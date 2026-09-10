@@ -55,6 +55,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
 }) => {
   const sharedTooltip = useSharedTooltip();
   const { t } = useTranslation();
+
   const profileUrl = getMargonemProfileUrl({
     accountId,
     characterId,

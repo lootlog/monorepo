@@ -18,10 +18,12 @@ const fullDateFormatter = new Intl.DateTimeFormat("pl-PL", {
   dateStyle: "full",
   timeZone: "Europe/Warsaw",
 });
+
 const weekdayFormatter = new Intl.DateTimeFormat("pl-PL", {
   weekday: "short",
   timeZone: "Europe/Warsaw",
 });
+
 const monthFormatter = new Intl.DateTimeFormat("pl-PL", {
   month: "short",
   timeZone: "Europe/Warsaw",
@@ -63,17 +65,22 @@ export function ActivityHeatmap({
   const lastDate = days[days.length - 1]?.date;
   useEffect(() => {
     const element = scroller.current;
+
     if (element) element.scrollLeft = element.scrollWidth;
   }, [lastDate, days.length]);
   const maximum = Math.max(1, ...days.map(({ value }) => value ?? 0));
   const offset = days[0] ? calendarOffset(days[0].date) : 0;
+
   const describe = (day: ActivityDay) => {
     const date = fullDateFormatter.format(new Date(`${day.date}T12:00:00Z`));
+
     const value =
       day.value === null ? t("statistics.unknown") : formatValue(day.value);
+
     const details = [
       `${date}: ${value}${day.partial ? ` · ${t("statistics.partialDay")}` : ""}`,
     ];
+
     if (day.worlds?.length) {
       details.push(
         t("statistics.sourceWorlds", {
@@ -81,11 +88,14 @@ export function ActivityHeatmap({
         }),
       );
     }
+
     if (day.worldsComplete === false) {
       details.push(t("statistics.sourceWorldsIncomplete"));
     }
+
     return details.join("\n");
   };
+
   return (
     <div
       className={cn(
@@ -169,9 +179,13 @@ export function ActivityHeatmap({
                       ["ArrowDown", 1],
                       ["ArrowUp", -1],
                     ]);
+
                     let next = index + (moves.get(event.key) ?? 0);
+
                     if (event.key === "Home") next = 0;
+
                     if (event.key === "End") next = days.length - 1;
+
                     if (next === index) return;
                     event.preventDefault();
                     buttons.current

@@ -29,6 +29,7 @@ const parseSearch = (searchString: string) => {
   const normalizedSearch = searchString.startsWith("?")
     ? searchString.slice(1)
     : searchString;
+
   const searchParams = new URLSearchParams(normalizedSearch);
   // SAFETY: The null-prototype dictionary starts empty; this function only assigns URLSearchParams strings or string arrays.
   const parsedSearch = Object.create(null) as Record<string, string | string[]>;
@@ -52,6 +53,7 @@ const searchValuesSchema = z.record(
   z.string(),
   z.union([z.array(z.coerce.string().nullish()), z.coerce.string()]).nullish(),
 );
+
 const stringifySearch = (
   search: Parameters<typeof searchValuesSchema.parse>[0],
 ) => {
@@ -78,6 +80,7 @@ const stringifySearch = (
   }
 
   const serializedSearch = searchParams.toString();
+
   return serializedSearch ? `?${serializedSearch}` : "";
 };
 

@@ -38,6 +38,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
   const guildId = useGuildId();
   const queryClient = useQueryClient();
   const refreshStatusContext = useContext(RefreshStatusContext);
+
   const { mutate: refreshMember, isPending } =
     useMembersControllerRefreshMember({
       mutation: {
@@ -63,6 +64,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
               },
             );
             onMemberUpdated?.(data);
+
             if (data.active) {
               toast.success(t("settings.members.refreshSuccess"));
             } else {
@@ -105,9 +107,11 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
   const canRefresh = Boolean(member.globalUserId);
   const refreshReferenceAt = member.lastDiscordSyncAt;
   const permissionRefreshInfo = getPermissionRefreshInfo(refreshReferenceAt);
+
   const canTriggerRefresh = refreshReferenceAt
     ? permissionRefreshInfo.canTriggerRefresh
     : true;
+
   let canTriggerRefreshText = t("settings.members.refreshNoDiscordSync");
 
   if (refreshReferenceAt && canTriggerRefresh) {
@@ -117,6 +121,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
   } else if (refreshReferenceAt) {
     canTriggerRefreshText = permissionRefreshInfo.canTriggerRefreshText;
   }
+
   let tooltipText = canTriggerRefreshText;
 
   if (!canRefresh) {
@@ -144,6 +149,7 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({
               }
               onClick={(e) => {
                 e.stopPropagation();
+
                 if (!guildId) {
                   return;
                 }

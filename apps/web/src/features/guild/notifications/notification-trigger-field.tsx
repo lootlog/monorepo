@@ -47,6 +47,7 @@ export const NotificationTriggerField = ({
                 "contentTemplate",
                 getDefaultContentTemplate(nextType),
               );
+
               if (nextType === NotificationTriggerType.SCHEDULED_MESSAGE) {
                 form.setValue("world", ALL_WORLDS_VALUE);
                 form.setValue("npcIds", []);

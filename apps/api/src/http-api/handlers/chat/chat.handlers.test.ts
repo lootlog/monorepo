@@ -15,11 +15,13 @@ import {
 } from "./chat.handlers.js";
 
 const identity = { userId: "user-a", discordId: "discord-a" };
+
 const access = {
   ...identity,
   guildId: "guild-canonical",
   permissions: [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
 };
+
 const message = {
   id: "message-a",
   guildId: "guild-canonical",
@@ -37,6 +39,7 @@ const message = {
   },
   canDelete: true,
 };
+
 const payload = {
   message: "hello",
   type: "NORMAL" as const,
@@ -72,11 +75,13 @@ const provideServices = (
 describe("Chat HttpApi handlers", () => {
   it("returns visible messages through the generated response schema", async () => {
     const calls: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization(),
       makeData({
         getMessages: (discordId, guildId) => {
           calls.push({ discordId, guildId });
+
           return Effect.succeed([message]);
         },
       }),
@@ -98,12 +103,15 @@ describe("Chat HttpApi handlers", () => {
       status: 403,
       code: "CHAT_READ_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(denied) }),
       makeData({
         getMessages: () => {
           dataCalled = true;
+
           return Effect.succeed([]);
         },
       }),
@@ -122,12 +130,15 @@ describe("Chat HttpApi handlers", () => {
       status: 404,
       code: "GUILD_NOT_FOUND",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeAuthorization({ requireGuild: () => Effect.fail(hidden) }),
       makeData({
         sendMessage: () => {
           dataCalled = true;
+
           return Effect.succeed(message);
         },
       }),
@@ -146,10 +157,12 @@ describe("Chat HttpApi handlers", () => {
   it("requires visibility and write capability for every message mutation", async () => {
     const authorizationCalls: unknown[] = [];
     const mutationCalls: unknown[] = [];
+
     const layer = provideServices(
       makeAuthorization({
         requireGuild: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed(access);
         },
       }),
@@ -161,6 +174,7 @@ describe("Chat HttpApi handlers", () => {
             guildId,
             messageId,
           });
+
           return Effect.fail(
             new ChatOperationError({
               cause: new PermissionDeniedError("not owner"),

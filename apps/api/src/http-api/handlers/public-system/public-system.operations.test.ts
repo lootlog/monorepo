@@ -64,11 +64,14 @@ describe("public system HttpApi handlers", () => {
       guildId: string;
       anyOf: ReadonlyArray<string>;
     }> = [];
+
     const refreshedGuilds: string[] = [];
+
     const layer = provideServices(
       makeData({
         refreshStatsCard: (guildId) => {
           refreshedGuilds.push(guildId);
+
           return Effect.succeed({
             nextRefreshAt: "2026-09-02T12:00:00.000Z",
           });
@@ -77,6 +80,7 @@ describe("public system HttpApi handlers", () => {
       makeAuthorization({
         requireCapability: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed({ guildId: options.guildId });
         },
       }),
@@ -101,11 +105,14 @@ describe("public system HttpApi handlers", () => {
       status: 403,
       code: "GUILD_MANAGE_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         refreshStatsCard: () => {
           dataCalled = true;
+
           return Effect.succeed({ nextRefreshAt: "never" });
         },
       }),
@@ -133,6 +140,7 @@ describe("public system HttpApi handlers", () => {
       "public, max-age=300, must-revalidate",
     );
     expect(response.body._tag).toBe("Uint8Array");
+
     if (Predicate.isTagged(response.body, "Uint8Array")) {
       expect(response.body.body).toEqual(png);
     }

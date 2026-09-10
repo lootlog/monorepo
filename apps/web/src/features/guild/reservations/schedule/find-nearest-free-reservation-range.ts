@@ -27,6 +27,7 @@ export function getNearestFreeReservationSearchWindow({
   settings,
 }: NearestFreeReservationSearchWindowOptions) {
   const from = ceilDateToReservationStep(now, settings);
+
   const latestStartsAt = floorDateToReservationStep(
     getReservationLatestStartDate(settings, now),
     settings,
@@ -56,11 +57,13 @@ export function findNearestFreeReservationRange({
     if (interval.endsAt <= candidateStartsAt) continue;
 
     const candidateEndsAt = addMinutes(candidateStartsAt, durationMinutes);
+
     if (interval.startsAt >= candidateEndsAt) {
       return { startsAt: candidateStartsAt, endsAt: candidateEndsAt };
     }
 
     candidateStartsAt = ceilDateToReservationStep(interval.endsAt, settings);
+
     if (candidateStartsAt > latestStartsAt) return null;
   }
 

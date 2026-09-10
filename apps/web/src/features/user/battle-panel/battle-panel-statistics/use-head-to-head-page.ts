@@ -63,9 +63,11 @@ export function useHeadToHeadPage({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+
   const [queryState, setQueryState] = useQueryStates(
     battlePanelHeadToHeadSearchParsers,
   );
+
   const resolvePageState = () => ({
     pageIndex: getBattlePanelPageIndex(queryState.page),
     currentCharacterId: normalizeBattlePanelCharacterId(queryState.characterId),
@@ -80,6 +82,7 @@ export function useHeadToHeadPage({
     sortBy: queryState.sortBy ?? "totalBattles",
     sortOrder: queryState.sortOrder ?? "desc",
   });
+
   const {
     pageIndex,
     currentCharacterId,
@@ -94,6 +97,7 @@ export function useHeadToHeadPage({
     sortBy,
     sortOrder,
   } = resolvePageState();
+
   const selectedWarriors = getSelectedWarriorsFromSearch(search);
   const sorting: SortingState = [{ id: sortBy, desc: sortOrder === "desc" }];
   const pageSize = 20;
@@ -177,6 +181,7 @@ export function useHeadToHeadPage({
     const isSelected = selectedWarriors.some(
       (item) => item.name === warrior.name,
     );
+
     const nextSelectedWarriors = isSelected
       ? selectedWarriors.filter((item) => item.name !== warrior.name)
       : [warrior];
@@ -287,6 +292,7 @@ export function useHeadToHeadPage({
     ph,
     search,
   };
+
   const activeFilterChips = buildHeadToHeadFilterLabels({
     ...filterState,
     selectedWarriorsCount: selectedWarriors.length,

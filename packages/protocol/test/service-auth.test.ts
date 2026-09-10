@@ -5,6 +5,7 @@ import { hasServiceAuthorization } from "../src/http/service-auth.js";
 test("service authorization fails closed without a nonempty matching secret", () => {
   const secret = Redacted.make("service-secret");
   expect(hasServiceAuthorization("Bearer service-secret", secret)).toBe(true);
+
   for (const value of [
     undefined,
     "",
@@ -14,6 +15,7 @@ test("service authorization fails closed without a nonempty matching secret", ()
   ]) {
     expect(hasServiceAuthorization(value, secret)).toBe(false);
   }
+
   expect(hasServiceAuthorization("Bearer service-secret", undefined)).toBe(
     false,
   );

@@ -101,8 +101,11 @@ const getSpinnerOverride = (
   isRiasTheme: boolean,
 ) => {
   if (isCatTheme) return LazyCatPawSpinner;
+
   if (isRukiaTheme) return LazyRukiaIceSpinner;
+
   if (isRiasTheme) return LazyRiasMagicSpinner;
+
   return null;
 };
 
@@ -152,6 +155,7 @@ export const ThemeSidebarBackground = () => {
       </Suspense>
     );
   }
+
   if (isRiasTheme) {
     return (
       <Suspense fallback={null}>
@@ -159,6 +163,7 @@ export const ThemeSidebarBackground = () => {
       </Suspense>
     );
   }
+
   return null;
 };
 
@@ -172,6 +177,7 @@ export const ThemeSidebarFooterDecoration = () => {
       </Suspense>
     );
   }
+
   if (isRiasTheme) {
     return (
       <Suspense fallback={null}>
@@ -179,6 +185,7 @@ export const ThemeSidebarFooterDecoration = () => {
       </Suspense>
     );
   }
+
   return null;
 };
 
@@ -297,8 +304,11 @@ export const useThemedKey = () => {
 
   return (base: string) => {
     if (isCatTheme) return `${base}Cat`;
+
     if (isRukiaTheme) return `${base}Rukia`;
+
     if (isRiasTheme) return `${base}Rias`;
+
     return base;
   };
 };
@@ -319,6 +329,7 @@ export const ThemeEmptyStateIcon = ({
       </Suspense>
     );
   }
+
   if (isRukiaTheme) {
     return (
       <Suspense fallback={<>{fallback}</>}>
@@ -326,6 +337,7 @@ export const ThemeEmptyStateIcon = ({
       </Suspense>
     );
   }
+
   if (isRiasTheme) {
     return (
       <Suspense fallback={<>{fallback}</>}>
@@ -333,5 +345,6 @@ export const ThemeEmptyStateIcon = ({
       </Suspense>
     );
   }
+
   return <>{fallback}</>;
 };

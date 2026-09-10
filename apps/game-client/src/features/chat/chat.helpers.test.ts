@@ -47,6 +47,7 @@ describe("chat helpers", () => {
         timestamp: "2026-01-01T10:03:00.000Z",
       }),
     ];
+
     const serverMessages = [
       makeChatMessage({ id: "message-1", message: "edited on server" }),
       makeChatMessage({
@@ -77,6 +78,7 @@ describe("chat helpers", () => {
           timestamp: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
         }),
     );
+
     const socketMessage = makeChatMessage({
       id: `message-${CHAT_MESSAGE_LIMIT}`,
       timestamp: new Date(
@@ -98,6 +100,7 @@ describe("chat helpers", () => {
     const messages = Array.from({ length: CHAT_MESSAGE_LIMIT }, (_, index) =>
       makeChatMessage({ id: `message-${index}` }),
     );
+
     const nextMessage = makeChatMessage({ id: "message-new" });
 
     const updatedMessages = upsertChatMessage(messages, nextMessage);
@@ -145,6 +148,7 @@ describe("chat helpers", () => {
         guildId,
         Array.from({ length: 300 }, (_, messageIndex) => {
           const chronologicalIndex = guildIndex * 300 + messageIndex;
+
           return makeChatMessage({
             guildId,
             id: `message-${chronologicalIndex}`,
@@ -169,6 +173,7 @@ describe("chat helpers", () => {
       id: "message-2",
       timestamp: "2026-01-01T10:00:00.150Z",
     });
+
     const npcMessage = makeChatMessage({
       id: "message-3",
       type: MessageType.NPC,
@@ -186,17 +191,21 @@ describe("chat helpers", () => {
         wt: 100,
       },
     });
+
     const notificationMessage = makeChatMessage({
       id: "message-4",
       type: MessageType.NOTIFICATION,
       message: "ping",
       timestamp: "2026-01-01T10:01:00.000Z",
     });
+
     const original = makeChatMessage();
+
     const laterDuplicate = makeChatMessage({
       id: "message-2",
       timestamp: "2026-01-01T10:00:00.150Z",
     });
+
     const laterNpcMessage = makeChatMessage({
       id: "message-3",
       type: MessageType.NPC,
@@ -256,6 +265,7 @@ describe("chat helpers", () => {
         wt: 100,
       },
     });
+
     const elite2Message = makeChatMessage({
       id: "elite2",
       type: MessageType.NPC,
@@ -271,6 +281,7 @@ describe("chat helpers", () => {
         wt: 25,
       },
     });
+
     const messages = [makeChatMessage(), titanMessage, elite2Message];
     const hidden = new Set<NpcTypeEnum>(["TITAN"]);
 
@@ -309,11 +320,13 @@ describe("chat helpers", () => {
         wt: 100,
       },
     });
+
     const secondNpcMessage = makeChatMessage({
       ...firstNpcMessage,
       id: "npc-2",
       timestamp: "2026-01-01T10:00:30.000Z",
     });
+
     const nextBurstNpcMessage = makeChatMessage({
       ...firstNpcMessage,
       id: "npc-3",
@@ -363,6 +376,7 @@ describe("chat helpers", () => {
       type: 1,
       wt: 100,
     };
+
     const dragonNpc = {
       id: 11,
       name: "Dragon",
@@ -575,6 +589,7 @@ describe("chat helpers", () => {
         wt: 100,
       },
     });
+
     const messages = Array.from({ length: 15 }, (_, index) => ({
       ...firstMessage,
       id: `npc-${index}`,
@@ -655,6 +670,7 @@ describe("chat helpers", () => {
 
 it("excludes legacy party cards from every chat filter", () => {
   const legacy = makeChatMessage({ type: MessageType.PARTY_GATHERING });
+
   for (const filter of ["all", "normal", "npc", "party", "reports"] as const) {
     expect(filterChatMessages([legacy], filter)).toEqual([]);
   }

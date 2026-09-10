@@ -6,19 +6,24 @@ import gameClientPackage from "./package.json";
 
 export function gameClientViteConfig(mode: string): UserConfig {
   const env = loadEnv(mode, import.meta.dirname, "");
+
   const useFastLocalMinifier =
     env.FAST_BUILD === "1" || process.env.FAST_BUILD === "1";
+
   const commitSha =
     env.VITE_COMMIT_SHA ||
     env.WORKERS_CI_COMMIT_SHA ||
     process.env.WORKERS_CI_COMMIT_SHA ||
     "";
+
   const runtimeVersion =
     env.VITE_GAME_CLIENT_VERSION ||
     commitSha ||
     process.env.npm_package_version ||
     "development";
+
   const buildTimestamp = new Date().toISOString();
+
   return {
     define: {
       "import.meta.env.VITE_BUILD_TIMESTAMP": JSON.stringify(buildTimestamp),

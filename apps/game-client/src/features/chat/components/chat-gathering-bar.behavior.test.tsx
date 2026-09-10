@@ -69,10 +69,13 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
     getMembersControllerGetMeQueryKey({ guildId: "guild-1" }),
     createChatMember(),
   );
+
   const discovery = vi
     .fn<() => Promise<Response>>()
     .mockImplementation(async () => Response.json(rooms));
+
   const mutation = vi.fn<typeof fetch>();
+
   const restoreApi = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
@@ -80,14 +83,18 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
         const url = new URL(
           input instanceof Request ? input.url : String(input),
         );
+
         if (url.pathname === "/guilds/guild-1/members/summary")
           return Response.json([]);
+
         if (url.pathname === "/messaging/party-gathering/active")
           return discovery();
+
         return mutation(input, init);
       },
     },
   });
+
   const view = render(
     <ChatGatheringBar>
       {(gatheringBar, hiddenGatherings, ownGathering) => (
@@ -101,6 +108,7 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
     </ChatGatheringBar>,
     { wrapper: harness.wrapper },
   );
+
   onTestFinished(() => {
     view.unmount();
     restoreApi();
@@ -120,12 +128,14 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
       }),
     ).toBe(0);
   });
+
   const refresh = () =>
     act(async () => {
       await harness.queryClient.invalidateQueries({
         queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
       });
     });
+
   return {
     ...harness,
     discovery,
@@ -139,13 +149,16 @@ const openGatheringMenu = (index = 0) => {
   const trigger = screen.getAllByRole("button", { name: "Opcje zbiórki" })[
     index
   ];
+
   if (!trigger) throw new Error("Expected gathering menu");
   fireEvent.click(trigger);
 };
+
 const expandGatherings = () => {
   const button = screen.queryByRole("button", {
     name: /^\+\d+ pozostałe zbiórki$/,
   });
+
   if (button) fireEvent.click(button);
 };
 
@@ -212,16 +225,20 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
   "retains the %s room after failed removal and removes it after retry",
   async (viewer) => {
     const harness = await setup();
+
     const room =
       viewer === "ORGANIZER"
         ? { ...readyRoomOrganizerFixture, world: "pandora" }
         : createChatReadyRoom({ world: "pandora" });
+
     act(() => usePartyFinderStore.getState().mergeProjection(room));
     harness.mutation.mockImplementation(async () =>
       Response.json({ message: "Failed" }, { status: 500 }),
     );
+
     const name =
       viewer === "ORGANIZER" ? "Anuluj zbiórkę" : "Wycofaj zgłoszenie";
+
     if (viewer === "ORGANIZER") openGatheringMenu();
     fireEvent.click(await screen.findByRole("button", { name }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się");
@@ -234,6 +251,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
         revision: 4,
       }),
     );
+
     if (viewer === "ORGANIZER") openGatheringMenu();
     fireEvent.click(screen.getByRole("button", { name }));
     await waitFor(() =>
@@ -250,6 +268,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
 
 it("shows actual party size independently of applications and opens management", async () => {
   await setup();
+
   const room = {
     ...readyRoomOrganizerFixture,
     world: "pandora",
@@ -274,6 +293,7 @@ it("shows actual party size independently of applications and opens management",
       },
     },
   };
+
   act(() => {
     useWindowsStore.getState().setOpen("party-finder", false);
     usePartyFinderStore.getState().mergeProjection(room);
@@ -312,9 +332,11 @@ it("invites applicants only when available, blocks double clicks and recovers af
       world: "pandora",
     }),
   );
+
   const invite = await screen.findByRole("button", {
     name: "Zaproś zgłoszonych",
   });
+
   expect(invite).toBeDisabled();
   fireEvent.click(invite);
   expect(harness.mutation).not.toHaveBeenCalled();
@@ -374,6 +396,7 @@ it.each(["OUTSIDE", "IN_PARTY"] as const)(
     await setup();
     const room = createChatReadyRoom({ world: "pandora" });
     const participant = room.participants["participant-1"];
+
     if (!participant) throw new Error("Expected current character fixture");
     act(() =>
       usePartyFinderStore.getState().mergeProjection({
@@ -399,9 +422,11 @@ it("keeps the hovered signup target and prioritizes an owned room", async () => 
   const room = createGathering({
     notificationId: "original-room",
   });
+
   const harness = await setup([room]);
   await screen.findByRole("button", { name: "Zgłoś się" });
   const panel = harness.container.firstElementChild;
+
   if (!(panel instanceof HTMLElement))
     throw new Error("Expected gathering panel");
   fireEvent.mouseEnter(panel);
@@ -438,20 +463,26 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
       notificationId: "first-room",
       description: "First gathering",
     });
+
     const second = createGathering({
       notificationId: "second-room",
       description: "Second gathering",
     });
+
     const harness = await setup([first, second]);
+
     const room =
       viewer === "ORGANIZER"
         ? { ...readyRoomOrganizerFixture, world: "pandora" }
         : createChatReadyRoom({ world: "pandora" });
+
     act(() => usePartyFinderStore.getState().mergeProjection(room));
+
     const currentAction = await screen.findByRole("button", {
       name:
         viewer === "ORGANIZER" ? "Zaproś zgłoszonych" : "Wycofaj zgłoszenie",
     });
+
     const assertOrder = (descriptions: string[]) => {
       const rows = screen
         .getAllByRole("listitem")
@@ -459,6 +490,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
           (row) =>
             !within(row).queryByRole("button", { name: "Zwiń pozostałe" }),
         );
+
       const currentIndex = viewer === "ORGANIZER" ? rows.length - 1 : 0;
       expect(rows[currentIndex]).toContainElement(currentAction);
       const others = rows.filter((_, index) => index !== currentIndex);
@@ -467,6 +499,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
         expect(others[index]).toHaveTextContent(description),
       );
     };
+
     expandGatherings();
     assertOrder(["First gathering", "Second gathering"]);
     harness.discovery.mockImplementation(async () =>
@@ -492,6 +525,7 @@ it("keeps full discovery counts after joining despite a private projection and m
     inPartyCount: 2,
     partyMemberCount: 8,
   });
+
   const harness = await setup([gathering]);
   expect(
     await screen.findByLabelText("W grupie: 8/10", { exact: false }),
@@ -535,9 +569,11 @@ it("hides a frozen hovered target and makes the next visible gathering the hotke
     notificationId: "original-room",
     description: "Original gathering",
   });
+
   const harness = await setup([gathering]);
   await screen.findByRole("button", { name: "Zgłoś się" });
   const panel = harness.container.firstElementChild;
+
   if (!(panel instanceof HTMLElement))
     throw new Error("Expected gathering panel");
   fireEvent.mouseEnter(panel);
@@ -555,6 +591,7 @@ it("hides a frozen hovered target and makes the next visible gathering the hotke
   expect(screen.getByText("Original gathering")).toBeVisible();
   openGatheringMenu();
   const firstHide = screen.getAllByRole("button", { name: "Ukryj zbiórkę" })[0];
+
   if (!firstHide) throw new Error("Expected first gathering hide action");
   fireEvent.click(firstHide);
   expect(await screen.findByText("New gathering")).toBeVisible();
@@ -629,6 +666,7 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
     notificationId: "new-room-same-organizer",
     description: "New gathering",
   };
+
   harness.discovery.mockImplementation(async () =>
     Response.json([newGathering, gathering]),
   );
@@ -667,9 +705,11 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
   const secondaryHide = screen.getByRole("button", { name: "Ukryj zbiórkę" });
   act(() => secondaryHide.focus());
   await user.keyboard("{Enter}");
+
   const menu = await screen.findByRole("button", {
     name: "Ukryte zbiórki (1)",
   });
+
   await waitFor(() => expect(menu).toHaveFocus());
   expect(screen.queryByText("Second")).toBeNull();
   openGatheringMenu();
@@ -685,6 +725,7 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
 
 it("joins the selected organizer from the visible list and enables other signups after withdrawal", async () => {
   const user = userEvent.setup();
+
   const harness = await setup([
     createGathering({ description: "First", organizerName: "First organizer" }),
     createGathering({
@@ -693,6 +734,7 @@ it("joins the selected organizer from the visible list and enables other signups
       organizerName: "Second organizer",
     }),
   ]);
+
   harness.mutation.mockResolvedValueOnce(
     Response.json(
       createChatReadyRoom({
@@ -703,18 +745,22 @@ it("joins the selected organizer from the visible list and enables other signups
     ),
   );
   expandGatherings();
+
   const secondOrganizer = screen
     .getAllByRole("listitem")
     .find((row) => within(row).queryByText("Second"));
+
   if (!secondOrganizer) throw new Error("Expected second organizer gathering");
   await user.click(
     within(secondOrganizer).getByRole("button", { name: "Zgłoś się" }),
   );
   await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
   expect(String(harness.mutation.mock.calls[0]?.[0])).toContain("second-room");
+
   const withdrawal = await screen.findByRole("button", {
     name: "Wycofaj zgłoszenie",
   });
+
   expect(screen.getByText("First")).toBeVisible();
   expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeDisabled();
   openGatheringMenu();
@@ -735,6 +781,7 @@ it("joins the selected organizer from the visible list and enables other signups
     ).toBeNull(),
   );
   expect(screen.getByText("First")).toBeVisible();
+
   for (const action of screen.getAllByRole("button", {
     name: /^(Zgłoś się|Ukryj zbiórkę)$/,
   })) {
@@ -750,6 +797,7 @@ it("preserves the editor focus, draft and caret while gatherings appear, change 
   await user.paste("Keep this draft");
   const textNode = editor.querySelector("[data-lexical-text]")?.firstChild;
   const selection = document.getSelection();
+
   if (!(textNode instanceof Text) || !selection)
     throw new Error("Expected editor text selection");
   act(() => {
@@ -792,6 +840,7 @@ it("updates the main join tooltip from the live binding without advertising its 
     createGathering(),
     createGathering({ notificationId: "second-room" }),
   ]);
+
   const binding = {
     type: "keyboard" as const,
     key: "J",
@@ -799,12 +848,15 @@ it("updates the main join tooltip from the live binding without advertising its 
     alt: false,
     shift: false,
   };
+
   act(() =>
     useHotkeysStore.getState().setBinding("join-party-gathering", binding),
   );
+
   const signup = (
     await screen.findAllByRole("button", { name: "Zgłoś się" })
   )[0];
+
   if (!signup) throw new Error("Expected first gathering signup");
   await user.keyboard("{Tab}");
   act(() => signup.focus());
@@ -829,9 +881,11 @@ it("updates the main join tooltip from the live binding without advertising its 
   );
   expect(screen.getAllByRole("button", { name: "Zgłoś się" })).toHaveLength(1);
   expandGatherings();
+
   const secondarySignup = screen.getAllByRole("button", {
     name: "Zgłoś się",
   })[1];
+
   if (!secondarySignup) throw new Error("Expected secondary gathering signup");
   await user.keyboard("{Tab}");
   act(() => secondarySignup.focus());

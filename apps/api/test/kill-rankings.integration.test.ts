@@ -23,10 +23,15 @@ import { makeGuildKillQueries } from "../src/kills/guild-kill-queries.js";
 import { applicationLogger } from "../src/shared/application-logger.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
+
 const guildId = `kill-ranking-${randomUUID()}`;
+
 const otherGuildId = `kill-ranking-${randomUUID()}`;
+
 const policy = createAccessPolicy({ capabilities: [Permission.ADMIN] });
+
 const cache: KillQueryCache = { getOrSet: (_key, _schema, load) => load };
+
 const queries = Effect.map(ApiDatabase, (db) =>
   makeGuildKillQueries(makeKillStatsPersistence(db), cache, applicationLogger),
 );
@@ -43,6 +48,7 @@ beforeAll(async () => {
           updatedAt: new Date(),
         })),
       );
+
       const members = yield* db
         .insert(memberTable)
         .values(
@@ -54,8 +60,11 @@ beforeAll(async () => {
           })),
         )
         .returning();
+
       const [first, second] = members;
+
       if (!first || !second) throw new Error("Missing fixture members");
+
       const base = {
         guildId,
         npcId: 1,
@@ -66,6 +75,7 @@ beforeAll(async () => {
         npcIcon: "low.gif",
         updatedAt: new Date(),
       };
+
       const stats = [
         {
           ...base,
@@ -105,6 +115,7 @@ beforeAll(async () => {
           memberKills: 50,
         },
       ];
+
       yield* db.insert(npcKillStatsTable).values(stats);
       yield* db.insert(npcKillStatsBucketTable).values(
         stats.map((row) => ({
@@ -123,6 +134,7 @@ beforeAll(async () => {
         memberKills: 900,
         periodStart: new Date("2000-01-01"),
       });
+
       const summaries = [
         { ...base, id: randomUUID(), world: "a", uniqueKills: 7 },
         {
@@ -150,6 +162,7 @@ beforeAll(async () => {
           uniqueKills: 999,
         },
       ];
+
       yield* db.insert(guildKillSummaryTable).values(summaries);
       yield* db.insert(guildKillSummaryBucketTable).values(
         summaries.map((row) => ({
@@ -166,6 +179,7 @@ afterAll(async () => {
   await runtime.runPromise(
     Effect.gen(function* () {
       const db = yield* ApiDatabase;
+
       for (const table of [
         npcKillStatsBucketTable,
         npcKillStatsTable,
@@ -177,6 +191,7 @@ afterAll(async () => {
           .delete(table)
           .where(inArray(table.guildId, [guildId, otherGuildId]));
       }
+
       yield* db
         .delete(guildTable)
         .where(inArray(guildTable.id, [guildId, otherGuildId]));
@@ -190,6 +205,7 @@ for (const period of ["all", "24h"] as const) {
     await runtime.runPromise(
       Effect.gen(function* () {
         const service = yield* queries;
+
         const top = yield* service.getGuildTopNpcs(
           guildId,
           policy,
@@ -202,6 +218,7 @@ for (const period of ["all", "24h"] as const) {
           undefined,
           period,
         );
+
         expect(top.topNpcs).toEqual([
           expect.objectContaining({
             npcId: 1,
@@ -210,6 +227,7 @@ for (const period of ["all", "24h"] as const) {
             npcName: "High",
           }),
         ]);
+
         const members = yield* service.getGuildTopKillersByType(
           guildId,
           policy,
@@ -218,6 +236,7 @@ for (const period of ["all", "24h"] as const) {
           1,
           period,
         );
+
         expect(members[NpcType.ELITE2]).toEqual([
           expect.objectContaining({
             memberName: "first",
@@ -231,6 +250,7 @@ for (const period of ["all", "24h"] as const) {
           }),
         ]);
         expect(members[NpcType.TITAN]).toEqual([]);
+
         const npc = yield* service.getNpcKillers(
           guildId,
           policy,
@@ -240,6 +260,7 @@ for (const period of ["all", "24h"] as const) {
           undefined,
           period,
         );
+
         expect(npc?.npc).toEqual(
           expect.objectContaining({
             npcName: "High",
@@ -263,6 +284,7 @@ test("filters before ranking and keeps all-time metadata with zero counts for an
   await runtime.runPromise(
     Effect.gen(function* () {
       const service = yield* queries;
+
       const filtered = yield* service.getGuildTopNpcs(
         guildId,
         policy,
@@ -274,9 +296,11 @@ test("filters before ranking and keeps all-time metadata with zero counts for an
         1,
         150,
       );
+
       expect(filtered.topNpcs).toEqual([
         expect.objectContaining({ npcName: "Low", uniqueKills: 7 }),
       ]);
+
       const empty = yield* service.getNpcKillers(
         guildId,
         policy,
@@ -286,6 +310,7 @@ test("filters before ranking and keeps all-time metadata with zero counts for an
         "missing",
         "24h",
       );
+
       expect(empty?.npc).toEqual(
         expect.objectContaining({
           npcName: "High",
@@ -297,11 +322,13 @@ test("filters before ranking and keeps all-time metadata with zero counts for an
       expect(yield* service.getNpcKillers(guildId, policy, [], -1)).toBeNull();
       const db = yield* ApiDatabase;
       const persistence = makeKillStatsPersistence(db);
+
       const visible = yield* persistence.topMembersByType(
         { guildId, OR: [{ npcType: NpcType.ELITE2, npcLvl: { lte: 150 } }] },
         false,
         1,
       );
+
       expect(visible).toEqual([
         expect.objectContaining({
           memberName: "first",
@@ -316,9 +343,11 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
   await runtime.runPromise(
     Effect.gen(function* () {
       const service = yield* queries;
+
       const restricted = createAccessPolicy({
         capabilities: [Permission.LOOTLOG_LOOTS_READ],
       });
+
       const roles = [
         {
           id: "limited",
@@ -333,16 +362,19 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
           updatedAt: new Date(),
         },
       ];
+
       const top = yield* service.getGuildTopNpcs(guildId, restricted, roles, 5);
       expect(top.topNpcs).toEqual([
         expect.objectContaining({ npcId: 1, npcLvl: 100, uniqueKills: 7 }),
       ]);
+
       const members = yield* service.getGuildTopKillersByType(
         guildId,
         restricted,
         roles,
         [NpcType.ELITE2, NpcType.HERO],
       );
+
       expect(members[NpcType.HERO]).toEqual([]);
       expect(members[NpcType.ELITE2]).toEqual([
         expect.objectContaining({
@@ -369,6 +401,7 @@ test("finite ranking limits retain slice semantics for negative, fractional and 
   await runtime.runPromise(
     Effect.gen(function* () {
       const service = yield* queries;
+
       for (const [limit, expectedNpcIds, expectedMembers] of [
         [-1, [2], ["first"]],
         [-1.9, [2], ["first"]],
@@ -383,6 +416,7 @@ test("finite ranking limits retain slice semantics for negative, fractional and 
         expect(npcs.topNpcs.map((npc) => npc.npcId)).toEqual([
           ...expectedNpcIds,
         ]);
+
         const members = yield* service.getGuildTopKillersByType(
           guildId,
           policy,
@@ -390,6 +424,7 @@ test("finite ranking limits retain slice semantics for negative, fractional and 
           [NpcType.ELITE2],
           limit,
         );
+
         expect(
           members[NpcType.ELITE2]?.map((member) => member.memberName),
         ).toEqual([...expectedMembers]);

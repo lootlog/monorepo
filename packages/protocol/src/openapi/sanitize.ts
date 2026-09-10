@@ -1,4 +1,5 @@
 import { isRecord as isOpenApiDictionary } from "@lootlog/schema/records";
+
 type OpenApiDictionary = Record<string, unknown>;
 
 const httpMethods = new Set([
@@ -39,6 +40,7 @@ function preserveLegacyQueryParameterSchemas(document: unknown) {
           limitParameterIndex,
           1,
         );
+
         value.parameters.push(limitParameter);
       }
     }
@@ -70,6 +72,7 @@ function preserveLegacyArraySchemaKeyOrder(document: unknown) {
     }
 
     const entries = Object.entries(value);
+
     const arrayKeywordOrder = new Map([
       ["minItems", 0],
       ["maxItems", 1],
@@ -81,14 +84,18 @@ function preserveLegacyArraySchemaKeyOrder(document: unknown) {
       const rightOrder = arrayKeywordOrder.get(rightKey);
 
       if (leftOrder === undefined && rightOrder === undefined) return 0;
+
       if (leftOrder === undefined) return 1;
+
       if (rightOrder === undefined) return -1;
+
       return leftOrder - rightOrder;
     });
 
     for (const key of Object.keys(value)) {
       delete value[key];
     }
+
     Object.assign(value, Object.fromEntries(entries));
   });
 }
@@ -99,6 +106,7 @@ function visitOpenApiDictionaries(
 ) {
   if (Array.isArray(value)) {
     value.forEach((entry) => visitOpenApiDictionaries(entry, visitor));
+
     return;
   }
 
@@ -117,6 +125,7 @@ function hasOpenApiProperty(value: OpenApiDictionary, propertyName: string) {
 function stripTypedObjectAdditionalProperties(value: unknown) {
   if (Array.isArray(value)) {
     value.forEach(stripTypedObjectAdditionalProperties);
+
     return;
   }
 
@@ -135,6 +144,7 @@ function stripTypedObjectAdditionalProperties(value: unknown) {
 function stripUnsupportedOpenApiKeywords(value: unknown) {
   if (Array.isArray(value)) {
     value.forEach(stripUnsupportedOpenApiKeywords);
+
     return;
   }
 
@@ -164,6 +174,7 @@ function ensurePathParameters(document: unknown) {
       pathName.matchAll(/\{([^}]+)\}/g),
       (match) => match[1],
     );
+
     if (pathParameterNames.length === 0) continue;
 
     for (const [methodName, operation] of Object.entries(pathItem)) {
@@ -174,6 +185,7 @@ function ensurePathParameters(document: unknown) {
       const pathLevelParameters = Array.isArray(pathItem.parameters)
         ? pathItem.parameters
         : [];
+
       const parameters = Array.isArray(operation.parameters)
         ? operation.parameters
         : [];

@@ -43,6 +43,7 @@ export const NotificationJobCountdown = ({
   scheduledFor,
 }: NotificationJobCountdownProps) => {
   const { t } = useTranslation();
+
   const [remainingTimeLabel, setRemainingTimeLabel] = useState(() =>
     getRemainingTimeLabel(scheduledFor),
   );

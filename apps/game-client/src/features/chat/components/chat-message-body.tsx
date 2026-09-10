@@ -25,6 +25,7 @@ export const ChatMessageBody: FC<ChatMessageBodyProps> = ({
 }) => {
   const { t } = useTranslation("chat");
   const messageBody = getChatMessageBody(message);
+
   const mentionSegments = messageBody
     ? getChatMentionSegments(messageBody.text, mentionContext)
     : [];

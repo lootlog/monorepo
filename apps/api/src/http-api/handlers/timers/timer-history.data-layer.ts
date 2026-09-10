@@ -31,7 +31,9 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
     Effect.gen(function* () {
       const limit =
         requestedLimit && requestedLimit > 0 ? Math.min(requestedLimit, 20) : 5;
+
       let timerKey = timerIdentifier;
+
       if (timerIdentifier && isLegacyNpcIdIdentifier(timerIdentifier)) {
         const matches = yield* database
           .select({ timerKey: timerTable.timerKey })
@@ -43,6 +45,7 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
               eq(timerTable.npcId, Number.parseInt(timerIdentifier, 10)),
             ),
           );
+
         if (matches.length > 1) {
           return yield* Effect.fail(
             new InvalidRequestError({
@@ -50,8 +53,10 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             }),
           );
         }
+
         timerKey = matches[0]?.timerKey ?? timerIdentifier;
       }
+
       const condition = timerKey
         ? and(
             eq(timerHistoryEntryTable.guildId, access.guild.id),
@@ -62,6 +67,7 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             eq(timerHistoryEntryTable.guildId, access.guild.id),
             eq(timerHistoryEntryTable.world, world),
           );
+
       const rows = yield* database
         .select({
           entry: timerHistoryEntryTable,
@@ -88,11 +94,13 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
         .where(condition)
         .orderBy(desc(timerHistoryEntryTable.createdAt))
         .limit(limit);
+
       return rows.flatMap(
         ({ entry, guildName, actorMember, actorCharacter }) => {
           if (!canViewTimer(access, entry)) {
             return [];
           }
+
           return [
             {
               id: entry.id,

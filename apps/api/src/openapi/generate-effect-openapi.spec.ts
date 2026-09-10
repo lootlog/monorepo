@@ -7,6 +7,7 @@ import path from "node:path";
 it("exports current source contracts without depending on compiled output", async () => {
   const appDirectory = path.resolve(import.meta.dir, "../..");
   const fixture = await mkdtemp(path.join(tmpdir(), "api-openapi-source-"));
+
   try {
     cpSync(path.join(appDirectory, "src"), path.join(fixture, "src"), {
       recursive: true,
@@ -24,17 +25,20 @@ it("exports current source contracts without depending on compiled output", asyn
       path.join(fixture, "node_modules"),
       "dir",
     );
+
     const generate = async () => {
       const child = Bun.spawn([process.execPath, "run", "openapi:generate"], {
         cwd: fixture,
         stdout: "pipe",
         stderr: "pipe",
       });
+
       const [exitCode, output, errors] = await Promise.all([
         child.exited,
         new Response(child.stdout).text(),
         new Response(child.stderr).text(),
       ]);
+
       expect({
         exitCode,
         diagnostics: exitCode === 0 ? "" : output + errors,
@@ -42,6 +46,7 @@ it("exports current source contracts without depending on compiled output", asyn
         exitCode: 0,
         diagnostics: "",
       });
+
       return Bun.file(path.join(fixture, "openapi.yaml")).text();
     };
 
@@ -50,6 +55,7 @@ it("exports current source contracts without depending on compiled output", asyn
     const sharedSource = Bun.file(
       path.join(fixture, "src/contracts/shared.ts"),
     );
+
     await Bun.write(
       sharedSource,
       (await sharedSource.text()).replace(

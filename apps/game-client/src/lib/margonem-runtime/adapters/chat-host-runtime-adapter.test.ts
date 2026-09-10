@@ -3,12 +3,15 @@ import { watchIntegratedChatHost } from "./chat-host-runtime-adapter";
 
 function fixture() {
   document.body.innerHTML = `<div class="new-chat-window"><div class="chat-channel-card-wrapper"><button class="chat-channel-card active">Native</button></div><div class="chat-message-wrapper" style="display:grid"></div><div class="chat-input-wrapper"></div></div>`;
+
   // oxlint-disable-next-line anti-slop/no-unknown-parameters -- Characterizes opaque native forwarding.
   const setChannel = vi.fn(function (this: unknown, ...args: unknown[]) {
     return { receiver: this, args };
   });
+
   const chatWindow = { setChannel };
   const input = { setChannel: vi.fn(), focus: vi.fn() };
+
   const runtime = Object.assign(window, {
     Engine: {
       chatController: {
@@ -17,6 +20,7 @@ function fixture() {
       },
     },
   });
+
   return { runtime, chatWindow, input, setChannel };
 }
 
@@ -30,10 +34,12 @@ describe("NI chat host", () => {
     const { runtime, chatWindow } = fixture();
     const changed = vi.fn();
     const host = watchIntegratedChatHost("Lootlog", changed, runtime);
+
     try {
       const tab = document.querySelector<HTMLButtonElement>(
         ".ll-integrated-chat-tab",
       );
+
       expect(tab?.getAttribute("aria-label")).toBe("Lootlog");
       expect(tab?.title).toBe("Lootlog");
       expect(tab?.textContent).toBe("");
@@ -50,6 +56,7 @@ describe("NI chat host", () => {
   it("allows integrated content to scroll through the native wheel guard", () => {
     const { runtime } = fixture();
     const host = watchIntegratedChatHost("Lootlog", vi.fn(), runtime);
+
     // Characterizes Interface.blockWheel's documented native opt-in.
     const blockWheel = (event: WheelEvent) => {
       if (
@@ -59,22 +66,28 @@ describe("NI chat host", () => {
       )
         event.preventDefault();
     };
+
     window.addEventListener("wheel", blockWheel, { passive: false });
+
     try {
       const content = document.createElement("div");
       document.querySelector(".ll-integrated-chat-panel")?.append(content);
+
       const integratedWheel = new WheelEvent("wheel", {
         bubbles: true,
         cancelable: true,
         deltaY: 100,
       });
+
       content.dispatchEvent(integratedWheel);
       expect(integratedWheel.defaultPrevented).toBe(false);
+
       const nativeWheel = new WheelEvent("wheel", {
         bubbles: true,
         cancelable: true,
         deltaY: 100,
       });
+
       document.querySelector(".chat-channel-card")?.dispatchEvent(nativeWheel);
       expect(nativeWheel.defaultPrevented).toBe(true);
     } finally {
@@ -86,6 +99,7 @@ describe("NI chat host", () => {
   it("restores native channels, forwards arguments/receiver/result once, and cleans up", () => {
     const { runtime, chatWindow, setChannel, input } = fixture();
     const nativeHost = document.querySelector<HTMLElement>(".new-chat-window");
+
     if (!nativeHost) throw new Error("Missing native chat fixture");
     nativeHost.style.right = "2px";
     const changed = vi.fn();

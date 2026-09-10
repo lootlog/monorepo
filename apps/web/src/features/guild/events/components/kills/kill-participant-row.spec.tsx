@@ -16,6 +16,7 @@ import { KillParticipantRow } from "./kill-participant-row";
 await initializeTestTranslations();
 
 const wrapper = await createOrganizationTestWrapper();
+
 const render = (element: ReactElement) => renderElement(element, { wrapper });
 
 afterEach(cleanup);
@@ -53,6 +54,7 @@ describe("KillParticipantRow", () => {
         },
       ],
     });
+
     const { container } = render(
       <KillParticipantRow
         participant={participant}
@@ -116,6 +118,7 @@ describe("KillParticipantRow", () => {
   it("exposes an accessible expansion control and renders the point and map breakdown", () => {
     const onToggle = vi.fn();
     const participant = createParticipant({ manualAdjustmentPoints: 0.25 });
+
     const { rerender } = render(
       <KillParticipantRow
         participant={participant}
@@ -128,6 +131,7 @@ describe("KillParticipantRow", () => {
     const expandButton = screen.getByRole("button", {
       name: "events.kills.expandParticipant",
     });
+
     fireEvent.click(expandButton);
     expect(onToggle).toHaveBeenCalledOnce();
 

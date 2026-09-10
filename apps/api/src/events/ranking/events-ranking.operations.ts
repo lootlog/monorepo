@@ -3,7 +3,9 @@ import { InvalidRequestError } from "#src/shared/http/http-errors";
 
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
+
 type Role = typeof roleTable.$inferSelect;
+
 import {
   AcknowledgeExpiredParticipationConfirmationsRequest,
   UpdateKillPointRequest,
@@ -81,6 +83,7 @@ export const makeEventsRanking = (
         },
         { concurrency: "unbounded" },
       );
+
       const visibleHeroNames = new Set(
         filteredOverview.heroNpcs.map((hero) => hero.npcName),
       );
@@ -96,6 +99,7 @@ export const makeEventsRanking = (
       const canViewEditHistory =
         accessPolicy.allows(Permission.OWNER) ||
         accessPolicy.allows(Permission.ADMIN);
+
       if (!canViewEditHistory) {
         return visibleRankings.map((ranking) => ({
           ...ranking,

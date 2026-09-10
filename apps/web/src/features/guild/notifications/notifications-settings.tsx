@@ -45,6 +45,7 @@ export const NotificationsSettings = () => {
   const guildId = useGuildId();
   const hasGuildId = Boolean(guildId);
   const resolvedGuildId = getResolvedGuildId(guildId);
+
   const { data: syncState } = useGuildsControllerGetGuildDiscordSyncStatus(
     {
       guildId: resolvedGuildId,
@@ -58,6 +59,7 @@ export const NotificationsSettings = () => {
       },
     },
   );
+
   const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
     { guildId: resolvedGuildId },
     {
@@ -69,6 +71,7 @@ export const NotificationsSettings = () => {
       },
     },
   );
+
   const rulesQuery = useNotificationsGuildControllerGetGuildRules(
     { guildId: resolvedGuildId },
     {
@@ -80,6 +83,7 @@ export const NotificationsSettings = () => {
       },
     },
   );
+
   const jobsQuery = useNotificationsGuildControllerGetGuildJobs(
     { guildId: resolvedGuildId },
     {
@@ -100,23 +104,30 @@ export const NotificationsSettings = () => {
       },
     },
   );
+
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+
   const [isCreateTargetDialogOpen, setIsCreateTargetDialogOpen] =
     useState(false);
+
   const [editedTarget, setEditedTarget] = useState<
     NotificationTargetResponseDto | undefined
   >();
+
   const missingPermissions = syncState?.missingPermissions ?? [];
   const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(syncState);
   const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
   const targets = targetsQuery.data ?? [];
   const notificationLimits = rulesQuery.data?.limits;
+
   const visibleRules =
     rulesQuery.data?.items.filter((rule) =>
       isSupportedGuildNotificationTrigger(rule.triggerType),
     ) ?? [];
+
   const jobsData = jobsQuery.data;
   const isLoading = targetsQuery.isLoading || rulesQuery.isLoading;
+
   const isRuleLimitReached =
     notificationLimits !== undefined &&
     notificationLimits.ruleCount >= notificationLimits.ruleLimit;

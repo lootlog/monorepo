@@ -70,7 +70,9 @@ export const LootFiltersHeader = ({
         setIsCommandOpen((open) => !open);
       }
     };
+
     document.addEventListener("keydown", down);
+
     return () => document.removeEventListener("keydown", down);
   }, []);
 

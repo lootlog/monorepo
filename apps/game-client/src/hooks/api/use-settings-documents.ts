@@ -18,6 +18,7 @@ import { NpcTypeEnum } from "@lootlog/schema/npc-type";
 const NPC_TYPE_VALUES: ReadonlySet<string> = new Set(
   Object.values(NpcTypeEnum),
 );
+
 const isNpcType = (value: unknown): value is NpcTypeEnum =>
   typeof value === "string" && NPC_TYPE_VALUES.has(value);
 
@@ -25,6 +26,7 @@ export const getChatAppearanceFromSettingsDocuments = (
   settingsDocuments: SettingsDocumentsResponseDtoOutput | undefined,
 ) => {
   const appearance = settingsDocuments?.domains.appearance;
+
   const chat = isRecord(appearance?.effective)
     ? appearance.effective.chat
     : undefined;
@@ -37,6 +39,7 @@ export const updateChatAppearanceInSettingsDocuments = (
   patch: Partial<ChatAppearanceSettings>,
 ) => {
   const appearance = settingsDocuments?.domains.appearance;
+
   if (!settingsDocuments || !appearance) {
     return settingsDocuments;
   }
@@ -63,9 +66,11 @@ export const getNpcTypeColorsFromSettingsDocuments = (
   settingsDocuments: SettingsDocumentsResponseDtoOutput | undefined,
 ) => {
   const appearance = settingsDocuments?.domains.appearance;
+
   const npcColors = isRecord(appearance?.effective)
     ? appearance.effective.npcColors
     : undefined;
+
   return normalizeNpcTypeColors(npcColors ?? DEFAULT_NPC_TYPE_COLORS);
 };
 
@@ -74,6 +79,7 @@ export const updateNpcTypeColorsInSettingsDocuments = (
   patch: Partial<NpcTypeColors>,
 ) => {
   const appearance = settingsDocuments?.domains.appearance;
+
   if (!settingsDocuments || !appearance) return settingsDocuments;
 
   return {
@@ -96,6 +102,7 @@ export const updateNpcTypeColorsInSettingsDocuments = (
 
 export const useNpcTypeColors = () => {
   const query = useAppearanceSettingsDocuments();
+
   return {
     ...query,
     npcTypeColors: getNpcTypeColorsFromSettingsDocuments(query.data),
@@ -129,9 +136,11 @@ export const getHiddenNpcTypesFromSettingsDocuments = (
   settingsDocuments: SettingsDocumentsResponseDtoOutput | undefined,
 ): NpcTypeEnum[] => {
   const chat = settingsDocuments?.domains.chat;
+
   const hidden = isRecord(chat?.effective)
     ? chat.effective.hiddenNpcTypes
     : undefined;
+
   return Array.isArray(hidden) ? hidden.filter(isNpcType) : [];
 };
 
@@ -140,6 +149,7 @@ export const updateHiddenNpcTypesInSettingsDocuments = (
   hiddenNpcTypes: readonly NpcTypeEnum[],
 ) => {
   const chat = settingsDocuments?.domains.chat;
+
   if (!settingsDocuments || !chat) return settingsDocuments;
 
   return {

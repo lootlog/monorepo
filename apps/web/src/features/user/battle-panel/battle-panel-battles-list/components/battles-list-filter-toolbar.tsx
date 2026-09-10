@@ -79,21 +79,25 @@ export const BattlesListFilterToolbar = ({
   const selectedCharacterIds = new Set(filters.characterId);
   const characterListId = useId();
   const [characterOpen, setCharacterOpen] = useState(false);
+
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
     { value: "group" as const, label: t("battlePanel.filters.types.group") },
   ];
+
   const battleResults = [
     { value: "won" as const, label: t("battlePanel.filters.results.won") },
     { value: "lost" as const, label: t("battlePanel.filters.results.lost") },
     { value: "flee" as const, label: t("battlePanel.filters.results.flee") },
   ];
+
   const extraFiltersCount =
     (filters.ph ? 1 : 0) +
     (showMatchmakingFilter && filters.matchmaking ? 1 : 0) +
     ((filters.minLevel ?? 1) !== 1 || (filters.maxLevel ?? 500) !== 500
       ? 1
       : 0);
+
   let moreLabel = t("battlePanel.filters.more");
 
   if (extraFiltersCount > 0) {

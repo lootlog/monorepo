@@ -15,8 +15,11 @@ const layoutStyle = {
 } as CSSProperties;
 
 const teamRows = Array.from({ length: 2 });
+
 const statsRows = Array.from({ length: 14 });
+
 const logTurns = Array.from({ length: 9 });
+
 const recentRows = Array.from({ length: 7 });
 
 export const BattlePanelSingleBattleSkeleton = () => {

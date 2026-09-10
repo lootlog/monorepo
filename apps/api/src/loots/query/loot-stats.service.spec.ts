@@ -29,7 +29,9 @@ describe("LootStatsService access-scoped caching", () => {
       deleteByPattern: () =>
         Promise.reject(new Error("Unexpected cache invalidation")),
     });
+
     const base = role("role", [Permission.LOOTLOG_LOOTS_READ]);
+
     const titan = role("role", [
       Permission.LOOTLOG_LOOTS_READ,
       Permission.LOOTLOG_LOOTS_TITANS_READ,
@@ -41,6 +43,7 @@ describe("LootStatsService access-scoped caching", () => {
       [base],
       "7d",
     );
+
     const titanKey = service["buildCacheKey"](
       "guild-1",
       [Permission.LOOTLOG_LOOTS_READ, Permission.LOOTLOG_LOOTS_TITANS_READ],
@@ -67,6 +70,7 @@ describe("LootStatsService access-scoped caching", () => {
       topContributors: [],
       topItems: [],
     };
+
     const service = new LootStatsService(
       () => Effect.die("SQL must not run on a cache hit"),
       {

@@ -31,9 +31,11 @@ import {
 } from "#src/events/catalog/event-response.schema";
 
 const CACHE_PREFIX = "event-read:v2";
+
 const CACHE_TTL_SECONDS = 10;
 
 type Role = typeof roleTable.$inferSelect;
+
 export class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadError>()(
   "EventCatalogReadError",
   { operation: Schema.String, cause: Schema.Defect() },
@@ -74,6 +76,7 @@ export const makeEventsCatalogRead = (
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
     const codec = makeJsonCodec(Schema.toType(schema), superjson);
+
     return redis.getOrSetJsonEffect({
       key,
       codec,
@@ -143,6 +146,7 @@ export const makeEventsCatalogRead = (
     ).pipe(
       Effect.map((rows) => {
         const event = rows[0];
+
         return event ? { ...event, scoringRules: event.scoringRules } : null;
       }),
     );
@@ -168,12 +172,15 @@ export const makeEventsCatalogRead = (
       EventOverviewResponse,
       Effect.gen(function* () {
         const event = yield* scopedEvent(guildId, eventId);
+
         if (!event) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Event not found"),
           );
         }
+
         const heroNpcs = yield* findHeroes([eventId]);
+
         return attachComputedEventActive(
           { ...event, heroNpcs },
           new Date(yield* Clock.currentTimeMillis),
@@ -191,11 +198,15 @@ export const makeEventsCatalogRead = (
           .where(eq(eventTable.id, eventId))
           .limit(1),
       );
+
       const event = rows[0];
+
       if (!event) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
+
       const heroes = yield* findHeroes([eventId]);
+
       const heroNpcs = yield* Effect.forEach(
         heroes,
         (hero) =>
@@ -204,6 +215,7 @@ export const makeEventsCatalogRead = (
           ),
         { concurrency: "unbounded" },
       );
+
       return {
         ...event,
         scoringRules: event.scoringRules,
@@ -222,6 +234,7 @@ export const makeEventsCatalogRead = (
     ) => {
       const normalizedWorld = world?.trim().toLowerCase();
       const onlyActive = activeOnly !== "false";
+
       return cached(
         cacheKey(guild.id, "guild", "list", {
           activeOnly: onlyActive,
@@ -230,6 +243,7 @@ export const makeEventsCatalogRead = (
         EventsListResponse,
         Effect.gen(function* () {
           const referenceTime = new Date(yield* Clock.currentTimeMillis);
+
           const events = yield* query(
             "events.catalog.list",
             database
@@ -257,7 +271,9 @@ export const makeEventsCatalogRead = (
               )
               .orderBy(desc(eventTable.createdAt)),
           );
+
           const heroes = yield* findHeroes(events.map(({ id }) => id));
+
           return events
             .map((event) =>
               attachComputedEventActive(
@@ -311,12 +327,15 @@ export const makeEventsCatalogRead = (
         EventMapsResponse,
         Effect.gen(function* () {
           const event = yield* scopedEvent(guild.id, eventId);
+
           if (!event) {
             return yield* Effect.fail(
               new ResourceNotFoundError("Event not found"),
             );
           }
+
           const heroes = yield* findHeroes([eventId]);
+
           const heroNpcs = yield* Effect.forEach(
             heroes,
             (hero) =>
@@ -335,6 +354,7 @@ export const makeEventsCatalogRead = (
               ),
             { concurrency: "unbounded" },
           );
+
           return { id: event.id, heroNpcs };
         }),
       ).pipe(Effect.map((event) => filterEvent(event, roles, accessPolicy))),

@@ -60,6 +60,7 @@ describe("QuickAccess", () => {
     expect(
       document.querySelector("[data-ll-quick-access-horizontal-scroll]"),
     ).toBeInTheDocument();
+
     const scrollViewport = document.querySelector(
       "[data-ll-scroll-area-viewport]",
     );
@@ -95,11 +96,13 @@ describe("QuickAccess", () => {
       .getState()
       .setSize("quick-access", { width: 340, height: 84 });
     const fixture = createGuildPreferencesTest();
+
     const { rerender } = render(
       <QueryClientProvider client={fixture.queryClient}>
         <QuickAccess />
       </QueryClientProvider>,
     );
+
     const quickAccessWindow = document.querySelector<HTMLElement>(
       '[data-ll-draggable-window="quick-access"]',
     );

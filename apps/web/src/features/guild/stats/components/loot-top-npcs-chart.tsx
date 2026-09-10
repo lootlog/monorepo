@@ -114,6 +114,7 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
                     const item = chartData.find(
                       (point) => point === payload[0]?.payload,
                     );
+
                     return String(item?.fullName ?? "");
                   }}
                 />

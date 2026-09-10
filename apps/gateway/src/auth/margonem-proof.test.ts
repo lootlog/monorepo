@@ -11,10 +11,13 @@ const proofOptions = () => {
   const accountId = "7";
   const characterId = "11";
   const socketId = "connection-1";
+
   const token = `lootlog:${socketId}:${accountId}:02${BigInt(characterId)
     .toString(16)
     .padStart(16, "0")}ffffffffffffffff${"a".repeat(32)}`;
+
   const ts = Date.now();
+
   return {
     accountId,
     characterId,
@@ -35,6 +38,7 @@ const response = (body: Uint8Array) => new Response(new Uint8Array(body));
 describe("Margonem proof verifier", () => {
   test("rejects malformed proof without an outbound request", async () => {
     const get = mock(() => Effect.die("HTTP must not run"));
+
     const verifier = makeMargonemProofVerifier(
       config,
       httpClientFromResponses(get),
@@ -56,6 +60,7 @@ describe("Margonem proof verifier", () => {
         ),
       ),
     );
+
     const verifier = makeMargonemProofVerifier(
       config,
       httpClientFromResponses(get),
@@ -71,6 +76,7 @@ describe("Margonem proof verifier", () => {
     const get = mock(() =>
       Effect.succeed(response(new Uint8Array(64 * 1_024 + 1))),
     );
+
     const verifier = makeMargonemProofVerifier(
       config,
       httpClientFromResponses(get),
@@ -84,6 +90,7 @@ describe("Margonem proof verifier", () => {
 
   test("propagates interruption to the signing-key request", async () => {
     let interrupted = false;
+
     const get = mock(() =>
       Effect.never.pipe(
         Effect.onInterrupt(() =>
@@ -93,11 +100,14 @@ describe("Margonem proof verifier", () => {
         ),
       ),
     );
+
     const verifier = makeMargonemProofVerifier(
       config,
       httpClientFromResponses(get),
     );
+
     const fiber = Effect.runFork(verifier.verify(proofOptions()));
+
     while (get.mock.calls.length === 0) await Promise.resolve();
 
     await Effect.runPromise(Fiber.interrupt(fiber));

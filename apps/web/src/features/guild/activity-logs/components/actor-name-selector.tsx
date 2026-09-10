@@ -65,6 +65,7 @@ export function ActorNameSelector({
   const exactMatch = suggestions.some(
     (s) => s.toLowerCase() === searchValue.trim().toLowerCase(),
   );
+
   const showCustomOption = searchValue.trim() && !exactMatch;
 
   const displayValue = value || placeholder;

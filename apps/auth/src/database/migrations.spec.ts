@@ -34,6 +34,7 @@ const makePool = ({
   readonly counts?: Readonly<Record<string, number>>;
 } = {}) => {
   const queries: Array<RecordedQuery> = [];
+
   const execute = (sql: string, values?: ReadonlyArray<unknown>) => {
     queries.push({ sql, values });
 
@@ -73,10 +74,12 @@ const makePool = ({
     const matchingCount = Object.entries(counts).find(([fragment]) =>
       sql.includes(fragment),
     )?.[1];
+
     return Effect.succeed(
       sql.includes("COUNT(*)") ? [{ count: String(matchingCount ?? 0) }] : [],
     );
   };
+
   const pool: AuthMigrationClient = {
     unsafe: <A extends object>(sql: string, values?: ReadonlyArray<unknown>) =>
       execute(sql, values).pipe(
@@ -201,6 +204,7 @@ describe("initializeAuthMigrations", () => {
     const migrationInserts = queries.filter(({ sql }) =>
       sql.includes("INSERT INTO drizzle.__drizzle_migrations"),
     );
+
     expect(migrationInserts).toHaveLength(3);
     expect(migrationInserts[0]?.values).toHaveLength(2);
   });

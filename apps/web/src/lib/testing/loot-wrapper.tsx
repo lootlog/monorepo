@@ -16,9 +16,11 @@ import { createOrganizationTestWrapper } from "./router";
 
 export async function createLootTestWrapper() {
   const RouterWrapper = await createOrganizationTestWrapper();
+
   const client = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity } },
   });
+
   client.setQueryData(
     getNotificationsUserControllerGetUserTargetsQueryKey(),
     [],
@@ -27,6 +29,7 @@ export async function createLootTestWrapper() {
     getNotificationsUserControllerGetWatchedItemsQueryKey(),
     [],
   );
+
   const guild: GuildResponseDtoOutput = {
     id: "guild-1",
     name: "Guild",
@@ -38,6 +41,7 @@ export async function createLootTestWrapper() {
     reservationMaxAdvanceDays: 7,
     reservationActiveLimitPerSpot: 1,
   };
+
   client.setQueryData(
     getGuildsControllerGetGuildByIdQueryKey({ guildId: "guild-1" }),
     guild,
@@ -51,6 +55,7 @@ export async function createLootTestWrapper() {
     error: null,
   });
   onTestFinished(() => client.clear());
+
   return function LootTestWrapper({ children }: PropsWithChildren) {
     return (
       <RouterWrapper>

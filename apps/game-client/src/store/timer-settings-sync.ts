@@ -5,8 +5,11 @@ import type {
 import { useTimersStore } from "./timers.store";
 
 let syncTimeoutId: NodeJS.Timeout | null = null;
+
 const guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
+
 let pendingGlobalPayload: UpdateTimerSettingsPayload = {};
+
 const pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
   new Map();
 
@@ -15,6 +18,7 @@ const SYNC_DEBOUNCE_MS = 500;
 type MutateGlobalFn = (payload: UpdateTimerSettingsPayload) => void;
 
 let globalMutateFn: MutateGlobalFn | null = null;
+
 const globalMutationRegistrations = new Map<symbol, MutateGlobalFn>();
 
 const selectLatestGlobalMutation = (): void => {
@@ -44,12 +48,14 @@ export const registerGlobalSettingsMutation = (
   globalMutateFn = mutateFn;
 
   let registered = true;
+
   return () => {
     if (!registered) return;
 
     registered = false;
     globalMutationRegistrations.delete(registrationId);
     selectLatestGlobalMutation();
+
     if (globalMutationRegistrations.size === 0) {
       disposeTimerSettingsSync();
     }
@@ -72,6 +78,7 @@ export const debouncedSyncGlobalSettings = (
 
     if (payloadToSend.syncEnabled === undefined) {
       const { syncEnabled } = useTimersStore.getState();
+
       if (!syncEnabled) {
         return;
       }
@@ -79,6 +86,7 @@ export const debouncedSyncGlobalSettings = (
 
     if (!globalMutateFn) {
       console.warn("[TimerSync] Global mutation not registered, skipping sync");
+
       return;
     }
 
@@ -94,6 +102,7 @@ export const debouncedSyncGuildSettings = (
   pendingGuildPayloads.set(guildId, { ...existingPayload, ...payload });
 
   const existingTimeout = guildSyncTimeouts.get(guildId);
+
   if (existingTimeout) {
     clearTimeout(existingTimeout);
   }
@@ -102,8 +111,10 @@ export const debouncedSyncGuildSettings = (
     pendingGuildPayloads.delete(guildId);
 
     const { syncEnabled } = useTimersStore.getState();
+
     if (!syncEnabled) {
       guildSyncTimeouts.delete(guildId);
+
       return;
     }
 

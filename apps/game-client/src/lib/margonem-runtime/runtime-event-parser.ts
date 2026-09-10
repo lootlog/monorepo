@@ -7,6 +7,7 @@ import type { RuntimeFact } from "./runtime.types";
 
 export function parseRuntimeFacts(event: GameEvent): readonly RuntimeFact[] {
   const facts: RuntimeFact[] = [];
+
   const add = (kind: RuntimeFact["kind"], present: boolean) => {
     if (present) facts.push(Object.freeze({ event, kind }));
   };

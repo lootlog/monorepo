@@ -46,34 +46,45 @@ import { useTranslation } from "react-i18next";
 
 export const MembersSettingsContent = () => {
   const { t } = useTranslation();
+
   const [statusFilter, setStatusFilter] =
     useState<MemberStatusFilter>(defaultStatusFilter);
+
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const routeGuildId = useGuildId();
+
   const { data: members } = useMembersControllerGetGuildMembers(
     { guildId: routeGuildId ?? "" },
     {
       includeInactive: true,
     },
   );
+
   const [searchValue, setSearchValue] = useState("");
+
   const { data: guild } = useGuildsControllerGetGuildById({
     guildId: routeGuildId ?? "",
   });
+
   const { data: guildRoles } = useRolesControllerGetGuildRoles({
     guildId: routeGuildId ?? "",
   });
+
   const { data: accessPolicy } = useGuildPermissions();
   const resolvedGuildId = guild?.id ?? undefined;
+
   const { data: memberActivityStats } = useQuery(
     memberActivityStatsQueryOptions(resolvedGuildId),
   );
+
   const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
   const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
+
   const memberActivityStatsByDiscordIdAndSource = useMemo(
     () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
     [memberActivityStats],
   );
+
   const guildRolePositionById = useMemo(() => {
     const rolePositions = new Map<string, number>();
 
@@ -83,7 +94,9 @@ export const MembersSettingsContent = () => {
 
     return rolePositions;
   }, [guildRoles]);
+
   const isMobile = useIsMobile();
+
   const canManageMembers = Boolean(
     accessPolicy?.allows(Permission.ADMIN) ||
     accessPolicy?.allows(Permission.OWNER),
@@ -104,6 +117,7 @@ export const MembersSettingsContent = () => {
         isMemberOnlineInGame(memberGamePresenceByDiscordId, member.userId);
 
       stats.totalMembers += 1;
+
       if (member.active) {
         stats.activeMembers += 1;
       } else {
@@ -124,6 +138,7 @@ export const MembersSettingsContent = () => {
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
+
     const getMemberSortRolePosition = (member: GuildMember) => {
       let highestRolePosition = 0;
 
@@ -138,6 +153,7 @@ export const MembersSettingsContent = () => {
 
       return highestRolePosition;
     };
+
     const filtered = members.filter((member) => {
       const isOnline =
         isMemberOnlineOnWeb(memberWebPresenceByDiscordId, member.userId) ||

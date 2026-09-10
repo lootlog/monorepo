@@ -53,6 +53,7 @@ export const TanStackTableBody = <TData extends RowData>({
             {row.getVisibleCells().map((cell) => {
               const resolvedCellClassName =
                 getCellClassName?.(cell) ?? cellClassName;
+
               const content = flexRender(
                 cell.column.columnDef.cell,
                 cell.getContext(),

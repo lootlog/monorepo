@@ -55,6 +55,7 @@ export function ChatInput(props: ChatInputProps) {
     selectedGuildId,
     autofocus,
   } = useChatInputController(props);
+
   return (
     <form
       className={cn(
@@ -122,6 +123,7 @@ export function ChatInput(props: ChatInputProps) {
                   setDismissedMentionKey(null);
                   setTabCompletionSession(null);
                   setRequestedMentionIndex(-1);
+
                   if (nextMessage.trim() !== "/clr") {
                     setIsClearConfirmOpen(false);
                   }

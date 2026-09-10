@@ -31,6 +31,7 @@ describe("online players presence", () => {
   it("applies a batch with one top-level clone and preserves untouched accounts", () => {
     const firstPresence = createPresence("discord-1", "1", "Ithan");
     const untouchedPresences = [createPresence("discord-2", "2", "Karka-han")];
+
     const previous = {
       "discord-1": [firstPresence],
       "discord-2": untouchedPresences,
@@ -100,6 +101,7 @@ describe("online players presence", () => {
 
   it("uses an acknowledgement timeout and retries once", async () => {
     const response = { status: "success" as const, players: {} };
+
     const emitWithAck = vi
       .fn<
         ReturnType<
@@ -108,6 +110,7 @@ describe("online players presence", () => {
       >()
       .mockRejectedValueOnce(new Error("ack timeout"))
       .mockResolvedValueOnce(response);
+
     const timeout = vi.fn<
       Parameters<typeof requestServerPresence>[0]["timeout"]
     >(() => ({ emitWithAck }));

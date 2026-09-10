@@ -3,8 +3,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sourceRoot = join(process.cwd(), "src");
+
 const runtimeGlobalNames =
   "Engine|g|_g|successData|API|CFG|hero|map|message|getCookie|getZoomFactor";
+
 const forbiddenRuntimeAccess = new RegExp(
   [
     String.raw`@\/lib\/game(?:["/])`,
@@ -19,9 +21,13 @@ const forbiddenRuntimeAccess = new RegExp(
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
+
     if (entry.isDirectory()) return sourceFiles(path);
+
     if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".tsx")) return [];
+
     if (entry.name.includes(".test.")) return [];
+
     return [path];
   });
 }
@@ -32,11 +38,13 @@ describe("runtime architecture", () => {
       join(sourceRoot, "lib/margonem-runtime/margonem-runtime-bridge.ts"),
       join(sourceRoot, "lib/margonem-runtime/runtime-adapter.ts"),
     ]);
+
     const files = sourceFiles(sourceRoot).filter(
       (file) =>
         !allowedRuntimeFiles.has(file) &&
         !file.includes("/lib/margonem-runtime/adapters/"),
     );
+
     for (const file of files) {
       expect(readFileSync(file, "utf8"), file).not.toMatch(
         forbiddenRuntimeAccess,

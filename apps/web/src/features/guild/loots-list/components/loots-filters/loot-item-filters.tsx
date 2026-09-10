@@ -76,9 +76,11 @@ export const LootItemFilters = ({
                   checked={selectedRarities.has(rarity.value)}
                   onCheckedChange={(checked) => {
                     const currentRarities = filters.rarities ?? [];
+
                     const newRarities = checked
                       ? [...currentRarities, rarity.value]
                       : currentRarities.filter((r) => r !== rarity.value);
+
                     updateFilters({ rarities: newRarities });
                   }}
                 />
@@ -108,11 +110,13 @@ export const LootItemFilters = ({
                   checked={selectedProfessions.has(profession.value)}
                   onCheckedChange={(checked) => {
                     const currentProfessions = filters.professions ?? [];
+
                     const newProfessions = checked
                       ? [...currentProfessions, profession.value]
                       : currentProfessions.filter(
                           (prof) => prof !== profession.value,
                         );
+
                     updateFilters({
                       professions: newProfessions,
                     });

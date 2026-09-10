@@ -19,11 +19,14 @@ const ITEMS_PER_PAGE = 20;
 
 export const useStatsNpcsListModel = () => {
   const { t } = useTranslation();
+
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/stats/npcs/",
   });
+
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(0);
+
   const {
     settings,
     debouncedMinLvl,
@@ -34,8 +37,10 @@ export const useStatsNpcsListModel = () => {
     setNpcType,
     setPeriod,
   } = useStatsSettings("npcs-list");
+
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
+
   const topNpcsParams = buildGuildTopNpcsParams({
     limit: 100,
     npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
@@ -61,6 +66,7 @@ export const useStatsNpcsListModel = () => {
   );
 
   const topNpcs = data?.topNpcs ?? [];
+
   const hasActiveFilters =
     Boolean(settings.world) ||
     Boolean(settings.minLvl) ||
@@ -68,8 +74,10 @@ export const useStatsNpcsListModel = () => {
     settings.period !== "all" ||
     settings.npcType !== "ALL" ||
     Boolean(debouncedSearch);
+
   const total = topNpcs.length;
   const paginatedData = topNpcs.slice(cursor, cursor + ITEMS_PER_PAGE);
+
   const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
     getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
 
@@ -83,6 +91,7 @@ export const useStatsNpcsListModel = () => {
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
     const npcType = findNpcType(value);
+
     if (value !== "ALL" && !npcType) return;
     setNpcType(npcType ?? "ALL");
     setCursor(0);

@@ -10,7 +10,9 @@ import {
 } from "effect";
 
 const isLogContext = Schema.is(Schema.Struct({ context: Schema.String }));
+
 const isLogMessage = Schema.is(Schema.Struct({ message: Schema.String }));
+
 const isHttpServerError = Schema.is(
   Schema.Number.check(Schema.isBetween({ minimum: 500, maximum: 599 })),
 );
@@ -25,10 +27,12 @@ export const currentLogSpan = () =>
 
 export const makeLocalLogger = () => {
   const pretty = Logger.consolePretty();
+
   return Logger.make((options) => {
     const status = options.fiber.getRef(References.CurrentLogAnnotations)[
       "http.status"
     ];
+
     return pretty.log({
       ...options,
       logLevel:
@@ -47,16 +51,20 @@ export const makeJsonLogger = (config: {
   Logger.withConsoleLog(
     Logger.make((options) => {
       const entry = Logger.formatStructured.log(options);
+
       const parts: ReadonlyArray<unknown> = (
         Array.isArray(entry.message) ? entry.message : [entry.message]
       ).filter((part) => part !== undefined);
+
       const context = parts.find(isLogContext);
       const span = options.fiber.currentSpan;
+
       return Formatter.formatJson({
         ...entry,
         message: parts
           .map((part) => {
             if (isLogMessage(part)) return part.message;
+
             return Inspectable.toStringUnknown(part, 0);
           })
           .join(" "),

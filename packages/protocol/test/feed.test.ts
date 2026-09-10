@@ -15,8 +15,10 @@ test("accepts queued feed previews from before item statistics and grouping were
     additionalItemsCount: 0,
     items: [{ id: 1, name: "Item", icon: "item.png", rarity: null }],
   };
+
   const decode = Schema.decodeUnknownSync(UserFeedItem);
   expect(decode(preview)).toEqual(preview);
+
   const enriched = {
     ...preview,
     groupKey: "loot:1",
@@ -51,6 +53,7 @@ test("accepts queued feed previews from before item statistics and grouping were
       { ...preview.items[0], stat: "lvl=100;sa=10", type: null, lvl: 100 },
     ],
   };
+
   expect(decode(enriched)).toEqual(enriched);
   expect(() =>
     decode({ ...enriched, items: [{ ...enriched.items[0], stat: 10 }] }),
@@ -68,11 +71,14 @@ test("keeps old kill messages valid while carrying optional NPC profession", () 
     count: 1,
     npc: { id: 1, name: "NPC", type: "HERO", lvl: 100, icon: null },
   };
+
   const decode = Schema.decodeUnknownSync(UserFeedItem);
   expect(decode(event)).toEqual(event);
+
   for (const prof of ["w", "WARRIOR", null]) {
     const withProfession = { ...event, npc: { ...event.npc, prof } };
     expect(decode(withProfession)).toEqual(withProfession);
   }
+
   expect(() => decode({ ...event, npc: { ...event.npc, prof: 1 } })).toThrow();
 });

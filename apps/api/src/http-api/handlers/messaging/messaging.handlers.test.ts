@@ -13,6 +13,7 @@ const notification = {
   world: "Tempest",
   message: "Hello",
 };
+
 const makeData = (overrides: Partial<MessagingData["Service"]> = {}) =>
   MessagingData.of({
     sendNotification: () =>
@@ -23,6 +24,7 @@ const makeData = (overrides: Partial<MessagingData["Service"]> = {}) =>
     volunteer: () => Effect.void,
     ...overrides,
   });
+
 const provideServices = (
   data: MessagingData["Service"],
   identity = MessagingIdentity.of({
@@ -37,10 +39,12 @@ const provideServices = (
 describe("messaging HttpApi handlers", () => {
   it("preserves both authenticated identities and the notification response", async () => {
     const callers: unknown[] = [];
+
     const layer = provideServices(
       makeData({
         sendNotification: (caller) => {
           callers.push(caller);
+
           return Effect.succeed({
             notificationId: "notification-a",
             guildIds: ["guild-a"],
@@ -52,6 +56,7 @@ describe("messaging HttpApi handlers", () => {
     const response = await Effect.runPromise(
       sendNotification(notification).pipe(Effect.provide(layer)),
     );
+
     expect(callers).toEqual([{ userId: "user-a", discordId: "discord-a" }]);
     expect(Schema.is(SentNotificationResponse)(response)).toBe(true);
   });
@@ -61,11 +66,14 @@ describe("messaging HttpApi handlers", () => {
       status: 401,
       code: "AUTH_REQUIRED",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         sendNotification: () => {
           dataCalled = true;
+
           return Effect.succeed({});
         },
       }),
@@ -75,6 +83,7 @@ describe("messaging HttpApi handlers", () => {
     const error = await Effect.runPromise(
       Effect.flip(sendNotification(notification).pipe(Effect.provide(layer))),
     );
+
     expect(error).toBe(denied);
     expect(dataCalled).toBe(false);
   });

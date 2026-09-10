@@ -53,12 +53,14 @@ export const permissionEnum = pgEnum("Permission", [
   "LOOTLOG_LOOTS_ARCHIVE",
   "LOOTLOG_PRESENCE_LOCATION_READ",
 ]);
+
 export const memberTypeEnum = pgEnum("MemberType", [
   "OWNER",
   "ADMIN",
   "USER",
   "BOT",
 ]);
+
 export const npcTypeEnum = pgEnum("NpcType", [
   "COMMON",
   "ELITE",
@@ -70,6 +72,7 @@ export const npcTypeEnum = pgEnum("NpcType", [
   "COLOSSUS",
   "NPC",
 ]);
+
 export const itemTypeEnum = pgEnum("ItemType", [
   "ONE_HAND_WEAPON",
   "TWO_HAND_WEAPON",
@@ -104,12 +107,14 @@ export const itemTypeEnum = pgEnum("ItemType", [
   "PETS",
   "TELEPORTS",
 ]);
+
 export const itemRarityEnum = pgEnum("ItemRarity", [
   "UNIQUE",
   "HEROIC",
   "LEGENDARY",
   "UPGRADED",
 ]);
+
 export const professionEnum = pgEnum("Profession", [
   "WARRIOR",
   "PALADIN",
@@ -118,72 +123,87 @@ export const professionEnum = pgEnum("Profession", [
   "BLADE_DANCER",
   "TRACKER",
 ]);
+
 export const lootSourceEnum = pgEnum("LootSource", [
   "LOOTBOX",
   "DIALOG",
   "FIGHT",
 ]);
+
 export const lootShareSourceEnum = pgEnum("LootShareSource", [
   "NONE",
   "ITEM_OWNER",
   "CHAT_MESSAGE",
 ]);
+
 export const timerHistoryActionEnum = pgEnum("TimerHistoryAction", [
   "CREATE",
   "RESET",
   "DELETE",
   "RESTORE",
 ]);
+
 export const guildDocumentHistoryActionEnum = pgEnum(
   "GuildDocumentHistoryAction",
   ["SAVE", "DELETE", "RESTORE"],
 );
+
 export const refreshJobStatusEnum = pgEnum("RefreshJobStatus", [
   "PENDING",
   "PROCESSING",
   "COMPLETED",
   "FAILED",
 ]);
+
 export const notificationOwnerTypeEnum = pgEnum("NotificationOwnerType", [
   "GUILD",
   "USER",
 ]);
+
 export const notificationProviderEnum = pgEnum("NotificationProvider", [
   "DISCORD",
 ]);
+
 export const notificationTargetTypeEnum = pgEnum("NotificationTargetType", [
   "CHANNEL",
   "DM",
 ]);
+
 export const notificationTriggerTypeEnum = pgEnum("NotificationTriggerType", [
   "TIMER_BEFORE_SPAWN",
   "NPC_SPAWNED",
   "WATCHED_ITEM_DROPPED",
   "SCHEDULED_MESSAGE",
 ]);
+
 export const notificationScheduleStrategyEnum = pgEnum(
   "NotificationScheduleStrategy",
   ["SPAWN_WINDOW_RELATIVE", "FIXED_DATETIME"],
 );
+
 export const settingsScopeTypeEnum = pgEnum("SettingsScopeType", [
   "USER",
   "GAME_ACCOUNT",
   "CHARACTER",
   "GUILD",
 ]);
+
 export const notificationScheduleAnchorEnum = pgEnum(
   "NotificationScheduleAnchor",
   ["MIN_SPAWN", "MAX_SPAWN"],
 );
+
 export const notificationScheduleIntervalTypeEnum = pgEnum(
   "NotificationScheduleIntervalType",
   ["ONCE", "HOURLY", "DAILY", "WEEKLY"],
 );
+
 export const notificationJobKindEnum = pgEnum("NotificationJobKind", [
   "SCHEDULED",
   "INSTANT",
   "TEST",
 ]);
+
 export const notificationJobStatusEnum = pgEnum("NotificationJobStatus", [
   "PENDING",
   "PROCESSING",
@@ -192,6 +212,7 @@ export const notificationJobStatusEnum = pgEnum("NotificationJobStatus", [
   "BLOCKED",
   "CANCELED",
 ]);
+
 export const discordGuildSyncStatusEnum = pgEnum("DiscordGuildSyncStatus", [
   "SYNCED",
   "SYNCING",
@@ -199,14 +220,17 @@ export const discordGuildSyncStatusEnum = pgEnum("DiscordGuildSyncStatus", [
   "STALE",
   "NOT_FOUND",
 ]);
+
 export const coverageGapTypeEnum = pgEnum("CoverageGapType", [
   "UNASSIGNED",
   "UNCOVERED",
 ]);
+
 export const eventScoringModeEnum = pgEnum("EventScoringMode", [
   "SIMPLE",
   "ADVANCED",
 ]);
+
 export const pointsEditTypeEnum = pgEnum("PointsEditType", [
   "KILL_POINT",
   "RANKING",
@@ -2618,6 +2642,7 @@ export const memberToRoleTable = pgTable(
       .onUpdate("cascade"),
   ],
 );
+
 export const eventMapToMemberTable = pgTable(
   "_EventMapToMember",
   { A: text("A").notNull(), B: integer("B").notNull() },

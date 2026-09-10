@@ -23,6 +23,7 @@ export const updateNotificationTarget = Effect.fnUntraced(function* (
   const displayName = Object.hasOwn(data, "displayName")
     ? { displayName: data.displayName ?? null }
     : {};
+
   return yield* database
     .update(notificationTargetTable)
     .set({

@@ -17,6 +17,7 @@ export function ChatGatheringMenu({
 }) {
   const { t } = useTranslation("chat");
   const [open, setOpen] = useState(false);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

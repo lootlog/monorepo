@@ -33,6 +33,7 @@ describe("API client transport", () => {
         status: 200,
       }),
     );
+
     restoreConfiguration = configureApiClients({
       main: {
         baseUrl: "https://api.example.test/root/",
@@ -46,6 +47,7 @@ describe("API client transport", () => {
     });
 
     const client = createApiClient("main");
+
     const response = await client.get<{ ok: boolean }>("/users", {
       credentials: "omit",
       headers: {
@@ -83,8 +85,10 @@ describe("API client transport", () => {
       if (this !== globalThis) {
         throw new TypeError("Illegal invocation");
       }
+
       return Promise.resolve(Response.json({ ok: true }));
     });
+
     restoreConfiguration = configureApiClients({
       main: {
         baseUrl: "https://api.example.test",
@@ -102,6 +106,7 @@ describe("API client transport", () => {
     const firstFetch = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "first" }));
+
     const secondFetch = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "second" }));
@@ -140,6 +145,7 @@ describe("API client transport", () => {
       if (this !== globalThis) {
         throw new TypeError("Illegal invocation");
       }
+
       return Promise.resolve(Response.json({ ok: true }));
     });
 
@@ -158,15 +164,18 @@ describe("API client transport", () => {
     const firstFetch = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "first" }));
+
     const secondFetch = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ source: "second" }));
+
     const restoreFirst = configureApiClients({
       main: {
         baseUrl: "https://first.example.test",
         fetch: firstFetch,
       },
     });
+
     const restoreSecond = configureApiClients({
       main: {
         baseUrl: "https://second.example.test",
@@ -188,12 +197,14 @@ describe("API client transport", () => {
   it("normalizes failed responses and notifies the configured error handler", async () => {
     const onError =
       vi.fn<(error: ApiError<unknown>, context: ApiRequestContext) => void>();
+
     const fetchImplementation = vi.fn<TestFetch>().mockResolvedValue(
       new Response(JSON.stringify({ message: ["Session expired"] }), {
         headers: { "content-type": "application/json" },
         status: 401,
       }),
     );
+
     restoreConfiguration = configureApiClients({
       auth: {
         baseUrl: "https://auth.example.test",
@@ -221,6 +232,7 @@ describe("API client transport", () => {
 
   it("preserves the network failure as the cause of ApiError", async () => {
     const networkError = new TypeError("Connection refused");
+
     const fetchImplementation = vi
       .fn<TestFetch>()
       .mockRejectedValue(networkError);
@@ -246,6 +258,7 @@ describe("API client transport", () => {
     const fetchImplementation = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ id: "created" }));
+
     const client = createApiClient("main", {
       baseUrl: "https://api.example.test",
       fetch: fetchImplementation,
@@ -277,6 +290,7 @@ describe("API client transport", () => {
         }),
       )
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
     const requestOptions = {
       apiClient: {
         baseUrl: "https://api.example.test",
@@ -302,6 +316,7 @@ describe("API client transport", () => {
     const fetchImplementation = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ ok: true }));
+
     vi.stubGlobal("fetch", fetchImplementation);
 
     await expect(
@@ -316,6 +331,7 @@ describe("API client transport", () => {
     const fetchImplementation = vi
       .fn<TestFetch>()
       .mockResolvedValue(Response.json({ ok: true }));
+
     vi.stubGlobal("fetch", fetchImplementation);
     restoreConfiguration = configureApiClients({
       main: {
@@ -364,6 +380,7 @@ describe("raw API error string fields", () => {
       url: "/rooms",
       data: { message: "  exact text  ", code: "", notificationId: "room-1" },
     });
+
     expect(getApiErrorStringField(cause, "message")).toBe("  exact text  ");
     expect(getApiErrorStringField(cause, "code")).toBe("");
     expect(getApiErrorStringField(cause, "notificationId")).toBe("room-1");
@@ -376,6 +393,7 @@ describe("raw API error string fields", () => {
       url: "/rooms",
       data: { message: ["  first message  "], notificationId: 123 },
     });
+
     expect(getApiErrorStringField(cause, "message")).toBeUndefined();
     expect(getApiErrorStringField(cause, "notificationId")).toBeUndefined();
     expect(getApiErrorMessage(cause)).toBe("first message");

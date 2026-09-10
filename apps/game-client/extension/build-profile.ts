@@ -3,6 +3,7 @@ export function buildProfile(mode: string) {
   if (!["production", "production-local", "development"].includes(mode))
     throw new Error(`Unsupported extension build mode: ${mode}`);
   const local = mode !== "production";
+
   return {
     VITE_API_URL: local
       ? "http://localhost/api/lootlog"

@@ -14,6 +14,7 @@ export function clipToWindow(params: {
   windowEnd: Date;
 }): TrackingWindowInterval {
   const effectiveEnd = params.end ?? params.windowEnd;
+
   return {
     start: new Date(
       Math.max(params.start.getTime(), params.windowStart.getTime()),
@@ -33,6 +34,7 @@ export function clipToWindowSeconds(params: {
   windowEnd: Date;
 }): number {
   const { start, end } = clipToWindow(params);
+
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 1000));
 }
 
@@ -44,6 +46,7 @@ export function clipIntervalToWindow(params: {
 }): TrackingWindowInterval | null {
   const clippedStart =
     params.start > params.windowStart ? params.start : params.windowStart;
+
   const clippedEnd =
     params.end < params.windowEnd ? params.end : params.windowEnd;
 
@@ -85,6 +88,7 @@ export function calculateTrackingDurationSeconds(
   }
 
   totalMs += currentEndMs - currentStartMs;
+
   return Math.round(totalMs / 1000);
 }
 

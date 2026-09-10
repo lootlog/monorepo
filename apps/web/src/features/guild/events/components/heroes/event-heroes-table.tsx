@@ -28,11 +28,15 @@ type EventHeroesTableProps = {
 
 const getColumnClassName = (columnId: string) => {
   if (columnId === "hero") return "min-w-0";
+
   if (columnId === "maps" || columnId === "kills") {
     return "hidden w-0 text-right lg:table-cell lg:w-16";
   }
+
   if (columnId === "timer") return "w-24 text-right sm:w-28";
+
   if (columnId === "actions") return "w-16 text-right";
+
   return "";
 };
 
@@ -47,6 +51,7 @@ export const EventHeroesTable = ({
   rows,
 }: EventHeroesTableProps) => {
   const { t } = useTranslation();
+
   const columns = createEventHeroesTableColumns({
     canManage,
     eventId,
@@ -56,6 +61,7 @@ export const EventHeroesTable = ({
     onManageMaps,
     t,
   });
+
   const table = useTable({
     features: coreTableFeatures,
     columns,

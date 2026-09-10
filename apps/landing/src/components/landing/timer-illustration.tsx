@@ -10,9 +10,11 @@ export function TimerIllustration() {
 
   useEffect(() => {
     const deadline = Date.now() + spawnDelay * 1000;
+
     const interval = window.setInterval(() => {
       setRemaining(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
     }, 1000);
+
     return () => window.clearInterval(interval);
   }, []);
 

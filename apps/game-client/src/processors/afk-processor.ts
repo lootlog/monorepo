@@ -20,6 +20,7 @@ export class AfkProcessor {
 
       if (connected && joinedGuilds.length > 0) {
         const game = ingress?.game ?? useGameStore.getState().game;
+
         if (!game) return;
         const socket = getSocket();
         socket.emit(GatewayEvent.PLAYER_PRESENCE_UPDATE, {

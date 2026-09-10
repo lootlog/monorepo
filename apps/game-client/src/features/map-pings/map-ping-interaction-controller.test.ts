@@ -49,6 +49,7 @@ describe("MapPingInteractionController", () => {
     const controller = new MapPingInteractionController({
       getViewport: () => ({ height: 600, width: 800 }),
     });
+
     const listener = vi.fn<() => void>();
     controller.subscribe(listener);
 
@@ -121,6 +122,7 @@ describe("map ping wheel geometry", () => {
   ] as const)("maps the %s segment boundary at %s degrees", (type, angle) => {
     const radians = (angle * Math.PI) / 180;
     const origin = { x: 100, y: 100 };
+
     const pointer = {
       x: origin.x + Math.cos(radians) * 40,
       y: origin.y + Math.sin(radians) * 40,

@@ -31,6 +31,7 @@ interface ThemeProviderProps {
 export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const { data: session } = useSession();
   const setUserPreferences = useSetUsersControllerGetUserPreferencesQueryData();
+
   const { data: preferences, isLoading } = useUsersControllerGetUserPreferences(
     {
       query: {
@@ -40,6 +41,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       },
     },
   );
+
   const updatePreferences = useUsersControllerUpdateUserPreferences({
     mutation: {
       onSuccess: (updatedPreferences) => {
@@ -51,7 +53,9 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const [localTheme, setLocalTheme] = useState<ThemeId>(() => {
     return resolveStoredTheme(localStorage.getItem(THEME_STORAGE_KEY));
   });
+
   const [hasThemeOverride, setHasThemeOverride] = useState(false);
+
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
     resolveThemeClass(
       localTheme,
@@ -73,6 +77,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       theme,
       getRootResolvedTheme(document.documentElement) ?? resolvedTheme,
     );
+
     applyThemeClassToRoot({
       root: document.documentElement,
       resolvedTheme: nextResolvedTheme,

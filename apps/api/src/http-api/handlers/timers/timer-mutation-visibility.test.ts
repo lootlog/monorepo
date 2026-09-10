@@ -43,6 +43,7 @@ it.each([
   "preserves source visibility for timer mutations: $name",
   async ({ read, max, allowed }) => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const database = boundary.database;
       const now = new Date();
@@ -50,6 +51,7 @@ it.each([
       const member = createMemberFixture();
       await boundary.run(database.insert(guildTable).values(guild));
       await boundary.run(database.insert(memberTable).values(member));
+
       const roles = await boundary.run(
         database
           .insert(roleTable)
@@ -69,6 +71,7 @@ it.each([
           })
           .returning(),
       );
+
       const access = {
         guild,
         userId: "user",
@@ -78,6 +81,7 @@ it.each([
           capabilities: roles.flatMap((role) => role.permissions),
         }),
       };
+
       const [timer] = await boundary.run(
         database
           .insert(timerTable)
@@ -95,8 +99,10 @@ it.each([
           })
           .returning(),
       );
+
       if (!timer) throw new Error("Timer fixture missing");
       const publications: string[] = [];
+
       const ports = {
         invalidate: () => Effect.succeed(0),
         publish: (key: string) =>
@@ -104,23 +110,31 @@ it.each([
             publications.push(key);
           }),
       };
+
       const reset = makeResetTimer(database, {
         ...ports,
         withLock: (_key, operation) => operation,
       });
+
       const remove = makeDeleteTimer(database, ports);
       const restore = makeRestoreTimer(database, ports);
+
       const resetResult = await boundary.run(
         reset(access, "300", { world: "world" }).pipe(Effect.result),
       );
+
       expect(resetResult._tag).toBe(allowed ? "Success" : "Failure");
+
       const deleteResult = await boundary.run(
         remove(access, "300", "world").pipe(Effect.result),
       );
+
       expect(deleteResult._tag).toBe(allowed ? "Success" : "Failure");
+
       let history = await boundary.run(
         database.select().from(timerHistoryEntryTable),
       );
+
       if (!allowed) {
         expect(history).toHaveLength(0);
         expect(publications).toHaveLength(0);
@@ -154,17 +168,24 @@ it.each([
             .returning(),
         );
       }
+
       const deletion = history.find((entry) => entry.action === "DELETE");
+
       if (!deletion) throw new Error("Deletion fixture missing");
+
       const restored = await boundary.run(
         restore(access, deletion.id).pipe(Effect.result),
       );
+
       expect(restored._tag).toBe(allowed ? "Success" : "Failure");
+
       const [persisted] = await boundary.run(
         database.select().from(timerTable),
       );
+
       expect(persisted?.deletedAt).toEqual(allowed ? null : now);
       expect(publications).toHaveLength(allowed ? 6 : 0);
+
       if (allowed && read !== Permission.ADMIN) {
         // The same timer key can acquire a different NPC level after this history entry.
         for (const deletedAt of [null, now]) {
@@ -178,9 +199,11 @@ it.each([
               .where(eq(timerTable.timerKey, timer.timerKey))
               .returning(),
           );
+
           const denied = await boundary.run(
             restore(access, deletion.id).pipe(Effect.result),
           );
+
           expect(Result.isFailure(denied)).toBe(true);
           expect(denied).toMatchObject({ failure: { kind: "not-found" } });
           expect(

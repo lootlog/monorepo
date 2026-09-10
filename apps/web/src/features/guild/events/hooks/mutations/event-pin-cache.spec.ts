@@ -13,6 +13,7 @@ describe("event pin cache", () => {
 
     const afterFirstPin = addPinnedEvent([], firstPin);
     const afterSecondPin = addPinnedEvent(afterFirstPin, secondPin);
+
     const afterFirstPinRollback = removePinnedEvent(
       afterSecondPin,
       firstPin.event.id,

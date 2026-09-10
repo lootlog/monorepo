@@ -85,11 +85,13 @@ const getActiveMentionForSuggestions = ({
   if (activeMention) {
     return activeMention;
   }
+
   if (!tabCompletionSession) {
     return null;
   }
 
   const { insertedLabel, mention } = tabCompletionSession;
+
   const isSessionActive =
     caretIndex === mention.end + 1 &&
     /\s/.test(messageValue[mention.end] ?? "") &&
@@ -106,9 +108,11 @@ const resolveSuggestionKeys = (
   const activeMentionKey = activeMention
     ? [activeMention.start, activeMention.end, activeMention.query].join(":")
     : null;
+
   const commandKey = isCommandSuggestionsInput(messageValue)
     ? `command:${messageValue}`
     : null;
+
   const isCommandInput = commandKey !== null;
   const activeSuggestionKey = isCommandInput ? commandKey : activeMentionKey;
 
@@ -142,9 +146,12 @@ const resolveSuggestionPresentation = ({
     isCommandInput &&
     filteredCommandSuggestions.length > 0 &&
     !areSuggestionsDismissed;
+
   const isMentionSuggestionsOpen =
     !isCommandInput && activeMention !== null && !areSuggestionsDismissed;
+
   let suggestionMode: "command" | "mention" | null = null;
+
   let activeSuggestions: ChatInputSuggestion[] = mentionSuggestions.map(
     (suggestion) => ({ ...suggestion, type: "mention" as const }),
   );
@@ -190,6 +197,7 @@ const getChatMentionQueryData = <MemberItem, RoleItem>({
 
 function resolveSelectedSuggestionIndex(count: number, requested: number) {
   if (count === 0) return -1;
+
   return requested >= 0 && requested < count ? requested : 0;
 }
 
@@ -202,12 +210,16 @@ export function useChatInputController({
   const { t: tCommand } = useTranslation("command");
   const queryClient = useQueryClient();
   const reportSendError = useChatSendError();
+
   const replyDraft = useChatStore(
     (state) => state.replyDraftsByGuild[selectedGuildId ?? ""],
   );
+
   const focusRequest = useChatStore((state) => state.focusRequest);
+
   const clearReplyDraft = () =>
     useChatStore.getState().clearReplyDraft(selectedGuildId);
+
   const editorRef = useRef<ChatInputEditorHandle>(null);
   const currentGuildRef = useRef(selectedGuildId);
   useEffect(() => {
@@ -215,61 +227,80 @@ export function useChatInputController({
   }, [selectedGuildId]);
   const clearConfirmAnchorRef = useRef<HTMLDivElement>(null);
   const world = useGameStore((state) => state.game?.world ?? "unknown");
+
   const currentCharacterNick = useGameStore(
     (state) => state.game?.hero.name ?? "",
   );
+
   const { mutateAsync: sendChatMessage, isPending: isSendingMessage } =
     useChatControllerSendChatMessage();
+
   const { mutateAsync: clearChatMessages, isPending: isClearingChat } =
     useChatControllerClearChatMessages();
+
   const { isCreatingNotificationMessage, startNotificationMessage } =
     useNotificationChatOrchestration();
+
   const { handlePartyCommand } = usePartyCommand();
+
   const messageValue = useChatStore(
     (state) => state.draftsByGuild[selectedGuildId ?? ""] ?? "",
   );
+
   const setMessageValue = (message: string) =>
     useChatStore.getState().setDraft(selectedGuildId ?? "", message);
+
   const [caretIndex, setCaretIndex] = useState(0);
   const [requestedMentionIndex, setRequestedMentionIndex] = useState(-1);
+
   const [dismissedMentionKey, setDismissedMentionKey] = useState<string | null>(
     null,
   );
+
   const [tabCompletionSession, setTabCompletionSession] =
     useState<TabCompletionSession | null>(null);
+
   const [clearConfirmRequested, setIsClearConfirmOpen] = useState(false);
   const pendingFocusCaretRef = useRef<number | null>(null);
   const submissionInProgressRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const isPending = [
     isSubmitting,
     isSendingMessage,
     isCreatingNotificationMessage,
     isClearingChat,
   ].includes(true);
+
   const resolvedGuildId = selectedGuildId ?? "";
+
   const activeMention = getActiveChatMention({
     message: messageValue,
     caretIndex,
   });
+
   const activeMentionForSuggestions = getActiveMentionForSuggestions({
     activeMention,
     caretIndex,
     messageValue,
     tabCompletionSession,
   });
+
   const hasMentionInput = hasChatMentionToken(messageValue);
+
   const { activeSuggestionKey, areSuggestionsDismissed, isCommandInput } =
     resolveSuggestionKeys(
       messageValue,
       activeMentionForSuggestions,
       dismissedMentionKey,
     );
+
   const shouldLoadMentionData = shouldLoadChatMentionData(
     resolvedGuildId,
     hasMentionInput,
     isCommandInput,
   );
+
   const guildPermissionsQuery = useGuildsControllerGetGuildPermissions(
     { guildId: resolvedGuildId },
     {
@@ -282,6 +313,7 @@ export function useChatInputController({
       },
     },
   );
+
   const guildMembersQuery = useGuildMembersSummary(
     { guildId: resolvedGuildId },
     {
@@ -290,7 +322,9 @@ export function useChatInputController({
       },
     },
   );
+
   const isFetchingMemberNames = guildMembersQuery.isFetching;
+
   const guildRolesQuery = useRolesControllerGetGuildRoles(
     { guildId: resolvedGuildId },
     {
@@ -304,11 +338,14 @@ export function useChatInputController({
       },
     },
   );
+
   const isFetchingRoleNames = guildRolesQuery.isFetching;
+
   const { members: guildMembers, roles: guildRoles } = getChatMentionQueryData({
     members: guildMembersQuery.data,
     roles: guildRolesQuery.data,
   });
+
   const { data: currentMember } = useMembersControllerGetMe(
     { guildId: resolvedGuildId },
     {
@@ -322,30 +359,38 @@ export function useChatInputController({
       },
     },
   );
+
   const memberSuggestions = getChatMentionMemberSuggestions(guildMembers);
   const roleSuggestions = getChatMentionRoleSuggestions(guildRoles);
+
   const accessPolicy = createAccessPolicy({
     capabilities: guildPermissionsQuery.data ?? [],
   });
+
   const canClearChat = accessPolicy.allowsAny(REQUIRED_CLEAR_CHAT_PERMISSIONS);
+
   const commandSuggestions = getCommandSuggestions(tCommand, {
     includeClearChatCommand: canClearChat,
   });
+
   const filteredCommandSuggestions = filterCommandSuggestions({
     inputValue: messageValue,
     suggestions: commandSuggestions,
   });
+
   const mentionSuggestions = getChatMentionSuggestions({
     memberSuggestions,
     roleSuggestions,
     query: activeMentionForSuggestions?.query ?? "",
   });
+
   const mentionContext = buildChatMentionContext({
     currentCharacterNick,
     currentMember,
     members: guildMembers,
     roles: guildRoles,
   });
+
   const {
     activeSuggestions,
     isMentionSuggestionsOpen,
@@ -360,26 +405,32 @@ export function useChatInputController({
     isFetchingRoleNames,
     mentionSuggestions,
   });
+
   const isClearChatCommand = messageValue.trim() === "/clr";
+
   const selectedMentionIndex = resolveSelectedSuggestionIndex(
     suggestionMode === null ? 0 : activeSuggestions.length,
     requestedMentionIndex,
   );
+
   const setSelectedMentionIndex = (
     update: (currentIndex: number) => number,
   ) => {
     setRequestedMentionIndex(update(selectedMentionIndex));
   };
+
   const isClearConfirmOpen = isClearChatCommand && clearConfirmRequested;
 
   useEffect(() => {
     if (focusRequest?.guildId !== selectedGuildId) return;
+
     const frame = requestAnimationFrame(() =>
       editorRef.current?.focus(
         useChatStore.getState().draftsByGuild[selectedGuildId ?? ""]?.length ??
           0,
       ),
     );
+
     return () => cancelAnimationFrame(frame);
   }, [focusRequest, selectedGuildId]);
 
@@ -434,6 +485,7 @@ export function useChatInputController({
       mention,
       suggestion,
     });
+
     const insertedLabel = getChatMentionSuggestionDisplayLabel(suggestion);
 
     applySelectedMessageValue({
@@ -497,6 +549,7 @@ export function useChatInputController({
   const handleSuggestionSelect = (suggestion: ChatInputSuggestion) => {
     if (suggestion.type === "command") {
       handleCommandSuggestionSelect(suggestion);
+
       return;
     }
 
@@ -509,6 +562,7 @@ export function useChatInputController({
   const resetInputState = () => {
     setMessageValue("");
     clearReplyDraft();
+
     if (currentGuildRef.current !== selectedGuildId) return;
     setCaretIndex(0);
     setDismissedMentionKey(null);
@@ -548,11 +602,13 @@ export function useChatInputController({
     }
 
     const characterData = buildChatCharacterData();
+
     if (!characterData) {
       return;
     }
 
     const currentCaretIndex = caretIndex;
+
     const submitAction = getChatSubmitAction({
       canClearChat,
       messageValue,
@@ -560,6 +616,7 @@ export function useChatInputController({
 
     if (submitAction.kind === "clear") {
       setIsClearConfirmOpen(true);
+
       return;
     }
 
@@ -567,6 +624,7 @@ export function useChatInputController({
       handlePartyCommand(submitAction.description, [selectedGuildId]);
       resetInputState();
       focusEditorCaret(0);
+
       return;
     }
 
@@ -617,9 +675,11 @@ export function useChatInputController({
       focusEditorCaret(0);
     } catch (error) {
       reportSendError(error);
+
       if (error instanceof NotificationChatPublishError) {
         resetInputState();
       }
+
       focusEditorCaret(currentCaretIndex);
     } finally {
       submissionInProgressRef.current = false;
@@ -637,6 +697,7 @@ export function useChatInputController({
       setIsClearConfirmOpen(false);
       setTabCompletionSession(null);
       focusEditorCaret(caretIndex);
+
       return;
     }
 
@@ -653,6 +714,7 @@ export function useChatInputController({
       event.preventDefault();
       setDismissedMentionKey(activeSuggestionKey);
       setTabCompletionSession(null);
+
       return;
     }
 
@@ -665,6 +727,7 @@ export function useChatInputController({
       setSelectedMentionIndex((currentIndex) =>
         currentIndex <= 0 ? activeSuggestions.length - 1 : currentIndex - 1,
       );
+
       return;
     }
 
@@ -673,12 +736,14 @@ export function useChatInputController({
       setSelectedMentionIndex((currentIndex) =>
         currentIndex >= activeSuggestions.length - 1 ? 0 : currentIndex + 1,
       );
+
       return;
     }
 
     if (event.key === "Tab" && suggestionMode === "mention") {
       const selectedSuggestionIndex =
         selectedMentionIndex >= 0 ? selectedMentionIndex : 0;
+
       const selectedSuggestion = activeSuggestions[selectedSuggestionIndex];
 
       if (selectedSuggestion?.type !== "mention") {
@@ -700,6 +765,7 @@ export function useChatInputController({
 
         return nextIndex;
       });
+
       return;
     }
 
@@ -710,6 +776,7 @@ export function useChatInputController({
     ) {
       event.preventDefault();
       handleSuggestionSelect(activeSuggestions[selectedMentionIndex]);
+
       return;
     }
 
@@ -718,6 +785,7 @@ export function useChatInputController({
       void handleSubmit();
     }
   };
+
   return {
     t,
     replyDraft,

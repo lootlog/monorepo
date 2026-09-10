@@ -82,6 +82,7 @@ const mapNpc = (npc: Npc): PublicNpc => ({
 
 const toIso = (value: Date | string | undefined | null): string | null => {
   if (value === undefined || value === null) return null;
+
   return new Date(value).toISOString();
 };
 
@@ -117,6 +118,7 @@ export const mapGuilds = (
   data: Array<Guild | GuildResponseDtoOutput> | undefined,
 ): PublicGuild[] | undefined => {
   if (!data) return undefined;
+
   return data.map((g): PublicGuild => ({
     id: g.id,
     name: g.name,
@@ -129,6 +131,7 @@ export const mapTimers = (
   data: Timer[] | undefined,
 ): PublicTimer[] | undefined => {
   if (!data) return undefined;
+
   return data.map(mapTimer);
 };
 
@@ -136,13 +139,16 @@ export const groupTimersByGuild = (
   timers: PublicTimer[],
 ): Map<string, PublicTimer[]> => {
   const grouped = new Map<string, PublicTimer[]>();
+
   for (const timer of timers) {
     const existing = grouped.get(timer.guildId);
+
     if (existing) {
       existing.push(timer);
     } else {
       grouped.set(timer.guildId, [timer]);
     }
   }
+
   return grouped;
 };

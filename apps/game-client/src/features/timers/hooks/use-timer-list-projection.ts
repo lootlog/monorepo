@@ -21,6 +21,7 @@ export const useTimerListProjection = ({
   timers,
 }: UseTimerListProjectionInput) => {
   const removalTimers = getTimerListRemovalTimers(timers, context.isGrouping);
+
   const epoch = useTimerRemovalBoundary(
     removalTimers,
     preferences.removeTimerAfterMs,

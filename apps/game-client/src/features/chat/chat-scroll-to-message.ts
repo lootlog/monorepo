@@ -22,6 +22,7 @@ export const subscribeToChatScrollToMessage = (
   const eventListener = (event: ChatScrollToMessageEvent) => listener(event);
 
   window.addEventListener(CHAT_SCROLL_TO_MESSAGE_EVENT, eventListener);
+
   return () =>
     window.removeEventListener(CHAT_SCROLL_TO_MESSAGE_EVENT, eventListener);
 };

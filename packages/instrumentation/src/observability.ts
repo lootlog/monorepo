@@ -13,15 +13,18 @@ const sampledTracer = Layer.effect(
   Tracer.Tracer,
   Effect.gen(function* () {
     const tracer = yield* Effect.tracer;
+
     return Tracer.make({
       span(options) {
         const sampled = Option.isSome(options.parent)
           ? options.parent.value.sampled
           : Math.random() < 0.1;
+
         const span = tracer.span({
           ...options,
           sampled: options.sampled && sampled,
         });
+
         const attribute = span.attribute.bind(span);
         // HTTP credentials can live in arbitrary headers and OAuth query strings.
         span.attribute = (name, value) => {
@@ -34,6 +37,7 @@ const sampledTracer = Layer.effect(
             return;
           attribute(name, value);
         };
+
         return span;
       },
       context(primitive, fiber) {
@@ -41,6 +45,7 @@ const sampledTracer = Layer.effect(
         // mismatch, including clearing a span when an untraced fiber resumes.
         if (logSpanContext.getStore() === fiber.currentSpan)
           return primitive["~effect/Effect/evaluate"](fiber);
+
         return logSpanContext.run(fiber.currentSpan, () =>
           primitive["~effect/Effect/evaluate"](fiber),
         );
@@ -64,15 +69,18 @@ export const makeObservabilityLayer = <E, R>(
   Layer.unwrap(
     Effect.gen(function* () {
       const config = yield* configuration;
+
       const commitSha =
         config.commitSha ??
         (yield* Config.string("COMMIT_SHA").pipe(
           Config.withDefault(undefined),
         ));
+
       const instanceId = yield* Config.string("OTEL_SERVICE_INSTANCE_ID").pipe(
         Config.orElse(() => Config.string("HOSTNAME")),
         Config.withDefault(`local-${process.pid}`),
       );
+
       const resource = {
         serviceName: config.serviceName,
         serviceVersion: commitSha,
@@ -83,6 +91,7 @@ export const makeObservabilityLayer = <E, R>(
           "service.instance.id": instanceId,
         },
       };
+
       return Layer.mergeAll(
         OtlpMetrics.layerFromConfig({ resource }),
         sampledTracer.pipe(

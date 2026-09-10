@@ -39,6 +39,7 @@ export const MapTemplateForm = (
     handleClose,
     isPending,
   } = useMapTemplateForm(props);
+
   return (
     <>
       <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">

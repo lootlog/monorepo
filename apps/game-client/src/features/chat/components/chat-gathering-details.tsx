@@ -25,13 +25,16 @@ export function ChatGatheringDetails({
   maxLvl,
 }: Props) {
   const { t } = useTranslation("chat");
+
   const level =
     minLvl !== undefined || maxLvl !== undefined
       ? t("gatherings.level", { min: minLvl ?? 0, max: maxLvl ?? "∞" })
       : null;
+
   const location = npc
     ? [npc.location, getChatNpcCoordinatesLabel(npc)].filter(Boolean).join(" ")
     : "";
+
   return (
     <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-[2px] ll:[overflow-wrap:anywhere]">
       {npc && (

@@ -40,6 +40,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = ({
   const processedValue = transformValue
     ? transformValue(roundedValue, action.type)
     : roundedValue;
+
   const actionPresentation = getBattleActionPresentation(action);
 
   const dynamicData = generateDynamicValuesAndComponents(

@@ -27,9 +27,11 @@ export class ActivityConfig extends Context.Service<
         RuntimeEnvironmentSchema,
         "ENV",
       ).pipe(Config.withDefault(RuntimeEnvironment.LOCAL));
+
       const configuredSecret = yield* Config.option(
         Config.redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
       );
+
       const signatureSecret = Option.isSome(configuredSecret)
         ? configuredSecret.value
         : environment === RuntimeEnvironment.PROD ||
@@ -40,6 +42,7 @@ export class ActivityConfig extends Context.Service<
               ),
             )
           : Redacted.make("local-development-activity-event-signature-secret");
+
       if (Redacted.value(signatureSecret).length < 32)
         return yield* Effect.fail(
           new Error(
@@ -47,15 +50,19 @@ export class ActivityConfig extends Context.Service<
           ),
         );
       const redisHost = yield* Config.option(Config.string("REDIS_HOST"));
+
       const redisPort = yield* Config.int("REDIS_PORT").pipe(
         Config.withDefault(6379),
       );
+
       const redisUsername = yield* Config.string("REDIS_USERNAME").pipe(
         Config.withDefault("default"),
       );
+
       const redisPassword = yield* Config.string("REDIS_PASSWORD").pipe(
         Config.withDefault(""),
       );
+
       return ActivityConfig.of({
         environment,
         port: yield* Config.int("PORT"),

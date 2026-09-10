@@ -15,10 +15,12 @@ describe("AfkProcessor", () => {
   beforeEach(async () => {
     disposeSocket();
     wire = new RealtimeWire();
+
     const realtime = new RealtimeClient({
       url: "https://gateway.example.test",
       webSocketFactory: () => wire,
     });
+
     restorePlatform = configureGameClientPlatform({
       fetch: globalThis.fetch,
       createRealtime: () => realtime,

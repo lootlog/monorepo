@@ -13,18 +13,23 @@ import type { NormalizedReservation } from "./normalize-reservation";
 await initializeTestTranslations();
 
 const RouterWrapper = await createOrganizationTestWrapper();
+
 const client = new QueryClient({
   defaultOptions: {
     queries: { staleTime: Infinity, retry: false, gcTime: Infinity },
   },
 });
+
 client.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), []);
+
 const wrapper = ({ children }: React.PropsWithChildren) => (
   <RouterWrapper>
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   </RouterWrapper>
 );
+
 beforeEach(() => vi.stubGlobal("innerWidth", 390));
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -64,10 +69,12 @@ describe("ReservationDetails", () => {
       spotId: "driady",
       onOpenChange: vi.fn(),
     };
+
     const { rerender } = render(
       <ReservationDetails {...props} reservation={null} />,
       { wrapper },
     );
+
     expect(screen.queryByRole("dialog")).toBeNull();
     rerender(<ReservationDetails {...props} reservation={reservation} />);
     expect(await screen.findByRole("dialog")).toBeTruthy();
@@ -94,6 +101,7 @@ describe("ReservationDetails", () => {
     const dismissButton = screen.getByRole("button", {
       name: "common.cancel",
     });
+
     const footer = dismissButton.closest("footer");
     expect(footer?.classList.contains("border-t")).toBe(true);
     expect(

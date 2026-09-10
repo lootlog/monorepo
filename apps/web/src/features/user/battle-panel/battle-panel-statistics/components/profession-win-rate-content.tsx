@@ -30,12 +30,14 @@ export function ProfessionWinRateChart({
   isLoading,
 }: ProfessionWinRateChartProps) {
   const { t } = useTranslation();
+
   const chartConfig = {
     winRate: {
       label: t("battlePanel.statistics.professionWinRate.chartLabel"),
       color: BATTLE_HEX_COLORS.chart.winRate,
     },
   } satisfies ChartConfig;
+
   const chartData = data.map((item) => ({
     ...item,
     professionName: getProfessionName(item.prof),
@@ -88,6 +90,7 @@ export function ProfessionWinRateChart({
                       const item = chartData.find(
                         (entry) => entry === payload[0]?.payload,
                       );
+
                       return t(
                         "battlePanel.statistics.professionWinRate.tooltipBattles",
                         {

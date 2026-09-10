@@ -72,6 +72,7 @@ export const makeGuildLifecycle = (
     data: GuildCreated,
   ) {
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const guild = yield* operation(
       "guildLifecycle.create.transaction",
       database.transaction((transaction) =>
@@ -98,8 +99,11 @@ export const makeGuildLifecycle = (
               },
             })
             .returning();
+
           const result = guildRows[0];
+
           if (!result) return yield* Effect.fail("Guild was not returned");
+
           if (data.roles.length > 0) {
             yield* transaction
               .insert(roleTable)
@@ -117,6 +121,7 @@ export const makeGuildLifecycle = (
               )
               .onConflictDoNothing();
           }
+
           yield* transaction
             .insert(lootlogConfigTable)
             .values({ id: data.guildId, createdAt: now, updatedAt: now })
@@ -154,10 +159,12 @@ export const makeGuildLifecycle = (
               target: discordGuildSyncStateTable.guildId,
               set: { status: DiscordGuildSyncStatus.STALE, updatedAt: now },
             });
+
           return result;
         }),
       ),
     );
+
     return guild;
   });
 
@@ -173,6 +180,7 @@ export const makeGuildLifecycle = (
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
+
     yield* operation(
       "guildLifecycle.update.write",
       database
@@ -195,6 +203,7 @@ export const makeGuildLifecycle = (
       ],
       { concurrency: "unbounded", discard: true },
     );
+
     return oldGuild?.vanityUrl ?? null;
   });
 
@@ -202,6 +211,7 @@ export const makeGuildLifecycle = (
     data: GuildDeleted,
   ) {
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const deletion = yield* operation(
       "guildLifecycle.delete.transaction",
       database.transaction((transaction) =>
@@ -211,6 +221,7 @@ export const makeGuildLifecycle = (
             .from(guildTable)
             .where(eq(guildTable.id, data.guildId))
             .limit(1);
+
           const members = yield* transaction
             .select({
               discordId: memberTable.userId,
@@ -224,6 +235,7 @@ export const makeGuildLifecycle = (
                 eq(memberTable.active, true),
               ),
             );
+
           yield* transaction
             .delete(lootlogConfigNpcTable)
             .where(eq(lootlogConfigNpcTable.lootlogConfigId, data.guildId));
@@ -251,6 +263,7 @@ export const makeGuildLifecycle = (
             .update(guildTable)
             .set({ active: false, updatedAt: now })
             .where(eq(guildTable.id, data.guildId));
+
           return {
             vanityUrl: guildRows[0]?.vanityUrl ?? null,
             members,
@@ -258,6 +271,7 @@ export const makeGuildLifecycle = (
         }),
       ),
     );
+
     yield* ports.notifyMembersRemoved(deletion.members);
     yield* Effect.all(
       [
@@ -269,6 +283,7 @@ export const makeGuildLifecycle = (
       ],
       { concurrency: "unbounded", discard: true },
     );
+
     return deletion.vanityUrl;
   });
 
@@ -283,19 +298,24 @@ export const makeGuildLifecycle = (
       )
       .limit(1)
       .pipe(Effect.map((rows) => rows[0] ?? null));
+
     const permissions = adminPermissions(data.admin);
+
     const existingAdmin = existing
       ? createAccessPolicy({ capabilities: existing.permissions }).allows(
           Capability.ADMIN,
         )
       : false;
+
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const roleUpdate: Partial<typeof roleTable.$inferInsert> = {
       name: data.name,
       color: data.color,
       position: data.position,
       updatedAt: now,
     };
+
     if (existingAdmin !== data.admin) roleUpdate.permissions = permissions;
     yield* operation(
       "guildLifecycle.role.upsert.write",

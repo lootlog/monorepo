@@ -108,6 +108,7 @@ describe("legendary bonus timeline markers", () => {
         ],
       },
     ];
+
     const warriors = [
       { originalId: "1", name: "Kamik", team: 1 },
       { originalId: "2", name: "Rival", team: 2 },

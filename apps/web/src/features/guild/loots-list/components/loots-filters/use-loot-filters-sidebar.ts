@@ -23,6 +23,7 @@ import { formatItemHid, parseItemHid } from "@/lib/utils/hid-detection";
 import { useTranslation } from "react-i18next";
 
 const DEFAULT_DEBOUNCE_MS = 500;
+
 const CUSTOM_FILTERS_STORAGE_KEY = "loots-custom-quick-filters";
 
 type SavedFilter = {
@@ -58,12 +59,15 @@ const getEntitySearchParams = (
   world: string | null | undefined,
 ) => {
   const queryWorld = world || "";
+
   if (search.length > 0) {
     return { search, world: queryWorld };
   }
+
   if (selectedNames.length > 0) {
     return { search: selectedNames.split(","), world: queryWorld };
   }
+
   return undefined;
 };
 
@@ -72,8 +76,10 @@ const getHidQueryState = (
   world: string | null | undefined,
 ) => {
   const parsedHid = parseItemHid(hid && world ? formatItemHid(hid, world) : "");
+
   const queryParams: LootsControllerResolveLootItemByHidParams | undefined =
     parsedHid ? { hid: parsedHid.hid, world: parsedHid.world } : undefined;
+
   return {
     queryParams,
     fallbackQueryParams: queryParams ?? { hid: "" },
@@ -93,11 +99,13 @@ const getFilterSectionState = (filters: LootFilters) => {
     Number(filters.npcTypes.length > 0) +
     Number(filters.npcs.length > 0) +
     Number(Boolean(filters.npcLevelMin || filters.npcLevelMax));
+
   const itemActiveFilterCount =
     Number(filters.rarities.length > 0) +
     Number(filters.professions.length > 0) +
     Number(filters.itemNames.length > 0 || Boolean(filters.hid)) +
     Number(Boolean(filters.itemLevelMin || filters.itemLevelMax));
+
   const playerActiveFilterCount =
     Number(filters.players.length > 0) +
     Number(Boolean(filters.playerLevelMin || filters.playerLevelMax));
@@ -123,51 +131,66 @@ export const useLootFiltersSidebar = ({
   embedded = false,
 }: LootsFiltersSidebarProps) => {
   const { t } = useTranslation();
+
   const {
     defaultQuickFilters,
     npcTypeOptions,
     professionOptions,
     rarityOptions,
   } = useLootFilterOptions();
+
   const { world } = useGuildContext();
   const guildId = useGuildId();
+
   const { filters, setFilters, hasActiveFilters, clearFilters } =
     useLootsFilters();
+
   const filterInputValues = getLootFilterInputValues(filters);
+
   const [customFilters, setCustomFilters] = useLocalStorage<SavedFilter[]>(
     CUSTOM_FILTERS_STORAGE_KEY,
     [],
   );
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newFilterName, setNewFilterName] = useState("");
 
   const [playersSearchValue, setDebouncedPlayersSearchValue] = useState("");
+
   const debouncedPlayersSearchValue = useDebounce(
     playersSearchValue,
     DEFAULT_DEBOUNCE_MS,
   );
+
   const [npcsSearchValue, setDebouncedNpcsSearchValue] = useState("");
+
   const debouncedNpcsSearchValue = useDebounce(
     npcsSearchValue,
     DEFAULT_DEBOUNCE_MS,
   );
+
   const [itemsSearchValue, setDebouncedItemsSearchValue] = useState("");
+
   const debouncedItemsSearchValue = useDebounce(
     itemsSearchValue,
     DEFAULT_DEBOUNCE_MS,
   );
+
   const selectedPlayerNames = filters.players.join(",");
   const selectedNpcNames = filters.npcs.join(",");
+
   const playersSearchParams = getEntitySearchParams(
     debouncedPlayersSearchValue,
     selectedPlayerNames,
     world,
   );
+
   const npcsSearchParams = getEntitySearchParams(
     debouncedNpcsSearchValue,
     selectedNpcNames,
     world,
   );
+
   const itemsSearchParams = {
     limit: 10,
     search: debouncedItemsSearchValue,
@@ -202,6 +225,7 @@ export const useLootFiltersSidebar = ({
     queryParams: hidItemQueryParams,
     fallbackQueryParams: hidItemFallbackQueryParams,
   } = getHidQueryState(filters.hid, world);
+
   const { data: hidItem } = useLootsControllerResolveLootItemByHid(
     { guildId: guildId ?? "" },
     hidItemFallbackQueryParams,
@@ -317,6 +341,7 @@ export const useLootFiltersSidebar = ({
 
   const canSaveCurrentFilter =
     hasActiveFilters && !isCurrentFilterAlreadySaved();
+
   const {
     npcActiveFilterCount,
     itemActiveFilterCount,

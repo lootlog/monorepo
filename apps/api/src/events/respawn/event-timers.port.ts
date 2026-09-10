@@ -77,6 +77,7 @@ export const makeEventTimersPort = ({
   const lockManager = redlock.createInstance({
     automaticExtensionThreshold: 5_000,
   });
+
   const external = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
       try: run,
@@ -86,6 +87,7 @@ export const makeEventTimersPort = ({
         attributes: { adapter: "event-timers", retryCount: 0 },
       }),
     );
+
   const mapped = <A>(operation: string, effect: Effect.Effect<A, unknown>) =>
     effect.pipe(
       Effect.mapError((cause) => new EventTimersError({ operation, cause })),
@@ -113,6 +115,7 @@ export const makeEventTimersPort = ({
 
   const publishUpdate = (timer: Timer) => {
     const response = mapTimerResponse(timer);
+
     return Effect.all(
       [
         mapped(
@@ -138,6 +141,7 @@ export const makeEventTimersPort = ({
 
   const publishDelete = (timer: Timer) => {
     const npc = timer.npc;
+
     const payload = {
       guildId: timer.guildId,
       world: timer.world,
@@ -148,6 +152,7 @@ export const makeEventTimersPort = ({
         npcLevel: timerNpcField(npc, "lvl"),
       },
     };
+
     return Effect.all(
       [
         mapped(
@@ -179,9 +184,12 @@ export const makeEventTimersPort = ({
     Effect.gen(function* () {
       for (let attempt = 0; attempt < 10; attempt += 1) {
         const timer = yield* store.findTimer(guildId, world, timerKey);
+
         if (timer) return timer;
+
         if (attempt < 9) yield* Effect.sleep("20 millis");
       }
+
       return null;
     });
 
@@ -191,9 +199,11 @@ export const makeEventTimersPort = ({
     use: () => Effect.Effect<A, unknown>,
   ) => {
     type AcquiredLock = Awaited<ReturnType<typeof lockManager.acquire>>;
+
     const acquire = external<AcquiredLock>(`${operation}.lock.acquire`, () =>
       lockManager.acquire([lockKey], LOCK_TTL_MS),
     );
+
     return Effect.acquireUseRelease(acquire, use, (lock) =>
       external(`${operation}.lock.release`, () => lock.release()).pipe(
         Effect.ignore,
@@ -212,9 +222,11 @@ export const makeEventTimersPort = ({
       const timerKey = buildTimerKey(input.npcId, input.npcName);
       const operation = "eventTimers.openRespawn";
       const lockKey = `timer:lock:${input.guildId}:${input.world}:${timerKey}`;
+
       const work = withLock(operation, lockKey, () =>
         Effect.gen(function* () {
           const windowOpenedAt = new Date(yield* Clock.currentTimeMillis);
+
           const npc = {
             id: input.npcId,
             name: input.npcName,
@@ -228,6 +240,7 @@ export const makeEventTimersPort = ({
               ? String(TIMER_TYPES.CUSTOM_MANUAL)
               : "0",
           };
+
           const timer = yield* store.upsertTimer(
             {
               guildId: input.guildId,
@@ -258,11 +271,14 @@ export const makeEventTimersPort = ({
               deletedAt: null,
             },
           );
+
           yield* invalidateCache(input.guildId);
           yield* publishUpdate(timer);
+
           return timer;
         }),
       );
+
       return work.pipe(
         Effect.catch((error) => {
           if (
@@ -288,6 +304,7 @@ export const makeEventTimersPort = ({
               ),
             );
           }
+
           return Effect.fail(
             error instanceof EventTimersError
               ? error
@@ -300,16 +317,19 @@ export const makeEventTimersPort = ({
     closeEventRespawnTimer: ({ guildId, world, npcId, npcName }) => {
       const timerKey = buildTimerKey(npcId, npcName);
       const operation = "eventTimers.closeRespawn";
+
       return withLock(
         operation,
         `timer:lock:${guildId}:${world}:${timerKey}`,
         () =>
           Effect.gen(function* () {
             const timer = yield* store.findTimer(guildId, world, timerKey);
+
             if (!timer) return null;
             yield* store.deleteTimer(guildId, world, timerKey);
             yield* invalidateCache(guildId);
             yield* publishDelete(timer);
+
             return timer;
           }),
       ).pipe(
@@ -355,12 +375,15 @@ export const makeEventTimersPort = ({
 
     getTimersForEventHeroFilters: (guildId, world, heroes) => {
       if (heroes.length === 0) return Effect.succeed([]);
+
       const timerKeys = heroes
         .filter((hero) => hero.npcId !== null)
         .map((hero) => buildTimerKey(hero.npcId, hero.npcName));
+
       const npcNames = heroes
         .filter((hero) => hero.npcId === null)
         .map((hero) => hero.npcName);
+
       return mapped(
         "eventTimers.getHeroTimers",
         Effect.all(

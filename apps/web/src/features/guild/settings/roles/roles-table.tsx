@@ -34,6 +34,7 @@ import { getActivePermissionCategories } from "./active-permission-categories";
 export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const openRoleDetails = (role: GuildRole) => {
     navigate({
       to: "/$guildId/settings/roles/$roleId",
@@ -106,9 +107,11 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
         {roles.map((role, index) => {
           const color = getColorFromRoleColor(role.color);
           const roleRouteParams = { guildId, roleId: role.id };
+
           const activeCategories = getActivePermissionCategories(
             role.permissions,
           );
+
           const isLastRole = index === roles.length - 1;
 
           return (
@@ -122,6 +125,7 @@ export const RolesTable = ({ guildId, isMobile, roles }: RolesTableProps) => {
               )}
               onClickCapture={(event) => {
                 const target = event.target;
+
                 if (
                   target instanceof Element &&
                   target.closest("button,a,[data-role-row-action]")

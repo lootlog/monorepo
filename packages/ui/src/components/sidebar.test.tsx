@@ -7,11 +7,14 @@ beforeEach(() => {
   const matchMedia = window.matchMedia.bind(window);
   vi.spyOn(window, "matchMedia").mockImplementation((query) => {
     const result = matchMedia(query);
+
     if (query === "(max-width: 767px)")
       Object.defineProperty(result, "matches", { value: true });
+
     return result;
   });
 });
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -39,6 +42,7 @@ describe("mobile sidebar", () => {
     const Content = () => {
       useEffect(() => {
         onEffectConnect();
+
         return onEffectDisconnect;
       }, []);
 

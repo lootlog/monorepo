@@ -60,6 +60,7 @@ class FakeHub {
   ): boolean {
     this.deliveryOrder.push("response");
     this.responses.push(response);
+
     return true;
   }
   sendEvent(
@@ -68,6 +69,7 @@ class FakeHub {
   ): boolean {
     this.deliveryOrder.push("event");
     this.events.push(event);
+
     return true;
   }
   replaceSubscriptions(
@@ -106,14 +108,19 @@ class FakePresence {
   reconcileAccess(socket: GatewaySocket): Effect.Effect<void> {
     return Effect.sync(() => {
       this.reconciled.push(socket);
+
       const allowedIds = new Set(
         socket.data.guilds.map(({ guild: currentGuild }) => currentGuild.id),
       );
+
       const current = socket.data.presence;
+
       if (!current) return;
+
       const organizationIds = current.organizationIds.filter((id) =>
         allowedIds.has(id),
       );
+
       socket.data.presence =
         organizationIds.length === 0
           ? undefined
@@ -124,6 +131,7 @@ class FakePresence {
 
 const makeSocket = () => {
   const closes: number[] = [];
+
   const data: SessionData = {
     discordId: "discord-1",
     userId: "user-1",
@@ -136,6 +144,7 @@ const makeSocket = () => {
     confidence: "reported",
     backpressureStrikes: 0,
   };
+
   return {
     socket: {
       data,
@@ -154,6 +163,7 @@ const setup = (guildStore?: GuildStore) => {
   const hub = new FakeHub();
   const activity = new FakeActivity();
   const presence = new FakePresence();
+
   const handler = new CommandHandler(
     guildStore ?? guilds,
     {
@@ -170,6 +180,7 @@ const setup = (guildStore?: GuildStore) => {
         Promise.reject(new Error("Unexpected air tag observation")),
     },
   );
+
   return { handler, guilds, hub, activity, presence };
 };
 
@@ -181,7 +192,9 @@ describe("CommandHandler session lifecycle", () => {
         { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
         unusedFederationStore,
       );
+
       const { guilds, presence, activity } = setup();
+
       const handler = new CommandHandler(
         guilds,
         {
@@ -199,8 +212,10 @@ describe("CommandHandler session lifecycle", () => {
             Promise.reject(new Error("Unexpected air tag observation")),
         },
       );
+
       const responses: unknown[] = [];
       const target = makeSocket();
+
       const socket: GatewaySocket = {
         ...target.socket,
         data: {
@@ -212,14 +227,17 @@ describe("CommandHandler session lifecycle", () => {
           if (Predicate.isString(data)) responses.push(JSON.parse(data));
           else if (data instanceof Uint8Array) responses.push(decode(data));
           else throw new Error("Unexpected frame encoding");
+
           return 0;
         },
       };
+
       for (let index = 0; index < 4_096; index += 1)
         hub.subscribe(socket, {
           topic: "party.ready-room",
           eventId: String(index),
         });
+
       for (const [requestId, type, eventId] of [
         ["over-capacity", "subscription.subscribe", "extra"],
         ["oversized", "subscription.subscribe", "ą".repeat(512)],
@@ -233,6 +251,7 @@ describe("CommandHandler session lifecycle", () => {
           type,
           data: { topic: "party.ready-room", eventId },
         };
+
         await Effect.runPromise(
           handler.handle(
             socket,
@@ -242,6 +261,7 @@ describe("CommandHandler session lifecycle", () => {
           ),
         );
       }
+
       expect(responses).toEqual([
         ...["over-capacity", "oversized"].map((requestId) => ({
           v: 1,
@@ -292,6 +312,7 @@ describe("CommandHandler session lifecycle", () => {
     const { handler, hub } = setup();
     const { socket } = makeSocket();
     socket.data = { ...socket.data, platform: "game" };
+
     const command = encode({
       v: 1,
       type: "session.join",
@@ -323,12 +344,14 @@ describe("CommandHandler session lifecycle", () => {
   test("supports deterministic rejoin and emits request/response plus joined events", async () => {
     const { handler, hub, activity } = setup();
     const { socket } = makeSocket();
+
     const command = encode({
       v: 1,
       type: "session.join",
       requestId: "request-1",
       data: {},
     });
+
     await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
     await Effect.runPromise(handler.handle(socket, Buffer.from(command)));
     expect(socket.data.joined).toBe(true);
@@ -350,8 +373,10 @@ describe("CommandHandler session lifecycle", () => {
         guilds: [guild()],
         cachedAt: Date.now(),
       });
+
       let requests = 0;
       let invalidations = 0;
+
       const store = makeGuildStore(
         { apiUrl: "http://api.local" },
         {
@@ -359,11 +384,13 @@ describe("CommandHandler session lifecycle", () => {
             get: async () => cached,
             set: async (_key: string, value: string) => {
               cached = value;
+
               return "OK";
             },
             del: async () => {
               invalidations++;
               cached = null;
+
               return 1;
             },
           },
@@ -371,10 +398,12 @@ describe("CommandHandler session lifecycle", () => {
         httpClientFromResponses(() =>
           Effect.sync(() => {
             requests++;
+
             return Response.json([]);
           }),
         ),
       );
+
       const local = setup(store);
       const remote = setup(store);
       const target = makeSocket();
@@ -439,6 +468,7 @@ describe("CommandHandler session lifecycle", () => {
     guilds.getUserGuilds = () =>
       Effect.sync(() => {
         hub.sockets.splice(0, 1, current.socket);
+
         return [];
       });
     await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
@@ -475,9 +505,11 @@ describe("CommandHandler session lifecycle", () => {
         ],
       },
     ];
+
     for (let index = 0; index < 4; index++) {
       await Effect.runPromise(handler.rebalanceUser("discord-1", "user-1"));
     }
+
     expect(target.socket.data.guilds).toBe(guilds.guilds);
     expect(target.socket.data.subscriptions).toBe(subscriptions);
     expect(hub.events).toEqual([]);
@@ -489,11 +521,14 @@ describe("CommandHandler session lifecycle", () => {
     const target = makeSocket();
     target.socket.data.joined = true;
     const one = guild();
+
     const two = {
       ...guild(),
       guild: { id: "organization-2", ownerId: "owner" },
     };
+
     target.socket.data.guilds = [one, two];
+
     const scope = (guildId: string) => ({
       guildId,
       world: "fobos",
@@ -505,6 +540,7 @@ describe("CommandHandler session lifecycle", () => {
         mapId: 1,
       },
     });
+
     const retained = scope("organization-2");
     target.socket.data.airTagScopes = [scope("organization-1"), retained];
     target.socket.data.subscriptions = new Map(
@@ -530,13 +566,17 @@ describe("CommandHandler session lifecycle", () => {
     const join = Buffer.from(encode({ v: 1, type: "session.join", data: {} }));
     await Effect.runPromise(handler.handle(target.socket, join));
     await Effect.runPromise(handler.handle(target.socket, join));
+
     const readPolicy = (index: number) => {
       const event = hub.events[index];
       const decoded = decodeServerEvent(event);
+
       if (decoded.type !== "session.joined" || !decoded.data.accessPolicy)
         throw new Error("Missing joined policy");
+
       return decoded.data.accessPolicy;
     };
+
     const previous = readPolicy(0);
     expect(previous.version).toMatch(/^[a-f0-9]{64}$/);
     expect(readPolicy(1)).toEqual(previous);
@@ -550,6 +590,7 @@ describe("CommandHandler session lifecycle", () => {
     async (previouslyJoined) => {
       const { handler, guilds, hub, activity, presence } = setup();
       const target = makeSocket();
+
       if (previouslyJoined) {
         target.socket.data.joined = true;
         target.socket.data.guilds = [guild()];
@@ -581,6 +622,7 @@ describe("CommandHandler session lifecycle", () => {
           lastSeen: 1,
         };
       }
+
       guilds.guilds = [];
       await Effect.runPromise(
         handler.handle(
@@ -606,6 +648,7 @@ describe("CommandHandler session lifecycle", () => {
           accessPolicy: { organizations: [] },
         },
       });
+
       if (event.type !== "permissions.updated")
         throw new Error("Missing policy event");
       expect(event.data.accessPolicy?.version).toMatch(/^[a-f0-9]{64}$/);
@@ -674,6 +717,7 @@ describe("CommandHandler session lifecycle", () => {
       ]),
     ];
     hub.sockets.push(target.socket);
+
     const timer = (
       type: "HERO" | "TITAN",
       lvl: number,
@@ -685,9 +729,11 @@ describe("CommandHandler session lifecycle", () => {
         payload: { guildId: "organization-1", npc: { type, lvl } },
       },
     });
+
     const titan = timer("TITAN", 250);
     const lowLevelHero = timer("HERO", 105);
     const allowedHero = timer("HERO", 250);
+
     for (const event of [titan, lowLevelHero, allowedHero]) {
       expect(canReadSourceEvent(target.socket.data, event)).toBe(true);
     }
@@ -862,16 +908,21 @@ test("client NPC policy decisions match gateway source filtering across roles an
           ],
         },
       ];
+
       const policy = createAccessPolicySnapshot(
         target.socket.data.guilds,
         viewer,
       ).organizations[0];
+
       if (!policy) throw new Error("Missing fixture policy");
+
       for (const type of ["ELITE2", "HERO", "EVENT_HERO", "TITAN", "INVALID"]) {
         for (const lvl of [100, 250, 600]) {
           const npc = { type, lvl };
+
           for (const feature of ["timers", "chat", "notifications"] as const) {
             let event: typeof ServerEvent.Type;
+
             if (feature === "timers")
               event = {
                 v: 1,
@@ -926,6 +977,7 @@ test("API key joins and rebalances preserve each key's organization scope withou
   };
   other.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
   hub.sockets.push(socket, other);
+
   for (const target of [socket, other])
     await Effect.runPromise(
       handler.handle(

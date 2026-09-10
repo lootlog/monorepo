@@ -5,11 +5,13 @@ import type { GuildIdentity } from "@/lib/api/generated-helpers";
 export function getCurrentCharacterId(): string | null {
   try {
     const characterId = useGameStore.getState().game?.hero.characterId;
+
     if (characterId === undefined || characterId === null) {
       return null;
     }
 
     const normalizedCharacterId = String(characterId).trim();
+
     return normalizedCharacterId || null;
   } catch {
     return null;
@@ -36,6 +38,7 @@ export function getSelectedLootlogGuildId(
   guildIdByCharId: Record<string, string | undefined>,
 ): string | undefined {
   const currentCharacterId = getCurrentCharacterId();
+
   if (!currentCharacterId) {
     return undefined;
   }

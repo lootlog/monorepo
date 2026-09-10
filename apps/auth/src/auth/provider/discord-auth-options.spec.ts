@@ -6,8 +6,11 @@ import { decodeJwt } from "jose";
 import { createDiscordAuthOptions } from "./discord-auth-options.js";
 
 const DISCORD_EMAIL = "discord-user@example.com";
+
 const DISCORD_A = "123456789012345671";
+
 const DISCORD_B = "123456789012345672";
+
 const DISCORD_C = "123456789012345673";
 
 const createDiscordProfile = ({
@@ -126,6 +129,7 @@ describe("Discord OAuth identity", () => {
       mock((input: URL | RequestInfo) => {
         const requestURL =
           input instanceof Request ? input.url : input.toString();
+
         const parsedRequestURL = new URL(requestURL);
 
         if (requestURL === "https://discord.com/api/oauth2/token") {
@@ -162,6 +166,7 @@ describe("Discord OAuth identity", () => {
   const signInWithDiscord = async (profile: DiscordProfile) => {
     activeDiscordProfile = profile;
     const authHeaders = new Headers();
+
     const signInResponse = await instance.client.signIn.social({
       provider: "discord",
       callbackURL: "/",
@@ -171,6 +176,7 @@ describe("Discord OAuth identity", () => {
         },
       },
     });
+
     const authorizationURL = new URL(signInResponse.data?.url ?? "");
     const state = authorizationURL.searchParams.get("state") ?? "";
     let callbackLocation = "";
@@ -218,6 +224,7 @@ describe("Discord OAuth identity", () => {
     const session = await instance.auth.api.getSession({
       headers: result.authHeaders,
     });
+
     expect(session?.user.discordId).toBe(DISCORD_A);
   });
 
@@ -225,47 +232,60 @@ describe("Discord OAuth identity", () => {
     const first = await signInWithDiscord(
       createDiscordProfile({ id: DISCORD_A }),
     );
+
     const second = await signInWithDiscord(
       createDiscordProfile({ id: DISCORD_B }),
     );
 
     expect(second.session?.user.id).toBe(first.session?.user.id);
     expect(second.session?.user.discordId).toBe(DISCORD_B);
+
     const firstSessionAfterSwitch = await instance.auth.api.getSession({
       headers: first.authHeaders,
     });
+
     expect(firstSessionAfterSwitch?.user.discordId).toBe(DISCORD_B);
     expect(
       await instance.auth.api.listSessions({ headers: second.authHeaders }),
     ).toHaveLength(2);
+
     const accountsAfterSwitch = await instance.auth.api.listUserAccounts({
       headers: second.authHeaders,
     });
+
     const activeAccount = accountsAfterSwitch.find(
       ({ accountId }) => accountId === DISCORD_B,
     );
+
     expect(activeAccount).toBeDefined();
+
     if (!second.session || !activeAccount) {
       throw new Error("Expected an active Discord session and account");
     }
+
     const activeToken = await instance.auth.api.getAccessToken({
       body: {
         userId: second.session.user.id,
         accountId: activeAccount.id,
       },
     });
+
     expect(activeToken.accessToken).toBe(`access-token-${DISCORD_B}`);
+
     const jwtResponse = await instance.auth.api.getToken({
       headers: second.authHeaders,
     });
+
     expect(decodeJwt(jwtResponse.token).discordId).toBe(DISCORD_B);
 
     const third = await signInWithDiscord(
       createDiscordProfile({ id: DISCORD_C }),
     );
+
     const switchedBack = await signInWithDiscord(
       createDiscordProfile({ id: DISCORD_A }),
     );
+
     expect(third.session?.user.id).toBe(first.session?.user.id);
     expect(third.session?.user.discordId).toBe(DISCORD_C);
     expect(switchedBack.session?.user.id).toBe(first.session?.user.id);
@@ -274,6 +294,7 @@ describe("Discord OAuth identity", () => {
     const linkedAccounts = await instance.auth.api.listUserAccounts({
       headers: switchedBack.authHeaders,
     });
+
     expect(linkedAccounts.map(({ accountId }) => accountId).sort()).toEqual([
       DISCORD_A,
       DISCORD_B,
@@ -285,6 +306,7 @@ describe("Discord OAuth identity", () => {
     const first = await signInWithDiscord(
       createDiscordProfile({ id: DISCORD_A }),
     );
+
     const second = await signInWithDiscord(
       createDiscordProfile({
         id: DISCORD_B,
@@ -298,6 +320,7 @@ describe("Discord OAuth identity", () => {
 
   it("does not link an unverified Discord account by matching email", async () => {
     await signInWithDiscord(createDiscordProfile({ id: DISCORD_A }));
+
     const second = await signInWithDiscord(
       createDiscordProfile({
         id: DISCORD_B,

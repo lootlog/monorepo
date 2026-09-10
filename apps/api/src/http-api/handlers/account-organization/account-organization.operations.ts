@@ -150,6 +150,7 @@ const validateGuildConfiguration = (
   ) {
     return invalidReservationRange();
   }
+
   if (payload.vanityUrl && RESTRICTED_VANITY_URLS.includes(payload.vanityUrl)) {
     return new InvalidRequestError({
       message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
@@ -162,6 +163,7 @@ const validateGuildConfigurationAgainstStored = (
   stored: typeof guildTable.$inferSelect | undefined,
 ) => {
   if (!stored) return;
+
   if (
     (payload.reservationMinDurationMinutes !== undefined &&
       payload.reservationMaxDurationMinutes === undefined &&
@@ -182,25 +184,33 @@ const buildGuildConfigurationUpdate = (
   const update: Partial<typeof guildTable.$inferInsert> = {
     updatedAt: new Date(),
   };
+
   if (Object.hasOwn(payload, "vanityUrl")) {
     update.vanityUrl = generateSlug(payload.vanityUrl ?? undefined);
   }
+
   if (payload.publicStatsCardEnabled !== undefined)
     update.publicStatsCardEnabled = payload.publicStatsCardEnabled;
+
   if (payload.reservationMaxDurationMinutes !== undefined)
     update.reservationMaxDurationMinutes =
       payload.reservationMaxDurationMinutes;
+
   if (payload.reservationMinDurationMinutes !== undefined)
     update.reservationMinDurationMinutes =
       payload.reservationMinDurationMinutes;
+
   if (payload.reservationTimeGranularityMinutes !== undefined)
     update.reservationTimeGranularityMinutes =
       payload.reservationTimeGranularityMinutes;
+
   if (payload.reservationMaxAdvanceDays !== undefined)
     update.reservationMaxAdvanceDays = payload.reservationMaxAdvanceDays;
+
   if (payload.reservationActiveLimitPerSpot !== undefined)
     update.reservationActiveLimitPerSpot =
       payload.reservationActiveLimitPerSpot;
+
   return update;
 };
 
@@ -225,6 +235,7 @@ export class GuildConfigurationData extends Context.Service<
               (cause) => new AccountOrganizationOperationError({ cause }),
             ),
           );
+
         return GuildConfigurationData.of({
           getGuildById: (idOrVanityUrl) =>
             operation(
@@ -233,6 +244,7 @@ export class GuildConfigurationData extends Context.Service<
                   cache,
                   idOrVanityUrl,
                 );
+
                 if (cached) return cached;
 
                 const rows = yield* database
@@ -248,7 +260,9 @@ export class GuildConfigurationData extends Context.Service<
                     ),
                   )
                   .limit(1);
+
                 const guild = rows[0];
+
                 if (!guild) {
                   return yield* Effect.fail(
                     new ResourceNotFoundError({
@@ -258,6 +272,7 @@ export class GuildConfigurationData extends Context.Service<
                 }
 
                 yield* writeGuildConfigurationCache(cache, guild);
+
                 return guild;
               }),
             ),
@@ -265,6 +280,7 @@ export class GuildConfigurationData extends Context.Service<
             operation(
               Effect.gen(function* () {
                 const validationError = validateGuildConfiguration(payload);
+
                 if (validationError) return yield* Effect.fail(validationError);
 
                 const oldRows = yield* database
@@ -272,9 +288,12 @@ export class GuildConfigurationData extends Context.Service<
                   .from(guildTable)
                   .where(eq(guildTable.id, guildId))
                   .limit(1);
+
                 const oldGuild = oldRows[0];
+
                 const storedValidationError =
                   validateGuildConfigurationAgainstStored(payload, oldGuild);
+
                 if (storedValidationError) {
                   return yield* Effect.fail(storedValidationError);
                 }
@@ -284,7 +303,9 @@ export class GuildConfigurationData extends Context.Service<
                   .set(buildGuildConfigurationUpdate(payload))
                   .where(eq(guildTable.id, guildId))
                   .returning();
+
                 const guild = updatedRows[0];
+
                 if (!guild) {
                   return yield* Effect.fail(
                     new ResourceNotFoundError({
@@ -292,6 +313,7 @@ export class GuildConfigurationData extends Context.Service<
                     }),
                   );
                 }
+
                 yield* Effect.all([
                   cache.del(getGuildCacheKey(guildId)),
                   ...(oldGuild?.vanityUrl &&
@@ -299,6 +321,7 @@ export class GuildConfigurationData extends Context.Service<
                     ? [cache.del(getGuildCacheKey(oldGuild.vanityUrl))]
                     : []),
                 ]);
+
                 return guild;
               }).pipe(
                 Effect.withSpan("guild-configuration.update.persistence", {
@@ -376,11 +399,13 @@ export const toAccountOrganizationHttpResponse = <A, R>(
     AccountOrganizationOperationError: (error) => {
       const cause = error.cause;
       let databaseCause: unknown;
+
       if (cause instanceof EffectDrizzleQueryError) {
         databaseCause = Cause.isCause(cause.cause)
           ? Cause.squash(cause.cause)
           : cause.cause;
       }
+
       if (
         databaseCause instanceof SqlError &&
         Predicate.isTagged(databaseCause.reason, "UniqueViolation") &&
@@ -392,6 +417,7 @@ export const toAccountOrganizationHttpResponse = <A, R>(
           }),
         );
       }
+
       return applicationErrorResponse(cause);
     },
   });
@@ -400,6 +426,7 @@ export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
   function* () {
     const current = yield* identity;
     yield* data((service) => service.deleteAccount(current));
+
     return yield* decode(StatusOk, { status: "OK" });
   },
 );
@@ -407,9 +434,11 @@ export const deleteCurrentAccount = Effect.fn("deleteCurrentAccount")(
 export const getCurrentUserPreferences = Effect.fn("getCurrentUserPreferences")(
   function* () {
     const current = yield* identity;
+
     const value = yield* data((service) =>
       service.getUserPreferences(current.userId),
     );
+
     return yield* decode(UserPreferencesResponse, value);
   },
 );
@@ -418,20 +447,24 @@ export const updateCurrentUserPreferences = Effect.fn(
   "updateCurrentUserPreferences",
 )(function* (payload: UpdateUserPreferencesRequest) {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.updateUserPreferences(current.userId, payload),
   );
+
   return yield* decode(UserPreferencesResponse, value);
 });
 
 export const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(
   function* (accessibleOnly = false) {
     const current = yield* identity;
+
     const value = yield* data((service) =>
       accessibleOnly
         ? service.getCurrentUserAccessibleGuilds(current)
         : service.getCurrentUserGuilds(current),
     );
+
     return yield* decode(
       accessibleOnly
         ? CurrentOrganizationsResponse
@@ -445,9 +478,11 @@ export const getCurrentUserGamePreferences = Effect.fn(
   "getCurrentUserGamePreferences",
 )(function* (accountId: string) {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.getUserGameAccountPreferences(current.userId, accountId),
   );
+
   return yield* decode(UserGameAccountPreferencesResponse, value);
 });
 
@@ -458,6 +493,7 @@ export const updateCurrentUserGamePreferences = Effect.fn(
   payload: UpdateUserGameAccountPreferencesRequest,
 ) {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.updateUserGameAccountPreferences(
       current.userId,
@@ -465,15 +501,18 @@ export const updateCurrentUserGamePreferences = Effect.fn(
       payload,
     ),
   );
+
   return yield* decode(UserGameAccountPreferencesResponse, value);
 });
 
 export const legacyCurrentGuildList = Effect.fn("legacyCurrentGuildList")(
   function* (source?: string) {
     const current = yield* identity;
+
     const value = yield* data((service) =>
       service.getUserGuilds(current, source),
     );
+
     return yield* decode(UserOrganizationsResponse, value);
   },
 );
@@ -482,9 +521,11 @@ export const currentGuildPermissionsList = Effect.fn(
   "currentGuildPermissionsList",
 )(function* () {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.getUserGuildsWithPermissions(current),
   );
+
   return yield* decode(UserOrganizationPermissionsResponse, value);
 });
 
@@ -492,9 +533,11 @@ export const manageableCurrentGuildList = Effect.fn(
   "manageableCurrentGuildList",
 )(function* () {
   const current = yield* identity;
+
   const value = yield* data((service) =>
     service.getManageableUserGuilds(current),
   );
+
   return yield* decode(ManageableOrganizationsResponse, value);
 });
 
@@ -502,9 +545,11 @@ export const guildRead = Effect.fn("guildRead")(function* (guildId: string) {
   const authorized = yield* authorizeGuild(guildId, [
     Permission.LOOTLOG_ACCESS,
   ]);
+
   const value = yield* guildConfigurationData((service) =>
     service.getGuildById(authorized.guildId),
   );
+
   return yield* decode(OrganizationSummary, value);
 });
 
@@ -515,9 +560,11 @@ export const updateGuildConfiguration = Effect.fn(
     Permission.OWNER,
     Permission.ADMIN,
   ]);
+
   const value = yield* guildConfigurationData((service) =>
     service.updateGuildConfig(authorized.guildId, payload),
   );
+
   return yield* decode(OrganizationSummary, value);
 });
 
@@ -526,9 +573,11 @@ export const guildWorlds = Effect.fn("GuildsControllerGetWorldsByGuildId")(
     const authorized = yield* authorizeGuild(guildId, [
       Permission.LOOTLOG_ACCESS,
     ]);
+
     const value = yield* guildConfigurationData((service) =>
       service.getWorldsByGuildId(authorized.guildId),
     );
+
     return yield* decode(OrganizationWorldsResponse, value);
   },
 );
@@ -539,6 +588,7 @@ export const guildPermissions = Effect.fn("guildPermissions")(function* (
   const authorized = yield* authorizeGuild(guildId, [
     Permission.LOOTLOG_ACCESS,
   ]);
+
   return yield* decode(
     OrganizationCapabilitiesResponse,
     authorized.permissions,
@@ -553,12 +603,15 @@ export const guildDiscordSync = Effect.fn("guildDiscordSync")(function* (
     Permission.OWNER,
     Permission.ADMIN,
   ]);
+
   const value = yield* data((service) =>
     refresh
       ? service.refreshGuildDiscordSync(authorized.guildId)
       : service.getGuildDiscordSyncStatus(authorized.guildId),
   );
+
   const encoded = encodeUnknownResponse(DiscordGuildSyncStateCodec, value);
+
   return yield* decode(DiscordGuildSyncStateSchema, encoded);
 });
 

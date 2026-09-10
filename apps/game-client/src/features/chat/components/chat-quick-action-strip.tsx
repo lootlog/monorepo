@@ -24,6 +24,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
   const [creatingParty, setCreatingParty] = useState(false);
   const [open, setOpen] = useState(false);
   const disabled = !guildId || isPending;
+
   const actions = [
     {
       key: "chat-position",
@@ -48,6 +49,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
       run: async () => {
         if (!guildId) return;
         setCreatingParty(true);
+
         try {
           await handlePartyCommand(undefined, [guildId]);
         } finally {
@@ -58,6 +60,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
       shortcut: "",
     },
   ] as const;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <Tooltip>

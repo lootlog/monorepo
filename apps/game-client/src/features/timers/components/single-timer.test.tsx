@@ -22,16 +22,20 @@ import { TimerClockProvider } from "./timer-clock-provider";
 import { SingleTimer } from "./single-timer";
 
 const NOW = new Date("2026-04-22T10:00:00.000Z").getTime();
+
 const resetStore = () =>
   useTimersStore.setState(useTimersStore.getInitialState(), true);
+
 beforeEach(() => {
   resetStore();
   vi.spyOn(Date, "now").mockReturnValue(NOW);
 });
+
 afterEach(() => {
   resetStore();
   vi.restoreAllMocks();
 });
+
 const createTimer = () => ({
   ...createTimerFixture({
     minSpawnTime: new Date(NOW + 5000).toISOString(),
@@ -63,6 +67,7 @@ describe("SingleTimer", () => {
       },
     });
     const timer = createTimer();
+
     const content = (capabilities: Permission[]) => (
       <QueryClientProvider client={fixture.queryClient}>
         <TimerClockProvider>
@@ -76,12 +81,14 @@ describe("SingleTimer", () => {
         </TimerClockProvider>
       </QueryClientProvider>
     );
+
     const view = render(
       content([
         Permission.LOOTLOG_TIMERS_DELETE,
         Permission.LOOTLOG_TIMERS_RESET,
       ]),
     );
+
     onTestFinished(() => {
       view.unmount();
       fixture.cleanup();
@@ -131,6 +138,7 @@ describe("SingleTimer", () => {
         countdownMode: "max",
       },
     });
+
     const view = render(
       <QueryClientProvider client={fixture.queryClient}>
         <TimerClockProvider>
@@ -145,6 +153,7 @@ describe("SingleTimer", () => {
         </TimerClockProvider>
       </QueryClientProvider>,
     );
+
     onTestFinished(() => {
       view.unmount();
       fixture.cleanup();

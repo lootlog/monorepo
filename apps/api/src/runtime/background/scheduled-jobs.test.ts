@@ -17,6 +17,7 @@ describe("scheduled jobs", () => {
       yield* TestClock.adjust("1 minute");
       yield* Effect.yieldNow;
       const afterFirstTick = yield* Ref.get(count);
+
       return { beforeFirstTick, afterFirstTick };
     }).pipe(
       Effect.scoped,

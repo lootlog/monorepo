@@ -18,8 +18,10 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
   const matches = useMatches();
   const navigate = useNavigate();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+
   const [headerActionsElement, setHeaderActionsElement] =
     useState<HTMLElement | null>(null);
+
   const navigationInfo = resolveAppNavigation({ matches });
   const parentPath = navigationInfo.parentPath;
 

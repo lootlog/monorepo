@@ -10,6 +10,7 @@ describe("UpdateOrganizationConfigRequest", () => {
     });
 
     expect(Result.isFailure(result)).toBe(true);
+
     if (Result.isSuccess(result)) return;
     expect(String(result.failure)).toContain(
       ErrorKey.GUILDS_RESERVATION_TIME_GRANULARITY_INVALID,

@@ -1,4 +1,5 @@
 const DEFAULT_CHANNEL = "regular";
+
 const DEFAULT_MAX_CACHED_AUDIO = 16;
 
 export type AudioPlaybackRequest = {
@@ -40,6 +41,7 @@ export const createAudioPlaybackPool = (
     1,
     options.maxCachedAudio ?? DEFAULT_MAX_CACHED_AUDIO,
   );
+
   const audioByCacheKey = new Map<string, CachedAudio>();
   const activeAudioByCacheKey = new Map<string, HTMLAudioElement>();
 
@@ -48,15 +50,18 @@ export const createAudioPlaybackPool = (
 
   const removeCachedAudio = (cacheKey: string, cachedAudio: CachedAudio) => {
     audioByCacheKey.delete(cacheKey);
+
     if (activeAudioByCacheKey.get(cacheKey) === cachedAudio.audio) {
       activeAudioByCacheKey.delete(cacheKey);
     }
+
     releaseAudio(cachedAudio.audio);
   };
 
   const enforceCacheLimit = () => {
     while (audioByCacheKey.size > maxCachedAudio) {
       const oldestEntry = audioByCacheKey.entries().next().value;
+
       if (!oldestEntry) return;
       removeCachedAudio(oldestEntry[0], oldestEntry[1]);
     }
@@ -65,9 +70,11 @@ export const createAudioPlaybackPool = (
   const getOrCreateAudio = (url: string, channel: string) => {
     const cacheKey = getCacheKey(channel, url);
     const cachedAudio = audioByCacheKey.get(cacheKey);
+
     if (cachedAudio) {
       audioByCacheKey.delete(cacheKey);
       audioByCacheKey.set(cacheKey, cachedAudio);
+
       return cachedAudio.audio;
     }
 
@@ -76,6 +83,7 @@ export const createAudioPlaybackPool = (
     audio.load();
     audioByCacheKey.set(cacheKey, { audio });
     enforceCacheLimit();
+
     return audio;
   };
 
@@ -92,6 +100,7 @@ export const createAudioPlaybackPool = (
   }: AudioPlaybackRequest) => {
     const cacheKey = getCacheKey(channel, url);
     const activeAudio = activeAudioByCacheKey.get(cacheKey);
+
     if (activeAudio) {
       activeAudio.pause();
       resetPlaybackPosition(activeAudio);
@@ -108,6 +117,7 @@ export const createAudioPlaybackPool = (
         activeAudioByCacheKey.delete(cacheKey);
       }
     };
+
     audio.play().catch(() => {});
   };
 
@@ -115,6 +125,7 @@ export const createAudioPlaybackPool = (
     for (const cachedAudio of audioByCacheKey.values()) {
       releaseAudio(cachedAudio.audio);
     }
+
     audioByCacheKey.clear();
     activeAudioByCacheKey.clear();
   };

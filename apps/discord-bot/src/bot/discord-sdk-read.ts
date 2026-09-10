@@ -24,9 +24,11 @@ export const discordSdkRead = <A>(
   execute: () => Promise<A>,
 ): Effect.Effect<A, DiscordSdkReadFailure> => {
   let retryCount = 0;
+
   return Effect.suspend(() => {
     const currentRetryCount = retryCount;
     retryCount += 1;
+
     return Effect.tryPromise({
       try: execute,
       catch: (cause) =>

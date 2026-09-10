@@ -27,6 +27,7 @@ import { InvalidRequestError } from "#src/shared/http/http-errors";
 const MAX_NPCS_PER_RULE = 5;
 
 type RuleInput = CreateNotificationRuleRequest | UpdateNotificationRuleRequest;
+
 type ExistingRule = {
   readonly triggerType: NotificationTriggerTypeValue;
   readonly world: string | null;
@@ -59,8 +60,11 @@ const isScheduledMessage = (triggerType: NotificationTriggerTypeValue) =>
 
 const validateNpcSelection = (data: RuleInput) => {
   const npcIds = new Set<number>();
+
   if (data.npcId !== undefined && data.npcId !== null) npcIds.add(data.npcId);
+
   for (const npcId of data.npcIds ?? []) npcIds.add(npcId);
+
   if (npcIds.size > MAX_NPCS_PER_RULE) {
     throw new InvalidRequestError({
       message: NotificationError.NOTIFICATION_RULE_MAX_NPCS_EXCEEDED,
@@ -71,16 +75,22 @@ const validateNpcSelection = (data: RuleInput) => {
 
 const buildFilters = (data: RuleInput): JsonObject => {
   const filters: JsonObject = {};
+
   if (data.npcId !== undefined) filters.npcId = data.npcId;
+
   if (data.npcIds !== undefined) filters.npcIds = [...data.npcIds];
+
   if (data.itemId !== undefined) filters.itemId = data.itemId;
+
   if (data.itemIds !== undefined) filters.itemIds = [...data.itemIds];
+
   return filters;
 };
 
 const normalizeContentTemplate = (value?: string | null) => {
   if (value === undefined || value === null) return null;
   const trimmed = value.trim();
+
   return trimmed.length > 0 ? trimmed : null;
 };
 
@@ -96,6 +106,7 @@ const scheduleConfig = (
       scheduleOffsetMinutes: null,
     };
   }
+
   if (triggerType !== NotificationTriggerType.TIMER_BEFORE_SPAWN) {
     return {
       scheduleStrategy: null,
@@ -103,15 +114,19 @@ const scheduleConfig = (
       scheduleOffsetMinutes: null,
     };
   }
+
   const strategy = data.scheduleStrategy ?? existing?.scheduleStrategy ?? null;
   const anchor = data.scheduleAnchor ?? existing?.scheduleAnchor ?? null;
+
   const offset =
     data.scheduleOffsetMinutes ?? existing?.scheduleOffsetMinutes ?? null;
+
   if (strategy !== NotificationScheduleStrategy.SPAWN_WINDOW_RELATIVE) {
     throw new InvalidRequestError(
       NotificationError.TIMER_NOTIFICATION_REQUIRES_SPAWN_WINDOW_RELATIVE_STRATEGY,
     );
   }
+
   if (
     anchor !== NotificationScheduleAnchor.MIN_SPAWN &&
     anchor !== NotificationScheduleAnchor.MAX_SPAWN
@@ -120,11 +135,13 @@ const scheduleConfig = (
       NotificationError.TIMER_NOTIFICATION_REQUIRES_VALID_SCHEDULE_ANCHOR,
     );
   }
+
   if (offset === null || offset < 0) {
     throw new InvalidRequestError(
       NotificationError.TIMER_NOTIFICATION_REQUIRES_NON_NEGATIVE_SCHEDULE_OFFSET,
     );
   }
+
   return {
     scheduleStrategy: strategy,
     scheduleAnchor: anchor,
@@ -138,14 +155,17 @@ const scheduleTimezone = (
   existing?: string | null,
 ) => {
   const normalized = provided?.trim() ?? "";
+
   if (normalized.length > 0) {
     if (!isValidTimeZone(normalized)) {
       throw new InvalidRequestError(
         NotificationError.INVALID_NOTIFICATION_SCHEDULE_TIMEZONE,
       );
     }
+
     return normalized;
   }
+
   return (
     existing ??
     (ownerType === NotificationOwnerType.GUILD
@@ -158,6 +178,7 @@ const scheduledUntil = (data: RuleInput, existing?: ExistingRule) => {
   if (!Object.hasOwn(data, "scheduledUntil")) {
     return existing?.scheduledUntil ?? null;
   }
+
   return data.scheduledUntil ? new Date(data.scheduledUntil) : null;
 };
 
@@ -172,6 +193,7 @@ const firstScheduledOccurrence = (options: {
   const scheduledAt = options.data.scheduledAt
     ? new Date(options.data.scheduledAt)
     : (options.existing?.scheduledAt ?? null);
+
   if (
     scheduledAt ||
     !isRecurringScheduleInterval(options.intervalType) ||
@@ -180,6 +202,7 @@ const firstScheduledOccurrence = (options: {
   ) {
     return scheduledAt;
   }
+
   return calculateFirstOccurrenceInTimeZone({
     intervalType: options.intervalType,
     timeOfDay: options.timeOfDay,
@@ -204,32 +227,39 @@ const scheduledMessageFields = (
       scheduleTimezone: null,
     };
   }
+
   const intervalType = firstNonNullish(
     NotificationScheduleIntervalType.ONCE,
     data.scheduleIntervalType,
     existing?.scheduleIntervalType,
   );
+
   const intervalValue = firstNonNullish<number | null>(
     null,
     data.scheduleIntervalValue,
     existing?.scheduleIntervalValue,
   );
+
   const weekday = firstNonNullish<number | null>(
     null,
     data.scheduleWeekday,
     existing?.scheduleWeekday,
   );
+
   const timeOfDay = firstNonNullish<string | null>(
     null,
     data.scheduleTimeOfDay,
     existing?.scheduleTimeOfDay,
   );
+
   const until = scheduledUntil(data, existing);
+
   const timezone = scheduleTimezone(
     ownerType,
     data.scheduleTimezone,
     existing?.scheduleTimezone,
   );
+
   if (
     ownerType === NotificationOwnerType.USER &&
     isRecurringScheduleInterval(intervalType) &&
@@ -239,6 +269,7 @@ const scheduledMessageFields = (
       NotificationError.RECURRING_USER_SCHEDULED_MESSAGES_REQUIRE_TIMEZONE,
     );
   }
+
   const scheduledAt = firstScheduledOccurrence({
     data,
     existing,
@@ -247,6 +278,7 @@ const scheduledMessageFields = (
     weekday,
     timezone,
   });
+
   return {
     scheduledAt,
     scheduleIntervalType: intervalType,
@@ -265,7 +297,9 @@ export const createNotificationRuleValues = (
 ) => {
   const triggerType = data.triggerType;
   const scheduled = isScheduledMessage(triggerType);
+
   if (!scheduled) validateNpcSelection(data);
+
   return {
     ownerType,
     ownerId,
@@ -289,21 +323,27 @@ export const updateNotificationRuleValues = (
 ) => {
   const triggerType = data.triggerType ?? existing.triggerType;
   const scheduled = isScheduledMessage(triggerType);
+
   if (!scheduled) validateNpcSelection(data);
+
   const hasFilterUpdate =
     data.npcId !== undefined ||
     data.npcIds !== undefined ||
     data.itemId !== undefined ||
     data.itemIds !== undefined;
+
   let world = existing.world;
   let filters = existing.filters;
+
   if (scheduled) {
     world = null;
     filters = null;
   } else {
     if (Object.hasOwn(data, "world")) world = data.world ?? null;
+
     if (hasFilterUpdate) filters = buildFilters(data);
   }
+
   return {
     triggerType,
     world,

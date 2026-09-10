@@ -52,6 +52,7 @@ export const ScoringModeSelector = ({
       {modes.map((mode) => {
         const isActive = value === mode.value;
         const Icon = mode.icon;
+
         return (
           <FieldLabel key={mode.value} className="cursor-pointer">
             <Field

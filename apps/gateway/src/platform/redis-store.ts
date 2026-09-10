@@ -66,6 +66,7 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
     ),
   }),
 );
+
 const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
   FederatedRealtimeMessageJson,
 );
@@ -105,9 +106,11 @@ export class RedisGatewayStore {
         ...keysAndArgs: ReadonlyArray<string | number>
       ) => {
         const descriptor = scripts.get<A>(script, numberOfKeys);
+
         const parameters = keysAndArgs.map((value, index) =>
           index < numberOfKeys ? prefix(String(value)) : String(value),
         );
+
         return run(redis.eval(descriptor)(...parameters));
       },
       flushdb: () => run(redis.send("FLUSHDB")),
@@ -133,19 +136,25 @@ export class RedisGatewayStore {
     listener: (message: FederatedRealtimeMessage) => void,
   ): Promise<void> {
     let markReady: () => void = () => undefined;
+
     const ready = new Promise<void>((resolve) => {
       markReady = resolve;
     });
+
     const redis = this.redis;
     const channel = this.channel;
+
     const consume = Effect.scoped(
       Effect.gen(function* () {
         const messages = yield* redis.subscribe(channel);
         yield* Effect.sync(markReady);
+
         while (true) {
           const { message: raw } = yield* Queue.take(messages);
+
           try {
             const message = decodeFederatedRealtimeMessage(raw);
+
             if (
               message.frame !== undefined ||
               message.control?.type === "permissions.rebalance"
@@ -165,6 +174,7 @@ export class RedisGatewayStore {
         ]),
       ),
     );
+
     this.runBackground("redis.subscription", consume);
     await ready;
   }

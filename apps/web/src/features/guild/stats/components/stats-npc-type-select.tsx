@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
+
 export function StatsNpcTypeSelect({
   value,
   onValueChange,
@@ -15,6 +16,7 @@ export function StatsNpcTypeSelect({
   onValueChange: (value: string | null) => void;
 }) {
   const { t } = useTranslation();
+
   return (
     <Select
       value={value ?? "ALL"}

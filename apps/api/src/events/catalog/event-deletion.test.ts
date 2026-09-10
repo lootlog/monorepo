@@ -17,6 +17,7 @@ describe("event deletion Effect module", () => {
       const pending = mock(() => Promise.resolve([]));
       const delayed = mock(() => Promise.resolve([]));
       const boundary = await createDatabaseBoundary();
+
       try {
         if (hasHiddenHero) {
           await boundary.run(
@@ -45,6 +46,7 @@ describe("event deletion Effect module", () => {
             }),
           );
         }
+
         const removeEvent = makeEventDeletion(
           boundary.database,
           {

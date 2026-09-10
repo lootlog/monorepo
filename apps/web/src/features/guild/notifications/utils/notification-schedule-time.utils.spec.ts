@@ -9,6 +9,7 @@ import {
 describe("notificationScheduleTimeUtils", () => {
   it("round-trips summer datetimes for the guild timezone", () => {
     const isoString = "2026-05-10T10:30:00.000Z";
+
     const inputValue = formatDateTimeLocalInputValue(
       isoString,
       GUILD_NOTIFICATION_TIMEZONE,
@@ -25,6 +26,7 @@ describe("notificationScheduleTimeUtils", () => {
 
   it("round-trips winter datetimes for the guild timezone", () => {
     const isoString = "2026-01-10T10:30:00.000Z";
+
     const inputValue = formatDateTimeLocalInputValue(
       isoString,
       GUILD_NOTIFICATION_TIMEZONE,

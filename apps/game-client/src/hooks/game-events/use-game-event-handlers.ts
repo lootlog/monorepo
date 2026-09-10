@@ -8,7 +8,9 @@ import { useOtherCatchingGuildGlow } from "./use-other-catching-guild-glow";
 import { useWhoIsHereLootlogHighlight } from "./use-who-is-here-lootlog-highlight";
 
 let activeDispatcher: EventDispatcher | null = null;
+
 let activeDispatcherConsumers = 0;
+
 let initialEventsHandled = false;
 
 const acquireEventDispatcher = () => {
@@ -25,6 +27,7 @@ const acquireEventDispatcher = () => {
 
     released = true;
     activeDispatcherConsumers -= 1;
+
     if (activeDispatcherConsumers > 0) return;
 
     activeDispatcher?.cleanup();

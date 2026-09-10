@@ -29,6 +29,7 @@ describe("UnderBagTimers", () => {
       ?.addEventListener("wheel", wheelListener);
 
     const lootlogRoot = document.getElementById("lootlog-root");
+
     if (!lootlogRoot) throw new Error("Expected Lootlog root");
     render(
       <UnderBagTimers>
@@ -40,6 +41,7 @@ describe("UnderBagTimers", () => {
     expect(screen.getByText("TimersInPortal")).toBeVisible();
 
     const timersContainer = screen.getByText("TimersInPortal").parentElement;
+
     if (!timersContainer) throw new Error("Expected timers portal container");
     expect(timersContainer).toHaveClass("ll-theme-boundary", "dark-theme");
     expect(["4px", "calc(8px - 4px)"]).toContain(
@@ -63,6 +65,7 @@ describe("UnderBagTimers", () => {
     `;
 
     const lootlogRoot = document.getElementById("lootlog-root");
+
     if (!lootlogRoot) throw new Error("Expected Lootlog root");
     render(
       <UnderBagTimers>
@@ -100,6 +103,7 @@ describe("UnderBagTimers", () => {
     document.head.append(hostCursorStyle);
 
     const lootlogRoot = document.getElementById("lootlog-root");
+
     if (!lootlogRoot) throw new Error("Expected Lootlog root");
     render(
       <UnderBagTimers>

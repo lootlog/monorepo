@@ -55,12 +55,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const emitJoin = async () => {
       if (gameInitialized && connected) {
         const game = useGameStore.getState().game;
+
         if (!game) {
           return;
         }
 
         const { hero, world } = game;
         const { accountId, characterId } = hero;
+
         if (cancelled || !socket.connected) {
           return;
         }
@@ -97,11 +99,13 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const accessCache = createGameAccessCache(queryClient);
     const releaseChatPolicy = retainChatAccessPolicy(queryClient);
     const handleConnect = () => setConnected(true);
+
     const handleDisconnect = () => {
       setConnected(false);
       setJoined(false);
       setJoinedGuilds([]);
     };
+
     const handleJoin = (data: {
       status: "success" | "error";
       code?: string;
@@ -120,6 +124,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       // This ensures presence is sent even after browser refresh
       // (when town change event is not fired)
       const map = useGameStore.getState().game?.map;
+
       if (!map) {
         return;
       }
@@ -130,8 +135,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         isAfk: false,
       });
     };
+
     const handlePermissionsUpdated = (data: PermissionsUpdatedPayload) => {
       accessCache.apply(data);
+
       if (data.accessPolicy) {
         applyChatAccessPolicy(queryClient, data.accessPolicy);
         reconcileNotificationAccess(data.accessPolicy);
@@ -139,14 +146,17 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         applyLegacyChatAccessChange(queryClient);
         useNotificationsStore.getState().clearNotifications();
       }
+
       const updatedGuildIds = data.guilds?.map((guild) => guild.guild.id);
 
       if (!updatedGuildIds) {
         if (import.meta.env.DEV) {
           console.warn("[Gateway] No guilds data in permissions update");
         }
+
         setJoinedGuilds([]);
         setJoined(false);
+
         return;
       }
 
@@ -158,6 +168,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     const currentPolicy = socket.getAccessPolicy?.();
+
     if (currentPolicy)
       handlePermissionsUpdated({
         accessPolicy: currentPolicy,

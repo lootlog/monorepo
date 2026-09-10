@@ -12,9 +12,11 @@ import { useGlobalStore } from "@/store/global.store";
 export function usePartyReadyRoomObserver(): void {
   const ownedReadyRoom = usePartyFinderStore(selectOwnedReadyRoom);
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
+
   const readyRoomsSynchronized = usePartyFinderStore(
     (state) => state.readyRoomsSynchronized,
   );
+
   const { connected, joined } = useGlobalStore((state) => state.socketState);
   const partyMembers = usePartyStore((state) => state.members);
   const partyStatus = usePartyStore((state) => state.status);
@@ -22,12 +24,14 @@ export function usePartyReadyRoomObserver(): void {
 
   useEffect(() => {
     const currentCharacter = getCurrentReadyRoomCharacterIdentity();
+
     const isOrganizingCharacter =
       currentCharacter !== null &&
       currentCharacter.accountId ===
         ownedReadyRoom?.organizerCharacter.accountId &&
       currentCharacter.characterId ===
         ownedReadyRoom?.organizerCharacter.characterId;
+
     if (
       !ownedReadyRoom ||
       !connected ||
@@ -37,13 +41,16 @@ export function usePartyReadyRoomObserver(): void {
       !isOrganizingCharacter
     ) {
       lastReportedSnapshot.current = null;
+
       return;
     }
 
     const memberCharacterIds = [
       ...new Set(partyMembers.map(({ characterId }) => characterId)),
     ].sort();
+
     const snapshot = `${ownedReadyRoom.notificationId}:${memberCharacterIds.join(",")}`;
+
     if (lastReportedSnapshot.current === snapshot) return;
     lastReportedSnapshot.current = snapshot;
 

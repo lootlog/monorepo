@@ -22,14 +22,18 @@ function buildContext(params: {
 }): EvaluationContext {
   const respawnDurationSeconds = params.respawnDurationMin * 60;
   const maxRespawnDurationSeconds = params.maxRespawnDurationMin * 60;
+
   const derivedTrackingSeconds =
     (params.trackingPercent / 100) * respawnDurationSeconds;
+
   const trackingSeconds =
     params.trackingDurationSeconds ?? derivedTrackingSeconds;
+
   const derivedTimeOnMap = trackingSeconds * (1 - params.afkPercent / 100);
   const timeOnMapSeconds = params.timeOnMapSeconds ?? derivedTimeOnMap;
 
   const now = new Date();
+
   const killTime = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -39,6 +43,7 @@ function buildContext(params: {
     0,
     0,
   );
+
   const respawnStartTime = new Date(
     killTime.getTime() - respawnDurationSeconds * 1000,
   );
@@ -82,10 +87,13 @@ export function useScoringSimulator(scoringRules: EventScoringRules) {
   const [minutesSinceLeave, setMinutesSinceLeave] = useState(5);
   const [respawnDurationMin, setRespawnDurationMin] = useState(120);
   const [maxRespawnDurationMin, setMaxRespawnDurationMin] = useState(180);
+
   const [trackingDurationSecondsOverride, setTrackingDurationSecondsOverride] =
     useState<string>("");
+
   const [timeOnMapSecondsOverride, setTimeOnMapSecondsOverride] =
     useState<string>("");
+
   const [wasPresent, setWasPresent] = useState(true);
 
   const [ruleOverrides, setRuleOverrides] = useState<Record<string, boolean>>(

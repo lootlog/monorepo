@@ -16,6 +16,7 @@ import { RealtimeWire } from "@/test/realtime-wire";
 type SocketServerResponse =
   | Awaited<ReturnType<AppSocket["emitWithAck"]>>
   | { presences: BasicPresence[] };
+
 const mocks = {
   join: vi.fn<
     (
@@ -30,18 +31,26 @@ const mocks = {
       ) => Promise<SocketServerResponse>
     >(),
 };
+
 let wire: RealtimeWire;
+
 let restorePlatform = () => {};
+
 let proofAvailable = true;
+
 const proofRequests: Request[] = [];
+
 const sockets: AppSocket[] = [];
+
 const createSocket = () => {
   const socket = new AppSocket();
   sockets.push(socket);
   socket.connect();
   wire.open();
+
   return socket;
 };
+
 afterEach(() => {
   sockets.splice(0).forEach((socket) => socket.dispose());
   restorePlatform();
@@ -79,6 +88,7 @@ describe("game realtime verification and presence selection", () => {
     vi.spyOn(wire, "send").mockImplementation((bytes) => {
       originalSend(bytes);
       const frame = wire.frames[wire.frames.length - 1];
+
       if (
         !frame ||
         !("type" in frame) ||
@@ -87,18 +97,22 @@ describe("game realtime verification and presence selection", () => {
       )
         throw new Error("Expected request frame");
       const requestId = frame.requestId;
+
       const reply =
         frame.type === "session.join"
           ? mocks.join(frame.data)
           : mocks.request(frame.type, frame.data);
+
       void Promise.resolve(reply).then((data) =>
         wire.receive({ v: 1, requestId, status: "success", data }),
       );
     });
+
     const realtime = new RealtimeClient({
       url: "https://gateway.test",
       webSocketFactory: () => wire,
     });
+
     restorePlatform = configureGameClientPlatform({
       fetch: globalThis.fetch,
       createRealtime: () => realtime,
@@ -108,8 +122,10 @@ describe("game realtime verification and presence selection", () => {
       async (input: string | URL | Request, init?: RequestInit) => {
         const request = new Request(input, init);
         proofRequests.push(request);
+
         if (!proofAvailable) return new Response(null, { status: 503 });
         const token = new URLSearchParams(await request.text()).get("token");
+
         return Response.json({
           user_id: "20",
           token,
@@ -129,6 +145,7 @@ describe("game realtime verification and presence selection", () => {
     const socket = createSocket();
     const listener = vi.fn<(payload: PlayerPresenceUpdatePayload) => void>();
     socket.on(GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE, listener);
+
     const presence = {
       userId: "internal-user-1",
       discordId: "discord-1",
@@ -140,6 +157,7 @@ describe("game realtime verification and presence selection", () => {
       lastSeen: 1,
       organizationIds: ["organization-1"],
     };
+
     mocks.request.mockResolvedValueOnce({ presences: [presence] });
     await expect(
       socket.emitWithAck(GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, {
@@ -148,6 +166,7 @@ describe("game realtime verification and presence selection", () => {
     ).resolves.toMatchObject({
       players: { "discord-1": [{ discordId: "discord-1" }] },
     });
+
     const events: ServerEvent[] = [
       {
         v: 1,
@@ -184,9 +203,11 @@ describe("game realtime verification and presence selection", () => {
         },
       },
     ];
+
     for (const event of events) wire.receive(event);
     await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(3));
     expect(listener).toHaveBeenCalledTimes(3);
+
     for (const [payload] of listener.mock.calls)
       expect(payload).toMatchObject({
         discordId: "discord-1",
@@ -312,16 +333,19 @@ describe("game realtime verification and presence selection", () => {
       pingId: "ping-1",
       extension: { sequence: 1 },
     };
+
     const subscriptionAck = {
       status: "accepted" as const,
       requestId: "air-request-1",
       scopes: [],
     };
+
     const observationAck = {
       status: "accepted" as const,
       acceptedScopes: 1,
       acceptedTargets: 2,
     };
+
     mocks.request
       .mockResolvedValueOnce(mapAck)
       .mockResolvedValueOnce(subscriptionAck)
@@ -371,8 +395,10 @@ describe("game realtime verification and presence selection", () => {
       }),
     );
     const socket = createSocket();
+
     const acknowledgement =
       vi.fn<(error: Error | null, response?: SocketServerResponse) => void>();
+
     socket
       .timeout(5)
       .emit(
@@ -395,14 +421,17 @@ describe("game realtime verification and presence selection", () => {
       new Promise<SocketServerResponse>(() => {}),
     );
     const socket = createSocket();
+
     const result = socket.emitWithAck(GatewayEvent.MAP_PING_SEND, {
       expectedMapId: 7,
       type: "enemy",
       x: 1,
       y: 2,
     });
+
     await vi.waitFor(() => expect(wire.frames).toHaveLength(1));
     const frame = wire.frames[0];
+
     if (!frame || !("requestId" in frame) || !frame.requestId)
       throw new Error("Missing request");
     wire.receive({

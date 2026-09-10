@@ -17,19 +17,24 @@ const dismissedCharactersSchema = z.record(z.string(), z.boolean());
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
 type DismissedCharacters = Record<string, boolean>;
+
 const DEFAULT_DISMISSED_CHARACTERS: DismissedCharacters = {};
 
 export const CatchingWhitelistWarning: FC = () => {
   const { t } = useTranslation(["catchingWhitelistWarning", "common"]);
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
+
   const queryKey =
     getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
       accountId,
     });
+
   const windowState = useWindowsStore(
     (state) => state["catching-whitelist-warning"],
   );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const { data: lootlogCharactersConfig, isSuccess } =
     useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
       { accountId },
@@ -42,9 +47,11 @@ export const CatchingWhitelistWarning: FC = () => {
         },
       },
     );
+
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const [
     dismissedCharacters = DEFAULT_DISMISSED_CHARACTERS,
     setDismissedCharacters,
@@ -53,6 +60,7 @@ export const CatchingWhitelistWarning: FC = () => {
     DEFAULT_DISMISSED_CHARACTERS,
     dismissedCharactersSchema,
   );
+
   const checkedCharacterIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
@@ -66,6 +74,7 @@ export const CatchingWhitelistWarning: FC = () => {
 
     if (dismissedCharacters[characterId]) {
       checkedCharacterIdsRef.current.add(characterId);
+
       return;
     }
 
@@ -92,6 +101,7 @@ export const CatchingWhitelistWarning: FC = () => {
         [characterId]: true,
       });
     }
+
     setOpen("catching-whitelist-warning", false);
   };
 

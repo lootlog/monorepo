@@ -13,10 +13,12 @@ import {
   type ApiKey,
 } from "~/lib/key-client";
 import { portalText as t } from "~/lib/translations";
+
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
   timeZone: "Europe/Warsaw",
 });
+
 export function KeyRow({
   apiKey,
   onChange,
@@ -31,22 +33,28 @@ export function KeyRow({
   const [name, setName] = useState(apiKey.name);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   async function mutate(method: "PATCH" | "DELETE") {
     setPending(true);
     setError(null);
+
     try {
       const request: RequestInit = { method };
+
       if (method === "PATCH") request.body = JSON.stringify({ name });
       await keyRequest(`/${encodeURIComponent(apiKey.id)}`, request);
       await onChange();
     } catch (error) {
       setError(getKeyErrorMessage(error));
+
       if (method === "DELETE") throw error;
     } finally {
       setPending(false);
     }
   }
+
   const expired = !isApiKeyActive(apiKey, observedAt);
+
   return (
     <Card>
       <CardContent>

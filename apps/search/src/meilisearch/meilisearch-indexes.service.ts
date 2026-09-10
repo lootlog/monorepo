@@ -40,6 +40,7 @@ const ensureIndex = (
       if (getMeilisearchErrorCode(error.cause) !== "index_not_found") {
         return Effect.fail(error);
       }
+
       return completeMeilisearchTask("meilisearch.index.create", () =>
         meilisearch.createIndex(indexName, { primaryKey }),
       );
@@ -82,6 +83,7 @@ export const configureMeilisearchIndexes = (
           .updateSortableAttributes(["name", "lvl", "rarity", "type"]),
       () => meilisearch.index(ITEMS_INDEX).updateDistinctAttribute("id"),
     ];
+
     yield* Effect.all(
       configure.map((configureIndex, index) =>
         completeMeilisearchTask(`meilisearch.index.configure.${index}`, () =>

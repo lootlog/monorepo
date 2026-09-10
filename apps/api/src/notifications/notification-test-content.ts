@@ -40,6 +40,7 @@ export interface NotificationTestContentInput {
 const npcName = (npc: unknown) => {
   if (!isRecord(npc)) return null;
   const name = npc.name;
+
   return typeof name === "string" ? name : null;
 };
 
@@ -52,14 +53,18 @@ export const makeNotificationTestContent = (
     input: NotificationTestContentInput,
   ) {
     const { notificationRule: rule, scheduledFor } = input;
+
     if (rule.triggerType !== NotificationTriggerType.TIMER_BEFORE_SPAWN) {
       return content.buildGenericTestNotificationPayload(input);
     }
+
     if (rule.guildId) {
       const timers = yield* store.timersForRule(rule.guildId, rule.world);
+
       const timer = timers.find((candidate) =>
         matching.matchesTimerRule(rule.filters, candidate.npcId),
       );
+
       if (timer) {
         return content.buildTimerNotificationPayload({
           notificationRule: rule,
@@ -74,17 +79,21 @@ export const makeNotificationTestContent = (
         });
       }
     }
+
     const filters = matching.parseFilters(rule.filters);
     const fallbackNpcId = filters.npcId ?? filters.npcIds?.[0] ?? 0;
     const offset = rule.scheduleOffsetMinutes ?? 0;
+
     const minSpawnTime =
       rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN
         ? new Date(scheduledFor.getTime() + Math.max(0, offset - 20) * 60_000)
         : new Date(scheduledFor.getTime() + offset * 60_000);
+
     const maxSpawnTime =
       rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN
         ? new Date(scheduledFor.getTime() + offset * 60_000)
         : new Date(minSpawnTime.getTime() + 20 * 60_000);
+
     return content.buildTimerNotificationPayload({
       notificationRule: rule,
       target: { targetType: input.targetType },

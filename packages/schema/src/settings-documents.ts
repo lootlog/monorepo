@@ -11,7 +11,9 @@ export const SETTINGS_DOMAINS = [
   "sounds",
   "controls",
 ] as const;
+
 export const SettingsDomainSchema = Schema.Literals(SETTINGS_DOMAINS);
+
 export type SettingsDomain = typeof SettingsDomainSchema.Type;
 
 export const SETTINGS_SCOPE_TYPES = [
@@ -20,25 +22,30 @@ export const SETTINGS_SCOPE_TYPES = [
   "CHARACTER",
   "GUILD",
 ] as const;
+
 export const SettingsScopeTypeSchema = Schema.Literals(SETTINGS_SCOPE_TYPES);
+
 export type SettingsScopeType = typeof SettingsScopeTypeSchema.Type;
 
 export const SettingsScopeSchema = Schema.Struct({
   type: SettingsScopeTypeSchema,
   id: NonEmptyString,
 });
+
 export type SettingsScope = typeof SettingsScopeSchema.Type;
 
 export const SettingsValueSourceSchema = Schema.Union([
   Schema.Literal("DEFAULT"),
   SettingsScopeSchema,
 ]);
+
 export type SettingsValueSource = typeof SettingsValueSourceSchema.Type;
 
 export const SettingsPersistenceSchema = Schema.Literals([
   "SERVER_DOCUMENT",
   "DEVICE",
 ]);
+
 export type SettingsPersistence = typeof SettingsPersistenceSchema.Type;
 
 const PositiveSafeInt = Schema.Int.check(
@@ -52,6 +59,7 @@ export const SettingsDocumentLayerSchema = Schema.Struct({
   schemaVersion: Schema.optionalKey(PositiveSafeInt),
   updatedAt: Schema.optionalKey(IsoDateTime),
 });
+
 export type SettingsDocumentLayer = typeof SettingsDocumentLayerSchema.Type;
 
 export const SettingsDomainResolutionSchema = Schema.Struct({
@@ -61,6 +69,7 @@ export const SettingsDomainResolutionSchema = Schema.Struct({
   schemaVersion: PositiveSafeInt,
   updatedAt: Schema.optionalKey(IsoDateTime),
 });
+
 export type SettingsDomainResolution =
   typeof SettingsDomainResolutionSchema.Type;
 
@@ -70,6 +79,7 @@ export const SettingsDocumentsQuerySchema = Schema.Struct({
   characterId: Schema.optionalKey(NonEmptyString),
   guildId: Schema.optionalKey(NonEmptyString),
 });
+
 export type SettingsDocumentsQuery = typeof SettingsDocumentsQuerySchema.Type;
 
 export const SettingsPatchOperationSchema = Schema.Struct({
@@ -88,7 +98,9 @@ export const PatchSettingsDocumentsSchema = Schema.Struct({
     Schema.isMinLength(1),
   ),
 }).annotate({ identifier: "PatchSettingsDocumentsDto" });
+
 export type PatchSettingsDocuments = typeof PatchSettingsDocumentsSchema.Type;
+
 export type EncodedPatchSettingsDocuments =
   typeof PatchSettingsDocumentsSchema.Encoded;
 
@@ -110,7 +122,9 @@ const SettingsDomainResolutionResponseSchema = Schema.Struct({
 export const SettingsDocumentsResponseSchema = Schema.Struct({
   domains: Schema.Record(Schema.String, SettingsDomainResolutionResponseSchema),
 }).annotate({ identifier: "SettingsDocumentsResponseDto_Output" });
+
 export type SettingsDocumentsResponse =
   typeof SettingsDocumentsResponseSchema.Type;
+
 export type EncodedSettingsDocumentsResponse =
   typeof SettingsDocumentsResponseSchema.Encoded;

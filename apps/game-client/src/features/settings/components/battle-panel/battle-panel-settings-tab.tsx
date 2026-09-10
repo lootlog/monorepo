@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 export const BattlePanelSettingsTab: FC = () => {
   const { isBattleCollectionEnabled, toggleBattleCollection } =
     useBattlePanelStore();
+
   const { t } = useTranslation();
 
   return (

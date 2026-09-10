@@ -30,6 +30,7 @@ type AccordionProps = SingleAccordionProps | MultipleAccordionProps;
 function Accordion(props: AccordionProps) {
   if (props.type === "multiple") {
     const { type: _type, ...multipleProps } = props;
+
     return <BaseAccordion.Root multiple {...multipleProps} />;
   }
 
@@ -50,6 +51,7 @@ function Accordion(props: AccordionProps) {
       onValueChange={(nextValue, eventDetails) => {
         if (!collapsible && nextValue.length === 0) {
           eventDetails.cancel();
+
           return;
         }
 
@@ -73,6 +75,7 @@ const AccordionItem = React.forwardRef<
     {...props}
   />
 ));
+
 AccordionItem.displayName = "AccordionItem";
 
 const AccordionTrigger = React.forwardRef<
@@ -95,6 +98,7 @@ const AccordionTrigger = React.forwardRef<
     </BaseAccordion.Trigger>
   </BaseAccordion.Header>
 ));
+
 AccordionTrigger.displayName = "AccordionTrigger";
 
 const AccordionContent = React.forwardRef<
@@ -120,6 +124,7 @@ const AccordionContent = React.forwardRef<
     </BaseAccordion.Panel>
   );
 });
+
 AccordionContent.displayName = "AccordionContent";
 
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };

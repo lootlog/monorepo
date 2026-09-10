@@ -19,7 +19,9 @@ import {
 } from "../src/shared/cache.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
+
 const guildId = "guild-lifecycle-test";
+
 const decodeCreated = (payload: typeof GuildCreated.Encoded) =>
   Schema.decodeUnknownSync(GuildCreated)(
     decodeRabbitEventJson(
@@ -27,6 +29,7 @@ const decodeCreated = (payload: typeof GuildCreated.Encoded) =>
       JSON.stringify(payload),
     ),
   );
+
 const decodeUpdated = (payload: typeof GuildUpdated.Encoded) =>
   Schema.decodeUnknownSync(GuildUpdated)(
     decodeRabbitEventJson(
@@ -52,12 +55,14 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
     await runtime.runPromise(
       Effect.gen(function* () {
         const db = yield* ApiDatabase;
+
         const lifecycle = makeGuildLifecycle(db, {
           clearCacheKey: (key) => Effect.sync(() => clearedKeys.push(key)),
           clearCachePattern: (pattern) =>
             Effect.sync(() => clearedPatterns.push(pattern)),
           notifyMembersRemoved: () => Effect.void,
         });
+
         const created = decodeCreated({
           guildId,
           name: "lootlog-test",
@@ -67,6 +72,7 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
             { id: "role", name: "Role", color: 0, position: 0, admin: false },
           ],
         });
+
         yield* lifecycle.createGuild(created);
         yield* lifecycle.createGuild(created);
         yield* lifecycle.createGuild(
@@ -82,10 +88,12 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           .update(guildTable)
           .set({ vanityUrl: "guild-alias" })
           .where(eq(guildTable.id, guildId));
+
         const [initial] = yield* db
           .select()
           .from(guildTable)
           .where(eq(guildTable.id, guildId));
+
         expect(initial).toMatchObject({
           name: "lootlog-test",
           icon: null,
@@ -97,6 +105,7 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
             .from(roleTable)
             .where(eq(roleTable.guildId, guildId)),
         ).toHaveLength(1);
+
         for (const changes of [
           { name: "testowankox", icon: null, ownerId: "original-owner" },
           {
@@ -109,17 +118,21 @@ describe("Discord guild lifecycle against migrated PostgreSQL", () => {
           const updated = decodeUpdated({ guildId, ...changes });
           yield* lifecycle.updateGuild(updated);
           yield* lifecycle.updateGuild(updated);
+
           const rows = yield* db
             .select()
             .from(guildTable)
             .where(eq(guildTable.id, guildId));
+
           expect(rows).toHaveLength(1);
           expect(rows[0]).toMatchObject(changes);
         }
+
         const [other] = yield* db
           .select()
           .from(guildTable)
           .where(eq(guildTable.id, "other-organization"));
+
         expect(other).toMatchObject({
           name: "Other",
           icon: "other-icon",

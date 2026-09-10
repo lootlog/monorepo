@@ -16,6 +16,7 @@ interface PhGrowthChartProps {
 
 export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
   const { t } = useTranslation();
+
   const chartData = data.map((point) => ({
     date: new Date(point.date).toLocaleDateString("pl-PL", {
       day: "2-digit",

@@ -54,6 +54,7 @@ describe("loadGatewayConfiguration", () => {
           ),
         ),
       );
+
       expect(config.allowedExtensionOrigins).toEqual(new Set([origin]));
       expect(config.allowedWebOrigins.has(origin)).toBe(false);
     },

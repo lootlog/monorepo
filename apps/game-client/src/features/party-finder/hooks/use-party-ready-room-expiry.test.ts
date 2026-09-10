@@ -27,7 +27,9 @@ const projection: PartyReadyRoomProjection = {
   viewer: "PARTICIPANT",
   participants: {},
 };
+
 let restoreClient = () => {};
+
 describe("usePartyReadyRoomExpiry", () => {
   beforeEach(() => {
     vi.useFakeTimers();

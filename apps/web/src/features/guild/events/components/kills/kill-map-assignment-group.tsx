@@ -30,6 +30,7 @@ export const KillMapAssignmentGroup = ({
 }: KillMapAssignmentGroupProps) => {
   const [open, setOpen] = useState(false);
   const hasMultiplePeriods = assignment.periods.length > 1;
+
   const rowContent = (
     <>
       <Avatar className="size-6 shrink-0">

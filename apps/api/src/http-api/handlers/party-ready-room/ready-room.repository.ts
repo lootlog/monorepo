@@ -28,9 +28,13 @@ export type JoinReadyRoomResult =
   | { readonly status: "joined-elsewhere"; readonly notificationId: string };
 
 const ROOM_PREFIX = "party-ready-room:v3:room:";
+
 const ORGANIZER_PREFIX = "party-ready-room:v3:organizer:";
+
 const USER_PREFIX = "party-ready-room:v3:user:";
+
 const CHARACTER_PREFIX = "party-ready-room:v3:character:";
+
 const TERMINAL_TOMBSTONE_SECONDS = 60;
 
 export interface ReadyRoomRedis {
@@ -80,8 +84,11 @@ export interface ReadyRoomEffectRepository {
 }
 
 const roomKey = (id: string) => `${ROOM_PREFIX}${id}`;
+
 const organizerKey = (id: string) => `${ORGANIZER_PREFIX}${id}`;
+
 const userKey = (id: string) => `${USER_PREFIX}${id}`;
+
 const characterKey = (world: string, id: string) =>
   `${CHARACTER_PREFIX}${encodeURIComponent(world)}:${encodeURIComponent(id)}`;
 
@@ -95,8 +102,11 @@ const parseCommit = (
   if (!Array.isArray(result) || typeof result[0] !== "string") {
     throw new Error("Invalid Ready Room commit result from Redis");
   }
+
   if (result[0] === "COMMITTED") return { status: "committed", aggregate };
+
   if (result[0] === "CONFLICT") return { status: "conflict" };
+
   if (result[0] === "MISSING") return { status: "missing" };
   throw new Error(`Unknown Ready Room commit result: ${String(result[0])}`);
 };
@@ -108,16 +118,20 @@ const parseCreate = (
   if (!Array.isArray(result) || typeof result[0] !== "string") {
     throw new Error("Invalid Ready Room create result from Redis");
   }
+
   if (result[0] === "CREATED") return { status: "created", aggregate };
+
   if (
     result[0] === "ACTIVE_ROOM_EXISTS" &&
     Schema.is(Schema.String)(result[1])
   ) {
     return { status: "active-room-exists", notificationId: result[1] };
   }
+
   if (result[0] === "JOINED_ELSEWHERE" && Schema.is(Schema.String)(result[1])) {
     return { status: "joined-elsewhere", notificationId: result[1] };
   }
+
   if (result[0] === "ROOM_EXISTS") return { status: "room-exists" };
   throw new Error(`Unknown Ready Room create result: ${String(result[0])}`);
 };
@@ -132,23 +146,29 @@ export const makeReadyRoomRepository = (
     arguments_: ReadonlyArray<string | number>,
   ) {
     const declaredKeys = new Set(keys);
+
     // Bound work if concurrent requests keep replacing the indexed room.
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const result = yield* redis.eval(script, [...declaredKeys], arguments_);
+
       if (
         !Schema.is(Schema.Array(Schema.String))(result) ||
         result[0] !== "DECLARE_KEYS"
       ) {
         return result;
       }
+
       for (const key of result.slice(1)) declaredKeys.add(key);
     }
+
     return yield* Effect.fail(
       new Error("Ready Room indexes changed too often"),
     );
   });
+
   const get = (notificationId: string) =>
     redis.getJson(roomKey(notificationId), PartyReadyRoomAggregateSchema);
+
   return {
     get,
     findActive: (guildIds, world) =>
@@ -195,10 +215,13 @@ export const makeReadyRoomRepository = (
                 new Error("Invalid Ready Room index result from Redis"),
               );
             }
+
             const ids = [...new Set(result)];
+
             return Effect.all(ids.map(get)).pipe(
               Effect.tap((aggregates) => {
                 const missing = ids.filter((_, index) => !aggregates[index]);
+
                 return missing.length === 0
                   ? Effect.void
                   : redis
@@ -219,9 +242,11 @@ export const makeReadyRoomRepository = (
         ),
     create: (aggregate) => {
       const ttl = remainingTtl(aggregate, clock);
+
       if (ttl <= 0) {
         return Effect.fail(new Error("Ready Room must expire in the future"));
       }
+
       return evalWithIndexedRoomKeys(
         CREATE_READY_ROOM_SCRIPT,
         [
@@ -255,7 +280,9 @@ export const makeReadyRoomRepository = (
     },
     commit: (expected, next) => {
       const ttl = remainingTtl(next, clock);
+
       if (ttl <= 0) return Effect.succeed({ status: "missing" as const });
+
       return redis
         .eval(
           COMMIT_READY_ROOM_SCRIPT,
@@ -273,9 +300,12 @@ export const makeReadyRoomRepository = (
     },
     join: (expected, next, participantId) => {
       const ttl = remainingTtl(next, clock);
+
       if (ttl <= 0) return Effect.succeed({ status: "missing" as const });
       const participant = next.participants[participantId];
+
       if (!participant) return Effect.succeed({ status: "conflict" as const });
+
       return evalWithIndexedRoomKeys(
         JOIN_READY_ROOM_SCRIPT,
         [
@@ -304,6 +334,7 @@ export const makeReadyRoomRepository = (
                 notificationId: result[1],
               });
             }
+
             return Effect.try({
               try: () => parseCommit(result, next),
               catch: (error) => error,
@@ -314,12 +345,16 @@ export const makeReadyRoomRepository = (
     },
     exitParticipant: (expected, next, participantId) => {
       const ttl = remainingTtl(next, clock);
+
       if (ttl <= 0) return Effect.succeed({ status: "missing" as const });
       const participant = expected.participants[participantId];
+
       if (!participant) return Effect.succeed({ status: "conflict" as const });
+
       const ownerStillPresent = Object.values(next.participants).some(
         (candidate) => candidate.discordId === participant.discordId,
       );
+
       return redis
         .eval(
           EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
@@ -347,15 +382,18 @@ export const makeReadyRoomRepository = (
     },
     terminate: (expected, next) => {
       const remaining = remainingTtl(next, clock);
+
       if (remaining <= 0) {
         return Effect.succeed({ status: "missing" as const });
       }
+
       const participantKeys = Object.values(expected.participants).flatMap(
         (participant) => [
           userKey(participant.discordId),
           characterKey(expected.world, participant.character.characterId),
         ],
       );
+
       return redis
         .eval(
           TERMINATE_READY_ROOM_SCRIPT,

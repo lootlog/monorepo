@@ -13,18 +13,22 @@ import { useRouteErrorRetry } from "./use-route-error-retry";
 export const RootRouteError = ({ error, reset }: ErrorComponentProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const normalizedStatus = normalizeRouteErrorStatus(
     getRouteErrorStatus(error),
   );
+
   const actionLabel =
     normalizedStatus === 401
       ? t("common.routeErrors.actions.goToSignIn")
       : t("common.routeErrors.actions.goToInit");
+
   const handleRetry = useRouteErrorRetry(reset);
 
   const handleNavigate = () => {
     if (normalizedStatus === 401) {
       void navigate({ to: "/signin" });
+
       return;
     }
 

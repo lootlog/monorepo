@@ -9,6 +9,7 @@ export function getLootlogPortalContainer(): HTMLElement | undefined {
 
 export function getLootlogHostPortalThemeClassName(): string {
   const lootlogRoot = getLootlogPortalContainer();
+
   const inheritedClassNames = INHERITED_THEME_CLASS_NAMES.filter((className) =>
     lootlogRoot?.classList.contains(className),
   );

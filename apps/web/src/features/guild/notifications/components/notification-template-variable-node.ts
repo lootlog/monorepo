@@ -28,10 +28,12 @@ export class NotificationTemplateVariableNode extends TextNode {
       node.__templateKey,
       node.__key,
     );
+
     clone.__format = node.__format;
     clone.__style = node.__style;
     clone.__mode = node.__mode;
     clone.__detail = node.__detail;
+
     return clone;
   }
 
@@ -51,6 +53,7 @@ export class NotificationTemplateVariableNode extends TextNode {
   createDOM(config: EditorConfig) {
     const element = super.createDOM(config);
     this.applyVariableStyles(element);
+
     return element;
   }
 
@@ -110,6 +113,7 @@ export const $createNotificationTemplateVariableNode = (
   const node = new NotificationTemplateVariableNode(templateKey);
   node.setMode("token");
   node.toggleUnmergeable();
+
   return node;
 };
 

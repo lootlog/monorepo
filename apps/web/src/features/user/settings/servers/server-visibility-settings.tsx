@@ -51,33 +51,41 @@ export const ServerVisibilitySettings = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [isShowingAll, setIsShowingAll] = useState(false);
   const [query, setQuery] = useState("");
+
   const [visibilityFilter, setVisibilityFilter] =
     useState<VisibilityFilter>("all");
 
   const hiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
+
   const orderedGuilds = orderGuilds(
     guildsQuery.data ?? [],
     preferencesQuery.data?.guildsOrder,
   );
+
   const visibleCount = orderedGuilds.filter(
     (guild) => !hiddenGuildIdSet.has(guild.id),
   ).length;
+
   const hiddenCount = orderedGuilds.length - visibleCount;
+
   const filteredGuilds = filterGuildsByVisibility(
     orderedGuilds,
     hiddenGuildIds,
     visibilityFilter,
     query,
   );
+
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
   const isLoading = guildsQuery.isLoading || preferencesQuery.isLoading;
   const loadError = guildsQuery.error ?? preferencesQuery.error;
+
   const { showEmpty, showGuilds, showLoadError } = getServerVisibilityViewState(
     isLoading,
     loadError,
     orderedGuilds.length,
   );
+
   const isSaved = showPreferencesSaved(updatePreferences);
 
   const updateGuildVisibility = (guildId: string, isVisible: boolean) => {

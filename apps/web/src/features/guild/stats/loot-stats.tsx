@@ -27,11 +27,13 @@ const LootTimelineChart = lazy(() =>
     default: module.LootTimelineChart,
   })),
 );
+
 const LootRarityChart = lazy(() =>
   import("./components/loot-rarity-chart").then((module) => ({
     default: module.LootRarityChart,
   })),
 );
+
 const LootTopNpcsChart = lazy(() =>
   import("./components/loot-top-npcs-chart").then((module) => ({
     default: module.LootTopNpcsChart,
@@ -41,14 +43,18 @@ const LootTopNpcsChart = lazy(() =>
 export const LootStats: React.FC = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { settings, setPeriod, setWorld, setExcludeColossus } =
     useLootStatsSettings();
+
   const isMobile = useIsMobile();
+
   const lootStatsParams = buildLootStatsParams({
     period: settings.period,
     world: settings.world ?? undefined,
     excludeColossus: settings.excludeColossus,
   });
+
   const { data, isLoading } = useLootsControllerGetLootStats(
     { guildId: guildId ?? "" },
     lootStatsParams,

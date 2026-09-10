@@ -40,6 +40,7 @@ export const LootsList = () => {
     hasActiveFilters,
     clearFilters,
   } = useLiveLootList();
+
   if (!world) {
     return (
       <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8">
@@ -66,6 +67,7 @@ export const LootsList = () => {
       </div>
     );
   }
+
   if (!isLoading && !hasLoots) {
     return (
       <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
@@ -107,6 +109,7 @@ export const LootsList = () => {
       </div>
     );
   }
+
   return (
     <SharedTooltipProvider>
       <ScrollArea

@@ -54,6 +54,7 @@ export const ItemStack: FC<Props> = ({
     };
 
     document.addEventListener("pointerdown", handleClickOutside);
+
     return () =>
       document.removeEventListener("pointerdown", handleClickOutside);
   }, [isExpanded]);
@@ -76,9 +77,11 @@ export const ItemStack: FC<Props> = ({
 
   const sorted = sortByRarity(items);
   const topItem = sorted[0];
+
   if (!topItem) {
     return null;
   }
+
   const remainingCount = sorted.length - 1;
   const hasItemFilter = selectedItemNames.length > 0;
   const selectedNames = new Set(selectedItemNames);
@@ -86,9 +89,11 @@ export const ItemStack: FC<Props> = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+
     if (!isExpanded && stackRef.current) {
       setAnchorRect(stackRef.current.getBoundingClientRect());
     }
+
     setIsExpanded((prev) => !prev);
   };
 

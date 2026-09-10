@@ -5,6 +5,7 @@ const MAX_TIMEOUT_DELAY_MS = 2_147_483_647;
 
 const getTimerRemovalBoundary = (timer: Timer, removeTimerAfterMs: number) => {
   const expiryTimestamp = timer.deletedAt ?? timer.maxSpawnTime;
+
   return new Date(expiryTimestamp).getTime() + removeTimerAfterMs;
 };
 
@@ -17,6 +18,7 @@ export const getNextTimerRemovalBoundary = (
 
   for (const timer of timers) {
     const boundary = getTimerRemovalBoundary(timer, removeTimerAfterMs);
+
     if (
       boundary > now &&
       (nextBoundary === undefined || boundary < nextBoundary)
@@ -39,6 +41,7 @@ export const useTimerRemovalBoundary = (
     initialEpoch,
     (providedInitialEpoch) => providedInitialEpoch ?? Date.now(),
   );
+
   const nextBoundary = enabled
     ? getNextTimerRemovalBoundary(
         timers,

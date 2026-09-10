@@ -119,7 +119,9 @@ export const makeEventMapAssignments = (
           .innerJoin(memberTable, eq(memberTable.id, eventMapToMemberTable.B))
           .where(eq(eventMapToMemberTable.A, mapId)),
       );
+
       const memberIds = assignments.map(({ member }) => member.id);
+
       const roles =
         memberIds.length === 0
           ? []
@@ -136,6 +138,7 @@ export const makeEventMapAssignments = (
                 .where(inArray(memberToRoleTable.A, memberIds))
                 .orderBy(desc(roleTable.position)),
             );
+
       return assignments.map(({ member }) => ({
         id: member.id,
         name: member.name,
@@ -264,11 +267,14 @@ export const makeEventMapAssignments = (
     ) =>
       Effect.gen(function* () {
         const scoped = yield* scopedMap(guild.id, eventId, mapId);
+
         if (!scoped)
           return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
         const members = yield* assignedMembers(mapId);
+
         if (members.some(({ id }) => id === memberId))
           return yield* hydratedMap(mapId);
+
         const memberRows = yield* query(
           "events.assignments.member",
           database
@@ -282,18 +288,22 @@ export const makeEventMapAssignments = (
             )
             .limit(1),
         );
+
         if (!memberRows[0])
           return yield* Effect.fail(
             new ResourceNotFoundError("Member not found"),
           );
+
         const effectiveNpcId =
           scoped.hero.npcId ?? getSyntheticNpcId(scoped.hero.id);
+
         const timer = yield* timers.getEventRespawnTimer({
           guildId: guild.id,
           world: scoped.event.world,
           npcId: effectiveNpcId,
           npcName: scoped.hero.npcName,
         });
+
         if (!timer)
           return yield* Effect.fail(
             new InvalidRequestError(
@@ -301,16 +311,19 @@ export const makeEventMapAssignments = (
             ),
           );
         const now = new Date(yield* Clock.currentTimeMillis);
+
         if (now >= new Date(timer.maxSpawnTime))
           return yield* Effect.fail(
             new InvalidRequestError(
               "Cannot assign members after the respawn window is overdue",
             ),
           );
+
         const enabledAt = new Date(
           new Date(timer.minSpawnTime).getTime() -
             scoped.event.assignmentTimeoutMinutes * 60 * 1000,
         );
+
         if (now < enabledAt)
           return yield* Effect.fail(
             new InvalidRequestError(
@@ -318,6 +331,7 @@ export const makeEventMapAssignments = (
             ),
           );
         const cap = scoped.event.mapAssignmentCap;
+
         if (cap && cap > 0 && members.length >= cap)
           return yield* Effect.fail(
             new InvalidRequestError(
@@ -333,6 +347,7 @@ export const makeEventMapAssignments = (
                 .insert(eventMapToMemberTable)
                 .values({ A: mapId, B: memberId })
                 .onConflictDoNothing();
+
               const openAssignments = yield* transaction
                 .select({ id: eventMapAssignmentHistoryTable.id })
                 .from(eventMapAssignmentHistoryTable)
@@ -344,6 +359,7 @@ export const makeEventMapAssignments = (
                   ),
                 )
                 .limit(1);
+
               if (!openAssignments[0])
                 yield* transaction
                   .insert(eventMapAssignmentHistoryTable)
@@ -357,6 +373,7 @@ export const makeEventMapAssignments = (
             }),
           ),
         );
+
         if (wasUnassigned) {
           yield* closeGap(mapId, "UNASSIGNED", now);
           yield* openGap(mapId, scoped.hero.id, "UNCOVERED", now);
@@ -368,6 +385,7 @@ export const makeEventMapAssignments = (
             "events.assignments.publishPresenceCheck",
           );
         }
+
         const updated = yield* hydratedMap(mapId);
         yield* Effect.all(
           [
@@ -376,6 +394,7 @@ export const makeEventMapAssignments = (
           ],
           { concurrency: "unbounded", discard: true },
         );
+
         return updated;
       }).pipe(Effect.withSpan("EventsAssignmentController_assignMember")),
 
@@ -387,6 +406,7 @@ export const makeEventMapAssignments = (
     ) =>
       Effect.gen(function* () {
         const scoped = yield* scopedMap(guild.id, eventId, mapId);
+
         if (!scoped)
           return yield* Effect.fail(new ResourceNotFoundError("Map not found"));
         const now = new Date(yield* Clock.currentTimeMillis);
@@ -420,10 +440,12 @@ export const makeEventMapAssignments = (
           ),
         );
         const updated = yield* hydratedMap(mapId);
+
         if (updated && updated.assignedMembers.length === 0) {
           yield* openGap(mapId, scoped.hero.id, "UNASSIGNED", now);
           yield* closeGap(mapId, "UNCOVERED", now);
         }
+
         yield* Effect.all(
           [
             invalidate(guild.id, eventId),
@@ -431,6 +453,7 @@ export const makeEventMapAssignments = (
           ],
           { concurrency: "unbounded", discard: true },
         );
+
         return updated;
       }).pipe(Effect.withSpan("EventsAssignmentController_unassignMember")),
   };

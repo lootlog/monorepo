@@ -8,12 +8,15 @@ export const useRefreshJobUpdates = (
   onUpdate: (update: RefreshJobUpdate) => void,
 ) => {
   const { socket, connected } = useGateway();
+
   const handleUpdate = useEffectEvent((update: RefreshJobUpdate) => {
     if (update.guildId === guildId) onUpdate(update);
   });
+
   useEffect(() => {
     if (!guildId || !connected) return;
     socket.on(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleUpdate);
+
     return () => {
       socket.off(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleUpdate);
     };

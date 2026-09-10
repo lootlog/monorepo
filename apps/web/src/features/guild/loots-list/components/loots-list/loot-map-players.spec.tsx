@@ -114,6 +114,7 @@ describe("LootMapPlayers", () => {
       const { container } = render(
         <LootMapPlayers loot={{ ...otherLoot, mapPlayersSnapshot: null }} />,
       );
+
       expect(container.textContent).toBe("");
     },
   );
@@ -129,18 +130,22 @@ it.each([
     pageParams: [null],
   });
   const root = createRootRoute();
+
   const route = createRoute({
     getParentRoute: () => root,
     path: "$guildId/loots",
     component: function CachedLootMapPlayers() {
       const cachedLoot = useLootFromCache(1);
+
       return cachedLoot ? <LootMapPlayers loot={cachedLoot} /> : null;
     },
   });
+
   const router = createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({ initialEntries: ["/guild-1/loots"] }),
   });
+
   try {
     render(
       <QueryClientProvider client={client}>

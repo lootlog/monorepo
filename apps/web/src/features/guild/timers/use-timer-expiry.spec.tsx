@@ -18,31 +18,40 @@ afterEach(() => {
 it("refreshes simultaneous expiries once, preserves scope, and handles a reset timer", async () => {
   vi.useFakeTimers();
   vi.setSystemTime("2026-09-05T12:00:00Z");
+
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
+
   const queryKey = getTimersControllerGetTimersQueryKey(
     { guildId: "one" },
     { world: "tempest" },
   );
+
   const otherKey = getTimersControllerGetTimersQueryKey(
     { guildId: "two" },
     { world: "tempest" },
   );
+
   const fetchTimers = vi.fn(async () => []);
+
   const observer = new QueryObserver(client, {
     queryKey,
     queryFn: fetchTimers,
     initialData: [],
     staleTime: Infinity,
   });
+
   const unsubscribe = observer.subscribe(() => undefined);
   client.setQueryData(otherKey, []);
+
   const timers = Array.from({ length: 100 }, (_, index) => ({
     timerKey: String(index),
     maxSpawnTime: "2026-09-05T12:00:01Z",
   }));
+
   const recordRender = vi.fn();
+
   const { rerender, unmount } = renderHook(
     ({ currentTimers }) => {
       recordRender();
@@ -55,6 +64,7 @@ it("refreshes simultaneous expiries once, preserves scope, and handles a reset t
       ),
     },
   );
+
   await act(async () => {
     await vi.advanceTimersByTimeAsync(1000);
   });

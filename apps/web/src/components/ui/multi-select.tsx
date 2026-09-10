@@ -105,6 +105,7 @@ const getInputPlaceholder = ({
   if (hasSelection) {
     return undefined;
   }
+
   return hasSearch ? searchPlaceholder : placeholder;
 };
 
@@ -224,23 +225,31 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     const [open, setOpen] = React.useState(false);
     const [inputValue, setInputValue] = React.useState(searchValue ?? "");
     const selectedValues = resolveValue(value, internalValue);
+
     const [optionCache, setOptionCache] = React.useState(
       () => new Map<string, MultiSelectOption>(),
     );
+
     const mergeOptions = () => {
       const currentOptions = new Map(optionCache);
+
       for (const option of options) {
         currentOptions.set(option.value, option);
       }
+
       const optionsChanged = Array.from(currentOptions.values()).some(
         (option) => {
           const cached = optionCache.get(option.value);
+
           return cached?.label !== option.label || cached?.icon !== option.icon;
         },
       );
+
       return { currentOptions, optionsChanged };
     };
+
     const { currentOptions, optionsChanged } = mergeOptions();
+
     if (optionsChanged) {
       setOptionCache(currentOptions);
     }
@@ -249,17 +258,20 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       open,
       searchValue,
     });
+
     const synchronizeSearch = () => {
       if (
         previousSearch.open !== open ||
         previousSearch.searchValue !== searchValue
       ) {
         setPreviousSearch({ open, searchValue });
+
         if (!open) {
           setInputValue(searchValue ?? "");
         }
       }
     };
+
     synchronizeSearch();
 
     const resolvedLabels = resolveLabels({
@@ -270,10 +282,14 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       defaultSearchPlaceholder: t("common.search"),
       defaultEmptyMessage: t("common.noResults"),
     });
+
     const hasSearch = commandSearch || controlledSearch;
+
     const shouldPromptForSearch =
       controlledSearch && inputValue.length < minimumSearchLength;
+
     const visibleOptions = shouldPromptForSearch || errorMessage ? [] : options;
+
     const selectedOptions = selectedValues.map(
       (selectedValue) =>
         currentOptions.get(selectedValue) ?? {
@@ -281,10 +297,12 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
           value: selectedValue,
         },
     );
+
     const promptLabel =
       minimumSearchLength > 1
         ? t("common.searchMinimumCharacters", { count: minimumSearchLength })
         : t("common.startTypingToSearch");
+
     const resultsEmptyLabel = shouldPromptForSearch
       ? promptLabel
       : resolvedLabels.emptyMessage;
@@ -293,6 +311,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
       if (value === undefined) {
         setInternalValue(nextValue);
       }
+
       onValueChange(nextValue);
 
       if (reason === "chip-remove-press" || reason === "clear-press") {
@@ -301,6 +320,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
     };
 
     const optionValues = visibleOptions.map((option) => option.value);
+
     const openCombobox = () => {
       if (!disabled) {
         setOpen(true);
@@ -319,11 +339,13 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
           if (!nextOpen && open) {
             onClose(selectedValues);
           }
+
           setOpen(nextOpen);
         }}
         inputValue={inputValue}
         onInputValueChange={(nextInputValue) => {
           setInputValue(nextInputValue);
+
           if (controlledSearch) {
             onSearchChange?.(nextInputValue);
           }

@@ -21,12 +21,14 @@ const RawDaily = Schema.Struct({
   world: Schema.String,
   kills: Schema.Number,
 });
+
 const RawBase = Schema.Struct({
   allTimeKills: Schema.Number,
   timedKills: Schema.Number,
   firstBucketAt: Schema.NullOr(Schema.String),
   daily: Schema.Array(RawDaily),
 });
+
 const RawNpc = Schema.Struct({
   world: Schema.String,
   npcId: Schema.Number,
@@ -43,6 +45,7 @@ const RawNpc = Schema.Struct({
     Schema.Struct({ date: Schema.String, kills: Schema.Number }),
   ),
 });
+
 const RawAnalytics = Schema.Struct({
   ...RawBase.fields,
   currentKills: Schema.Number,
@@ -72,14 +75,18 @@ const RawAnalytics = Schema.Struct({
     }),
   ),
 });
+
 type DailyPoint = UserKillActivityResponse["daily"][number];
+
 const localDate = (date: string) =>
   DateTime.makeZonedUnsafe(date, {
     timeZone: "Europe/Warsaw",
     adjustForTimeZone: true,
   });
+
 const dateAfter = (date: string, days: number) =>
   DateTime.formatIsoDate(DateTime.add(localDate(date), { days }));
+
 const percentChange = (current: number, previous: number) =>
   previous === 0 ? null : ((current - previous) / previous) * 100;
 
@@ -96,21 +103,27 @@ export const buildKillActivity = (
         ),
       )
     : null;
+
   const untimedKills = Math.max(0, raw.allTimeKills - raw.timedKills);
   const byDate = new Map<string, number>();
   const worldsByDate = new Map<string, Set<string>>();
+
   for (const row of raw.daily) {
     byDate.set(row.date, (byDate.get(row.date) ?? 0) + row.kills);
+
     if (row.kills > 0) {
       const worlds = worldsByDate.get(row.date) ?? new Set<string>();
       worlds.add(row.world);
       worldsByDate.set(row.date, worlds);
     }
   }
+
   const daily = Array.from({ length: range.days }, (_, index) => {
     const date = dateAfter(range.startDate, index);
+
     const unknown =
       untimedKills > 0 && (firstDate === null || date < firstDate);
+
     return {
       date,
       kills: unknown ? null : (byDate.get(date) ?? 0),
@@ -121,12 +134,14 @@ export const buildKillActivity = (
         (untimedKills > 0 && date === firstDate),
     };
   });
+
   const coverage =
     raw.timedKills === 0 && raw.allTimeKills > 0
       ? "unavailable"
       : raw.allTimeKills !== raw.timedKills
         ? "partial"
         : "complete";
+
   return {
     meta: {
       timezone: "Europe/Warsaw",
@@ -160,19 +175,24 @@ const periodRecords = (
       days: number;
     }
   >();
+
   for (const point of daily) {
     if (point.kills === null) continue;
     const date = localDate(point.date);
     const start = DateTime.startOf(date, unit, { weekStartsOn: 1 });
+
     const next = Match.value(unit).pipe(
       Match.when("day", () => DateTime.add(start, { days: 1 })),
       Match.when("week", () => DateTime.add(start, { days: 7 })),
       Match.orElse(() => DateTime.add(start, { months: 1 })),
     );
+
     const startDate = DateTime.formatIsoDate(start);
+
     const endDate = DateTime.formatIsoDate(
       DateTime.subtract(next, { days: 1 }),
     );
+
     const previous = periods.get(startDate);
     periods.set(startDate, {
       startDate,
@@ -182,17 +202,21 @@ const periodRecords = (
       days: (previous?.days ?? 0) + 1,
     });
   }
+
   return [...periods.values()].map(({ days, ...record }) => {
     let expectedDays = 0;
+
     for (
       let date = record.startDate;
       date <= record.endDate;
       date = dateAfter(date, 1)
     )
       expectedDays++;
+
     return { ...record, partial: record.partial || days < expectedDays };
   });
 };
+
 const bestRecord = (records: ReturnType<typeof periodRecords>) =>
   records
     .filter((record) => record.kills > 0)
@@ -203,14 +227,19 @@ const bestRecord = (records: ReturnType<typeof periodRecords>) =>
 const killStreaks = (daily: ReadonlyArray<DailyPoint>) => {
   let longestStreak = 0,
     streak = 0;
+
   for (const day of daily) {
     streak = (day.kills ?? 0) > 0 ? streak + 1 : 0;
     longestStreak = Math.max(streak, longestStreak);
   }
+
   let currentStreak = 0;
   let index = daily.length - 1;
+
   if ((daily[index]?.kills ?? 0) === 0) index--;
+
   for (; index >= 0 && (daily[index]?.kills ?? 0) > 0; index--) currentStreak++;
+
   return { currentStreak, longestStreak };
 };
 
@@ -225,11 +254,13 @@ export const buildKillAnalytics = (
   const totalKills = daily.reduce((total, day) => total + (day.kills ?? 0), 0);
   const activeDays = daily.filter((day) => (day.kills ?? 0) > 0).length;
   const weekly = periodRecords(daily, "week");
+
   const mapNpc = (npc: typeof RawNpc.Type) => ({
     ...npc,
     share: totalKills ? (npc.totalKills / totalKills) * 100 : 0,
     deltaPercent: percentChange(npc.comparisonKills, npc.previousKills),
   });
+
   const worlds = new Map<
     string,
     {
@@ -240,6 +271,7 @@ export const buildKillAnalytics = (
       daily: Array<{ date: string; kills: number | null }>;
     }
   >();
+
   for (const previous of raw.worldComparisons)
     worlds.set(previous.world, {
       world: previous.world,
@@ -248,8 +280,10 @@ export const buildKillAnalytics = (
       previousKills: previous.previousKills,
       daily: [],
     });
+
   for (const row of raw.daily) {
     if (row.date < range.startDate) continue;
+
     const entry = worlds.get(row.world) ?? {
       world: row.world,
       totalKills: 0,
@@ -261,10 +295,12 @@ export const buildKillAnalytics = (
           ?.previousKills ?? 0,
       daily: [],
     };
+
     entry.totalKills += row.kills;
     entry.daily.push({ date: row.date, kills: row.kills });
     worlds.set(row.world, entry);
   }
+
   for (const entry of worlds.values()) {
     const counts = new Map(entry.daily.map((day) => [day.date, day.kills]));
     entry.daily = daily.map((day) => ({
@@ -272,6 +308,7 @@ export const buildKillAnalytics = (
       kills: day.kills === null ? null : (counts.get(day.date) ?? 0),
     }));
   }
+
   return {
     ...activity,
     overview: {
@@ -334,22 +371,28 @@ export const makeUserKillAnalytics = (
     query: UserKillAnalyticsQuery,
   ) {
     const range = getKillAnalyticsRange(yield* DateTime.now, query.days ?? 30);
+
     const load = Effect.gen(function* () {
       const rows = yield* database.execute(
         userKillAnalyticsSql(userId, query.world, range, false),
       );
+
       const decoded = yield* Schema.decodeUnknownEffect(
         Schema.Struct({
           rows: Schema.Array(Schema.Struct({ payload: RawAnalytics })),
         }),
       )(rows);
+
       const row = decoded.rows[0];
+
       if (!row)
         return yield* Effect.fail(
           new Error("Missing kill analytics aggregate"),
         );
+
       return buildKillAnalytics(row.payload, range, query.world);
     });
+
     return yield* cache.getOrSet(
       buildKillQueryCacheKey("user-analytics", userId, {
         days: query.days ?? 30,
@@ -362,25 +405,32 @@ export const makeUserKillAnalytics = (
       30,
     );
   });
+
   const getUserKillActivity = Effect.fn("kills.user-activity")(function* (
     userId: string,
     query: UserKillActivityQuery,
   ) {
     const range = getKillAnalyticsRange(yield* DateTime.now, 112);
+
     const load = Effect.gen(function* () {
       const rows = yield* database.execute(
         userKillAnalyticsSql(userId, query.world, range, true),
       );
+
       const decoded = yield* Schema.decodeUnknownEffect(
         Schema.Struct({
           rows: Schema.Array(Schema.Struct({ payload: RawBase })),
         }),
       )(rows);
+
       const row = decoded.rows[0];
+
       if (!row)
         return yield* Effect.fail(new Error("Missing kill activity aggregate"));
+
       return buildKillActivity(row.payload, range, query.world);
     });
+
     return yield* cache.getOrSet(
       buildKillQueryCacheKey("user-activity", userId, {
         days: range.days,
@@ -393,5 +443,6 @@ export const makeUserKillAnalytics = (
       30,
     );
   });
+
   return { getUserKillAnalytics, getUserKillActivity };
 };

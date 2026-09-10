@@ -26,6 +26,7 @@ export const createAccountPreferences = (
     hasStoredPreferences: false,
     ...overrides,
   });
+
 export const createAccountPreferencesTest = (
   respond?: (request: Request) => Response | Promise<Response>,
 ) => {
@@ -39,9 +40,11 @@ export const createAccountPreferencesTest = (
       gameInitialized: true,
     },
   });
+
   const queryKey = getUsersControllerGetUserGameAccountPreferencesQueryKey({
     accountId: "202",
   });
+
   const guildsKey = getUsersControllerGetCurrentUserAccessibleGuildsQueryKey();
   queryClient.setQueryDefaults(guildsKey, {
     staleTime: Infinity,
@@ -52,12 +55,14 @@ export const createAccountPreferencesTest = (
     createTimerGuildFixture({ id: "guild-2", name: "Beta" }),
   ]);
   const requests: Request[] = [];
+
   const restore = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
       fetch: (input, init) => {
         const request = new Request(input, init);
         requests.push(request);
+
         return Promise.resolve(
           respond
             ? respond(request)
@@ -66,13 +71,16 @@ export const createAccountPreferencesTest = (
       },
     },
   });
+
   onTestFinished(() => {
     queryClient.clear();
     npcsDetectionProcessor.cleanup();
     restore();
   });
+
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
   return { queryClient, queryKey, guildsKey, requests, wrapper };
 };

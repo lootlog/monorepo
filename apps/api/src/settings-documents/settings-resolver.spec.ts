@@ -34,6 +34,7 @@ describe("settings resolver", () => {
     ).filter(([path]) => path.startsWith("chat."));
 
     expect(chatFields.length).toBeGreaterThan(0);
+
     for (const [, definition] of chatFields) {
       expect(definition.scopes).toEqual(["USER"]);
     }

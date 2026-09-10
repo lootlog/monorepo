@@ -133,6 +133,7 @@ describe("useHotkeys", () => {
       button: 1,
       cancelable: true,
     });
+
     act(() => {
       canvas.dispatchEvent(event);
     });
@@ -257,10 +258,13 @@ describe("useHotkeys", () => {
     usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
     const requests: Request[] = [];
+
     const fetch: typeof globalThis.fetch = (input, init) => {
       requests.push(new Request(input, init));
+
       return Promise.resolve(Response.json({ targets: [] }));
     };
+
     onTestFinished(
       configureApiClients({
         main: { baseUrl: "https://api.example.test", fetch },
@@ -298,12 +302,14 @@ it("opens party creation once and ignores typing and repeated keys", () => {
   });
   useWindowsStore.getState().setOpen("create-party-gathering", false);
   renderHook(() => useHotkeys());
+
   const press = (repeat = false) =>
     act(() => {
       window.dispatchEvent(
         new KeyboardEvent("keydown", { key: "G", altKey: true, repeat }),
       );
     });
+
   press();
   expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(true);
   act(() =>

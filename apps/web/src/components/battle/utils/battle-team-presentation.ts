@@ -12,6 +12,7 @@ type BattleTeamPresentation = {
 };
 
 const ATTACKING_TEAM_NUMBER = 1 satisfies BattleTeamNumber;
+
 const DEFENDING_TEAM_NUMBER = 2 satisfies BattleTeamNumber;
 
 const getPresentationCharacterId = (
@@ -30,12 +31,15 @@ export const getBattleTeamPresentation = (
   preferredCharacterId?: string,
 ): BattleTeamPresentation => {
   const characterId = getPresentationCharacterId(battle, preferredCharacterId);
+
   const attackingTeam = battle.warriors.filter(
     (warrior) => warrior.team === ATTACKING_TEAM_NUMBER,
   );
+
   const defendingTeam = battle.warriors.filter(
     (warrior) => warrior.team === DEFENDING_TEAM_NUMBER,
   );
+
   const userWarrior = battle.warriors.find(
     (warrior) => warrior.originalId === characterId,
   );

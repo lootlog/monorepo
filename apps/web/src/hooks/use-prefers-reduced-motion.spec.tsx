@@ -13,6 +13,7 @@ describe("usePrefersReducedMotion", () => {
   it("updates mounted consumers when the system preference changes and unsubscribes", () => {
     const events = new EventTarget();
     let matches = false;
+
     const query = {
       get matches() {
         return matches;
@@ -25,6 +26,7 @@ describe("usePrefersReducedMotion", () => {
       removeEventListener: events.removeEventListener.bind(events),
       dispatchEvent: events.dispatchEvent.bind(events),
     } satisfies MediaQueryList;
+
     const remove = vi.spyOn(query, "removeEventListener");
     vi.stubGlobal("matchMedia", () => query);
     const first = renderHook(usePrefersReducedMotion);

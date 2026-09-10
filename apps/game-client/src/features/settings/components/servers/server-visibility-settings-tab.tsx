@@ -25,31 +25,41 @@ export const ServerVisibilitySettingsTab = () => {
   const preferencesQuery = useUserPreferences();
   const updatePreferences = useUpdateUserPreferences();
   const [query, setQuery] = useState("");
+
   const [visibilityFilter, setVisibilityFilter] =
     useState<VisibilityFilter>("all");
+
   const hiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
+
   const orderedGuilds = orderLootlogGuilds(
     guildsQuery.data ?? [],
     preferencesQuery.data?.guildsOrder,
   );
+
   const visibleCount = orderedGuilds.filter(
     (guild) => !hiddenGuildIdSet.has(guild.id),
   ).length;
+
   const hiddenCount = orderedGuilds.length - visibleCount;
   const normalizedQuery = query.trim().toLocaleLowerCase();
+
   const filteredGuilds = orderedGuilds.filter((guild) => {
     const isHidden = hiddenGuildIdSet.has(guild.id);
+
     if (visibilityFilter === "visible" && isHidden) {
       return false;
     }
+
     if (visibilityFilter === "hidden" && !isHidden) {
       return false;
     }
 
     return guild.name.toLocaleLowerCase().includes(normalizedQuery);
   });
+
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
+
   const updateGuildVisibility = (guildId: string, isVisible: boolean) => {
     const nextHiddenGuildIds = isVisible
       ? hiddenGuildIds.filter((hiddenGuildId) => hiddenGuildId !== guildId)
@@ -59,6 +69,7 @@ export const ServerVisibilitySettingsTab = () => {
   };
 
   let saveStatus: string | null = null;
+
   if (updatePreferences.isPending) {
     saveStatus = t("settings.servers.saving");
   } else if (updatePreferences.isError) {

@@ -7,6 +7,7 @@ import {
 } from "./-search-route.utils";
 
 const SEARCH_DEBOUNCE_MS = 300;
+
 export const useBasicSearchForm = (
   search: BasicRouteSearch,
   navigate: (options: {

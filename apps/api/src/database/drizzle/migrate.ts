@@ -19,11 +19,13 @@ const toError = (cause: unknown): Error =>
 const adoptDatabase = Effect.gen(function* () {
   const sql = yield* PgClient.PgClient;
   const connection = yield* sql.reserve;
+
   const client: SqlTransactionClient = {
     query: async (statement: string, values: ReadonlyArray<unknown> = []) => {
       const rows = await Effect.runPromise(
         connection.execute(statement, values, undefined),
       );
+
       return { rows };
     },
   };

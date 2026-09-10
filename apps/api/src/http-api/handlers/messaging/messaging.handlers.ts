@@ -54,6 +54,7 @@ export const sendNotification = (payload: SendNotificationRequest) =>
     const authenticated = yield* caller;
     const data = yield* MessagingData;
     const result = yield* data.sendNotification(authenticated, payload);
+
     return yield* encodeDomainJson(result).pipe(
       Effect.flatMap(Schema.decodeUnknownEffect(SentNotificationResponse)),
       Effect.mapError((cause) => new MessagingOperationError({ cause })),

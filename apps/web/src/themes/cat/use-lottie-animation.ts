@@ -10,9 +10,11 @@ export function useLottieAnimation(url: string) {
       queryKey: ["lottie-animation", url],
       queryFn: async ({ signal }) => {
         const response = await fetch(url, { signal });
+
         if (!response.ok) {
           throw new Error(`Animation request failed: ${response.status}`);
         }
+
         return animationSchema.parse(await response.json());
       },
       staleTime: Infinity,

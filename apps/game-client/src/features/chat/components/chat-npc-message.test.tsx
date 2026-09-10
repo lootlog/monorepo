@@ -86,6 +86,7 @@ describe("ChatNpcMessage", () => {
   it("hides the NPC rank of the clicked message through the context menu", async () => {
     const user = userEvent.setup();
     const harness = createGuildPreferencesTest();
+
     const settingsDocuments: SettingsDocumentsResponseDtoOutput = {
       domains: {
         chat: {
@@ -96,15 +97,18 @@ describe("ChatNpcMessage", () => {
         },
       },
     };
+
     harness.queryClient.setQueryData(
       getSettingsDocumentsControllerGetPreferencesQueryKey({
         domains: "chat",
       }),
       settingsDocuments,
     );
+
     const patchRequest = vi
       .fn<typeof fetch>()
       .mockResolvedValue(Response.json(settingsDocuments));
+
     harness.request.mockImplementation(patchRequest);
     renderUi(
       <ChatNpcMessage
@@ -182,6 +186,7 @@ describe("ChatNpcMessage", () => {
 
   it("omits the location row when npc location is empty", () => {
     const npc = makeChatMessage().npc;
+
     if (!npc) throw new Error("Expected NPC fixture data");
 
     render(

@@ -11,6 +11,7 @@ function hasHttpStatus(cause: unknown, status: number): boolean {
 export function usePartyReadyRoomExpiry(): void {
   const projections = usePartyFinderStore((state) => state.projections);
   const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
+
   const removeProjection = usePartyFinderStore(
     (state) => state.removeProjection,
   );
@@ -19,16 +20,19 @@ export function usePartyReadyRoomExpiry(): void {
     const activeProjections = Object.values(projections).filter(
       ({ status }) => status === "ACTIVE",
     );
+
     if (activeProjections.length === 0) return;
 
     const nextExpiry = Math.min(
       ...activeProjections.map(({ expiresAt }) => Date.parse(expiresAt)),
     );
+
     const timeout = window.setTimeout(
       () => {
         const expiredProjections = activeProjections.filter(
           ({ expiresAt }) => Date.parse(expiresAt) <= Date.now(),
         );
+
         for (const projection of expiredProjections) {
           void partyReadyRoomControllerGet({
             notificationId: projection.notificationId,
@@ -39,8 +43,10 @@ export function usePartyReadyRoomExpiry(): void {
             .catch((cause: unknown) => {
               if (hasHttpStatus(cause, 404)) {
                 removeProjection(projection.notificationId);
+
                 return;
               }
+
               console.warn(
                 "Failed to resynchronize expired party Ready Room",
                 cause,

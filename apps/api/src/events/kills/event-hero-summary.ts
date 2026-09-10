@@ -37,6 +37,7 @@ export const makeEventHeroSummary = (
         attributes: { adapter: "events.hero-summary.drizzle", retryCount: 0 },
       }),
     );
+
   const eventWithHeroes = (guildId: string, eventId: string) =>
     Effect.gen(function* () {
       const events = yield* query(
@@ -49,9 +50,12 @@ export const makeEventHeroSummary = (
           )
           .limit(1),
       );
+
       const event = events[0];
+
       if (!event)
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
+
       const heroNpcs = yield* query(
         "events.heroSummary.heroes",
         database
@@ -59,8 +63,10 @@ export const makeEventHeroSummary = (
           .from(eventHeroNpcTable)
           .where(eq(eventHeroNpcTable.eventId, eventId)),
       );
+
       return { event, heroNpcs };
     });
+
   const cachedStats = <S extends Schema.ConstraintDecoder<unknown>>(
     guildId: string,
     eventId: string,
@@ -69,6 +75,7 @@ export const makeEventHeroSummary = (
   ) => {
     const key = `event-read:v2:${guildId}:${eventId}:hero-stats-v2:e30`;
     const codec = makeJsonCodec(Schema.toType(schema), superjson);
+
     return redis
       .getOrSetJsonEffect({
         key,
@@ -84,18 +91,23 @@ export const makeEventHeroSummary = (
         }),
       );
   };
+
   return {
     getTimers: (guild: { id: string }, eventId: string, world: string) =>
       Effect.gen(function* () {
         const { heroNpcs } = yield* eventWithHeroes(guild.id, eventId);
+
         if (heroNpcs.length === 0) return [];
+
         const values = yield* timers.getTimersForEventHeroFilters(
           guild.id,
           world,
           heroNpcs,
         );
+
         return values.map((timer) => {
           const npc = isObjectRecord(timer.npc) ? timer.npc : {};
+
           return {
             npcLvl: Schema.is(Schema.Number)(npc.lvl) ? npc.lvl : null,
             npcId: timer.npcId,
@@ -115,6 +127,7 @@ export const makeEventHeroSummary = (
         Effect.gen(function* () {
           const { event, heroNpcs } = yield* eventWithHeroes(guild.id, eventId);
           const heroIds = heroNpcs.map(({ id }) => id);
+
           const counts =
             heroIds.length === 0
               ? []
@@ -129,9 +142,11 @@ export const makeEventHeroSummary = (
                     .where(inArray(eventHeroKillTable.heroNpcId, heroIds))
                     .groupBy(eventHeroKillTable.heroNpcId),
                 );
+
           const npcIds = heroNpcs.flatMap(({ npcId }) =>
             npcId === null ? [] : [npcId],
           );
+
           const npcStats =
             npcIds.length === 0
               ? []
@@ -156,9 +171,11 @@ export const makeEventHeroSummary = (
                       desc(npcKillStatsTable.updatedAt),
                     ),
                 );
+
           const professions = new Map(
             npcStats.map(({ npcId, npcProf }) => [npcId, npcProf]),
           );
+
           return heroNpcs.map((hero) => ({
             heroId: hero.id,
             npcId: hero.npcId,

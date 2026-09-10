@@ -1,4 +1,5 @@
 import type { SoundSettingsResponseDto } from "@lootlog/client/main";
+
 export const createSoundSettings = (
   overrides: Partial<SoundSettingsResponseDto> = {},
 ): SoundSettingsResponseDto => ({

@@ -14,6 +14,7 @@ it("rejects an HTTP error payload and allows the animation request to recover", 
   const fetchAnimation = vi
     .fn<typeof fetch>()
     .mockResolvedValue(Response.json({ error: "missing" }, { status: 404 }));
+
   vi.stubGlobal("fetch", fetchAnimation);
   queryClient.setQueryDefaults(["lottie-animation"], { retry: false });
   const { result } = renderHook(() => useLottieAnimation("/lottie/test.json"));

@@ -29,9 +29,11 @@ describe("CatPawLottie", () => {
       removeEventListener: () => {},
     }));
     playback.mockReturnValue(null);
+
     const { container } = render(
       <CatPawLottie animationData={animationData} />,
     );
+
     const options = playback.mock.calls[0]?.[0];
     expect(options.autoplay).toBe(true);
     expect(options.loop).toEqual(expect.any(Number));
@@ -49,9 +51,11 @@ describe("CatPawLottie", () => {
       addEventListener: () => {},
       removeEventListener: () => {},
     }));
+
     const { container } = render(
       <CatPawLottie animationData={{}} className="size-8" />,
     );
+
     expect(playback).not.toHaveBeenCalled();
     expect(container.firstElementChild?.classList.contains("size-8")).toBe(
       true,

@@ -15,6 +15,7 @@ export const createBattlePanelCursorActions = (
       direction === "next"
         ? pagination?.nextCursor
         : pagination?.previousCursor;
+
     if (cursor)
       void change({
         cursor,
@@ -24,6 +25,7 @@ export const createBattlePanelCursorActions = (
             : getPreviousBattlePanelPage(page),
       });
   };
+
   return {
     handleNextPage: () => move("next"),
     handlePreviousPage: () => move("previous"),

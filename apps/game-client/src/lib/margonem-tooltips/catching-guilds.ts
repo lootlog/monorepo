@@ -46,9 +46,11 @@ function appendCatchingGuildsSection(
 ): string {
   const t = getFixedT("common");
   const ownerTitle = escapeTooltipHtml(t("characterTooltip.owner.title"));
+
   const ownerBody = escapeTooltipHtml(
     ownerName ?? t("characterTooltip.owner.unavailable"),
   );
+
   const title = escapeTooltipHtml(t("characterTooltip.catchingGuilds.title"));
   const body = buildCatchingGuildsBody(status, guildNames);
 
@@ -65,20 +67,25 @@ export const appendCatchingGuildsTooltipSection: CharacterTooltipTransform = ({
   }
 
   const state = useCharacterTooltipCatchingGuildsStore.getState();
+
   const selectedGuildId = getSelectedLootlogGuildId(
     useSettingsStore.getState().guildIdByCharId,
   );
+
   if (!state.isShiftPressed || !isConcreteLootlogGuildId(selectedGuildId)) {
     return currentHtml;
   }
 
   const target =
     "d" in character ? getOtherCatchingGuildsTarget(character) : null;
+
   if (!target) {
     const ownersStatus = useOnlineCharacterOwnersStore.getState().status;
+
     if (ownersStatus === "loading") {
       return appendCatchingGuildsSection(currentHtml, "loading", []);
     }
+
     if (ownersStatus === "error") {
       return appendCatchingGuildsSection(currentHtml, "error", []);
     }

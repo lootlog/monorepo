@@ -10,6 +10,7 @@ describe("mergeSoundSettingsPatches", () => {
         },
       },
     };
+
     const elitePatch = {
       notificationsConfig: {
         ELITE2: {

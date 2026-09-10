@@ -41,6 +41,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
 }) => {
   const { t } = useTranslation("timers");
   const hiddenColorIds = new Set(hiddenDefaultColors);
+
   const colors = [
     ...Object.entries(TIMERS_COLORS).flatMap(([id, color]) =>
       hiddenColorIds.has(id)
@@ -66,6 +67,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
       },
     })),
   ];
+
   if (colors.length === 0) return null;
 
   return (

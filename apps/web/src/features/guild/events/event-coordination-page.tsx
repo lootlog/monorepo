@@ -39,13 +39,16 @@ export const EventCoordinationPage = () => {
   const { guildId, eventId } = useParams({ strict: false });
   const queryClient = useQueryClient();
   const [assigningMapId, setAssigningMapId] = useState<string | null>(null);
+
   const [closingHero, setClosingHero] =
     useState<EventCoordinationResponseDtoHeroesItem | null>(null);
+
   const hasEventRouteParams = Boolean(guildId && eventId);
   const resolvedGuildId = getRouteId(guildId);
   const resolvedEventId = getRouteId(eventId);
 
   const { data: accessPolicy } = useGuildPermissions();
+
   const {
     data: coordination,
     isPending,
@@ -129,6 +132,7 @@ export const EventCoordinationPage = () => {
     Permission.ADMIN,
     Permission.OWNER,
   ]);
+
   const canManage = hasAnyPermission(accessPolicy, [
     Permission.LOOTLOG_MANAGE,
     Permission.LOOTLOG_EVENTS_MANAGE,
@@ -146,8 +150,10 @@ export const EventCoordinationPage = () => {
       assignmentTimeoutMinutes: coordination?.assignmentTimeoutMinutes ?? 5,
       timer: hero.timer,
     });
+
     if (!assignmentAvailability.allowed) {
       toast.error(t("events.maps.assignError"));
+
       return;
     }
 

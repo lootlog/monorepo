@@ -55,10 +55,12 @@ export const EventCoordinationHeroCard = ({
   const isClosing = hero.heroId === closingHeroId;
   const timerStatus = hero.timer?.status ?? "NONE";
   const timerTime = getTimerDisplayTime(hero);
+
   const assignmentAvailability = getAssignmentAvailability({
     assignmentTimeoutMinutes,
     timer: hero.timer,
   });
+
   const {
     isEnabled: isAssignmentEnabled,
     formattedTime: assignmentCountdownTime,

@@ -21,6 +21,7 @@ export const AuthenticationGuard = ({ children }: Props) => {
     isFetching,
     refetch,
   } = useAuthScopes();
+
   const authFailure = useAuthRecoveryStore((state) => state.failure);
   const reauthenticationAttempt = useRef<Promise<unknown> | null>(null);
   const [reauthenticationPending, setReauthenticationPending] = useState(false);
@@ -41,12 +42,14 @@ export const AuthenticationGuard = ({ children }: Props) => {
       "redirect",
       `${window.location.pathname}${window.location.search}${window.location.hash}`,
     );
+
     const attempt = authClient.signIn.social({
       provider: "discord",
       callbackURL: window.location.href,
       errorCallbackURL: errorCallbackURL.toString(),
       scopes: DISCORD_AUTH_SCOPES,
     });
+
     reauthenticationAttempt.current = attempt;
 
     try {

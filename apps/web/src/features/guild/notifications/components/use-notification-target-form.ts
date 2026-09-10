@@ -57,6 +57,7 @@ export const useNotificationTargetForm = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const createTarget = useNotificationsGuildControllerCreateGuildTarget({
     mutation: {
       onSuccess: async () => {
@@ -68,6 +69,7 @@ export const useNotificationTargetForm = ({
       },
     },
   });
+
   const updateTarget = useNotificationsGuildControllerUpdateGuildTarget({
     mutation: {
       onSuccess: async () => {
@@ -79,7 +81,9 @@ export const useNotificationTargetForm = ({
       },
     },
   });
+
   const isCreateMode = mode === "create";
+
   const { data: availableChannelsResponse, isLoading: isLoadingChannels } =
     useNotificationsGuildControllerGetAvailableGuildTargets(
       { guildId: guildId ?? "" },
@@ -101,6 +105,7 @@ export const useNotificationTargetForm = ({
           ),
       },
     );
+
   const form = useForm<TargetFormValues>({
     resolver: zodResolver(targetFormSchema(t, isCreateMode)),
     defaultValues: {
@@ -141,6 +146,7 @@ export const useNotificationTargetForm = ({
 
   const handleSubmit = async (values: TargetFormValues) => {
     const trimmedDisplayName = values.displayName.trim();
+
     if (!guildId) {
       toast.error(
         t(
@@ -149,6 +155,7 @@ export const useNotificationTargetForm = ({
             : "settings.notifications.toasts.targetUpdateError",
         ),
       );
+
       return;
     }
 
@@ -163,6 +170,7 @@ export const useNotificationTargetForm = ({
               trimmedDisplayName.length > 0 ? trimmedDisplayName : undefined,
           },
         });
+
         toast.success(t("settings.notifications.toasts.targetCreated"));
         onCreated?.(createdTarget);
       } else if (target) {

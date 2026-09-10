@@ -52,6 +52,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   onPeriodChange,
 }) => {
   const { t } = useTranslation();
+
   const { data } = useKillsControllerGetUserKillStats(undefined, {
     query: {
       queryKey: getKillsControllerGetUserKillStatsQueryKey(),
@@ -71,6 +72,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   const handleNpcTypeChange = (value: string | null) => {
     if (value === null) return;
     const npcType = findTrackableNpcType(value);
+
     if (value !== "all" && !npcType) return;
     onNpcTypeChange(npcType ? [npcType] : undefined);
   };

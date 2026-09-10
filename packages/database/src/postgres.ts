@@ -14,6 +14,7 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
   Layer.effectContext(
     Effect.gen(function* () {
       const services = yield* Effect.context<never>();
+
       const pool = yield* Effect.acquireRelease(
         Effect.sync(() => {
           const poolOptions: pg.PoolConfig &
@@ -51,6 +52,7 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
             application_name: options.applicationName ?? "@effect/sql-pg",
             types: options.types,
           };
+
           if (options.stream) poolOptions.stream = options.stream;
           const pool = new pg.Pool(poolOptions);
           pool.on("error", () => {
@@ -63,15 +65,18 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
               ),
             );
           });
+
           return pool;
         }),
         (pool) =>
           Effect.promise(() => pool.end()).pipe(Effect.timeoutOption(1000)),
       );
+
       const client = yield* PgClient.fromPool({
         ...options,
         acquire: Effect.succeed(pool),
       });
+
       yield* client`SELECT 1`.pipe(
         Effect.timeoutOrElse({
           duration: options.connectTimeout ?? "5 seconds",
@@ -87,6 +92,7 @@ export const makePostgresLayer = (options: PgClient.PgPoolConfig) =>
             ),
         }),
       );
+
       return Context.make(PostgresPool, pool).pipe(
         Context.add(PgClient.PgClient, client),
         Context.add(SqlClient.SqlClient, client),

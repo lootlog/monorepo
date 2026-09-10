@@ -16,7 +16,9 @@ import { Label } from "@lootlog/ui/components/label";
 import { useTranslation } from "react-i18next";
 
 const DEFAULT_TABLE_SIZE = 3;
+
 const MIN_TABLE_SIZE = 1;
+
 const MAX_TABLE_SIZE = 20;
 
 type GuildDocTableDialogProps = {
@@ -49,8 +51,10 @@ export const GuildDocTableDialog = ({
   const canSubmit = rows.trim().length > 0 && columns.trim().length > 0;
 
   const [wasOpen, setWasOpen] = useState(open);
+
   if (wasOpen !== open) {
     setWasOpen(open);
+
     if (open) {
       setRows(String(DEFAULT_TABLE_SIZE));
       setColumns(String(DEFAULT_TABLE_SIZE));

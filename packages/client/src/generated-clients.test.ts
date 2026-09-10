@@ -46,6 +46,7 @@ describe("generated API clients", () => {
         status: 200,
       }),
     );
+
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -53,6 +54,7 @@ describe("generated API clients", () => {
         },
       },
     });
+
     const queryOptions = getHealthzControllerHealthCheckQueryOptions({
       request: {
         apiClient: {

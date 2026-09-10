@@ -25,6 +25,7 @@ export function StatisticsContent({
   const { t } = useTranslation();
   const Content = tabs[tab];
   const hasHistory = data.meta.coverage !== "unavailable";
+
   return (
     <>
       {!hasHistory && (

@@ -21,8 +21,10 @@ export const MultipliersCard = ({
 }: MultipliersCardProps) => {
   const rules = eventConfig.scoringRules?.rules ?? [];
   const hardCapPoints = eventConfig.scoringRules?.hardCapPoints ?? 2;
+
   const minTrackingPercentForBonuses =
     eventConfig.scoringRules?.minTrackingPercentForBonuses ?? 50;
+
   const timezone = eventConfig.scoringRules?.timezone ?? "Europe/Warsaw";
 
   return (

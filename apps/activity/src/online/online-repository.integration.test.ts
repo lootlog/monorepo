@@ -29,6 +29,7 @@ import { Permissions } from "#src/activities/activity-permissions";
 describe("durable private online history", () => {
   let postgres: StartedPostgreSqlContainer;
   let database: ReturnType<typeof makePostgresLayer>;
+
   const checkpoint = (
     userId: string,
     segmentId: string,
@@ -44,12 +45,14 @@ describe("durable private online history", () => {
     endedAt,
     observedAt: endedAt,
   });
+
   const run = <A, E>(effect: Effect.Effect<A, E, OnlineRepository>) =>
     Effect.runPromise(
       effect.pipe(
         Effect.provide(OnlineRepository.layer.pipe(Layer.provide(database))),
       ),
     );
+
   const runAt = <A, E>(
     time: string,
     effect: Effect.Effect<A, E, OnlineRepository>,
@@ -57,9 +60,11 @@ describe("durable private online history", () => {
     run(
       Effect.gen(function* () {
         yield* TestClock.setTime(Date.parse(time));
+
         return yield* effect;
       }).pipe(Effect.provide(TestClock.layer())),
     );
+
   beforeAll(async () => {
     postgres = await new PostgreSqlContainer("postgres:17-alpine")
       .withDatabase("online_history")
@@ -72,6 +77,7 @@ describe("durable private online history", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
+
         const migration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
@@ -80,8 +86,10 @@ describe("durable private online history", () => {
             ),
           ).text(),
         );
+
         yield* sql.unsafe(migration).unprepared;
         yield* sql.unsafe(migration).unprepared;
+
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
@@ -90,6 +98,7 @@ describe("durable private online history", () => {
             ),
           ).text(),
         );
+
         yield* sql.unsafe(worldsMigration).unprepared;
         yield* sql.unsafe(worldsMigration).unprepared;
       }).pipe(Effect.provide(database)),
@@ -103,10 +112,12 @@ describe("durable private online history", () => {
     const result = await run(
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
+
         const initial = yield* repo.find("never", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
+
         expect(initial.status).toBe("unavailable");
         yield* repo.ingest({
           version: 1,
@@ -114,12 +125,14 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt: "2025-10-25T00:00:00Z",
         });
+
         const first = checkpoint(
           "union",
           "a",
           "2026-09-01T08:00:00Z",
           "2026-09-01T09:00:00Z",
         );
+
         yield* repo.ingest(first);
         yield* repo.ingest({
           ...first,
@@ -153,12 +166,14 @@ describe("durable private online history", () => {
             "2026-09-01T20:00:00Z",
           ),
         );
+
         return yield* repo.find("union", {
           from: "2026-08-31",
           to: "2026-09-02",
         });
       }),
     );
+
     expect(result.days).toEqual([
       {
         date: "2026-08-31",
@@ -190,12 +205,14 @@ describe("durable private online history", () => {
       "2025-10-27T12:00:00Z",
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
+
         return yield* repo.find("never-played", {
           from: "2025-10-24",
           to: "2025-10-26",
         });
       }),
     );
+
     expect(result.days).toEqual([
       {
         date: "2025-10-24",
@@ -219,6 +236,7 @@ describe("durable private online history", () => {
         worldsComplete: true,
       },
     ]);
+
     const confirmed = await runAt(
       "2025-10-27T12:00:00Z",
       Effect.gen(function* () {
@@ -231,12 +249,14 @@ describe("durable private online history", () => {
             "2025-10-25T09:00:00Z",
           ),
         );
+
         return yield* repo.find("deployment-day", {
           from: "2025-10-25",
           to: "2025-10-25",
         });
       }),
     );
+
     expect(confirmed.days[0]).toEqual({
       date: "2025-10-25",
       onlineSeconds: 3600,
@@ -273,9 +293,11 @@ describe("durable private online history", () => {
         Effect.gen(function* () {
           const repo = yield* OnlineRepository;
           yield* repo.ingest(checkpoint(user, "a", start, end));
+
           return yield* repo.find(user, { from: date, to: date });
         }),
       );
+
       expect(result.days[0]?.onlineSeconds).toBe(seconds);
     },
   );
@@ -291,10 +313,12 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt,
         });
+
         const fresh = yield* repo.find("union", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
+
         yield* repo.ingest({
           version: 1,
           type: "collector",
@@ -307,17 +331,21 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt,
         });
+
         const stale = yield* repo.find("union", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
+
         const unavailable = yield* repo.find("never", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
+
         return { fresh, stale, unavailable };
       }),
     );
+
     expect(result.fresh.status).toBe("fresh");
     expect(result.stale.status).toBe("stale");
     expect(result.unavailable.status).toBe("stale");
@@ -326,6 +354,7 @@ describe("durable private online history", () => {
 
   it("persists a degraded gateway lease across newer healthy peers and repository restarts", async () => {
     const now = Date.now();
+
     const first = await run(
       Effect.gen(function* () {
         yield* TestClock.setTime(now);
@@ -342,24 +371,30 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt: new Date(now + 1000).toISOString(),
         });
+
         return yield* repo.find("union", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
       }).pipe(Effect.provide(TestClock.layer())),
     );
+
     expect(first.status).toBe("stale");
+
     const beforeExpiry = await run(
       Effect.gen(function* () {
         yield* TestClock.setTime(now + 179_000);
         const repo = yield* OnlineRepository;
+
         return yield* repo.find("union", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
       }).pipe(Effect.provide(TestClock.layer())),
     );
+
     expect(beforeExpiry.status).toBe("stale");
+
     const recovered = await run(
       Effect.gen(function* () {
         yield* TestClock.setTime(now + 180_000);
@@ -370,12 +405,14 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt: new Date(now + 180_000).toISOString(),
         });
+
         return yield* repo.find("union", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
       }).pipe(Effect.provide(TestClock.layer())),
     );
+
     expect(recovered.status).toBe("fresh");
   });
 
@@ -386,11 +423,15 @@ describe("durable private online history", () => {
       "2026-09-01T08:00:00Z",
       "2026-09-01T09:00:00Z",
     );
+
     const secret = "s".repeat(32);
+
     let consumeHandler:
       | ((delivery: RabbitDelivery) => Effect.Effect<void, unknown>)
       | undefined;
+
     const published: string[] = [];
+
     const rabbit = RabbitMessaging.of({
       publish: (options) =>
         Effect.sync(() => {
@@ -400,12 +441,14 @@ describe("durable private online history", () => {
       nack: () => Effect.void,
       consume: (options, handler) => {
         consumeHandler = handler;
+
         return Effect.succeed({
           consumerTag: options.queue,
           cancel: Effect.void,
         });
       },
     });
+
     const delivery = (signature: string): RabbitDelivery => {
       const raw: RabbitDelivery["raw"] = {
         content: Buffer.from(JSON.stringify(payload)),
@@ -433,6 +476,7 @@ describe("durable private online history", () => {
           headers: { [ACTIVITY_EVENT_SIGNATURE_HEADER]: signature },
         },
       };
+
       return {
         raw,
         content: raw.content,
@@ -442,6 +486,7 @@ describe("durable private online history", () => {
         redelivered: true,
       };
     };
+
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* Layer.build(
@@ -462,6 +507,7 @@ describe("durable private online history", () => {
             ),
           ),
         );
+
         if (!consumeHandler)
           return yield* Effect.die("Online consumer not installed");
         yield* consumeHandler(delivery("invalid"));
@@ -472,15 +518,18 @@ describe("durable private online history", () => {
     expect(published).toEqual([
       RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
     ]);
+
     const result = await run(
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
+
         return yield* repo.find("signed", {
           from: "2026-09-01",
           to: "2026-09-01",
         });
       }),
     );
+
     expect(result.days[0]?.onlineSeconds).toBe(3600);
   });
 
@@ -491,6 +540,7 @@ describe("durable private online history", () => {
       "2020-01-01T00:00:00Z",
       "2020-01-01T01:00:00Z",
     );
+
     await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
@@ -504,24 +554,29 @@ describe("durable private online history", () => {
         yield* repo.ingest(expired);
       }),
     );
+
     const rows = await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
+
         return yield* sql`SELECT * FROM "UserOnlineInterval" WHERE "userId"='expired'`;
       }).pipe(Effect.provide(database)),
     );
+
     expect(rows).toHaveLength(0);
   });
 
   it("physically trims the 112-day boundary and replay cannot restore the forgotten start", async () => {
     const now = "2026-09-06T12:00:00Z";
     const cutoff = Date.parse(now) - 112 * 86_400_000;
+
     const input = checkpoint(
       "retention-boundary",
       "stable-segment",
       new Date(cutoff - 3600_000).toISOString(),
       new Date(cutoff + 7200_000).toISOString(),
     );
+
     await runAt(
       now,
       Effect.gen(function* () {
@@ -530,6 +585,7 @@ describe("durable private online history", () => {
       }),
     );
     const later = new Date(Date.parse(now) + 3600_000).toISOString();
+
     const result = await runAt(
       later,
       Effect.gen(function* () {
@@ -540,16 +596,19 @@ describe("durable private online history", () => {
           ...input,
           endedAt: new Date(cutoff).toISOString(),
         });
+
         return yield* repo.find("retention-boundary", {
           from: new Date(cutoff - 86_400_000).toISOString().slice(0, 10),
           to: new Date(cutoff).toISOString().slice(0, 10),
         });
       }),
     );
+
     const changedStart = await runAt(
       later,
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
+
         return yield* repo
           .ingest({
             ...input,
@@ -558,17 +617,21 @@ describe("durable private online history", () => {
           .pipe(Effect.result);
       }),
     );
+
     expect(changedStart._tag).toBe("Failure");
     expect(result.days[0]?.onlineSeconds).toBeNull();
     expect(result.days[1]?.onlineSeconds).toBe(3600);
+
     const rows = await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
+
         return yield* sql<{
           startedAt: string;
         }>`SELECT "startedAt"::text AS "startedAt" FROM "UserOnlineInterval" WHERE "userId"='retention-boundary'`;
       }).pipe(Effect.provide(database)),
     );
+
     expect(rows).toHaveLength(1);
     expect(Date.parse(rows[0]?.startedAt ?? "")).toBe(cutoff + 3600_000);
   });
@@ -581,9 +644,11 @@ describe("durable private online history", () => {
         ('migration-expired','a','a',CURRENT_TIMESTAMP-interval '114 days',CURRENT_TIMESTAMP-interval '113 days',CURRENT_TIMESTAMP-interval '113 days'),
         ('migration-crossing','a','a',CURRENT_TIMESTAMP-interval '113 days',CURRENT_TIMESTAMP-interval '111 days',CURRENT_TIMESTAMP-interval '111 days')`;
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId","lastObservedAt") VALUES ('migration-expired',CURRENT_TIMESTAMP-interval '113 days')`;
+
         const before = yield* sql<{
           cutoff: string;
         }>`SELECT (CURRENT_TIMESTAMP-interval '112 days')::text AS cutoff`;
+
         const migration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
@@ -592,8 +657,10 @@ describe("durable private online history", () => {
             ),
           ).text(),
         );
+
         yield* sql.unsafe(migration).unprepared;
         yield* sql.unsafe(migration).unprepared;
+
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
@@ -602,17 +669,22 @@ describe("durable private online history", () => {
             ),
           ).text(),
         );
+
         yield* sql.unsafe(worldsMigration).unprepared;
         yield* sql.unsafe(worldsMigration).unprepared;
+
         const rows = yield* sql<{
           userId: string;
           startedAt: string;
         }>`SELECT "userId","startedAt"::text AS "startedAt" FROM "UserOnlineInterval" WHERE "userId" IN ('migration-expired','migration-crossing')`;
+
         const metadata =
           yield* sql`SELECT * FROM "UserOnlineTracking" WHERE "userId"='migration-expired'`;
+
         return { before, rows, metadata };
       }).pipe(Effect.provide(database)),
     );
+
     expect(result.rows).toHaveLength(1);
     expect(result.rows[0]?.userId).toBe("migration-crossing");
     expect(Date.parse(result.rows[0]?.startedAt ?? "")).toBeGreaterThanOrEqual(
@@ -652,18 +724,24 @@ describe("durable private online history", () => {
       ),
       Layer.provideMerge(HttpServer.layerServices),
     );
+
     const boundary = HttpRouter.toWebHandler(routes, { disableLogger: true });
+
     const url =
       "https://activity/users/@me/activity/online?from=2026-09-01&to=2026-09-01";
+
     try {
       expect((await boundary.handler(new Request(url))).status).toBe(401);
+
       const headers = {
         authorization: "Bearer forwarded",
         "x-auth-user-id": "union",
       };
+
       const response = await boundary.handler(
         new Request(url + "&userId=different-user", { headers }),
       );
+
       expect(response.status).toBe(200);
       expect((await response.json()).days[0].onlineSeconds).toBe(14_400);
       expect(
@@ -697,6 +775,7 @@ describe("durable private online history", () => {
           status: "healthy",
           observedAt: "2026-09-01T00:00:00Z",
         });
+
         const known = {
           ...checkpoint(
             "worlds",
@@ -706,6 +785,7 @@ describe("durable private online history", () => {
           ),
           world: "luvia",
         };
+
         yield* repo.ingest(known);
         yield* repo.ingest(known);
         yield* repo.ingest({
@@ -743,10 +823,12 @@ describe("durable private online history", () => {
           ),
           world: "zero",
         });
+
         const result = yield* repo.find("worlds", {
           from: "2026-09-04",
           to: "2026-09-06",
         });
+
         expect(
           result.days.map(({ onlineSeconds, worlds, worldsComplete }) => ({
             onlineSeconds,
@@ -762,18 +844,22 @@ describe("durable private online history", () => {
           },
           { onlineSeconds: 0, worlds: [], worldsComplete: true },
         ]);
+
         const changedWorld = yield* repo
           .ingest({ ...known, world: "changed" })
           .pipe(Effect.exit);
+
         expect(changedWorld._tag).toBe("Failure");
         yield* repo.ingest(
           checkpoint("worlds", "a", known.startedAt, "2026-09-05T00:00:00Z"),
         );
         yield* repo.ingest(known);
+
         const rollback = yield* repo.find("worlds", {
           from: "2026-09-04",
           to: "2026-09-05",
         });
+
         expect(rollback.days[0]?.worldsComplete).toBe(false);
         expect(rollback.days[0]?.worlds).toEqual([]);
         expect(rollback.days[1]?.onlineSeconds).toBe(7200);

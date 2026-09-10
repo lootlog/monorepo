@@ -137,6 +137,7 @@ describe("AirTagObservationController", () => {
       publisher,
     });
     const entries: Other = {};
+
     for (let index = 0; index < 55; index += 1) {
       entries[String(index)] = createOther({ nick: `Target ${index}` });
     }
@@ -158,6 +159,7 @@ describe("AirTagObservationController", () => {
       publisher,
     });
     const entries: Other = {};
+
     for (let index = 0; index < 101; index += 1) {
       entries[String(index)] = createOther({ nick: `Target ${index}` });
     }
@@ -169,6 +171,7 @@ describe("AirTagObservationController", () => {
       (count, [batch]) => count + batch.observations.length,
       0,
     );
+
     expect(publishedCount).toBe(100);
   });
 

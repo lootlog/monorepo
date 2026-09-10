@@ -16,8 +16,11 @@ const pvpStart = (moves = ["start"]): GameEvent => ({
     w: { "111": createBattleWarrior(111), "222": createBattleWarrior(222) },
   },
 });
+
 const end: GameEvent = { f: { endBattle: 1, m: ["end"] } };
+
 afterEach(() => vi.restoreAllMocks());
+
 it("ignores nonbattle packets and publishes combined initialization/warriors in one transaction", async () => {
   createBattleTest();
   const processor = new BattleEventProcessor();
@@ -25,6 +28,7 @@ it("ignores nonbattle packets and publishes combined initialization/warriors in 
   expect(useBattleStore.getState().battleState).toBe("idle");
   const changes = vi.fn<Parameters<typeof useBattleStore.subscribe>[0]>();
   const unsubscribe = useBattleStore.subscribe(changes);
+
   try {
     await processor.handle(pvpStart());
     expect(changes).toHaveBeenCalledOnce();
@@ -37,6 +41,7 @@ it("ignores nonbattle packets and publishes combined initialization/warriors in 
     unsubscribe();
   }
 });
+
 it("does not capture or send PvP battles when collection is disabled", async () => {
   const fixture = createBattleTest();
   useBattlePanelStore.setState({ isBattleCollectionEnabled: false });
@@ -46,6 +51,7 @@ it("does not capture or send PvP battles when collection is disabled", async () 
   expect(useBattleStore.getState().events).toEqual([]);
   expect(fixture.battles()).toHaveLength(0);
 });
+
 it("never submits a partial battle after the capture budget overflows", async () => {
   const fixture = createBattleTest();
   const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -55,6 +61,7 @@ it("never submits a partial battle after the capture budget overflows", async ()
   expect(fixture.battles()).toHaveLength(0);
   expect(warning).toHaveBeenCalled();
 });
+
 it("submits actual mapped PvP events with stable identity and clears finished state", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -85,6 +92,7 @@ it("submits actual mapped PvP events with stable identity and clears finished st
   expect(useBattleStore.getState().events).toEqual([]);
   expect(useBattleStore.getState().lastBattleHash).toMatch(/^[a-f0-9]{64}$/);
 });
+
 it("does not submit a one-team battle", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -94,6 +102,7 @@ it("does not submit a one-team battle", async () => {
   await processor.handle(end);
   expect(fixture.requests).toHaveLength(0);
 });
+
 it.each([
   { weight: 9, tracked: false },
   { weight: 19, tracked: false },
@@ -120,6 +129,7 @@ it.each([
     expect(fixture.battles()).toHaveLength(0);
   },
 );
+
 it("records only the highest-weight defeated NPC", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -141,11 +151,13 @@ it("records only the highest-weight defeated NPC", async () => {
     npc: { id: -200, name: "Titan", wt: 101 },
   });
 });
+
 it.each(["alive", "legacy-percent", "nested-current", "malformed"] as const)(
   "handles the %s NPC health representation",
   async (kind) => {
     const fixture = createBattleTest();
     const warrior = createBattleWarrior(-100, { hpp: 100 });
+
     if (kind === "legacy-percent") {
       // @ts-expect-error Legacy native packets can contain string HP; the runtime parser intentionally supports this representation.
       warrior.hpp = "0.00";
@@ -158,6 +170,7 @@ it.each(["alive", "legacy-percent", "nested-current", "malformed"] as const)(
       warrior.hpp = "not hp";
       warrior.hp = { cur: "invalid" };
     }
+
     const processor = new BattleEventProcessor();
     await processor.handle({ f: { init: "1", w: { "-100": warrior } } });
     await processor.handle(end);
@@ -166,6 +179,7 @@ it.each(["alive", "legacy-percent", "nested-current", "malformed"] as const)(
     );
   },
 );
+
 it("preserves distinct packets sharing an event id", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -180,6 +194,7 @@ it("preserves distinct packets sharing an event id", async () => {
     ],
   });
 });
+
 it("submits incremental and compact replays only once using the actual digest", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -197,6 +212,7 @@ it("submits incremental and compact replays only once using the actual digest", 
   });
   expect(fixture.battles()).toHaveLength(1);
 });
+
 it("does not submit the same completed battle twice", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -206,17 +222,20 @@ it("does not submit the same completed battle twice", async () => {
   await processor.handle(end);
   expect(fixture.battles()).toHaveLength(1);
 });
+
 const deferNextDigest = () => {
   const actual = crypto.subtle.digest.bind(crypto.subtle);
   const pending = Promise.withResolvers<ArrayBuffer>();
   vi.spyOn(crypto.subtle, "digest").mockImplementationOnce(
     () => pending.promise,
   );
+
   return {
     release: async () =>
       pending.resolve(await actual("SHA-256", new Uint8Array([1]))),
   };
 };
+
 it("publishes final warriors before digest completion", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -224,15 +243,18 @@ it("publishes final warriors before digest completion", async () => {
     f: { init: "1", w: { "-100": createBattleWarrior(-100, { hpp: 100 }) } },
   });
   const digest = deferNextDigest();
+
   const finalization = processor.handle({
     f: { endBattle: 1, w: { "-100": createBattleWarrior(-100, { hpp: 0 }) } },
   });
+
   expect(useBattleStore.getState().battleWarriors["-100"]?.hpp).toBe(0);
   expect(fixture.kills()).toHaveLength(0);
   await digest.release();
   await finalization;
   expect(fixture.kills()).toHaveLength(1);
 });
+
 it("submits one immutable snapshot while digest computation is pending", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -249,6 +271,7 @@ it("submits one immutable snapshot while digest computation is pending", async (
     events: [{ f: { m: ["start"] } }, { f: { m: ["end"] } }],
   });
 });
+
 it("does not overwrite a new battle when previous asynchronous finalization completes", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
@@ -266,6 +289,7 @@ it("does not overwrite a new battle when previous asynchronous finalization comp
   ]);
   expect(fixture.kills()).toHaveLength(0);
 });
+
 it.each(["battle", "kill"] as const)(
   "reports a %s HTTP failure",
   async (kind) => {
@@ -273,10 +297,12 @@ it.each(["battle", "kill"] as const)(
     fixture.fail();
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     const processor = new BattleEventProcessor();
+
     const warriors: W =
       kind === "battle"
         ? { "111": createBattleWarrior(111), "222": createBattleWarrior(222) }
         : { "-100": createBattleWarrior(-100) };
+
     await processor.handle({ f: { init: "1", m: ["start"], w: warriors } });
     await processor.handle(end);
     await waitFor(() =>
@@ -288,6 +314,7 @@ it.each(["battle", "kill"] as const)(
     expect(fixture.requests).toHaveLength(1);
   },
 );
+
 it("ignores an end packet while no battle is active", async () => {
   const fixture = createBattleTest();
   await new BattleEventProcessor().handle(end);

@@ -10,17 +10,25 @@ import {
 } from "@/lib/margonem-runtime/adapters/tooltip-runtime-adapter";
 
 type OriginalCreateStrTip = (...args: unknown[]) => string;
+
 type OriginalCanvasTipHide = NonNullable<RuntimeCanvasTip["hide"]>;
+
 type OriginalCanvasTipShow = NonNullable<RuntimeCanvasTip["show"]>;
 
 const patchedCreateStrTip = new WeakMap<object, OriginalCreateStrTip>();
 
 let cleanupCurrentInstallation: (() => void) | null = null;
+
 let originalCanvasTipHide: OriginalCanvasTipHide | null = null;
+
 let originalCanvasTipShow: OriginalCanvasTipShow | null = null;
+
 let lastOtherCanvasTipEvent: unknown = null;
+
 let lastOtherCanvasTipObject: Other | null = null;
+
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
+
 const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
 
 function patchCreateStrTip(
@@ -53,6 +61,7 @@ function patchCreateStrTip(
 
 function restoreCreateStrTip(character: MargonemTooltipCharacter): void {
   const originalCreateStrTip = patchedCreateStrTip.get(character);
+
   if (!originalCreateStrTip) return;
 
   character.createStrTip = originalCreateStrTip;
@@ -103,6 +112,7 @@ function patchOtherPrototype(other: MargonemTooltipCharacter): boolean {
 
   patchedCharacters.add(prototypeAsCharacter);
   patchedOtherPrototypes.add(prototypeAsCharacter);
+
   return true;
 }
 
@@ -110,9 +120,11 @@ function prunePatchedCharacters(): void {
   const hero = getRuntimeHeroTooltipOwner();
   const currentOthers = Object.values(runtimeOtherHandles.getAll());
   const retainedCharacters = new Set<MargonemTooltipCharacter>(currentOthers);
+
   if (hero) {
     retainedCharacters.add(hero);
   }
+
   const retainedPrototypes = new Set(
     currentOthers.map((other) => Object.getPrototypeOf(other)),
   );
@@ -121,6 +133,7 @@ function prunePatchedCharacters(): void {
     const isRetainedPrototype =
       patchedOtherPrototypes.has(character) &&
       retainedPrototypes.has(character);
+
     if (retainedCharacters.has(character) || isRetainedPrototype) {
       continue;
     }
@@ -182,6 +195,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
     lastOtherCanvasTipEvent = null;
     lastOtherCanvasTipObject = null;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
+
     return originalCanvasTipHide?.call(canvasTip, event);
   };
 
@@ -191,6 +205,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
     if (originalCanvasTipShow) {
       canvasTip.show = originalCanvasTipShow;
     }
+
     if (originalCanvasTipHide) {
       canvasTip.hide = originalCanvasTipHide;
     }
@@ -216,12 +231,15 @@ export function patchOtherCharacterTooltip(other: OtherHandle): void {
 
 export function refreshActiveOtherCanvasTooltip(): void {
   const state = useCharacterTooltipCatchingGuildsStore.getState();
+
   if (!state.isShiftPressed) {
     state.clearActiveOther();
+
     return;
   }
 
   const activeOther = state.activeOther ?? lastOtherCanvasTipObject;
+
   if (!activeOther) return;
 
   state.setActiveOther(activeOther);
@@ -229,6 +247,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
   patchOtherCharacterTooltip(activeOther);
 
   const canvasTip = getRuntimeCanvasTip();
+
   if (!canvasTip?.show || !lastOtherCanvasTipEvent) return;
 
   canvasTip.show(lastOtherCanvasTipEvent, activeOther);
@@ -236,6 +255,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
 
 export function patchOtherCharacterTooltips(others: OtherHandle[]): void {
   prunePatchedCharacters();
+
   for (const other of others) {
     patchOtherCharacterTooltip(other);
   }
@@ -248,10 +268,13 @@ export function installCharacterTooltipTransforms(): () => void {
 
   const hero = getRuntimeHeroTooltipOwner();
   const canvasTip = getRuntimeCanvasTip();
+
   if (!hero && !canvasTip) {
     return () => undefined;
   }
+
   const cleanupCanvasTip = canvasTip ? patchCanvasTip(canvasTip) : null;
+
   if (hero && patchCreateStrTip(hero, "hero")) {
     patchedCharacters.add(hero);
     refreshCharacterTooltip(hero);
@@ -264,6 +287,7 @@ export function installCharacterTooltipTransforms(): () => void {
       restoreCreateStrTip(character);
       refreshCharacterTooltip(character);
     }
+
     patchedCharacters.clear();
     patchedOtherPrototypes.clear();
 

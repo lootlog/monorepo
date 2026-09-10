@@ -37,6 +37,7 @@ const createReservation = (
 describe("getReservationSegments", () => {
   it("splits multi-day reservations into visible day segments", () => {
     const weekStart = new Date(2026, 0, 5);
+
     const segments = getReservationSegments(
       [createReservation(1, new Date(2026, 0, 5, 22), new Date(2026, 0, 7, 2))],
       weekStart,
@@ -60,6 +61,7 @@ describe("getReservationSegments", () => {
 
   it("assigns parallel lanes to overlapping partner reservations", () => {
     const weekStart = new Date(2026, 0, 5);
+
     const segments = getReservationSegments(
       [
         createReservation(
@@ -97,6 +99,7 @@ describe("getReservationSegments", () => {
 
   it("includes adjacent days when the calendar requests swipe previews", () => {
     const weekStart = new Date(2026, 0, 5);
+
     const segments = getReservationSegments(
       [
         createReservation(

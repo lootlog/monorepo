@@ -32,8 +32,10 @@ describe("useNpcDetectorStore", () => {
     const npc = createNpc(1);
     useNpcDetectorStore.getState().addNpc(npc);
     const npcs = useNpcDetectorStore.getState().npcs;
+
     const publish =
       vi.fn<Parameters<typeof useNpcDetectorStore.subscribe>[0]>();
+
     const unsubscribe = useNpcDetectorStore.subscribe(publish);
 
     useNpcDetectorStore.getState().removeNpc([2, 3]);
@@ -82,8 +84,10 @@ describe("useNpcDetectorStore", () => {
     useNpcDetectorStore
       .getState()
       .addNpc([createNpc(1), createNpc(2), createNpc(3)]);
+
     const publish =
       vi.fn<Parameters<typeof useNpcDetectorStore.subscribe>[0]>();
+
     const unsubscribe = useNpcDetectorStore.subscribe(publish);
 
     useNpcDetectorStore.getState().setNpcStates([

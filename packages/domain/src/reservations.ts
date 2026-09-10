@@ -70,24 +70,28 @@ export function validateReservationTime({
   if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
     return { code: "INVALID_TIME_RANGE" };
   }
+
   if (
     !allowPastStart &&
     startsAt.getTime() < now.getTime() - RESERVATION_START_GRACE_MS
   ) {
     return { code: "RESERVATION_START_IN_PAST" };
   }
+
   if (durationMinutes < settings.reservationMinDurationMinutes) {
     return {
       code: "RESERVATION_TOO_SHORT",
       minimumMinutes: settings.reservationMinDurationMinutes,
     };
   }
+
   if (durationMinutes > settings.reservationMaxDurationMinutes) {
     return {
       code: "RESERVATION_TOO_LONG",
       maximumMinutes: settings.reservationMaxDurationMinutes,
     };
   }
+
   if (
     startsAt.getTime() >
     now.getTime() + settings.reservationMaxAdvanceDays * 24 * 60 * 60 * 1000
@@ -97,6 +101,7 @@ export function validateReservationTime({
       maximumDays: settings.reservationMaxAdvanceDays,
     };
   }
+
   if (
     !isAlignedToGrid(startsAt, settings.reservationTimeGranularityMinutes) ||
     !isAlignedToGrid(endsAt, settings.reservationTimeGranularityMinutes)

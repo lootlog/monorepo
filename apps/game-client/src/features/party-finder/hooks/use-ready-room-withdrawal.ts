@@ -19,6 +19,7 @@ export const useReadyRoomWithdrawal = (
         getCurrentReadyRoomCharacterIdentity(),
       )
     : null;
+
   const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -26,6 +27,7 @@ export const useReadyRoomWithdrawal = (
     if (!room || !participant || isWithdrawing) return;
 
     setIsWithdrawing(true);
+
     return partyReadyRoomControllerWithdraw(
       { notificationId: room.notificationId },
       { participantId: participant.participantId },

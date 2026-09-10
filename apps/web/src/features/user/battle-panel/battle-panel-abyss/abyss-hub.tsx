@@ -27,7 +27,9 @@ import { getAbyssSeasonRangeLabel } from "./abyss-formatters";
 import { AbyssSeasonsTable } from "./abyss-seasons-table";
 import { AbyssSummaryCards } from "./abyss-summary-cards";
 import { useAbyssHub } from "./use-abyss-hub";
+
 const PAGE_SIZE = 20;
+
 const NO_SEASON_VALUE = "no-season";
 
 const getSeasonLabel = (
@@ -73,6 +75,7 @@ export function AbyssHub() {
     streakData,
     handleSeasonSelect,
   } = useAbyssHub();
+
   if (isLoadingCharacters) {
     return <BattlePanelStatisticsSkeleton />;
   }

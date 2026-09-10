@@ -52,15 +52,19 @@ export const useSettingsStore = create<SettingsState>()(
       ensureGuildId: (charId, orderedGuildIds) => {
         set((state) => {
           const currentGuildId = state.guildIdByCharId[charId];
+
           const hasCurrentGuild =
             currentGuildId === "all" ||
             Boolean(currentGuildId && orderedGuildIds.includes(currentGuildId));
+
           const selectedGuildId = hasCurrentGuild
             ? currentGuildId
             : orderedGuildIds[0];
+
           if (!selectedGuildId) return state;
 
           if (hasCurrentGuild) return state;
+
           return {
             guildIdByCharId: {
               ...state.guildIdByCharId,

@@ -36,17 +36,21 @@ export const NpcColorsSettings = () => {
   const preferences = useUserPreferences();
   const settingsDocuments = useAppearanceSettingsDocuments();
   const queryClient = useQueryClient();
+
   const serverDraft = getNpcTypeColorsFromSettingsDocuments(
     settingsDocuments.data,
   );
+
   const [draftState, setDraftState] = useState({
     source: settingsDocuments.data,
     value: serverDraft,
   });
+
   const draft =
     draftState.source === settingsDocuments.data
       ? draftState.value
       : serverDraft;
+
   const [openType, setOpenType] = useState<CombatNpcType | null>(null);
   const [saving, setSaving] = useState(false);
   const queue = useRef(initialQueue);
@@ -63,6 +67,7 @@ export const NpcColorsSettings = () => {
 
   const commit = (patch: Partial<NpcTypeColors>, unset: string[] = []) => {
     const userId = preferences.data?.userId;
+
     if (!userId) return;
 
     const currentGeneration = generation.current;
@@ -70,6 +75,7 @@ export const NpcColorsSettings = () => {
     queue.current = queue.current
       .then(async () => {
         if (currentGeneration !== generation.current) return;
+
         try {
           const response = await settingsDocumentsControllerPatchPreferences({
             operations: [
@@ -81,6 +87,7 @@ export const NpcColorsSettings = () => {
               },
             ],
           });
+
           const nextColors = getNpcTypeColorsFromSettingsDocuments(response);
           queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
             getSettingsDocumentsControllerGetPreferencesQueryKey(
@@ -107,12 +114,14 @@ export const NpcColorsSettings = () => {
       value,
       DEFAULT_NPC_TYPE_COLORS[npcType],
     );
+
     const patch = { [npcType]: color } satisfies Partial<NpcTypeColors>;
     setDraftState({
       source: settingsDocuments.data,
       value: { ...draft, ...patch },
     });
     updateCache(patch);
+
     return color;
   };
 
@@ -159,8 +168,10 @@ export const NpcColorsSettings = () => {
       >
         {COMBAT_NPC_TYPES.map((npcType) => {
           const surfaceColors = deriveNpcSurfaceColors(draft[npcType]);
+
           const isModified =
             draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType];
+
           const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
 
           return (

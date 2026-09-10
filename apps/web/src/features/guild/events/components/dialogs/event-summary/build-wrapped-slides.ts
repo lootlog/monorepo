@@ -68,6 +68,7 @@ const getPrimaryLeader = (
 export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
   const { data } = quality;
   const primaryLeader = getPrimaryLeader(quality);
+
   const spotlightCandidates: Array<WrappedFactSlide | null> = [
     validPositive(data.overview.totalKills)
       ? { id: "kills", kind: "fact", value: data.overview.totalKills }
@@ -124,6 +125,7 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
         }
       : null,
   ];
+
   const supportingCandidates: Array<WrappedFactSlide | null> = [
     quality.leaders.longestDuty
       ? {
@@ -145,6 +147,7 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
       ? { id: "points", kind: "fact", value: data.overview.totalPoints }
       : null,
   ];
+
   const facts = [...spotlightCandidates, ...supportingCandidates]
     .filter((candidate): candidate is WrappedFactSlide => candidate !== null)
     .slice(0, 8);

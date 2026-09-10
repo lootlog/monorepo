@@ -38,6 +38,7 @@ export const GuildDocCreateDialog = ({
   const createDocument = useDocsControllerCreateDocument();
   const trimmedTitle = title.trim();
   const titleTooLong = trimmedTitle.length > 120;
+
   const canSubmit =
     canCreate &&
     trimmedTitle.length > 0 &&

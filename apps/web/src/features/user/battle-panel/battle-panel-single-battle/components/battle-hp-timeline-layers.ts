@@ -86,6 +86,7 @@ export const DEFAULT_BATTLE_HP_TIMELINE_LAYER_CONFIG =
   BATTLE_HP_TIMELINE_LAYER_DEFINITIONS.reduce<BattleHpTimelineLayerConfig>(
     (config, definition) => {
       config[definition.key] = definition.key === "legendary";
+
       return config;
     },
     {} as BattleHpTimelineLayerConfig,
@@ -98,6 +99,7 @@ export const BATTLE_HP_TIMELINE_LAYER_DEFINITION_BY_KEY =
   >(
     (definitions, definition) => {
       definitions[definition.key] = definition;
+
       return definitions;
     },
     {} as Record<BattleHpTimelineLayerKey, BattleHpTimelineLayerDefinition>,

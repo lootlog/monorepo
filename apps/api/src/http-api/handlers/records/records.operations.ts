@@ -53,6 +53,7 @@ import type {
 } from "#src/contracts/loots/schemas";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
 
 export interface AuthenticatedCaller {
@@ -228,6 +229,7 @@ const requireGuild = (
       }),
     );
   }
+
   return Effect.flatMap(RecordsAuthorization, (authorization) =>
     authorization.requireGuild({ guildId, capability }),
   );
@@ -239,6 +241,7 @@ const data = <A>(
 
 const parseIdentifier = (value: string, code: string) => {
   const parsed = Number.parseInt(value, 10);
+
   return Number.isSafeInteger(parsed) && parsed >= 0
     ? Effect.succeed(parsed)
     : Effect.fail(new RecordsBadRequest({ status: 400, code }));
@@ -248,12 +251,14 @@ export const createKill = Effect.fn("kills.createKill")(function* (
   payload: CreateKillRequest,
 ) {
   const caller = yield* requireCaller;
+
   return yield* data((service) => service.createKill(caller, payload));
 });
 
 export const getGuildKillStats = Effect.fn("kills.getGuildKillStats")(
   function* (guildId: string | undefined, query: GuildKillStatsQuery) {
     const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+
     return yield* data((service) => service.getGuildKillStats(caller, query));
   },
 );
@@ -262,6 +267,7 @@ export const getUserKillStats = Effect.fn("kills.getUserKillStats")(function* (
   query: UserKillStatsQuery,
 ) {
   const caller = yield* requireCaller;
+
   return yield* data((service) => service.getUserKillStats(caller, query));
 });
 
@@ -269,6 +275,7 @@ export const getUserNpcKills = Effect.fn("kills.getUserNpcKills")(function* (
   query: UserNpcKillsQuery,
 ) {
   const caller = yield* requireCaller;
+
   return yield* data((service) => service.getUserNpcKills(caller, query));
 });
 
@@ -277,6 +284,7 @@ export const getGuildTopNpcs = Effect.fn("kills.getGuildTopNpcs")(function* (
   query: GuildTopNpcsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+
   return yield* data((service) => service.getGuildTopNpcs(caller, query));
 });
 
@@ -284,6 +292,7 @@ export const getGuildTopKillersByType = Effect.fn(
   "kills.getGuildTopKillersByType",
 )(function* (guildId: string | undefined, query: GuildTopKillersQuery) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
+
   return yield* data((service) =>
     service.getGuildTopKillersByType(caller, query),
   );
@@ -296,9 +305,11 @@ export const getNpcKillers = Effect.fn("kills.getNpcKillers")(function* (
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   const parsedNpcId = yield* parseIdentifier(npcId, "INVALID_NPC_ID");
+
   const result = yield* data((service) =>
     service.getNpcKillers(caller, parsedNpcId, query),
   );
+
   return (
     result ?? {
       npc: null,
@@ -314,9 +325,11 @@ export const getMemberKills = Effect.fn("kills.getMemberKills")(function* (
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_ACCESS);
   const parsedMemberId = yield* parseIdentifier(memberId, "INVALID_MEMBER_ID");
+
   const result = yield* data((service) =>
     service.getMemberKills(caller, parsedMemberId, query),
   );
+
   return (
     result ?? {
       member: null,
@@ -332,6 +345,7 @@ export const fetchLoots = Effect.fn("loots.fetchLoots")(function* (
   query: LootsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+
   return yield* data((service) => service.fetchLoots(caller, query));
 });
 
@@ -340,6 +354,7 @@ export const getLootStats = Effect.fn("loots.getLootStats")(function* (
   query: LootStatsQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+
   return yield* data((service) => service.getLootStats(caller, query));
 });
 
@@ -349,6 +364,7 @@ export const countLoots = Effect.fn("loots.countLoots")(function* (
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   const count = yield* data((service) => service.countLoots(caller, query));
+
   return { count } satisfies LootCountResponse;
 });
 
@@ -357,6 +373,7 @@ export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
   query: ResolveLootItemQuery,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+
   return yield* data((service) => service.resolveLootItem(caller, query));
 });
 
@@ -366,12 +383,14 @@ export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   const loot = yield* data((service) => service.fetchLoot(caller, lootId));
+
   if (loot === null) {
     return yield* new RecordsNotFound({
       status: 404,
       code: "LOOT_NOT_FOUND",
     });
   }
+
   return loot;
 });
 
@@ -380,15 +399,18 @@ export const archiveLoot = Effect.fn("loots.archiveLoot")(function* (
   lootId: number,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_ARCHIVE);
+
   const archived = yield* data((service) =>
     service.archiveLoot(caller, lootId),
   );
+
   if (!archived) {
     return yield* new RecordsNotFound({
       status: 404,
       code: "LOOT_NOT_FOUND",
     });
   }
+
   return HttpServerResponse.empty({ status: 200 });
 });
 
@@ -396,6 +418,7 @@ export const createLoot = Effect.fn("loots.createLoot")(function* (
   payload: CreateLootRequest,
 ) {
   const caller = yield* requireCaller;
+
   return yield* data((service) => service.createLoot(caller, payload));
 });
 
@@ -404,15 +427,18 @@ export const getComments = Effect.fn("loots.getComments")(function* (
   lootId: number,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
+
   const comments = yield* data((service) =>
     service.getComments(caller, lootId),
   );
+
   if (comments === null) {
     return yield* new RecordsNotFound({
       status: 404,
       code: "LOOT_NOT_FOUND",
     });
   }
+
   return comments;
 });
 
@@ -422,15 +448,18 @@ export const createComment = Effect.fn("loots.createComment")(function* (
   payload: CreateLootCommentRequest,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_WRITE);
+
   const comment = yield* data((service) =>
     service.createComment(caller, lootId, payload),
   );
+
   if (comment === null) {
     return yield* new RecordsNotFound({
       status: 404,
       code: "LOOT_NOT_FOUND",
     });
   }
+
   return comment;
 });
 
@@ -439,15 +468,18 @@ export const updateLoot = Effect.fn("loots.updateLoot")(function* (
   payload: UpdateLootShareRequest,
 ) {
   const caller = yield* requireCaller;
+
   const loot = yield* data((service) =>
     service.updateLoot(caller, lootId, payload),
   );
+
   if (loot === null) {
     return yield* new RecordsNotFound({
       status: 404,
       code: "LOOT_NOT_FOUND",
     });
   }
+
   return loot;
 });
 
@@ -470,19 +502,23 @@ export const toRecordsHttpResponse = <A, R>(
 export const getUserKillAnalytics = Effect.fn("kills.getUserKillAnalytics")(
   function* (query: UserKillAnalyticsQuery) {
     const caller = yield* requireCaller;
+
     return yield* data((service) =>
       service.getUserKillAnalytics(caller, query),
     );
   },
 );
+
 export const getUserKillActivity = Effect.fn("kills.getUserKillActivity")(
   function* (query: UserKillActivityQuery) {
     const caller = yield* requireCaller;
+
     return yield* data((service) => service.getUserKillActivity(caller, query));
   },
 );
 
 export const getUserFeed = Effect.fn("users.feed")(function* () {
   const caller = yield* requireCaller;
+
   return yield* data((service) => service.getUserFeed(caller));
 });

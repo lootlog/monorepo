@@ -62,6 +62,7 @@ export type EventMapsResponse = Omit<EventMapsResponseDtoOutput, "heroNpcs"> & {
 
 export type EventWrappedRarityTotals =
   EventWrappedApiResponseDtoOutputOverviewRarityTotals;
+
 export type EventWrappedLeader = {
   memberId: number;
   name: string;
@@ -69,23 +70,31 @@ export type EventWrappedLeader = {
   primaryValue: number;
   secondaryValue?: number | null;
 };
+
 export type EventWrappedLeaderResult = {
   winner: EventWrappedLeader | null;
   candidateCount: number;
   tiedWinnerCount: number;
 };
+
 export type EventWrappedHeroCoverage =
   EventWrappedApiResponseDtoOutputCoverageBestHeroCoverage;
+
 export type EventWrappedHero = EventWrappedApiResponseDtoOutputHeroesItem;
+
 export type EventWrappedLootHero =
   EventWrappedApiResponseDtoOutputLootHeroBreakdownItem;
+
 export type EventWrapped = EventWrappedApiResponseDtoOutput;
 
 export type PointsEditHistoryEntry = EventRanking["editHistory"][number];
 
 export type WindowStatus = HeroRespawnConfigResponseDtoWindowStatus;
+
 export type RespawnConfig = HeroRespawnConfigResponseDto;
 
 export type MapAssignment = KillTimelineMapResponseDtoAssignmentsItem;
+
 export type MapGap = KillTimelineMapResponseDtoGapsItem;
+
 export type MapTimelineData = KillTimelineMapResponseDto;

@@ -27,12 +27,15 @@ type KillAnalyticsTrendProps = {
   title: string;
   data: { date: string; kills: number | null; partial?: boolean }[];
 };
+
 export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
   const { t } = useTranslation();
   const [view, setView] = useState<"chart" | "table">("chart");
+
   const partialDates = new Set(
     data.flatMap((point) => (point.partial ? [point.date] : [])),
   );
+
   return (
     <SectionCard>
       <SectionCardHeader

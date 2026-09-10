@@ -15,6 +15,7 @@ export const formatDateTimeLocalInputValue = (
   }
 
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) {
     return "";
   }
@@ -34,6 +35,7 @@ export const parseDateTimeLocalInputToIsoString = (
   }
 
   const [datePart, timePart] = value.split("T");
+
   if (!datePart || !timePart) {
     return undefined;
   }

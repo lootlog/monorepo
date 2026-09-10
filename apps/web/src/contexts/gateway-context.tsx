@@ -11,4 +11,5 @@ export type GatewayProviderValue = {
 export const GatewayContext = createContext<GatewayProviderValue | undefined>(
   undefined,
 );
+
 GatewayContext.displayName = "GatewayContext";

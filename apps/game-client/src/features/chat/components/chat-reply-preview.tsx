@@ -27,6 +27,7 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
   const { t } = useTranslation("chat");
   const compact = variant === "compact";
   const Content = onClick ? "button" : "div";
+
   return (
     <div
       className={cn(

@@ -17,6 +17,7 @@ import {
 
 test("the scoped log runner preserves the configured logger", async () => {
   const messages: unknown[] = [];
+
   const logger = Logger.make(({ message }) => {
     messages.push(message);
   });
@@ -35,6 +36,7 @@ describe("HTTP server metrics", () => {
   test("silences healthcheck access logs while preserving responses and other request logs", async () => {
     const messages: unknown[] = [];
     const logger = Logger.make(({ message }) => messages.push(message));
+
     const boundary = HttpRouter.toWebHandler(
       HttpRouter.add(
         "GET",
@@ -54,11 +56,14 @@ describe("HTTP server metrics", () => {
       ),
       { middleware: httpServerMetrics },
     );
+
     const counter = Metric.withAttributes(httpServerRequestCount, {
       "http.request.method": "GET",
       "http.response.status_code": "202",
     });
+
     const before = await Effect.runPromise(Metric.value(counter));
+
     try {
       const healthPaths = [
         "/healthz",
@@ -68,11 +73,13 @@ describe("HTTP server metrics", () => {
         "//healthz",
         "///HeAlThZ///?probe=readiness",
       ];
+
       const healthResponses = await Promise.all(
         healthPaths.map((path) =>
           boundary.handler(new Request(`http://localhost${path}`)),
         ),
       );
+
       expect(healthResponses.map((response) => response.status)).toEqual(
         healthPaths.map(() => 202),
       );
@@ -85,6 +92,7 @@ describe("HTTP server metrics", () => {
           boundary.handler(new Request(`http://localhost${path}`)),
         ),
       );
+
       expect(otherResponses.map((response) => response.status)).toEqual([
         204, 204, 204,
       ]);
@@ -104,6 +112,7 @@ describe("HTTP server metrics", () => {
       },
       { path: "/interrupt", status: 503, effect: Effect.interrupt },
     ] as const;
+
     const boundary = HttpRouter.toWebHandler(
       Layer.mergeAll(
         HttpRouter.add("GET", routes[0].path, routes[0].effect),
@@ -115,6 +124,7 @@ describe("HTTP server metrics", () => {
       ),
       { disableLogger: true, middleware: httpServerMetrics },
     );
+
     try {
       await Promise.all(
         routes.map(async ({ path, status }) => {
@@ -123,24 +133,31 @@ describe("HTTP server metrics", () => {
             "http.response.status_code": String(status),
             "http.route": path,
           };
+
           const counter = Metric.withAttributes(
             httpServerRequestCount,
             attributes,
           );
+
           const histogram = Metric.withAttributes(
             httpServerDuration,
             attributes,
           );
+
           const before = await Effect.runPromise(
             Effect.all([Metric.value(counter), Metric.value(histogram)]),
           );
+
           const response = await boundary.handler(
             new Request(`http://localhost${path}`),
           );
+
           expect(response.status).toBe(status);
+
           const after = await Effect.runPromise(
             Effect.all([Metric.value(counter), Metric.value(histogram)]),
           );
+
           expect(after[0].count - before[0].count).toBe(1);
           expect(after[1].count - before[1].count).toBe(1);
         }),
@@ -158,26 +175,32 @@ describe("HTTP server metrics", () => {
       ),
       { disableLogger: true, middleware: httpServerMetrics },
     );
+
     const metric = Metric.withAttributes(httpServerRequestCount, {
       "http.request.method": "GET",
       "http.response.status_code": "204",
       "http.route": "/widgets/:id",
     });
+
     const before = await Effect.runPromise(Metric.value(metric));
+
     try {
       const responses = await Promise.all(
         ["/widgets/123?secret=hidden", "/widgets/456"].map((path) =>
           boundary.handler(new Request(`http://localhost${path}`)),
         ),
       );
+
       expect(responses.map((response) => response.status)).toEqual([204, 204]);
       expect(
         (await Effect.runPromise(Metric.value(metric))).count - before.count,
       ).toBe(2);
+
       const missing = Metric.withAttributes(httpServerRequestCount, {
         "http.request.method": "GET",
         "http.response.status_code": "404",
       });
+
       const missingBefore = await Effect.runPromise(Metric.value(missing));
       expect(
         (await boundary.handler(new Request("http://localhost/private/123")))
@@ -214,6 +237,7 @@ describe("HTTP server metrics", () => {
         Metric.value(Metric.withAttributes(httpServerDuration, attributes)),
       ]),
     );
+
     expect(count.count).toBe(1);
     expect(duration.count).toBe(1);
     expect(duration.sum).toBe(0.012);

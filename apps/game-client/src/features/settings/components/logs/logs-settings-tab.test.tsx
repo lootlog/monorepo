@@ -16,9 +16,13 @@ const toastMocks = vi.hoisted(() => ({
   success: vi.fn<typeof SonnerToast.success>(),
   error: vi.fn<typeof SonnerToast.error>(),
 }));
+
 const mockClipboardWriteText = vi.fn<Clipboard["writeText"]>();
+
 const mockCreateObjectURL = vi.fn<typeof URL.createObjectURL>();
+
 const mockRevokeObjectURL = vi.fn<typeof URL.revokeObjectURL>();
+
 const mockAnchorClick = vi.fn<HTMLAnchorElement["click"]>();
 
 vi.mock("sonner", () => ({
@@ -113,6 +117,7 @@ describe("LogsSettingsTab", () => {
 
     expect(toggle).toBeInTheDocument();
     expect(useSettingsStore.getState().lootDebugLoggingEnabled).toBe(false);
+
     if (!toggle) {
       throw new Error("Loot debug logging toggle was not rendered");
     }
@@ -281,6 +286,7 @@ describe("LogsSettingsTab", () => {
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:logs");
 
     const exportedBlob = mockCreateObjectURL.mock.calls[0][0];
+
     if (!(exportedBlob instanceof Blob))
       throw new Error("Expected exported JSON blob");
     const exportedText = await exportedBlob.text();

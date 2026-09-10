@@ -15,12 +15,14 @@ const npc = {
   npcType: "HERO" as const,
   allowedRarities: ["LEGENDARY" as const],
 };
+
 const makeData = (overrides: Partial<LootlogConfigData["Service"]> = {}) =>
   LootlogConfigData.of({
     get: () => Effect.succeed({ id: "guild-a", npcs: [npc] }),
     updateNpc: () => Effect.succeed(npc),
     ...overrides,
   });
+
 const provideServices = (
   data: LootlogConfigData["Service"],
   authorization: LootlogConfigAuthorization["Service"],
@@ -34,16 +36,19 @@ describe("lootlog config HttpApi handlers", () => {
   it("uses the canonical Organization and ADMIN capability for updates", async () => {
     const authorizationCalls: unknown[] = [];
     const dataCalls: Array<[string, string]> = [];
+
     const layer = provideServices(
       makeData({
         updateNpc: (guildId, npcId) => {
           dataCalls.push([guildId, npcId]);
+
           return Effect.succeed(npc);
         },
       }),
       LootlogConfigAuthorization.of({
         requireCapability: (options) => {
           authorizationCalls.push(options);
+
           return Effect.succeed({ guildId: "guild-a" });
         },
       }),
@@ -67,11 +72,14 @@ describe("lootlog config HttpApi handlers", () => {
       status: 404,
       code: "GUILD_NOT_FOUND",
     });
+
     let dataCalled = false;
+
     const layer = provideServices(
       makeData({
         get: () => {
           dataCalled = true;
+
           return Effect.succeed(null);
         },
       }),

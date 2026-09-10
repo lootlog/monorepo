@@ -72,6 +72,7 @@ describe("log actions retry", () => {
       actionType: "send_chat_message",
       payload: { guildCount: 2 },
     });
+
     const error = { message: "Guild unavailable", status: 503 };
 
     await expect(
@@ -194,15 +195,18 @@ describe("log value retention", () => {
       events: Array<{ index: number; message: string }>;
       self?: CyclicPayload;
     };
+
     const payload: CyclicPayload = {
       events: Array.from({ length: 1_100 }, (_, index) => ({
         index,
         message: "x".repeat(20_000),
       })),
     };
+
     payload.self = payload;
 
     const serialized = serializeLogValue(payload);
+
     const serializedBytes = new TextEncoder().encode(
       JSON.stringify(serialized),
     ).byteLength;

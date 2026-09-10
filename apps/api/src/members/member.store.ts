@@ -35,6 +35,7 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
         attributes: { adapter: "api.database", retryCount: 0 },
       }),
     );
+
   const findMember = (userId: string, guildId: string) =>
     operation(
       "memberStore.find",
@@ -47,6 +48,7 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
+
   const attachRoles = (member: typeof memberTable.$inferSelect) =>
     operation(
       "memberStore.roles",
@@ -63,12 +65,14 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
           })),
         ),
     );
+
   const findMemberWithRoles = (userId: string, guildId: string) =>
     findMember(userId, guildId).pipe(
       Effect.flatMap((member) =>
         member ? attachRoles(member) : Effect.succeed(null),
       ),
     );
+
   const resolveActiveGuildId = (idOrVanityUrl: string) =>
     operation(
       "memberStore.resolveGuild",
@@ -87,6 +91,7 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
         .limit(1)
         .pipe(Effect.map((rows) => rows[0]?.id ?? null)),
     );
+
   const findExistingRoleIds = (
     roleIds: ReadonlyArray<string>,
     guildId: string,
@@ -106,6 +111,7 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
             )
             .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
         );
+
   const upsertMemberWithRoles = (
     userId: string,
     guildId: string,
@@ -130,17 +136,21 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
               set: { ...values, updatedAt: values.lastDiscordSyncAt },
             })
             .returning();
+
           const member = rows[0];
+
           if (!member) return yield* Effect.die("Member was not returned");
           yield* transaction
             .delete(memberToRoleTable)
             .where(eq(memberToRoleTable.A, member.id));
+
           if (roleIds.length > 0) {
             yield* transaction
               .insert(memberToRoleTable)
               .values(roleIds.map((roleId) => ({ A: member.id, B: roleId })))
               .onConflictDoNothing();
           }
+
           const roles =
             roleIds.length === 0
               ? []
@@ -148,10 +158,12 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
                   .select()
                   .from(roleTable)
                   .where(inArray(roleTable.id, [...roleIds]));
+
           return { ...member, roles };
         }),
       ),
     );
+
   const markSyncAttempt = (options: {
     readonly userId: string;
     readonly guildId: string;
@@ -163,6 +175,7 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
     findMember(options.userId, options.guildId).pipe(
       Effect.flatMap((existing) => {
         if (!existing) return Effect.succeed(null);
+
         return operation(
           "memberStore.markSync.transaction",
           database.transaction((transaction) =>
@@ -172,33 +185,43 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
                 lastDiscordStatus: options.status,
                 updatedAt: options.attemptedAt,
               };
+
               if (options.markSynced)
                 update.lastDiscordSyncAt = options.attemptedAt;
+
               if (options.deactivate) update.active = false;
+
               const rows = yield* transaction
                 .update(memberTable)
                 .set(update)
                 .where(eq(memberTable.id, existing.id))
                 .returning();
+
               if (options.deactivate) {
                 yield* transaction
                   .delete(memberToRoleTable)
                   .where(eq(memberToRoleTable.A, existing.id));
               }
+
               const member = rows[0];
+
               if (!member) return null;
+
               if (options.deactivate) return { ...member, roles: [] };
+
               const roles = yield* transaction
                 .select({ role: roleTable })
                 .from(memberToRoleTable)
                 .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
                 .where(eq(memberToRoleTable.A, existing.id));
+
               return { ...member, roles: roles.map(({ role }) => role) };
             }),
           ),
         );
       }),
     );
+
   return {
     findMember,
     findMemberWithRoles,

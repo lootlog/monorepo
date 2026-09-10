@@ -32,8 +32,10 @@ describe("EventCoordination", () => {
   const findEvent = mock<EventCoordinationStore["findEvent"]>();
   const findActiveGaps = mock<EventCoordinationStore["findActiveGaps"]>();
   const repository = { findEvent, findActiveGaps };
+
   const getTimersForEventHeroFilters =
     mock<EventTimersPort["getTimersForEventHeroFilters"]>();
+
   const mockTimersService: EventTimersPort = {
     getTimersForEventHeroFilters,
     getEventRespawnTimer: () => Effect.die("Unexpected timer lookup"),
@@ -92,6 +94,7 @@ describe("EventCoordination", () => {
         }),
       ),
     );
+
     expect(result.heroes).toEqual([]);
     expect(result.summary).toMatchObject({
       criticalCount: 0,

@@ -28,6 +28,7 @@ RedisConnection.clientFactory = (options) => {
   if (!options.url) {
     throw new Error("BullMQ requires a Redis URL");
   }
+
   return createBunRedisClient(new RedisClient(options.url));
 };
 
@@ -60,12 +61,15 @@ export class BattlelogApplication extends Context.Service<
 
       const cacheService = makeBattleAnalyticsCache(redis);
       const queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
+
       const analyticsService = makeBattleAnalytics(
         drizzle,
         cacheService,
         queryService,
       );
+
       const metadataService = makeBattleMetadata(drizzle, redis);
+
       const battlesService = makeBattles(
         drizzle,
         makeBattleObjectStorage(redis, config.r2),
@@ -75,6 +79,7 @@ export class BattlelogApplication extends Context.Service<
         makeBattleListFilter(drizzle),
         metadataService,
       );
+
       yield* battlesService.drainObjectDeletions.pipe(
         Effect.catch((error) =>
           Effect.logError("Battle object cleanup retry failed", error),
@@ -140,9 +145,11 @@ const acquireDeleteWorker = (
 ) =>
   Effect.gen(function* () {
     const runWorker = yield* FiberSet.makeRuntimePromise();
+
     return yield* Effect.acquireRelease(
       Effect.sync(() => {
         const processor = makeDeleteUserBattlesProcessor(battlesService);
+
         return new Worker<DeleteUserBattlesJobData>(
           DELETE_USER_BATTLES_QUEUE,
           (job) => runWorker(processor.process(job)),

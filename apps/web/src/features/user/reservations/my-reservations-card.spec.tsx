@@ -18,6 +18,7 @@ import "@/i18n/config";
 import { MyReservationsCard } from "./my-reservations-card";
 
 let restoreClient = () => {};
+
 afterEach(() => {
   cleanup();
   restoreClient();
@@ -30,6 +31,7 @@ async function renderCard(client: QueryClient) {
   });
   client.setQueryData(getUsersControllerGetCurrentUserGuildsQueryKey(), []);
   const Wrapper = await createOrganizationTestWrapper("/@me");
+
   return render(
     <Wrapper>
       <QueryClientProvider client={client}>
@@ -43,11 +45,14 @@ it("shows a retryable error instead of an empty calendar after initial failure",
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
+
   let requests = 0;
   vi.stubGlobal("fetch", async () => {
     requests += 1;
+
     if (requests === 1)
       return Response.json({ message: "Unavailable" }, { status: 503 });
+
     return Response.json({ items: [] });
   });
   await renderCard(client);
@@ -66,6 +71,7 @@ it("keeps cached reservations visible and marks them stale after a refresh failu
       queries: { retry: false, gcTime: 0, staleTime: Infinity },
     },
   });
+
   const queryKey = getListMyReservationsQueryKey({ status: "upcoming" });
   client.setQueryData(queryKey, {
     items: [

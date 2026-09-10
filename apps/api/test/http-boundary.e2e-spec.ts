@@ -44,8 +44,11 @@ const caller = {
   userId: "user-1",
   discordId: "discord-1",
 } as const;
+
 const authorizedGuildId = "guild-authorized";
+
 const forbiddenGuildId = "guild-forbidden";
+
 const world = "Aldous";
 
 const publishedMessages: Parameters<RabbitMessagingService["publish"]>[0][] =
@@ -94,12 +97,14 @@ const request = (path: string, init?: RequestInit) =>
 describe("API HTTP boundary", () => {
   const databaseRuntime = ManagedRuntime.make(ApiDatabaseLive);
   let database: ApiDatabaseValue;
+
   const countTimers = async () =>
     (
       await databaseRuntime.runPromise(
         database.select({ value: count() }).from(timerTable),
       )
     )[0]?.value;
+
   let redis: RedisService;
   let redisRuntime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
 
@@ -155,6 +160,7 @@ describe("API HTTP boundary", () => {
             Permission.LOOTLOG_MANAGE,
           ],
         });
+
         const members = yield* database
           .insert(memberTable)
           .values([
@@ -176,9 +182,11 @@ describe("API HTTP boundary", () => {
             },
           ])
           .returning();
+
         const authorizedMember = members.find(
           (member) => member.guildId === authorizedGuildId,
         );
+
         if (!authorizedMember)
           throw new Error("Authorized member was not created");
         yield* database
@@ -203,22 +211,30 @@ describe("API HTTP boundary", () => {
         message: "Hej",
       }),
     });
+
     expect(notification.status).toBe(201);
+
     const event = publishedMessages.find(
       ({ routingKey }) => routingKey === "guilds.notifications.send",
     );
+
     expect(event).toBeDefined();
+
     if (!event) throw new Error("Notification was not published");
+
     const payload: unknown = JSON.parse(
       new TextDecoder().decode(event.content),
     );
+
     expect(payload).toEqual(
       expect.objectContaining({ discordId: caller.discordId }),
     );
+
     const expectSenderSummary = async () => {
       const response = await request(
         `/guilds/${authorizedGuildId}/members/summary`,
       );
+
       expect(response.status).toBe(200);
       const members = await response.json();
       expect(members).toEqual([
@@ -228,6 +244,7 @@ describe("API HTTP boundary", () => {
         }),
       ]);
     };
+
     await expectSenderSummary();
     await expectSenderSummary();
   });
@@ -239,6 +256,7 @@ describe("API HTTP boundary", () => {
     { world: "  Aldous  " },
   ])("round-trips detector rules with optional labels %j", async (labels) => {
     const path = "/users/@me/game-preferences/accounts/routing-test";
+
     const rule = {
       id: "rule-1",
       minLevel: 0,
@@ -246,18 +264,23 @@ describe("API HTTP boundary", () => {
       guildIds: [authorizedGuildId],
       ...labels,
     };
+
     const expectedRule: DetectorRoutingRule = {
       id: rule.id,
       minLevel: 0,
       maxLevel: 500,
       guildIds: [authorizedGuildId],
     };
+
     if (labels.name?.trim()) expectedRule.name = labels.name.trim();
+
     if (labels.world?.trim()) expectedRule.world = labels.world.trim();
+
     const updated = await request(path, {
       method: "PATCH",
       body: JSON.stringify({ detector: { routingRules: [rule] } }),
     });
+
     expect(updated.status).toBe(200);
     expect(await updated.json()).toMatchObject({
       detector: { routingRules: [expectedRule] },
@@ -281,9 +304,11 @@ describe("API HTTP boundary", () => {
         updatedAt: new Date(),
       }),
     );
+
     const fetched = await request(
       `/users/@me/game-preferences/accounts/${accountId}`,
     );
+
     expect(fetched.status).toBe(200);
     expect(await fetched.json()).toMatchObject({
       detector: { routingRules: [rule] },
@@ -330,6 +355,7 @@ describe("API HTTP boundary", () => {
         });
       }),
     );
+
     for (const [path, scope, expectedSnapshot] of [
       ["/quick-add", { guildId: authorizedGuildId }, null],
       [
@@ -357,6 +383,7 @@ describe("API HTTP boundary", () => {
           }),
         },
       );
+
       expect(response.status).toBe(201);
       // eslint-disable-next-line no-await-in-loop -- Validate each response before retrying the mutation.
       expect(await response.json()).toMatchObject({
@@ -364,6 +391,7 @@ describe("API HTTP boundary", () => {
         itemSnapshot: expectedSnapshot,
       });
     }
+
     expect(
       await databaseRuntime.runPromise(
         database.select({ value: count() }).from(watchedItemTable),
@@ -385,12 +413,14 @@ describe("API HTTP boundary", () => {
       icon: "reporter.gif",
       lvl: 80,
     };
+
     const expectedActor = {
       ...actorCharacter,
       accountId: 123,
       characterId: 456,
       prof: "WARRIOR",
     };
+
     const createdResponse = await request(
       `/guilds/${authorizedGuildId}/timers/manual`,
       {
@@ -411,9 +441,11 @@ describe("API HTTP boundary", () => {
         status: 201,
       },
     );
+
     const created = Schema.decodeUnknownSync(Schema.toEncoded(TimerResponse))(
       JSON.parse(createdBody),
     );
+
     expect(created).toMatchObject({
       guildId: authorizedGuildId,
       world,
@@ -425,6 +457,7 @@ describe("API HTTP boundary", () => {
     const listedResponse = await request(
       `/guilds/${authorizedGuildId}/timers?world=${world}`,
     );
+
     expect(listedResponse.status).toBe(200);
     expect(await listedResponse.json()).toEqual([
       expect.objectContaining({
@@ -437,12 +470,14 @@ describe("API HTTP boundary", () => {
       `/guilds/${authorizedGuildId}/timers/${encodeURIComponent(created.timerKey)}?world=${world}`,
       { method: "DELETE" },
     );
+
     expect(deletedResponse.status).toBe(200);
     expect(await countTimers()).toBe(0);
 
     const afterDeleteResponse = await request(
       `/guilds/${authorizedGuildId}/timers?world=${world}`,
     );
+
     expect(await afterDeleteResponse.json()).toEqual([]);
   });
 
@@ -494,6 +529,7 @@ describe("API HTTP boundary", () => {
         }),
       },
     );
+
     const forbiddenHistory = await request(
       `/guilds/${forbiddenGuildId}/timers/missing-timer/history?world=${world}`,
     );
@@ -537,10 +573,12 @@ describe("API HTTP boundary", () => {
         method,
         body: payload ? JSON.stringify(payload) : undefined,
       };
+
       const missing = await request(
         `/guilds/missing-organization${suffix}`,
         init,
       );
+
       const forbidden = await request(
         `/guilds/${forbiddenGuildId}${suffix}`,
         init,

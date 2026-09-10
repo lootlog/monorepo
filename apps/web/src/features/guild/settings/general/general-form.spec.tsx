@@ -27,17 +27,20 @@ it("keeps save busy for the network request and restores it after failure", asyn
   let rejectSave = (_reason: Error): void => {
     throw new Error("Save has not started");
   };
+
   const save = vi.fn(
     () =>
       new Promise<Response>((_resolve, reject) => {
         rejectSave = reject;
       }),
   );
+
   const restoreClient = configureApiClients({
     main: {
       baseUrl: "https://api.test",
       fetch: (_input, init) => {
         if (init?.method === "PATCH") return save();
+
         return Promise.resolve(
           Response.json({
             id: "guild-1",
@@ -54,10 +57,13 @@ it("keeps save busy for the network request and restores it after failure", asyn
       },
     },
   });
+
   onTestFinished(restoreClient);
+
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+
   onTestFinished(() => queryClient.clear());
   const router = createOrganizationTestRouter(<GeneralForm />);
   await router.load();
@@ -71,15 +77,18 @@ it("keeps save busy for the network request and restores it after failure", asyn
   fireEvent.change(textbox, {
     target: { value: "new-name" },
   });
+
   const saveButton = await screen.findByRole<HTMLButtonElement>("button", {
     name: "common.save",
   });
+
   fireEvent.click(saveButton);
   await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
   await waitFor(() => expect(saveButton.disabled).toBe(true));
   expect(saveButton.getAttribute("aria-busy")).toBe("true");
   fireEvent.click(saveButton);
   const form = saveButton.closest("form");
+
   if (!form) throw new Error("Save button must belong to a form");
   fireEvent.submit(form);
   expect(save).toHaveBeenCalledTimes(1);

@@ -9,10 +9,12 @@ import { makeNotificationUserTargets } from "#src/notifications/targets/notifica
 describe("notification user targets Effect module", () => {
   it("rejects a channel target before database or job access", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const cancel = mock(() => Effect.die("unexpected job cancellation"));
       const createJob = mock(() => Effect.die("unexpected job creation"));
       const enqueue = mock(() => Effect.die("unexpected job enqueue"));
+
       const targets = makeNotificationUserTargets(boundary.database, {
         cancel,
         create: createJob,

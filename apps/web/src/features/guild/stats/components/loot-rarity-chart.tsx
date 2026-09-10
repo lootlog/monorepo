@@ -47,6 +47,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
   const { t } = useTranslation();
 
   const filteredData = RARITY_ORDER.filter((rarity) => data?.[rarity]);
+
   const filteredTotal = filteredData.reduce(
     (sum, rarity) => sum + (data?.[rarity]?.count ?? 0),
     0,
@@ -54,6 +55,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
 
   const chartData = filteredData.map((rarity) => {
     const count = data?.[rarity]?.count ?? 0;
+
     return {
       name: rarity,
       value: count,

@@ -54,6 +54,7 @@ export const StatsRanking: React.FC = () => {
     handlePreviousPage,
     handleNextPage,
   } = useStatsRankingModel();
+
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">
@@ -127,6 +128,7 @@ export const StatsRanking: React.FC = () => {
                   <div className="grid gap-2 p-3 md:hidden">
                     {paginatedData.map((member, index) => {
                       const rank = cursor + index + 1;
+
                       return (
                         <button
                           key={member.memberId}
@@ -210,6 +212,7 @@ export const StatsRanking: React.FC = () => {
                     <TableBody>
                       {paginatedData.map((member, index) => {
                         const rank = cursor + index + 1;
+
                         return (
                           <TableRow
                             key={member.memberId}

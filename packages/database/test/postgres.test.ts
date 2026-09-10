@@ -12,6 +12,7 @@ test("fails startup with the original driver error when PostgreSQL is unavailabl
       connectTimeout: "100 millis",
     }),
   );
+
   try {
     const startup = runtime.runPromise(PostgresPool);
     await expect(startup).rejects.toBeInstanceOf(SqlError);
@@ -25,15 +26,18 @@ test("fails startup with the original driver error when PostgreSQL is unavailabl
 
 test("closes a stalled connection after startup times out", async () => {
   const sockets = new Set<Socket>();
+
   const server = createServer((socket) => {
     sockets.add(socket);
     socket.resume();
     socket.on("close", () => sockets.delete(socket));
   });
+
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   // SAFETY: the awaited listener binds an IPv4 TCP port, so address is neither
   // a Unix socket path nor null (the server has not been closed).
   const address = server.address() as AddressInfo;
+
   const runtime = ManagedRuntime.make(
     makePostgresLayer({
       host: "127.0.0.1",
@@ -41,6 +45,7 @@ test("closes a stalled connection after startup times out", async () => {
       connectTimeout: "100 millis",
     }),
   );
+
   try {
     await expect(runtime.runPromise(PostgresPool)).rejects.toBeInstanceOf(
       SqlError,
@@ -50,6 +55,7 @@ test("closes a stalled connection after startup times out", async () => {
     expect(sockets.size).toBe(0);
   } finally {
     await runtime.dispose();
+
     for (const socket of sockets) socket.destroy();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }

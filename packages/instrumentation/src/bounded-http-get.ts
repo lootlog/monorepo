@@ -24,8 +24,10 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
   decode: (body: ArrayBuffer, status: number) => A;
 }) {
   let retryCount = 0;
+
   const attempt = Effect.suspend(() => {
     const currentRetryCount = retryCount++;
+
     return options.client.get(String(options.url)).pipe(
       Effect.timeout(options.timeoutMilliseconds),
       Effect.mapError((error) =>
@@ -43,7 +45,9 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
             options.failure("status", response.status >= 500, response.status),
           );
         }
+
         const status = options.response === "raw" ? response.status : undefined;
+
         return response.arrayBuffer.pipe(
           Effect.mapError(() =>
             options.failure(
@@ -69,6 +73,7 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
       }),
     );
   });
+
   return yield* attempt.pipe(
     Effect.retry({ times: options.retries, while: (error) => error.retryable }),
   );

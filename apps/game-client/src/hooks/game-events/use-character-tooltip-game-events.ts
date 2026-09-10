@@ -12,6 +12,7 @@ export function useCharacterTooltipGameEvents(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+
   const selectedGuildId = useSelectedLootlogGuildId();
   const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
 
@@ -24,6 +25,7 @@ export function useCharacterTooltipGameEvents(): void {
   useEffect(() => {
     return runtimeEventPipeline.subscribeProjected((envelope) => {
       const event = envelope.raw;
+
       if (!event) return;
 
       if (event.town) {
@@ -39,6 +41,7 @@ export function useCharacterTooltipGameEvents(): void {
         if (!createsOther(entry)) continue;
 
         const runtimeOther = runtimeOtherHandles.get(id);
+
         if (!runtimeOther) continue;
 
         changedOthers.push(runtimeOther);

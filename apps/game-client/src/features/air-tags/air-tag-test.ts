@@ -14,18 +14,22 @@ export const createAirTagTest = () => {
   getSocket().connect();
   test.open();
   const runtime = new AirTagRuntime();
+
   const subscriptions = () =>
     test.wire.frames.filter(
       (frame) => "type" in frame && frame.type === "air-tag.subscription",
     );
+
   const acknowledge = async (guildIds = ["guild-1", "guild-2"]) => {
     const request = subscriptions().at(-1);
+
     if (
       !request ||
       request.type !== "air-tag.subscription" ||
       !request.requestId
     )
       throw new Error("Missing air subscription");
+
     const acknowledgement: AirTagSubscriptionAck = {
       status: "accepted",
       requestId: request.data.requestId,
@@ -48,6 +52,7 @@ export const createAirTagTest = () => {
         ],
       })),
     };
+
     const requestId = request.requestId;
     await act(() =>
       test.wire.receive({
@@ -58,5 +63,6 @@ export const createAirTagTest = () => {
       }),
     );
   };
+
   return { ...test, runtime, subscriptions, acknowledge };
 };

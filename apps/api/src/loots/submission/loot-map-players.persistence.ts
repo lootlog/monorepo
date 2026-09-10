@@ -15,12 +15,16 @@ export function mapPlayersToSnapshotInputs(
   players: MapPlayersSnapshot,
 ) {
   const seen = new Set<string>();
+
   const uniquePlayers = players.filter(({ accountId, characterId }) => {
     const identity = `${accountId}:${characterId}`;
+
     if (seen.has(identity)) return false;
     seen.add(identity);
+
     return true;
   });
+
   return uniquePlayers.map((player) => ({
     ...player,
     world,
@@ -55,6 +59,7 @@ export const captureLootMapPlayers = Effect.fnUntraced(function* (
     )
     .orderBy(asc(organizationLootRecordTable.id))
     .for("update");
+
   if (records.length === 0) return [];
 
   const captured = yield* transaction
@@ -66,14 +71,17 @@ export const captureLootMapPlayers = Effect.fnUntraced(function* (
         records.map(({ id }) => id),
       ),
     );
+
   const capturedIds = new Set(captured.map(({ recordId }) => recordId));
   const missing = records.filter(({ id }) => !capturedIds.has(id));
+
   if (missing.length === 0) return [];
 
   const [loot] = yield* transaction
     .select({ world: lootTable.world })
     .from(lootTable)
     .where(eq(lootTable.id, lootId));
+
   if (!loot)
     return yield* Effect.fail(
       new DependencyUnavailableError("Failed to resolve loot world"),
@@ -83,6 +91,7 @@ export const captureLootMapPlayers = Effect.fnUntraced(function* (
     transaction,
     mapPlayersToSnapshotInputs(loot.world, players),
   );
+
   yield* transaction.insert(lootMapPlayerTable).values(
     missing.flatMap(({ id }) =>
       snapshots.map((snapshot) => ({
@@ -100,5 +109,6 @@ export const captureLootMapPlayers = Effect.fnUntraced(function* (
         missing.map(({ id }) => id),
       ),
     );
+
   return missing.map(({ guildId }) => guildId);
 });

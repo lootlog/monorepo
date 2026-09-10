@@ -47,10 +47,12 @@ export function refreshWhoIsHereRuntimeTooltip(
   const whoIsHere = runtimeWindow.Engine?.whoIsHere;
   const listEntry = whoIsHere?.getWhoIsHereOther?.(characterId);
   let tipContainer = listEntry?.$?.find?.(".tip-container");
+
   if (!tipContainer) {
     const element = row.querySelector(".tip-container");
     tipContainer =
       element && runtimeWindow.$ ? runtimeWindow.$(element) : element;
   }
+
   whoIsHere?.createTipWrapper?.(tipContainer, other);
 }

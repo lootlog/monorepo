@@ -5,6 +5,7 @@ import "@/i18n/config";
 import { ActivityHeatmap } from "./activity-heatmap";
 
 afterEach(cleanup);
+
 describe("ActivityHeatmap", () => {
   it("names unknown and zero days separately and supports keyboard and touch details", () => {
     render(
@@ -36,6 +37,7 @@ describe("ActivityHeatmap", () => {
 
 it("keeps a keyboard entry point after shrinking the period and refreshes selected values", () => {
   const formatValue = (value: number) => `${value} bić`;
+
   const { rerender } = render(
     <ActivityHeatmap
       label="Bicia"
@@ -46,6 +48,7 @@ it("keeps a keyboard entry point after shrinking the period and refreshes select
       formatValue={formatValue}
     />,
   );
+
   const latest = screen.getByRole("button", { name: /2 bić/ });
   latest.focus();
   fireEvent.click(latest);

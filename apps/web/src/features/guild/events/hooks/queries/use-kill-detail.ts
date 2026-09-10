@@ -15,13 +15,18 @@ import {
 } from "@lootlog/domain/scoring";
 
 export type KillDetailMember = KillDetailResponseDtoKillTimerCreatedBy;
+
 export type KillDetailParticipant = KillDetailResponseDtoKillPointsItem;
+
 export type KillDetailHeroNpc = KillDetailResponseDtoKillHeroNpc;
+
 export type KillDetail = KillDetailResponseDtoKill;
+
 export type EventConfig = {
   scoringMode: KillDetailResponseDto["eventConfig"]["scoringMode"];
   scoringRules: EventScoringRules | null;
 };
+
 export type KillDetailResponse = Omit<KillDetailResponseDto, "eventConfig"> & {
   eventConfig: EventConfig;
 };

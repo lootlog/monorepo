@@ -36,6 +36,7 @@ describe("host layout styles", () => {
     `;
 
     const gameColumn = getRequiredElement('[data-testid="game-column"]');
+
     const loaderProgress = getRequiredElement(
       '[data-testid="loader-progress"]',
     );

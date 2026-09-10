@@ -30,6 +30,7 @@ export const makeReservationReadDataLayer = (
             (cause) => new OrganizationWorkspaceOperationError({ cause }),
           ),
         );
+
       const findReservations = (
         guildIds: ReadonlyArray<string>,
         condition: Exclude<ReturnType<typeof and>, undefined>,
@@ -38,6 +39,7 @@ export const makeReservationReadDataLayer = (
           const keyScope = yield* apiKeyOrganizationFilter(
             reservationTable.guildId,
           );
+
           return yield* database
             .select({ reservation: reservationTable, guild: guildTable })
             .from(reservationTable)
@@ -59,9 +61,11 @@ export const makeReservationReadDataLayer = (
               ),
             );
         });
+
       const requireSpot = (spotId: string) =>
         Effect.flatMap(catalog.getSpots, (spots) => {
           const spot = spots.find((candidate) => candidate.id === spotId);
+
           return spot
             ? Effect.succeed(spot)
             : Effect.fail(
@@ -76,6 +80,7 @@ export const makeReservationReadDataLayer = (
           operation(
             Effect.gen(function* () {
               const now = new Date(yield* Clock.currentTimeMillis);
+
               const [spots, guildIds, pinnedSpots] = yield* Effect.all(
                 [
                   catalog.getSpots,
@@ -98,34 +103,42 @@ export const makeReservationReadDataLayer = (
                 ],
                 { concurrency: "unbounded" },
               );
+
               const reservations = yield* findReservations(
                 guildIds,
                 gt(reservationTable.endsAt, now),
               );
+
               const pinnedIds = new Set(
                 pinnedSpots.map(({ spotId }) => spotId),
               );
+
               const viewer = {
                 guildId: context.guildId,
                 userId: context.userId,
                 discordId: context.discordId,
                 canModerateCurrentGuild: canModerateReservations(context),
               };
+
               return spots.map((spot) => {
                 const atSpot = reservations.filter(
                   (reservation) => reservation.spotId === spot.id,
                 );
+
                 const local = atSpot.filter(
                   (reservation) => reservation.guildId === context.guildId,
                 );
+
                 const current =
                   local.find(
                     (reservation) =>
                       reservation.startsAt <= now && reservation.endsAt > now,
                   ) ?? null;
+
                 const next =
                   local.find((reservation) => reservation.startsAt > now) ??
                   null;
+
                 return {
                   ...spot,
                   isPinned: pinnedIds.has(spot.id),
@@ -154,34 +167,41 @@ export const makeReservationReadDataLayer = (
           operation(
             Effect.gen(function* () {
               yield* requireSpot(spotId);
+
               const { from, to } = yield* Effect.try({
                 try: () => parseReservationWindow(fromValue, toValue),
                 catch: (cause) => cause,
               });
+
               const guildIds = yield* visibleReservationGuildIds(
                 database,
                 context.guildId,
               );
+
               const windowCondition = and(
                 eq(reservationTable.spotId, spotId),
                 lt(reservationTable.startsAt, to),
                 gt(reservationTable.endsAt, from),
               );
+
               if (!windowCondition) {
                 return yield* Effect.die(
                   new Error("Reservation window condition is empty"),
                 );
               }
+
               const reservations = yield* findReservations(
                 guildIds,
                 windowCondition,
               );
+
               const viewer = {
                 guildId: context.guildId,
                 userId: context.userId,
                 discordId: context.discordId,
                 canModerateCurrentGuild: canModerateReservations(context),
               };
+
               return {
                 items: reservations.map((reservation) =>
                   presentReservation(reservation, viewer),

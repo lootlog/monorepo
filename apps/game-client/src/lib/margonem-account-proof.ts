@@ -33,8 +33,11 @@ type RequestMargonemAccountProofOptions = {
 };
 
 const NONCE_BYTES = 16;
+
 const TOKEN_VERSION_PREFIX = "02";
+
 const NO_CLAN_HEX = "ffffffffffffffff";
+
 const MAX_UINT64 = 0xffffffffffffffffn;
 
 export function createMargonemAccountProofToken({
@@ -51,6 +54,7 @@ export function createMargonemAccountProofToken({
   nonce?: string;
 }): string {
   const encodedCharacterId = encodeUnsignedInt64Hex(characterId);
+
   const encodedClanId =
     clanId === undefined ? NO_CLAN_HEX : encodeUnsignedInt64Hex(clanId);
 
@@ -70,6 +74,7 @@ export async function requestMargonemAccountProof({
     characterId,
     clanId,
   });
+
   const response = await fetchFn(MARGONEM_ACCOUNT_VALIDATE_URL, {
     method: "POST",
     credentials: "include",

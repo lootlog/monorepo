@@ -27,12 +27,15 @@ describe("MargonemRuntimeBridge", () => {
     const event = Object.freeze({ h: { stasis: 1 } });
     const callback = vi.fn<() => void>();
     const receiver = { runtime: true };
+
     const original = vi.fn<RuntimeFunction>(function (...args) {
       order.push("margonem");
       expect(this).toBe(receiver);
       expect(args).toEqual([event, callback]);
+
       return "unchanged-result";
     });
+
     runtimeWindow.successData = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     bridge.subscribeApplied(() => order.push("applied"));
@@ -74,6 +77,7 @@ describe("MargonemRuntimeBridge", () => {
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     bridge.setGameInitCallback(() => {
       order.push("bootstrap");
+
       return true;
     });
     bridge.subscribeApplied(() => order.push("applied"));
@@ -97,10 +101,12 @@ describe("MargonemRuntimeBridge", () => {
       ev: 1_785_091_976.123,
       f: { m: ["turn-1"] },
     });
+
     const secondEvent = Object.freeze({
       ev: 1_785_091_976.123,
       f: { m: ["turn-2"] },
     });
+
     const original = vi.fn<() => string>(() => "margonem-result");
     runtimeWindow.successData = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
@@ -186,14 +192,18 @@ describe("MargonemRuntimeBridge", () => {
   it("reports observer failures without allowing reporter failures to escape", () => {
     const event = Object.freeze({ h: { stasis: 1 } });
     const observerFailure = new Error("observer failed");
+
     const onObserverError = vi.fn<() => never>(() => {
       throw new Error("reporter failed");
     });
+
     runtimeWindow.successData = vi.fn<() => string>(() => "margonem-result");
+
     const bridge = new MargonemRuntimeBridge({
       interface: "si",
       onObserverError,
     });
+
     bridge.subscribeApplied(() => {
       throw observerFailure;
     });
@@ -210,6 +220,7 @@ describe("MargonemRuntimeBridge", () => {
 
   it("calls Margonem unchanged when creating an applied envelope fails", () => {
     const envelopeFailure = new Error("event access failed");
+
     const event = new Proxy(
       {},
       {
@@ -218,16 +229,21 @@ describe("MargonemRuntimeBridge", () => {
         },
       },
     );
+
     const callback = vi.fn<() => void>();
     const receiver = { runtime: true };
+
     const original = vi.fn<RuntimeFunction>(function (...args) {
       expect(this).toBe(receiver);
       expect(args[0]).toBe(event);
       expect(args[1]).toBe(callback);
+
       return "margonem-result";
     });
+
     const onObserverError = vi.fn<(failure: RuntimeObserverFailure) => void>();
     runtimeWindow.successData = original;
+
     const bridge = new MargonemRuntimeBridge({
       interface: "si",
       onObserverError,
@@ -250,19 +266,23 @@ describe("MargonemRuntimeBridge", () => {
     const payload = Object.freeze({ answer: "yes" });
     const callback = vi.fn<() => void>();
     const receiver = { request: true };
+
     const original = vi.fn<RuntimeFunction>(function (...args) {
       expect(this).toBe(receiver);
       expect(args[0]).toBe("talk&id=501&c=2");
       expect(args[1]).toBe(callback);
       expect(args[2]).toBe(payload);
+
       return payload;
     });
+
     testRuntimeWindow._g = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     const intents = vi.fn<RuntimeIntentHandler>();
     bridge.subscribeIntent(intents);
 
     bridge.install();
+
     const result = testRuntimeWindow._g.call(
       receiver,
       "talk&id=501&c=2",
@@ -285,11 +305,14 @@ describe("MargonemRuntimeBridge", () => {
     const callback = vi.fn<() => void>();
     const payload = Object.freeze({ answer: "yes" });
     const receiver = { request: true };
+
     const original = vi.fn<RuntimeFunction>(function (...args) {
       expect(this).toBe(receiver);
       expect(args).toEqual(["talk&id=501", callback, payload]);
+
       return payload;
     });
+
     testRuntimeWindow._g = original;
     const bridge = new MargonemRuntimeBridge({ interface: "si" });
     const laterObserver = vi.fn<RuntimeIntentHandler>();
@@ -299,6 +322,7 @@ describe("MargonemRuntimeBridge", () => {
     bridge.subscribeIntent(laterObserver);
 
     bridge.install();
+
     const result = testRuntimeWindow._g.call(
       receiver,
       "talk&id=501",
@@ -342,6 +366,7 @@ describe("MargonemRuntimeBridge", () => {
     const applied = vi.fn<RuntimeEventHandler>();
     bridge.subscribeApplied((envelope) => {
       applied(envelope);
+
       if (envelope.sequence === 1) testRuntimeWindow._g?.("talk&id=502");
     });
 
@@ -374,9 +399,11 @@ describe("MargonemRuntimeBridge", () => {
 
   it("uses NI parseJSON and does not emit applied when Margonem throws", () => {
     const failure = new Error("game failed");
+
     const parseJSON = vi.fn<RuntimeFunction>(() => {
       throw failure;
     });
+
     const successData = vi.fn<RuntimeFunction>();
     const communication = { parseJSON, successData };
     testRuntimeWindow.Engine = { communication };
@@ -397,11 +424,14 @@ describe("MargonemRuntimeBridge", () => {
     const callback = vi.fn<() => void>();
     const receiver = { communication: true };
     const result = Object.freeze({ ok: true });
+
     const parseJSON = vi.fn<RuntimeFunction>(function (...args) {
       expect(this).toBe(receiver);
       expect(args).toEqual([event, callback]);
+
       return result;
     });
+
     const communication = { parseJSON };
     testRuntimeWindow.Engine = { communication };
     const bridge = new MargonemRuntimeBridge({ interface: "ni" });
@@ -497,4 +527,5 @@ describe("MargonemRuntimeBridge", () => {
     bridge.cleanup();
   });
 });
+
 import { testRuntimeWindow } from "@/test/test-runtime-window";

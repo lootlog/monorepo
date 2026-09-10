@@ -44,6 +44,7 @@ interface ComboboxProps {
 }
 
 const EMPTY_OPTIONS: ComboboxOption[] = [];
+
 const EMPTY_GROUPS: ComboboxGroup[] = [];
 
 export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
@@ -67,6 +68,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
     const selectedOption = React.useMemo(() => {
       const allOptions =
         groups.length > 0 ? groups.flatMap((g) => g.options) : options;
+
       return allOptions.find((option) => option.value === value);
     }, [value, options, groups]);
 

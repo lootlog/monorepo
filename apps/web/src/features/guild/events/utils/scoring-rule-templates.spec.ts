@@ -34,6 +34,7 @@ describe("SCORING_RULE_TEMPLATES", () => {
     const template = SCORING_RULE_TEMPLATES.find(
       (t) => t.id === "baseThreshold",
     );
+
     const rule = template?.createRule();
     expect(rule?.action.type).toBe("SET_BASE");
   });
@@ -42,6 +43,7 @@ describe("SCORING_RULE_TEMPLATES", () => {
     const template = SCORING_RULE_TEMPLATES.find(
       (t) => t.id === "smallGroupBonus",
     );
+
     const rule = template?.createRule();
     expect(rule?.action.type).toBe("ADD_BONUS");
     expect(rule?.conditions).toHaveLength(2);
@@ -63,6 +65,7 @@ describe("SCORING_RULE_TEMPLATES", () => {
     const template = SCORING_RULE_TEMPLATES.find(
       (t) => t.id === "killTimeBonus",
     );
+
     const rule = template?.createRule();
     expect(rule?.action.type).toBe("ADD_BONUS");
     expect(rule?.conditions[0]?.type).toBe("KILL_TIME_IN_WINDOW");
@@ -89,8 +92,10 @@ it("creates independent editable rule conditions", () => {
   const template = SCORING_RULE_TEMPLATES.find(
     (entry) => entry.id === "smallGroupBonus",
   );
+
   const first = template?.createRule();
   const second = template?.createRule();
+
   if (!first || !second) throw new Error("Missing small group template");
   first.conditions.length = 0;
   expect(second.conditions).toHaveLength(2);

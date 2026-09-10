@@ -24,6 +24,7 @@ const createFormSchema = (t: TFunction<"partyFinder">) =>
         if (data.minLvl && data.maxLvl) {
           return Number(data.minLvl) <= Number(data.maxLvl);
         }
+
         return true;
       },
       {
@@ -33,12 +34,14 @@ const createFormSchema = (t: TFunction<"partyFinder">) =>
     );
 
 type FormSchema = ReturnType<typeof createFormSchema>;
+
 type FormData = z.output<FormSchema>;
 
 export const CreatePartyGatheringForm = () => {
   const formId = useId();
   const { t } = useTranslation("partyFinder");
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
+
   const { isCreatingPartyGathering, startPartyGathering } =
     usePartyGatheringOrchestration();
 
@@ -59,6 +62,7 @@ export const CreatePartyGatheringForm = () => {
   const onSubmit = async (data: FormData) => {
     if (selectedGuildIds.length === 0) {
       showRuntimeMessage(t("form.selectGuild"));
+
       return;
     }
 

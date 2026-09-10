@@ -27,6 +27,7 @@ export interface TimerUpdatedEvent {
 }
 
 type RuleWithTargets = NotificationRuleWithTargets;
+
 type Timer = Effect.Success<
   ReturnType<NotificationJobStore["findTimers"]>
 >[number];
@@ -79,6 +80,7 @@ export const makeNotificationJobRebuild = (
     event: TimerUpdatedEvent,
   ) {
     const rule = yield* store.findRule(ruleId, true);
+
     if (
       !rule ||
       !rule.enabled ||
@@ -89,31 +91,38 @@ export const makeNotificationJobRebuild = (
     ) {
       return;
     }
+
     const sourceEntityId = timerSourceEntityId(event);
     yield* scheduler.cancel({
       ruleId,
       sourceEntityType: "timer",
       sourceEntityId,
     });
+
     const permitted =
       rule.ownerType === NotificationOwnerType.USER
         ? true
         : yield* hasRequiredGuildPermissions(rule.ownerId);
+
     const anchor =
       rule.scheduleAnchor === NotificationScheduleAnchor.MAX_SPAWN
         ? new Date(event.maxSpawnTime)
         : new Date(event.minSpawnTime);
+
     const calculated = new Date(
       anchor.getTime() - rule.scheduleOffsetMinutes * 60_000,
     );
+
     const scheduledFor =
       calculated < new Date(yield* Clock.currentTimeMillis)
         ? new Date(yield* Clock.currentTimeMillis)
         : calculated;
+
     yield* Effect.forEach(
       rule.targets,
       ({ target }) => {
         if (!target.active || !target.canSend) return Effect.void;
+
         return scheduler
           .create({
             notificationRule: rule,
@@ -153,14 +162,19 @@ export const makeNotificationJobRebuild = (
   const rebuildScheduled = Effect.fn("notifications.jobs.rebuildScheduled")(
     function* (ruleId: number) {
       const rule = yield* store.findRule(ruleId, true);
+
       if (!rule?.enabled || !rule.scheduledAt) return;
       const scheduledAt = rule.scheduledAt;
+
       if (scheduledAt < new Date(yield* Clock.currentTimeMillis)) return;
+
       if (rule.scheduledUntil && scheduledAt > rule.scheduledUntil) return;
+
       const permitted =
         rule.ownerType === NotificationOwnerType.USER
           ? true
           : yield* hasRequiredGuildPermissions(rule.ownerId);
+
       yield* scheduleNotificationOccurrence(
         rule,
         scheduledAt,
@@ -175,8 +189,10 @@ export const makeNotificationJobRebuild = (
     ruleId: number,
   ) {
     const rule = yield* store.findRule(ruleId, false);
+
     if (!rule) return;
     yield* scheduler.cancel({ ruleId });
+
     if (
       rule.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE &&
       rule.enabled &&
@@ -184,6 +200,7 @@ export const makeNotificationJobRebuild = (
     ) {
       return yield* rebuildScheduled(rule.id);
     }
+
     if (
       rule.triggerType !== NotificationTriggerType.TIMER_BEFORE_SPAWN ||
       !rule.enabled ||
@@ -195,12 +212,14 @@ export const makeNotificationJobRebuild = (
     ) {
       return;
     }
+
     const timers = yield* store.timers(rule.guildId, rule.world);
     yield* Effect.forEach(
       timers,
       (timer) => {
         if (!matchesTimerRule(rule.filters, timer.npcId)) return Effect.void;
         const npc = isRecord(timer.npc) ? timer.npc : null;
+
         return rebuildTimer(rule.id, { ...timer, npc });
       },
       { concurrency: "unbounded", discard: true },

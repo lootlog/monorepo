@@ -58,6 +58,7 @@ const message = {
 
 const boundaries: Array<Awaited<ReturnType<typeof createDatabaseBoundary>>> =
   [];
+
 afterEach(async () => {
   await Promise.all(boundaries.splice(0).map((boundary) => boundary.dispose()));
 });
@@ -77,6 +78,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
       updatedAt: new Date(0),
     },
   ];
+
   const boundary = await createDatabaseBoundary();
   boundaries.push(boundary);
   const database = boundary.database;
@@ -110,6 +112,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
   );
   const records = [JSON.stringify(message)];
   const published: unknown[] = [];
+
   const redis: ChatRedis = {
     lrange: () => Effect.sync(() => [...records]),
     lset: (_key, index, value) =>
@@ -119,6 +122,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
     lrem: (_key, _count, value) =>
       Effect.sync(() => {
         const index = records.indexOf(value);
+
         if (index >= 0) records.splice(index, 1);
       }),
     del: () =>
@@ -131,6 +135,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
       }),
     ltrim: () => Effect.void,
   };
+
   const operations = await Effect.runPromise(
     makeChatOperations(redis, {
       publish: (_key, payload) =>
@@ -139,6 +144,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
         }),
     }).pipe(Effect.provideService(ApiDatabase, database)),
   );
+
   return {
     operations: operations.service,
     endPartyGatheringMessages: operations.endPartyGatheringMessages,
@@ -153,7 +159,9 @@ describe("chat mutation source visibility", () => {
       [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
       0,
     );
+
     const caller = { userId: "author-user", discordId: "author" };
+
     const services = Layer.mergeAll(
       Layer.succeed(ChatData, fixture.operations),
       Layer.succeed(ChatAuthorization, {
@@ -168,6 +176,7 @@ describe("chat mutation source visibility", () => {
           }),
       }),
     );
+
     const boundary = HttpRouter.toWebHandler(
       HttpApiBuilder.layer(HttpApi.make("LootlogApi").add(ChatGroup)).pipe(
         Layer.provide(ChatHandlers),
@@ -183,6 +192,7 @@ describe("chat mutation source visibility", () => {
       ),
       { disableLogger: true },
     );
+
     try {
       const response = await boundary.handler(
         new Request(
@@ -197,6 +207,7 @@ describe("chat mutation source visibility", () => {
           },
         ),
       );
+
       expect(response.status).toBe(404);
       expect(fixture.records).toEqual([JSON.stringify(message)]);
       expect(fixture.published).toEqual([]);
@@ -210,11 +221,13 @@ describe("chat mutation source visibility", () => {
       Permission.LOOTLOG_CHAT_READ,
       Permission.LOOTLOG_CHAT_WRITE,
     ]);
+
     const operation = fixture.operations.deleteMessage(
       "author",
       "organization",
       "message",
     );
+
     const failure = await Effect.runPromise(operation.pipe(Effect.flip));
     expect(failure).toBeInstanceOf(ChatOperationError);
     expect(failure.cause).toBeInstanceOf(PermissionDeniedError);
@@ -227,6 +240,7 @@ describe("chat mutation source visibility", () => {
       [Permission.LOOTLOG_CHAT_READ, Permission.LOOTLOG_CHAT_WRITE],
       0,
     );
+
     await Effect.runPromise(
       fixture.operations.deleteMessage("author", "organization", "message"),
     );

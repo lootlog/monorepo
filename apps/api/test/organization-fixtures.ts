@@ -4,6 +4,7 @@ import type {
 } from "../src/database/drizzle/schema.js";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Member = typeof memberTable.$inferSelect;
 
 export const createGuildFixture = (overrides: Partial<Guild> = {}): Guild => ({

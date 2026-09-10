@@ -23,6 +23,7 @@ const setup = async (permissions: Permission[][] | null) => {
   const fixture = createTimerHttpFixture(
     () => new Promise<Response>(() => undefined),
   );
+
   onTestFinished(fixture.cleanup);
   fixture.queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
@@ -40,6 +41,7 @@ const setup = async (permissions: Permission[][] | null) => {
     ),
   );
   const onDeleteTimer = vi.fn<(guildId: string, timerKey: string) => void>();
+
   const timer = {
     ...createTimerFixture(),
     minTimeLeft: 0,
@@ -49,6 +51,7 @@ const setup = async (permissions: Permission[][] | null) => {
       { guildId: "guild-2", npcId: 10, timerKey: "timer-2" },
     ],
   };
+
   render(
     <QueryClientProvider client={fixture.queryClient}>
       <ContextMenu>
@@ -64,30 +67,37 @@ const setup = async (permissions: Permission[][] | null) => {
     target: screen.getByText("Timer"),
     keys: "[MouseRight]",
   });
+
   return { user, onDeleteTimer };
 };
+
 it("hides deletion when neither organization permits it", async () => {
   await setup([[], []]);
   expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
 });
+
 it("shows pending permissions without exposing deletion", async () => {
   await setup(null);
   expect(screen.getByText("Sprawdzanie uprawnień...")).toBeVisible();
   expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
 });
+
 it("accepts LOOTLOG_TIMERS_DELETE for a single organization", async () => {
   const { user, onDeleteTimer } = await setup([
     [Permission.LOOTLOG_TIMERS_DELETE],
     [],
   ]);
+
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
   expect(onDeleteTimer).toHaveBeenCalledWith("guild-1", "timer-1");
 });
+
 it("keeps the organization chooser open until its target is selected", async () => {
   const { user, onDeleteTimer } = await setup([
     [Permission.ADMIN],
     [Permission.OWNER],
   ]);
+
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
   expect(screen.getByText("Wybierz serwer do usunięcia timera:")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Beta" }));

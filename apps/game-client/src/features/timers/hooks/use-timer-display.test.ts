@@ -178,6 +178,7 @@ describe("useTimerDisplay", () => {
 
     renderHook(() => {
       renderCount += 1;
+
       return useTimerDisplay(createTimer());
     });
 

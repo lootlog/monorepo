@@ -4,14 +4,17 @@ export const processCpuUtilization = Metric.gauge("process.cpu.utilization", {
   description: "Process CPU seconds per elapsed second (one core equals 1)",
   attributes: { unit: "1" },
 });
+
 export const processMemoryUsage = Metric.gauge("process.memory.usage", {
   description: "Process resident memory in bytes",
   attributes: { unit: "By" },
 });
+
 export const processHeapUsage = Metric.gauge("process.runtime.heap.usage", {
   description: "Runtime used heap memory in bytes",
   attributes: { unit: "By" },
 });
+
 export const processEventLoopDelay = Metric.histogram(
   "process.runtime.eventloop.delay",
   {
@@ -32,6 +35,7 @@ export const processEventLoopDelay = Metric.histogram(
     ],
   },
 );
+
 export const serviceUp = Metric.gauge("lootlog.service.up", {
   description: "Running service process",
   attributes: { unit: "" },
@@ -59,6 +63,7 @@ export const startRuntimeMetrics = Effect.gen(function* () {
         Math.max(0, now - timerStarted - 1_000) / 1_000,
       );
       const elapsed = now - previousCpuTime;
+
       if (elapsed >= 10_000) {
         const cpu = process.cpuUsage();
         yield* Metric.update(

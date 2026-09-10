@@ -25,6 +25,7 @@ describe("activity wire schemas", () => {
         prof: "w",
       },
     });
+
     expect(value.guildId).toBe("guild");
   });
 
@@ -76,6 +77,7 @@ it("preserves multiple valid activity filters", () => {
       "https://activity/activity-logs?type=CONNECT_EVENT,DISCONNECT_EVENT&source=GAME&source=WEB_APP",
     ),
   );
+
   expect(query.type).toEqual(["CONNECT_EVENT", "DISCONNECT_EVENT"]);
   expect(query.source).toEqual(["GAME", "WEB_APP"]);
 });

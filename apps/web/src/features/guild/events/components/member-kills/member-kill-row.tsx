@@ -32,6 +32,7 @@ export const MemberKillRow = ({
 }: MemberKillRowProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+
   const {
     point,
     hasManualPointsAdjustment,

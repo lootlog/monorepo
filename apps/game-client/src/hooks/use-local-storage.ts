@@ -36,10 +36,12 @@ type StorageState<T extends typeof JsonValue.Type> = {
   shouldPersist: boolean;
   value: T | undefined;
 };
+
 type StorageAction<T extends typeof JsonValue.Type> =
   | { key: string; type: "hydrate"; value: T | undefined }
   | { type: "remove" }
   | { type: "set"; value: SetStateAction<T | undefined> };
+
 const reduceStorageState = <T extends typeof JsonValue.Type>(
   state: StorageState<T>,
   action: StorageAction<T>,
@@ -51,6 +53,7 @@ const reduceStorageState = <T extends typeof JsonValue.Type>(
       value: action.value,
     };
   }
+
   if (action.type === "remove") {
     return { ...state, shouldPersist: true, value: undefined };
   }
@@ -59,6 +62,7 @@ const reduceStorageState = <T extends typeof JsonValue.Type>(
     typeof action.value === "function"
       ? action.value(state.value)
       : action.value;
+
   return { ...state, shouldPersist: true, value: nextValue };
 };
 
@@ -86,14 +90,17 @@ export function useLocalStorage<T extends typeof JsonValue.Type>(
 
     if (storageState.value === undefined) {
       window.localStorage.removeItem(key);
+
       return;
     }
+
     window.localStorage.setItem(key, JSON.stringify(storageState.value));
   }, [key, storageState]);
 
   const setValue: Dispatch<SetStateAction<T | undefined>> = (value) => {
     dispatch({ type: "set", value });
   };
+
   const remove = () => dispatch({ type: "remove" });
 
   return [storageState.value, setValue, remove];

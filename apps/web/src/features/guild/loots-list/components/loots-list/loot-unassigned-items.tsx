@@ -3,6 +3,7 @@ import type { Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import { useTranslation } from "react-i18next";
 import { Fragment, type ReactNode } from "react";
+
 export const LootUnassignedItems = ({
   items,
   watchContext,

@@ -14,10 +14,13 @@ import * as apiModule from "@/lib/configure-api-clients";
 type RuntimeWindow = Window & {
   __lootlogGameClientRuntime?: GameClientRuntime;
 };
+
 const runtimeWindow: RuntimeWindow = window;
+
 beforeEach(() => {
   vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(null));
 });
+
 afterEach(() => {
   runtimeWindow.__lootlogGameClientRuntime?.dispose();
   delete runtimeWindow.__lootlogGameClientRuntime;
@@ -89,11 +92,13 @@ describe("game client startup", () => {
 
   it("lets the extension replace the userscript, then preserves it on userscript reload", () => {
     const userscript = bootstrapGameClient();
+
     const extension = bootstrapGameClient({
       fetch: globalThis.fetch,
       createRealtime: () =>
         new RealtimeClient({ url: "https://gateway.lootlog.pl" }),
     });
+
     expect(extension.version).toBe(userscript.version);
     expect(extension.installation).toBe("extension");
     expect(userscript.state).toBe("disposed");
@@ -106,12 +111,14 @@ describe("game client startup", () => {
     const runtime = bootstrapGameClient();
     const first = new Error("unmount failed");
     const realUnmount = runtime.root.unmount.bind(runtime.root);
+
     const unmount = vi
       .spyOn(runtime.root, "unmount")
       .mockImplementationOnce(() => {
         realUnmount();
         throw first;
       });
+
     const realClear = queryClient.clear.bind(queryClient);
     vi.spyOn(queryClient, "clear").mockImplementationOnce(() => {
       realClear();
@@ -139,6 +146,7 @@ describe("game client startup", () => {
         unmount();
         throw new Error("unmount failed");
       });
+
       return root;
     });
     expect(() => bootstrapGameClient()).toThrow(original);
@@ -174,6 +182,7 @@ describe("game client startup", () => {
       (target, property, attributes) => {
         if (target === window && property === "lootlogGameClientApi")
           throw failure;
+
         return defineProperty(target, property, attributes);
       },
     );

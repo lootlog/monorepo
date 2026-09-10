@@ -24,6 +24,7 @@ export function BattleStatsCustomizationActions({
   setHideZeros,
 }: Props) {
   const { t } = useTranslation();
+
   const {
     config: internalConfig,
     updateCategoryOrder,
@@ -36,6 +37,7 @@ export function BattleStatsCustomizationActions({
     removeCategory,
     resetToDefaults,
   } = customization;
+
   return (
     <>
       <StatsCustomizationModal

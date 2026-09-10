@@ -121,11 +121,13 @@ describe("AirTagRenderer", () => {
     vi.spyOn(mainMapContext, "fillText");
     const addDrawable = vi.fn<(drawable: RuntimeDrawable) => void>();
     let drawFrame: (() => void) | undefined;
+
     const addCallbackToEvent = vi.fn<
       (_event: string, callback: () => void) => void
     >((_event: string, callback: () => void) => {
       drawFrame = callback;
     });
+
     const removeCallbackFromEvent = vi.fn<() => void>();
     testRuntimeWindow.Engine = {
       apiData: { CALL_DRAW_ADD_TO_RENDERER: "draw" },
@@ -188,6 +190,7 @@ describe("AirTagRenderer", () => {
     expect(miniMapContext.arc).toHaveBeenCalledTimes(2);
     expect(addDrawable).toHaveBeenCalledOnce();
     const drawable = addDrawable.mock.calls[0]?.[0];
+
     if (!drawable) throw new Error("Expected drawable");
     drawable.draw(mainMapContext);
     expect(mainMapContext.arc).toHaveBeenCalledTimes(1);
@@ -201,4 +204,5 @@ describe("AirTagRenderer", () => {
     expect(removeCallbackFromEvent).toHaveBeenCalledOnce();
   });
 });
+
 import { testRuntimeWindow } from "@/test/test-runtime-window";

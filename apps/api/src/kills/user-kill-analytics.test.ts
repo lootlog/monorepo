@@ -10,6 +10,7 @@ const range = getKillAnalyticsRange(
   DateTime.makeUnsafe("2026-10-25T02:30:00Z"),
   7,
 );
+
 const base = {
   allTimeKills: 30,
   timedKills: 30,
@@ -20,6 +21,7 @@ const base = {
     { date: "2026-10-25", world: "tempest", kills: 18 },
   ],
 };
+
 const raw = {
   ...base,
   currentKills: 19,
@@ -40,10 +42,12 @@ describe("personal kill analytics calendar semantics", () => {
     expect(range.start).toBe("2026-10-18T22:00:00.000Z");
     expect(range.through).toBe("2026-10-25T02:00:00.000Z");
     expect(range.previousThrough).toBe("2026-10-18T01:00:00.000Z");
+
     const spring = getKillAnalyticsRange(
       DateTime.makeUnsafe("2026-03-29T01:30:00Z"),
       7,
     );
+
     expect(spring.start).toBe("2026-03-22T23:00:00.000Z");
     expect(spring.previousThrough).toBe("2026-03-22T02:00:00.000Z");
   });
@@ -52,6 +56,7 @@ describe("personal kill analytics calendar semantics", () => {
       { ...base, allTimeKills: 130, firstBucketAt: "2026-10-23T10:00:00Z" },
       range,
     );
+
     expect(result.meta.untimedKills).toBe(100);
     expect(result.meta.coverage).toBe("partial");
     expect(result.daily[0]).toEqual({
@@ -86,6 +91,7 @@ describe("personal kill analytics calendar semantics", () => {
       },
       range,
     );
+
     expect(result.daily[4]?.worlds).toEqual(["lunia", "tempest"]);
     expect(result.daily[4]?.kills).toBe(13);
     expect(result.daily[0]?.worlds).toEqual([]);
@@ -101,15 +107,19 @@ describe("personal kill analytics calendar semantics", () => {
       longestStreak: 3,
       uniqueNpcs: 2,
     });
+
     const yesterday = buildKillAnalytics(
       { ...raw, daily: base.daily.slice(0, 2) },
       range,
     );
+
     expect(yesterday.overview.currentStreak).toBe(2);
+
     const broken = buildKillAnalytics(
       { ...raw, daily: base.daily.slice(0, 1) },
       range,
     );
+
     expect(broken.overview.currentStreak).toBe(0);
   });
   it("retains previous-only worlds and distinguishes covered zeroes from missing history", () => {
@@ -143,6 +153,7 @@ describe("personal kill analytics calendar semantics", () => {
       },
       range,
     );
+
     expect(result.meta.coverage).toBe("unavailable");
     expect(result.daily.every((day) => day.kills === null)).toBe(true);
     expect(result.overview.averagePerDay).toBeNull();

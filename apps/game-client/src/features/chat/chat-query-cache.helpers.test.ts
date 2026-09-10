@@ -10,7 +10,9 @@ import { upsertChatMessage } from "./chat.helpers";
 import { updateChatMessagesCache } from "./chat-query-cache.helpers";
 
 const guildId = "guild-1";
+
 const queryKey = getChatControllerGetChatMessagesQueryKey({ guildId });
+
 const socketMessage = createChatMessage({
   id: "socket-message",
   guildId,
@@ -22,9 +24,11 @@ const socketMessage = createChatMessage({
 describe("chat query cache", () => {
   it("keeps an unseen guild history fetchable after a socket update", async () => {
     const queryClient = new QueryClient();
+
     const serverHistory = [
       { ...socketMessage, id: "history-message", message: "History message" },
     ];
+
     const fetchHistory = vi
       .fn<() => Promise<ChatMessage[]>>()
       .mockResolvedValue(serverHistory);
@@ -47,11 +51,13 @@ describe("chat query cache", () => {
 
   it("applies socket updates to an already loaded guild history", () => {
     const queryClient = new QueryClient();
+
     const historyMessage = {
       ...socketMessage,
       id: "history-message",
       message: "History message",
     };
+
     queryClient.setQueryData(queryKey, [historyMessage]);
 
     updateChatMessagesCache({

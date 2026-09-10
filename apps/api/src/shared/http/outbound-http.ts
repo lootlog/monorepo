@@ -35,9 +35,11 @@ export const outboundHttpRequest = (
   request: OutboundHttpRequest,
 ): Effect.Effect<OutboundHttpResponse, OutboundHttpFailure> => {
   let retryCount = 0;
+
   const attempt = Effect.suspend(() => {
     const currentRetryCount = retryCount;
     retryCount += 1;
+
     const execute =
       request.method === "GET"
         ? httpClient.get(request.url.toString(), { headers: request.headers })
@@ -51,6 +53,7 @@ export const outboundHttpRequest = (
                   ),
             headers: request.headers,
           });
+
     return execute.pipe(
       Effect.timeout(request.timeout),
       Effect.mapError(
@@ -90,6 +93,7 @@ export const outboundHttpRequest = (
       }),
     );
   });
+
   return attempt.pipe(
     Effect.retry({
       times: request.retryTimes,

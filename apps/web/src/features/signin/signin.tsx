@@ -20,6 +20,7 @@ export const SignIn: React.FC = () => {
 
     try {
       setIsLoading(true);
+
       const attempt = authClient.signIn.social({
         provider: "discord",
         callbackURL: search.redirect
@@ -27,6 +28,7 @@ export const SignIn: React.FC = () => {
           : `${window.location.origin}/@me`,
         errorCallbackURL: window.location.href,
       });
+
       signInAttempt.current = attempt;
       await attempt;
     } catch {

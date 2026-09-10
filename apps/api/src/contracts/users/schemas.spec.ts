@@ -9,10 +9,12 @@ test("updating one notification or detector flag preserves an otherwise empty pa
   const decode = Schema.decodeUnknownSync(
     UpdateUserGameAccountPreferencesRequest,
   );
+
   const patch = {
     notifications: { HERO: { sound: false } },
     detector: { TITAN: { detect: false } },
   };
+
   expect(decode(patch)).toEqual(patch);
   expect(decode({})).toEqual({});
   expect(() =>
@@ -22,6 +24,7 @@ test("updating one notification or detector flag preserves an otherwise empty pa
 
 test("NPC mute updates reject empty identifiers, fractional levels and unsafe IDs", () => {
   const decode = Schema.decodeUnknownSync(UpdateUserPreferencesRequest);
+
   const npc = {
     npcKey: "world:123",
     npcId: 123,
@@ -31,9 +34,11 @@ test("NPC mute updates reject empty identifiers, fractional levels and unsafe ID
     prof: null,
     icon: null,
   } as const;
+
   expect(decode({ mutes: { npcs: [npc] } })).toEqual({
     mutes: { npcs: [npc] },
   });
+
   for (const invalid of [
     { npcKey: "" },
     { name: "" },
@@ -45,5 +50,6 @@ test("NPC mute updates reject empty identifiers, fractional levels and unsafe ID
       decode({ mutes: { npcs: [{ ...npc, ...invalid }] } }),
     ).toThrow();
   }
+
   expect(decode({ mutes: { npcs: [] } })).toEqual({ mutes: { npcs: [] } });
 });

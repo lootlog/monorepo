@@ -70,10 +70,12 @@ export class SearchOperations extends Context.Service<
     SearchOperations,
     Effect.gen(function* () {
       const config = yield* SearchConfig;
+
       const meilisearch = new Meilisearch({
         host: config.meilisearchHost,
         apiKey: Redacted.value(config.meilisearchApiKey),
       });
+
       const items = makeItemsModule(meilisearch, effectLogger);
       const npcs = makeNpcsModule(meilisearch, effectLogger);
       const players = makePlayersModule(meilisearch, effectLogger);

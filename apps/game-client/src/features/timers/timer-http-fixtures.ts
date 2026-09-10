@@ -16,16 +16,19 @@ export const createTimerHttpFixture = (
   respond?: (request: Request) => Response | Promise<Response>,
 ) => {
   const requests: Request[] = [];
+
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: Infinity },
       mutations: { retry: false },
     },
   });
+
   queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
     [],
   );
+
   const preferences: UserPreferencesResponseDtoOutput = {
     userId: "user-1",
     guildsOrder: [],
@@ -34,22 +37,27 @@ export const createTimerHttpFixture = (
     chatAppearance: { ...CHAT_APPEARANCE_READABLE_PRESET },
     mutes: { players: [], npcs: [] },
   };
+
   queryClient.setQueryData(
     getUsersControllerGetUserPreferencesQueryKey(),
     preferences,
   );
   const history = createTimerHistoryFixture();
+
   const restored = createTimerFixture({
     timerKey: history.timerKey,
     npcId: history.npcId,
   });
+
   queryClient.setQueryData(queryKeys.timers("pandora"), []);
+
   const restoreApi = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
       fetch: (input, init) => {
         const request = new Request(input, init);
         requests.push(request);
+
         return Promise.resolve(
           respond
             ? respond(request)
@@ -58,6 +66,7 @@ export const createTimerHttpFixture = (
       },
     },
   });
+
   return {
     queryClient,
     requests,

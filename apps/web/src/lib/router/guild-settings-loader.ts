@@ -41,6 +41,7 @@ export const loadGuildSettings = ({
 
     if (preload) {
       void prefetchRouteQuery(context.queryClient, permissionsQueryOptions);
+
       return null;
     }
 

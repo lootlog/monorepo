@@ -29,6 +29,7 @@ export function useNpcListExitingRows({
     const currentNpcIds = new Set((npcs ?? []).map((npc) => npc.id));
     const previousNpcs = previousNpcsRef.current;
     const previousVisibleRange = previousVisibleRangeRef.current;
+
     const removedVisibleNpcs = previousNpcs.flatMap((npc, index) =>
       index >= previousVisibleRange.startIndex &&
       index < previousVisibleRange.endIndex &&
@@ -45,6 +46,7 @@ export function useNpcListExitingRows({
       const retainedRows = currentRows.filter(
         (row) => !currentNpcIds.has(row.npc.id),
       );
+
       let changed = retainedRows.length !== currentRows.length;
       const retainedNpcIds = new Set(retainedRows.map((row) => row.npc.id));
 
@@ -69,6 +71,7 @@ export function useNpcListExitingRows({
     const nearestExpiryAt = Math.min(
       ...exitingNpcRows.map((row) => row.startedAt + NPC_ROW_EXIT_RETENTION_MS),
     );
+
     const timeoutId = window.setTimeout(
       () => {
         const now = Date.now();

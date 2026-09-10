@@ -37,11 +37,13 @@ describe("EventMapGrid location sections", () => {
       [],
     );
     onTestFinished(() => queryClient.clear());
+
     const router = createOrganizationTestRouter(
       <QueryClientProvider client={queryClient}>
         <EventMapGrid locations={[location]} maps={[]} vertical />
       </QueryClientProvider>,
     );
+
     await router.load();
     render(<RouterProvider router={router} />);
 

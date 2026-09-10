@@ -35,6 +35,7 @@ import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
 
 let dragonfly: StartedTestContainer;
+
 let redisPort: number;
 
 const makeConfiguration = () =>
@@ -108,29 +109,36 @@ const makeSession = (connectionId: string): SessionData => ({
 
 const makeSocket = (connectionId: string) => {
   const frames: Uint8Array[] = [];
+
   const socket = {
     data: makeSession(connectionId),
     getBufferedAmount: () => 0,
     send: (bytes: Uint8Array) => {
       frames.push(bytes);
+
       return bytes.byteLength;
     },
     close: () => undefined,
   };
+
   return { socket, frames };
 };
 
 const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
+
   for (const frame of frames) {
     const decoded = decodeRealtimeFrame(frame);
+
     if ("type" in decoded && decoded.type === type) events.push(decoded);
   }
+
   return events;
 };
 
 const waitFor = async (predicate: () => boolean): Promise<void> => {
   const deadline = Date.now() + 2_000;
+
   while (!predicate()) {
     if (Date.now() >= deadline)
       throw new Error("Timed out waiting for realtime federation");
@@ -159,8 +167,10 @@ describe("realtime Dragonfly integration", () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
+
     try {
       const redis = await runtime.runPromise(Redis.Redis);
+
       const store = new RedisGatewayStore(
         redis,
         {
@@ -173,6 +183,7 @@ describe("realtime Dragonfly integration", () => {
         (effect) => runtime.runPromise(effect),
         () => {},
       );
+
       let now = Date.now();
       const first = makeSocket("metrics-first").socket;
       const duplicate = makeSocket("metrics-duplicate").socket;
@@ -236,10 +247,12 @@ describe("realtime Dragonfly integration", () => {
         gameSessions: 0,
         uniquePlayers: 0,
       });
+
       const observed = Metric.gauge(
         "lootlog_gateway_cluster_observed_at_seconds",
         { attributes: { unit: "s" } },
       );
+
       const lastSuccess = Effect.runSync(Metric.value(observed)).value;
       await store.command.del("realtime:metrics:instances:v2");
       await store.command.set(
@@ -268,8 +281,10 @@ describe("realtime Dragonfly integration", () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
+
     try {
       const redis = await runtime.runPromise(Redis.Redis);
+
       const store = new RedisGatewayStore(
         redis,
         {
@@ -282,22 +297,29 @@ describe("realtime Dragonfly integration", () => {
         (effect) => runtime.runPromise(effect),
         () => {},
       );
+
       let now = Date.now();
+
       const hub = {
         instanceId: crypto.randomUUID(),
         publishPresence: async () => {},
         publishToScope: async () => {},
         refreshRegistry: async () => {},
       };
+
       const events: GameCharacterOffline[] = [];
       let fails = false;
+
       const publish = (event: GameCharacterOffline) =>
         Effect.suspend(() => {
           if (fails) return Effect.fail(new Error("Rabbit unavailable"));
           events.push(event);
+
           return Effect.void;
         });
+
       let beforeClaim: (() => Promise<void>) | undefined;
+
       const command = {
         ...store.command,
         eval: async <A>(
@@ -308,9 +330,11 @@ describe("realtime Dragonfly integration", () => {
           const callback = beforeClaim;
           beforeClaim = undefined;
           await callback?.();
+
           return store.command.eval<A>(script, keyCount, ...args);
         },
       };
+
       const makePresence = () =>
         new PresenceStore(
           { command },
@@ -320,6 +344,7 @@ describe("realtime Dragonfly integration", () => {
           undefined,
           publish,
         );
+
       let presence = makePresence();
       const game = makeSocket("offline").socket;
       game.data.character = game.data.presence?.character;
@@ -331,6 +356,7 @@ describe("realtime Dragonfly integration", () => {
           presence.publish(game, { organizationIds: [] }),
         );
       };
+
       await Effect.runPromise(presence.sweepOffline());
       expect(events).toEqual([]);
 
@@ -360,8 +386,10 @@ describe("realtime Dragonfly integration", () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
+
     try {
       const redis = await runtime.runPromise(Redis.Redis);
+
       const store = new RedisGatewayStore(
         redis,
         {
@@ -374,25 +402,32 @@ describe("realtime Dragonfly integration", () => {
         (effect) => runtime.runPromise(effect),
         () => {},
       );
+
       const start = Date.parse("2026-09-06T10:00:00Z");
       let now = start;
       const messages: UserOnlineEventV1[] = [];
       let fails = false;
+
       const publish = (event: UserOnlineEventV1) =>
         Effect.suspend(() => {
           if (fails) return Effect.fail(new Error("Rabbit unavailable"));
           messages.push(event);
+
           return Effect.void;
         });
+
       let history = new OnlineHistory(store.command, publish, () => now);
       const session = makeSession("online-one");
       session.character = session.presence?.character;
+
       const observeAt = async (seconds: number, final = false) => {
         now = start + seconds * 1000;
         await Effect.runPromise(history.observe(session, now, final));
       };
+
       const checkpoints = () =>
         messages.filter((event) => event.type === "checkpoint");
+
       await observeAt(0);
       await observeAt(25);
       await observeAt(50);
@@ -431,11 +466,13 @@ describe("realtime Dragonfly integration", () => {
         new Date(start + 225_000).toISOString(),
       );
       expect(session.guilds).toHaveLength(2);
+
       const web = {
         ...session,
         platform: "web-app" as const,
         connectionId: "web",
       };
+
       await Effect.runPromise(history.observe(web, now));
       await Effect.runPromise(history.observe(web, now + 30_000, true));
       now += 120_000;
@@ -479,6 +516,7 @@ describe("realtime Dragonfly integration", () => {
       expect(checkpoints()[4]?.startedAt).toBe(
         new Date(legacyStart + 25_000).toISOString(),
       );
+
       if (!session.character) throw new Error("Expected game character");
       session.character = { ...session.character, world: "luvia" };
       now = legacyStart + 75_000;
@@ -498,8 +536,10 @@ describe("realtime Dragonfly integration", () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
+
     try {
       const redis = await runtime.runPromise(Redis.Redis);
+
       const store = new RedisGatewayStore(
         redis,
         {
@@ -512,16 +552,21 @@ describe("realtime Dragonfly integration", () => {
         (effect) => runtime.runPromise(effect),
         () => {},
       );
+
       const start = Date.parse("2026-09-06T10:00:00Z");
       let now = start;
+
       const sessions = Array.from({ length: 1250 }, (_, index) => {
         const session = makeSession(`backlog-${index}`);
         session.character = session.presence?.character;
+
         return session;
       });
+
       const messages: UserOnlineEventV1[] = [];
       let updatedSession: SessionData | undefined;
       let fail = false;
+
       const history = new OnlineHistory(
         store.command,
         (event) =>
@@ -529,28 +574,34 @@ describe("realtime Dragonfly integration", () => {
             if (fail && event.type === "checkpoint")
               return yield* Effect.fail(new Error("Rabbit unavailable"));
             messages.push(event);
+
             if (event.type === "checkpoint" && !updatedSession) {
               updatedSession = sessions.find(
                 (session) => session.connectionId === event.sessionId,
               );
+
               if (!updatedSession) throw new Error("Missing session");
               yield* history.observe(updatedSession, start + 55_000);
             }
           }),
         () => now,
       );
+
       for (const session of sessions) {
         await Effect.runPromise(history.observe(session, start));
         await Effect.runPromise(history.observe(session, start + 50_000));
       }
+
       const checkpoints = () =>
         messages.filter((event) => event.type === "checkpoint");
+
       const pending = () =>
         store.command.eval<number>(
           "return redis.call('HLEN', KEYS[1])",
           1,
           "online-history:pending",
         );
+
       now = start + 60_000;
       await Effect.runPromise(history.flush());
       expect(checkpoints()).toHaveLength(1000);
@@ -574,9 +625,11 @@ describe("realtime Dragonfly integration", () => {
         1250,
       );
       expect(await pending()).toBe(0);
+
       const updated = checkpoints().filter(
         (event) => event.sessionId === updatedSession?.connectionId,
       );
+
       expect(updated.map((event) => event.endedAt)).toEqual([
         new Date(start + 50_000).toISOString(),
         new Date(start + 55_000).toISOString(),
@@ -593,8 +646,10 @@ describe("realtime Dragonfly integration", () => {
       const runtime = ManagedRuntime.make(
         BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
       );
+
       try {
         const redis = await runtime.runPromise(Redis.Redis);
+
         const store = new RedisGatewayStore(
           redis,
           {
@@ -607,35 +662,45 @@ describe("realtime Dragonfly integration", () => {
           (effect) => runtime.runPromise(effect),
           () => {},
         );
+
         const start = Date.parse("2026-09-06T10:00:00Z");
         let now = start;
         const messages: UserOnlineEventV1[] = [];
         let fail = delay === 3000;
         let attempts = 0;
+
         const history = new OnlineHistory(
           store.command,
           (event) =>
             Effect.suspend(() => {
               if (event.type === "checkpoint") {
                 attempts++;
+
                 if (attempts === 1) now += delay;
+
                 if (fail && attempts === 101)
                   return Effect.fail(new Error("Rabbit unavailable"));
               }
+
               messages.push(event);
+
               return Effect.void;
             }),
           () => now,
         );
+
         for (let index = 0; index < 250; index++) {
           const session = makeSession(`slow-${index}`);
           session.character = session.presence?.character;
           await Effect.runPromise(history.observe(session, start));
           await Effect.runPromise(history.observe(session, start + 50_000));
         }
+
         const checkpoints = () =>
           messages.filter((event) => event.type === "checkpoint");
+
         now = start + 60_000;
+
         if (fail)
           await expect(Effect.runPromise(history.flush())).rejects.toThrow(
             "Rabbit unavailable",
@@ -680,6 +745,7 @@ describe("realtime Dragonfly integration", () => {
             });
           }),
         );
+
         // Dragonfly observes socket closure asynchronously on another connection.
         const subscriptions = yield* redis
           .send<[string, number]>("PUBSUB", "NUMSUB", channel)
@@ -689,6 +755,7 @@ describe("realtime Dragonfly integration", () => {
               schedule: Schedule.spaced("10 millis"),
             }),
           );
+
         expect(subscriptions).toEqual([channel, 0]);
         expect(yield* redis.send("PING")).toBe("PONG");
       }).pipe(
@@ -704,6 +771,7 @@ describe("realtime Dragonfly integration", () => {
 
   test("SIGINT shuts down an active Redis subscription without logging a defect", async () => {
     const url = `redis://${dragonfly.getHost()}:${redisPort}`;
+
     const child = Bun.spawn(
       [
         process.execPath,
@@ -728,8 +796,10 @@ describe("realtime Dragonfly integration", () => {
         killSignal: "SIGKILL",
       },
     );
+
     const reader = child.stdout.getReader();
     const errors = new Response(child.stderr).text();
+
     try {
       const ready = await reader.read();
       expect(new TextDecoder().decode(ready.value)).toContain("subscribed");
@@ -749,10 +819,12 @@ describe("realtime Dragonfly integration", () => {
         const redis = yield* Redis.Redis;
         const messages = yield* redis.subscribe("shutdown:disconnect");
         const clients = yield* redis.send<string>("CLIENT", "LIST");
+
         const subscriberAddress = clients
           .split("\n")
           .find((client) => /\bflags=P\b/.test(client))
           ?.match(/\baddr=(\S+)/)?.[1];
+
         if (!subscriberAddress)
           throw new Error("Subscriber connection not found");
         yield* redis.send("CLIENT", "KILL", subscriberAddress);
@@ -776,16 +848,20 @@ describe("realtime Dragonfly integration", () => {
 
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
     const configuration = makeConfiguration();
+
     const firstRuntime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
     );
+
     const secondRuntime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://127.0.0.1:${redisPort}` }),
     );
+
     const firstRedis = await firstRuntime.runPromise(Redis.Redis);
     const secondRedis = await secondRuntime.runPromise(Redis.Redis);
     const firstBackgroundFibers: Array<Fiber.Fiber<void, unknown>> = [];
     const secondBackgroundFibers: Array<Fiber.Fiber<void, unknown>> = [];
+
     const firstStore = new RedisGatewayStore(
       firstRedis,
       {
@@ -797,6 +873,7 @@ describe("realtime Dragonfly integration", () => {
         firstBackgroundFibers.push(firstRuntime.runFork(effect));
       },
     );
+
     const secondStore = new RedisGatewayStore(
       secondRedis,
       {
@@ -808,7 +885,9 @@ describe("realtime Dragonfly integration", () => {
         secondBackgroundFibers.push(secondRuntime.runFork(effect));
       },
     );
+
     await Promise.all([firstStore.connect(), secondStore.connect()]);
+
     try {
       await firstStore.command.flushdb();
       const firstHub = new RealtimeHub(configuration, firstStore);
@@ -820,6 +899,7 @@ describe("realtime Dragonfly integration", () => {
       secondHub.register(recipient.socket);
       const visibleFeed = makeSocket("visible-feed");
       const hiddenFeed = makeSocket("hidden-feed");
+
       for (const target of [visibleFeed, hiddenFeed]) {
         Object.assign(target.socket.data, {
           platform: "web-app",
@@ -847,6 +927,7 @@ describe("realtime Dragonfly integration", () => {
           organizationId: "organization-1",
         });
       }
+
       await firstHub.publishToScope(
         { topic: "organization.loots", organizationId: "organization-1" },
         { v: 1, type: "kills.changed", data: { guildId: "organization-1" } },
@@ -896,9 +977,11 @@ describe("realtime Dragonfly integration", () => {
             topic: "organization.timers",
             organizationId: "organization-1",
           });
+
           return { ...target, allowed };
         }),
       );
+
       await firstHub.publishToScope(
         { topic: "organization.timers", organizationId: "organization-1" },
         {
@@ -932,6 +1015,7 @@ describe("realtime Dragonfly integration", () => {
           .filter((target) => target.allowed)
           .every((target) => target.frames.length === 2),
       );
+
       for (const target of timerTargets.filter((target) => !target.allowed))
         expect(target.frames).toHaveLength(0);
       // Even full tier grants do not authorize an out-of-range timer.
@@ -968,6 +1052,7 @@ describe("realtime Dragonfly integration", () => {
           .filter((target) => target.allowed)
           .every((target) => target.frames.length === 3),
       );
+
       for (const target of timerTargets.filter((target) => !target.allowed))
         expect(target.frames).toHaveLength(0);
 
@@ -981,6 +1066,7 @@ describe("realtime Dragonfly integration", () => {
       }
 
       const mapPings = new MapPingService(firstStore, firstHub);
+
       for (let index = 0; index < 5; index += 1) {
         await expect(
           mapPings.send(source.socket, {
@@ -991,6 +1077,7 @@ describe("realtime Dragonfly integration", () => {
           }),
         ).resolves.toMatchObject({ status: "accepted" });
       }
+
       await expect(
         mapPings.send(source.socket, {
           expectedMapId: 7,
@@ -1023,6 +1110,7 @@ describe("realtime Dragonfly integration", () => {
         enabled: true,
         expectedMapId: 7,
       });
+
       const observation = {
         targetId: "target-1",
         nickname: "Enemy",
@@ -1030,6 +1118,7 @@ describe("realtime Dragonfly integration", () => {
         x: 10,
         y: 11,
       };
+
       await expect(
         sourceAirTags.publishObservations(source.socket, {
           expectedMapId: 7,
@@ -1047,6 +1136,7 @@ describe("realtime Dragonfly integration", () => {
 
       const reconnected = makeSocket("reconnected");
       secondHub.register(reconnected.socket);
+
       const rejoined = await recipientAirTags.updateSubscription(
         reconnected.socket,
         {
@@ -1055,6 +1145,7 @@ describe("realtime Dragonfly integration", () => {
           expectedMapId: 7,
         },
       );
+
       expect(rejoined).toMatchObject({
         status: "accepted",
         scopes: [{ targets: [{ targetId: "target-1", x: 12 }] }],
@@ -1065,8 +1156,10 @@ describe("realtime Dragonfly integration", () => {
           source.socket,
           { expectedMapId: 7, observations: [observation] },
         );
+
         expect(acknowledgement).toMatchObject({ status: "accepted" });
       }
+
       await expect(
         sourceAirTags.publishObservations(source.socket, {
           expectedMapId: 7,
@@ -1076,6 +1169,7 @@ describe("realtime Dragonfly integration", () => {
 
       await Bun.sleep(10_100);
       const afterExpiry = makeSocket("after-expiry");
+
       const expiredSnapshot = await recipientAirTags.updateSubscription(
         afterExpiry.socket,
         {
@@ -1084,6 +1178,7 @@ describe("realtime Dragonfly integration", () => {
           expectedMapId: 7,
         },
       );
+
       expect(expiredSnapshot).toMatchObject({
         status: "accepted",
         scopes: [{ targets: [] }],

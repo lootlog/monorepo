@@ -31,7 +31,9 @@ export const makeEventPresenceStats = (
           ),
         )
         .limit(1);
+
       const hero = heroRows[0];
+
       if (!hero) {
         return yield* Effect.fail(new ResourceNotFoundError("Hero not found"));
       }
@@ -40,7 +42,9 @@ export const makeEventPresenceStats = (
         .select({ id: eventMapTable.id })
         .from(eventMapTable)
         .where(eq(eventMapTable.heroNpcId, heroNpcId));
+
       const mapIds = maps.map(({ id }) => id);
+
       const [assignments, presenceRows] = yield* Effect.all(
         mapIds.length === 0
           ? [Effect.succeed([]), Effect.succeed([])]
@@ -67,12 +71,15 @@ export const makeEventPresenceStats = (
       );
 
       const eventStart = hero.event.startsAt ?? hero.event.createdAt;
+
       const eventEnd =
         hero.event.endsAt ?? new Date(yield* Clock.currentTimeMillis);
+
       const totalEventSeconds = Math.max(
         0,
         Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),
       );
+
       const memberStats = new Map<
         number,
         {
@@ -83,6 +90,7 @@ export const makeEventPresenceStats = (
           afkTimeMs: number;
         }
       >();
+
       for (const { member } of assignments) {
         memberStats.set(member.id, {
           memberId: member.id,
@@ -95,12 +103,15 @@ export const makeEventPresenceStats = (
 
       const now = new Date(yield* Clock.currentTimeMillis);
       let totalCoverageMs = 0;
+
       for (const { log, member } of presenceRows) {
         const duration = Math.max(
           0,
           (log.endedAt ?? now).getTime() - log.startedAt.getTime(),
         );
+
         if (!log.isAfk) totalCoverageMs += duration;
+
         const stats = memberStats.get(log.memberId) ?? {
           memberId: member.id,
           memberName: member.name,
@@ -108,12 +119,15 @@ export const makeEventPresenceStats = (
           totalTimeMs: 0,
           afkTimeMs: 0,
         };
+
         stats.totalTimeMs += duration;
+
         if (log.isAfk) stats.afkTimeMs += duration;
         memberStats.set(log.memberId, stats);
       }
 
       const totalCoverageSeconds = Math.round(totalCoverageMs / 1000);
+
       return {
         totalCoverageSeconds,
         totalEventSeconds,
@@ -150,6 +164,7 @@ export const makeEventPresenceStats = (
       const key = cache.getEventKey(guildId, eventId, "hero-presence", {
         heroNpcId,
       });
+
       return cache
         .getOrSet(key, HeroPresenceStatsResponse, () =>
           load(guildId, eventId, heroNpcId),

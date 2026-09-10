@@ -44,9 +44,11 @@ describe("KillDetailSummary", () => {
     const respawnMetric = screen.getByLabelText(
       "events.killDetail.respawnTime: 1h 18m, events.killDetail.respawnFasterBy:41m 48s",
     );
+
     const maximumWindowMetric = screen.getByLabelText(
       "events.killDetail.respawnWindowTime: 2h",
     );
+
     const delta = screen.getByText("−41m 48s");
     const valueRow = respawnMetric.querySelector("dd");
 
@@ -62,9 +64,11 @@ describe("KillDetailSummary", () => {
     const respawnMetric = screen.getByLabelText(
       "events.killDetail.respawnTime: 1h 18m, events.killDetail.overdueBy:1m",
     );
+
     const maximumWindowMetric = screen.getByLabelText(
       "events.killDetail.respawnWindowTime: 2h",
     );
+
     const delta = screen.getByText("+1m");
 
     expect(delta.className).toContain("text-amber-500");

@@ -30,11 +30,14 @@ const effects = {
 };
 
 type CapturedRequest = { path: string; body: unknown };
+
 const requests: CapturedRequest[] = [];
+
 const restoreApi = configureApiClients({
   main: { baseUrl: "https://api.example.test", fetch: captureHttp },
   battlelog: { baseUrl: "https://battlelog.example.test", fetch: captureHttp },
 });
+
 async function captureHttp(
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -43,14 +46,20 @@ async function captureHttp(
   const path = new URL(request.url).pathname;
   const body: unknown = JSON.parse(await request.text());
   requests.push({ path, body });
+
   if (path === "/loots")
     return Response.json({ id: 1, submittedGuilds: [], rejectedGuilds: [] });
+
   if (path === "/kills") return Response.json({ updated: 1 });
+
   if (path === "/battles") return Response.json({ battleId: "battle-1" });
+
   return new Response(null, { status: 404 });
 }
+
 const requestsFor = (path: string) =>
   requests.filter((request) => request.path === path);
+
 const submittedBattleSchema = z.object({
   events: z.array(
     z.object({
@@ -63,7 +72,9 @@ const submittedBattleSchema = z.object({
     }),
   ),
 });
+
 const pipelineWindow: Window & { successData?: RuntimeFunction } = window;
+
 const originalSuccessData = pipelineWindow.successData;
 
 const combinedEvent = {
@@ -299,7 +310,9 @@ function dispatchRuntimeEvents(payloads: readonly unknown[]): unknown[] {
   const results = payloads.map((payload) =>
     pipelineWindow.successData?.(payload),
   );
+
   runtimeEventPipeline.flush();
+
   return results;
 }
 
@@ -312,6 +325,7 @@ function replayAndSnapshot(payload: unknown) {
 
   const result = dispatchRuntimeEvent(payload);
   const battleState = useBattleStore.getState();
+
   const snapshot = {
     battle: {
       battleState: battleState.battleState,
@@ -334,6 +348,7 @@ function replayAndSnapshot(payload: unknown) {
 
   dispatcher.cleanup();
   runtimeEventPipeline.cleanup();
+
   return snapshot;
 }
 
@@ -410,6 +425,7 @@ describe("game event pipeline golden replay", () => {
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
+
     const finalFightLootEvent = {
       ...finalFightEvent,
       ...fightLootEvent,
@@ -534,6 +550,7 @@ describe("game event pipeline golden replay", () => {
               "12345": { hpp: 75 },
               "-100": { hpp: 0 },
             };
+
       const fragmentaryFinalFightEvent = {
         f: {
           endBattle: 1,
@@ -602,6 +619,7 @@ describe("game event pipeline golden replay", () => {
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
     margonemRuntimeBridge.setupProxies();
     dispatcher.register();
+
     const talkedNpc = Object.freeze({
       icon: "npc.gif",
       id: 501,
@@ -614,6 +632,7 @@ describe("game event pipeline golden replay", () => {
       x: 1,
       y: 2,
     });
+
     useNpcsStore.getState().replaceNpcs([talkedNpc]);
     useDialogStore.getState().setNpcContext({
       npc: null,
@@ -651,12 +670,15 @@ describe("game event pipeline golden replay", () => {
     for (const event of keuktaIncrementalEvents) {
       dispatchRuntimeEvent(event);
     }
+
     dispatchRuntimeEvent(compactKeuktaEvent);
 
     await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(1));
+
     const submittedBattle = submittedBattleSchema.parse(
       requestsFor("/battles")[0]?.body,
     );
+
     const submittedMoves =
       submittedBattle?.events.flatMap((event) => event.f?.m ?? []) ?? [];
 
@@ -691,6 +713,7 @@ describe("game event pipeline golden replay", () => {
     const dateNow = vi
       .spyOn(Date, "now")
       .mockReturnValue(Date.parse("2026-07-26T18:52:57.000Z"));
+
     resetPipelineState();
     const dispatcher = new EventDispatcher();
     pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
@@ -700,6 +723,7 @@ describe("game event pipeline golden replay", () => {
     for (const event of keuktaIncrementalEvents) {
       dispatchRuntimeEvent(event);
     }
+
     await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(1));
     dateNow.mockReturnValue(Date.parse("2026-07-26T18:53:07.001Z"));
     dispatchRuntimeEvent({

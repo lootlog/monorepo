@@ -186,6 +186,7 @@ describe("AirTagReceiveController", () => {
 
 it("prunes revoked scopes during an in-flight refresh without clearing unrelated targets", () => {
   const controller = new AirTagReceiveController();
+
   const snapshots = [
     createSnapshot(),
     createSnapshot({
@@ -193,6 +194,7 @@ it("prunes revoked scopes during an in-flight refresh without clearing unrelated
       targets: [createTarget({ targetId: "target-2", nickname: "Other" })],
     }),
   ];
+
   controller.beginSubscription("initial", "aether", 42);
   controller.applySubscriptionAck({
     status: "accepted",

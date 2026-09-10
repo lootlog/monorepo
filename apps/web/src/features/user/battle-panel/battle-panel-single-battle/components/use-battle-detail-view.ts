@@ -22,10 +22,15 @@ import { useTranslation } from "react-i18next";
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 
 const STICKY_TOP_OFFSET_PX = 12;
+
 const STICKY_CONTENT_GAP_PX = 12;
+
 const SIDE_CARD_BOTTOM_OFFSET_PX = 8;
+
 const DEFAULT_CHART_HEIGHT_PX = 216;
+
 const HIDE_ZERO_STATS_STORAGE_KEY = "lootlog-battle-hide-zero-stats-v1";
+
 const SCROLL_AREA_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]';
 
 export type BattleDetailViewProps = {
@@ -53,6 +58,7 @@ const getBattleDetailLayoutState = ({
 }) => {
   const timelineTurns = timeline?.timeline ?? [];
   const hasTimeline = timelineTurns.length > 0;
+
   const layoutStyle: CSSProperties &
     Record<
       | "--battle-chart-height"
@@ -68,6 +74,7 @@ const getBattleDetailLayoutState = ({
       STICKY_TOP_OFFSET_PX + STICKY_CONTENT_GAP_PX + SIDE_CARD_BOTTOM_OFFSET_PX
     }px))`,
   };
+
   return {
     hasSideContent: Boolean(sideContent),
     hasTimeline,
@@ -86,13 +93,16 @@ export function useBattleDetailView({
   timeline,
 }: BattleDetailViewProps) {
   const { t } = useTranslation();
+
   const [queryState, setQueryState] = useQueryStates(
     battlePanelSingleBattleSearchParsers,
   );
+
   const [hideZeros, setHideZeros] = useLocalStorage(
     HIDE_ZERO_STATS_STORAGE_KEY,
     true,
   );
+
   const [selectedTurn, setSelectedTurn] = useState<number | null>(null);
   const [scrollTargetTurn, setScrollTargetTurn] = useState<number | null>(null);
   const [scrollTargetRequestId, setScrollTargetRequestId] = useState(0);
@@ -104,9 +114,11 @@ export function useBattleDetailView({
   const chartWrapperRef = useRef<HTMLDivElement>(null);
   const battleLogWrapperRef = useRef<HTMLDivElement>(null);
   const selectedTurnRef = useRef<number | null>(null);
+
   const sideCardsWheelHandlerRef = useRef<(event: WheelEvent) => void>(
     () => undefined,
   );
+
   const chartHeightRef = useRef(DEFAULT_CHART_HEIGHT_PX);
   const scrollViewportHeightRef = useRef(0);
   const scrollAnimationFrameRef = useRef<number | null>(null);
@@ -139,6 +151,7 @@ export function useBattleDetailView({
     sideContent,
     timeline,
   });
+
   const selectedTurnNumber = getBattlePanelSelectedTurn({
     availableTurns: timelineTurns.map((turn) => turn.turn),
     requestedTurn: queryState.turn,
@@ -179,6 +192,7 @@ export function useBattleDetailView({
 
   useEffect(() => {
     const requestedTurn = queryState.turn;
+
     if (requestedTurn === null) {
       return;
     }
@@ -225,6 +239,7 @@ export function useBattleDetailView({
       setMeasuredScrollViewportHeight(
         scrollViewportRef.current?.clientHeight ?? 0,
       );
+
       return;
     }
 
@@ -307,18 +322,22 @@ export function useBattleDetailView({
     const logViewport = battleLogWrapperRef.current.querySelector<HTMLElement>(
       '[data-slot="scroll-area-viewport"]',
     );
+
     const viewportElement = isDesktop
       ? (logViewport ?? scrollViewportRef.current)
       : scrollViewportRef.current;
+
     const viewportRect = viewportElement.getBoundingClientRect();
     const pageViewportRect = scrollViewportRef.current.getBoundingClientRect();
     const chartRect = chartWrapperRef.current?.getBoundingClientRect();
+
     const occlusionBottom =
       chartRect &&
       chartRect.bottom > viewportRect.top &&
       chartRect.top < viewportRect.bottom
         ? chartRect.bottom
         : null;
+
     const turnPositions: BattleLogTurnPosition[] = Array.from(
       battleLogWrapperRef.current.querySelectorAll<HTMLElement>(
         "[data-battle-turn]",
@@ -340,11 +359,14 @@ export function useBattleDetailView({
         },
       ];
     });
+
     const viewportTop = Math.max(viewportRect.top, pageViewportRect.top);
+
     const viewportBottom = Math.min(
       viewportRect.bottom,
       pageViewportRect.bottom,
     );
+
     const activeTurn = getBattleLogScrollActiveTurn({
       turnPositions,
       viewportTop,

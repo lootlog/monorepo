@@ -33,6 +33,7 @@ export const EventCreateDialog = ({
     onSubmit,
     setStep,
   } = useEventCreateDialog({ open, onOpenChange });
+
   return (
     <Dialog
       open={open}
@@ -189,8 +190,10 @@ export const EventCreateDialog = ({
             onClick={() => {
               if (step === 1) {
                 handleClose(false);
+
                 return;
               }
+
               setStep(1);
             }}
             className="flex-1"

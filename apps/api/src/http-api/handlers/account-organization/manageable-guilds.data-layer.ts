@@ -20,6 +20,7 @@ export const makeManageableGuilds = (
   const getManageableUserGuilds = Effect.fn("getManageableUserGuilds")(
     function* (identity: AuthenticatedIdentity) {
       const apiKey = yield* requestApiKeyAccess;
+
       const guilds = yield* getDiscordGuilds(identity).pipe(
         Effect.catch((error) =>
           error instanceof ApplicationError &&
@@ -28,6 +29,7 @@ export const makeManageableGuilds = (
             : Effect.fail(error),
         ),
       );
+
       return guilds
         .filter((guild) => apiKeyAllowsOrganization(apiKey, guild.id))
         .filter((guild) => isDiscordAdministrator(BigInt(guild.permissions)))
@@ -38,6 +40,7 @@ export const makeManageableGuilds = (
         }));
     },
   );
+
   return (identity: AuthenticatedIdentity) =>
     getManageableUserGuilds(identity).pipe(
       Effect.mapError(

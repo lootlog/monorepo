@@ -26,6 +26,7 @@ export const RouteErrorState = ({
   const { t } = useTranslation();
   const { emoji, color } = statusConfig[status];
   const title = t(`common.routeErrors.status.${status}.title`);
+
   const stateDescription =
     description ?? t(`common.routeErrors.status.${status}.description`);
 

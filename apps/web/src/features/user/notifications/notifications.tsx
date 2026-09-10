@@ -24,18 +24,22 @@ import {
 
 export const UserNotifications = () => {
   const { t } = useTranslation();
+
   const targetsQuery = useNotificationsUserControllerGetUserTargets({
     query: {
       queryKey: getNotificationsUserControllerGetUserTargetsQueryKey(),
     },
   });
+
   const watchedItemsQuery = useNotificationsUserControllerGetWatchedItems({
     query: {
       queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey(),
     },
   });
+
   const { data: guilds = [] } =
     useUsersControllerGetCurrentUserAccessibleGuilds();
+
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isWatchFormOpen, setIsWatchFormOpen] = useState(false);
 
@@ -43,6 +47,7 @@ export const UserNotifications = () => {
   const hasActiveDm = Boolean(dmTarget?.active && dmTarget.canSend);
   const watchedItems = watchedItemsQuery.data ?? [];
   const isLoading = targetsQuery.isLoading || watchedItemsQuery.isLoading;
+
   const guildOptions = guilds.map((guild) => ({
     value: guild.id,
     label: guild.name,

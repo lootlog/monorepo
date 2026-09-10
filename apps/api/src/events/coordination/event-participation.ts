@@ -37,6 +37,7 @@ export const makeEventParticipation = (
     kill: typeof eventHeroKillTable.$inferSelect;
     hero: typeof eventHeroNpcTable.$inferSelect;
   };
+
   const query = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>
     effect.pipe(
       Effect.mapError(
@@ -46,6 +47,7 @@ export const makeEventParticipation = (
         attributes: { adapter: "events.participation.drizzle", retryCount: 0 },
       }),
     );
+
   const participationPoints = (
     eventId: string,
     memberId: number,
@@ -74,6 +76,7 @@ export const makeEventParticipation = (
             : asc(eventKillPointTable.confirmationDeadlineAt),
         ),
     );
+
   const dedupe = (rows: ParticipationRow[]) => {
     const items = new Map<
       string,
@@ -84,6 +87,7 @@ export const makeEventParticipation = (
         heroNpc: typeof eventHeroNpcTable.$inferSelect;
       }
     >();
+
     for (const { point, kill, hero } of rows) {
       if (point.confirmationDeadlineAt && !items.has(point.killId)) {
         items.set(point.killId, {
@@ -94,8 +98,10 @@ export const makeEventParticipation = (
         });
       }
     }
+
     return [...items.values()];
   };
+
   const afterConfirmation = (guildId: string, eventId: string) =>
     Effect.all(
       [
@@ -152,11 +158,13 @@ export const makeEventParticipation = (
             )
             .limit(1),
         );
+
         if (!eventRows[0])
           return yield* Effect.fail(
             new ResourceNotFoundError("Event not found"),
           );
         const now = new Date(yield* Clock.currentTimeMillis);
+
         const [pending, expired] = yield* Effect.all(
           [
             participationPoints(eventId, member.id, now, false),
@@ -164,6 +172,7 @@ export const makeEventParticipation = (
           ],
           { concurrency: "unbounded" },
         );
+
         return { items: dedupe(pending), expiredItems: dedupe(expired) };
       }).pipe(
         Effect.withSpan(
@@ -240,18 +249,23 @@ export const makeEventParticipation = (
               ),
             ),
         );
+
         if (rows.length === 0) {
           return yield* Effect.fail(
             new ResourceNotFoundError("Kill point not found"),
           );
         }
+
         const unconfirmed = rows.filter(
           ({ point }) => point.confirmedAt === null,
         );
+
         if (unconfirmed.length === 0) {
           return { success: true as const, confirmedNow: false };
         }
+
         const now = new Date(yield* Clock.currentTimeMillis);
+
         if (
           unconfirmed.some(
             ({ point }) =>
@@ -263,12 +277,15 @@ export const makeEventParticipation = (
             new InvalidRequestError("Confirmation window has expired"),
           );
         }
+
         const confirmable = unconfirmed.filter(
           ({ point }) => point.confirmationDeadlineAt !== null,
         );
+
         if (confirmable.length === 0) {
           return { success: true as const, confirmedNow: false };
         }
+
         yield* query(
           "events.participation.confirm.transaction",
           database.transaction((transaction) =>
@@ -286,7 +303,9 @@ export const makeEventParticipation = (
                       ),
                     )
                     .returning({ id: eventKillPointTable.id });
+
                   if (!confirmed[0]) return;
+
                   const rankingRows = yield* transaction
                     .select()
                     .from(eventRankingTable)
@@ -298,7 +317,9 @@ export const makeEventParticipation = (
                       ),
                     )
                     .limit(1);
+
                   const ranking = rankingRows[0];
+
                   const trackingSeconds = Number.isFinite(
                     point.trackingDurationSeconds,
                   )
@@ -307,8 +328,10 @@ export const makeEventParticipation = (
                         Math.round(point.trackingDurationSeconds ?? 0),
                       )
                     : 0;
+
                   if (ranking) {
                     const totalKills = ranking.totalKills + 1;
+
                     const averageAfk =
                       Math.round(
                         ((ranking.avgAfkPercentage * ranking.totalKills +
@@ -316,6 +339,7 @@ export const makeEventParticipation = (
                           totalKills) *
                           100,
                       ) / 100;
+
                     yield* transaction
                       .update(eventRankingTable)
                       .set({
@@ -329,8 +353,10 @@ export const makeEventParticipation = (
                         updatedAt: now,
                       })
                       .where(eq(eventRankingTable.id, ranking.id));
+
                     return;
                   }
+
                   yield* transaction.insert(eventRankingTable).values({
                     id: randomUUID(),
                     eventId,
@@ -349,6 +375,7 @@ export const makeEventParticipation = (
           ),
         );
         yield* afterConfirmation(guild.id, eventId);
+
         return { success: true as const, confirmedNow: true };
       }).pipe(
         Effect.withSpan("EventsRankingController_confirmParticipationForKill"),

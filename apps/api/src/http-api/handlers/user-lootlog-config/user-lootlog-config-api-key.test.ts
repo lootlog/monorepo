@@ -14,16 +14,20 @@ import {
 
 test("key config updates preserve other organizations and never reuse the unrestricted account cache", async () => {
   const boundary = await createDatabaseBoundary();
+
   try {
     const getJson = mock<UserLootlogConfigCache["getJson"]>(() =>
       Effect.die("unscoped cache read"),
     );
+
     const setJson = mock<UserLootlogConfigCache["setJson"]>(() => Effect.void);
+
     const cache: UserLootlogConfigCache = {
       getJson,
       setJson,
       deleteByPattern: () => Effect.void,
     };
+
     await boundary.run(
       boundary.database
         .insert(guildTable)
@@ -42,14 +46,17 @@ test("key config updates preserve other organizations and never reuse the unrest
         updatedAt: new Date(0),
       }),
     );
+
     const result = await boundary.run(
       Effect.gen(function* () {
         const data = yield* UserLootlogConfigData;
         const before = yield* data.getAccount("discord-1", "account");
+
         const updated = yield* data.upsertCharacter("discord-1", "account", {
           characterId: "character",
           catchingGuildIds: [],
         });
+
         const batch = yield* data.getPlayersCatchingGuilds("discord-1", {
           players: [
             {
@@ -59,6 +66,7 @@ test("key config updates preserve other organizations and never reuse the unrest
             },
           ],
         });
+
         return { before, updated, batch };
       }).pipe(
         Effect.provide(UserLootlogConfigData.layerDatabase(cache)),
@@ -75,6 +83,7 @@ test("key config updates preserve other organizations and never reuse the unrest
         }),
       ),
     );
+
     expect(result.before).toMatchObject({
       character: { catchingGuildIds: ["1"] },
     });

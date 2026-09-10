@@ -22,6 +22,7 @@ export const useCommandSuggestions = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const commandSuggestions = getCommandSuggestions(t);
   const isOpen = isCommandSuggestionsInput(inputValue);
+
   const filtered = filterCommandSuggestions({
     inputValue,
     suggestions: commandSuggestions,
@@ -33,12 +34,14 @@ export const useCommandSuggestions = ({
     if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex((prev) => (prev <= 0 ? filtered.length - 1 : prev - 1));
+
       return true;
     }
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setSelectedIndex((prev) => (prev >= filtered.length - 1 ? 0 : prev + 1));
+
       return true;
     }
 
@@ -46,6 +49,7 @@ export const useCommandSuggestions = ({
       e.preventDefault();
       onSelect(getCommandSuggestionInsertValue(filtered[selectedIndex]));
       setSelectedIndex(-1);
+
       return true;
     }
 

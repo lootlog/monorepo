@@ -57,8 +57,10 @@ const EventActionDialogSimple = ({
 
   const handleConfirm = async () => {
     if (isPending) return;
+
     try {
       await onConfirm();
+
       if (closeOnConfirm) onOpenChange(false);
     } catch {
       // The action reports its error; keep the confirmation available for retry.
@@ -126,6 +128,7 @@ const EventActionDialogWithConfirmation = ({
 
   const handleConfirm = async () => {
     if (!isConfirmationValid || isPending) return;
+
     try {
       await onConfirm();
     } catch {

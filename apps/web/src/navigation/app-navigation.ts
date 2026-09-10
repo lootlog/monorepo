@@ -8,7 +8,9 @@ import { getBattleRouteLabel } from "@/lib/battle/battle-route-label";
 import { canReadGuildDocs } from "@/features/guild/docs/docs-permissions";
 
 const ROOT_ROUTE_ID = "__root__";
+
 const USER_ROUTE_PREFIX = "/_authenticated/@me";
+
 const ORGANIZATION_ROUTE_PREFIX = "/_authenticated/$guildId";
 
 export type AppNavigationMatch = {
@@ -63,6 +65,7 @@ type ResolveAppNavigationOptions = {
 const organizationRouteLoaderData = z.object({
   guild: z.object({ name: z.string().optional() }).optional(),
 });
+
 const eventRouteLoaderData = z.object({
   event: z
     .object({
@@ -86,6 +89,7 @@ const eventRouteLoaderData = z.object({
     )
     .optional(),
 });
+
 const documentRouteLoaderData = z.object({
   document: z.object({ title: z.string().optional() }).optional(),
 });
@@ -106,6 +110,7 @@ function t(key: string, options?: TOptions) {
 function getLastMatch(matches: readonly AppNavigationMatch[]) {
   for (let index = matches.length - 1; index >= 0; index -= 1) {
     const match = matches[index];
+
     if (match?.routeId !== ROOT_ROUTE_ID) return match;
   }
 }
@@ -119,6 +124,7 @@ function getMatchByRouteId(
 
 function formatDocumentTitle(title: string, context?: string) {
   const appName = t("common.documentTitle.appName");
+
   if (context && context !== title) {
     return t("common.documentTitle.contextTemplate", {
       appName,
@@ -126,22 +132,27 @@ function formatDocumentTitle(title: string, context?: string) {
       title,
     });
   }
+
   return t("common.documentTitle.template", { appName, title });
 }
 
 function getCurrentBreadcrumb(breadcrumbs: readonly Breadcrumb[]) {
   for (let index = breadcrumbs.length - 1; index >= 0; index -= 1) {
     const breadcrumb = breadcrumbs[index];
+
     if (breadcrumb && breadcrumb.path === null) return breadcrumb;
   }
+
   return breadcrumbs[breadcrumbs.length - 1];
 }
 
 function resolveStatusTitle(matches: readonly AppNavigationMatch[]) {
   const lastMatch = getLastMatch(matches);
+
   if (lastMatch?.status === "notFound" || lastMatch?.globalNotFound) {
     return formatDocumentTitle(t("common.routeErrors.status.404.title"));
   }
+
   if (matches.some((match) => match.status === "error")) {
     return formatDocumentTitle(t("common.routeErrors.status.500.title"));
   }
@@ -151,9 +162,11 @@ function resolvePublicTitle(lastMatch: AppNavigationMatch) {
   if (lastMatch.routeId === "/signin") {
     return formatDocumentTitle(t("common.documentTitle.signin"));
   }
+
   if (lastMatch.routeId === "/init") {
     return formatDocumentTitle(t("common.documentTitle.init"));
   }
+
   if (lastMatch.routeId === "/battles/$id") {
     return formatDocumentTitle(
       t("common.documentTitle.publicBattle", { id: lastMatch.params?.id }),
@@ -164,6 +177,7 @@ function resolvePublicTitle(lastMatch: AppNavigationMatch) {
 function isPathActive(pathname: string, href: string) {
   const normalizedPathname = normalizePath(pathname);
   const normalizedHref = normalizePath(href);
+
   return (
     normalizedPathname === normalizedHref ||
     normalizedPathname.startsWith(`${normalizedHref}/`)
@@ -178,6 +192,7 @@ function resolveSidebarItems(
   const matchingItems = registry.filter((item) =>
     isPathActive(pathname, item.path),
   );
+
   const activeItem = matchingItems.sort(
     (left, right) => right.path.length - left.path.length,
   )[0];
@@ -234,6 +249,7 @@ function buildOrganizationSidebarRegistry(
       Capability.LOOTLOG_EVENTS_READ,
       Capability.LOOTLOG_EVENTS_MANAGE,
     ]) ?? false;
+
   const canManage = (accessPolicy: AccessPolicy | undefined) =>
     accessPolicy?.allows(Capability.ADMIN) ?? false;
 
@@ -343,7 +359,9 @@ function navigationInfo(
   parentPath: string | null,
 ): NavigationInfo {
   const info: NavigationInfo = { breadcrumbs, showBack: parentPath !== null };
+
   if (parentPath !== null) info.backPath = parentPath;
+
   return info;
 }
 
@@ -352,6 +370,7 @@ function resolveUserNavigationInfo(
   battleLabel?: string,
 ): NavigationInfo {
   const path = normalizePath(pathValue);
+
   const battlePanel = {
     label: t("layout.navigation.battlePanel"),
     path: ROUTES.user.battlePanel.base,
@@ -363,9 +382,11 @@ function resolveUserNavigationInfo(
       null,
     );
   }
+
   if (path === ROUTES.user.statistics) {
     return navigationInfo([{ label: t("statistics.title"), path: null }], null);
   }
+
   if (path === ROUTES.user.reservations) {
     return navigationInfo(
       [
@@ -378,21 +399,25 @@ function resolveUserNavigationInfo(
       ROUTES.user.dashboard,
     );
   }
+
   if (path === ROUTES.user.battlePanel.base) {
     return navigationInfo([{ ...battlePanel, path: null }], null);
   }
+
   if (path === ROUTES.user.battlePanel.statistics) {
     return navigationInfo(
       [battlePanel, { label: t("layout.breadcrumbs.statistics"), path: null }],
       battlePanel.path,
     );
   }
+
   if (path === ROUTES.user.battlePanel.abyss) {
     return navigationInfo(
       [battlePanel, { label: t("layout.breadcrumbs.abyss"), path: null }],
       battlePanel.path,
     );
   }
+
   if (path === ROUTES.user.battlePanel.h2h) {
     return navigationInfo(
       [
@@ -406,6 +431,7 @@ function resolveUserNavigationInfo(
       ROUTES.user.battlePanel.statistics,
     );
   }
+
   if (path === ROUTES.user.battlePanel.matchmakingH2h) {
     return navigationInfo(
       [
@@ -419,6 +445,7 @@ function resolveUserNavigationInfo(
       ROUTES.user.battlePanel.abyss,
     );
   }
+
   if (
     path.startsWith(`${ROUTES.user.battlePanel.statistics}/player-vs-player/`)
   ) {
@@ -436,9 +463,11 @@ function resolveUserNavigationInfo(
   }
 
   const battleDetailsPath = `${ROUTES.user.battlePanel.base}/battles`;
+
   if (path.startsWith(`${battleDetailsPath}/`)) {
     const pathSegments = path.split("/");
     const battleId = pathSegments[pathSegments.length - 1];
+
     if (battleId) {
       return navigationInfo(
         [
@@ -464,9 +493,11 @@ function resolveUserNavigationInfo(
     [ROUTES.user.settings.appearance, "settings.appearance.title"],
     [ROUTES.user.settings.servers, "settings.servers.title"],
   ] as const;
+
   const settingsRoute = settingsRoutes.find(
     ([routePath]) => path === routePath,
   );
+
   if (settingsRoute) {
     return navigationInfo(
       [
@@ -479,12 +510,14 @@ function resolveUserNavigationInfo(
       ROUTES.user.settings.base,
     );
   }
+
   if (path === ROUTES.user.settings.base) {
     return navigationInfo(
       [{ label: t("layout.navigation.settings"), path: null }],
       null,
     );
   }
+
   if (path.startsWith(`${ROUTES.user.settings.base}/`)) {
     return navigationInfo(
       [
@@ -497,12 +530,14 @@ function resolveUserNavigationInfo(
       ROUTES.user.settings.base,
     );
   }
+
   if (path === ROUTES.user.notifications.base) {
     return navigationInfo(
       [{ label: t("layout.navigation.notifications"), path: null }],
       null,
     );
   }
+
   if (path.startsWith(`${ROUTES.user.notifications.base}/`)) {
     return navigationInfo(
       [
@@ -515,6 +550,7 @@ function resolveUserNavigationInfo(
       ROUTES.user.notifications.base,
     );
   }
+
   if (path === "/@me/kills") {
     return navigationInfo(
       [
@@ -544,6 +580,7 @@ function resolveDocumentContext(
   const title =
     getCurrentBreadcrumb(navigationInfoValue.breadcrumbs)?.label ??
     t("common.documentTitle.fallback");
+
   return formatDocumentTitle(title, context);
 }
 
@@ -565,6 +602,7 @@ function resolveUserAppNavigation(
     lastMatch.pathname,
     getBattleRouteLabel(lastMatch, t, { currentBattle }),
   );
+
   return {
     scope: "user",
     breadcrumbs: userNavigation.breadcrumbs,
@@ -582,6 +620,7 @@ function resolveUserAppNavigation(
 
 function createMissingOrganizationNavigation(): AppNavigation {
   const fallbackLabel = t("common.breadcrumbs.guild");
+
   return {
     scope: "organization",
     breadcrumbs: [{ label: fallbackLabel, path: null }],
@@ -595,10 +634,12 @@ function getOrganizationLoaderContext(matches: readonly AppNavigationMatch[]) {
   const organization = organizationRouteLoaderData.safeParse(
     getMatchByRouteId(matches, "/_authenticated/$guildId")?.loaderData,
   ).data;
+
   const event = eventRouteLoaderData.safeParse(
     getMatchByRouteId(matches, "/_authenticated/$guildId/events_/$eventId_")
       ?.loaderData,
   ).data;
+
   const document = documentRouteLoaderData.safeParse(
     getMatchByRouteId(matches, "/_authenticated/$guildId/docs/$docId")
       ?.loaderData,
@@ -615,6 +656,7 @@ function resolveCurrentDocumentTitle(options: {
 }) {
   if (options.loaderTitle) return options.loaderTitle;
   const documentsPath = `${ROUTES.guild.docs.base(options.organizationId)}/`;
+
   if (options.pathname.startsWith(documentsPath)) {
     return options.currentEntityLabel;
   }
@@ -622,6 +664,7 @@ function resolveCurrentDocumentTitle(options: {
 
 function createCurrentEntityData(currentEntityLabel?: string) {
   if (!currentEntityLabel) return {};
+
   return {
     memberKillsData: { member: { memberName: currentEntityLabel } },
     npcKillersData: { npc: { npcName: currentEntityLabel } },
@@ -634,19 +677,24 @@ function resolveOrganizationAppNavigation(
 ): AppNavigation {
   const { matches, currentEntityLabel, organizationName, accessPolicy } =
     options;
+
   const params = lastMatch.params ?? {};
   const organizationId = params.guildId;
+
   if (!organizationId) {
     return createMissingOrganizationNavigation();
   }
 
   const loaderContext = getOrganizationLoaderContext(matches);
+
   const resolvedOrganizationName =
     organizationName ?? loaderContext.organization?.guild?.name;
+
   const eventHeroNpcs = loaderContext.event?.event?.heroNpcs?.map((hero) => ({
     id: String(hero.id),
     npcName: hero.npcName,
   }));
+
   const organizationNavigation = getNavigationInfo({
     path: lastMatch.pathname,
     params,
@@ -666,6 +714,7 @@ function resolveOrganizationAppNavigation(
     ...createCurrentEntityData(currentEntityLabel),
     t,
   });
+
   const documentContext =
     loaderContext.event?.event?.name ?? resolvedOrganizationName;
 
@@ -697,23 +746,31 @@ export function resolveAppNavigation(
       statusTitle ?? t("common.documentTitle.appName"),
     );
   }
+
   const publicTitle = resolvePublicTitle(lastMatch);
+
   if (publicTitle && !statusTitle) {
     return createPublicNavigation(publicTitle);
   }
+
   if (lastMatch.routeId.startsWith(USER_ROUTE_PREFIX)) {
     const navigation = resolveUserAppNavigation(lastMatch, currentBattle);
+
     return statusTitle
       ? { ...navigation, documentTitle: statusTitle }
       : navigation;
   }
+
   if (lastMatch.routeId.startsWith(ORGANIZATION_ROUTE_PREFIX)) {
     const navigation = resolveOrganizationAppNavigation(options, lastMatch);
+
     return statusTitle
       ? { ...navigation, documentTitle: statusTitle }
       : navigation;
   }
+
   if (statusTitle) return createPublicNavigation(statusTitle);
+
   return createPublicNavigation(
     formatDocumentTitle(t("common.documentTitle.fallback")),
   );
@@ -734,6 +791,7 @@ function getNavigationInfo(args: GetNavigationInfoArgs): NavigationInfo {
   }
 
   const routes = buildRoutes(guildId);
+
   const guildBreadcrumb: Breadcrumb = {
     label: guildName ?? t("common.breadcrumbs.guild"),
     path: routes.base,
@@ -866,6 +924,7 @@ function resolveSimpleRoute(
     if (route.backPath !== routes.base) {
       // eslint-disable-next-line react-doctor/js-index-maps -- Only the matching route reaches this lookup, then the outer loop returns; the search runs once, not once per route.
       const parentRoute = simpleRoutes.find((r) => r.path === route.backPath);
+
       if (parentRoute) {
         breadcrumbs.push({
           label: parentRoute.label,
@@ -885,6 +944,7 @@ function resolveSimpleRoute(
 
   if (path.startsWith(routes.reservations) && path !== routes.reservations) {
     const { reservationId } = args.params;
+
     return {
       breadcrumbs: [
         guildBreadcrumb,
@@ -992,6 +1052,7 @@ function resolveEventRoutes(
   const eventDetail = `${routes.events}/${eventId}`;
   const eventRanking = `${eventDetail}/ranking`;
   const eventCoordination = `${eventDetail}/coordination`;
+
   const eventBreadcrumb: Breadcrumb = {
     label: eventName ?? t("common.breadcrumbs.event"),
     path: eventDetail,
@@ -1018,6 +1079,7 @@ function resolveEventRoutes(
     const selectedMemberRanking = eventRankings.find(
       (ranking) => String(ranking.memberId) === params.memberId,
     );
+
     return {
       breadcrumbs: [
         guildBreadcrumb,
@@ -1038,6 +1100,7 @@ function resolveEventRoutes(
 
   if (heroId && path === `${eventDetail}/heroes/${heroId}/kills`) {
     const heroPath = `${eventDetail}/heroes/${heroId}`;
+
     return {
       breadcrumbs: [
         guildBreadcrumb,
@@ -1053,6 +1116,7 @@ function resolveEventRoutes(
 
   if (killId && path.includes("/kills/")) {
     const heroPath = `${eventDetail}/heroes/${heroId}`;
+
     return {
       breadcrumbs: [
         guildBreadcrumb,
@@ -1144,6 +1208,7 @@ function resolveNotificationRoutes(
   }
 
   let leafLabel = t("common.breadcrumbs.notificationEdit");
+
   if (path === `${routes.notifications}/create`) {
     leafLabel = t("common.breadcrumbs.notificationCreate");
   } else if (path === `${routes.notifications}/history`) {
@@ -1186,6 +1251,7 @@ function resolveSettingsRoutes(
       label: t("common.breadcrumbs.settings"),
       path: null,
     });
+
     return { breadcrumbs, showBack: true, backPath: routes.base };
   }
 
@@ -1273,11 +1339,15 @@ function appendSettingsRouteBreadcrumbs(
 
 function getSettingsBackPath(path: string, routes: Routes): string {
   if (path === routes.settings) return routes.base;
+
   if (path.startsWith(`${routes.settingsRoles}/`)) return routes.settingsRoles;
+
   if (path.startsWith(`${routes.settingsMembers}/`)) {
     return routes.settingsMembers;
   }
+
   if (path.startsWith(`${routes.settingsNpcs}/`)) return routes.settingsNpcs;
+
   return routes.settings;
 }
 

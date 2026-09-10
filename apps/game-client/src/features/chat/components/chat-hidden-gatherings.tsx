@@ -32,6 +32,7 @@ export function ChatHiddenGatherings({
   const [hidden, setHidden] = useState(gatherings.length > 0);
   const label = t("gatherings.hidden", { count: gatherings.length });
   const visible = hidden ? gatherings : activeGatherings;
+
   return (
     <Popover
       open={open}

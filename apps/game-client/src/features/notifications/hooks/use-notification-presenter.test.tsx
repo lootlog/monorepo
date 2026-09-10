@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useNotificationPresenter } from "./use-notification-presenter";
 
 let test: ReturnType<typeof createNotificationTest>;
+
 const createNotification = (
   notificationId: string,
 ): NotificationWithServers => ({
@@ -50,6 +51,7 @@ describe("useNotificationPresenter", () => {
   it("plays a configured sound once for duplicate categories in a batch", () => {
     test.preferences.notifications.message.sound = true;
     test.setPreferences();
+
     const { result } = renderHook(() => useNotificationPresenter(), {
       wrapper: test.wrapper,
     });

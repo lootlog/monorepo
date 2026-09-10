@@ -12,6 +12,7 @@ export const getNpcTplFromEvent = (
     return undefined;
 
   const heroLevel = useGameStore.getState().game?.hero.level;
+
   const lvl =
     templateBase.elasticLevelFactor === 0 ? heroLevel : templateBase.level;
 

@@ -42,21 +42,26 @@ export const EventListCard = ({
 }: Props) => {
   const eventStatus = getEventStatusAtTimestamp(event, currentTimestamp);
   const isEventActive = eventStatus === "active";
+
   const eventStatusLabel =
     eventStatus === "upcoming"
       ? t("events.upcoming")
       : eventStatus === "ended"
         ? t("events.ended")
         : t("events.active");
+
   const eventStatusVariant =
     eventStatus === "active"
       ? "default"
       : eventStatus === "upcoming"
         ? "outline"
         : "secondary";
+
   const formattedWorld =
     event.world.charAt(0).toUpperCase() + event.world.slice(1);
+
   let pinActionLabel = t("events.pinEvent");
+
   if (!event.active) {
     pinActionLabel = t("events.pinUnavailable");
   } else if (isPinned(event.id)) {

@@ -12,8 +12,10 @@ export const upsertActorCharacter = Effect.fnUntraced(function* (
   if (!actor) return null;
   const characterId = Number.parseInt(actor.characterId, 10);
   const accountId = Number.parseInt(actor.accountId, 10);
+
   if (Number.isNaN(characterId) || Number.isNaN(accountId)) return null;
   const icon = actor.icon ?? "";
+
   const snapshots = yield* resolvePlayerSnapshots(database, [
     {
       world,
@@ -24,5 +26,6 @@ export const upsertActorCharacter = Effect.fnUntraced(function* (
       icon,
     },
   ]);
+
   return snapshots[0] ?? null;
 });

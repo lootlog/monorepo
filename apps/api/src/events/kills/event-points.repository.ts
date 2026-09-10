@@ -35,8 +35,11 @@ import {
 } from "#src/database/drizzle/schema";
 
 type Database = ApiDatabaseValue;
+
 type RankingInsert = typeof eventRankingTable.$inferInsert;
+
 type KillPointUpdate = Partial<typeof eventKillPointTable.$inferInsert>;
+
 type RankingUpdate = Partial<typeof eventRankingTable.$inferInsert>;
 
 export const makeEventPointsStore = (database: ApiDatabaseValue) => {
@@ -74,7 +77,9 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
           .where(eq(eventRankingTable.eventId, eventId))
           .orderBy(desc(eventRankingTable.totalPoints)),
       );
+
       const memberIds = rows.map(({ member }) => member.id);
+
       const roles =
         memberIds.length === 0
           ? []
@@ -90,6 +95,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
                 .where(inArray(memberToRoleTable.A, memberIds))
                 .orderBy(desc(roleTable.position)),
             );
+
       return rows.map(({ ranking, member }) => ({
         ...ranking,
         member: {
@@ -205,7 +211,9 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
           eq(eventHeroNpcTable.eventId, eventId),
         ),
       );
+
       const heroIds = [...new Set(rows.map(({ hero }) => hero.id))];
+
       const maps =
         heroIds.length === 0
           ? []
@@ -215,6 +223,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
                 .from(eventMapTable)
                 .where(inArray(eventMapTable.heroNpcId, heroIds)),
             );
+
       return rows.map(({ point, kill, hero }) => ({
         ...point,
         kill: {
@@ -263,6 +272,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
 
   function findWindowSummaries(killIds: string[]) {
     if (killIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select({
@@ -282,6 +292,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   ) {
     if (mapIds.length === 0 || memberIds.length === 0)
       return Effect.succeed([]);
+
     return run((database) =>
       database
         .select({
@@ -322,6 +333,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
               .update(eventKillPointTable)
               .set(item.data)
               .where(eq(eventKillPointTable.id, item.id));
+
           for (const item of rankingUpdates) {
             if (item.kind === "update")
               yield* transaction
@@ -362,6 +374,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     since?: Date,
   ) {
     if (mapIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select()
@@ -499,6 +512,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
                 isNull(eventKillPointTable.confirmedAt),
               ),
             );
+
           return yield* transaction
             .select()
             .from(eventKillPointTable)
@@ -564,6 +578,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     rankingIds: string[],
   ) {
     if (rankingIds.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select({ history: eventPointsEditHistoryTable })
@@ -586,6 +601,7 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
 
   function findEditors(guildId: string, ids: string[]) {
     if (ids.length === 0) return Effect.succeed([]);
+
     return run((database) =>
       database
         .select({

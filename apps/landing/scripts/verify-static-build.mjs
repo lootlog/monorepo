@@ -10,7 +10,9 @@ function readDocument(relativePath) {
 }
 
 const homeDocument = await readDocument("index.html");
+
 const privacyDocument = await readDocument("privacy-policy/index.html");
+
 const termsDocument = await readDocument("terms-of-service/index.html");
 
 for (const [documentName, document, canonicalUrl] of [
@@ -40,13 +42,18 @@ for (const [documentName, document, canonicalUrl] of [
 }
 
 assert.match(homeDocument, /<script type="application\/ld\+json">/u);
+
 assert.match(homeDocument, /"@type":"WebApplication"/u);
+
 assert.match(
   privacyDocument,
   /<title>Lootlog\.pl - Polityka Prywatności<\/title>/u,
 );
+
 assert.match(termsDocument, /<title>Lootlog\.pl - Regulamin Serwisu<\/title>/u);
+
 assert.match(privacyDocument, /Polityka prywatności/u);
+
 assert.match(termsDocument, /Regulamin serwisu/u);
 
 await Promise.all(

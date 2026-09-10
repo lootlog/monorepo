@@ -54,6 +54,7 @@ const createProjectionInput = (
 describe("projectTimerList", () => {
   it("returns render-ready ungrouped Timer state through one interface", () => {
     const member = createTimerMemberFixture({ id: 77, name: "Alderaan" });
+
     const actorCharacter: NonNullable<Timer["actorCharacter"]> = {
       characterId: 77,
       accountId: 1,
@@ -62,6 +63,7 @@ describe("projectTimerList", () => {
       icon: null,
       lvl: null,
     };
+
     const result = projectTimerList(
       createProjectionInput({
         filters: {
@@ -124,11 +126,13 @@ describe("projectTimerList", () => {
 
   it("groups shared Timers while keeping manual Timers separate by world", () => {
     const alice = createTimerMemberFixture({ id: 1, name: "Alice" });
+
     const bob = createTimerMemberFixture({
       id: 2,
       name: "Bob",
       guildId: "guild-2",
     });
+
     const result = projectTimerList(
       createProjectionInput({
         context: { guildId: "guild-1", isGrouping: true },
@@ -208,6 +212,7 @@ describe("projectTimerList", () => {
         },
       }),
     ];
+
     const result = projectTimerList(
       createProjectionInput({
         filters: {
@@ -240,6 +245,7 @@ describe("projectTimerList", () => {
 
   it("keeps configured expired Timers and sorts pinned and expired Timers compatibly", () => {
     const epoch = new Date("2099-04-22T10:00:00.000Z").getTime();
+
     const result = projectTimerList(
       createProjectionInput({
         epoch,

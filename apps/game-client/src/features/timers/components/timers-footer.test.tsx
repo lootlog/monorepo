@@ -9,6 +9,7 @@ it("shows color totals, disconnected status and the add action with history only
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
   const onAddTimer = vi.fn<() => void>();
+
   const footer = (isGrouping: boolean) => (
     <QueryClientProvider client={fixture.queryClient}>
       <TimersFooter
@@ -20,7 +21,9 @@ it("shows color totals, disconnected status and the add action with history only
       />
     </QueryClientProvider>
   );
+
   const view = render(footer(false));
+
   try {
     expect(
       screen.getByRole("button", { name: "Historia timerów" }),

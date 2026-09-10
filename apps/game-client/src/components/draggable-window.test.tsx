@@ -11,8 +11,11 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 
 const resizeObserverCallbacks: Array<() => void> = [];
+
 const resizeObserverObservedElements: Element[] = [];
+
 const mutationObserverCallbacks: Array<() => void> = [];
+
 const initialWindowInnerWidth = window.innerWidth;
 
 class ResizeObserverMock {
@@ -45,6 +48,7 @@ class MutationObserverMock implements MutationObserver {
 }
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+
 vi.stubGlobal("MutationObserver", MutationObserverMock);
 
 const triggerResizeObservers = async () => {
@@ -115,6 +119,7 @@ const getWindowElements = (
   const windowBody = windowElement.firstElementChild;
   const contentElement = windowBody?.querySelector(".ll\\:flex-1");
   const titleBarElement = windowBody?.firstElementChild;
+
   const resizeHandle = container.querySelector(
     "[data-ll-window-resize-handle]",
   );
@@ -148,9 +153,11 @@ const getWindowElements = (
 const getNestedScrollAreaElements = (container: HTMLElement) => {
   const { windowElement, windowBody, titleBarElement, contentElement } =
     getWindowElements(container, { requireResizeHandle: false });
+
   const viewportElement = container.querySelector(
     "[data-ll-scroll-area-viewport]",
   );
+
   const viewportContent = viewportElement?.firstElementChild;
   const measuredContentElement = viewportContent?.firstElementChild;
 
@@ -226,6 +233,7 @@ describe("DraggableWindow", () => {
         <div>Treść</div>
       </DraggableWindow>,
     );
+
     const { windowBody, windowElement } = getWindowElements(container);
 
     expect(windowBody).toHaveClass("ll-window-preparing");
@@ -276,12 +284,14 @@ describe("DraggableWindow", () => {
         <div>TreĹ›Ä‡</div>
       </DraggableWindow>,
     );
+
     const { windowBody } = getWindowElements(container);
     await flushAnimationFrame();
 
     const animationCancelEvent = new Event("animationcancel", {
       bubbles: true,
     });
+
     Object.defineProperty(animationCancelEvent, "animationName", {
       value: "ll-window-enter",
     });
@@ -304,10 +314,12 @@ describe("DraggableWindow", () => {
         <div className="ll:w-max">Treść</div>
       </DraggableWindow>,
     );
+
     const { windowElement, windowBody, contentElement } = getWindowElements(
       container,
       { requireResizeHandle: false },
     );
+
     const contentRoot = contentElement.firstElementChild;
 
     if (!(contentRoot instanceof HTMLDivElement)) {
@@ -382,6 +394,7 @@ describe("DraggableWindow", () => {
 
     const { windowElement, windowBody, titleBarElement, contentElement } =
       getWindowElements(container, { requireResizeHandle: false });
+
     const contentRoot = contentElement.firstElementChild;
 
     if (!(contentRoot instanceof HTMLDivElement)) {
@@ -427,6 +440,7 @@ describe("DraggableWindow", () => {
         <div>Treść</div>
       </DraggableWindow>,
     );
+
     const { windowElement, contentElement } = getWindowElements(container);
 
     expect(windowElement.style.height).toBe("auto");
@@ -437,6 +451,7 @@ describe("DraggableWindow", () => {
 
   it("resizes only width when auto height mode is not armed", async () => {
     const handleMaxContentHeightChange = vi.fn<(height: number) => void>();
+
     const { container } = render(
       <DraggableWindow
         isOpen
@@ -812,6 +827,7 @@ describe("DraggableWindow", () => {
       configurable: true,
       value: () => {
         const height = contentElement.clientHeight + 0.6;
+
         return {
           width: 0,
           height,
@@ -996,6 +1012,7 @@ describe("DraggableWindow", () => {
       getWindowElements(container, {
         requireResizeHandle: false,
       });
+
     const contentRoot = contentElement.firstElementChild;
 
     if (!(contentRoot instanceof HTMLDivElement)) {

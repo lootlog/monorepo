@@ -6,6 +6,7 @@ import { useHorizontalWheelScroll } from "./use-horizontal-wheel-scroll";
 function Scroller() {
   const ref = useRef<HTMLDivElement>(null);
   useHorizontalWheelScroll(ref);
+
   return <div ref={ref} data-testid="scroller" />;
 }
 
@@ -18,11 +19,14 @@ it("moves vertical wheel input horizontally and releases page scrolling at eithe
     clientWidth: { value: 200 },
     scrollWidth: { value: 500 },
   });
+
   const wheel = (deltaY: number) => {
     const event = new WheelEvent("wheel", { deltaY, cancelable: true });
     viewport.dispatchEvent(event);
+
     return event.defaultPrevented;
   };
+
   expect(wheel(-40)).toBe(false);
   expect(wheel(120)).toBe(true);
   expect(viewport.scrollLeft).toBe(120);
@@ -38,6 +42,7 @@ it("preserves zoom and native horizontal gestures and normalizes line and page d
     clientWidth: { value: 200 },
     scrollWidth: { value: 1000 },
   });
+
   for (const input of [
     { deltaY: 50, ctrlKey: true },
     { deltaX: 80, deltaY: 20 },
@@ -51,6 +56,7 @@ it("preserves zoom and native horizontal gestures and normalizes line and page d
     expect(event.defaultPrevented).toBe(false);
     expect(viewport.scrollLeft).toBe(0);
   }
+
   viewport.dispatchEvent(new WheelEvent("wheel", { deltaY: 2, deltaMode: 1 }));
   expect(viewport.scrollLeft).toBe(32);
   viewport.dispatchEvent(new WheelEvent("wheel", { deltaY: 1, deltaMode: 2 }));

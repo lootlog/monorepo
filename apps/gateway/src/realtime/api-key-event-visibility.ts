@@ -5,6 +5,7 @@ import type { SessionData } from "./session.js";
 const SharedRoom = Schema.Struct({
   room: Schema.Struct({ guildIds: Schema.Array(Schema.String) }),
 });
+
 const readSharedRoom = Schema.decodeUnknownOption(SharedRoom);
 
 /** Check payload scope even for direct user delivery, which bypasses subscription audiences. */
@@ -13,10 +14,13 @@ export function canReadApiKeyEvent(
   event: ServerEvent,
 ): boolean {
   const access = session.apiKeyAccess;
+
   if (!access) return true;
+
   const allowed = (id: string) =>
     access.organizationIds.includes(id) &&
     session.guilds.some(({ guild }) => guild.id === id);
+
   switch (event.type) {
     case "session.joined":
     case "permissions.updated":
@@ -32,12 +36,14 @@ export function canReadApiKeyEvent(
       );
     case "party-ready-room.updated": {
       const room = readSharedRoom(event.data.payload);
+
       return (
         allowed(event.data.organizationId) &&
         Option.isSome(room) &&
         room.value.room.guildIds.every(allowed)
       );
     }
+
     case "feed.entry":
       return allowed(event.data.guild.id);
     case "map-ping.received":
@@ -46,7 +52,9 @@ export function canReadApiKeyEvent(
     default:
       if ("organizationId" in event.data)
         return allowed(event.data.organizationId);
+
       if ("guildId" in event.data) return allowed(event.data.guildId);
+
       return false;
   }
 }

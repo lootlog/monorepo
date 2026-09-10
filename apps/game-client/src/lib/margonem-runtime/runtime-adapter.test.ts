@@ -83,6 +83,7 @@ describe("NI runtime adapter", () => {
         prof: "m",
       },
     };
+
     const engine = {
       hero: { d: hero },
       interface: { alreadyInitialised: true },
@@ -115,6 +116,7 @@ describe("NI runtime adapter", () => {
       },
       worldConfig: { getWorldName: () => "world" },
     };
+
     vi.stubGlobal("Engine", engine);
     const adapter = new NiRuntimeAdapter();
 
@@ -195,6 +197,7 @@ describe("SI runtime adapter", () => {
       nick: "Other",
       prof: "m",
     };
+
     vi.stubGlobal("Engine", undefined);
     vi.stubGlobal("hero", hero);
     vi.stubGlobal("map", map);

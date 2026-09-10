@@ -28,11 +28,14 @@ export function ReadyRoomParticipantItem({
   const { t } = useTranslation("partyFinder");
   const [isRemoving, setIsRemoving] = useState(false);
   const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
+
   const isFriend = useFriendsStore((state) =>
     state.isFriend(participant.character.characterId),
   );
+
   const { inviteParticipants, canInviteParticipants } =
     useReadyRoomInvitations();
+
   const sameClan =
     participant.character.clan?.id !== undefined &&
     room.organizerCharacter.clan?.id !== undefined &&
@@ -40,6 +43,7 @@ export function ReadyRoomParticipantItem({
 
   const removeParticipant = () => {
     setIsRemoving(true);
+
     return partyReadyRoomControllerRemove(
       { notificationId: room.notificationId },
       {

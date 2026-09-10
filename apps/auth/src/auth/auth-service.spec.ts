@@ -8,15 +8,18 @@ import {
   normalizeScopes,
   type AuthProvider,
 } from "./auth-service.js";
+
 const findDiscordAccountId = () => Effect.succeed("account-row-1");
 
 const createFakeAuth = () => {
   const getSession = mock<AuthProvider["api"]["getSession"]>(() =>
     Promise.resolve(null),
   );
+
   const getJwks = mock<AuthProvider["api"]["getJwks"]>(() =>
     Promise.resolve({ keys: [] } satisfies JSONWebKeySet),
   );
+
   const getAccessToken = mock<AuthProvider["api"]["getAccessToken"]>(() =>
     Promise.resolve(null),
   );
@@ -43,6 +46,7 @@ describe("AuthService", () => {
 
   it("rejects spoofed forward-auth identity headers", async () => {
     const { auth } = createFakeAuth();
+
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
@@ -64,6 +68,7 @@ describe("AuthService", () => {
     getSession.mockResolvedValue({
       user: { id: "user", discordId: "discord" },
     });
+
     const service = createAuthService({
       auth,
       appUrl: "https://auth.test",
@@ -73,6 +78,7 @@ describe("AuthService", () => {
           new HttpResponseError({ status: 401, body: { message: "Rejected" } }),
         ),
     });
+
     await expect(
       Effect.runPromise(
         service.verifyRequestIdentity({
@@ -88,6 +94,7 @@ describe("AuthService", () => {
 
   it("returns key grants only from the key verifier", async () => {
     const { auth, getSession } = createFakeAuth();
+
     const identity = {
       userId: "user",
       discordId: "discord",
@@ -99,12 +106,14 @@ describe("AuthService", () => {
         expiresAt: null,
       },
     };
+
     const service = createAuthService({
       auth,
       appUrl: "https://auth.test",
       findDiscordAccountId,
       verifyApiKey: () => Effect.succeed(identity),
     });
+
     expect(
       await Effect.runPromise(
         service.verifyRequestIdentity({
@@ -120,6 +129,7 @@ describe("AuthService", () => {
     getSession.mockResolvedValue({
       user: { id: "user-1", discordId: "discord-1" },
     });
+
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
@@ -137,6 +147,7 @@ describe("AuthService", () => {
     const issuer = "https://auth.example.test";
     const { privateKey, publicKey } = await generateKeyPair("EdDSA");
     const publicJwk = await exportJWK(publicKey);
+
     const token = await new SignJWT({ discordId: "discord-2" })
       .setProtectedHeader({ alg: "EdDSA", kid: "test-key" })
       .setSubject("user-2")
@@ -144,10 +155,12 @@ describe("AuthService", () => {
       .setAudience(issuer)
       .setExpirationTime("5m")
       .sign(privateKey);
+
     const { auth, getJwks } = createFakeAuth();
     getJwks.mockResolvedValue({
       keys: [{ ...publicJwk, alg: "EdDSA", kid: "test-key" }],
     });
+
     const service = createAuthService({
       auth,
       appUrl: issuer,
@@ -171,6 +184,7 @@ describe("AuthService", () => {
       accessTokenExpiresAt: new Date(Date.now() + 60_000),
       scopes: "guilds identify",
     });
+
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
@@ -201,6 +215,7 @@ describe("AuthService", () => {
 
   it("keeps TOKEN_EXPIRED and TOKEN_NOT_FOUND response contracts", async () => {
     const { auth, getAccessToken } = createFakeAuth();
+
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",
@@ -256,6 +271,7 @@ describe("AuthService", () => {
         message: "Failed to get a valid access token",
       }),
     );
+
     const service = createAuthService({
       auth,
       appUrl: "http://localhost:3000",

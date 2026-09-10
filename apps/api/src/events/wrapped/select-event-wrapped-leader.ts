@@ -44,11 +44,13 @@ export const selectEventWrappedLeader = <T extends EventWrappedLeaderCandidate>(
 ): EventWrappedLeaderResultDto => {
   const candidates = entries.flatMap((entry) => {
     const primaryValue = getPrimaryValue(entry);
+
     if (!Number.isFinite(primaryValue)) {
       return [];
     }
 
     const rawSecondaryValue = getSecondaryValue?.(entry);
+
     const secondaryValue =
       rawSecondaryValue === undefined || !Number.isFinite(rawSecondaryValue)
         ? null
@@ -68,6 +70,7 @@ export const selectEventWrappedLeader = <T extends EventWrappedLeaderCandidate>(
   const maximumValue = Math.max(
     ...candidates.map((candidate) => candidate.primaryValue),
   );
+
   const tiedWinners = candidates.filter(
     (candidate) => candidate.primaryValue === maximumValue,
   );

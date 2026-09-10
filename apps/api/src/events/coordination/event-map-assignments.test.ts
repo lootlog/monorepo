@@ -16,8 +16,10 @@ describe("event map assignments Effect module", () => {
     const getEventRespawnTimer = mock(() =>
       Effect.die("unexpected timer read"),
     );
+
     const publish = mock(() => Effect.die("unexpected publish"));
     const boundary = await createDatabaseBoundary();
+
     try {
       const assignments = makeEventMapAssignments(
         boundary.database,
@@ -52,6 +54,7 @@ it.each([300, null])(
   async (npcLvl) => {
     const boundary = await createDatabaseBoundary();
     const publish = mock(() => Effect.void);
+
     try {
       await boundary.run(
         boundary.database.insert(guildTable).values({
@@ -87,6 +90,7 @@ it.each([300, null])(
           updatedAt: new Date(),
         }),
       );
+
       const assignments = makeEventMapAssignments(
         boundary.database,
         { deleteByPattern: () => Promise.resolve(0) },
@@ -94,9 +98,11 @@ it.each([300, null])(
         { publish },
         { warn: () => {} },
       );
+
       const result = await boundary.run(
         assignments.unassignMember({ id: "guild-1" }, "event-1", "map-1"),
       );
+
       expect(result?.assignedMembers).toEqual([]);
       expect(publish).toHaveBeenCalledWith(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
         guildId: "guild-1",

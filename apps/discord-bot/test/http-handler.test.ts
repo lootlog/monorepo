@@ -72,9 +72,11 @@ const services = (): BotServicesValue => ({
 describe("Discord bot HTTP contract", () => {
   test("serves health", async () => {
     const boundary = makeBotHttpBoundary(services());
+
     const response = await boundary.handler(
       new Request("http://localhost/healthz"),
     );
+
     await boundary.dispose();
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("OK");
@@ -82,9 +84,11 @@ describe("Discord bot HTTP contract", () => {
 
   test("preserves internal guild channel route", async () => {
     const boundary = makeBotHttpBoundary(services());
+
     const response = await boundary.handler(
       new Request("http://localhost/internal/guilds/guild-1/channels"),
     );
+
     await boundary.dispose();
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({

@@ -14,7 +14,9 @@ const battleLabel = z.object({
   type: z.string(),
   warriors: z.array(z.object({ name: z.string(), team: z.number() })),
 });
+
 type BattleLabel = z.output<typeof battleLabel>;
+
 const battleRouteLoaderData = z.object({ battle: battleLabel.optional() });
 
 type BattleRouteLabelOptions = {
@@ -29,9 +31,11 @@ function getOneVsOneBattleLabel(battle: BattleLabel | undefined, t: Translate) {
   const teamOneWarriors = battle.warriors.filter(
     (warrior) => warrior.team === 1,
   );
+
   const teamTwoWarriors = battle.warriors.filter(
     (warrior) => warrior.team === 2,
   );
+
   const teamOneWarrior = teamOneWarriors[0];
   const teamTwoWarrior = teamTwoWarriors[0];
 

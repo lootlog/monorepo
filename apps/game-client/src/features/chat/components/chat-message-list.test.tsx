@@ -11,6 +11,7 @@ const rows = (ids: string[]): ChatRenderableMessage[] =>
     key: id,
     message: createChatMessage({ id, message: `Public fixture ${id}` }),
   }));
+
 const props = {
   ariaLabel: "Chat messages",
   emptyStateTitle: "No messages",
@@ -34,6 +35,7 @@ describe("chat transcript rendering", () => {
       <ChatMessageList {...props} renderables={rows(["one", "two"])} />,
       { wrapper: createChatTestWrapper().wrapper },
     );
+
     view.rerender(
       <ChatMessageList {...props} renderables={rows(["two", "three"])} />,
     );
@@ -68,9 +70,11 @@ describe("chat transcript rendering", () => {
       />,
       { wrapper: createChatTestWrapper().wrapper },
     );
+
     const viewport = view.container.querySelector<HTMLElement>(
       "[data-chat-viewport]",
     )!;
+
     const scrollTo = vi.fn();
     Object.defineProperty(viewport, "scrollTop", {
       value: 120,

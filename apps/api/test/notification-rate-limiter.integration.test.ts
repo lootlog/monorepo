@@ -40,6 +40,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
           catch: (error) => error,
         }),
     };
+
     return (userId: string) =>
       Effect.runPromise(consumeNotificationRateLimit(adapter, userId));
   };
@@ -136,9 +137,11 @@ describe("Notification rate limiter Dragonfly integration", () => {
     const firstLocks = new RedlockService(firstRedis).createInstance({
       retryCount: 0,
     });
+
     const secondLocks = new RedlockService(secondRedis).createInstance({
       retryCount: 0,
     });
+
     const held = await firstLocks.acquire(["integration:lock"], 5_000);
 
     await expect(
@@ -154,6 +157,7 @@ describe("Notification rate limiter Dragonfly integration", () => {
     const locks = new RedlockService(firstRedis).createInstance({
       retryCount: 0,
     });
+
     const held = await locks.acquire(["integration:lock"], 5_000);
     await firstRedis.set("integration:lock", "replacement", 5);
 

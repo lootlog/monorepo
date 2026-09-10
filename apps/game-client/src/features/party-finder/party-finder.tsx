@@ -21,16 +21,20 @@ export const PartyFinder = () => {
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
   const readyRoom = usePartyFinderStore(selectOwnedReadyRoom);
   const partyMembers = usePartyStore((s) => s.members);
+
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
+
   const { inviteParticipants, canInviteParticipants } =
     useReadyRoomInvitations();
+
   const isOrganizerCharacter =
     readyRoom !== null &&
     currentCharacterIdentity?.accountId ===
       readyRoom.organizerCharacter.accountId &&
     currentCharacterIdentity.characterId ===
       readyRoom.organizerCharacter.characterId;
+
   const hasInvitableParticipants =
     isOrganizerCharacter &&
     Object.values(readyRoom.participants).some(

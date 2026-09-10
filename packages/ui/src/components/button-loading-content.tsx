@@ -15,10 +15,12 @@ export function ButtonLoadingContent({
   // Group only the leading content with the spinner so the button's other flex gaps stay intact.
   const content = Children.toArray(children);
   let leadingContentEnd = 1;
+
   if (isLeadingText(content[0])) {
     const firstElementIndex = content.findIndex(
       (child) => !isLeadingText(child),
     );
+
     leadingContentEnd =
       firstElementIndex < 0 ? content.length : firstElementIndex;
   }

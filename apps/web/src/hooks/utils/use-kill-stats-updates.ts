@@ -22,18 +22,22 @@ export function useKillStatsUpdates(socket: Pick<GatewayClient, "on" | "off">) {
   // eslint-disable-next-line react-doctor/effect-needs-cleanup -- The analyzer does not track the timer assigned inside scheduleRefresh.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
+
     const scheduleRefresh = () => {
       if (timer !== undefined) return;
       // Organization events are only refresh hints, never personal increments.
       timer = setTimeout(() => {
         timer = undefined;
+
         for (const queryKey of queryKeys) {
           void queryClient.invalidateQueries({ queryKey });
         }
       }, 1_000);
     };
+
     socket.on(GatewayEvent.KILLS_CHANGED, scheduleRefresh);
     socket.on(GatewayEvent.JOIN, scheduleRefresh);
+
     return () => {
       clearTimeout(timer);
       socket.off(GatewayEvent.KILLS_CHANGED, scheduleRefresh);

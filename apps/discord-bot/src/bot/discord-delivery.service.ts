@@ -37,9 +37,11 @@ const notificationContent = (command: DiscordNotificationSendCommand) => {
   if (command.content !== undefined && command.content.trim().length > 0) {
     return truncateToDiscordLimit(command.content);
   }
+
   if (command.title.trim().length === 0) {
     return truncateToDiscordLimit(command.message);
   }
+
   return truncateToDiscordLimit(`**${command.title}**\n${command.message}`);
 };
 
@@ -55,6 +57,7 @@ const isRetryableDiscordError = (cause: unknown) => {
   if (cause instanceof DiscordAPIError) {
     return !NON_RETRYABLE_DISCORD_ERROR_CODES.has(Number(cause.code));
   }
+
   return (
     cause instanceof Error &&
     (cause.name === "AbortError" ||
@@ -67,6 +70,7 @@ const isRetryableDiscordError = (cause: unknown) => {
 
 const discordErrorCode = (cause: unknown) => {
   if (cause instanceof DiscordAPIError) return String(cause.code);
+
   return cause instanceof Error ? cause.name : "UNKNOWN_DISCORD_ERROR";
 };
 
@@ -82,11 +86,13 @@ const deliveryFailure = (
   });
 
 type DeliveryMessage = { readonly id: string };
+
 type MessageSender = {
   readonly send: (
     options: ReturnType<typeof messageOptions>,
   ) => Promise<DeliveryMessage>;
 };
+
 export interface DiscordDeliveryClient {
   readonly users: {
     readonly fetch: (
@@ -139,6 +145,7 @@ export const makeDiscordDelivery = (
       try: async () => {
         const user = await client.users.fetch(command.target.externalId);
         const directMessageChannel = await user.createDM();
+
         return directMessageChannel.send(messageOptions(command));
       },
       catch: (error) => deliveryFailure("fetch-user", error),
@@ -159,6 +166,7 @@ export const makeDiscordDelivery = (
     Effect.tryPromise({
       try: async () => {
         const channel = await client.channels.fetch(command.target.externalId);
+
         if (
           !channel ||
           channel.type === ChannelType.DM ||
@@ -168,6 +176,7 @@ export const makeDiscordDelivery = (
         ) {
           throw new Error("Discord channel is not text-based");
         }
+
         return channel.send(messageOptions(command));
       },
       catch: (error) => deliveryFailure("fetch-channel", error),
@@ -191,6 +200,7 @@ export const makeDiscordDelivery = (
           ? sendDirectMessage(command)
           : sendGuildChannelMessage(command)
       ).pipe(Effect.result);
+
       if (Result.isSuccess(delivery)) {
         yield* publishDeliveryResult({
           notificationJobId: command.notificationJobId,
@@ -199,6 +209,7 @@ export const makeDiscordDelivery = (
           providerMessageId: delivery.success.id,
           deliveredAt: new Date(yield* Clock.currentTimeMillis).toISOString(),
         });
+
         return;
       }
 

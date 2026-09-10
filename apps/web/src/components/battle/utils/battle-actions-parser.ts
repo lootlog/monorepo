@@ -80,5 +80,6 @@ export const parseActions = (
       allActionTypes,
     );
   });
+
   return parsedActions;
 };

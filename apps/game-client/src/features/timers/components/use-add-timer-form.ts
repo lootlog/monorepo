@@ -76,6 +76,7 @@ const validateTimerLevel = (
   }
 
   const level = Number(data.lvl);
+
   if (
     Number.isInteger(level) &&
     level >= MIN_NPC_LEVEL &&
@@ -121,10 +122,12 @@ const validateTimerDurations = (
       t("addForm.validation.maxDurationRequired"),
       "maxDuration",
     );
+
     return;
   }
 
   const maxSeconds = parseDurationToSeconds(maxDuration);
+
   if (maxSeconds <= 0) {
     addValidationIssue(
       context,
@@ -132,6 +135,7 @@ const validateTimerDurations = (
       "maxDuration",
     );
   }
+
   if (
     hasText(minDuration) &&
     maxSeconds < parseDurationToSeconds(minDuration)
@@ -158,6 +162,7 @@ const validateTimerDates = (
       "startDate",
     );
   }
+
   if (!hasText(endDate)) {
     addValidationIssue(
       context,
@@ -165,6 +170,7 @@ const validateTimerDates = (
       "endDate",
     );
   }
+
   if (
     hasText(startDate) &&
     hasText(endDate) &&
@@ -182,6 +188,7 @@ const formatSecondsToHHMMSS = (seconds: number): string => {
   const h = Math.floor(seconds / SECONDS_IN_HOUR);
   const m = Math.floor((seconds % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE);
   const s = seconds % SECONDS_IN_MINUTE;
+
   return `${h}h ${m}m ${s}s`;
 };
 
@@ -226,6 +233,7 @@ const createFormSchema = (t: TimerFormTranslation) =>
           t("addForm.validation.provideRespawnOrDates"),
           "minDuration",
         );
+
         return;
       }
 
@@ -259,12 +267,15 @@ const getPreferredGuildId = (
   if (initialGuildId && availableGuildIds.has(initialGuildId)) {
     return initialGuildId;
   }
+
   if (savedGuildId && availableGuildIds.has(savedGuildId)) {
     return savedGuildId;
   }
+
   if (currentGuildId && availableGuildIds.has(currentGuildId)) {
     return currentGuildId;
   }
+
   return firstVisibleGuildId ?? "";
 };
 
@@ -295,6 +306,7 @@ const getSelectedGuildId = (
   ) {
     return selection.guildId;
   }
+
   return preferredGuildId;
 };
 
@@ -330,11 +342,14 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
   const { t } = useTranslation("timers");
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
+
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
   );
+
   const { selectedGuildIdsForTimersByCharId, guildIdByCharId } =
     useSettingsStore();
+
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { visibleGuilds } = useVisibleLootlogGuilds();
 
@@ -342,8 +357,10 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
   const [selectedGuildSelection, setSelectedGuildSelection] =
     useState<GuildSelection | null>(null);
+
   const selectedNpcRef = useRef<SearchTimersNpcResponseDtoOutput | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -353,8 +370,10 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     guildIdByCharId,
     selectedGuildIdsForTimersByCharId,
   );
+
   const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
   const availableGuildIds = new Set(visibleGuilds.map((guild) => guild.id));
+
   const preferredGuildId = getPreferredGuildId(
     initialGuildId,
     savedGuildId,
@@ -362,6 +381,7 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     availableGuildIds,
     visibleGuilds[0]?.id,
   );
+
   const selectedGuildId = getSelectedGuildId(
     selectedGuildSelection,
     guildSelectionContextKey,
@@ -420,8 +440,10 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
 
   const handleNpcSelect = (npc: SearchTimersNpcResponseDtoOutput) => {
     const baseSeconds = npc.latestRespBaseSeconds ?? 0;
+
     const respawnRandomness =
       npc.latestRespawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
+
     const variance = Math.round((baseSeconds * respawnRandomness) / 100);
     const minSeconds = Math.max(baseSeconds - variance, 0);
     const maxSeconds = baseSeconds + variance;
@@ -439,6 +461,7 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
 
   const handleCustomDatesToggle = (enabled: boolean) => {
     setCustomDatesEnabled(enabled);
+
     if (enabled) {
       setValue("minDuration", "");
       setValue("maxDuration", "");
@@ -450,6 +473,7 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.nativeEvent.isComposing) return;
+
     if (!npcResults || npcResults.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -524,10 +548,12 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     control,
     name: ["startDate", "endDate", "type"],
   });
+
   const selectedNpcType = getSelectedNpcType(watchedNpcType);
   const nameField = register("name");
 
   const hasSearchResults = Boolean(npcResults?.length);
+
   const showNoResults = shouldShowNoNpcResults({
     debouncedSearch,
     hasSearchResults,
@@ -535,6 +561,7 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     isLoading: npcSearchLoading,
     showSuggestions,
   });
+
   return {
     t,
     isPending,

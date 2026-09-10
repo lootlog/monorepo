@@ -19,7 +19,9 @@ const NPC_TYPES_OPTIONS = [
   NpcType.HERO,
   NpcType.TITAN,
 ];
+
 const MAX_LVL = 500;
+
 const MIN_LVL = 0;
 
 const clampValue = (value: number, min: number, max: number): number => {
@@ -32,6 +34,7 @@ type TimersFiltersProps = {
 
 export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   const { t } = useTranslation("timers");
+
   const {
     timerFiltersSearchText,
     setTimerFiltersSearchText,
@@ -58,6 +61,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const numericValue = Number(event.target.value);
+
     if (Number.isNaN(numericValue)) return;
     setTimersFilters(filtersKey, {
       ...filters,
@@ -159,6 +163,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);
             const overridden = overriddenDefaultColors[colorId];
+
             return (
               <Tooltip key={colorId}>
                 <TooltipTrigger asChild>
@@ -195,6 +200,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           })}
           {Object.values(customColors).map((color) => {
             const isSelected = selectedColors.has(color.id);
+
             return (
               <Tooltip key={color.id}>
                 <TooltipTrigger asChild>

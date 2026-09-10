@@ -12,6 +12,7 @@ import {
 
 const key = (guildId: string) =>
   getChatControllerGetChatMessagesQueryKey({ guildId });
+
 const message = (
   guildId: string,
   id: string,
@@ -45,6 +46,7 @@ const message = (
 
   canDelete: false,
 });
+
 const policy = (titanAccess = true, maxLevel = 500) =>
   createAccessPolicySnapshot(
     ["one", "two"].map((id) => ({
@@ -76,12 +78,15 @@ describe("chat policy reconciliation", () => {
     const rows = [message("one", "titan")];
     client.setQueryData(key("one"), rows);
     const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue(rows);
+
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
       staleTime: Infinity,
     });
+
     const unsubscribe = observer.subscribe(() => {});
+
     for (let i = 0; i < 20; i++) applyChatAccessPolicy(client, policy());
     await vi.advanceTimersByTimeAsync(10_000);
     expect(fetch).not.toHaveBeenCalled();
@@ -100,6 +105,7 @@ describe("chat policy reconciliation", () => {
     client.setQueryData(key("one"), [visible, forbidden]);
     client.setQueryData(key("two"), other);
     let resolve: ((rows: ChatMessage[]) => void) | undefined;
+
     const request = client
       .fetchQuery({
         queryKey: key("one"),
@@ -109,6 +115,7 @@ describe("chat policy reconciliation", () => {
           }),
       })
       .catch(() => undefined);
+
     applyChatAccessPolicy(client, policy(false));
     expect(client.getQueryData(key("one"))).toEqual([visible]);
     expect(client.getQueryData(key("two"))).toBe(other);
@@ -125,6 +132,7 @@ describe("chat policy reconciliation", () => {
     client.setQueryData(key("one"), [message("one", "revoked")]);
     let resolve: ((rows: ChatMessage[]) => void) | undefined;
     const rows = [message("two", "allowed")];
+
     const fetch = vi
       .fn<() => Promise<ChatMessage[]>>()
       .mockImplementationOnce(
@@ -134,10 +142,12 @@ describe("chat policy reconciliation", () => {
           }),
       )
       .mockResolvedValue(rows);
+
     const observer = new QueryObserver(client, {
       queryKey: key("two"),
       queryFn: fetch,
     });
+
     const off = observer.subscribe(() => {});
     applyChatAccessPolicy(client, policy(false));
     expect(client.getQueryData(key("one"))).toEqual([]);
@@ -159,16 +169,19 @@ describe("chat policy reconciliation", () => {
     const client = new QueryClient();
     const release = retainChatAccessPolicy(client);
     let resolve: ((rows: ChatMessage[]) => void) | undefined;
+
     const fetch = vi.fn(
       () =>
         new Promise<ChatMessage[]>((done) => {
           resolve = done;
         }),
     );
+
     const observer = new QueryObserver(client, {
       queryKey: key("removed"),
       queryFn: fetch,
     });
+
     const off = observer.subscribe(() => {});
     applyChatAccessPolicy(client, policy());
     resolve?.([message("removed", "stale")]);
@@ -188,12 +201,15 @@ describe("chat policy reconciliation", () => {
     client.setQueryData(key("one"), [message("one", "revoked")]);
     client.setQueryData(key("two"), [message("two", "inactive")]);
     const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue([]);
+
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
       staleTime: Infinity,
     });
+
     const off = observer.subscribe(() => {});
+
     for (let i = 0; i < 10; i++) applyLegacyChatAccessChange(client);
     expect(client.getQueryData(key("one"))).toEqual([]);
     expect(client.getQueryData(key("two"))).toEqual([]);
@@ -215,11 +231,13 @@ describe("chat policy reconciliation", () => {
     const rows = [message("one", "elite", 100, 20)];
     client.setQueryData(key("one"), rows);
     const fetch = vi.fn<() => Promise<ChatMessage[]>>().mockResolvedValue(rows);
+
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
       staleTime: Infinity,
     });
+
     const unsubscribe = observer.subscribe(() => {});
     applyChatAccessPolicy(client, policy());
     unsubscribe();
@@ -240,17 +258,20 @@ describe("chat policy reconciliation", () => {
     const low = message("one", "low", 50);
     client.setQueryData(key("one"), [low, message("one", "high", 300)]);
     let resolve: ((rows: ChatMessage[]) => void) | undefined;
+
     const fetch = vi.fn<() => Promise<ChatMessage[]>>(
       () =>
         new Promise<ChatMessage[]>((done) => {
           resolve = done;
         }),
     );
+
     const observer = new QueryObserver(client, {
       queryKey: key("one"),
       queryFn: fetch,
       staleTime: Infinity,
     });
+
     const unsubscribe = observer.subscribe(() => {});
     applyChatAccessPolicy(client, policy(true, 100));
     expect(client.getQueryData(key("one"))).toEqual([low]);

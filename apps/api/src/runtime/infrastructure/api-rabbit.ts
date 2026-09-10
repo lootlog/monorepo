@@ -147,6 +147,7 @@ export const apiRabbitQueues = [
     RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
   ),
 ] as const satisfies ReadonlyArray<RabbitQueueDefinition>;
+
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 
 export const ApiRabbitLive = Layer.unwrap(

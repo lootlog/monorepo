@@ -43,7 +43,9 @@ export const onlineQueues = [
     routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
   }),
 ];
+
 const decode = Schema.decodeUnknownSync(UserOnlineEventV1);
+
 export const OnlineConsumer = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
@@ -58,12 +60,15 @@ export const OnlineConsumer = Layer.effectDiscard(
       (delivery) =>
         Effect.gen(function* () {
           const now = yield* Clock.currentTimeMillis;
+
           const parsed = yield* Effect.try(() => {
             const payload: unknown = JSON.parse(
               new TextDecoder().decode(delivery.content),
             );
+
             const signature =
               delivery.properties.headers?.[ACTIVITY_EVENT_SIGNATURE_HEADER];
+
             if (
               !verifyActivityEventSignature({
                 payload,
@@ -75,10 +80,13 @@ export const OnlineConsumer = Layer.effectDiscard(
             )
               throw new Error("Invalid checkpoint signature");
             const event = decode(payload);
+
             if (Date.parse(event.observedAt) > now + 60_000)
               throw new Error("Future checkpoint observation");
+
             return event;
           }).pipe(Effect.result);
+
           if (Result.isFailure(parsed)) {
             // Ack only after confirmed DLQ publication; do not consume and discard its evidence.
             yield* rabbit.publish({
@@ -91,8 +99,10 @@ export const OnlineConsumer = Layer.effectDiscard(
                 "x-validation-error": "Invalid signed online event",
               },
             });
+
             return;
           }
+
           // Hold this delivery unacked so health cannot overtake a failed checkpoint.
           // The single active consumer preserves ordering across replicas.
           yield* repository

@@ -47,6 +47,7 @@ describe("MemberKillRow", () => {
     const expandButton = screen.getByRole("button", {
       name: "events.kills.expandBreakdown",
     });
+
     fireEvent.click(expandButton);
 
     expect(link.getAttribute("href")).toBe(

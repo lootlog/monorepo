@@ -39,13 +39,16 @@ export const BattleCompactOverviewCard: FC<BattleCompactOverviewCardProps> = ({
   currentUserCharacterId,
 }) => {
   const { t } = useTranslation();
+
   const { characterId, leftTeam, rightTeam, leftTeamNumber, rightTeamNumber } =
     getBattleTeamPresentation(battle, currentUserCharacterId);
+
   const winnerResult = getWinnerResult(battle);
   const isLeftTeamWinner = battle.winningTeam === leftTeamNumber;
   const isRightTeamWinner = battle.winningTeam === rightTeamNumber;
   const ResultIcon = RESULT_ICON_BY_TYPE[winnerResult];
   const winnerResultLabel = t(`battlePanel.list.results.${winnerResult}`);
+
   const winnerBadgeClassName = cn(
     "inline-flex h-5 shrink-0 items-center gap-1 rounded-sm border px-1.5 text-[10px] font-semibold leading-none",
     RESULT_CLASS_NAME_BY_TYPE[winnerResult],

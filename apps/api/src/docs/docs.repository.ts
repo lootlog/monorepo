@@ -27,6 +27,7 @@ import {
 import type { GuildDocumentContent } from "./guild-document-content.schema.js";
 
 type DocsDatabase = typeof ApiDatabase.Service;
+
 type WriteDatabase = Pick<
   DocsDatabase,
   "delete" | "insert" | "select" | "update"
@@ -40,13 +41,17 @@ export class DocsPersistenceError extends TaggedErrorClass<DocsPersistenceError>
 export type DocsRepositoryFailure = ApplicationError | DocsPersistenceError;
 
 export type StoredDocument = typeof guildDocumentTable.$inferSelect;
+
 export type DocumentSummary = Omit<
   StoredDocument,
   "content" | "deletedAt" | "deletedByMemberId"
 >;
+
 export type StoredDocumentHistory =
   typeof guildDocumentHistoryTable.$inferSelect;
+
 export type DocumentHistorySummary = Omit<StoredDocumentHistory, "content">;
+
 type DocumentListing = {
   readonly guild: Pick<typeof guildTable.$inferSelect, "documentLimit"> | null;
   readonly used: number;
@@ -219,25 +224,32 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             .from(guildTable)
             .where(eq(guildTable.id, options.guildId))
             .limit(1);
+
           const guild = guildRows[0];
+
           if (!guild)
             return yield* Effect.fail(
               new ResourceNotFoundError("Guild not found"),
             );
+
           const usedRows = yield* transaction
             .select({ value: count() })
             .from(guildDocumentTable)
             .where(eq(guildDocumentTable.guildId, options.guildId));
+
           const limit = Math.max(
             0,
             guild.documentLimit ?? options.defaultLimit,
           );
+
           if ((usedRows[0]?.value ?? 0) >= limit) {
             return yield* Effect.fail(
               new ResourceConflictError("Guild document limit reached"),
             );
           }
+
           const now = new Date(yield* Clock.currentTimeMillis);
+
           const rows = yield* transaction
             .insert(guildDocumentTable)
             .values({
@@ -252,12 +264,15 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
               updatedAt: now,
             })
             .returning();
+
           const document = rows[0];
+
           if (!document) {
             return yield* Effect.fail(
               new DocsPersistenceError({ cause: "Document was not returned" }),
             );
           }
+
           yield* transaction.insert(guildDocumentHistoryTable).values({
             id: randomUUID(),
             documentId: document.id,
@@ -269,6 +284,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             actorMemberId: options.memberId,
             editedAt: now,
           });
+
           return document;
         }),
       ),
@@ -300,11 +316,14 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
               ),
             )
             .limit(1);
+
           const document = rows[0];
+
           if (!document)
             return yield* Effect.fail(
               new ResourceNotFoundError("Document not found"),
             );
+
           if (
             document.title === options.title &&
             stableJsonStringify(document.content) ===
@@ -312,7 +331,9 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
           ) {
             return document;
           }
+
           const now = new Date(yield* Clock.currentTimeMillis);
+
           const updatedRows = yield* transaction
             .update(guildDocumentTable)
             .set({
@@ -324,12 +345,15 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             })
             .where(eq(guildDocumentTable.id, options.documentId))
             .returning();
+
           const updated = updatedRows[0];
+
           if (!updated) {
             return yield* Effect.fail(
               new DocsPersistenceError({ cause: "Document was not returned" }),
             );
           }
+
           yield* transaction.insert(guildDocumentHistoryTable).values({
             id: randomUUID(),
             documentId: options.documentId,
@@ -341,6 +365,7 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             actorMemberId: options.memberId,
             editedAt: now,
           });
+
           return updated;
         }),
       ),
@@ -407,22 +432,28 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
                   eq(guildDocumentTable.id, options.documentId),
                   eq(guildDocumentTable.guildId, options.guildId),
                 );
+
           const rows = yield* transaction
             .select()
             .from(guildDocumentTable)
             .where(predicate)
             .limit(1);
+
           const document = rows[0];
+
           if (!document)
             return yield* Effect.fail(
               new ResourceNotFoundError("Document not found"),
             );
+
           if (options.action === "RESTORE" && !document.deletedAt) {
             return yield* Effect.fail(
               new ResourceConflictError("Document is not in trash"),
             );
           }
+
           const now = new Date(yield* Clock.currentTimeMillis);
+
           const updatedRows = yield* transaction
             .update(guildDocumentTable)
             .set({
@@ -434,12 +465,15 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             })
             .where(eq(guildDocumentTable.id, options.documentId))
             .returning();
+
           const updated = updatedRows[0];
+
           if (!updated) {
             return yield* Effect.fail(
               new DocsPersistenceError({ cause: "Document was not returned" }),
             );
           }
+
           yield* transaction.insert(guildDocumentHistoryTable).values({
             id: randomUUID(),
             documentId: options.documentId,
@@ -470,16 +504,20 @@ function makeDocsRepository(database: DocsDatabase): DocsRepositoryService {
             )
             .limit(1),
         );
+
         const document = rows[0];
+
         if (!document)
           return yield* Effect.fail(
             new ResourceNotFoundError("Document not found"),
           );
+
         if (!document.deletedAt) {
           return yield* Effect.fail(
             new ResourceConflictError("Document is not in trash"),
           );
         }
+
         yield* protect(
           database
             .delete(guildDocumentTable)

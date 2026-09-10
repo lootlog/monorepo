@@ -66,6 +66,7 @@ describe("battle log search", () => {
         },
       ],
     };
+
     const rawText = buildBattleLogRawSearchText({
       event,
       attacker,
@@ -102,6 +103,7 @@ describe("battle log search", () => {
           },
         ],
       };
+
       const rawText = buildBattleLogRawSearchText({
         event,
         attacker,
@@ -142,6 +144,7 @@ describe("battle log search", () => {
         },
       ],
     };
+
     const rawText = buildBattleLogRawSearchText({
       event,
       attacker,
@@ -172,6 +175,7 @@ describe("battle log search", () => {
           },
         ],
       };
+
       const passiveWoundEvent: RawBattleParsedEvent = {
         attackerId: "38798",
         defenderId: null,

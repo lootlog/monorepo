@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(
@@ -10,11 +11,15 @@ const packageJson = JSON.parse(
 );
 
 const src = join(__dirname, "../templates/entrypoint.js");
+
 const dest = join(__dirname, "../../dist/@lootlog/entrypoint.user.js");
 
 const file = readFileSync(src, "utf8");
+
 const url = process.env.GAME_CLIENT_URL ?? "sample-url";
+
 const version = packageJson.version ?? "1.0.0";
+
 const updatedFile = file
   .replace("$GAME_CLIENT_URL$", url)
   .replace("$GAME_CLIENT_VERSION$", version);

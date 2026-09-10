@@ -32,15 +32,18 @@ export const NpcTile: FC<NpcTileProps> = ({
   const { icon, lvl, name } = npc;
   const sharedTooltip = useSharedTooltip();
   const tileClassName = cn("relative w-fit", className);
+
   const isAbsoluteIconUrl =
     icon !== undefined &&
     icon !== null &&
     (icon.startsWith("http://") ||
       icon.startsWith("https://") ||
       icon.startsWith("//"));
+
   const npcIconSource = isAbsoluteIconUrl
     ? icon
     : `${MARGONEM_CDN_NPCS_URL}${icon ?? ""}`;
+
   const tooltipContent = renderTooltip?.(npc) ?? (
     <p className="text-foreground">
       {name}

@@ -14,8 +14,10 @@ export const addNpcKills = (
   kills: number,
 ) => {
   const existing = npcMap.get(stat.npcId);
+
   if (existing) {
     existing.totalKills += kills;
+
     if (stat.npcLvl > existing.npcLvl) {
       existing.npcLvl = stat.npcLvl;
       existing.npcName = stat.npcName;

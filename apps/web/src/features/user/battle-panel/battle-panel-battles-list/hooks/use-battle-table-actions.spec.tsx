@@ -16,27 +16,34 @@ const mocks = {
   copy: vi.fn<(text: string) => Promise<void>>(),
   error: vi.fn(),
 };
+
 await initializeTestTranslations();
+
 const dashboardKey = getBattlesControllerGetDashboardBattlesQueryKey();
 
 const deferred = () => {
   let resolve!: () => void;
   let reject!: (error: Error) => void;
+
   const promise = new Promise<void>((yes, no) => {
     resolve = yes;
     reject = no;
   });
+
   return { promise, resolve, reject };
 };
+
 const battles = [
   createBattle({ id: "one", public: false }),
   createBattle({ id: "two", public: false }),
 ];
+
 const setup = () => {
   const queryClient = new QueryClient();
   queryClient.setQueryData(dashboardKey, { battles: [] });
   onTestFinished(() => queryClient.clear());
   const removeBattleFromSelection = vi.fn();
+
   return {
     removeBattleFromSelection,
     queryClient,
@@ -57,10 +64,12 @@ const setup = () => {
     ),
   };
 };
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(navigator.clipboard, "writeText").mockImplementation(mocks.copy);
@@ -72,6 +81,7 @@ beforeEach(() => {
         fetch: async (_input, init) => {
           if (init?.method === "DELETE") await mocks.remove();
           else await mocks.update();
+
           return Response.json({});
         },
       },

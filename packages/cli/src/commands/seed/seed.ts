@@ -42,6 +42,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = path.dirname(__filename);
 
 const mainPool = new pg.Pool({
@@ -49,6 +50,7 @@ const mainPool = new pg.Pool({
     process.env.POSTGRESQL_CONNECTION_URI ??
     "postgresql://placeholder:placeholder@localhost:5433/placeholder",
 });
+
 const mainDatabase = drizzle({ client: mainPool });
 
 const ITEM_TYPES = new Map<number, string>([
@@ -91,6 +93,7 @@ const battlelogConnectionUri =
   process.env.BATTLELOG_DATABASE_URL || process.env.POSTGRESQL_CONNECTION_URI;
 
 const battlelogPool = new pg.Pool({ connectionString: battlelogConnectionUri });
+
 const battlelogDatabase = drizzle({ client: battlelogPool });
 
 interface SeedOptions {
@@ -153,6 +156,7 @@ async function seedGuilds(count: number) {
 
   for (let i = 0; i < guilds.length; i++) {
     const guild = guilds[i];
+
     if (!guild) continue;
 
     const isDevGuild = i < devGuildIds.length;
@@ -160,6 +164,7 @@ async function seedGuilds(count: number) {
 
     if (useDevelopmentIds) {
       const devGuildId = devGuildIds[i];
+
       if (!devGuildId) continue;
 
       // Check if dev guild already exists
@@ -184,6 +189,7 @@ async function seedGuilds(count: number) {
       guild.ownerId = devUserId;
 
       const ownerMember = guild.members.find((m) => m.userId === guild.ownerId);
+
       if (ownerMember) {
         ownerMember.userId = devUserId;
       }
@@ -191,6 +197,7 @@ async function seedGuilds(count: number) {
 
     const createdGuild = await mainDatabase.transaction(async (transaction) => {
       const now = new Date();
+
       const insertedGuilds = await transaction
         .insert(guildTable)
         .values({
@@ -203,7 +210,9 @@ async function seedGuilds(count: number) {
           updatedAt: now,
         })
         .returning();
+
       const insertedGuild = insertedGuilds[0];
+
       if (!insertedGuild) {
         throw new Error(`Guild insert did not return ${guild.id}`);
       }
@@ -236,7 +245,9 @@ async function seedGuilds(count: number) {
             updatedAt: now,
           })
           .returning({ id: memberTable.id });
+
         const insertedMember = insertedMembers[0];
+
         if (!insertedMember || member.roleIds.length === 0) continue;
         await transaction.insert(memberToRoleTable).values(
           member.roleIds.map((roleId) => ({
@@ -255,6 +266,7 @@ async function seedGuilds(count: number) {
   console.log(
     `✅ Created ${createdGuilds.length} guilds with roles and members`,
   );
+
   return createdGuilds;
 }
 
@@ -285,6 +297,7 @@ async function findOrCreateItemSnapshot(
 ) {
   const statsHash = createItemStatsHash(item.stat);
   const parsedStats = parseItemStats(item.stat);
+
   const inserted = await transaction
     .insert(itemSnapshotTable)
     .values({
@@ -302,6 +315,7 @@ async function findOrCreateItemSnapshot(
       target: [itemSnapshotTable.itemId, itemSnapshotTable.statsHash],
     })
     .returning({ id: itemSnapshotTable.id });
+
   if (inserted[0]) return inserted[0];
 
   const existing = await transaction
@@ -314,7 +328,9 @@ async function findOrCreateItemSnapshot(
       ),
     )
     .limit(1);
+
   if (!existing[0]) throw new Error(`Missing item snapshot ${item.id}`);
+
   return existing[0];
 }
 
@@ -331,11 +347,13 @@ async function findOrCreatePlayerSnapshot(
 ) {
   const accountId = Number(player.accountId);
   const characterId = Number(player.characterId);
+
   const snapshotHash = createPlayerSnapshotHash(
     player.name,
     player.prof,
     player.icon,
   );
+
   const inserted = await transaction
     .insert(playerSnapshotTable)
     .values({
@@ -356,6 +374,7 @@ async function findOrCreatePlayerSnapshot(
       ],
     })
     .returning({ id: playerSnapshotTable.id });
+
   if (inserted[0]) return inserted[0];
 
   const existing = await transaction
@@ -370,7 +389,9 @@ async function findOrCreatePlayerSnapshot(
       ),
     )
     .limit(1);
+
   if (!existing[0]) throw new Error(`Missing player snapshot ${player.name}`);
+
   return existing[0];
 }
 
@@ -389,6 +410,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
       "❌ Failed to initialize loot generator. Make sure data files exist.",
     );
     console.log("💡 Run scraping scripts first to generate data files.");
+
     return;
   }
 
@@ -419,7 +441,9 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
           updatedAt: new Date(),
         })
         .returning();
+
       const insertedLoot = insertedLoots[0];
+
       if (!insertedLoot) throw new Error("Loot insert did not return a row");
 
       for (const item of loot.loots) {
@@ -437,6 +461,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
           loot.world,
           player,
         );
+
         await transaction.insert(lootPlayerTable).values({
           lootId: insertedLoot.id,
           playerSnapshotId: snapshot.id,
@@ -462,6 +487,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
             target: [npcSnapshotTable.npcId, npcSnapshotTable.name],
           })
           .returning({ id: npcSnapshotTable.id });
+
         const snapshot =
           insertedSnapshots[0] ??
           (
@@ -476,6 +502,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
               )
               .limit(1)
           )[0];
+
         if (!snapshot) throw new Error(`Missing NPC snapshot ${npc.id}`);
         await transaction.insert(lootNpcTable).values({
           lootId: insertedLoot.id,
@@ -488,7 +515,9 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
 
     if (guilds.length > 0) {
       const randomGuild = guilds[Math.floor(Math.random() * guilds.length)];
+
       if (!randomGuild) continue;
+
       const organizationLootRecords = await mainDatabase
         .insert(organizationLootRecordTable)
         .values({
@@ -497,8 +526,11 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
           updatedAt: new Date(),
         })
         .returning({ id: organizationLootRecordTable.id });
+
       const organizationLootRecord = organizationLootRecords[0];
+
       if (!organizationLootRecord) continue;
+
       let members = await mainDatabase
         .select()
         .from(memberTable)
@@ -506,6 +538,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
         .limit(Math.floor(Math.random() * 3) + 1);
 
       const isDevGuild = devGuildIds.includes(randomGuild.id);
+
       if (isDevGuild && devUserId && devUserId !== "xxx") {
         const devMembers = await mainDatabase
           .select()
@@ -517,6 +550,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
             ),
           )
           .limit(1);
+
         const devMember = devMembers[0];
 
         if (devMember && !members.some((m) => m.id === devMember.id)) {
@@ -537,6 +571,7 @@ async function seedLoots(count: number, guilds: SeedGuild[]) {
   }
 
   console.log(`✅ Created ${createdLoots.length} loots with submissions`);
+
   return createdLoots;
 }
 
@@ -547,12 +582,14 @@ async function seedTimers(guilds: SeedGuild[]) {
   const npcsPath = path.join(dataPath, "npcs.json");
 
   let npcs = [];
+
   try {
     const fs = await import("node:fs/promises");
     const npcsData = await fs.readFile(npcsPath, "utf-8");
     npcs = JSON.parse(npcsData);
   } catch (_error) {
     console.error("❌ Failed to load NPCs data. Make sure npcs.json exists.");
+
     return;
   }
 
@@ -581,6 +618,7 @@ async function seedTimers(guilds: SeedGuild[]) {
 
     const isDevGuild = devGuildIds.includes(guild.id);
     let devMember = null;
+
     if (isDevGuild && devUserId && devUserId !== "xxx") {
       const devMembers = await mainDatabase
         .select()
@@ -592,11 +630,13 @@ async function seedTimers(guilds: SeedGuild[]) {
           ),
         )
         .limit(1);
+
       devMember = devMembers[0] ?? null;
     }
 
     for (let i = 0; i < timerCount; i++) {
       const randomNpc = npcs[Math.floor(Math.random() * npcs.length)];
+
       const creatorMember =
         (isDevGuild && devMember) ||
         members[Math.floor(Math.random() * members.length)];
@@ -610,6 +650,7 @@ async function seedTimers(guilds: SeedGuild[]) {
 
       const now = new Date();
       const minSpawnTime = new Date(now.getTime() + Math.random() * 3600000);
+
       const maxSpawnTime = new Date(
         minSpawnTime.getTime() + Math.random() * 3600000,
       );
@@ -761,10 +802,12 @@ async function seedBattles(count: number) {
   console.log(`⚔️  Seeding ${count} battles...`);
 
   const userId = process.env.SEEDING_USER_ID;
+
   if (!userId || userId === "xxx") {
     console.error(
       "❌ SEEDING_USER_ID environment variable is required for battles seeding",
     );
+
     return;
   }
 
@@ -779,6 +822,7 @@ async function seedBattles(count: number) {
     characterId,
     accountId,
   );
+
   const processor = new BattleProcessor();
 
   let createdCount = 0;
@@ -794,6 +838,7 @@ async function seedBattles(count: number) {
 
       const winningTeam = analysis.outcome.winningTeam;
       const losingTeam = analysis.outcome.losingTeam;
+
       if (
         winningTeam === undefined ||
         winningTeam === null ||
@@ -819,6 +864,7 @@ async function seedBattles(count: number) {
           hasFlee: analysis.outcome.hasFlee,
           statistics: analysis.statistics,
         };
+
         const [battle] = await transaction
           .insert(battlesTable)
           .values(battleValues)

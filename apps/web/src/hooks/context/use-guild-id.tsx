@@ -8,5 +8,6 @@ export const useGuildId = () => {
   const search = guildSearch.parse(useSearch({ strict: false }));
 
   const guildIdFromPath = "guildId" in params ? params.guildId : undefined;
+
   return guildIdFromPath ?? search.guild_id;
 };

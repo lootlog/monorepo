@@ -63,6 +63,7 @@ export const makeEventDeletion =
               }),
           ),
         );
+
       if (!rows[0]) {
         return yield* Effect.fail(new ResourceNotFoundError("Event not found"));
       }
@@ -80,6 +81,7 @@ export const makeEventDeletion =
               }),
           ),
         );
+
       if (
         filterHeroesByLevel(
           heroes,
@@ -111,6 +113,7 @@ export const makeEventDeletion =
         },
         { concurrency: "unbounded" },
       );
+
       yield* Effect.forEach(
         [...jobs.pending, ...jobs.delayed].filter(
           (job) => job.eventId === eventId,
@@ -150,6 +153,7 @@ export const makeEventDeletion =
         ],
         "Failed to invalidate event cache",
       );
+
       return { success: true };
     }).pipe(Effect.withSpan("EventsController_deleteEvent"));
 

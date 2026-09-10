@@ -66,11 +66,13 @@ export class DiscordGuildMemberClient {
       this.memberCacheTtlLocal,
       this.memberCacheTtlProd,
     );
+
     const { guildId, userId, discordId } = options;
     const cacheKeys = getGuildMemberCacheKeys({ guildId, userId, discordId });
     const legacyCacheKeys = getLegacyGuildMemberCacheKeys({ guildId, userId });
 
     const cached = await this.getCachedMember(cacheKeys.data);
+
     if (cached) {
       return cached;
     }
@@ -83,6 +85,7 @@ export class DiscordGuildMemberClient {
       lock = await this.redlock.acquire([cacheKeys.lock], this.lockTtl);
 
       const cachedAfterLock = await this.getCachedMember(cacheKeys.data);
+
       if (cachedAfterLock) {
         return cachedAfterLock;
       }
@@ -215,6 +218,7 @@ export class DiscordGuildMemberClient {
         fullRoute: path,
         method: RequestMethod.Get,
       });
+
       await this.rateLimiter.updateRateLimitFromHeaders(
         userId,
         "guild-member",
@@ -222,6 +226,7 @@ export class DiscordGuildMemberClient {
       );
 
       const member = await parseResponse(response);
+
       if (!isApiGuildMember(member))
         throw new TypeError("Invalid Discord guild member response");
       this.logger.log({
@@ -264,11 +269,13 @@ export class DiscordGuildMemberClient {
     }
 
     const cachedMember = this.parseCachedGuildMember(cached);
+
     if (cachedMember) {
       return cachedMember;
     }
 
     await this.redisService.del(cacheKey);
+
     return null;
   }
 
@@ -294,6 +301,7 @@ export class DiscordGuildMemberClient {
   private parseCachedGuildMember(cached: string): APIGuildMember | null {
     try {
       const parsed = decodeJsonUnknown(cached);
+
       if (isApiGuildMember(parsed)) {
         return parsed;
       }

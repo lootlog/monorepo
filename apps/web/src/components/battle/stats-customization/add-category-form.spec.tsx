@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { AddCategoryForm } from "./add-category-form";
 
 await initializeTestTranslations();
+
 afterEach(cleanup);
 
 it("does not create a category while Enter confirms an IME composition", () => {

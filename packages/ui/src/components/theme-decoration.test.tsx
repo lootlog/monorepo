@@ -23,6 +23,7 @@ describe("theme decorations", () => {
       expect(container.querySelector('[aria-hidden="true"]')).toBeNull();
       await act(() => {
         document.documentElement.className = theme;
+
         return Promise.resolve();
       });
       expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(
@@ -32,6 +33,7 @@ describe("theme decorations", () => {
       expect(container.textContent).toBe("Content");
       await act(() => {
         document.documentElement.className = "dark";
+
         return Promise.resolve();
       });
       expect(container.querySelector('[aria-hidden="true"]')).toBeNull();
@@ -41,6 +43,7 @@ describe("theme decorations", () => {
   it("shares one root observer across cards and releases it on unmount", () => {
     const observe = vi.spyOn(MutationObserver.prototype, "observe");
     const disconnect = vi.spyOn(MutationObserver.prototype, "disconnect");
+
     const { unmount } = render(
       <>
         <Card />
@@ -48,6 +51,7 @@ describe("theme decorations", () => {
         <Card />
       </>,
     );
+
     expect(observe).toHaveBeenCalledTimes(1);
     unmount();
     expect(disconnect).toHaveBeenCalledTimes(1);
@@ -57,6 +61,7 @@ describe("theme decorations", () => {
 
   it("server renders without accessing document", () => {
     vi.stubGlobal("document", undefined);
+
     try {
       expect(renderToString(<ThemeDecoration />)).toBe("");
     } finally {

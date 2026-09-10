@@ -37,6 +37,7 @@ export function ReservationShareInvitation({
   const [targetGuildId, setTargetGuildId] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const previewQuery = usePreviewReservationShareInvitation({ token });
+
   const acceptMutation = useAcceptReservationShareInvitation({
     mutation: {
       onSuccess: () => setAccepted(true),
@@ -108,6 +109,7 @@ export function ReservationShareInvitation({
   }
 
   const organizations = previewQuery.data?.eligibleTargetOrganizations ?? [];
+
   return (
     <div className="w-full max-w-xl">
       <PageHeader

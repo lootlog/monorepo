@@ -10,6 +10,7 @@ interface DamageBreakdownProps {
 
 export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
   const { t } = useTranslation();
+
   const damageBreakdown = [
     {
       type: t("battleUi.breakdowns.damageTaken.all"),

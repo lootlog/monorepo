@@ -27,20 +27,26 @@ const DbNotificationScheduleAnchor = {
   MAX_SPAWN: "MAX_SPAWN",
   MIN_SPAWN: "MIN_SPAWN",
 } as const;
+
 type DbNotificationScheduleAnchor =
   (typeof DbNotificationScheduleAnchor)[keyof typeof DbNotificationScheduleAnchor];
+
 type DbNotificationScheduleStrategy =
   | "FIXED_DATETIME"
   | "SPAWN_WINDOW_RELATIVE";
+
 const DbNotificationTargetType = { CHANNEL: "CHANNEL", DM: "DM" } as const;
+
 type DbNotificationTargetType =
   (typeof DbNotificationTargetType)[keyof typeof DbNotificationTargetType];
+
 const DbNotificationTriggerType = {
   NPC_SPAWNED: "NPC_SPAWNED",
   SCHEDULED_MESSAGE: "SCHEDULED_MESSAGE",
   TIMER_BEFORE_SPAWN: "TIMER_BEFORE_SPAWN",
   WATCHED_ITEM_DROPPED: "WATCHED_ITEM_DROPPED",
 } as const;
+
 type DbNotificationTriggerType =
   (typeof DbNotificationTriggerType)[keyof typeof DbNotificationTriggerType];
 
@@ -103,6 +109,7 @@ class NotificationContent {
         DbNotificationScheduleAnchor.MIN_SPAWN,
       scheduleOffsetMinutes: params.notificationRule.scheduleOffsetMinutes ?? 0,
     });
+
     const content = this.renderTimerNotificationContent({
       template:
         params.notificationRule.contentTemplate ??
@@ -158,7 +165,9 @@ class NotificationContent {
     const ruleName = params.notificationRule.name?.trim().length
       ? params.notificationRule.name.trim()
       : SCHEDULED_MESSAGE_DEFAULT_NAME;
+
     const message = scheduledMessageNotification(ruleName);
+
     const content = this.renderScheduledMessageContent({
       template:
         params.notificationRule.contentTemplate ??
@@ -243,6 +252,7 @@ class NotificationContent {
           .filter((roleId): roleId is string => typeof roleId === "string"),
       ),
     );
+
     const parse: Array<"everyone"> = [];
 
     if (content.includes("@everyone") || content.includes("@here")) {
@@ -254,8 +264,11 @@ class NotificationContent {
     }
 
     const mentions: DiscordNotificationAllowedMentions = { repliedUser: false };
+
     if (parse.length > 0) mentions.parse = parse;
+
     if (roleIds.length > 0) mentions.roles = roleIds;
+
     return mentions;
   }
 
@@ -267,6 +280,7 @@ class NotificationContent {
     const parse = parseAllowedMentionList(value.parse);
     const roles = parseStringList(value.roles);
     const users = parseStringList(value.users);
+
     const repliedUser =
       typeof value.repliedUser === "boolean" ? value.repliedUser : undefined;
 
@@ -275,10 +289,15 @@ class NotificationContent {
     }
 
     const mentions: DiscordNotificationAllowedMentions = {};
+
     if (parse && parse.length > 0) mentions.parse = parse;
+
     if (roles && roles.length > 0) mentions.roles = roles;
+
     if (users && users.length > 0) mentions.users = users;
+
     if (repliedUser !== undefined) mentions.repliedUser = repliedUser;
+
     return mentions;
   }
 

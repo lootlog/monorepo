@@ -21,13 +21,16 @@ const attacker: BattleWarrior = buildBattleWarrior({
   icon: "",
   team: 1,
 });
+
 const defender: BattleWarrior = {
   ...attacker,
   originalId: "2",
   name: "Żółw",
   team: 2,
 };
+
 const i18n = i18next.createInstance();
+
 i18n.init({
   lng: "pl",
   fallbackLng: "pl",
@@ -82,6 +85,7 @@ describe("battle log visible search text", () => {
           param: "123.6,25",
         })),
       };
+
       const element = document.createElement("div");
       element.innerHTML = renderToStaticMarkup(
         <I18nextProvider i18n={i18n}>
@@ -124,6 +128,7 @@ describe("battle log visible search text", () => {
         },
       },
     });
+
     const event: RawBattleParsedEvent = {
       attackerId: "1",
       defenderId: "2",
@@ -131,6 +136,7 @@ describe("battle log visible search text", () => {
       defenderHpPercentage: 100,
       actions: [{ actionType: "+crit", param: "" }],
     };
+
     expect(
       buildBattleLogVisibleText({
         event,
@@ -152,6 +158,7 @@ describe("battle log visible search text", () => {
         { actionType: "+dmg", param: "55.8" },
       ],
     };
+
     const text = normalizeBattleLogSearchText(
       buildBattleLogVisibleText({
         event,
@@ -161,6 +168,7 @@ describe("battle log visible search text", () => {
         t: i18n.t,
       }),
     );
+
     expect(text).toContain("#999");
     expect(text).toContain("lucznik <a&b>");
     expect(text).toContain("124");

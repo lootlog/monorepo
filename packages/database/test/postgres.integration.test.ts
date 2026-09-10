@@ -28,9 +28,11 @@ const records = pgTable("database_contract", {
 });
 
 let postgres: StartedPostgreSqlContainer;
+
 beforeAll(async () => {
   postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
 }, 60_000);
+
 afterAll(async () => {
   await postgres?.stop();
 });
@@ -42,11 +44,13 @@ test("preserves required TLS without falling back to an unencrypted connection",
       ssl: true,
     }),
   );
+
   try {
     const error: unknown = await runtime.runPromise(PostgresPool).then(
       () => undefined,
       (cause: unknown) => cause,
     );
+
     expect(Predicate.isTagged("SqlError")(error)).toBe(true);
     expect(error).toMatchObject({
       reason: {
@@ -66,15 +70,19 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
       maxConnections: 1,
     }),
   );
+
   const pool = await runtime.runPromise(PostgresPool);
+
   try {
     const db = await runtime.runPromise(makeWithDefaults());
     const promiseDb = drizzle({ client: pool });
     const client = await runtime.runPromise(PgClient.PgClient);
     expect(await runtime.runPromise(SqlClient.SqlClient)).toBe(client);
+
     const rawIdentity = await pool.query(
       "SELECT pg_backend_pid() AS pid, current_setting('application_name') AS application",
     );
+
     expect(
       await runtime.runPromise(
         client`SELECT pg_backend_pid() AS pid, current_setting('application_name') AS application`,
@@ -85,6 +93,7 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
       id integer PRIMARY KEY, "createdAt" timestamptz NOT NULL,
       payload jsonb NOT NULL, amount numeric NOT NULL, large bigint NOT NULL
     )`);
+
     const record = {
       id: 1,
       createdAt: new Date("2026-09-04T10:11:12.345Z"),
@@ -92,6 +101,7 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
       amount: "1234567890.123456789",
       large: 9007199254740993n,
     };
+
     await promiseDb.transaction((tx) => tx.insert(records).values(record));
     expect(await runtime.runPromise(db.select().from(records))).toEqual([
       record,
@@ -107,6 +117,7 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
         db.transaction((tx) =>
           Effect.gen(function* () {
             yield* tx.insert(records).values({ ...record, id: 3 });
+
             return yield* Effect.fail(new Error("rollback-effect"));
           }),
         ),
@@ -127,6 +138,7 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
   } finally {
     await runtime.dispose();
   }
+
   expect(pool.ended).toBe(true);
   expect(pool.totalCount).toBe(0);
 }, 30_000);

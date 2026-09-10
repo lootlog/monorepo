@@ -13,8 +13,10 @@ export const messagingData = Layer.unwrap(
   Effect.gen(function* () {
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
+
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     const readyRedis = {
       getJson: (key, schema) =>
         attempt(() => redis.getJson(key, makeJsonCodec(schema))),
@@ -24,6 +26,7 @@ export const messagingData = Layer.unwrap(
         arguments_: ReadonlyArray<string | number>,
       ) => attempt(() => redis.eval<A>(script, [...keys], [...arguments_])),
     };
+
     const publishReadyRoom: ReadyRoomEffects["publish"] = (envelope) =>
       rabbit
         .publish({
@@ -32,6 +35,7 @@ export const messagingData = Layer.unwrap(
           content: new TextEncoder().encode(JSON.stringify(envelope)),
         })
         .pipe(Effect.asVoid);
+
     return makeMessagingDataLayer(
       {
         get: (key) => attempt(() => redis.get(key)),

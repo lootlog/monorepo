@@ -17,8 +17,10 @@ type Props = { className?: string } & (
       value: number;
     }
 );
+
 export function StatsOverviewCard(props: Props) {
   const { className } = props;
+
   if (props.loading)
     return (
       <SectionCard className={className}>
@@ -29,6 +31,7 @@ export function StatsOverviewCard(props: Props) {
       </SectionCard>
     );
   const { icon, iconBg, iconColor, label, value } = props;
+
   return (
     <SectionCard className={className}>
       <SectionCardHeader

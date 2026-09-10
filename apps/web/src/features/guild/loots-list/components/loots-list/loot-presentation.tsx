@@ -8,6 +8,7 @@ import {
 import { LootNpcs } from "./loot-npcs";
 import { LootContent } from "./loot-content";
 import { LootFooter } from "./loot-footer";
+
 const EMPTY_NAMES: string[] = [];
 
 export const LootPresentation = ({
@@ -26,6 +27,7 @@ export const LootPresentation = ({
   renderItem?: (item: Item) => ReactNode;
 }) => {
   const { itemsByPlayer, unassignedItems, sortedPlayers } = buildLootData(loot);
+
   return (
     <>
       <div className="flex flex-row justify-between items-center gap-2 mb-1">

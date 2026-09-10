@@ -89,10 +89,12 @@ export const BattlesListFiltersMobile = ({
   const { t } = useTranslation();
   const resultListId = useId();
   const typeListId = useId();
+
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
     { value: "group" as const, label: t("battlePanel.filters.types.group") },
   ];
+
   const battleResults = [
     { value: "won" as const, label: t("battlePanel.filters.results.won") },
     { value: "lost" as const, label: t("battlePanel.filters.results.lost") },

@@ -21,9 +21,11 @@ export class MapChangeProcessor {
     if (previousMapId === mapId) return;
 
     this.previousMapId = mapId;
+
     if (previousMapId !== null) {
       useNpcDetectorStore.getState().clearNpcs();
     }
+
     useDialogStore.getState().clearNpcContext();
     mapPingInteractionController.cancel();
     mapPingController.clear();

@@ -1,6 +1,7 @@
 import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 
 type FeedItems = UserFeedResponseDtoOutput["items"];
+
 export function groupFeedItems(items: FeedItems) {
   const groups = new Map<
     string,
@@ -10,9 +11,11 @@ export function groupFeedItems(items: FeedItems) {
       organizations: FeedItems[number]["guild"][];
     }
   >();
+
   for (const item of items) {
     const key = item.groupKey ?? item.id;
     const group = groups.get(key);
+
     if (!group) groups.set(key, { key, item, organizations: [item.guild] });
     else if (
       !group.organizations.some(
@@ -21,6 +24,7 @@ export function groupFeedItems(items: FeedItems) {
     )
       group.organizations.push(item.guild);
   }
+
   return [...groups.values()];
 }
 
@@ -30,11 +34,14 @@ export function mergeFeedItems(
   now = Date.now(),
 ): FeedItems {
   const entries = new Map(current.map((item) => [item.id, item]));
+
   for (const item of incoming) {
     const previous = entries.get(item.id);
+
     if (!previous || item.version > previous.version)
       entries.set(item.id, item);
   }
+
   const sorted = [...entries.values()]
     .filter((item) => Date.parse(item.occurredAt) >= now - 86_400_000)
     .sort(
@@ -42,13 +49,16 @@ export function mergeFeedItems(
         Date.parse(right.occurredAt) - Date.parse(left.occurredAt) ||
         right.id.localeCompare(left.id),
     );
+
   const visibleGroups = new Set(
     groupFeedItems(sorted)
       .slice(0, 20)
       .map(({ key }) => key),
   );
+
   return sorted.filter((item) => visibleGroups.has(item.groupKey ?? item.id));
 }
+
 export type LiveFeedState = {
   items: FeedItems | undefined;
   pending: FeedItems | undefined;
@@ -57,6 +67,7 @@ export type LiveFeedState = {
   isFetching: boolean;
   isError: boolean;
 };
+
 export const initialLiveFeedState: LiveFeedState = {
   items: undefined,
   pending: undefined,
@@ -65,6 +76,7 @@ export const initialLiveFeedState: LiveFeedState = {
   isFetching: false,
   isError: false,
 };
+
 export type LiveFeedAction =
   | {
       type: "received";
@@ -88,6 +100,7 @@ function getAnimatedKeys(
   const existingKeys = new Set(
     groupFeedItems(state.pending ?? state.items ?? []).map(({ key }) => key),
   );
+
   return [
     ...new Set([
       ...state.animatedKeys,
@@ -144,13 +157,16 @@ function receiveFeedItems(
     action.type === "entry"
       ? mergeFeedItems(state.pending ?? state.items ?? [], [action.item])
       : mergeFeedItems(action.items, action.liveItems ?? []);
+
   const animatedKeys = getAnimatedKeys(
     state,
     items,
     action.type === "entry" ? [action.item] : (action.liveItems ?? []),
   );
+
   const queryState =
     action.type === "received" ? { isFetching: false, isError: false } : {};
+
   if (!state.items?.length || state.atTop)
     return {
       ...state,
@@ -159,6 +175,7 @@ function receiveFeedItems(
       items,
       pending: undefined,
     };
+
   // Only access revalidation can interrupt the reading snapshot.
   // Normal refreshes may drop entries due to the rolling time/count limit.
   if (action.type === "received" && action.revalidatedAccess)
@@ -170,6 +187,7 @@ function receiveFeedItems(
       pending: undefined,
     };
   const changed = JSON.stringify(state.items) !== JSON.stringify(items);
+
   return {
     ...state,
     ...queryState,

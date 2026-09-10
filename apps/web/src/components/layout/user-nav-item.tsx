@@ -29,6 +29,7 @@ export const UserNavItem = () => {
   const { isRukiaTheme } = useThemeMeta();
 
   const isActive = pathname.startsWith("/@me");
+
   const avatarElement = (
     <Avatar
       className={cn(

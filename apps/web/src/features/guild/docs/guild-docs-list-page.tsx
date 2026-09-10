@@ -60,6 +60,7 @@ export const GuildDocsListPage = () => {
     documentPendingTrash,
     moveDocumentToTrash,
   } = useGuildDocsList();
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <h1 className="sr-only">{t("docs.list.title")}</h1>

@@ -3,6 +3,7 @@ import {
   createDetectorSettings,
   createNotificationsSettings,
 } from "@/lib/game-account-preferences";
+
 export const createGameAccountPreferences = (
   accountId: string,
   overrides: Partial<UserGameAccountPreferencesResponseDtoOutput> = {},

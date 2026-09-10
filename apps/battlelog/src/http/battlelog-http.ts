@@ -68,6 +68,7 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
   const request = yield* HttpServerRequest.HttpServerRequest;
   const discordId = request.headers["x-auth-discord-id"];
   const userId = request.headers["x-auth-user-id"];
+
   if (!discordId || !userId) {
     return yield* Effect.fail(
       new BattlelogOperationFailure({
@@ -76,6 +77,7 @@ const currentUserId = Effect.fn("Battlelog.currentUserId")(function* () {
       }),
     );
   }
+
   return userId;
 });
 
@@ -89,6 +91,7 @@ const errorResponse = (cause: unknown) => {
       { status: 400 },
     );
   }
+
   if (Schema.isSchemaError(cause)) {
     return HttpServerResponse.jsonUnsafe(
       {
@@ -100,8 +103,10 @@ const errorResponse = (cause: unknown) => {
       { status: 400 },
     );
   }
+
   if (cause instanceof ApplicationError) {
     const status = applicationErrorStatus(cause);
+
     return HttpServerResponse.jsonUnsafe(
       {
         error: cause.name.replace(/Exception$/, ""),
@@ -111,7 +116,9 @@ const errorResponse = (cause: unknown) => {
       { status },
     );
   }
+
   logger.error("Unhandled request failure", cause);
+
   return HttpServerResponse.jsonUnsafe(
     {
       error: "Internal Server Error",
@@ -150,6 +157,7 @@ const secured = <A>(
     Effect.gen(function* () {
       const userId = yield* currentUserId();
       const services = yield* operations;
+
       return yield* run(services, userId);
     }),
     status,
@@ -212,6 +220,7 @@ export const BattlelogHandlers = Layer.mergeAll(
         toResponse(
           Effect.gen(function* () {
             const userId = yield* currentUserId();
+
             const data: CreateBattleInput =
               yield* HttpServerRequest.schemaBodyJson(CreateBattleSchema, {
                 onExcessProperty: "error",
@@ -224,7 +233,9 @@ export const BattlelogHandlers = Layer.mergeAll(
                     }),
                 ),
               );
+
             const services = yield* operations;
+
             return yield* services.battles.createBattle(data, userId);
           }),
           201,
@@ -341,6 +352,7 @@ export const BattlelogHandlers = Layer.mergeAll(
         toResponse(
           Effect.gen(function* () {
             const userId = yield* currentUserId();
+
             const data: BattleUpdate = yield* HttpServerRequest.schemaBodyJson(
               UpdateBattleSchema,
               {
@@ -355,7 +367,9 @@ export const BattlelogHandlers = Layer.mergeAll(
                   }),
               ),
             );
+
             const services = yield* operations;
+
             return yield* services.battles.updateBattle(
               params.battleId,
               data,
@@ -401,6 +415,7 @@ export const BattlelogHandlers = Layer.mergeAll(
         Effect.gen(function* () {
           const request = yield* HttpServerRequest.HttpServerRequest;
           const application = yield* BattlelogApplication;
+
           if (
             !hasServiceAuthorization(
               request.headers.authorization,
@@ -412,6 +427,7 @@ export const BattlelogHandlers = Layer.mergeAll(
               cause: new AuthenticationRequiredError(),
             });
           }
+
           const body: DeleteUserData = yield* HttpServerRequest.schemaBodyJson(
             DeleteUserDataSchema,
             {
@@ -426,7 +442,9 @@ export const BattlelogHandlers = Layer.mergeAll(
                 }),
             ),
           );
+
           const services = yield* operations;
+
           return yield* services.internal.deleteUserData(body);
         }),
         201,
@@ -441,7 +459,9 @@ export const BattlelogHandlers = Layer.mergeAll(
 
 const openApiFile = async (): Promise<Blob> => {
   const colocated = Bun.file(new URL("../../openapi.yaml", import.meta.url));
+
   if (await colocated.exists()) return colocated;
+
   return Bun.file(new URL("../../../openapi.yaml", import.meta.url));
 };
 
@@ -449,6 +469,7 @@ const openApiFile = async (): Promise<Blob> => {
 const DocumentationRoutes = HttpRouter.use((router) =>
   Effect.gen(function* () {
     const yaml = yield* Effect.tryPromise(openApiFile);
+
     const documentationRoutes = [
       HttpRouter.route(
         "GET",
@@ -469,6 +490,7 @@ const DocumentationRoutes = HttpRouter.use((router) =>
         ),
       ),
     ];
+
     yield* router.addAll(documentationRoutes);
   }),
 );
@@ -492,6 +514,7 @@ export const battlelogHttpMiddleware = HttpMiddleware.make(
       Effect.tapCause(effect, (cause) =>
         Effect.sync(() => {
           const [, failure] = HttpServerError.causeResponseStripped(cause);
+
           if (
             Option.isSome(failure) &&
             !Cause.hasInterruptsOnly(failure.value)
@@ -544,6 +567,7 @@ export const makeBattlelogTestBoundary = (
     ),
     { disableLogger: true, middleware: battlelogHttpMiddleware },
   );
+
   return {
     dispose: boundary.dispose,
     handler: boundary.handler,

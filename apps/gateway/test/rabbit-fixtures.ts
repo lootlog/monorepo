@@ -22,6 +22,7 @@ export const createRabbitDelivery = (
     appId: undefined,
     clusterId: undefined,
   };
+
   const fields = {
     consumerTag: "gateway-test",
     deliveryTag: 1,
@@ -29,6 +30,7 @@ export const createRabbitDelivery = (
     routingKey,
     redelivered,
   };
+
   return {
     content,
     properties,

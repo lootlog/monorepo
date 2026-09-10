@@ -57,6 +57,7 @@ const sumWarriorValues = (
 ) =>
   warriors.reduce((total, warrior) => {
     const value = getValue(warrior);
+
     const safeValue =
       value !== null && value !== undefined && Number.isFinite(value)
         ? value

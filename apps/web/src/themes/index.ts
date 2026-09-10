@@ -9,6 +9,7 @@ export {
   ThemeSurfaceOverlay,
   useThemedKey,
 } from "./adapters";
+
 export {
   DEFAULT_CAT_THEME_VARIANT,
   DEFAULT_THEME_ID,
@@ -18,9 +19,11 @@ export {
   type ResolvedThemeId,
   type ThemeId,
 } from "./catalog";
+
 export {
   applyThemeClassToRoot,
   getRootResolvedTheme,
   resolveThemeClass,
 } from "./resolver";
+
 export { useThemeMeta } from "./use-theme-meta";

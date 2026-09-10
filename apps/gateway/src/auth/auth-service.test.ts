@@ -25,6 +25,7 @@ describe("AuthService websocket upgrade boundary", () => {
       expect(service.getPlatform(origin)).toBe("game");
       expect(service.isAllowedOrigin(`${origin}.attacker.example`)).toBe(false);
     }
+
     expect(
       service.isAllowedOrigin(
         "chrome-extension://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -65,6 +66,7 @@ describe("AuthService websocket upgrade boundary", () => {
     { "x-auth-user-id": "user-1", "x-auth-discord-id": " " },
     { cookie: "lootlog.session=abc", authorization: "Bearer legacy" },
   ];
+
   test.each(incompleteIdentityHeaders)(
     "requires both nonempty proxy identity headers: %j",
     (headers) => {
@@ -83,11 +85,13 @@ test("API key proxy assertions require renewal configuration and cannot fall bac
     "x-auth-discord-id": "d",
     "x-api-key": "invalid",
   };
+
   expect(
     makeGatewayAuth(config).readIdentity(
       new Request("https://gateway.example/ws", { headers }),
     ),
   ).toBeNull();
+
   for (const assertion of [
     "",
     "{",

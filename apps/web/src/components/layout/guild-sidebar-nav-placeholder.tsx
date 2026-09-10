@@ -2,6 +2,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import * as m from "framer-motion/m";
 
 const skeletonRows = [1, 2, 3, 4];
+
 const bottomRows = [1, 2, 3];
 
 export const GuildSidebarNavPlaceholder = () => {

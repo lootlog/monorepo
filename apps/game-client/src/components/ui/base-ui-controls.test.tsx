@@ -12,6 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 describe("Base UI control adapters", () => {
   it("preserves the switch checked contract", async () => {
     const user = userEvent.setup();
+
     const onCheckedChange =
       vi.fn<NonNullable<ComponentProps<typeof Switch>["onCheckedChange"]>>();
 
@@ -28,20 +29,24 @@ describe("Base UI control adapters", () => {
     render(<Switch checked />);
 
     const switchControl = screen.getByRole("switch");
+
     const switchThumb = switchControl.querySelector<HTMLElement>(
       ":scope > [data-checked]",
     );
 
     expect(switchThumb).not.toBeNull();
+
     if (!switchThumb) {
       throw new Error("Switch thumb was not rendered");
     }
+
     expect(getComputedStyle(switchControl).boxSizing).toBe("border-box");
     expect(switchThumb).toHaveClass("ll:data-[checked]:translate-x-4");
   });
 
   it("marks the selected tab and reports tab changes", async () => {
     const user = userEvent.setup();
+
     const onValueChange =
       vi.fn<NonNullable<ComponentProps<typeof Tabs>["onValueChange"]>>();
 
@@ -111,11 +116,13 @@ describe("Base UI control adapters", () => {
       ["Column", { left: 47, width: 70 }],
       ["Stack", { left: 117, width: 58 }],
     ]);
+
     const offsetLeft = vi
       .spyOn(HTMLElement.prototype, "offsetLeft", "get")
       .mockImplementation(function getOffsetLeft(this: HTMLElement) {
         return segmentGeometry.get(this.textContent ?? "")?.left ?? 0;
       });
+
     const offsetWidth = vi
       .spyOn(HTMLElement.prototype, "offsetWidth", "get")
       .mockImplementation(function getOffsetWidth(this: HTMLElement) {
@@ -129,6 +136,7 @@ describe("Base UI control adapters", () => {
         <ToggleGroupItem value="stack">Stack</ToggleGroupItem>
       </ToggleGroup>,
     );
+
     const toggleGroup = container.querySelector<HTMLElement>(
       '[data-slot="toggle-group"]',
     );
@@ -186,11 +194,13 @@ describe("Base UI control adapters", () => {
 
   it("remeasures the indicator after an uncontrolled selection change", async () => {
     const user = userEvent.setup();
+
     const offsetLeft = vi
       .spyOn(HTMLElement.prototype, "offsetLeft", "get")
       .mockImplementation(function getOffsetLeft(this: HTMLElement) {
         return this.textContent === "Column" ? 42 : 2;
       });
+
     const offsetWidth = vi
       .spyOn(HTMLElement.prototype, "offsetWidth", "get")
       .mockImplementation(function getOffsetWidth(this: HTMLElement) {
@@ -203,6 +213,7 @@ describe("Base UI control adapters", () => {
         <ToggleGroupItem value="column">Column</ToggleGroupItem>
       </ToggleGroup>,
     );
+
     const toggleGroup = container.querySelector<HTMLElement>(
       '[data-slot="toggle-group"]',
     );
@@ -263,6 +274,7 @@ describe("Base UI control adapters", () => {
   it("keeps the array-valued slider interface and accessible name", () => {
     const onValueChange =
       vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueChange"]>>();
+
     const onValueCommit =
       vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommit"]>>();
 
@@ -328,6 +340,7 @@ describe("Base UI control adapters", () => {
   it("keeps the array-valued slider interface for pointer changes", () => {
     const onValueChange =
       vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueChange"]>>();
+
     const onValueCommit =
       vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommit"]>>();
 
@@ -345,6 +358,7 @@ describe("Base UI control adapters", () => {
     const sliderRoot = container.querySelector('[data-slot="slider"]');
 
     expect(sliderControl).not.toBeNull();
+
     if (!sliderControl) {
       throw new Error("Slider control was not rendered");
     }
@@ -401,7 +415,9 @@ describe("Base UI control adapters", () => {
     const { container } = render(
       <Slider aria-label="Volume" defaultValue={[25]} />,
     );
+
     const sliderRoot = container.querySelector('[data-slot="slider"]');
+
     const sliderThumb = screen.getByRole("slider", {
       name: "Volume",
     }).parentElement;

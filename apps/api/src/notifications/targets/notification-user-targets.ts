@@ -41,9 +41,11 @@ import {
 } from "#src/notifications/notification-enums";
 
 const TEST_LIMIT = 5;
+
 const TEST_WINDOW_MS = 15 * 60_000;
 
 type Rule = typeof notificationRuleTable.$inferSelect;
+
 type Target = typeof notificationTargetTable.$inferSelect;
 
 export interface NotificationUserTargetJobs {
@@ -112,8 +114,10 @@ export const makeNotificationUserTargets = (
   const requireTargetScope = (targetId: number) =>
     Effect.gen(function* () {
       const organizations = yield* notificationApiKeyOrganizations(database);
+
       if (!organizations) return;
       const organizationIds = organizations.map((guild) => guild.id);
+
       const rules = yield* database
         .select({ rule: notificationRuleTable })
         .from(notificationRuleTargetTable)
@@ -122,11 +126,13 @@ export const makeNotificationUserTargets = (
           eq(notificationRuleTargetTable.ruleId, notificationRuleTable.id),
         )
         .where(eq(notificationRuleTargetTable.targetId, targetId));
+
       const allowed = yield* notificationRulesInApiKeyScope(
         database,
         rules.map(({ rule }) => rule),
         organizationIds,
       );
+
       if (allowed.length !== rules.length) {
         return yield* new PermissionDeniedError(
           "Notification target affects organizations outside the API key scope",
@@ -167,7 +173,9 @@ export const makeNotificationUserTargets = (
         desc(notificationTargetTable.updatedAt),
       )
       .pipe(Effect.mapError(databaseFailure("notifications.userTargets.list")));
+
     const usage = yield* recentUsage(targets.map(({ id }) => id));
+
     return targets.map((target) => ({
       ...mapNotificationTarget(target),
       testTrigger: usageResponse(usage.get(target.id) ?? []),
@@ -185,6 +193,7 @@ export const makeNotificationUserTargets = (
         ),
       );
     }
+
     if (data.externalId && data.externalId !== discordId) {
       return yield* Effect.fail(
         new InvalidRequestError(
@@ -192,7 +201,9 @@ export const makeNotificationUserTargets = (
         ),
       );
     }
+
     const organizations = yield* notificationApiKeyOrganizations(database);
+
     if (organizations) {
       const existing = yield* database
         .select({ id: notificationTargetTable.id })
@@ -206,9 +217,12 @@ export const makeNotificationUserTargets = (
           ),
         )
         .limit(1);
+
       if (existing[0]) yield* requireTargetScope(existing[0].id);
     }
+
     const now = new Date(yield* Clock.currentTimeMillis);
+
     const target = yield* database
       .transaction((transaction) =>
         Effect.gen(function* () {
@@ -242,8 +256,11 @@ export const makeNotificationUserTargets = (
               },
             })
             .returning();
+
           const created = rows[0];
+
           if (!created) return yield* Effect.fail("target-not-returned");
+
           const watchedRules = yield* transaction
             .select({
               ruleId: watchedItemTable.notificationRuleId,
@@ -260,12 +277,15 @@ export const makeNotificationUserTargets = (
                 isNotNull(watchedItemTable.notificationRuleId),
               ),
             );
+
           const allowed = yield* notificationRulesInApiKeyScope(
             transaction,
             watchedRules.map(({ rule }) => rule),
             organizations?.map((guild) => guild.id),
           );
+
           const ruleIds = allowed.map(({ id }) => id);
+
           if (ruleIds.length > 0) {
             yield* transaction
               .insert(notificationRuleTargetTable)
@@ -274,6 +294,7 @@ export const makeNotificationUserTargets = (
               )
               .onConflictDoNothing();
           }
+
           return created;
         }),
       )
@@ -283,6 +304,7 @@ export const makeNotificationUserTargets = (
           attributes: { adapter: "notifications.drizzle", retryCount: 0 },
         }),
       );
+
     return mapNotificationTarget(target);
   });
 
@@ -293,6 +315,7 @@ export const makeNotificationUserTargets = (
   ) {
     yield* find(discordId, targetId);
     yield* requireTargetScope(targetId);
+
     const rows = yield* updateNotificationTarget(
       database,
       targetId,
@@ -302,6 +325,7 @@ export const makeNotificationUserTargets = (
     ).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.update")),
     );
+
     return rows[0] ? mapNotificationTarget(rows[0]) : null;
   });
 
@@ -311,13 +335,17 @@ export const makeNotificationUserTargets = (
         .select({ ruleId: notificationRuleTargetTable.ruleId })
         .from(notificationRuleTargetTable)
         .where(eq(notificationRuleTargetTable.targetId, targetId));
+
       const ruleIds = links.map(({ ruleId }) => ruleId);
+
       if (ruleIds.length === 0) return [];
+
       const counts = yield* database
         .select({ ruleId: notificationRuleTargetTable.ruleId, value: count() })
         .from(notificationRuleTargetTable)
         .where(inArray(notificationRuleTargetTable.ruleId, ruleIds))
         .groupBy(notificationRuleTargetTable.ruleId);
+
       return counts
         .filter(({ value }) => value === 1)
         .map(({ ruleId }) => ruleId);
@@ -343,6 +371,7 @@ export const makeNotificationUserTargets = (
           yield* transaction
             .delete(notificationTargetTable)
             .where(eq(notificationTargetTable.id, targetId));
+
           if (ruleIds.length > 0) {
             yield* transaction
               .delete(notificationRuleTable)
@@ -356,6 +385,7 @@ export const makeNotificationUserTargets = (
           attributes: { adapter: "notifications.drizzle", retryCount: 0 },
         }),
       );
+
     return { success: true as const };
   });
 
@@ -375,9 +405,12 @@ export const makeNotificationUserTargets = (
               ),
             )
             .limit(1);
+
           let rule = existing[0];
+
           if (!rule) {
             const now = new Date(yield* Clock.currentTimeMillis);
+
             const rows = yield* transaction
               .insert(notificationRuleTable)
               .values({
@@ -394,13 +427,16 @@ export const makeNotificationUserTargets = (
                 updatedAt: now,
               })
               .returning();
+
             rule = rows[0];
           }
+
           if (!rule) return yield* Effect.fail("rule-not-returned");
           yield* transaction
             .insert(notificationRuleTargetTable)
             .values({ ruleId: rule.id, targetId })
             .onConflictDoNothing();
+
           return rule;
         }),
       )
@@ -414,6 +450,7 @@ export const makeNotificationUserTargets = (
   const triggerTest = Effect.fn("notifications.userTargets.triggerTest")(
     function* (discordId: string, targetId: number) {
       const target = yield* find(discordId, targetId);
+
       if (target.targetType !== NotificationTargetType.DM) {
         return yield* Effect.fail(
           new InvalidRequestError(
@@ -421,6 +458,7 @@ export const makeNotificationUserTargets = (
           ),
         );
       }
+
       if (!target.active || !target.canSend) {
         return yield* Effect.fail(
           new ResourceConflictError(
@@ -428,9 +466,11 @@ export const makeNotificationUserTargets = (
           ),
         );
       }
+
       const usage = usageResponse(
         (yield* recentUsage([targetId])).get(targetId) ?? [],
       );
+
       if (usage.remaining <= 0) {
         return yield* Effect.fail(
           new ResourceConflictError({
@@ -441,8 +481,10 @@ export const makeNotificationUserTargets = (
           }),
         );
       }
+
       const rule = yield* getOrCreateTestRule(discordId, targetId);
       const scheduledFor = new Date(yield* Clock.currentTimeMillis);
+
       const job = yield* jobs.create({
         notificationRule: rule,
         target,
@@ -458,6 +500,7 @@ export const makeNotificationUserTargets = (
           testTriggeredAt: scheduledFor.toISOString(),
         },
       });
+
       if (!job) {
         return yield* Effect.fail(
           new ResourceConflictError(
@@ -465,7 +508,9 @@ export const makeNotificationUserTargets = (
           ),
         );
       }
+
       yield* jobs.enqueue(job.id, 0);
+
       return { success: true as const };
     },
   );

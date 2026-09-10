@@ -42,6 +42,7 @@ type UseBufferedSocketIngressOptions<TPayload, TCancelPayload> =
     );
 
 const DEFAULT_MAX_PENDING_ITEMS = 100;
+
 const DEFAULT_MAX_PENDING_CANCELS = 100;
 
 export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
@@ -70,6 +71,7 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
   const processPayloadsRef = useRef<(payloads: readonly TPayload[]) => void>(
     () => undefined,
   );
+
   const flushPendingItemsRef = useRef<() => void>(() => undefined);
 
   useEffect(() => {
@@ -83,11 +85,13 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       const payloads = input.filter(
         (payload) => isPayloadAllowedRef.current?.(payload) ?? true,
       );
+
       if (payloads.length === 0) return;
       const getPayloadId = getPayloadIdRef.current;
 
       if (!getPayloadId) {
         onProcessBatchRef.current(payloads);
+
         return;
       }
 
@@ -96,6 +100,7 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
 
         if (pendingCancelIdsRef.current.has(payloadId)) {
           pendingCancelIdsRef.current.delete(payloadId);
+
           return false;
         }
 
@@ -106,6 +111,7 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
         onProcessBatchRef.current(acceptedPayloads);
       }
     };
+
     flushPendingItemsRef.current = () => {
       if (!isReadyRef.current || pendingItemsRef.current.length === 0) {
         return;
@@ -135,13 +141,17 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
         pendingItemsRef.current = pendingItemsRef.current.filter(
           isPayloadAllowedRef.current,
         );
+
         return;
       }
+
       pendingItemsRef.current = [];
       pendingCancelIdsRef.current.clear();
     };
+
     socket?.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     socket?.on(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
+
     return () => {
       socket?.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
       socket?.off(GatewayEvent.DISCONNECT, handlePermissionsUpdated);
@@ -170,6 +180,7 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
       flushScheduledRef.current = true;
       queueMicrotask(() => {
         flushScheduledRef.current = false;
+
         if (listenerGenerationRef.current !== listenerGeneration) {
           return;
         }
@@ -182,6 +193,7 @@ export const useBufferedSocketIngress = <TPayload, TCancelPayload = never>({
 
     return () => {
       socket.off(event, handleEvent);
+
       if (listenerGenerationRef.current === listenerGeneration) {
         listenerGenerationRef.current += 1;
         flushScheduledRef.current = false;

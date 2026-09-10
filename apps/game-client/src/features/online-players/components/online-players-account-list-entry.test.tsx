@@ -49,6 +49,7 @@ const getAccountTile = (container: HTMLElement) => {
   expect(tile).not.toBeNull();
 
   if (!tile) throw new Error("Expected account tile");
+
   return tile;
 };
 
@@ -56,9 +57,11 @@ const expectTooltipAboveWindows = (tooltip: HTMLElement) => {
   const tooltipPositioner = tooltip.parentElement;
 
   expect(tooltipPositioner).not.toBeNull();
+
   if (!tooltipPositioner) {
     throw new Error("Tooltip positioner was not rendered");
   }
+
   expect(getComputedStyle(tooltipPositioner).zIndex).toBe("500");
 };
 
@@ -164,17 +167,21 @@ describe("OnlinePlayersAccountListEntry", () => {
 
   it("keeps the character tooltip above draggable windows", async () => {
     const user = userEvent.setup();
+
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
+
     const characterTrigger = container.querySelector<HTMLElement>(
       '[style*="hero.gif"]',
     );
 
     expect(characterTrigger).not.toBeNull();
+
     if (!characterTrigger) {
       throw new Error("Character tooltip trigger was not rendered");
     }
+
     await user.hover(characterTrigger);
 
     const tooltip = await screen.findByRole("tooltip");
@@ -201,12 +208,14 @@ describe("OnlinePlayersAccountListEntry", () => {
 
   it("shows double click invite hint in the tile tooltip when player can be invited", async () => {
     const user = userEvent.setup();
+
     const { container } = render(
       <OnlinePlayersAccountListEntry
         presence={createPresence()}
         guildMember={{ id: 1, userId: "discord-1", name: "Discord User" }}
       />,
     );
+
     const tile = getAccountTile(container);
 
     await user.hover(tile);
@@ -248,6 +257,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
+
     const tile = getAccountTile(container);
 
     fireEvent.doubleClick(tile);
@@ -294,6 +304,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
+
     const tile = getAccountTile(container);
 
     fireEvent.doubleClick(tile);
@@ -340,6 +351,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     const { container } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
+
     const tile = getAccountTile(container);
 
     fireEvent.doubleClick(tile);

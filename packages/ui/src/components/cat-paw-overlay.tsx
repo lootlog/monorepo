@@ -52,6 +52,7 @@ function createCatPaws(id: string) {
     const pawY = bodyAccumulatedY + Math.sin(perpendicularAngle) * sideOffset;
 
     const angleInDegrees = walkAngle * (180 / Math.PI) + 90;
+
     const pawRotation =
       angleInDegrees + (isRightPaw ? pawRotationOutward : -pawRotationOutward);
 

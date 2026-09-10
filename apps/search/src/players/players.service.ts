@@ -22,6 +22,7 @@ export const makePlayersModule = (
     world,
   }: PlayerSearchQuery) {
     const index = meilisearch.index<PlayerHit>(PLAYERS_INDEX);
+
     const { filter: searchFilter, searchTerm } =
       buildMeilisearchSearchTermFilter("name", search);
 
@@ -64,6 +65,7 @@ export const makePlayersModule = (
       logger.warn("No valid players to index (missing required fields)", {
         players: data.players,
       });
+
       return;
     }
 
@@ -71,6 +73,7 @@ export const makePlayersModule = (
       const invalidPlayers = data.players.filter(
         (player) => !player.world || !player.id || !player.name,
       );
+
       logger.warn(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },

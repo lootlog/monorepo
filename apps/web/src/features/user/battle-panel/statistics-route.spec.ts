@@ -17,6 +17,7 @@ import type { RouterContext } from "@/App";
 
 const makeRouter = (queryClient: QueryClient) => {
   const root = createRootRouteWithContext<RouterContext>()({});
+
   const route = createRoute({
     getParentRoute: () => root,
     path: "/statistics",
@@ -25,6 +26,7 @@ const makeRouter = (queryClient: QueryClient) => {
     }),
     loader: loadBattlePanelStatistics,
   });
+
   return createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
@@ -57,11 +59,14 @@ it("finishes the route while panel data is still pending", async () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+
   const restore = configureApiClients({
     battlelog: { baseUrl: "https://battlelog.test" },
   });
+
   const fetch = vi.fn(() => new Promise<Response>(() => {}));
   vi.stubGlobal("fetch", fetch);
+
   try {
     const router = makeRouter(queryClient);
     await router.navigate({ href: "/statistics?characterId=42" });
@@ -78,9 +83,11 @@ it("reuses the loader combat-profile response when its generated hook mounts", a
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 60_000 } },
   });
+
   const restore = configureApiClients({
     battlelog: { baseUrl: "https://battlelog.test" },
   });
+
   const requests: string[] = [];
   vi.stubGlobal(
     "fetch",
@@ -88,13 +95,16 @@ it("reuses the loader combat-profile response when its generated hook mounts", a
       requests.push(
         new URL(input instanceof Request ? input.url : input).pathname,
       );
+
       return Response.json([]);
     }),
   );
+
   try {
     await makeRouter(queryClient).navigate({
       href: "/statistics?characterId=42",
     });
+
     const { result } = renderHook(
       () =>
         useBattlesControllerGetCombatProfile({
@@ -109,6 +119,7 @@ it("reuses the loader combat-profile response when its generated hook mounts", a
           createElement(QueryClientProvider, { client: queryClient }, children),
       },
     );
+
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(
       requests.filter((path) => path.endsWith("/combat-profile")),

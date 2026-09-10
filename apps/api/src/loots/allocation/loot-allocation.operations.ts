@@ -37,6 +37,7 @@ export interface LootAllocationCache {
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
 }
+
 export interface LootAllocationPublisher {
   readonly publish: (
     exchange: RabbitExchangeName,
@@ -53,16 +54,21 @@ export class LootAllocationOperationError extends TaggedErrorClass<LootAllocatio
 const parseChatAllocation = (message: string) => {
   const allocation: Record<string, string[]> = {};
   let match: RegExpExecArray | null;
+
   while ((match = LOOT_SHARE_MSG_REGEX.exec(message)) !== null) {
     const nickname = match[1].trim();
     let itemMatch: RegExpExecArray | null;
+
     while ((itemMatch = LOOT_SHARE_ITEM_REGEX.exec(match[2])) !== null) {
       const items = allocation[nickname];
+
       if (items) items.push(itemMatch[1]);
       else allocation[nickname] = [itemMatch[1]];
     }
+
     LOOT_SHARE_ITEM_REGEX.lastIndex = 0;
   }
+
   return allocation;
 };
 
@@ -72,14 +78,19 @@ const resolveChatAllocation = (
   items: ReadonlyArray<{ readonly hid: string }>,
 ): LootShare => {
   const allocation: LootShare = {};
+
   for (const [nickname, hids] of Object.entries(parsed)) {
     const playerId = players.find((player) => player.name === nickname)?.id;
+
     if (!playerId) continue;
+
     const itemIds = hids.filter((hid) =>
       items.some((item) => item.hid === hid),
     );
+
     if (itemIds.length > 0) allocation[playerId] = itemIds;
   }
+
   return allocation;
 };
 
@@ -129,7 +140,9 @@ export const makeLootAllocationOperations = (options: {
   ) => {
     const persistedValue = stableJsonStringify(persisted);
     const submittedValue = stableJsonStringify(submitted);
+
     if (persistedValue === submittedValue) return Effect.void;
+
     return Effect.sync(() =>
       options.logger.warn("Conflicting chat loot share rejected", {
         lootId,
@@ -158,22 +171,27 @@ export const makeLootAllocationOperations = (options: {
         const submissionCutoff = new Date(
           (yield* Clock.currentTimeMillis) - SUBMISSION_WINDOW_MS,
         );
+
         const authorized = yield* options.persistence.findAuthorizedLoot({
           actorUserId: input.actorUserId,
           lootId: input.lootId,
           submissionCutoff,
         });
+
         if (!authorized) {
           return yield* Effect.fail(
             new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT),
           );
         }
+
         const parsed = parseChatAllocation(input.message);
+
         if (Object.keys(parsed).length === 0) {
           return yield* Effect.fail(
             new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE),
           );
         }
+
         const players = authorized.lootPlayers.map(
           ({ lvl, playerSnapshot }) => ({
             id: `${playerSnapshot.characterId}${playerSnapshot.accountId}`,
@@ -185,6 +203,7 @@ export const makeLootAllocationOperations = (options: {
             accountId: String(playerSnapshot.accountId),
           }),
         );
+
         const items = authorized.lootItems.map(({ hid, itemSnapshot }) => ({
           id: String(itemSnapshot.itemId),
           hid,
@@ -196,16 +215,21 @@ export const makeLootAllocationOperations = (options: {
           prof: [],
           type: itemSnapshot.itemType ?? "",
         }));
+
         const allocation = resolveChatAllocation(parsed, players, items);
+
         if (Object.keys(allocation).length === 0) {
           return yield* Effect.fail(
             new InvalidRequestError(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER),
           );
         }
+
         if (authorized.lootShareSource === LootShareSource.CHAT_MESSAGE) {
           yield* assertMatching(input.lootId, authorized.lootShare, allocation);
+
           return {};
         }
+
         if (Object.keys(allocation).length < items.length) {
           options.logger.log({
             level: "warn",
@@ -216,12 +240,14 @@ export const makeLootAllocationOperations = (options: {
             totalItemsCount: items.length,
           });
         }
+
         const updated = yield* options.persistence.compareAndSetChatAllocation({
           actorUserId: input.actorUserId,
           lootId: input.lootId,
           submissionCutoff,
           lootShare: allocation,
         });
+
         if (!updated) {
           const state =
             yield* options.persistence.findAuthorizedAllocationState({
@@ -229,17 +255,21 @@ export const makeLootAllocationOperations = (options: {
               lootId: input.lootId,
               submissionCutoff,
             });
+
           if (!state) {
             return yield* Effect.fail(
               new PermissionDeniedError(ErrorKey.CANT_UPDATE_LOOT),
             );
           }
+
           if (state.lootShareSource !== LootShareSource.CHAT_MESSAGE) {
             return yield* Effect.fail(
               new DependencyUnavailableError("Failed to persist loot share"),
             );
           }
+
           yield* assertMatching(input.lootId, state.lootShare, allocation);
+
           return {};
         }
 
@@ -248,6 +278,7 @@ export const makeLootAllocationOperations = (options: {
             authorized.organizationLootRecords.map((record) => record.guildId),
           ),
         ];
+
         yield* Effect.all(
           organizationIds.map((guildId) =>
             options.cache.deleteByPattern(`loots:list:${guildId}:*`).pipe(
@@ -279,6 +310,7 @@ export const makeLootAllocationOperations = (options: {
           ),
           { concurrency: "unbounded", discard: true },
         );
+
         return {};
       }),
     );

@@ -9,11 +9,13 @@ import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 it("loads scoped history only when opened and restores the timer into its world cache", async () => {
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
+
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <GlobalTimerHistoryPopover guildId="guild-1" world="pandora" />
     </QueryClientProvider>,
   );
+
   try {
     expect(fixture.requests).toHaveLength(0);
     await user.click(screen.getByRole("button", { name: "Historia timerów" }));

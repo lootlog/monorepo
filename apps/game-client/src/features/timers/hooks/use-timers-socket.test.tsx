@@ -10,6 +10,7 @@ import { useTimersSocket } from "./use-timers-socket";
 
 function TimerListener() {
   useTimersSocket();
+
   return null;
 }
 
@@ -17,18 +18,22 @@ it("updates world cache only while joined and subscribed, including listener cle
   const fixture = createTimerHttpFixture();
   const gateway = createTimerRealtimeFixture();
   const key = queryKeys.timers("pandora");
+
   const content = (listening: boolean) => (
     <QueryClientProvider client={fixture.queryClient}>
       <SocketProvider>{listening && <TimerListener />}</SocketProvider>
     </QueryClientProvider>
   );
+
   const view = render(content(true));
   const timer = createTimerFixture();
+
   const created = {
     v: 1,
     type: "timer.created",
     data: { organizationId: "guild-1", payload: timer },
   } as const;
+
   try {
     act(() => gateway.wire.open());
     await gateway.receive(created);

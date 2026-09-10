@@ -39,12 +39,15 @@ const getBreadcrumbVisibility = (
   if (index === breadcrumbsCount - 1) {
     return "always";
   }
+
   if (index === breadcrumbsCount - 2) {
     return "sm";
   }
+
   if (index === breadcrumbsCount - 3) {
     return "xl";
   }
+
   return "2xl";
 };
 

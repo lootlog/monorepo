@@ -1,14 +1,19 @@
 // Run against the existing portal with PLAYWRIGHT_MODULE set if needed.
 import assert from "node:assert/strict";
+
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE ?? "playwright"
 );
+
 const browser = await chromium.launch({
   headless: true,
   channel: process.env.BROWSER_CHANNEL ?? "chrome",
 });
+
 const base = process.env.PORTAL_URL ?? "http://localhost/developer";
+
 const page = await browser.newPage();
+
 try {
   await page.goto(base + "/");
   await page
@@ -30,6 +35,7 @@ try {
   await page.waitForURL(base + "/keys");
   await page.getByRole("heading", { name: "API Keys", exact: true }).waitFor();
   await page.goto(base + "/");
+
   // Viewport checks operate sequentially on the same page.
   /* eslint-disable no-await-in-loop */
   for (const width of [320, 768, 1440]) {
@@ -41,6 +47,7 @@ try {
       "Overview fits viewport",
     );
   }
+
   /* eslint-enable no-await-in-loop */
   await page.setViewportSize({ width: 320, height: 900 });
   await page.getByRole("button", { name: "Open Search" }).click();

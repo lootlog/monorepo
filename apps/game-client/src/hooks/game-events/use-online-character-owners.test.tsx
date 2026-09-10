@@ -14,24 +14,30 @@ async function setup() {
     guildIdByCharId: { "1": "guild-1" },
     worldByGuildId: { "guild-1": "pandora" },
   });
+
   const view = renderHook(() => useOnlineCharacterOwners(), {
     wrapper: test.wrapper,
   });
+
   test.open();
   await test.join();
+
   const requests = () =>
     test.wire.frames.flatMap((frame) =>
       "type" in frame && frame.type === "presence.fetch" ? [frame] : [],
     );
+
   const activate = (active: boolean) =>
     act(() =>
       useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(active),
     );
+
   const respond = (
     index: number,
     error?: { code: string; message: string; retryable: boolean },
   ) => {
     const request = requests()[index];
+
     if (!request?.requestId) throw new Error("Presence request not sent");
     const requestId = request.requestId;
     act(() =>
@@ -47,6 +53,7 @@ async function setup() {
       ),
     );
   };
+
   return {
     ...test,
     httpRequests: test.requests,
@@ -116,6 +123,7 @@ describe("useOnlineCharacterOwners", () => {
     test.activate(true);
     await waitFor(() => expect(test.requests()).toHaveLength(1));
     const requestId = test.requests()[0]?.requestId;
+
     if (!requestId) throw new Error("Presence request not sent");
     act(() =>
       test.wire.receive({

@@ -57,10 +57,12 @@ export const HeadToHeadFilterToolbar = ({
   showPhFilter = true,
 }: HeadToHeadFilterToolbarProps) => {
   const { t } = useTranslation();
+
   const extraFiltersCount =
     ((minLevel ?? 1) !== 1 || (maxLevel ?? 500) !== 500 ? 1 : 0) +
     (showPhFilter && ph ? 1 : 0) +
     (showMatchmakingFilter && matchmaking ? 1 : 0);
+
   let moreLabel = t("battlePanel.filters.more");
 
   if (extraFiltersCount > 0) {

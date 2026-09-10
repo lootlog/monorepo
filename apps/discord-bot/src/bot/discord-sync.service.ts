@@ -92,6 +92,7 @@ const permissionState = (
   const grantedPermissions = REQUIRED_NOTIFICATION_PERMISSIONS.filter(
     (permission) => permissions?.has(permission.flag) ?? false,
   ).map((permission) => permission.name);
+
   const missingPermissions = REQUIRED_NOTIFICATION_PERMISSIONS.filter(
     (permission) => !(permissions?.has(permission.flag) ?? false),
   ).map((permission) => permission.name);
@@ -111,6 +112,7 @@ const channelPermissionsState = (
   botUserId: string,
 ): ChannelPermissionsState => {
   const permissions = channel.permissionsFor(botUserId);
+
   return {
     canView: permissions?.has(PermissionsBitField.Flags.ViewChannel) ?? false,
     canSend: permissions?.has(PermissionsBitField.Flags.SendMessages) ?? false,
@@ -127,6 +129,7 @@ const unavailableSyncState = (
   },
 ): DiscordGuildSyncState => {
   const updatedAt = options?.lastAttemptAt ?? new Date().toISOString();
+
   return {
     guildId,
     status: options?.status ?? DiscordGuildSyncStatus.STALE,
@@ -189,6 +192,7 @@ const channelSnapshot = (
   syncedAt: string,
 ): DiscordGuildChannelSnapshot => {
   const permissions = channelPermissionsState(channel, botUserId);
+
   return {
     guildId: channel.guild.id,
     channelId: channel.id,
@@ -230,6 +234,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const resolveGuild = (guildId: string): Effect.Effect<ResolveGuildResult> => {
     const cachedGuild = client.guilds.cache.get(guildId);
+
     if (cachedGuild) {
       return Effect.succeed({ kind: "found", guild: cachedGuild });
     }
@@ -240,6 +245,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       Effect.map((guild): ResolveGuildResult => ({ kind: "found", guild })),
       Effect.catch((error) => {
         const cause = error.cause;
+
         return Effect.succeed(
           isGuildNotFoundError(cause)
             ? {
@@ -260,20 +266,24 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       const syncedAt =
         options?.syncedAt ??
         new Date(yield* Clock.currentTimeMillis).toISOString();
+
       const botMember =
         guild.members.me ??
         (yield* discordSdkRead("fetchBotMember", () =>
           guild.members.fetchMe(),
         ));
+
       const fetchedChannels = yield* discordSdkRead("fetchGuildChannels", () =>
         guild.channels.fetch(undefined, { force: true }),
       );
+
       const channels = Array.from(fetchedChannels.values()).filter(
         (channel): channel is SyncableGuildChannel =>
           channel !== null &&
           isSyncableGuildChannel(channel) &&
           channel.id !== options?.excludeChannelId,
       );
+
       return {
         botMember,
         syncedAt,
@@ -320,9 +330,11 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const loadGuildChannelsPayload = (guildId: string) =>
     Effect.gen(function* () {
       const resolved = yield* resolveGuild(guildId);
+
       if (resolved.kind === "failed") {
         return yield* Effect.fail(failure("resolveGuild", resolved.cause));
       }
+
       if (resolved.kind === "not_found") {
         return {
           guildId,
@@ -333,6 +345,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
           }),
         } satisfies DiscordGuildChannelsSyncedEvent;
       }
+
       return yield* guildChannelsPayload(resolved.guild).pipe(
         Effect.mapError((cause) => failure("loadGuildChannels", cause)),
       );
@@ -350,9 +363,11 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       logger.log(
         `handleGuildCreate called for guild ${guild.id} (${guild.name}), owner: ${guild.ownerId}`,
       );
+
       const roles = yield* discordSdkRead("fetchGuildRoles", () =>
         guild.roles.fetch(),
       );
+
       yield* publish(RoutingKey.GUILDS_CREATE, {
         guildId: guild.id,
         name: guild.name,
@@ -394,10 +409,12 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
       yield* publish(RoutingKey.GUILDS_DELETE, {
         guildId: guild.id,
       } satisfies GuildDeleted);
+
       const state = unavailableSyncState(guild.id, {
         status: DiscordGuildSyncStatus.NOT_FOUND,
         lastError: "Bot no longer has access to this guild",
       });
+
       yield* publish(RoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED, {
         guildId: guild.id,
         status: state.status,
@@ -479,10 +496,12 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const handleChannelCreate = (channel: GuildBasedChannel) => {
     if (!isSyncableGuildChannel(channel)) return Effect.void;
+
     return createSyncContext(channel.guild).pipe(
       Effect.mapError((cause) => failure("handleChannelCreate", cause)),
       Effect.flatMap((initialContext) => {
         const context = contextWithChannel(initialContext, channel);
+
         return publish(RoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED, {
           guildId: channel.guild.id,
           channel: snapshotFromContext(channel, context),
@@ -498,11 +517,13 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   ) => {
     const hadSyncableType = isSyncableGuildChannel(oldChannel);
     const hasSyncableType = isSyncableGuildChannel(newChannel);
+
     if (hasSyncableType) {
       return createSyncContext(newChannel.guild).pipe(
         Effect.mapError((cause) => failure("handleChannelUpdate", cause)),
         Effect.flatMap((initialContext) => {
           const context = contextWithChannel(initialContext, newChannel);
+
           return publish(RoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED, {
             guildId: newChannel.guild.id,
             channel: snapshotFromContext(newChannel, context),
@@ -511,7 +532,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
         }),
       );
     }
+
     if (!hadSyncableType) return Effect.void;
+
     return createSyncContext(oldChannel.guild, {
       excludeChannelId: oldChannel.id,
     }).pipe(
@@ -528,6 +551,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   const handleChannelDelete = (channel: GuildBasedChannel) => {
     if (!isSyncableGuildChannel(channel)) return Effect.void;
+
     return createSyncContext(channel.guild, {
       excludeChannelId: channel.id,
     }).pipe(
@@ -545,15 +569,18 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const getGuildSyncStatus = (guildId: string) =>
     Effect.gen(function* () {
       const resolved = yield* resolveGuild(guildId);
+
       if (resolved.kind === "not_found") {
         return unavailableSyncState(guildId, {
           status: DiscordGuildSyncStatus.NOT_FOUND,
           lastError: resolved.lastError,
         });
       }
+
       if (resolved.kind === "failed") {
         return yield* Effect.fail(failure("resolveGuild", resolved.cause));
       }
+
       return yield* liveSyncStatus(resolved.guild).pipe(
         Effect.mapError((cause) => failure("getGuildSyncStatus", cause)),
       );

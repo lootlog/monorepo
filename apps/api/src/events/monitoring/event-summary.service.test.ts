@@ -21,6 +21,7 @@ describe("EventSummary", () => {
     const saveSummary = mock(() =>
       Effect.succeed({ deletedLogs: 0, deletedGaps: 0 }),
     );
+
     const summary = makeEventSummary(makeStore({ saveSummary }));
 
     await Effect.runPromise(
@@ -40,6 +41,7 @@ describe("EventSummary", () => {
 
   it("keeps a hidden hero indistinguishable from an empty history", async () => {
     const findSummaries = mock(() => Effect.succeed([]));
+
     const summary = makeEventSummary(
       makeStore({
         heroExists: () => Effect.succeed(false),
@@ -61,6 +63,7 @@ describe("EventSummary", () => {
       params: [],
       cause: new Error("database unavailable"),
     });
+
     const summary = makeEventSummary(
       makeStore({ findMaps: () => Effect.fail(failure) }),
     );

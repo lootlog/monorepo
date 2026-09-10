@@ -22,14 +22,17 @@ export const usePartyGatheringSocket = () => {
   const removeNotification = useNotificationsStore((s) => s.removeNotification);
   const { presentNotifications } = useNotificationPresenter();
   const { data: sessionData } = useSession();
+
   const { accountId, isReady, settings } =
     useCurrentGameAccountNotificationSettings();
+
   const { isReady: areMutesReady, mutes } = useCurrentUserNotificationMutes();
   const world = useGameStore((state) => state.game?.world);
   const settingsRef = useRef(settings);
   const mutesRef = useRef(mutes);
   const sessionDataRef = useRef(sessionData);
   const worldRef = useRef(world);
+
   const processNotificationsRef = useRef<
     (notifications: readonly PartyGatheringPayload[]) => void
   >(() => undefined);
@@ -44,6 +47,7 @@ export const usePartyGatheringSocket = () => {
         if (data.discordId === sessionDataRef.current?.user?.discordId) {
           return [];
         }
+
         if (isNotificationMuted(data, mutesRef.current)) return [];
 
         const currentSettings = settingsRef.current;
@@ -51,12 +55,14 @@ export const usePartyGatheringSocket = () => {
 
         if (typeSettings) {
           if (!typeSettings.show) return [];
+
           if (
             typeSettings.ignoreOtherWorlds &&
             data.world !== worldRef.current
           ) {
             return [];
           }
+
           if (
             Array.isArray(typeSettings.guildIds) &&
             !typeSettings.guildIds.includes(data.guildId)

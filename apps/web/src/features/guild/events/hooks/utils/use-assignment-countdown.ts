@@ -4,7 +4,9 @@ import { formatDurationCompact } from "../../utils/format-duration";
 const formatTimeRemaining = (targetDate: Date): string => {
   const now = new Date();
   const diffMs = targetDate.getTime() - now.getTime();
+
   if (diffMs <= 0) return "0:00";
+
   return formatDurationCompact(Math.floor(diffMs / 1000));
 };
 
@@ -13,6 +15,7 @@ export const useAssignmentCountdown = (
   assignmentEnabledAt?: Date | null,
 ) => {
   const [isEnabled, setIsEnabled] = useState(!assignmentDisabled);
+
   const [formattedTime, setFormattedTime] = useState<string | null>(() => {
     if (!assignmentDisabled || !assignmentEnabledAt) {
       return null;
@@ -25,12 +28,14 @@ export const useAssignmentCountdown = (
     if (!assignmentDisabled) {
       setIsEnabled(true);
       setFormattedTime(null);
+
       return;
     }
 
     if (!assignmentEnabledAt) {
       setIsEnabled(false);
       setFormattedTime(null);
+
       return;
     }
 

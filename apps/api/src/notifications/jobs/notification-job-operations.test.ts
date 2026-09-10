@@ -17,6 +17,7 @@ import { makeNotificationJobOperations } from "#src/notifications/jobs/notificat
 describe("notification job operations Effect module", () => {
   it("does not cancel a completed guild job", async () => {
     const boundary = await createDatabaseBoundary();
+
     try {
       const database = boundary.database;
       await boundary.run(

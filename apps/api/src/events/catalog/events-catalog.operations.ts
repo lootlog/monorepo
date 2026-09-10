@@ -11,6 +11,7 @@ import type { EventPointRecalculation } from "#src/events/kills/event-point-reca
 import type { EventUpdate } from "#src/events/catalog/event-update";
 
 type Guild = typeof guildTable.$inferSelect;
+
 type Role = typeof roleTable.$inferSelect;
 
 export const makeEventsCatalog = (wrapped: EventWrapped) => ({
@@ -21,6 +22,7 @@ export const makeEventsCatalog = (wrapped: EventWrapped) => ({
     accessPolicy: AccessPolicy,
   ) => {
     const permissions = getEffectiveCapabilities(accessPolicy);
+
     return wrapped.getWrapped(guildData, eventId, permissions, roles);
   },
 });

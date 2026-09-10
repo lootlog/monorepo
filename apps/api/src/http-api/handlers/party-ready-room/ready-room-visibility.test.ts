@@ -14,8 +14,11 @@ import {
 } from "#src/database/drizzle/schema";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { readyRoomSourceVisibility } from "./ready-room-visibility.js";
+
 let dispose = async () => {};
+
 afterEach(async () => dispose());
+
 it("filters Organization, NPC tier, and level boundaries before exposing a gathering", async () => {
   const boundary = await createDatabaseBoundary();
   dispose = () => boundary.dispose();
@@ -53,9 +56,11 @@ it("filters Organization, NPC tier, and level boundaries before exposing a gathe
   await boundary.run(
     database.insert(memberToRoleTable).values({ A: 1, B: "role" }),
   );
+
   const visible = await boundary.run(
     readyRoomSourceVisibility(database, "member", ["org"]),
   );
+
   const room: ReadyRoomAggregate = {
     schemaVersion: 3,
     notificationId: "room",
@@ -78,6 +83,7 @@ it("filters Organization, NPC tier, and level boundaries before exposing a gathe
     participants: {},
     npc: { name: "NPC", location: "map", lvl: 150, type: "HERO" },
   };
+
   expect(visible(room)).toEqual(["org"]);
   expect(
     visible({

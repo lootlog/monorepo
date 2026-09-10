@@ -47,6 +47,7 @@ describe("ReservationCard", () => {
 
   it("places the pin action between the alliance badge and chevron", () => {
     const onPinChange = vi.fn();
+
     const { container } = render(
       <ReservationCard
         spot={spot}
@@ -54,6 +55,7 @@ describe("ReservationCard", () => {
         onPinChange={onPinChange}
       />,
     );
+
     const actions = container.querySelector(
       '[data-slot="reservation-card-actions"]',
     );
@@ -73,6 +75,7 @@ describe("ReservationCard", () => {
     const { container, rerender } = render(
       <ReservationCard spot={spot} onOpen={vi.fn()} onPinChange={vi.fn()} />,
     );
+
     const unpinnedIcon = container.querySelector(
       '[data-slot="reservation-card-pin-icon"]',
     );
@@ -87,6 +90,7 @@ describe("ReservationCard", () => {
         onPinChange={vi.fn()}
       />,
     );
+
     const pinnedIcon = container.querySelector(
       '[data-slot="reservation-card-pin-icon"]',
     );
@@ -145,6 +149,7 @@ describe("ReservationCard", () => {
         reminderMinutesBefore: null,
       },
     };
+
     const { container } = render(
       <ReservationCard
         spot={occupiedSpot}
@@ -152,6 +157,7 @@ describe("ReservationCard", () => {
         onPinChange={vi.fn()}
       />,
     );
+
     const statusLines = container.querySelector(
       '[data-slot="reservation-card-status-lines"]',
     );

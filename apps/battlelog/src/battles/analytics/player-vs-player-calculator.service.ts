@@ -10,8 +10,10 @@ export const playerVsPlayerCalculator = {
     query: PlayerVsPlayerQuery,
   ): PlayerVsPlayerBattle[] {
     const result: PlayerVsPlayerBattle[] = [];
+
     for (const battle of battles) {
       if (!shouldIncludeBattle(battle, query)) continue;
+
       if (
         !domain.isOpponentLevelInRange(
           battle,
@@ -39,6 +41,7 @@ export const playerVsPlayerCalculator = {
         opponentWarrior: domain.mapPlayerVsPlayerWarrior(opponentWarrior),
       });
     }
+
     return result;
   },
 };
@@ -48,8 +51,10 @@ const shouldIncludeBattle = (
   query: PlayerVsPlayerQuery,
 ): boolean => {
   if (battle.type !== "1v1") return false;
+
   if (query.excludeBattleId && battle.id === query.excludeBattleId)
     return false;
+
   return battle.warriors.some(
     (warrior) => warrior.originalId === query.opponentId,
   );

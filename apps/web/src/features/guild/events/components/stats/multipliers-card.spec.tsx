@@ -74,11 +74,14 @@ describe("MultipliersCard", () => {
     );
 
     expect(container.querySelector("button")).toBeNull();
+
     const list = screen.getByRole("list", {
       name: "events.killDetail.multipliers.configuredRules",
     });
+
     const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(3);
+
     if (!items[0] || !items[1] || !items[2])
       throw new Error("Missing scoring rules");
     expect(items[0]?.textContent).toContain("Applied rule");
@@ -143,6 +146,7 @@ describe("MultipliersCard", () => {
 
       expect(screen.getByText(text)).toBeTruthy();
       expect(container.querySelector("button")).toBeNull();
+
       if (scoringMode === "SIMPLE") {
         expect(
           screen.queryByText("events.killDetail.multipliers.ruleCount"),

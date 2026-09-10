@@ -10,9 +10,11 @@ import { SearchRoutes } from "../src/http-api/search-http.js";
 
 const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
   let itemQuery: unknown;
+
   const operations: SearchOperationsValue = {
     searchItems: (query) => {
       itemQuery = query;
+
       return Effect.succeed({
         hits: [],
         estimatedTotalHits: 0,
@@ -28,6 +30,7 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
     indexPlayers: () => Effect.void,
     ...overrides,
   };
+
   const boundary = HttpRouter.toWebHandler(
     SearchRoutes.pipe(
       Layer.provide(Layer.succeed(SearchOperations, operations)),
@@ -35,8 +38,10 @@ const makeBoundary = (overrides: Partial<SearchOperationsValue> = {}) => {
     ),
     { disableLogger: true },
   );
+
   const handler = (request: Request) =>
     boundary.handler(request, Context.make(SearchOperations, operations));
+
   return {
     handler,
     dispose: boundary.dispose,
@@ -54,11 +59,13 @@ describe("Search HttpApi contract", () => {
 
   test("decodes the item query through the HTTP contract", async () => {
     const { dispose, handler, readItemQuery } = makeBoundary();
+
     const response = await handler(
       new Request(
         "http://localhost/items?limit=5&offset=2&facets=rarity&facets=type&filter=world%20%3D%20berufs",
       ),
     );
+
     expect(response.status).toBe(200);
     expect(readItemQuery()).toEqual({
       limit: 5,
@@ -87,10 +94,12 @@ test("a search outage is an explicit unavailable response, not an empty success"
         }),
       ),
   });
+
   try {
     const response = await boundary.handler(
       new Request("http://localhost/players?limit=10"),
     );
+
     expect(response.status).toBe(503);
     expect(Predicate.isTagged("SearchUnavailable")(await response.json())).toBe(
       true,
@@ -102,6 +111,7 @@ test("a search outage is an explicit unavailable response, not an empty success"
 
 test("allows scoped keys to search global catalogs and denies malformed or unsupported key access", async () => {
   const boundary = makeBoundary();
+
   const headers = {
     "x-auth-user-id": "user",
     "x-auth-discord-id": "discord",
@@ -113,10 +123,12 @@ test("allows scoped keys to search global catalogs and denies malformed or unsup
       expiresAt: null,
     }),
   };
+
   try {
     const response = await boundary.handler(
       new Request("http://localhost/players?limit=10", { headers }),
     );
+
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([]);
     expect(

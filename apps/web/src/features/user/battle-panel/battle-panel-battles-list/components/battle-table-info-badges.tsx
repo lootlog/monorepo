@@ -47,9 +47,11 @@ export const BattleTableInfoBadges = ({
   onWorldClick,
 }: BattleTableInfoBadgesProps) => {
   const { t } = useTranslation();
+
   const visibilityLabel = battle.public
     ? t("battleUi.metadata.public")
     : t("battleUi.metadata.private");
+
   const userWarrior = battle.warriors.find(
     (warrior) => warrior.originalId === battle.characterId,
   );

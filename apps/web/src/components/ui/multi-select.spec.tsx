@@ -125,6 +125,7 @@ describe("MultiSelect", () => {
       placeholder: "Wybierz graczy",
       value: ["player-1"],
     };
+
     const { rerender } = render(
       <MultiSelect
         {...sharedProps}
@@ -166,6 +167,7 @@ describe("MultiSelect", () => {
       onValueChange: () => {},
       value: ["player-1"],
     };
+
     const { rerender } = render(
       <MultiSelect
         {...sharedProps}
@@ -204,6 +206,7 @@ describe("MultiSelect", () => {
 
     fireEvent.click(screen.getByRole("combobox"));
     const searchInput = screen.getByPlaceholderText("Szukaj...");
+
     if (!(searchInput instanceof HTMLInputElement))
       throw new Error("Missing search input");
 

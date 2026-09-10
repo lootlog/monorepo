@@ -30,6 +30,7 @@ import {
 import { getKillStatsBucketStart } from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
+
 const STATS_CACHE_PREFIX = "kill-stats";
 
 export class KillCreationError extends TaggedErrorClass<KillCreationError>()(
@@ -98,10 +99,12 @@ export const makeKillCreation = (
     write: Effect.Effect<void, KillCreationError>,
   ) {
     const token = randomUUID();
+
     const acquired = yield* protect(
       operation,
       cache.setNx(key, token, DEDUP_TTL_SECONDS),
     );
+
     if (!acquired) return false;
     yield* write.pipe(
       Effect.tapError(() =>
@@ -117,6 +120,7 @@ export const makeKillCreation = (
         ),
       ),
     );
+
     return true;
   });
 
@@ -254,6 +258,7 @@ export const makeKillCreation = (
     periodStart: Date,
   ) => {
     const { userId: _userId, ...values } = input;
+
     return protect(
       "kills.create.guild",
       database
@@ -347,6 +352,7 @@ export const makeKillCreation = (
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
     const killedAt = new Date(yield* Clock.currentTimeMillis);
     const periodStart = getKillStatsBucketStart(killedAt);
+
     const input: KillInput = {
       userId: discordId,
       world: data.world,
@@ -358,12 +364,15 @@ export const makeKillCreation = (
       npcIcon: data.npc.icon ?? null,
       lastKilledAt: killedAt,
     };
+
     const userDedupKey = buildUserKillDedupKey(discordId, {
       world: data.world,
       npcId,
     });
+
     const apiKey = yield* requestApiKeyAccess;
     let personalUpdated = false;
+
     if (!apiKey || apiKey.personalData) {
       personalUpdated = yield* writeOnce(
         userDedupKey,
@@ -378,10 +387,12 @@ export const makeKillCreation = (
                   message: "Failed to upsert user kill stats",
                   error,
                 });
+
                 return false;
               }),
         ),
       );
+
       if (personalUpdated) {
         yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
       }
@@ -423,9 +434,11 @@ export const makeKillCreation = (
     );
 
     const writableGuildIds = new Set(writableGuildRows.map(({ id }) => id));
+
     const guildIds = (configs[0]?.catchingGuildIds ?? []).filter((guildId) =>
       writableGuildIds.has(guildId),
     );
+
     if (guildIds.length === 0)
       return personalUpdated
         ? { updated: 0 }
@@ -445,6 +458,7 @@ export const makeKillCreation = (
           ),
         ),
     );
+
     const memberByGuild = new Map(
       members.map((member) => [member.guildId, member]),
     );
@@ -453,8 +467,10 @@ export const makeKillCreation = (
       guildIds,
       (guildId) => {
         const member = memberByGuild.get(guildId);
+
         if (!member) return Effect.succeed({ guildId, updated: false });
         const memberInput = { ...input, guildId, memberId: member.id };
+
         return Effect.gen(function* () {
           const newMemberKill = yield* writeOnce(
             buildMemberKillDedupKey(guildId, member.id, {
@@ -464,7 +480,9 @@ export const makeKillCreation = (
             "kills.dedup.member",
             incrementMember(memberInput, periodStart),
           );
+
           if (!newMemberKill) return { guildId, updated: false };
+
           const first = yield* cache
             .setNx(
               buildGuildKillDedupKey(guildId, {
@@ -483,7 +501,9 @@ export const makeKillCreation = (
                   }),
               ),
             );
+
           if (first) yield* incrementGuild({ ...input, guildId }, periodStart);
+
           return { guildId, updated: true };
         }).pipe(
           Effect.catch((error) =>
@@ -492,6 +512,7 @@ export const makeKillCreation = (
                 message: `Failed to upsert kill stats for guildId ${guildId}`,
                 error,
               });
+
               return { guildId, updated: false };
             }),
           ),
@@ -499,6 +520,7 @@ export const makeKillCreation = (
       },
       { concurrency: "unbounded" },
     );
+
     yield* Effect.forEach(
       results,
       ({ guildId }) =>
@@ -510,6 +532,7 @@ export const makeKillCreation = (
       { concurrency: "unbounded", discard: true },
     );
     const updated = results.filter(({ updated }) => updated).length;
+
     return !personalUpdated && updated === 0
       ? { deduplicated: true, updated: 0 }
       : { updated };

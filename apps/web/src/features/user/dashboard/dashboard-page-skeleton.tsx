@@ -12,12 +12,14 @@ import { useTranslation } from "react-i18next";
 
 export function DashboardPageSkeleton() {
   const { t } = useTranslation();
+
   const calendarStyle: CSSProperties & { "--activity-weeks": number } = {
     containerType: "inline-size",
     "--activity-weeks": Math.ceil(
       (112 + calendarOffset(calendarRange(new Date(), 112).from)) / 7,
     ),
   };
+
   return (
     <ScrollArea className="h-full min-h-0 [&>[data-slot=scroll-area-viewport]>div]:h-full">
       <div

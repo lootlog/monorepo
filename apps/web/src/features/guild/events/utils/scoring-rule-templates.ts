@@ -17,7 +17,9 @@ const createPresetRule = (presetId: string, name: string): EventScoringRule => {
   const preset = DEFAULT_ADVANCED_EVENT_SCORING_RULES.rules.find(
     (rule) => rule.id === presetId,
   );
+
   if (!preset) throw new Error(`Unknown scoring preset: ${presetId}`);
+
   return { ...structuredClone(preset), id: makeRuleId(), name };
 };
 

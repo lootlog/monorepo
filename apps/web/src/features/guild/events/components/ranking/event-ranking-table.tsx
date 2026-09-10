@@ -73,6 +73,7 @@ const getColumnClassName = (
     if (variant === "compact") {
       return "w-20 text-right @md/ranking:w-28";
     }
+
     return "w-28 text-right md:w-36";
   }
 
@@ -93,6 +94,7 @@ export const EventRankingTable = ({
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
   const updateRankingPoints = useUpdateRankingPoints({
     mutation: {
       onSuccess: () => {
@@ -114,6 +116,7 @@ export const EventRankingTable = ({
       const data: Parameters<
         typeof updateRankingPoints.mutateAsync
       >[0]["data"] = { pointsDelta };
+
       if (comment) data.comment = comment;
       await updateRankingPoints.mutateAsync({
         pathParams: {
@@ -158,11 +161,13 @@ export const EventRankingTable = ({
       header: t("events.ranking.player"),
       cell: ({ row }) => {
         const ranking = row.original;
+
         const memberLabel =
           ranking.member?.name ??
           t("events.ranking.memberFallback", {
             memberId: ranking.memberId,
           });
+
         const roleCssColor = getCustomRoleCssColor(
           ranking.member?.roles[0]?.color,
         );
@@ -253,6 +258,7 @@ export const EventRankingTable = ({
       enableSorting: false,
     },
   ];
+
   const columns =
     variant === "compact"
       ? allColumns.filter((column) =>
@@ -275,11 +281,13 @@ export const EventRankingTable = ({
     }
 
     const ranking = cell.row.original;
+
     const memberLabel =
       ranking.member?.name ??
       t("events.ranking.memberFallback", {
         memberId: ranking.memberId,
       });
+
     const isPrimaryLink = cell.column.id === PRIMARY_LINK_COLUMN_ID;
 
     return (

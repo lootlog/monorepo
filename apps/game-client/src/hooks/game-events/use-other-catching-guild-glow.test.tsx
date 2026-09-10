@@ -21,8 +21,11 @@ import {
   createGuildPreferencesTest,
   createTestGuild,
 } from "@/test/guild-preferences-test";
+
 let endpoint: ReturnType<typeof createCatchingGuildsHttp>;
+
 let test: ReturnType<typeof createGuildPreferencesTest>;
+
 function setAccessibleGuilds(
   guilds: { id: string; name: string; icon: null }[],
 ) {
@@ -31,6 +34,7 @@ function setAccessibleGuilds(
     guilds.map(({ id, name }) => createTestGuild(id, name)),
   );
 }
+
 function renderGlowHook<Result>(callback: () => Result) {
   return renderHook(callback, { wrapper: test.wrapper });
 }
@@ -109,14 +113,18 @@ function setRuntime(heroId: number | null | undefined = 101) {
       getDrawableList: vi.fn<() => Other[]>(() => []),
     },
   };
+
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: engine,
   });
+
   if (heroId === null || heroId === undefined) {
     useGameStore.getState().clearGame();
+
     return engine;
   }
+
   useGameStore.getState().replaceGame({
     hero: {
       accountId: "1",
@@ -134,6 +142,7 @@ function setRuntime(heroId: number | null | undefined = 101) {
     map: { id: 1, name: "Map", visibility: 30 },
     world: "tempest",
   });
+
   return engine;
 }
 
@@ -194,6 +203,7 @@ describe("useOtherCatchingGuildGlow", () => {
     );
 
     const runtimeHero = testRuntimeWindow.Engine?.hero;
+
     if (!runtimeHero) throw new Error("Expected test runtime hero");
     runtimeHero.d.id = 101;
     act(() => {});
@@ -264,9 +274,11 @@ describe("useOtherCatchingGuildGlow", () => {
     const others = Object.fromEntries(
       Array.from({ length: 50 }, (_, index) => {
         const characterId = String(index + 1);
+
         return [characterId, createOther(characterId)];
       }),
     );
+
     seedRuntimeOthers(others);
     setOnlineOwners(others);
     useSettingsStore.setState({
@@ -318,9 +330,11 @@ describe("useOtherCatchingGuildGlow", () => {
     const others = Object.fromEntries(
       Array.from({ length: 125 }, (_, index) => {
         const characterId = String(index + 1);
+
         return [characterId, createOther(characterId)];
       }),
     );
+
     seedRuntimeOthers(others);
     setOnlineOwners(others);
     useSettingsStore.setState({
@@ -356,9 +370,11 @@ describe("useOtherCatchingGuildGlow", () => {
     const others = Object.fromEntries(
       Array.from({ length: 125 }, (_, index) => {
         const characterId = String(index + 1);
+
         return [characterId, createOther(characterId)];
       }),
     );
+
     seedRuntimeOthers(others);
     setOnlineOwners(others);
     useSettingsStore.setState({
@@ -429,10 +445,12 @@ describe("useOtherCatchingGuildGlow", () => {
 
   it("does not rerender for other or presence updates while inactive", () => {
     let renderCount = 0;
+
     const { unmount } = renderGlowHook(() => {
       renderCount += 1;
       useOtherCatchingGuildGlow();
     });
+
     const renderCountBeforeUpdates = renderCount;
     const other = createOther("1");
 
@@ -564,6 +582,7 @@ describe("useOtherCatchingGuildGlow", () => {
   it("finishes an in-flight batch when another player appears", async () => {
     const firstOther = createOther("1");
     const secondOther = createOther("2");
+
     let resolveFirstBatch:
       | ((value: {
           players: Array<{

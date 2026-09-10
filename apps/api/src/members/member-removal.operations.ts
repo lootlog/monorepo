@@ -92,6 +92,7 @@ export const makeMemberRemoval = (
           ),
         ),
     );
+
     if (missing.length === 0) return 0;
     const ids = missing.map(({ id }) => id);
     const now = new Date(yield* Clock.currentTimeMillis);
@@ -121,6 +122,7 @@ export const makeMemberRemoval = (
         globalUserId: member.globalUserId,
       })),
     );
+
     return missing.length;
   });
 

@@ -17,6 +17,7 @@ export const useCharacterList = () => {
   const accountId = useGameStore((state) =>
     Number(state.game?.hero.accountId ?? 0),
   );
+
   const world = useGameStore((state) => state.game?.world);
   const gameReady = useGameStore((state) => state.game !== null);
   const languageVersion = getLanguageVersion(window.location.href);

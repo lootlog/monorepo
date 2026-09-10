@@ -10,6 +10,7 @@ export function useReservationOrganizationIcon(
 ) {
   const { data: guilds } = useUsersControllerGetCurrentUserGuilds();
   const organizationPathSegment = sourceOrganization.calendarPath.split("/")[1];
+
   const currentGuild = guilds?.find(
     (guild) =>
       guild.id === organizationPathSegment ||

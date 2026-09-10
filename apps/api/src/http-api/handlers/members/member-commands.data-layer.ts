@@ -94,14 +94,18 @@ const memberWithRoles = (
         ),
       )
       .limit(1);
+
     const member = members[0];
+
     if (!member) return null;
+
     const roleRows = yield* database
       .select({ role: roleTable })
       .from(memberToRoleTable)
       .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
       .where(eq(memberToRoleTable.A, member.id))
       .orderBy(desc(roleTable.position));
+
     return { ...member, roles: roleRows.map(({ role }) => role) };
   });
 
@@ -158,7 +162,9 @@ export const makeMembersDataLayer = (
               ),
             )
             .limit(1);
+
           const desiredGuildId = guildRows[0]?.id;
+
           if (!desiredGuildId) {
             return yield* Effect.fail(
               new ResourceNotFoundError({
@@ -168,20 +174,25 @@ export const makeMembersDataLayer = (
           }
 
           const now = new Date(yield* Clock.currentTimeMillis);
+
           const ttl = options.refresh
             ? getRefreshPermissionsTtl(environment)
             : getMemberCacheSoftTtl(environment);
+
           const stored = yield* memberWithRoles(
             database,
             options.identity.discordId,
             desiredGuildId,
           );
+
           const fresh = isFresh(stored, new Date(now.getTime() - ttl));
+
           if (stored && options.refresh && fresh) {
             return yield* Effect.fail(
               new InvalidRequestError(ErrorKey.MEMBER_TTL_ACTIVE),
             );
           }
+
           if (fresh) return stored;
 
           const refreshAttempt = yield* ports.refreshGuildMember({
@@ -194,24 +205,29 @@ export const makeMembersDataLayer = (
             reason: options.refresh ? "manual-refresh" : "member-read",
             throwOnUnexpectedError: options.refresh,
           });
+
           if (
             refreshAttempt.status === "UNAUTHORIZED" &&
             options.throwOnMemberUnauthorized
           ) {
             return yield* throwSyncError(refreshAttempt);
           }
+
           if (refreshAttempt.member) {
             return refreshAttempt.member.active ||
               options.returnDeactivatedMember
               ? refreshAttempt.member
               : null;
           }
+
           if (refreshAttempt.status === "NOT_FOUND") return null;
+
           if (!useStaleMember(stored, refreshAttempt, now)) return null;
 
           yield* ports
             .recordStaleUse(refreshAttempt.status)
             .pipe(Effect.ignore);
+
           return {
             ...stored,
             isStale: true,
@@ -232,17 +248,21 @@ export const makeMembersDataLayer = (
                 discordId,
                 guildId,
               );
+
               if (!stored) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError("Member not found"),
                 );
               }
+
               if (!stored.active) {
                 return yield* Effect.fail(
                   new InvalidRequestError(ErrorKey.MEMBER_ALREADY_DEACTIVATED),
                 );
               }
+
               const now = new Date(yield* Clock.currentTimeMillis);
+
               const rows = yield* transaction
                 .update(memberTable)
                 .set({
@@ -254,15 +274,19 @@ export const makeMembersDataLayer = (
                 })
                 .where(eq(memberTable.id, stored.id))
                 .returning();
+
               const updated = rows[0];
+
               if (!updated) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError("Member not found"),
                 );
               }
+
               yield* transaction
                 .delete(memberToRoleTable)
                 .where(eq(memberToRoleTable.A, stored.id));
+
               return { ...updated, roles: [] };
             }),
           )
@@ -291,6 +315,7 @@ export const makeMembersDataLayer = (
       const createBulkRefresh = (guildId: string, requestedBy: string) =>
         Effect.gen(function* () {
           const rateLimit = getAdminBulkRefreshRateLimit(environment);
+
           const recent = yield* database
             .select()
             .from(memberRefreshJobTable)
@@ -305,6 +330,7 @@ export const makeMembersDataLayer = (
             )
             .orderBy(desc(memberRefreshJobTable.createdAt))
             .limit(1);
+
           if (recent[0]) {
             return yield* Effect.fail(
               new InvalidRequestError({
@@ -315,6 +341,7 @@ export const makeMembersDataLayer = (
               }),
             );
           }
+
           const members = yield* database
             .select({ userId: memberTable.userId })
             .from(memberTable)
@@ -325,7 +352,9 @@ export const makeMembersDataLayer = (
                 isNotNull(memberTable.globalUserId),
               ),
             );
+
           const now = new Date(yield* Clock.currentTimeMillis);
+
           const inserted = yield* database
             .insert(memberRefreshJobTable)
             .values({
@@ -337,7 +366,9 @@ export const makeMembersDataLayer = (
               updatedAt: now,
             })
             .returning();
+
           const job = inserted[0];
+
           if (!job)
             return yield* Effect.die("Member refresh job was not returned");
 
@@ -370,10 +401,12 @@ export const makeMembersDataLayer = (
                       completedAt,
                     })
                     .pipe(Effect.ignore);
+
                   return yield* Effect.fail(error);
                 }),
               ),
             );
+
           return {
             ...job,
             nextAvailableAt: new Date(job.createdAt.getTime() + rateLimit),
@@ -412,7 +445,9 @@ export const makeMembersDataLayer = (
                   ),
                 )
                 .limit(1);
+
               const userId = rows[0]?.userId;
+
               if (!userId) {
                 return yield* Effect.fail(
                   new ResourceNotFoundError(
@@ -420,6 +455,7 @@ export const makeMembersDataLayer = (
                   ),
                 );
               }
+
               return yield* getMember({
                 identity: { discordId, userId },
                 guildId,

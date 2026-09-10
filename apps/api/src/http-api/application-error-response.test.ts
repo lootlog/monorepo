@@ -36,6 +36,7 @@ it.each([
     const response = HttpServerResponse.toWeb(
       await Effect.runPromise(applicationErrorResponse(error)),
     );
+
     expect(response.status).toBe(status);
     expect(await response.json()).toEqual(body);
   },

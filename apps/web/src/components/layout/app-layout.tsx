@@ -17,18 +17,23 @@ const ThemeAnnouncement = lazy(() =>
     default: module.ThemeAnnouncement,
   })),
 );
+
 export const AppLayout = () => {
   const { t } = useTranslation();
   const location = useLocation();
+
   const guildRouteMatch = useMatches({
     select: (matches) =>
       matches.find((match) => match.routeId === "/_authenticated/$guildId"),
   });
+
   const isUserRoute =
     location.pathname === "/@me" || location.pathname.startsWith("/@me/");
+
   const isStandaloneRoute = location.pathname.startsWith(
     "/reservation-sharing/invitations/",
   );
+
   const hasResolvedGuildRoute =
     guildRouteMatch?.status === "success" &&
     guildRouteMatch.loaderData !== undefined;

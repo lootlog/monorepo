@@ -35,6 +35,7 @@ export function buildLootNpcVisibilitySql(
   const completeRoles = toLootVisibilityRoles(roles).filter((role) =>
     role.permissions.includes(LOOT_PERMISSION.read),
   );
+
   if (completeRoles.length === 0) {
     return "AND FALSE";
   }
@@ -67,6 +68,7 @@ function buildCompleteRoleNpcSqlCondition(role: LootVisibilityRole): string {
   if (!role.permissions.includes(LOOT_PERMISSION.readTitans)) {
     excludedTypes.push("'TITAN'");
   }
+
   if (!role.permissions.includes(LOOT_PERMISSION.readHeroes)) {
     excludedTypes.push("'HERO'", "'EVENT_HERO'");
   }

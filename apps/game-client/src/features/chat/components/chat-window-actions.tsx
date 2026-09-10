@@ -18,15 +18,19 @@ export const ChatWindowActions = ({
 }: ChatWindowActionsProps) => {
   const { t } = useTranslation("chat");
   const filtersVisible = useChatStore((state) => state.filtersVisible);
+
   const toggleFiltersVisible = useChatStore(
     (state) => state.toggleFiltersVisible,
   );
+
   const filterLabel = t(
     filtersVisible ? "actions.hideFilters" : "actions.showFilters",
   );
+
   const integrationLabel = integrated
     ? t("integration.detach")
     : t("integration.attach");
+
   return (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
       <ChatSettingsButton />

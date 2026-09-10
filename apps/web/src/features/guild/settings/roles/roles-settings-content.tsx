@@ -17,31 +17,38 @@ import { useTranslation } from "react-i18next";
 export const RolesSettingsContent = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
+
   const { data: roles } = useRolesControllerGetGuildRoles({
     guildId: guildId ?? "",
   });
+
   const [searchValue, setSearchValue] = useState("");
   const isMobile = useIsMobile();
   const normalizedSearchValue = searchValue.trim().toLowerCase();
+
   const filteredRoles = [...(roles ?? [])]
     .filter((role) => role.name.toLowerCase().includes(normalizedSearchValue))
     .sort((firstRole, secondRole) => {
       const firstRoleIsAdmin = firstRole.permissions.includes(Permission.ADMIN);
+
       const secondRoleIsAdmin = secondRole.permissions.includes(
         Permission.ADMIN,
       );
 
       if (firstRoleIsAdmin && !secondRoleIsAdmin) return -1;
+
       if (!firstRoleIsAdmin && secondRoleIsAdmin) return 1;
 
       const firstRolePosition = firstRole.position ?? 0;
       const secondRolePosition = secondRole.position ?? 0;
+
       if (firstRolePosition !== secondRolePosition) {
         return secondRolePosition - firstRolePosition;
       }
 
       return firstRole.name.localeCompare(secondRole.name);
     });
+
   const hasActiveFilters = normalizedSearchValue !== "";
 
   return (

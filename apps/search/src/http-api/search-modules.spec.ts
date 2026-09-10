@@ -16,15 +16,18 @@ const silentLogger: AppLogger = {
 const makeClient = (index: (name: string) => object): Meilisearch => {
   const client = new Meilisearch({ host: "http://search.invalid" });
   Object.defineProperty(client, "index", { value: index });
+
   return client;
 };
 
 describe("Search Effect modules", () => {
   test("builds bounded player and NPC filters", async () => {
     const searches: Array<{ term: string; options: SearchParams }> = [];
+
     const client = makeClient(() => ({
       search: (term: string, options: SearchParams) => {
         searches.push({ term, options });
+
         return Promise.resolve({ hits: [] });
       },
     }));
@@ -63,6 +66,7 @@ describe("Search Effect modules", () => {
 
   test("generates stable player and NPC document ids", async () => {
     const indexed: unknown[] = [];
+
     const client = makeClient(() => ({
       addDocuments: (
         documents: ReadonlyArray<{
@@ -72,6 +76,7 @@ describe("Search Effect modules", () => {
         }>,
       ) => {
         indexed.push(documents);
+
         return {
           waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
         };
@@ -130,6 +135,7 @@ describe("Search Effect modules", () => {
     const failure = await Effect.runPromise(
       players.getPlayers({ limit: 10 }).pipe(Effect.flip),
     );
+
     expect(Predicate.isTagged("SearchOperationFailure")(failure)).toBe(true);
     expect(failure).toMatchObject({ operation: "search.players" });
   });
@@ -140,6 +146,7 @@ describe("Search Effect modules", () => {
         waitTask: () => Promise.reject(new Error("index unavailable")),
       }),
     }));
+
     const players = makePlayersModule(client, silentLogger);
 
     const failure = await Effect.runPromise(
@@ -184,6 +191,7 @@ describe("Search Effect modules", () => {
           ],
         }),
     }));
+
     const npcs = makeNpcsModule(client, silentLogger);
 
     const result = await Effect.runPromise(npcs.getNpcs({ limit: 10 }));
@@ -195,6 +203,7 @@ describe("Search Effect modules", () => {
 
   test("merges item worlds before indexing", async () => {
     let indexedDocuments: unknown;
+
     const client = makeClient(() => ({
       getDocuments: () =>
         Promise.resolve({ results: [{ uid: "42", worlds: ["jaruna"] }] }),
@@ -206,11 +215,13 @@ describe("Search Effect modules", () => {
         }>,
       ) => {
         indexedDocuments = documents;
+
         return {
           waitTask: () => Promise.resolve({ uid: 1, status: "succeeded" }),
         };
       },
     }));
+
     const items = makeItemsModule(client, silentLogger);
 
     await Effect.runPromise(
@@ -261,6 +272,7 @@ describe("Search Effect modules", () => {
       createIndex: {
         value: (name: string) => {
           created.push(name);
+
           return task;
         },
       },
@@ -270,6 +282,7 @@ describe("Search Effect modules", () => {
           updateFilterableAttributes: () => task,
           updateSearchableAttributes: (fields: string[]) => {
             searchable.push(fields);
+
             return task;
           },
           updateSortableAttributes: () => task,

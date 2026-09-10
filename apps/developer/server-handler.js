@@ -44,6 +44,7 @@ function nodeRequestToWebRequest(request, port) {
 
 async function sendWebResponse(response, webResponse) {
   const headers = {};
+
   for (const [name, value] of webResponse.headers.entries()) {
     if (name !== "set-cookie") {
       headers[name] = value;
@@ -51,6 +52,7 @@ async function sendWebResponse(response, webResponse) {
   }
 
   const setCookies = webResponse.headers.getSetCookie();
+
   if (setCookies.length > 0) {
     headers["set-cookie"] = setCookies;
   }
@@ -59,6 +61,7 @@ async function sendWebResponse(response, webResponse) {
 
   if (!webResponse.body) {
     response.end();
+
     return;
   }
 
@@ -76,11 +79,13 @@ export function createDeveloperServer({ clientDirectory, port, serverEntry }) {
           "Content-Type": "text/plain; charset=utf-8",
         });
         response.end("OK\n");
+
         return;
       }
 
       if (url.pathname.startsWith("/assets/")) {
         const filePath = join(clientDirectory, url.pathname);
+
         try {
           const file = await readFile(filePath);
           response.writeHead(200, {
@@ -88,6 +93,7 @@ export function createDeveloperServer({ clientDirectory, port, serverEntry }) {
             "Content-Type": getMimeType(url.pathname),
           });
           response.end(file);
+
           return;
         } catch (error) {
           if (
@@ -105,12 +111,14 @@ export function createDeveloperServer({ clientDirectory, port, serverEntry }) {
     } catch (error) {
       const requestError =
         error instanceof Error ? error : new Error(String(error));
+
       console.warn("Developer portal request failed", requestError);
 
       if (response.headersSent) {
         if (!response.destroyed) {
           response.destroy(requestError);
         }
+
         return;
       }
 

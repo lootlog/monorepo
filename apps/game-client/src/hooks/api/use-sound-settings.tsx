@@ -50,12 +50,15 @@ export const useUpdateSoundSettings = () => {
           if (payload.masterVolume !== undefined) {
             newData.masterVolume = payload.masterVolume;
           }
+
           if (payload.notificationsVolume !== undefined) {
             newData.notificationsVolume = payload.notificationsVolume;
           }
+
           if (payload.detectorVolume !== undefined) {
             newData.detectorVolume = payload.detectorVolume;
           }
+
           if (payload.timersVolume !== undefined) {
             newData.timersVolume = payload.timersVolume;
           }
@@ -71,6 +74,7 @@ export const useUpdateSoundSettings = () => {
               },
             );
           }
+
           if (payload.detectorConfig) {
             newData.detectorConfig = { ...newData.detectorConfig };
             Object.entries(payload.detectorConfig).forEach(
@@ -82,6 +86,7 @@ export const useUpdateSoundSettings = () => {
               },
             );
           }
+
           if (payload.timersConfig) {
             newData.timersConfig = { ...newData.timersConfig };
             Object.entries(payload.timersConfig).forEach(

@@ -41,16 +41,20 @@ const FILTER_CONTROL_CLASS_NAME = "ll:w-full ll:text-xs";
 export const LogsSettingsTab: FC = () => {
   const actions = useLogsStore((state) => state.actions);
   const clearActions = useLogsStore((state) => state.clearActions);
+
   const lootDebugLoggingEnabled = useSettingsStore(
     (state) => state.lootDebugLoggingEnabled,
   );
+
   const setLootDebugLoggingEnabled = useSettingsStore(
     (state) => state.setLootDebugLoggingEnabled,
   );
+
   const [actionTypeFilter, setActionTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<LogStatusFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { t } = useTranslation();
+
   const logStatusOptions = LOG_STATUS_VALUES.map((value) => ({
     value,
     label:
@@ -106,9 +110,11 @@ export const LogsSettingsTab: FC = () => {
         },
         actions: filteredActions,
       };
+
       const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
         type: "application/json",
       });
+
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
 

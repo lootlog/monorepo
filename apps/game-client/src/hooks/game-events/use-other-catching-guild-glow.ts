@@ -25,14 +25,17 @@ import { useOthersStore } from "@/store/others.store";
 const EMPTY_ENTRIES_BY_KEY: Readonly<
   Record<string, CharacterTooltipCatchingGuildsEntry | undefined>
 > = Object.freeze({});
+
 const EMPTY_OTHERS_BY_ID: Readonly<Record<string, RuntimeOther>> =
   Object.freeze({});
+
 const EMPTY_OWNERS_BY_CHARACTER_KEY: Readonly<
   Record<string, OnlineCharacterOwner | undefined>
 > = Object.freeze({});
 
 function getEntryCharacterId(targetKey: string): string {
   const separatorIndex = targetKey.lastIndexOf(":");
+
   return separatorIndex === -1
     ? targetKey
     : targetKey.slice(separatorIndex + 1);
@@ -59,14 +62,18 @@ export function useOtherCatchingGuildGlow(): void {
   const isShiftPressed = useCharacterTooltipCatchingGuildsStore(
     (state) => state.isShiftPressed,
   );
+
   const selectedGuildId = useSelectedLootlogGuildId();
   const active = isShiftPressed && isConcreteLootlogGuildId(selectedGuildId);
+
   const entriesByKey = useCharacterTooltipCatchingGuildsStore((state) =>
     active ? state.entriesByKey : EMPTY_ENTRIES_BY_KEY,
   );
+
   const othersById = useOthersStore((state) =>
     active ? state.othersById : EMPTY_OTHERS_BY_ID,
   );
+
   const ownersByCharacterKey = useOnlineCharacterOwnersStore((state) =>
     active ? state.ownersByCharacterKey : EMPTY_OWNERS_BY_CHARACTER_KEY,
   );
@@ -86,6 +93,7 @@ export function useOtherCatchingGuildGlow(): void {
 
     if (!active) {
       lootlogOtherGlowManager.clear();
+
       return;
     }
 
@@ -95,9 +103,11 @@ export function useOtherCatchingGuildGlow(): void {
       const other = othersById[characterId];
       const runtimeHandle = runtimeOtherHandles.get(characterId);
       visibleCharacterIds.add(other.characterId);
+
       if (!runtimeHandle) continue;
 
       const target = getOtherCatchingGuildsTarget(other);
+
       if (!target) {
         lootlogOtherGlowManager.setGlow(
           runtimeHandle,
@@ -114,6 +124,7 @@ export function useOtherCatchingGuildGlow(): void {
 
     for (const targetKey of Object.keys(entriesByKey)) {
       const entryCharacterId = getEntryCharacterId(targetKey);
+
       if (entryCharacterId && !visibleCharacterIds.has(entryCharacterId)) {
         lootlogOtherGlowManager.removeGlow(entryCharacterId);
       }
@@ -123,6 +134,7 @@ export function useOtherCatchingGuildGlow(): void {
   useEffect(() => {
     if (!active) {
       characterTooltipCatchingGuildsCoordinator.sync([], false);
+
       return;
     }
 
@@ -131,6 +143,7 @@ export function useOtherCatchingGuildGlow(): void {
 
       const accountId = other.accountId;
       const characterId = other.characterId;
+
       if (!accountId || !characterId) continue;
 
       useCharacterTooltipCatchingGuildsStore

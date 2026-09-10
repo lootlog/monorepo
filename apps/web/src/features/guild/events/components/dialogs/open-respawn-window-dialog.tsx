@@ -49,6 +49,7 @@ const getDefaultValues = () => {
   const now = new Date();
   const later = new Date();
   later.setHours(later.getHours() + 3);
+
   return {
     minTime: now,
     maxTime: later,
@@ -73,6 +74,7 @@ export const OpenRespawnWindowDialog = ({
 
   const handleConfirm = async (values: FormValues) => {
     if (isLoading) return;
+
     try {
       await onConfirm({
         minSpawnTime: values.minTime.toISOString(),
@@ -86,9 +88,11 @@ export const OpenRespawnWindowDialog = ({
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isLoading) return;
+
     if (!isOpen) {
       form.reset(getDefaultValues());
     }
+
     onOpenChange(isOpen);
   };
 

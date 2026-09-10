@@ -13,6 +13,7 @@ import {
 } from "#src/shared/schema/response-codecs";
 
 const isNpcType = Schema.is(NpcTypeSchema);
+
 export type TimerProjection = Timer & {
   readonly member?: Member | null;
   readonly actorCharacter?: PlayerSnapshot | null;
@@ -55,14 +56,18 @@ export const CachedTimerProjectionSchema = Schema.Struct({
   member: Schema.optionalKey(Schema.NullOr(CachedTimerMember)),
   actorCharacter: Schema.optionalKey(Schema.NullOr(CachedTimerCharacter)),
 });
+
 export type CachedTimerProjection = typeof CachedTimerProjectionSchema.Type;
 
 export const mapTimerNpc = (npc: unknown) => {
   if (!isRecord(npc)) return null;
   const value = npc;
+
   const rawType =
     typeof value.type === "string" ? value.type.toUpperCase() : null;
+
   const type = isNpcType(rawType) ? rawType : NpcType.NPC;
+
   return {
     id: typeof value.id === "number" ? value.id : 0,
     name: typeof value.name === "string" ? value.name : "",
@@ -83,6 +88,7 @@ export const parseTimerNpc = (
   npc: unknown,
 ): { readonly lvl: number; readonly type: NpcType } | null => {
   let value = npc;
+
   if (typeof value === "string") {
     try {
       value = JSON.parse(value);
@@ -90,12 +96,15 @@ export const parseTimerNpc = (
       return null;
     }
   }
+
   const mapped = mapTimerNpc(value);
+
   return mapped === null ? null : { lvl: mapped.lvl, type: mapped.type };
 };
 
 export const toTimerDate = (value: Date | string | null | undefined) => {
   if (!value) return null;
+
   return value instanceof Date ? value : new Date(value);
 };
 
@@ -139,15 +148,19 @@ type TimerAssociations = {
 
 export const mapTimerResponse = (timer: CachedTimerProjection) => {
   const member = mapTimerMember(timer.member);
+
   const actorCharacter = mapTimerCharacter(
     timer.actorCharacter,
     timer.actorCharacterLvl,
   );
 
   const associations: TimerAssociations = {};
+
   if (member !== undefined) associations.member = member;
+
   if (actorCharacter !== undefined)
     associations.actorCharacter = actorCharacter;
+
   return {
     ...associations,
     guildId: timer.guildId,

@@ -9,9 +9,11 @@ export const Timers = () => {
   useTimersSocket();
 
   const open = useWindowsStore((state) => state.timers.open);
+
   const timersUnderBag = useTimersStore(
     (state) => state.generalConfig.timersUnderBag,
   );
+
   const gameInterface = useGameStore((state) => state.game?.interface);
   const isUnderBag = timersUnderBag && gameInterface === "ni";
   const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);

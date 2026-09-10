@@ -1,6 +1,7 @@
 import { Schema, SchemaTransformation } from "effect";
 
 export const NonEmptyString = Schema.NonEmptyString;
+
 export const NonNegativeInt = Schema.Int.check(
   Schema.isGreaterThanOrEqualTo(0),
 );
@@ -15,5 +16,7 @@ export const IsoDateTime = Schema.String.annotate({
   Schema.check(Schema.isPattern(isoDateTimePattern)),
   Schema.decodeTo(Schema.Date, SchemaTransformation.dateFromString),
 );
+
 export type IsoDateTime = typeof IsoDateTime.Type;
+
 export type EncodedIsoDateTime = typeof IsoDateTime.Encoded;

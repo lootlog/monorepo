@@ -24,6 +24,7 @@ export function PeriodSelector({
   className,
 }: PeriodSelectorProps) {
   const { t } = useTranslation();
+
   const allPeriods = [
     { value: "24h" as const, label: t("common.periodOptions.24h") },
     { value: "3d" as const, label: t("common.periodOptions.3d") },
@@ -37,6 +38,7 @@ export function PeriodSelector({
       label: allLabel ?? t("common.periodOptions.all"),
     },
   ];
+
   const availablePeriods = allPeriods.filter(
     (period) => !excludePeriods.includes(period.value),
   );

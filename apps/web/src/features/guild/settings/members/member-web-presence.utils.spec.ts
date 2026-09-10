@@ -26,6 +26,7 @@ describe("member web presence utils", () => {
       sessionId: "session-1",
       status: "online",
     });
+
     const updated = applyMemberWebPresenceUpdate(added, {
       guildId: "guild-1",
       discordId: "discord-1",

@@ -34,6 +34,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   onPointerDown,
 }) => {
   const { t } = useTranslation("common");
+
   const handleOpacityChange = () => {
     const currentIndex = OPACITY_LEVELS.indexOf(opacity);
     const nextIndex = (currentIndex + 1) % OPACITY_LEVELS.length;

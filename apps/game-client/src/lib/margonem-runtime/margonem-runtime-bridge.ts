@@ -13,14 +13,18 @@ import type {
 } from "./runtime.types";
 
 type RuntimeInterface = "ni" | "si";
+
 export type RuntimeFunction = (this: unknown, ...args: unknown[]) => unknown;
+
 type RuntimeFunctionContainer = {
   parseJSON?: unknown;
   successData?: unknown;
   send?: unknown;
   send2?: unknown;
 };
+
 type RuntimeFunctionProperty = keyof RuntimeFunctionContainer;
+
 type RuntimeWindow = Window & {
   Engine?: { communication?: RuntimeFunctionContainer };
   _g?: unknown;
@@ -48,6 +52,7 @@ export type RuntimeBridgeHealth = Readonly<{
 }>;
 
 const INSTALL_RETRY_DELAY_MS = 100;
+
 const MAX_INSTALL_RETRIES = 20;
 
 const EMPTY_INGRESS = Object.freeze({
@@ -97,15 +102,20 @@ export class MargonemRuntimeBridge {
     this.detachInbound();
     this.detachOutgoing();
     this.installOutgoing();
+
     const runtimeInterface =
       this.runtimeInterface ??
       (typeof getRuntimeWindow().Engine === "object" ? "ni" : "si");
+
     const inbound = this.resolveInbound(runtimeInterface);
+
     if (!inbound) {
       this.failureReason = "missing-inbound-seam";
       this.scheduleInstallRetry();
+
       return false;
     }
+
     this.clearInstallRetry();
     this.failureReason = null;
     this.inboundSeam = `${runtimeInterface}:${inbound.property}`;
@@ -114,11 +124,14 @@ export class MargonemRuntimeBridge {
     const initializeGame = this.initializeGameSafely.bind(this);
     const createEnvelope = this.createEnvelopeSafely.bind(this);
     const captureIntent = () => this.activeIntent;
+
     const clearIntent = () => {
       this.activeIntent = null;
     };
+
     const emitApplied = (envelope: RuntimeEventEnvelope) =>
       this.emit(this.appliedHandlers, envelope, "applied");
+
     const wrappedInbound: RuntimeFunction = function (...args) {
       initializeGame();
       const intent = captureIntent();
@@ -127,7 +140,9 @@ export class MargonemRuntimeBridge {
       initializeGame();
       const envelope = createEnvelope(args[0], intent);
       clearIntent();
+
       if (envelope) emitApplied(envelope);
+
       return result;
     };
 
@@ -136,6 +151,7 @@ export class MargonemRuntimeBridge {
     this.inboundContainer = container;
     this.inboundProperty = property;
     container[property] = wrappedInbound;
+
     return container[property] === wrappedInbound;
   }
 
@@ -151,25 +167,31 @@ export class MargonemRuntimeBridge {
   triggerManualEvent(event: unknown): boolean {
     if (!import.meta.env.DEV) return false;
     const envelope = this.createEnvelope(event, this.activeIntent);
+
     if (!envelope) return false;
     this.emit(this.appliedHandlers, envelope, "applied");
+
     return true;
   }
 
   subscribeApplied(handler: RuntimeEventHandler): () => void {
     this.appliedHandlers.add(handler);
+
     return () => this.appliedHandlers.delete(handler);
   }
 
   subscribeIntent(handler: RuntimeIntentHandler): () => void {
     this.intentHandlers.add(handler);
+
     return () => this.intentHandlers.delete(handler);
   }
 
   getHealth(): RuntimeBridgeHealth {
     let status: RuntimeBridgeHealth["status"] = "installing";
+
     if (this.failureReason?.startsWith("fatal:")) status = "fatal";
     else if (this.inboundSeam) status = "ready";
+
     return Object.freeze({
       adapter:
         this.runtimeInterface ?? this.resolvedAdapter?.interface ?? "unknown",
@@ -198,9 +220,11 @@ export class MargonemRuntimeBridge {
   private installOutgoing(): boolean {
     let installed = false;
     const runtimeWindow = getRuntimeWindow();
+
     if (isRuntimeFunction(runtimeWindow._g)) {
       const originalOutgoing = runtimeWindow._g;
       const observeIntent = this.observeIntent.bind(this);
+
       const wrappedOutgoing: RuntimeFunction = function (...args) {
         observeIntent(args[0]);
 
@@ -215,18 +239,22 @@ export class MargonemRuntimeBridge {
     }
 
     const communication = runtimeWindow.Engine?.communication;
+
     if (communication) {
       for (const property of ["send", "send2"] as const) {
         const original = communication[property];
+
         if (!isRuntimeFunction(original)) continue;
         const observeIntent = this.observeIntent.bind(this);
         const originalFunction = original;
+
         const wrapper: RuntimeFunction = function (...args) {
           observeIntent(args[0]);
 
           // Never modify the arguments, payload, callbacks, or return value of an outgoing Margonem request.
           return Reflect.apply(originalFunction, this, args);
         };
+
         communication[property] = wrapper;
         this.fallbackOutgoingWrappers.push({
           container: communication,
@@ -237,16 +265,20 @@ export class MargonemRuntimeBridge {
         installed = true;
       }
     }
+
     return installed;
   }
 
   private observeIntent(command: unknown): void {
     const intent = this.parseIntent(command);
+
     if (!intent) return;
     const activeIntent = this.activeIntent;
     const improvesSnapshot = !activeIntent?.npc && Boolean(intent.npc);
+
     if (activeIntent?.npcId === intent.npcId && !improvesSnapshot) return;
     this.activeIntent = intent;
+
     for (const handler of this.intentHandlers) {
       try {
         handler(intent);
@@ -264,17 +296,22 @@ export class MargonemRuntimeBridge {
   private parseIntent(command: unknown): RuntimeIntent | null {
     if (typeof command !== "string") return null;
     const [action, ...queryParts] = command.split("&");
+
     if (action !== "talk") return null;
+
     const npcId = Number(
       new URLSearchParams(queryParts.join("&")).get("id") ?? "",
     );
+
     if (!Number.isSafeInteger(npcId) || npcId <= 0) return null;
     let npc = null;
+
     try {
       npc = (this.adapter ?? this.getAdapter())?.getNpc(npcId) ?? null;
     } catch {
       npc = null;
     }
+
     return Object.freeze({ npc, npcId, type: "talk" });
   }
 
@@ -283,6 +320,7 @@ export class MargonemRuntimeBridge {
     intent: RuntimeIntent | null,
   ): RuntimeEventEnvelope | null {
     let event: GameEvent;
+
     if (typeof payload === "string") {
       try {
         // SAFETY: native Communication successData/parseJSON supplies game packets.
@@ -302,6 +340,7 @@ export class MargonemRuntimeBridge {
 
     this.sequence += 1;
     const facts = parseRuntimeFacts(event);
+
     return Object.freeze({
       facts,
       ingress: Object.freeze({
@@ -326,12 +365,14 @@ export class MargonemRuntimeBridge {
         phase: "applied",
         sequence: this.sequence,
       });
+
       return null;
     }
   }
 
   private initializeGameSafely(): void {
     if (!this.gameInitCallback || this.gameInitCallbackExecuted) return;
+
     try {
       this.gameInitCallbackExecuted = this.gameInitCallback();
     } catch (error) {
@@ -345,11 +386,14 @@ export class MargonemRuntimeBridge {
 
   private scheduleInstallRetry(): void {
     if (this.installRetryTimeout) return;
+
     if (this.installRetryCount >= MAX_INSTALL_RETRIES) {
       this.failureReason = "fatal:missing-inbound-seam";
       this.onFatalPipelineError?.();
+
       return;
     }
+
     this.installRetryCount += 1;
     this.installRetryTimeout = setTimeout(() => {
       this.installRetryTimeout = null;
@@ -365,8 +409,10 @@ export class MargonemRuntimeBridge {
 
   private getAdapter(): MargonemRuntimeAdapter | null {
     if (this.resolvedAdapter) return this.resolvedAdapter;
+
     try {
       this.resolvedAdapter = createRuntimeAdapter();
+
       return this.resolvedAdapter;
     } catch {
       return null;
@@ -379,8 +425,10 @@ export class MargonemRuntimeBridge {
     property: RuntimeFunctionProperty;
   } | null {
     const runtimeWindow = getRuntimeWindow();
+
     if (runtimeInterface === "ni") {
       const communication = runtimeWindow.Engine?.communication;
+
       if (communication && isRuntimeFunction(communication.parseJSON)) {
         return {
           container: communication,
@@ -388,6 +436,7 @@ export class MargonemRuntimeBridge {
           property: "parseJSON",
         };
       }
+
       if (communication && isRuntimeFunction(communication.successData)) {
         return {
           container: communication,
@@ -396,7 +445,9 @@ export class MargonemRuntimeBridge {
         };
       }
     }
+
     if (!isRuntimeFunction(runtimeWindow.successData)) return null;
+
     return {
       container: runtimeWindow,
       original: runtimeWindow.successData,
@@ -440,6 +491,7 @@ export class MargonemRuntimeBridge {
     ) {
       this.inboundContainer[this.inboundProperty] = this.originalInbound;
     }
+
     this.originalInbound = null;
     this.wrappedInbound = null;
     this.inboundContainer = null;
@@ -449,16 +501,20 @@ export class MargonemRuntimeBridge {
 
   private detachOutgoing(): void {
     const runtimeWindow = getRuntimeWindow();
+
     if (this.wrappedOutgoing && runtimeWindow._g === this.wrappedOutgoing) {
       runtimeWindow._g = this.originalOutgoing ?? undefined;
     }
+
     this.originalOutgoing = null;
     this.wrappedOutgoing = null;
+
     for (const fallback of this.fallbackOutgoingWrappers) {
       if (fallback.container[fallback.property] === fallback.wrapper) {
         fallback.container[fallback.property] = fallback.original;
       }
     }
+
     this.fallbackOutgoingWrappers = [];
   }
 }
@@ -467,7 +523,9 @@ function scheduleActiveRuntimeTeardown(): void {
   const runtimeWindow: Window & {
     __lootlogGameClientRuntime?: { dispose: () => void };
   } = window;
+
   const failedRuntime = runtimeWindow.__lootlogGameClientRuntime;
+
   if (!failedRuntime) return;
 
   queueMicrotask(() => {

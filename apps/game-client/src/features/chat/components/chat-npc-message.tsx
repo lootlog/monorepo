@@ -42,6 +42,7 @@ export const ChatNpcMessage: FC<ChatNpcMessageProps> = ({
 }) => {
   const { t } = useTranslation("chat");
   const memberColor = useMemberColor(member);
+
   if (!message.npc || !guildName) return null;
 
   const location = getChatNpcLocation(message.npc);

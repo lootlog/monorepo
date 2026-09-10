@@ -39,9 +39,11 @@ describe("settings manifest persistence references", () => {
 
   it("exposes sounds as a standalone domain after notifications", () => {
     const domainIds = SETTINGS_MANIFEST.map((domain) => domain.id);
+
     const notifications = SETTINGS_MANIFEST.find(
       (domain) => domain.id === "notifications",
     );
+
     const sounds = SETTINGS_MANIFEST.find((domain) => domain.id === "sounds");
 
     expect(domainIds).toEqual([
@@ -112,6 +114,7 @@ describe("settings manifest persistence references", () => {
     );
 
     expect(settingKeys.length).toBeGreaterThan(0);
+
     for (const settingKey of settingKeys) {
       expect(catalogHasKey(settingKey), settingKey).toBe(true);
     }

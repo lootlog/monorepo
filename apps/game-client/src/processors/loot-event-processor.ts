@@ -55,17 +55,21 @@ export class LootEventProcessor {
         ...debugContext,
         reason: "missing-battle-warriors",
       });
+
       return;
     }
 
     lootStore.setLastLootId(null);
+
     if (!game) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "missing-runtime-game-snapshot",
       });
+
       return;
     }
+
     this.createLootFromBattle(event, debugContext, game);
   }
 
@@ -82,12 +86,14 @@ export class LootEventProcessor {
       event,
       eventNpcDelIds,
     });
+
     if (!dialogStore.npcContext) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         eventNpcDelIds,
         reason: "missing-dialog-npc-context",
       });
+
       return;
     }
 
@@ -95,10 +101,12 @@ export class LootEventProcessor {
     lootStore.setLastLootId(null);
 
     const { npcContext } = dialogStore;
+
     const npc =
       npcContext.npc ??
       ingress?.npcsById[npcContext.npcId] ??
       useNpcsStore.getState().getNpc(npcContext.npcId);
+
     const resolutionSource: DialogNpcContextSource = npcContext.npc
       ? npcContext.source
       : "fallback-lookup";
@@ -111,6 +119,7 @@ export class LootEventProcessor {
         reason: "missing-dialog-npc-snapshot",
         resolutionSource,
       });
+
       return;
     }
 
@@ -119,8 +128,10 @@ export class LootEventProcessor {
         ...debugContext,
         reason: "missing-runtime-game-snapshot",
       });
+
       return;
     }
+
     this.createLootFromDialog(event, debugContext, npc, resolutionSource, game);
   }
 
@@ -130,29 +141,36 @@ export class LootEventProcessor {
     game: RuntimeGameSnapshot,
   ): void {
     const loot = event.loot;
+
     if (!loot) return;
+
     if (!event.f) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "missing-fight-data",
       });
+
       return;
     }
 
     const loots = getLoot(event.item, loot);
+
     if (!loots.length) {
       logLootCreateDebug("skipped", {
         ...debugContext,
         reason: "empty-parsed-loots",
       });
+
       return;
     }
 
     const battleStore = useBattleStore.getState();
+
     const { npcs, party } = getBattleParticipants(
       battleStore.battleWarriors,
       game,
     );
+
     const { hero, map } = game;
 
     const payload = {
@@ -197,10 +215,12 @@ export class LootEventProcessor {
   ) {
     if (!loots.some((item) => getItemRarity(item.stat ?? "") === "legendary"))
       return {};
+
     const primary = npcs.reduce<Npc | undefined>(
       (current, npc) => (!current || npc.wt > current.wt ? npc : current),
       undefined,
     );
+
     if (
       !primary ||
       getNpcTypeByWt(NpcType, primary.wt, primary.prof, primary.type) !==
@@ -210,6 +230,7 @@ export class LootEventProcessor {
 
     const others = useOthersStore.getState();
     const currentGame = useGameStore.getState();
+
     if (
       others.status !== "ready" ||
       currentGame.status !== "ready" ||
@@ -220,9 +241,11 @@ export class LootEventProcessor {
 
     const mapPlayersSnapshot: MapPlayerSnapshot[] = [];
     const seen = new Set<number>();
+
     for (const character of [game.hero, ...Object.values(others.othersById)]) {
       const accountId = Number(character.accountId);
       const characterId = Number(character.characterId);
+
       if (
         !Number.isSafeInteger(accountId) ||
         accountId <= 0 ||
@@ -231,6 +254,7 @@ export class LootEventProcessor {
         !character.name.trim()
       )
         return {};
+
       if (seen.has(characterId)) continue;
       seen.add(characterId);
       mapPlayersSnapshot.push({
@@ -241,6 +265,7 @@ export class LootEventProcessor {
         icon: character.icon || null,
       });
     }
+
     return { mapPlayersSnapshot };
   }
 
@@ -252,9 +277,11 @@ export class LootEventProcessor {
     game: RuntimeGameSnapshot,
   ): void {
     const loot = event.loot;
+
     if (!loot) return;
 
     const loots = getLoot(event.item, loot);
+
     if (!loots.length) {
       const requestedNpcIds = (event.npcs_del ?? []).map((npc) => npc.id);
       logLootCreateDebug("skipped", {
@@ -264,10 +291,12 @@ export class LootEventProcessor {
         reason: "empty-parsed-loots",
         resolutionSource,
       });
+
       return;
     }
 
     const mapName = game.map.name;
+
     const npcs: Npc[] = [
       {
         icon: npcData.icon,
@@ -286,6 +315,7 @@ export class LootEventProcessor {
     ];
 
     const { hero } = game;
+
     const players: PartyMember[] = [
       {
         id: Number(hero.characterId),

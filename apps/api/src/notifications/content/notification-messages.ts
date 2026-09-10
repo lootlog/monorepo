@@ -13,13 +13,19 @@ export const DEFAULT_SCHEDULED_MESSAGE_TEMPLATE = [
 ].join("\n");
 
 export const TIMER_NOTIFICATION_TITLE = "Nadchodzacy spawn";
+
 export const SCHEDULED_MESSAGE_TITLE = "Zaplanowana wiadomosc";
+
 export const GENERIC_NOTIFICATION_TITLE = "Powiadomienie";
+
 export const SPAWN_NOTIFICATION_FALLBACK_NAME = "Powiadomienie o spawnie";
+
 export const TIMER_BEFORE_SPAWN_LABEL = "Przypomnienie przed spawnem";
+
 export const SCHEDULED_MESSAGE_DEFAULT_NAME = "Zaplanowana wiadomosc";
 
 export const FALLBACK_NPC_NAME = "Wybrany NPC";
+
 export const FALLBACK_WORLD_NAME = "Wybrany swiat";
 
 export const WATCHED_ITEM_DROPPED_TITLE = "Obserwowany item wypadł!";

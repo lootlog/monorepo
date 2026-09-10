@@ -5,6 +5,7 @@ export const NpcRoutingTierSchema = Schema.Literals([
   "titans",
   "heroes",
 ]);
+
 export type NpcRoutingTier = typeof NpcRoutingTierSchema.Type;
 
 export const NpcRoutingDataSchema = Schema.Struct({
@@ -16,4 +17,5 @@ export const NpcRoutingDataSchema = Schema.Struct({
     Schema.NullOr(Schema.Union([Schema.Number, Schema.String])),
   ),
 });
+
 export type NpcRoutingData = typeof NpcRoutingDataSchema.Type;

@@ -55,6 +55,7 @@ export const NpcKillersPage: React.FC = () => {
     handlePreviousPage,
     handleNextPage,
   } = useNpcKillersPage();
+
   if (isLoading) {
     return <StatsDetailLoading entity="npc" />;
   }
@@ -165,6 +166,7 @@ export const NpcKillersPage: React.FC = () => {
                   <div className="grid gap-2 p-3 md:hidden">
                     {paginatedKillers.map((killer, index) => {
                       const globalIndex = cursor + index;
+
                       return (
                         <Link
                           key={killer.memberId}
@@ -233,6 +235,7 @@ export const NpcKillersPage: React.FC = () => {
                     <TableBody>
                       {paginatedKillers.map((killer, index) => {
                         const globalIndex = cursor + index;
+
                         return (
                           <TableRow
                             key={killer.memberId}

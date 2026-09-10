@@ -26,27 +26,33 @@ const remoteSettings: TimerSettingsResponseDto = {
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-02T00:00:00.000Z",
 };
+
 beforeEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
   localStorage.removeItem(TIMERS_STORAGE_KEY);
 });
+
 const mountSync = (remote: TimerSettingsResponseDto) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
+
   queryClient.setQueryData(
     getTimerSettingsControllerGetGlobalSettingsQueryKey(),
     remote,
   );
+
   const Wrapper = ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
   const view = renderHook(useTimerSettingsSync, { wrapper: Wrapper });
   onTestFinished(() => {
     view.unmount();
     queryClient.clear();
   });
 };
+
 it("applies partial server settings without losing defaults or extension fields", async () => {
   const initial = useTimersStore.getState();
   mountSync(remoteSettings);
@@ -70,6 +76,7 @@ it("applies partial server settings without losing defaults or extension fields"
     Date.parse(remoteSettings.updatedAt),
   );
 });
+
 it("keeps valid local settings when individual server documents are malformed", async () => {
   useTimersStore.setState({
     timersColors: { Tanroth: "blue" },
@@ -96,6 +103,7 @@ it("keeps valid local settings when individual server documents are malformed", 
     "guild-1": ["timer-2"],
   });
 });
+
 it("rehydrates partial legacy settings, preserves extensions on write and protects live actions", async () => {
   const initial = useTimersStore.getState();
   localStorage.setItem(

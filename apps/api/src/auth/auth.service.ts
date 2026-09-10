@@ -16,18 +16,23 @@ import {
 } from "#src/shared/cache";
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
+
 const IdpTokenSuccess = Schema.Struct({
   accessToken: Schema.String,
   expiresIn: Schema.Number,
   scopes: Schema.mutable(Schema.Array(Schema.String)),
 });
+
 const IdpTokenResponseJson = Schema.fromJsonString(
   Schema.Union([IdpTokenSuccess, Schema.Struct({ error: Schema.String })]),
 );
+
 const decodeIdpTokenResponse = Schema.decodeUnknownSync(IdpTokenResponseJson);
+
 const cachedIdpTokenCodec = makeJsonCodec(IdpTokenSuccess);
 
 type IdpToken = Extract<GetIdpTokenResponse, { accessToken: string }>;
+
 type AuthServiceError =
   | AccountNotFoundError
   | AuthBadRequestError
@@ -67,6 +72,7 @@ export class AuthService {
   ): Effect.Effect<GetIdpTokenResponse, AuthServiceError> {
     return Effect.gen({ self: this }, function* () {
       const url = `${this.authServiceUrl}/auth/idp-token`;
+
       const response = yield* outboundHttpRequest(this.httpClient, {
         adapter: "auth-idp-token",
         body: JSON.stringify({ userId, discordId }),
@@ -82,8 +88,10 @@ export class AuthService {
         timeout: `${DEFAULT_REQUEST_TIMEOUT} millis`,
         url,
       });
+
       const responseBody = new TextDecoder().decode(response.body);
       let data: GetIdpTokenResponse | undefined;
+
       if (responseBody) {
         try {
           data = decodeIdpTokenResponse(responseBody);
@@ -91,6 +99,7 @@ export class AuthService {
           data = undefined;
         }
       }
+
       if (response.status < 200 || response.status >= 300) {
         return yield* Effect.fail(
           new AuthHttpResponseError({
@@ -105,6 +114,7 @@ export class AuthService {
           level: "error",
           message: `Empty response from auth service for user ${userId}`,
         });
+
         return yield* Effect.fail(
           new AuthServiceUnavailableError("Empty response from auth service"),
         );
@@ -122,6 +132,7 @@ export class AuthService {
   ): Effect.Effect<IdpToken, AuthServiceError> {
     return Effect.gen({ self: this }, function* () {
       const cacheKey = getAuthTokenCacheKey(userId, discordId);
+
       const cached = yield* Effect.tryPromise(() =>
         this.redisService.getJson(cacheKey, cachedIdpTokenCodec),
       );
@@ -145,6 +156,7 @@ export class AuthService {
             level: "warn",
             message: `Token error for user ${userId}: ${response.error}`,
           });
+
           return yield* Effect.fail(new TokenExpiredError());
         }
 
@@ -152,6 +164,7 @@ export class AuthService {
           level: "error",
           message: `Unknown error from auth service for user ${userId}: ${response.error}`,
         });
+
         return yield* Effect.fail(
           new AuthServiceUnavailableError(
             `Auth service error: ${response.error}`,
@@ -209,6 +222,7 @@ export class AuthService {
         level: "warn",
         message: `Account not found for user ${userId}`,
       });
+
       return new AccountNotFoundError();
     }
 
@@ -217,6 +231,7 @@ export class AuthService {
         level: "warn",
         message: `Token error for user ${userId}`,
       });
+
       return new TokenExpiredError();
     }
 
@@ -232,6 +247,7 @@ export class AuthService {
         level: "error",
         message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
       });
+
       return new AuthBadRequestError(errorMessage);
     }
 
@@ -240,6 +256,7 @@ export class AuthService {
       level: "error",
       message: `HTTP request failed for user ${userId}: ${errorMessage}`,
     });
+
     return new AuthServiceUnavailableError(
       `Failed to connect to auth service: ${errorMessage}`,
     );
@@ -257,6 +274,7 @@ export class AuthService {
       message: `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
       stack: errorStack,
     });
+
     return new AuthServiceUnavailableError(
       `Failed to fetch IDP token: ${errorMessage}`,
     );

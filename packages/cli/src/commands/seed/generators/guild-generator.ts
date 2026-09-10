@@ -71,6 +71,7 @@ export class GuildGenerator {
         AVAILABLE_PERMISSIONS[
           crypto.randomInt(0, AVAILABLE_PERMISSIONS.length)
         ];
+
       if (perm && !permissions.includes(perm)) {
         permissions.push(perm);
       }
@@ -98,11 +99,13 @@ export class GuildGenerator {
       0,
       Math.min(3, availableRoleIds.length + 1),
     );
+
     const roleIds: string[] = [];
 
     for (let i = 0; i < roleCount; i++) {
       const roleId =
         availableRoleIds[crypto.randomInt(0, availableRoleIds.length)];
+
       if (roleId && !roleIds.includes(roleId)) {
         roleIds.push(roleId);
       }
@@ -126,6 +129,7 @@ export class GuildGenerator {
     const id = uuidv7();
     const name = generate({ exactly: crypto.randomInt(2, 4), join: " " });
     const ownerId = uuidv7();
+
     const vanityUrl =
       crypto.randomInt(0, 10) > 5 ? generate({ exactly: 1 })[0] : undefined;
 
@@ -133,6 +137,7 @@ export class GuildGenerator {
       rolesPerGuild.min,
       rolesPerGuild.max + 1,
     );
+
     const roles = Array.from({ length: roleCount }, (_, i) =>
       this.generateRole(i),
     );
@@ -141,7 +146,9 @@ export class GuildGenerator {
       membersPerGuild.min,
       membersPerGuild.max + 1,
     );
+
     const roleIds = roles.map((r) => r.id);
+
     const members = Array.from({ length: memberCount }, () =>
       this.generateMember(roleIds),
     );

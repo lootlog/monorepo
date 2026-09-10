@@ -21,14 +21,17 @@ export type NotificationStoredJob = Omit<
   typeof notificationJobTable.$inferSelect,
   "payloadSnapshot"
 > & { readonly payloadSnapshot: JsonValue };
+
 export type NotificationStoredRule = Omit<
   typeof notificationRuleTable.$inferSelect,
   "filters"
 > & { readonly filters: JsonValue | null };
+
 export type NotificationStoredTarget = Omit<
   typeof notificationTargetTable.$inferSelect,
   "metadata"
 > & { readonly metadata: JsonValue | null };
+
 export type NotificationRuleWithTargets = NotificationStoredRule & {
   readonly targets: Array<{
     readonly ruleId: number;
@@ -37,10 +40,12 @@ export type NotificationRuleWithTargets = NotificationStoredRule & {
     readonly target: NotificationStoredTarget;
   }>;
 };
+
 export type NotificationJobWithRelations = NotificationStoredJob & {
   readonly rule: NotificationStoredRule;
   readonly target: NotificationStoredTarget;
 };
+
 export type NotificationDeliveryUpdate = {
   readonly jobId: string;
   readonly targetId: number;
@@ -60,6 +65,7 @@ const mapJob = (
   ...job,
   payloadSnapshot: job.payloadSnapshot,
 });
+
 const mapRule = (
   rule: typeof notificationRuleTable.$inferSelect,
 ): NotificationStoredRule => ({
@@ -90,6 +96,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.mapError(failure("notifications.jobStore.findWithRelations")),
         Effect.map((rows): NotificationJobWithRelations | null => {
           const row = rows[0];
+
           return row
             ? {
                 ...mapJob(row.job),
@@ -142,6 +149,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
               updatedAt: new Date(yield* Clock.currentTimeMillis),
             })
             .where(eq(notificationTargetTable.id, options.targetId));
+
           const job = transaction
             .update(notificationJobTable)
             .set({
@@ -149,6 +157,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
               updatedAt: new Date(yield* Clock.currentTimeMillis),
             })
             .where(eq(notificationJobTable.id, options.jobId));
+
           if (options.targetFirst ?? true) {
             yield* target;
             yield* job;
@@ -194,9 +203,12 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         .from(notificationRuleTable)
         .where(eq(notificationRuleTable.id, ruleId))
         .limit(1);
+
       const rule = rows[0];
+
       if (!rule) return null;
       const targets = yield* targetsForRule(ruleId);
+
       return {
         ...mapRule(rule),
         targets,
@@ -272,6 +284,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         )
         .orderBy(desc(notificationJobTable.updatedAt))
         .offset(offset);
+
       if (stale.length === 0) return;
       yield* database.delete(notificationJobTable).where(
         inArray(

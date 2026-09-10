@@ -45,6 +45,7 @@ export const createTimerViewFixture = (timers: Timer[] = []) => {
   gameColumn.innerHTML =
     '<div class="inner-wrapper"><div class="right-main-column-wrapper"><div class="bottom-wrapper"></div></div></div>';
   document.body.append(gameColumn);
+
   return {
     ...fixture,
     gameColumn,

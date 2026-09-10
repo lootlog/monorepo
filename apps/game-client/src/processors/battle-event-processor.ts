@@ -26,13 +26,19 @@ const TRACKABLE_NPC_TYPES: ReadonlySet<NpcType> = new Set([
   NpcType.COLOSSUS,
   NpcType.TITAN,
 ]);
+
 const BATTLE_REPLAY_WINDOW_MS = 10_000;
 
 type BattleStoreState = ReturnType<typeof useBattleStore.getState>;
+
 type BattleCapture = ReturnType<BattleStoreState["getCaptureSnapshot"]>;
+
 type BattleData = NonNullable<GameEvent["f"]>;
+
 type KillIntent = Parameters<typeof createKill>[0];
+
 type BattleIntent = Parameters<typeof createBattle>[0];
+
 type KillResolution = {
   intent: KillIntent | null;
   lastKillHash: string | undefined;
@@ -60,13 +66,16 @@ const showBattleCreatedToast = (battleId: string) => {
 
 const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
   const legacyHpp = parseNumericHpValue(warrior.hpp);
+
   if (legacyHpp !== null) return legacyHpp <= 0;
 
   const hpData = warrior.hp;
   const nestedHpp = parseNumericHpValue(hpData?.hpp);
+
   if (nestedHpp !== null) return nestedHpp <= 0;
 
   const currentHp = parseNumericHpValue(hpData?.cur);
+
   if (currentHp !== null) return currentHp <= 0;
 
   return false;
@@ -92,6 +101,7 @@ const getNpcBattleSummary = (warriors: BattleWarriorsWithAccountId) => {
     wt: number;
     type: number;
   }> = [];
+
   let hasNpcInBattle = false;
   let topNpc: DeadNpc | null = null;
 
@@ -150,6 +160,7 @@ export class BattleEventProcessor {
     const startsBattle = event.f.init === "1";
 
     this.beginBattleIfNeeded(startsBattle, battleStore);
+
     const battleWarriors = this.resolveBattleWarriors({
       battleData: event.f,
       currentWarriors: stateAtIngress.battleWarriors,
@@ -173,11 +184,13 @@ export class BattleEventProcessor {
         battleState: startsBattle ? "in-battle" : undefined,
         battleWarriors: startsBattle || event.f.w ? battleWarriors : undefined,
       });
+
       return;
     }
 
     const endingGeneration = this.battleGeneration;
     this.finalizingGeneration = endingGeneration;
+
     const capture = battlePanelStore.isBattleCollectionEnabled
       ? battleStore.getCaptureSnapshot()
       : null;
@@ -189,6 +202,7 @@ export class BattleEventProcessor {
     try {
       const { deadNpcs, hasNpcInBattle, topNpc } =
         getNpcBattleSummary(battleWarriors);
+
       const pendingKillResult = this.resolveKillIntent({
         deadNpcs,
         hasNpcInBattle,
@@ -196,9 +210,11 @@ export class BattleEventProcessor {
         lastKillHash: stateAtIngress.lastKillHash,
         topNpc,
       });
+
       const killResult = isPromise(pendingKillResult)
         ? await pendingKillResult
         : pendingKillResult;
+
       const battleResult = await this.resolveBattleIntent({
         capture,
         hasNpcInBattle,
@@ -247,6 +263,7 @@ export class BattleEventProcessor {
     startsBattle: boolean;
   }): BattleWarriorsWithAccountId {
     let warriors = params.startsBattle ? {} : params.currentWarriors;
+
     if (!params.battleData.w) return warriors;
 
     warriors = mergeBattleWarriorPatches(
@@ -255,16 +272,20 @@ export class BattleEventProcessor {
       params.ingress,
     );
     this.observeBattleTeams(params.battleData.w);
+
     return warriors;
   }
 
   private observeBattleTeams(warriors: NonNullable<BattleData["w"]>): void {
     if (this.hasMultipleTeams) return;
+
     for (const warrior of Object.values(warriors)) {
       if (warrior.team === undefined) continue;
       this.observedTeams.add(warrior.team);
+
       if (this.observedTeams.size > 1) {
         this.hasMultipleTeams = true;
+
         return;
       }
     }
@@ -280,12 +301,14 @@ export class BattleEventProcessor {
     if (!params.hasNpcInBattle || !params.topNpc) {
       return { intent: null, lastKillHash: params.lastKillHash };
     }
+
     const npcType = getNpcTypeByWt(
       NpcType,
       params.topNpc.wt,
       params.topNpc.prof,
       params.topNpc.type,
     );
+
     if (!TRACKABLE_NPC_TYPES.has(npcType)) {
       return { intent: null, lastKillHash: params.lastKillHash };
     }
@@ -313,11 +336,15 @@ export class BattleEventProcessor {
     }
 
     const game = params.ingress?.game ?? useGameStore.getState().game;
+
     if (!game) return { intent: null, lastKillHash: killHash };
+
     if (!params.topNpc) {
       return { intent: null, lastKillHash: killHash };
     }
+
     const { type: _, ...npcWithoutType } = params.topNpc;
+
     return {
       intent: {
         world: game.world,
@@ -341,23 +368,30 @@ export class BattleEventProcessor {
     if (!params.capture) {
       return { intent: null, lastBattleHash: params.lastBattleHash };
     }
+
     if (params.capture.overflowed) {
       this.warnCaptureOverflow();
+
       return { intent: null, lastBattleHash: params.lastBattleHash };
     }
 
     const game = params.ingress?.game ?? useGameStore.getState().game;
+
     if (!game) return { intent: null, lastBattleHash: params.lastBattleHash };
 
     const { accountId, characterId } = game.hero;
     const { world } = game;
+
     const battleHash = await createSHA256Hash(
       JSON.stringify(params.capture.turns),
     );
+
     const events = mapBattleEventsToPayload(params.capture.events);
+
     if (!events || params.hasNpcInBattle || !this.hasMultipleTeams) {
       return { intent: null, lastBattleHash: battleHash };
     }
+
     const submissionId = await createSHA256Hash(
       JSON.stringify({
         accountId,
@@ -366,6 +400,7 @@ export class BattleEventProcessor {
         world,
       }),
     );
+
     return {
       intent: { accountId, characterId, submissionId, events, world },
       lastBattleHash: battleHash,
@@ -384,8 +419,10 @@ export class BattleEventProcessor {
     intent: BattleIntent | null,
   ): BattleIntent | null {
     if (!intent) return null;
+
     if (this.hasRecentBattleReplayKey(intent.submissionId)) return null;
     this.recentBattleReplayKeys.set(intent.submissionId, Date.now());
+
     return intent;
   }
 
@@ -398,6 +435,7 @@ export class BattleEventProcessor {
         console.warn("[BattleEventProcessor] Failed to create kill:", error);
       });
     }
+
     if (battleIntent) {
       createBattle(battleIntent)
         .then((response) => {
@@ -414,11 +452,13 @@ export class BattleEventProcessor {
 
   private hasRecentBattleReplayKey(battleReplayKey: string): boolean {
     const now = Date.now();
+
     for (const [key, observedAt] of this.recentBattleReplayKeys) {
       if (now - observedAt >= BATTLE_REPLAY_WINDOW_MS) {
         this.recentBattleReplayKeys.delete(key);
       }
     }
+
     return this.recentBattleReplayKeys.has(battleReplayKey);
   }
 }

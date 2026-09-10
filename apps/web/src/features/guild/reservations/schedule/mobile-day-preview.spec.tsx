@@ -13,6 +13,7 @@ const getHourBackground = (container: HTMLElement, hourIndex: number) => {
   const hourRows = container.querySelectorAll(".absolute.inset-x-0.flex");
   const background = hourRows[hourIndex]?.lastElementChild;
   expect(background).toBeInstanceOf(HTMLDivElement);
+
   return background;
 };
 

@@ -42,6 +42,7 @@ export const NotificationTargetCard = ({
   const { t } = useTranslation();
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const deleteTarget = useNotificationsGuildControllerDeleteGuildTarget<
     unknown,
     GuildNotificationCacheSnapshot | undefined
@@ -68,6 +69,7 @@ export const NotificationTargetCard = ({
       ...getGuildNotificationMutationCallbacks(queryClient, guildId),
     },
   });
+
   const isActionDisabled = actionsDisabled || deleteTarget.isPending;
 
   const handleDelete = async () => {
@@ -79,6 +81,7 @@ export const NotificationTargetCard = ({
       );
       throw error;
     }
+
     try {
       await deleteTarget.mutateAsync({
         pathParams: { guildId, targetId: target.id },

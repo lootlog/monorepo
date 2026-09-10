@@ -71,10 +71,12 @@ interface MemberServicesValue {
   readonly diagnostics: DiscordSyncDiagnosticsService;
   readonly sync: MemberSync;
 }
+
 export class MemberServices extends Context.Service<
   MemberServices,
   MemberServicesValue
 >()("@lootlog/api/http-api/MemberServices") {}
+
 export const memberServicesLive = Layer.effect(
   MemberServices,
   Effect.gen(function* () {
@@ -86,6 +88,7 @@ export const memberServicesLive = Layer.effect(
     const fibers = yield* FiberSet.make<unknown, unknown>();
     const runPromise = yield* FiberSet.runtimePromise(fibers)<never>();
     const queueConnection = { url: redisUrl(config.redis) };
+
     const adapter = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
 
@@ -95,20 +98,26 @@ export const memberServicesLive = Layer.effect(
           connection: queueConnection,
           prefix: "{bull}",
         });
+
         const memberBulkRefreshQueue = new Queue(MEMBER_BULK_REFRESH_QUEUE, {
           connection: queueConnection,
           prefix: "{bull}",
         });
+
         const memberStore = makeMemberStore(database);
+
         const diagnostics = new DiscordSyncDiagnosticsService(
           applicationLogger,
           redis,
         );
+
         const rateLimiter = new DiscordRateLimiterService(
           applicationLogger,
           redis,
         );
+
         const redlock = new RedlockService(redis);
+
         const restClientFactory = new DiscordRestClientFactory(
           new AuthService(
             applicationLogger,
@@ -119,6 +128,7 @@ export const memberServicesLive = Layer.effect(
           ),
           runPromise,
         );
+
         const userGuildsClient = new DiscordUserGuildsClient(
           applicationLogger,
           redis,
@@ -128,6 +138,7 @@ export const memberServicesLive = Layer.effect(
           restClientFactory,
           config.environment,
         );
+
         const guildMemberClient = new DiscordGuildMemberClient(
           applicationLogger,
           redis,
@@ -137,12 +148,15 @@ export const memberServicesLive = Layer.effect(
           restClientFactory,
           config.environment,
         );
+
         userGuildsClient.initialize();
         guildMemberClient.initialize();
+
         const discord = makeDiscordOperations(
           userGuildsClient,
           guildMemberClient,
         );
+
         const removal = makeMemberRemoval(database, {
           clearMemberCaches: (member) =>
             Effect.all(
@@ -194,14 +208,17 @@ export const memberServicesLive = Layer.effect(
               ),
             }),
         });
+
         const nextRefreshAt = (userId: string) =>
           adapter(() =>
             rateLimiter.getNextAvailableAtForUser(userId, "guild-member"),
           );
+
         const recordMetric = (options: {
           readonly outcome: "delayed" | "queued" | "rate_limited";
           readonly reason: string;
         }) => adapter(() => diagnostics.recordMemberRefreshMetric(options));
+
         const scheduler = makeMemberRefreshScheduler(
           applicationLogger,
           memberRefreshQueue,
@@ -215,6 +232,7 @@ export const memberServicesLive = Layer.effect(
               adapter(() => redis.eval(script, keys, args)),
           },
         );
+
         const memberDiscordSync = makeMemberSync(
           applicationLogger,
           memberStore,
@@ -253,11 +271,13 @@ export const memberServicesLive = Layer.effect(
               ),
           },
         );
+
         const memberDiscordRefresh = makeMemberRefresh(scheduler, {
           nextRefreshAt,
           recordMetric: (options) => recordMetric(options),
           syncMember: memberDiscordSync.syncMemberFromDiscord,
         });
+
         const refreshMember = (options: {
           readonly discordId: string;
           readonly guildId: string;
@@ -267,7 +287,9 @@ export const memberServicesLive = Layer.effect(
               options.discordId,
               options.guildId,
             );
+
             if (!member?.globalUserId) return null;
+
             const result =
               yield* memberDiscordRefresh.refreshGuildMemberWithinBudget({
                 discordId: options.discordId,
@@ -276,10 +298,12 @@ export const memberServicesLive = Layer.effect(
                 priority: MEMBER_REFRESH_PRIORITY.MANUAL,
                 reason: "bulk-refresh",
               });
+
             return result.member
               ? { ...result.member, refreshQueued: result.refreshQueued }
               : null;
           });
+
         return {
           database,
           queues: [memberRefreshQueue, memberBulkRefreshQueue] as const,
@@ -304,6 +328,7 @@ export const memberServicesLive = Layer.effect(
     );
   }),
 );
+
 type MemberPublishedEvents = {
   [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: Parameters<
     MemberCommandsPorts["publishMemberRemoved"]
@@ -312,15 +337,19 @@ type MemberPublishedEvents = {
     MemberCommandsPorts["publishRefreshJobUpdate"]
   >[0];
 };
+
 export const membersData = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
+
     const { refresh, diagnostics, discord, bulkRefreshQueue } =
       yield* MemberServices;
+
     const promise = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
+
     const publish = <Key extends keyof MemberPublishedEvents>(
       routingKey: Key,
       payload: MemberPublishedEvents[Key],
@@ -330,6 +359,7 @@ export const membersData = Layer.unwrap(
         routingKey,
         content: new TextEncoder().encode(JSON.stringify(payload)),
       });
+
     return makeMembersDataLayer(
       {
         refreshGuildMember: refresh.refreshGuildMemberWithinBudget,
@@ -378,10 +408,12 @@ export const membersData = Layer.unwrap(
     );
   }),
 );
+
 export const memberReadData = Layer.unwrap(
   Effect.map(ApiRedis, (redis) => {
     const attempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (error) => error });
+
     return makeMemberReadDataLayer({
       getJson: (key, schema) =>
         attempt(() => redis.getJson(key, makeJsonCodec(schema))),

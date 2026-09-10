@@ -6,6 +6,7 @@ import type {
 import type { SessionData } from "#src/realtime/session";
 
 type Topic = typeof RealtimeLogicalTopic.Type;
+
 type Scope = typeof SubscriptionScope.Type;
 
 const TOPIC_PERMISSION = new Map<Topic, Permission>([
@@ -30,7 +31,9 @@ const hasPermission = (
   const guild = session.guilds.find(
     (entry) => entry.guild.id === organizationId,
   );
+
   if (!guild) return false;
+
   return (
     guild.guild.ownerId === session.discordId ||
     guild.roles.some(
@@ -44,16 +47,20 @@ const hasPermission = (
 export const canSubscribe = (session: SessionData, scope: Scope): boolean => {
   if (!session.joined) return false;
   const organizationId = scope.organizationId;
+
   if (!organizationId)
     return scope.topic === "party.ready-room" && !session.apiKeyAccess;
+
   if (
     session.apiKeyAccess &&
     !session.apiKeyAccess.organizationIds.includes(organizationId)
   )
     return false;
   const permission = TOPIC_PERMISSION.get(scope.topic);
+
   if (!permission)
     return hasPermission(session, organizationId, Permission.LOOTLOG_ACCESS);
+
   return hasPermission(session, organizationId, permission);
 };
 
@@ -72,13 +79,17 @@ export const organizationIds = (session: SessionData): string[] =>
 
 export const defaultScopes = (session: SessionData): Scope[] => {
   const scopes: Scope[] = [];
+
   for (const organizationId of organizationIds(session)) {
     for (const topic of TOPIC_PERMISSION.keys()) {
       if (topic === "map.air-tags") continue;
       const scope = { topic, organizationId } satisfies Scope;
+
       if (canSubscribe(session, scope)) scopes.push(scope);
     }
   }
+
   if (!session.apiKeyAccess) scopes.push({ topic: "party.ready-room" });
+
   return scopes;
 };

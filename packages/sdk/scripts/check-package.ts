@@ -4,17 +4,22 @@ import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const sdk = resolve(import.meta.dirname, "..");
+
 const consumer = mkdtempSync(resolve(tmpdir(), "lootlog-sdk-consumer-"));
+
 function run(command: string, args: string[], cwd: string) {
   const result = spawnSync(command, args, { cwd, stdio: "inherit" });
+
   if (result.status !== 0)
     throw new Error(`Packed consumer check failed: ${command}`);
 }
+
 for (const name of ["sdk", "game-client-api"]) {
   const cwd = resolve(sdk, "..", name);
   run(process.execPath, ["run", "build"], cwd);
   run("npm", ["pack", "--ignore-scripts", "--pack-destination", consumer], cwd);
 }
+
 writeFileSync(
   resolve(consumer, "package.json"),
   JSON.stringify({
@@ -27,7 +32,9 @@ writeFileSync(
     },
   }),
 );
+
 run(process.execPath, ["install", "--ignore-scripts"], consumer);
+
 writeFileSync(
   resolve(consumer, "check.ts"),
   `
@@ -56,7 +63,9 @@ const version: LootlogGameClientApi['apiVersion'] = 1;
 assert.equal(version,1);
 `,
 );
+
 run(process.execPath, ["check.ts"], consumer);
+
 run(
   resolve(consumer, "node_modules/.bin/tsc"),
   [
@@ -74,4 +83,5 @@ run(
   ],
   consumer,
 );
+
 process.stdout.write(`Packed consumer verified: ${consumer}\n`);

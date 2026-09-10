@@ -43,8 +43,11 @@ export const getBackgroundColor = (
   npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
 ) => {
   const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+
   if (highlight && npcColors) return npcColors.background;
+
   if (!highlight || !key || !isNotificationColorKey(key)) return "transparent";
+
   return BACKGROUND_COLORS_BY_KEY[key];
 };
 
@@ -54,8 +57,11 @@ export const getTextColor = (
   npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
 ) => {
   const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+
   if (highlight && npcColors) return npcColors.text;
+
   if (!highlight || !key || !isNotificationColorKey(key)) return "white";
+
   return TEXT_COLORS_BY_KEY[key];
 };
 
@@ -65,9 +71,12 @@ export const getBorderColor = (
   npcTypeColors: NpcTypeColors = DEFAULT_NPC_TYPE_COLORS,
 ) => {
   const npcColors = getNpcSurfaceColors(key, npcTypeColors);
+
   if (highlight && npcColors) return npcColors.border;
+
   if (!highlight || !key || !isNotificationColorKey(key))
     return "rgba(156, 163, 175, 1)";
+
   return TEXT_COLORS_BY_KEY[key];
 };
 

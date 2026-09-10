@@ -49,6 +49,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
     if (nextOpen) {
       savedColor.current = color;
     }
+
     setColorDraft(color);
     setHexDraft(color);
     onOpenChange(nextOpen);
@@ -58,6 +59,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
     if (!isHexAppearanceColor(nextColor)) {
       setColorDraft(savedColor.current);
       setHexDraft(savedColor.current);
+
       return;
     }
 
@@ -131,6 +133,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
                   commitColor(event.currentTarget.value);
                   event.currentTarget.blur();
                 }
+
                 if (event.key === "Escape") rollbackAndClose();
               }}
               className="ll:text-popover-foreground ll:border-foreground/20 ll:w-28 ll:font-mono ll:uppercase"

@@ -20,6 +20,7 @@ export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const open = useWindowsStore((state) => state["quick-access"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
+
   const buttons: QuickAccessButtonProps[] = [
     {
       id: "create-party-gathering",

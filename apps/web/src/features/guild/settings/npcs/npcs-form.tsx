@@ -44,8 +44,10 @@ const formSchema = z.object({
 export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
   const guildId = useGuildId();
   const queryClient = useQueryClient();
+
   const { mutate: updateGuildLootlogNpc, isPending } =
     useLootlogConfigControllerUpdateNpc();
+
   const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -86,6 +88,7 @@ export const NpcsForm: FC<NpcsFormProps> = ({ npc }) => {
               { guildId },
             );
           }
+
           toast.success(t("settings.npcs.updateSuccess"));
           form.reset(values);
         },

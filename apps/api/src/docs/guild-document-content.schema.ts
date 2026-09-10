@@ -27,6 +27,7 @@ export const GuildDocumentContentSchema = Schema.Record(
   Schema.makeFilter(
     (value) => {
       const root = value.root;
+
       return Schema.is(Schema.Record(Schema.String, JsonValueSchema))(root)
         ? undefined
         : "Invalid Lexical editor state";

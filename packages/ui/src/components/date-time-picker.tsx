@@ -74,19 +74,24 @@ export function DateTimePicker({
   required = false,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false);
+
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     value,
   );
+
   const [timeValue, setTimeValue] = React.useState<string>(
     value ? format(value, "HH:mm") : getCurrentTimeValue(),
   );
 
   React.useEffect(() => {
     setSelectedDate(value);
+
     if (value) {
       setTimeValue(format(value, "HH:mm"));
+
       return;
     }
+
     setTimeValue(getCurrentTimeValue());
   }, [value]);
 
@@ -94,6 +99,7 @@ export function DateTimePicker({
     if (!date) {
       setSelectedDate(undefined);
       onChange?.(undefined);
+
       return;
     }
 
@@ -127,10 +133,12 @@ export function DateTimePicker({
   const disabledDays = getDisabledDays(disabled, min, max);
 
   const selectedDay = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+
   const minTime =
     min && selectedDay === format(min, "yyyy-MM-dd")
       ? format(min, "HH:mm")
       : undefined;
+
   const maxTime =
     max && selectedDay === format(max, "yyyy-MM-dd")
       ? format(max, "HH:mm")

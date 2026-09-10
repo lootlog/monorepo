@@ -30,9 +30,12 @@ import { BattlePanelStatisticsSkeleton } from "./battle-panel-statistics-skeleto
 export function BattlePanelStatistics() {
   const { t } = useTranslation();
   const charactersQuery = useBattlesControllerGetUserCharacters();
+
   const { data: charactersResponse, isLoading: isLoadingCharacters } =
     charactersQuery;
+
   const characters = charactersResponse?.characters;
+
   const [queryState, setQueryState] = useQueryStates(
     battlePanelStatisticsSearchParsers,
   );
@@ -40,6 +43,7 @@ export function BattlePanelStatistics() {
   const currentCharacterId = normalizeBattlePanelCharacterId(
     queryState.characterId,
   );
+
   const period = queryState.period ?? "30d";
   const minLevel = queryState.minLevel;
   const maxLevel = queryState.maxLevel;
@@ -52,6 +56,7 @@ export function BattlePanelStatistics() {
   useEffect(() => {
     if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
       const firstCharacterId = characters[0]?.id;
+
       if (firstCharacterId) {
         void setQueryState({
           characterId: firstCharacterId,
@@ -70,38 +75,49 @@ export function BattlePanelStatistics() {
     ph,
     matchmaking,
   };
+
   const queryOptions = { query: { enabled: Boolean(selectedCharacterId) } };
+
   const professionQuery = useBattlesControllerGetProfessionWinRate(
     statisticsParams,
     queryOptions,
   );
+
   const headToHeadQuery = useBattlesControllerGetHeadToHead(
     { ...statisticsParams, size: 5 },
     queryOptions,
   );
+
   const streakQuery = useBattlesControllerGetCurrentStreak(
     statisticsParams,
     queryOptions,
   );
+
   const durationQuery = useBattlesControllerGetBattleDuration(
     statisticsParams,
     queryOptions,
   );
+
   const phGrowthQuery = useBattlesControllerGetPhGrowth(
     statisticsParams,
     queryOptions,
   );
+
   const combatProfileQuery = useBattlesControllerGetCombatProfile(
     statisticsParams,
     queryOptions,
   );
+
   const { data: professionData, isLoading: isProfessionLoading } =
     professionQuery;
+
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
     headToHeadQuery;
+
   const { data: streakData, isLoading: isStreakLoading } = streakQuery;
   const { data: durationData, isLoading: isDurationLoading } = durationQuery;
   const { data: phGrowthData, isLoading: isPhGrowthLoading } = phGrowthQuery;
+
   const { data: combatProfile, isLoading: isCombatProfileLoading } =
     combatProfileQuery;
 
@@ -120,9 +136,11 @@ export function BattlePanelStatistics() {
     if (charactersQuery.isError) {
       return <StatisticsQueryPanel query={charactersQuery} />;
     }
+
     if (isLoadingCharacters) {
       return <BattlePanelStatisticsSkeleton />;
     }
+
     return <p className="p-3">{t("battlePanel.statistics.empty.title")}</p>;
   }
 

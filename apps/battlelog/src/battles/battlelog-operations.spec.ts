@@ -16,7 +16,9 @@ describe("Battlelog operations", () => {
       timeline: [],
       warriors: [],
     };
+
     const getBattleTimeline = mock(() => Effect.succeed(timeline));
+
     const operations = makeBattlelogOperations(
       { ...unusedBattles, getBattleTimeline },
       unusedBattleAnalytics,
@@ -33,9 +35,11 @@ describe("Battlelog operations", () => {
 
   it("requires ownership before updating battle visibility", async () => {
     const assertBattleOwner = mock(() => Effect.void);
+
     const updateBattle = mock(() =>
       Effect.succeed({ ...createBattleFixture(), warriors: [] }),
     );
+
     const operations = makeBattlelogOperations(
       { ...unusedBattles, assertBattleOwner, updateBattle },
       unusedBattleAnalytics,

@@ -23,6 +23,7 @@ export const ChatNpcHideTypeMenuItem: FC<ChatNpcHideTypeMenuItemProps> = ({
   const { t } = useTranslation(["chat", "common"]);
   const { hiddenNpcTypes, ready, setNpcTypeVisible } = useHiddenNpcTypes();
   const npcType = resolveNpcType(npc);
+
   if (!isChatNpcType(npcType) || hiddenNpcTypes.has(npcType)) return null;
 
   return (

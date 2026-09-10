@@ -18,6 +18,7 @@ const buildTimestampFormatter = new Intl.DateTimeFormat("pl-PL", {
 export const InformationSettingsTab = () => {
   const { t } = useTranslation();
   const notAvailable = t("settings.information.notAvailable");
+
   const metadataRows = [
     {
       label: t("settings.information.versionLabel"),

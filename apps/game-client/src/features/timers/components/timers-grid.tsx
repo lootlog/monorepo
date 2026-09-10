@@ -33,9 +33,11 @@ export const TimersGrid: FC<TimersGridProps> = ({
       staleTime: 1000 * 60 * 5,
     },
   });
+
   const guildIds = getGuildIds(guilds);
   const guildNamesById = getGuildNamesById(guilds);
   const timerGuildIds = [...new Set(timers.map((timer) => timer.guildId))];
+
   const guildPermissionQueries = useQueries({
     queries: timerGuildIds.map((guildId) =>
       getGuildsControllerGetGuildPermissionsQueryOptions(
@@ -52,6 +54,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
       ),
     ),
   });
+
   const accessPoliciesByGuildId = Object.fromEntries(
     timerGuildIds.map((guildId, index) => [
       guildId,
@@ -60,6 +63,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
       }),
     ]),
   );
+
   const hiddenTimerNames = new Set(hiddenTimers);
 
   return (
@@ -72,6 +76,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
       >
         {timers.map((timer) => {
           const isHidden = hiddenTimerNames.has(timer.npc.name);
+
           return (
             <SingleTimer
               key={`${timer.timerKey}-${timer.guildId}`}

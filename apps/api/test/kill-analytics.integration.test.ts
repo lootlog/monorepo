@@ -22,14 +22,19 @@ import {
   userKillAnalyticsSql,
 } from "../src/kills/user-kill-analytics-query.js";
 import type { KillQueryCache } from "../src/kills/kill-query-support.js";
+
 const now = "2026-10-25T02:30:00Z";
+
 const cache: KillQueryCache = { getOrSet: (_key, _schema, load) => load };
+
 const client = new Client({
   connectionString: requireIsolatedTestDatabase(),
 });
+
 const readAnalytics = (world?: string) =>
   Effect.gen(function* () {
     yield* TestClock.setTime(Date.parse(now));
+
     return yield* makeUserKillAnalytics(
       yield* ApiDatabase,
       cache,
@@ -42,9 +47,11 @@ const readAnalytics = (world?: string) =>
     Effect.provide(TestClock.layer()),
     Effect.runPromise,
   );
+
 const readActivity = (world?: string) =>
   Effect.gen(function* () {
     yield* TestClock.setTime(Date.parse(now));
+
     return yield* makeUserKillAnalytics(
       yield* ApiDatabase,
       cache,
@@ -54,6 +61,7 @@ const readActivity = (world?: string) =>
     Effect.provide(TestClock.layer()),
     Effect.runPromise,
   );
+
 const bucket = async (
   date: string,
   kills: number,
@@ -66,12 +74,14 @@ const bucket = async (
     [randomUUID(), user, world, npcId, kills, date],
   );
 };
+
 const totals = async (user = "analytics-owner", extra = 0) => {
   await client.query(
     `insert into "UserKillStats" (id,"userId",world,"npcId","npcName","npcType","npcLvl","totalKills","updatedAt") select gen_random_uuid()::text,"userId",world,"npcId",max("npcName"),'HERO',100,sum("totalKills")+$2,now() from "UserKillStatsBucket" where "userId"=$1 group by "userId",world,"npcId"`,
     [user, extra],
   );
 };
+
 describe("personal kill analytics PostgreSQL boundary", () => {
   beforeAll(async () => {
     await client.connect();
@@ -139,8 +149,10 @@ describe("personal kill analytics PostgreSQL boundary", () => {
   it("returns real missing-history metadata and lightweight exactly-112-date activity", async () => {
     await bucket("2026-10-25T00:00:00Z", 4);
     await totals("analytics-owner", 96);
+
     const result = await Effect.gen(function* () {
       yield* TestClock.setTime(Date.parse(now));
+
       return yield* makeUserKillAnalytics(
         yield* ApiDatabase,
         cache,
@@ -150,6 +162,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
       Effect.provide(TestClock.layer()),
       Effect.runPromise,
     );
+
     expect(result.daily).toHaveLength(112);
     expect(result.meta.untimedKills).toBe(96);
     expect(result.meta.coverage).toBe("partial");
@@ -164,6 +177,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
     );
     await totals();
     await client.query('analyze "UserKillStatsBucket"');
+
     const query = new PgDialect().sqlToQuery(
       userKillAnalyticsSql(
         "analytics-owner",
@@ -172,10 +186,12 @@ describe("personal kill analytics PostgreSQL boundary", () => {
         false,
       ),
     );
+
     const result = await client.query(
       `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query.sql}`,
       query.params,
     );
+
     const explain = Schema.decodeUnknownSync(
       Schema.Array(
         Schema.Struct({
@@ -188,6 +204,7 @@ describe("personal kill analytics PostgreSQL boundary", () => {
         }),
       ),
     )(result.rows)[0]?.["QUERY PLAN"][0];
+
     expect(explain).toBeDefined();
     expect(JSON.stringify(explain?.Plan)).toMatch(/Index|Bitmap/);
     process.stdout.write(

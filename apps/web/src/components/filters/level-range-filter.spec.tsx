@@ -18,13 +18,16 @@ it("commits only the last valid draft and cancels a pending edit on unmount", ()
   vi.useFakeTimers();
   const onMinLevelChange = vi.fn();
   const onMaxLevelChange = vi.fn();
+
   const { unmount } = render(
     <LevelRangeFilter
       onMinLevelChange={onMinLevelChange}
       onMaxLevelChange={onMaxLevelChange}
     />,
   );
+
   const input = screen.getAllByRole("spinbutton")[0];
+
   if (!input) throw new Error("Missing minimum level input");
   fireEvent.change(input, { target: { value: "10" } });
   fireEvent.change(input, { target: { value: "20" } });

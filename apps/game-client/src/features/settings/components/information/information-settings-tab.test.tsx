@@ -7,6 +7,7 @@ const { buildMetadata, buildTimestamp, commitSha } = vi.hoisted(() => ({
   buildTimestamp: "2026-07-23T10:20:30.000Z",
   commitSha: "1234567890abcdef1234567890abcdef12345678",
 }));
+
 // eslint-disable-next-line anti-slop/no-module-mocking -- Vite hard-defines these build metadata literals before execution; stubEnv cannot vary the missing-SHA boundary.
 vi.mock("@/config/app", () => ({
   APP_ENVIRONMENT: "production",
@@ -16,6 +17,7 @@ vi.mock("@/config/app", () => ({
   },
   GAME_CLIENT_PACKAGE_VERSION: "1.0.1",
 }));
+
 import { InformationSettingsTab } from "./information-settings-tab";
 
 describe("InformationSettingsTab", () => {

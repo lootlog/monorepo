@@ -7,7 +7,9 @@ import type {
 } from "#src/battles/analytics/battle-analytics.types";
 
 type HeadToHeadSortBy = NonNullable<BattleStatisticsQuery["sortBy"]>;
+
 type Warrior = InflatedBattleWithWarriors["warriors"][number];
+
 type OpponentStats = {
   name: string;
   icon: string;
@@ -30,6 +32,7 @@ const ratingStats = (
   if (!matchmaking) {
     return { totalRatingDelta: undefined, avgRatingDelta: undefined };
   }
+
   return {
     totalRatingDelta: stats.totalRatingDelta,
     avgRatingDelta:
@@ -45,18 +48,22 @@ const applyRecordFilters = (
   query: BattleStatisticsQuery,
 ): HeadToHeadRecord[] => {
   let filteredRecords = records;
+
   if (query.search) {
     const searchLower = query.search.toLowerCase();
     filteredRecords = filteredRecords.filter((record) =>
       record.opponentName.toLowerCase().includes(searchLower),
     );
   }
+
   const minBattles = query.minBattles;
+
   if (minBattles !== undefined) {
     filteredRecords = filteredRecords.filter(
       (record) => record.totalBattles >= minBattles,
     );
   }
+
   return filteredRecords;
 };
 
@@ -67,6 +74,7 @@ const sortRecords = (
 ): HeadToHeadRecord[] => {
   records.sort((left, right) => {
     let comparison: number;
+
     switch (sortBy) {
       case "wins":
         comparison = left.wins - right.wins;
@@ -93,8 +101,10 @@ const sortRecords = (
         comparison = (left.avgRatingDelta ?? 0) - (right.avgRatingDelta ?? 0);
         break;
     }
+
     return sortOrder === "desc" ? -comparison : comparison;
   });
+
   return records;
 };
 
@@ -109,13 +119,16 @@ export const headToHeadCalculator = {
     for (const battle of battles) {
       const userWarrior = domain.findUserWarrior(battle, characterIds);
       const opponentWarrior = domain.findOpponentWarrior(battle, characterIds);
+
       if (!userWarrior || !opponentWarrior) continue;
 
       const battleResult = domain.getBattleResultForUserWarrior(
         battle,
         userWarrior,
       );
+
       const existing = opponents.get(opponentWarrior.originalId);
+
       const stats = existing ?? {
         name: opponentWarrior.name,
         icon: opponentWarrior.icon,
@@ -136,6 +149,7 @@ export const headToHeadCalculator = {
 
       if (query.matchmaking && battle.ratingDelta !== null) {
         stats.totalRatingDelta += battle.ratingDelta;
+
         if (battle.ratingDelta !== 0) stats.battlesWithRating++;
       }
 
@@ -151,6 +165,7 @@ export const headToHeadCalculator = {
           lastBattleOpponentWarrior: opponentWarrior,
         });
       }
+
       opponents.set(opponentWarrior.originalId, stats);
     }
 
@@ -158,6 +173,7 @@ export const headToHeadCalculator = {
       ([opponentId, stats]) => {
         const totalBattles = stats.wins + stats.losses;
         const rating = ratingStats(stats, query.matchmaking);
+
         return {
           opponentId,
           opponentName: stats.name,

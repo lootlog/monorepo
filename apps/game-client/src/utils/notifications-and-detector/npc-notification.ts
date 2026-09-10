@@ -74,6 +74,7 @@ export function buildNpcNotificationPayload({
   const character = isGatheringParty
     ? buildCurrentCharacterPayload()
     : undefined;
+
   if (isGatheringParty && !character) return null;
 
   const payload: CreateNotificationOptions = {
@@ -81,10 +82,12 @@ export function buildNpcNotificationPayload({
     world,
     guildIds,
   };
+
   if (isGatheringParty) {
     payload.isGatheringParty = isGatheringParty;
     payload.character = character;
   }
+
   return payload;
 }
 
@@ -96,6 +99,7 @@ export const buildNpcChatMessagePayload = ({
   message = "",
 }: BuildNpcChatMessagePayloadOptions): SendChatMessageOptions | null => {
   const characterData = buildChatCharacterData();
+
   if (!characterData) return null;
 
   const payload: SendChatMessageOptions = {
@@ -105,5 +109,6 @@ export const buildNpcChatMessagePayload = ({
     characterData,
     npc: { ...buildNotificationNpcPayload(npc), world },
   };
+
   return payload;
 };

@@ -18,6 +18,7 @@ export const StatsWorldPeriodFields = ({
   onPeriodChange: (value: KillStatsPeriod) => void;
 }) => {
   const { t } = useTranslation();
+
   return (
     <>
       <div className="space-y-2">

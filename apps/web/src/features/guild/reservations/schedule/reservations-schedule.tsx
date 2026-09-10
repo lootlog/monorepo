@@ -67,6 +67,7 @@ export function ReservationsSchedule() {
   const { reservationId: spotId } = useParams({
     from: "/_authenticated/$guildId/reservations/$reservationId",
   });
+
   const { t } = useTranslation();
   const guildId = useGuildId() ?? "";
   const { containerRef, isCompact } = useCompactScheduleLayout();
@@ -77,24 +78,30 @@ export function ReservationsSchedule() {
   const findingNearestFreeSlotRef = useRef(false);
   const [date, setDate] = useState(() => new Date());
   const [createRange, setCreateRange] = useState<ReservationRange | null>(null);
+
   const [isFindingNearestFreeSlot, setIsFindingNearestFreeSlot] =
     useState(false);
+
   const [selectedReservationId, setSelectedReservationId] = useState<
     number | null
   >(null);
+
   const weekStart = startOfWeek(date, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 7);
   const swipePreviewStart = addDays(weekStart, -1);
   const swipePreviewEnd = addDays(weekEnd, 1);
   const dayIndex = differenceInCalendarDays(date, weekStart);
   const spotsQuery = useQuery(reservationSpotsQueryOptions(guildId));
+
   const spotName = resolveSpotName(
     spotsQuery.data,
     spotId,
     t("layout.navigation.reservations"),
   );
+
   const guildQuery = useGuildsControllerGetGuildById({ guildId });
   const settings = resolveReservationSettings(guildQuery.data);
+
   const reservationsQuery = useListSpotReservations(
     { guildId, spotId },
     {
@@ -109,43 +116,54 @@ export function ReservationsSchedule() {
       },
     },
   );
+
   const reservations = (reservationsQuery.data?.items ?? []).map(
     normalizeReservation,
   );
+
   const segments = getReservationSegments(reservations, weekStart, 1);
+
   const selectedReservation =
     reservations.find(({ id }) => id === selectedReservationId) ?? null;
+
   const canManageReservationSettings =
     isOwner ||
     Boolean(
       accessPolicy?.allows(Permission.OWNER) ||
       accessPolicy?.allows(Permission.ADMIN),
     );
+
   const cancelMutation = useDeleteReservation({
     mutation: {
       onSuccess: async (_data, variables) => {
         await invalidateReservationQueries(queryClient, guildId, spotId);
+
         if (selectedReservationId === variables.pathParams.reservationId) {
           setSelectedReservationId(null);
         }
+
         toast.success(t("reservations.details.cancelled"));
       },
       onError: (error) => toast.error(getReservationErrorMessage(error, t)),
     },
   });
+
   const cancellingReservationId = cancelMutation.isPending
     ? (cancelMutation.variables?.pathParams.reservationId ?? null)
     : null;
 
   useEffect(() => {
     if (!connected || !guildId) return;
+
     const refresh = (payload: ReservationChangedPayload) => {
       if (payload.spotId && payload.spotId !== spotId) return;
       void invalidateReservationQueries(queryClient, guildId, spotId);
     };
+
     socket.on(GatewayEvent.RESERVATIONS_CHANGED, refresh);
     socket.on(GatewayEvent.RESERVATIONS_CREATE, refresh);
     socket.on(GatewayEvent.RESERVATIONS_DELETE, refresh);
+
     return () => {
       socket.off(GatewayEvent.RESERVATIONS_CHANGED, refresh);
       socket.off(GatewayEvent.RESERVATIONS_CREATE, refresh);
@@ -168,6 +186,7 @@ export function ReservationsSchedule() {
     findingNearestFreeSlotRef.current = true;
     setIsFindingNearestFreeSlot(true);
     const now = new Date();
+
     const searchWindow = getNearestFreeReservationSearchWindow({
       now,
       settings,
@@ -183,6 +202,7 @@ export function ReservationsSchedule() {
           },
         ),
       );
+
       const nearestRange = findNearestFreeReservationRange({
         intervals: result.items.flatMap(
           ({ endsAt, startsAt, sourceOrganization }) =>
@@ -196,6 +216,7 @@ export function ReservationsSchedule() {
 
       if (!nearestRange) {
         toast.info(t("reservations.schedule.nearestFreeSlot.unavailable"));
+
         return;
       }
 

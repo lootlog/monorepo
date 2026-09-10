@@ -67,6 +67,7 @@ export class LootlogConfigData extends Context.Service<
     Effect.map(ApiDatabase, (database) => {
       const operationError = (cause: unknown) =>
         new LootlogConfigOperationError({ cause });
+
       return LootlogConfigData.of({
         get: (guildId) =>
           Effect.gen(function* () {
@@ -74,17 +75,22 @@ export class LootlogConfigData extends Context.Service<
               .select()
               .from(lootlogConfigTable)
               .where(inArray(lootlogConfigTable.id, [guildId]));
+
             const config = configs[0];
+
             if (!config) return null;
+
             const npcs = yield* database
               .select()
               .from(lootlogConfigNpcTable)
               .where(eq(lootlogConfigNpcTable.lootlogConfigId, guildId))
               .orderBy(desc(lootlogConfigNpcTable.id));
+
             return { ...config, npcs };
           }).pipe(Effect.mapError(operationError)),
         updateNpc: (guildId, npcId, payload) => {
           const parsedNpcId = Number(npcId);
+
           if (!Number.isInteger(parsedNpcId)) {
             return Effect.fail(
               operationError(
@@ -92,6 +98,7 @@ export class LootlogConfigData extends Context.Service<
               ),
             );
           }
+
           return database
             .update(lootlogConfigNpcTable)
             .set({
@@ -134,6 +141,7 @@ const authorize = (guildId: string | undefined) => {
       }),
     );
   }
+
   return Effect.flatMap(LootlogConfigAuthorization, (authorization) =>
     authorization.requireCapability({ guildId, capability: Permission.ADMIN }),
   );
@@ -149,6 +157,7 @@ export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
 ) {
   const { guildId } = yield* authorize(requestedGuildId);
   const data = yield* LootlogConfigData;
+
   return yield* decode(LootlogConfigResponse, yield* data.get(guildId));
 });
 
@@ -160,6 +169,7 @@ export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
   ) {
     const { guildId } = yield* authorize(requestedGuildId);
     const data = yield* LootlogConfigData;
+
     return yield* decode(
       NpcLootlogConfigResponse,
       yield* data.updateNpc(guildId, npcId, payload),

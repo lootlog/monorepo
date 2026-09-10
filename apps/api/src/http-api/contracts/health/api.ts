@@ -5,6 +5,7 @@ import {
   HttpApiSchema,
   OpenApi,
 } from "effect/unstable/httpapi";
+
 export class HealthGroup extends HttpApiGroup.make("health").add(
   HttpApiEndpoint.get("HealthzControllerHealthCheck", "/healthz", {
     success: HttpApiSchema.Empty(200),

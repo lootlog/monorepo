@@ -9,6 +9,7 @@ import {
 import { testRuntimeWindow } from "@/test/test-runtime-window";
 
 let canvas: ReturnType<typeof installTestCanvas>;
+
 const originalWindowEngine = testRuntimeWindow.Engine;
 
 function createOther(id: string) {
@@ -38,21 +39,27 @@ function createOther(id: string) {
 }
 
 type TestOther = ReturnType<typeof createOther>;
+
 type NativeGlow = {
   draw: (context: CanvasRenderingContext2D) => void;
   master: TestOther;
   update: () => void;
   updateColor: () => void;
 };
+
 type NativeMark = { getColor: () => string; getTypeObject: () => string };
+
 type Drawable =
   | "base"
   | TestOther
   | NativeGlow
   | NativeMark
   | { draw: (context: CanvasRenderingContext2D) => void };
+
 let runtime: ReturnType<typeof setRuntime>;
+
 const getRuntimeDrawableList = () => runtime.others.getDrawableList();
+
 function moveOther(
   other: TestOther,
   position: { rx: number; ry: number; x: number; y: number },
@@ -62,6 +69,7 @@ function moveOther(
   other.d.x = position.x;
   other.d.y = position.y;
 }
+
 function setOtherUpdate(
   other: TestOther,
   update: (this: TestOther, dt: number) => void,
@@ -102,11 +110,13 @@ function setRuntime(drawables: Drawable[] = ["base"]) {
       getDrawableList,
     },
   };
+
   Object.defineProperty(window, "Engine", {
     configurable: true,
     value: engine,
   });
   runtime = engine;
+
   return engine;
 }
 
@@ -197,11 +207,13 @@ describe("lootlogOtherGlowManager", () => {
 
   it("updates managed glow position after runtime Other.update movement", () => {
     const other = createOther("617");
+
     const originalUpdate = vi.fn<(this: TestOther, dt: number) => void>(
       function (this: TestOther, dt: number) {
         moveOther(this, { rx: 17 + dt, ry: 18 + dt, x: 17 + dt, y: 18 + dt });
       },
     );
+
     setOtherUpdate(other, originalUpdate);
 
     lootlogOtherGlowManager.install();
@@ -240,6 +252,7 @@ describe("lootlogOtherGlowManager", () => {
     lootlogOtherGlowManager.install();
     lootlogOtherGlowManager.setGlow(other, LOOTLOG_OTHER_GLOW_BLUE);
     const glow = getRuntimeDrawableList()[1];
+
     if (!glow || glow === "base" || !("draw" in glow))
       throw new Error("Expected glow drawable");
 
@@ -262,16 +275,19 @@ describe("lootlogOtherGlowManager", () => {
 
   it("suppresses native Margonem other glows while keeping other drawables and Lootlog glows", () => {
     const other = createOther("617");
+
     const nativeMaskGlow = {
       draw: vi.fn<(context: CanvasRenderingContext2D) => void>(),
       master: other,
       update: vi.fn<() => void>(),
       updateColor: vi.fn<() => void>(),
     };
+
     const nativeColorMark = {
       getColor: vi.fn<() => string>(() => "green"),
       getTypeObject: vi.fn<() => string>(() => "OTHER_NAVIGATE"),
     };
+
     setRuntime([other, nativeMaskGlow, nativeColorMark]);
 
     lootlogOtherGlowManager.install();

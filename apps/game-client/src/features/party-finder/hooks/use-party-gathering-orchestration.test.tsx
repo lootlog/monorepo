@@ -10,9 +10,13 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { usePartyGatheringOrchestration } from "./use-party-gathering-orchestration";
 
 const createRoom = vi.fn<(request: Request) => Promise<Response>>();
+
 const sendChat = vi.fn<(request: Request) => Promise<Response>>();
+
 const getRoom = vi.fn<(request: Request) => Promise<Response>>();
+
 const notify = vi.fn<(request: Request) => Promise<Response>>();
+
 const npc = {
   id: 1,
   nick: "Hydra",
@@ -27,18 +31,23 @@ const npc = {
   location: "Ithan",
   notificationSent: false,
 };
+
 let restoreClient = () => {};
+
 let queryClient: QueryClient;
+
 function Wrapper({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
+
 afterEach(() => {
   restoreClient();
   queryClient.clear();
   vi.unstubAllGlobals();
 });
+
 const projection: PartyReadyRoomProjection = {
   schemaVersion: 3,
   notificationId: "room-1",
@@ -104,9 +113,13 @@ describe("usePartyGatheringOrchestration", () => {
       (input: string | URL | Request, init?: RequestInit) => {
         const request = new Request(input, init);
         const path = new URL(request.url).pathname;
+
         if (path.endsWith("/chat-messages")) return sendChat(request);
+
         if (path === "/messaging") return notify(request);
+
         if (request.method === "GET") return getRoom(request);
+
         return createRoom(request);
       },
     );
@@ -115,6 +128,7 @@ describe("usePartyGatheringOrchestration", () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
+
     await act(() =>
       result.current.startPartyGathering({
         openPartyFinder: false,
@@ -132,6 +146,7 @@ describe("usePartyGatheringOrchestration", () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
+
     await act(() =>
       result.current.startPartyGathering({
         guildIds: ["guild-1"],
@@ -149,9 +164,11 @@ describe("usePartyGatheringOrchestration", () => {
   });
   it("opens a known active gathering without creating another one", async () => {
     usePartyFinderStore.getState().mergeProjection(projection);
+
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
+
     await act(async () => {
       await expect(
         result.current.startPartyGathering({
@@ -177,9 +194,11 @@ describe("usePartyGatheringOrchestration", () => {
         ),
       ),
     );
+
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
+
     await act(async () => {
       await expect(
         result.current.startPartyGathering({
@@ -201,6 +220,7 @@ describe("usePartyGatheringOrchestration", () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
+
     await act(() =>
       result.current.startNpcPartyGathering({
         openPartyFinder: false,
@@ -219,6 +239,7 @@ describe("usePartyGatheringOrchestration", () => {
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
     });
+
     await act(() =>
       result.current.startNpcNotification({
         npc,

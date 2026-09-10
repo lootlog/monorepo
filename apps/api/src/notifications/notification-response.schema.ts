@@ -22,6 +22,7 @@ import {
 
 const literals = <A extends string>(values: ReadonlyArray<A>) =>
   Schema.Literals(values);
+
 const optionalNullable = <S extends Schema.Top>(schema: S) =>
   Schema.optionalKey(Schema.NullOr(schema));
 

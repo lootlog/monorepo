@@ -4,6 +4,7 @@ import type { RedisGatewayCommands } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
+
 const SAMPLE = `
 local time = redis.call('TIME')
 local now = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
@@ -28,18 +29,23 @@ for i = 1, #snapshots, 2 do
 end
 return {connections, sessions, count}
 `;
+
 const decodeCounts = Schema.decodeUnknownSync(
   Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
 );
+
 const observedAt = Metric.gauge("lootlog_gateway_cluster_observed_at_seconds", {
   attributes: { unit: "s" },
 });
+
 const connections = Metric.gauge("lootlog_gateway_cluster_connections", {
   attributes: { unit: "" },
 });
+
 const gameSessions = Metric.gauge("lootlog_gateway_cluster_game_sessions", {
   attributes: { unit: "" },
 });
+
 const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
   description: "Unique Discord accounts with active game sessions",
   attributes: { unit: "" },
@@ -57,8 +63,10 @@ export class GatewayMetrics {
     const players = new Set<string>();
     let sessions = 0;
     const now = this.now();
+
     for (const { data } of sockets) {
       const presence = data.presence;
+
       if (
         data.platform !== "game" ||
         !presence ||
@@ -68,6 +76,7 @@ export class GatewayMetrics {
       sessions += 1;
       players.add(data.discordId);
     }
+
     // ponytail: one snapshot per replica is scanned every 10s; shard aggregation if replica/player counts make this Redis script costly.
     const counts = yield* Effect.tryPromise(() =>
       this.redis.eval(
@@ -82,11 +91,13 @@ export class GatewayMetrics {
         }),
       ),
     );
+
     const [connectionCount, sessionCount, playerCount] = decodeCounts(counts);
     yield* Metric.update(connections, connectionCount);
     yield* Metric.update(gameSessions, sessionCount);
     yield* Metric.update(uniquePlayers, playerCount);
     yield* Metric.update(observedAt, this.now() / 1_000);
+
     return {
       connections: connectionCount,
       gameSessions: sessionCount,

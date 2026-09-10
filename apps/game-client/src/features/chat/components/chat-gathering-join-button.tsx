@@ -14,6 +14,7 @@ const getTooltipLabel = (
   featured: boolean,
 ) => {
   if (statusLabel) return `${statusLabel} · ${label}`;
+
   return featured ? `${label} (${shortcut})` : label;
 };
 
@@ -31,16 +32,21 @@ export function ChatGatheringJoinButton({
   onClick: () => void;
 }) {
   const { t } = useTranslation("chat");
+
   const binding = useHotkeysStore(
     (state) => state.bindings["join-party-gathering"],
   );
+
   const actionLabel = t(status ? "gatherings.withdraw" : "gatherings.apply");
+
   const pendingLabel = t(
     status ? "gatherings.withdrawing" : "gatherings.applying",
   );
+
   const label = pending ? pendingLabel : actionLabel;
   const statusLabel = status ? t(`gatherings.${status}`) : undefined;
   const buttonDisabled = pending || disabled;
+
   const shortcut =
     binding.type === "keyboard" && !binding.key
       ? t("gatherings.shortcutUnset")

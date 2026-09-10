@@ -17,6 +17,7 @@ afterEach(() => {
 
 it("recenters the selected link after the viewport or menu resizes", async () => {
   let notifyResize = () => {};
+
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -72,6 +73,7 @@ it("recenters the selected link after the viewport or menu resizes", async () =>
 
 it("preserves the highlight and scroll position on unrelated renders while tracking selection changes", async () => {
   const scroll = vi.spyOn(HTMLElement.prototype, "scrollTo");
+
   const { rerender } = render(
     <HorizontalMenu aria-label="Settings">
       <li>
@@ -84,6 +86,7 @@ it("preserves the highlight and scroll position on unrelated renders while track
       </li>
     </HorizontalMenu>,
   );
+
   const general = screen.getByRole("link", { name: "General" });
   const roles = screen.getByRole("link", { name: "Roles" });
   Object.defineProperties(general, {

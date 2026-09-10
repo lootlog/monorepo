@@ -39,6 +39,7 @@ export function MyReservationListItem({
   onCancel,
 }: MyReservationListItemProps) {
   const { t } = useTranslation();
+
   const organizationIconUrl = useReservationOrganizationIcon(
     reservation.sourceOrganization,
   );

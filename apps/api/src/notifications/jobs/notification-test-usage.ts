@@ -10,6 +10,7 @@ export const readNotificationTestUsage = Effect.fnUntraced(function* (
   windowMs: number,
 ) {
   if (targetIds.length === 0) return new Map<number, Date[]>();
+
   const rows = yield* database
     .select({
       targetId: notificationJobTable.targetId,
@@ -27,11 +28,14 @@ export const readNotificationTestUsage = Effect.fnUntraced(function* (
       ),
     )
     .orderBy(asc(notificationJobTable.createdAt));
+
   const usage = new Map<number, Date[]>();
+
   for (const row of rows) {
     const values = usage.get(row.targetId) ?? [];
     values.push(row.createdAt);
     usage.set(row.targetId, values);
   }
+
   return usage;
 });

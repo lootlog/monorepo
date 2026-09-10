@@ -10,6 +10,7 @@ const requestSchema = z.strictObject({
 });
 
 export type ExtensionHttpRequest = z.infer<typeof requestSchema>;
+
 export type ExtensionHttpResponse = {
   status: number;
   statusText: string;
@@ -19,7 +20,9 @@ export type ExtensionHttpResponse = {
 
 // Battle submissions include the complete fight event sequence.
 export const MAX_EXTENSION_HTTP_BYTES = 16 * 1024 * 1024;
+
 const encoder = new TextEncoder();
+
 const mainRoutes: ReadonlyArray<readonly [string, RegExp]> = [
   ["GET PATCH", /^\/users\/@me\/preferences$/],
   ["GET", /^\/users\/@me\/guilds\/accessible$/],
@@ -61,6 +64,7 @@ const mainRoutes: ReadonlyArray<readonly [string, RegExp]> = [
 function relativePath(url: URL, base: string): string | null {
   const parsed = new URL(base);
   const prefix = parsed.pathname.replace(/\/$/, "");
+
   return url.origin === parsed.origin && url.pathname.startsWith(`${prefix}/`)
     ? url.pathname.slice(prefix.length)
     : null;
@@ -73,26 +77,33 @@ async function readBody(response: Response): Promise<string> {
     await response.body?.cancel();
     throw new Error("Extension HTTP response is too large");
   }
+
   if (!response.body) return "";
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   const chunks: string[] = [];
   let bytes = 0;
+
   try {
     while (true) {
       // Stream consumption must be sequential to bound retained bytes.
       // eslint-disable-next-line no-await-in-loop
       const { done, value } = await reader.read();
+
       if (done) break;
       bytes += value.byteLength;
+
       if (bytes > MAX_EXTENSION_HTTP_BYTES) {
         // eslint-disable-next-line no-await-in-loop
         await reader.cancel();
         throw new Error("Extension HTTP response is too large");
       }
+
       chunks.push(decoder.decode(value, { stream: true }));
     }
+
     chunks.push(decoder.decode());
+
     return chunks.join("");
   } finally {
     reader.releaseLock();
@@ -101,9 +112,11 @@ async function readBody(response: Response): Promise<string> {
 
 function validateOperation(url: URL, request: ExtensionHttpRequest): boolean {
   const path = relativePath(url, API_URL);
+
   const isSession =
     relativePath(url, AUTH_API_URL) === "/idp/get-session" &&
     request.method === "GET";
+
   const isAllowed =
     isSession ||
     (relativePath(url, BATTLELOG_API_URL) === "/battles" &&
@@ -113,6 +126,7 @@ function validateOperation(url: URL, request: ExtensionHttpRequest): boolean {
         ([methods, pattern]) =>
           methods.split(" ").includes(request.method) && pattern.test(path),
       ));
+
   if (
     !isAllowed ||
     url.username ||
@@ -122,6 +136,7 @@ function validateOperation(url: URL, request: ExtensionHttpRequest): boolean {
   ) {
     throw new Error("Extension HTTP operation is not allowed");
   }
+
   return isSession;
 }
 
@@ -134,12 +149,15 @@ export async function executeExtensionHttp(
   const url = new URL(request.url);
   const isSession = validateOperation(url, request);
   const headers = new Headers();
+
   for (const [name, value] of Object.entries(request.headers)) {
     if (!["accept", "content-type"].includes(name.toLowerCase())) {
       throw new Error("Extension HTTP header is not allowed");
     }
+
     headers.set(name, value);
   }
+
   if (
     request.body !== undefined &&
     (request.method === "GET" ||
@@ -147,6 +165,7 @@ export async function executeExtensionHttp(
   )
     throw new Error("Extension HTTP request body is invalid or too large");
   signal.throwIfAborted();
+
   const response = await fetchImplementation(url.href, {
     method: request.method,
     headers,
@@ -155,19 +174,27 @@ export async function executeExtensionHttp(
     credentials: "include",
     redirect: "error",
   });
+
   let body = await readBody(response);
+
   if (isSession && response.ok && body) {
     const data: unknown = JSON.parse(body);
+
     if (isRecord(data) && isRecord(data.session)) {
       delete data.session.token;
     }
+
     body = JSON.stringify(data);
   }
+
   const responseHeaders: Record<string, string> = {};
+
   for (const name of ["content-type", "retry-after"]) {
     const value = response.headers.get(name);
+
     if (value !== null) responseHeaders[name] = value;
   }
+
   return {
     status: response.status,
     statusText: response.statusText,

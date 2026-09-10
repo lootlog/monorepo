@@ -6,7 +6,9 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 const temporaryDirectories: string[] = [];
+
 const serverProcesses: ChildProcess[] = [];
+
 const serverPath = path.resolve(
   process.cwd(),
   "src/scripts/serve-local-build.mjs",
@@ -15,6 +17,7 @@ const serverPath = path.resolve(
 const waitForServerUrl = (serverProcess: ChildProcess): Promise<string> =>
   new Promise((resolve, reject) => {
     let output = "";
+
     const timeout = setTimeout(() => {
       reject(new Error(`Local build server did not start. Output: ${output}`));
     }, 5_000);
@@ -22,6 +25,7 @@ const waitForServerUrl = (serverProcess: ChildProcess): Promise<string> =>
     serverProcess.stdout?.on("data", (chunk: Buffer) => {
       output += chunk.toString();
       const match = output.match(/http:\/\/127\.0\.0\.1:\d+/);
+
       if (match) {
         clearTimeout(timeout);
         resolve(match[0]);
@@ -61,6 +65,7 @@ afterEach(async () => {
   for (const serverProcess of serverProcesses.splice(0)) {
     serverProcess.kill("SIGTERM");
   }
+
   await Promise.all(
     temporaryDirectories
       .splice(0)
@@ -73,6 +78,7 @@ describe("serve-local-build", () => {
     const temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), "game-client-local-server-"),
     );
+
     temporaryDirectories.push(temporaryDirectory);
     const lootlogDirectory = path.join(temporaryDirectory, "@lootlog");
     await mkdir(lootlogDirectory);
@@ -92,6 +98,7 @@ describe("serve-local-build", () => {
       [serverPath, "--dist", temporaryDirectory, "--port", "0"],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
+
     serverProcesses.push(serverProcess);
     const serverUrl = await waitForServerUrl(serverProcess);
 
@@ -118,6 +125,7 @@ describe("serve-local-build", () => {
     const temporaryDirectory = await mkdtemp(
       path.join(tmpdir(), "game-client-local-server-missing-"),
     );
+
     temporaryDirectories.push(temporaryDirectory);
     const lootlogDirectory = path.join(temporaryDirectory, "@lootlog");
     await mkdir(lootlogDirectory);
@@ -125,11 +133,13 @@ describe("serve-local-build", () => {
       path.join(lootlogDirectory, "game-client-local.user.js"),
       "// local loader",
     );
+
     const serverProcess = spawn(
       process.execPath,
       [serverPath, "--dist", temporaryDirectory, "--port", "0"],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
+
     let standardError = "";
     serverProcess.stderr?.on("data", (chunk: Buffer) => {
       standardError += chunk.toString();

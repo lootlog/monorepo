@@ -19,6 +19,7 @@ describe("notification delivery result", () => {
   it("requeues retryable delivery failures through attempt three", async () => {
     const records: unknown[] = [];
     const enqueued: Array<[string, number]> = [];
+
     const handle = makeNotificationDeliveryResult(
       {
         find: () => Effect.succeed(job(3)),
@@ -45,6 +46,7 @@ describe("notification delivery result", () => {
 
   it("finalizes the fourth failed attempt and prunes history", async () => {
     let pruned = false;
+
     const handle = makeNotificationDeliveryResult(
       {
         find: () => Effect.succeed(job(4)),

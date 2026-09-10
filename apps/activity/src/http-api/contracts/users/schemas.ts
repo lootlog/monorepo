@@ -22,12 +22,15 @@ export const UserOnlineQuery = Schema.Struct({
   Schema.makeFilter(
     ({ from, to }) => {
       const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
+
       return days >= 0 && days < ONLINE_HISTORY_RETENTION_DAYS;
     },
     { expected: "an inclusive date range of 1 to 112 days" },
   ),
 );
+
 export type UserOnlineQuery = typeof UserOnlineQuery.Type;
+
 export const UserOnlineResponse = Schema.Struct({
   timezone: Schema.Literal("Europe/Warsaw"),
   trackingStartedAt: Schema.NullOr(DateTimeWithOffsetString),
@@ -43,4 +46,5 @@ export const UserOnlineResponse = Schema.Struct({
     }),
   ),
 }).annotate({ identifier: "UserOnlineResponseDto" });
+
 export type UserOnlineResponse = typeof UserOnlineResponse.Type;

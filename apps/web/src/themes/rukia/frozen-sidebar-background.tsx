@@ -3,6 +3,7 @@ import * as m from "framer-motion/m";
 
 export const FrozenSidebarBackground = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
       {[

@@ -13,9 +13,11 @@ import { useRouteErrorRetry } from "./use-route-error-retry";
 export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   const normalizedStatus = normalizeRouteErrorStatus(
     getRouteErrorStatus(error),
   );
+
   const handleRetry = useRouteErrorRetry(reset);
 
   return (

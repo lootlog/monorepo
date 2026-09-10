@@ -18,6 +18,7 @@ export const createKillsColumns = (
     header: () => <div className="text-center w-8">#</div>,
     cell: ({ row }) => {
       const rank = startRank + row.index + 1;
+
       return (
         <div className="flex items-center justify-center w-8">
           <PodiumRankIcon

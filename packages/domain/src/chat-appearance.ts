@@ -31,6 +31,7 @@ export const normalizeChatAppearanceSettings = (
   fallback: ChatAppearanceSettings = CHAT_APPEARANCE_READABLE_PRESET,
 ): ChatAppearanceSettings => {
   const settings = isRecord(value) ? value : {};
+
   return {
     npcLayout:
       settings.npcLayout === "tile" || settings.npcLayout === "inline"

@@ -56,17 +56,21 @@ const acquireBrokerResource = <
   Effect.gen(function* () {
     const fail = yield* RabbitConnectionFailure;
     let closing = false;
+
     const onError = (cause: unknown) => {
       if (!closing) fail(cause);
     };
+
     const onClose = () =>
       onError(new Error("RabbitMQ connection or channel closed"));
+
     return yield* Effect.acquireRelease(
       Effect.tryPromise({
         try: async () => {
           const resource = await acquire();
           resource.on("error", onError);
           resource.on("close", onClose);
+
           return resource;
         },
         catch: (cause) => error("connect", cause),
@@ -74,6 +78,7 @@ const acquireBrokerResource = <
       (resource) =>
         Effect.promise(async () => {
           closing = true;
+
           try {
             await resource.close();
           } catch {
@@ -201,6 +206,7 @@ const isRetryCount = Schema.is(
 
 const readRetryCount = (message: ConsumeMessage): number => {
   const value = message.properties.headers?.["x-lootlog-retry-count"];
+
   return isRetryCount(value) ? value : 0;
 };
 
@@ -257,11 +263,14 @@ const makeService = (
     }
 
     const currentRetryCount = readRetryCount(delivery.raw);
+
     const shouldRetry =
       policy.strategy === "retry" && currentRetryCount < policy.maxRetries;
+
     const exchange = shouldRetry
       ? RabbitExchange.RETRY
       : RabbitExchange.DEAD_LETTER;
+
     const routingKey = shouldRetry
       ? policy.retryRoutingKey
       : policy.deadLetterRoutingKey;
@@ -308,11 +317,13 @@ const makeService = (
 
     const cancellation = yield* Semaphore.make(1);
     let cancelled = false;
+
     const cancel = (consumerTag: string) =>
       cancellation
         .withPermits(1)(
           Effect.suspend(() => {
             if (cancelled) return Effect.void;
+
             return Effect.tryPromise({
               try: () => channel.cancel(consumerTag),
               catch: (cause) => error("cancel", cause),
@@ -328,6 +339,7 @@ const makeService = (
           }),
         )
         .pipe(Effect.uninterruptible);
+
     const result = yield* Effect.acquireRelease(
       Effect.tryPromise({
         try: () =>
@@ -336,8 +348,10 @@ const makeService = (
             (message) => {
               if (message === null) {
                 consumerCancelled(options.queue);
+
                 return;
               }
+
               const delivery = toDelivery(message);
               runDelivery(
                 Effect.suspend(() => handler(delivery)).pipe(
@@ -363,6 +377,7 @@ const makeService = (
       }),
       (consumer) => cancel(consumer.consumerTag).pipe(Effect.ignore),
     );
+
     return {
       consumerTag: result.consumerTag,
       cancel: cancel(result.consumerTag),
@@ -392,9 +407,11 @@ const installTopology = (
             deadLetterExchange: queue.deadLetterExchange,
             deadLetterRoutingKey: queue.deadLetterRoutingKey,
           };
+
           if (queue.singleActiveConsumer) {
             queueOptions.arguments = { "x-single-active-consumer": true };
           }
+
           await channel.assertQueue(queue.name, queueOptions);
           await channel.bindQueue(queue.name, queue.exchange, queue.routingKey);
         }),
@@ -420,14 +437,17 @@ export class RabbitMessaging extends Context.Service<
               : undefined,
           }),
         );
+
         const channel = yield* acquireBrokerResource(() =>
           connection.createConfirmChannel(),
         );
 
         yield* installTopology(channel, config.queues ?? []);
+
         const deadLetterQueues = (config.queues ?? []).filter(
           (queue) => queue.exchange === RabbitExchange.DEAD_LETTER,
         );
+
         if (deadLetterQueues.length > 0) {
           yield* Effect.forEach(
             deadLetterQueues,
@@ -456,6 +476,7 @@ export class RabbitMessaging extends Context.Service<
         }
 
         const fail = yield* RabbitConnectionFailure;
+
         return RabbitMessaging.of(
           makeService(channel, (queue) =>
             fail(new Error(`RabbitMQ consumer cancelled by broker: ${queue}`)),
@@ -471,6 +492,7 @@ export class RabbitMessaging extends Context.Service<
   ): Effect.Effect<A, E | MessagingError, Exclude<R, RabbitConnectionFailure>> {
     return Effect.gen(function* () {
       const failure = yield* Deferred.make<never, MessagingError>();
+
       return yield* Effect.raceFirst(
         application.pipe(
           Effect.provideService(RabbitConnectionFailure, (cause) => {

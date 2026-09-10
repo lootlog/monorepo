@@ -33,6 +33,7 @@ const role = (
 // Drizzle predicate so a missing WHERE clause cannot masquerade as denied access.
 const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
   const database = new Database(":memory:");
+
   try {
     database.exec(`
       CREATE TABLE "NpcKillStats" (
@@ -48,9 +49,11 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
         ('organization', 7, 250, 'TITAN'),
         ('other-organization', 8, 250, 'ELITE2');
     `);
+
     const policy = createAccessPolicy({
       capabilities: administrative ? [Capability.ADMIN] : [],
     });
+
     const condition = buildKillStatsCondition(
       {
         guildId: npcKillStatsTable.guildId,
@@ -64,11 +67,14 @@ const visibleNpcIds = (roles: KillQueryRole[], administrative = false) => {
         ...visibilityFilter(policy, readableRoles(roles)),
       },
     );
+
     if (!condition) throw new Error("Missing organization predicate");
     const query = new PgDialect().sqlToQuery(condition);
+
     const parameters = Schema.decodeUnknownSync(
       Schema.Array(Schema.Union([Schema.String, Schema.Number])),
     )(query.params);
+
     return database
       .query<{ npcId: number }, SQLQueryBindings[]>(
         `SELECT "npcId" FROM "NpcKillStats" WHERE ${query.sql} ORDER BY "npcId"`,

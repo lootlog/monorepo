@@ -43,6 +43,7 @@ describe("reservation contracts", () => {
     expect(details.editingConstraints).toMatchObject({
       future: { allowed: true },
     });
+
     const spots = Schema.decodeUnknownSync(ReservationSpotsResponse)([
       {
         id: "spot",
@@ -59,6 +60,7 @@ describe("reservation contracts", () => {
         nextReservation: null,
       },
     ]);
+
     expect(spots[0]?.currentReservation).toHaveProperty("future", {
       calendar: true,
     });
@@ -78,6 +80,7 @@ describe("reservation contracts", () => {
       startsAt: "2026-09-04T12:00:00+02:00",
       endsAt: "2026-09-04T13:00:00+02:00",
     };
+
     expect(
       Schema.decodeUnknownSync(CreateReservationRequest)({
         ...dates,

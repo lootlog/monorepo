@@ -39,6 +39,7 @@ export const applyMemberGamePresenceUpdate = (
 
   if ((disconnected || status === "offline") && disconnectedSessionId) {
     const existingPresence = nextPresenceByDiscordId.get(discordId) ?? [];
+
     const filteredPresence = existingPresence.filter(
       (presence) => presence.sessionId !== disconnectedSessionId,
     );
@@ -57,6 +58,7 @@ export const applyMemberGamePresenceUpdate = (
   }
 
   const existingPresence = nextPresenceByDiscordId.get(discordId) ?? [];
+
   const existingIndex = existingPresence.findIndex(
     (presence) => presence.sessionId === player.sessionId,
   );

@@ -44,6 +44,7 @@ describe("gateway presence identity", () => {
       ],
     });
     const client = new GatewayClient();
+
     for (const [event, field] of [
       [GatewayEvent.MEMBER_WEB_PRESENCE_FETCH, "sessions"],
       [GatewayEvent.EVENT_PRESENCE_FETCH, "players"],
@@ -70,6 +71,7 @@ describe("gateway presence identity", () => {
     const gameUpdates = vi.fn();
     client.on(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, webUpdates);
     client.on(GatewayEvent.EVENT_PRESENCE_UPDATE, gameUpdates);
+
     const events: ServerEvent[] = [
       {
         v: 1,
@@ -108,7 +110,9 @@ describe("gateway presence identity", () => {
         },
       },
     ];
+
     for (const event of events) deliver?.(event);
+
     for (const updates of [webUpdates, gameUpdates]) {
       expect(updates).toHaveBeenNthCalledWith(
         1,
@@ -150,6 +154,7 @@ it("delivers complete feed entries without turning them into loot invalidation s
   const lootHandler = vi.fn();
   client.on(GatewayEvent.FEED_ENTRY, entryHandler);
   client.on(GatewayEvent.LOOTS_CREATE, lootHandler);
+
   const entry = {
     id: "kill:organization-1:world:1:minute",
     version: 2,
@@ -160,6 +165,7 @@ it("delivers complete feed entries without turning them into loot invalidation s
     guild: { id: "organization-1", name: "Organization", vanityUrl: null },
     npc: { id: 1, name: "Hero", type: "HERO", lvl: 100, icon: null },
   };
+
   deliver?.({ v: 1, type: "feed.entry", data: entry });
   expect(entryHandler).toHaveBeenCalledWith(entry);
   expect(lootHandler).not.toHaveBeenCalled();

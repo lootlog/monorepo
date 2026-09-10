@@ -26,8 +26,10 @@ describe("notification job dispatch", () => {
   it("blocks an inactive target before claim and publish", async () => {
     const updates: Array<Parameters<NotificationDispatchStore["update"]>[1]> =
       [];
+
     let claimed = false;
     let published = false;
+
     const dispatch = makeNotificationJobDispatch(
       {
         find: () => Effect.succeed(job(false)),
@@ -38,6 +40,7 @@ describe("notification job dispatch", () => {
         claim: () =>
           Effect.sync(() => {
             claimed = true;
+
             return true;
           }),
       },
@@ -68,7 +71,9 @@ describe("notification job dispatch", () => {
   it("returns a claimed job to pending and enqueues the established retry", async () => {
     const updates: Array<Parameters<NotificationDispatchStore["update"]>[1]> =
       [];
+
     const enqueued: Array<[string, number]> = [];
+
     const dispatch = makeNotificationJobDispatch(
       {
         find: () => Effect.succeed(job(true)),

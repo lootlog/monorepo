@@ -10,6 +10,7 @@ export function ChatComposeArea({
   ownGathering: ReactNode;
 }) {
   const { t } = useTranslation("chat");
+
   return (
     <div className="ll:shrink-0">
       {ownGathering}

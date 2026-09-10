@@ -1,11 +1,15 @@
 import { Schema } from "effect";
 
 export const CHAT_FONT_SCALE_MIN_PERCENT = 70;
+
 export const CHAT_FONT_SCALE_MAX_PERCENT = 150;
+
 export const CHAT_MESSAGE_GAP_MIN_PX = 0;
+
 export const CHAT_MESSAGE_GAP_MAX_PX = 16;
 
 export const ChatNpcLayoutSchema = Schema.Literals(["tile", "inline"]);
+
 export type ChatNpcLayout = typeof ChatNpcLayoutSchema.Type;
 
 export const ChatAppearancePresetSchema = Schema.Literals([
@@ -13,6 +17,7 @@ export const ChatAppearancePresetSchema = Schema.Literals([
   "compact",
   "custom",
 ]);
+
 export type ChatAppearancePreset = typeof ChatAppearancePresetSchema.Type;
 
 export const ChatAppearanceSettingsSchema = Schema.Struct({
@@ -35,6 +40,7 @@ export const ChatAppearanceSettingsSchema = Schema.Struct({
   showNpcLevel: Schema.Boolean,
   showNpcLocationAndCoordinates: Schema.Boolean,
 });
+
 export type ChatAppearanceSettings = typeof ChatAppearanceSettingsSchema.Type;
 
 export const CHAT_APPEARANCE_READABLE_PRESET = {

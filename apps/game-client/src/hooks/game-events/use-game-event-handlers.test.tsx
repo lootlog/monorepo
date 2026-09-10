@@ -6,11 +6,14 @@ import { useGlobalStore } from "@/store/global.store";
 import { useGameEventHandlers } from "./use-game-event-handlers";
 
 let test: ReturnType<typeof createRealtimeTest>;
+
 const register = vi.spyOn(EventDispatcher.prototype, "register");
+
 const initialEvents = vi.spyOn(
   EventDispatcher.prototype,
   "handleInitialEvents",
 );
+
 const cleanup = vi.spyOn(EventDispatcher.prototype, "cleanup");
 
 beforeEach(() => {
@@ -25,6 +28,7 @@ describe("useGameEventHandlers", () => {
     const { rerender } = renderHook(() => useGameEventHandlers(), {
       wrapper: test.wrapper,
     });
+
     rerender();
     expect(register).toHaveBeenCalledOnce();
     expect(initialEvents).not.toHaveBeenCalled();
@@ -34,6 +38,7 @@ describe("useGameEventHandlers", () => {
     const { rerender } = renderHook(() => useGameEventHandlers(), {
       wrapper: test.wrapper,
     });
+
     act(() =>
       useGlobalStore.getState().setGameState({ gameInitialized: true }),
     );
@@ -45,18 +50,22 @@ describe("useGameEventHandlers", () => {
     const { unmount } = renderHook(() => useGameEventHandlers(), {
       wrapper: test.wrapper,
     });
+
     unmount();
     expect(cleanup).toHaveBeenCalledOnce();
   });
 
   it("retains the shared dispatcher until the last client unmounts", () => {
     useGlobalStore.getState().setGameState({ gameInitialized: true });
+
     const first = renderHook(() => useGameEventHandlers(), {
       wrapper: test.wrapper,
     });
+
     const second = renderHook(() => useGameEventHandlers(), {
       wrapper: test.wrapper,
     });
+
     expect(register).toHaveBeenCalledOnce();
     expect(initialEvents).toHaveBeenCalledOnce();
     first.unmount();

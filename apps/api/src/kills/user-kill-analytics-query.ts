@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { DateTime } from "effect";
 
 export const KILL_ANALYTICS_TIMEZONE = "Europe/Warsaw";
+
 export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
   const zoned = DateTime.setZoneNamedUnsafe(now, KILL_ANALYTICS_TIMEZONE);
   const today = DateTime.startOf(zoned, "day");
@@ -9,10 +10,12 @@ export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
   const previousStart = DateTime.subtract(start, { days });
   // Round the instant, not a local wall hour: the repeated autumn hour is distinct.
   const through = DateTime.startOf(now, "hour");
+
   const previousThrough = DateTime.subtract(
     DateTime.setZoneNamedUnsafe(through, KILL_ANALYTICS_TIMEZONE),
     { days },
   );
+
   return {
     days,
     generatedAt: DateTime.formatIso(now),
@@ -24,6 +27,7 @@ export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
     previousThrough: DateTime.formatIso(previousThrough),
   };
 };
+
 export type KillAnalyticsRange = ReturnType<typeof getKillAnalyticsRange>;
 
 /** Both variants aggregate inside PostgreSQL. The activity variant never computes NPC ranks or hourly grids. */
@@ -37,6 +41,7 @@ export const userKillAnalyticsSql = (
   const start = sql`${range.start}::timestamptz at time zone 'UTC'`;
   const previousThrough = sql`${range.previousThrough}::timestamptz at time zone 'UTC'`;
   const through = sql`${range.through}::timestamptz at time zone 'UTC'`;
+
   return sql`
     with lifetime as (
       select coalesce(sum("totalKills"), 0)::float8 as total from "UserKillStats" where ${scope}

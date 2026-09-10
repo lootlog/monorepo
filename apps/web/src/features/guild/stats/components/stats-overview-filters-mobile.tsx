@@ -34,6 +34,7 @@ export const StatsOverviewFiltersMobile = ({
 
   const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
     if (value === "" || /^\d+$/.test(value)) {
       onMinLvlChange(value);
     }
@@ -41,6 +42,7 @@ export const StatsOverviewFiltersMobile = ({
 
   const handleMaxLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
     if (value === "" || /^\d+$/.test(value)) {
       onMaxLvlChange(value);
     }

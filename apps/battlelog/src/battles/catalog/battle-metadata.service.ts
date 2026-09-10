@@ -16,11 +16,13 @@ const UserCharactersResponseSchema = Schema.Struct({
     }),
   ),
 });
+
 type UserCharactersResponse = typeof UserCharactersResponseSchema.Type;
 
 const UserWorldsResponseSchema = Schema.Struct({
   worlds: Schema.Array(Schema.String),
 });
+
 type UserWorldsResponse = typeof UserWorldsResponseSchema.Type;
 
 type BattleMetadataDatabase = Pick<
@@ -41,8 +43,10 @@ export const makeBattleMetadata = (
 ) => {
   const logger = new Logger("BattleMetadata");
   const cache = makeBattleAnalyticsCache(redisService);
+
   const getUserCharactersCacheKey = (userId: string) =>
     `battle-characters:list:${userId}`;
+
   const getUserWorldsCacheKey = (userId: string) =>
     `battle-worlds:${userId}:list`;
 
@@ -61,6 +65,7 @@ export const makeBattleMetadata = (
       .pipe(
         Effect.mapError((error) => {
           logger.error("Failed to retrieve user characters:", error);
+
           return new Error(
             `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -89,6 +94,7 @@ export const makeBattleMetadata = (
       .pipe(
         Effect.mapError((error) => {
           logger.error("Failed to retrieve user worlds:", error);
+
           return new Error(
             `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
@@ -173,6 +179,7 @@ export const makeBattleMetadata = (
             `Failed to upsert character ${characterId} for user ${userId}`,
             error,
           );
+
           return Effect.void;
         }),
         Effect.withSpan("BattleMetadata_upsertCharacter", {

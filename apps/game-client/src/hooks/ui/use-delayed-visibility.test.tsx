@@ -22,6 +22,7 @@ describe("useDelayedVisibility", () => {
 
   it("cancels the pending reveal when the state becomes inactive", () => {
     vi.useFakeTimers();
+
     const { result, rerender } = renderHook(
       ({ active }) => useDelayedVisibility(active, 200),
       { initialProps: { active: true } },

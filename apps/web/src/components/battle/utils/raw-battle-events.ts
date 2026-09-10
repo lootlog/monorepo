@@ -15,6 +15,7 @@ const parseHpPercentage = (value: string | undefined): number | null => {
   }
 
   const hpPercentage = Number.parseFloat(value.replace(",", "."));
+
   if (Number.isNaN(hpPercentage)) {
     return null;
   }
@@ -85,12 +86,15 @@ export const parseRawBattleSourceEvents = (
   sourceEvents: RawBattle["sourceEvents"],
 ): RawBattleParsedEvent[] | null => {
   const result = z.array(sourceBattleEvent).safeParse(sourceEvents);
+
   if (!result.success) return null;
+
   const parsedEvents = result.data.flatMap(
     (event) =>
       event?.f.m.flatMap((move) => (move === null ? [] : [parseMove(move)])) ??
       [],
   );
+
   return parsedEvents.length > 0 ? parsedEvents : null;
 };
 

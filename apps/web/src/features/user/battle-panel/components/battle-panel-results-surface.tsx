@@ -38,6 +38,7 @@ export const BattlePanelResultsSurface = ({
   withHorizontalScroll = true,
 }: BattlePanelResultsSurfaceProps) => {
   const { t } = useTranslation();
+
   const shouldShowChips =
     chips.length > 0 && clearFiltersLabel !== undefined && onClearFilters;
 

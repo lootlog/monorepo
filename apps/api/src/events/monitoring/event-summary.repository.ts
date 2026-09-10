@@ -58,6 +58,7 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
     windowClosedAt: Date,
   ) {
     if (mapIds.length === 0) return Effect.succeed([]);
+
     return database
       .select({ log: eventPresenceLogTable, member: memberTable })
       .from(eventPresenceLogTable)
@@ -114,6 +115,7 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
         yield* transaction
           .insert(eventRespawnWindowSummaryTable)
           .values({ ...options.data, id: options.data.id ?? randomUUID() });
+
         const deletedLogs =
           options.mapIds.length === 0
             ? []
@@ -147,6 +149,7 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
                   ),
                 )
                 .returning({ id: eventPresenceLogTable.id });
+
         const deletedGaps = yield* transaction
           .delete(eventMapCoverageGapTable)
           .where(
@@ -157,6 +160,7 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
             ),
           )
           .returning({ id: eventMapCoverageGapTable.id });
+
         return {
           deletedLogs: deletedLogs.length,
           deletedGaps: deletedGaps.length,
@@ -197,6 +201,7 @@ export const makeEventSummaryStore = (database: ApiDatabaseValue) => ({
 });
 
 type EventSummaryQueries = ReturnType<typeof makeEventSummaryStore>;
+
 export type EventSummaryStore = {
   readonly [Method in keyof EventSummaryQueries]: (
     ...args: Parameters<EventSummaryQueries[Method]>

@@ -12,6 +12,7 @@ const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 export const TimersSettingsGeneral: FC = () => {
   const { generalConfig, setGeneralConfig, syncEnabled, setSyncEnabled } =
     useTimersStore();
+
   const { t } = useTranslation();
 
   const [inputValue, setInputValue] = useState<string>(() =>
@@ -26,12 +27,15 @@ export const TimersSettingsGeneral: FC = () => {
 
     if (value === "") {
       setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
+
       return;
     }
 
     const num = Number.parseInt(value, 10);
+
     if (Number.isNaN(num)) {
       setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
+
       return;
     }
 
@@ -41,6 +45,7 @@ export const TimersSettingsGeneral: FC = () => {
         removeTimerAfterMs: MAX_REMOVE_TIMER_AFTER_MS,
       });
       setInputValue((MAX_REMOVE_TIMER_AFTER_MS / 1000).toString());
+
       return;
     }
 

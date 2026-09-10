@@ -9,14 +9,19 @@ import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/clien
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
+
   const { data: guilds, isFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds();
+
   const [requestedGuildId, setRequestedGuildId] = useState("");
   const { t } = useTranslation();
+
   const requestedGuildExists = guilds?.some(
     (guild) => guild.id === requestedGuildId,
   );
+
   let selectedGuildId = "";
+
   if (!generalConfig.timersGrouping && isFetched) {
     selectedGuildId = requestedGuildExists
       ? requestedGuildId

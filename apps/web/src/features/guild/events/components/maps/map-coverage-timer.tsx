@@ -36,10 +36,13 @@ export const MapCoverageTimer = ({
     status,
     activeGap,
   );
+
   const isUnassigned = gapType === "UNASSIGNED";
+
   const tooltipContent = isUnassigned
     ? t("events.maps.gap.unassignedTooltip")
     : t("events.maps.gap.uncoveredTooltip");
+
   const isTimerVisible =
     isWindowActive(windowStatus) &&
     gapType !== null &&
@@ -53,11 +56,13 @@ export const MapCoverageTimer = ({
         0,
         currentSecond - Math.floor(startTime / 1000),
       );
+
       const nextDuration = formatDurationPadded(elapsedSeconds);
 
       if (timerValueRef.current) {
         timerValueRef.current.textContent = nextDuration;
       }
+
       timerContainerRef.current?.setAttribute(
         "aria-label",
         `${tooltipContent}: ${nextDuration}`,
@@ -65,6 +70,7 @@ export const MapCoverageTimer = ({
     };
 
     updateTimerValue(getClockSecond());
+
     return subscribeToSecondClock(updateTimerValue);
   }, [isTimerVisible, startTime, tooltipContent]);
 

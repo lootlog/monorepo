@@ -21,6 +21,7 @@ export const aggregateMapData = (
 
   for (const map of mapData) {
     const existing = aggregated.get(map.mapId);
+
     if (existing) {
       existing.assignmentDurationSeconds += map.assignmentDurationSeconds;
       existing.presenceTimeSeconds += map.presenceTimeSeconds;

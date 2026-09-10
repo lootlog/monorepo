@@ -35,6 +35,7 @@ export function ChatAvailableGatherings({
 }: Props) {
   const { t } = useTranslation("chat");
   const [expanded, setExpanded] = useState(false);
+
   const availableCandidates = [
     ...(target && !room ? [target] : []),
     ...candidates.filter(
@@ -43,11 +44,14 @@ export function ChatAvailableGatherings({
         (room || candidate.notificationId !== target?.notificationId),
     ),
   ];
+
   const visibleCandidateCount = room?.viewer === "PARTICIPANT" ? 0 : 1;
+
   const remainingCount = Math.max(
     0,
     availableCandidates.length - visibleCandidateCount,
   );
+
   const currentRoom = room && (
     <li
       key={room.notificationId}
@@ -58,6 +62,7 @@ export function ChatAvailableGatherings({
       </div>
     </li>
   );
+
   return (
     <ul
       className="ll:m-0 ll:flex ll:min-w-0 ll:max-h-64 ll:flex-col ll:list-none ll:overflow-auto ll:p-0"
@@ -77,6 +82,7 @@ export function ChatAvailableGatherings({
             )}
           </div>
         );
+
         return (
           <li
             key={candidate.notificationId}

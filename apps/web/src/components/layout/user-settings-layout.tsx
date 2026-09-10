@@ -5,6 +5,7 @@ import { ROUTE_SEGMENTS } from "@/config/routes";
 
 export const UserSettingsLayout: React.FC = () => {
   const { t } = useTranslation();
+
   const navElements = [
     {
       id: "account",

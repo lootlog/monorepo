@@ -43,7 +43,9 @@ const hasValidAssignmentWindow = (data: EventWrapped) => {
   const windowStart = data.event.startsAt
     ? Date.parse(data.event.startsAt)
     : Number.NaN;
+
   const windowEnd = Date.parse(data.event.endsAt ?? data.generatedAt);
+
   return (
     Number.isFinite(windowStart) &&
     Number.isFinite(windowEnd) &&
@@ -56,9 +58,11 @@ const getDominantHero = (data: EventWrapped, killSourceConsistent: boolean) => {
     ...data.heroes.map((hero) => hero.totalKills),
     0,
   );
+
   const heroesWithMaximumKills = data.heroes.filter(
     (hero) => hero.totalKills === maximumHeroKills,
   );
+
   if (
     !killSourceConsistent ||
     data.heroes.length < 2 ||
@@ -67,6 +71,7 @@ const getDominantHero = (data: EventWrapped, killSourceConsistent: boolean) => {
   ) {
     return null;
   }
+
   return heroesWithMaximumKills[0] ?? null;
 };
 
@@ -83,11 +88,13 @@ const validateLeader = ({
 }): WrappedLeaderFact | null => {
   if (!sourceConsistent) {
     omissions.push({ factId, reason: "kill-source-mismatch" });
+
     return null;
   }
 
   if (result.candidateCount < 2) {
     omissions.push({ factId, reason: "insufficient-candidates" });
+
     return null;
   }
 
@@ -97,6 +104,7 @@ const validateLeader = ({
       reason:
         result.tiedWinnerCount > 1 ? "tied-winner" : "non-positive-maximum",
     });
+
     return null;
   }
 
@@ -105,6 +113,7 @@ const validateLeader = ({
     result.winner.primaryValue === 0
   ) {
     omissions.push({ factId, reason: "invalid-value" });
+
     return null;
   }
 
@@ -118,11 +127,13 @@ export const buildWrappedQualityModel = (
   data: EventWrapped,
 ): WrappedQualityModel => {
   const omissions: WrappedQualityModel["omissions"] = [];
+
   const rankedKillTotal = data.heroes.reduce(
     (total, hero) =>
       total + (isFiniteNonNegative(hero.totalKills) ? hero.totalKills : 0),
     0,
   );
+
   const killSourceConsistent =
     isFiniteNonNegative(data.overview.totalKills) &&
     rankedKillTotal === data.overview.totalKills;
@@ -151,6 +162,7 @@ export const buildWrappedQualityModel = (
     data.coverage.totalUnassignedSeconds,
     data.coverage.coveragePercentage,
   ];
+
   const coverageValid =
     coverageValues.every(isFiniteNonNegative) &&
     data.coverage.totalWindowCount > 0 &&
@@ -166,6 +178,7 @@ export const buildWrappedQualityModel = (
     data.loot.rarityTotals.heroic,
     data.loot.rarityTotals.legendary,
   ];
+
   const rarityItemCount = rarityValues.every(isFiniteNonNegative)
     ? rarityValues.reduce((total, value) => total + value, 0)
     : 0;
@@ -180,11 +193,13 @@ export const buildWrappedQualityModel = (
     sourceConsistent: killSourceConsistent,
     omissions,
   });
+
   const topScorer = validateLeader({
     factId: "top-scorer",
     result: data.leaders.topScorer,
     omissions,
   });
+
   const longestDuty = assignmentWindowValid
     ? validateLeader({
         factId: "longest-duty",

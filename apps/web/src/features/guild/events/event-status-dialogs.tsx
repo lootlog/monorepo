@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { EventActionDialog } from "./components/dialogs/event-action-dialog";
 import type { useEventDetail } from "./use-event-detail";
+
 type Props = Pick<
   ReturnType<typeof useEventDetail>,
   | "endDialogOpen"
@@ -16,6 +17,7 @@ type Props = Pick<
   | "deleteEvent"
   | "navigate"
 > & { event: NonNullable<ReturnType<typeof useEventDetail>["event"]> };
+
 export const EventStatusDialogs = ({
   endDialogOpen,
   setEndDialogOpen,
