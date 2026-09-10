@@ -44,3 +44,31 @@ it("distinguishes an item-search outage from a successful empty search and recov
   );
   expect(screen.queryByRole("alert")).toBeNull();
 });
+
+it("clears a selected item through its keyboard-accessible action", () => {
+  const onSelect = vi.fn();
+  const onSearchChange = vi.fn();
+  render(
+    <WatchedItemSelector
+      loading={false}
+      items={[]}
+      searchValue="miecz"
+      selectedItem={{ id: 1, name: "miecz", icon: "", rarity: null }}
+      placeholder="Wybierz przedmiot"
+      searchPlaceholder="Wyszukaj przedmiot"
+      emptyMessage="Brak przedmiotów"
+      loadingMessage="Wczytywanie"
+      disabledMessage="Wybierz świat"
+      onSearchChange={onSearchChange}
+      onSelect={onSelect}
+    />,
+  );
+  const clear = screen.getByRole("button", { name: "common.clear" });
+  clear.focus();
+  fireEvent.click(clear);
+  expect(onSelect).toHaveBeenCalledWith(null);
+  expect(onSearchChange).toHaveBeenCalledWith("");
+  expect(screen.getByRole("combobox").getAttribute("aria-expanded")).toBe(
+    "false",
+  );
+});

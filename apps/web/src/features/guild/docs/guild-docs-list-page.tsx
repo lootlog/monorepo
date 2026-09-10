@@ -1,14 +1,8 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
-  SectionCard,
   SectionCard as Card,
+  SectionCard,
 } from "@/components/common/section-card/section-card";
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { Archive, FileText, FileX2, Plus, SearchX, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +15,9 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link } from "@tanstack/react-router";
+import { Archive, FileText, FileX2, Plus, SearchX, Trash2 } from "lucide-react";
 
 import {
   Empty,
@@ -31,84 +28,38 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  useDocsControllerDeleteDocument,
-  useDocsControllerGetDocuments,
-  type GuildDocumentListResponseDtoItemsItem,
-} from "@lootlog/client/main";
 
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import {
-  guildDocsListQueryOptions,
-  invalidateGuildDocsQueries,
-} from "./docs-api";
-import { canManageGuildDocs, canWriteGuildDocs } from "./docs-permissions";
-import { formatGuildDocDateTime } from "./docs-date-format";
+import { SearchInput } from "@/components/ui/search-input";
 import { GuildDocCreateDialog } from "./components/guild-doc-create-dialog";
 import { GuildDocTrashDialog } from "./components/guild-doc-trash-dialog";
+import { formatGuildDocDateTime } from "./docs-date-format";
 import { GuildDocsListSkeleton } from "./guild-docs-list-skeleton";
-import { useTranslation } from "react-i18next";
-import { SearchInput } from "@/components/ui/search-input";
 
-const filterGuildDocuments = (
-  documents: GuildDocumentListResponseDtoItemsItem[],
-  searchValue: string,
-) => {
-  const normalizedSearch = searchValue.trim().toLocaleLowerCase("pl");
-  if (!normalizedSearch) return documents;
-  return documents.filter((document) =>
-    document.title.toLocaleLowerCase("pl").includes(normalizedSearch),
-  );
-};
+import { useGuildDocsList } from "./use-guild-docs-list";
 
 export const GuildDocsListPage = () => {
-  const { t } = useTranslation();
-  const guildId = useGuildId() ?? "";
-  const queryClient = useQueryClient();
-  const { data: accessPolicy } = useGuildPermissions();
-  const [searchValue, setSearchValue] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [trashOpen, setTrashOpen] = useState(false);
-  const [documentPendingTrash, setDocumentPendingTrash] =
-    useState<GuildDocumentListResponseDtoItemsItem | null>(null);
-  const documentsQuery = useDocsControllerGetDocuments(
-    { guildId },
-    {
-      query: guildDocsListQueryOptions(guildId),
-    },
-  );
-  const deleteDocument = useDocsControllerDeleteDocument();
-
-  const documents = documentsQuery.data?.items ?? [];
-  const filteredDocuments = filterGuildDocuments(documents, searchValue);
-  const limit = documentsQuery.data?.limit ?? {
-    canCreate: false,
-    max: 50,
-    trashed: 0,
-    used: documents.length,
-  };
-  const canCreate = canWriteGuildDocs(accessPolicy) && limit.canCreate;
-  const canWrite = canWriteGuildDocs(accessPolicy);
-  const canManage = canManageGuildDocs(accessPolicy);
-  const hasDocuments = documents.length > 0;
-  const hasFilteredDocuments = filteredDocuments.length > 0;
-
-  const moveDocumentToTrash = async (
-    document: GuildDocumentListResponseDtoItemsItem,
-  ) => {
-    try {
-      await deleteDocument.mutateAsync({
-        pathParams: { guildId, docId: document.id },
-      });
-      await invalidateGuildDocsQueries(queryClient, guildId, document.id);
-      setDocumentPendingTrash(null);
-      toast.success(t("docs.trash.moved"));
-    } catch {
-      toast.error(t("docs.trash.moveError"));
-    }
-  };
-
+  const {
+    t,
+    searchValue,
+    setSearchValue,
+    documentsQuery,
+    limit,
+    canWrite,
+    setTrashOpen,
+    canCreate,
+    setCreateOpen,
+    hasDocuments,
+    hasFilteredDocuments,
+    filteredDocuments,
+    guildId,
+    deleteDocument,
+    setDocumentPendingTrash,
+    createOpen,
+    canManage,
+    trashOpen,
+    documentPendingTrash,
+    moveDocumentToTrash,
+  } = useGuildDocsList();
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
       <h1 className="sr-only">{t("docs.list.title")}</h1>

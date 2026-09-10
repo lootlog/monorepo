@@ -29,8 +29,8 @@ const getExpectedMentionSignature = (
   mentionContext?: ChatMentionContext,
 ) => {
   return getChatMentionSegments(message, mentionContext)
-    .filter((segment) => segment.isMention)
-    .map((segment) => {
+    .flatMap((segment) => {
+      if (!segment.isMention) return [];
       return [
         segment.text,
         segment.kind,
@@ -44,8 +44,8 @@ const getExpectedMentionSignature = (
 const getCurrentMentionSignature = () => {
   return $getRoot()
     .getAllTextNodes()
-    .filter($isChatMentionNode)
-    .map((node) => {
+    .flatMap((node) => {
+      if (!$isChatMentionNode(node)) return [];
       const serializedNode = node.exportJSON();
 
       return [

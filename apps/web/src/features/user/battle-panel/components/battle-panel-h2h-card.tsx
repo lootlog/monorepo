@@ -1,9 +1,7 @@
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import {
-  BattleResultStatus,
-  getBattleResultRowClassName,
-} from "@/features/user/battle-panel/components/battle-result-status";
+import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
+import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import {

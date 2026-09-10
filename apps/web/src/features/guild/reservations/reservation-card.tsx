@@ -45,6 +45,13 @@ export function ReservationCard({
     statusDetail = `${spot.currentReservation.author.displayName} · ${format(new Date(spot.currentReservation.endsAt), "HH:mm")}`;
   }
 
+  const imageOccurrences = new Map<string, number>();
+  const images = spot.images.slice(0, 4).map((image) => {
+    const occurrence = (imageOccurrences.get(image) ?? 0) + 1;
+    imageOccurrences.set(image, occurrence);
+    return { image, key: `${image}:${occurrence}` };
+  });
+
   return (
     <Card
       className={cn(
@@ -109,9 +116,9 @@ export function ReservationCard({
 
       {spot.images.length > 0 && viewMode === "grid" && (
         <div className="pointer-events-none relative z-10 flex min-h-10 items-center gap-2 overflow-hidden">
-          {spot.images.slice(0, 4).map((image, index) => (
+          {images.map(({ image, key }) => (
             <NpcSearchTile
-              key={`${image}-${index}`}
+              key={key}
               icon={image}
               name={spot.name}
               className="shrink-0 cursor-inherit"

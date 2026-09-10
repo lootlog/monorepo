@@ -9,6 +9,8 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@lootlog/ui/components/chart";
+// Loaded on demand by LootStats; Recharts primitives must share this chart boundary.
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type {

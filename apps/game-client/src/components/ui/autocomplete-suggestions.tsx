@@ -106,13 +106,14 @@ export const AutocompleteSuggestions = <T,>({
         {items.map((item, index) => {
           const isSelected = index === selectedIndex;
           return (
-            <div
+            <button
+              type="button"
               key={keyExtractor(item)}
               onClick={() => onSelect(item)}
-              className="ll:cursor-pointer"
+              className="ll:cursor-pointer ll:block ll:w-full ll:border-0 ll:bg-transparent ll:p-0 ll:text-left ll:text-inherit ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
             >
               {renderItem(item, index, isSelected)}
-            </div>
+            </button>
           );
         })}
       </div>

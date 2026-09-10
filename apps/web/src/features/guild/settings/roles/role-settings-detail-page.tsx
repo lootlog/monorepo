@@ -1,11 +1,10 @@
 import { PageHeader } from "@/components/common/page-header";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
-import { PERMISSION_CATEGORIES } from "@/features/guild/settings/roles/constants/permission-categories";
 import { RolesForm } from "@/features/guild/settings/roles/components/roles-form";
-import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { getColorFromRoleColor } from "@/utils/get-color-from-role";
-import { Permission } from "@lootlog/schema/permissions";
+import { useRolesControllerGetGuildRoles } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
+import { getActivePermissionCategories } from "./active-permission-categories";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { TooltipProvider } from "@lootlog/ui/components/tooltip";
@@ -57,16 +56,7 @@ export const RoleSettingsDetailPage = () => {
   }
 
   const color = getColorFromRoleColor(role.color);
-  const hasAdminPermission = role.permissions.includes(Permission.ADMIN);
-  const activeCategories = hasAdminPermission
-    ? PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.includes(Permission.ADMIN),
-      )
-    : PERMISSION_CATEGORIES.filter((category) =>
-        category.permissions.some((permission) =>
-          role.permissions.includes(permission),
-        ),
-      );
+  const activeCategories = getActivePermissionCategories(role.permissions);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
@@ -107,11 +97,7 @@ export const RoleSettingsDetailPage = () => {
             <div className="flex min-h-8 shrink-0 flex-wrap items-center gap-1 pl-12 sm:pl-0">
               {activeCategories.length > 0 ? (
                 <TooltipProvider delay={100}>
-                  {activeCategories.map((category) => {
-                    const activePermissions = category.permissions.filter(
-                      (permission) => role.permissions.includes(permission),
-                    );
-
+                  {activeCategories.map(({ category, activePermissions }) => {
                     return (
                       <PermissionCategoryTooltip
                         key={category.name}

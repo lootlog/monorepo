@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { type FC, useRef } from "react";
 import { getRuntimeUiScale } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import {
@@ -7,6 +8,18 @@ import {
   isWindowResizeSessionActive,
   registerWindowResizeSessionCancellation,
 } from "./window-resize-session";
+
+const KEYBOARD_RESIZE_DELTAS = new Map([
+  ["ArrowLeft", { x: -1, y: 0 }],
+  ["ArrowRight", { x: 1, y: 0 }],
+  ["ArrowUp", { x: 0, y: -1 }],
+  ["ArrowDown", { x: 0, y: 1 }],
+]);
+
+const getScaledViewportSize = (scale: number) => ({
+  width: (window.visualViewport?.width ?? window.innerWidth) * scale,
+  height: (window.visualViewport?.height ?? window.innerHeight) * scale,
+});
 
 const getResizeCursor = ({
   allowHorizontalResize,
@@ -63,6 +76,8 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   onResizeStart,
   onResizeEnd,
 }) => {
+  const { t } = useTranslation("common");
+  const keyboardResizing = useRef(false);
   const activeTouchIdRef = useRef<number | null>(null);
   const cursor = getResizeCursor({
     allowHorizontalResize,
@@ -87,11 +102,8 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
       const scale = getRuntimeUiScale();
-      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
-      const viewportHeight =
-        window.visualViewport?.height ?? window.innerHeight;
-      const scaledViewportWidth = viewportWidth * scale;
-      const scaledViewportHeight = viewportHeight * scale;
+      const { width: scaledViewportWidth, height: scaledViewportHeight } =
+        getScaledViewportSize(scale);
 
       const deltaX = (e.clientX - startX) / scale;
       const deltaY = (e.clientY - startY) / scale;
@@ -159,11 +171,8 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
       if (!touch) return;
       e.preventDefault();
       const scale = getRuntimeUiScale();
-      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
-      const viewportHeight =
-        window.visualViewport?.height ?? window.innerHeight;
-      const scaledViewportWidth = viewportWidth * scale;
-      const scaledViewportHeight = viewportHeight * scale;
+      const { width: scaledViewportWidth, height: scaledViewportHeight } =
+        getScaledViewportSize(scale);
 
       const clientX = touch.pageX - window.scrollX;
       const clientY = touch.pageY - window.scrollY;
@@ -223,10 +232,57 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     window.addEventListener("touchcancel", handleTouchEnd);
   };
 
+  const handleKeyboardResize = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+  ) => {
+    const delta = KEYBOARD_RESIZE_DELTAS.get(event.key);
+    if (!delta) return;
+    const horizontal = allowHorizontalResize && delta.x !== 0;
+    const vertical = allowVerticalResize && delta.y !== 0;
+    if (!horizontal && !vertical) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!keyboardResizing.current) {
+      cancelWindowResizeSession();
+      keyboardResizing.current = true;
+      onResizeStart();
+    }
+    const root = event.currentTarget.parentElement?.parentElement;
+    const width = root?.offsetWidth ?? minWidth;
+    const height = root?.offsetHeight ?? minHeight;
+    const step = event.shiftKey ? 10 : 1;
+    const scale = getRuntimeUiScale();
+    const viewport = getScaledViewportSize(scale);
+    onResize({
+      width: horizontal
+        ? Math.max(
+            minWidth,
+            Math.min(maxWidth ?? viewport.width, width + delta.x * step),
+          )
+        : width,
+      height: vertical
+        ? Math.max(
+            minHeight,
+            Math.min(maxHeight ?? viewport.height, height + delta.y * step),
+          )
+        : height,
+    });
+  };
+  const finishKeyboardResize = () => {
+    if (!keyboardResizing.current) return;
+    keyboardResizing.current = false;
+    onResizeEnd();
+  };
+
   return (
-    <div
+    <button
+      type="button"
+      aria-label={t("actions.resizeWindow")}
+      onKeyDown={handleKeyboardResize}
+      onKeyUp={finishKeyboardResize}
+      onBlur={finishKeyboardResize}
       data-ll-window-resize-handle=""
-      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-3 ll:h-3 ll:bg-transparent touch-none"
+      className="ll:absolute ll:bottom-0 ll:right-0 ll:w-3 ll:h-3 ll:bg-transparent ll:border-0 ll:p-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring touch-none"
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       style={{

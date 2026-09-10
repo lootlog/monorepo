@@ -1,3 +1,4 @@
+/* eslint-disable react-doctor/no-array-index-as-key -- Items belong to one immutable loot event and never reorder within its row. Identical drops may share catalog IDs and HIDs, so the occurrence index disambiguates them. */
 import { ItemTile } from "@/components/tiles/item-tile";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { LootMetaItem } from "@/features/guild/loots-list/components/loots-list/loot-meta-item";

@@ -1,12 +1,13 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
-import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skeleton";
-import { getOffsetPagination } from "./utils/offset-pagination";
-import { useState, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
-import { Users } from "lucide-react";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
+import { SearchInput } from "@/components/ui/search-input";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import {
   Table,
   TableBody,
@@ -15,149 +16,44 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import { SearchInput } from "@/components/ui/search-input";
-import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
+import { TextLink } from "@lootlog/ui/components/text-link";
+import { Link } from "@tanstack/react-router";
+import { Users } from "lucide-react";
+import { StatsRankingRowsSkeleton } from "./components/stats-ranking-rows-skeleton";
 
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import {
-  getKillsControllerGetGuildKillStatsQueryKey,
-  useKillsControllerGetGuildKillStats,
-  type NpcType,
-} from "@lootlog/client/main";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 
-import { useStatsSettings } from "./hooks/use-stats-settings";
+import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
 import { LevelFilters } from "./components/level-filters";
 import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";
-import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
-import {
-  KillStatsPeriodSelect,
-  type KillStatsPeriod,
-} from "@/features/kills/components/kill-stats-period-select";
 
-const ITEMS_PER_PAGE = 20;
-
-const NPC_TYPE_ORDER: NpcType[] = [
-  "TITAN",
-  "COLOSSUS",
-  "HERO",
-  "ELITE3",
-  "ELITE2",
-  "ELITE",
-  "COMMON",
-];
+import { useStatsRankingModel } from "./use-stats-ranking-model";
 
 export const StatsRanking: React.FC = () => {
-  const { t } = useTranslation();
-  const { guildId } = useParams({
-    from: "/_authenticated/$guildId/stats/ranking",
-  });
-  const navigate = useNavigate();
-  const [cursor, setCursor] = useState(0);
   const {
+    t,
+    handleSearchChange,
     settings,
-    debouncedMinLvl,
-    debouncedMaxLvl,
-    setWorld,
-    setMinLvl,
-    setMaxLvl,
-    setPeriod,
-  } = useStatsSettings("ranking");
-  const [searchQuery, setSearchQuery] = useState("");
-  const killStatsParams = buildGuildKillStatsParams({
-    world: settings.world ?? undefined,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-    period: settings.period,
-  });
-
-  const { data, isLoading } = useKillsControllerGetGuildKillStats(
-    { guildId },
-    killStatsParams,
-    {
-      query: {
-        enabled: Boolean(guildId),
-        queryKey: getKillsControllerGetGuildKillStatsQueryKey(
-          { guildId },
-          killStatsParams,
-        ),
-      },
-    },
-  );
-
-  const handleWorldChange = (value: string | null) => {
-    setWorld(value);
-    setCursor(0);
-  };
-
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleMinLvlChange = (value: string) => {
-    setMinLvl(value);
-    setCursor(0);
-  };
-
-  const handleMaxLvlChange = (value: string) => {
-    setMaxLvl(value);
-    setCursor(0);
-  };
-
-  const handlePeriodChange = (value: KillStatsPeriod) => {
-    setPeriod(value);
-    setCursor(0);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      setSearchQuery(value);
-      setCursor(0);
-    }, 500);
-  };
-
-  const memberRanking = data?.memberRanking ?? [];
-  const filteredRanking = searchQuery
-    ? memberRanking.filter((member) =>
-        member.memberName?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : memberRanking;
-  const hasActiveFilters =
-    Boolean(settings.world) ||
-    Boolean(settings.minLvl) ||
-    Boolean(settings.maxLvl) ||
-    settings.period !== "all" ||
-    Boolean(searchQuery);
-  const total = filteredRanking.length;
-  const paginatedData = filteredRanking.slice(cursor, cursor + ITEMS_PER_PAGE);
-  const { hasNext, hasPrev, handleNextPage, handlePreviousPage } =
-    getOffsetPagination(cursor, total, ITEMS_PER_PAGE, setCursor);
-
-  const activeNpcTypes = NPC_TYPE_ORDER.filter((type) =>
-    memberRanking.some(
-      (member) => (member.participationsByType[type] ?? 0) > 0,
-    ),
-  );
-
-  const handleRowClick = (memberId: number) => {
-    navigate({
-      to: "/$guildId/stats/members/$memberId",
-      params: {
-        guildId,
-        memberId: memberId.toString(),
-      },
-    });
-  };
-
+    handleWorldChange,
+    handleMinLvlChange,
+    handleMaxLvlChange,
+    handlePeriodChange,
+    isLoading,
+    data,
+    paginatedData,
+    hasActiveFilters,
+    cursor,
+    handleRowClick,
+    activeNpcTypes,
+    guildId,
+    total,
+    hasPrev,
+    hasNext,
+    handlePreviousPage,
+    handleNextPage,
+  } = useStatsRankingModel();
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <ScrollArea className="flex-1 min-h-0">

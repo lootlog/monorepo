@@ -32,8 +32,6 @@ const vendorChunkGroups = {
   ],
   "vendor-icons": ["/node_modules/lucide-react/"],
   "vendor-motion": [
-    "/node_modules/framer-motion/",
-    "/node_modules/motion/",
     "/node_modules/gsap/",
     "/node_modules/three/",
     "/node_modules/ogl/",

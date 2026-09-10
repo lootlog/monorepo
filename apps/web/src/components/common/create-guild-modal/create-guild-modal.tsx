@@ -25,6 +25,10 @@ import {
   useGuildsControllerGetManageableUserGuilds,
 } from "@lootlog/client/main";
 
+const handleAddToGuild = (guildId: string) => {
+  window.location.assign(buildDiscordBotInstallUrl(guildId));
+};
+
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [debouncedValue] = useDebounceValue<string>(searchValue, 200);
@@ -40,10 +44,6 @@ export const CreateGuildModal: FC = () => {
       },
     },
   );
-
-  const handleAddToGuild = (guildId: string) => {
-    window.location.assign(buildDiscordBotInstallUrl(guildId));
-  };
 
   const handleModalClose = () => {
     createGuildModal.dispatch({ type: "CLOSE" });

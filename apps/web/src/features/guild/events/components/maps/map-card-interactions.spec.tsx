@@ -10,7 +10,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventMap } from "../../types/api";
-import { MapCard, STATUS_STYLES } from "./map-card";
+import { MapCard } from "./map-card";
+import { STATUS_STYLES } from "./map-status";
 
 await initializeTestTranslations();
 

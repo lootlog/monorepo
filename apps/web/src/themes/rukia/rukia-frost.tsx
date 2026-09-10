@@ -1,5 +1,6 @@
+/* eslint-disable react-doctor/no-scale-from-zero -- These zero-scale elements are intentional point-origin decorative particles and SVG crystals, never text or controls; the rule explicitly permits point-origin illustration effects. */
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 import { useState, type ReactNode } from "react";
 
 // SVG Frost Filter - creates organic ice texture
@@ -54,7 +55,7 @@ const ScatteredCrystal = ({
   isVisible: boolean;
   delay: number;
 }) => (
-  <motion.div
+  <m.div
     className="absolute pointer-events-none"
     style={{
       left: x,
@@ -81,7 +82,7 @@ const ScatteredCrystal = ({
         }}
       />
     </svg>
-  </motion.div>
+  </m.div>
 );
 
 // Snowflake component
@@ -100,7 +101,7 @@ const Snowflake = ({
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <motion.div
+    <m.div
       key={String(prefersReducedMotion)}
       className="absolute pointer-events-none"
       style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
@@ -136,13 +137,13 @@ const Snowflake = ({
           <line x1="22" y1="12" x2="19" y2="14" />
         </g>
       </svg>
-    </motion.div>
+    </m.div>
   );
 };
 
 // Ice crack lines
 const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
-  <motion.svg
+  <m.svg
     className="absolute inset-0 w-full h-full pointer-events-none"
     viewBox="0 0 100 100"
     preserveAspectRatio="none"
@@ -150,7 +151,7 @@ const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
     animate={{ opacity: isVisible ? 1 : 0 }}
     transition={{ duration: 0.3 }}
   >
-    <motion.path
+    <m.path
       d="M50 50 L30 30 L20 35 M30 30 L25 20"
       fill="none"
       stroke="rgba(200, 230, 255, 0.4)"
@@ -160,7 +161,7 @@ const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
       animate={{ pathLength: isVisible ? 1 : 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
     />
-    <motion.path
+    <m.path
       d="M50 50 L70 35 L80 40 M70 35 L75 25"
       fill="none"
       stroke="rgba(200, 230, 255, 0.35)"
@@ -170,7 +171,7 @@ const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
       animate={{ pathLength: isVisible ? 1 : 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
     />
-    <motion.path
+    <m.path
       d="M50 50 L35 70 L30 80 M35 70 L25 75"
       fill="none"
       stroke="rgba(200, 230, 255, 0.3)"
@@ -180,7 +181,7 @@ const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
       animate={{ pathLength: isVisible ? 1 : 0 }}
       transition={{ duration: 0.55, delay: 0.35 }}
     />
-    <motion.path
+    <m.path
       d="M50 50 L65 65 L75 70 M65 65 L70 80"
       fill="none"
       stroke="rgba(200, 230, 255, 0.35)"
@@ -190,7 +191,7 @@ const IceCracks = ({ isVisible }: { isVisible: boolean }) => (
       animate={{ pathLength: isVisible ? 1 : 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
     />
-  </motion.svg>
+  </m.svg>
 );
 
 // Crystal positions for buttons
@@ -216,23 +217,24 @@ const buttonSnowflakePositions = [
 ];
 
 // Wind streaks that sweep across the screen
+const streaks = [
+  { y: "15%", duration: 8, delay: 0, width: 200, opacity: 0.06 },
+  { y: "35%", duration: 12, delay: 3, width: 300, opacity: 0.045 },
+  { y: "55%", duration: 10, delay: 6, width: 250, opacity: 0.05 },
+  { y: "75%", duration: 14, delay: 2, width: 180, opacity: 0.04 },
+  { y: "25%", duration: 9, delay: 8, width: 220, opacity: 0.045 },
+  { y: "65%", duration: 11, delay: 5, width: 280, opacity: 0.05 },
+  { y: "85%", duration: 13, delay: 1, width: 160, opacity: 0.04 },
+];
+
 const WindStreaks = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const streaks = [
-    { y: "15%", duration: 8, delay: 0, width: 200, opacity: 0.06 },
-    { y: "35%", duration: 12, delay: 3, width: 300, opacity: 0.045 },
-    { y: "55%", duration: 10, delay: 6, width: 250, opacity: 0.05 },
-    { y: "75%", duration: 14, delay: 2, width: 180, opacity: 0.04 },
-    { y: "25%", duration: 9, delay: 8, width: 220, opacity: 0.045 },
-    { y: "65%", duration: 11, delay: 5, width: 280, opacity: 0.05 },
-    { y: "85%", duration: 13, delay: 1, width: 160, opacity: 0.04 },
-  ];
 
   return (
     <>
-      {streaks.map((streak, i) => (
-        <motion.div
-          key={`${i}-${prefersReducedMotion}`}
+      {streaks.map((streak) => (
+        <m.div
+          key={`${streak.y}:${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
             top: streak.y,
@@ -271,19 +273,20 @@ const WindStreaks = () => {
 };
 
 // Frost mist that drifts across the bottom
+const mistLayers = [
+  { y: "92%", duration: 40, delay: 0, opacity: 0.03 },
+  { y: "95%", duration: 35, delay: 10, opacity: 0.045 },
+  { y: "88%", duration: 45, delay: 20, opacity: 0.02 },
+];
+
 const FrostMist = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const mistLayers = [
-    { y: "92%", duration: 40, delay: 0, opacity: 0.03 },
-    { y: "95%", duration: 35, delay: 10, opacity: 0.045 },
-    { y: "88%", duration: 45, delay: 20, opacity: 0.02 },
-  ];
 
   return (
     <>
-      {mistLayers.map((mist, i) => (
-        <motion.div
-          key={`${i}-${prefersReducedMotion}`}
+      {mistLayers.map((mist) => (
+        <m.div
+          key={`${mist.y}:${prefersReducedMotion}`}
           className="absolute w-full h-24 pointer-events-none"
           style={{
             top: mist.y,
@@ -342,7 +345,7 @@ const IceSparkles = () => {
   return (
     <>
       {iceSparkleConfigs.map((sparkle) => (
-        <motion.div
+        <m.div
           key={`${sparkle.id}-${prefersReducedMotion}`}
           className="absolute pointer-events-none rounded-full"
           style={{
@@ -447,9 +450,9 @@ const frostPatchConfigs = generateFrostPatches();
 
 const FrostPatches = () => (
   <>
-    {frostPatchConfigs.map((patch, i) => (
+    {frostPatchConfigs.map((patch) => (
       <div
-        key={i}
+        key={`${patch.x}:${patch.y}`}
         className="absolute pointer-events-none"
         style={{
           left: patch.x === "auto" ? undefined : patch.x,
@@ -469,7 +472,7 @@ const FrostPatches = () => (
 
 // Global ambient frost overlay for the entire app
 export const GlobalFrostOverlay = () => (
-  <motion.div
+  <m.div
     className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -503,7 +506,7 @@ export const GlobalFrostOverlay = () => (
 
     {/* Floating snowflakes across the screen */}
     <FloatingSnowflakes />
-  </motion.div>
+  </m.div>
 );
 
 type FallingSnowflakeType = "simple" | "detailed" | "dot";
@@ -532,7 +535,7 @@ const FallingSnowflake = ({
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <motion.div
+    <m.div
       key={String(prefersReducedMotion)}
       className="absolute pointer-events-none"
       style={{ left: `${initialX}%`, top: "-5%" }}
@@ -632,7 +635,7 @@ const FallingSnowflake = ({
           </g>
         </svg>
       )}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -739,7 +742,7 @@ export const FrozenCircle = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Pulsing ice glow */}
-      <motion.div
+      <m.div
         key={String(prefersReducedMotion)}
         className="absolute inset-0 rounded-xl pointer-events-none"
         animate={
@@ -774,7 +777,7 @@ export const FrozenCircle = ({
       />
 
       {/* Frost overlay */}
-      <motion.div
+      <m.div
         className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
         animate={{ opacity: isAnimating ? 1 : 0 }}
         transition={{ duration: 0.3 }}
@@ -786,12 +789,12 @@ export const FrozenCircle = ({
               "radial-gradient(circle, rgba(220, 240, 255, 0.3) 0%, rgba(200, 230, 255, 0.15) 50%, transparent 70%)",
           }}
         />
-      </motion.div>
+      </m.div>
 
       {/* Ice crystals - randomly scattered, continuously animated */}
-      {frozenCircleCrystals.map((crystal, i) => (
-        <motion.div
-          key={`${i}-${prefersReducedMotion}`}
+      {frozenCircleCrystals.map((crystal) => (
+        <m.div
+          key={`${`${crystal.x}:${crystal.y}`}:${prefersReducedMotion}`}
           className="absolute pointer-events-none"
           style={{
             left: `${crystal.x}%`,
@@ -837,7 +840,7 @@ export const FrozenCircle = ({
               }}
             />
           </svg>
-        </motion.div>
+        </m.div>
       ))}
 
       {/* Content */}
@@ -877,7 +880,7 @@ export const FrozenButton = ({
           {/* Frost texture + edge frost - only on hover, skipped on active to keep text readable */}
           {!isActive && (
             <>
-              <motion.div
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: subtle ? 0.15 : 0.3 }}
@@ -891,16 +894,16 @@ export const FrozenButton = ({
                     background: "white",
                   }}
                 />
-              </motion.div>
+              </m.div>
 
-              <motion.div
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <motion.div
+                <m.div
                   className="absolute inset-0"
                   style={{
                     background:
@@ -914,15 +917,15 @@ export const FrozenButton = ({
                   exit={{ scale: 0.8, opacity: 0 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
-              </motion.div>
+              </m.div>
             </>
           )}
 
           <IceCracks isVisible />
 
-          {buttonCrystalPositions.map((crystal, index) => (
+          {buttonCrystalPositions.map((crystal) => (
             <ScatteredCrystal
-              key={index}
+              key={`${crystal.x}:${crystal.y}`}
               x={crystal.x}
               y={crystal.y}
               size={crystal.size}
@@ -932,9 +935,9 @@ export const FrozenButton = ({
             />
           ))}
 
-          {buttonSnowflakePositions.map((snowflake, index) => (
+          {buttonSnowflakePositions.map((snowflake) => (
             <Snowflake
-              key={index}
+              key={`${snowflake.x}:${snowflake.y}`}
               x={snowflake.x}
               y={snowflake.y}
               size={snowflake.size}
@@ -944,7 +947,7 @@ export const FrozenButton = ({
           ))}
 
           {/* Ice glow border - outer glow only, no inset */}
-          <motion.div
+          <m.div
             className={`absolute inset-0 ${rounded} pointer-events-none`}
             initial={{ opacity: 0 }}
             animate={{
@@ -959,10 +962,10 @@ export const FrozenButton = ({
           {/* Active state: shimmer + cyan border */}
           {isActive && !subtle && (
             <>
-              <motion.div
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none overflow-hidden`}
               >
-                <motion.div
+                <m.div
                   key={String(prefersReducedMotion)}
                   className="absolute inset-0"
                   style={{
@@ -981,8 +984,8 @@ export const FrozenButton = ({
                         }
                   }
                 />
-              </motion.div>
-              <motion.div
+              </m.div>
+              <m.div
                 className={`absolute inset-0 ${rounded} pointer-events-none border border-cyan-200/30`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -993,7 +996,7 @@ export const FrozenButton = ({
 
           {/* Active burst (one-shot) */}
           {isActive && !subtle && (
-            <motion.div
+            <m.div
               className={`absolute inset-0 ${rounded} pointer-events-none`}
               style={{
                 background:
@@ -1071,9 +1074,9 @@ export const FrostOverlay = ({
 
       <IceCracks isVisible />
 
-      {buttonCrystalPositions.map((crystal, index) => (
+      {buttonCrystalPositions.map((crystal) => (
         <ScatteredCrystal
-          key={index}
+          key={`${crystal.x}:${crystal.y}`}
           x={crystal.x}
           y={crystal.y}
           size={crystal.size * intensity}
@@ -1083,9 +1086,9 @@ export const FrostOverlay = ({
         />
       ))}
 
-      {buttonSnowflakePositions.map((snowflake, index) => (
+      {buttonSnowflakePositions.map((snowflake) => (
         <Snowflake
-          key={index}
+          key={`${snowflake.x}:${snowflake.y}`}
           x={snowflake.x}
           y={snowflake.y}
           size={snowflake.size * intensity}

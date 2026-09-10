@@ -58,10 +58,12 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
   const isControlled = value !== undefined;
   const currentWorld = isControlled ? value : contextWorld;
 
+  const availableWorlds = new Set(worlds);
+  const orderedWorldNames = new Set(worldOrder);
   const orderedWorlds = worlds
     ? [
-        ...worldOrder.filter((world) => worlds.includes(world)),
-        ...worlds.filter((world) => !worldOrder.includes(world)),
+        ...worldOrder.filter((world) => availableWorlds.has(world)),
+        ...worlds.filter((world) => !orderedWorldNames.has(world)),
       ]
     : [];
   const worldOptions = orderedWorlds.map((world) => ({

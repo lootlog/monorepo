@@ -66,7 +66,7 @@ export const MapPingWheel = () => {
         selection: selectedLabel,
       })}
       aria-live="polite"
-      className="ll:fixed ll:h-[176px] ll:w-[176px] ll:select-none ll:animate-in ll:fade-in-0 ll:zoom-in-95 ll:duration-100"
+      className="ll:fixed ll:h-[176px] ll:w-[176px] ll:select-none ll:animate-in ll:fade-in-0 ll:zoom-in-95 ll:duration-100 ll:transition-none"
       role="status"
       style={{
         left: snapshot.visualCenter.x - MAP_PING_WHEEL_RADIUS_PX,

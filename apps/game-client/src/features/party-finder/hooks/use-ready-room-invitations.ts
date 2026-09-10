@@ -10,11 +10,8 @@ export function useReadyRoomInvitations() {
   usePartyFinderStore((state) => state.readyRoomsSynchronized);
   useGlobalStore((state) => state.socketState);
 
-  const inviteParticipants = (participantIds?: string[]) =>
-    enqueueReadyRoomInvitations(participantIds);
-
-  const canInviteParticipants = (participantIds?: string[]) =>
-    canEnqueueReadyRoomInvitations(participantIds);
-
-  return { inviteParticipants, canInviteParticipants };
+  return {
+    inviteParticipants: enqueueReadyRoomInvitations,
+    canInviteParticipants: canEnqueueReadyRoomInvitations,
+  };
 }

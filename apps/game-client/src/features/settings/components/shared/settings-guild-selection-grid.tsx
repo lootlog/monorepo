@@ -79,6 +79,8 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
     onToggle(guildId);
   };
 
+  const selectedGuildIdSet = new Set(selectedGuildIds);
+
   return (
     <div
       className={cn(
@@ -89,7 +91,7 @@ export const SettingsGuildSelectionGrid: FC<SettingsGuildSelectionGridProps> = (
       )}
     >
       {guilds.map((guild) => {
-        const isSelected = selectedGuildIds.includes(guild.id);
+        const isSelected = selectedGuildIdSet.has(guild.id);
         const stateLabel = isSelected
           ? t("guildSelection.enabled")
           : t("guildSelection.disabled");
@@ -209,7 +211,8 @@ export const toggleAvailableGuild = (
   const nextGuildIds = selectedGuildIds.includes(guildId)
     ? selectedGuildIds.filter((id) => id !== guildId)
     : [...selectedGuildIds, guildId];
-  return guilds
-    .map((guild) => guild.id)
-    .filter((id) => nextGuildIds.includes(id));
+  const nextGuildIdSet = new Set(nextGuildIds);
+  return guilds.flatMap((guild) =>
+    nextGuildIdSet.has(guild.id) ? [guild.id] : [],
+  );
 };

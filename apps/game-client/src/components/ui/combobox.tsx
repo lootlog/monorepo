@@ -24,6 +24,7 @@ export interface ComboboxOption {
 }
 
 export interface ComboboxGroup {
+  id: string;
   label?: string;
   options: ComboboxOption[];
 }
@@ -42,13 +43,16 @@ interface ComboboxProps {
   contentClassName?: string;
 }
 
+const EMPTY_OPTIONS: ComboboxOption[] = [];
+const EMPTY_GROUPS: ComboboxGroup[] = [];
+
 export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
   (
     {
       value,
       onValueChange,
-      options = [],
-      groups = [],
+      options = EMPTY_OPTIONS,
+      groups = EMPTY_GROUPS,
       placeholder = "Select option...",
       searchPlaceholder = "Search...",
       emptyText = "No results found.",
@@ -118,7 +122,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                 </CommandEmpty>
                 {groups.length > 0 ? (
                   groups.map((group, index) => (
-                    <React.Fragment key={index}>
+                    <React.Fragment key={group.id}>
                       <CommandGroup
                         heading={group.label}
                         className="ll:text-muted-foreground ll:text-[10px] ll:font-sans [&_[cmdk-group-heading]]:ll:text-[10px] [&_[cmdk-group-heading]]:ll:font-semibold [&_[cmdk-group-heading]]:ll:text-muted-foreground [&_[cmdk-group-heading]]:ll:pl-3 [&_[cmdk-group-heading]]:ll:pr-2 [&_[cmdk-group-heading]]:ll:py-1"

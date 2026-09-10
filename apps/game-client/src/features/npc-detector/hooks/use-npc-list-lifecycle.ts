@@ -36,8 +36,7 @@ export const useNpcListLifecycle = ({
     hasNotificationCooldown || hasDetectionAnimation,
   );
   const notificationNpcSignature = npcs
-    .filter((npc) => npc.notificationSent)
-    .map((npc) => npc.id)
+    .flatMap((npc) => (npc.notificationSent ? [npc.id] : []))
     .join(":");
   const [notificationDeadlineState, setNotificationDeadlineState] = useState(
     () => ({
@@ -99,6 +98,8 @@ export const useNpcListLifecycle = ({
     }
   }, [activeDetectionAnimations]);
 
+  // The clock subscription expires external detector-store cooldowns; these are not derived parent props.
+  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent
   useEffect(() => {
     const expiredCooldownNpcIds: number[] = [];
 

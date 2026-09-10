@@ -362,9 +362,9 @@ export const buildLegendaryBonusMarkerGroups = (
     warriors.map((warrior) => [warrior.originalId, warrior.team]),
   );
   const teamByWarriorName = new Map(
-    warriors
-      .filter((warrior) => warrior.name)
-      .map((warrior) => [warrior.name?.toLowerCase() ?? "", warrior.team]),
+    warriors.flatMap((warrior) =>
+      warrior.name ? [[warrior.name.toLowerCase(), warrior.team] as const] : [],
+    ),
   );
   const groups = new Map<string, LegendaryBonusMarkerGroup>();
 

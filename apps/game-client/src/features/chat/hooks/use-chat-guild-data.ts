@@ -63,9 +63,9 @@ const reconcileChatMessageRefetch = ({
     cachedMessagesAfterRequest?.map((message) => message.id),
   );
   const removedMessageIds = new Set(
-    cachedMessagesBeforeRequest
-      ?.filter((message) => !messageIdsAfterRequest.has(message.id))
-      .map((message) => message.id),
+    cachedMessagesBeforeRequest?.flatMap((message) =>
+      messageIdsAfterRequest.has(message.id) ? [] : [message.id],
+    ),
   );
   const messagesChangedDuringRequest =
     cachedMessagesAfterRequest?.filter(

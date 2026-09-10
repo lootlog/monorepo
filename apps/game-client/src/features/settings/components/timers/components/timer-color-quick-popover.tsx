@@ -96,7 +96,10 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                     }
                     onBlur={(event) => commitHex(field, event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter") {
+                      if (
+                        event.key === "Enter" &&
+                        !event.nativeEvent.isComposing
+                      ) {
                         commitHex(field, event.currentTarget.value);
                         event.currentTarget.blur();
                       }

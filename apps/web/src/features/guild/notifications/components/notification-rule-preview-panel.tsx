@@ -10,7 +10,7 @@ import type { RoleResponseDtoOutput as GuildRole } from "@lootlog/client/main";
 import {
   createPreviewTemplateValues,
   renderTemplatePreview,
-} from "./notification-template-editor";
+} from "./notification-template-editor.utils";
 import {
   replaceRoleMentions,
   previewUrlTransform,

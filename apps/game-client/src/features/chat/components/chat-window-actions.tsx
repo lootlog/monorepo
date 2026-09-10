@@ -14,6 +14,15 @@ type ChatWindowActionsProps = {
   toggleIntegrated: () => void;
 };
 
+const actionButtonStyle = {
+  appearance: "none",
+  background: "transparent",
+  border: 0,
+  padding: 0,
+  margin: 0,
+  color: "inherit",
+} as const;
+
 export const ChatWindowActions = ({
   integrated,
   canIntegrate,
@@ -30,21 +39,13 @@ export const ChatWindowActions = ({
   const integrationLabel = integrated
     ? t("integration.detach")
     : t("integration.attach");
-  const style = {
-    appearance: "none",
-    background: "transparent",
-    border: 0,
-    padding: 0,
-    margin: 0,
-    color: "inherit",
-  } as const;
   return (
     <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
-            style={style}
+            style={actionButtonStyle}
             className="ll-custom-cursor-pointer ll:relative ll:flex ll:size-5 ll:items-center ll:justify-center ll:rounded-sm ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
             aria-label={filterLabel}
             aria-pressed={filtersVisible}
@@ -66,7 +67,7 @@ export const ChatWindowActions = ({
           <TooltipTrigger asChild>
             <button
               type="button"
-              style={style}
+              style={actionButtonStyle}
               className="ll-custom-cursor-pointer ll:flex ll:size-5 ll:items-center ll:justify-center ll:rounded-sm ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
               aria-label={integrationLabel}
               onClick={toggleIntegrated}

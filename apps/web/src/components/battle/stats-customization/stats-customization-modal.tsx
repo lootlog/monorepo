@@ -67,7 +67,9 @@ export const StatsCustomizationModal = ({
 
   const allAvailableStats: BattleStatDefinition[] = Array.from(
     new Map(
-      defaultCategories.flatMap((cat) => cat.stats).map((s) => [s.key, s]),
+      defaultCategories.flatMap((category) =>
+        category.stats.map((stat) => [stat.key, stat] as const),
+      ),
     ).values(),
   );
 

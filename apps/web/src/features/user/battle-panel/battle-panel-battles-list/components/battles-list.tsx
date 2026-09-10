@@ -66,8 +66,12 @@ const getBattlesListClassName = (
     showFilters && "gap-3",
   );
 
+const EMPTY_ACTIVEFILTERCHIPS: NonNullable<
+  BattlesListProps["activeFilterChips"]
+> = [];
+
 export const BattlesList = ({
-  activeFilterChips = [],
+  activeFilterChips = EMPTY_ACTIVEFILTERCHIPS,
   battlesResponse,
   clearFiltersLabel,
   characters,
@@ -159,21 +163,26 @@ export const BattlesList = ({
       <BattlesTable
         activeFilterChips={activeFilterChips}
         battles={tableState.battles}
+        pagination={
+          showPagination
+            ? {
+                hasNext: tableState.hasNext,
+                hasPrev: tableState.hasPrev,
+                pageIndex,
+                pageSize: tableState.pageSize ?? 20,
+                totalCount: tableState.totalCount,
+                onNextPage: handleNextPage,
+                onPreviousPage: handlePreviousPage,
+              }
+            : undefined
+        }
         clearFiltersLabel={clearFiltersLabel}
-        hasNext={tableState.hasNext}
-        hasPrev={tableState.hasPrev}
         isLoading={isLoading}
         onClearFilters={onClearFilters}
         onMatchmakingClick={handleMatchmakingClick}
-        onNextPage={handleNextPage}
         onPhClick={handlePhClick}
-        onPreviousPage={handlePreviousPage}
         onWorldClick={handleWorldClick}
-        pageIndex={pageIndex}
-        pageSize={tableState.pageSize}
-        showPagination={showPagination}
         selectionLimit={tableState.selectionLimit}
-        totalCount={tableState.totalCount}
         toolbar={toolbar}
         toolbarEnd={toolbarEnd}
       />

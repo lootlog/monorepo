@@ -33,8 +33,8 @@ export const BattleBreakdownTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rows.map((item, index) => (
-          <TableRow key={index} className="h-8 hover:bg-transparent">
+        {rows.map((item) => (
+          <TableRow key={item.type} className="h-8 hover:bg-transparent">
             <TableCell className={`py-1 ${item.color}`}>{item.type}</TableCell>
             <TableCell className="py-1 text-right font-medium tabular-nums">
               {item.value}

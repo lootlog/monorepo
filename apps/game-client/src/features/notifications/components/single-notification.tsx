@@ -152,9 +152,10 @@ const resolveNotificationAppearance = ({
   const key = getNotificationSettingsKey(notification);
   const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
   const autoHideDurationMs = autoHideTimeout > 0 ? autoHideTimeout * 1000 : 0;
-  const serverNames = notification.servers
-    .map((server) => guildNamesById[server] ?? "")
-    .filter(Boolean);
+  const serverNames = notification.servers.flatMap((server) => {
+    const name = guildNamesById[server];
+    return name ? [name] : [];
+  });
   const time = format(new Date(notification.createdAt), "HH:mm");
   const highlight = categorySettings?.highlight;
 

@@ -95,13 +95,15 @@ export const useNpcTypeColors = () => {
   };
 };
 
+const appearanceParams: SettingsDocumentsControllerGetPreferencesParams = {
+  domains: "appearance",
+};
+
 export const useAppearanceSettingsDocuments = () => {
-  const params: SettingsDocumentsControllerGetPreferencesParams = {
-    domains: "appearance",
-  };
-  const query = useSettingsDocumentsControllerGetPreferences(params, {
+  const query = useSettingsDocumentsControllerGetPreferences(appearanceParams, {
     query: {
-      queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params),
+      queryKey:
+        getSettingsDocumentsControllerGetPreferencesQueryKey(appearanceParams),
       staleTime: 60_000,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
@@ -111,7 +113,7 @@ export const useAppearanceSettingsDocuments = () => {
 
   return {
     ...query,
-    params,
+    params: appearanceParams,
     chatAppearance: getChatAppearanceFromSettingsDocuments(query.data),
   };
 };

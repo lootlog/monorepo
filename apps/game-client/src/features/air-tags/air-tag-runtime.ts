@@ -73,9 +73,9 @@ export class AirTagRuntime {
       const policy = getSocket().getAccessPolicy?.();
       if (policy) {
         this.allowedOrganizations = new Set(
-          policy.organizations
-            .filter(canReadPresence)
-            .map((organization) => organization.organizationId),
+          policy.organizations.flatMap((organization) =>
+            canReadPresence(organization) ? [organization.organizationId] : [],
+          ),
         );
         airTagReceiveController.retainOrganizations(this.allowedOrganizations);
       }
@@ -104,9 +104,9 @@ export class AirTagRuntime {
       return;
     }
     const allowed = new Set(
-      payload.accessPolicy.organizations
-        .filter(canReadPresence)
-        .map((organization) => organization.organizationId),
+      payload.accessPolicy.organizations.flatMap((organization) =>
+        canReadPresence(organization) ? [organization.organizationId] : [],
+      ),
     );
     const previous = this.allowedOrganizations;
     this.allowedOrganizations = allowed;

@@ -29,6 +29,8 @@ export function useActivePartyGatherings() {
     refetchInterval: 30_000,
     staleTime: 0,
   });
+  // Cleanup removes every listener with the same event and handler, including the events loop.
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     if (!connected || !joined || !socket) return;
     const reconcile = () => {
@@ -70,9 +72,10 @@ export function useActivePartyGatherings() {
   }, [connected, joined, socket, queryClient]);
   useEffect(() => {
     const nextExpiry = Math.min(
-      ...(query.data ?? [])
-        .map((room) => Date.parse(room.expiresAt))
-        .filter((expiry) => expiry > Date.now()),
+      ...(query.data ?? []).flatMap((room) => {
+        const expiry = Date.parse(room.expiresAt);
+        return expiry > Date.now() ? [expiry] : [];
+      }),
     );
     if (!Number.isFinite(nextExpiry)) return;
     const timer = window.setTimeout(

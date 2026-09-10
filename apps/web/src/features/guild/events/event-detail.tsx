@@ -1,418 +1,81 @@
-import { EventDetailSkeleton } from "./event-detail-skeleton";
-import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
-import { PageHeader } from "@/components/common/page-header";
-import { canManageEvent } from "./utils/event-access";
-import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
-import { useTranslation } from "react-i18next";
-import { useParams, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@lootlog/ui/components/button";
-import { Badge } from "@lootlog/ui/components/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import type {
-  EventHeroNpc,
-  EventMap,
-  EventMapLocation,
-  EventMapsResponse,
-} from "./types/api";
-import {
-  type EventOverviewResponseDto,
-  getEventsRankingControllerGetEventHeroStatsQueryKey,
-  getListEventHeroTimersQueryKey,
-  getListEventMapsQueryKey,
-  getListEventRankingQueryKey,
-  getListEventsQueryKey,
-  getShowEventOverviewQueryKey,
-  useDeleteEvent,
-  useEventsAssignmentControllerDeleteHero,
-  useEventsRankingControllerGetEventHeroStats,
-  useListEventHeroTimers,
-  useListEventMaps,
-  useListEventRanking,
-  useShowEventOverview,
-  useUpdateEvent,
-} from "@lootlog/client/main";
-import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
-import {
-  Trophy,
-  AlertCircle,
-  Clock,
-  CalendarDays,
-  BookText,
-  Sparkles,
-  Crosshair,
-  Globe2,
-  Star,
-} from "lucide-react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
-import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
-import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
-import { EventActionDialog } from "./components/dialogs/event-action-dialog";
+import { Link } from "@tanstack/react-router";
+import { AlertCircle } from "lucide-react";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
-import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
-import { toast } from "sonner";
-import { Permission } from "@lootlog/schema/permissions";
-import { EventHeroLoots } from "./components/stats/event-hero-loots";
-import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
+import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
+import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { EventHeroesTable } from "./components/heroes/event-heroes-table";
+import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
+import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import { EventActionsCard } from "./components/shared/event-actions-card";
+import { EventHeroLoots } from "./components/stats/event-hero-loots";
+import { EventDetailHeader } from "./event-detail-header";
+import { EventDetailSkeleton } from "./event-detail-skeleton";
+import { EventStatusDialogs } from "./event-status-dialogs";
 import { findEventHeroTimer } from "./utils/find-event-hero-timer";
-import {
-  normalizeEventScoringMode,
-  normalizeEventScoringRules,
-} from "@lootlog/domain/scoring";
-import { getEventStatusAtTimestamp } from "./utils/event-activity";
 
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
-import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
-import { useToggleEventPin } from "./hooks/mutations/use-toggle-event-pin";
-import { cn } from "cn";
-
-type EventDetailHero = EventHeroNpc & {
-  locations: EventMapLocation[];
-  maps: EventMap[];
-};
-
-type EventOverview = EventOverviewResponseDto;
-type Translator = ReturnType<typeof useTranslation>["t"];
-
-const getEventHeroes = (
-  event: EventOverview | undefined,
-  eventMaps: EventMapsResponse | undefined,
-): EventDetailHero[] => {
-  const heroMapsById = new Map(
-    (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
-  );
-  return (event?.heroNpcs ?? []).map((hero) => {
-    const mapsData = heroMapsById.get(hero.id);
-    return {
-      ...hero,
-      locations: mapsData?.locations ?? [],
-      maps: mapsData?.maps ?? [],
-    };
-  });
-};
-
-const getEventDateRangeLabel = (
-  event: EventOverview | undefined,
-  t: Translator,
-) => {
-  if (!event) return "";
-  const start = format(
-    new Date(event.startsAt || event.createdAt),
-    "d MMM yyyy",
-    {
-      locale: pl,
-    },
-  );
-  const end = event.endsAt
-    ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
-    : t("events.ongoing");
-  return `${start} - ${end}`;
-};
-
-const getEventAccess = (
-  accessPolicy: ReturnType<typeof useGuildPermissions>["data"],
-) => ({
-  canManage: canManageEvent(accessPolicy),
-  canDeleteEvent: Boolean(
-    accessPolicy?.allows(Permission.ADMIN) ||
-    accessPolicy?.allows(Permission.OWNER),
-  ),
-});
-
-const getEventStatusView = (
-  event: EventOverview | undefined,
-  timestamp: number,
-  eventIsPinned: boolean,
-  t: Translator,
-) => {
-  const status = event ? getEventStatusAtTimestamp(event, timestamp) : "ended";
-  let pinActionLabel = t("events.pinEvent");
-  if (status !== "active") {
-    pinActionLabel = t("events.pinUnavailable");
-  } else if (eventIsPinned) {
-    pinActionLabel = t("events.unpinEvent");
-  }
-
-  if (status === "upcoming") {
-    return {
-      status,
-      isActive: false,
-      pinActionLabel,
-      statusLabel: t("events.upcoming"),
-      statusVariant: "outline" as const,
-    };
-  }
-  if (status === "active") {
-    return {
-      status,
-      isActive: true,
-      pinActionLabel,
-      statusLabel: t("events.active"),
-      statusVariant: "default" as const,
-    };
-  }
-  return {
-    status,
-    isActive: false,
-    pinActionLabel,
-    statusLabel: t("events.ended"),
-    statusVariant: "secondary" as const,
-  };
-};
-
-const getEventScoring = (event: EventOverview | undefined) => {
-  const scoringMode = normalizeEventScoringMode(event?.scoringMode);
-  return {
-    scoringMode,
-    scoringRules:
-      scoringMode === "ADVANCED"
-        ? normalizeEventScoringRules(event?.scoringRules)
-        : null,
-  };
-};
-
-const getEventPinnedState = (
-  eventId: string | undefined,
-  isPinned: (eventId: string) => boolean,
-) => (eventId ? isPinned(eventId) : false);
-
-const isPinActionDisabled = (
-  eventId: string | undefined,
-  isEventActive: boolean,
-  isPending: (eventId: string) => boolean,
-) => !eventId || !isEventActive || isPending(eventId);
-
-const hasEventDetailErrors = (
-  mapsError: Error | null,
-  rankingError: Error | null,
-) => Boolean(mapsError || rankingError);
-
-const getEventRouteQuery = (
-  guildId: string | undefined,
-  eventId: string | undefined,
-) => ({
-  guildId: guildId ?? "",
-  eventId: eventId ?? "",
-});
-
-const getEventHeroTimerQuery = (world: string | null | undefined) => ({
-  world: world ?? "",
-});
+import { hasEventDetailErrors, useEventDetail } from "./use-event-detail";
 
 export const EventDetail = () => {
-  const { t } = useTranslation();
-  const { guildId, eventId } = useParams({ strict: false });
-  const { guildId: queryGuildId, eventId: queryEventId } = getEventRouteQuery(
+  const {
     guildId,
     eventId,
-  );
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const {
-    togglePin,
-    isPinned,
-    isPending: isPinPending,
-  } = useToggleEventPin(queryGuildId);
-  const currentTimestamp = useMinuteTimestamp();
-  const hasEventRouteParams = Boolean(guildId && eventId);
-  const eventIsPinned = getEventPinnedState(eventId, isPinned);
-
-  const {
-    data: event,
-    isLoading,
+    event,
+    heroDialogOpen,
+    setHeroDialogOpen,
+    queryGuildId,
+    queryEventId,
+    selectedHero,
+    mapDialogOpen,
+    setMapDialogOpen,
+    endDialogOpen,
+    setEndDialogOpen,
+    updateEvent,
+    t,
     error,
-  } = useShowEventOverview(
-    {
-      guildId: queryGuildId,
-      eventId: queryEventId,
-    },
-    {
-      query: {
-        enabled: hasEventRouteParams,
-        queryKey: getShowEventOverviewQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
-      },
-    },
-  );
-  const {
-    data: eventMaps,
-    isLoading: isMapsLoading,
-    error: mapsError,
-  } = useListEventMaps(
-    {
-      guildId: queryGuildId,
-      eventId: queryEventId,
-    },
-    {
-      query: {
-        enabled: hasEventRouteParams,
-        queryKey: getListEventMapsQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
-      },
-    },
-  );
-
-  const { data: accessPolicy } = useGuildPermissions();
-
-  const { data: heroTimers } = useListEventHeroTimers(
-    {
-      guildId: queryGuildId,
-      eventId: queryEventId,
-    },
-    getEventHeroTimerQuery(event?.world),
-    {
-      query: {
-        enabled: hasEventRouteParams && Boolean(event?.world),
-        queryKey: getListEventHeroTimersQueryKey(
-          {
-            guildId: queryGuildId,
-            eventId: queryEventId,
-          },
-          getEventHeroTimerQuery(event?.world),
-        ),
-      },
-    },
-  );
-
-  const { data: heroStats } = useEventsRankingControllerGetEventHeroStats(
-    {
-      guildId: queryGuildId,
-      eventId: queryEventId,
-    },
-    {
-      query: {
-        enabled: hasEventRouteParams,
-        queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
-      },
-    },
-  );
-  const { data: rankings = [], error: rankingError } = useListEventRanking(
-    {
-      guildId: queryGuildId,
-      eventId: queryEventId,
-    },
-    {
-      query: {
-        enabled: hasEventRouteParams,
-        queryKey: getListEventRankingQueryKey({
-          guildId: queryGuildId,
-          eventId: queryEventId,
-        }),
-      },
-    },
-  );
-  const updateEvent = useUpdateEvent({
-    mutation: {
-      onSuccess: () => {
-        if (!guildId || !eventId) {
-          return;
-        }
-
-        invalidateEventDetailQueries(queryClient, guildId, eventId);
-      },
-    },
-  });
-  const deleteHero = useEventsAssignmentControllerDeleteHero({
-    mutation: {
-      onSuccess: () => {
-        if (!guildId || !eventId) {
-          return;
-        }
-
-        invalidateEventDetailQueries(queryClient, guildId, eventId);
-      },
-    },
-  });
-  const deleteEvent = useDeleteEvent({
-    mutation: {
-      onSuccess: () => {
-        if (!guildId) {
-          return;
-        }
-
-        queryClient.invalidateQueries({
-          queryKey: getListEventsQueryKey({ guildId }),
-        });
-      },
-    },
-  });
-
-  const [heroDialogOpen, setHeroDialogOpen] = useState(false);
-  const [mapDialogOpen, setMapDialogOpen] = useState(false);
-  const [endDialogOpen, setEndDialogOpen] = useState(false);
-  const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
-  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
-  const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
-    null,
-  );
-
-  const heroes = getEventHeroes(event, eventMaps);
-  const { scoringMode, scoringRules } = getEventScoring(event);
-  const eventDateRangeLabel = getEventDateRangeLabel(event, t);
-  const { canManage, canDeleteEvent } = getEventAccess(accessPolicy);
-  const {
-    isActive: isEventActive,
+    resumeDialogOpen,
+    setResumeDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    deleteEvent,
+    navigate,
+    rulesDialogOpen,
+    setRulesDialogOpen,
+    scoringMode,
+    scoringRules,
+    summaryDialogOpen,
+    setSummaryDialogOpen,
+    eventStatusVariant,
+    eventStatusLabel,
+    eventDateRangeLabel,
+    isPinPending,
+    eventIsPinned,
     pinActionLabel,
-    statusLabel: eventStatusLabel,
-    statusVariant: eventStatusVariant,
-  } = getEventStatusView(event, currentTimestamp, eventIsPinned, t);
-
-  const handleEditHero = (hero: EventHeroNpc) => {
-    setSelectedHero({
-      ...hero,
-      locations: hero.locations ?? [],
-      maps: hero.maps ?? [],
-    });
-    setHeroDialogOpen(true);
-  };
-
-  const handleManageMaps = (hero: EventHeroNpc) => {
-    setSelectedHero({
-      ...hero,
-      locations: hero.locations ?? [],
-      maps: hero.maps ?? [],
-    });
-    setMapDialogOpen(true);
-  };
-
-  const handleDeleteHero = async (heroId: string) => {
-    try {
-      await deleteHero.mutateAsync({
-        pathParams: {
-          guildId: queryGuildId,
-          eventId: queryEventId,
-          heroId,
-        },
-      });
-      toast.success(t("events.heroes.deleted"));
-    } catch {
-      toast.error(t("events.heroes.deleteError"));
-    }
-  };
-
+    isEventActive,
+    togglePin,
+    canManage,
+    canDeleteEvent,
+    navigateToEventEdit,
+    openEventStatusDialog,
+    mapsError,
+    rankingError,
+    heroes,
+    heroTimers,
+    heroStats,
+    setSelectedHero,
+    handleEditHero,
+    handleManageMaps,
+    handleDeleteHero,
+    rankings,
+    isLoading,
+    isMapsLoading,
+  } = useEventDetail();
   if (isLoading || isMapsLoading) {
     return <EventDetailSkeleton />;
   }
-
   if (error || !event) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
@@ -424,26 +87,6 @@ export const EventDetail = () => {
       </div>
     );
   }
-
-  const navigateToEventEdit = () => {
-    navigate({
-      to: "/$guildId/events/$eventId/edit",
-      params: {
-        guildId: queryGuildId,
-        eventId: queryEventId,
-      },
-    });
-  };
-
-  const openEventStatusDialog = () => {
-    if (isEventActive) {
-      setEndDialogOpen(true);
-      return;
-    }
-
-    setResumeDialogOpen(true);
-  };
-
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
       <EventParticipationConfirmationDialog
@@ -468,87 +111,20 @@ export const EventDetail = () => {
               hero={selectedHero}
             />
           )}
-          <EventActionDialog
-            open={endDialogOpen}
-            onOpenChange={setEndDialogOpen}
-            eventName={event.name}
-            titleKey="events.endDialog.title"
-            descriptionKey="events.endDialog.description"
-            actionLabelKey="events.end"
-            variant="destructive"
-            onConfirm={async () => {
-              try {
-                await updateEvent.mutateAsync({
-                  pathParams: {
-                    guildId: queryGuildId,
-                    eventId: queryEventId,
-                  },
-                  data: {
-                    endsAt: new Date().toISOString(),
-                  },
-                });
-                toast.success(t("events.endSuccess"));
-              } catch (error) {
-                toast.error(t("events.statusError"));
-                throw error;
-              }
-            }}
-            isPending={updateEvent.isPending}
-          />
-          <EventActionDialog
-            open={resumeDialogOpen}
-            onOpenChange={setResumeDialogOpen}
-            eventName={event.name}
-            titleKey="events.resumeDialog.title"
-            descriptionKey="events.resumeDialog.description"
-            actionLabelKey="events.resume"
-            onConfirm={async () => {
-              try {
-                await updateEvent.mutateAsync({
-                  pathParams: {
-                    guildId: queryGuildId,
-                    eventId: queryEventId,
-                  },
-                  data: {
-                    endsAt: null,
-                  },
-                });
-                toast.success(t("events.resumeSuccess"));
-              } catch (error) {
-                toast.error(t("events.statusError"));
-                throw error;
-              }
-            }}
-            isPending={updateEvent.isPending}
-          />
-          <EventActionDialog
-            open={deleteDialogOpen}
-            onOpenChange={setDeleteDialogOpen}
-            eventName={event.name}
-            requireNameConfirmation
-            titleKey="events.deleteDialog.title"
-            descriptionKey="events.deleteDialog.description"
-            actionLabelKey="events.delete"
-            variant="destructive"
-            isPending={deleteEvent.isPending}
-            onConfirm={async () => {
-              try {
-                await deleteEvent.mutateAsync({
-                  pathParams: {
-                    guildId: queryGuildId,
-                    eventId: queryEventId,
-                  },
-                });
-                toast.success(t("events.deleteSuccess"));
-                setDeleteDialogOpen(false);
-                navigate({
-                  to: "/$guildId/events",
-                  params: { guildId: queryGuildId },
-                });
-              } catch {
-                toast.error(t("events.deleteError"));
-              }
-            }}
+          <EventStatusDialogs
+            endDialogOpen={endDialogOpen}
+            setEndDialogOpen={setEndDialogOpen}
+            event={event}
+            updateEvent={updateEvent}
+            queryGuildId={queryGuildId}
+            queryEventId={queryEventId}
+            t={t}
+            resumeDialogOpen={resumeDialogOpen}
+            setResumeDialogOpen={setResumeDialogOpen}
+            deleteDialogOpen={deleteDialogOpen}
+            setDeleteDialogOpen={setDeleteDialogOpen}
+            deleteEvent={deleteEvent}
+            navigate={navigate}
           />
           <EventRulesDialog
             open={rulesDialogOpen}
@@ -570,128 +146,23 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-3">
-          <PageHeader
-            icon={Trophy}
-            title={event.name}
-            status={
-              <Badge
-                variant={eventStatusVariant}
-                className="h-5 px-2 text-[11px]"
-              >
-                {eventStatusLabel}
-              </Badge>
-            }
-            metadata={
-              <>
-                <span className="inline-flex items-center gap-1.5">
-                  <Globe2 className="size-3.5" />
-                  {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
-                </span>
-
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                      >
-                        <Clock className="size-3.5" />
-                        {t("events.header.assignmentTimeoutValue", {
-                          minutes: event.assignmentTimeoutMinutes ?? 5,
-                        })}
-                      </button>
-                    }
-                  />
-                  <TooltipContent>
-                    <p>{t("events.header.assignmentTimeoutTooltip")}</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <CalendarDays className="size-3.5 shrink-0" />
-                  <span>{eventDateRangeLabel}</span>
-                </span>
-              </>
-            }
-            actions={
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      loading={isPinPending(event.id)}
-                      icon=<Star
-                        className={cn(
-                          "size-4",
-                          eventIsPinned && "fill-current",
-                        )}
-                      />
-                      aria-label={pinActionLabel}
-                      title={pinActionLabel}
-                      aria-pressed={eventIsPinned}
-                      disabled={isPinActionDisabled(
-                        eventId,
-                        isEventActive,
-                        isPinPending,
-                      )}
-                      className={cn(
-                        "h-9 shrink-0 gap-2 px-3",
-                        eventIsPinned
-                          ? "border-yellow-500/35 bg-yellow-500/10 text-yellow-500 hover:border-yellow-500/50 hover:bg-yellow-500/15 hover:text-yellow-500"
-                          : "border-primary/30 bg-primary/5 text-primary hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
-                      )}
-                      onClick={() => {
-                        if (eventId) {
-                          togglePin(event);
-                        }
-                      }}
-                    >
-                      <span className="hidden sm:inline">{pinActionLabel}</span>
-                    </Button>
-                  }
-                />
-                <TooltipContent>{pinActionLabel}</TooltipContent>
-              </Tooltip>
-            }
-          >
-            <SectionCardFooter className="grid gap-1 p-1.5 sm:grid-cols-3">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
-                render={
-                  <Link
-                    to="/$guildId/events/$eventId/coordination"
-                    params={{ guildId: queryGuildId, eventId: queryEventId }}
-                  >
-                    <Crosshair className="size-3.5" />
-                    {t("events.coordination.trigger")}
-                  </Link>
-                }
-                nativeButton={false}
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
-                onClick={() => setSummaryDialogOpen(true)}
-              >
-                <Sparkles className="size-3.5" />
-                {t("events.summaryDialog.trigger")}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="w-full min-w-0 justify-center text-muted-foreground hover:text-foreground"
-                onClick={() => setRulesDialogOpen(true)}
-              >
-                <BookText className="size-3.5" />
-                {t("events.rulesDialog.trigger")}
-              </Button>
-            </SectionCardFooter>
-          </PageHeader>
+          <EventDetailHeader
+            event={event}
+            eventStatusVariant={eventStatusVariant}
+            eventStatusLabel={eventStatusLabel}
+            t={t}
+            eventDateRangeLabel={eventDateRangeLabel}
+            isPinPending={isPinPending}
+            eventIsPinned={eventIsPinned}
+            pinActionLabel={pinActionLabel}
+            eventId={eventId}
+            isEventActive={isEventActive}
+            togglePin={togglePin}
+            queryGuildId={queryGuildId}
+            queryEventId={queryEventId}
+            setSummaryDialogOpen={setSummaryDialogOpen}
+            setRulesDialogOpen={setRulesDialogOpen}
+          />
 
           <div className="xl:hidden">
             <EventActionsCard

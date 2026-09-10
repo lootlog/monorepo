@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useLottieAnimation } from "./use-lottie-animation";
+import { lazy, Suspense } from "react";
 import type { ResolvedThemeId } from "../catalog";
 
 const CatLottiePlayer = lazy(() =>
@@ -14,16 +15,8 @@ const lottieByTheme: Partial<Record<ResolvedThemeId, string>> = {
 };
 
 export const SidebarCatAnimation = ({ theme }: { theme: ResolvedThemeId }) => {
-  const [animationData, setAnimationData] = useState<object | null>(null);
-
   const lottieUrl = lottieByTheme[theme] ?? "/lottie/rolling-cat.json";
-
-  useEffect(() => {
-    fetch(lottieUrl)
-      .then((res) => res.json())
-      .then(setAnimationData)
-      .catch(() => {});
-  }, [lottieUrl]);
+  const { data: animationData } = useLottieAnimation(lottieUrl);
 
   if (!animationData) return null;
 

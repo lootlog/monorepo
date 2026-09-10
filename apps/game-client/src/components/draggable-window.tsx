@@ -1,9 +1,7 @@
 import type { FC } from "react";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
-import {
-  DraggableWindowFrame,
-  type DraggableWindowFrameProps,
-} from "./draggable-window-frame";
+import { DraggableWindowFrame } from "./draggable-window-frame";
+import type { DraggableWindowFrameProps } from "./use-draggable-window-frame";
 
 export type DraggableWindowProps = Omit<
   DraggableWindowFrameProps,

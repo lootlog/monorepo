@@ -17,6 +17,8 @@ interface EventActionsCardProps {
   onDelete: () => void;
 }
 
+// Capabilities, persisted event activity, and independent update/delete mutations are separate concerns, not presentation variants.
+// eslint-disable-next-line react-doctor/no-many-boolean-props
 export const EventActionsCard = ({
   canManage,
   canDeleteEvent,

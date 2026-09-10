@@ -3,7 +3,8 @@ import {
   getListPinnedEventsQueryKey,
   useListPinnedEvents,
 } from "@lootlog/client/main";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 
 export const GuildPinnedEventsSection = ({
   guildId,
@@ -28,7 +29,7 @@ export const GuildPinnedEventsSection = ({
   return (
     <AnimatePresence initial={false}>
       {!isPending && hasPinnedEvents && (
-        <motion.div
+        <m.div
           key="pinned-events"
           layout
           initial={{ opacity: 0, scaleY: 0.96 }}
@@ -43,7 +44,7 @@ export const GuildPinnedEventsSection = ({
             guildId={guildId}
             onNavigate={onNavigate}
           />
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

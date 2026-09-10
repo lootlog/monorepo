@@ -59,8 +59,9 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
   selectedGuildIds,
   translations,
 }) => {
+  const selectedGuildIdSet = new Set(selectedGuildIds);
   const selectedGuilds =
-    guilds?.filter((guild) => selectedGuildIds.includes(guild.id)) ?? [];
+    guilds?.filter((guild) => selectedGuildIdSet.has(guild.id)) ?? [];
   const visiblePreviewGuilds = selectedGuilds.slice(
     0,
     VISIBLE_PREVIEW_GUILDS_COUNT,

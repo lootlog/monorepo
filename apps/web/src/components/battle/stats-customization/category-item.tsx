@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import * as m from "framer-motion/m";
 import { GripVertical, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
@@ -59,8 +59,9 @@ export const CategoryItem = ({
     }
   };
 
+  const assignedStatKeys = new Set(category.statOrder);
   const availableStats = allAvailableStats.filter(
-    (stat) => !category.statOrder.includes(String(stat.key)),
+    (stat) => !assignedStatKeys.has(String(stat.key)),
   );
 
   return (
@@ -96,12 +97,12 @@ export const CategoryItem = ({
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex-shrink-0"
         >
-          <motion.div
+          <m.div
             animate={{ rotate: isExpanded ? 0 : -90 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
             <ChevronDown className="h-4 w-4" />
-          </motion.div>
+          </m.div>
         </Button>
       </div>
 

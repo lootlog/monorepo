@@ -52,10 +52,8 @@ export const useRecentOpponentBattles = (battle: Battle | undefined) => {
       return detailsById;
     }
 
-    return {
-      ...detailsById,
-      [recentBattle.battleId]: detailQuery.data,
-    };
+    detailsById[recentBattle.battleId] = detailQuery.data;
+    return detailsById;
   }, {});
 
   return {

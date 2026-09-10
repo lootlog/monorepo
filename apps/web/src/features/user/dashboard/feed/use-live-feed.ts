@@ -27,6 +27,8 @@ export function useLiveFeed() {
   const controlsRef = useRef<
     { refresh: () => void; setPaused: (value: boolean) => void } | undefined
   >(undefined);
+  // The callback-owned timer is replaced only after cancellation and cleared on cleanup.
+  // eslint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup also removes every socket listener and invalidates pending fetches.
   useEffect(() => {
     let generation = 0;
     let disposed = false;

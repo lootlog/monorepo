@@ -25,11 +25,16 @@ export const buildBattleHpTimelineLegendItems = ({
   layerCounts: Partial<Record<BattleHpTimelineLayerKey, number>>;
   legendaryItems: LegendaryBonusMarkerDefinition[];
 }): BattleHpTimelineLegendItems => ({
-  eventItems: BATTLE_HP_TIMELINE_EVENT_LAYER_DEFINITIONS.filter(
-    (definition) => config[definition.key],
-  ).map((definition) => ({
-    ...definition,
-    count: layerCounts[definition.key] ?? 0,
-  })),
+  eventItems: BATTLE_HP_TIMELINE_EVENT_LAYER_DEFINITIONS.flatMap(
+    (definition) =>
+      config[definition.key]
+        ? [
+            {
+              ...definition,
+              count: layerCounts[definition.key] ?? 0,
+            },
+          ]
+        : [],
+  ),
   legendaryItems: config.legendary ? legendaryItems : [],
 });

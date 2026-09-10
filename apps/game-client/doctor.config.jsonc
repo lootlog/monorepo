@@ -1,0 +1,85 @@
+{
+  "ignore": {
+    // WXT emits these bundles from the source entrypoints below.
+    "files": [".output/**"],
+    "overrides": [
+      {
+        // Chat outlives ChatView to retain read receipts while closed. Only the mounted view owns
+        // server query subscriptions; their access/message changes reconcile that retained state.
+        "files": ["src/features/chat/chat-view.tsx"],
+        "rules": ["react-doctor/no-pass-data-to-parent"],
+      },
+      {
+        // Joining a Ready Room, loading/updating mutes, and showing close are independent controls,
+        // not mutually exclusive presentation variants; combining them into a variant loses valid states.
+        "files": [
+          "src/features/notifications/components/single-notification.tsx",
+        ],
+        "rules": ["react-doctor/no-many-boolean-props"],
+      },
+      {
+        // Pinning, hiding, pending creation and authorization are independent timer state/capability axes.
+        // The pin and visibility menu items intentionally compose; no mutually exclusive variant exists.
+        "files": [
+          "src/features/timers/components/timer-context-menu-content.tsx",
+        ],
+        "rules": [
+          "react-doctor/no-many-boolean-props",
+          "react-doctor/prefer-explicit-variants",
+        ],
+      },
+      {
+        // The transcript owns virtualized DOM scroll geometry, persisted after row/layout changes.
+        "files": ["src/features/chat/components/chat-transcript.tsx"],
+        "rules": ["react-doctor/no-pass-data-to-parent"],
+      },
+      {
+        // This clock subscription expires external detector-store cooldowns and animation cycles.
+        "files": ["src/features/npc-detector/hooks/use-npc-list-lifecycle.ts"],
+        "rules": [
+          "react-doctor/no-pass-data-to-parent",
+          "react-doctor/no-pass-live-state-to-parent",
+        ],
+      },
+      {
+        // React Hook Form changes feed a debounced server autosave, not parent render state.
+        "files": [
+          "src/features/settings/components/notifications/notification-category-form.tsx",
+        ],
+        "rules": ["react-doctor/no-pass-data-to-parent"],
+      },
+      {
+        // The window handshake checks source and origin before accepting a transferred MessagePort.
+        // MessagePort messages have no origin; possession of the accepted port authorizes this channel.
+        "files": ["extension/entrypoints/bridge.content.ts"],
+        "rules": ["react-doctor/postmessage-origin-risk"],
+      },
+      {
+        // WXT discovers these files through entrypointsDir in wxt.config.ts.
+        "files": [
+          "extension/entrypoints/background.ts",
+          "extension/entrypoints/bridge.content.ts",
+        ],
+        "rules": ["deslop/unused-file"],
+      },
+      {
+        // Vitest discovers benchmarks by filename, independently of the app graph.
+        "files": ["src/lib/margonem-runtime/runtime-replay.bench.ts"],
+        "rules": ["deslop/unused-file"],
+      },
+      {
+        // vite.shared.ts resolves use-sync-external-store/with-selector to this shim.
+        "files": ["src/shims/use-sync-external-store-with-selector.ts"],
+        "rules": ["deslop/unused-file"],
+      },
+      {
+        // copy-entrypoint.mjs and generate-local-entrypoint.mjs read these build inputs.
+        "files": [
+          "src/templates/entrypoint.js",
+          "src/templates/local-entrypoint.js",
+        ],
+        "rules": ["deslop/unused-file"],
+      },
+    ],
+  },
+}

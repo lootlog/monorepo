@@ -316,6 +316,8 @@ export class MapPingController {
       return;
     }
 
+    // The preceding guard excludes missing, zero, and negative normalSize values.
+    // oxlint-disable-next-line react-doctor/no-arithmetic-on-optional-chained-operand
     const radius = Math.min(14, Math.max(6, normalSize * 1.75));
     for (const ping of this.activePings.values()) {
       if (ping.mapId !== currentMapId) {

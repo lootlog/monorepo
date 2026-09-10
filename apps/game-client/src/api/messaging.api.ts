@@ -1,12 +1,9 @@
 import {
   messagingControllerSendNotification,
-  messagingControllerVolunteer,
   type CreateNotificationDto,
-  type CreateVolunteerDto,
   type NotificationResponseDtoOutput,
 } from "@lootlog/client/main";
 
-import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 
 export type CreateNotificationOptions = CreateNotificationDto;
@@ -24,35 +21,5 @@ export function createNotification(
       payload: options,
     },
     execute: () => messagingControllerSendNotification(options),
-  });
-}
-
-export type VolunteerOptions = Omit<CreateVolunteerDto, "character"> & {
-  notificationId: string;
-};
-
-export async function volunteer(options: VolunteerOptions): Promise<void> {
-  const character = buildCurrentCharacterPayload();
-  if (!character) return;
-
-  const payload: CreateVolunteerDto = {
-    world: options.world,
-    targetDiscordId: options.targetDiscordId,
-    character,
-  };
-
-  await runSingleLoggedAction({
-    actionType: "volunteer",
-    actionPayload: options,
-    request: {
-      method: "POST",
-      endpoint: `/messaging/${options.notificationId}/volunteer`,
-      payload,
-    },
-    execute: () =>
-      messagingControllerVolunteer(
-        { notificationId: options.notificationId },
-        payload,
-      ),
   });
 }

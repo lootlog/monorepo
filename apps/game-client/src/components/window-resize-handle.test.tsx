@@ -55,7 +55,7 @@ const renderResizeHandle = ({
     throw new Error("Expected resize handle root");
   }
 
-  if (!(resizeHandle instanceof HTMLDivElement)) {
+  if (!(resizeHandle instanceof HTMLButtonElement)) {
     throw new Error("Expected resize handle");
   }
 
@@ -66,6 +66,18 @@ const renderResizeHandle = ({
 };
 
 describe("WindowResizeHandle", () => {
+  it("resizes the permitted axis with keyboard arrows", () => {
+    const { resizeHandle, handleResize } = renderResizeHandle({
+      allowVerticalResize: false,
+    });
+    fireEvent.keyDown(resizeHandle, { key: "ArrowRight", shiftKey: true });
+    expect(handleResize).toHaveBeenLastCalledWith({ width: 210, height: 130 });
+    fireEvent.keyUp(resizeHandle, { key: "ArrowRight" });
+    handleResize.mockClear();
+    fireEvent.keyDown(resizeHandle, { key: "ArrowDown" });
+    expect(handleResize).not.toHaveBeenCalled();
+  });
+
   afterEach(() => {
     if (originalOffsetWidthDescriptor) {
       Object.defineProperty(

@@ -729,7 +729,9 @@
       }
     },
     {
-      "files": ["src/features/npc-detector/components/npcs-list.tsx"],
+      "files": [
+        "src/features/npc-detector/hooks/use-npc-list-row-layout-animation.ts"
+      ],
       "rules": {
         "anti-slop/no-runtime-typeof": [
           "error",

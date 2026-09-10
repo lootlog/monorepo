@@ -22,7 +22,6 @@ interface CategoryAccordionItemProps {
   onVolumeChange: (value: number[]) => void;
   onVolumeCommit: (value: number[]) => void;
   onMuteToggle: (e: React.MouseEvent) => void;
-  onMuteKeyDown: (e: React.KeyboardEvent) => void;
   onSoundUrlChange: (key: string, value: string) => void;
   onPlaySound: (key: string, soundUrl: string) => void;
   description?: string;
@@ -43,7 +42,6 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
   onVolumeChange,
   onVolumeCommit,
   onMuteToggle,
-  onMuteKeyDown,
   onSoundUrlChange,
   onPlaySound,
   description,
@@ -53,7 +51,7 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
 
   return (
     <AccordionItem value={id} disabled={disabled}>
-      <AccordionTrigger className="ll:gap-3" disabled={disabled}>
+      <div className="ll:flex ll:items-center ll:gap-3 ll:border ll:border-gray-400 ll:rounded-sm ll:px-3">
         <div className="ll:flex ll:items-center ll:gap-2 ll:flex-1">
           <CategoryVolumeControl
             icon={icon}
@@ -63,7 +61,6 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
             onVolumeChange={onVolumeChange}
             onVolumeCommit={onVolumeCommit}
             onMuteToggle={onMuteToggle}
-            onMuteKeyDown={onMuteKeyDown}
           />
           {disabled && (
             <span className="ll:text-xs ll:text-muted-foreground ll:ml-auto ll:mr-2">
@@ -71,7 +68,12 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
             </span>
           )}
         </div>
-      </AccordionTrigger>
+        <AccordionTrigger
+          aria-label={label}
+          className="ll:w-auto ll:border-0 ll:px-1"
+          disabled={disabled}
+        />
+      </div>
       <AccordionContent>
         <div className="ll:flex ll:flex-col ll:gap-3 ll:pt-2">
           <p className="ll:text-xs ll:text-muted-foreground">{description}</p>

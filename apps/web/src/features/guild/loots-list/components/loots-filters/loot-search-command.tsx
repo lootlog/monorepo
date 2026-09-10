@@ -5,36 +5,13 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
-import {
-  ItemImage,
-  resolveItemRarity,
-} from "@lootlog/ui/components/item-image";
-import { useQuery } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
-import { useDebounceValue } from "usehooks-ts";
-import { useGuildContext } from "@/hooks/context/use-guild-context";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import {
-  getLootsControllerFetchLootsByGuildIdQueryKey,
-  lootsControllerFetchLootsByGuildId,
-  type LootsControllerFetchLootsByGuildIdParams,
-} from "@lootlog/client/main";
-
-import {
-  getAllControllerSearchAllQueryKey,
-  useAllControllerSearchAll,
-  type NpcHitDtoOutput,
-} from "@lootlog/client/search";
+import { ItemImage } from "@lootlog/ui/components/item-image";
+import { LootSearchResults } from "./loot-search-results";
 
 import { ItemRarity } from "@/lib/loots/loot-types";
-import { parseItemHid } from "@/lib/utils/hid-detection";
-import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
-import { cn } from "cn";
-import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
-import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { useTranslation } from "react-i18next";
+import { AnimatePresence } from "framer-motion";
+import * as m from "framer-motion/m";
 import {
   ArrowRight,
   CircleAlert,
@@ -42,216 +19,47 @@ import {
   PackageSearch,
   SearchX,
 } from "lucide-react";
+import { useLootSearchCommand } from "./use-loot-search-command";
 
 export type LootSearchCommandProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-const containerVariants: Variants = {
-  hidden: { opacity: 0, y: 4 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.2,
-      ease: [0.22, 1, 0.36, 1],
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -4,
-    transition: { duration: 0.12 },
-  },
-};
+import {
+  allTrue,
+  containerVariants,
+  renderIf,
+} from "./loot-search-presentation";
 
-const getRarityStyle = (rarity: string | null) => {
-  switch (rarity) {
-    case "LEGENDARY":
-      return "text-orange-400";
-    case "HEROIC":
-      return "text-blue-500";
-    case "UNIQUE":
-      return "text-amber-300";
-    case "UPGRADED":
-      return "text-primary";
-    default:
-      return "text-muted-foreground";
-  }
-};
-
-const allTrue = (...values: boolean[]) => values.every(Boolean);
-const anyTrue = (...values: boolean[]) => values.some(Boolean);
-const renderIf = (condition: boolean, content: ReactNode) =>
-  condition ? content : null;
-export const LootSearchCommand = ({
-  open,
-  onOpenChange,
-}: LootSearchCommandProps) => {
-  const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch] = useDebounceValue(searchQuery, 200);
-  const { world } = useGuildContext();
-  const guildId = useGuildId();
-  const { setFilters } = useLootsFilters();
-  const trimmedSearch = searchQuery.trim();
-  const parsedHid = parseItemHid(trimmedSearch);
-  const isHidInput = trimmedSearch.toUpperCase().startsWith("ITEM#");
-
-  const searchResultsQuery = useAllControllerSearchAll(
-    {
-      search: debouncedSearch,
-      world: world || "",
-    },
-    {
-      query: {
-        queryKey: getAllControllerSearchAllQueryKey({
-          search: debouncedSearch,
-          world: world || "",
-        }),
-        enabled: debouncedSearch.length >= 2 && !isHidInput,
-      },
-    },
-  );
-  const searchResults = searchResultsQuery.data;
-  const isSearchLoading = searchResultsQuery.isLoading;
-
-  const isHid = !!parsedHid;
-  const hidLootQueryParams:
-    | LootsControllerFetchLootsByGuildIdParams
-    | undefined = parsedHid
-    ? {
-        hid: parsedHid.hid,
-        world: parsedHid.world,
-        limit: 1,
-      }
-    : undefined;
+export const LootSearchCommand = (
+  props: Parameters<typeof useLootSearchCommand>[0],
+) => {
   const {
-    data: hidItem,
-    isError: isHidError,
-    isFetched: isHidFetched,
-    isFetching: isHidLoading,
-  } = useQuery({
-    queryKey: hidLootQueryParams
-      ? getLootsControllerFetchLootsByGuildIdQueryKey(
-          { guildId: guildId ?? "" },
-          hidLootQueryParams,
-        )
-      : ["loot-search", "hid-item"],
-    queryFn: async () => {
-      if (!guildId || !hidLootQueryParams) {
-        return null;
-      }
-
-      const response = await lootsControllerFetchLootsByGuildId(
-        {
-          guildId,
-        },
-        hidLootQueryParams,
-      );
-      const firstLoot = response[0];
-
-      return (
-        firstLoot?.items.find((item) => item.hid === hidLootQueryParams.hid) ??
-        null
-      );
-    },
-    enabled: !!guildId && !!hidLootQueryParams,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const handleSelectNpc = (npc: NpcHitDtoOutput) => {
-    setFilters({ npcs: [npc.name] });
-    onOpenChange(false);
-    setSearchQuery("");
-  };
-
-  const handleSelectItem = (item: { name: string }) => {
-    setFilters({ itemNames: [item.name] });
-    onOpenChange(false);
-    setSearchQuery("");
-  };
-
-  const handleSelectItemByHid = (hid: string) => {
-    setFilters({
-      hid,
-      search: null,
-      npcTypes: null,
-      npcs: null,
-      npcLevelMin: null,
-      npcLevelMax: null,
-      rarities: null,
-      itemLevelMin: null,
-      itemLevelMax: null,
-      itemNames: null,
-      players: null,
-      playerLevelMin: null,
-      playerLevelMax: null,
-    });
-    onOpenChange(false);
-    setSearchQuery("");
-  };
-
-  const handleSelectPlayer = (player: { name: string }) => {
-    setFilters({ players: [player.name] });
-    onOpenChange(false);
-    setSearchQuery("");
-  };
-
-  const npcResults = searchResults?.npcs ?? [];
-  const itemResults = searchResults?.items ?? [];
-  const playerResults = searchResults?.players ?? [];
-  const hasSearchResults = anyTrue(
-    npcResults.length > 0,
-    itemResults.length > 0,
-    playerResults.length > 0,
-  );
-
-  const showSearchLoading = allTrue(
-    !isHidInput,
-    trimmedSearch.length >= 2,
-    anyTrue(
-      debouncedSearch !== trimmedSearch,
-      allTrue(isSearchLoading, Boolean(debouncedSearch), !hasSearchResults),
-    ),
-  );
-  const showHidNotFound = allTrue(
+    t,
+    searchQuery,
+    setSearchQuery,
+    trimmedSearch,
+    isHidInput,
     isHid,
-    isHidFetched,
-    !isHidLoading,
-    !isHidError,
-    !hidItem,
-  );
-  const showSearchResults = allTrue(
-    !isHidInput,
-    trimmedSearch.length >= 2,
-    Boolean(debouncedSearch),
-    !showSearchLoading,
-    !searchResultsQuery.isError,
-    Boolean(hasSearchResults),
-  );
-  const showNoResults = allTrue(
-    !isHidInput,
-    trimmedSearch.length >= 2,
-    Boolean(debouncedSearch),
-    !showSearchLoading,
-    !searchResultsQuery.isError,
-    !hasSearchResults,
-  );
-  const showSearchError = allTrue(
-    !isHidInput,
-    trimmedSearch.length >= 2,
-    !showSearchLoading,
-    searchResultsQuery.isError,
-  );
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    onOpenChange(nextOpen);
-    if (!nextOpen) {
-      setSearchQuery("");
-    }
-  };
-
+    isHidLoading,
+    isHidError,
+    showHidNotFound,
+    hidItem,
+    handleSelectItemByHid,
+    showSearchLoading,
+    showSearchError,
+    showSearchResults,
+    npcResults,
+    handleSelectNpc,
+    itemResults,
+    handleSelectItem,
+    playerResults,
+    handleSelectPlayer,
+    showNoResults,
+    open,
+    handleOpenChange,
+  } = useLootSearchCommand(props);
   const dialogContent = (
     <>
       <CommandInput
@@ -264,7 +72,7 @@ export const LootSearchCommand = ({
         <AnimatePresence mode="wait" initial={false}>
           {renderIf(
             !trimmedSearch,
-            <motion.div
+            <m.div
               key="idle"
               variants={containerVariants}
               initial="hidden"
@@ -288,12 +96,12 @@ export const LootSearchCommand = ({
                   {t("loots.searchCommand.hidExample")}
                 </code>
               </div>
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             allTrue(!isHidInput, trimmedSearch.length === 1),
-            <motion.div
+            <m.div
               key="keep-typing"
               variants={containerVariants}
               initial="hidden"
@@ -305,12 +113,12 @@ export const LootSearchCommand = ({
               <p className="mt-3 text-sm text-muted-foreground">
                 {t("loots.searchCommand.keepTyping")}
               </p>
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             allTrue(isHidInput, !isHid),
-            <motion.div
+            <m.div
               key="invalid-hid"
               variants={containerVariants}
               initial="hidden"
@@ -330,12 +138,12 @@ export const LootSearchCommand = ({
               <code className="mt-3 rounded-md bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
                 {t("loots.searchCommand.hidExample")}
               </code>
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             allTrue(isHid, isHidLoading),
-            <motion.div
+            <m.div
               key="hid-loading"
               variants={containerVariants}
               initial="hidden"
@@ -350,12 +158,12 @@ export const LootSearchCommand = ({
               <code className="mt-2 max-w-full truncate font-mono text-xs text-muted-foreground">
                 {trimmedSearch}
               </code>
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             allTrue(isHid, isHidError),
-            <motion.div
+            <m.div
               key="hid-error"
               variants={containerVariants}
               initial="hidden"
@@ -372,12 +180,12 @@ export const LootSearchCommand = ({
               <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
                 {t("loots.searchCommand.hidErrorDescription")}
               </p>
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             showHidNotFound,
-            <motion.div
+            <m.div
               key="hid-not-found"
               variants={containerVariants}
               initial="hidden"
@@ -397,11 +205,11 @@ export const LootSearchCommand = ({
               <code className="mt-3 max-w-full truncate font-mono text-xs text-muted-foreground">
                 {trimmedSearch}
               </code>
-            </motion.div>,
+            </m.div>,
           )}
 
           {isHid && hidItem && (
-            <motion.div
+            <m.div
               key="hid-result"
               variants={containerVariants}
               initial="hidden"
@@ -429,12 +237,12 @@ export const LootSearchCommand = ({
                   <ArrowRight className="size-4 text-primary" />
                 </CommandItem>
               </CommandGroup>
-            </motion.div>
+            </m.div>
           )}
 
           {renderIf(
             showSearchLoading,
-            <motion.div
+            <m.div
               key="search-loading"
               variants={containerVariants}
               initial="hidden"
@@ -446,12 +254,12 @@ export const LootSearchCommand = ({
               <span className="text-sm">
                 {t("loots.searchCommand.loading")}
               </span>
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             showSearchError,
-            <motion.div
+            <m.div
               key="search-error"
               role="alert"
               variants={containerVariants}
@@ -462,116 +270,26 @@ export const LootSearchCommand = ({
             >
               <CircleAlert className="size-5" />
               {t("common.searchUnavailable")}
-            </motion.div>,
+            </m.div>,
           )}
 
           {renderIf(
             showSearchResults,
-            <motion.div
+            <LootSearchResults
               key="search-results"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              {renderIf(
-                npcResults.length > 0,
-                <CommandGroup heading={t("loots.searchCommand.npcs")}>
-                  {npcResults.map((npc) => (
-                    <CommandItem
-                      key={`npc-${npc.id}`}
-                      value={`npc-${npc.id}`}
-                      onSelect={() => handleSelectNpc(npc)}
-                      className="h-14 min-h-14 rounded-lg px-3 py-1.5"
-                    >
-                      <NpcSearchTile icon={npc.icon} name={npc.name} />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-semibold">{npc.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {NPC_TYPE_NAMES[npc.type]}
-                        </div>
-                      </div>
-                      {npc.lvl > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {t("loots.searchCommand.level", {
-                            level: npc.lvl,
-                          })}
-                        </span>
-                      )}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>,
-              )}
-
-              {renderIf(
-                itemResults.length > 0,
-                <CommandGroup heading={t("loots.searchCommand.items")}>
-                  {itemResults.map((item) => (
-                    <CommandItem
-                      key={`item-${item.id}`}
-                      value={`item-${item.id}`}
-                      onSelect={() => handleSelectItem(item)}
-                      className="h-14 min-h-14 rounded-lg px-3 py-1.5"
-                    >
-                      <ItemImage
-                        icon={item.icon}
-                        rarity={resolveItemRarity(item.rarity)}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-semibold">
-                          {item.name}
-                        </div>
-                        {item.rarity && (
-                          <div
-                            className={cn(
-                              "text-xs font-semibold",
-                              getRarityStyle(item.rarity),
-                            )}
-                          >
-                            {ITEM_RARITY_NAMES.get(item.rarity) ?? item.rarity}
-                          </div>
-                        )}
-                      </div>
-                      {item.lvl > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {t("loots.searchCommand.level", {
-                            level: item.lvl,
-                          })}
-                        </span>
-                      )}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>,
-              )}
-
-              {renderIf(
-                playerResults.length > 0,
-                <CommandGroup heading={t("loots.searchCommand.players")}>
-                  {playerResults.map((player) => (
-                    <CommandItem
-                      key={`player-${player.id}`}
-                      value={`player-${player.id}`}
-                      onSelect={() => handleSelectPlayer(player)}
-                      className="h-14 min-h-14 rounded-lg px-3 py-1.5"
-                    >
-                      <PlayerSearchTile
-                        icon={player.icon}
-                        name={player.name}
-                        className="scale-75"
-                      />
-                      <span className="truncate font-semibold">
-                        {player.name}
-                      </span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>,
-              )}
-            </motion.div>,
+              npcResults={npcResults}
+              t={t}
+              handleSelectNpc={handleSelectNpc}
+              itemResults={itemResults}
+              handleSelectItem={handleSelectItem}
+              playerResults={playerResults}
+              handleSelectPlayer={handleSelectPlayer}
+            />,
           )}
 
           {renderIf(
             showNoResults,
-            <motion.div
+            <m.div
               key="no-results"
               variants={containerVariants}
               initial="hidden"
@@ -588,7 +306,7 @@ export const LootSearchCommand = ({
               <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
                 {t("loots.searchCommand.noResultsDescription")}
               </p>
-            </motion.div>,
+            </m.div>,
           )}
         </AnimatePresence>
       </CommandList>
