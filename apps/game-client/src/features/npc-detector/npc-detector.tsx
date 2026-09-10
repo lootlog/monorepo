@@ -10,7 +10,7 @@ import { NpcType } from "@/api/npcs.api";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 
 export const NpcDetector = () => {
   const { t } = useTranslation("npcDetector");

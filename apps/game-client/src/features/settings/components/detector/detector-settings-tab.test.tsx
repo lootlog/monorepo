@@ -1,4 +1,8 @@
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
 import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
@@ -14,6 +18,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { DetectorSettingsTab } from "./detector-settings-tab";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
+const seedAccountPreferences = (
+  preferences: Parameters<typeof accountPreferenceValues>[0],
+) =>
+  seedSettingsDocuments(
+    harness.queryClient,
+    createSettingsDocuments(accountPreferenceValues(preferences)),
+  );
 
 beforeEach(() => {
   harness = createGuildPreferencesTest();
@@ -63,17 +75,13 @@ describe("DetectorSettingsTab", () => {
   it("applies refreshed account preferences without restarting the form reset loop", async () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
 
-    const key = getUsersControllerGetUserGameAccountPreferencesQueryKey({
-      accountId: "202",
-    });
-
     const initial = createGameAccountPreferences("202");
-    harness.queryClient.setQueryData(key, initial);
+    seedAccountPreferences(initial);
     render();
     const control = document.getElementById("ELITE2-detect");
     expect(control).not.toBeChecked();
     act(() =>
-      harness.queryClient.setQueryData(key, {
+      seedAccountPreferences({
         ...initial,
         detector: {
           ...initial.detector,

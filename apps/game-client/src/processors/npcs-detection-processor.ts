@@ -18,7 +18,6 @@ import {
   type DetectorNpcType,
   type DetectorSettings,
   type DetectorTypeSettings,
-  type UserGameAccountPreferences,
 } from "@lootlog/schema/account-preferences";
 import { sendChatMessage, createNotification, MessageType } from "@/api";
 import {
@@ -27,11 +26,10 @@ import {
   resolveNpcNotificationRouting,
 } from "@/utils/notifications-and-detector/npc-notification";
 import { playSound } from "@/lib/sound-playback";
-import { queryClient } from "@/lib/query-client";
-import {
-  getEffectiveDetectorSettings,
-  getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-preferences";
+import { getGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
+import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
+import { areSettingsDocumentsSettled } from "@/features/settings/persistence/settings-snapshot";
+import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 
 type PendingDetection =
   | {
@@ -530,11 +528,9 @@ export class NpcsDetectionProcessor {
       return getEffectiveDetectorSettings();
     }
 
-    const preferences = queryClient.getQueryData<UserGameAccountPreferences>(
-      getUserGameAccountPreferencesQueryKey(accountId),
+    return getEffectiveDetectorSettings(
+      getGameAccountPreferences(readCurrentSettingsDocuments(), accountId),
     );
-
-    return getEffectiveDetectorSettings(preferences);
   }
 
   private createDetectionContext(): DetectionProcessingContext {
@@ -567,21 +563,9 @@ export class NpcsDetectionProcessor {
   }
 
   private isDetectorReady(accountId: string) {
-    const queryKey = getUserGameAccountPreferencesQueryKey(accountId);
+    if (accountId !== this.getCurrentAccountId()) return false;
 
-    const preferences =
-      queryClient.getQueryData<UserGameAccountPreferences>(queryKey);
-
-    const queryState = queryClient.getQueryState<
-      UserGameAccountPreferences,
-      Error
-    >(queryKey);
-
-    if (preferences) {
-      return true;
-    }
-
-    return queryState?.status === "error";
+    return areSettingsDocumentsSettled();
   }
 }
 

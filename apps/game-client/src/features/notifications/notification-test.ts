@@ -1,13 +1,17 @@
 import { onTestFinished, vi } from "vitest";
 import { createRealtimeTest } from "@/test/realtime-test";
 import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
-  getSoundSettingsControllerGetSettingsQueryKey,
   type UserGameAccountPreferencesResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
   type SoundSettingsResponseDto,
 } from "@lootlog/client/main";
+import {
+  accountPreferenceValues,
+  seedSettingsDocumentValues,
+  soundSettingValues,
+  userPreferenceValues,
+} from "@/test/settings-documents-fixtures";
 import {
   createNotificationsSettings,
   createDetectorSettings,
@@ -62,23 +66,29 @@ export const createNotificationTest = () => {
   };
 
   const setPreferences = () =>
-    test.queryClient.setQueryData(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "1",
+    seedSettingsDocumentValues(
+      test.queryClient,
+      accountPreferenceValues({
+        ...preferences,
+        notifications: { ...preferences.notifications },
       }),
-      { ...preferences, notifications: { ...preferences.notifications } },
     );
 
-  const setUserPreferences = () =>
+  const setUserPreferences = () => {
     test.queryClient.setQueryData(
       getUsersControllerGetUserPreferencesQueryKey(),
       { ...userPreferences, mutes: { ...userPreferences.mutes } },
     );
+    seedSettingsDocumentValues(
+      test.queryClient,
+      userPreferenceValues({ mutes: { ...userPreferences.mutes } }),
+    );
+  };
 
   const setSounds = () =>
-    test.queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      { ...soundSettings },
+    seedSettingsDocumentValues(
+      test.queryClient,
+      soundSettingValues({ ...soundSettings }),
     );
 
   setPreferences();

@@ -9,10 +9,6 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
-import {
-  debouncedSyncGlobalSettings,
-  registerGlobalSettingsMutation,
-} from "@/store/timer-settings-sync";
 import { resetTransientRuntimeState } from "./runtime-state";
 
 describe("resetTransientRuntimeState", () => {
@@ -139,21 +135,5 @@ describe("resetTransientRuntimeState", () => {
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().entriesByKey,
     ).toEqual({});
-  });
-
-  it("cancels pending timer settings mutations during runtime teardown", () => {
-    vi.useFakeTimers();
-
-    const mutate =
-      vi.fn<Parameters<typeof registerGlobalSettingsMutation>[0]>();
-
-    const unregister = registerGlobalSettingsMutation(mutate);
-    debouncedSyncGlobalSettings({ syncEnabled: true });
-
-    resetTransientRuntimeState();
-    vi.advanceTimersByTime(500);
-    unregister();
-
-    expect(mutate).not.toHaveBeenCalled();
   });
 });

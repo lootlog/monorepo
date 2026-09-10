@@ -6,12 +6,12 @@ import {
 } from "@/features/settings/components/shared/settings-guild-selection-grid";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
+import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   NotificationSettings,
@@ -89,8 +89,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
 
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
 
-  const updateUserGameAccountPreferences =
-    useUpdateUserGameAccountPreferences(accountId);
+  const updateUserGameAccountPreferences = useUpdateGameAccountPreferences();
 
   const currentCategorySettings: NotificationSettings =
     accountSettings[categoryKey];

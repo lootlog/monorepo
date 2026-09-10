@@ -4,13 +4,31 @@ import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { beforeEach, describe, expect, it } from "vitest";
 import { DetectorRoutingSettingsTabForm } from "./detector-routing-settings-tab-form";
 import type { GuildIdentity } from "@/lib/api/generated-helpers";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  readSeededSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
 import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
+const gameDataOperations = (set: {
+  detector: { routingRules: DetectorRoutingRule[] };
+}) => ({
+  operations: [
+    {
+      domain: "gameData",
+      scope: { type: "GAME_ACCOUNT", id: "202" },
+      set,
+      unset: [],
+    },
+  ],
+});
 
 const render = () =>
   renderUi(<DetectorRoutingSettingsTabForm />, { wrapper: harness.wrapper });
@@ -71,20 +89,19 @@ describe("DetectorRoutingSettingsTabForm", () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
     harness.queryClient.setQueryData(harness.guildsKey, guilds);
 
-    const preferencesKey =
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "202",
-      });
-
-    harness.queryClient.setQueryData(
-      preferencesKey,
-      createGameAccountPreferences("202", {
-        detector: { ...createDetectorSettings(), routingRules },
-      }),
+    seedSettingsDocuments(
+      harness.queryClient,
+      createSettingsDocuments(
+        accountPreferenceValues(
+          createGameAccountPreferences("202", {
+            detector: { ...createDetectorSettings(), routingRules },
+          }),
+        ),
+      ),
     );
     harness.request.mockImplementation(() =>
       Promise.resolve(
-        Response.json(harness.queryClient.getQueryData(preferencesKey)),
+        Response.json(readSeededSettingsDocuments(harness.queryClient)),
       ),
     );
   });
@@ -136,8 +153,10 @@ describe("DetectorRoutingSettingsTabForm", () => {
     );
 
     await waitFor(() => {
-      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
-        JSON.stringify({
+      expect(
+        JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body)),
+      ).toEqual(
+        gameDataOperations({
           detector: {
             routingRules: [
               {
@@ -194,8 +213,10 @@ describe("DetectorRoutingSettingsTabForm", () => {
     expect(screen.getByText("Gordion hero")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
-        JSON.stringify({
+      expect(
+        JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body)),
+      ).toEqual(
+        gameDataOperations({
           detector: {
             routingRules: [
               {
@@ -238,8 +259,10 @@ describe("DetectorRoutingSettingsTabForm", () => {
     await user.tab();
 
     await waitFor(() => {
-      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
-        JSON.stringify({
+      expect(
+        JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body)),
+      ).toEqual(
+        gameDataOperations({
           detector: {
             routingRules: [
               {

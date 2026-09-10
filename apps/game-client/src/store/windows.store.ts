@@ -69,7 +69,6 @@ export type WindowId =
   | "notifications"
   | "create-notification"
   | "quick-access"
-  | "timer-settings-conflict"
   | "catching-whitelist-warning"
   | "backend-preferences-warning"
   | "party-finder"
@@ -111,7 +110,6 @@ interface WindowsState {
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
   "quick-access": WindowData;
-  "timer-settings-conflict": WindowData;
   "catching-whitelist-warning": WindowData;
   "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
@@ -208,7 +206,6 @@ const WINDOW_IDS: WindowId[] = [
   "notifications",
   "create-notification",
   "quick-access",
-  "timer-settings-conflict",
   "catching-whitelist-warning",
   "backend-preferences-warning",
   "party-finder",
@@ -328,6 +325,8 @@ export const migrateWindowsState = (
   if (version < 13) delete state["event-mode"];
 
   if (version < 14) migrateChatSettingsPath(state);
+
+  if (version < 15) delete state["timer-settings-conflict"];
 
   return state;
 };
@@ -584,14 +583,6 @@ export const useWindowsStore = create<WindowsState>()(
         position: DEFAULT_POSITION,
         hasDefinedPosition: false,
         size: { width: DEFAULT_QUICK_ACCESS_WIDTH, height: 56 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-      },
-      "timer-settings-conflict": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 420, height: 320 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -873,7 +864,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 14,
+      version: 15,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },

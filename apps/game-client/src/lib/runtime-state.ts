@@ -16,14 +16,14 @@ import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
-import { disposeTimerSettingsSync } from "@/store/timer-settings-sync";
+import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
 
 export function resetTransientRuntimeState(): void {
   disposeReadyRoomInvitationCoordinator();
   characterTooltipCatchingGuildsCoordinator.dispose();
   characterTooltipTransforms.clear();
   clearTimerEpochCache();
-  disposeTimerSettingsSync();
+  settingsPatchQueue.reset();
   useCharacterTooltipCatchingGuildsStore.getState().clear();
   useNotificationsStore.getState().clearNotifications();
   useNpcDetectorStore.getState().clearNpcs();

@@ -9,18 +9,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
-import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
+import {
+  useCurrentUserNotificationMutes,
+  useUpdateNotificationMutes,
+} from "@/features/settings/persistence/use-notification-mutes";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const NotificationMutesSettingsTab = () => {
   const { isReady, mutes } = useCurrentUserNotificationMutes();
-  const updateUserPreferences = useUpdateUserPreferences();
+  const updateNotificationMutes = useUpdateNotificationMutes();
   const [playerSearch, setPlayerSearch] = useState("");
   const [npcSearch, setNpcSearch] = useState("");
   const { t } = useTranslation();
-  const isMutating = updateUserPreferences.isPending;
+  const isMutating = updateNotificationMutes.isPending;
   const isActionsDisabled = !isReady || isMutating;
 
   const normalizedPlayerSearch = playerSearch.trim().toLocaleLowerCase("pl");
@@ -109,13 +111,11 @@ export const NotificationMutesSettingsTab = () => {
                     className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
                     disabled={isActionsDisabled}
                     onClick={() =>
-                      updateUserPreferences.mutate({
-                        mutes: {
-                          players: mutes.players.filter(
-                            (currentPlayer) =>
-                              currentPlayer.discordId !== player.discordId,
-                          ),
-                        },
+                      updateNotificationMutes.mutate({
+                        players: mutes.players.filter(
+                          (currentPlayer) =>
+                            currentPlayer.discordId !== player.discordId,
+                        ),
                       })
                     }
                   >
@@ -172,12 +172,10 @@ export const NotificationMutesSettingsTab = () => {
                     className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
                     disabled={isActionsDisabled}
                     onClick={() =>
-                      updateUserPreferences.mutate({
-                        mutes: {
-                          npcs: mutes.npcs.filter(
-                            (currentNpc) => currentNpc.npcKey !== npc.npcKey,
-                          ),
-                        },
+                      updateNotificationMutes.mutate({
+                        npcs: mutes.npcs.filter(
+                          (currentNpc) => currentNpc.npcKey !== npc.npcKey,
+                        ),
                       })
                     }
                   >

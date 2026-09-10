@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
 import i18n from "@/i18n/config";
+import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:hotkeys:state");
 
@@ -294,7 +295,12 @@ interface HotkeysState {
   setBinding: (action: HotkeyAction, binding: HotkeyBinding) => boolean;
   resetBinding: (action: HotkeyAction) => void;
   resetAll: () => void;
+  /** Replaces bindings from the settings documents without writing back. */
+  applyBindings: (bindings: Record<HotkeyAction, HotkeyBinding>) => void;
 }
+
+const syncBindings = (bindings: Record<HotkeyAction, HotkeyBinding>) =>
+  enqueueSettingsPatch({ domain: "controls", set: { hotkeys: bindings } });
 
 export const useHotkeysStore = create<HotkeysState>()(
   persist<HotkeysState, [], [], Pick<HotkeysState, "bindings">>(
@@ -313,6 +319,7 @@ export const useHotkeysStore = create<HotkeysState>()(
         set((state) => ({
           bindings: { ...state.bindings, [action]: binding },
         }));
+        syncBindings(get().bindings);
 
         return true;
       },
@@ -326,8 +333,13 @@ export const useHotkeysStore = create<HotkeysState>()(
             [action]: { ...config.defaultBinding },
           },
         }));
+        syncBindings(get().bindings);
       },
-      resetAll: () => set({ bindings: getDefaultBindings() }),
+      resetAll: () => {
+        set({ bindings: getDefaultBindings() });
+        syncBindings(get().bindings);
+      },
+      applyBindings: (bindings) => set({ bindings }),
     }),
     {
       name: STORAGE_KEY,

@@ -10,8 +10,7 @@ import { useTranslation } from "react-i18next";
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 
 export const TimersSettingsGeneral: FC = () => {
-  const { generalConfig, setGeneralConfig, syncEnabled, setSyncEnabled } =
-    useTimersStore();
+  const { generalConfig, setGeneralConfig } = useTimersStore();
 
   const { t } = useTranslation();
 
@@ -55,16 +54,6 @@ export const TimersSettingsGeneral: FC = () => {
   return (
     <div className="ll:flex ll:flex-col ll:gap-3">
       <SettingsSection title={t("settings.timers.general.behaviorTitle")}>
-        <SettingsControlRow
-          label={t("settings.timers.general.syncLabel")}
-          description={t("settings.timers.general.syncDescription")}
-        >
-          <Switch
-            checked={syncEnabled ?? true}
-            onCheckedChange={setSyncEnabled}
-            id="sync-enabled"
-          />
-        </SettingsControlRow>
         <SettingsControlRow
           label={t("settings.timers.general.groupingLabel")}
           description={t("settings.timers.general.groupingDescription")}

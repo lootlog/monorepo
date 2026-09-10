@@ -13,7 +13,7 @@ import { useIntegratedChatHost } from "./hooks/use-integrated-chat-host";
 import { hasCurrentUserMention } from "./chat-mentions.helpers";
 import { receiveChatMessage, type ChatReadState } from "./chat-read-state";
 import { isHiddenNpcChatMessage } from "./chat.helpers";
-import { useChatSettingsDocuments } from "@/hooks/api/use-settings-documents";
+import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import type { ChatScrollPosition } from "./components/chat-transcript";
 
 export const Chat = () => {
@@ -51,7 +51,7 @@ export const Chat = () => {
 
   const isVisible = integrated.target ? integrated.visible : open;
   const { shouldRender } = useWindowPresence(open);
-  const { hiddenNpcTypes } = useChatSettingsDocuments();
+  const { hiddenNpcTypes } = useHiddenNpcTypes();
   const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
 
   useChatMessagesListener({

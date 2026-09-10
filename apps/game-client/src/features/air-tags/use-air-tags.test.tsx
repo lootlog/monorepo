@@ -1,9 +1,11 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
 import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
+import { describe, expect, it } from "vitest";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
 import {
   createNotificationsSettings,
   createDetectorSettings,
@@ -51,11 +53,9 @@ const update = {
 describe("useAirTags", () => {
   it("ignores incoming targets and sends no subscription while disabled", async () => {
     const test = createAirTagTest();
-    test.queryClient.setQueryData(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "202",
-      }),
-      settings(false),
+    seedSettingsDocuments(
+      test.queryClient,
+      createSettingsDocuments(accountPreferenceValues(settings(false))),
     );
     const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
     await test.join();
@@ -69,11 +69,9 @@ describe("useAirTags", () => {
   });
   it("applies updates only while ready and clears state on unmount", async () => {
     const test = createAirTagTest();
-    test.queryClient.setQueryData(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "202",
-      }),
-      settings(true),
+    seedSettingsDocuments(
+      test.queryClient,
+      createSettingsDocuments(accountPreferenceValues(settings(true))),
     );
     const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
     await test.join();

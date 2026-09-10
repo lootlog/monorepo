@@ -79,49 +79,6 @@ describe("useUpdateUserPreferences", () => {
     });
   });
 
-  it("optimistically merges player mute updates without replacing NPC mutes", async () => {
-    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
-    const previousData = createTestUserPreferences();
-    const nextPlayers = [{ discordId: "discord-2", displayName: "Beta" }];
-
-    const payload: UpdateUserPreferencesDto = {
-      mutes: {
-        players: nextPlayers,
-      },
-    };
-
-    respond.mockReturnValue(deferred.promise);
-    queryClient.setQueryData(
-      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-      previousData,
-    );
-
-    const { result } = renderHook(() => useUpdateUserPreferences(), {
-      wrapper: createWrapper(queryClient),
-    });
-
-    act(() => {
-      result.current.mutate(payload);
-    });
-
-    await waitFor(() => {
-      expect(
-        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-        ),
-      ).toEqual({
-        ...previousData,
-        mutes: {
-          players: nextPlayers,
-          npcs: previousData.mutes.npcs,
-        },
-      });
-    });
-
-    deferred.resolve(previousData);
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-  });
-
   it("optimistically merges a partial chat appearance patch", async () => {
     const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
@@ -236,60 +193,6 @@ describe("useUpdateUserPreferences", () => {
       ...previousData,
       hiddenGuildIds: ["guild-1", "guild-2"],
     });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-  });
-
-  it("optimistically merges NPC mute updates without replacing player mutes", async () => {
-    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
-    const previousData = createTestUserPreferences();
-
-    const nextNpcs = [
-      {
-        npcKey: "npc-2",
-        npcId: 2,
-        name: "Maddok",
-        npcType: "TITAN" as const,
-        lvl: 300,
-        prof: null,
-        icon: null,
-      },
-    ];
-
-    const payload: UpdateUserPreferencesDto = {
-      mutes: {
-        npcs: nextNpcs,
-      },
-    };
-
-    respond.mockReturnValue(deferred.promise);
-    queryClient.setQueryData(
-      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-      previousData,
-    );
-
-    const { result } = renderHook(() => useUpdateUserPreferences(), {
-      wrapper: createWrapper(queryClient),
-    });
-
-    act(() => {
-      result.current.mutate(payload);
-    });
-
-    await waitFor(() => {
-      expect(
-        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-        ),
-      ).toEqual({
-        ...previousData,
-        mutes: {
-          players: previousData.mutes.players,
-          npcs: nextNpcs,
-        },
-      });
-    });
-
-    deferred.resolve(previousData);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 

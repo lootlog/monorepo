@@ -1,9 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { onTestFinished, vi } from "vitest";
 import type { ReactNode } from "react";
 import { configureApiClients } from "@lootlog/client/transport";
 import {
-  getSettingsDocumentsControllerGetPreferencesQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
   getUsersControllerGetUserPreferencesUrl,
@@ -11,6 +10,11 @@ import {
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import { queryClient } from "@/lib/query-client";
+import {
+  createSettingsDocuments,
+  seedSettingsDocuments,
+} from "./settings-documents-fixtures";
 
 export const createTestGuild = (
   id: string,
@@ -30,11 +34,11 @@ export const createTestGuild = (
 });
 
 export const createGuildPreferencesTest = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, staleTime: Infinity },
-      mutations: { retry: false },
-    },
+  // Persistence helpers read the shared client, so tests must seed it.
+  queryClient.clear();
+  queryClient.setDefaultOptions({
+    queries: { retry: false, staleTime: Infinity },
+    mutations: { retry: false },
   });
 
   const preferencesKey = getUsersControllerGetUserPreferencesQueryKey();
@@ -54,12 +58,7 @@ export const createGuildPreferencesTest = () => {
     });
 
   setPreferences();
-  queryClient.setQueryData(
-    getSettingsDocumentsControllerGetPreferencesQueryKey({
-      domains: "appearance",
-    }),
-    { domains: {} },
-  );
+  seedSettingsDocuments(queryClient, createSettingsDocuments());
   queryClient.setQueryData(guildsKey, [
     createTestGuild("guild-1", "Alpha"),
     createTestGuild("guild-2", "Beta"),

@@ -5,8 +5,10 @@ import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
-import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
+import {
+  useCurrentGameAccountPreferences,
+  useUpdateGameAccountPreferences,
+} from "@/features/settings/persistence/use-game-account-preferences";
 import { useGameStore } from "@/store/game.store";
 
 export const GeneralSettingsTab: FC = () => {
@@ -21,11 +23,9 @@ export const GeneralSettingsTab: FC = () => {
 
   const { t } = useTranslation();
 
-  const { accountId, data: accountPreferences } =
-    useCurrentGameAccountPreferences();
+  const { data: accountPreferences } = useCurrentGameAccountPreferences();
 
-  const updateAccountPreferences =
-    useUpdateUserGameAccountPreferences(accountId);
+  const updateAccountPreferences = useUpdateGameAccountPreferences();
 
   return (
     <SettingsTabLayout

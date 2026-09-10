@@ -1,4 +1,9 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { configureApiClients } from "@lootlog/client/transport";
@@ -16,10 +21,7 @@ import { useNpcsStore } from "@/store/npcs.store";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
-import {
-  createDetectorSettings,
-  getUserGameAccountPreferencesQueryKey,
-} from "./game-account-preferences";
+import { createDetectorSettings } from "./game-account-preferences";
 import { queryClient } from "./query-client";
 import { EventDispatcher } from "./event-dispatcher";
 
@@ -82,9 +84,12 @@ beforeEach(() => {
     hasStoredPreferences: true,
   };
 
-  queryClient.setQueryData(
-    getUserGameAccountPreferencesQueryKey("202"),
-    preferences,
+  seedSettingsDocuments(
+    queryClient,
+    createSettingsDocuments(accountPreferenceValues(preferences), {
+      type: "GAME_ACCOUNT",
+      id: "202",
+    }),
   );
 });
 

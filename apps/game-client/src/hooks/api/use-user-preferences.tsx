@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { cloneNotificationMutes } from "@/lib/user-preferences";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
   useUsersControllerGetUserPreferences,
@@ -40,29 +39,17 @@ export const useUpdateUserPreferences = () => {
         return { previousData };
       }
 
-      const previousMutes = cloneNotificationMutes(previousData.mutes);
-
-      const nextMutes = payload.mutes
-        ? {
-            players: payload.mutes.players
-              ? payload.mutes.players.map((player) => ({ ...player }))
-              : previousMutes.players,
-            npcs: payload.mutes.npcs
-              ? payload.mutes.npcs.map((npc) => ({ ...npc }))
-              : previousMutes.npcs,
-          }
-        : previousData.mutes;
+      const { mutes: _mutes, ...personalPayload } = payload;
 
       queryClient.setQueryData<UserPreferencesResponseDtoOutput>(queryKey, {
         ...previousData,
-        ...payload,
+        ...personalPayload,
         chatAppearance: payload.chatAppearance
           ? {
               ...previousData.chatAppearance,
               ...payload.chatAppearance,
             }
           : previousData.chatAppearance,
-        mutes: nextMutes,
       });
 
       return { previousData };

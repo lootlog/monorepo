@@ -1,10 +1,10 @@
 import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { Switch } from "@/components/ui/switch";
-import { useUpdateUserGameAccountPreferences } from "@/hooks/api/use-user-account-preferences";
+import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { useNpcTypeColors } from "@/hooks/api/use-settings-documents";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   DetectorNpcType,
@@ -66,8 +66,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     settings: accountSettings,
   } = useCurrentGameAccountDetectorSettings();
 
-  const updateUserGameAccountPreferences =
-    useUpdateUserGameAccountPreferences(accountId);
+  const updateUserGameAccountPreferences = useUpdateGameAccountPreferences();
 
   const currentCategorySettings = accountSettings[categoryKey];
   const textColor = getTextColor(categoryKey, true, npcTypeColors);

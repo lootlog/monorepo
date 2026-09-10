@@ -358,8 +358,6 @@
     },
     "general": {
       "behaviorTitle": "Zachowanie",
-      "syncLabel": "Synchronizuj ustawienia",
-      "syncDescription": "Synchronizuje ustawienia timerów z serwerem.",
       "groupingLabel": "Grupuj timery",
       "groupingDescription": "Łączy timery z różnych lootlogów w jeden zbiorczy.",
       "underBagLabel": "Timery pod torbami",

@@ -273,7 +273,6 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
               "timers.timerFiltersEnabled",
               "timers.colorFiltersEnabled",
               "timers.timersSortOrder",
-              "timers.syncEnabled",
             ],
           },
           {

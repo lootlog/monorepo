@@ -1,6 +1,6 @@
 import { storageKey } from "@/lib/storage-key";
 import { afterEach, describe, expect, it } from "vitest";
-import { migrateSettingsState, useSettingsStore } from "./settings.store";
+import { useSettingsStore } from "./settings.store";
 
 const SETTINGS_STORAGE_KEY = storageKey("ll:settings:state");
 
@@ -50,15 +50,6 @@ describe("useSettingsStore", () => {
 
     useSettingsStore.getState().setMasterVolume(-1);
     expect(useSettingsStore.getState().masterVolume).toBe(0);
-  });
-
-  it("preserves version 3 device settings during migration", () => {
-    const persistedState = {
-      animationEffectsEnabled: false,
-      guildIdByCharId: { "character-1": "guild-1" },
-    };
-
-    expect(migrateSettingsState(persistedState)).toEqual(persistedState);
   });
 
   it("updates loot debug logging", () => {
