@@ -41,6 +41,12 @@ COPY --from=pruner /usr/src/app/patches ./patches
 RUN --mount=type=cache,id=bun,target=/root/.bun/install/cache,sharing=locked \
     bun install --frozen-lockfile --production
 
+# TypeScript reaches the production install only as an optional peer of
+# runtime dependencies (cva, cosmiconfig). The runtime never runs tsc, and the
+# TypeScript 7 Go binary is flagged by Trivy, so drop it from the image.
+RUN rm -rf node_modules/typescript node_modules/.bun/typescript@* node_modules/.bun/@typescript+typescript-* && \
+    ! find node_modules -type f -path '*@typescript*' -name tsc | grep -q .
+
 COPY --from=pruner /pruned/full/ .
 COPY --from=builder "/usr/src/app/${APP_DIR}/dist" "/usr/src/app/${APP_DIR}/dist"
 
