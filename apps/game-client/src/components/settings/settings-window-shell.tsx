@@ -69,8 +69,8 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
       >
         <div
           className={cn(
-            "ll:flex ll:flex-col ll:gap-6 ll:px-4 ll:pb-2",
-            subsections ? "ll:pt-4" : "ll:pt-0",
+            "ll:flex ll:flex-col ll:gap-6 ll:px-4",
+            !subsections && "ll:pb-2",
           )}
         >
           {children}
