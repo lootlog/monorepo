@@ -27,6 +27,7 @@ describe("settings manifest persistence references", () => {
   it("lists domains in navigation order with battle panel as its own domain", () => {
     expect(SETTINGS_MANIFEST.map((domain) => domain.id)).toEqual([
       "general",
+      "catching",
       "servers",
       "appearance",
       "chat",
@@ -43,15 +44,16 @@ describe("settings manifest persistence references", () => {
     ]);
   });
 
-  it("groups organization scope under general and every timer subsection under timers", () => {
+  it("keeps catching as its own domain and every timer subsection under timers", () => {
     const subsectionsOf = (id: string) =>
       SETTINGS_MANIFEST.find((domain) => domain.id === id)?.subsections.map(
         (subsection) => subsection.id,
       );
 
-    expect(subsectionsOf("general")).toEqual(["catching", "behavior"]);
+    expect(subsectionsOf("general")).toEqual(["behavior"]);
+    expect(subsectionsOf("catching")).toEqual(["catching"]);
     expect(subsectionsOf("servers")).toEqual(["visibility"]);
-    expect(subsectionsOf("appearance")).toEqual(["npc-colors", "interface"]);
+    expect(subsectionsOf("appearance")).toEqual(["npc-colors"]);
     expect(subsectionsOf("timers")).toEqual([
       "timer-behavior",
       "timer-appearance",

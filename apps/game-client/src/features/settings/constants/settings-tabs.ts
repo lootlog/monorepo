@@ -1,5 +1,6 @@
 export const SETTINGS_DOMAIN_VALUES = [
   "general",
+  "catching",
   "servers",
   "appearance",
   "chat",
@@ -41,10 +42,9 @@ export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
  */
 export const SETTINGS_SUBSECTION_DOMAINS = {
   visibility: "servers",
-  catching: "general",
+  catching: "catching",
   behavior: "general",
   "npc-colors": "appearance",
-  interface: "appearance",
   "chat-appearance": "chat",
   "chat-filters": "chat",
   "timer-behavior": "timers",
@@ -79,11 +79,17 @@ export interface SettingsPath {
 
 const DEFAULT_SETTINGS_PATH: SettingsPath = {
   domain: "general",
+  subsection: "behavior",
+};
+
+const CATCHING_SETTINGS_PATH: SettingsPath = {
+  domain: "catching",
   subsection: "catching",
 };
 
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   general: DEFAULT_SETTINGS_PATH,
+  catching: CATCHING_SETTINGS_PATH,
   servers: { domain: "servers", subsection: "visibility" },
   appearance: { domain: "appearance", subsection: "npc-colors" },
   chat: { domain: "chat", subsection: "chat-appearance" },
@@ -100,8 +106,7 @@ const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   experimental: { domain: "experimental", subsection: "experimental" },
   diagnostics: { domain: "diagnostics", subsection: "logs" },
   information: { domain: "information", subsection: "build" },
-  "game-data": { domain: "general", subsection: "catching" },
-  catching: { domain: "general", subsection: "catching" },
+  "game-data": CATCHING_SETTINGS_PATH,
   "hidden-timers": { domain: "timers", subsection: "hidden-timers" },
   "npc-detector": { domain: "detector", subsection: "detector" },
   "notification-mutes": { domain: "mutes", subsection: "muted-players" },

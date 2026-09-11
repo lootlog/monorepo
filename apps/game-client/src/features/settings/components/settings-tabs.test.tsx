@@ -45,7 +45,7 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders fourteen domain tabs in order and opens the selected domain", async () => {
+  it("renders fifteen domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
@@ -58,6 +58,7 @@ describe("SettingsTabs", () => {
 
     expect(tabNames).toEqual([
       "Ogólne",
+      "Zakres zbierania",
       "Lootlogi",
       "Wygląd",
       "Chat",

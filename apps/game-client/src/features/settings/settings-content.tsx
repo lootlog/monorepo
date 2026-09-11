@@ -8,7 +8,6 @@ import { ExperimentalSettingsTab } from "@/features/settings/components/experime
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
-import { InterfaceSettingsTab } from "@/features/settings/components/appearance/interface-settings-tab";
 import { InformationSettingsTab } from "@/features/settings/components/information/information-settings-tab";
 import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
 import { MutedNpcsSettingsTab } from "@/features/settings/components/mutes/muted-npcs-settings-tab";
@@ -27,6 +26,7 @@ import {
   Bell,
   BellOff,
   Clock,
+  Crosshair,
   FlaskConical,
   Info,
   Keyboard,
@@ -48,6 +48,7 @@ import type { ComponentType } from "react";
  */
 export const SETTINGS_DOMAIN_ICONS = {
   settings: Settings,
+  crosshair: Crosshair,
   server: Server,
   palette: Palette,
   messageSquare: MessageSquare,
@@ -68,7 +69,6 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   catching: CatchingSettings,
   behavior: GeneralSettingsTab,
   "npc-colors": NpcColorsSettings,
-  interface: InterfaceSettingsTab,
   "chat-appearance": ChatAppearanceSettingsForm,
   "chat-filters": ChatFiltersSettings,
   "timer-behavior": TimersSettingsGeneral,

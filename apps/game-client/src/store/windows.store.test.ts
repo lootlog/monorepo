@@ -211,6 +211,49 @@ describe("windows store", () => {
       activeSubsection: "detector",
     });
   });
+
+  it("resets window geometry while keeping open state and the settings page", () => {
+    useWindowsStore.setState((state) => ({
+      settings: {
+        ...state.settings,
+        open: true,
+        position: { x: 300, y: 200 },
+        hasDefinedPosition: true,
+        size: { width: 500, height: 400 },
+        state: { activeTab: "sounds", activeSubsection: "sounds" },
+      },
+      timers: {
+        ...state.timers,
+        open: false,
+        position: { x: 40, y: 40 },
+        hasDefinedPosition: true,
+        opacity: 2,
+        locked: true,
+        maxContentHeight: 300,
+      },
+    }));
+
+    useWindowsStore.getState().resetWindowLayout();
+
+    const { settings, timers } = useWindowsStore.getState();
+    const defaults = useWindowsStore.getInitialState();
+
+    expect(settings).toMatchObject({
+      open: true,
+      position: defaults.settings.position,
+      hasDefinedPosition: false,
+      size: defaults.settings.size,
+      state: { activeTab: "sounds", activeSubsection: "sounds" },
+    });
+    expect(timers).toMatchObject({
+      open: false,
+      position: defaults.timers.position,
+      hasDefinedPosition: false,
+      opacity: defaults.timers.opacity,
+      locked: false,
+    });
+    expect(timers.maxContentHeight).toBeUndefined();
+  });
 });
 
 describe("createDeduplicatingStateStorage", () => {
@@ -355,6 +398,44 @@ describe("migrateWindowsState", () => {
     });
   });
 
+  it("moves the retired interface page into general and catching into its own domain", () => {
+    const interfaceMigrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          position: { x: 12, y: 34 },
+          state: { activeTab: "appearance", activeSubsection: "interface" },
+        },
+        windowFocusHistory: [],
+      },
+      17,
+    );
+
+    expect(interfaceMigrated).toHaveProperty("settings.position", {
+      x: 12,
+      y: 34,
+    });
+    expect(interfaceMigrated).toHaveProperty("settings.state", {
+      activeTab: "general",
+      activeSubsection: "behavior",
+    });
+
+    const catchingMigrated = migrateWindowsState(
+      {
+        settings: {
+          state: { activeTab: "general", activeSubsection: "catching" },
+        },
+        windowFocusHistory: [],
+      },
+      17,
+    );
+
+    expect(catchingMigrated).toHaveProperty("settings.state", {
+      activeTab: "catching",
+      activeSubsection: "catching",
+    });
+  });
+
   it("resets only the legacy automatic quick access width", () => {
     const migrated = migrateWindowsState(
       {
@@ -421,7 +502,7 @@ describe("migrateWindowsState", () => {
     expect(migrated).toHaveProperty("settings.hasDefinedPosition", false);
     expect(migrated).toHaveProperty("settings.state", {
       activeTab: "general",
-      activeSubsection: "catching",
+      activeSubsection: "behavior",
     });
   });
 

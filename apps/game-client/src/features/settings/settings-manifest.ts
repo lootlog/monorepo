@@ -6,6 +6,7 @@ import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
 
 export type SettingsIconName =
   | "settings"
+  | "crosshair"
   | "server"
   | "palette"
   | "messageSquare"
@@ -54,6 +55,59 @@ const MANIFEST = [
     icon: "settings",
     subsections: [
       {
+        id: "behavior",
+        labelKey: "settings.subsections.behavior",
+        controls: [
+          {
+            id: "account-status",
+            labelKey: "settings.general.accountLabel",
+            descriptionKey: "settings.general.statusTitle",
+            aliases: ["konto", "sesja", "logowanie", "discord", "cookies"],
+          },
+          {
+            id: "connection-status",
+            labelKey: "settings.general.connectionLabel",
+            descriptionKey: "settings.general.statusTitle",
+            aliases: ["połączenie", "realtime", "websocket", "gateway"],
+          },
+          {
+            id: "allow-world-selection",
+            labelKey: "settings.general.allowWorldSelectionLabel",
+            descriptionKey: "settings.general.allowWorldSelectionDescription",
+            settingKeys: ["general.allowWorldSelection"],
+          },
+          {
+            id: "animation-effects",
+            labelKey: "settings.general.animationEffectsLabel",
+            descriptionKey: "settings.general.animationEffectsDescription",
+            aliases: ["animacje", "wydajność", "performance"],
+            settingKeys: ["device.animationEffectsEnabled"],
+            help: {
+              recommendationKey: "settings.help.animationsRecommendation",
+            },
+          },
+          {
+            id: "reset-window-layout",
+            labelKey: "settings.general.resetWindowLayoutLabel",
+            descriptionKey: "settings.general.resetWindowLayoutDescription",
+            aliases: ["okna", "położenie", "pozycja", "rozmiar", "reset"],
+          },
+          {
+            id: "clear-local-data",
+            labelKey: "settings.general.clearLocalDataLabel",
+            descriptionKey: "settings.general.clearLocalDataDescription",
+            aliases: ["cache", "pamięć", "storage", "wyczyść", "reset"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "catching",
+    labelKey: "settings.domains.catching",
+    icon: "crosshair",
+    subsections: [
+      {
         id: "catching",
         labelKey: "settings.subsections.catching",
         controls: [
@@ -62,18 +116,6 @@ const MANIFEST = [
             labelKey: "settings.catching.form.collectionRangeTitle",
             aliases: ["łupy", "lootlog", "zbieranie"],
             settingKeys: ["gameData.lootlog"],
-          },
-        ],
-      },
-      {
-        id: "behavior",
-        labelKey: "settings.subsections.behavior",
-        controls: [
-          {
-            id: "allow-world-selection",
-            labelKey: "settings.general.allowWorldSelectionLabel",
-            descriptionKey: "settings.general.allowWorldSelectionDescription",
-            settingKeys: ["general.allowWorldSelection"],
           },
         ],
       },
@@ -128,22 +170,6 @@ const MANIFEST = [
               "appearance.npcColors.COLOSSUS",
               "appearance.npcColors.TITAN",
             ],
-          },
-        ],
-      },
-      {
-        id: "interface",
-        labelKey: "settings.subsections.interface",
-        controls: [
-          {
-            id: "animation-effects",
-            labelKey: "settings.general.animationEffectsLabel",
-            descriptionKey: "settings.general.animationEffectsDescription",
-            aliases: ["animacje", "wydajność", "performance"],
-            settingKeys: ["device.animationEffectsEnabled"],
-            help: {
-              recommendationKey: "settings.help.animationsRecommendation",
-            },
           },
         ],
       },

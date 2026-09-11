@@ -10,6 +10,7 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
+import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
 import { useTranslation } from "react-i18next";
 
 export const TimersConnectionStatus: FC = () => {
@@ -25,7 +26,8 @@ export const TimersConnectionStatus: FC = () => {
   });
 
   const connectedToServers =
-    connected && joined && joinedGuilds && joinedGuilds.length > 0;
+    summarizeRealtimeConnection({ connected, joined, joinedGuilds }) ===
+    "connected";
 
   return (
     <Tooltip>

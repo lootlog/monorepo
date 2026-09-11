@@ -4,6 +4,7 @@
   },
   "domains": {
     "general": "Ogólne",
+    "catching": "Zakres zbierania",
     "servers": "Lootlogi",
     "appearance": "Wygląd",
     "chat": "Chat",
@@ -28,7 +29,6 @@
     "timerColors": "Kolory",
     "timerBehavior": "Działanie",
     "catching": "Zakres zbierania",
-    "interface": "Interfejs",
     "notificationRules": "Reguły",
     "experimentalFeatures": "Funkcje",
     "battleDataCollection": "Zbieranie danych",
@@ -168,7 +168,29 @@
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
     "allowWorldSelectionDescription": "Pozwala wybrać świat przy dodawaniu timera; nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
-    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi."
+    "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "statusTitle": "Stan dodatku",
+    "accountLabel": "Konto",
+    "accountChecking": "Sprawdzanie sesji…",
+    "accountSignedIn": "Zalogowano jako {{name}}",
+    "accountSignedOut": "Niezalogowany",
+    "accountError": "Nie udało się sprawdzić sesji",
+    "accountSignedOutHint": "Zaloguj się na stronie Lootloga i sprawdź sesję. Jeśli po zalogowaniu nadal widzisz ten komunikat, zezwól w przeglądarce na ciasteczka innych firm dla lootlog.pl.",
+    "connectionLabel": "Połączenie z serwerem",
+    "connectionConnected": "Połączono ({{count}} Lootlogów)",
+    "connectionJoining": "Łączenie z Lootlogami…",
+    "connectionDisconnected": "Brak połączenia",
+    "windowsTitle": "Okna",
+    "resetWindowLayoutLabel": "Przywróć domyślne położenie okien",
+    "resetWindowLayoutDescription": "Ustawia wszystkie okna dodatku w domyślnych miejscach i rozmiarach. Otwarte okna pozostają otwarte.",
+    "resetWindowLayoutAction": "Przywróć",
+    "resetWindowLayoutDone": "Przywrócono domyślne położenie okien",
+    "localDataTitle": "Dane lokalne",
+    "clearLocalDataLabel": "Wyczyść dane lokalne",
+    "clearLocalDataDescription": "Usuwa dane dodatku zapisane w tej przeglądarce (okna, timery, logi, lokalne preferencje) i przeładowuje grę. Ustawienia zapisane na serwerze zostają.",
+    "clearLocalDataAction": "Wyczyść",
+    "clearLocalDataConfirm": "Potwierdź",
+    "clearLocalDataCancel": "Anuluj"
   },
   "experimental": {
     "sectionTitle": "Funkcje eksperymentalne",
@@ -352,6 +374,7 @@
     "description": "Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów.",
     "subTabs": {
       "general": "Ogólne",
+      "catching": "Zakres zbierania",
       "appearance": "Wygląd",
       "colors": "Kolory"
     },
@@ -627,9 +650,6 @@
   "nav": {
     "domains": "Działy ustawień",
     "subsections": "Sekcje ustawień"
-  },
-  "appearance": {
-    "interfaceTitle": "Interfejs"
   },
   "matrix": {
     "enableAll": "Kliknij nagłówek, aby włączyć we wszystkich wierszach.",

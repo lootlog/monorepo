@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { resolveSettingsPath } from "./settings-tabs";
 
 describe("resolveSettingsPath", () => {
-  it("opens general on catching by default", () => {
+  it("opens general on behavior by default", () => {
     expect(resolveSettingsPath()).toEqual({
       domain: "general",
-      subsection: "catching",
+      subsection: "behavior",
     });
     expect(resolveSettingsPath("general", "behavior")).toEqual({
       domain: "general",
@@ -19,7 +19,11 @@ describe("resolveSettingsPath", () => {
       subsection: "visibility",
     });
     expect(resolveSettingsPath("game-data")).toEqual({
-      domain: "general",
+      domain: "catching",
+      subsection: "catching",
+    });
+    expect(resolveSettingsPath("general", "catching")).toEqual({
+      domain: "catching",
       subsection: "catching",
     });
     expect(resolveSettingsPath("npc-detector")).toEqual({
