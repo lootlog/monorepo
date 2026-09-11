@@ -89,7 +89,7 @@ describe("SettingsTabs", () => {
 
     expect(screen.getByText("Powiadomienia › Wykrywacz")).toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: "Gdzie wysyłać zgłoszenia" }),
+      screen.getByRole("option", { name: "Gdzie wysyłać powiadomienia" }),
     ).toBeInTheDocument();
   });
 
