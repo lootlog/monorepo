@@ -163,7 +163,8 @@
     "editColor": "Edytuj kolor NPC",
     "preview": "Podgląd powierzchni",
     "notificationPreview": "Powiadomienie o wykryciu potwora",
-    "detectorPreview": "Potwór widoczny w wykrywaczu"
+    "detectorPreview": "Potwór widoczny w wykrywaczu",
+    "resetAllDescription": "Wraca do domyślnej palety dla wszystkich typów potworów."
   },
   "general": {
     "title": "Ustawienia ogólne",
@@ -276,7 +277,8 @@
         "description": "Oznacz kafelek pod kursorem na mapie lub Podręcznej mapie"
       }
     },
-    "restoreDefaultsTitle": "Reset"
+    "restoreDefaultsTitle": "Reset",
+    "restoreDefaultsDescription": "Usuwa własne przypisania we wszystkich kategoriach i wraca do domyślnych skrótów."
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
