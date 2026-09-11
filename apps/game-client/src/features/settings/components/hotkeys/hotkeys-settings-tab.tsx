@@ -130,9 +130,9 @@ export const HotkeysSettingsTab = () => {
                 description={
                   error ? (
                     <span className="ll:text-red-400">{error}</span>
-                  ) : (
+                  ) : config.descriptionKey ? (
                     t(config.descriptionKey)
-                  )
+                  ) : undefined
                 }
                 controlClassName={HOTKEY_CONTROL_CLASS_NAME}
               >

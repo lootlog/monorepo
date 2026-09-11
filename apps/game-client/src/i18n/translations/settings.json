@@ -238,40 +238,34 @@
     },
     "actions": {
       "toggle-command": {
-        "label": "Konsola",
-        "description": "Otwórz/zamknij okno komendy"
+        "label": "Konsola"
       },
       "toggle-chat": {
-        "label": "Chat",
-        "description": "Otwórz/zamknij okno czatu"
+        "label": "Chat"
       },
       "toggle-settings": {
-        "label": "Ustawienia",
-        "description": "Otwórz/zamknij ustawienia"
+        "label": "Ustawienia"
       },
       "toggle-timers": {
-        "label": "Timery",
-        "description": "Otwórz/zamknij okno timerów"
+        "label": "Timery"
       },
       "toggle-online-players": {
-        "label": "Gracze online",
-        "description": "Otwórz/zamknij okno graczy online"
+        "label": "Gracze online"
       },
       "toggle-quick-access": {
-        "label": "Quick access",
-        "description": "Otwórz/zamknij okno quick access"
+        "label": "Quick access"
       },
       "invite-all": {
         "label": "Zaproś wszystkich",
-        "description": "Zaproś wszystkich z party findera"
+        "description": "Zaprasza do grupy wszystkich zapisanych na Twoją zbiórkę."
       },
       "map-ping": {
         "label": "Ping na mapie",
-        "description": "Oznacz kafelek pod kursorem na mapie lub Podręcznej mapie"
+        "description": "Oznacza miejsce pod kursorem na mapie."
       }
     },
     "restoreDefaultsTitle": "Reset",
-    "restoreDefaultsDescription": "Usuwa własne przypisania we wszystkich kategoriach i wraca do domyślnych skrótów."
+    "restoreDefaultsDescription": "Cofa wszystkie zmienione skróty."
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
