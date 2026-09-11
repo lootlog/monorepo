@@ -4,6 +4,7 @@
   },
   "domains": {
     "general": "Ogólne",
+    "servers": "Serwery",
     "appearance": "Wygląd",
     "chat": "Chat",
     "timers": "Timery",

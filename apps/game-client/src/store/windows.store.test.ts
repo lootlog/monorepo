@@ -379,7 +379,7 @@ describe("migrateWindowsState", () => {
     expect(migrated).toHaveProperty("settings.hasDefinedPosition", false);
     expect(migrated).toHaveProperty("settings.state", {
       activeTab: "general",
-      activeSubsection: "visibility",
+      activeSubsection: "catching",
     });
   });
 

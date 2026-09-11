@@ -12,9 +12,12 @@ import {
   type ChatInputProps,
 } from "./use-chat-input-controller";
 
+const FOCUS_RING_CLASSES =
+  "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]";
+
 const CHAT_INPUT_FOCUS_CLASSES = {
-  default:
-    "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]",
+  default: FOCUS_RING_CLASSES,
+  filled: FOCUS_RING_CLASSES,
   borderless: "",
 };
 

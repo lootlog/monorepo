@@ -27,6 +27,7 @@ describe("settings manifest persistence references", () => {
   it("lists domains in navigation order with battle panel as its own domain", () => {
     expect(SETTINGS_MANIFEST.map((domain) => domain.id)).toEqual([
       "general",
+      "servers",
       "appearance",
       "chat",
       "timers",
@@ -46,11 +47,8 @@ describe("settings manifest persistence references", () => {
         (subsection) => subsection.id,
       );
 
-    expect(subsectionsOf("general")).toEqual([
-      "visibility",
-      "catching",
-      "behavior",
-    ]);
+    expect(subsectionsOf("general")).toEqual(["catching", "behavior"]);
+    expect(subsectionsOf("servers")).toEqual(["visibility"]);
     expect(subsectionsOf("appearance")).toEqual(["npc-colors", "interface"]);
     expect(subsectionsOf("timers")).toEqual([
       "timer-behavior",

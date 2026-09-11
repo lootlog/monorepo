@@ -40,6 +40,7 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
   return (
     <div className="ll:pb-1 ll:flex ll:gap-1">
       <SearchInput
+        size="sm"
         placeholder={t("search.placeholder")}
         value={searchQuery}
         onChange={onSearchChange}
