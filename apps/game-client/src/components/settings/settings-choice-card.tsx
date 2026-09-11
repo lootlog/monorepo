@@ -6,6 +6,8 @@ export type SettingsChoiceOption<Value extends string> = {
   value: Value;
   title: ReactNode;
   description?: ReactNode;
+  /** Shown in place but not selectable, so the grid keeps its layout. */
+  disabled?: boolean;
 };
 
 type SettingsChoiceCardsProps<Value extends string> = {
@@ -50,13 +52,18 @@ export const SettingsChoiceCards = <Value extends string>({
 
     if (delta === 0 || disabled) return;
     event.preventDefault();
+    let index = findIndex(options, value);
 
-    const next =
-      options[
-        (findIndex(options, value) + delta + options.length) % options.length
-      ];
+    for (let step = 0; step < options.length; step += 1) {
+      index = (index + delta + options.length) % options.length;
+      const next = options[index];
 
-    if (next) onChange(next.value);
+      if (next && !next.disabled) {
+        onChange(next.value);
+
+        return;
+      }
+    }
   };
 
   return (
@@ -75,7 +82,7 @@ export const SettingsChoiceCards = <Value extends string>({
           key={option.value}
           option={option}
           selected={option.value === value}
-          disabled={disabled}
+          disabled={disabled || option.disabled === true}
           tabIndex={option.value === value ? 0 : -1}
           onSelect={() => onChange(option.value)}
         />

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
+import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useTranslation } from "react-i18next";
 import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
@@ -61,11 +62,8 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       },
     );
 
-  const {
-    mutate: updateLootlogCharacterConfig,
-    isPending: isUpdatingLootlogConfig,
-    status: updateStatus,
-  } = useUpdateLootlogCharactersConfig();
+  const { mutate: updateLootlogCharacterConfig, status: updateStatus } =
+    useUpdateLootlogCharactersConfig();
 
   // The callback is read through a ref so the report follows the mutation
   // status alone; a parent re-render (e.g. from the report itself) must not
@@ -131,6 +129,11 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           clearTimeout(debounceTimerId);
         }
 
+        // The write is queued from this moment; report it like the settings
+        // patch queue does instead of waiting for the debounce to fire.
+        onSaveStateChangeRef.current?.("saving");
+        reportSettingsSave.saving();
+
         debounceTimerId = setTimeout(() => {
           const catchingGuildIds = (values.catchingGuildIds ?? []).filter(
             (id): id is string => typeof id === "string",
@@ -153,8 +156,9 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     };
   }, [characterId, subscribe, updateLootlogCharacterConfig]);
 
-  const isPending = isLootlogConfigLoading || isUpdatingLootlogConfig;
-  const isInteractionDisabled = isPending || disabled;
+  // The write is optimistic and replaces the whole list, so the picker stays
+  // usable while a save is in flight; only the initial load blocks it.
+  const isInteractionDisabled = isLootlogConfigLoading || disabled;
   const totalGuilds = guilds?.length ?? 0;
   const selectedCount = selectedGuildIds.length;
 
@@ -179,10 +183,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       description={t("settings.catching.form.serversDescription")}
       actions={
         <div className="ll:flex ll:items-center ll:gap-3">
-          <span
-            key={selectedCount}
-            className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground ll:animate-in ll:fade-in-0 ll:duration-200"
-          >
+          <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
             {t("settings.catching.form.activeCount", {
               selectedCount,
               totalCount: totalGuilds,

@@ -53,15 +53,13 @@ export const ChatAppearanceSettingsForm = () => {
       title: t("settings.chat.preset.compact"),
       description: t("settings.chat.preset.compactDescription"),
     },
-    ...(activePreset === "custom"
-      ? [
-          {
-            value: "custom" as const,
-            title: t("settings.chat.preset.custom"),
-            description: t("settings.chat.preset.customDescription"),
-          },
-        ]
-      : []),
+    // Always in the grid so switching to custom values shifts nothing below.
+    {
+      value: "custom",
+      title: t("settings.chat.preset.custom"),
+      description: t("settings.chat.preset.customDescription"),
+      disabled: activePreset !== "custom",
+    },
   ];
 
   const visibleMetadataKeys = allowWorldSelection
@@ -167,6 +165,7 @@ export const ChatAppearanceSettingsForm = () => {
         {visibleMetadataKeys.map((key) => (
           <SettingsRow
             key={key}
+            settingKeys={[`appearance.chat.${key}`]}
             htmlFor={`chat-metadata-${key}`}
             label={t(`settings.chat.metadata.${key}`)}
             description={t(`settings.chat.metadata.${key}Description`)}
