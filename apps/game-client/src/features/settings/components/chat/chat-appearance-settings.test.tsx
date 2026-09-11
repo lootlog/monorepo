@@ -49,9 +49,19 @@ describe("ChatAppearanceSettingsForm", () => {
       getCurrentSettingsDocumentsQueryKey(),
       settingsDocuments,
     );
+    // A real server answers a patch with the patched document; the cache
+    // holds that state optimistically, so echo it back.
     patchRequest
       .mockReset()
-      .mockResolvedValue(Response.json(settingsDocuments));
+      .mockImplementation(() =>
+        Promise.resolve(
+          Response.json(
+            harness.queryClient.getQueryData(
+              getCurrentSettingsDocumentsQueryKey(),
+            ),
+          ),
+        ),
+      );
     harness.request.mockImplementation(patchRequest);
   });
 
@@ -106,6 +116,7 @@ describe("ChatAppearanceSettingsForm", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       );
     });
@@ -236,6 +247,7 @@ describe("ChatAppearanceSettingsForm", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       );
     });

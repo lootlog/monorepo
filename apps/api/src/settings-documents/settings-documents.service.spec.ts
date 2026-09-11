@@ -240,7 +240,10 @@ describe("settings documents Effect module", () => {
     expect(repository.findDocuments).toHaveBeenCalledWith(
       "user-1",
       ["timers"],
-      [{ type: "GUILD", id: "guild-1" }],
+      [
+        { type: "USER", id: "user-1" },
+        { type: "GUILD", id: "guild-1" },
+      ],
     );
   });
 

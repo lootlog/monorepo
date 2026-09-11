@@ -2,14 +2,15 @@ import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
-  settingsDocumentsControllerGetPreferences,
+  settingsDocumentsControllerGetGuildPreferences,
   useSettingsDocumentsControllerGetPreferences,
 } from "@lootlog/client/main";
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   getGuildTimersDocumentsParams,
+  getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsParams,
-  type SettingsDocuments,
+  type GuildSettingsDocuments,
 } from "./settings-documents";
 
 const QUERY_OPTIONS = {
@@ -43,23 +44,19 @@ export const useSettingsDocuments = () => {
   });
 };
 
-/** Guild-scoped timer documents (hidden and pinned timers) for the given guilds. */
+/** Timer documents (hidden and pinned timers) of the given guilds, in one request. */
 export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
   const gameInitialized = useGlobalStore(
     (state) => state.gameState.gameInitialized,
   );
 
-  return useQueries({
-    queries: guildIds.map((guildId) => {
-      const params = getGuildTimersDocumentsParams(guildId);
+  const params = getGuildTimersDocumentsParams(guildIds);
 
-      return {
-        queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params),
-        queryFn: (): Promise<SettingsDocuments> =>
-          settingsDocumentsControllerGetPreferences(params),
-        enabled: gameInitialized,
-        ...QUERY_OPTIONS,
-      };
-    }),
+  return useQuery({
+    queryKey: getGuildTimersDocumentsQueryKey(guildIds),
+    queryFn: (): Promise<GuildSettingsDocuments> =>
+      settingsDocumentsControllerGetGuildPreferences(params),
+    enabled: gameInitialized && guildIds.length > 0,
+    ...QUERY_OPTIONS,
   });
 };

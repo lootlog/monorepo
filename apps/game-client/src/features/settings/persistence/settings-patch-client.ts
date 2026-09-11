@@ -9,17 +9,22 @@ import {
 import {
   getUsersControllerGetUserPreferencesQueryKey,
   settingsDocumentsControllerPatchPreferences,
+  type SettingsDocumentsContextDto,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import type { QueryKey } from "@tanstack/react-query";
 import { isRecord } from "@lootlog/schema/records";
 import { toast } from "sonner";
 import {
+  applyGuildSettingsOperation,
   applySettingsOperation,
-  getGuildTimersDocumentsQueryKey,
+  GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX,
   getSettingsDocumentsQueryKey,
+  mergeSettingsDocuments,
+  type GuildSettingsDocuments,
   type SettingsDocuments,
   type SettingsDocumentsContext,
+  type SettingsOperation,
   type SettingsScope,
   type SettingsScopeType,
 } from "./settings-documents";
@@ -86,16 +91,115 @@ export const resolveSettingsScope = (
   }
 };
 
+const isGuildOperation = (operation: SettingsOperation) =>
+  operation.scope.type === "GUILD";
+
+/**
+ * The read context a batch is resolved in, so the response matches the cache
+ * entry it replaces: the character context for user/account/character
+ * writes, the guild for guild-only writes. A mixed batch has no single
+ * context and is reconciled with a refetch instead.
+ */
+const getPatchContext = (
+  operations: SettingsOperation[],
+): SettingsDocumentsContextDto | undefined => {
+  if (operations.every(isGuildOperation)) {
+    return { guildId: operations[0]?.scope.id };
+  }
+
+  if (operations.some(isGuildOperation)) return undefined;
+
+  const { gameAccountId, characterId } = getCurrentSettingsContext();
+  const context: SettingsDocumentsContextDto = {};
+
+  if (gameAccountId) {
+    context.gameAccountId = gameAccountId;
+
+    if (characterId) context.characterId = characterId;
+  }
+
+  return context;
+};
+
+const applyOptimisticOperation = (
+  queryKey: QueryKey,
+  operation: SettingsOperation,
+) => {
+  if (isGuildOperation(operation)) {
+    queryClient.setQueriesData<GuildSettingsDocuments>(
+      { queryKey },
+      (current) => applyGuildSettingsOperation(current, operation),
+    );
+
+    return;
+  }
+
+  queryClient.setQueryData<SettingsDocuments>(queryKey, (current) =>
+    applySettingsOperation(current, operation),
+  );
+};
+
+/**
+ * Puts a save response into the cache entry its context matches. Returns
+ * false when no entry holds that document, so the queue refetches instead.
+ */
+const applyServerDocuments = (
+  response: SettingsDocuments,
+  operations: SettingsOperation[],
+) => {
+  const context = getPatchContext(operations);
+
+  if (!context) return false;
+
+  if (context.guildId) {
+    const guildId = context.guildId;
+    let applied = false;
+
+    queryClient.setQueriesData<GuildSettingsDocuments>(
+      { queryKey: GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX },
+      (current) => {
+        const guildDocuments = current?.guilds[guildId];
+
+        if (!current || !guildDocuments) return current;
+        applied = true;
+
+        return {
+          guilds: {
+            ...current.guilds,
+            [guildId]:
+              mergeSettingsDocuments(guildDocuments, response) ??
+              guildDocuments,
+          },
+        };
+      },
+    );
+
+    return applied;
+  }
+
+  const queryKey = getCurrentSettingsDocumentsQueryKey();
+
+  if (!queryClient.getQueryData<SettingsDocuments>(queryKey)) return false;
+
+  queryClient.setQueryData<SettingsDocuments>(queryKey, (current) =>
+    mergeSettingsDocuments(current, response),
+  );
+
+  return true;
+};
+
 export const settingsPatchQueue = createSettingsPatchQueue({
   send: (operations) =>
-    settingsDocumentsControllerPatchPreferences({ operations }),
+    settingsDocumentsControllerPatchPreferences({
+      operations,
+      context: getPatchContext(operations),
+    }),
   applyOptimistic: ({ operation, queryKeys }) => {
     for (const queryKey of queryKeys) {
-      queryClient.setQueryData<SettingsDocuments>(queryKey, (current) =>
-        applySettingsOperation(current, operation),
-      );
+      applyOptimisticOperation(queryKey, operation);
     }
   },
+  applyServerDocuments,
   reconcile: async (queryKeys) => {
     await Promise.all(
       queryKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
@@ -153,7 +257,7 @@ export const enqueueSettingsPatch = ({
 
   const queryKeys: QueryKey[] =
     scope.type === "GUILD"
-      ? [getGuildTimersDocumentsQueryKey(scope.id)]
+      ? [GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX]
       : [getCurrentSettingsDocumentsQueryKey()];
 
   const settingKeys = [...collectLeafPaths(set), ...unset].map(

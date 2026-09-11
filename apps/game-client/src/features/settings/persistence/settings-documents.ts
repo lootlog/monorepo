@@ -15,14 +15,20 @@ import {
 } from "@lootlog/domain/settings-paths";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import {
+  getSettingsDocumentsControllerGetGuildPreferencesQueryKey,
   getSettingsDocumentsControllerGetPreferencesQueryKey,
+  type GuildSettingsDocumentsResponseDtoOutput,
   type PatchSettingsDocumentsDtoOperationsItem,
+  type SettingsDocumentsControllerGetGuildPreferencesParams,
   type SettingsDocumentsControllerGetPreferencesParams,
   type SettingsDocumentsResponseDtoOutput,
 } from "@lootlog/client/main";
 import { isRecord } from "@lootlog/schema/records";
 
 export type SettingsDocuments = SettingsDocumentsResponseDtoOutput;
+
+/** Guild-scoped documents keyed by guild id, from one batched request. */
+export type GuildSettingsDocuments = GuildSettingsDocumentsResponseDtoOutput;
 
 export type SettingsScopeType =
   PatchSettingsDocumentsDtoOperationsItem["scope"]["type"];
@@ -69,16 +75,21 @@ export const getSettingsDocumentsQueryKey = (
   );
 
 export const getGuildTimersDocumentsParams = (
-  guildId: string,
-): SettingsDocumentsControllerGetPreferencesParams => ({
+  guildIds: readonly string[],
+): SettingsDocumentsControllerGetGuildPreferencesParams => ({
   domains: "timers",
-  guildId,
+  guildIds: [...new Set(guildIds)].sort().join(","),
 });
 
-export const getGuildTimersDocumentsQueryKey = (guildId: string) =>
-  getSettingsDocumentsControllerGetPreferencesQueryKey(
-    getGuildTimersDocumentsParams(guildId),
+/** One cache entry holds the timer documents of every accessible guild. */
+export const getGuildTimersDocumentsQueryKey = (guildIds: readonly string[]) =>
+  getSettingsDocumentsControllerGetGuildPreferencesQueryKey(
+    getGuildTimersDocumentsParams(guildIds),
   );
+
+/** Prefix matching every guild documents entry, whatever its guild list. */
+export const GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX =
+  getSettingsDocumentsControllerGetGuildPreferencesQueryKey();
 
 export type SettingsKeyParts<TKey extends ServerSettingsCatalogKey> =
   TKey extends `${infer TDomain extends SettingsDomain}.${infer TField}`
@@ -235,6 +246,35 @@ export const applySettingsOperation = (
     },
   };
 };
+
+/** Applies a GUILD scoped operation to that guild's entry of a batched response. */
+export const applyGuildSettingsOperation = (
+  documents: GuildSettingsDocuments | undefined,
+  operation: SettingsOperation,
+): GuildSettingsDocuments | undefined => {
+  const current = documents?.guilds[operation.scope.id];
+
+  if (!documents || !current) return documents;
+
+  const next = applySettingsOperation(current, operation) ?? current;
+
+  return next === current
+    ? documents
+    : { guilds: { ...documents.guilds, [operation.scope.id]: next } };
+};
+
+/**
+ * Replaces the domains a save response carries and keeps the rest of the
+ * cached document, so a response resolved for the same context can stand in
+ * for a refetch.
+ */
+export const mergeSettingsDocuments = (
+  current: SettingsDocuments | undefined,
+  incoming: SettingsDocuments,
+): SettingsDocuments | undefined =>
+  current
+    ? { ...current, domains: { ...current.domains, ...incoming.domains } }
+    : current;
 
 /** Structural equality for catalog-shaped values (plain JSON). */
 export const areSettingsValuesEqual = (left: unknown, right: unknown) =>

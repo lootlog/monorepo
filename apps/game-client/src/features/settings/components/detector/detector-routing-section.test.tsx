@@ -28,6 +28,7 @@ const gameDataOperations = (set: {
       unset: [],
     },
   ],
+  context: { gameAccountId: "202", characterId: "101" },
 });
 
 const render = () =>

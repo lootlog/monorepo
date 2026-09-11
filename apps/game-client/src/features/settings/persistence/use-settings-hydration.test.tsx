@@ -30,6 +30,24 @@ const respond = (harness: Harness) =>
       );
     }
 
+    if (url.pathname === "/preferences/guilds") {
+      const guildIds = url.searchParams.get("guildIds")?.split(",") ?? [];
+
+      return Promise.resolve(
+        Response.json({
+          guilds: Object.fromEntries(
+            guildIds.map((guildId) => [
+              guildId,
+              createSettingsDocuments(
+                { "timers.hiddenTimers": [`hidden-${guildId}`] },
+                { type: "GUILD", id: guildId },
+              ),
+            ]),
+          ),
+        }),
+      );
+    }
+
     if (url.pathname !== "/preferences") {
       throw new Error(`Unexpected HTTP request: ${url.pathname}`);
     }
@@ -42,17 +60,8 @@ const respond = (harness: Harness) =>
       );
     }
 
-    const guildId = url.searchParams.get("guildId");
-
     return Promise.resolve(
-      Response.json(
-        guildId
-          ? createSettingsDocuments(
-              { "timers.hiddenTimers": [`hidden-${guildId}`] },
-              { type: "GUILD", id: guildId },
-            )
-          : readSeededSettingsDocuments(harness.queryClient),
-      ),
+      Response.json(readSeededSettingsDocuments(harness.queryClient)),
     );
   });
 
