@@ -6,10 +6,9 @@ import { useHotkeysStore } from "@/store/hotkeys.store";
 import { HotkeysSettingsTab } from "./hotkeys-settings-tab";
 
 const keyCaps = (row: ReturnType<typeof chatRow>) =>
-  row
-    .getAllByText((_, element) => element?.tagName === "KBD")
-    .map((element) => element.textContent)
-    .join(" + ");
+  row.getByText(
+    (_, element) => element?.getAttribute("data-slot") === "kbd-group",
+  ).textContent;
 
 const chatRow = () => {
   const label = screen.getByText(

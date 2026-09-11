@@ -7,6 +7,7 @@ import { usePartyCommand } from "@/features/command/hooks/use-party-command";
 import { MapPin, Plus, Siren, Swords } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { HotkeyCaps } from "@/components/hotkey-caps";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -14,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
-import { formatBinding, useHotkeysStore } from "@/store/hotkeys.store";
+import { useHotkeysStore } from "@/store/hotkeys.store";
 
 export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
   const { t } = useTranslation("chat");
@@ -32,7 +33,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
       icon: MapPin,
       run: () => sendPosition(guildId),
       disabled,
-      shortcut: formatBinding(bindings["chat-position"]),
+      shortcut: bindings["chat-position"],
     },
     {
       key: "chat-help",
@@ -40,7 +41,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
       icon: Siren,
       run: () => sendHelp(guildId),
       disabled,
-      shortcut: formatBinding(bindings["chat-help"]),
+      shortcut: bindings["chat-help"],
     },
     {
       key: "party-finder",
@@ -57,7 +58,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
         }
       },
       disabled: creatingParty || !guildId,
-      shortcut: "",
+      shortcut: null,
     },
   ] as const;
 
@@ -109,9 +110,9 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
             >
               <Icon aria-hidden className="ll:size-3.5" />
               {label}
-              <span className="ll:ml-auto ll:pl-3 ll:text-[10px] ll:text-muted-foreground">
-                {shortcut}
-              </span>
+              {shortcut ? (
+                <HotkeyCaps binding={shortcut} className="ll:ml-auto ll:pl-3" />
+              ) : null}
             </Button>
           ),
         )}
