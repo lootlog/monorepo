@@ -166,20 +166,19 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                       : undefined
                   }
                   className={cn(
-                    "ll:h-8 ll:text-center ll:align-middle ll:font-normal ll:transition-colors",
+                    "ll:h-8 ll:px-2 ll:text-center ll:align-middle ll:font-normal ll:transition-colors",
                     // The name column absorbs the spare width; option columns
                     // share one width unless a label or control needs more.
-                    column.primary
-                      ? "ll:border-0 ll:border-e ll:border-solid ll:border-border ll:px-2"
-                      : "ll:px-0.5",
+                    column.primary &&
+                      "ll:border-0 ll:border-e ll:border-solid ll:border-border",
                     // Icon-only columns keep enough room for the control to
                     // read as its own column.
-                    !column.primary && (compact ? "ll:w-11" : "ll:w-[4.5rem]"),
+                    !column.primary && (compact ? "ll:w-12" : "ll:w-20"),
                     hoveredColumn === index && "ll:bg-white/5",
                   )}
                 >
                   <Tooltip>
-                    <TooltipTrigger className="ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-0.5 ll:border-0 ll:bg-transparent ll:px-1 ll:py-0.5 ll:text-[11px] ll:leading-4 ll:font-semibold ll:text-foreground ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
+                    <TooltipTrigger className="ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-0.5 ll:border-0 ll:bg-transparent ll:p-0 ll:text-[11px] ll:leading-4 ll:font-semibold ll:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
                       <column.icon
                         aria-hidden
                         className="ll:size-3.5 ll:text-muted-foreground"
