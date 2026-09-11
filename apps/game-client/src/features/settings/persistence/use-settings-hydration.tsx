@@ -17,6 +17,7 @@ import {
 } from "@/lib/game-account-preferences";
 import { getGuildIds } from "@/lib/api/generated-helpers";
 import {
+  areSettingsValuesEqual,
   hasStoredSettingsValue,
   selectSettingsValue,
   type SettingsDocuments,
@@ -81,9 +82,7 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
   const store = useTimersStore.getState();
   const updatedAt = documents.domains.timers?.updatedAt;
 
-  if (updatedAt) useTimersStore.setState({ updatedAt: Date.parse(updatedAt) });
-
-  useTimersStore.setState({
+  const next: Partial<TimersProjection> = {
     generalConfig: { ...store.generalConfig, ...decoded.generalConfig },
     displayConfig: { ...store.displayConfig, ...decoded.displayConfig },
     alwaysVisibleExpiredTimers:
@@ -100,21 +99,73 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
       decoded.overriddenDefaultColors ?? store.overriddenDefaultColors,
     hiddenDefaultColors:
       decoded.hiddenDefaultColors ?? store.hiddenDefaultColors,
-    hiddenTimers: {
-      ...store.hiddenTimers,
-      [GLOBAL_TIMER_SETTINGS_KEY]: selectSettingsValue(
-        documents,
-        "timers.hiddenTimers",
-      ),
-    },
-    pinnedTimers: {
-      ...store.pinnedTimers,
-      [GLOBAL_TIMER_SETTINGS_KEY]: selectSettingsValue(
-        documents,
-        "timers.pinnedTimers",
-      ),
-    },
-  });
+  };
+
+  if (updatedAt) next.updatedAt = Date.parse(updatedAt);
+
+  setTimersStateIfChanged(next);
+  setGuildTimerLists(
+    GLOBAL_TIMER_SETTINGS_KEY,
+    selectSettingsValue(documents, "timers.hiddenTimers"),
+    selectSettingsValue(documents, "timers.pinnedTimers"),
+  );
+};
+
+type TimersState = ReturnType<typeof useTimersStore.getState>;
+
+type TimersProjection = Pick<
+  TimersState,
+  | "updatedAt"
+  | "generalConfig"
+  | "displayConfig"
+  | "alwaysVisibleExpiredTimers"
+  | "timerFiltersEnabled"
+  | "colorFiltersEnabled"
+  | "timersSortOrder"
+  | "customColors"
+  | "timersColors"
+  | "defaultColorNames"
+  | "overriddenDefaultColors"
+  | "hiddenDefaultColors"
+>;
+
+/**
+ * Writes only the keys whose value changed, so a refetched document with the
+ * same content leaves store identities (and their subscribers) untouched.
+ */
+const setTimersStateIfChanged = (next: Partial<TimersProjection>) => {
+  const store = useTimersStore.getState();
+  const changed: Partial<TimersProjection> = {};
+
+  // SAFETY: `next` is built from TimersProjection keys only.
+  for (const key of Object.keys(next) as (keyof TimersProjection)[]) {
+    if (!areSettingsValuesEqual(store[key], next[key])) {
+      Object.assign(changed, { [key]: next[key] });
+    }
+  }
+
+  if (Object.keys(changed).length > 0) useTimersStore.setState(changed);
+};
+
+const setGuildTimerLists = (
+  key: string,
+  hiddenTimers: string[],
+  pinnedTimers: string[],
+) => {
+  const store = useTimersStore.getState();
+
+  const changed: Partial<Pick<TimersState, "hiddenTimers" | "pinnedTimers">> =
+    {};
+
+  if (!areSettingsValuesEqual(store.hiddenTimers[key], hiddenTimers)) {
+    changed.hiddenTimers = { ...store.hiddenTimers, [key]: hiddenTimers };
+  }
+
+  if (!areSettingsValuesEqual(store.pinnedTimers[key], pinnedTimers)) {
+    changed.pinnedTimers = { ...store.pinnedTimers, [key]: pinnedTimers };
+  }
+
+  if (Object.keys(changed).length > 0) useTimersStore.setState(changed);
 };
 
 /** Projects one guild's timer document into the per-guild lists. */
@@ -122,18 +173,11 @@ export const applyGuildTimerDocuments = (
   guildId: string,
   documents: SettingsDocuments,
 ) => {
-  const store = useTimersStore.getState();
-
-  useTimersStore.setState({
-    hiddenTimers: {
-      ...store.hiddenTimers,
-      [guildId]: selectSettingsValue(documents, "timers.hiddenTimers"),
-    },
-    pinnedTimers: {
-      ...store.pinnedTimers,
-      [guildId]: selectSettingsValue(documents, "timers.pinnedTimers"),
-    },
-  });
+  setGuildTimerLists(
+    guildId,
+    selectSettingsValue(documents, "timers.hiddenTimers"),
+    selectSettingsValue(documents, "timers.pinnedTimers"),
+  );
 };
 
 const applyProjections = (documents: SettingsDocuments) => {

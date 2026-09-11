@@ -103,6 +103,21 @@ describe("useSettingsHydration", () => {
       "global-hidden",
     ]);
     expect(patchBodies).toEqual([]);
+
+    // A refetched document with the same content must not replace store
+    // values, or every settings save would re-render the timers feature.
+    const { generalConfig, displayConfig, hiddenTimers } =
+      useTimersStore.getState();
+
+    seedSettingsDocuments(
+      harness.queryClient,
+      structuredClone(readSeededSettingsDocuments(harness.queryClient)!),
+    );
+    await waitFor(() => expect(harness.queryClient.isFetching()).toBe(0));
+
+    expect(useTimersStore.getState().generalConfig).toBe(generalConfig);
+    expect(useTimersStore.getState().displayConfig).toBe(displayConfig);
+    expect(useTimersStore.getState().hiddenTimers).toBe(hiddenTimers);
   });
 
   it("seeds notification and detector defaults once per account and releases queued detections", async () => {

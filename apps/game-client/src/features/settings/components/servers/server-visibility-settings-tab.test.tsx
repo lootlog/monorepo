@@ -86,6 +86,11 @@ describe("ServerVisibilitySettingsTab", () => {
         }),
       ),
     );
+
+    // The save response seeds the cache; no preferences refetch may follow.
+    await waitFor(() => expect(harness.queryClient.isMutating()).toBe(0));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(harness.request).toHaveBeenCalledTimes(1);
   });
 
   it("shows every guild with one reset action", async () => {

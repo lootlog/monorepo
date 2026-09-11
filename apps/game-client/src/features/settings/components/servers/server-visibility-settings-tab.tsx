@@ -92,7 +92,7 @@ export const ServerVisibilitySettingsTab = () => {
         errorLabel={t("settings.servers.loadError")}
         isLoading={guildsQuery.isLoading || preferencesQuery.isLoading}
         loadingLabel={t("settings.servers.loading")}
-        retryLabel={t("actions.retry")}
+        retryLabel={t("actions.retry", { ns: "common" })}
         onRetry={() => {
           void guildsQuery.refetch();
           void preferencesQuery.refetch();
@@ -230,7 +230,6 @@ export const ServerVisibilitySettingsTab = () => {
                       <Switch
                         id={switchId}
                         checked={isVisible}
-                        disabled={updatePreferences.isPending}
                         onCheckedChange={(checked) =>
                           updateGuildVisibility(guild.id, checked)
                         }

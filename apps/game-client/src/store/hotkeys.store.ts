@@ -334,7 +334,13 @@ export const useHotkeysStore = create<HotkeysState>()(
         set({ bindings: getDefaultBindings() });
         syncBindings(get().bindings);
       },
-      applyBindings: (bindings) => set({ bindings }),
+      applyBindings: (bindings) => {
+        if (JSON.stringify(get().bindings) === JSON.stringify(bindings)) {
+          return;
+        }
+
+        set({ bindings });
+      },
     }),
     {
       name: STORAGE_KEY,
