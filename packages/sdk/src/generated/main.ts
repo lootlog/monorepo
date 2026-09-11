@@ -340,7 +340,6 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsELITE2 = {
   ignoreOtherWorlds: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 };
 
@@ -350,7 +349,6 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsHERO = {
   ignoreOtherWorlds: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 };
 
@@ -360,7 +358,6 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsCOLOSSUS = {
   ignoreOtherWorlds: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 };
 
@@ -370,7 +367,6 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsTITAN = {
   ignoreOtherWorlds: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 };
 
@@ -380,7 +376,6 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsMessage = {
   ignoreOtherWorlds: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 };
 
@@ -390,11 +385,11 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsPartyGatheri
   ignoreOtherWorlds: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 };
 
 export type UserGameAccountPreferencesResponseDtoOutputNotifications = {
+  guildIds: string[];
   ELITE2: UserGameAccountPreferencesResponseDtoOutputNotificationsELITE2;
   HERO: UserGameAccountPreferencesResponseDtoOutputNotificationsHERO;
   COLOSSUS: UserGameAccountPreferencesResponseDtoOutputNotificationsCOLOSSUS;
@@ -489,7 +484,6 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsELITE2 = {
   ignoreOtherWorlds?: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds?: string[];
   sound?: boolean;
 };
 
@@ -499,7 +493,6 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsHERO = {
   ignoreOtherWorlds?: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds?: string[];
   sound?: boolean;
 };
 
@@ -509,7 +502,6 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsCOLOSSUS = {
   ignoreOtherWorlds?: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds?: string[];
   sound?: boolean;
 };
 
@@ -519,7 +511,6 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsTITAN = {
   ignoreOtherWorlds?: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds?: string[];
   sound?: boolean;
 };
 
@@ -529,7 +520,6 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsMessage = {
   ignoreOtherWorlds?: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds?: string[];
   sound?: boolean;
 };
 
@@ -539,11 +529,11 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsPartyGathering = {
   ignoreOtherWorlds?: boolean;
   /** @minimum 0 */
   autoHideTimeout?: number;
-  guildIds?: string[];
   sound?: boolean;
 };
 
 export type UpdateUserGameAccountPreferencesDtoNotifications = {
+  guildIds?: string[];
   ELITE2?: UpdateUserGameAccountPreferencesDtoNotificationsELITE2;
   HERO?: UpdateUserGameAccountPreferencesDtoNotificationsHERO;
   COLOSSUS?: UpdateUserGameAccountPreferencesDtoNotificationsCOLOSSUS;

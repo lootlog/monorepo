@@ -4,10 +4,12 @@ import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-g
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cloneNotifications } from "@lootlog/domain/account-preferences";
 import {
   NOTIFICATION_TYPES,
   type NotificationSettings,
   type NotificationsSettings,
+  type NotificationsSettingsPatch,
 } from "@lootlog/schema/account-preferences";
 import { useEffect, useEffectEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -26,11 +28,11 @@ const NotificationSettingsSchema = z.object({
     .min(AUTO_HIDE_MIN_SECONDS)
     .max(AUTO_HIDE_MAX_SECONDS)
     .optional(),
-  guildIds: z.array(z.string()),
   sound: z.boolean(),
 });
 
 const FormSchema = z.object({
+  guildIds: z.array(z.string()),
   rules: z.object({
     ELITE2: NotificationSettingsSchema,
     HERO: NotificationSettingsSchema,
@@ -51,44 +53,26 @@ const areNotificationSettingsEqual = (
   left.highlight === right.highlight &&
   left.ignoreOtherWorlds === right.ignoreOtherWorlds &&
   left.autoHideTimeout === right.autoHideTimeout &&
-  left.sound === right.sound &&
-  left.guildIds.length === right.guildIds.length &&
-  left.guildIds.every((guildId, index) => guildId === right.guildIds[index]);
+  left.sound === right.sound;
 
-// SAFETY: the entries cover every NotificationType key, so the record is complete.
-const cloneRules = (settings: NotificationsSettings): NotificationsSettings =>
-  Object.fromEntries(
-    NOTIFICATION_TYPES.map((type) => [
-      type,
-      { ...settings[type], guildIds: [...settings[type].guildIds] },
-    ]),
-  ) as NotificationsSettings;
+const areGuildIdsEqual = (left: readonly string[], right: readonly string[]) =>
+  left.length === right.length &&
+  left.every((guildId, index) => guildId === right[index]);
 
-const areRulesEqual = (
-  left: NotificationsSettings,
-  right: NotificationsSettings,
-) =>
-  NOTIFICATION_TYPES.every((type) =>
-    areNotificationSettingsEqual(left[type], right[type]),
-  );
+const toFormValues = (settings: NotificationsSettings): FormData => {
+  const { guildIds, ...rules } = cloneNotifications(settings);
 
-/**
- * The shared server selection shown for every category: the union of the
- * stored per-category lists, ordered like the accessible guilds. A union
- * keeps every notification a player used to receive when the lists differ.
- */
-const mergeGuildSelection = (
-  rules: NotificationsSettings,
-  guilds: readonly { id: string }[] | undefined,
-): string[] => {
-  const selected = new Set(
-    NOTIFICATION_TYPES.flatMap((type) => rules[type].guildIds),
-  );
-
-  if (!guilds) return [...selected];
-
-  return guilds.flatMap((guild) => (selected.has(guild.id) ? [guild.id] : []));
+  return { guildIds, rules };
 };
+
+const areFormValuesEqual = (
+  values: FormData,
+  settings: NotificationsSettings,
+) =>
+  areGuildIdsEqual(values.guildIds, settings.guildIds) &&
+  NOTIFICATION_TYPES.every((type) =>
+    areNotificationSettingsEqual(values.rules[type], settings[type]),
+  );
 
 /**
  * One form for every notification category. Edits autosave; only the
@@ -116,13 +100,13 @@ export function useNotificationRulesForm() {
 
   const { control, reset, setValue, formState, getValues } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { rules: cloneRules(accountSettings) },
+    defaultValues: toFormValues(accountSettings),
   });
 
   useEffect(() => {
-    const nextFormValues = { rules: cloneRules(accountSettings) };
+    const nextFormValues = toFormValues(accountSettings);
 
-    if (areRulesEqual(getValues().rules, accountSettings)) {
+    if (areFormValuesEqual(getValues(), accountSettings)) {
       reset(nextFormValues, { keepValues: true });
 
       return;
@@ -139,20 +123,24 @@ export function useNotificationRulesForm() {
       return;
     }
 
-    const nextRules = getValues().rules;
+    const { guildIds: nextGuildIds, rules: nextRules } = getValues();
 
-    const changedRules = Object.fromEntries(
+    const patch: NotificationsSettingsPatch = Object.fromEntries(
       NOTIFICATION_TYPES.filter(
         (type) =>
           !areNotificationSettingsEqual(nextRules[type], accountSettings[type]),
       ).map((type) => [type, nextRules[type]]),
     );
 
-    if (Object.keys(changedRules).length === 0) {
+    if (!areGuildIdsEqual(nextGuildIds, accountSettings.guildIds)) {
+      patch.guildIds = nextGuildIds;
+    }
+
+    if (Object.keys(patch).length === 0) {
       return;
     }
 
-    debouncedUpdate({ notifications: changedRules });
+    debouncedUpdate({ notifications: patch });
   };
 
   const syncFromEffect = useEffectEvent(syncCurrentValues);
@@ -165,25 +153,16 @@ export function useNotificationRulesForm() {
     syncFromEffect();
   }, [accountId, accountSettings, formState.isDirty, isFetched, watchedData]);
 
-  const guildIds = mergeGuildSelection(watchedData.rules, guilds);
-
-  /**
-   * One server list for every category. Toggling writes the merged list to
-   * each category, so lists that diverged before converge on the first edit.
-   */
   const toggleGuild = (guildId: string) => {
     if (!guilds) {
       return;
     }
 
-    const nextGuildIds = toggleAvailableGuild(guilds, guildIds, guildId);
-
-    for (const type of NOTIFICATION_TYPES) {
-      setValue(`rules.${type}.guildIds`, nextGuildIds, {
-        shouldDirty: true,
-        shouldTouch: true,
-      });
-    }
+    setValue(
+      "guildIds",
+      toggleAvailableGuild(guilds, watchedData.guildIds, guildId),
+      { shouldDirty: true, shouldTouch: true },
+    );
   };
 
   /** Sets one switch in every category where it is editable (its row is on). */
@@ -204,7 +183,7 @@ export function useNotificationRulesForm() {
   return {
     control,
     guilds,
-    guildIds,
+    guildIds: watchedData.guildIds,
     rules: watchedData.rules,
     setSwitchForAll,
     toggleGuild,

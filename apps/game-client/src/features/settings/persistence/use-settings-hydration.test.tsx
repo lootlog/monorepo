@@ -128,9 +128,7 @@ describe("useSettingsHydration", () => {
         scope: { type: "GAME_ACCOUNT", id: "202" },
         set: {
           presentation: expect.objectContaining({
-            HERO: expect.objectContaining({
-              guildIds: ["guild-1", "guild-2", "guild-3"],
-            }),
+            guildIds: ["guild-1", "guild-2", "guild-3"],
           }),
         },
       }),

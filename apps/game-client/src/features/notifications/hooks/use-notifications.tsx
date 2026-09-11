@@ -74,9 +74,9 @@ export const useNotifications = () => {
           ) {
             return [];
           }
-
-          if (!typeSettings.guildIds.includes(data.guildId)) return [];
         }
+
+        if (!currentSettings.guildIds.includes(data.guildId)) return [];
 
         return [
           {

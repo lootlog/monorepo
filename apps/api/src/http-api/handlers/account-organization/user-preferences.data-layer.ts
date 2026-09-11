@@ -7,6 +7,7 @@ import {
   normalizeAirTags,
   normalizeDetector,
   normalizeDetectorType,
+  normalizeGuildIds,
   normalizeMutedNpcs,
   normalizeMutedPlayers,
   normalizeNotification,
@@ -233,11 +234,9 @@ export const makeUserPreferencesData = (
 
       if (!ids) return value;
       const notifications = cloneNotifications(value.notifications);
-
-      for (const type of NOTIFICATION_TYPES)
-        notifications[type].guildIds = notifications[type].guildIds.filter(
-          (id) => ids.has(id),
-        );
+      notifications.guildIds = notifications.guildIds.filter((id) =>
+        ids.has(id),
+      );
 
       return {
         ...value,
@@ -412,9 +411,7 @@ export const makeUserPreferencesData = (
     if (
       (yield* requestApiKeyAccess) &&
       (payload.detector?.routingRules !== undefined ||
-        NOTIFICATION_TYPES.some(
-          (type) => payload.notifications?.[type]?.guildIds !== undefined,
-        ))
+        payload.notifications?.guildIds !== undefined)
     ) {
       return yield* new PermissionDeniedError(
         "Organization preference routing requires a session",
@@ -426,15 +423,19 @@ export const makeUserPreferencesData = (
     const notifications = cloneNotifications(current.notifications);
 
     if (payload.notifications) {
+      if (payload.notifications.guildIds) {
+        notifications.guildIds = normalizeGuildIds(
+          payload.notifications.guildIds,
+          notifications.guildIds,
+        );
+      }
+
       for (const type of NOTIFICATION_TYPES) {
         const patch = payload.notifications[type];
 
         if (patch) {
           notifications[type] = normalizeNotification(
-            {
-              ...patch,
-              guildIds: patch.guildIds ? [...patch.guildIds] : undefined,
-            },
+            patch,
             notifications[type],
           );
         }

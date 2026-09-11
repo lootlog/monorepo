@@ -107,13 +107,12 @@ describe("NotificationsSettingsTab", () => {
     expect(document.getElementById("TITAN-highlight")).not.toBeChecked();
   });
 
-  it("shows the union of the stored server lists and saves one list to every category", async () => {
+  it("saves the shared server list once instead of per category", async () => {
     const user = userEvent.setup();
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");
     initial.notifications.HERO.show = false;
-    initial.notifications.HERO.guildIds = ["guild-2"];
-    initial.notifications.TITAN.guildIds = ["guild-1"];
+    initial.notifications.guildIds = ["guild-1", "guild-2"];
     seedAccountPreferences(initial);
     harness.request.mockImplementation(() =>
       Promise.resolve(
@@ -132,15 +131,9 @@ describe("NotificationsSettingsTab", () => {
 
     await waitFor(() => {
       const body = JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body));
-      const presentation = body.operations[0].set.presentation;
-      // TITAN already stored ["guild-1"], so only the categories that differ are sent.
-      expect(Object.keys(presentation).sort()).toEqual(
-        ["COLOSSUS", "ELITE2", "HERO", "message", "party-gathering"].sort(),
-      );
-
-      for (const rule of Object.values(presentation)) {
-        expect(rule).toMatchObject({ guildIds: ["guild-1"] });
-      }
+      expect(body.operations[0].set.presentation).toEqual({
+        guildIds: ["guild-1"],
+      });
     });
   });
 

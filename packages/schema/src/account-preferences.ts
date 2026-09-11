@@ -26,14 +26,20 @@ export interface NotificationSettings {
   highlight: boolean;
   ignoreOtherWorlds: boolean;
   autoHideTimeout?: number;
-  guildIds: string[];
   sound: boolean;
 }
 
+/**
+ * One notification rule per type plus the single list of Organizations the
+ * player receives notifications from. The list is shared by every type since
+ * `notifications` document schema version 2.
+ */
 export type NotificationsSettings = Record<
   NotificationType,
   NotificationSettings
->;
+> & {
+  guildIds: string[];
+};
 
 export interface DetectorRoutingRule {
   id: string;
@@ -91,10 +97,14 @@ export interface UserGameAccountPreferences {
   hasStoredPreferences: boolean;
 }
 
+export type NotificationsSettingsPatch = Partial<
+  Record<NotificationType, Partial<NotificationSettings>>
+> & {
+  guildIds?: string[];
+};
+
 export interface UpdateUserGameAccountPreferencesPayload {
-  notifications?: Partial<
-    Record<NotificationType, Partial<NotificationSettings>>
-  >;
+  notifications?: NotificationsSettingsPatch;
   detector?: DetectorSettingsPatch;
   pings?: Partial<MapPingPreferences>;
   airTags?: Partial<AirTagPreferences>;
@@ -109,12 +119,12 @@ export const defaultAirTagPreferences: AirTagPreferences = {
 };
 
 export const defaultNotificationsSettings: NotificationsSettings = {
+  guildIds: [],
   ELITE2: {
     show: false,
     highlight: false,
     ignoreOtherWorlds: true,
     autoHideTimeout: 0,
-    guildIds: [],
     sound: false,
   },
   HERO: {
@@ -122,7 +132,6 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     highlight: true,
     ignoreOtherWorlds: true,
     autoHideTimeout: 0,
-    guildIds: [],
     sound: false,
   },
   COLOSSUS: {
@@ -130,7 +139,6 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     highlight: true,
     ignoreOtherWorlds: true,
     autoHideTimeout: 0,
-    guildIds: [],
     sound: false,
   },
   TITAN: {
@@ -138,7 +146,6 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     highlight: true,
     ignoreOtherWorlds: true,
     autoHideTimeout: 0,
-    guildIds: [],
     sound: false,
   },
   message: {
@@ -146,7 +153,6 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     highlight: true,
     ignoreOtherWorlds: true,
     autoHideTimeout: 0,
-    guildIds: [],
     sound: false,
   },
   "party-gathering": {
@@ -154,7 +160,6 @@ export const defaultNotificationsSettings: NotificationsSettings = {
     highlight: true,
     ignoreOtherWorlds: true,
     autoHideTimeout: 0,
-    guildIds: [],
     sound: false,
   },
 };
