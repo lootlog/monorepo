@@ -1,6 +1,5 @@
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
-import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
+import { NpcColorPreviewChip } from "./npc-color-preview-chip";
 
 export const NpcColorsSettings = () => {
   const { t } = useTranslation();
@@ -35,6 +35,10 @@ export const NpcColorsSettings = () => {
   const draft = draftState.source === data ? draftState.value : npcTypeColors;
   const [openType, setOpenType] = useState<CombatNpcType | null>(null);
   const saving = status === "saving";
+
+  const anyModified = COMBAT_NPC_TYPES.some(
+    (npcType) => draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType],
+  );
 
   const setDraft = (patch: Partial<NpcTypeColors>) =>
     setDraftState({ source: data, value: { ...draft, ...patch } });
@@ -63,11 +67,32 @@ export const NpcColorsSettings = () => {
     commit({}, [`npcColors.${npcType}`]);
   };
 
+  const resetAll = () => {
+    setDraft(DEFAULT_NPC_TYPE_COLORS);
+    commit(
+      {},
+      COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
+    );
+  };
+
   return (
     <SettingsTabLayout>
       <SettingsSection
         controlId="npc-type-colors"
         title={t("settings.npcColors.title")}
+        description={t("settings.npcColors.description")}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!anyModified}
+            title={t("settings.npcColors.resetAllDescription")}
+            onClick={resetAll}
+          >
+            {t("settings.npcColors.resetAll")}
+          </Button>
+        }
       >
         {COMBAT_NPC_TYPES.map((npcType) => {
           const color = draft[npcType];
@@ -79,10 +104,9 @@ export const NpcColorsSettings = () => {
             <SettingsColorRow
               key={npcType}
               name={npcTypeLabel}
+              meta={color}
               borderColor={color}
               backgroundColor={surfaceColors.background}
-              modified={isModified}
-              modifiedLabel={t("settings.npcColors.modified")}
               editLabel={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
               editTrigger={(trigger) => (
                 <NpcColorEditorPopover
@@ -102,38 +126,22 @@ export const NpcColorsSettings = () => {
                   {trigger}
                 </NpcColorEditorPopover>
               )}
+              preview={
+                <NpcColorPreviewChip color={color}>
+                  {npcTypeLabel}
+                </NpcColorPreviewChip>
+              }
             >
-              {isModified ? (
-                <SettingsIconButton
-                  label={`${t("settings.npcColors.reset")}: ${npcTypeLabel}`}
-                  onClick={() => resetType(npcType)}
-                >
-                  <RotateCcw />
-                </SettingsIconButton>
-              ) : null}
+              <SettingsIconButton
+                label={`${t("settings.npcColors.reset")}: ${npcTypeLabel}`}
+                disabled={!isModified}
+                onClick={() => resetType(npcType)}
+              >
+                <RotateCcw />
+              </SettingsIconButton>
             </SettingsColorRow>
           );
         })}
-        <SettingsRow
-          label={t("settings.npcColors.resetAll")}
-          description={t("settings.npcColors.resetAllDescription")}
-        >
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setDraft(DEFAULT_NPC_TYPE_COLORS);
-              commit(
-                {},
-                COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
-              );
-            }}
-          >
-            <RotateCcw aria-hidden />
-            {t("common:actions.restore")}
-          </Button>
-        </SettingsRow>
       </SettingsSection>
     </SettingsTabLayout>
   );

@@ -13,7 +13,8 @@ type SettingsToolbarProps = {
 /**
  * Search plus filters above a list (servers, mutes, logs). One row while it
  * fits; when the content column is narrow the search takes the full first
- * row and the filters wrap under it.
+ * row and the filters wrap under it. The bottom margin keeps the list from
+ * touching the field.
  */
 export const SettingsToolbar: FC<SettingsToolbarProps> = ({
   search,
@@ -22,7 +23,7 @@ export const SettingsToolbar: FC<SettingsToolbarProps> = ({
 }) => (
   <search
     className={cn(
-      "ll:flex ll:flex-wrap ll:items-center ll:gap-2 ll:px-2",
+      "ll:mb-1.5 ll:flex ll:flex-wrap ll:items-center ll:gap-2 ll:px-2",
       className,
     )}
   >

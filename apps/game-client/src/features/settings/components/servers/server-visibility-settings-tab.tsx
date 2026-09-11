@@ -1,7 +1,6 @@
 import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { AsyncContent } from "@/components/async-content";
-import { SettingsList } from "@/components/settings/settings-list";
-import { SettingsRow } from "@/components/settings/settings-row";
+import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -10,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "cn";
 import {
   useUserPreferences,
   useUpdateUserPreferences,
@@ -41,9 +41,11 @@ export const ServerVisibilitySettingsTab = () => {
     preferencesQuery.data?.guildsOrder,
   );
 
-  const hasHiddenGuilds = orderedGuilds.some((guild) =>
+  const hiddenGuildCount = orderedGuilds.filter((guild) =>
     hiddenGuildIdSet.has(guild.id),
-  );
+  ).length;
+
+  const hasHiddenGuilds = hiddenGuildCount > 0;
 
   const normalizedQuery = query.trim().toLocaleLowerCase();
 
@@ -93,10 +95,11 @@ export const ServerVisibilitySettingsTab = () => {
             <SettingsSection
               controlId="server-visibility"
               title={t("settings.servers.listTitle")}
+              description={t("settings.servers.description")}
               actions={
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   disabled={!hasHiddenGuilds || updatePreferences.isPending}
                   onClick={() =>
@@ -108,7 +111,11 @@ export const ServerVisibilitySettingsTab = () => {
                     })
                   }
                 >
-                  {t("settings.servers.showAll")}
+                  {hasHiddenGuilds
+                    ? t("settings.servers.showAllCount", {
+                        count: hiddenGuildCount,
+                      })
+                    : t("settings.servers.showAll")}
                 </Button>
               }
             >
@@ -142,50 +149,60 @@ export const ServerVisibilitySettingsTab = () => {
                   {t("settings.servers.noResults")}
                 </SettingsEmptyState>
               ) : (
-                <SettingsList>
-                  {filteredGuilds.map((guild) => {
-                    const isVisible = !hiddenGuildIdSet.has(guild.id);
-                    const switchId = `server-visibility-${guild.id}`;
+                filteredGuilds.map((guild) => {
+                  const isVisible = !hiddenGuildIdSet.has(guild.id);
+                  const switchId = `server-visibility-${guild.id}`;
 
-                    return (
-                      <SettingsRow
-                        key={guild.id}
-                        htmlFor={switchId}
-                        label={
-                          <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
-                            <Avatar className="ll:size-6 ll:shrink-0 ll:rounded-sm ll:bg-black/20">
-                              {guild.icon ? (
-                                <img
-                                  src={guild.icon}
-                                  alt=""
-                                  className="ll:h-full ll:w-full ll:object-cover"
-                                />
-                              ) : (
-                                <AvatarFallback
-                                  aria-hidden
-                                  className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[10px] ll:font-semibold"
-                                >
-                                  {guild.name.charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                            <span className="ll:truncate">{guild.name}</span>
-                          </span>
-                        }
+                  return (
+                    <SettingsListRow
+                      key={guild.id}
+                      className="ll:py-0.5"
+                      leading={
+                        <Avatar
+                          className={cn(
+                            "ll:size-5 ll:rounded ll:bg-black/20 ll:transition-opacity",
+                            !isVisible && "ll:opacity-50",
+                          )}
+                        >
+                          {guild.icon ? (
+                            <img
+                              src={guild.icon}
+                              alt=""
+                              className="ll:h-full ll:w-full ll:object-cover"
+                            />
+                          ) : (
+                            <AvatarFallback
+                              aria-hidden
+                              className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[10px] ll:font-semibold"
+                            >
+                              {guild.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      }
+                      title={
+                        <label
+                          htmlFor={switchId}
+                          className={cn(
+                            "ll-custom-cursor-pointer ll:block ll:truncate ll:transition-colors",
+                            !isVisible && "ll:text-muted-foreground",
+                          )}
+                        >
+                          {guild.name}
+                        </label>
+                      }
+                    >
+                      <Switch
+                        id={switchId}
+                        checked={isVisible}
                         disabled={updatePreferences.isPending}
-                      >
-                        <Switch
-                          id={switchId}
-                          checked={isVisible}
-                          disabled={updatePreferences.isPending}
-                          onCheckedChange={(checked) =>
-                            updateGuildVisibility(guild.id, checked)
-                          }
-                        />
-                      </SettingsRow>
-                    );
-                  })}
-                </SettingsList>
+                        onCheckedChange={(checked) =>
+                          updateGuildVisibility(guild.id, checked)
+                        }
+                      />
+                    </SettingsListRow>
+                  );
+                })
               )}
             </SettingsSection>
           </>

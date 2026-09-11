@@ -1,6 +1,7 @@
 import {
   accountPreferenceValues,
   createSettingsDocuments,
+  readSeededSettingsDocuments,
   seedSettingsDocuments,
 } from "@/test/settings-documents-fixtures";
 import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
@@ -54,36 +55,51 @@ const render = () => {
 };
 
 describe("DetectorSettingsTab", () => {
-  it("lists every NPC type as an accordion item with the first one open", () => {
-    render();
-    expect(screen.getByRole("button", { name: "Elita 2" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Heros" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
-    expect(screen.getByRole("button", { name: "Kolos" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Tytan" })).toBeInTheDocument();
-    expect(document.getElementById("ELITE2-detect")).toBeInTheDocument();
-    expect(document.getElementById("HERO-detect")).not.toBeInTheDocument();
-  });
-
-  it("opens a collapsed type and keeps dependent rows disabled until detect is on", async () => {
-    const user = userEvent.setup();
+  it("shows every option of every NPC type at once and keeps dependent switches disabled until detect is on", () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");
     initial.detector.HERO.detect = false;
+    initial.detector.COLOSSUS.detect = true;
     seedAccountPreferences(initial);
     render();
 
-    await user.click(screen.getByRole("button", { name: "Heros" }));
+    expect(
+      screen.getByRole("table", { name: "Które potwory wykrywać" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { expanded: false })).toBeNull();
+
+    for (const type of ["ELITE2", "HERO", "COLOSSUS", "TITAN"]) {
+      expect(document.getElementById(`${type}-detect`)).toBeInTheDocument();
+    }
 
     expect(document.getElementById("HERO-detect")).not.toBeChecked();
     expect(document.getElementById("HERO-autoSend")).toBeDisabled();
     expect(document.getElementById("HERO-highlight")).toBeDisabled();
+    expect(document.getElementById("COLOSSUS-autoSend")).toBeEnabled();
   });
+
+  it("saves only the NPC type whose switch changed", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.detector.TITAN.detect = false;
+    seedAccountPreferences(initial);
+    harness.request.mockImplementation(() =>
+      Promise.resolve(
+        Response.json(readSeededSettingsDocuments(harness.queryClient)),
+      ),
+    );
+    render();
+
+    await user.click(screen.getByRole("switch", { name: "Tytan: Wykrywaj" }));
+
+    await waitFor(() => {
+      const body = JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body));
+      expect(Object.keys(body.operations[0].set.detector)).toEqual(["TITAN"]);
+      expect(body.operations[0].set.detector.TITAN.detect).toBe(true);
+    });
+  });
+
   it("applies refreshed account preferences without restarting the form reset loop", async () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
 

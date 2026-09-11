@@ -91,7 +91,9 @@ describe("ServerVisibilitySettingsTab", () => {
   it("shows every guild with one reset action", async () => {
     render();
 
-    fireEvent.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Pokaż wszystkie (1)" }),
+    );
 
     await waitFor(() =>
       expect(harness.request.mock.calls[0]?.[1]?.body).toBe(

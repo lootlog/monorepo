@@ -67,10 +67,12 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
       <ScrollArea
         className={cn(
           "ll:min-h-0 ll:flex-1",
-          subsections ? "ll:mt-4" : "ll:mt-2",
+          subsections ? "ll:mt-3" : "ll:mt-1",
         )}
       >
-        <div className="ll:@container/settings ll:flex ll:flex-col ll:gap-6 ll:px-4 ll:pb-2">
+        {/* The top padding lives inside the viewport so a section header
+            action that overhangs its title line (-my-1) is not clipped. */}
+        <div className="ll:@container/settings ll:flex ll:flex-col ll:gap-6 ll:px-4 ll:pt-1 ll:pb-2">
           {children}
         </div>
       </ScrollArea>
