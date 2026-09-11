@@ -609,7 +609,7 @@
   "chatFilters": {
     "npcMessages": {
       "title": "Wiadomości NPC w chacie",
-      "description": "Wyłącz typy NPC, których wiadomości nie chcesz widzieć w chacie. Wyłączone typy nie pojawiają się w chacie i nie wywołują powiadomień o wzmiankach."
+      "description": "Wyłączony typ NPC znika z chatu i nie wywołuje powiadomień o wzmiankach. Typ ukryjesz też prawym przyciskiem myszy na jego wiadomości."
     }
   },
   "saveStatus": {

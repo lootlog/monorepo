@@ -40,7 +40,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
             className={cn(
               "ll:relative ll:flex ll:min-w-0 ll:h-full ll:items-center ll:justify-center ll:gap-1 ll:rounded-none ll:border-0 ll:px-1 ll:py-0 ll:text-[11px] ll:leading-none ll:font-semibold ll:cursor-pointer ll:transition-none ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2",
               value === option.value
-                ? "ll:bg-white/10 ll:text-gray-100"
+                ? "ll:bg-primary ll:text-primary-foreground ll:hover:bg-primary/90"
                 : "ll:bg-transparent ll:text-muted-foreground ll:hover:bg-white/5",
             )}
           >
@@ -50,7 +50,10 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
               aria-label={option.unread ? t("navigation.unread") : undefined}
               aria-hidden={!option.unread}
               className={cn(
-                "ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-primary",
+                "ll:size-1.5 ll:shrink-0 ll:rounded-full",
+                value === option.value
+                  ? "ll:bg-primary-foreground"
+                  : "ll:bg-primary",
                 !option.unread && "ll:invisible",
               )}
             />

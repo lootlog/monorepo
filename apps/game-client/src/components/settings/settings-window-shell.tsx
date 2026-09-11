@@ -65,7 +65,7 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
     <div className="ll:flex ll:min-h-0 ll:min-w-0 ll:flex-1 ll:flex-col ll:pt-1.5">
       {subsections}
       <ScrollArea
-        className={cn("ll:min-h-0 ll:flex-1", subsections && "ll:mt-2")}
+        className={cn("ll:min-h-0 ll:flex-1", subsections && "ll:mt-4")}
       >
         <div
           className={cn(

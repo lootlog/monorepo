@@ -28,7 +28,7 @@ export const TilePickerItem: FC<TilePickerItemProps> = ({
         className={cn(
           "ll:h-auto ll:min-w-0 ll:overflow-hidden ll:border-0 ll:p-0",
           "ll:ring-1 ll:ring-input ll:hover:ring-muted-foreground/60",
-          "ll:data-pressed:bg-accent ll:data-pressed:ring-2 ll:data-pressed:ring-selected",
+          "ll:data-pressed:bg-accent ll:data-pressed:hover:bg-accent ll:data-pressed:ring-2 ll:data-pressed:ring-selected",
           // Unselected tiles are dimmed, but less than disabled ones, and
           // brighten under the pointer or keyboard focus.
           "ll:not-disabled:not-data-pressed:opacity-70 ll:not-disabled:not-data-pressed:hover:opacity-100 ll:not-disabled:not-data-pressed:focus-visible:opacity-100",

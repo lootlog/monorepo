@@ -25,7 +25,11 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
     onValueChange={(id) => onSelect(String(id))}
     className="ll:shrink-0 ll:px-4"
   >
-    <TabsList aria-label={label} className="ll:w-full">
+    {/* Matches the search field height so both columns share one top row. */}
+    <TabsList
+      aria-label={label}
+      className="ll:w-full ll:group-data-horizontal/tabs:h-7"
+    >
       {options.map((option) => (
         <TabsTrigger key={option.id} value={option.id}>
           <span className="ll:truncate">{option.label}</span>
