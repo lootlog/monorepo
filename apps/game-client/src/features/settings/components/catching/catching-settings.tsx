@@ -1,22 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
-import { CatchingCharacterOption } from "@/features/settings/components/catching/catching-character-option";
+import { CharacterPicker } from "@/components/character-picker";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
@@ -25,10 +16,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const CHARACTER_PICKER_ID = "catching-character";
-
-const TOGGLE_GROUP_MAX_OPTIONS = 3;
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
@@ -226,63 +213,18 @@ export const CatchingSettings = () => {
     });
   };
 
-  const characterPicker =
-    characters.length <= TOGGLE_GROUP_MAX_OPTIONS ? (
-      <ToggleGroup
-        id={CHARACTER_PICKER_ID}
-        variant="outline"
-        size="sm"
-        spacing={0}
-        value={[selectedCharacterId]}
-        onValueChange={([value]: string[]) => {
-          if (value) setRequestedCharacterId(value);
-        }}
-      >
-        {characters.map((character) => (
-          <ToggleGroupItem key={character.id} value={String(character.id)}>
-            <CatchingCharacterOption
-              icon={character.icon}
-              nick={character.nick}
-            />
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-    ) : (
-      <Select
-        value={selectedCharacterId}
-        onValueChange={setRequestedCharacterId}
-      >
-        <SelectTrigger id={CHARACTER_PICKER_ID} size="sm">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {characters.map((character) => (
-            <SelectItem key={character.id} value={String(character.id)}>
-              <CatchingCharacterOption
-                icon={character.icon}
-                nick={character.nick}
-              />
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-
   return (
     <SettingsTabLayout>
       <SettingsSection
         title={t("settings.catching.characterTitle")}
         description={t("settings.catching.characterDescription")}
       >
-        <SettingsRow
-          htmlFor={CHARACTER_PICKER_ID}
-          label={t("settings.catching.characterLabel")}
-          controlClassName={
-            characters.length > TOGGLE_GROUP_MAX_OPTIONS ? "ll:w-44" : undefined
-          }
-        >
-          {characterPicker}
-        </SettingsRow>
+        <CharacterPicker
+          aria-label={t("settings.catching.characterLabel")}
+          characters={characters}
+          value={selectedCharacterId}
+          onValueChange={setRequestedCharacterId}
+        />
       </SettingsSection>
       {selectedCharacterId ? (
         <CatchingSettingsForm
