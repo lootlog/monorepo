@@ -104,7 +104,7 @@ export const DetectorRoutingSection = () => {
             worldField=<Input
               id={worldInputId}
               type="text"
-              className="ll:w-full"
+              className="ll:w-28"
               placeholder={t("settings.detector.routing.worldPlaceholder")}
               onFocus={() => {
                 setDeferredSyncField(`routingRules.${index}.world`);
