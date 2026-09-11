@@ -56,15 +56,15 @@ export const MutedNpcsSettingsTab = () => {
                 key={npc.npcKey}
                 leading={
                   npc.icon ? (
-                    // Every sprite gets the same height, matching the player
-                    // avatars; the slot is wide enough to keep names aligned.
+                    // Every sprite gets the same height; the slot is wide
+                    // enough to keep the names aligned.
                     <NpcTile
                       npc={{ icon: npc.icon, nick: npc.name }}
-                      className="ll:h-6 ll:max-h-6 ll:max-w-none ll:rounded-sm"
-                      containerClassName="ll:h-6 ll:w-8"
+                      className="ll:h-8 ll:max-h-8 ll:max-w-none ll:rounded-sm"
+                      containerClassName="ll:h-8 ll:w-10"
                     />
                   ) : (
-                    <span aria-hidden className="ll:h-6 ll:w-8" />
+                    <span aria-hidden className="ll:h-8 ll:w-10" />
                   )
                 }
                 title={
