@@ -1,0 +1,130 @@
+/* Left sidebar above Lootlog windows, so the controls stay reachable. Hide it
+   to reach a window placed under it; the collapsed toggle sits bottom-left. */
+#sandbox-panel-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100000;
+}
+
+body:has(.sbx-panel) .sandbox-game {
+  left: 260px;
+}
+
+.sbx-toggle,
+.sbx-panel button {
+  font: inherit;
+  color: #e6e6e6;
+  background: #2a2d35;
+  border: 1px solid #454a55;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.sbx-toggle:hover,
+.sbx-panel button:hover {
+  background: #353945;
+}
+
+.sbx-toggle:focus-visible,
+.sbx-panel button:focus-visible,
+.sbx-panel a:focus-visible,
+.sbx-textarea:focus-visible {
+  outline: 2px solid #7aa2ff;
+  outline-offset: 1px;
+}
+
+.sbx-toggle {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+}
+
+.sbx-panel {
+  box-sizing: border-box;
+  width: 260px;
+  height: 100vh;
+  overflow-y: auto;
+  background: #141519;
+  border-right: 1px solid #3a3e48;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.sbx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.sbx-section {
+  border-top: 1px solid #2c3039;
+  padding: 8px 0 4px;
+}
+
+.sbx-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9aa0ad;
+}
+
+.sbx-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sbx-muted {
+  margin: 0 0 4px;
+  color: #9aa0ad;
+}
+
+.sbx-panel a {
+  color: #8fb3ff;
+}
+
+.sbx-error {
+  margin: 4px 0;
+  color: #ff8a8a;
+}
+
+.sbx-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 4px;
+  font:
+    11px/1.4 ui-monospace,
+    monospace;
+  color: #e6e6e6;
+  background: #0f1013;
+  border: 1px solid #3a3e48;
+  border-radius: 6px;
+  padding: 6px;
+  resize: vertical;
+}
+
+.sbx-panel .sbx-inline {
+  padding: 0 6px;
+  font-size: 10px;
+  text-transform: none;
+}
+
+.sbx-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 140px;
+  overflow-y: auto;
+  font:
+    11px/1.4 ui-monospace,
+    monospace;
+  overflow-wrap: anywhere;
+}
