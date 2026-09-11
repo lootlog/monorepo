@@ -145,7 +145,7 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                 ref={rowHeaderRef}
                 scope="col"
                 className={cn(
-                  "ll:h-8 ll:px-2 ll:text-left ll:align-middle ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground",
+                  "ll:px-2 ll:py-2 ll:text-left ll:align-middle ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground",
                   // With labels the name column absorbs the spare width; in
                   // icon-only mode every column keeps its own width instead.
                   !compact && "ll:w-full",
@@ -166,26 +166,27 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                       : undefined
                   }
                   className={cn(
-                    "ll:h-8 ll:px-2 ll:text-center ll:align-middle ll:font-normal ll:transition-colors",
-                    // The name column absorbs the spare width; option columns
-                    // share one width unless a label or control needs more.
+                    "ll:px-1 ll:py-2 ll:text-center ll:align-middle ll:font-normal ll:transition-colors",
                     column.primary &&
                       "ll:border-0 ll:border-e ll:border-solid ll:border-border",
-                    // Icon-only columns keep enough room for the control to
-                    // read as its own column.
-                    !column.primary && (compact ? "ll:w-12" : "ll:w-20"),
+                    // The name column absorbs the spare width; every option
+                    // column shares one width so the switches line up in an
+                    // even grid. Labels wrap inside it, and the header grows
+                    // with them. Icon-only columns keep enough room for the
+                    // control to read as its own column.
+                    compact ? "ll:min-w-12" : "ll:min-w-[92px]",
                     hoveredColumn === index && "ll:bg-white/5",
                   )}
                 >
                   <Tooltip>
-                    <TooltipTrigger className="ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-0.5 ll:border-0 ll:bg-transparent ll:p-0 ll:text-xs ll:leading-4 ll:font-semibold ll:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
+                    <TooltipTrigger className="ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-1 ll:border-0 ll:bg-transparent ll:p-0 ll:text-xs ll:leading-4 ll:font-semibold ll:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
                       <column.icon
                         aria-hidden
                         className="ll:size-3.5 ll:text-muted-foreground"
                       />
                       <span
                         className={cn(
-                          "ll:whitespace-nowrap",
+                          "ll:text-balance",
                           compact && "ll:sr-only",
                         )}
                       >

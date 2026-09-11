@@ -45,7 +45,7 @@
     "title": "Widoczność Lootlogów",
     "description": "Ukryte Lootlogi znikną z przełączników w grze. Powiadomienia i przetwarzanie w tle nadal będą działać.",
     "listTitle": "Twoje Lootlogi",
-    "searchPlaceholder": "Szukaj Lootloga",
+    "searchPlaceholder": "Szukaj...",
     "filters": {
       "all": "Wszystkie",
       "visible": "Widoczne",
@@ -272,7 +272,7 @@
     "title": "Ustawienia powiadomień",
     "toggles": {
       "show": "Pokazuj",
-      "ignoreOtherWorlds": "Tylko ten świat",
+      "ignoreOtherWorlds": "Mój świat",
       "highlight": "Podświetlenie",
       "sound": "Dźwięk",
       "showDescription": "Główny włącznik. Gdy jest wyłączony, powiadomienia tego typu nie pojawią się w grze.",

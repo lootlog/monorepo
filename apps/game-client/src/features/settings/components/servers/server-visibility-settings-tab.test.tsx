@@ -63,7 +63,7 @@ describe("ServerVisibilitySettingsTab", () => {
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Wszystkie" }));
-    fireEvent.change(screen.getByPlaceholderText("Szukaj Lootloga"), {
+    fireEvent.change(screen.getByPlaceholderText("Szukaj..."), {
       target: { value: "gamma" },
     });
     expect(screen.getByText("Gamma")).toBeInTheDocument();
