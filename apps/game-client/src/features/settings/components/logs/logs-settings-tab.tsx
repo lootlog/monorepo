@@ -158,10 +158,6 @@ export const LogsSettingsTab: FC = () => {
       <SettingsSection
         controlId="logs-list"
         title={t("settings.logs.listTitle")}
-        description={t("settings.logs.listDescription", {
-          visibleCount: filteredActions.length,
-          totalCount: actions.length,
-        })}
         actions={
           <div className="ll:flex ll:items-center ll:gap-2">
             <Button

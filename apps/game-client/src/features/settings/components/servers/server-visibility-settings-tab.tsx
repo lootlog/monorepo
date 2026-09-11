@@ -41,11 +41,10 @@ export const ServerVisibilitySettingsTab = () => {
     preferencesQuery.data?.guildsOrder,
   );
 
-  const visibleCount = orderedGuilds.filter(
-    (guild) => !hiddenGuildIdSet.has(guild.id),
-  ).length;
+  const hasHiddenGuilds = orderedGuilds.some((guild) =>
+    hiddenGuildIdSet.has(guild.id),
+  );
 
-  const hiddenCount = orderedGuilds.length - visibleCount;
   const normalizedQuery = query.trim().toLocaleLowerCase();
 
   const filteredGuilds = orderedGuilds.filter((guild) => {
@@ -93,14 +92,11 @@ export const ServerVisibilitySettingsTab = () => {
           <SettingsSection
             controlId="server-visibility"
             title={t("settings.servers.listTitle")}
-            description={`${t("settings.servers.visibleCount", {
-              count: visibleCount,
-            })} · ${t("settings.servers.hiddenCount", { count: hiddenCount })}`}
             actions={
               <Button
                 type="button"
                 variant="ghost"
-                disabled={hiddenCount === 0 || updatePreferences.isPending}
+                disabled={!hasHiddenGuilds || updatePreferences.isPending}
                 onClick={() =>
                   updatePreferences.mutate({
                     hiddenGuildIds: hiddenGuildIds.filter(

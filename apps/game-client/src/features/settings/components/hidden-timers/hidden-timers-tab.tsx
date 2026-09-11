@@ -39,15 +39,8 @@ export const HiddenTimersTab = () => {
 
   return (
     <SettingsTabLayout>
-      <SettingsSection
-        title={t("settings.hiddenTimers.scopeTitle")}
-        description={
-          generalConfig.timersGrouping
-            ? t("settings.hiddenTimers.groupedDescription")
-            : undefined
-        }
-      >
-        {!generalConfig.timersGrouping ? (
+      {!generalConfig.timersGrouping ? (
+        <SettingsSection title={t("settings.hiddenTimers.scopeTitle")}>
           <SettingsRow
             htmlFor="hidden-timers-guild"
             label={t("settings.hiddenTimers.guildLabel")}
@@ -88,8 +81,8 @@ export const HiddenTimersTab = () => {
               </SettingsEmptyState>
             )}
           </SettingsRow>
-        ) : null}
-      </SettingsSection>
+        </SettingsSection>
+      ) : null}
       <SettingsSection
         controlId="hidden-timers-list"
         title={t("settings.hiddenTimers.listTitle")}

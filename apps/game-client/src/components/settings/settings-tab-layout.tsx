@@ -3,30 +3,19 @@ import type { FC, ReactNode } from "react";
 
 type SettingsTabLayoutProps = {
   children: ReactNode;
-  /** Tab-level actions, rendered as a trailing toolbar above the sections. */
-  actions?: ReactNode;
   className?: string;
-  contentClassName?: string;
 };
 
 /**
- * Subsection body: its sections, optionally preceded by a toolbar. The
- * navigation already names the subsection, so the body carries no heading.
+ * Subsection body. The navigation already names the subsection, so it carries
+ * no heading; the gap leaves room for the hairline each section draws above
+ * itself.
  */
 export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
   children,
-  actions,
   className,
-  contentClassName,
 }) => (
-  <div className={cn("ll:flex ll:w-full ll:flex-col ll:gap-2", className)}>
-    {actions ? (
-      <div className="ll:flex ll:items-center ll:justify-end ll:gap-2 ll:px-2">
-        {actions}
-      </div>
-    ) : null}
-    <div className={cn("ll:flex ll:flex-col ll:gap-3", contentClassName)}>
-      {children}
-    </div>
+  <div className={cn("ll:flex ll:w-full ll:flex-col ll:gap-6", className)}>
+    {children}
   </div>
 );

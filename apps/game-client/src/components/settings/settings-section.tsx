@@ -8,24 +8,25 @@ type SettingsSectionProps = {
   /** Manifest id when the whole section is one searchable control. */
   controlId?: SettingsControlId;
   title?: ReactNode;
-  description?: ReactNode;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
   contentClassName?: string;
 };
 
-/** A titled card of rows; lists inside it sit on a darker, recessed surface. */
+/**
+ * A titled group of rows. Consecutive sections are divided by a hairline
+ * drawn in the gap above them, so a highlight hugs only the section itself.
+ */
 export const SettingsSection: FC<SettingsSectionProps> = ({
   controlId,
   title,
-  description,
   children,
   actions,
   className,
   contentClassName,
 }) => {
-  const hasHeader = title || description || actions;
+  const hasHeader = title || actions;
 
   const { ref, dataAttributes } =
     useSettingsControlHighlight<HTMLElement>(controlId);
@@ -35,17 +36,13 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:flex ll:flex-col ll:gap-1.5 ll:rounded-sm ll:border ll:border-white/8 ll:bg-white/4 ll:p-2 ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:relative ll:flex ll:flex-col ll:gap-1 ll:rounded-sm ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-gray-400/20 ll:[section+&]:before:content-['']",
         className,
       )}
     >
       {hasHeader ? (
-        <SettingsSectionHeader
-          title={title}
-          description={description}
-          actions={actions}
-          className="ll:pt-0.5"
-        />
+        <SettingsSectionHeader title={title} actions={actions} />
       ) : null}
       <div className={cn("ll:flex ll:flex-col ll:gap-0.5", contentClassName)}>
         {children}

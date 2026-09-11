@@ -23,10 +23,7 @@ export const ExperimentalSettingsTab: FC = () => {
 
   return (
     <SettingsTabLayout>
-      <SettingsSection
-        title={t("settings.experimental.sectionTitle")}
-        description={t("settings.experimental.sectionDescription")}
-      >
+      <SettingsSection title={t("settings.experimental.sectionTitle")}>
         {gameInterface === "ni" ? (
           <>
             <SettingsRow

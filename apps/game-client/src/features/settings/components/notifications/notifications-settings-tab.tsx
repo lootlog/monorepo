@@ -53,7 +53,6 @@ export const NotificationsSettingsTab = () => {
       <SettingsSection
         controlId="notification-rules"
         title={t("settings.notifications.rulesTitle")}
-        description={t("settings.notifications.description")}
       >
         <SettingsCategoryAccordion
           defaultOpen={firstCategory ? [firstCategory.key] : []}

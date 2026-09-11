@@ -218,7 +218,6 @@ export const CatchingSettings = () => {
       <SettingsSection
         controlId="catching-range"
         title={t("settings.catching.characterTitle")}
-        description={t("settings.catching.characterDescription")}
         contentClassName="ll:gap-1"
       >
         <CharacterPicker

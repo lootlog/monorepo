@@ -35,23 +35,21 @@ export const DetectorRoutingSettingsTab = () => {
   } = useDetectorRoutingForm();
 
   return (
-    <SettingsTabLayout
-      actions={
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addRoutingRule}
-        >
-          <Plus aria-hidden />
-          {t("settings.detector.routing.addRuleButton")}
-        </Button>
-      }
-    >
+    <SettingsTabLayout>
       <SettingsSection
         controlId="detector-routing"
         title={t("settings.detector.routing.sectionTitle")}
-        description={t("settings.detector.routing.sectionDescription")}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addRoutingRule}
+          >
+            <Plus aria-hidden />
+            {t("settings.detector.routing.addRuleButton")}
+          </Button>
+        }
         contentClassName="ll:gap-1"
       >
         {fields.length === 0 ? (
