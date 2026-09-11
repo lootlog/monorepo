@@ -52,13 +52,10 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
         ) : null}
       </>
     ) : (
-      <div
-        className={cn(
-          navColumnClassName,
-          "ll:w-52 ll:flex-col ll:gap-3 ll:pe-3",
-        )}
-      >
-        {search}
+      <div className={cn(navColumnClassName, "ll:w-52 ll:flex-col ll:gap-3")}>
+        <div className="ll:pe-3">{search}</div>
+        {/* The scroll area reaches the divider so its scrollbar sits in the
+            gap between the buttons and the hairline instead of over them. */}
         <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
       </div>
     )}
