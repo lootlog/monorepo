@@ -292,7 +292,7 @@ const migrateRoutingSettingsPath = (state: RawPersistedWindows): void => {
     ...settings,
     state: {
       ...settingsState,
-      activeTab: "notifications",
+      activeTab: "detector",
       activeSubsection: "detector",
     },
   };

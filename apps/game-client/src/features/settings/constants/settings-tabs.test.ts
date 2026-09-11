@@ -23,7 +23,7 @@ describe("resolveSettingsPath", () => {
       subsection: "catching",
     });
     expect(resolveSettingsPath("npc-detector")).toEqual({
-      domain: "notifications",
+      domain: "detector",
       subsection: "detector",
     });
     expect(resolveSettingsPath("battle-panel")).toEqual({
@@ -38,7 +38,7 @@ describe("resolveSettingsPath", () => {
       subsection: "timer-appearance",
     });
     expect(resolveSettingsPath("game-data", "detector")).toEqual({
-      domain: "notifications",
+      domain: "detector",
       subsection: "detector",
     });
     expect(resolveSettingsPath("notifications", "sounds")).toEqual({

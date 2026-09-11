@@ -11,6 +11,7 @@ export type SettingsIconName =
   | "messageSquare"
   | "clock"
   | "bell"
+  | "radar"
   | "bellOff"
   | "swords"
   | "volume2"
@@ -335,6 +336,13 @@ const MANIFEST = [
           },
         ],
       },
+    ],
+  },
+  {
+    id: "detector",
+    labelKey: "settings.domains.detector",
+    icon: "radar",
+    subsections: [
       {
         id: "detector",
         labelKey: "settings.subsections.detector",

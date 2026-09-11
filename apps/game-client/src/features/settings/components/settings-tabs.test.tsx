@@ -45,7 +45,7 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders thirteen domain tabs in order and opens the selected domain", async () => {
+  it("renders fourteen domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
@@ -63,6 +63,7 @@ describe("SettingsTabs", () => {
       "Chat",
       "Timery",
       "Powiadomienia",
+      "Wykrywacz",
       "Wyciszenia",
       "Panel walk",
       "Dźwięki",
@@ -87,7 +88,7 @@ describe("SettingsTabs", () => {
       "discord",
     );
 
-    expect(screen.getByText("Powiadomienia › Wykrywacz")).toBeInTheDocument();
+    expect(screen.getByText("Wykrywacz")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: "Gdzie wysyłać powiadomienia" }),
     ).toBeInTheDocument();
