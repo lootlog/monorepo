@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 import type { SettingsControlId } from "@/features/settings/settings-manifest";
+import { SettingsSectionHeader } from "./settings-section-header";
 import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 
 type SettingsSectionProps = {
@@ -39,21 +40,12 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       )}
     >
       {hasHeader ? (
-        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:px-2 ll:pt-0.5">
-          <div className="ll:min-w-0 ll:flex-1">
-            {title ? (
-              <h3 className="ll:m-0 ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground">
-                {title}
-              </h3>
-            ) : null}
-            {description ? (
-              <p className="ll:m-0 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
-                {description}
-              </p>
-            ) : null}
-          </div>
-          {actions ? <div className="ll:shrink-0">{actions}</div> : null}
-        </div>
+        <SettingsSectionHeader
+          title={title}
+          description={description}
+          actions={actions}
+          className="ll:pt-0.5"
+        />
       ) : null}
       <div className={cn("ll:flex ll:flex-col ll:gap-0.5", contentClassName)}>
         {children}

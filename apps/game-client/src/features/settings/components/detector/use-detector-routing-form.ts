@@ -1,4 +1,4 @@
-import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-selection-grid";
+import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";

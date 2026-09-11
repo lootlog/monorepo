@@ -46,12 +46,6 @@
     "loadingGuilds": "Ładowanie serwerów",
     "guildsError": "Nie udało się załadować serwerów"
   },
-  "guildSelection": {
-    "enabled": "Włączone",
-    "disabled": "Wyłączone",
-    "toggleAria": "Przełącz gildię {{name}}: {{state}}",
-    "selectAria": "Wybierz gildię {{name}}: {{state}}"
-  },
   "preview": {
     "name": "[T] Tanroth",
     "time": "00:21:37"

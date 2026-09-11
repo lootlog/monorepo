@@ -1,5 +1,5 @@
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
+import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
@@ -17,7 +17,7 @@ import { useGameStore } from "@/store/game.store";
 type CatchingSettingsFormProps = {
   characterId: string;
   disabled?: boolean;
-  /** Trailing section actions, e.g. "apply to all characters". */
+  /** Trailing actions of the servers group, e.g. "apply to all characters". */
   actions?: ReactNode;
   onSelectionChange?: (catchingGuildIds: string[]) => void;
 };
@@ -152,23 +152,25 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   };
 
   return (
-    <SettingsSection
-      controlId="catching-range"
-      title={t("settings.catching.form.collectionRangeTitle")}
-      description={`${t("settings.catching.form.collectionRangeDescription")} ${t(
-        "settings.catching.form.activeCount",
-        { selectedCount, totalCount: totalGuilds },
-      )}`}
-      actions={actions}
-    >
-      <SettingsGuildSelectionGrid
+    <div className="ll:flex ll:flex-col ll:gap-1">
+      <SettingsSectionHeader
+        as="h4"
+        title={t("settings.catching.form.serversTitle")}
+        description={t("settings.catching.form.activeCount", {
+          selectedCount,
+          totalCount: totalGuilds,
+        })}
+        actions={actions}
+      />
+      <SettingsGuildPicker
+        aria-label={t("settings.catching.form.serversTitle")}
         guilds={guilds}
         selectedGuildIds={selectedGuildIds}
         disabled={isInteractionDisabled}
         onToggle={handleGuildToggle}
         emptyStateLabel={t("settings.catching.form.emptyGuilds")}
-        variant="compact"
+        className="ll:px-1"
       />
-    </SettingsSection>
+    </div>
   );
 };

@@ -6,7 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
+import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
 import { ChevronRight, Trash2 } from "lucide-react";
@@ -130,15 +130,15 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
                 "settings.detector.routing.guildSelectionDescription",
               )}
             >
-              <SettingsGuildSelectionGrid
+              <SettingsGuildPicker
+                aria-label={t("settings.detector.routing.guildSelectionLabel")}
                 emptyStateLabel={t(
                   "settings.detector.routing.noGuildsAvailable",
                 )}
                 guilds={guilds}
                 onToggle={onToggleGuild}
                 selectedGuildIds={selectedGuildIds}
-                variant="compact"
-                className="ll:w-full"
+                className="ll:-mx-1 ll:w-[calc(100%+0.5rem)]"
               />
             </SettingsRow>
           </div>

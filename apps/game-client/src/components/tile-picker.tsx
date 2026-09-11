@@ -1,0 +1,51 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToggleGroup } from "@/components/ui/toggle-group";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "cn";
+import type { FC, ReactNode } from "react";
+
+type TilePickerProps = {
+  children: ReactNode;
+  value: readonly string[];
+  onValueChange: (value: string[]) => void;
+  "aria-label"?: string;
+  className?: string;
+  disabled?: boolean;
+  multiple?: boolean;
+};
+
+/**
+ * Row of `TilePickerItem`s. The row never wraps; longer lists scroll
+ * horizontally (the mouse wheel scrolls it too). The inner padding keeps the
+ * items' focus rings clear of the scroll viewport edge.
+ */
+export const TilePicker: FC<TilePickerProps> = ({
+  children,
+  value,
+  onValueChange,
+  "aria-label": ariaLabel,
+  className,
+  disabled,
+  multiple,
+}) => (
+  <TooltipProvider>
+    <ScrollArea
+      data-slot="tile-picker"
+      orientation="horizontal"
+      className={cn("ll:w-full", className)}
+    >
+      <ToggleGroup
+        aria-label={ariaLabel}
+        variant="outline"
+        spacing={1}
+        multiple={multiple}
+        disabled={disabled}
+        value={value}
+        onValueChange={onValueChange}
+        className="ll:w-max ll:p-1 ll:pb-2.5"
+      >
+        {children}
+      </ToggleGroup>
+    </ScrollArea>
+  </TooltipProvider>
+);

@@ -187,7 +187,7 @@ describe("DetectorRoutingSettingsTab", () => {
     });
   });
 
-  it("updates routing rule guilds through the dedicated tile grid", async () => {
+  it("updates routing rule guilds through the guild picker", async () => {
     const user = userEvent.setup();
 
     render();
@@ -196,9 +196,7 @@ describe("DetectorRoutingSettingsTab", () => {
       screen.getByRole("button", { name: "Rozwiń regułę Bossy hero" }),
     );
     await user.click(
-      screen.getByRole("button", {
-        name: "Przełącz gildię Gamma: Włączone",
-      }),
+      screen.getByRole("button", { name: "Gamma", pressed: true }),
     );
 
     await waitFor(() => {
