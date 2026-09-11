@@ -1,3 +1,4 @@
+import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
@@ -24,12 +25,13 @@ export const useUpdateUserPreferences = () => {
   const queryClient = useQueryClient();
   const queryKey = getUsersControllerGetUserPreferencesQueryKey();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationKey: ["usersControllerUpdateUserPreferences"],
     scope: { id: "user-preferences" },
     mutationFn: (payload: UpdateUserPreferencesDto) =>
       usersControllerUpdateUserPreferences(payload),
     onMutate: async (payload) => {
+      reportSettingsSave.saving();
       await queryClient.cancelQueries({ queryKey });
 
       const previousData =
@@ -54,7 +56,9 @@ export const useUpdateUserPreferences = () => {
 
       return { previousData };
     },
-    onError: (_error, _payload, context) => {
+    onError: (_error, payload, context) => {
+      reportSettingsSave.failed(() => mutation.mutate(payload));
+
       if (!context?.previousData) {
         return;
       }
@@ -63,9 +67,12 @@ export const useUpdateUserPreferences = () => {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(queryKey, data);
+      reportSettingsSave.saved();
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
     },
   });
+
+  return mutation;
 };

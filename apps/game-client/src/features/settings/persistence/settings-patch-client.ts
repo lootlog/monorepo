@@ -100,7 +100,10 @@ export const settingsPatchQueue = createSettingsPatchQueue({
       queryKeys.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
     );
   },
-  onStatus: (status) => useSettingsSaveStatusStore.getState().setStatus(status),
+  onStatus: (status) =>
+    useSettingsSaveStatusStore
+      .getState()
+      .setStatus(status, () => void settingsPatchQueue.retry()),
   onError: () => {
     toast.error(getFixedT("settings")("saveStatus.error"));
   },

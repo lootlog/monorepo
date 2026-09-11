@@ -216,4 +216,38 @@ describe("settings patch queue", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(statuses.at(-1)).toBe("saved");
   });
+  it("re-applies a write queued while the cache was refreshing so the refetch cannot hide it", async () => {
+    let finishReconcile: () => void = () => {};
+
+    const { queue, send, applyOptimistic, reconcile } = createHarness();
+    reconcile.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishReconcile = resolve;
+        }),
+    );
+
+    queue.enqueue({
+      operation: operation({ set: { guildIds: ["a"] } }),
+      queryKeys: [["/preferences"]],
+    });
+    await vi.advanceTimersByTimeAsync(300);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(reconcile).toHaveBeenCalledTimes(1);
+
+    const laterPatch = {
+      operation: operation({ set: { guildIds: ["a", "b"] } }),
+      queryKeys: [["/preferences"]],
+    };
+
+    queue.enqueue(laterPatch);
+    applyOptimistic.mockClear();
+
+    finishReconcile();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(applyOptimistic).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: laterPatch.operation }),
+    );
+  });
 });

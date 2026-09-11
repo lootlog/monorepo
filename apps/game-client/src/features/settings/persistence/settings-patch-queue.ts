@@ -151,6 +151,17 @@ export const createSettingsPatchQueue = (
     return keys;
   };
 
+  /**
+   * Refreshes the cache from the server, then lays the patches queued in the
+   * meantime back on top: the refetched documents predate them, and without
+   * this the form would briefly show, and could reset to, the stale state.
+   */
+  const reconcile = async (queryKeys: QueryKey[]) => {
+    await config.reconcile(queryKeys);
+
+    for (const patch of pending.values()) config.applyOptimistic(patch);
+  };
+
   const sendPatches = async (patches: QueuedSettingsPatch[]) => {
     if (patches.length === 0) return;
     config.onStatus("saving");
@@ -170,7 +181,7 @@ export const createSettingsPatchQueue = (
       for (const patch of patches) patch.afterSave?.();
 
       if (pending.size === 0) {
-        await config.reconcile(collectQueryKeys(patches));
+        await reconcile(collectQueryKeys(patches));
         config.onStatus(pending.size === 0 ? "saved" : "saving");
       }
     } catch (error) {
@@ -190,7 +201,7 @@ export const createSettingsPatchQueue = (
 
       pending.clear();
       config.onError?.(error);
-      await config.reconcile(collectQueryKeys(patches));
+      await reconcile(collectQueryKeys(patches));
       config.onStatus("error");
     }
   };
