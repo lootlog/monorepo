@@ -506,8 +506,6 @@
     "copyFailed": "Nie udało się skopiować logu",
     "copyActionSuccess": "Akcja skopiowana do schowka",
     "copyRequestSuccess": "Request skopiowany do schowka",
-    "successCount": "Sukcesy: {{count}}",
-    "errorCount": "Błędy: {{count}}",
     "actionPayload": "Payload akcji",
     "actionDetails": "Szczegóły akcji",
     "toggleActionDetails": "Przełącz szczegóły akcji",
@@ -547,8 +545,7 @@
     "columns": {
       "time": "Czas",
       "action": "Akcja",
-      "status": "Status",
-      "requests": "Żądania"
+      "status": "Status"
     },
     "requestColumns": {
       "method": "Metoda",

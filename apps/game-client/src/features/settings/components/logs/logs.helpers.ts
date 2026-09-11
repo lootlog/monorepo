@@ -49,20 +49,6 @@ export const getStatusLabel = (
   return i18n.t(STATUS_LABEL_KEYS[status]);
 };
 
-export const getActionRequestSummary = (action: LoggedAction) => {
-  const successCount = action.requests.filter(
-    (request) => request.status === "success",
-  ).length;
-
-  const failureCount = action.requests.length - successCount;
-
-  return {
-    successCount,
-    failureCount,
-    totalRequests: action.requests.length,
-  };
-};
-
 export const matchesActionFilters = (
   action: LoggedAction,
   actionTypeFilter: string,
