@@ -15,7 +15,6 @@ import {
   type HotkeyBinding,
   type HotkeyCategory,
 } from "@/store/hotkeys.store";
-import { RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -156,24 +155,18 @@ export const HotkeysSettingsTab = () => {
               </SettingsRow>
             );
           })}
-          {index === categories.length - 1 ? (
-            <SettingsRow
-              label={t("settings.hotkeys.restoreDefaultsLabel")}
-              description={t("settings.hotkeys.restoreDefaultsDescription")}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetAll}
-                type="button"
-              >
-                <RotateCcw aria-hidden />
-                {t("common:actions.restore")}
-              </Button>
-            </SettingsRow>
-          ) : null}
         </SettingsSection>
       ))}
+      <SettingsSection title={t("settings.hotkeys.restoreDefaultsTitle")}>
+        <SettingsRow
+          label={t("settings.hotkeys.restoreDefaultsLabel")}
+          description={t("settings.hotkeys.restoreDefaultsDescription")}
+        >
+          <Button variant="outline" size="sm" onClick={resetAll} type="button">
+            {t("common:actions.restore")}
+          </Button>
+        </SettingsRow>
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };
