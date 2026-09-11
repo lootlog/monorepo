@@ -3,7 +3,15 @@ import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { margonemRuntimeBridge } from "@/lib/margonem-runtime/margonem-runtime-bridge";
 import { useGameStore } from "@/store/game.store";
 import { createDebugLegendaryLootEvent } from "./debug-legendary-loot-event";
@@ -273,6 +281,33 @@ const EVENT_TEMPLATES = {
   },
 } satisfies Record<string, { event: GameEvent }>;
 
+const DETECTOR_NPC_ENTRIES = [
+  {
+    key: "titan",
+    preset: DETECTOR_NPC_PRESETS.titan,
+    eventLabelKey: "settings.debug.events.detectTitan",
+    npcTypeKey: "common:npcTypes.titan",
+  },
+  {
+    key: "hero",
+    preset: DETECTOR_NPC_PRESETS.hero,
+    eventLabelKey: "settings.debug.events.detectHero",
+    npcTypeKey: "common:npcTypes.hero",
+  },
+  {
+    key: "colossus",
+    preset: DETECTOR_NPC_PRESETS.colossus,
+    eventLabelKey: "settings.debug.events.detectColossus",
+    npcTypeKey: "common:npcTypes.colossus",
+  },
+  {
+    key: "elite2",
+    preset: DETECTOR_NPC_PRESETS.elite2,
+    eventLabelKey: "settings.debug.events.detectElite2",
+    npcTypeKey: "common:npcTypes.elite2",
+  },
+] as const;
+
 // SAFETY: This private literal defines every own enumerable template key; it is never mutated.
 const eventTemplateKeys = Object.keys(
   EVENT_TEMPLATES,
@@ -304,6 +339,10 @@ export const DebugTab: FC = () => {
   );
 
   const [jsonError, setJsonError] = useState<string | null>(null);
+
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<keyof typeof EVENT_TEMPLATES>("npcSpawn");
+
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
   const game = useGameStore((s) => s.game);
 
@@ -343,205 +382,217 @@ export const DebugTab: FC = () => {
     const template = EVENT_TEMPLATES[templateKey];
 
     if (template) {
+      setSelectedTemplate(templateKey);
       setRawJson(JSON.stringify(template.event, null, 2));
       setJsonError(null);
     }
   };
 
+  const runLabel = t("settings.debug.run");
+
+  const renderRunButton = (
+    onClick: () => void,
+    options: { disabled?: boolean; variant?: "ghost" | "destructive" } = {},
+  ) => (
+    <Button
+      className="ll:px-2"
+      disabled={options.disabled}
+      onClick={onClick}
+      type="button"
+      variant={options.variant ?? "ghost"}
+    >
+      {runLabel}
+    </Button>
+  );
+
   return (
-    <SettingsTabLayout className="ll:px-2 ll:pb-2">
+    <SettingsTabLayout>
       <SettingsSection title={t("settings.debug.eventTemplatesTitle")}>
-        <div className="ll:flex ll:flex-wrap ll:gap-1">
-          {eventTemplateKeys.map((key) => (
-            <Button
-              key={key}
-              onClick={() =>
-                triggerEvent(EVENT_TEMPLATES[key].event, eventLabels[key])
-              }
-              className="ll:px-2"
-            >
-              {eventLabels[key]}
-            </Button>
-          ))}
-          <Button
-            disabled={!game}
-            onClick={() => {
+        {eventTemplateKeys.map((key) => (
+          <SettingsRow
+            description={t(`settings.debug.actions.${key}Description`, {
+              defaultValue: "",
+            })}
+            key={key}
+            label={eventLabels[key]}
+          >
+            {renderRunButton(() =>
+              triggerEvent(EVENT_TEMPLATES[key].event, eventLabels[key]),
+            )}
+          </SettingsRow>
+        ))}
+        <SettingsRow
+          description={t("settings.debug.actions.lootLegendaryDescription")}
+          disabled={!game}
+          label={t("settings.debug.events.lootLegendary")}
+        >
+          {renderRunButton(
+            () => {
               if (!game) return;
               triggerEvent(
                 createDebugLegendaryLootEvent(game),
                 t("settings.debug.events.lootLegendary"),
               );
-            }}
-            className="ll:px-2"
-          >
-            {t("settings.debug.events.lootLegendary")}
-          </Button>
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createUniqueKillNpcEvent(),
-                t("settings.debug.events.killNpcUnique"),
-              )
-            }
-            className="ll:px-2 ll:bg-green-700 hover:ll:bg-green-600"
-          >
-            {t("settings.debug.events.killNpcUnique")}
-          </Button>
-        </div>
+            },
+            { disabled: !game },
+          )}
+        </SettingsRow>
+        <SettingsRow
+          description={t("settings.debug.actions.killNpcUniqueDescription")}
+          label={t("settings.debug.events.killNpcUnique")}
+        >
+          {renderRunButton(() =>
+            triggerEvent(
+              createUniqueKillNpcEvent(),
+              t("settings.debug.events.killNpcUnique"),
+            ),
+          )}
+        </SettingsRow>
       </SettingsSection>
 
       <SettingsSection
         title={t("settings.debug.npcDetectorTitle")}
         description={t("settings.debug.npcDetectorDescription")}
       >
-        <div className="ll:flex ll:flex-wrap ll:gap-1">
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createDetectorEvent(DETECTOR_NPC_PRESETS.titan),
-                t("settings.debug.events.detectTitan"),
-              )
-            }
-            className="ll:px-2 ll:bg-primary ll:text-primary-foreground hover:ll:bg-primary/90"
-          >
-            {t("common:npcTypes.titan")}
-          </Button>
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createDetectorEvent(DETECTOR_NPC_PRESETS.hero),
-                t("settings.debug.events.detectHero"),
-              )
-            }
-            className="ll:px-2 ll:bg-orange-700 hover:ll:bg-orange-600"
-          >
-            {t("common:npcTypes.hero")}
-          </Button>
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createDetectorEvent(DETECTOR_NPC_PRESETS.colossus),
-                t("settings.debug.events.detectColossus"),
-              )
-            }
-            className="ll:px-2 ll:bg-blue-700 hover:ll:bg-blue-600"
-          >
-            {t("common:npcTypes.colossus")}
-          </Button>
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createDetectorEvent(DETECTOR_NPC_PRESETS.elite2),
-                t("settings.debug.events.detectElite2"),
-              )
-            }
-            className="ll:px-2 ll:bg-yellow-700 hover:ll:bg-yellow-600"
-          >
-            {t("common:npcTypes.elite2")}
-          </Button>
-        </div>
+        {DETECTOR_NPC_ENTRIES.map(
+          ({ key, preset, eventLabelKey, npcTypeKey }) => (
+            <SettingsRow key={key} label={t(npcTypeKey)}>
+              {renderRunButton(() =>
+                triggerEvent(createDetectorEvent(preset), t(eventLabelKey)),
+              )}
+            </SettingsRow>
+          ),
+        )}
       </SettingsSection>
 
       <SettingsSection
         title={t("settings.debug.partyEventsTitle")}
         description={t("settings.debug.partyEventsDescription")}
       >
-        <div className="ll:flex ll:flex-wrap ll:gap-1">
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createPartyJoinEvent(),
-                t("settings.debug.events.partyJoin"),
-              )
-            }
-            className="ll:px-2 ll:bg-teal-700 hover:ll:bg-teal-600"
-          >
-            {t("settings.debug.events.partyJoin")}
-          </Button>
-          <Button
-            onClick={() =>
-              triggerEvent(
-                createPartyLeaveEvent(),
-                t("settings.debug.events.partyLeave"),
-              )
-            }
-            className="ll:px-2 ll:bg-red-700 hover:ll:bg-red-600"
-          >
-            {t("settings.debug.events.partyLeave")}
-          </Button>
-        </div>
+        <SettingsRow
+          description={t("settings.debug.actions.partyJoinDescription")}
+          label={t("settings.debug.events.partyJoin")}
+        >
+          {renderRunButton(() =>
+            triggerEvent(
+              createPartyJoinEvent(),
+              t("settings.debug.events.partyJoin"),
+            ),
+          )}
+        </SettingsRow>
+        <SettingsRow
+          description={t("settings.debug.actions.partyLeaveDescription")}
+          label={t("settings.debug.events.partyLeave")}
+        >
+          {renderRunButton(() =>
+            triggerEvent(
+              createPartyLeaveEvent(),
+              t("settings.debug.events.partyLeave"),
+            ),
+          )}
+        </SettingsRow>
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.rawJsonTitle")}>
-        <div className="ll:flex ll:flex-wrap ll:gap-1 ll:mb-2">
-          {eventTemplateKeys.map((key) => (
-            <Button
-              key={key}
-              onClick={() => loadTemplate(key)}
-              className="ll:px-2 ll:text-[10px] ll:h-4"
+        <SettingsRow
+          description={t("settings.debug.templateDescription")}
+          label={t("settings.debug.templateLabel")}
+        >
+          <Select
+            onValueChange={(value) =>
+              loadTemplate(
+                eventTemplateKeys.find((key) => key === value) ?? "npcSpawn",
+              )
+            }
+            value={selectedTemplate}
+          >
+            <SelectTrigger
+              aria-label={t("settings.debug.templateLabel")}
+              className="ll:w-40 ll:text-xs"
             >
-              {t("settings.debug.loadTemplate", {
-                label: eventLabels[key],
-              })}
-            </Button>
-          ))}
-        </div>
-        <SettingsPanel className="ll:p-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {eventTemplateKeys.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {eventLabels[key]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SettingsRow>
+        <SettingsRow
+          controlClassName="ll:flex-col ll:items-stretch ll:gap-1.5"
+          description={
+            jsonError ? (
+              <span className="ll:text-red-400">{jsonError}</span>
+            ) : (
+              t("settings.debug.rawJsonDescription")
+            )
+          }
+          htmlFor="debug-raw-json"
+          label={t("settings.debug.rawJsonLabel")}
+          layout="stacked"
+        >
           <textarea
-            aria-label={t("settings.debug.rawJsonTitle")}
-            value={rawJson}
-            onChange={(e) => {
-              setRawJson(e.target.value);
+            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/20 ll:p-2 ll:font-mono ll:text-[11px] ll:text-gray-100 ll:outline-none ll:focus-visible:border-ring"
+            id="debug-raw-json"
+            onChange={(event) => {
+              setRawJson(event.target.value);
               setJsonError(null);
             }}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="ll:h-32 ll:w-full ll:resize-y ll:border-none ll:bg-transparent ll:p-0 ll:text-xs ll:font-mono ll:text-white ll:outline-none"
+            onMouseDown={(event) => event.stopPropagation()}
             spellCheck={false}
+            value={rawJson}
           />
-        </SettingsPanel>
-        {jsonError && (
-          <p className="ll:text-red-400 ll:text-xs ll:mt-1">{jsonError}</p>
-        )}
-        <Button onClick={triggerFromJson} className="ll:mt-2 ll:w-full">
-          {t("settings.debug.triggerCustomEvent")}
-        </Button>
+          <div>
+            <Button
+              className="ll:px-2"
+              onClick={triggerFromJson}
+              type="button"
+              variant="ghost"
+            >
+              {t("settings.debug.triggerCustomEvent")}
+            </Button>
+          </div>
+        </SettingsRow>
       </SettingsSection>
 
       <SettingsSection
         title={t("settings.debug.eventLogTitle")}
         actions={
           <Button
+            className="ll:px-2"
+            disabled={eventLog.length === 0}
             onClick={() => setEventLog([])}
-            className="ll:px-2 ll:text-[10px] ll:h-4"
+            type="button"
+            variant="destructive"
           >
             {t("common:actions.clear")}
           </Button>
         }
       >
-        <SettingsPanel className="ll:max-h-24 ll:overflow-y-auto ll:p-2">
+        <SettingsPanel className="ll:max-h-32 ll:overflow-y-auto ll:font-mono ll:text-[11px]">
           {eventLog.length === 0 ? (
-            <SettingsEmptyState className="ll:border-none ll:bg-transparent ll:px-0 ll:py-0">
+            <SettingsEmptyState className="ll:bg-transparent ll:px-0 ll:py-0">
               {t("settings.debug.noEvents")}
             </SettingsEmptyState>
           ) : (
             eventLog.map((entry) => (
-              <div
-                key={entry.id}
-                className="ll:text-xs ll:flex ll:gap-2 ll:items-center"
-              >
-                <span className="ll:text-gray-500">
+              <div key={entry.id} className="ll:flex ll:items-center ll:gap-2">
+                <span className="ll:text-muted-foreground">
                   {entry.timestamp.toLocaleTimeString()}
                 </span>
                 <span
                   className={
-                    entry.success ? "ll:text-green-400" : "ll:text-red-400"
+                    entry.success ? "ll:text-emerald-200" : "ll:text-red-400"
                   }
                 >
                   {entry.success
                     ? t("settings.debug.statusOk")
                     : t("settings.debug.statusFail")}
                 </span>
-                <span className="ll:text-white">{entry.eventType}</span>
+                <span className="ll:text-gray-100">{entry.eventType}</span>
               </div>
             ))
           )}

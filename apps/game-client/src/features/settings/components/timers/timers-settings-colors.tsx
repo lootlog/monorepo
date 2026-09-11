@@ -1,6 +1,7 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { Button } from "@/components/ui/button";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import {
   Popover,
   PopoverContent,
@@ -149,15 +150,12 @@ export const TimersSettingsColors: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-4">
+    <SettingsTabLayout>
       <SettingsSection
         controlId="timer-colors-list"
         title={t("settings.timers.colors.standardColorsTitle")}
       >
-        <div
-          id="timer-colors-list"
-          className="ll:grid ll:grid-cols-2 ll:gap-1.5 ll:px-2 ll:pt-1"
-        >
+        <div id="timer-colors-list" className="ll:flex ll:flex-col ll:gap-0.5">
           {visibleDefaultColors.map((colorId) => {
             const selection: TimerColorSelection = {
               id: colorId,
@@ -176,9 +174,6 @@ export const TimersSettingsColors: FC = () => {
             return (
               <TimerColorListItem
                 key={colorId}
-                color={overridden ? undefined : colorId}
-                customBorderColor={overridden?.borderColor}
-                customBackgroundColor={overridden?.backgroundColor}
                 data={editData}
                 isDefault
                 isModified={isModified}
@@ -193,6 +188,11 @@ export const TimersSettingsColors: FC = () => {
             );
           })}
         </div>
+        <HiddenColorsList
+          hiddenColors={hiddenDefaultColors}
+          colorNames={defaultColorNames}
+          onRestore={restoreDefaultColor}
+        />
       </SettingsSection>
 
       <SettingsSection
@@ -203,14 +203,9 @@ export const TimersSettingsColors: FC = () => {
             onOpenChange={(open) => setOpenPopover(open ? "add" : null)}
           >
             <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="ll:size-7 ll:p-0"
-                aria-label={t("settings.timers.colors.addTitle")}
-              >
-                <Plus className="ll:size-3.5" />
-              </Button>
+              <SettingsIconButton label={t("settings.timers.colors.addTitle")}>
+                <Plus />
+              </SettingsIconButton>
             </PopoverTrigger>
             <PopoverContent
               role="dialog"
@@ -223,7 +218,7 @@ export const TimersSettingsColors: FC = () => {
         }
       >
         {Object.keys(customColors).length > 0 ? (
-          <div className="ll:grid ll:grid-cols-2 ll:gap-1.5 ll:px-2 ll:pt-1">
+          <div className="ll:flex ll:flex-col ll:gap-0.5">
             {Object.values(customColors).map((color) => {
               const selection: TimerColorSelection = {
                 id: color.id,
@@ -233,8 +228,6 @@ export const TimersSettingsColors: FC = () => {
               return (
                 <TimerColorListItem
                   key={color.id}
-                  customBorderColor={color.borderColor}
-                  customBackgroundColor={color.backgroundColor}
                   data={getEditData(selection)}
                   isDefault={false}
                   isModified
@@ -251,12 +244,6 @@ export const TimersSettingsColors: FC = () => {
           </div>
         ) : null}
       </SettingsSection>
-
-      <HiddenColorsList
-        hiddenColors={hiddenDefaultColors}
-        colorNames={defaultColorNames}
-        onRestore={restoreDefaultColor}
-      />
-    </div>
+    </SettingsTabLayout>
   );
 };

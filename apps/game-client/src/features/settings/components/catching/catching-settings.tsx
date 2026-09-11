@@ -1,23 +1,35 @@
 import { Button } from "@/components/ui/button";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
-import { CharacterTile } from "@/components/character-tile";
+import { CatchingCharacterOption } from "@/features/settings/components/catching/catching-character-option";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
 import { useGameStore } from "@/store/game.store";
-import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+const CHARACTER_PICKER_ID = "catching-character";
+
+const TOGGLE_GROUP_MAX_OPTIONS = 3;
 
 export const CatchingSettings = () => {
   const queryClient = useQueryClient();
@@ -53,13 +65,15 @@ export const CatchingSettings = () => {
   const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
   const { t } = useTranslation();
 
-  const requestedCharacterExists = characterList?.some(
+  const characters = characterList ?? [];
+
+  const requestedCharacterExists = characters.some(
     (character) => String(character.id) === requestedCharacterId,
   );
 
   const selectedCharacterId = requestedCharacterExists
     ? requestedCharacterId
-    : String(characterList?.[0]?.id ?? "");
+    : String(characters[0]?.id ?? "");
 
   const applyToAllMutation = useMutation({
     mutationKey: ["apply-catching-config-to-all-characters", accountId],
@@ -153,8 +167,6 @@ export const CatchingSettings = () => {
       context,
     ) => {
       if (failureCount === 0) {
-        toast.success(t("settings.catching.applySuccess"));
-
         return;
       }
 
@@ -198,9 +210,9 @@ export const CatchingSettings = () => {
   });
 
   const handleApplyToAllCharacters = () => {
-    if (!characterList || characterList.length <= 1) return;
+    if (characters.length <= 1) return;
 
-    const targetCharacterIds = characterList.map((character) =>
+    const targetCharacterIds = characters.map((character) =>
       String(character.id),
     );
 
@@ -215,57 +227,93 @@ export const CatchingSettings = () => {
     });
   };
 
+  const characterPicker =
+    characters.length <= TOGGLE_GROUP_MAX_OPTIONS ? (
+      <ToggleGroup
+        id={CHARACTER_PICKER_ID}
+        variant="outline"
+        size="sm"
+        spacing={0}
+        value={[selectedCharacterId]}
+        onValueChange={([value]: string[]) => {
+          if (value) setRequestedCharacterId(value);
+        }}
+      >
+        {characters.map((character) => (
+          <ToggleGroupItem key={character.id} value={String(character.id)}>
+            <CatchingCharacterOption
+              icon={character.icon}
+              nick={character.nick}
+            />
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    ) : (
+      <Select
+        value={selectedCharacterId}
+        onValueChange={setRequestedCharacterId}
+      >
+        <SelectTrigger id={CHARACTER_PICKER_ID}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {characters.map((character) => (
+            <SelectItem key={character.id} value={String(character.id)}>
+              <CatchingCharacterOption
+                icon={character.icon}
+                nick={character.nick}
+              />
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+
   return (
     <SettingsTabLayout>
       <SettingsSection
-        controlId="catching-range"
         title={t("settings.catching.characterTitle")}
         description={t("settings.catching.characterDescription")}
       >
-        <Tabs
-          value={selectedCharacterId}
-          onValueChange={setRequestedCharacterId}
-          className="ll:w-full ll:gap-3"
+        <SettingsRow
+          htmlFor={CHARACTER_PICKER_ID}
+          label={t("settings.catching.characterLabel")}
+          controlClassName={
+            characters.length > TOGGLE_GROUP_MAX_OPTIONS ? "ll:w-44" : undefined
+          }
         >
-          <TabsList className="ll:w-full">
-            {characterList?.map((character) => (
-              <TabsTrigger key={character.id} value={`${character.id}`}>
-                <CharacterTile character={character} />
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {characterList && characterList.length > 1 ? (
-            <div className="ll:flex ll:justify-end">
+          {characterPicker}
+        </SettingsRow>
+      </SettingsSection>
+      {selectedCharacterId ? (
+        <CatchingSettingsForm
+          key={selectedCharacterId}
+          characterId={selectedCharacterId}
+          disabled={applyToAllMutation.isPending}
+          onSelectionChange={(catchingGuildIds) => {
+            selectionByCharacterIdRef.current = {
+              ...selectionByCharacterIdRef.current,
+              [selectedCharacterId]: catchingGuildIds,
+            };
+          }}
+          actions={
+            characters.length > 1 ? (
               <Button
                 type="button"
                 variant="ghost"
                 onClick={handleApplyToAllCharacters}
                 disabled={applyToAllMutation.isPending}
-                className="ll:mt-0 ll:h-7 ll:min-w-44 ll:gap-2 ll:px-3 ll:text-[11px] ll:font-semibold"
+                className="ll:gap-2"
               >
                 {applyToAllMutation.isPending ? (
                   <Loader2 className="ll:size-3.5 ll:animate-spin" />
                 ) : null}
                 {t("settings.catching.applyToAllButton")}
               </Button>
-            </div>
-          ) : null}
-          {characterList?.map((character) => (
-            <TabsContent key={character.id} value={`${character.id}`}>
-              <CatchingSettingsForm
-                characterId={character.id.toString()}
-                disabled={applyToAllMutation.isPending}
-                onSelectionChange={(catchingGuildIds) => {
-                  selectionByCharacterIdRef.current = {
-                    ...selectionByCharacterIdRef.current,
-                    [String(character.id)]: catchingGuildIds,
-                  };
-                }}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
-      </SettingsSection>
+            ) : null
+          }
+        />
+      ) : null}
     </SettingsTabLayout>
   );
 };

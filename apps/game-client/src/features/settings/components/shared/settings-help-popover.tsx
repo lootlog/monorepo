@@ -7,7 +7,7 @@ import { CircleHelp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface SettingsHelpPopoverProps {
-  description: string;
+  description?: string;
   recommendation?: string;
   example?: string;
   dependency?: string;
@@ -34,7 +34,9 @@ export const SettingsHelpPopover = ({
         align="start"
         className="ll:w-56 ll:space-y-2 ll:text-[11px] ll:leading-4"
       >
-        <p className="ll:m-0 ll:text-popover-foreground">{description}</p>
+        {description ? (
+          <p className="ll:m-0 ll:text-popover-foreground">{description}</p>
+        ) : null}
         {dependency ? (
           <div>
             <strong className="ll:text-muted-foreground">

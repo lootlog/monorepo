@@ -1,3 +1,4 @@
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,14 +55,11 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
       }}
     >
       <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className="ll:size-7 ll:shrink-0 ll:p-0"
-          aria-label={`${t("settings.timers.colors.actionsAria")}: ${name}`}
+        <SettingsIconButton
+          label={`${t("settings.timers.colors.actionsAria")}: ${name}`}
         >
-          <MoreHorizontal className="ll:size-3.5" />
-        </Button>
+          <MoreHorizontal />
+        </SettingsIconButton>
       </PopoverTrigger>
       <PopoverContent role="dialog" align="end" className="ll:w-56 ll:p-2.5">
         <div className="ll:flex ll:flex-col ll:gap-2">

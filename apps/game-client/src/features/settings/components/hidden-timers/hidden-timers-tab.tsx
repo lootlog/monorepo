@@ -1,6 +1,15 @@
-import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
 import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
@@ -35,20 +44,50 @@ export const HiddenTimersTab = () => {
         description={
           generalConfig.timersGrouping
             ? t("settings.hiddenTimers.groupedDescription")
-            : t("settings.hiddenTimers.ungroupedDescription")
+            : undefined
         }
       >
         {!generalConfig.timersGrouping ? (
-          <div className="ll:w-full">
-            <SettingsGuildSelectionGrid
-              guilds={guilds}
-              selectedGuildId={selectedGuildId}
-              selectionMode="single"
-              onSelect={setRequestedGuildId}
-              emptyStateLabel={t("settings.hiddenTimers.emptyGuilds")}
-              variant="compact"
-            />
-          </div>
+          <SettingsRow
+            htmlFor="hidden-timers-guild"
+            label={t("settings.hiddenTimers.guildLabel")}
+            description={t("settings.hiddenTimers.ungroupedDescription")}
+            controlClassName="ll:w-48"
+          >
+            {guilds && guilds.length > 0 ? (
+              <Select
+                value={selectedGuildId}
+                onValueChange={setRequestedGuildId}
+              >
+                <SelectTrigger id="hidden-timers-guild">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {guilds.map((guild) => (
+                    <SelectItem key={guild.id} value={guild.id}>
+                      <span className="ll:inline-flex ll:min-w-0 ll:items-center ll:gap-1.5">
+                        <Avatar className="ll:size-4 ll:shrink-0 ll:rounded-sm">
+                          <AvatarImage
+                            src={guild.icon ?? undefined}
+                            alt=""
+                            className="ll:h-full ll:w-full ll:object-cover"
+                          />
+                          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-gray-800 ll:text-[9px] ll:font-semibold ll:text-gray-100">
+                            {guild.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="ll:truncate">{guild.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <SettingsEmptyState className="ll:w-full">
+                {t("settings.hiddenTimers.emptyGuilds")}
+              </SettingsEmptyState>
+            )}
+          </SettingsRow>
         ) : null}
       </SettingsSection>
       <SettingsSection

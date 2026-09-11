@@ -44,22 +44,16 @@ describe("ServerVisibilitySettingsTab", () => {
   it("shows ordered guilds with avatars and visibility counts", () => {
     render();
 
-    expect(screen.getByText("2 widoczne")).toBeInTheDocument();
-    expect(screen.getByText("1 ukryty")).toBeInTheDocument();
-    expect(screen.getByAltText("Beta")).toHaveAttribute(
-      "src",
-      "https://cdn.discordapp.com/icons/guild-2/beta.png",
-    );
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByText("2 widoczne · 1 ukryty")).toBeInTheDocument();
     expect(
-      screen
-        .getAllByRole("switch")
-        .map((control) => control.getAttribute("aria-label")),
-    ).toEqual([
-      "Pokaż Beta w grze",
-      "Pokaż Alpha w grze",
-      "Pokaż Gamma w grze",
-    ]);
+      document.querySelector(
+        'img[src="https://cdn.discordapp.com/icons/guild-2/beta.png"]',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Beta" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "Alpha" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Gamma" })).toBeChecked();
   });
 
   it("filters hidden guilds and searches by name", () => {
@@ -82,7 +76,7 @@ describe("ServerVisibilitySettingsTab", () => {
 
     fireEvent.click(
       screen.getByRole("switch", {
-        name: "Pokaż Alpha w grze",
+        name: "Alpha",
       }),
     );
 

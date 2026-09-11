@@ -1,10 +1,10 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsPanel } from "@/components/settings/settings-panel";
+import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   useCurrentUserNotificationMutes,
   useUpdateNotificationMutes,
@@ -15,161 +15,138 @@ import { useTranslation } from "react-i18next";
 export const NotificationMutesSettingsTab = () => {
   const { isReady, mutes } = useCurrentUserNotificationMutes();
   const updateNotificationMutes = useUpdateNotificationMutes();
-  const [playerSearch, setPlayerSearch] = useState("");
-  const [npcSearch, setNpcSearch] = useState("");
+  const [search, setSearch] = useState("");
   const { t } = useTranslation();
-  const isMutating = updateNotificationMutes.isPending;
-  const isActionsDisabled = !isReady || isMutating;
+  const isActionsDisabled = !isReady || updateNotificationMutes.isPending;
 
-  const normalizedPlayerSearch = playerSearch.trim().toLocaleLowerCase("pl");
-  const normalizedNpcSearch = npcSearch.trim().toLocaleLowerCase("pl");
+  const normalizedSearch = search.trim().toLocaleLowerCase("pl");
 
-  const sortedPlayers = [...mutes.players]
-    .filter((player) => {
-      if (!normalizedPlayerSearch) {
-        return true;
-      }
+  const matchesSearch = (values: string[]) =>
+    !normalizedSearch ||
+    values.some((value) =>
+      value.toLocaleLowerCase("pl").includes(normalizedSearch),
+    );
 
-      return [player.displayName, player.discordId].some((value) =>
-        value.toLocaleLowerCase("pl").includes(normalizedPlayerSearch),
-      );
-    })
+  const sortedPlayers = mutes.players
+    .filter((player) => matchesSearch([player.displayName, player.discordId]))
     .sort((left, right) =>
       left.displayName.localeCompare(right.displayName, "pl"),
     );
 
-  const sortedNpcs = [...mutes.npcs]
-    .filter((npc) => {
-      if (!normalizedNpcSearch) {
-        return true;
-      }
-
-      return [npc.name, npc.npcType, npc.prof ?? "", String(npc.lvl)].some(
-        (value) => value.toLocaleLowerCase("pl").includes(normalizedNpcSearch),
-      );
-    })
+  const sortedNpcs = mutes.npcs
+    .filter((npc) =>
+      matchesSearch([npc.name, npc.npcType, npc.prof ?? "", String(npc.lvl)]),
+    )
     .sort((left, right) => left.name.localeCompare(right.name, "pl"));
 
   return (
-    <SettingsTabLayout contentClassName="ll:gap-3">
-      <SettingsSection controlId="notification-mutes">
-        <Tabs defaultValue="players" className="ll:w-full ll:gap-3">
-          <TabsList className="ll:w-full">
-            <TabsTrigger value="players">
-              {t("settings.notificationMutes.tabs.players")}
-            </TabsTrigger>
-            <TabsTrigger value="npcs">
-              {t("settings.notificationMutes.tabs.npcs")}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="players" className="ll:space-y-3">
-            <Input
-              value={playerSearch}
-              onChange={(event) => setPlayerSearch(event.target.value)}
-              placeholder={t(
-                "settings.notificationMutes.searchPlayersPlaceholder",
-              )}
-              className="ll:h-8 ll:text-[12px]"
-            />
-            <div className="ll:space-y-2">
-              {sortedPlayers.length === 0 ? (
-                <SettingsEmptyState>
-                  {t("settings.notificationMutes.emptyPlayers")}
-                </SettingsEmptyState>
-              ) : (
-                sortedPlayers.map((player) => (
-                  <SettingsPanel
-                    key={player.discordId}
-                    className="ll:flex ll:items-center ll:justify-between ll:gap-3"
-                  >
-                    <div className="ll:min-w-0 ll:flex-1 ll:flex ll:flex-col">
-                      <span className="ll:text-[12px] ll:font-semibold ll:text-white ll:truncate">
-                        {player.displayName ||
-                          t("settings.notificationMutes.unknownPlayer")}
-                      </span>
-                      <span className="ll:text-[11px] ll:text-gray-400 ll:truncate">
-                        {player.discordId}
-                      </span>
-                    </div>
-                    <Button
-                      className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
-                      disabled={isActionsDisabled}
-                      onClick={() =>
-                        updateNotificationMutes.mutate({
-                          players: mutes.players.filter(
-                            (currentPlayer) =>
-                              currentPlayer.discordId !== player.discordId,
-                          ),
-                        })
-                      }
-                    >
-                      {t("common:actions.remove")}
-                    </Button>
-                  </SettingsPanel>
-                ))
-              )}
-            </div>
-          </TabsContent>
-          <TabsContent value="npcs" className="ll:space-y-3">
-            <Input
-              value={npcSearch}
-              onChange={(event) => setNpcSearch(event.target.value)}
-              placeholder={t(
-                "settings.notificationMutes.searchNpcsPlaceholder",
-              )}
-              className="ll:h-8 ll:text-[12px]"
-            />
-            <div className="ll:space-y-2">
-              {sortedNpcs.length === 0 ? (
-                <SettingsEmptyState>
-                  {t("settings.notificationMutes.emptyNpcs")}
-                </SettingsEmptyState>
-              ) : (
-                sortedNpcs.map((npc) => (
-                  <SettingsPanel
-                    key={npc.npcKey}
-                    className="ll:flex ll:items-center ll:justify-between ll:gap-3"
-                  >
-                    <div className="ll:min-w-0 ll:flex ll:flex-1 ll:items-center ll:gap-3">
-                      {npc.icon ? (
-                        <img
-                          src={npc.icon}
-                          alt={npc.name}
-                          className="ll:size-8 ll:shrink-0 ll:rounded-sm ll:border ll:border-gray-600 ll:bg-black/30 ll:object-contain"
-                        />
-                      ) : null}
-                      <div className="ll:min-w-0 ll:flex ll:flex-col">
-                        <span className="ll:text-[12px] ll:font-semibold ll:text-white ll:truncate">
-                          {npc.name}
-                        </span>
-                        <span className="ll:text-[11px] ll:text-gray-400 ll:truncate">
-                          {npc.npcType} •{" "}
-                          {t("settings.notificationMutes.npcLevel", {
-                            level: npc.lvl,
-                          })}
-                          {npc.prof ? ` • ${npc.prof}` : ""}
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      className="ll:h-7 ll:px-2.5 ll:text-[11px] ll:font-semibold"
-                      disabled={isActionsDisabled}
-                      onClick={() =>
-                        updateNotificationMutes.mutate({
-                          npcs: mutes.npcs.filter(
-                            (currentNpc) => currentNpc.npcKey !== npc.npcKey,
-                          ),
-                        })
-                      }
-                    >
-                      {t("common:actions.remove")}
-                    </Button>
-                  </SettingsPanel>
-                ))
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+    <SettingsTabLayout
+      actions=<SearchInput
+        value={search}
+        placeholder={t("settings.notificationMutes.searchPlaceholder")}
+        onChange={(event) => setSearch(event.target.value)}
+      />
+    >
+      <SettingsSection
+        controlId="notification-mutes"
+        title={t("settings.notificationMutes.playersTitle", {
+          count: mutes.players.length,
+        })}
+        description={t("settings.notificationMutes.playersDescription")}
+      >
+        {sortedPlayers.length === 0 ? (
+          <SettingsEmptyState>
+            {t("settings.notificationMutes.emptyPlayers")}
+          </SettingsEmptyState>
+        ) : (
+          sortedPlayers.map((player) => {
+            const name =
+              player.displayName ||
+              t("settings.notificationMutes.unknownPlayer");
+
+            return (
+              <SettingsListRow
+                key={player.discordId}
+                leading={
+                  <Avatar className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20">
+                    <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100">
+                      {name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                }
+                title={name}
+                description={player.discordId}
+              >
+                <Button
+                  variant="ghost"
+                  className="ll:px-2"
+                  disabled={isActionsDisabled}
+                  onClick={() =>
+                    updateNotificationMutes.mutate({
+                      players: mutes.players.filter(
+                        (currentPlayer) =>
+                          currentPlayer.discordId !== player.discordId,
+                      ),
+                    })
+                  }
+                >
+                  {t("common:actions.remove")}
+                </Button>
+              </SettingsListRow>
+            );
+          })
+        )}
+      </SettingsSection>
+
+      <SettingsSection
+        title={t("settings.notificationMutes.npcsTitle", {
+          count: mutes.npcs.length,
+        })}
+        description={t("settings.notificationMutes.npcsDescription")}
+      >
+        {sortedNpcs.length === 0 ? (
+          <SettingsEmptyState>
+            {t("settings.notificationMutes.emptyNpcs")}
+          </SettingsEmptyState>
+        ) : (
+          sortedNpcs.map((npc) => (
+            <SettingsListRow
+              key={npc.npcKey}
+              leading={
+                npc.icon ? (
+                  <img
+                    src={npc.icon}
+                    alt=""
+                    className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20 ll:object-contain"
+                  />
+                ) : undefined
+              }
+              title={npc.name}
+              description={[
+                npc.npcType,
+                t("settings.notificationMutes.npcLevel", { level: npc.lvl }),
+                npc.prof,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            >
+              <Button
+                variant="ghost"
+                className="ll:px-2"
+                disabled={isActionsDisabled}
+                onClick={() =>
+                  updateNotificationMutes.mutate({
+                    npcs: mutes.npcs.filter(
+                      (currentNpc) => currentNpc.npcKey !== npc.npcKey,
+                    ),
+                  })
+                }
+              >
+                {t("common:actions.remove")}
+              </Button>
+            </SettingsListRow>
+          ))
+        )}
       </SettingsSection>
     </SettingsTabLayout>
   );

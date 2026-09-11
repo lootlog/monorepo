@@ -1,11 +1,7 @@
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import type { FC, ReactNode } from "react";
+import { SettingsCategoryAccordionItem } from "@/components/settings/settings-category-accordion";
+import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
+import type { FC, MouseEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { CategoryVolumeControl } from "./category-volume-control";
 import { SoundFieldInput } from "./sound-field-input";
 import { getDefaultSoundUrl } from "../../config/default-sounds";
 import type { SoundCategory } from "./types";
@@ -21,11 +17,10 @@ interface CategoryAccordionItemProps {
   urlErrors: Record<string, string>;
   onVolumeChange: (value: number) => void;
   onVolumeCommit: (value: number) => void;
-  onMuteToggle: (e: React.MouseEvent) => void;
+  onMuteToggle: (event: MouseEvent<HTMLButtonElement>) => void;
   onSoundUrlChange: (key: string, value: string) => void;
   onPlaySound: (key: string, soundUrl: string) => void;
-  description?: string;
-  disabled?: boolean;
+  description: string;
 }
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
@@ -45,62 +40,57 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
   onSoundUrlChange,
   onPlaySound,
   description,
-  disabled = false,
 }) => {
   const { t } = useTranslation();
 
   return (
-    <AccordionItem value={id} disabled={disabled}>
-      <div className="ll:flex ll:items-center ll:gap-2 ll:rounded-sm ll:bg-black/20 ll:px-2">
-        <div className="ll:flex ll:items-center ll:gap-2 ll:flex-1">
-          <CategoryVolumeControl
-            icon={icon}
+    <SettingsCategoryAccordionItem
+      id={id}
+      title={
+        <span className="ll:inline-flex ll:items-center ll:gap-1.5">
+          {icon}
+          {label}
+        </span>
+      }
+      triggerLabel={label}
+      headerControls={
+        <div className="ll:w-48">
+          <SettingsVolumeControl
             label={label}
+            muteLabel={t("common:actions.mute")}
+            unmuteLabel={t("common:actions.unmute")}
             volume={volume}
-            isMuted={isMuted}
+            muted={isMuted}
             onVolumeChange={onVolumeChange}
             onVolumeCommit={onVolumeCommit}
             onMuteToggle={onMuteToggle}
           />
-          {disabled && (
-            <span className="ll:text-xs ll:text-muted-foreground ll:ml-auto ll:mr-2">
-              {t("settings.sounds.temporarilyUnavailable")}
-            </span>
-          )}
         </div>
-        <AccordionTrigger
-          aria-label={label}
-          className="ll:w-auto ll:border-0 ll:px-1"
-          disabled={disabled}
-        />
-      </div>
-      <AccordionContent>
-        <div className="ll:flex ll:flex-col ll:gap-2 ll:pt-1">
-          <p className="ll:m-0 ll:text-[11px] ll:text-muted-foreground">
-            {description}
-          </p>
-          {fields.map((field) => {
-            const config = categoryConfig[field.key] ?? DEFAULT_NPC_CONFIG;
-            const soundUrl = config.soundUrl ?? "";
-            const hasError = urlErrors[field.key];
+      }
+    >
+      <p className="ll:m-0 ll:px-2 ll:text-[11px] ll:text-muted-foreground">
+        {description}
+      </p>
+      {fields.map((field) => {
+        const config = categoryConfig[field.key] ?? DEFAULT_NPC_CONFIG;
+        const soundUrl = config.soundUrl ?? "";
 
-            return (
-              <SoundFieldInput
-                key={field.key}
-                label={field.label}
-                soundUrl={soundUrl}
-                placeholder={getDefaultSoundUrl(field.key)}
-                error={hasError}
-                onSoundUrlChange={(value) => onSoundUrlChange(field.key, value)}
-                onPlaySound={() => onPlaySound(field.key, soundUrl)}
-              />
-            );
-          })}
-          <p className="ll:m-0 ll:text-[11px] ll:text-muted-foreground">
-            {t("settings.sounds.supportedFormats")}
-          </p>
-        </div>
-      </AccordionContent>
-    </AccordionItem>
+        return (
+          <SoundFieldInput
+            key={field.key}
+            fieldKey={field.key}
+            label={field.label}
+            soundUrl={soundUrl}
+            placeholder={getDefaultSoundUrl(field.key)}
+            error={urlErrors[field.key]}
+            onSoundUrlChange={(value) => onSoundUrlChange(field.key, value)}
+            onPlaySound={() => onPlaySound(field.key, soundUrl)}
+          />
+        );
+      })}
+      <p className="ll:m-0 ll:px-2 ll:text-[11px] ll:text-muted-foreground">
+        {t("settings.sounds.supportedFormats")}
+      </p>
+    </SettingsCategoryAccordionItem>
   );
 };

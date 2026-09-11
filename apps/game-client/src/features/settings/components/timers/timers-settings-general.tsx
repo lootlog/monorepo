@@ -1,58 +1,22 @@
+import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { Input } from "@/components/ui/input";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
-import { type FC, useState } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
+const MAX_REMOVE_TIMER_AFTER_SECONDS = 120;
 
 export const TimersSettingsGeneral: FC = () => {
   const { generalConfig, setGeneralConfig } = useTimersStore();
 
   const { t } = useTranslation();
 
-  const [inputValue, setInputValue] = useState<string>(() =>
-    (generalConfig.removeTimerAfterMs / 1000).toString(),
-  );
-
-  const handleRemoveTimerAfterMsChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = e.target.value;
-    setInputValue(value);
-
-    if (value === "") {
-      setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
-
-      return;
-    }
-
-    const num = Number.parseInt(value, 10);
-
-    if (Number.isNaN(num)) {
-      setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
-
-      return;
-    }
-
-    if (num < 0 || num > MAX_REMOVE_TIMER_AFTER_MS / 1000) {
-      setGeneralConfig({
-        ...generalConfig,
-        removeTimerAfterMs: MAX_REMOVE_TIMER_AFTER_MS,
-      });
-      setInputValue((MAX_REMOVE_TIMER_AFTER_MS / 1000).toString());
-
-      return;
-    }
-
-    setGeneralConfig({ ...generalConfig, removeTimerAfterMs: num * 1000 });
-  };
-
   return (
-    <div className="ll:flex ll:flex-col ll:gap-4">
+    <SettingsTabLayout>
       <SettingsSection
         controlId="timer-behavior"
         title={t("settings.timers.general.behaviorTitle")}
@@ -130,18 +94,25 @@ export const TimersSettingsGeneral: FC = () => {
       </SettingsSection>
       <SettingsSection title={t("settings.timers.general.fadeTitle")}>
         <SettingsRow
+          htmlFor="timers-remove-after"
           label={t("settings.timers.general.removeTimerAfterLabel")}
           description={t("settings.timers.general.removeTimerAfterDescription")}
-          controlClassName="ll:w-10"
         >
-          <Input
-            type="text"
-            value={inputValue}
-            max={120}
-            onChange={handleRemoveTimerAfterMsChange}
+          <SettingsNumberField
+            id="timers-remove-after"
+            min={0}
+            max={MAX_REMOVE_TIMER_AFTER_SECONDS}
+            unit="s"
+            value={generalConfig.removeTimerAfterMs / 1000}
+            onCommit={(seconds) =>
+              setGeneralConfig({
+                ...generalConfig,
+                removeTimerAfterMs: seconds * 1000,
+              })
+            }
           />
         </SettingsRow>
       </SettingsSection>
-    </div>
+    </SettingsTabLayout>
   );
 };

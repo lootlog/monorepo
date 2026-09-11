@@ -7,7 +7,7 @@ import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import type { SoundCategory } from "@/features/settings/components/sounds/types";
-import { Bell, Clock, Crosshair, type LucideIcon } from "lucide-react";
+import { Bell, Crosshair, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -24,7 +24,7 @@ export function useSoundSettingsForm() {
   );
 
   const { playSoundTest } = useSoundPlayback();
-  const { t } = useTranslation(["settings", "common"]);
+  const { t } = useTranslation();
 
   const settings = soundSettings;
 
@@ -82,37 +82,32 @@ export function useSoundSettingsForm() {
     { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
   ] as const;
 
-  const detectorTimerNpcTypes = notificationNpcTypes.filter(
+  const detectorNpcTypes = notificationNpcTypes.filter(
     (field) => field.key !== "message",
   );
 
+  // The "timers" category stays out of the UI while timer sounds are
+  // unsupported; its persisted config and volume are preserved untouched.
   const categories: {
-    id: Exclude<SoundCategory, "pings">;
+    id: Exclude<SoundCategory, "pings" | "timers">;
     label: string;
     icon: LucideIcon;
-    fields: typeof notificationNpcTypes | typeof detectorTimerNpcTypes;
+    fields: typeof notificationNpcTypes | typeof detectorNpcTypes;
     description: string;
   }[] = [
     {
       id: "notifications",
-      label: t("sounds.categories.notifications.label"),
+      label: t("settings.sounds.categories.notifications.label"),
       icon: Bell,
       fields: notificationNpcTypes,
-      description: t("sounds.categories.notifications.description"),
+      description: t("settings.sounds.categories.notifications.description"),
     },
     {
       id: "detector",
-      label: t("sounds.categories.detector.label"),
+      label: t("settings.sounds.categories.detector.label"),
       icon: Crosshair,
-      fields: detectorTimerNpcTypes,
-      description: t("sounds.categories.detector.description"),
-    },
-    {
-      id: "timers",
-      label: t("sounds.categories.timers.label"),
-      icon: Clock,
-      fields: detectorTimerNpcTypes,
-      description: t("sounds.categories.timers.description"),
+      fields: detectorNpcTypes,
+      description: t("settings.sounds.categories.detector.description"),
     },
   ];
 

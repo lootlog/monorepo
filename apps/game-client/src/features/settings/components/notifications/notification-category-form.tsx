@@ -1,29 +1,20 @@
+import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
-import { SettingsSection } from "@/components/settings/settings-section";
 import {
   SettingsGuildSelectionGrid,
   toggleAvailableGuild,
 } from "@/features/settings/components/shared/settings-guild-selection-grid";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   NotificationSettings,
   NotificationType,
 } from "@lootlog/schema/account-preferences";
-import {
-  type FC,
-  type FormEvent,
-  useEffect,
-  useEffectEvent,
-  useState,
-} from "react";
+import { type FC, type FormEvent, useEffect, useEffectEvent } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import * as z from "zod";
@@ -67,9 +58,9 @@ const cloneNotificationSettings = (
   };
 };
 
-const isDeferredNotificationSyncField = (fieldName: string | null) => {
-  return fieldName === "autoHideTimeout";
-};
+const AUTO_HIDE_MIN_SECONDS = 0;
+
+const AUTO_HIDE_MAX_SECONDS = 600;
 
 const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
@@ -79,7 +70,6 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   categoryKey,
 }) => {
   const { t } = useTranslation();
-  const { npcTypeColors } = useNpcTypeColors();
 
   const {
     accountId,
@@ -94,30 +84,37 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   const currentCategorySettings: NotificationSettings =
     accountSettings[categoryKey];
 
-  const textColor = getTextColor(categoryKey, true, npcTypeColors);
-
   const toggleFields: Array<{
     key: keyof Pick<
       NotificationSettings,
       "show" | "ignoreOtherWorlds" | "highlight" | "sound"
     >;
     label: string;
+    description: string;
   }> = [
-    { key: "show", label: t("settings.notifications.toggles.show") },
+    {
+      key: "show",
+      label: t("settings.notifications.toggles.show"),
+      description: t("settings.notifications.toggles.showDescription"),
+    },
     {
       key: "ignoreOtherWorlds",
       label: t("settings.notifications.toggles.ignoreOtherWorlds"),
+      description: t(
+        "settings.notifications.toggles.ignoreOtherWorldsDescription",
+      ),
     },
     {
       key: "highlight",
       label: t("settings.notifications.toggles.highlight"),
+      description: t("settings.notifications.toggles.highlightDescription"),
     },
-    { key: "sound", label: t("settings.notifications.toggles.sound") },
+    {
+      key: "sound",
+      label: t("settings.notifications.toggles.sound"),
+      description: t("settings.notifications.toggles.soundDescription"),
+    },
   ];
-
-  const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
-    null,
-  );
 
   const debouncedUpdate = useDebouncedCallback(
     (
@@ -128,11 +125,10 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     300,
   );
 
-  const { control, register, reset, setValue, formState, getValues } =
-    useForm<FormData>({
-      resolver: zodResolver(FormSchema),
-      defaultValues: cloneNotificationSettings(currentCategorySettings),
-    });
+  const { control, reset, setValue, formState, getValues } = useForm<FormData>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: cloneNotificationSettings(currentCategorySettings),
+  });
 
   useEffect(() => {
     const nextFormValues = cloneNotificationSettings(currentCategorySettings);
@@ -181,10 +177,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   // Autosave the form subscription to the debounced server mutation, rather than synchronizing parent render state.
   // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
-    if (
-      !formState.isDirty ||
-      isDeferredNotificationSyncField(deferredSyncField)
-    ) {
+    if (!formState.isDirty) {
       return;
     }
 
@@ -194,7 +187,6 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
     categoryKey,
     currentCategorySettings,
     debouncedUpdate,
-    deferredSyncField,
     formState.isDirty,
     isFetched,
     getValues,
@@ -222,72 +214,62 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
   };
 
   return (
-    <form
-      className="ll:flex ll:flex-col ll:gap-4 ll:py-4"
-      onSubmit={handleSubmit}
-    >
-      <div className="ll:grid ll:gap-2">
-        {toggleFields.map((field) => {
-          const isDisabled = field.key !== "show" && !watchShow;
-          const isHighlightField = field.key === "highlight";
+    <form className="ll:flex ll:flex-col" onSubmit={handleSubmit}>
+      {toggleFields.map((field) => {
+        const isDisabled = field.key !== "show" && !watchShow;
+        const controlId = `${categoryKey}-${field.key}`;
 
-          return (
-            <SettingsRow
-              key={field.key}
-              disabled={isDisabled}
-              label={field.label}
-              labelStyle={isHighlightField ? { color: textColor } : undefined}
-            >
-              <Controller
-                name={field.key}
-                control={control}
-                render={({ field: controllerField }) => (
-                  <Switch
-                    id={`${categoryKey}-${field.key}`}
-                    checked={controllerField.value}
-                    disabled={isDisabled}
-                    onCheckedChange={controllerField.onChange}
-                  />
-                )}
-              />
-            </SettingsRow>
-          );
-        })}
-        <SettingsRow
-          disabled={!watchShow}
-          label={t("settings.notifications.autoHideLabel")}
-          description={t("settings.notifications.autoHideDescription")}
-          controlClassName="ll:w-12"
-        >
-          <Input
-            id={`${categoryKey}-auto-hide-timeout`}
-            type="number"
-            disabled={!watchShow}
-            className="ll:h-5! ll:w-full! ll:px-1! ll:py-0! ll:text-[11px]! ll:text-center"
-            placeholder="0"
-            onFocus={() => {
-              setDeferredSyncField("autoHideTimeout");
-            }}
-            {...register("autoHideTimeout", {
-              onBlur: () => {
-                setDeferredSyncField(null);
-                syncCurrentValues();
-              },
-              setValueAs: (value) => {
-                if (value === "" || value === null || value === undefined) {
-                  return 0;
-                }
-
-                const parsedValue = Number(value);
-
-                return Number.isNaN(parsedValue) ? 0 : parsedValue;
-              },
-            })}
-          />
-        </SettingsRow>
-      </div>
-
-      <SettingsSection title={t("settings.notifications.serversTitle")}>
+        return (
+          <SettingsRow
+            key={field.key}
+            htmlFor={controlId}
+            disabled={isDisabled}
+            label={field.label}
+            description={field.description}
+          >
+            <Controller
+              name={field.key}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Switch
+                  id={controlId}
+                  checked={controllerField.value}
+                  disabled={isDisabled}
+                  onCheckedChange={controllerField.onChange}
+                />
+              )}
+            />
+          </SettingsRow>
+        );
+      })}
+      <SettingsRow
+        htmlFor={`${categoryKey}-auto-hide-timeout`}
+        disabled={!watchShow}
+        label={t("settings.notifications.autoHideLabel")}
+        description={t("settings.notifications.autoHideDescription")}
+      >
+        <Controller
+          name="autoHideTimeout"
+          control={control}
+          render={({ field: controllerField }) => (
+            <SettingsNumberField
+              id={`${categoryKey}-auto-hide-timeout`}
+              value={controllerField.value ?? 0}
+              min={AUTO_HIDE_MIN_SECONDS}
+              max={AUTO_HIDE_MAX_SECONDS}
+              unit="s"
+              disabled={!watchShow}
+              onCommit={controllerField.onChange}
+            />
+          )}
+        />
+      </SettingsRow>
+      <SettingsRow
+        layout="stacked"
+        disabled={!watchShow}
+        label={t("settings.notifications.serversTitle")}
+        description={t("settings.notifications.serversDescription")}
+      >
         <SettingsGuildSelectionGrid
           guilds={guilds}
           selectedGuildIds={selectedGuildIds}
@@ -295,8 +277,9 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
           onToggle={toggleGuild}
           emptyStateLabel={t("settings.notifications.emptyGuilds")}
           variant="compact"
+          className="ll:w-full"
         />
-      </SettingsSection>
+      </SettingsRow>
     </form>
   );
 };

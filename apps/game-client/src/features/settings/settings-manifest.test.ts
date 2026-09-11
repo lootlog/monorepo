@@ -61,6 +61,7 @@ describe("settings manifest persistence references", () => {
     expect(subsectionsOf("notifications")).toEqual([
       "notification-rules",
       "detector",
+      "routing",
       "notification-mutes",
     ]);
     expect(subsectionsOf("experimental")).toEqual(["experimental"]);

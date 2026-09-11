@@ -65,6 +65,28 @@ synchronizacji został usunięty.
 - `Escape` najpierw czyści wyszukiwanie, potem zamyka panel wyszukiwania w
   wąskim oknie, a na końcu zamyka okno.
 
+### Układ sekcji
+
+Każda sekcja okna ma ten sam układ: tytuł, krótki opis i lista wierszy, gdzie
+po lewej stoi nazwa ustawienia z jednozdaniowym opisem, a po prawej jego
+kontrolka. Wybór jednej z dwóch lub trzech opcji to przełącznik segmentowy,
+dłuższe listy to lista rozwijana, a wartości liczbowe to pole z jednostką
+i suwak z odczytem, który zapisuje wartość po puszczeniu.
+
+- **Powiadomienia → Reguły** i **Powiadomienia → Wykrywacz** pokazują wszystkie
+  kategorie NPC jako rozwijane panele; w nagłówku panelu widzisz od razu, czy
+  kategoria jest włączona i na ile serwerów trafia.
+- **Powiadomienia → Routing** to osobna sekcja z regułami wysyłki wykrywacza na
+  serwery. Każda reguła ma w nagłówku skrót zakresu poziomów, świata i liczby
+  serwerów; rozwiń ją, aby edytować nazwę, zakres, świat i serwery.
+- **Powiadomienia → Wyciszenia** to dwie listy (gracze i potwory) z jednym
+  polem wyszukiwania nad nimi.
+- **Diagnostyka → Logi** prezentuje akcje jako tabelę z filtrami w pasku nad
+  nią; kliknięcie wiersza rozwija payload, szczegóły i żądania API.
+- **Sterowanie → Skróty klawiszowe** pokazują skrót jako klawisz; ikona
+  przywracania pojawia się tylko przy zmienionych skrótach, a „Przywróć
+  domyślne” jest w pasku nad listą.
+
 ### Zapisywanie zmian
 
 Każda zmiana zapisuje się automatycznie. W pasku tytułu okna zobaczysz stan

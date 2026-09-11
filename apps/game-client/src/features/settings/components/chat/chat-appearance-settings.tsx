@@ -1,31 +1,34 @@
 import { useChatAppearanceDraft } from "./use-chat-appearance-draft";
+import {
+  SettingsChoiceCards,
+  type SettingsChoiceOption,
+} from "@/components/settings/settings-choice-card";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { SettingsSliderField } from "@/components/settings/settings-slider-field";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useSettingsStore } from "@/store/settings.store";
 import {
-  CHAT_APPEARANCE_COMPACT_PRESET,
-  CHAT_APPEARANCE_READABLE_PRESET,
   CHAT_FONT_SCALE_MAX_PERCENT,
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
 } from "@lootlog/schema/chat-appearance";
 import { getChatAppearancePreset } from "@lootlog/domain/chat-appearance";
-import { RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SettingsHelpPopover } from "../shared/settings-help-popover";
-import { ChatAppearancePresetCard } from "./chat-appearance-preset-card";
 
 const METADATA_KEYS = [
   "showTimestamp",
   "showGuildLabel",
   "showNpcAvatar",
   "showNpcLevel",
+  "showNpcLocationAndCoordinates",
 ] as const;
+
+type ChatPresetChoice = "readable" | "compact" | "custom";
 
 export const ChatAppearanceSettingsForm = () => {
   const { t } = useTranslation();
@@ -34,71 +37,52 @@ export const ChatAppearanceSettingsForm = () => {
     (state) => state.allowWorldSelection ?? false,
   );
 
-  const {
-    draft,
-    npcTypeColors,
-    updateDraft,
-    commit,
-    updateAndCommit,
-    applyPreset,
-  } = useChatAppearanceDraft();
+  const { draft, updateDraft, commit, updateAndCommit, applyPreset } =
+    useChatAppearanceDraft();
 
   const activePreset = getChatAppearancePreset(draft);
+
+  const presetOptions: SettingsChoiceOption<ChatPresetChoice>[] = [
+    {
+      value: "readable",
+      title: t("settings.chat.preset.readable"),
+      description: t("settings.chat.preset.readableDescription"),
+    },
+    {
+      value: "compact",
+      title: t("settings.chat.preset.compact"),
+      description: t("settings.chat.preset.compactDescription"),
+    },
+    ...(activePreset === "custom"
+      ? [
+          {
+            value: "custom" as const,
+            title: t("settings.chat.preset.custom"),
+            description: t("settings.chat.preset.customDescription"),
+          },
+        ]
+      : []),
+  ];
 
   const visibleMetadataKeys = allowWorldSelection
     ? METADATA_KEYS
     : METADATA_KEYS.filter((key) => key !== "showGuildLabel");
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-4">
+    <SettingsTabLayout>
       <SettingsSection
         controlId="chat-preset"
         title={t("settings.chat.preset.section")}
-        actions={
-          activePreset === "custom" ? (
-            <Button
-              onClick={() => {
-                applyPreset("readable");
-              }}
-              type="button"
-              variant="ghost"
-              className="ll:gap-1 ll:px-1.5"
-            >
-              <RotateCcw className="ll:size-3" aria-hidden="true" />
-              {t("settings.chat.preset.restoreReadable")}
-            </Button>
-          ) : null
-        }
       >
-        <div
-          className="ll:grid ll:gap-1 ll:px-2 ll:pt-1"
+        <SettingsChoiceCards
           id="chat-preset"
-          style={{
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(min(100%, 9rem), 1fr))",
+          label={t("settings.chat.preset.label")}
+          options={presetOptions}
+          value={activePreset}
+          onChange={(preset) => {
+            if (preset !== "custom") applyPreset(preset);
           }}
-        >
-          <ChatAppearancePresetCard
-            description={t("settings.chat.preset.readableDescription")}
-            name={t("settings.chat.preset.readable")}
-            npcTypeColors={npcTypeColors}
-            onSelect={() => {
-              applyPreset("readable");
-            }}
-            selected={activePreset === "readable"}
-            settings={CHAT_APPEARANCE_READABLE_PRESET}
-          />
-          <ChatAppearancePresetCard
-            description={t("settings.chat.preset.compactDescription")}
-            name={t("settings.chat.preset.compact")}
-            npcTypeColors={npcTypeColors}
-            onSelect={() => {
-              applyPreset("compact");
-            }}
-            selected={activePreset === "compact"}
-            settings={CHAT_APPEARANCE_COMPACT_PRESET}
-          />
-        </div>
+        />
       </SettingsSection>
 
       <SettingsSection title={t("settings.chat.layout.section")}>
@@ -114,7 +98,6 @@ export const ChatAppearanceSettingsForm = () => {
               />
             </span>
           }
-          description={t("settings.chat.npcLayout.description")}
         >
           <ToggleGroup
             variant="outline"
@@ -137,45 +120,43 @@ export const ChatAppearanceSettingsForm = () => {
         <SettingsRow
           controlId="chat-font-scale"
           label={t("settings.chat.fontScale.label")}
-          controlClassName="ll:w-48 ll:gap-2"
+          description={t("settings.chat.fontScale.description")}
+          controlClassName="ll:w-48"
         >
-          <Slider
+          <SettingsSliderField
             id="chat-font-scale"
             aria-label={t("settings.chat.fontScale.label")}
             min={CHAT_FONT_SCALE_MIN_PERCENT}
             max={CHAT_FONT_SCALE_MAX_PERCENT}
             step={5}
+            unit="%"
             value={draft.fontScalePercent}
             onValueChange={(fontScalePercent) =>
               updateDraft({ fontScalePercent })
             }
-            onValueCommitted={(fontScalePercent) => {
+            onCommit={(fontScalePercent) => {
               commit({ fontScalePercent });
             }}
           />
-          <span className="ll:w-10 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">
-            {draft.fontScalePercent}%
-          </span>
         </SettingsRow>
         <SettingsRow
           controlId="chat-message-gap"
           label={t("settings.chat.messageGap.label")}
-          controlClassName="ll:w-48 ll:gap-2"
+          description={t("settings.chat.messageGap.description")}
+          controlClassName="ll:w-48"
         >
-          <Slider
+          <SettingsSliderField
             id="chat-message-gap"
             aria-label={t("settings.chat.messageGap.label")}
             min={CHAT_MESSAGE_GAP_MIN_PX}
             max={CHAT_MESSAGE_GAP_MAX_PX}
+            unit="px"
             value={draft.messageGapPx}
             onValueChange={(messageGapPx) => updateDraft({ messageGapPx })}
-            onValueCommitted={(messageGapPx) => {
+            onCommit={(messageGapPx) => {
               commit({ messageGapPx });
             }}
           />
-          <span className="ll:w-10 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">
-            {draft.messageGapPx}px
-          </span>
         </SettingsRow>
       </SettingsSection>
 
@@ -188,6 +169,7 @@ export const ChatAppearanceSettingsForm = () => {
             key={key}
             htmlFor={`chat-metadata-${key}`}
             label={t(`settings.chat.metadata.${key}`)}
+            description={t(`settings.chat.metadata.${key}Description`)}
           >
             <Switch
               id={`chat-metadata-${key}`}
@@ -198,19 +180,7 @@ export const ChatAppearanceSettingsForm = () => {
             />
           </SettingsRow>
         ))}
-        <SettingsRow
-          htmlFor="chat-metadata-show-npc-location"
-          label={t("settings.chat.metadata.showNpcLocationAndCoordinates")}
-        >
-          <Switch
-            id="chat-metadata-show-npc-location"
-            checked={draft.showNpcLocationAndCoordinates}
-            onCheckedChange={(checked) => {
-              updateAndCommit({ showNpcLocationAndCoordinates: checked });
-            }}
-          />
-        </SettingsRow>
       </SettingsSection>
-    </div>
+    </SettingsTabLayout>
   );
 };

@@ -11,6 +11,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Profiler } from "react";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -53,15 +54,35 @@ const render = () => {
 };
 
 describe("DetectorSettingsTab", () => {
-  it("renders translated tab copy instead of raw settings keys", () => {
+  it("lists every NPC type as an accordion item with the first one open", () => {
     render();
-    expect(screen.getByRole("tab", { name: "Elita 2" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Heros" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Kolos" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Tytan" })).toBeInTheDocument();
-    expect(
-      screen.queryByText("settings.detector.title"),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Elita 2" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Heros" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.getByRole("button", { name: "Kolos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tytan" })).toBeInTheDocument();
+    expect(document.getElementById("ELITE2-detect")).toBeInTheDocument();
+    expect(document.getElementById("HERO-detect")).not.toBeInTheDocument();
+  });
+
+  it("opens a collapsed type and keeps dependent rows disabled until detect is on", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.detector.HERO.detect = false;
+    seedAccountPreferences(initial);
+    render();
+
+    await user.click(screen.getByRole("button", { name: "Heros" }));
+
+    expect(document.getElementById("HERO-detect")).not.toBeChecked();
+    expect(document.getElementById("HERO-autoSend")).toBeDisabled();
+    expect(document.getElementById("HERO-highlight")).toBeDisabled();
   });
   it("applies refreshed account preferences without restarting the form reset loop", async () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });

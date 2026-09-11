@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   useUserPreferences,
   useUpdateUserPreferences,
@@ -18,6 +19,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
+
+const VISIBILITY_FILTERS: VisibilityFilter[] = ["all", "visible", "hidden"];
 
 export const ServerVisibilitySettingsTab = () => {
   const { t } = useTranslation();
@@ -68,42 +71,8 @@ export const ServerVisibilitySettingsTab = () => {
     updatePreferences.mutate({ hiddenGuildIds: nextHiddenGuildIds });
   };
 
-  let saveStatus: string | null = null;
-
-  if (updatePreferences.isPending) {
-    saveStatus = t("settings.servers.saving");
-  } else if (updatePreferences.isError) {
-    saveStatus = t("settings.servers.saveError");
-  } else if (updatePreferences.isSuccess) {
-    saveStatus = t("settings.servers.saved");
-  }
-
   return (
-    <SettingsTabLayout
-      actions={
-        saveStatus ? (
-          <div className="ll:flex ll:items-center ll:gap-2">
-            <span
-              aria-live="polite"
-              className="ll:text-[11px] ll:text-gray-400"
-            >
-              {saveStatus}
-            </span>
-            {updatePreferences.isError && updatePreferences.variables ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() =>
-                  updatePreferences.mutate(updatePreferences.variables)
-                }
-              >
-                {t("actions.retry")}
-              </Button>
-            ) : null}
-          </div>
-        ) : null
-      }
-    >
+    <SettingsTabLayout>
       <AsyncContent
         error={guildsQuery.error ?? preferencesQuery.error}
         errorLabel={t("settings.servers.loadError")}
@@ -123,6 +92,9 @@ export const ServerVisibilitySettingsTab = () => {
           <SettingsSection
             controlId="server-visibility"
             title={t("settings.servers.listTitle")}
+            description={`${t("settings.servers.visibleCount", {
+              count: visibleCount,
+            })} · ${t("settings.servers.hiddenCount", { count: hiddenCount })}`}
             actions={
               <Button
                 type="button"
@@ -141,38 +113,29 @@ export const ServerVisibilitySettingsTab = () => {
               </Button>
             }
           >
-            <search className="ll:w-full">
-              <SearchInput
-                value={query}
-                placeholder={t("settings.servers.searchPlaceholder")}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </search>
-            <div className="ll:flex ll:flex-wrap ll:items-center ll:justify-between ll:gap-2">
-              <div className="ll:flex ll:gap-1">
-                {(["all", "visible", "hidden"] as const).map((filter) => (
-                  <Button
-                    key={filter}
-                    type="button"
-                    variant="ghost"
-                    aria-pressed={visibilityFilter === filter}
-                    className="ll:px-2 ll:aria-pressed:border-ring ll:aria-pressed:bg-accent"
-                    onClick={() => setVisibilityFilter(filter)}
-                  >
+            <div className="ll:flex ll:items-center ll:gap-2 ll:px-2 ll:pb-1">
+              <search className="ll:flex ll:min-w-0 ll:flex-1">
+                <SearchInput
+                  value={query}
+                  placeholder={t("settings.servers.searchPlaceholder")}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </search>
+              <ToggleGroup
+                variant="outline"
+                size="sm"
+                spacing={0}
+                value={[visibilityFilter]}
+                onValueChange={([value]: VisibilityFilter[]) => {
+                  if (value) setVisibilityFilter(value);
+                }}
+              >
+                {VISIBILITY_FILTERS.map((filter) => (
+                  <ToggleGroupItem key={filter} value={filter}>
                     {t(`settings.servers.filters.${filter}`)}
-                  </Button>
+                  </ToggleGroupItem>
                 ))}
-              </div>
-              <div className="ll:flex ll:items-center ll:gap-2">
-                <span className="ll:text-[11px] ll:text-gray-400">
-                  {t("settings.servers.visibleCount", {
-                    count: visibleCount,
-                  })}
-                </span>
-                <span className="ll:text-[11px] ll:text-gray-400">
-                  {t("settings.servers.hiddenCount", { count: hiddenCount })}
-                </span>
-              </div>
+              </ToggleGroup>
             </div>
             {filteredGuilds.length === 0 ? (
               <SettingsEmptyState>
@@ -181,36 +144,39 @@ export const ServerVisibilitySettingsTab = () => {
             ) : (
               filteredGuilds.map((guild) => {
                 const isVisible = !hiddenGuildIdSet.has(guild.id);
+                const switchId = `server-visibility-${guild.id}`;
 
                 return (
                   <SettingsRow
                     key={guild.id}
+                    htmlFor={switchId}
                     label={
-                      <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
-                        <Avatar className="ll:size-8 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
+                      <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
+                        <Avatar className="ll:size-6 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
                           {guild.icon ? (
                             <img
                               src={guild.icon}
-                              alt={guild.name}
+                              alt=""
                               className="ll:h-full ll:w-full ll:object-cover"
                             />
                           ) : (
-                            <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-md ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100">
+                            <AvatarFallback
+                              aria-hidden
+                              className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-md ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100"
+                            >
                               {guild.name.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           )}
                         </Avatar>
                         <span className="ll:truncate">{guild.name}</span>
-                      </div>
+                      </span>
                     }
                     disabled={updatePreferences.isPending}
                   >
                     <Switch
+                      id={switchId}
                       checked={isVisible}
                       disabled={updatePreferences.isPending}
-                      aria-label={t("settings.servers.switchLabel", {
-                        name: guild.name,
-                      })}
                       onCheckedChange={(checked) =>
                         updateGuildVisibility(guild.id, checked)
                       }

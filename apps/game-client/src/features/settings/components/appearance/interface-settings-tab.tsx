@@ -2,6 +2,7 @@ import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
+import { SettingsHelpPopover } from "@/features/settings/components/shared/settings-help-popover";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,7 +24,14 @@ export const InterfaceSettingsTab: FC = () => {
         <SettingsRow
           controlId="animation-effects"
           htmlFor="animation-effects"
-          label={t("settings.general.animationEffectsLabel")}
+          label={
+            <span className="ll:inline-flex ll:items-center">
+              {t("settings.general.animationEffectsLabel")}
+              <SettingsHelpPopover
+                recommendation={t("settings.help.animationsRecommendation")}
+              />
+            </span>
+          }
           description={t("settings.general.animationEffectsDescription")}
         >
           <Switch

@@ -1,10 +1,9 @@
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
-import { type FC, useEffect, useRef } from "react";
+import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,6 +17,8 @@ import { useGameStore } from "@/store/game.store";
 type CatchingSettingsFormProps = {
   characterId: string;
   disabled?: boolean;
+  /** Trailing section actions, e.g. "apply to all characters". */
+  actions?: ReactNode;
   onSelectionChange?: (catchingGuildIds: string[]) => void;
 };
 
@@ -30,6 +31,7 @@ type FormData = z.infer<typeof FormSchema>;
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
   disabled = false,
+  actions,
   onSelectionChange,
 }) => {
   const { t } = useTranslation();
@@ -150,34 +152,23 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   };
 
   return (
-    <div className="ll:relative ll:py-1">
-      <SettingsSection
-        title={t("settings.catching.form.collectionRangeTitle")}
-        description={t("settings.catching.form.collectionRangeDescription")}
-        actions={
-          <div className="ll:flex ll:items-center ll:gap-2">
-            <div className="ll:rounded-sm ll:border ll:border-gray-600/80 ll:bg-gray-900/70 ll:px-2 ll:py-1 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-300">
-              {t("settings.catching.form.activeCount", {
-                selectedCount,
-                totalCount: totalGuilds,
-              })}
-            </div>
-            {isPending ? (
-              <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
-            ) : null}
-          </div>
-        }
-        contentClassName="ll:gap-3"
-      >
-        <SettingsGuildSelectionGrid
-          guilds={guilds}
-          selectedGuildIds={selectedGuildIds}
-          disabled={isInteractionDisabled}
-          onToggle={handleGuildToggle}
-          emptyStateLabel={t("settings.catching.form.emptyGuilds")}
-          variant="compact"
-        />
-      </SettingsSection>
-    </div>
+    <SettingsSection
+      controlId="catching-range"
+      title={t("settings.catching.form.collectionRangeTitle")}
+      description={`${t("settings.catching.form.collectionRangeDescription")} ${t(
+        "settings.catching.form.activeCount",
+        { selectedCount, totalCount: totalGuilds },
+      )}`}
+      actions={actions}
+    >
+      <SettingsGuildSelectionGrid
+        guilds={guilds}
+        selectedGuildIds={selectedGuildIds}
+        disabled={isInteractionDisabled}
+        onToggle={handleGuildToggle}
+        emptyStateLabel={t("settings.catching.form.emptyGuilds")}
+        variant="compact"
+      />
+    </SettingsSection>
   );
 };

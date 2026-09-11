@@ -381,6 +381,36 @@ export const bindingsEqual = (
   );
 };
 
+/** True when the binding structurally equals the action's default. */
+export const isDefaultBinding = (
+  action: HotkeyAction,
+  binding: HotkeyBinding,
+): boolean => {
+  const config = HOTKEY_ACTIONS.find((c) => c.action === action);
+
+  if (!config) return false;
+  const defaultBinding = config.defaultBinding;
+
+  if (
+    binding.type !== defaultBinding.type ||
+    binding.shift !== defaultBinding.shift ||
+    binding.ctrl !== defaultBinding.ctrl ||
+    binding.alt !== defaultBinding.alt
+  ) {
+    return false;
+  }
+
+  if (binding.type === "keyboard" && defaultBinding.type === "keyboard") {
+    return binding.key === defaultBinding.key;
+  }
+
+  return (
+    binding.type === "mouse" &&
+    defaultBinding.type === "mouse" &&
+    binding.button === defaultBinding.button
+  );
+};
+
 export const formatBinding = (binding: HotkeyBinding): string => {
   if (binding.type === "keyboard" && !binding.key)
     return i18n.t("chat:quickActions.unassigned");

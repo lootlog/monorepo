@@ -1,3 +1,4 @@
+import { NpcTypeChip } from "@/components/settings/npc-type-chip";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -6,44 +7,40 @@ import {
   CHAT_NPC_TYPES,
   useHiddenNpcTypes,
 } from "@/features/chat/hooks/use-hidden-npc-types";
-import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { useTranslation } from "react-i18next";
 
 export const ChatFiltersSettings = () => {
-  const { t } = useTranslation(["settings", "common"]);
+  const { t } = useTranslation();
   const { hiddenNpcTypes, ready, setNpcTypeVisible } = useHiddenNpcTypes();
-  const { npcTypeColors } = useNpcTypeColors();
 
   return (
     <SettingsTabLayout>
-      <SettingsSection controlId="chat-npc-message-types">
-        <div id="chat-npc-message-types" className="ll:flex ll:flex-col">
-          {CHAT_NPC_TYPES.map((npcType) => {
-            const label = t(`common:npcTypes.${npcType.toLowerCase()}`);
-            const controlId = `chat-npc-message-type-${npcType.toLowerCase()}`;
+      <SettingsSection
+        controlId="chat-npc-message-types"
+        title={t("settings.chatFilters.npcMessages.title")}
+        description={t("settings.chatFilters.npcMessages.description")}
+      >
+        {CHAT_NPC_TYPES.map((npcType) => {
+          const label = t(`common:npcTypes.${npcType.toLowerCase()}`);
+          const controlId = `chat-npc-message-type-${npcType.toLowerCase()}`;
 
-            return (
-              <SettingsRow
-                key={npcType}
-                htmlFor={controlId}
-                label={label}
-                labelStyle={{
-                  color: getTextColor(npcType, true, npcTypeColors),
-                }}
-              >
-                <Switch
-                  id={controlId}
-                  checked={!hiddenNpcTypes.has(npcType)}
-                  disabled={!ready}
-                  onCheckedChange={(checked) =>
-                    setNpcTypeVisible(npcType, checked)
-                  }
-                />
-              </SettingsRow>
-            );
-          })}
-        </div>
+          return (
+            <SettingsRow
+              key={npcType}
+              htmlFor={controlId}
+              label={<NpcTypeChip npcType={npcType}>{label}</NpcTypeChip>}
+            >
+              <Switch
+                id={controlId}
+                checked={!hiddenNpcTypes.has(npcType)}
+                disabled={!ready}
+                onCheckedChange={(checked) =>
+                  setNpcTypeVisible(npcType, checked)
+                }
+              />
+            </SettingsRow>
+          );
+        })}
       </SettingsSection>
     </SettingsTabLayout>
   );

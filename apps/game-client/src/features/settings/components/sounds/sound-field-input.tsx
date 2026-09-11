@@ -1,16 +1,14 @@
-import { Button } from "@/components/ui/button";
+import { NpcTypeChip } from "@/components/settings/npc-type-chip";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Play } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 interface SoundFieldInputProps {
+  /** Sound config key; NPC type keys get a coloured chip label. */
+  fieldKey: string;
   label: string;
   soundUrl: string;
   placeholder?: string;
@@ -19,7 +17,10 @@ interface SoundFieldInputProps {
   onPlaySound: () => void;
 }
 
+const NON_NPC_FIELD_KEYS = new Set(["message"]);
+
 export const SoundFieldInput: FC<SoundFieldInputProps> = ({
+  fieldKey,
   label,
   soundUrl,
   placeholder,
@@ -28,34 +29,40 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
   onPlaySound,
 }) => {
   const { t } = useTranslation();
+  const inputId = `sound-url-${fieldKey}`;
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1">
-      <div className="ll:flex ll:items-center ll:gap-3">
-        <Label className="ll:w-24 ll:shrink-0 ll:text-xs">{label}</Label>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              onClick={onPlaySound}
-              className="ll:p-1 ll:size-6 ll:shrink-0"
-            >
-              <Play className="ll:size-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{t("common:actions.playSound")}</TooltipContent>
-        </Tooltip>
-        <div className="ll:flex-1 ll:flex ll:flex-col ll:gap-1">
-          <Input
-            type="url"
-            placeholder={placeholder}
-            defaultValue={soundUrl}
-            onChange={(e) => onSoundUrlChange(e.target.value)}
-            className={`ll:text-xs ${error ? "ll:border-red-500 ll:focus-visible:ring-red-500" : ""}`}
-          />
-          {error && <span className="ll:text-xs ll:text-red-500">{error}</span>}
-        </div>
-      </div>
-    </div>
+    <SettingsRow
+      htmlFor={inputId}
+      label={
+        NON_NPC_FIELD_KEYS.has(fieldKey) ? (
+          label
+        ) : (
+          <NpcTypeChip npcType={fieldKey}>{label}</NpcTypeChip>
+        )
+      }
+      description={
+        error ? <span className="ll:text-red-400">{error}</span> : undefined
+      }
+      controlClassName="ll:w-64 ll:gap-1"
+    >
+      <Input
+        id={inputId}
+        type="url"
+        placeholder={placeholder}
+        defaultValue={soundUrl}
+        aria-invalid={error ? true : undefined}
+        onChange={(event) => onSoundUrlChange(event.target.value)}
+        className={
+          error ? "ll:border-red-500 ll:focus-visible:ring-red-500" : undefined
+        }
+      />
+      <SettingsIconButton
+        label={t("common:actions.playSound")}
+        onClick={onPlaySound}
+      >
+        <Play aria-hidden />
+      </SettingsIconButton>
+    </SettingsRow>
   );
 };

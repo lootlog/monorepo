@@ -1,3 +1,5 @@
+import { SettingsColorRow } from "@/components/settings/settings-color-row";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -75,74 +77,61 @@ export const NpcColorsSettings = () => {
             );
           }}
         >
-          <RotateCcw className="ll:size-3" />
+          <RotateCcw className="ll:size-3.5" />
           {t("settings.npcColors.resetAll")}
         </Button>
       }
     >
-      <SettingsSection controlId="npc-type-colors">
-        <div
-          id="npc-type-colors"
-          className="ll:grid ll:grid-cols-1 ll:gap-1.5 ll:px-2 min-[680px]:ll:grid-cols-2"
-        >
-          {COMBAT_NPC_TYPES.map((npcType) => {
-            const surfaceColors = deriveNpcSurfaceColors(draft[npcType]);
+      <SettingsSection
+        controlId="npc-type-colors"
+        title={t("settings.npcColors.title")}
+        description={t("settings.npcColors.description")}
+      >
+        {COMBAT_NPC_TYPES.map((npcType) => {
+          const color = draft[npcType];
+          const surfaceColors = deriveNpcSurfaceColors(color);
+          const isModified = color !== DEFAULT_NPC_TYPE_COLORS[npcType];
+          const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
 
-            const isModified =
-              draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType];
-
-            const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
-
-            return (
-              <NpcColorEditorPopover
-                key={npcType}
-                color={draft[npcType]}
-                defaultColor={DEFAULT_NPC_TYPE_COLORS[npcType]}
-                npcType={npcType}
-                open={openType === npcType}
-                saving={saving && openType === npcType}
-                onOpenChange={(open) => setOpenType(open ? npcType : null)}
-                onDraftChange={(color) => updateDraft(npcType, color)}
-                onCommit={(color) => {
-                  const normalizedColor = updateDraft(npcType, color);
-                  commit({ [npcType]: normalizedColor });
-                }}
-                onReset={() => resetType(npcType)}
-              >
-                <button
-                  type="button"
-                  className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-ring ll-custom-cursor-pointer"
-                  style={{
-                    borderColor:
-                      openType === npcType ? surfaceColors.border : undefined,
-                    backgroundColor:
-                      openType === npcType
-                        ? surfaceColors.background
-                        : undefined,
+          return (
+            <SettingsColorRow
+              key={npcType}
+              name={npcTypeLabel}
+              borderColor={color}
+              backgroundColor={surfaceColors.background}
+              modified={isModified}
+              modifiedLabel={t("settings.npcColors.modified")}
+              editLabel={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
+              editTrigger={(trigger) => (
+                <NpcColorEditorPopover
+                  color={color}
+                  defaultColor={DEFAULT_NPC_TYPE_COLORS[npcType]}
+                  npcType={npcType}
+                  open={openType === npcType}
+                  saving={saving && openType === npcType}
+                  onOpenChange={(open) => setOpenType(open ? npcType : null)}
+                  onDraftChange={(nextColor) => updateDraft(npcType, nextColor)}
+                  onCommit={(nextColor) => {
+                    const normalizedColor = updateDraft(npcType, nextColor);
+                    commit({ [npcType]: normalizedColor });
                   }}
-                  aria-label={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
+                  onReset={() => resetType(npcType)}
                 >
-                  <span
-                    className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:border"
-                    style={{
-                      backgroundColor: draft[npcType],
-                      borderColor: draft[npcType],
-                    }}
-                  />
-                  <span className="ll:min-w-0 ll:flex-1 ll:truncate">
-                    {npcTypeLabel}
-                  </span>
-                  {isModified ? (
-                    <span
-                      className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-primary"
-                      title={t("settings.npcColors.modified")}
-                    />
-                  ) : null}
-                </button>
-              </NpcColorEditorPopover>
-            );
-          })}
-        </div>
+                  {trigger}
+                </NpcColorEditorPopover>
+              )}
+            >
+              {isModified ? (
+                <SettingsIconButton
+                  label={`${t("settings.npcColors.reset")}: ${npcTypeLabel}`}
+                  onClick={() => resetType(npcType)}
+                >
+                  <RotateCcw />
+                </SettingsIconButton>
+              ) : null}
+            </SettingsColorRow>
+          );
+        })}
       </SettingsSection>
     </SettingsTabLayout>
   );
