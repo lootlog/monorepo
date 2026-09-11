@@ -19,6 +19,7 @@ const operation = (
 
 const createHarness = (
   sendImplementation?: SettingsPatchQueueConfig["send"],
+  applyServerDocuments?: SettingsPatchQueueConfig["applyServerDocuments"],
 ) => {
   const statuses: string[] = [];
 
@@ -32,6 +33,7 @@ const createHarness = (
   const queue = createSettingsPatchQueue({
     send,
     applyOptimistic,
+    applyServerDocuments,
     reconcile,
     onStatus: (status) => statuses.push(status),
     debounceMs: 300,
@@ -118,6 +120,82 @@ describe("settings patch queue", () => {
         }),
       ],
     ]);
+  });
+
+  it("uses the save response instead of refetching when it fits the cache", async () => {
+    const response = { domains: { sounds: {} } };
+    const applyServerDocuments = vi.fn(() => true);
+
+    const { queue, send, applyOptimistic, reconcile, statuses } = createHarness(
+      () => Promise.resolve(response),
+      applyServerDocuments,
+    );
+
+    queue.enqueue({
+      operation: operation({ set: { detectorVolume: 0.7 } }),
+      queryKeys: [["/preferences"]],
+    });
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(applyServerDocuments).toHaveBeenCalledWith(response, [
+      operation({ set: { detectorVolume: 0.7 } }),
+    ]);
+    expect(reconcile).not.toHaveBeenCalled();
+    expect(applyOptimistic).toHaveBeenCalledTimes(1);
+    expect(statuses.at(-1)).toBe("saved");
+  });
+
+  it("re-lays a write queued during the request over the save response", async () => {
+    let finishSend: () => void = () => {};
+
+    const { queue, applyOptimistic, reconcile } = createHarness(
+      () =>
+        new Promise((resolve) => {
+          finishSend = () => resolve({ domains: {} });
+        }),
+      () => true,
+    );
+
+    queue.enqueue({
+      operation: operation({ set: { guildIds: ["a"] } }),
+      queryKeys: [["/preferences"]],
+    });
+    await vi.advanceTimersByTimeAsync(300);
+
+    const laterPatch = {
+      operation: operation({ set: { guildIds: ["a", "b"] } }),
+      queryKeys: [["/preferences"]],
+    };
+
+    queue.enqueue(laterPatch);
+    applyOptimistic.mockClear();
+    finishSend();
+    await vi.advanceTimersByTimeAsync(0);
+
+    // The response predates the later write; without re-applying it the
+    // form would briefly show the older server state.
+    expect(applyOptimistic.mock.calls[0]?.[0]).toMatchObject({
+      operation: laterPatch.operation,
+    });
+    expect(reconcile).not.toHaveBeenCalled();
+  });
+
+  it("refetches when the save response cannot replace the cache entry", async () => {
+    const { queue, reconcile, statuses } = createHarness(
+      () => Promise.resolve({ domains: {} }),
+      () => false,
+    );
+
+    queue.enqueue({
+      operation: operation({ set: { detectorVolume: 0.7 } }),
+      queryKeys: [["/preferences"]],
+    });
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(reconcile).toHaveBeenCalledTimes(1);
+    expect(reconcile).toHaveBeenCalledWith([["/preferences"]]);
+    expect(statuses.at(-1)).toBe("saved");
   });
 
   it("splits guild scoped documents into separate requests", async () => {

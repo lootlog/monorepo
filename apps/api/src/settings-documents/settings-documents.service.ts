@@ -284,21 +284,32 @@ export const makeSettingsDocuments = (
         guildIds,
       );
 
-      const scopes: SettingsScope[] = memberGuildIds.map((guildId) => ({
+      const userScope: SettingsScope = { type: "USER", id: userId };
+
+      const guildScopes: SettingsScope[] = memberGuildIds.map((guildId) => ({
         type: "GUILD",
         id: guildId,
       }));
 
+      // Each guild resolves over the same layers as a single-guild read:
+      // the user document first, then the guild document.
       const documents =
-        scopes.length === 0
+        guildScopes.length === 0
           ? []
-          : yield* repository.findDocuments(userId, context.domains, scopes);
+          : yield* repository.findDocuments(userId, context.domains, [
+              userScope,
+              ...guildScopes,
+            ]);
 
       const guilds: GuildSettingsDocumentsResponse["guilds"] = {};
 
-      for (const scope of scopes) {
+      for (const scope of guildScopes) {
         guilds[scope.id] = {
-          domains: resolveDomains(context.domains, [scope], documents),
+          domains: resolveDomains(
+            context.domains,
+            [userScope, scope],
+            documents,
+          ),
         };
       }
 

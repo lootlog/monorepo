@@ -12,9 +12,17 @@ export type QueuedSettingsPatch = {
   afterSave?: () => void;
 };
 
-export type SettingsPatchQueueConfig = {
-  send: (operations: SettingsOperation[]) => Promise<unknown>;
+export type SettingsPatchQueueConfig<TResponse = unknown> = {
+  send: (operations: SettingsOperation[]) => Promise<TResponse>;
   applyOptimistic: (patch: QueuedSettingsPatch) => void;
+  /**
+   * Puts the documents a save returned into the cache. Returning false means
+   * the response could not stand in for a refetch, so the queue reconciles.
+   */
+  applyServerDocuments?: (
+    response: TResponse,
+    operations: SettingsOperation[],
+  ) => boolean;
   /** Re-synchronize cache entries with the server (called after success/failure). */
   reconcile: (queryKeys: QueryKey[]) => Promise<void>;
   onStatus: (status: SettingsSaveStatus) => void;
@@ -121,8 +129,8 @@ const groupIntoBatches = (operations: SettingsOperation[]) => {
   return [[...userOnly, ...firstBatch], ...otherBatches];
 };
 
-export const createSettingsPatchQueue = (
-  config: SettingsPatchQueueConfig,
+export const createSettingsPatchQueue = <TResponse>(
+  config: SettingsPatchQueueConfig<TResponse>,
 ): SettingsPatchQueue => {
   const debounceMs = config.debounceMs ?? 300;
   const pending = new Map<string, QueuedSettingsPatch>();
@@ -151,6 +159,11 @@ export const createSettingsPatchQueue = (
     return keys;
   };
 
+  /** Re-lays the patches queued after `documents` were produced on top. */
+  const reapplyPending = () => {
+    for (const patch of pending.values()) config.applyOptimistic(patch);
+  };
+
   /**
    * Refreshes the cache from the server, then lays the patches queued in the
    * meantime back on top: the refetched documents predate them, and without
@@ -158,8 +171,7 @@ export const createSettingsPatchQueue = (
    */
   const reconcile = async (queryKeys: QueryKey[]) => {
     await config.reconcile(queryKeys);
-
-    for (const patch of pending.values()) config.applyOptimistic(patch);
+    reapplyPending();
   };
 
   const sendPatches = async (patches: QueuedSettingsPatch[]) => {
@@ -167,13 +179,21 @@ export const createSettingsPatchQueue = (
     config.onStatus("saving");
 
     try {
+      let cacheMatchesServer = true;
+
       for (const batch of groupIntoBatches(
         patches.map((patch) => patch.operation),
       )) {
         // Batches must reach the server in order: each one carries a merged
         // state for its scopes and later batches may depend on earlier ones.
         // eslint-disable-next-line no-await-in-loop
-        await config.send(batch);
+        const response = await config.send(batch);
+
+        if (config.applyServerDocuments?.(response, batch)) {
+          reapplyPending();
+        } else {
+          cacheMatchesServer = false;
+        }
       }
 
       retained = new Map();
@@ -181,7 +201,7 @@ export const createSettingsPatchQueue = (
       for (const patch of patches) patch.afterSave?.();
 
       if (pending.size === 0) {
-        await reconcile(collectQueryKeys(patches));
+        if (!cacheMatchesServer) await reconcile(collectQueryKeys(patches));
         config.onStatus(pending.size === 0 ? "saved" : "saving");
       }
     } catch (error) {

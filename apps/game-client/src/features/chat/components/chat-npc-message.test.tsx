@@ -103,9 +103,19 @@ describe("ChatNpcMessage", () => {
       settingsDocuments,
     );
 
+    // A real server answers a patch with the patched document; the cache
+    // holds that state optimistically, so echo it back.
     const patchRequest = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(Response.json(settingsDocuments));
+      .mockImplementation(() =>
+        Promise.resolve(
+          Response.json(
+            harness.queryClient.getQueryData(
+              getCurrentSettingsDocumentsQueryKey(),
+            ),
+          ),
+        ),
+      );
 
     harness.request.mockImplementation(patchRequest);
     renderUi(
@@ -137,6 +147,7 @@ describe("ChatNpcMessage", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       ),
     );

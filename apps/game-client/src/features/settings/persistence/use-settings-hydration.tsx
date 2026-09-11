@@ -256,11 +256,7 @@ export const useSettingsHydration = () => {
 
   const guildIds = getGuildIds(guilds);
 
-  const guildDocuments = useGuildTimersDocuments(guildIds);
-
-  const guildDocumentsSignature = guildDocuments
-    .map((result, index) => `${guildIds[index]}:${result.dataUpdatedAt}`)
-    .join("|");
+  const guildDocuments = useGuildTimersDocuments(guildIds).data;
 
   const importedRef = useRef(false);
   const seededAccountsRef = useRef<Set<string>>(new Set());
@@ -309,15 +305,12 @@ export const useSettingsHydration = () => {
   ]);
 
   useEffect(() => {
-    guildDocuments.forEach((result, index) => {
-      const guildId = guildIds[index];
+    if (!guildDocuments) return;
 
-      if (guildId && result.data)
-        applyGuildTimerDocuments(guildId, result.data);
-    });
-    // The signature changes whenever any guild document is refetched.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guildDocumentsSignature]);
+    for (const [guildId, documents] of Object.entries(guildDocuments.guilds)) {
+      applyGuildTimerDocuments(guildId, documents);
+    }
+  }, [guildDocuments]);
 
   useEffect(() => {
     if (

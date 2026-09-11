@@ -61,6 +61,7 @@ describe("ChatFiltersSettings", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       );
     });
