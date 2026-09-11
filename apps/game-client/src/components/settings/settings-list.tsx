@@ -16,7 +16,7 @@ export const SettingsList: FC<SettingsListProps> = ({
 }) => (
   <div
     className={cn(
-      "ll:flex ll:flex-col ll:divide-y ll:divide-solid ll:divide-white/6 ll:[&>*]:rounded-none ll:[&>*:first-child]:rounded-t-sm ll:[&>*:last-child]:rounded-b-sm",
+      "ll:flex ll:flex-col ll:[&>*+*]:border-t ll:[&>*+*]:border-solid ll:[&>*+*]:border-gray-400/25 ll:[&>*]:rounded-none ll:[&>*:first-child]:rounded-t-sm ll:[&>*:last-child]:rounded-b-sm",
       className,
     )}
   >
