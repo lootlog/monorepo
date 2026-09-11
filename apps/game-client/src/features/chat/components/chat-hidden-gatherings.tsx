@@ -81,7 +81,7 @@ export function ChatHiddenGatherings({
               key={String(isHidden)}
               variant="ghost"
               aria-pressed={hidden === isHidden}
-              className={`ll:flex-1 ll:h-7 ll:rounded-none ll:border-0 ll:text-[11px] ${hidden === isHidden ? "ll:bg-accent" : ""}`}
+              className="ll:flex-1 ll:h-7 ll:rounded-none ll:border-0 ll:text-[11px] ll:aria-pressed:bg-primary ll:aria-pressed:text-primary-foreground ll:aria-pressed:hover:bg-primary/90 ll:aria-pressed:hover:text-primary-foreground"
               onClick={() => setHidden(isHidden)}
             >
               {t(isHidden ? "gatherings.hiddenTab" : "gatherings.activeTab", {

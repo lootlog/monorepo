@@ -107,22 +107,22 @@ const SettingsChoiceCard: FC<SettingsChoiceCardProps<string>> = ({
     disabled={disabled}
     data-selected={selected}
     onClick={onSelect}
-    className="ll-custom-cursor-pointer ll:flex ll:min-w-0 ll:flex-col ll:gap-0.5 ll:rounded-sm ll:border-0 ll:bg-black/25 ll:p-2 ll:text-left ll:transition-colors ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:opacity-60 ll:data-[selected=true]:bg-primary/15 ll:data-[selected=true]:shadow-[inset_0_0_0_1px_var(--color-primary)]"
+    className="ll-custom-cursor-pointer ll:group ll:flex ll:min-w-0 ll:flex-col ll:gap-0.5 ll:rounded-sm ll:border-0 ll:bg-black/25 ll:p-2 ll:text-left ll:transition-colors ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:opacity-60 ll:data-[selected=true]:bg-primary ll:data-[selected=true]:hover:bg-primary/90"
   >
     <span className="ll:flex ll:w-full ll:items-start ll:justify-between ll:gap-2">
-      <span className="ll:text-xs ll:font-semibold ll:leading-4 ll:text-gray-100">
+      <span className="ll:text-xs ll:font-semibold ll:leading-4 ll:text-gray-100 ll:group-data-[selected=true]:text-primary-foreground">
         {option.title}
       </span>
       <span
         aria-hidden
-        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary ll:text-white ll:transition-opacity"
+        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary-foreground ll:text-primary ll:transition-opacity"
         style={{ opacity: selected ? 1 : 0 }}
       >
         <Check className="ll:size-3" />
       </span>
     </span>
     {option.description ? (
-      <span className="ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
+      <span className="ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground ll:group-data-[selected=true]:text-primary-foreground/70">
         {option.description}
       </span>
     ) : null}

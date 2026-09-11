@@ -20,7 +20,7 @@ type SettingsNavProps = {
 };
 
 const railButtonClassName =
-  "ll-custom-cursor-pointer ll:flex ll:size-7 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll:transition-[color,background-color,scale] ll:duration-150 ll:ease-out ll:hover:bg-accent/60 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:active:scale-[0.96] ll:aria-current:bg-accent ll:aria-current:text-foreground";
+  "ll-custom-cursor-pointer ll:flex ll:size-7 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-foreground ll:transition-[color,background-color,scale] ll:duration-150 ll:ease-out ll:hover:bg-accent/60 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:active:scale-[0.96] ll:aria-current:bg-primary ll:aria-current:text-primary-foreground ll:aria-current:hover:bg-primary/90";
 
 const moveRailFocus = (event: KeyboardEvent<HTMLDivElement>) => {
   if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;

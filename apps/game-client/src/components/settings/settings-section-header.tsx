@@ -41,7 +41,7 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
         </Heading>
       ) : null}
       {description ? (
-        <p className="ll:m-0 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
+        <p className="ll:m-0 ll:mt-1 ll:max-w-[80ch] ll:text-[11px] ll:leading-[15px] ll:text-pretty ll:text-muted-foreground">
           {description}
         </p>
       ) : null}
