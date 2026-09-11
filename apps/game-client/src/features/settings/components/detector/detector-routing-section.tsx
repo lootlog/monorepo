@@ -48,6 +48,7 @@ export const DetectorRoutingSection = () => {
       title={t("settings.detector.routing.sectionTitle")}
       description={t("settings.detector.routing.sectionDescription")}
       actions={addButton}
+      className="ll:mt-4 ll:[section+&]:before:-top-5"
       contentClassName="ll:gap-1.5"
     >
       {fields.length === 0 ? (
