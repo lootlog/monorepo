@@ -139,9 +139,53 @@ export const LogsSettingsTab: FC = () => {
   };
 
   return (
-    <SettingsTabLayout
-      actions={
-        <div className="ll:flex ll:w-full ll:flex-wrap ll:items-center ll:gap-2">
+    <SettingsTabLayout>
+      <SettingsSection title={t("settings.logs.consoleDebugTitle")}>
+        <SettingsRow
+          controlId="loot-debug-logging"
+          htmlFor="loot-debug-logging"
+          label={t("settings.logs.lootDebugLoggingLabel")}
+          description={t("settings.logs.lootDebugLoggingDescription")}
+        >
+          <Switch
+            checked={lootDebugLoggingEnabled}
+            id="loot-debug-logging"
+            onCheckedChange={setLootDebugLoggingEnabled}
+          />
+        </SettingsRow>
+      </SettingsSection>
+
+      <SettingsSection
+        controlId="logs-list"
+        title={t("settings.logs.listTitle")}
+        description={t("settings.logs.listDescription", {
+          visibleCount: filteredActions.length,
+          totalCount: actions.length,
+        })}
+        actions={
+          <div className="ll:flex ll:items-center ll:gap-2">
+            <Button
+              size="sm"
+              disabled={filteredActions.length === 0}
+              onClick={handleExportLogs}
+              type="button"
+              variant="outline"
+            >
+              {t("common:actions.exportJson")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={actions.length === 0}
+              onClick={clearActions}
+              type="button"
+              variant="outline"
+            >
+              {t("common:actions.clear")}
+            </Button>
+          </div>
+        }
+      >
+        <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-2 ll:px-2 ll:pt-2 ll:pb-1">
           <SearchInput
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder={t("settings.logs.searchPlaceholder")}
@@ -186,50 +230,7 @@ export const LogsSettingsTab: FC = () => {
               ))}
             </SelectContent>
           </Select>
-          <Button
-            size="sm"
-            disabled={filteredActions.length === 0}
-            onClick={handleExportLogs}
-            type="button"
-            variant="outline"
-          >
-            {t("common:actions.exportJson")}
-          </Button>
-          <Button
-            size="sm"
-            disabled={actions.length === 0}
-            onClick={clearActions}
-            type="button"
-            variant="outline"
-          >
-            {t("common:actions.clear")}
-          </Button>
         </div>
-      }
-    >
-      <SettingsSection title={t("settings.logs.consoleDebugTitle")}>
-        <SettingsRow
-          controlId="loot-debug-logging"
-          htmlFor="loot-debug-logging"
-          label={t("settings.logs.lootDebugLoggingLabel")}
-          description={t("settings.logs.lootDebugLoggingDescription")}
-        >
-          <Switch
-            checked={lootDebugLoggingEnabled}
-            id="loot-debug-logging"
-            onCheckedChange={setLootDebugLoggingEnabled}
-          />
-        </SettingsRow>
-      </SettingsSection>
-
-      <SettingsSection
-        controlId="logs-list"
-        title={t("settings.logs.listTitle")}
-        description={t("settings.logs.listDescription", {
-          visibleCount: filteredActions.length,
-          totalCount: actions.length,
-        })}
-      >
         {filteredActions.length > 0 ? (
           <Table>
             <TableHeader>
