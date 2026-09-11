@@ -1,5 +1,5 @@
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
-import { SettingsRangeField } from "@/components/settings/settings-range-field";
+import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { Button } from "@/components/ui/button";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
@@ -8,7 +8,6 @@ import {
   LEVEL_MIN,
 } from "@/features/settings/components/detector/use-detector-routing-form";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
-import { cn } from "cn";
 import { Send, Trash2, TriangleAlert } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -77,23 +76,20 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
     ? currentWorld.charAt(0).toUpperCase() + currentWorld.slice(1)
     : "";
 
-  const summary =
-    selectedCount === 0
-      ? t("settings.detector.routing.summaryNoGuilds")
-      : t("settings.detector.routing.summary", {
-          guilds: t("settings.detector.routing.summaryGuilds", {
-            count: selectedCount,
-          }),
-          levels: coversEveryLevel
-            ? t("settings.detector.routing.summaryEveryLevel")
-            : t("settings.detector.routing.summaryLevels", {
-                min: minLevel,
-                max: maxLevel,
-              }),
-          world: world
-            ? t("settings.detector.routing.summaryWorld", { world })
-            : t("settings.detector.routing.summaryEveryWorld"),
-        });
+  const summary = t("settings.detector.routing.summary", {
+    guilds: t("settings.detector.routing.summaryGuilds", {
+      count: selectedCount,
+    }),
+    levels: coversEveryLevel
+      ? t("settings.detector.routing.summaryEveryLevel")
+      : t("settings.detector.routing.summaryLevels", {
+          min: minLevel,
+          max: maxLevel,
+        }),
+    world: world
+      ? t("settings.detector.routing.summaryWorld", { world })
+      : t("settings.detector.routing.summaryEveryWorld"),
+  });
 
   return (
     <article
@@ -109,6 +105,12 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
           {index}
         </span>
         <div className="ll:min-w-0 ll:flex-1">{nameField}</div>
+        {selectedCount === 0 ? (
+          <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:rounded-sm ll:bg-amber-200/10 ll:px-1.5 ll:py-0.5 ll:text-[11px] ll:leading-[14px] ll:text-amber-200">
+            <TriangleAlert aria-hidden className="ll:size-3 ll:shrink-0" />
+            {t("settings.detector.routing.noGuildsBadge")}
+          </span>
+        ) : null}
         <SettingsIconButton
           variant="destructive"
           label={t("settings.detector.routing.deleteRuleLabel", {
@@ -122,18 +124,24 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
       <div className="ll:flex ll:flex-col ll:gap-0.5 ll:border-0 ll:border-t ll:border-solid ll:border-border ll:py-1">
         <SettingsRow
           label={t("settings.detector.routing.levelRangeLabel")}
-          description={t("settings.detector.routing.levelRangeDescription")}
-          control="wide"
-          controlClassName="ll:w-64"
+          controlClassName="ll:gap-1"
         >
-          <SettingsRangeField
-            value={[minLevel, maxLevel]}
+          <SettingsNumberField
+            aria-label={t("settings.detector.routing.minLevelLabel")}
+            value={minLevel}
             min={LEVEL_MIN}
             max={LEVEL_MAX}
-            fromLabel={t("settings.detector.routing.minLevelLabel")}
-            toLabel={t("settings.detector.routing.maxLevelLabel")}
-            sliderLabel={t("settings.detector.routing.levelSliderLabel")}
-            onCommit={onLevelRangeCommit}
+            onCommit={(value) => onLevelRangeCommit([value, maxLevel])}
+          />
+          <span aria-hidden className="ll:text-xs ll:text-muted-foreground">
+            –
+          </span>
+          <SettingsNumberField
+            aria-label={t("settings.detector.routing.maxLevelLabel")}
+            value={maxLevel}
+            min={LEVEL_MIN}
+            max={LEVEL_MAX}
+            onCommit={(value) => onLevelRangeCommit([minLevel, value])}
           />
         </SettingsRow>
         <SettingsRow
@@ -184,21 +192,12 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
           />
         </SettingsRow>
       </div>
-      <footer
-        className={cn(
-          "ll:flex ll:items-center ll:gap-1.5 ll:border-0 ll:border-t ll:border-solid ll:border-border ll:px-2 ll:py-1.5 ll:text-[11px] ll:leading-[14px]",
-          selectedCount === 0
-            ? "ll:text-amber-200"
-            : "ll:text-muted-foreground",
-        )}
-      >
-        {selectedCount === 0 ? (
-          <TriangleAlert aria-hidden className="ll:size-3.5 ll:shrink-0" />
-        ) : (
+      {selectedCount > 0 ? (
+        <footer className="ll:flex ll:items-center ll:gap-1.5 ll:border-0 ll:border-t ll:border-solid ll:border-border ll:px-2 ll:py-1.5 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
           <Send aria-hidden className="ll:size-3.5 ll:shrink-0" />
-        )}
-        <span className="ll:min-w-0">{summary}</span>
-      </footer>
+          <span className="ll:min-w-0">{summary}</span>
+        </footer>
+      ) : null}
     </article>
   );
 };

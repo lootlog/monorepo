@@ -185,9 +185,7 @@ describe("DetectorRoutingSection", () => {
 
     expect(screen.getByLabelText("Serwery: Reguła 3")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Ta reguła nic nie wysyła – zaznacz co najmniej jeden serwer.",
-      ),
+      screen.getByText("Nic nie wysyła – zaznacz serwer"),
     ).toBeInTheDocument();
 
     await user.click(
