@@ -31,6 +31,7 @@ import {
   Keyboard,
   MessageSquare,
   Palette,
+  Server,
   Settings,
   Swords,
   Volume2,
@@ -45,6 +46,7 @@ import type { ComponentType } from "react";
  */
 export const SETTINGS_DOMAIN_ICONS = {
   settings: Settings,
+  server: Server,
   palette: Palette,
   messageSquare: MessageSquare,
   clock: Clock,

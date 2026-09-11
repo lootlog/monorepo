@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { resolveSettingsPath } from "./settings-tabs";
 
 describe("resolveSettingsPath", () => {
-  it("opens general on server visibility by default", () => {
+  it("opens general on catching by default", () => {
     expect(resolveSettingsPath()).toEqual({
       domain: "general",
-      subsection: "visibility",
+      subsection: "catching",
     });
     expect(resolveSettingsPath("general", "behavior")).toEqual({
       domain: "general",
@@ -15,7 +15,7 @@ describe("resolveSettingsPath", () => {
 
   it("maps retired top-level tabs to their new homes", () => {
     expect(resolveSettingsPath("servers")).toEqual({
-      domain: "general",
+      domain: "servers",
       subsection: "visibility",
     });
     expect(resolveSettingsPath("game-data")).toEqual({

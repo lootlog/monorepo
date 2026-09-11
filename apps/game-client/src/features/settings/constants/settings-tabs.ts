@@ -1,5 +1,6 @@
 export const SETTINGS_DOMAIN_VALUES = [
   "general",
+  "servers",
   "appearance",
   "chat",
   "timers",
@@ -16,7 +17,6 @@ export type SettingsDomainValue = (typeof SETTINGS_DOMAIN_VALUES)[number];
 
 /** Tab ids persisted by earlier releases; they still resolve to a path. */
 export const LEGACY_SETTINGS_TAB_VALUES = [
-  "servers",
   "game-data",
   "catching",
   "hidden-timers",
@@ -38,7 +38,7 @@ export type SettingsTabValue = SettingsDomainValue | LegacySettingsTabValue;
  * owning domain is resolved from the subsection first.
  */
 export const SETTINGS_SUBSECTION_DOMAINS = {
-  visibility: "general",
+  visibility: "servers",
   catching: "general",
   behavior: "general",
   "npc-colors": "appearance",
@@ -77,11 +77,12 @@ export interface SettingsPath {
 
 const DEFAULT_SETTINGS_PATH: SettingsPath = {
   domain: "general",
-  subsection: "visibility",
+  subsection: "catching",
 };
 
 const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   general: DEFAULT_SETTINGS_PATH,
+  servers: { domain: "servers", subsection: "visibility" },
   appearance: { domain: "appearance", subsection: "npc-colors" },
   chat: { domain: "chat", subsection: "chat-appearance" },
   timers: { domain: "timers", subsection: "timer-behavior" },
@@ -95,7 +96,6 @@ const SETTINGS_PATHS: Record<SettingsTabValue, SettingsPath> = {
   experimental: { domain: "experimental", subsection: "experimental" },
   diagnostics: { domain: "diagnostics", subsection: "logs" },
   information: { domain: "information", subsection: "build" },
-  servers: { domain: "general", subsection: "visibility" },
   "game-data": { domain: "general", subsection: "catching" },
   catching: { domain: "general", subsection: "catching" },
   "hidden-timers": { domain: "timers", subsection: "hidden-timers" },

@@ -6,6 +6,7 @@ import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
 
 export type SettingsIconName =
   | "settings"
+  | "server"
   | "palette"
   | "messageSquare"
   | "clock"
@@ -51,18 +52,6 @@ const MANIFEST = [
     icon: "settings",
     subsections: [
       {
-        id: "visibility",
-        labelKey: "settings.subsections.serverVisibility",
-        controls: [
-          {
-            id: "server-visibility",
-            labelKey: "settings.servers.title",
-            descriptionKey: "settings.servers.description",
-            aliases: ["serwery", "discord", "ukryte serwery"],
-          },
-        ],
-      },
-      {
         id: "catching",
         labelKey: "settings.subsections.catching",
         controls: [
@@ -83,6 +72,25 @@ const MANIFEST = [
             labelKey: "settings.general.allowWorldSelectionLabel",
             descriptionKey: "settings.general.allowWorldSelectionDescription",
             settingKeys: ["general.allowWorldSelection"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "servers",
+    labelKey: "settings.domains.servers",
+    icon: "server",
+    subsections: [
+      {
+        id: "visibility",
+        labelKey: "settings.subsections.serverVisibility",
+        controls: [
+          {
+            id: "server-visibility",
+            labelKey: "settings.servers.title",
+            descriptionKey: "settings.servers.description",
+            aliases: ["serwery", "discord", "ukryte serwery"],
           },
         ],
       },
