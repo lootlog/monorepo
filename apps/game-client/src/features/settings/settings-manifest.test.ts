@@ -32,6 +32,7 @@ describe("settings manifest persistence references", () => {
       "chat",
       "timers",
       "notifications",
+      "detector",
       "mutes",
       "battle-panel",
       "sounds",
@@ -57,10 +58,8 @@ describe("settings manifest persistence references", () => {
       "timer-colors",
       "hidden-timers",
     ]);
-    expect(subsectionsOf("notifications")).toEqual([
-      "notification-rules",
-      "detector",
-    ]);
+    expect(subsectionsOf("notifications")).toEqual(["notification-rules"]);
+    expect(subsectionsOf("detector")).toEqual(["detector"]);
     expect(subsectionsOf("mutes")).toEqual(["muted-players", "muted-npcs"]);
     expect(subsectionsOf("experimental")).toEqual(["experimental"]);
     expect(subsectionsOf("battle-panel")).toEqual(["battle-panel"]);

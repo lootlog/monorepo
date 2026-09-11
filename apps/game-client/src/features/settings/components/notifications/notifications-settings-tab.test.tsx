@@ -81,6 +81,38 @@ describe("NotificationsSettingsTab", () => {
     expect(document.getElementById("COLOSSUS-highlight")).toBeEnabled();
   });
 
+  it("toggles a switch from a click anywhere in its cell, leaving disabled cells alone", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.notifications.HERO.show = false;
+    initial.notifications.HERO.highlight = false;
+    initial.notifications.COLOSSUS.show = true;
+    initial.notifications.COLOSSUS.highlight = false;
+    seedAccountPreferences(initial);
+    render();
+
+    const cellOf = (id: string) => {
+      const cell = document.getElementById(id)?.closest("td");
+
+      if (!cell) throw new Error(`Missing cell for ${id}`);
+
+      return cell;
+    };
+
+    await user.click(cellOf("COLOSSUS-highlight"));
+    expect(document.getElementById("COLOSSUS-highlight")).toBeChecked();
+
+    // A click on the switch itself must not be forwarded a second time.
+    await user.click(
+      screen.getByRole("switch", { name: "Kolos: Podświetlenie" }),
+    );
+    expect(document.getElementById("COLOSSUS-highlight")).not.toBeChecked();
+
+    await user.click(cellOf("HERO-highlight"));
+    expect(document.getElementById("HERO-highlight")).not.toBeChecked();
+  });
+
   it("switches a whole column on unless every editable row is already on, skipping rows that are off", async () => {
     const user = userEvent.setup();
     setTestRuntimeGame({ hero: { accountId: "202" } });

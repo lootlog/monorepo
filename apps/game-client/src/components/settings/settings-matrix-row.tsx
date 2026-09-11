@@ -1,6 +1,6 @@
 import { SettingsMatrixHoveredColumnContext } from "@/components/settings/settings-matrix";
 import { cn } from "cn";
-import { useContext, type FC, type ReactNode } from "react";
+import { useContext, type FC, type MouseEvent, type ReactNode } from "react";
 
 type SettingsMatrixRowProps = {
   /** Category name; usually an NpcTypeChip. */
@@ -13,6 +13,29 @@ type SettingsMatrixRowProps = {
    */
   dimmed?: boolean;
   className?: string;
+};
+
+/**
+ * A click anywhere in a cell toggles the switch it holds, so the whole cell is
+ * the target instead of the small control. Clicks on the control itself, on
+ * other controls (e.g. a number field) and on disabled switches are left alone.
+ */
+const forwardCellClick = (event: MouseEvent<HTMLTableCellElement>) => {
+  const target = event.target;
+
+  if (!(target instanceof Element)) return;
+
+  const control = target.closest(
+    "button, input, select, textarea, a, [role='switch'], [role='textbox']",
+  );
+
+  if (control) return;
+
+  const toggle = event.currentTarget.querySelector<HTMLElement>(
+    "[data-slot='switch']:not([data-disabled])",
+  );
+
+  toggle?.click();
 };
 
 /** One category of a SettingsMatrix: name cell plus one cell per column. */
@@ -44,8 +67,10 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
           // oxlint-disable-next-line react/no-array-index-key
           key={index}
           data-matrix-column={index}
+          onClick={forwardCellClick}
           className={cn(
             "ll:h-9 ll:p-0 ll:text-center ll:align-middle ll:transition-colors",
+            "ll:has-[[data-slot=switch]:not([data-disabled])]:cursor-pointer",
             index === 0 &&
               "ll:border-0 ll:border-e ll:border-solid ll:border-border",
             hoveredColumn === index && "ll:bg-white/5",
