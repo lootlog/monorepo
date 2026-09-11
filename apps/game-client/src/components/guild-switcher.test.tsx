@@ -276,7 +276,7 @@ describe("GuildSwitcher", () => {
     expect(useWindowsStore.getState().settings).toMatchObject({
       open: true,
       state: {
-        activeTab: "servers",
+        activeTab: "general",
         activeSubsection: "visibility",
       },
     });

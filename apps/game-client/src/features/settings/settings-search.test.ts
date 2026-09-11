@@ -14,8 +14,8 @@ const searchItems: SettingsSearchItem[] = [
     order: 0,
   },
   {
-    categoryId: "game-data",
-    categoryLabel: "Dane z gry",
+    categoryId: "notifications",
+    categoryLabel: "Powiadomienia",
     subsectionId: "detector",
     subsectionLabel: "Wykrywacz NPC",
     controlId: "detector-routing",

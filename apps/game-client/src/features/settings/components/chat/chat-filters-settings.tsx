@@ -26,7 +26,8 @@ export const ChatFiltersSettings = () => {
             return (
               <SettingsRow
                 key={npcType}
-                label={<label htmlFor={controlId}>{label}</label>}
+                htmlFor={controlId}
+                label={label}
                 labelStyle={{
                   color: getTextColor(npcType, true, npcTypeColors),
                 }}

@@ -207,7 +207,7 @@ describe("windows store", () => {
     useWindowsStore.getState().setSettingsActiveTab("npc-detector");
 
     expect(useWindowsStore.getState().settings.state).toEqual({
-      activeTab: "game-data",
+      activeTab: "notifications",
       activeSubsection: "detector",
     });
   });
@@ -263,7 +263,7 @@ describe("migrateWindowsState", () => {
       height: 470,
     });
     expect(migrated).toHaveProperty("settings.state", {
-      activeTab: "game-data",
+      activeTab: "notifications",
       activeSubsection: "detector",
     });
   });
@@ -379,7 +379,7 @@ describe("migrateWindowsState", () => {
     expect(migrated).toHaveProperty("settings.hasDefinedPosition", false);
     expect(migrated).toHaveProperty("settings.state", {
       activeTab: "general",
-      activeSubsection: "behavior",
+      activeSubsection: "visibility",
     });
   });
 

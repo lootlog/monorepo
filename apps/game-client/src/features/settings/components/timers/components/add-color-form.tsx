@@ -83,9 +83,9 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
                 min={0}
                 max={100}
                 step={1}
-                value={[backgroundAlpha]}
-                onValueChange={(v) => setBackgroundAlpha(v[0])}
-                className="ll:h-6"
+                value={backgroundAlpha}
+                onValueChange={setBackgroundAlpha}
+                className="ll:flex ll:h-6 ll:items-center"
                 aria-label={t("settings.timers.colors.transparencyAria")}
               />
             </div>

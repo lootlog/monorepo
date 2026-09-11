@@ -1,7 +1,6 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { SettingsSaveStatus } from "@/components/settings/settings-save-status";
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
-import { useRecentlyChangedStore } from "@/features/settings/recently-changed.store";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useLayoutEffect } from "react";
@@ -18,18 +17,15 @@ export const Settings = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
   const setPosition = useWindowsStore((state) => state.setPosition);
   const { t } = useTranslation();
-  const setView = useSettingsUiStore((state) => state.setView);
   const setOverlayOpen = useSettingsUiStore((state) => state.setOverlayOpen);
   const clearQuery = useSettingsUiStore((state) => state.clearQuery);
 
-  // Opening the window starts on the recently changed view when there is one.
+  // Opening the window starts from a clean search state.
   useEffect(() => {
     if (!open) return;
-    const hasRecent = useRecentlyChangedStore.getState().entries.length > 0;
-    setView(hasRecent ? "recent" : "path");
     setOverlayOpen(false);
     clearQuery();
-  }, [clearQuery, open, setOverlayOpen, setView]);
+  }, [clearQuery, open, setOverlayOpen]);
 
   useLayoutEffect(() => {
     if (!open || hasDefinedPosition) return;

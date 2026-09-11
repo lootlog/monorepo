@@ -4,6 +4,10 @@ import {
   type SettingsCatalogKey,
 } from "@lootlog/domain/settings-documents";
 import { describe, expect, it } from "vitest";
+import {
+  SETTINGS_SUBSECTION_DOMAINS,
+  SETTINGS_SUBSECTION_VALUES,
+} from "./constants/settings-tabs";
 import { SETTINGS_MANIFEST } from "./settings-manifest";
 
 const catalogHasKey = (key: SettingsCatalogKey) => {
@@ -20,91 +24,65 @@ const catalogHasKey = (key: SettingsCatalogKey) => {
 };
 
 describe("settings manifest persistence references", () => {
-  it("keeps NPC colors first in appearance after moving chat to its own domain", () => {
-    const appearance = SETTINGS_MANIFEST.find(
-      (domain) => domain.id === "appearance",
-    );
-
-    expect(appearance?.subsections.map((subsection) => subsection.id)).toEqual([
-      "npc-colors",
-      "timer-appearance",
-      "timer-colors",
-    ]);
-    expect(
-      appearance?.subsections.find(
-        (subsection) => subsection.id === "npc-colors",
-      )?.controls[0].settingKeys,
-    ).toHaveLength(7);
-  });
-
-  it("exposes sounds as a standalone domain after notifications", () => {
-    const domainIds = SETTINGS_MANIFEST.map((domain) => domain.id);
-
-    const notifications = SETTINGS_MANIFEST.find(
-      (domain) => domain.id === "notifications",
-    );
-
-    const sounds = SETTINGS_MANIFEST.find((domain) => domain.id === "sounds");
-
-    expect(domainIds).toEqual([
+  it("lists domains in navigation order with battle panel as its own domain", () => {
+    expect(SETTINGS_MANIFEST.map((domain) => domain.id)).toEqual([
       "general",
-      "servers",
       "appearance",
       "chat",
       "timers",
-      "game-data",
       "notifications",
+      "battle-panel",
       "sounds",
       "controls",
       "experimental",
       "diagnostics",
       "information",
     ]);
-    expect(
-      notifications?.subsections.some(
-        (subsection) => subsection.id === "sounds",
-      ),
-    ).toBe(false);
-    expect(sounds?.subsections.map((subsection) => subsection.id)).toEqual([
-      "sounds",
-    ]);
   });
 
-  it("groups chat appearance, notifications and filters under the chat domain", () => {
-    const chat = SETTINGS_MANIFEST.find((domain) => domain.id === "chat");
+  it("groups organization scope under general and every timer subsection under timers", () => {
+    const subsectionsOf = (id: string) =>
+      SETTINGS_MANIFEST.find((domain) => domain.id === id)?.subsections.map(
+        (subsection) => subsection.id,
+      );
 
-    expect(chat?.subsections.map((subsection) => subsection.id)).toEqual([
-      "chat-appearance",
-      "chat-filters",
+    expect(subsectionsOf("general")).toEqual([
+      "visibility",
+      "catching",
+      "behavior",
     ]);
-    expect(
-      chat?.subsections
-        .flatMap((subsection) => subsection.controls)
-        .map((control) => control.id),
-    ).toContain("chat-npc-message-types");
+    expect(subsectionsOf("appearance")).toEqual(["npc-colors", "interface"]);
+    expect(subsectionsOf("timers")).toEqual([
+      "timer-behavior",
+      "timer-appearance",
+      "timer-colors",
+      "hidden-timers",
+    ]);
+    expect(subsectionsOf("notifications")).toEqual([
+      "notification-rules",
+      "detector",
+      "notification-mutes",
+    ]);
+    expect(subsectionsOf("experimental")).toEqual(["experimental"]);
+    expect(subsectionsOf("battle-panel")).toEqual(["battle-panel"]);
   });
 
-  it("exposes server visibility as a searchable settings domain", () => {
-    const servers = SETTINGS_MANIFEST.find((domain) => domain.id === "servers");
+  it("owns every subsection in exactly one domain, matching the path resolver", () => {
+    const seen = new Map<string, string>();
 
-    expect(servers).toMatchObject({
-      icon: "server",
-      labelKey: "settings.domains.servers",
-    });
-    expect(servers?.subsections).toEqual([
-      {
-        id: "visibility",
-        labelKey: "settings.subsections.serverVisibility",
-        controls: [
-          {
-            id: "server-visibility",
-            labelKey: "settings.servers.title",
-            descriptionKey: "settings.servers.description",
-            aliases: ["serwery", "discord", "ukryte serwery"],
-          },
-        ],
-      },
-    ]);
+    for (const domain of SETTINGS_MANIFEST) {
+      for (const subsection of domain.subsections) {
+        expect(seen.has(subsection.id), subsection.id).toBe(false);
+        seen.set(subsection.id, domain.id);
+        expect(SETTINGS_SUBSECTION_DOMAINS[subsection.id], subsection.id).toBe(
+          domain.id,
+        );
+      }
+    }
+
+    expect([...seen.keys()].sort()).toEqual(
+      [...SETTINGS_SUBSECTION_VALUES].sort(),
+    );
   });
 
   it("points every declared setting key to the shared catalog", () => {

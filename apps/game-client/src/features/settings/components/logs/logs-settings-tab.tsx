@@ -158,6 +158,8 @@ export const LogsSettingsTab: FC = () => {
     >
       <SettingsSection title={t("settings.logs.consoleDebugTitle")}>
         <SettingsRow
+          controlId="loot-debug-logging"
+          htmlFor="loot-debug-logging"
           label={t("settings.logs.lootDebugLoggingLabel")}
           description={t("settings.logs.lootDebugLoggingDescription")}
         >

@@ -6,12 +6,11 @@ import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
 
 export type SettingsIconName =
   | "settings"
-  | "server"
   | "palette"
   | "messageSquare"
   | "clock"
-  | "database"
   | "bell"
+  | "swords"
   | "volume2"
   | "keyboard"
   | "flaskConical"
@@ -52,35 +51,6 @@ const MANIFEST = [
     icon: "settings",
     subsections: [
       {
-        id: "behavior",
-        labelKey: "settings.subsections.behavior",
-        controls: [
-          {
-            id: "allow-world-selection",
-            labelKey: "settings.general.allowWorldSelectionLabel",
-            descriptionKey: "settings.general.allowWorldSelectionDescription",
-            settingKeys: ["general.allowWorldSelection"],
-          },
-          {
-            id: "animation-effects",
-            labelKey: "settings.general.animationEffectsLabel",
-            descriptionKey: "settings.general.animationEffectsDescription",
-            aliases: ["animacje", "wydajność", "performance"],
-            settingKeys: ["device.animationEffectsEnabled"],
-            help: {
-              recommendationKey: "settings.help.animationsRecommendation",
-            },
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "servers",
-    labelKey: "settings.domains.servers",
-    icon: "server",
-    subsections: [
-      {
         id: "visibility",
         labelKey: "settings.subsections.serverVisibility",
         controls: [
@@ -89,6 +59,30 @@ const MANIFEST = [
             labelKey: "settings.servers.title",
             descriptionKey: "settings.servers.description",
             aliases: ["serwery", "discord", "ukryte serwery"],
+          },
+        ],
+      },
+      {
+        id: "catching",
+        labelKey: "settings.subsections.catching",
+        controls: [
+          {
+            id: "catching-range",
+            labelKey: "settings.catching.form.collectionRangeTitle",
+            aliases: ["łupy", "lootlog", "zbieranie"],
+            settingKeys: ["gameData.lootlog"],
+          },
+        ],
+      },
+      {
+        id: "behavior",
+        labelKey: "settings.subsections.behavior",
+        controls: [
+          {
+            id: "allow-world-selection",
+            labelKey: "settings.general.allowWorldSelectionLabel",
+            descriptionKey: "settings.general.allowWorldSelectionDescription",
+            settingKeys: ["general.allowWorldSelection"],
           },
         ],
       },
@@ -128,41 +122,18 @@ const MANIFEST = [
         ],
       },
       {
-        id: "timer-appearance",
-        labelKey: "settings.subsections.timerAppearance",
+        id: "interface",
+        labelKey: "settings.subsections.interface",
         controls: [
           {
-            id: "timer-visibility",
-            labelKey: "settings.timers.appearance.visibilityTitle",
-            settingKeys: ["appearance.timers.displayConfig"],
-          },
-          {
-            id: "timer-layout",
-            labelKey: "settings.timers.appearance.layoutTitle",
-            settingKeys: ["appearance.timers.displayConfig"],
-          },
-          {
-            id: "timer-scale",
-            labelKey: "settings.timers.appearance.scaleTitle",
-            settingKeys: ["appearance.timers.displayConfig"],
-          },
-        ],
-      },
-      {
-        id: "timer-colors",
-        labelKey: "settings.subsections.timerColors",
-        controls: [
-          {
-            id: "timer-colors-list",
-            labelKey: "settings.timers.colors.listTitle",
-            aliases: ["barwy", "kolor timera"],
-            settingKeys: [
-              "appearance.timers.customColors",
-              "appearance.timers.timersColors",
-              "appearance.timers.defaultColorNames",
-              "appearance.timers.overriddenDefaultColors",
-              "appearance.timers.hiddenDefaultColors",
-            ],
+            id: "animation-effects",
+            labelKey: "settings.general.animationEffectsLabel",
+            descriptionKey: "settings.general.animationEffectsDescription",
+            aliases: ["animacje", "wydajność", "performance"],
+            settingKeys: ["device.animationEffectsEnabled"],
+            help: {
+              recommendationKey: "settings.help.animationsRecommendation",
+            },
           },
         ],
       },
@@ -263,6 +234,7 @@ const MANIFEST = [
           {
             id: "timer-behavior",
             labelKey: "settings.timers.general.behaviorTitle",
+            aliases: ["grupowanie", "torby", "kompaktowy"],
             settingKeys: [
               "timers.generalConfig",
               "timers.timerFiltersEnabled",
@@ -274,6 +246,46 @@ const MANIFEST = [
             id: "timer-countdown",
             labelKey: "settings.timers.general.countdownTitle",
             settingKeys: ["timers.alwaysVisibleExpiredTimers"],
+          },
+        ],
+      },
+      {
+        id: "timer-appearance",
+        labelKey: "settings.subsections.timerAppearance",
+        controls: [
+          {
+            id: "timer-visibility",
+            labelKey: "settings.timers.appearance.visibilityTitle",
+            settingKeys: ["appearance.timers.displayConfig"],
+          },
+          {
+            id: "timer-layout",
+            labelKey: "settings.timers.appearance.layoutTitle",
+            settingKeys: ["appearance.timers.displayConfig"],
+          },
+          {
+            id: "timer-scale",
+            labelKey: "settings.timers.appearance.scaleTitle",
+            aliases: ["czcionka", "szerokość"],
+            settingKeys: ["appearance.timers.displayConfig"],
+          },
+        ],
+      },
+      {
+        id: "timer-colors",
+        labelKey: "settings.subsections.timerColors",
+        controls: [
+          {
+            id: "timer-colors-list",
+            labelKey: "settings.timers.colors.listTitle",
+            aliases: ["barwy", "kolor timera"],
+            settingKeys: [
+              "appearance.timers.customColors",
+              "appearance.timers.timersColors",
+              "appearance.timers.defaultColorNames",
+              "appearance.timers.overriddenDefaultColors",
+              "appearance.timers.hiddenDefaultColors",
+            ],
           },
         ],
       },
@@ -291,18 +303,19 @@ const MANIFEST = [
     ],
   },
   {
-    id: "game-data",
-    labelKey: "settings.domains.gameData",
-    icon: "database",
+    id: "notifications",
+    labelKey: "settings.domains.notifications",
+    icon: "bell",
     subsections: [
       {
-        id: "catching",
-        labelKey: "settings.tabs.catching",
+        id: "notification-rules",
+        labelKey: "settings.subsections.notificationRules",
         controls: [
           {
-            id: "catching-range",
-            labelKey: "settings.catching.form.collectionRangeTitle",
-            settingKeys: ["gameData.lootlog"],
+            id: "notification-rules",
+            labelKey: "settings.notifications.title",
+            aliases: ["elita", "heros", "kolos", "tytan", "auto ukrywanie"],
+            settingKeys: ["notifications.presentation"],
           },
         ],
       },
@@ -311,38 +324,17 @@ const MANIFEST = [
         labelKey: "settings.tabs.detector",
         controls: [
           {
+            id: "detector-types",
+            labelKey: "settings.detector.typesTitle",
+            descriptionKey: "settings.detector.description",
+            aliases: ["wykrywacz", "elita", "heros", "kolos", "tytan"],
+            settingKeys: ["gameData.detector"],
+          },
+          {
             id: "detector-routing",
             labelKey: "settings.detector.routing.sectionTitle",
             aliases: ["discord", "serwery"],
             settingKeys: ["gameData.detector"],
-          },
-        ],
-      },
-      {
-        id: "battle-panel",
-        labelKey: "settings.tabs.battlePanel",
-        controls: [
-          {
-            id: "battle-data-collection",
-            labelKey: "settings.battlePanel.dataCollectionTitle",
-            settingKeys: ["gameData.battlePanel"],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "notifications",
-    labelKey: "settings.domains.notifications",
-    icon: "bell",
-    subsections: [
-      {
-        id: "notification-rules",
-        labelKey: "settings.tabs.notifications",
-        controls: [
-          {
-            id: "notification-rules",
-            labelKey: "settings.notifications.title",
           },
         ],
       },
@@ -360,6 +352,25 @@ const MANIFEST = [
     ],
   },
   {
+    id: "battle-panel",
+    labelKey: "settings.domains.battlePanel",
+    icon: "swords",
+    subsections: [
+      {
+        id: "battle-panel",
+        labelKey: "settings.subsections.battleDataCollection",
+        controls: [
+          {
+            id: "battle-data-collection",
+            labelKey: "settings.battlePanel.dataCollectionTitle",
+            aliases: ["walki", "panel walk"],
+            settingKeys: ["gameData.battlePanel"],
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "sounds",
     labelKey: "settings.domains.sounds",
     icon: "volume2",
@@ -371,7 +382,29 @@ const MANIFEST = [
           {
             id: "sound-master-volume",
             labelKey: "settings.sounds.masterVolume",
+            aliases: ["wycisz", "głośność"],
             settingKeys: ["device.masterVolume", "device.soundsMuted"],
+          },
+          {
+            id: "sound-categories",
+            labelKey: "settings.sounds.categoriesTitle",
+            descriptionKey: "settings.sounds.categoriesDescription",
+            aliases: [
+              "głośność",
+              "powiadomienia",
+              "wykrywacz",
+              "timery",
+              "pingi",
+            ],
+            settingKeys: [
+              "sounds.notificationsVolume",
+              "sounds.detectorVolume",
+              "sounds.timersVolume",
+              "sounds.pingsVolume",
+              "sounds.notificationsConfig",
+              "sounds.detectorConfig",
+              "sounds.timersConfig",
+            ],
           },
         ],
       },
@@ -402,7 +435,7 @@ const MANIFEST = [
     subsections: [
       {
         id: "experimental",
-        labelKey: "settings.domains.experimental",
+        labelKey: "settings.subsections.experimentalFeatures",
         controls: [
           {
             id: "map-pings",
@@ -431,6 +464,12 @@ const MANIFEST = [
         id: "logs",
         labelKey: "settings.tabs.logs",
         controls: [
+          {
+            id: "loot-debug-logging",
+            labelKey: "settings.logs.lootDebugLoggingLabel",
+            descriptionKey: "settings.logs.lootDebugLoggingDescription",
+            aliases: ["konsola", "debug"],
+          },
           {
             id: "logs-filters",
             labelKey: "settings.logs.filtersTitle",

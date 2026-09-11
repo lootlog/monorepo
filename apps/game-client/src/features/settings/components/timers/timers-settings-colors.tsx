@@ -149,7 +149,7 @@ export const TimersSettingsColors: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
+    <div className="ll:flex ll:flex-col ll:gap-4">
       <SettingsSection
         controlId="timer-colors-list"
         title={t("settings.timers.colors.standardColorsTitle")}

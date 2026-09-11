@@ -56,16 +56,12 @@ export function SoundsSettingsTab() {
 
   return (
     <SettingsTabLayout>
-      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
+      <div className="ll:flex ll:flex-col ll:gap-4">
         <MasterVolumeControl
           isMuted={soundsMuted}
           volume={masterVolume}
-          onVolumeChange={(value) => {
-            setMasterVolume(value[0]);
-          }}
-          onVolumeCommit={(value) => {
-            setMasterVolume(value[0]);
-          }}
+          onVolumeChange={setMasterVolume}
+          onVolumeCommit={setMasterVolume}
           onMuteToggle={() => {
             toggleSoundsMuted();
           }}
@@ -85,10 +81,10 @@ export function SoundsSettingsTab() {
                 onVolumeChange={(value) => {
                   setLocalVolumes((previous) => ({
                     ...previous,
-                    pings: value[0],
+                    pings: value,
                   }));
 
-                  if (value[0] > 0) {
+                  if (value > 0) {
                     setMutedCategories((previous) => ({
                       ...previous,
                       pings: false,
@@ -96,7 +92,7 @@ export function SoundsSettingsTab() {
                   }
                 }}
                 onVolumeCommit={(value) =>
-                  updateSettings({ pingsVolume: value[0] })
+                  updateSettings({ pingsVolume: value })
                 }
                 onMuteToggle={(event) => {
                   event.stopPropagation();
@@ -129,6 +125,7 @@ export function SoundsSettingsTab() {
         ) : null}
 
         <SettingsSection
+          controlId="sound-categories"
           title={t("sounds.categoriesTitle")}
           description={t("sounds.categoriesDescription")}
         >
@@ -159,7 +156,7 @@ export function SoundsSettingsTab() {
                   description={category.description}
                   disabled={category.id === "timers"}
                   onVolumeChange={(value) => {
-                    const newVolume = value[0];
+                    const newVolume = value;
 
                     setLocalVolumes((prev) => ({
                       ...prev,
@@ -174,7 +171,7 @@ export function SoundsSettingsTab() {
                     }
                   }}
                   onVolumeCommit={(value) => {
-                    updateSettings({ [`${category.id}Volume`]: value[0] });
+                    updateSettings({ [`${category.id}Volume`]: value });
                   }}
                   onMuteToggle={(event) => {
                     event.stopPropagation();

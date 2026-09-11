@@ -46,7 +46,7 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
       return (
         <div key={result.controlId}>
           {startsDomain ? (
-            <div className="ll:mt-1.5 ll:px-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+            <div className="ll:mt-1.5 ll:px-2 ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
               {result.categoryLabel}
             </div>
           ) : null}

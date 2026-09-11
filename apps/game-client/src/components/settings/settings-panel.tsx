@@ -12,10 +12,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   className,
 }) => (
   <div
-    className={cn(
-      "ll:rounded-sm ll:bg-black/20 ll:px-2 ll:py-[var(--ll-settings-space-sm)]",
-      className,
-    )}
+    className={cn("ll:rounded-sm ll:bg-black/20 ll:px-2 ll:py-1", className)}
   >
     {children}
   </div>

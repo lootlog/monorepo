@@ -106,7 +106,7 @@ export const HotkeysSettingsTab = () => {
 
   return (
     <SettingsTabLayout>
-      <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
+      <div className="ll:flex ll:flex-col ll:gap-4">
         {categories.map(([category, actions], index) => (
           <SettingsSection
             key={category}

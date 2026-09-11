@@ -264,7 +264,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
                 aria-label={t("actions.openSettings")}
                 onClick={() =>
                   setOpen("settings", true, {
-                    activeTab: "servers",
+                    activeTab: "general",
                     activeSubsection: "visibility",
                   })
                 }

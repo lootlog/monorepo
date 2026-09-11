@@ -52,12 +52,13 @@ export const TimersSettingsGeneral: FC = () => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
+    <div className="ll:flex ll:flex-col ll:gap-4">
       <SettingsSection
         controlId="timer-behavior"
         title={t("settings.timers.general.behaviorTitle")}
       >
         <SettingsRow
+          htmlFor="timers-grouping"
           label={t("settings.timers.general.groupingLabel")}
           description={t("settings.timers.general.groupingDescription")}
         >
@@ -70,6 +71,7 @@ export const TimersSettingsGeneral: FC = () => {
           />
         </SettingsRow>
         <SettingsRow
+          htmlFor="timers-under-bag"
           label={t("settings.timers.general.underBagLabel")}
           description={t("settings.timers.general.underBagDescription")}
         >
@@ -82,6 +84,7 @@ export const TimersSettingsGeneral: FC = () => {
           />
         </SettingsRow>
         <SettingsRow
+          htmlFor="compact-view"
           label={t("settings.timers.general.compactViewLabel")}
           description={t("settings.timers.general.compactViewDescription")}
         >
