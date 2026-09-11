@@ -140,8 +140,14 @@ const isDetectorSettingsRecord = Schema.is(
   }),
 );
 
+// One shared server list (`guildIds`) next to a record of per-type rules.
+// Effect index signatures cover every key, so the value is a union; the
+// consumers normalize each leaf.
 const isNotificationsPresentationRecord = Schema.is(
-  Schema.Record(Schema.String, UnknownRecord),
+  Schema.Record(
+    Schema.String,
+    Schema.Union([UnknownRecord, Schema.Array(Schema.String)]),
+  ),
 );
 
 const isNotificationMutesRecord = Schema.is(
@@ -351,8 +357,39 @@ export const SETTINGS_CATALOG = {
     },
   },
   notifications: {
-    schemaVersion: 1,
-    migrations: [],
+    schemaVersion: 2,
+    migrations: [
+      {
+        // Legacy: version 1 stored a server list inside every notification
+        // type. Version 2 keeps one shared `presentation.guildIds`; the union
+        // of the old lists keeps every notification the player received.
+        fromVersion: 1,
+        migrate: ({ presentation, ...overrides }) => {
+          if (!isRecord(presentation)) return overrides;
+          const guildIds = new Set<string>();
+          const migratedPresentation: RawSettingsValues = {};
+
+          for (const [type, rule] of Object.entries(presentation)) {
+            if (!isRecord(rule)) continue;
+            const { guildIds: legacyGuildIds, ...rest } = rule;
+
+            if (isStringArray(legacyGuildIds)) {
+              for (const guildId of legacyGuildIds) guildIds.add(guildId);
+            }
+
+            migratedPresentation[type] = rest;
+          }
+
+          if (isStringArray(presentation.guildIds)) {
+            for (const guildId of presentation.guildIds) guildIds.add(guildId);
+          }
+
+          migratedPresentation.guildIds = [...guildIds];
+
+          return { ...overrides, presentation: migratedPresentation };
+        },
+      },
+    ],
     fields: {
       presentation: field<Partial<NotificationsSettings>>(
         {},

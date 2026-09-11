@@ -1,7 +1,5 @@
 /* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
 import {
-  cloneDetector,
-  cloneNotifications,
   normalizeAirTags,
   normalizeDetector,
   normalizeNotifications,
@@ -133,18 +131,4 @@ export const useUpdateGameAccountPreferences = () => {
   };
 
   return { mutate, isPending: status === "saving" };
-};
-
-export const seedGameAccountPreferences = (
-  preferences: UserGameAccountPreferences,
-  guildIds: string[],
-) => {
-  const detector = cloneDetector(preferences.detector);
-  const notifications = cloneNotifications(preferences.notifications);
-
-  for (const settings of Object.values(notifications)) {
-    settings.guildIds = [...guildIds];
-  }
-
-  return { detector, notifications };
 };

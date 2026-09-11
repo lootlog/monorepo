@@ -21218,6 +21218,12 @@
           "notifications": {
             "type": "object",
             "properties": {
+              "guildIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "ELITE2": {
                 "type": "object",
                 "properties": {
@@ -21234,23 +21240,11 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "show",
-                  "highlight",
-                  "ignoreOtherWorlds",
-                  "guildIds",
-                  "sound"
-                ],
+                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
                 "additionalProperties": false
               },
               "HERO": {
@@ -21269,23 +21263,11 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "show",
-                  "highlight",
-                  "ignoreOtherWorlds",
-                  "guildIds",
-                  "sound"
-                ],
+                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
                 "additionalProperties": false
               },
               "COLOSSUS": {
@@ -21304,23 +21286,11 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "show",
-                  "highlight",
-                  "ignoreOtherWorlds",
-                  "guildIds",
-                  "sound"
-                ],
+                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
                 "additionalProperties": false
               },
               "TITAN": {
@@ -21339,23 +21309,11 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "show",
-                  "highlight",
-                  "ignoreOtherWorlds",
-                  "guildIds",
-                  "sound"
-                ],
+                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
                 "additionalProperties": false
               },
               "message": {
@@ -21374,23 +21332,11 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "show",
-                  "highlight",
-                  "ignoreOtherWorlds",
-                  "guildIds",
-                  "sound"
-                ],
+                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
                 "additionalProperties": false
               },
               "party-gathering": {
@@ -21409,27 +21355,16 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "show",
-                  "highlight",
-                  "ignoreOtherWorlds",
-                  "guildIds",
-                  "sound"
-                ],
+                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
                 "additionalProperties": false
               }
             },
             "required": [
+              "guildIds",
               "ELITE2",
               "HERO",
               "COLOSSUS",
@@ -21650,6 +21585,12 @@
           "notifications": {
             "type": "object",
             "properties": {
+              "guildIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "ELITE2": {
                 "type": "object",
                 "properties": {
@@ -21665,12 +21606,6 @@
                   "autoHideTimeout": {
                     "type": "number",
                     "minimum": 0
-                  },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   },
                   "sound": {
                     "type": "boolean"
@@ -21694,12 +21629,6 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
@@ -21721,12 +21650,6 @@
                   "autoHideTimeout": {
                     "type": "number",
                     "minimum": 0
-                  },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   },
                   "sound": {
                     "type": "boolean"
@@ -21750,12 +21673,6 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
@@ -21778,12 +21695,6 @@
                     "type": "number",
                     "minimum": 0
                   },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "sound": {
                     "type": "boolean"
                   }
@@ -21805,12 +21716,6 @@
                   "autoHideTimeout": {
                     "type": "number",
                     "minimum": 0
-                  },
-                  "guildIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   },
                   "sound": {
                     "type": "boolean"

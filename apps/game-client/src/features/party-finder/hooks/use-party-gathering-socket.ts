@@ -62,13 +62,13 @@ export const usePartyGatheringSocket = () => {
           ) {
             return [];
           }
+        }
 
-          if (
-            Array.isArray(typeSettings.guildIds) &&
-            !typeSettings.guildIds.includes(data.guildId)
-          ) {
-            return [];
-          }
+        if (
+          currentSettings &&
+          !currentSettings.guildIds.includes(data.guildId)
+        ) {
+          return [];
         }
 
         const notification: PartyGatheringNotification = {

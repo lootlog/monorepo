@@ -99,11 +99,9 @@ export const normalizeMutedNpcs = (npcs: unknown): MutedNpcPreference[] => {
 export const cloneNotifications = (
   settings: NotificationsSettings,
 ): NotificationsSettings => {
-  const copy = { ...settings };
+  const copy = { ...settings, guildIds: [...settings.guildIds] };
 
-  for (const type of NOTIFICATION_TYPES) {
-    copy[type] = { ...settings[type], guildIds: [...settings[type].guildIds] };
-  }
+  for (const type of NOTIFICATION_TYPES) copy[type] = { ...settings[type] };
 
   return copy;
 };
@@ -129,19 +127,28 @@ export const normalizeNotification = (
       settings.autoHideTimeout >= 0
         ? settings.autoHideTimeout
         : fallback.autoHideTimeout,
-    guildIds: Array.isArray(settings?.guildIds)
-      ? settings.guildIds.filter(
-          (guildId): guildId is string => typeof guildId === "string",
-        )
-      : [...fallback.guildIds],
     sound:
       typeof settings?.sound === "boolean" ? settings.sound : fallback.sound,
   };
 };
 
+export const normalizeGuildIds = (raw: unknown, fallback: string[]) =>
+  Array.isArray(raw)
+    ? raw.filter((guildId): guildId is string => typeof guildId === "string")
+    : [...fallback];
+
+/**
+ * Expects the current `notifications` document shape (schema version 2):
+ * the per-type lists of older documents are lifted by the catalog migration
+ * before any reader sees them.
+ */
 export const normalizeNotifications = (raw: unknown): NotificationsSettings => {
   const settings = isObjectRecord(raw) ? raw : undefined;
   const normalized = cloneNotifications(defaultNotificationsSettings);
+  normalized.guildIds = normalizeGuildIds(
+    settings?.guildIds,
+    defaultNotificationsSettings.guildIds,
+  );
 
   for (const type of NOTIFICATION_TYPES) {
     normalized[type] = normalizeNotification(

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -68,6 +68,7 @@ test("backfilled legacy preferences are served from settings documents and exist
               ],
               HERO: { detect: false },
             },
+            // Legacy shape: the server list lived inside every type.
             notifications: { HERO: { show: false, guildIds: ["1"] } },
           },
           updatedAt: new Date(0),
@@ -95,7 +96,7 @@ test("backfilled legacy preferences are served from settings documents and exist
         routingRules: [{ id: "rule", minLevel: 1, maxLevel: 50 }],
         HERO: { detect: false },
       },
-      notifications: { HERO: { show: false, guildIds: ["1"] } },
+      notifications: { guildIds: ["1"], HERO: { show: false } },
       hasStoredPings: true,
       hasStoredDetector: true,
       hasStoredNotifications: true,
@@ -110,8 +111,31 @@ test("backfilled legacy preferences are served from settings documents and exist
     await run(
       data.updateUserGameAccountPreferences(identity.userId, "account-1", {
         pings: { enabled: false },
+        notifications: { HERO: { sound: true } },
       }),
     );
+
+    // The patch stores the document in the current schema: the shared list
+    // is lifted and the per-type lists are gone.
+    const [notificationsDocument] = await boundary.run(
+      boundary.database
+        .select()
+        .from(userSettingDocumentTable)
+        .where(
+          and(
+            eq(userSettingDocumentTable.domain, "notifications"),
+            eq(userSettingDocumentTable.scopeType, "GAME_ACCOUNT"),
+          ),
+        ),
+    );
+
+    expect(notificationsDocument?.schemaVersion).toBe(2);
+    expect(notificationsDocument?.overrides).toMatchObject({
+      presentation: { guildIds: ["1"], HERO: { show: false, sound: true } },
+    });
+    expect(
+      JSON.stringify(notificationsDocument?.overrides).match(/guildIds/g),
+    ).toHaveLength(1);
 
     await runBackfill();
 

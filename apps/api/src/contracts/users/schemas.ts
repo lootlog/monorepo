@@ -34,7 +34,6 @@ const GameNotificationPreferences = Schema.Struct({
       }),
     ),
   ),
-  guildIds: Schema.Array(Schema.String),
   sound: Schema.Boolean,
 });
 
@@ -193,6 +192,7 @@ export type UserGameAccountPreferencesResponse =
 export const UserGameAccountPreferencesResponse = Schema.Struct({
   accountId: NonEmptyString,
   notifications: Schema.Struct({
+    guildIds: Schema.Array(Schema.String),
     ELITE2: GameNotificationPreferences,
     HERO: GameNotificationPreferences,
     COLOSSUS: GameNotificationPreferences,
@@ -222,6 +222,7 @@ export type UpdateUserGameAccountPreferencesRequest =
 export const UpdateUserGameAccountPreferencesRequest = Schema.Struct({
   notifications: Schema.optionalKey(
     Schema.Struct({
+      guildIds: Schema.optionalKey(Schema.Array(Schema.String)),
       ELITE2: Schema.optionalKey(GameNotificationPreferencesPatch),
       HERO: Schema.optionalKey(GameNotificationPreferencesPatch),
       COLOSSUS: Schema.optionalKey(GameNotificationPreferencesPatch),

@@ -26,6 +26,17 @@ field `general.guildsOrder` is declared but never written; do not add a second
 writer for it. `timers.syncEnabled` is kept only for old clients; the current
 Game client always synchronizes timer settings and never writes the field.
 
+## Document schema versions
+
+`notifications` is at schema version 2. Version 1 stored a server list inside
+every notification type (`presentation.HERO.guildIds`); version 2 keeps one
+shared `presentation.guildIds`. The catalog migration lifts the union of the
+old lists on every read, and the repository migrates a stored document before
+applying a patch, so the first write after the upgrade persists the current
+shape and drops the per-type lists. Documents that are never written again stay
+at version 1 on disk and are migrated on read; the migration can be removed once
+no version 1 rows remain.
+
 ## Backfill from legacy storage
 
 `drizzle/migrations/20260910185220_settings_documents_backfill` copies

@@ -62,6 +62,41 @@ describe("settings resolver", () => {
     expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 
+  it("lifts the per-type notification server lists into one shared list", () => {
+    expect(
+      migrateSettingsDocument(
+        "notifications",
+        {
+          presentation: {
+            HERO: { show: true, guildIds: ["1", "2"] },
+            TITAN: { show: false, guildIds: ["2", "3"] },
+            message: { show: true },
+          },
+        },
+        1,
+      ),
+    ).toEqual({
+      presentation: {
+        guildIds: ["1", "2", "3"],
+        HERO: { show: true },
+        TITAN: { show: false },
+        message: { show: true },
+      },
+    });
+    expect(SETTINGS_CATALOG.notifications.schemaVersion).toBe(2);
+    expect(
+      SETTINGS_CATALOG.notifications.fields.presentation.isValid({
+        guildIds: ["1"],
+        HERO: { show: true },
+      }),
+    ).toBe(true);
+    expect(
+      SETTINGS_CATALOG.notifications.fields.presentation.isValid({
+        guildIds: "1",
+      }),
+    ).toBe(false);
+  });
+
   it("accepts only known NPC ranks for hidden chat NPC types", () => {
     const { isValid } = SETTINGS_CATALOG.chat.fields.hiddenNpcTypes;
 

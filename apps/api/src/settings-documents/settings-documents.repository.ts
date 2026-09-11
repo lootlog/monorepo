@@ -1,6 +1,9 @@
 import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
+import {
+  migrateSettingsDocument,
+  SETTINGS_CATALOG,
+} from "@lootlog/domain/settings-documents";
 import type {
   PatchSettingsDocuments,
   SettingsDomain,
@@ -113,12 +116,21 @@ export class SettingsDocumentsRepository extends Context.Service<
                 let nextOverrides: JsonRecord;
 
                 try {
+                  // Bring the stored document to the catalog version before
+                  // patching, so the row written below matches the version
+                  // it is stamped with.
+                  const currentOverrides = isRecord(current?.overrides)
+                    ? migrateSettingsDocument(
+                        operation.domain,
+                        current.overrides,
+                        current.schemaVersion,
+                      )
+                    : {};
+
                   nextOverrides = applySettingsPatch({
                     domain: operation.domain,
                     scope: operation.scope,
-                    currentOverrides: isRecord(current?.overrides)
-                      ? current.overrides
-                      : {},
+                    currentOverrides,
                     set: operation.set,
                     unset: operation.unset,
                   });

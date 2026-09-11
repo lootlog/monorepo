@@ -20,7 +20,6 @@ const notification: StoredNotification = {
 
 const categorySettings: NotificationSettings = {
   autoHideTimeout: 30,
-  guildIds: [],
   highlight: true,
   ignoreOtherWorlds: false,
   show: true,
