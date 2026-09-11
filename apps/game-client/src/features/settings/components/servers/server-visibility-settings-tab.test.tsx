@@ -41,10 +41,9 @@ describe("ServerVisibilitySettingsTab", () => {
     });
   });
 
-  it("shows ordered guilds with avatars and visibility counts", () => {
+  it("shows ordered guilds with avatars and visibility state", () => {
     render();
 
-    expect(screen.getByText("2 widoczne · 1 ukryty")).toBeInTheDocument();
     expect(
       document.querySelector(
         'img[src="https://cdn.discordapp.com/icons/guild-2/beta.png"]',

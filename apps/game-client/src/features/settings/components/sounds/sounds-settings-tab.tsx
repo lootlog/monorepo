@@ -134,7 +134,6 @@ export function SoundsSettingsTab() {
       <SettingsSection
         controlId="sound-categories"
         title={t("settings.sounds.categoriesTitle")}
-        description={t("settings.sounds.categoriesDescription")}
       >
         <SettingsCategoryAccordion className="ll:px-2">
           {categories.map((category) => {

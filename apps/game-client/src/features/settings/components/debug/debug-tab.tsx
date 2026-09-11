@@ -450,10 +450,7 @@ export const DebugTab: FC = () => {
         </SettingsRow>
       </SettingsSection>
 
-      <SettingsSection
-        title={t("settings.debug.npcDetectorTitle")}
-        description={t("settings.debug.npcDetectorDescription")}
-      >
+      <SettingsSection title={t("settings.debug.npcDetectorTitle")}>
         {DETECTOR_NPC_ENTRIES.map(
           ({ key, preset, eventLabelKey, npcTypeKey }) => (
             <SettingsRow key={key} label={t(npcTypeKey)}>
@@ -465,10 +462,7 @@ export const DebugTab: FC = () => {
         )}
       </SettingsSection>
 
-      <SettingsSection
-        title={t("settings.debug.partyEventsTitle")}
-        description={t("settings.debug.partyEventsDescription")}
-      >
+      <SettingsSection title={t("settings.debug.partyEventsTitle")}>
         <SettingsRow
           description={t("settings.debug.actions.partyJoinDescription")}
           label={t("settings.debug.events.partyJoin")}

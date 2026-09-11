@@ -29,7 +29,6 @@ export const DetectorSettingsTab = () => {
       <SettingsSection
         controlId="detector-types"
         title={t("settings.detector.typesTitle")}
-        description={t("settings.detector.description")}
       >
         <SettingsCategoryAccordion
           defaultOpen={firstCategory ? [firstCategory.key] : []}

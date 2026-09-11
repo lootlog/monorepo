@@ -68,7 +68,6 @@ export const NpcColorsSettings = () => {
       <SettingsSection
         controlId="npc-type-colors"
         title={t("settings.npcColors.title")}
-        description={t("settings.npcColors.description")}
       >
         {COMBAT_NPC_TYPES.map((npcType) => {
           const color = draft[npcType];
