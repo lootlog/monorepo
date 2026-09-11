@@ -1,19 +1,21 @@
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { RotateCcw, Trash2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { alphaToHex, type ColorEditData } from "./color-utils";
-import { TimerColorActionsPopover } from "./timer-color-actions-popover";
-import { TimerColorQuickPopover } from "./timer-color-quick-popover";
+import { TimerColorEditorPopover } from "./timer-color-editor-popover";
+import { TimerColorPreviewChip } from "./timer-color-preview-chip";
 
 type TimerColorListItemProps = {
   data: ColorEditData;
   isDefault: boolean;
   isModified: boolean;
   itemKey: string;
-  openPopover: string | null;
-  onOpenPopoverChange: (popover: string | null) => void;
-  onCommit: (data: ColorEditData) => void;
-  onNameCommit: (name: string) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDraftChange: (draft: ColorEditData) => void;
+  onCommit: (draft: ColorEditData) => void;
   onReset: () => void;
   onDelete: () => void;
 };
@@ -23,52 +25,68 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
   isDefault,
   isModified,
   itemKey,
-  openPopover,
-  onOpenPopoverChange,
+  open,
+  onOpenChange,
+  onDraftChange,
   onCommit,
-  onNameCommit,
   onReset,
   onDelete,
 }) => {
   const { t } = useTranslation();
-  const quickPopoverKey = `${itemKey}:quick`;
-  const actionsPopoverKey = `${itemKey}:actions`;
+
+  const backgroundColor = `${data.backgroundColor}${alphaToHex(
+    data.backgroundAlpha,
+  )}`;
+
+  const preview = (
+    <TimerColorPreviewChip
+      borderColor={data.borderColor}
+      backgroundColor={backgroundColor}
+    />
+  );
 
   return (
     <SettingsColorRow
       name={data.name}
+      meta={data.borderColor}
       borderColor={data.borderColor}
-      backgroundColor={`${data.backgroundColor}${alphaToHex(
-        data.backgroundAlpha,
-      )}`}
-      modified={isModified}
-      modifiedLabel={t("settings.timers.colors.modified")}
+      backgroundColor={backgroundColor}
       editLabel={`${t("settings.timers.colors.editColorAria")}: ${data.name}`}
       editTrigger={(trigger) => (
-        <TimerColorQuickPopover
+        <TimerColorEditorPopover
+          idPrefix={itemKey}
           data={data}
-          open={openPopover === quickPopoverKey}
-          onOpenChange={(open) =>
-            onOpenPopoverChange(open ? quickPopoverKey : null)
-          }
+          isDefault={isDefault}
+          isModified={isModified}
+          open={open}
+          onOpenChange={onOpenChange}
+          onDraftChange={onDraftChange}
           onCommit={onCommit}
+          onReset={onReset}
+          onDelete={onDelete}
         >
           {trigger}
-        </TimerColorQuickPopover>
+        </TimerColorEditorPopover>
       )}
+      preview={preview}
     >
-      <TimerColorActionsPopover
-        isDefault={isDefault}
-        isModified={isModified}
-        name={data.name}
-        open={openPopover === actionsPopoverKey}
-        onOpenChange={(open) =>
-          onOpenPopoverChange(open ? actionsPopoverKey : null)
-        }
-        onNameCommit={onNameCommit}
-        onReset={onReset}
-        onDelete={onDelete}
-      />
+      {isDefault ? (
+        <SettingsIconButton
+          label={`${t("settings.timers.colors.resetColorTitle")}: ${data.name}`}
+          disabled={!isModified}
+          onClick={onReset}
+        >
+          <RotateCcw />
+        </SettingsIconButton>
+      ) : (
+        <SettingsIconButton
+          label={`${t("settings.timers.colors.deleteColorTitle")}: ${data.name}`}
+          variant="destructive"
+          onClick={onDelete}
+        >
+          <Trash2 />
+        </SettingsIconButton>
+      )}
     </SettingsColorRow>
   );
 };

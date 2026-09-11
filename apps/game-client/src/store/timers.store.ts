@@ -74,6 +74,7 @@ interface TimersState {
     backgroundColor: string,
   ) => void;
   resetDefaultColor: (colorId: string) => void;
+  resetAllDefaultColors: () => void;
   deleteDefaultColor: (colorId: string) => void;
   restoreDefaultColor: (colorId: string) => void;
 }
@@ -302,6 +303,12 @@ export const useTimersStore = create<TimersState>()(
           delete overriddenDefaultColors[colorId];
           delete defaultColorNames[colorId];
           setGlobalSettings({ overriddenDefaultColors, defaultColorNames });
+        },
+        resetAllDefaultColors: () => {
+          setGlobalSettings({
+            overriddenDefaultColors: {},
+            defaultColorNames: {},
+          });
         },
         deleteDefaultColor: (colorId: string) => {
           const state = get();

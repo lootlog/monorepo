@@ -4,6 +4,11 @@ import { getDefaultColorName } from "@/features/timers/utils/get-default-color-n
 import { useTimersStore } from "@/store/timers.store";
 import { TimersSettingsColors } from "./timers-settings-colors";
 
+const openEditor = (name: string) =>
+  fireEvent.click(
+    screen.getByRole("button", { name: `Edytuj kolor: ${name}` }),
+  );
+
 describe("TimersSettingsColors", () => {
   beforeEach(() => {
     useTimersStore.setState({
@@ -11,55 +16,63 @@ describe("TimersSettingsColors", () => {
       defaultColorNames: {},
       overriddenDefaultColors: {},
       hiddenDefaultColors: [],
+      timersColors: {},
     });
   });
 
-  it("opens a compact quick editor from a timer color row", () => {
+  it("opens one editor with name, colours, transparency and preview", () => {
     render(<TimersSettingsColors />);
 
-    fireEvent.click(
-      screen.getAllByRole("button", { name: /Edytuj kolor/i })[0],
-    );
+    openEditor("Czerwony");
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByLabelText("Nazwa")).toBeInTheDocument();
     expect(screen.getByLabelText("Kolor ramki HEX")).toBeInTheDocument();
     expect(screen.getByLabelText("Kolor tła HEX")).toBeInTheDocument();
+    expect(screen.getByLabelText("Przezroczystość tła")).toBeInTheDocument();
     expect(screen.getByText("Podgląd")).toBeInTheDocument();
   });
 
-  it("commits a valid border HEX value from the quick editor", () => {
+  it("commits a valid border HEX value without touching the name", () => {
     render(<TimersSettingsColors />);
 
-    fireEvent.click(
-      screen.getAllByRole("button", { name: /Edytuj kolor/i })[0],
-    );
+    openEditor("Czerwony");
     const borderHexInput = screen.getByLabelText("Kolor ramki HEX");
     fireEvent.change(borderHexInput, { target: { value: "#123456" } });
     fireEvent.blur(borderHexInput);
 
-    expect(useTimersStore.getState().overriddenDefaultColors.red).toMatchObject(
-      {
-        borderColor: "#123456",
-      },
-    );
+    const state = useTimersStore.getState();
+    expect(state.overriddenDefaultColors.red).toMatchObject({
+      borderColor: "#123456",
+    });
+    expect(state.defaultColorNames.red).toBeUndefined();
   });
 
-  it("keeps only one editor popover open at a time", () => {
+  it("renames a default colour without creating a colour override", () => {
     render(<TimersSettingsColors />);
 
-    fireEvent.click(
-      screen.getAllByRole("button", { name: /Edytuj kolor/i })[0],
-    );
-    fireEvent.click(
-      screen.getAllByRole("button", {
-        name: /Więcej ustawień koloru/i,
-      })[0],
-    );
+    openEditor("Czerwony");
+    const nameInput = screen.getByLabelText("Nazwa");
+    fireEvent.change(nameInput, { target: { value: "Bossy" } });
+    fireEvent.blur(nameInput);
+
+    const state = useTimersStore.getState();
+    expect(state.defaultColorNames.red).toBe("Bossy");
+    expect(state.overriddenDefaultColors.red).toBeUndefined();
+  });
+
+  it("rejects an invalid HEX value", () => {
+    render(<TimersSettingsColors />);
+
+    openEditor("Czerwony");
+    const borderHexInput = screen.getByLabelText("Kolor ramki HEX");
+    fireEvent.change(borderHexInput, { target: { value: "#12" } });
+    fireEvent.blur(borderHexInput);
 
     expect(
-      document.querySelectorAll('[data-slot="popover-content"][data-open]'),
-    ).toHaveLength(1);
-    expect(screen.getByLabelText("Nazwa")).toBeInTheDocument();
+      useTimersStore.getState().overriddenDefaultColors.red,
+    ).toBeUndefined();
+    expect(borderHexInput).toHaveValue("#EF4444");
   });
 
   it("does not mark an unchanged persisted default name as modified", () => {
@@ -69,7 +82,57 @@ describe("TimersSettingsColors", () => {
 
     render(<TimersSettingsColors />);
 
-    expect(screen.queryByTitle("Zmieniony")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Przywróć domyślny: Czerwony" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Przywróć wszystkie" }),
+    ).toBeDisabled();
+  });
+
+  it("restores every modified default colour at once", () => {
+    useTimersStore.setState({
+      defaultColorNames: { red: "Bossy" },
+      overriddenDefaultColors: {
+        green: { borderColor: "#123456", backgroundColor: "#12345633" },
+      },
+    });
+
+    render(<TimersSettingsColors />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Przywróć wszystkie" }));
+
+    const state = useTimersStore.getState();
+    expect(state.defaultColorNames).toEqual({});
+    expect(state.overriddenDefaultColors).toEqual({});
+  });
+
+  it("hides a default colour from its editor", () => {
+    render(<TimersSettingsColors />);
+
+    openEditor("Czerwony");
+    fireEvent.click(screen.getByRole("button", { name: "Ukryj kolor" }));
+
+    expect(useTimersStore.getState().hiddenDefaultColors).toEqual(["red"]);
+  });
+
+  it("deletes a custom colour from its row", () => {
+    useTimersStore.setState({
+      customColors: {
+        "custom-1": {
+          id: "custom-1",
+          name: "Topka",
+          borderColor: "#123456",
+          backgroundColor: "#12345633",
+        },
+      },
+    });
+
+    render(<TimersSettingsColors />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Usuń kolor: Topka" }));
+
+    expect(useTimersStore.getState().customColors).toEqual({});
   });
 
   it("restores a hidden default color from the collapsed list", () => {
