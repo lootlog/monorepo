@@ -26,7 +26,7 @@ export const LocalDataSection: FC = () => {
           <>
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
               onClick={() => {
                 setArmed(false);
               }}
