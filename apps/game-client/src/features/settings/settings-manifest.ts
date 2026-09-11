@@ -346,17 +346,11 @@ const MANIFEST = [
             aliases: ["wykrywacz", "elita", "heros", "kolos", "tytan"],
             settingKeys: ["gameData.detector"],
           },
-        ],
-      },
-      {
-        id: "routing",
-        labelKey: "settings.subsections.routing",
-        controls: [
           {
             id: "detector-routing",
             labelKey: "settings.detector.routing.sectionTitle",
             descriptionKey: "settings.detector.routing.sectionDescription",
-            aliases: ["discord", "serwery", "wykrywacz"],
+            aliases: ["routing", "discord", "serwery", "wykrywacz", "wysyłka"],
             settingKeys: ["gameData.detector"],
           },
         ],

@@ -133,22 +133,6 @@ const isDeferredRoutingSyncField = (fieldName: string | null) => {
   return /^routingRules\.\d+\.(name|world)$/.test(fieldName);
 };
 
-const toggleOpenRuleId = (
-  currentOpenRuleIds: string[],
-  ruleId: string,
-  open: boolean,
-) => {
-  if (open) {
-    if (currentOpenRuleIds.includes(ruleId)) {
-      return currentOpenRuleIds;
-    }
-
-    return [...currentOpenRuleIds, ruleId];
-  }
-
-  return currentOpenRuleIds.filter((currentRuleId) => currentRuleId !== ruleId);
-};
-
 export function useDetectorRoutingForm() {
   const {
     accountId,
@@ -165,8 +149,6 @@ export function useDetectorRoutingForm() {
   const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
     null,
   );
-
-  const [openRuleIds, setOpenRuleIds] = useState<string[]>([]);
 
   const debouncedUpdate = useDebouncedCallback(
     (
@@ -211,11 +193,6 @@ export function useDetectorRoutingForm() {
 
   const watchedData = useWatch({ control });
   const routingRules = watchedData.routingRules ?? [];
-  const availableRuleIds = new Set(routingRules.map((rule) => rule.id));
-
-  const visibleOpenRuleIds = new Set(
-    openRuleIds.filter((ruleId) => availableRuleIds.has(ruleId)),
-  );
 
   const availableGuildIds = guilds?.map((guild) => guild.id) ?? [];
   const availableGuildIdsJson = JSON.stringify(availableGuildIds);
@@ -281,30 +258,46 @@ export function useDetectorRoutingForm() {
     });
   };
 
-  const addRoutingRule = () => {
-    const nextRule = createEmptyRoutingRule();
+  const setLevelRange = (
+    ruleIndex: number,
+    [minLevel, maxLevel]: [number, number],
+  ) => {
+    setValue(`routingRules.${ruleIndex}.minLevel`, minLevel, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    setValue(`routingRules.${ruleIndex}.maxLevel`, maxLevel, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    syncCurrentValues();
+  };
 
-    append(nextRule, {
+  const setWorld = (ruleIndex: number, world: string) => {
+    setValue(`routingRules.${ruleIndex}.world`, world, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    syncCurrentValues();
+  };
+
+  const addRoutingRule = () => {
+    append(createEmptyRoutingRule(), {
       shouldFocus: false,
     });
-
-    setOpenRuleIds((currentOpenRuleIds) =>
-      toggleOpenRuleId(currentOpenRuleIds, nextRule.id, true),
-    );
   };
 
   return {
     guilds,
-    control,
     setDeferredSyncField,
-    setOpenRuleIds,
     register,
     fields,
     remove,
     routingRules,
-    visibleOpenRuleIds,
     syncCurrentValues,
     toggleGuild,
+    setLevelRange,
+    setWorld,
     addRoutingRule,
   };
 }

@@ -52,7 +52,6 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   "hidden-timers": "timers",
   "notification-rules": "notifications",
   detector: "notifications",
-  routing: "notifications",
   "muted-players": "mutes",
   "muted-npcs": "mutes",
   sounds: "sounds",

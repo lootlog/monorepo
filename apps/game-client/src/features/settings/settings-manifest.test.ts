@@ -60,7 +60,6 @@ describe("settings manifest persistence references", () => {
     expect(subsectionsOf("notifications")).toEqual([
       "notification-rules",
       "detector",
-      "routing",
     ]);
     expect(subsectionsOf("mutes")).toEqual(["muted-players", "muted-npcs"]);
     expect(subsectionsOf("experimental")).toEqual(["experimental"]);

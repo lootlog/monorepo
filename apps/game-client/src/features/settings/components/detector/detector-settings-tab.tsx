@@ -7,6 +7,7 @@ import { SettingsMatrixRow } from "@/components/settings/settings-matrix-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
+import { DetectorRoutingSection } from "@/features/settings/components/detector/detector-routing-section";
 import { useDetectorTypesForm } from "@/features/settings/components/detector/use-detector-types-form";
 import { NpcType } from "@/api/npcs.api";
 import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
@@ -109,6 +110,7 @@ export const DetectorSettingsTab = () => {
           })}
         </SettingsMatrix>
       </SettingsSection>
+      <DetectorRoutingSection />
     </SettingsTabLayout>
   );
 };

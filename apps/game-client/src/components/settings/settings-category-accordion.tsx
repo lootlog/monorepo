@@ -18,9 +18,8 @@ type SettingsCategoryAccordionProps = {
 };
 
 /**
- * Stack of collapsible categories inside one section (notification rules,
- * detector types, sound categories, routing rules). Several items may be
- * open at once.
+ * Stack of collapsible categories inside one section (sound categories).
+ * Several items may be open at once.
  */
 export const SettingsCategoryAccordion: FC<SettingsCategoryAccordionProps> = ({
   defaultOpen = [],
