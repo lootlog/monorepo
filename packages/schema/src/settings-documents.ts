@@ -93,11 +93,38 @@ export const SettingsPatchOperationSchema = Schema.Struct({
     .pipe(Schema.withDecodingDefaultTypeKey(Effect.succeed([]))),
 });
 
+/**
+ * The read context a client resolves its documents in. A patch that carries
+ * it gets back the documents resolved for that context, so the client can
+ * replace its cache entry with the response instead of refetching.
+ */
+export const SettingsDocumentsContextSchema = Schema.Struct({
+  gameAccountId: Schema.optionalKey(NonEmptyString),
+  characterId: Schema.optionalKey(NonEmptyString),
+  guildId: Schema.optionalKey(NonEmptyString),
+}).annotate({ identifier: "SettingsDocumentsContextDto" });
+
+export type SettingsDocumentsContext =
+  typeof SettingsDocumentsContextSchema.Type;
+
 export const PatchSettingsDocumentsSchema = Schema.Struct({
   operations: Schema.Array(SettingsPatchOperationSchema).check(
     Schema.isMinLength(1),
   ),
+  context: Schema.optionalKey(SettingsDocumentsContextSchema),
 }).annotate({ identifier: "PatchSettingsDocumentsDto" });
+
+/** Guild-scoped documents for several guilds in one request. */
+export const GuildSettingsDocumentsQuerySchema = Schema.Struct({
+  domains: NonEmptyString,
+  /** Comma-separated guild ids. */
+  guildIds: NonEmptyString,
+});
+
+export type GuildSettingsDocumentsQuery =
+  typeof GuildSettingsDocumentsQuerySchema.Type;
+
+export const GUILD_SETTINGS_DOCUMENTS_MAX_GUILDS = 50;
 
 export type PatchSettingsDocuments = typeof PatchSettingsDocumentsSchema.Type;
 
@@ -128,3 +155,11 @@ export type SettingsDocumentsResponse =
 
 export type EncodedSettingsDocumentsResponse =
   typeof SettingsDocumentsResponseSchema.Encoded;
+
+/** Documents per guild; guilds the user is not an active member of are omitted. */
+export const GuildSettingsDocumentsResponseSchema = Schema.Struct({
+  guilds: Schema.Record(Schema.String, SettingsDocumentsResponseSchema),
+}).annotate({ identifier: "GuildSettingsDocumentsResponseDto_Output" });
+
+export type GuildSettingsDocumentsResponse =
+  typeof GuildSettingsDocumentsResponseSchema.Type;

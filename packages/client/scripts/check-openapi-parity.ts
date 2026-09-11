@@ -1061,6 +1061,42 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
           },
         },
       },
+      // Verified by settings-documents.service.spec.ts (membership filtering).
+      "GET /preferences/guilds": {
+        operationId: "SettingsDocumentsController_getGuildPreferences",
+        parameters: ["domains", "guildIds"].map((name) => ({
+          name,
+          in: "query",
+          required: true,
+          schema: { type: "string", minLength: 1 },
+        })),
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/GuildSettingsDocumentsResponseDto_Output",
+                },
+              },
+            },
+          },
+          "400": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: [],
