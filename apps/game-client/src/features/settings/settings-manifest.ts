@@ -326,6 +326,13 @@ const MANIFEST = [
             aliases: ["elita", "heros", "kolos", "tytan", "auto ukrywanie"],
             settingKeys: ["notifications.presentation"],
           },
+          {
+            id: "notification-servers",
+            labelKey: "settings.notifications.serversTitle",
+            descriptionKey: "settings.notifications.serversDescription",
+            aliases: ["serwery", "discord", "gildie"],
+            settingKeys: ["notifications.presentation"],
+          },
         ],
       },
       {

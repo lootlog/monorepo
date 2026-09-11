@@ -52,6 +52,7 @@
       "hidden": "Ukryte"
     },
     "showAll": "Pokaż wszystkie",
+    "showAllCount": "Pokaż wszystkie ({{count}})",
     "presenceTitle": "Publikowanie obecności",
     "presenceDescription": "Wybierz organizacje, które mogą widzieć Twoją obecność w grze. Bez wyboru obecność nie jest publikowana, dopóki Lootlog nie dopasuje organizacji do bieżącego klanu.",
     "presenceLabel": "Obecność: {{name}}",
@@ -270,26 +271,27 @@
   "notifications": {
     "title": "Ustawienia powiadomień",
     "toggles": {
-      "show": "Wyświetlaj",
-      "ignoreOtherWorlds": "Ignoruj inne światy",
+      "show": "Pokazuj",
+      "ignoreOtherWorlds": "Tylko ten świat",
       "highlight": "Podświetlenie",
-      "sound": "Powiadom dźwiękiem",
-      "showDescription": "Pokazuj powiadomienia o tej kategorii w grze.",
-      "ignoreOtherWorldsDescription": "Pomijaj zgłoszenia z innych światów niż Twój.",
-      "highlightDescription": "Wyróżniaj powiadomienie kolorem tej kategorii.",
-      "soundDescription": "Odtwarzaj dźwięk przy nowym powiadomieniu."
+      "sound": "Dźwięk",
+      "showDescription": "Główny włącznik. Gdy jest wyłączony, powiadomienia tego typu nie pojawią się w grze.",
+      "ignoreOtherWorldsDescription": "Pokazuj tylko zgłoszenia ze świata, na którym grasz. Wyłącz, aby widzieć też inne światy.",
+      "highlightDescription": "Wyróżnia okno powiadomienia kolorem tego typu.",
+      "soundDescription": "Odtwarza dźwięk przy nowym powiadomieniu. Dźwięki zmienisz w zakładce Dźwięki."
     },
-    "autoHideLabel": "Auto ukrywanie",
-    "autoHideDescription": "Sekundy, 0 = wyłączone.",
-    "serversTitle": "Serwery",
-    "emptyGuilds": "Brak gildii do skonfigurowania dla tej kategorii.",
-    "rulesTitle": "Reguły powiadomień",
-    "summaryEnabled_one": "Włączone · {{count}} serwer",
-    "summaryEnabled_few": "Włączone · {{count}} serwery",
-    "summaryEnabled_many": "Włączone · {{count}} serwerów",
-    "summaryEnabled_other": "Włączone · {{count}} serwerów",
+    "autoHideLabel": "Znika po",
+    "autoHideDescription": "Po ilu sekundach powiadomienie samo zniknie. 0 = zostaje, aż je zamkniesz.",
+    "serversTitle": "Z których serwerów",
+    "emptyGuilds": "Nie należysz do żadnego serwera z Lootlogiem.",
+    "rulesTitle": "Co pokazywać",
     "summaryDisabled": "Wyłączone",
-    "serversDescription": "Serwery, z których przyjmujesz zgłoszenia tej kategorii."
+    "serversDescription": "Zgłoszenia trafiają do Ciebie tylko z zaznaczonych serwerów Discord. Kliknij ikonę serwera, aby go włączyć lub wyłączyć.",
+    "rulesDescription": "Każdy wiersz to jeden typ powiadomienia. Włącz „Pokazuj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
+    "categoryHeader": "Typ",
+    "cellLabel": "{{category}}: {{setting}}",
+    "serversPickerLabel": "Serwery: {{category}}",
+    "serversSelected": "{{selected}} z {{total}}"
   },
   "mutes": {
     "players": "Wyciszeni gracze",
@@ -307,18 +309,18 @@
   },
   "detector": {
     "title": "Ustawienia wykrywacza",
-    "description": "Wybierz, które typy NPC wykrywacz rozpoznaje lokalnie i jak o nich informuje.",
+    "description": "Każdy wiersz to jeden typ potwora. Włącz „Wykrywaj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
     "toggles": {
       "detect": "Wykrywaj",
-      "autoSend": "Auto wysyłanie",
-      "notifyWindow": "Okno powiadomienia",
+      "autoSend": "Auto wysyłka",
+      "notifyWindow": "Okno",
       "highlight": "Podświetlenie",
-      "notifySound": "Powiadom dźwiękiem",
-      "detectDescription": "Rozpoznawaj NPC tego typu na mapie.",
-      "autoSendDescription": "Wysyłaj wykrycie na serwery bez pytania.",
-      "notifyWindowDescription": "Pokazuj okno z wykrytym NPC.",
-      "highlightDescription": "Wyróżniaj wykrytego NPC kolorem tego typu.",
-      "notifySoundDescription": "Odtwarzaj dźwięk przy wykryciu."
+      "notifySound": "Dźwięk",
+      "detectDescription": "Główny włącznik. Gdy jest wyłączony, wykrywacz pomija potwory tego typu.",
+      "autoSendDescription": "Wysyła wykrycie na serwery od razu, bez pytania. Serwery ustawisz w zakładce Routing.",
+      "notifyWindowDescription": "Pokazuje okno z wykrytym potworem.",
+      "highlightDescription": "Wyróżnia wykrytego potwora kolorem tego typu.",
+      "notifySoundDescription": "Odtwarza dźwięk przy wykryciu. Dźwięki zmienisz w zakładce Dźwięki."
     },
     "routing": {
       "sectionTitle": "Routing na serwery",
@@ -346,10 +348,9 @@
       "summaryGuilds_other": "{{count}} serwerów",
       "toggleRuleLabel": "Rozwiń regułę {{name}}"
     },
-    "typesTitle": "Wykrywanie typów NPC",
-    "summaryEnabled": "Włączone",
-    "summaryDisabled": "Wyłączone",
-    "summaryAutoSend": "auto wysyłanie"
+    "typesTitle": "Które potwory wykrywać",
+    "categoryHeader": "Typ",
+    "cellLabel": "{{category}}: {{setting}}"
   },
   "timers": {
     "title": "Ustawienia timerów",
@@ -626,5 +627,9 @@
   },
   "appearance": {
     "interfaceTitle": "Interfejs"
+  },
+  "matrix": {
+    "enableAll": "Kliknij nagłówek, aby włączyć we wszystkich wierszach.",
+    "disableAll": "Kliknij nagłówek, aby wyłączyć we wszystkich wierszach."
   }
 }

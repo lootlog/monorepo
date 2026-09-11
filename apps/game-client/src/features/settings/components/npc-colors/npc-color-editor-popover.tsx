@@ -11,9 +11,9 @@ import {
   isHexAppearanceColor,
   type CombatNpcType,
 } from "@lootlog/schema/npc-appearance";
-import { RotateCcw } from "lucide-react";
 import { useRef, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { NpcColorPreviewChip } from "./npc-color-preview-chip";
 
 type NpcColorEditorPopoverProps = {
   children: ReactNode;
@@ -142,37 +142,27 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
             />
           </div>
 
-          <div className="ll:grid ll:gap-2">
+          <div className="ll:grid ll:gap-1.5">
             <div className="ll:text-[11px] ll:text-muted-foreground">
               {t("settings.npcColors.preview")}
             </div>
-            <div className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1 ll:text-xs">
+            <div className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1.5 ll:text-xs">
               <span className="ll:text-muted-foreground">[21:37] </span>
               <strong style={{ color: surfaceColors.text }}>
                 {t(`common:npcTypes.${npcType.toLowerCase()}`)}
               </strong>
             </div>
-            <div
-              className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1 ll:text-xs ll:text-foreground"
-              style={{
-                boxShadow: `inset 0 0 0 1px ${surfaceColors.border}`,
-                backgroundColor: surfaceColors.background,
-              }}
-            >
-              {t("settings.npcColors.notificationPreview")}
-            </div>
-            <div
-              className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1 ll:text-xs ll:text-foreground"
-              style={{
-                boxShadow: `inset 0 0 0 1px ${surfaceColors.border}`,
-                backgroundColor: surfaceColors.background,
-              }}
-            >
-              {t("settings.npcColors.detectorPreview")}
+            <div className="ll:flex ll:flex-wrap ll:gap-1.5">
+              <NpcColorPreviewChip color={colorDraft} className="ll:max-w-full">
+                {t("settings.npcColors.notificationPreview")}
+              </NpcColorPreviewChip>
+              <NpcColorPreviewChip color={colorDraft} className="ll:max-w-full">
+                {t("settings.npcColors.detectorPreview")}
+              </NpcColorPreviewChip>
             </div>
           </div>
 
-          <div className="ll:flex ll:justify-end ll:pt-2">
+          <div className="ll:flex ll:justify-end ll:pt-1">
             <Button
               type="button"
               variant="outline"
@@ -185,7 +175,6 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
                 onReset();
               }}
             >
-              <RotateCcw className="ll:size-3.5" />
               {t("settings.npcColors.reset")}
             </Button>
           </div>

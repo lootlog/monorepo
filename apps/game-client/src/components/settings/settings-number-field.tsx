@@ -11,6 +11,11 @@ type SettingsNumberFieldProps = {
   /** Short unit shown after the field, e.g. "s" or "px". */
   unit?: string;
   disabled?: boolean;
+  /**
+   * `cell` fills a grid cell: no border, no spin buttons, typing straight
+   * into the cell; the frame appears only on focus.
+   */
+  variant?: "default" | "cell";
   "aria-label"?: string;
   className?: string;
   /** Called with a value already clamped to [min, max] on blur or Enter. */
@@ -41,6 +46,7 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
   step = 1,
   unit,
   disabled,
+  variant = "default",
   "aria-label": ariaLabel,
   className,
   onCommit,
@@ -50,6 +56,7 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
   );
 
   const cancelled = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const text = draft && draft.source === value ? draft.text : String(value);
 
   const commit = () => {
@@ -79,8 +86,20 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
   };
 
   return (
-    <span className={cn("ll:inline-flex ll:items-center ll:gap-1", className)}>
+    <span
+      className={cn(
+        "ll:items-center",
+        variant === "cell"
+          ? "ll:relative ll:flex ll:h-full ll:w-full ll:min-w-14 ll:gap-0 ll:transition-colors ll:hover:bg-white/5 ll:focus-within:shadow-[inset_0_0_0_1px_var(--color-ring)]"
+          : "ll:inline-flex ll:gap-1",
+        className,
+      )}
+      // The whole cell is the click target; the field itself stays narrow so
+      // the value sits centred under the column icon.
+      onClick={variant === "cell" ? () => inputRef.current?.focus() : undefined}
+    >
       <Input
+        ref={inputRef}
         id={id}
         type="number"
         inputMode="decimal"
@@ -90,15 +109,29 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
         value={text}
         disabled={disabled}
         aria-label={ariaLabel}
+        variant={variant === "cell" ? "borderless" : "default"}
         onChange={(event) =>
           setDraft({ source: value, text: event.target.value })
         }
         onBlur={commit}
         onKeyDown={handleKeyDown}
-        className="ll:w-16 ll:text-right ll:tabular-nums"
+        className={cn(
+          "ll:text-right ll:tabular-nums",
+          variant === "cell"
+            ? "ll:h-full ll:flex-1 ll:px-0.5 ll:text-center ll:[appearance:textfield] ll:[&::-webkit-inner-spin-button]:appearance-none ll:[&::-webkit-outer-spin-button]:appearance-none"
+            : "ll:w-16",
+        )}
       />
       {unit ? (
-        <span className="ll:w-5 ll:shrink-0 ll:text-[11px] ll:text-muted-foreground">
+        <span
+          className={cn(
+            "ll:shrink-0 ll:text-[11px] ll:text-muted-foreground",
+            // Hangs right of the centred value so the digits stay under the icon.
+            variant === "cell"
+              ? "ll:pointer-events-none ll:absolute ll:top-1/2 ll:left-[calc(50%+0.8em)] ll:-translate-y-1/2"
+              : "ll:w-5",
+          )}
+        >
           {unit}
         </span>
       ) : null}

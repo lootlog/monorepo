@@ -11,6 +11,7 @@ import {
   render as renderUi,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Profiler } from "react";
@@ -55,34 +56,88 @@ const render = () => {
 };
 
 describe("NotificationsSettingsTab", () => {
-  it("lists every category as an accordion item with the first one open", () => {
-    render();
-    expect(screen.getByRole("button", { name: "Elita 2" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Komunikaty" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
-    expect(screen.getByRole("button", { name: "Grupa" })).toBeInTheDocument();
-    expect(document.getElementById("ELITE2-show")).toBeInTheDocument();
-    expect(document.getElementById("message-show")).not.toBeInTheDocument();
-  });
-
-  it("opens a collapsed category and keeps dependent rows disabled until show is on", async () => {
-    const user = userEvent.setup();
+  it("shows every option of every category at once, dimming rows that are off", () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");
     initial.notifications.HERO.show = false;
+    initial.notifications.COLOSSUS.show = true;
     seedAccountPreferences(initial);
     render();
 
-    await user.click(screen.getByRole("button", { name: "Heros" }));
+    expect(
+      screen.getByRole("table", { name: "Co pokazywać" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { expanded: false })).toBeNull();
+
+    for (const category of ["ELITE2", "HERO", "COLOSSUS", "TITAN", "message"]) {
+      expect(document.getElementById(`${category}-show`)).toBeInTheDocument();
+    }
 
     expect(document.getElementById("HERO-show")).not.toBeChecked();
     expect(document.getElementById("HERO-highlight")).toBeDisabled();
     expect(document.getElementById("HERO-auto-hide-timeout")).toBeDisabled();
+
+    for (const tile of within(
+      screen.getByRole("group", { name: "Serwery: Heros" }),
+    ).getAllByRole("button")) {
+      expect(tile).toBeDisabled();
+    }
+
+    expect(document.getElementById("ELITE2-highlight")).toBeDisabled();
+    expect(document.getElementById("COLOSSUS-highlight")).toBeEnabled();
+  });
+
+  it("switches a whole column on unless every editable row is already on, skipping rows that are off", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.notifications.HERO.show = true;
+    initial.notifications.HERO.highlight = true;
+    initial.notifications.COLOSSUS.show = true;
+    initial.notifications.COLOSSUS.highlight = false;
+    initial.notifications.TITAN.show = false;
+    initial.notifications.TITAN.highlight = false;
+    seedAccountPreferences(initial);
+    render();
+
+    const header = screen.getByRole("button", { name: "Podświetlenie" });
+
+    await user.click(header);
+    expect(document.getElementById("HERO-highlight")).toBeChecked();
+    expect(document.getElementById("COLOSSUS-highlight")).toBeChecked();
+    expect(document.getElementById("TITAN-highlight")).not.toBeChecked();
+
+    await user.click(header);
+    expect(document.getElementById("HERO-highlight")).not.toBeChecked();
+    expect(document.getElementById("COLOSSUS-highlight")).not.toBeChecked();
+    expect(document.getElementById("TITAN-highlight")).not.toBeChecked();
+  });
+
+  it("saves only the category whose server selection changed", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.notifications.HERO.show = true;
+    seedAccountPreferences(initial);
+    harness.request.mockImplementation(() =>
+      Promise.resolve(
+        Response.json(readSeededSettingsDocuments(harness.queryClient)),
+      ),
+    );
+    render();
+
+    const picker = screen.getByRole("group", { name: "Serwery: Heros" });
+    const [firstGuild] = within(picker).getAllByRole("button");
+
+    if (!firstGuild) throw new Error("no guild tile");
+    await user.click(firstGuild);
+
+    await waitFor(() => {
+      const body = JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body));
+      const presentation = body.operations[0].set.presentation;
+      expect(Object.keys(presentation)).toEqual(["HERO"]);
+      expect(presentation.HERO.guildIds).toEqual(["guild-1"]);
+    });
   });
 
   it("autosaves a committed auto-hide timeout clamped to the allowed range", async () => {
