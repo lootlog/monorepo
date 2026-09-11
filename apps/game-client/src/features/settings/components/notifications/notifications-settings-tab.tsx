@@ -90,6 +90,7 @@ export const NotificationsSettingsTab = () => {
           label={t("settings.notifications.rulesTitle")}
           rowHeader={t("settings.notifications.categoryHeader")}
           columns={columns}
+          className="ll:mt-2"
         >
           {categories.map((category) => {
             const enabled = rules[category.key].show;

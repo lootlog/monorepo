@@ -67,6 +67,7 @@ export const DetectorSettingsTab = () => {
           label={t("settings.detector.typesTitle")}
           rowHeader={t("settings.detector.categoryHeader")}
           columns={columns}
+          className="ll:mt-2"
         >
           {categories.map((category) => {
             const enabled = types[category.key].detect;
