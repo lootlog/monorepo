@@ -5,6 +5,7 @@ import {
   LOG_STATUS_CHIP_CLASS_NAMES,
 } from "@/features/settings/components/logs/logs.constants";
 import {
+  formatLogDateTime,
   formatLogTimestamp,
   getStatusLabel,
   stringifyLogValue,
@@ -57,10 +58,13 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
             {request.statusCode ?? getStatusLabel(request.status)}
           </span>
         </TableCell>
-        <TableCell className="ll:tabular-nums ll:text-muted-foreground">
+        <TableCell
+          className="ll:w-0 ll:tabular-nums ll:text-muted-foreground"
+          title={formatLogDateTime(request.createdAt)}
+        >
           {formatLogTimestamp(request.createdAt)}
         </TableCell>
-        <TableCell className="ll:w-0">
+        <TableCell className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]">
           <div className="ll:flex ll:items-center ll:justify-end ll:gap-0.5">
             <SettingsIconButton
               label={t("common:actions.copyRequest")}

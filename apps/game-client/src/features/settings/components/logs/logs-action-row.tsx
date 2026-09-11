@@ -13,6 +13,7 @@ import {
 } from "@/features/settings/components/logs/logs.constants";
 import { LogsRequestRow } from "@/features/settings/components/logs/logs-request-row";
 import {
+  formatLogDateTime,
   formatLogTimestamp,
   getActionLabel,
   getActionRequestSummary,
@@ -52,7 +53,10 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
         data-state={isOpen ? "expanded-detail" : undefined}
         onClick={toggleOpen}
       >
-        <TableCell className="ll:tabular-nums ll:text-muted-foreground">
+        <TableCell
+          className="ll:w-0 ll:tabular-nums ll:text-muted-foreground"
+          title={formatLogDateTime(action.createdAt)}
+        >
           {formatLogTimestamp(action.createdAt)}
         </TableCell>
         <TableCell>
@@ -83,7 +87,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
         >
           {requestSummary.successCount}/{requestSummary.failureCount}
         </TableCell>
-        <TableCell className="ll:w-0">
+        <TableCell className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]">
           <div className="ll:flex ll:items-center ll:justify-end ll:gap-0.5">
             <SettingsIconButton
               label={t("common:actions.copyAction")}
@@ -150,7 +154,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
                       <TableHead>
                         {t("settings.logs.requestColumns.time")}
                       </TableHead>
-                      <TableHead />
+                      <TableHead className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
