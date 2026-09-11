@@ -86,7 +86,7 @@ describe("DetectorRoutingSection", () => {
     );
   });
 
-  it("shows every rule expanded and reads each one back in plain words", () => {
+  it("shows every rule expanded with its own name, levels and Lootlogi", () => {
     render();
 
     expect(screen.queryByRole("button", { expanded: false })).toBeNull();
@@ -95,13 +95,6 @@ describe("DetectorRoutingSection", () => {
     expect(screen.getAllByLabelText("Do levela")).toHaveLength(2);
     expect(screen.getByLabelText("Lootlogi: Bossy hero")).toBeInTheDocument();
     expect(screen.getByLabelText("Lootlogi: Reguła 2")).toBeInTheDocument();
-
-    expect(
-      screen.getByText("Wysyła na 5 Lootlogów: poziom 20–80, świat Pandora"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Wysyła na 1 Lootlog: poziom 120–240, każdy świat"),
-    ).toBeInTheDocument();
   });
 
   it("clamps a committed level to the allowed range before saving", async () => {
@@ -193,7 +186,7 @@ describe("DetectorRoutingSection", () => {
     );
 
     expect(
-      screen.queryByText("Wysyła na 1 Lootlog: poziom 120–240, każdy świat"),
+      screen.queryByRole("button", { name: "Usuń regułę Reguła 3" }),
     ).not.toBeInTheDocument();
     expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
   });
