@@ -236,6 +236,10 @@ export const applySettingsOperation = (
   };
 };
 
+/** Structural equality for catalog-shaped values (plain JSON). */
+export const areSettingsValuesEqual = (left: unknown, right: unknown) =>
+  left === right || JSON.stringify(left) === JSON.stringify(right);
+
 export const isSettingsRecord = (
   value: unknown,
 ): value is Record<string, unknown> => isRecord(value);

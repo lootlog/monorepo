@@ -16,6 +16,10 @@ export const useBattlePanelStore = create<BattlePanelState>()(
     (set, get) => ({
       isBattleCollectionEnabled: false,
       setBattleCollectionEnabled: (isBattleCollectionEnabled) => {
+        if (get().isBattleCollectionEnabled === isBattleCollectionEnabled) {
+          return;
+        }
+
         set({ isBattleCollectionEnabled });
       },
       toggleBattleCollection: () => {

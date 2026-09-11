@@ -65,12 +65,10 @@ export const useUpdateUserPreferences = () => {
 
       queryClient.setQueryData(queryKey, context.previousData);
     },
+    // The response is the full preferences document, so no refetch follows.
     onSuccess: (data) => {
       queryClient.setQueryData(queryKey, data);
       reportSettingsSave.saved();
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
     },
   });
 

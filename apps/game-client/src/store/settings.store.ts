@@ -107,6 +107,7 @@ export const useSettingsStore = create<SettingsState>()(
         }));
       },
       setAllowWorldSelection: (allowWorldSelection) => {
+        if (get().allowWorldSelection === allowWorldSelection) return;
         set({ allowWorldSelection });
       },
       toggleAllowWorldSelection: () => {

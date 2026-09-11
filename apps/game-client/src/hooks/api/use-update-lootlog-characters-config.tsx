@@ -35,8 +35,13 @@ export const useUpdateLootlogCharactersConfig = () => {
         options,
       );
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey });
+    // The response is the saved character entry; it replaces the optimistic
+    // one instead of triggering a refetch of the whole account map.
+    onSuccess: (data) => {
+      queryClient.setQueryData<UserLootlogConfigAccountResponseDtoOutput>(
+        queryKey,
+        (current) => ({ ...current, [data.characterId]: data }),
+      );
       reportSettingsSave.saved();
     },
     onMutate: async (variables) => {

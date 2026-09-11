@@ -267,5 +267,12 @@ describe("useUpdateUserPreferences", () => {
     });
 
     expect(result.current.isSuccess).toBe(true);
+    // The response is the full document: no refetch may follow the save.
+    expect(
+      queryClient.getQueryState(
+        UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+      )?.isInvalidated,
+    ).toBe(false);
+    expect(respond).toHaveBeenCalledTimes(1);
   });
 });

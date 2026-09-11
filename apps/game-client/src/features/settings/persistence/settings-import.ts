@@ -4,6 +4,7 @@ import { isObjectRecord } from "@lootlog/schema/records";
 import type { SettingsDomain } from "@lootlog/schema/settings-documents";
 import { decodeTimerSettings } from "@/store/timer-settings-codec";
 import {
+  areSettingsValuesEqual,
   getSettingsDefaultValue,
   hasStoredSettingsValue,
   type SettingsDocuments,
@@ -62,9 +63,6 @@ export type LocalSettingsSnapshot = {
   battlePanel: { isBattleCollectionEnabled: boolean } | undefined;
 };
 
-const isEqual = (left: unknown, right: unknown) =>
-  JSON.stringify(left) === JSON.stringify(right);
-
 const hasContent = (value: unknown) =>
   isObjectRecord(value)
     ? Object.keys(value).length > 0
@@ -110,7 +108,7 @@ const isImportable = (
 const differsFromDefault = (
   key: Parameters<typeof getSettingsDefaultValue>[0],
   value: unknown,
-) => !isEqual(value, getSettingsDefaultValue(key));
+) => !areSettingsValuesEqual(value, getSettingsDefaultValue(key));
 
 const collectTimerBehaviorImport = (
   documents: SettingsDocuments,
