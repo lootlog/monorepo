@@ -45,10 +45,10 @@ export const SettingsRow: FC<SettingsRowProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:flex ll:min-h-6 ll:gap-1.5 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-[background-color,box-shadow] ll:hover:bg-white/5 ll:data-[settings-highlighted]:bg-primary/15 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:flex ll:min-h-6 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-[background-color,box-shadow] ll:hover:bg-white/5 ll:data-[settings-highlighted]:bg-primary/15 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
         layout === "inline"
-          ? "ll:items-center ll:justify-between"
-          : "ll:flex-col ll:items-stretch",
+          ? "ll:items-center ll:justify-between ll:gap-4"
+          : "ll:flex-col ll:items-stretch ll:gap-1.5",
         disabled && "ll:opacity-60",
         className,
       )}
@@ -77,7 +77,20 @@ export const SettingsRow: FC<SettingsRowProps> = ({
           </div>
         )}
         {description ? (
-          <p className="ll:m-0 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
+          // The description is a click target for the control only; it must
+          // not join the control's accessible name the way a second <label> would.
+          // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+          <p
+            className={cn(
+              "ll:m-0 ll:mt-0.5 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground",
+              htmlFor && "ll-custom-cursor-pointer",
+            )}
+            onClick={
+              htmlFor
+                ? () => document.getElementById(htmlFor)?.click()
+                : undefined
+            }
+          >
             {description}
           </p>
         ) : null}
