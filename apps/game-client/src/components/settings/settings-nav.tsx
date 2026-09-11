@@ -86,7 +86,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
 
   return (
     <TabsList
-      className="ll:h-auto ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-0.5 ll:rounded-none ll:bg-transparent ll:p-0 ll:group-data-horizontal/tabs:h-auto"
+      className="ll:h-auto ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-0.5 ll:rounded-none ll:bg-transparent ll:p-0 ll:pe-3 ll:group-data-horizontal/tabs:h-auto"
       aria-label={label}
       aria-orientation="vertical"
     >
