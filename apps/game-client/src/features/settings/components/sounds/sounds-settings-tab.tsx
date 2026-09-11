@@ -1,20 +1,19 @@
-import { SettingsCategoryAccordion } from "@/components/settings/settings-category-accordion";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
+import { getDefaultSoundUrl } from "@/features/settings/config/default-sounds";
 import { Play } from "lucide-react";
-import { CategoryAccordionItem } from "./category-accordion-item";
+import { SoundCategorySection } from "./sound-category-section";
+import { SoundFieldInput } from "./sound-field-input";
 import { useSoundSettingsForm } from "./use-sound-settings-form";
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
 
 const isValidUrl = (url: string): boolean => {
-  if (!url || url.trim() === "") {
-    return true;
-  }
+  if (url.trim() === "") return true;
 
   try {
     new URL(url);
@@ -37,14 +36,13 @@ export function SoundsSettingsTab() {
     playSoundTest,
     t,
     settings,
-    mutedCategories,
-    setMutedCategories,
-    localVolumes,
-    setLocalVolumes,
+    volumes,
+    setVolume,
+    commitVolume,
+    toggleMuted,
     urlErrors,
     setUrlErrors,
     categories,
-    queueSoundConfigPatch,
   } = useSoundSettingsForm();
 
   if (isLoading) {
@@ -57,16 +55,15 @@ export function SoundsSettingsTab() {
 
   const muteLabel = t("common:actions.mute");
   const unmuteLabel = t("common:actions.unmute");
-  const pingsMuted = mutedCategories.pings || localVolumes.pings === 0;
 
   return (
     <SettingsTabLayout>
-      <SettingsSection title={t("settings.sounds.volumeTitle")}>
-        <SettingsRow
-          controlId="sound-master-volume"
-          label={t("settings.sounds.masterVolume")}
-          control="wide"
-        >
+      <SettingsSection
+        controlId="sound-master-volume"
+        title={t("settings.sounds.masterTitle")}
+        description={t("settings.sounds.masterDescription")}
+      >
+        <SettingsRow label={t("settings.sounds.masterVolume")} control="wide">
           <SettingsVolumeControl
             label={t("settings.sounds.masterVolume")}
             muteLabel={muteLabel}
@@ -75,171 +72,103 @@ export function SoundsSettingsTab() {
             muted={soundsMuted}
             onVolumeChange={setMasterVolume}
             onVolumeCommit={setMasterVolume}
-            onMuteToggle={() => {
-              toggleSoundsMuted();
-            }}
+            onMuteToggle={() => toggleSoundsMuted()}
           />
         </SettingsRow>
+      </SettingsSection>
 
-        {gameInterface === "ni" ? (
-          <SettingsRow
-            label={t("settings.sounds.categories.pings.label")}
-            control="wide"
-            controlClassName="ll:gap-1"
+      {categories.map((category) => {
+        const configKey = `${category.id}Config` as const;
+        const categoryConfig = settings?.[configKey] ?? {};
+        const categoryErrors = urlErrors[category.id] ?? {};
+
+        const setSoundUrl = (key: string, soundUrl: string) => {
+          if (!isValidUrl(soundUrl)) {
+            setUrlErrors((previous) => ({
+              ...previous,
+              [category.id]: {
+                ...previous[category.id],
+                [key]: t("settings.sounds.invalidUrl"),
+              },
+            }));
+
+            return;
+          }
+
+          setUrlErrors((previous) => {
+            const errors = previous[category.id];
+
+            if (!errors || !(key in errors)) return previous;
+
+            const { [key]: _removed, ...remaining } = errors;
+            const { [category.id]: _previous, ...others } = previous;
+
+            return Object.keys(remaining).length > 0
+              ? { ...others, [category.id]: remaining }
+              : others;
+          });
+
+          const currentConfig = categoryConfig[key] ?? DEFAULT_NPC_CONFIG;
+
+          // The shared settings patch queue debounces and merges these.
+          updateSettings({
+            [configKey]: { [key]: { ...currentConfig, soundUrl } },
+          });
+        };
+
+        return (
+          <SoundCategorySection
+            key={category.id}
+            controlId={`sound-${category.id}`}
+            title={category.label}
+            description={category.description}
+            volume={volumes[category.id]}
+            onVolumeChange={(value) => setVolume(category.id, value)}
+            onVolumeCommit={(value) => commitVolume(category.id, value)}
+            onMuteToggle={() => toggleMuted(category.id)}
           >
-            <SettingsVolumeControl
-              label={t("settings.sounds.categories.pings.label")}
-              muteLabel={muteLabel}
-              unmuteLabel={unmuteLabel}
-              volume={localVolumes.pings}
-              muted={pingsMuted}
-              onVolumeChange={(value) => {
-                setLocalVolumes((previous) => ({
-                  ...previous,
-                  pings: value,
-                }));
+            {category.fields.map((field) => {
+              const soundUrl = categoryConfig[field.key]?.soundUrl ?? "";
 
-                if (value > 0) {
-                  setMutedCategories((previous) => ({
-                    ...previous,
-                    pings: false,
-                  }));
-                }
-              }}
-              onVolumeCommit={(value) => updateSettings({ pingsVolume: value })}
-              onMuteToggle={() => {
-                const nextVolume = pingsMuted ? 0.5 : 0;
+              return (
+                <SoundFieldInput
+                  key={field.key}
+                  category={category.id}
+                  fieldKey={field.key}
+                  label={field.label}
+                  soundUrl={soundUrl}
+                  placeholder={getDefaultSoundUrl(field.key)}
+                  error={categoryErrors[field.key]}
+                  onSoundUrlChange={(value) => setSoundUrl(field.key, value)}
+                  onPlaySound={() =>
+                    playSoundTest(category.id, field.key, soundUrl)
+                  }
+                />
+              );
+            })}
+          </SoundCategorySection>
+        );
+      })}
 
-                setLocalVolumes((previous) => ({
-                  ...previous,
-                  pings: nextVolume,
-                }));
-                setMutedCategories((previous) => ({
-                  ...previous,
-                  pings: nextVolume === 0,
-                }));
-                updateSettings({ pingsVolume: nextVolume });
-              }}
-            />
+      {gameInterface === "ni" ? (
+        <SoundCategorySection
+          controlId="sound-pings"
+          title={t("settings.sounds.categories.pings.label")}
+          description={t("settings.sounds.categories.pings.description")}
+          volume={volumes.pings}
+          onVolumeChange={(value) => setVolume("pings", value)}
+          onVolumeCommit={(value) => commitVolume("pings", value)}
+          onMuteToggle={() => toggleMuted("pings")}
+          actions={
             <SettingsIconButton
               label={t("common:actions.playSound")}
               onClick={() => playSoundTest("pings", "mapPing")}
             >
               <Play aria-hidden />
             </SettingsIconButton>
-          </SettingsRow>
-        ) : null}
-      </SettingsSection>
-
-      <SettingsSection
-        controlId="sound-categories"
-        title={t("settings.sounds.categoriesTitle")}
-      >
-        <SettingsCategoryAccordion>
-          {categories.map((category) => {
-            const configKey = `${category.id}Config` as const;
-            const categoryConfig = settings?.[configKey] ?? {};
-            const categoryVolume = localVolumes[category.id];
-
-            const isMuted =
-              mutedCategories[category.id] || categoryVolume === 0;
-
-            return (
-              <CategoryAccordionItem
-                key={category.id}
-                id={category.id}
-                label={category.label}
-                icon=<category.icon className="ll:size-3.5" aria-hidden />
-                volume={categoryVolume}
-                isMuted={isMuted}
-                fields={category.fields}
-                categoryConfig={categoryConfig}
-                urlErrors={urlErrors[category.id] ?? {}}
-                onVolumeChange={(value) => {
-                  setLocalVolumes((prev) => ({
-                    ...prev,
-                    [category.id]: value,
-                  }));
-
-                  if (value > 0) {
-                    setMutedCategories((prev) => ({
-                      ...prev,
-                      [category.id]: false,
-                    }));
-                  }
-                }}
-                onVolumeCommit={(value) => {
-                  updateSettings({ [`${category.id}Volume`]: value });
-                }}
-                onMuteToggle={() => {
-                  const newVolume = isMuted ? 0.5 : 0;
-
-                  setLocalVolumes((prev) => ({
-                    ...prev,
-                    [category.id]: newVolume,
-                  }));
-                  setMutedCategories((prev) => ({
-                    ...prev,
-                    [category.id]: !isMuted,
-                  }));
-                  updateSettings({ [`${category.id}Volume`]: newVolume });
-                }}
-                onSoundUrlChange={(key, soundUrl) => {
-                  if (!isValidUrl(soundUrl) && soundUrl.trim() !== "") {
-                    const message = t("settings.sounds.invalidUrl");
-                    setUrlErrors((prev) => ({
-                      ...prev,
-                      [category.id]: {
-                        ...prev[category.id],
-                        [key]: message,
-                      },
-                    }));
-
-                    return;
-                  }
-
-                  setUrlErrors((prev) => {
-                    const categoryErrors = prev[category.id];
-
-                    if (!categoryErrors || !(key in categoryErrors))
-                      return prev;
-
-                    const { [key]: _removedError, ...remainingErrors } =
-                      categoryErrors;
-
-                    const {
-                      [category.id]: _previousCategory,
-                      ...otherCategories
-                    } = prev;
-
-                    return Object.keys(remainingErrors).length > 0
-                      ? { ...otherCategories, [category.id]: remainingErrors }
-                      : otherCategories;
-                  });
-
-                  const currentCategoryConfig = settings?.[configKey] ?? {};
-
-                  const currentConfig =
-                    currentCategoryConfig[key] ?? DEFAULT_NPC_CONFIG;
-
-                  queueSoundConfigPatch({
-                    [configKey]: {
-                      [key]: { ...currentConfig, soundUrl },
-                    },
-                  });
-                }}
-                onPlaySound={(key) => {
-                  playSoundTest(
-                    category.id,
-                    key,
-                    categoryConfig[key]?.soundUrl,
-                  );
-                }}
-              />
-            );
-          })}
-        </SettingsCategoryAccordion>
-      </SettingsSection>
+          }
+        />
+      ) : null}
     </SettingsTabLayout>
   );
 }

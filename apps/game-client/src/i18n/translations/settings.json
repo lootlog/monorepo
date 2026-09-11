@@ -448,25 +448,26 @@
     "title": "Ustawienia dźwięków",
     "description": "Skonfiguruj dźwięki dla różnych funkcji.",
     "loading": "Ładowanie ustawień...",
-    "categoriesTitle": "Kategorie dźwięków",
-    "categoriesDescription": "Puste pole = dźwięk domyślny. Formaty: mp3, wav, ogg.",
     "invalidUrl": "Nieprawidłowy URL",
-    "volumeTitle": "Głośność",
-    "masterVolume": "Głośność główna",
-    "categoryVolume": "Głośność kategorii",
-    "categoryMuted": "Wyciszona",
+    "masterTitle": "Głośność główna",
+    "masterDescription": "Skaluje wszystkie dźwięki Lootloga na tym urządzeniu. Głośność każdej kategorii ustawisz poniżej.",
+    "masterVolume": "Głośność",
+    "categoryVolume": "Głośność",
     "categories": {
       "notifications": {
-        "label": "Powiadomienia"
+        "label": "Powiadomienia",
+        "description": "Dźwięk okna powiadomień dla każdego typu. Puste pole gra dźwięk domyślny; formaty: mp3, wav, ogg."
       },
       "detector": {
-        "label": "Wykrywacz"
+        "label": "Wykrywacz",
+        "description": "Dźwięk wykrywacza dla każdego typu. Puste pole gra dźwięk domyślny."
       },
       "timers": {
         "label": "Timery"
       },
       "pings": {
-        "label": "Pingi na mapie"
+        "label": "Pingi na mapie",
+        "description": "Dźwięk pingów, które grupa stawia na mapie."
       }
     }
   },

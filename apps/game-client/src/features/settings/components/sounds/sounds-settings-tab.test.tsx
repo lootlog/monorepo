@@ -56,28 +56,36 @@ describe("SoundsSettingsTab", () => {
     setTestRuntimeGame({ interface: "ni" });
   });
 
-  it("renders translated settings copy without the unsupported timers category", () => {
+  it("shows every category expanded without the unsupported timers category", () => {
     render();
     expect(
-      screen.getByRole("heading", { name: "Kategorie dźwięków" }),
+      screen.getByRole("heading", { name: "Powiadomienia" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Powiadomienia")).toBeInTheDocument();
-    expect(screen.getByText("Wykrywacz")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Wykrywacz" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Timery")).not.toBeInTheDocument();
     expect(screen.queryByText(/settings\.sounds\./)).not.toBeInTheDocument();
+    // Every sound url is editable at once; nothing is collapsed.
+    expect(screen.getByRole("textbox", { name: "Komunikaty" })).toBeVisible();
+    expect(screen.getAllByRole("textbox", { name: "Heros" })).toHaveLength(2);
   });
 
   it("hides map ping sound settings on the old interface", () => {
     setTestRuntimeGame({ interface: "si" });
     render();
 
-    expect(screen.queryByText("Pingi na mapie")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("slider", { name: "Pingi na mapie" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows map ping sound settings on the new interface", () => {
     render();
 
-    expect(screen.getByText("Pingi na mapie")).toBeInTheDocument();
+    expect(
+      screen.getByRole("slider", { name: "Pingi na mapie" }),
+    ).toBeInTheDocument();
   });
 
   it("mutes every add-on sound from the master volume row", async () => {
@@ -95,9 +103,6 @@ describe("SoundsSettingsTab", () => {
   it("persists a category mute as a zero volume", async () => {
     const user = userEvent.setup();
     render();
-
-    // The category volume row sits inside the collapsed category.
-    await user.click(screen.getByRole("button", { name: "Powiadomienia" }));
 
     const notificationsSlider = screen.getByRole("slider", {
       name: "Powiadomienia",
@@ -129,7 +134,6 @@ describe("SoundsSettingsTab", () => {
     const user = userEvent.setup();
     render();
 
-    await user.click(screen.getByRole("button", { name: "Powiadomienia" }));
     const input = screen.getByRole("textbox", { name: "Komunikaty" });
     await user.type(input, "not a url");
 
@@ -143,8 +147,8 @@ describe("SoundsSettingsTab", () => {
     const user = userEvent.setup();
     render();
 
-    await user.click(screen.getByRole("button", { name: "Wykrywacz" }));
-    const input = screen.getByRole("textbox", { name: "Heros" });
+    // The detector section lists the same types after the notifications one.
+    const input = screen.getAllByRole("textbox", { name: "Heros" })[1]!;
     await user.type(input, "https://audio.test/hero.mp3");
 
     await waitFor(() => {
