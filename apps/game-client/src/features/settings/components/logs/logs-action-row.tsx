@@ -16,7 +16,6 @@ import {
   formatLogDateTime,
   formatLogTimestamp,
   getActionLabel,
-  getActionRequestSummary,
   getStatusLabel,
   stringifyLogValue,
 } from "@/features/settings/components/logs/logs.helpers";
@@ -38,7 +37,6 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
   onCopyAction,
   onCopyRequest,
 }) => {
-  const requestSummary = getActionRequestSummary(action);
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -59,11 +57,11 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
         >
           {formatLogTimestamp(action.createdAt)}
         </TableCell>
-        <TableCell>
-          <div className="ll:font-medium ll:text-white">
+        <TableCell className="ll:w-full ll:max-w-0">
+          <div className="ll:truncate ll:font-medium ll:text-white">
             {getActionLabel(action.actionType)}
           </div>
-          <div className="ll:text-[10px] ll:text-muted-foreground">
+          <div className="ll:truncate ll:text-[10px] ll:text-muted-foreground">
             {action.actionType}
           </div>
         </TableCell>
@@ -77,17 +75,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
             {getStatusLabel(action.status)}
           </span>
         </TableCell>
-        <TableCell
-          className="ll:tabular-nums"
-          title={`${t("settings.logs.successCount", {
-            count: requestSummary.successCount,
-          })}, ${t("settings.logs.errorCount", {
-            count: requestSummary.failureCount,
-          })}`}
-        >
-          {requestSummary.successCount}/{requestSummary.failureCount}
-        </TableCell>
-        <TableCell className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]">
+        <TableCell className="ll:w-0">
           <div className="ll:flex ll:items-center ll:justify-end ll:gap-0.5">
             <SettingsIconButton
               label={t("common:actions.copyAction")}
@@ -118,7 +106,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
       </TableRow>
       {isOpen ? (
         <TableRow data-state="expanded-detail">
-          <TableCell className="ll:whitespace-normal ll:p-2" colSpan={5}>
+          <TableCell className="ll:whitespace-normal ll:p-2" colSpan={4}>
             <div className="ll:flex ll:flex-col ll:gap-2">
               <div className="ll:grid ll:gap-2 ll:md:grid-cols-2">
                 <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
@@ -154,7 +142,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
                       <TableHead>
                         {t("settings.logs.requestColumns.time")}
                       </TableHead>
-                      <TableHead className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]" />
+                      <TableHead className="ll:w-0" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>

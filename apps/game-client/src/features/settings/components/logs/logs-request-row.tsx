@@ -42,7 +42,7 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
       >
         <TableCell className="ll:font-mono">{request.method}</TableCell>
         <TableCell
-          className="ll:max-w-64 ll:truncate ll:font-mono"
+          className="ll:w-full ll:max-w-0 ll:truncate ll:font-mono"
           title={request.endpoint}
         >
           {request.endpoint}
@@ -64,7 +64,7 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
         >
           {formatLogTimestamp(request.createdAt)}
         </TableCell>
-        <TableCell className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]">
+        <TableCell className="ll:w-0">
           <div className="ll:flex ll:items-center ll:justify-end ll:gap-0.5">
             <SettingsIconButton
               label={t("common:actions.copyRequest")}
