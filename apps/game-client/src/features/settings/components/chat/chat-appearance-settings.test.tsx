@@ -99,9 +99,7 @@ describe("ChatAppearanceSettingsForm", () => {
     );
 
     expect(screen.getByRole("radio", { name: /^Czytelny/ })).toBeChecked();
-    expect(
-      screen.queryByRole("radio", { name: /^Własny/ }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /^Własny/ })).toBeDisabled();
 
     await user.click(screen.getByRole("radio", { name: /^Kompaktowy/ }));
 

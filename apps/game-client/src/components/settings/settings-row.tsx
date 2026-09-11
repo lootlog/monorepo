@@ -17,6 +17,11 @@ export const SETTINGS_WIDE_CONTROL_CLASS_NAME = "ll:w-48 ll:max-w-full";
 type SettingsRowProps = {
   /** Manifest id; enables search highlighting and "recently changed". */
   controlId?: SettingsControlId;
+  /**
+   * Catalog keys this row writes, for rows that share one manifest control
+   * (a section-level control) but should show their own save badge.
+   */
+  settingKeys?: readonly string[];
   /** DOM id of the row's control; makes the label click activate it. */
   htmlFor?: string;
   label: ReactNode;
@@ -42,6 +47,7 @@ type SettingsRowProps = {
  */
 export const SettingsRow: FC<SettingsRowProps> = ({
   controlId,
+  settingKeys,
   htmlFor,
   label,
   description,
@@ -58,7 +64,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
     useSettingsControlHighlight<HTMLDivElement>(controlId);
 
   const saveMark = useSettingsKeysSaveMark(
-    controlId ? getControlSettingKeys(controlId) : undefined,
+    settingKeys ?? (controlId ? getControlSettingKeys(controlId) : undefined),
   );
 
   const saveBadge = saveMark ? (
