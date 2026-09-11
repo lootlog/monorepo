@@ -283,6 +283,7 @@ export const NpcListItem = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                size="xs"
                 variant="ghost"
                 className={`${ACTION_BUTTON_CLASS_NAME} ll:border-yellow-500/40 ll:hover:bg-yellow-500/10`}
                 onClick={handleOpenDetectorSettings}
@@ -304,6 +305,7 @@ export const NpcListItem = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   className={`ll:relative ${ACTION_BUTTON_CLASS_NAME}`}
                   disabled={isSendingNpcNotification || npc.notificationSent}
@@ -361,6 +363,7 @@ export const NpcListItem = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   className={ACTION_BUTTON_CLASS_NAME}
                   disabled={
@@ -387,6 +390,7 @@ export const NpcListItem = ({
         )}
         {hasMultipleNpcs && (
           <Button
+            size="xs"
             variant="destructive"
             aria-label={t("actions.removeNpcAria")}
             className={ACTION_BUTTON_CLASS_NAME}

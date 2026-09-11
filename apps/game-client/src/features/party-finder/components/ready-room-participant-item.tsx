@@ -77,6 +77,8 @@ export function ReadyRoomParticipantItem({
       <div className="ll:flex ll:items-center ll:gap-0.5">
         {!isFriend && !sameClan ? (
           <Button
+            variant="secondary"
+            size="xs"
             className="ll:p-0"
             title={t("actions.addFriend")}
             onClick={() => inviteCharacterToFriends(participant.character.nick)}
@@ -86,6 +88,8 @@ export function ReadyRoomParticipantItem({
         ) : null}
         {participant.partyPresence === "OUTSIDE" ? (
           <Button
+            variant="secondary"
+            size="xs"
             className="ll:p-0"
             title={t("actions.invite")}
             disabled={!canInviteParticipants([participant.participantId])}
@@ -104,6 +108,8 @@ export function ReadyRoomParticipantItem({
           </Button>
         ) : null}
         <Button
+          variant="secondary"
+          size="xs"
           className="ll:p-0"
           title={t("actions.remove")}
           disabled={isRemoving}

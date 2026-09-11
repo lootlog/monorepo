@@ -106,10 +106,10 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
           </div>
 
           <Button
-            variant="menu"
+            size="sm"
             onClick={handleAdd}
             disabled={!name.trim()}
-            className="ll:h-7 ll:w-full"
+            className="ll:w-full"
           >
             {t("settings.timers.colors.addButton")}
           </Button>

@@ -52,6 +52,8 @@ export function ExtensionLogin() {
             {t("auth.signIn")}
           </a>
           <Button
+            variant="secondary"
+            size="xs"
             type="button"
             className="ll:h-7 ll:px-3 ll:focus-visible:outline-2"
             disabled={checking}

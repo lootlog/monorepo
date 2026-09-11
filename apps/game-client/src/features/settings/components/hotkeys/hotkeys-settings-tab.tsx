@@ -108,14 +108,7 @@ export const HotkeysSettingsTab = () => {
   }, [capturingAction, setBinding, t]);
 
   return (
-    <SettingsTabLayout
-      actions={
-        <Button onClick={resetAll} type="button" variant="ghost">
-          <RotateCcw className="ll:size-3.5" aria-hidden />
-          {t("settings.hotkeys.restoreDefaultsLabel")}
-        </Button>
-      }
-    >
+    <SettingsTabLayout>
       {categories.map(([category, actions], index) => (
         <SettingsSection
           key={category}
@@ -163,6 +156,22 @@ export const HotkeysSettingsTab = () => {
               </SettingsRow>
             );
           })}
+          {index === categories.length - 1 ? (
+            <SettingsRow
+              label={t("settings.hotkeys.restoreDefaultsLabel")}
+              description={t("settings.hotkeys.restoreDefaultsDescription")}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetAll}
+                type="button"
+              >
+                <RotateCcw aria-hidden />
+                {t("common:actions.restore")}
+              </Button>
+            </SettingsRow>
+          ) : null}
         </SettingsSection>
       ))}
     </SettingsTabLayout>

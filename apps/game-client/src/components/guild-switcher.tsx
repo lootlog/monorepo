@@ -259,6 +259,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                size="xs"
                 type="button"
                 variant="ghost"
                 aria-label={t("actions.openSettings")}

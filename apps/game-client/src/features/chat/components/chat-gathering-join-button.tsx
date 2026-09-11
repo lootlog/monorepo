@@ -61,6 +61,7 @@ export function ChatGatheringJoinButton({
           aria-label={buttonDisabled ? label : undefined}
         >
           <Button
+            size="xs"
             type="button"
             variant="ghost"
             className="ll:size-full ll:rounded ll:border-0 ll:bg-transparent ll:hover:bg-transparent ll:focus-visible:outline-2 ll:focus-visible:outline-ring"

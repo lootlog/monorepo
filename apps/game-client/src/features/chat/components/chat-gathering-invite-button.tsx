@@ -44,6 +44,7 @@ export function ChatGatheringInviteButton({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          size="xs"
           variant="ghost"
           className={`${CHAT_GATHERING_ACTION_CLASS} ll:gap-1 ll:px-2 ll:h-6 ll:border-0 ll:bg-accent`}
           aria-label={label}

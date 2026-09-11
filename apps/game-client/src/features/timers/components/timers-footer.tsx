@@ -48,6 +48,8 @@ export const TimersFooter: FC<TimersFooterProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            variant="secondary"
+            size="xs"
             type="button"
             className="ll:text-[12px] ll:border ll:border-gray-400 ll:px-4 ll-custom-cursor-pointer ll:mx-auto"
             onClick={onAddTimer}

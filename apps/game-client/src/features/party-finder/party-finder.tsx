@@ -76,6 +76,8 @@ export const PartyFinder = () => {
         <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
           {isOrganizerCharacter ? (
             <Button
+              variant="secondary"
+              size="xs"
               onClick={() => {
                 void inviteParticipants().catch((cause: unknown) => {
                   console.warn("Failed to resolve party invitations", cause);
@@ -88,6 +90,8 @@ export const PartyFinder = () => {
             </Button>
           ) : null}
           <Button
+            variant="secondary"
+            size="xs"
             onClick={() => cancelPartyGathering()}
             disabled={isCancelling}
             className="ll:w-full ll:border-red-500 ll:bg-red-600/20 ll:text-red-300 ll:hover:bg-red-600/40"

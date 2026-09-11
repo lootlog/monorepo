@@ -187,20 +187,20 @@ export const LogsSettingsTab: FC = () => {
             </SelectContent>
           </Select>
           <Button
-            className="ll:h-6 ll:px-2"
+            size="sm"
             disabled={filteredActions.length === 0}
             onClick={handleExportLogs}
             type="button"
-            variant="ghost"
+            variant="outline"
           >
             {t("common:actions.exportJson")}
           </Button>
           <Button
-            className="ll:h-6 ll:px-2"
+            size="sm"
             disabled={actions.length === 0}
             onClick={clearActions}
             type="button"
-            variant="ghost"
+            variant="outline"
           >
             {t("common:actions.clear")}
           </Button>

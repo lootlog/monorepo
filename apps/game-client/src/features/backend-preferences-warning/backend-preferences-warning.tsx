@@ -90,10 +90,20 @@ export const BackendPreferencesWarning: FC = () => {
           <p>{t("content.description")}</p>
         </div>
         <div className="ll:flex ll:justify-end ll:gap-2">
-          <Button onClick={handleClose} className="ll:px-3 ll:py-1">
+          <Button
+            variant="secondary"
+            size="xs"
+            onClick={handleClose}
+            className="ll:px-3 ll:py-1"
+          >
             {t("common:actions.close")}
           </Button>
-          <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
+          <Button
+            variant="secondary"
+            size="xs"
+            onClick={handleOpenSettings}
+            className="ll:px-3 ll:py-1"
+          >
             {t("common:actions.openSettings")}
           </Button>
         </div>

@@ -70,6 +70,7 @@ export const AutocompleteSuggestions = <T,>({
         <span>{errorMessage}</span>
         {onRetry ? (
           <Button
+            size="xs"
             aria-label={t("actions.retry")}
             className="ll:size-5 ll:p-0"
             onClick={onRetry}
