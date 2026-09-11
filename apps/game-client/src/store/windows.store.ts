@@ -126,6 +126,12 @@ interface WindowsState {
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
+  /**
+   * Restores every window's default geometry, opacity and lock while keeping
+   * open state and window payloads, so the window the player is using stays
+   * open and on the same page.
+   */
+  resetWindowLayout: () => void;
   setSettingsPath: (
     activeTab: SettingsTabValue,
     activeSubsection: SettingsSubsectionValue,
@@ -298,6 +304,36 @@ const migrateRoutingSettingsPath = (state: RawPersistedWindows): void => {
   };
 };
 
+/** Moves the retired appearance/interface page into general and catching into its own domain. */
+const migrateGeneralSettingsPath = (state: RawPersistedWindows): void => {
+  const settings = isObjectRecord(state.settings) ? state.settings : {};
+  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+
+  if (settingsState.activeSubsection === "interface") {
+    state.settings = {
+      ...settings,
+      state: {
+        ...settingsState,
+        activeTab: "general",
+        activeSubsection: "behavior",
+      },
+    };
+
+    return;
+  }
+
+  if (settingsState.activeSubsection === "catching") {
+    state.settings = {
+      ...settings,
+      state: {
+        ...settingsState,
+        activeTab: "catching",
+        activeSubsection: "catching",
+      },
+    };
+  }
+};
+
 const migrateMutesSettingsPath = (state: RawPersistedWindows): void => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
@@ -313,6 +349,18 @@ const migrateMutesSettingsPath = (state: RawPersistedWindows): void => {
     },
   };
 };
+
+/** Settings-page relocations, applied in order for persisted versions below `since`. */
+const SETTINGS_PATH_MIGRATIONS: readonly [
+  since: number,
+  migrate: (state: RawPersistedWindows) => void,
+][] = [
+  [12, migrateSettingsTabToPath],
+  [14, migrateChatSettingsPath],
+  [16, migrateMutesSettingsPath],
+  [17, migrateRoutingSettingsPath],
+  [18, migrateGeneralSettingsPath],
+];
 
 export const migrateWindowsState = (
   persisted: unknown,
@@ -352,17 +400,13 @@ export const migrateWindowsState = (
 
   if (version < 11) migrateQuickAccessWidth(state);
 
-  if (version < 12) migrateSettingsTabToPath(state);
-
   if (version < 13) delete state["event-mode"];
-
-  if (version < 14) migrateChatSettingsPath(state);
 
   if (version < 15) delete state["timer-settings-conflict"];
 
-  if (version < 16) migrateMutesSettingsPath(state);
-
-  if (version < 17) migrateRoutingSettingsPath(state);
+  for (const [since, migrate] of SETTINGS_PATH_MIGRATIONS) {
+    if (version < since) migrate(state);
+  }
 
   return state;
 };
@@ -833,6 +877,67 @@ export const useWindowsStore = create<WindowsState>()(
             },
           };
         }),
+      resetWindowLayout: () =>
+        set((state) => {
+          const defaults = useWindowsStore.getInitialState();
+
+          const resetWindow = <T extends WindowData>(
+            current: T,
+            fallback: WindowData,
+          ): T => ({
+            ...current,
+            position: fallback.position,
+            hasDefinedPosition: fallback.hasDefinedPosition,
+            size: fallback.size,
+            opacity: fallback.opacity,
+            locked: fallback.locked,
+            maxContentHeight: undefined,
+          });
+
+          return {
+            settings: resetWindow(state.settings, defaults.settings),
+            timers: resetWindow(state.timers, defaults.timers),
+            chat: resetWindow(state.chat, defaults.chat),
+            command: resetWindow(state.command, defaults.command),
+            "online-players": resetWindow(
+              state["online-players"],
+              defaults["online-players"],
+            ),
+            "add-timer": resetWindow(state["add-timer"], defaults["add-timer"]),
+            "npc-detector": resetWindow(
+              state["npc-detector"],
+              defaults["npc-detector"],
+            ),
+            notifications: resetWindow(
+              state.notifications,
+              defaults.notifications,
+            ),
+            "create-notification": resetWindow(
+              state["create-notification"],
+              defaults["create-notification"],
+            ),
+            "quick-access": resetWindow(
+              state["quick-access"],
+              defaults["quick-access"],
+            ),
+            "catching-whitelist-warning": resetWindow(
+              state["catching-whitelist-warning"],
+              defaults["catching-whitelist-warning"],
+            ),
+            "backend-preferences-warning": resetWindow(
+              state["backend-preferences-warning"],
+              defaults["backend-preferences-warning"],
+            ),
+            "party-finder": resetWindow(
+              state["party-finder"],
+              defaults["party-finder"],
+            ),
+            "create-party-gathering": resetWindow(
+              state["create-party-gathering"],
+              defaults["create-party-gathering"],
+            ),
+          };
+        }),
       setSettingsPath: (activeTab, activeSubsection) =>
         set((state) => ({
           settings: {
@@ -881,6 +986,7 @@ export const useWindowsStore = create<WindowsState>()(
           toggleOpen: _toggleOpen,
           setAutofocus: _setAutofocus,
           setSettingsActiveTab: _setSettingsActiveTab,
+          resetWindowLayout: _resetWindowLayout,
           setSettingsPath: _setSettingsPath,
           ...persisted
         } = state;
@@ -900,7 +1006,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 17,
+      version: 18,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },
