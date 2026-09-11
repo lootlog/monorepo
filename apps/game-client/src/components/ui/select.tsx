@@ -119,7 +119,9 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
         collisionPadding={collisionPadding}
         side={side}
         sideOffset={sideOffset}
-        className="ll:min-w-[var(--anchor-width)]"
+        // Draggable windows are positioned siblings with their own z-index;
+        // the positioner must sit above every window like the other overlays.
+        className="ll:z-[500] ll:min-w-[var(--anchor-width)]"
       >
         <BaseSelect.Popup
           ref={ref}

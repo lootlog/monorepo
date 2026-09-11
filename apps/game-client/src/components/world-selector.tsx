@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { Combobox, type ComboboxGroup } from "@/components/ui/combobox";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
@@ -16,6 +24,10 @@ import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 const recentWorldsSchema = z.array(z.string());
+
+type WorldOption = { value: string; label: string };
+
+type WorldGroup = { id: string; label: string; options: WorldOption[] };
 
 const DEFAULT_RECENT_WORLDS: string[] = [];
 
@@ -106,7 +118,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     }
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
 
-  const worldGroups = useMemo<ComboboxGroup[]>(() => {
+  const worldGroups = useMemo<WorldGroup[]>(() => {
     if (!worlds || worlds.length === 0) return [];
 
     const availableWorlds = new Set(worlds);
@@ -136,7 +148,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
           ],
     );
 
-    const groups: ComboboxGroup[] = [];
+    const groups: WorldGroup[] = [];
 
     if (recent.length > 0) {
       groups.push({
@@ -180,22 +192,35 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     return null;
   }
 
+  const placeholder = showLoading
+    ? t("async.loading")
+    : t("worldSelector.placeholder");
+
   return (
-    <Combobox
-      value={world}
+    <Select
+      value={world ?? null}
       onValueChange={handleWorldChange}
-      groups={worldGroups}
-      placeholder={
-        showLoading ? t("async.loading") : t("worldSelector.placeholder")
-      }
-      searchPlaceholder={t("worldSelector.searchPlaceholder")}
-      emptyText={t("worldSelector.empty")}
       disabled={disabled || isLoading}
-      triggerClassName={cn(
-        "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-6 ll:mb-1 ll-custom-cursor-pointer ll:w-full",
-        className,
-      )}
-      contentClassName="ll:font-sans ll:z-500"
-    />
+    >
+      <SelectTrigger
+        size="sm"
+        aria-label={t("worldSelector.placeholder")}
+        className={cn("ll:mb-1", className)}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {worldGroups.map((group) => (
+          <SelectGroup key={group.id}>
+            <SelectLabel>{group.label}</SelectLabel>
+            {group.options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };

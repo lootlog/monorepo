@@ -203,5 +203,17 @@ describe("overlay theme boundary", () => {
     expectContentInsideThemeBoundary("select-content");
     expectSmallRadius("select-content");
     expect(screen.getByRole("combobox")).toHaveTextContent("One");
+
+    // Draggable windows carry their own z-index; a select opened inside one
+    // must not paint underneath the window.
+    const selectPositioner = screen.getByTestId("select-content").parentElement;
+
+    expect(selectPositioner).not.toBeNull();
+
+    if (!selectPositioner) {
+      throw new Error("Select positioner missing");
+    }
+
+    expect(getComputedStyle(selectPositioner).zIndex).toBe("500");
   });
 });
