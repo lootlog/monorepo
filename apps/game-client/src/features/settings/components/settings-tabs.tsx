@@ -178,7 +178,7 @@ export const SettingsTabs = () => {
   const SubsectionContent = SETTINGS_SUBSECTION_CONTENT[selectedSubsection];
 
   const search = (
-    <>
+    <div className="ll:flex ll:min-h-0 ll:flex-1 ll:flex-col ll:gap-2">
       <SettingsSearchField
         inputRef={searchInputRef}
         value={query}
@@ -201,6 +201,7 @@ export const SettingsTabs = () => {
             id={SEARCH_RESULTS_ID}
             label={t("settings.search.results")}
             emptyLabel={t("settings.search.empty")}
+            query={query}
             results={results}
             selectedResultIndex={selectedResultIndex}
             onSelectIndex={setSelectedResultIndex}
@@ -208,7 +209,7 @@ export const SettingsTabs = () => {
           />
         </ScrollArea>
       ) : null}
-    </>
+    </div>
   );
 
   const nav = (
@@ -238,6 +239,7 @@ export const SettingsTabs = () => {
         nav={isCompact || !query ? nav : null}
         search={search}
         searchOverlayOpen={overlayOpen}
+        searchExpanded={Boolean(query)}
         subsections={
           activeDomain.subsections.length > 1 ? (
             <SettingsSubsectionBar

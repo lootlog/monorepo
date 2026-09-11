@@ -9,6 +9,8 @@ type SettingsWindowShellProps = {
   /** Search field plus results; overlaid on the rail when compact. */
   search: ReactNode;
   searchOverlayOpen: boolean;
+  /** Results are showing, so the search block takes the column instead of the nav. */
+  searchExpanded: boolean;
   /** Segmented subsection bar; omitted for single-subsection domains. */
   subsections?: ReactNode;
   children: ReactNode;
@@ -32,6 +34,7 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
   nav,
   search,
   searchOverlayOpen,
+  searchExpanded,
   subsections,
   children,
   onKeyDown,
@@ -53,10 +56,19 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
       </>
     ) : (
       <div className={cn(navColumnClassName, "ll:w-52 ll:flex-col ll:gap-3")}>
-        <div className="ll:pe-3">{search}</div>
+        <div
+          className={cn(
+            "ll:flex ll:flex-col ll:pe-3",
+            searchExpanded && "ll:min-h-0 ll:flex-1",
+          )}
+        >
+          {search}
+        </div>
         {/* The scroll area reaches the divider so its scrollbar sits in the
             gap between the buttons and the hairline instead of over them. */}
-        <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
+        {searchExpanded ? null : (
+          <ScrollArea className="ll:min-h-0 ll:flex-1">{nav}</ScrollArea>
+        )}
       </div>
     )}
     <div className="ll:flex ll:min-h-0 ll:min-w-0 ll:flex-1 ll:flex-col ll:pt-1.5">
