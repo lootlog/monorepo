@@ -275,7 +275,8 @@
         "label": "Ping na mapie",
         "description": "Oznacz kafelek pod kursorem na mapie lub Podręcznej mapie"
       }
-    }
+    },
+    "restoreDefaultsTitle": "Reset"
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
