@@ -1,4 +1,4 @@
-import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +17,7 @@ import { useGameStore } from "@/store/game.store";
 type CatchingSettingsFormProps = {
   characterId: string;
   disabled?: boolean;
-  /** Trailing actions of the servers group, e.g. "apply to all characters". */
+  /** Trailing actions of the servers section, e.g. "apply to all characters". */
   actions?: ReactNode;
   onSelectionChange?: (catchingGuildIds: string[]) => void;
 };
@@ -152,24 +152,32 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1">
-      <SettingsSectionHeader
-        as="h4"
-        title={t("settings.catching.form.serversTitle")}
-        description={t("settings.catching.form.activeCount", {
-          selectedCount,
-          totalCount: totalGuilds,
-        })}
-        actions={actions}
-      />
-      <SettingsGuildPicker
-        aria-label={t("settings.catching.form.serversTitle")}
-        guilds={guilds}
-        selectedGuildIds={selectedGuildIds}
-        disabled={isInteractionDisabled}
-        onToggle={handleGuildToggle}
-        emptyStateLabel={t("settings.catching.form.emptyGuilds")}
-      />
-    </div>
+    <SettingsSection
+      controlId="catching-range"
+      title={t("settings.catching.form.serversTitle")}
+      description={t("settings.catching.form.serversDescription")}
+      actions={
+        <div className="ll:flex ll:items-center ll:gap-3">
+          <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
+            {t("settings.catching.form.activeCount", {
+              selectedCount,
+              totalCount: totalGuilds,
+            })}
+          </span>
+          {actions}
+        </div>
+      }
+    >
+      <div className="ll:px-2 ll:py-0.5">
+        <SettingsGuildPicker
+          aria-label={t("settings.catching.form.serversLabel")}
+          guilds={guilds}
+          selectedGuildIds={selectedGuildIds}
+          disabled={isInteractionDisabled}
+          onToggle={handleGuildToggle}
+          emptyStateLabel={t("settings.catching.form.emptyGuilds")}
+        />
+      </div>
+    </SettingsSection>
   );
 };
