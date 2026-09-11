@@ -72,7 +72,7 @@ export const SettingsKeybindField: FC<SettingsKeybindFieldProps> = ({
       aria-pressed={capturing}
       onClick={onCaptureToggle}
       className={cn(
-        "ll-custom-cursor-pointer ll:group/keybind ll:flex ll:h-7 ll:w-36 ll:min-w-0 ll:items-center ll:justify-center ll:gap-1 ll:rounded-sm ll:border ll:border-input ll:bg-input/30 ll:px-1.5 ll:text-[11px] ll:text-gray-100 ll:transition-[border-color,box-shadow,background-color] ll:hover:border-ring/60 ll:hover:bg-input/50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50",
+        "ll-custom-cursor-pointer ll:group/keybind ll:flex ll:h-7 ll:w-28 ll:min-w-0 ll:items-center ll:justify-center ll:gap-1 ll:rounded-sm ll:border ll:border-input ll:bg-input/30 ll:px-1.5 ll:text-[11px] ll:text-gray-100 ll:transition-[border-color,box-shadow,background-color] ll:hover:border-ring/60 ll:hover:bg-input/50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50",
         capturing &&
           "ll:border-dashed ll:border-primary ll:bg-primary/10 ll:text-primary ll:hover:border-primary",
       )}
