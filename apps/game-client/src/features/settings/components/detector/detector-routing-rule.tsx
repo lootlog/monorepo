@@ -7,7 +7,7 @@ import {
   LEVEL_MIN,
 } from "@/features/settings/components/detector/use-detector-routing-form";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
-import { MapPin, Send, Trash2, TriangleAlert } from "lucide-react";
+import { MapPin, Trash2, TriangleAlert } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -35,9 +35,8 @@ type DetectorRoutingRuleProps = {
 };
 
 /**
- * One delivery rule, always fully visible: a numbered header with the name,
- * the three conditions as rows, and a footer that reads the rule back in
- * plain words so the player can check what it will do.
+ * One delivery rule, always fully visible: a numbered header with the name
+ * and the three conditions as rows.
  */
 export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
   index,
@@ -62,7 +61,6 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
   const label = name ?? t("settings.detector.routing.ruleLabel", { index });
   const guildCount = guilds?.length ?? 0;
   const selectedCount = selectedGuildIds.length;
-  const coversEveryLevel = minLevel <= LEVEL_MIN && maxLevel >= LEVEL_MAX;
 
   const canUseCurrentWorld =
     !!currentWorld &&
@@ -74,21 +72,6 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
   const currentWorldLabel = currentWorld
     ? currentWorld.charAt(0).toUpperCase() + currentWorld.slice(1)
     : "";
-
-  const summary = t("settings.detector.routing.summary", {
-    guilds: t("settings.detector.routing.summaryGuilds", {
-      count: selectedCount,
-    }),
-    levels: coversEveryLevel
-      ? t("settings.detector.routing.summaryEveryLevel")
-      : t("settings.detector.routing.summaryLevels", {
-          min: minLevel,
-          max: maxLevel,
-        }),
-    world: world
-      ? t("settings.detector.routing.summaryWorld", { world })
-      : t("settings.detector.routing.summaryEveryWorld"),
-  });
 
   return (
     <article
@@ -181,12 +164,6 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
           />
         </SettingsRow>
       </div>
-      {selectedCount > 0 ? (
-        <footer className="ll:flex ll:items-center ll:gap-1.5 ll:border-0 ll:border-t ll:border-solid ll:border-border ll:px-2 ll:py-1.5 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
-          <Send aria-hidden className="ll:size-3.5 ll:shrink-0" />
-          <span className="ll:min-w-0">{summary}</span>
-        </footer>
-      ) : null}
     </article>
   );
 };

@@ -341,16 +341,7 @@
       "guildPickerLabel": "Lootlogi: {{name}}",
       "noGuildsAvailable": "Nie należysz do żadnego Lootloga.",
       "deleteRuleLabel": "Usuń regułę {{name}}",
-      "summary": "Wysyła na {{guilds}}: {{levels}}, {{world}}",
-      "noGuildsBadge": "Nic nie wysyła – zaznacz Lootloga",
-      "summaryEveryLevel": "każdy poziom",
-      "summaryLevels": "poziom {{min}}–{{max}}",
-      "summaryEveryWorld": "każdy świat",
-      "summaryWorld": "świat {{world}}",
-      "summaryGuilds_one": "{{count}} Lootlog",
-      "summaryGuilds_few": "{{count}} Lootlogi",
-      "summaryGuilds_many": "{{count}} Lootlogów",
-      "summaryGuilds_other": "{{count}} Lootlogów"
+      "noGuildsBadge": "Nic nie wysyła – zaznacz Lootloga"
     },
     "typesTitle": "Które potwory wykrywać",
     "categoryHeader": "Typ",
