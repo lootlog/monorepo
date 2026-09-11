@@ -7,7 +7,7 @@ import { useGameStore } from "@/store/game.store";
 import {
   HOTKEY_ACTIONS,
   HOTKEY_CATEGORY_KEYS,
-  formatBinding,
+  formatBindingParts,
   isDefaultBinding,
   useHotkeysStore,
   type HotkeyAction,
@@ -29,7 +29,7 @@ for (const config of HOTKEY_ACTIONS) {
 
 const categories = Array.from(groupedActions);
 
-const HOTKEY_CONTROL_CLASS_NAME = "ll:w-44";
+const HOTKEY_CONTROL_CLASS_NAME = "ll:w-48";
 
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
@@ -138,7 +138,7 @@ export const HotkeysSettingsTab = () => {
                 controlClassName={HOTKEY_CONTROL_CLASS_NAME}
               >
                 <SettingsKeybindField
-                  binding={formatBinding(binding)}
+                  keys={formatBindingParts(binding)}
                   capturing={isCapturing}
                   captureLabel={t("settings.hotkeys.capture")}
                   label={t("settings.hotkeys.changeLabel", {
