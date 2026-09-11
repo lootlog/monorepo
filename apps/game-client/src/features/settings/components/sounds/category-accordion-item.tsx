@@ -20,7 +20,6 @@ interface CategoryAccordionItemProps {
   onMuteToggle: (event: MouseEvent<HTMLButtonElement>) => void;
   onSoundUrlChange: (key: string, value: string) => void;
   onPlaySound: (key: string, soundUrl: string) => void;
-  description: string;
 }
 
 const DEFAULT_NPC_CONFIG = { volume: 0.5, soundUrl: "" };
@@ -39,7 +38,6 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
   onMuteToggle,
   onSoundUrlChange,
   onPlaySound,
-  description,
 }) => {
   const { t } = useTranslation();
 
@@ -68,9 +66,6 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
         </div>
       }
     >
-      <p className="ll:m-0 ll:px-2 ll:text-[11px] ll:text-muted-foreground">
-        {description}
-      </p>
       {fields.map((field) => {
         const config = categoryConfig[field.key] ?? DEFAULT_NPC_CONFIG;
         const soundUrl = config.soundUrl ?? "";
@@ -88,9 +83,6 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
           />
         );
       })}
-      <p className="ll:m-0 ll:px-2 ll:text-[11px] ll:text-muted-foreground">
-        {t("settings.sounds.supportedFormats")}
-      </p>
     </SettingsCategoryAccordionItem>
   );
 };

@@ -66,7 +66,6 @@ export function SoundsSettingsTab() {
         <SettingsRow
           controlId="sound-master-volume"
           label={t("settings.sounds.masterVolume")}
-          description={t("settings.sounds.masterVolumeDescription")}
           controlClassName="ll:w-56"
         >
           <SettingsVolumeControl
@@ -86,7 +85,6 @@ export function SoundsSettingsTab() {
         {gameInterface === "ni" ? (
           <SettingsRow
             label={t("settings.sounds.categories.pings.label")}
-            description={t("settings.sounds.categories.pings.description")}
             controlClassName="ll:w-56 ll:gap-1"
           >
             <SettingsVolumeControl
@@ -158,7 +156,6 @@ export function SoundsSettingsTab() {
                 fields={category.fields}
                 categoryConfig={categoryConfig}
                 urlErrors={urlErrors[category.id] ?? {}}
-                description={category.description}
                 onVolumeChange={(value) => {
                   setLocalVolumes((prev) => ({
                     ...prev,

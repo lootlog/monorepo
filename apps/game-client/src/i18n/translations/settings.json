@@ -468,28 +468,22 @@
     "description": "Skonfiguruj dźwięki dla różnych funkcji.",
     "loading": "Ładowanie ustawień...",
     "categoriesTitle": "Kategorie dźwięków",
-    "categoriesDescription": "Dostosuj głośność i dźwięki dla każdej kategorii osobno.",
+    "categoriesDescription": "Puste pole = dźwięk domyślny. Formaty: mp3, wav, ogg.",
     "invalidUrl": "Nieprawidłowy URL",
-    "supportedFormats": "Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć domyślnego dźwięku.",
     "volumeTitle": "Głośność",
     "masterVolume": "Głośność główna",
-    "masterVolumeDescription": "Ogranicza głośność wszystkich dźwięków dodatku.",
     "categories": {
       "notifications": {
-        "label": "Powiadomienia",
-        "description": "Dźwięki odgrywane są przy różnych powiadomieniach."
+        "label": "Powiadomienia"
       },
       "detector": {
-        "label": "Wykrywacz",
-        "description": "Dźwięki odgrywane są, gdy wykrywacz znajdzie NPC."
+        "label": "Wykrywacz"
       },
       "timers": {
-        "label": "Timery",
-        "description": "Dźwięki odgrywane są, gdy timer wejdzie na minimalny czas respawnu."
+        "label": "Timery"
       },
       "pings": {
-        "label": "Pingi na mapie",
-        "description": "Dźwięk odgrywany przy pingach odebranych od innych graczy."
+        "label": "Pingi na mapie"
       }
     }
   },

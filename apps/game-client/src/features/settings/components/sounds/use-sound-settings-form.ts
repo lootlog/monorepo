@@ -93,21 +93,18 @@ export function useSoundSettingsForm() {
     label: string;
     icon: LucideIcon;
     fields: typeof notificationNpcTypes | typeof detectorNpcTypes;
-    description: string;
   }[] = [
     {
       id: "notifications",
       label: t("settings.sounds.categories.notifications.label"),
       icon: Bell,
       fields: notificationNpcTypes,
-      description: t("settings.sounds.categories.notifications.description"),
     },
     {
       id: "detector",
       label: t("settings.sounds.categories.detector.label"),
       icon: Crosshair,
       fields: detectorNpcTypes,
-      description: t("settings.sounds.categories.detector.description"),
     },
   ];
 
