@@ -1,67 +1,71 @@
+import { NpcTypeChip } from "@/components/settings/npc-type-chip";
+import {
+  SettingsCategoryAccordion,
+  SettingsCategoryAccordionItem,
+} from "@/components/settings/settings-category-accordion";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/detector/detector-routing-settings-tab-form";
 import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
 import { NpcType } from "@/api/npcs.api";
+import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
-import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 export const DetectorSettingsTab = () => {
-  const { t } = useTranslation(["settings", "common"]);
+  const { t } = useTranslation();
+  const { settings } = useCurrentGameAccountDetectorSettings();
 
-  const categoryTabs: Array<{
-    label: string;
-    key: DetectorNpcType;
-    content: ReactNode;
-  }> = [
-    {
-      label: t("common:npcTypes.elite2"),
-      key: NpcType.ELITE2,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.ELITE2} />,
-    },
-    {
-      label: t("common:npcTypes.hero"),
-      key: NpcType.HERO,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.HERO} />,
-    },
-    {
-      label: t("common:npcTypes.colossus"),
-      key: NpcType.COLOSSUS,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.COLOSSUS} />,
-    },
-    {
-      label: t("common:npcTypes.titan"),
-      key: NpcType.TITAN,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.TITAN} />,
-    },
+  const categories: Array<{ label: string; key: DetectorNpcType }> = [
+    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
+    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
+    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
+    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
   ];
 
-  return (
-    <SettingsTabLayout contentClassName="ll:gap-3">
-      <div className="ll:relative">
-        <SettingsSection controlId="detector-types">
-          <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
-            <TabsList className="ll:w-full">
-              {categoryTabs.map((tab) => (
-                <TabsTrigger key={tab.key} value={tab.key}>
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            {categoryTabs.map((tab) => (
-              <TabsContent key={tab.key} value={tab.key}>
-                {tab.content}
-              </TabsContent>
-            ))}
-          </Tabs>
-        </SettingsSection>
+  const firstCategory = categories[0];
 
-        <SettingsSection>
-          <DetectorRoutingSettingsTabForm />
-        </SettingsSection>
-      </div>
+  return (
+    <SettingsTabLayout>
+      <SettingsSection
+        controlId="detector-types"
+        title={t("settings.detector.typesTitle")}
+        description={t("settings.detector.description")}
+      >
+        <SettingsCategoryAccordion
+          defaultOpen={firstCategory ? [firstCategory.key] : []}
+        >
+          {categories.map((category) => {
+            const categorySettings = settings[category.key];
+
+            const summary = categorySettings.detect
+              ? [
+                  t("settings.detector.summaryEnabled"),
+                  categorySettings.autoSend
+                    ? t("settings.detector.summaryAutoSend")
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : t("settings.detector.summaryDisabled");
+
+            return (
+              <SettingsCategoryAccordionItem
+                key={category.key}
+                id={category.key}
+                title={
+                  <NpcTypeChip npcType={category.key}>
+                    {category.label}
+                  </NpcTypeChip>
+                }
+                summary={summary}
+                triggerLabel={category.label}
+              >
+                <DetectorSettingsTabForm categoryKey={category.key} />
+              </SettingsCategoryAccordionItem>
+            );
+          })}
+        </SettingsCategoryAccordion>
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };

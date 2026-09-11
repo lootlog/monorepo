@@ -14,24 +14,12 @@ describe("TimersSettingsColors", () => {
     });
   });
 
-  it("opens a compact quick editor from a timer color preview", () => {
-    const { container } = render(<TimersSettingsColors />);
+  it("opens a compact quick editor from a timer color row", () => {
+    render(<TimersSettingsColors />);
 
-    expect(container.querySelector("#timer-colors-list")).toHaveClass(
-      "ll:grid-cols-2",
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /Edytuj kolor/i })[0],
     );
-
-    const colorTrigger = screen.getAllByRole("button", {
-      name: /Edytuj kolor/i,
-    })[0];
-
-    expect(colorTrigger).toHaveClass(
-      "ll:appearance-none",
-      "ll:border-0",
-      "ll:bg-transparent",
-      "ll:p-0",
-    );
-    fireEvent.click(colorTrigger);
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByLabelText("Kolor ramki HEX")).toBeInTheDocument();
@@ -82,5 +70,16 @@ describe("TimersSettingsColors", () => {
     render(<TimersSettingsColors />);
 
     expect(screen.queryByTitle("Zmieniony")).not.toBeInTheDocument();
+  });
+
+  it("restores a hidden default color from the collapsed list", () => {
+    useTimersStore.setState({ hiddenDefaultColors: ["red"] });
+
+    render(<TimersSettingsColors />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Ukryte (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: /Przywróć kolor: / }));
+
+    expect(useTimersStore.getState().hiddenDefaultColors).toEqual([]);
   });
 });

@@ -6,12 +6,12 @@ import {
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
-import { useState, type FC, type ReactElement } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { alphaToHex, type ColorEditData } from "./color-utils";
 
 type TimerColorQuickPopoverProps = {
-  children: ReactElement;
+  children: ReactNode;
   data: ColorEditData;
   open: boolean;
   onOpenChange: (open: boolean) => void;

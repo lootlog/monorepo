@@ -1,5 +1,4 @@
 import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-selection-grid";
-import { getDetectorRoutingSettingsTranslations } from "@/features/settings/components/detector/detector-routing-settings-translations";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
@@ -131,7 +130,7 @@ const isDeferredRoutingSyncField = (fieldName: string | null) => {
     return false;
   }
 
-  return /^routingRules\.\d+\.(name|minLevel|maxLevel|world)$/.test(fieldName);
+  return /^routingRules\.\d+\.(name|world)$/.test(fieldName);
 };
 
 export const toggleOpenRuleId = (
@@ -160,8 +159,6 @@ export function useDetectorRoutingForm() {
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
 
   const updateUserGameAccountPreferences = useUpdateGameAccountPreferences();
-
-  const translations = getDetectorRoutingSettingsTranslations();
 
   const currentRoutingRules = accountSettings.routingRules;
 
@@ -298,7 +295,7 @@ export function useDetectorRoutingForm() {
 
   return {
     guilds,
-    translations,
+    control,
     setDeferredSyncField,
     setOpenRuleIds,
     register,

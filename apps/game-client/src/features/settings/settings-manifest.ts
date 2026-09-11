@@ -291,7 +291,7 @@ const MANIFEST = [
       },
       {
         id: "hidden-timers",
-        labelKey: "settings.tabs.hiddenTimers",
+        labelKey: "settings.subsections.hiddenTimers",
         controls: [
           {
             id: "hidden-timers-list",
@@ -321,7 +321,7 @@ const MANIFEST = [
       },
       {
         id: "detector",
-        labelKey: "settings.tabs.detector",
+        labelKey: "settings.subsections.detector",
         controls: [
           {
             id: "detector-types",
@@ -330,17 +330,24 @@ const MANIFEST = [
             aliases: ["wykrywacz", "elita", "heros", "kolos", "tytan"],
             settingKeys: ["gameData.detector"],
           },
+        ],
+      },
+      {
+        id: "routing",
+        labelKey: "settings.subsections.routing",
+        controls: [
           {
             id: "detector-routing",
             labelKey: "settings.detector.routing.sectionTitle",
-            aliases: ["discord", "serwery"],
+            descriptionKey: "settings.detector.routing.sectionDescription",
+            aliases: ["discord", "serwery", "wykrywacz"],
             settingKeys: ["gameData.detector"],
           },
         ],
       },
       {
         id: "notification-mutes",
-        labelKey: "settings.tabs.notificationMutes",
+        labelKey: "settings.subsections.notificationMutes",
         controls: [
           {
             id: "notification-mutes",
@@ -377,7 +384,7 @@ const MANIFEST = [
     subsections: [
       {
         id: "sounds",
-        labelKey: "settings.tabs.sounds",
+        labelKey: "settings.subsections.sounds",
         controls: [
           {
             id: "sound-master-volume",
@@ -417,7 +424,7 @@ const MANIFEST = [
     subsections: [
       {
         id: "hotkeys",
-        labelKey: "settings.tabs.hotkeys",
+        labelKey: "settings.subsections.hotkeys",
         controls: [
           {
             id: "hotkeys",
@@ -462,7 +469,7 @@ const MANIFEST = [
     subsections: [
       {
         id: "logs",
-        labelKey: "settings.tabs.logs",
+        labelKey: "settings.subsections.logs",
         controls: [
           {
             id: "loot-debug-logging",
@@ -471,14 +478,15 @@ const MANIFEST = [
             aliases: ["konsola", "debug"],
           },
           {
-            id: "logs-filters",
-            labelKey: "settings.logs.filtersTitle",
+            id: "logs-list",
+            labelKey: "settings.logs.listTitle",
+            aliases: ["akcje", "requesty", "api"],
           },
         ],
       },
       {
         id: "debug",
-        labelKey: "settings.tabs.debug",
+        labelKey: "settings.subsections.debug",
         controls: [],
         visible: () => import.meta.env.DEV,
       },

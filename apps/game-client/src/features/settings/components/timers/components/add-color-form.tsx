@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import { SettingsSliderField } from "@/components/settings/settings-slider-field";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -77,34 +77,16 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
           <Label className="ll:text-[11px]">
             {t("settings.timers.colors.transparencyLabel")}
           </Label>
-          <div className="ll:flex ll:gap-4">
-            <div className="ll:w-full">
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={backgroundAlpha}
-                onValueChange={setBackgroundAlpha}
-                className="ll:flex ll:h-6 ll:items-center"
-                aria-label={t("settings.timers.colors.transparencyAria")}
-              />
-            </div>
-            <div className="ll:flex ll:items-center ll:gap-1">
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                value={backgroundAlpha}
-                onChange={(e) =>
-                  setBackgroundAlpha(
-                    Math.max(0, Math.min(100, Number(e.target.value) || 0)),
-                  )
-                }
-                className="ll:text-popover-foreground ll:border-foreground/20 ll:w-12"
-              />
-              <span className="ll:text-muted-foreground ll:text-sm">%</span>
-            </div>
-          </div>
+          <SettingsSliderField
+            min={0}
+            max={100}
+            step={1}
+            unit="%"
+            value={backgroundAlpha}
+            aria-label={t("settings.timers.colors.transparencyAria")}
+            onValueChange={setBackgroundAlpha}
+            onCommit={setBackgroundAlpha}
+          />
         </div>
 
         <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-2">

@@ -1,9 +1,5 @@
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
-import { useSettingsSaveStatus } from "@/features/settings/persistence/settings-save-status.store";
-import {
-  useChatAppearanceSettings,
-  useNpcTypeColors,
-} from "@/features/settings/persistence/use-appearance-settings";
+import { useChatAppearanceSettings } from "@/features/settings/persistence/use-appearance-settings";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -17,8 +13,6 @@ import { useState } from "react";
  */
 export function useChatAppearanceDraft() {
   const { chatAppearance, data } = useChatAppearanceSettings();
-  const { npcTypeColors } = useNpcTypeColors();
-  const status = useSettingsSaveStatus();
 
   const [draftState, setDraftState] = useState<{
     source: typeof data;
@@ -50,8 +44,6 @@ export function useChatAppearanceDraft() {
 
   return {
     draft,
-    saving: status === "saving",
-    npcTypeColors,
     updateDraft,
     commit,
     updateAndCommit,

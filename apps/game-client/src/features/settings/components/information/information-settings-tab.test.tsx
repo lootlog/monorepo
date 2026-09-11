@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Vite replaces these values at compilation, so stubEnv cannot exercise missing build metadata.
@@ -45,11 +46,23 @@ describe("InformationSettingsTab", () => {
     expect(screen.getByText(formattedBuildTimestamp)).toBeInTheDocument();
   });
 
-  it("shows a fallback when commit sha is unavailable", () => {
+  it("shows a fallback without a copy action when commit sha is unavailable", () => {
     buildMetadata.commitSha = "";
 
     render(<InformationSettingsTab />);
 
     expect(screen.getByText("Brak danych")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Kopiuj Commit SHA" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("copies the commit sha to the clipboard", async () => {
+    const user = userEvent.setup();
+    render(<InformationSettingsTab />);
+
+    await user.click(screen.getByRole("button", { name: "Kopiuj Commit SHA" }));
+
+    expect(await navigator.clipboard.readText()).toBe(commitSha);
   });
 });

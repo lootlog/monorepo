@@ -9,7 +9,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import {
+  CHAT_APPEARANCE_COMPACT_PRESET,
+  CHAT_APPEARANCE_READABLE_PRESET,
+} from "@lootlog/schema/chat-appearance";
 import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -75,6 +78,64 @@ describe("ChatAppearanceSettingsForm", () => {
     expect(screen.getByRole("switch", { name: "Gildia" })).toBeInTheDocument();
   });
 
+  it("applies a preset from the preset radio group and offers a custom option only for custom values", async () => {
+    const user = userEvent.setup();
+    const queryClient = harness.queryClient;
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ChatAppearanceSettingsForm />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("radio", { name: /^Czytelny/ })).toBeChecked();
+    expect(
+      screen.queryByRole("radio", { name: /^Własny/ }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: /^Kompaktowy/ }));
+
+    await waitFor(() => {
+      expect(patchRequest.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          operations: [
+            {
+              domain: "appearance",
+              scope: { type: "USER", id: "user-1" },
+              set: { chat: CHAT_APPEARANCE_COMPACT_PRESET },
+              unset: [],
+            },
+          ],
+        }),
+      );
+    });
+    expect(screen.getByRole("radio", { name: /^Kompaktowy/ })).toBeChecked();
+  });
+
+  it("offers the custom option only when the stored values match no preset", () => {
+    const queryClient = harness.queryClient;
+    queryClient.setQueryData(getCurrentSettingsDocumentsQueryKey(), {
+      domains: {
+        appearance: {
+          ...settingsDocuments.domains.appearance,
+          effective: {
+            chat: { ...CHAT_APPEARANCE_READABLE_PRESET, fontScalePercent: 70 },
+            npcColors: DEFAULT_NPC_TYPE_COLORS,
+          },
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ChatAppearanceSettingsForm />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("radio", { name: /^Własny/ })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /^Czytelny/ })).not.toBeChecked();
+  });
+
   it("keeps slider changes local until the interaction is committed", async () => {
     const queryClient = harness.queryClient;
     patchRequest.mockResolvedValue(
@@ -120,7 +181,6 @@ describe("ChatAppearanceSettingsForm", () => {
       pointerType: "mouse",
     });
 
-    expect(screen.queryByText("Własne ustawienia")).not.toBeInTheDocument();
     expect(
       getChatAppearanceFromDocuments(
         queryClient.getQueryData(getCurrentSettingsDocumentsQueryKey()),

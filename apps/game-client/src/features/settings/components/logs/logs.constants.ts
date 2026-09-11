@@ -1,4 +1,9 @@
-import type { LogActionType, LogEntryStatus } from "@/store/logs.store";
+import type {
+  LogActionType,
+  LogEntryStatus,
+  LoggedAction,
+  LoggedApiRequest,
+} from "@/store/logs.store";
 
 export const LOG_STATUS_VALUES = [
   "all",
@@ -40,3 +45,15 @@ export const STATUS_LABEL_KEYS: Record<LogEntryStatus, string> = {
   partial: "settings.logs.statuses.partial",
   error: "settings.logs.statuses.error",
 };
+
+export const LOG_STATUS_CHIP_CLASS_NAMES: Record<
+  LoggedAction["status"] | LoggedApiRequest["status"],
+  string
+> = {
+  success: "ll:bg-emerald-500/15 ll:text-emerald-200",
+  partial: "ll:bg-amber-500/15 ll:text-amber-200",
+  error: "ll:bg-red-500/15 ll:text-red-200",
+};
+
+export const LOG_PRE_CLASS_NAME =
+  "ll:m-0 ll:max-h-48 ll:overflow-auto ll:rounded-sm ll:border ll:border-gray-700/80 ll:bg-black/30 ll:px-2 ll:py-2 ll:text-[11px] ll:leading-4 ll:text-gray-200";

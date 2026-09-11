@@ -142,12 +142,11 @@ describe("LogsSettingsTab", () => {
     const actionTypeListbox = screen.getByRole("listbox");
     await user.click(within(actionTypeListbox).getByText("Dodanie timera"));
 
-    expect(
-      screen.getByRole("button", { name: "Dodanie timera" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Dodanie łupu" }),
-    ).not.toBeInTheDocument();
+    const rows = screen.getAllByRole("row");
+
+    expect(rows).toHaveLength(2);
+    expect(within(rows[1]).getByText("Dodanie timera")).toBeInTheDocument();
+    expect(within(rows[1]).queryByText("Dodanie łupu")).not.toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Status akcji"));
     await user.click(screen.getByText("Błąd"));
@@ -232,16 +231,50 @@ describe("LogsSettingsTab", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows requests only after expanding an action", async () => {
+  it("shows requests only after clicking an action row", async () => {
     const user = userEvent.setup();
 
     render(<LogsSettingsTab />);
 
-    expect(screen.queryByText("POST /timers/auto")).not.toBeInTheDocument();
+    expect(screen.queryByText("/timers/auto")).not.toBeInTheDocument();
 
     await user.click(screen.getByText("Dodanie timera"));
 
-    expect(screen.getByText("POST /timers/auto")).toBeInTheDocument();
+    expect(screen.getByText("/timers/auto")).toBeInTheDocument();
+    expect(screen.getByText("Dodanie timera").closest("tr")).toHaveAttribute(
+      "data-state",
+      "expanded-detail",
+    );
+  });
+
+  it("toggles action details with the keyboard without toggling when copying", async () => {
+    const user = userEvent.setup();
+
+    render(<LogsSettingsTab />);
+
+    const [toggle] = screen.getAllByRole("button", {
+      name: "Przełącz szczegóły akcji",
+    });
+
+    toggle.focus();
+    await user.keyboard("{Enter}");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("/loots")).toBeInTheDocument();
+
+    await user.keyboard(" ");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("/loots")).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Kopiuj akcję" })[0],
+    );
+
+    await waitFor(() => {
+      expect(toastMocks.success).toHaveBeenCalledWith(
+        "Akcja skopiowana do schowka",
+      );
+    });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
 
   it("copies full action JSON to clipboard", async () => {
@@ -255,7 +288,7 @@ describe("LogsSettingsTab", () => {
 
     fireEvent.click(copyButtons[0]);
 
-    expect(screen.queryByText("POST /loots")).not.toBeInTheDocument();
+    expect(screen.queryByText("/loots")).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockClipboardWriteText).toHaveBeenCalledTimes(1);
@@ -305,20 +338,24 @@ describe("LogsSettingsTab", () => {
 
     render(<LogsSettingsTab />);
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /Dodanie łupu/,
-      }),
-    );
+    await user.click(screen.getByText("Dodanie łupu"));
 
-    await screen.findByText("POST /loots");
+    await screen.findByText("/loots");
 
-    const copyButton = await screen.findByRole("button", {
-      name: "Kopiuj request",
-    });
+    expect(screen.queryByText("Odpowiedź")).not.toBeInTheDocument();
 
-    expect(copyButton).toBeInTheDocument();
+    await user.click(screen.getByText("/loots"));
+
     expect(screen.getByText("Payload")).toBeInTheDocument();
+    expect(screen.getByText("Odpowiedź")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Kopiuj request" }));
+
+    await waitFor(() => {
+      expect(toastMocks.success).toHaveBeenCalledWith(
+        "Request skopiowany do schowka",
+      );
+    });
     expect(screen.getByText("Odpowiedź")).toBeInTheDocument();
   });
 });

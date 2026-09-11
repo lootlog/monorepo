@@ -11,11 +11,11 @@ import {
   type CombatNpcType,
 } from "@lootlog/schema/npc-appearance";
 import { RotateCcw } from "lucide-react";
-import { useRef, useState, type FC, type ReactElement } from "react";
+import { useRef, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 type NpcColorEditorPopoverProps = {
-  children: ReactElement;
+  children: ReactNode;
   color: string;
   defaultColor: string;
   npcType: CombatNpcType;

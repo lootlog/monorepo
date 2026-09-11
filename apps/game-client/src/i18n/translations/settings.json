@@ -2,21 +2,6 @@
   "window": {
     "title": "Ustawienia"
   },
-  "tabs": {
-    "general": "Ogólne",
-    "timers": "Timery",
-    "catching": "Dodawanie łupów i timerów",
-    "hiddenTimers": "Ukryte timery",
-    "detector": "Wykrywacz",
-    "notifications": "Powiadomienia",
-    "notificationMutes": "Wyciszenia",
-    "sounds": "Dźwięki",
-    "battlePanel": "Panel walk",
-    "hotkeys": "Skróty klawiszowe",
-    "logs": "Logi",
-    "information": "Informacje",
-    "debug": "Debug"
-  },
   "domains": {
     "general": "Ogólne",
     "appearance": "Wygląd",
@@ -43,7 +28,15 @@
     "interface": "Interfejs",
     "notificationRules": "Reguły",
     "experimentalFeatures": "Funkcje",
-    "battleDataCollection": "Zbieranie danych"
+    "battleDataCollection": "Zbieranie danych",
+    "hiddenTimers": "Ukryte timery",
+    "detector": "Wykrywacz",
+    "routing": "Routing",
+    "notificationMutes": "Wyciszenia",
+    "sounds": "Dźwięki",
+    "hotkeys": "Skróty klawiszowe",
+    "logs": "Logi",
+    "debug": "Debug"
   },
   "servers": {
     "title": "Widoczność serwerów",
@@ -56,7 +49,6 @@
       "hidden": "Ukryte"
     },
     "showAll": "Pokaż wszystkie",
-    "switchLabel": "Pokaż {{name}} w grze",
     "presenceTitle": "Publikowanie obecności",
     "presenceDescription": "Wybierz organizacje, które mogą widzieć Twoją obecność w grze. Bez wyboru obecność nie jest publikowana, dopóki Lootlog nie dopasuje organizacji do bieżącego klanu.",
     "presenceLabel": "Obecność: {{name}}",
@@ -72,10 +64,7 @@
     "loading": "Ładowanie serwerów…",
     "loadError": "Nie udało się pobrać listy serwerów.",
     "noGuilds": "Nie masz jeszcze dostępu do żadnego serwera Lootloga.",
-    "noResults": "Nie znaleziono serwerów pasujących do wybranych filtrów.",
-    "saving": "Zapisywanie…",
-    "saved": "Zapisano",
-    "saveError": "Nie udało się zapisać zmian. Przywróciliśmy poprzedni stan."
+    "noResults": "Nie znaleziono serwerów pasujących do wybranych filtrów."
   },
   "search": {
     "placeholder": "Szukaj",
@@ -119,8 +108,8 @@
       "readableDescription": "Większy tekst i więcej przestrzeni - najłatwiejszy do czytania.",
       "compact": "Kompaktowy",
       "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach.",
-      "custom": "Własne ustawienia",
-      "restoreReadable": "Przywróć domyślne"
+      "custom": "Własny",
+      "customDescription": "Twoje ręczne zmiany poniżej."
     },
     "advanced": {
       "title": "Więcej opcji"
@@ -138,10 +127,12 @@
       "example": "Wariant w linii zajmuje mniej miejsca w gęstym czacie."
     },
     "fontScale": {
-      "label": "Skala tekstu"
+      "label": "Skala tekstu",
+      "description": "Wielkość tekstu wiadomości względem domyślnej."
     },
     "messageGap": {
-      "label": "Odstęp wiadomości"
+      "label": "Odstęp wiadomości",
+      "description": "Pionowy odstęp między kolejnymi wiadomościami."
     },
     "metadata": {
       "title": "Widoczne informacje",
@@ -149,18 +140,12 @@
       "showGuildLabel": "Gildia",
       "showNpcAvatar": "Avatar NPC",
       "showNpcLevel": "Poziom NPC",
-      "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC"
-    },
-    "preview": {
-      "ariaLabel": "Podgląd wyglądu czatu",
-      "label": "Podgląd",
-      "player": "Lunara",
-      "level": "85 lvl",
-      "message": "Spotkajmy się przy wejściu.",
-      "guild": "Strażnicy Północy",
-      "npc": "Mroczny Łowca",
-      "npcMessage": "pojawił się na mapie",
-      "location": "Stare Ruiny"
+      "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC",
+      "showTimestampDescription": "Godzina wysłania przy każdej wiadomości.",
+      "showGuildLabelDescription": "Nazwa gildii nadawcy obok wiadomości.",
+      "showNpcAvatarDescription": "Ikona potwora w wiadomościach o NPC.",
+      "showNpcLevelDescription": "Poziom potwora w wiadomościach o NPC.",
+      "showNpcLocationAndCoordinatesDescription": "Nazwa mapy i koordynaty w wiadomościach o NPC."
     }
   },
   "npcColors": {
@@ -184,7 +169,7 @@
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
     "behaviorTitle": "Zachowanie dodatku",
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
-    "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach.",
+    "allowWorldSelectionDescription": "Pozwala wybrać świat przy dodawaniu timera; nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
     "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi."
   },
@@ -205,7 +190,10 @@
     "commitShaLabel": "Commit SHA",
     "environmentLabel": "Środowisko",
     "buildTimestampLabel": "Data builda (UTC)",
-    "notAvailable": "Brak danych"
+    "notAvailable": "Brak danych",
+    "copy": "Kopiuj {{label}}",
+    "copied": "Skopiowano",
+    "copyFailed": "Nie udało się skopiować"
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu"
@@ -236,6 +224,7 @@
     "description": "Skonfiguruj skróty klawiaturowe i przyciski myszy.",
     "capture": "Naciśnij klawisz lub przycisk myszy...",
     "conflict": "Ten skrót jest już przypisany do innej akcji.",
+    "changeLabel": "Zmień skrót: {{action}}",
     "modifiers": {
       "ctrl": "Ctrl",
       "alt": "Alt",
@@ -246,10 +235,7 @@
       "3": "Wstecz",
       "4": "Dalej"
     },
-    "resetTitle": "Reset",
     "restoreDefaultsLabel": "Przywróć domyślne",
-    "restoreDefaultsDescription": "Usuń własne przypisania i wróć do domyślnej konfiguracji skrótów.",
-    "restoreButton": "Przywróć",
     "categories": {
       "communication": "Komunikacja",
       "windows": "Okna",
@@ -292,66 +278,87 @@
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
-    "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
+    "description": "Wybierz, które typy NPC wywołują powiadomienia i jak są prezentowane.",
     "toggles": {
       "show": "Wyświetlaj",
       "ignoreOtherWorlds": "Ignoruj inne światy",
       "highlight": "Podświetlenie",
-      "sound": "Powiadom dźwiękiem"
+      "sound": "Powiadom dźwiękiem",
+      "showDescription": "Pokazuj powiadomienia o tej kategorii w grze.",
+      "ignoreOtherWorldsDescription": "Pomijaj zgłoszenia z innych światów niż Twój.",
+      "highlightDescription": "Wyróżniaj powiadomienie kolorem tej kategorii.",
+      "soundDescription": "Odtwarzaj dźwięk przy nowym powiadomieniu."
     },
     "autoHideLabel": "Auto ukrywanie",
     "autoHideDescription": "Sekundy, 0 = wyłączone.",
     "serversTitle": "Serwery",
-    "emptyGuilds": "Brak gildii do skonfigurowania dla tej kategorii."
+    "emptyGuilds": "Brak gildii do skonfigurowania dla tej kategorii.",
+    "rulesTitle": "Reguły powiadomień",
+    "summaryEnabled_one": "Włączone · {{count}} serwer",
+    "summaryEnabled_few": "Włączone · {{count}} serwery",
+    "summaryEnabled_many": "Włączone · {{count}} serwerów",
+    "summaryEnabled_other": "Włączone · {{count}} serwerów",
+    "summaryDisabled": "Wyłączone",
+    "serversDescription": "Serwery, z których przyjmujesz zgłoszenia tej kategorii."
   },
   "notificationMutes": {
     "title": "Wyciszenia",
     "description": "Zarządzaj globalną listą wyciszonych graczy i potworów. Te wyciszenia działają na wszystkich kontach.",
-    "tabs": {
-      "players": "Gracze",
-      "npcs": "Potwory"
-    },
-    "searchPlayersPlaceholder": "Szukaj gracza...",
-    "searchNpcsPlaceholder": "Szukaj potwora...",
     "emptyPlayers": "Brak wyników dla graczy.",
     "emptyNpcs": "Brak wyników dla potworów.",
     "unknownPlayer": "Nieznany",
-    "npcLevel": "lvl {{level}}"
+    "npcLevel": "lvl {{level}}",
+    "searchPlaceholder": "Szukaj gracza lub potwora",
+    "playersTitle": "Gracze ({{count}})",
+    "npcsTitle": "Potwory ({{count}})",
+    "playersDescription": "Zgłoszenia tych graczy nie wywołują powiadomień.",
+    "npcsDescription": "Te potwory nie wywołują powiadomień."
   },
   "detector": {
     "title": "Ustawienia wykrywacza",
-    "description": "Skonfiguruj wspólny routing komunikatów oraz lokalne wykrywanie NPC dla każdego typu.",
-    "routingTitle": "Routing",
+    "description": "Wybierz, które typy NPC wykrywacz rozpoznaje lokalnie i jak o nich informuje.",
     "toggles": {
       "detect": "Wykrywaj",
       "autoSend": "Auto wysyłanie",
       "notifyWindow": "Okno powiadomienia",
       "highlight": "Podświetlenie",
-      "notifySound": "Powiadom dźwiękiem"
+      "notifySound": "Powiadom dźwiękiem",
+      "detectDescription": "Rozpoznawaj NPC tego typu na mapie.",
+      "autoSendDescription": "Wysyłaj wykrycie na serwery bez pytania.",
+      "notifyWindowDescription": "Pokazuj okno z wykrytym NPC.",
+      "highlightDescription": "Wyróżniaj wykrytego NPC kolorem tego typu.",
+      "notifySoundDescription": "Odtwarzaj dźwięk przy wykryciu."
     },
     "routing": {
       "sectionTitle": "Routing na serwery",
-      "sectionDescription": "Wspólny routing dla całego wykrywacza. Nakładające się zakresy wysyłają komunikaty na wszystkie dopasowane serwery. Zakres leveli dotyczy poziomu NPC, nie gracza.",
+      "sectionDescription": "Nakładające się zakresy wysyłają komunikat na wszystkie dopasowane serwery.",
       "addRuleButton": "Dodaj regułę",
       "emptyState": "Brak reguł routingu. Detector będzie działał lokalnie bez wysyłki na Discord.",
       "ruleLabel": "Reguła {{index}}",
       "ruleNameLabel": "Nazwa reguły",
-      "selectedGuildsBadge": "Serwery {{count}}",
-      "minLevelBadge": "Od: {{level}}",
-      "maxLevelBadge": "Do: {{level}}",
-      "worldBadge": "Świat: {{world}}",
       "minLevelLabel": "Od levela",
       "maxLevelLabel": "Do levela",
       "worldLabel": "Świat",
       "guildSelectionLabel": "Na jakie serwery wysyłać",
-      "noGuildsSelected": "Brak serwerów",
       "noGuildsAvailable": "Brak serwerów do wyboru.",
-      "deleteRuleLabel": "Usuń regułę {{index}}",
-      "toggleRuleLabel": "Przełącz regułę {{index}}",
-      "guildOverflowLabel": "+{{count}}",
-      "guildOverflowTooltip": "{{count}} kolejnych serwerów"
+      "deleteRuleLabel": "Usuń regułę {{name}}",
+      "ruleNameDescription": "Własna nazwa ułatwia odróżnienie reguł.",
+      "levelRangeLabel": "Poziom NPC",
+      "levelRangeDescription": "Zakres poziomu NPC, nie gracza.",
+      "worldDescription": "Puste = każdy świat.",
+      "guildSelectionDescription": "Komunikat trafia na każdy zaznaczony serwer.",
+      "summaryLevels": "lvl {{min}}–{{max}}",
+      "summaryWorld": "świat {{world}}",
+      "summaryGuilds_one": "{{count}} serwer",
+      "summaryGuilds_few": "{{count}} serwery",
+      "summaryGuilds_many": "{{count}} serwerów",
+      "summaryGuilds_other": "{{count}} serwerów",
+      "toggleRuleLabel": "Rozwiń regułę {{name}}"
     },
-    "typesTitle": "Wykrywanie typów NPC"
+    "typesTitle": "Wykrywanie typów NPC",
+    "summaryEnabled": "Włączone",
+    "summaryDisabled": "Wyłączone",
+    "summaryAutoSend": "auto wysyłanie"
   },
   "timers": {
     "title": "Ustawienia timerów",
@@ -376,7 +383,7 @@
       "countdownMin": "Min",
       "fadeTitle": "Wygaszanie",
       "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu",
-      "removeTimerAfterDescription": "W sekundach."
+      "removeTimerAfterDescription": "Po ilu sekundach od wyzerowania timer znika z listy."
     },
     "appearance": {
       "visibilityTitle": "Widoczność",
@@ -389,7 +396,11 @@
       "singleTimerDisplayModeRow": "Wiersze",
       "scaleTitle": "Skala",
       "fontSizeLabel": "Wielkość czcionki",
-      "minWidthLabel": "Minimalna szerokość pojedynczego timera"
+      "minWidthLabel": "Minimalna szerokość pojedynczego timera",
+      "showLevelDescription": "Poziom potwora obok nazwy timera.",
+      "showTypeDescription": "Skrót typu potwora przed nazwą timera.",
+      "fontSizeDescription": "Wielkość tekstu w kafelkach timerów.",
+      "minWidthDescription": "Najmniejsza szerokość kafelka; większa wartość oznacza mniej kolumn."
     },
     "colors": {
       "listTitle": "Lista kolorów",
@@ -416,13 +427,8 @@
       "transparencyAria": "Przezroczystość tła",
       "previewLabel": "Podgląd",
       "addButton": "Dodaj",
-      "hiddenDefaultsTitle": "Usunięte domyślne kolory",
+      "hiddenCount": "Ukryte ({{count}})",
       "restoreColorTitle": "Przywróć kolor"
-    },
-    "preview": {
-      "ariaLabel": "Podgląd wyglądu timera",
-      "label": "Podgląd",
-      "npc": "Mroczny Łowca"
     }
   },
   "catching": {
@@ -430,15 +436,15 @@
     "description": "Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci.",
     "characterTitle": "Postać",
     "characterDescription": "Wybierz postać, a potem wskaż gildie, które mają odbierać z niej dane.",
+    "characterLabel": "Postać",
     "applyToAllButton": "Aplikuj do wszystkich postaci",
-    "applySuccess": "Ustawienia skopiowane do wszystkich postaci",
     "applyNoneFailed": "Nie udało się zaktualizować żadnej postaci",
     "applyPartialFailed": "Zaktualizowano {{successCount}}/{{totalCount}} postaci. Część zmian się nie udała.",
     "applyFailed": "Nie udało się skopiować ustawień do wszystkich postaci",
     "form": {
       "collectionRangeTitle": "Zakres zbierania",
       "collectionRangeDescription": "Kliknij gildię, aby włączyć lub wyłączyć odbieranie lootów i timerów dla tej postaci.",
-      "activeCount": "{{selectedCount}}/{{totalCount}} aktywne",
+      "activeCount": "Aktywne: {{selectedCount}}/{{totalCount}}.",
       "emptyGuilds": "Brak gildii do skonfigurowania dla tej postaci."
     }
   },
@@ -450,7 +456,8 @@
     "ungroupedDescription": "Wybierz serwer, dla którego chcesz zobaczyć ukryte timery.",
     "emptyGuilds": "Brak gildii do wyboru.",
     "listTitle": "Ukryte timery",
-    "emptyState": "Brak ukrytych timerów."
+    "emptyState": "Brak ukrytych timerów.",
+    "guildLabel": "Serwer"
   },
   "sounds": {
     "title": "Ustawienia dźwięków",
@@ -459,10 +466,10 @@
     "categoriesTitle": "Kategorie dźwięków",
     "categoriesDescription": "Dostosuj głośność i dźwięki dla każdej kategorii osobno.",
     "invalidUrl": "Nieprawidłowy URL",
-    "temporarilyUnavailable": "Tymczasowo niedostępne",
     "supportedFormats": "Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć domyślnego dźwięku.",
+    "volumeTitle": "Głośność",
     "masterVolume": "Głośność główna",
-    "test": "Odtwórz dźwięk testowy",
+    "masterVolumeDescription": "Ogranicza głośność wszystkich dźwięków dodatku.",
     "categories": {
       "notifications": {
         "label": "Powiadomienia",
@@ -488,8 +495,6 @@
     "consoleDebugTitle": "Diagnostyka konsoli",
     "lootDebugLoggingLabel": "Loguj tworzenie łupów",
     "lootDebugLoggingDescription": "Zapisuje w konsoli przeglądarki pełny przebieg tworzenia łupów z walk i dialogów. Logi zawierają pełne payloady, w tym nazwy oraz identyfikatory kont, postaci i NPC.",
-    "filtersTitle": "Filtry",
-    "filtersDescription": "Zawęź wpisy po typie, statusie lub fragmencie treści.",
     "searchPlaceholder": "Szukaj w logach",
     "actionTypeAria": "Typ akcji",
     "actionTypePlaceholder": "Typ akcji",
@@ -503,7 +508,6 @@
     "copyFailed": "Nie udało się skopiować logu",
     "copyActionSuccess": "Akcja skopiowana do schowka",
     "copyRequestSuccess": "Request skopiowany do schowka",
-    "requestsCount": "Requesty: {{count}}",
     "successCount": "Sukcesy: {{count}}",
     "errorCount": "Błędy: {{count}}",
     "actionPayload": "Payload akcji",
@@ -512,7 +516,6 @@
     "noRequests": "Brak zapisanych requestów dla tej akcji.",
     "payload": "Payload",
     "response": "Odpowiedź",
-    "statusCode": "Kod statusu: {{statusCode}}",
     "statuses": {
       "all": "Wszystkie statusy",
       "success": "Sukces",
@@ -541,7 +544,20 @@
       "update_user_game_account_preferences": "Aktualizacja preferencji konta gry",
       "update_lootlog_characters_config": "Aktualizacja konfiguracji postaci"
     },
-    "allActions": "Wszystkie akcje"
+    "allActions": "Wszystkie akcje",
+    "toggleRequestDetails": "Przełącz szczegóły requestu",
+    "columns": {
+      "time": "Czas",
+      "action": "Akcja",
+      "status": "Status",
+      "requests": "Żądania"
+    },
+    "requestColumns": {
+      "method": "Metoda",
+      "url": "URL",
+      "status": "Status",
+      "time": "Czas"
+    }
   },
   "debug": {
     "title": "Debug",
@@ -558,7 +574,6 @@
     "othersStateTitle": "Stan graczy na mapie",
     "othersCount": "Liczba graczy: {{count}}",
     "systemInfoTitle": "Informacje systemowe",
-    "loadTemplate": "Wczytaj {{label}}",
     "triggerCustomEvent": "Wywołaj własny event",
     "noEvents": "Nie wywołano żadnych eventów",
     "noPartyMembers": "Brak członków grupy",
@@ -595,7 +610,24 @@
       "partyJoin": "Dołączenie do grupy",
       "partyLeave": "Opuszczenie grupy",
       "customJson": "Własny JSON"
-    }
+    },
+    "run": "Wywołaj",
+    "rawJsonLabel": "Treść eventu",
+    "rawJsonDescription": "Wklej obiekt eventu Margonem i wywołaj go ręcznie w kliencie.",
+    "actions": {
+      "npcSpawnDescription": "Dodaje testowego NPC o id 999999 na aktualnej mapie.",
+      "npcDeleteDescription": "Usuwa testowego NPC o id 999999.",
+      "killNpcDescription": "Kończy walkę z tym samym testowym bossem.",
+      "killNpcUniqueDescription": "Kończy walkę z bossem o losowym id, więc każde wywołanie tworzy nowy wpis.",
+      "townChangeDescription": "Symuluje przejście na testową mapę.",
+      "lootFightDescription": "Wywołuje okno łupu po walce.",
+      "lootDialogDescription": "Wywołuje okno łupu z dialogu.",
+      "lootLegendaryDescription": "Wywołuje łup legendarny z elity II na podstawie aktualnego stanu gry.",
+      "partyJoinDescription": "Ustawia grupę z dwoma testowymi członkami.",
+      "partyLeaveDescription": "Opróżnia listę członków grupy."
+    },
+    "templateLabel": "Szablon",
+    "templateDescription": "Wczytuje wybrany szablon do pola poniżej."
   },
   "chatFilters": {
     "npcMessages": {

@@ -1,8 +1,8 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsPanel } from "@/components/settings/settings-panel";
-import { Tile } from "@/components/ui/tile";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { useTimersStore } from "@/store/timers.store";
-import { XIcon } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -17,48 +17,30 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   const key = generalConfig.timersGrouping ? "global" : guildId;
   const hiddenTimersForAccount = key ? hiddenTimers[key] : undefined;
 
-  const handleRemoveTimer = (timer: string) => {
-    if (!key) return;
+  const uniqueHiddenTimers = Array.from(
+    new Set(hiddenTimersForAccount ?? []),
+  ).toSorted((a, b) => a.localeCompare(b));
 
-    revealTimer(key, timer);
-  };
-
-  const sortedHiddenTimers = hiddenTimersForAccount
-    ? hiddenTimersForAccount.toSorted((a, b) => a.localeCompare(b))
-    : [];
-
-  const uniqueHiddenTimers = Array.from(new Set(sortedHiddenTimers));
+  if (!key || uniqueHiddenTimers.length === 0) {
+    return (
+      <SettingsEmptyState>
+        {t("settings.hiddenTimers.emptyState")}
+      </SettingsEmptyState>
+    );
+  }
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-2">
-      {uniqueHiddenTimers && uniqueHiddenTimers.length > 0 && (
-        <span className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
-          {sortedHiddenTimers.map((timer) => {
-            return (
-              <SettingsPanel key={timer} className="ll:px-2 ll:py-1.5">
-                <Tile className="ll:border-none ll:bg-transparent ll:px-0 ll:hover:bg-transparent">
-                  <span className="ll:flex ll:w-full ll:items-center ll:justify-between ll:px-1">
-                    <span className="ll:min-w-0 ll:truncate ll:text-[12px] ll:text-white">
-                      {timer}
-                    </span>
-                    <XIcon
-                      size="14"
-                      type="button"
-                      className="ll-custom-cursor-pointer ll:shrink-0 ll:stroke-gray-300 ll:transition-colors ll:hover:stroke-gray-100"
-                      onClick={() => handleRemoveTimer(timer)}
-                    />
-                  </span>
-                </Tile>
-              </SettingsPanel>
-            );
-          })}
-        </span>
-      )}
-      {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0 ? (
-        <SettingsEmptyState>
-          {t("settings.hiddenTimers.emptyState")}
-        </SettingsEmptyState>
-      ) : null}
-    </div>
+    <>
+      {uniqueHiddenTimers.map((timer) => (
+        <SettingsListRow key={timer} title={timer}>
+          <SettingsIconButton
+            label={t("common:actions.restore")}
+            onClick={() => revealTimer(key, timer)}
+          >
+            <RotateCcw aria-hidden="true" />
+          </SettingsIconButton>
+        </SettingsListRow>
+      ))}
+    </>
   );
 };

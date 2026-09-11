@@ -1,228 +1,149 @@
-import { Button } from "@/components/ui/button";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsPanel } from "@/components/settings/settings-panel";
+import { SettingsRow } from "@/components/settings/settings-row";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { DetectorRoutingGuildPreviewTile } from "@/features/settings/components/detector/detector-routing-guild-preview-tile";
 import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
-import type { DetectorRoutingSettingsTranslations } from "@/features/settings/components/detector/detector-routing-settings-translations";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
 import { cn } from "cn";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronRight, Trash2 } from "lucide-react";
 import type { FC, ReactNode } from "react";
-
-const VISIBLE_PREVIEW_GUILDS_COUNT = 3;
+import { useTranslation } from "react-i18next";
 
 type DetectorRoutingRuleCardProps = {
   fieldIdInput: ReactNode;
   guilds: Guild[] | undefined;
-  index: number;
   isOpen: boolean;
   label: string;
-  maxLevel: number;
-  maxLevelField: ReactNode;
   minLevel: number;
-  minLevelField: ReactNode;
-  nameField: ReactNode;
+  maxLevel: number;
   world?: string;
+  selectedGuildIds: string[];
+  nameInputId: string;
+  nameField: ReactNode;
+  levelFields: ReactNode;
+  worldInputId: string;
   worldField: ReactNode;
   onOpenChange: (open: boolean) => void;
   onRemove: () => void;
   onToggleGuild: (guildId: string) => void;
-  selectedGuildIds: string[];
-  translations: DetectorRoutingSettingsTranslations;
 };
 
 export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
   fieldIdInput,
   guilds,
-  index,
   isOpen,
   label,
-  maxLevel,
-  maxLevelField,
   minLevel,
-  minLevelField,
-  nameField,
+  maxLevel,
   world,
+  selectedGuildIds,
+  nameInputId,
+  nameField,
+  levelFields,
+  worldInputId,
   worldField,
   onOpenChange,
   onRemove,
   onToggleGuild,
-  selectedGuildIds,
-  translations,
 }) => {
-  const selectedGuildIdSet = new Set(selectedGuildIds);
+  const { t } = useTranslation();
 
-  const selectedGuilds =
-    guilds?.filter((guild) => selectedGuildIdSet.has(guild.id)) ?? [];
-
-  const visiblePreviewGuilds = selectedGuilds.slice(
-    0,
-    VISIBLE_PREVIEW_GUILDS_COUNT,
-  );
-
-  const hiddenPreviewGuildsCount = Math.max(
-    selectedGuildIds.length - visiblePreviewGuilds.length,
-    0,
-  );
-
-  const toggleOpen = () => {
-    onOpenChange(!isOpen);
-  };
+  const summary = [
+    t("settings.detector.routing.summaryLevels", {
+      min: minLevel,
+      max: maxLevel,
+    }),
+    world ? t("settings.detector.routing.summaryWorld", { world }) : null,
+    t("settings.detector.routing.summaryGuilds", {
+      count: selectedGuildIds.length,
+    }),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <TooltipProvider>
-      <Collapsible
-        open={isOpen}
-        onOpenChange={onOpenChange}
-        className={cn(
-          "ll:group ll:overflow-hidden ll:rounded-md ll:border ll:bg-gray-950/78 ll:transition-colors",
-          isOpen
-            ? "ll:border-sky-300/55 ll:shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_16px_40px_rgba(2,132,199,0.12)]"
-            : "ll:border-gray-700/90",
-        )}
-      >
+    <SettingsPanel className="ll:px-0 ll:py-0">
+      <Collapsible open={isOpen} onOpenChange={onOpenChange}>
         {fieldIdInput}
-
-        <CollapsibleTrigger
-          render={(props) => <div {...props} />}
-          nativeButton={false}
-          aria-label={translations.toggleRuleLabel(index + 1)}
-          className="ll:flex ll:items-center ll:gap-3 ll:p-2.5 ll:transition-colors group-hover:ll:bg-white/4 ll:cursor-pointer"
-        >
-          <div className="ll:min-w-0 ll:flex-1">
-            <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-4 ll:text-left">
-              <div className="ll:min-w-0 ll:flex-1 ll:flex ll:flex-col ll:gap-3">
-                <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-1.5">
-                  <span className="ll:text-[12px] ll:font-semibold ll:text-white">
-                    {label}
-                  </span>
-                  <span className="ll:rounded-sm ll:border ll:border-sky-300/35 ll:bg-sky-400/10 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-sky-100">
-                    {translations.selectedGuildsBadge(selectedGuildIds.length)}
-                  </span>
-                </div>
-                <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-1.5">
-                  <span className="ll:rounded-sm ll:border ll:border-gray-600/70 ll:bg-black/20 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-gray-200">
-                    {translations.minLevelBadge(minLevel)}
-                  </span>
-                  <span className="ll:rounded-sm ll:border ll:border-gray-600/70 ll:bg-black/20 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-gray-200">
-                    {translations.maxLevelBadge(maxLevel)}
-                  </span>
-                  {world ? (
-                    <span className="ll:rounded-sm ll:border ll:border-gray-600/70 ll:bg-black/20 ll:px-1.5 ll:py-0.5 ll:text-[10px] ll:font-medium ll:text-gray-200">
-                      {translations.worldBadge(world)}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              {visiblePreviewGuilds.length > 0 ? (
-                <div className="ll:ml-auto ll:flex ll:min-w-0 ll:flex-wrap ll:items-center ll:gap-1.5 ll:self-center">
-                  {visiblePreviewGuilds.map((guild) => (
-                    <DetectorRoutingGuildPreviewTile
-                      key={guild.id}
-                      guild={guild}
-                    />
-                  ))}
-                  {hiddenPreviewGuildsCount > 0 ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span
-                          aria-label={translations.guildOverflowTooltip(
-                            hiddenPreviewGuildsCount,
-                          )}
-                          className="ll:inline-flex ll:h-7 ll:min-w-7 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-dashed ll:border-gray-500/70 ll:bg-black/20 ll:px-1.5 ll:text-[10px] ll:font-semibold ll:text-gray-300"
-                        >
-                          {translations.guildOverflowLabel(
-                            hiddenPreviewGuildsCount,
-                          )}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="ll:z-500">
-                        <p className="ll:text-xs ll:font-semibold">
-                          {translations.guildOverflowTooltip(
-                            hiddenPreviewGuildsCount,
-                          )}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : null}
-                </div>
-              ) : (
-                <span className="ll:ml-auto ll:rounded-sm ll:border ll:border-dashed ll:border-gray-600/70 ll:bg-black/20 ll:px-2 ll:py-1 ll:text-[10px] ll:font-medium ll:text-gray-400 ll:self-center">
-                  {translations.noGuildsSelected}
-                </span>
+        <div className="ll:flex ll:min-h-7 ll:items-center ll:gap-2 ll:pr-1">
+          <CollapsibleTrigger
+            aria-label={t("settings.detector.routing.toggleRuleLabel", {
+              name: label,
+            })}
+            className="ll-custom-cursor-pointer ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1.5 ll:text-left ll:text-xs ll:font-semibold ll:text-gray-100 ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+          >
+            <ChevronRight
+              aria-hidden
+              className={cn(
+                "ll:size-3.5 ll:shrink-0 ll:transition-transform",
+                isOpen && "ll:rotate-90",
               )}
-            </div>
-          </div>
-
-          <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-2.5 ll:pl-1">
-            <Button
-              type="button"
-              variant="destructive"
-              className="ll:size-7 ll:px-0"
-              aria-label={translations.deleteRuleLabel(index + 1)}
-              onClick={(event) => {
-                event.stopPropagation();
-                onRemove();
-              }}
+            />
+            <span className="ll:min-w-0 ll:truncate">{label}</span>
+            <span className="ll:min-w-0 ll:truncate ll:text-[11px] ll:font-normal ll:text-muted-foreground">
+              {summary}
+            </span>
+          </CollapsibleTrigger>
+          <SettingsIconButton
+            variant="destructive"
+            label={t("settings.detector.routing.deleteRuleLabel", {
+              name: label,
+            })}
+            onClick={onRemove}
+          >
+            <Trash2 />
+          </SettingsIconButton>
+        </div>
+        <CollapsibleContent className="ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/20 ll:[&>div]:px-0 ll:[&>div]:pb-1 ll:[&>div]:pt-1">
+          <div className="ll:flex ll:flex-col ll:gap-0.5">
+            <SettingsRow
+              htmlFor={nameInputId}
+              label={t("settings.detector.routing.ruleNameLabel")}
+              description={t("settings.detector.routing.ruleNameDescription")}
+              controlClassName="ll:w-48"
             >
-              <Trash2 size={12} />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="ll:size-7 ll:border-gray-600/70 ll:bg-black/20 ll:px-0 ll:hover:bg-white/8"
-              aria-label={translations.toggleRuleLabel(index + 1)}
-              onClick={(event) => {
-                event.stopPropagation();
-                toggleOpen();
-              }}
+              {nameField}
+            </SettingsRow>
+            <SettingsRow
+              label={t("settings.detector.routing.levelRangeLabel")}
+              description={t("settings.detector.routing.levelRangeDescription")}
+              controlClassName="ll:gap-1"
             >
-              <ChevronDown
-                size={14}
-                className={cn(
-                  "ll:transition-transform ll:duration-200",
-                  isOpen && "ll:rotate-180",
-                )}
-              />
-            </Button>
-          </div>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent className="ll:border-t ll:border-white/10">
-          <div className="ll:flex ll:flex-col ll:gap-3">
-            {nameField}
-
-            <div className="ll:grid ll:grid-cols-3 ll:gap-2">
-              {minLevelField}
-              {maxLevelField}
+              {levelFields}
+            </SettingsRow>
+            <SettingsRow
+              htmlFor={worldInputId}
+              label={t("settings.detector.routing.worldLabel")}
+              description={t("settings.detector.routing.worldDescription")}
+              controlClassName="ll:w-48"
+            >
               {worldField}
-            </div>
-
-            <div className="ll:flex ll:flex-col ll:gap-2">
-              <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
-                {translations.guildSelectionLabel}
-              </span>
+            </SettingsRow>
+            <SettingsRow
+              layout="stacked"
+              label={t("settings.detector.routing.guildSelectionLabel")}
+              description={t(
+                "settings.detector.routing.guildSelectionDescription",
+              )}
+            >
               <SettingsGuildSelectionGrid
-                emptyStateLabel={translations.noGuildsAvailable}
+                emptyStateLabel={t(
+                  "settings.detector.routing.noGuildsAvailable",
+                )}
                 guilds={guilds}
                 onToggle={onToggleGuild}
                 selectedGuildIds={selectedGuildIds}
                 variant="compact"
+                className="ll:w-full"
               />
-            </div>
+            </SettingsRow>
           </div>
         </CollapsibleContent>
       </Collapsible>
-    </TooltipProvider>
+    </SettingsPanel>
   );
 };

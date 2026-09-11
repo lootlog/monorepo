@@ -8,35 +8,14 @@ import { SettingsSubsectionBar } from "@/components/settings/settings-subsection
 import { SettingsWindowShell } from "@/components/settings/settings-window-shell";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
-import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
-import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/chat-appearance-settings";
-import { ChatFiltersSettings } from "@/features/settings/components/chat/chat-filters-settings";
-import { DebugTab } from "@/features/settings/components/debug/debug-tab";
-import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
-import { ExperimentalSettingsTab } from "@/features/settings/components/experimental/experimental-settings-tab";
-import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
-import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
-import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
-import { InterfaceSettingsTab } from "@/features/settings/components/appearance/interface-settings-tab";
-import { InformationSettingsTab } from "@/features/settings/components/information/information-settings-tab";
-import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
-import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
-import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
-import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
-import { ServerVisibilitySettingsTab } from "@/features/settings/components/servers/server-visibility-settings-tab";
-import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
-import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
-import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
-import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
+import { resolveSettingsPath } from "@/features/settings/constants/settings-tabs";
 import {
-  resolveSettingsPath,
-  type SettingsSubsectionValue,
-} from "@/features/settings/constants/settings-tabs";
+  SETTINGS_DOMAIN_ICONS,
+  SETTINGS_SUBSECTION_CONTENT,
+} from "@/features/settings/settings-content";
 import {
   getVisibleSettingsManifest,
   isSettingsControlId,
-  type SettingsIconName,
 } from "@/features/settings/settings-manifest";
 import {
   buildSettingsSearchItems,
@@ -45,62 +24,10 @@ import {
 } from "@/features/settings/settings-search";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
 import { useWindowsStore } from "@/store/windows.store";
-import {
-  Activity,
-  Bell,
-  Clock,
-  FlaskConical,
-  Info,
-  Keyboard,
-  MessageSquare,
-  Palette,
-  Settings,
-  Swords,
-  Volume2,
-  type LucideIcon,
-} from "lucide-react";
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
-const ICONS = {
-  settings: Settings,
-  palette: Palette,
-  messageSquare: MessageSquare,
-  clock: Clock,
-  bell: Bell,
-  swords: Swords,
-  volume2: Volume2,
-  keyboard: Keyboard,
-  flaskConical: FlaskConical,
-  activity: Activity,
-  info: Info,
-} satisfies Record<SettingsIconName, LucideIcon>;
-
 const SEARCH_RESULTS_ID = "settings-search-results";
-
-const SETTINGS_CONTENT = {
-  visibility: () => <ServerVisibilitySettingsTab />,
-  behavior: () => <GeneralSettingsTab />,
-  "chat-appearance": () => <ChatAppearanceSettingsForm />,
-  "chat-filters": () => <ChatFiltersSettings />,
-  "npc-colors": () => <NpcColorsSettings />,
-  interface: () => <InterfaceSettingsTab />,
-  "timer-appearance": () => <TimersSettingsAppearance />,
-  "timer-colors": () => <TimersSettingsColors />,
-  "timer-behavior": () => <TimersSettingsGeneral />,
-  "hidden-timers": () => <HiddenTimersTab />,
-  catching: () => <CatchingSettings />,
-  detector: () => <DetectorSettingsTab />,
-  "battle-panel": () => <BattlePanelSettingsTab />,
-  "notification-rules": () => <NotificationsSettingsTab />,
-  "notification-mutes": () => <NotificationMutesSettingsTab />,
-  sounds: () => <SoundsSettingsTab />,
-  hotkeys: () => <HotkeysSettingsTab />,
-  experimental: () => <ExperimentalSettingsTab />,
-  logs: () => <LogsSettingsTab />,
-  debug: () => <DebugTab />,
-  build: () => <InformationSettingsTab />,
-} satisfies Record<SettingsSubsectionValue, () => ReactNode>;
 
 const isSearchShortcut = (event: KeyboardEvent) =>
   (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f";
@@ -248,6 +175,7 @@ export const SettingsTabs = () => {
   };
 
   const activeOption = results[selectedResultIndex];
+  const SubsectionContent = SETTINGS_SUBSECTION_CONTENT[selectedSubsection];
 
   const search = (
     <>
@@ -288,7 +216,7 @@ export const SettingsTabs = () => {
       domains={visibleDomains.map((domain) => ({
         id: domain.id,
         label: t(domain.labelKey),
-        icon: ICONS[domain.icon],
+        icon: SETTINGS_DOMAIN_ICONS[domain.icon],
       }))}
       activeDomainId={activeDomain.id}
       compact={isCompact}
@@ -331,7 +259,7 @@ export const SettingsTabs = () => {
           value={activeDomain.id}
           className="ll:mt-0 ll:flex ll:flex-col ll:gap-6"
         >
-          {SETTINGS_CONTENT[selectedSubsection]()}
+          <SubsectionContent />
         </TabsContent>
       </SettingsWindowShell>
     </Tabs>

@@ -86,7 +86,7 @@ describe("SettingsTabs", () => {
     );
 
     expect(screen.getByText("Powiadomienia")).toBeInTheDocument();
-    expect(screen.getByText("Wykrywacz")).toBeInTheDocument();
+    expect(screen.getByText("Routing")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: "Routing na serwery" }),
     ).toBeInTheDocument();

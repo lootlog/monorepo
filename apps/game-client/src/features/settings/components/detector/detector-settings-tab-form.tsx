@@ -3,8 +3,6 @@ import { Switch } from "@/components/ui/switch";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   DetectorNpcType,
@@ -58,7 +56,6 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   categoryKey,
 }) => {
   const { t } = useTranslation();
-  const { npcTypeColors } = useNpcTypeColors();
 
   const {
     accountId,
@@ -69,22 +66,36 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   const updateUserGameAccountPreferences = useUpdateGameAccountPreferences();
 
   const currentCategorySettings = accountSettings[categoryKey];
-  const textColor = getTextColor(categoryKey, true, npcTypeColors);
 
   const toggleFields: Array<{
     key: keyof DetectorTypeSettings;
     label: string;
+    description: string;
   }> = [
-    { key: "detect", label: t("settings.detector.toggles.detect") },
-    { key: "autoSend", label: t("settings.detector.toggles.autoSend") },
+    {
+      key: "detect",
+      label: t("settings.detector.toggles.detect"),
+      description: t("settings.detector.toggles.detectDescription"),
+    },
+    {
+      key: "autoSend",
+      label: t("settings.detector.toggles.autoSend"),
+      description: t("settings.detector.toggles.autoSendDescription"),
+    },
     {
       key: "notifyWindow",
       label: t("settings.detector.toggles.notifyWindow"),
+      description: t("settings.detector.toggles.notifyWindowDescription"),
     },
-    { key: "highlight", label: t("settings.detector.toggles.highlight") },
+    {
+      key: "highlight",
+      label: t("settings.detector.toggles.highlight"),
+      description: t("settings.detector.toggles.highlightDescription"),
+    },
     {
       key: "notifySound",
       label: t("settings.detector.toggles.notifySound"),
+      description: t("settings.detector.toggles.notifySoundDescription"),
     },
   ];
 
@@ -156,35 +167,34 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   const watchDetect = watchedData.detect;
 
   return (
-    <form className="ll:flex ll:flex-col ll:gap-3 ll:py-3">
-      <div className="ll:grid ll:gap-2">
-        {toggleFields.map((field) => {
-          const isDisabled = field.key !== "detect" && !watchDetect;
-          const isHighlightField = field.key === "highlight";
+    <form className="ll:flex ll:flex-col">
+      {toggleFields.map((field) => {
+        const isDisabled = field.key !== "detect" && !watchDetect;
+        const controlId = `${categoryKey}-${field.key}`;
 
-          return (
-            <SettingsRow
-              key={field.key}
-              disabled={isDisabled}
-              label={field.label}
-              labelStyle={isHighlightField ? { color: textColor } : undefined}
-            >
-              <Controller
-                name={field.key}
-                control={control}
-                render={({ field: controllerField }) => (
-                  <Switch
-                    id={`${categoryKey}-${field.key}`}
-                    checked={controllerField.value}
-                    disabled={isDisabled}
-                    onCheckedChange={controllerField.onChange}
-                  />
-                )}
-              />
-            </SettingsRow>
-          );
-        })}
-      </div>
+        return (
+          <SettingsRow
+            key={field.key}
+            htmlFor={controlId}
+            disabled={isDisabled}
+            label={field.label}
+            description={field.description}
+          >
+            <Controller
+              name={field.key}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Switch
+                  id={controlId}
+                  checked={controllerField.value}
+                  disabled={isDisabled}
+                  onCheckedChange={controllerField.onChange}
+                />
+              )}
+            />
+          </SettingsRow>
+        );
+      })}
     </form>
   );
 };
