@@ -14,8 +14,6 @@ type TilePickerProps = {
   contentClassName?: string;
   disabled?: boolean;
   multiple?: boolean;
-  /** Gap between tiles, in spacing units. */
-  spacing?: number;
 };
 
 /**
@@ -33,7 +31,6 @@ export const TilePicker: FC<TilePickerProps> = ({
   contentClassName,
   disabled,
   multiple,
-  spacing = 1.5,
 }) => (
   <TooltipProvider>
     <ScrollArea
@@ -44,7 +41,7 @@ export const TilePicker: FC<TilePickerProps> = ({
       <ToggleGroup
         aria-label={ariaLabel}
         variant="outline"
-        spacing={spacing}
+        spacing={1.5}
         multiple={multiple}
         disabled={disabled}
         value={value}
