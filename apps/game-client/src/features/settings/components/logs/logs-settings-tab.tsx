@@ -43,7 +43,7 @@ const getLogsExportFileName = (): string => {
   return `lootlog-logs-${new Date().toISOString().replaceAll(":", "-")}.json`;
 };
 
-const FILTER_CONTROL_CLASS_NAME = "ll:w-36 ll:text-xs";
+const FILTER_CONTROL_CLASS_NAME = "ll:w-36";
 
 export const LogsSettingsTab: FC = () => {
   const actions = useLogsStore((state) => state.actions);

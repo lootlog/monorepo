@@ -252,7 +252,7 @@ export const CatchingSettings = () => {
         value={selectedCharacterId}
         onValueChange={setRequestedCharacterId}
       >
-        <SelectTrigger id={CHARACTER_PICKER_ID}>
+        <SelectTrigger id={CHARACTER_PICKER_ID} size="sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
