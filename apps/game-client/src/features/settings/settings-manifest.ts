@@ -11,6 +11,7 @@ export type SettingsIconName =
   | "messageSquare"
   | "clock"
   | "bell"
+  | "bellOff"
   | "swords"
   | "volume2"
   | "keyboard"
@@ -353,13 +354,33 @@ const MANIFEST = [
           },
         ],
       },
+    ],
+  },
+  {
+    id: "mutes",
+    labelKey: "settings.domains.mutes",
+    icon: "bellOff",
+    subsections: [
       {
-        id: "notification-mutes",
-        labelKey: "settings.subsections.notificationMutes",
+        id: "muted-players",
+        labelKey: "settings.subsections.mutedPlayers",
         controls: [
           {
-            id: "notification-mutes",
-            labelKey: "settings.notificationMutes.title",
+            id: "muted-players",
+            labelKey: "settings.mutes.players",
+            aliases: ["wyciszenia", "wycisz", "gracze"],
+            settingKeys: ["notifications.mutes"],
+          },
+        ],
+      },
+      {
+        id: "muted-npcs",
+        labelKey: "settings.subsections.mutedNpcs",
+        controls: [
+          {
+            id: "muted-npcs",
+            labelKey: "settings.mutes.npcs",
+            aliases: ["wyciszenia", "wycisz", "potwory", "npc"],
             settingKeys: ["notifications.mutes"],
           },
         ],
