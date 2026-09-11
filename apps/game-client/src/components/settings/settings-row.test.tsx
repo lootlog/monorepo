@@ -23,3 +23,26 @@ describe("SettingsRow", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(false, expect.any(Object));
   });
 });
+
+describe("SettingsRow description", () => {
+  it("toggles the switch when the description is clicked", async () => {
+    const user = userEvent.setup();
+
+    const onCheckedChange =
+      vi.fn<NonNullable<ComponentProps<typeof Switch>["onCheckedChange"]>>();
+
+    render(
+      <SettingsRow
+        htmlFor="row-switch"
+        label="Grupuj timery"
+        description="Łączy timery w jeden zbiorczy."
+      >
+        <Switch id="row-switch" checked onCheckedChange={onCheckedChange} />
+      </SettingsRow>,
+    );
+
+    await user.click(screen.getByText("Łączy timery w jeden zbiorczy."));
+
+    expect(onCheckedChange).toHaveBeenCalledWith(false, expect.any(Object));
+  });
+});
