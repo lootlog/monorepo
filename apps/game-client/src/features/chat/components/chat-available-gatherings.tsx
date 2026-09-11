@@ -114,6 +114,7 @@ export function ChatAvailableGatherings({
       {remainingCount > 0 && (
         <li>
           <Button
+            size="xs"
             type="button"
             variant="ghost"
             className="ll:w-full ll:h-7 ll:gap-1 ll:rounded-none ll:border-0 ll:border-t ll:border-gray-400/20 ll:text-[10px]"

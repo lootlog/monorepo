@@ -22,7 +22,6 @@ import { useCharacterList } from "@/hooks/api/use-character-list";
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
 import { useGameStore } from "@/store/game.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -300,14 +299,11 @@ export const CatchingSettings = () => {
             characters.length > 1 ? (
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
+                size="sm"
                 onClick={handleApplyToAllCharacters}
-                disabled={applyToAllMutation.isPending}
-                className="ll:gap-2"
+                loading={applyToAllMutation.isPending}
               >
-                {applyToAllMutation.isPending ? (
-                  <Loader2 className="ll:size-3.5 ll:animate-spin" />
-                ) : null}
                 {t("settings.catching.applyToAllButton")}
               </Button>
             ) : null

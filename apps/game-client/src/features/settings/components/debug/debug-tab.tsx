@@ -395,11 +395,11 @@ export const DebugTab: FC = () => {
     options: { disabled?: boolean; variant?: "ghost" | "destructive" } = {},
   ) => (
     <Button
-      className="ll:px-2"
+      size="sm"
       disabled={options.disabled}
       onClick={onClick}
       type="button"
-      variant={options.variant ?? "ghost"}
+      variant={options.variant ?? "outline"}
     >
       {runLabel}
     </Button>
@@ -547,10 +547,10 @@ export const DebugTab: FC = () => {
           />
           <div>
             <Button
-              className="ll:px-2"
+              size="sm"
               onClick={triggerFromJson}
               type="button"
-              variant="ghost"
+              variant="outline"
             >
               {t("settings.debug.triggerCustomEvent")}
             </Button>
@@ -562,7 +562,7 @@ export const DebugTab: FC = () => {
         title={t("settings.debug.eventLogTitle")}
         actions={
           <Button
-            className="ll:px-2"
+            size="sm"
             disabled={eventLog.length === 0}
             onClick={() => setEventLog([])}
             type="button"

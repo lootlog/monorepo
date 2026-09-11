@@ -97,6 +97,8 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            variant="secondary"
+            size="xs"
             ref={ref}
             role="combobox"
             aria-expanded={open}

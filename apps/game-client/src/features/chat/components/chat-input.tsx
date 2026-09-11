@@ -160,6 +160,7 @@ export function ChatInput(props: ChatInputProps) {
                 </div>
                 <div className="ll:flex ll:justify-end ll:gap-2">
                   <Button
+                    size="xs"
                     variant="menu"
                     type="button"
                     onClick={() => {
@@ -170,6 +171,7 @@ export function ChatInput(props: ChatInputProps) {
                     {t("input.clearChatConfirm.cancel")}
                   </Button>
                   <Button
+                    size="xs"
                     variant="menu"
                     type="button"
                     disabled={isClearingChat}

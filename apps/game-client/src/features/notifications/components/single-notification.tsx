@@ -405,6 +405,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
@@ -427,6 +428,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
@@ -459,6 +461,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="destructive"
                   aria-label={t("actions.closeAria")}
                   className="ll:size-7 ll:px-0"

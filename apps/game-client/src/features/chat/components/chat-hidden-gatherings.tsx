@@ -43,6 +43,8 @@ export function ChatHiddenGatherings({
     >
       <PopoverTrigger asChild>
         <Button
+          variant="secondary"
+          size="xs"
           ref={triggerRef}
           type="button"
           aria-label={label}
@@ -63,6 +65,7 @@ export function ChatHiddenGatherings({
         <div className="ll:flex ll:items-center ll:justify-between ll:px-2 ll:py-1 ll:text-[12px]">
           <strong>{t("gatherings.listTitle")}</strong>
           <Button
+            size="xs"
             variant="ghost"
             className="ll:size-6 ll:border-0 ll:p-0"
             aria-label={t("gatherings.closeList")}
@@ -74,6 +77,7 @@ export function ChatHiddenGatherings({
         <div className="ll:flex ll:border-x-0 ll:border-y ll:border-gray-400/40">
           {[false, true].map((isHidden) => (
             <Button
+              size="xs"
               key={String(isHidden)}
               variant="ghost"
               aria-pressed={hidden === isHidden}

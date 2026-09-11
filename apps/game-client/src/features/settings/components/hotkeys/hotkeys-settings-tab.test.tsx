@@ -88,7 +88,7 @@ describe("HotkeysSettingsTab", () => {
     });
   });
 
-  it("restores every default binding from the toolbar", async () => {
+  it("restores every default binding from the restore row", async () => {
     const user = userEvent.setup();
     useHotkeysStore.getState().setBinding("toggle-chat", {
       type: "keyboard",
@@ -99,7 +99,7 @@ describe("HotkeysSettingsTab", () => {
     });
     render(<HotkeysSettingsTab />);
 
-    await user.click(screen.getByRole("button", { name: "Przywróć domyślne" }));
+    await user.click(screen.getByRole("button", { name: "Przywróć" }));
 
     expect(chatRow().getByText("Shift + C")).toBeInTheDocument();
     expect(chatRow().queryByRole("button", { name: "Reset" })).toBeNull();

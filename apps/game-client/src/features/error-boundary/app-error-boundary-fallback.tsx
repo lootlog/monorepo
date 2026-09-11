@@ -133,10 +133,15 @@ export const AppErrorBoundaryFallback = ({ error }: FallbackProps) => {
         </div>
 
         <div className="ll:flex ll:justify-end ll:gap-2">
-          <Button onClick={handleCopy} type="button">
+          <Button
+            variant="secondary"
+            size="xs"
+            onClick={handleCopy}
+            type="button"
+          >
             {copyButtonLabel}
           </Button>
-          <Button onClick={handleClose} type="button" variant="ghost">
+          <Button size="xs" onClick={handleClose} type="button" variant="ghost">
             {translations.closeButton}
           </Button>
         </div>

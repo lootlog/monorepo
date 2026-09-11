@@ -57,6 +57,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
       <span>{label}</span>
       {onRetry && retryLabel ? (
         <Button
+          size="xs"
           aria-label={retryLabel}
           className="ll:size-4 ll:h-4 ll:border-0 ll:bg-transparent! ll:p-0"
           onClick={onRetry}

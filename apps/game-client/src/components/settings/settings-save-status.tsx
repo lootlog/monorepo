@@ -80,8 +80,10 @@ export const SettingsSaveStatus: FC = () => {
           </span>
           {status === "error" ? (
             <Button
+              variant="link"
+              size="xs"
               onClick={() => void settingsPatchQueue.retry()}
-              className="ll:h-4 ll:px-1.5 ll:text-[11px] ll:font-semibold ll:leading-none ll:transition-[color,background-color,scale] ll:duration-150 ll:ease-out ll:active:scale-[0.96]"
+              className="ll:h-4 ll:px-1 ll:font-semibold"
             >
               {t("saveStatus.retry")}
             </Button>

@@ -1,5 +1,6 @@
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -63,25 +64,7 @@ export const NpcColorsSettings = () => {
   };
 
   return (
-    <SettingsTabLayout
-      actions={
-        <Button
-          type="button"
-          variant="ghost"
-          className="ll:gap-2 ll:px-2"
-          onClick={() => {
-            setDraft(DEFAULT_NPC_TYPE_COLORS);
-            commit(
-              {},
-              COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
-            );
-          }}
-        >
-          <RotateCcw className="ll:size-3.5" />
-          {t("settings.npcColors.resetAll")}
-        </Button>
-      }
-    >
+    <SettingsTabLayout>
       <SettingsSection
         controlId="npc-type-colors"
         title={t("settings.npcColors.title")}
@@ -132,6 +115,26 @@ export const NpcColorsSettings = () => {
             </SettingsColorRow>
           );
         })}
+        <SettingsRow
+          label={t("settings.npcColors.resetAll")}
+          description={t("settings.npcColors.resetAllDescription")}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDraft(DEFAULT_NPC_TYPE_COLORS);
+              commit(
+                {},
+                COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
+              );
+            }}
+          >
+            <RotateCcw aria-hidden />
+            {t("common:actions.restore")}
+          </Button>
+        </SettingsRow>
       </SettingsSection>
     </SettingsTabLayout>
   );

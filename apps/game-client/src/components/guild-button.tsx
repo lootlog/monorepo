@@ -29,6 +29,8 @@ export const GuildButton: FC<GuildButtonProps> = ({
   <Tooltip>
     <TooltipTrigger asChild>
       <Button
+        variant="secondary"
+        size="xs"
         type="button"
         onClick={onClick}
         disabled={disabled}

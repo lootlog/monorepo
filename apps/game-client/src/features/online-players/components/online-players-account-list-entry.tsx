@@ -252,6 +252,8 @@ export const OnlinePlayersAccountListEntry: FC<
                 </span>
                 {canInviteToParty ? (
                   <Button
+                    variant="secondary"
+                    size="xs"
                     type="button"
                     className="ll:h-5 ll:min-w-5 ll:w-5 ll:p-0 ll:shrink-0"
                     onClick={handleInviteToParty}

@@ -322,6 +322,8 @@ export const ChatTranscript = ({
       </BaseScrollArea.Viewport>
       <ScrollBar />
       <Button
+        variant="secondary"
+        size="xs"
         hidden={!end}
         style={{ display: end ? undefined : "none" }}
         onClick={() => scrollToEnd({ behavior: "instant" })}

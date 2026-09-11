@@ -292,6 +292,7 @@ export function ChatGatheringBar({
               {t(hasError ? "gatherings.failed" : "gatherings.stale")}
             </p>
             <Button
+              size="xs"
               type="button"
               variant="ghost"
               className={CHAT_GATHERING_ACTION_CLASS}

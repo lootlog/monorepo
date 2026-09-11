@@ -34,6 +34,8 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          variant="secondary"
+          size="xs"
           className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
           onClick={handleClick}
           aria-label={title}

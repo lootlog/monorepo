@@ -38,6 +38,7 @@ export function ChatGatheringListItem({
       <div className="ll:mt-1 ll:flex ll:items-center ll:justify-between ll:gap-2">
         {hidden ? (
           <Button
+            size="xs"
             variant="ghost"
             className="ll:h-6 ll:border-0 ll:p-0 ll:text-[10px] ll:text-primary ll:underline ll:underline-offset-2"
             aria-label={t("gatherings.restoreNamed", {
@@ -56,6 +57,7 @@ export function ChatGatheringListItem({
           </span>
         )}
         <Button
+          size="xs"
           variant="ghost"
           className="ll:h-6 ll:gap-1 ll:border ll:border-border ll:bg-accent ll:px-1.5 ll:text-[11px]"
           disabled={disabled || pending}

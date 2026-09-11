@@ -119,6 +119,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
             </span>
             {entry.canRestore && (
               <Button
+                size="xs"
                 aria-label={t("history.restore")}
                 className="ll:size-6 ll:p-0 ll:shrink-0"
                 disabled={restorePending}

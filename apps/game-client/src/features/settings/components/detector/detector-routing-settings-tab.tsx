@@ -39,10 +39,11 @@ export const DetectorRoutingSettingsTab = () => {
       actions={
         <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={addRoutingRule}
-          className="ll:gap-1 ll:px-2"
         >
-          <Plus className="ll:size-3.5" />
+          <Plus aria-hidden />
           {t("settings.detector.routing.addRuleButton")}
         </Button>
       }

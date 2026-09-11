@@ -174,9 +174,9 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
           <div className="ll:flex ll:justify-end ll:pt-2">
             <Button
               type="button"
-              variant="menu"
+              variant="outline"
+              size="sm"
               disabled={colorDraft === defaultColor}
-              className="ll:h-7 ll:gap-2 ll:px-2"
               onClick={() => {
                 savedColor.current = defaultColor;
                 setColorDraft(defaultColor);

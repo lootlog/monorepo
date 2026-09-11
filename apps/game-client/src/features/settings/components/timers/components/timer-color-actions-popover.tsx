@@ -88,7 +88,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
             <Button
               type="button"
               variant="menu"
-              className="ll:h-7 ll:justify-start ll:gap-2 ll:border-0 ll:px-2"
+              className="ll:w-full"
               onClick={() => {
                 onReset();
                 onOpenChange(false);
@@ -102,7 +102,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
           <Button
             type="button"
             variant="menu"
-            className="ll:h-7 ll:justify-start ll:gap-2 ll:px-2 ll:text-red-700 ll:in-[.dark-theme]:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
+            className="ll:w-full ll:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
             onClick={() => {
               onDelete();
               onOpenChange(false);

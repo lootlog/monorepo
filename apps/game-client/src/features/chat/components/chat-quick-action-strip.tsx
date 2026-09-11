@@ -67,6 +67,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button
+              size="xs"
               type="button"
               variant="ghost"
               className="ll:size-6 ll:shrink-0 ll:p-0 ll:mr-2 ll:border-0"
@@ -94,6 +95,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
             shortcut,
           }) => (
             <Button
+              size="xs"
               key={key}
               aria-label={label}
               type="button"

@@ -20,6 +20,7 @@ export const TimersEmptyState: FC<TimersEmptyStateProps> = ({
       <EmptyState
         action={
           <Button
+            size="xs"
             className="ll:h-6 ll:px-2.5"
             onClick={onResetFilters}
             type="button"

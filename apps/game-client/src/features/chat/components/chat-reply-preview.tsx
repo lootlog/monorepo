@@ -105,6 +105,7 @@ export const ChatReplyPreview: FC<ChatReplyPreviewProps> = ({
       </Content>
       {onClear && (
         <Button
+          size="xs"
           aria-label={t("messageActions.clearReply")}
           type="button"
           variant="ghost"
