@@ -284,12 +284,11 @@
     "serversTitle": "Z których Lootlogów",
     "emptyGuilds": "Nie należysz do żadnego Lootloga.",
     "rulesTitle": "Co pokazywać",
-    "summaryDisabled": "Wyłączone",
-    "serversDescription": "Powiadomienia trafiają do Ciebie tylko z zaznaczonych Lootlogów. Kliknij ikonę Lootloga, aby go włączyć lub wyłączyć.",
+    "serversDescription": "Jeden wybór dla wszystkich typów powiadomień. Dostajesz tylko powiadomienia z zaznaczonych Lootlogów; kliknij ikonę, aby włączyć lub wyłączyć Lootloga.",
     "rulesDescription": "Każdy wiersz to jeden typ powiadomienia. Włącz „Pokazuj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
     "categoryHeader": "Typ",
     "cellLabel": "{{category}}: {{setting}}",
-    "serversPickerLabel": "Lootlogi: {{category}}",
+    "serversPickerLabel": "Lootlogi",
     "serversSelected": "{{selected}} z {{total}}"
   },
   "mutes": {

@@ -8,12 +8,12 @@ import { SettingsNumberField } from "@/components/settings/settings-number-field
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
-import { NotificationServersRow } from "@/features/settings/components/notifications/notification-servers-row";
 import {
   AUTO_HIDE_MAX_SECONDS,
   AUTO_HIDE_MIN_SECONDS,
   useNotificationRulesForm,
 } from "@/features/settings/components/notifications/use-notification-rules-form";
+import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { NpcType } from "@/api/npcs.api";
 import type { NotificationType } from "@lootlog/schema/account-preferences";
 import { Bell, Globe, Highlighter, TimerOff, Volume2 } from "lucide-react";
@@ -35,7 +35,7 @@ const SWITCH_COLUMNS = [
 export const NotificationsSettingsTab = () => {
   const { t } = useTranslation();
 
-  const { control, guilds, rules, setSwitchForAll, toggleGuild } =
+  const { control, guilds, guildIds, rules, setSwitchForAll, toggleGuild } =
     useNotificationRulesForm();
 
   const categories: NotificationCategory[] = [
@@ -78,8 +78,6 @@ export const NotificationsSettingsTab = () => {
       description: t("settings.notifications.autoHideDescription"),
     },
   ];
-
-  const guildCount = guilds?.length ?? 0;
 
   return (
     <SettingsTabLayout>
@@ -164,37 +162,25 @@ export const NotificationsSettingsTab = () => {
         controlId="notification-servers"
         title={t("settings.notifications.serversTitle")}
         description={t("settings.notifications.serversDescription")}
+        actions={
+          <span className="ll:text-[11px] ll:leading-[14px] ll:tabular-nums ll:text-muted-foreground">
+            {t("settings.notifications.serversSelected", {
+              selected: guildIds.length,
+              total: guilds?.length ?? 0,
+            })}
+          </span>
+        }
       >
-        {categories.map((category) => {
-          const categoryRules = rules[category.key];
-
-          return (
-            <NotificationServersRow
-              key={category.key}
-              title={
-                <NpcTypeChip npcType={category.key}>
-                  {category.label}
-                </NpcTypeChip>
-              }
-              label={t("settings.notifications.serversPickerLabel", {
-                category: category.label,
-              })}
-              summary={
-                categoryRules.show
-                  ? t("settings.notifications.serversSelected", {
-                      selected: categoryRules.guildIds.length,
-                      total: guildCount,
-                    })
-                  : t("settings.notifications.summaryDisabled")
-              }
-              guilds={guilds}
-              selectedGuildIds={categoryRules.guildIds}
-              disabled={!categoryRules.show}
-              emptyStateLabel={t("settings.notifications.emptyGuilds")}
-              onToggle={(guildId) => toggleGuild(category.key, guildId)}
-            />
-          );
-        })}
+        <div className="ll:px-2 ll:py-0.5">
+          <SettingsGuildPicker
+            aria-label={t("settings.notifications.serversPickerLabel")}
+            guilds={guilds}
+            selectedGuildIds={guildIds}
+            emptyStateLabel={t("settings.notifications.emptyGuilds")}
+            onToggle={toggleGuild}
+            className="ll:w-full"
+          />
+        </div>
       </SettingsSection>
     </SettingsTabLayout>
   );
