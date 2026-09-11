@@ -5,6 +5,12 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useHotkeysStore } from "@/store/hotkeys.store";
 import { HotkeysSettingsTab } from "./hotkeys-settings-tab";
 
+const keyCaps = (row: ReturnType<typeof chatRow>) =>
+  row
+    .getAllByText((_, element) => element?.tagName === "KBD")
+    .map((element) => element.textContent)
+    .join(" + ");
+
 const chatRow = () => {
   const label = screen.getByText(
     i18n.t("settings.hotkeys.actions.toggle-chat.label"),
@@ -62,11 +68,11 @@ describe("HotkeysSettingsTab", () => {
       ctrl: true,
       alt: false,
     });
-    expect(chatRow().getByText("Ctrl + K")).toBeInTheDocument();
+    expect(keyCaps(chatRow())).toBe("Ctrl + K");
 
     await user.click(chatRow().getByRole("button", { name: "Reset" }));
 
-    expect(chatRow().getByText("Shift + C")).toBeInTheDocument();
+    expect(keyCaps(chatRow())).toBe("Shift + C");
     expect(chatRow().queryByRole("button", { name: "Reset" })).toBeNull();
   });
 
@@ -101,7 +107,7 @@ describe("HotkeysSettingsTab", () => {
 
     await user.click(screen.getByRole("button", { name: "Przywróć" }));
 
-    expect(chatRow().getByText("Shift + C")).toBeInTheDocument();
+    expect(keyCaps(chatRow())).toBe("Shift + C");
     expect(chatRow().queryByRole("button", { name: "Reset" })).toBeNull();
   });
 });

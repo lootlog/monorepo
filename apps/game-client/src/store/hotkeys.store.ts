@@ -411,9 +411,10 @@ export const isDefaultBinding = (
   );
 };
 
-export const formatBinding = (binding: HotkeyBinding): string => {
+/** Binding as key caps: modifiers first, then the key or mouse button. */
+export const formatBindingParts = (binding: HotkeyBinding): string[] => {
   if (binding.type === "keyboard" && !binding.key)
-    return i18n.t("chat:quickActions.unassigned");
+    return [i18n.t("chat:quickActions.unassigned")];
   const parts: string[] = [];
 
   if (binding.ctrl) parts.push(i18n.t("settings.hotkeys.modifiers.ctrl"));
@@ -428,5 +429,8 @@ export const formatBinding = (binding: HotkeyBinding): string => {
     parts.push(i18n.t(`settings.hotkeys.mouseButtons.${binding.button}`));
   }
 
-  return parts.join(" + ");
+  return parts;
 };
+
+export const formatBinding = (binding: HotkeyBinding): string =>
+  formatBindingParts(binding).join(" + ");
