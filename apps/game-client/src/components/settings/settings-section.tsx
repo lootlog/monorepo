@@ -39,7 +39,11 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:relative ll:flex ll:flex-col ll:rounded-sm ll:transition-[background-color,box-shadow] ll:duration-500 ll:data-[settings-highlighted]:duration-150 ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:relative ll:flex ll:flex-col ll:rounded-sm",
+        // The highlight is a pseudo-element that overhangs the section by a
+        // few pixels, so it breathes around the title and the last row
+        // without changing the layout.
+        "ll:after:pointer-events-none ll:after:absolute ll:after:-inset-x-1 ll:after:-inset-y-2 ll:after:rounded-md ll:after:bg-primary/10 ll:after:opacity-0 ll:after:shadow-[inset_0_0_0_1px_var(--color-primary)] ll:after:transition-opacity ll:after:duration-500 ll:after:content-[''] ll:data-[settings-highlighted]:after:opacity-100 ll:data-[settings-highlighted]:after:duration-150",
         "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-border ll:[section+&]:before:content-['']",
         description ? "ll:gap-3" : "ll:gap-2",
         className,
