@@ -25,7 +25,7 @@ export const SettingsListRow: FC<SettingsListRowProps> = ({
 }) => (
   <div
     className={cn(
-      "ll:flex ll:min-h-7 ll:items-center ll:gap-2 ll:rounded-sm ll:px-2 ll:py-1 ll:transition-colors ll:hover:bg-white/5",
+      "ll:flex ll:min-h-9 ll:items-center ll:gap-2.5 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-colors ll:hover:bg-white/5",
       className,
     )}
   >
@@ -33,11 +33,11 @@ export const SettingsListRow: FC<SettingsListRowProps> = ({
       <span className="ll:flex ll:shrink-0 ll:items-center">{leading}</span>
     ) : null}
     <div className="ll:min-w-0 ll:flex-1">
-      <div className="ll:truncate ll:text-xs ll:leading-4 ll:text-foreground">
+      <div className="ll:truncate ll:text-[13px] ll:font-semibold ll:leading-[18px] ll:text-foreground">
         {title}
       </div>
       {description ? (
-        <p className="ll:m-0 ll:truncate ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
+        <p className="ll:m-0 ll:truncate ll:text-xs ll:leading-4 ll:text-muted-foreground">
           {description}
         </p>
       ) : null}

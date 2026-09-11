@@ -9,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
  * left-aligned item used inside popover menus.
  */
 export const buttonVariants = cva(
-  "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-xs ll:font-medium ll:transition-[background-color,color,border-color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll-custom-cursor-pointer",
+  "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-[13px] ll:font-medium ll:transition-[background-color,color,border-color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll-custom-cursor-pointer",
   {
     variants: {
       variant: {
@@ -24,15 +24,15 @@ export const buttonVariants = cva(
         ghost:
           "ll:text-foreground ll:hover:bg-accent/50 ll:hover:text-accent-foreground",
         link: "ll:text-primary ll:underline-offset-4 ll:hover:underline",
-        menu: "ll:h-auto ll:min-h-6 ll:justify-start ll:px-2 ll:py-1.5 ll:text-[11px] ll:font-semibold ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:disabled:text-muted-foreground",
+        menu: "ll:h-auto ll:min-h-7 ll:justify-start ll:px-2 ll:py-1.5 ll:text-xs ll:font-semibold ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:disabled:text-muted-foreground",
       },
       size: {
-        default: "ll:h-7 ll:px-3 ll:has-[>svg]:px-2.5",
-        sm: "ll:h-6 ll:px-2 ll:text-[11px] ll:has-[>svg]:px-1.5",
-        xs: "ll:h-5 ll:px-1.5 ll:text-[11px] ll:has-[>svg]:px-1",
-        icon: "ll:size-7",
-        "icon-sm": "ll:size-6",
-        "icon-xs": "ll:size-5",
+        default: "ll:h-8 ll:px-3 ll:has-[>svg]:px-2.5",
+        sm: "ll:h-7 ll:px-2 ll:text-xs ll:has-[>svg]:px-1.5",
+        xs: "ll:h-6 ll:px-1.5 ll:text-xs ll:has-[>svg]:px-1",
+        icon: "ll:size-8",
+        "icon-sm": "ll:size-7",
+        "icon-xs": "ll:size-6",
       },
     },
     defaultVariants: {

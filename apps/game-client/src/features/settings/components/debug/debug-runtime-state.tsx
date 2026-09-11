@@ -53,7 +53,7 @@ export function DebugRuntimeState() {
   return (
     <>
       <SettingsSection title={t("settings.debug.partyStateTitle")}>
-        <SettingsPanel className="ll:font-mono ll:text-[11px]">
+        <SettingsPanel className="ll:font-mono ll:text-xs">
           {partyMembers.length === 0 ? (
             <SettingsEmptyState className="ll:bg-transparent ll:px-0 ll:py-0">
               {t("settings.debug.noPartyMembers")}
@@ -82,7 +82,7 @@ export function DebugRuntimeState() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.characterTooltipStateTitle")}>
-        <SettingsPanel className="ll:space-y-1 ll:font-mono ll:text-[11px]">
+        <SettingsPanel className="ll:space-y-1 ll:font-mono ll:text-xs">
           <div className="ll:text-muted-foreground">
             <div>
               {t("settings.debug.characterTooltip.shiftPressed", {
@@ -128,7 +128,7 @@ export function DebugRuntimeState() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.othersStateTitle")}>
-        <SettingsPanel className="ll:space-y-1 ll:font-mono ll:text-[11px]">
+        <SettingsPanel className="ll:space-y-1 ll:font-mono ll:text-xs">
           <div className="ll:text-muted-foreground">
             {t("settings.debug.othersCount", { count: debugOthers.length })}
           </div>
@@ -139,7 +139,7 @@ export function DebugRuntimeState() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.systemInfoTitle")}>
-        <SettingsPanel className="ll:space-y-0.5 ll:font-mono ll:text-[11px]">
+        <SettingsPanel className="ll:space-y-0.5 ll:font-mono ll:text-xs">
           <p className="ll:m-0 ll:text-muted-foreground">
             {t("settings.debug.zoomFactor", {
               value:

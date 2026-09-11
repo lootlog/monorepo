@@ -82,13 +82,13 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
       <header className="ll:flex ll:min-h-7 ll:items-center ll:gap-2 ll:ps-2 ll:pe-1 ll:py-1">
         <span
           aria-hidden
-          className="ll:flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:bg-primary/20 ll:text-[11px] ll:font-semibold ll:tabular-nums ll:text-primary"
+          className="ll:flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:bg-primary/20 ll:text-xs ll:font-semibold ll:tabular-nums ll:text-primary"
         >
           {index}
         </span>
         <div className="ll:min-w-0 ll:flex-1">{nameField}</div>
         {selectedCount === 0 ? (
-          <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:rounded-sm ll:bg-amber-200/10 ll:px-1.5 ll:py-0.5 ll:text-[11px] ll:leading-[14px] ll:text-amber-200">
+          <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:rounded-sm ll:bg-amber-200/10 ll:px-1.5 ll:py-0.5 ll:text-xs ll:leading-4 ll:text-amber-200">
             <TriangleAlert aria-hidden className="ll:size-3 ll:shrink-0" />
             {t("settings.detector.routing.noGuildsBadge")}
           </span>
@@ -115,7 +115,7 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
             max={LEVEL_MAX}
             onCommit={(value) => onLevelRangeCommit([value, maxLevel])}
           />
-          <span aria-hidden className="ll:text-xs ll:text-muted-foreground">
+          <span aria-hidden className="ll:text-[13px] ll:text-muted-foreground">
             –
           </span>
           <SettingsNumberField

@@ -34,7 +34,7 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
     className="ll:flex ll:flex-col ll:gap-px"
   >
     {results.length === 0 ? (
-      <p className="ll:m-0 ll:px-2 ll:py-2 ll:text-[11px] ll:text-muted-foreground">
+      <p className="ll:m-0 ll:px-2 ll:py-2 ll:text-xs ll:text-muted-foreground">
         {emptyLabel}
       </p>
     ) : null}
@@ -53,7 +53,7 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
       return (
         <div key={result.controlId}>
           {startsGroup ? (
-            <div className="ll:mt-2 ll:mb-0.5 ll:truncate ll:px-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground ll:first:mt-0">
+            <div className="ll:mt-2 ll:mb-0.5 ll:truncate ll:px-2 ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground ll:first:mt-0">
               {result.categoryLabel}
               {showSubsection ? ` › ${result.subsectionLabel}` : null}
             </div>
@@ -65,7 +65,7 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
             aria-selected={index === selectedResultIndex}
             onMouseEnter={() => onSelectIndex(index)}
             onClick={() => onOpen(result)}
-            className="ll-custom-cursor-pointer ll:flex ll:w-full ll:items-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-start ll:text-[11px] ll:leading-4 ll:text-foreground ll:hover:bg-accent/60 ll:aria-selected:bg-accent ll:aria-selected:text-foreground"
+            className="ll-custom-cursor-pointer ll:flex ll:w-full ll:items-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-start ll:text-xs ll:leading-4 ll:text-foreground ll:hover:bg-accent/60 ll:aria-selected:bg-accent ll:aria-selected:text-foreground"
           >
             <span className="ll:truncate">{result.label}</span>
           </button>

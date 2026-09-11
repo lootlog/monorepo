@@ -125,7 +125,7 @@ export const SettingsNumberField: FC<SettingsNumberFieldProps> = ({
       {unit ? (
         <span
           className={cn(
-            "ll:shrink-0 ll:text-[11px] ll:text-muted-foreground",
+            "ll:shrink-0 ll:text-xs ll:text-muted-foreground",
             // Hangs right of the centred value so the digits stay under the icon.
             variant === "cell"
               ? "ll:pointer-events-none ll:absolute ll:top-1/2 ll:left-[calc(50%+0.8em)] ll:-translate-y-1/2"

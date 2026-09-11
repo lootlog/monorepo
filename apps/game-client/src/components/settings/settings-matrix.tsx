@@ -135,7 +135,7 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
           ref={tableRef}
           aria-label={label}
           data-compact={compact ? "true" : undefined}
-          className="ll:w-full ll:border-collapse ll:text-xs"
+          className="ll:w-full ll:border-collapse ll:text-[13px]"
           onMouseOver={(event) => setHoveredColumn(readColumnIndex(event))}
           onMouseLeave={() => setHoveredColumn(null)}
         >
@@ -145,7 +145,7 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                 ref={rowHeaderRef}
                 scope="col"
                 className={cn(
-                  "ll:h-8 ll:px-2 ll:text-left ll:align-middle ll:text-[10px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground",
+                  "ll:h-8 ll:px-2 ll:text-left ll:align-middle ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground",
                   // With labels the name column absorbs the spare width; in
                   // icon-only mode every column keeps its own width instead.
                   !compact && "ll:w-full",
@@ -178,7 +178,7 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                   )}
                 >
                   <Tooltip>
-                    <TooltipTrigger className="ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-0.5 ll:border-0 ll:bg-transparent ll:p-0 ll:text-[11px] ll:leading-4 ll:font-semibold ll:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
+                    <TooltipTrigger className="ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-0.5 ll:border-0 ll:bg-transparent ll:p-0 ll:text-xs ll:leading-4 ll:font-semibold ll:text-foreground ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
                       <column.icon
                         aria-hidden
                         className="ll:size-3.5 ll:text-muted-foreground"

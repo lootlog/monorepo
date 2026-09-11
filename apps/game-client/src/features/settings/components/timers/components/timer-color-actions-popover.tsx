@@ -63,7 +63,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
       </PopoverTrigger>
       <PopoverContent role="dialog" align="end" className="ll:w-56 ll:p-2.5">
         <div className="ll:flex ll:flex-col ll:gap-2">
-          <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-muted-foreground">
+          <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[11px] ll:text-muted-foreground">
             {t("settings.timers.colors.nameLabel")}
             <Input
               className="ll:border-border ll:text-popover-foreground"

@@ -55,7 +55,7 @@ export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
               alt=""
               className="ll:size-full ll:object-cover"
             />
-            <AvatarFallback className="ll:flex ll:size-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/25 ll:text-[10px] ll:font-semibold ll:text-foreground">
+            <AvatarFallback className="ll:flex ll:size-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/25 ll:text-[11px] ll:font-semibold ll:text-foreground">
               {guild.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>

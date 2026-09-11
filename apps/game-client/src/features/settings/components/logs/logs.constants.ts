@@ -57,7 +57,7 @@ export const LOG_STATUS_CHIP_CLASS_NAMES: Record<
 
 /** Shared chip shape; pair with a LOG_STATUS_CHIP_CLASS_NAMES colour. */
 export const LOG_STATUS_CHIP_BASE_CLASS_NAME =
-  "ll:inline-flex ll:h-4 ll:items-center ll:rounded-sm ll:px-1 ll:text-[10px] ll:font-semibold ll:tabular-nums";
+  "ll:inline-flex ll:h-4 ll:items-center ll:rounded-sm ll:px-1 ll:text-[11px] ll:font-semibold ll:tabular-nums";
 
 export const LOG_PRE_CLASS_NAME =
-  "ll:m-0 ll:max-h-48 ll:overflow-auto ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-2 ll:text-[11px] ll:leading-4 ll:text-foreground";
+  "ll:m-0 ll:max-h-48 ll:overflow-auto ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-2 ll:text-xs ll:leading-4 ll:text-foreground";

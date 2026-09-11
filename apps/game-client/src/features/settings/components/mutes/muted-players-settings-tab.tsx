@@ -60,7 +60,7 @@ export const MutedPlayersSettingsTab = () => {
                 key={player.discordId}
                 leading={
                   <Avatar className="ll:size-6 ll:rounded-sm ll:bg-black/20">
-                    <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[10px] ll:font-semibold">
+                    <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[11px] ll:font-semibold">
                       {player.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

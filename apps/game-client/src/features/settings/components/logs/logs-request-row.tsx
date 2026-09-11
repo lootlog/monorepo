@@ -99,7 +99,7 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
           <TableCell className="ll:whitespace-normal ll:p-2" colSpan={5}>
             <div className="ll:grid ll:gap-2 ll:@min-[448px]/settings:grid-cols-2">
               <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
+                <span className="ll:text-xs ll:font-semibold ll:text-muted-foreground">
                   {t("settings.logs.payload")}
                 </span>
                 <pre className={LOG_PRE_CLASS_NAME}>
@@ -107,7 +107,7 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
                 </pre>
               </div>
               <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
+                <span className="ll:text-xs ll:font-semibold ll:text-muted-foreground">
                   {t("settings.logs.response")}
                 </span>
                 <pre className={LOG_PRE_CLASS_NAME}>

@@ -538,7 +538,7 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         hasDefinedPosition: false,
-        size: { width: 760, height: 520 },
+        size: { width: 820, height: 560 },
         opacity: DEFAULT_OPACITY,
         locked: false,
         state: {},

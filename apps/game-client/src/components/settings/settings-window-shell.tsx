@@ -39,14 +39,14 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
   // Shortcuts apply only while focus is inside the window.
   // oxlint-disable-next-line jsx-a11y/no-static-element-interactions
   <div
-    className="ll:relative ll:flex ll:h-full ll:min-h-0 ll:w-full ll:flex-row ll:text-xs"
+    className="ll:relative ll:flex ll:h-full ll:min-h-0 ll:w-full ll:flex-row ll:text-[13px]"
     onKeyDown={onKeyDown}
   >
     {compact ? (
       <>
         <div className={cn(navColumnClassName, "ll:w-11")}>{nav}</div>
         {searchOverlayOpen ? (
-          <div className="ll:absolute ll:inset-y-0 ll:start-11 ll:z-30 ll:flex ll:w-54 ll:flex-col ll:gap-3 ll:border-0 ll:border-e ll:border-solid ll:border-border ll:bg-black/90 ll:p-1 ll:ps-2 ll:pe-3 ll:animate-in ll:fade-in-0 ll:duration-150">
+          <div className="ll:absolute ll:inset-y-0 ll:start-11 ll:z-30 ll:flex ll:w-64 ll:flex-col ll:gap-3 ll:border-0 ll:border-e ll:border-solid ll:border-border ll:bg-black/90 ll:p-1 ll:ps-2 ll:pe-3 ll:animate-in ll:fade-in-0 ll:duration-150">
             {search}
           </div>
         ) : null}
@@ -55,7 +55,7 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
       <div
         className={cn(
           navColumnClassName,
-          "ll:w-44 ll:flex-col ll:gap-3 ll:pe-3",
+          "ll:w-52 ll:flex-col ll:gap-3 ll:pe-3",
         )}
       >
         {search}

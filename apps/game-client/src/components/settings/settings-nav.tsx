@@ -94,9 +94,9 @@ export const SettingsNav: FC<SettingsNavProps> = ({
         <TabsTrigger
           key={domain.id}
           value={domain.id}
-          className="ll:h-auto ll:min-h-7 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:px-2 ll:py-1 ll:text-start"
+          className="ll:h-auto ll:min-h-8 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:px-2 ll:py-1 ll:text-start ll:text-[13px]"
         >
-          <domain.icon className="ll:size-3.5 ll:shrink-0" aria-hidden="true" />
+          <domain.icon className="ll:size-4 ll:shrink-0" aria-hidden="true" />
           <span className="ll:truncate">{domain.label}</span>
         </TabsTrigger>
       ))}

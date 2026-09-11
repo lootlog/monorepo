@@ -90,7 +90,7 @@ export const DetectorRoutingSection = () => {
               placeholder={t("settings.detector.routing.ruleNamePlaceholder", {
                 index: index + 1,
               })}
-              className="ll:w-full ll:px-1 ll:text-xs ll:font-semibold ll:focus-visible:shadow-[inset_0_0_0_1px_var(--color-ring)]"
+              className="ll:w-full ll:px-1 ll:text-[13px] ll:font-semibold ll:focus-visible:shadow-[inset_0_0_0_1px_var(--color-ring)]"
               onFocus={() => {
                 setDeferredSyncField(`routingRules.${index}.name`);
               }}

@@ -163,7 +163,7 @@ export const NotificationsSettingsTab = () => {
         title={t("settings.notifications.serversTitle")}
         description={t("settings.notifications.serversDescription")}
         actions={
-          <span className="ll:text-[11px] ll:leading-[14px] ll:tabular-nums ll:text-muted-foreground">
+          <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
             {t("settings.notifications.serversSelected", {
               selected: guildIds.length,
               total: guilds?.length ?? 0,
