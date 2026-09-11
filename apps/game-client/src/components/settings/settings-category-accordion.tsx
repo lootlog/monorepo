@@ -48,7 +48,7 @@ type SettingsCategoryAccordionItemProps = {
 export const SettingsCategoryAccordionItem: FC<
   SettingsCategoryAccordionItemProps
 > = ({ id, title, summary, headerControls, triggerLabel, children }) => (
-  <AccordionItem value={id} className="ll:rounded-sm ll:bg-black/20">
+  <AccordionItem value={id} className="ll:rounded-sm ll:bg-black/25">
     <div className="ll:flex ll:min-h-7 ll:items-center ll:gap-2 ll:pl-2">
       <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-center ll:gap-2">
         <span className="ll:min-w-0 ll:truncate ll:text-xs ll:font-semibold ll:text-gray-100">

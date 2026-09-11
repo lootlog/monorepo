@@ -14,7 +14,7 @@ type SettingsSectionProps = {
   contentClassName?: string;
 };
 
-/** A titled block of rows separated from its neighbours by a hairline. */
+/** A titled card of rows; lists inside it sit on a darker, recessed surface. */
 export const SettingsSection: FC<SettingsSectionProps> = ({
   controlId,
   title,
@@ -34,12 +34,12 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:flex ll:flex-col ll:gap-1 ll:border-0 ll:border-gray-400/30 ll:transition-[background-color,box-shadow] ll:[&:not(:first-child)]:border-t ll:[&:not(:first-child)]:pt-4 ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:flex ll:flex-col ll:gap-1.5 ll:rounded-sm ll:border ll:border-white/8 ll:bg-white/4 ll:p-2 ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
         className,
       )}
     >
       {hasHeader ? (
-        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:px-2">
+        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:px-2 ll:pt-0.5">
           <div className="ll:min-w-0 ll:flex-1">
             {title ? (
               <h3 className="ll:m-0 ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground">
