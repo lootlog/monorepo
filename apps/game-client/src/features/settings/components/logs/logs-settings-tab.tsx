@@ -232,26 +232,28 @@ export const LogsSettingsTab: FC = () => {
           </Select>
         </div>
         {filteredActions.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("settings.logs.columns.time")}</TableHead>
-                <TableHead>{t("settings.logs.columns.action")}</TableHead>
-                <TableHead>{t("settings.logs.columns.status")}</TableHead>
-                <TableHead className="ll:w-0" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredActions.map((action) => (
-                <LogsActionRow
-                  action={action}
-                  key={action.id}
-                  onCopyAction={handleCopyAction}
-                  onCopyRequest={handleCopyRequest}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          <div className="ll:px-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("settings.logs.columns.time")}</TableHead>
+                  <TableHead>{t("settings.logs.columns.action")}</TableHead>
+                  <TableHead>{t("settings.logs.columns.status")}</TableHead>
+                  <TableHead className="ll:w-0" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActions.map((action) => (
+                  <LogsActionRow
+                    action={action}
+                    key={action.id}
+                    onCopyAction={handleCopyAction}
+                    onCopyRequest={handleCopyRequest}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           <SettingsEmptyState>
             {t("settings.logs.emptyState")}
