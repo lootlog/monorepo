@@ -311,6 +311,69 @@ describe("timers.store", () => {
     });
   });
 
+  it("unsets colour map entries removed while other entries remain", () => {
+    useTimersStore.setState({
+      customColors: {
+        "custom-1": {
+          id: "custom-1",
+          name: "Bosses",
+          borderColor: "#111111",
+          backgroundColor: "#22222233",
+        },
+        "custom-2": {
+          id: "custom-2",
+          name: "Titans",
+          borderColor: "#333333",
+          backgroundColor: "#44444433",
+        },
+      },
+      defaultColorNames: { red: "Alarm", green: "Safe" },
+      overriddenDefaultColors: {
+        red: { borderColor: "#111111", backgroundColor: "#22222233" },
+        green: { borderColor: "#333333", backgroundColor: "#44444433" },
+      },
+    });
+
+    useTimersStore.getState().resetDefaultColor("red");
+    useTimersStore.getState().deleteCustomColor("custom-1");
+    vi.advanceTimersByTime(500);
+
+    expect(
+      patchesFor("appearance").map(({ set, unset }) => ({ set, unset })),
+    ).toEqual([
+      {
+        set: {
+          timers: {
+            overriddenDefaultColors: {
+              green: { borderColor: "#333333", backgroundColor: "#44444433" },
+            },
+            defaultColorNames: { green: "Safe" },
+          },
+        },
+        unset: [
+          "timers.defaultColorNames.red",
+          "timers.overriddenDefaultColors.red",
+        ],
+      },
+      {
+        set: {
+          timers: {
+            customColors: {
+              "custom-2": {
+                id: "custom-2",
+                name: "Titans",
+                borderColor: "#333333",
+                backgroundColor: "#44444433",
+              },
+            },
+            timersColors: {},
+          },
+        },
+        unset: ["timers.customColors.custom-1"],
+      },
+    ]);
+  });
+
   it("persists only the partialized timer state", () => {
     const store = useTimersStore.getState();
     store.setGeneralConfig({
