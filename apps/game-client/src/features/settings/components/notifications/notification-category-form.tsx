@@ -1,9 +1,9 @@
 import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
 import {
-  SettingsGuildSelectionGrid,
+  SettingsGuildPicker,
   toggleAvailableGuild,
-} from "@/features/settings/components/shared/settings-guild-selection-grid";
+} from "@/features/settings/components/shared/settings-guild-picker";
 import { Switch } from "@/components/ui/switch";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
@@ -270,14 +270,14 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
         label={t("settings.notifications.serversTitle")}
         description={t("settings.notifications.serversDescription")}
       >
-        <SettingsGuildSelectionGrid
+        <SettingsGuildPicker
+          aria-label={t("settings.notifications.serversTitle")}
           guilds={guilds}
           selectedGuildIds={selectedGuildIds}
           disabled={!watchShow}
           onToggle={toggleGuild}
           emptyStateLabel={t("settings.notifications.emptyGuilds")}
-          variant="compact"
-          className="ll:w-full"
+          className="ll:-mx-1 ll:w-[calc(100%+0.5rem)]"
         />
       </SettingsRow>
     </form>

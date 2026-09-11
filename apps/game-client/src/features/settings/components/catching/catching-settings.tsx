@@ -216,42 +216,45 @@ export const CatchingSettings = () => {
   return (
     <SettingsTabLayout>
       <SettingsSection
+        controlId="catching-range"
         title={t("settings.catching.characterTitle")}
         description={t("settings.catching.characterDescription")}
+        contentClassName="ll:gap-1"
       >
         <CharacterPicker
           aria-label={t("settings.catching.characterLabel")}
           characters={characters}
           value={selectedCharacterId}
           onValueChange={setRequestedCharacterId}
+          className="ll:px-1"
         />
+        {selectedCharacterId ? (
+          <CatchingSettingsForm
+            key={selectedCharacterId}
+            characterId={selectedCharacterId}
+            disabled={applyToAllMutation.isPending}
+            onSelectionChange={(catchingGuildIds) => {
+              selectionByCharacterIdRef.current = {
+                ...selectionByCharacterIdRef.current,
+                [selectedCharacterId]: catchingGuildIds,
+              };
+            }}
+            actions={
+              characters.length > 1 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleApplyToAllCharacters}
+                  loading={applyToAllMutation.isPending}
+                >
+                  {t("settings.catching.applyToAllButton")}
+                </Button>
+              ) : null
+            }
+          />
+        ) : null}
       </SettingsSection>
-      {selectedCharacterId ? (
-        <CatchingSettingsForm
-          key={selectedCharacterId}
-          characterId={selectedCharacterId}
-          disabled={applyToAllMutation.isPending}
-          onSelectionChange={(catchingGuildIds) => {
-            selectionByCharacterIdRef.current = {
-              ...selectionByCharacterIdRef.current,
-              [selectedCharacterId]: catchingGuildIds,
-            };
-          }}
-          actions={
-            characters.length > 1 ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleApplyToAllCharacters}
-                loading={applyToAllMutation.isPending}
-              >
-                {t("settings.catching.applyToAllButton")}
-              </Button>
-            ) : null
-          }
-        />
-      ) : null}
     </SettingsTabLayout>
   );
 };

@@ -439,7 +439,7 @@
     "title": "Ustawienia łapania lootu i timerów",
     "description": "Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci.",
     "characterTitle": "Postać",
-    "characterDescription": "Wybierz postać, a potem wskaż gildie, które mają odbierać z niej dane.",
+    "characterDescription": "Wybierz postać i serwery, które mają odbierać z niej looty i timery.",
     "characterLabel": "Postać",
     "applyToAllButton": "Aplikuj do wszystkich postaci",
     "applyNoneFailed": "Nie udało się zaktualizować żadnej postaci",
@@ -447,9 +447,9 @@
     "applyFailed": "Nie udało się skopiować ustawień do wszystkich postaci",
     "form": {
       "collectionRangeTitle": "Zakres zbierania",
-      "collectionRangeDescription": "Kliknij gildię, aby włączyć lub wyłączyć odbieranie lootów i timerów dla tej postaci.",
-      "activeCount": "Aktywne: {{selectedCount}}/{{totalCount}}.",
-      "emptyGuilds": "Brak gildii do skonfigurowania dla tej postaci."
+      "serversTitle": "Serwery",
+      "activeCount": "Aktywne: {{selectedCount}}/{{totalCount}}",
+      "emptyGuilds": "Brak serwerów do skonfigurowania dla tej postaci."
     }
   },
   "hiddenTimers": {
