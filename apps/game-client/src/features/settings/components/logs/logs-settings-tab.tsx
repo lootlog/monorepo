@@ -239,7 +239,7 @@ export const LogsSettingsTab: FC = () => {
                 <TableHead>{t("settings.logs.columns.action")}</TableHead>
                 <TableHead>{t("settings.logs.columns.status")}</TableHead>
                 <TableHead>{t("settings.logs.columns.requests")}</TableHead>
-                <TableHead />
+                <TableHead className="ll:sticky ll:right-0 ll:z-10 ll:w-0 ll:bg-background/90 ll:backdrop-blur-sm ll:shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)]" />
               </TableRow>
             </TableHeader>
             <TableBody>
