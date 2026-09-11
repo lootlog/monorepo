@@ -282,6 +282,22 @@ const migrateChatSettingsPath = (state: RawPersistedWindows): void => {
   };
 };
 
+const migrateRoutingSettingsPath = (state: RawPersistedWindows): void => {
+  const settings = isObjectRecord(state.settings) ? state.settings : {};
+  const settingsState = isObjectRecord(settings.state) ? settings.state : {};
+
+  if (settingsState.activeSubsection !== "routing") return;
+
+  state.settings = {
+    ...settings,
+    state: {
+      ...settingsState,
+      activeTab: "notifications",
+      activeSubsection: "detector",
+    },
+  };
+};
+
 const migrateMutesSettingsPath = (state: RawPersistedWindows): void => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
@@ -345,6 +361,8 @@ export const migrateWindowsState = (
   if (version < 15) delete state["timer-settings-conflict"];
 
   if (version < 16) migrateMutesSettingsPath(state);
+
+  if (version < 17) migrateRoutingSettingsPath(state);
 
   return state;
 };
@@ -882,7 +900,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 16,
+      version: 17,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },

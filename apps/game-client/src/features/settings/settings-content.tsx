@@ -3,7 +3,6 @@ import { CatchingSettings } from "@/features/settings/components/catching/catchi
 import { ChatAppearanceSettingsForm } from "@/features/settings/components/chat/chat-appearance-settings";
 import { ChatFiltersSettings } from "@/features/settings/components/chat/chat-filters-settings";
 import { DebugTab } from "@/features/settings/components/debug/debug-tab";
-import { DetectorRoutingSettingsTab } from "@/features/settings/components/detector/detector-routing-settings-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { ExperimentalSettingsTab } from "@/features/settings/components/experimental/experimental-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
@@ -76,7 +75,6 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   "hidden-timers": HiddenTimersTab,
   "notification-rules": NotificationsSettingsTab,
   detector: DetectorSettingsTab,
-  routing: DetectorRoutingSettingsTab,
   "muted-players": MutedPlayersSettingsTab,
   "muted-npcs": MutedNpcsSettingsTab,
   "battle-panel": BattlePanelSettingsTab,

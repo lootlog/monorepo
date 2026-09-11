@@ -334,6 +334,27 @@ describe("migrateWindowsState", () => {
     });
   });
 
+  it("moves the persisted routing subsection into the detector subsection", () => {
+    const migrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          state: {
+            activeTab: "notifications",
+            activeSubsection: "routing",
+          },
+        },
+        windowFocusHistory: [],
+      },
+      16,
+    );
+
+    expect(migrated).toHaveProperty("settings.state", {
+      activeTab: "notifications",
+      activeSubsection: "detector",
+    });
+  });
+
   it("resets only the legacy automatic quick access width", () => {
     const migrated = migrateWindowsState(
       {

@@ -87,9 +87,9 @@ describe("SettingsTabs", () => {
       "discord",
     );
 
-    expect(screen.getByText("Powiadomienia › Routing")).toBeInTheDocument();
+    expect(screen.getByText("Powiadomienia › Wykrywacz")).toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: "Routing na serwery" }),
+      screen.getByRole("option", { name: "Gdzie wysyłać zgłoszenia" }),
     ).toBeInTheDocument();
   });
 
