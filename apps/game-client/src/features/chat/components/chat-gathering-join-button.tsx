@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -5,17 +6,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatBinding, useHotkeysStore } from "@/store/hotkeys.store";
+import { HotkeyCaps } from "@/components/hotkey-caps";
+import { useHotkeysStore } from "@/store/hotkeys.store";
 
-const getTooltipLabel = (
+const getTooltipContent = (
   label: string,
   statusLabel: string | undefined,
-  shortcut: string,
+  shortcut: ReactNode,
   featured: boolean,
 ) => {
   if (statusLabel) return `${statusLabel} · ${label}`;
 
-  return featured ? `${label} (${shortcut})` : label;
+  if (!featured) return label;
+
+  return (
+    <>
+      {label} ({shortcut})
+    </>
+  );
 };
 
 export function ChatGatheringJoinButton({
@@ -48,9 +56,11 @@ export function ChatGatheringJoinButton({
   const buttonDisabled = pending || disabled;
 
   const shortcut =
-    binding.type === "keyboard" && !binding.key
-      ? t("gatherings.shortcutUnset")
-      : formatBinding(binding);
+    binding.type === "keyboard" && !binding.key ? (
+      t("gatherings.shortcutUnset")
+    ) : (
+      <HotkeyCaps binding={binding} />
+    );
 
   return (
     <Tooltip>
@@ -74,7 +84,7 @@ export function ChatGatheringJoinButton({
         </span>
       </TooltipTrigger>
       <TooltipContent side="top">
-        {getTooltipLabel(label, statusLabel, shortcut, featured)}
+        {getTooltipContent(label, statusLabel, shortcut, featured)}
       </TooltipContent>
     </Tooltip>
   );

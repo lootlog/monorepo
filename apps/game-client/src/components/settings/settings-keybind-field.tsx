@@ -1,4 +1,6 @@
+import { HotkeyCaps } from "@/components/hotkey-caps";
 import { Button } from "@/components/ui/button";
+import type { HotkeyBinding } from "@/store/hotkeys.store";
 import {
   Tooltip,
   TooltipContent,
@@ -6,11 +8,10 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "cn";
 import { RotateCcw } from "lucide-react";
-import { Fragment, type FC } from "react";
+import type { FC } from "react";
 
 type SettingsKeybindFieldProps = {
-  /** Key caps of the binding, e.g. ["Ctrl", "K"]. */
-  keys: string[];
+  binding: HotkeyBinding;
   capturing: boolean;
   captureLabel: string;
   /** Accessible name of the capture button, e.g. "Zmień skrót: Chat". */
@@ -30,7 +31,7 @@ type SettingsKeybindFieldProps = {
  * line up regardless of which bindings were changed.
  */
 export const SettingsKeybindField: FC<SettingsKeybindFieldProps> = ({
-  keys,
+  binding,
   capturing,
   captureLabel,
   label,
@@ -66,18 +67,10 @@ export const SettingsKeybindField: FC<SettingsKeybindFieldProps> = ({
           <span className="ll:truncate">{captureLabel}</span>
         </>
       ) : (
-        keys.map((key, index) => (
-          <Fragment key={`${index}-${key}`}>
-            {index > 0 ? (
-              <span aria-hidden className="ll:text-muted-foreground">
-                +
-              </span>
-            ) : null}
-            <kbd className="ll:min-w-5 ll:truncate ll:rounded-xs ll:border ll:border-white/15 ll:bg-white/10 ll:px-1 ll:py-px ll:text-center ll:font-sans ll:text-[11px] ll:leading-4 ll:shadow-[inset_0_-1px_0_rgba(0,0,0,0.4)]">
-              {key}
-            </kbd>
-          </Fragment>
-        ))
+        <HotkeyCaps
+          binding={binding}
+          kbdClassName="ll:h-4 ll:bg-white/10 ll:text-gray-100 ll:shadow-[inset_0_-1px_0_rgba(0,0,0,0.4)]"
+        />
       )}
     </button>
     <span className="ll:flex ll:size-6 ll:shrink-0 ll:items-center ll:justify-center">

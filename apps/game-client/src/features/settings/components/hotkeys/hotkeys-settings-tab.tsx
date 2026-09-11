@@ -7,7 +7,6 @@ import { useGameStore } from "@/store/game.store";
 import {
   HOTKEY_ACTIONS,
   HOTKEY_CATEGORY_KEYS,
-  formatBindingParts,
   isDefaultBinding,
   useHotkeysStore,
   type HotkeyAction,
@@ -138,7 +137,7 @@ export const HotkeysSettingsTab = () => {
                 controlClassName={HOTKEY_CONTROL_CLASS_NAME}
               >
                 <SettingsKeybindField
-                  keys={formatBindingParts(binding)}
+                  binding={binding}
                   capturing={isCapturing}
                   captureLabel={t("settings.hotkeys.capture")}
                   label={t("settings.hotkeys.changeLabel", {
