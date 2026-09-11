@@ -90,9 +90,7 @@
   "worldSelector": {
     "recent": "Ostatnio używane",
     "allWorlds": "Wszystkie światy",
-    "placeholder": "Wybierz świat...",
-    "searchPlaceholder": "Szukaj świata...",
-    "empty": "Nie znaleziono światów."
+    "placeholder": "Wybierz świat..."
   },
   "autocomplete": {
     "noResults": "Nie znaleziono wyników"

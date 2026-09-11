@@ -239,7 +239,6 @@
         "@tanstack/react-query": "catalog:",
         "better-auth": "1.7.2",
         "class-variance-authority": "^0.7.1",
-        "cmdk": "1.1.1",
         "cn": "catalog:",
         "i18next": "^26.4.0",
         "lexical": "catalog:",
