@@ -77,12 +77,6 @@ describe("NotificationsSettingsTab", () => {
     expect(document.getElementById("HERO-highlight")).toBeDisabled();
     expect(document.getElementById("HERO-auto-hide-timeout")).toBeDisabled();
 
-    for (const tile of within(
-      screen.getByRole("group", { name: "Lootlogi: Heros" }),
-    ).getAllByRole("button")) {
-      expect(tile).toBeDisabled();
-    }
-
     expect(document.getElementById("ELITE2-highlight")).toBeDisabled();
     expect(document.getElementById("COLOSSUS-highlight")).toBeEnabled();
   });
@@ -113,11 +107,13 @@ describe("NotificationsSettingsTab", () => {
     expect(document.getElementById("TITAN-highlight")).not.toBeChecked();
   });
 
-  it("saves only the category whose server selection changed", async () => {
+  it("shows the union of the stored server lists and saves one list to every category", async () => {
     const user = userEvent.setup();
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");
-    initial.notifications.HERO.show = true;
+    initial.notifications.HERO.show = false;
+    initial.notifications.HERO.guildIds = ["guild-2"];
+    initial.notifications.TITAN.guildIds = ["guild-1"];
     seedAccountPreferences(initial);
     harness.request.mockImplementation(() =>
       Promise.resolve(
@@ -126,17 +122,25 @@ describe("NotificationsSettingsTab", () => {
     );
     render();
 
-    const picker = screen.getByRole("group", { name: "Lootlogi: Heros" });
-    const [firstGuild] = within(picker).getAllByRole("button");
+    const picker = screen.getByRole("group", { name: "Lootlogi" });
+    const [alpha, beta] = within(picker).getAllByRole("button");
 
-    if (!firstGuild) throw new Error("no guild tile");
-    await user.click(firstGuild);
+    if (!alpha || !beta) throw new Error("no guild tile");
+    expect(alpha).toHaveAttribute("aria-pressed", "true");
+    expect(beta).toHaveAttribute("aria-pressed", "true");
+    await user.click(beta);
 
     await waitFor(() => {
       const body = JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body));
       const presentation = body.operations[0].set.presentation;
-      expect(Object.keys(presentation)).toEqual(["HERO"]);
-      expect(presentation.HERO.guildIds).toEqual(["guild-1"]);
+      // TITAN already stored ["guild-1"], so only the categories that differ are sent.
+      expect(Object.keys(presentation).sort()).toEqual(
+        ["COLOSSUS", "ELITE2", "HERO", "message", "party-gathering"].sort(),
+      );
+
+      for (const rule of Object.values(presentation)) {
+        expect(rule).toMatchObject({ guildIds: ["guild-1"] });
+      }
     });
   });
 

@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   NOTIFICATION_TYPES,
   type NotificationSettings,
-  type NotificationType,
   type NotificationsSettings,
 } from "@lootlog/schema/account-preferences";
 import { useEffect, useEffectEvent } from "react";
@@ -72,6 +71,24 @@ const areRulesEqual = (
   NOTIFICATION_TYPES.every((type) =>
     areNotificationSettingsEqual(left[type], right[type]),
   );
+
+/**
+ * The shared server selection shown for every category: the union of the
+ * stored per-category lists, ordered like the accessible guilds. A union
+ * keeps every notification a player used to receive when the lists differ.
+ */
+const mergeGuildSelection = (
+  rules: NotificationsSettings,
+  guilds: readonly { id: string }[] | undefined,
+): string[] => {
+  const selected = new Set(
+    NOTIFICATION_TYPES.flatMap((type) => rules[type].guildIds),
+  );
+
+  if (!guilds) return [...selected];
+
+  return guilds.flatMap((guild) => (selected.has(guild.id) ? [guild.id] : []));
+};
 
 /**
  * One form for every notification category. Edits autosave; only the
@@ -148,18 +165,25 @@ export function useNotificationRulesForm() {
     syncFromEffect();
   }, [accountId, accountSettings, formState.isDirty, isFetched, watchedData]);
 
-  const toggleGuild = (type: NotificationType, guildId: string) => {
+  const guildIds = mergeGuildSelection(watchedData.rules, guilds);
+
+  /**
+   * One server list for every category. Toggling writes the merged list to
+   * each category, so lists that diverged before converge on the first edit.
+   */
+  const toggleGuild = (guildId: string) => {
     if (!guilds) {
       return;
     }
 
-    const selectedGuildIds = watchedData.rules[type].guildIds;
+    const nextGuildIds = toggleAvailableGuild(guilds, guildIds, guildId);
 
-    setValue(
-      `rules.${type}.guildIds`,
-      toggleAvailableGuild(guilds, selectedGuildIds, guildId),
-      { shouldDirty: true, shouldTouch: true },
-    );
+    for (const type of NOTIFICATION_TYPES) {
+      setValue(`rules.${type}.guildIds`, nextGuildIds, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    }
   };
 
   /** Sets one switch in every category where it is editable (its row is on). */
@@ -180,6 +204,7 @@ export function useNotificationRulesForm() {
   return {
     control,
     guilds,
+    guildIds,
     rules: watchedData.rules,
     setSwitchForAll,
     toggleGuild,
