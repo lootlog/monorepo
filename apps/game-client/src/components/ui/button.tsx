@@ -44,7 +44,11 @@ export const buttonVariants = cva(
 
 type ButtonProps = ComponentProps<typeof ButtonPrimitive> &
   VariantProps<typeof buttonVariants> & {
-    /** Shows a spinner in place of the leading icon and disables the button. */
+    /**
+     * Disables the button and centres a spinner over its content. The content
+     * stays in the layout (only hidden), so the button keeps its width and
+     * nothing around it shifts.
+     */
     loading?: boolean;
   };
 
@@ -68,14 +72,29 @@ export const Button = ({
     <ButtonPrimitive
       data-slot="button"
       data-variant={variant ?? "default"}
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(
+        buttonVariants({ variant, size }),
+        loading && "ll:relative",
+        className,
+      )}
       onMouseDown={handleMouseDown}
       {...props}
       disabled={disabled || loading}
       aria-busy={loading || props["aria-busy"]}
     >
-      {loading ? <Spinner /> : null}
-      {children}
+      {loading ? (
+        <>
+          <span
+            aria-hidden
+            className="ll:absolute ll:inset-0 ll:flex ll:items-center ll:justify-center ll:animate-in ll:fade-in-0 ll:duration-150"
+          >
+            <Spinner />
+          </span>
+          <span className="ll:contents ll:invisible">{children}</span>
+        </>
+      ) : (
+        children
+      )}
     </ButtonPrimitive>
   );
 };
