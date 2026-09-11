@@ -28,7 +28,7 @@ for (const config of HOTKEY_ACTIONS) {
 
 const categories = Array.from(groupedActions);
 
-const HOTKEY_CONTROL_CLASS_NAME = "ll:w-48";
+const HOTKEY_CONTROL_CLASS_NAME = "ll:justify-end";
 
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
