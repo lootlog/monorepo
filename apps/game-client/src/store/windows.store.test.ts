@@ -313,6 +313,27 @@ describe("migrateWindowsState", () => {
     });
   });
 
+  it("moves the persisted notification mutes path into the mutes domain", () => {
+    const migrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          state: {
+            activeTab: "notifications",
+            activeSubsection: "notification-mutes",
+          },
+        },
+        windowFocusHistory: [],
+      },
+      15,
+    );
+
+    expect(migrated).toHaveProperty("settings.state", {
+      activeTab: "mutes",
+      activeSubsection: "muted-players",
+    });
+  });
+
   it("resets only the legacy automatic quick access width", () => {
     const migrated = migrateWindowsState(
       {

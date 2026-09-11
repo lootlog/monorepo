@@ -12,7 +12,8 @@ import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotke
 import { InterfaceSettingsTab } from "@/features/settings/components/appearance/interface-settings-tab";
 import { InformationSettingsTab } from "@/features/settings/components/information/information-settings-tab";
 import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
-import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
+import { MutedNpcsSettingsTab } from "@/features/settings/components/mutes/muted-npcs-settings-tab";
+import { MutedPlayersSettingsTab } from "@/features/settings/components/mutes/muted-players-settings-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { ServerVisibilitySettingsTab } from "@/features/settings/components/servers/server-visibility-settings-tab";
@@ -25,6 +26,7 @@ import type { SettingsIconName } from "@/features/settings/settings-manifest";
 import {
   Activity,
   Bell,
+  BellOff,
   Clock,
   FlaskConical,
   Info,
@@ -51,6 +53,7 @@ export const SETTINGS_DOMAIN_ICONS = {
   messageSquare: MessageSquare,
   clock: Clock,
   bell: Bell,
+  bellOff: BellOff,
   swords: Swords,
   volume2: Volume2,
   keyboard: Keyboard,
@@ -74,7 +77,8 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   "notification-rules": NotificationsSettingsTab,
   detector: DetectorSettingsTab,
   routing: DetectorRoutingSettingsTab,
-  "notification-mutes": NotificationMutesSettingsTab,
+  "muted-players": MutedPlayersSettingsTab,
+  "muted-npcs": MutedNpcsSettingsTab,
   "battle-panel": BattlePanelSettingsTab,
   sounds: SoundsSettingsTab,
   hotkeys: HotkeysSettingsTab,

@@ -102,13 +102,7 @@ const renderLeadingVisual = (
   }
 
   if (isRegularNotification(notification) && notification.npc) {
-    return (
-      <NpcTile
-        npc={notification.npc}
-        className="ll:w-auto ll:max-w-7 ll:max-h-10 ll:object-contain"
-        containerClassName="ll:w-7 ll:h-10 ll:shrink-0"
-      />
-    );
+    return <NpcTile npc={notification.npc} />;
   }
 
   return (

@@ -32,6 +32,7 @@ describe("settings manifest persistence references", () => {
       "chat",
       "timers",
       "notifications",
+      "mutes",
       "battle-panel",
       "sounds",
       "controls",
@@ -60,8 +61,8 @@ describe("settings manifest persistence references", () => {
       "notification-rules",
       "detector",
       "routing",
-      "notification-mutes",
     ]);
+    expect(subsectionsOf("mutes")).toEqual(["muted-players", "muted-npcs"]);
     expect(subsectionsOf("experimental")).toEqual(["experimental"]);
     expect(subsectionsOf("battle-panel")).toEqual(["battle-panel"]);
   });
