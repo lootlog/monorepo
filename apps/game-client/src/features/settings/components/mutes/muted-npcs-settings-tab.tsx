@@ -42,7 +42,6 @@ export const MutedNpcsSettingsTab = () => {
       <SettingsSection
         controlId="muted-npcs"
         title={t("settings.mutes.npcsTitle", { count: mutes.npcs.length })}
-        description={t("settings.mutes.npcsDescription")}
       >
         {npcs.length === 0 ? (
           <SettingsEmptyState>
