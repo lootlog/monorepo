@@ -2,6 +2,7 @@ import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
   LOG_PRE_CLASS_NAME,
+  LOG_STATUS_CHIP_BASE_CLASS_NAME,
   LOG_STATUS_CHIP_CLASS_NAMES,
 } from "@/features/settings/components/logs/logs.constants";
 import {
@@ -50,7 +51,7 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
         <TableCell>
           <span
             className={cn(
-              "ll:rounded-sm ll:px-1.5 ll:py-px ll:text-[10px] ll:font-medium",
+              LOG_STATUS_CHIP_BASE_CLASS_NAME,
               LOG_STATUS_CHIP_CLASS_NAMES[request.status],
             )}
             title={getStatusLabel(request.status)}
@@ -96,9 +97,9 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
       {isOpen ? (
         <TableRow data-state="expanded-detail">
           <TableCell className="ll:whitespace-normal ll:p-2" colSpan={5}>
-            <div className="ll:grid ll:gap-2 ll:md:grid-cols-2">
+            <div className="ll:grid ll:gap-2 ll:@min-[448px]/settings:grid-cols-2">
               <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
+                <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
                   {t("settings.logs.payload")}
                 </span>
                 <pre className={LOG_PRE_CLASS_NAME}>
@@ -106,7 +107,7 @@ export const LogsRequestRow: FC<LogsRequestRowProps> = ({
                 </pre>
               </div>
               <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
+                <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
                   {t("settings.logs.response")}
                 </span>
                 <pre className={LOG_PRE_CLASS_NAME}>

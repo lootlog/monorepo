@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import {
   LOG_PRE_CLASS_NAME,
+  LOG_STATUS_CHIP_BASE_CLASS_NAME,
   LOG_STATUS_CHIP_CLASS_NAMES,
 } from "@/features/settings/components/logs/logs.constants";
 import { LogsRequestRow } from "@/features/settings/components/logs/logs-request-row";
@@ -58,7 +59,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
           {formatLogTimestamp(action.createdAt)}
         </TableCell>
         <TableCell className="ll:w-full ll:max-w-0">
-          <div className="ll:truncate ll:font-medium ll:text-white">
+          <div className="ll:truncate ll:font-medium ll:text-foreground">
             {getActionLabel(action.actionType)}
           </div>
           <div className="ll:truncate ll:text-[10px] ll:text-muted-foreground">
@@ -68,7 +69,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
         <TableCell>
           <span
             className={cn(
-              "ll:rounded-sm ll:px-1.5 ll:py-px ll:text-[10px] ll:font-medium",
+              LOG_STATUS_CHIP_BASE_CLASS_NAME,
               LOG_STATUS_CHIP_CLASS_NAMES[action.status],
             )}
           >
@@ -108,9 +109,9 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
         <TableRow data-state="expanded-detail">
           <TableCell className="ll:whitespace-normal ll:p-2" colSpan={4}>
             <div className="ll:flex ll:flex-col ll:gap-2">
-              <div className="ll:grid ll:gap-2 ll:md:grid-cols-2">
+              <div className="ll:grid ll:gap-2 ll:@min-[448px]/settings:grid-cols-2">
                 <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                  <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
+                  <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
                     {t("settings.logs.actionPayload")}
                   </span>
                   <pre className={LOG_PRE_CLASS_NAME}>
@@ -118,7 +119,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
                   </pre>
                 </div>
                 <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                  <span className="ll:text-[11px] ll:font-semibold ll:text-gray-300">
+                  <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
                     {t("settings.logs.actionDetails")}
                   </span>
                   <pre className={LOG_PRE_CLASS_NAME}>

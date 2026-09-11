@@ -51,13 +51,13 @@ export const SettingsSaveStatus: FC = () => {
           <span key={status} className={ICON_ENTER_CLASS_NAME}>
             {status === "error" ? (
               <AlertCircle
-                className="ll:size-3.5 ll:text-red-300"
+                className="ll:size-3.5 ll:text-destructive"
                 strokeWidth={1.5}
                 aria-hidden="true"
               />
             ) : status === "saving" ? (
               <Loader2
-                className="ll:size-3.5 ll:animate-spin ll:text-gray-300"
+                className="ll:size-3.5 ll:animate-spin ll:text-muted-foreground"
                 strokeWidth={1.5}
                 aria-hidden="true"
               />
@@ -73,7 +73,9 @@ export const SettingsSaveStatus: FC = () => {
             key={`${status}-label`}
             className={cn(
               LABEL_ENTER_CLASS_NAME,
-              status === "error" ? "ll:text-red-200" : "ll:text-gray-300",
+              status === "error"
+                ? "ll:text-destructive"
+                : "ll:text-muted-foreground",
             )}
           >
             {t(`saveStatus.${status}`)}

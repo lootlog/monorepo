@@ -14,6 +14,10 @@ type SettingsSearchResultsProps = {
 export const getSettingsSearchOptionId = (controlId: string) =>
   `settings-search-option-${controlId}`;
 
+/**
+ * Search results grouped by the place they open: one small-caps heading per
+ * domain › subsection, then the matching controls as options.
+ */
 export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
   id,
   label,
@@ -37,22 +41,21 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
     {results.map((result, index) => {
       const previousResult = results[index - 1];
 
-      const startsDomain =
-        !previousResult || previousResult.categoryId !== result.categoryId;
+      const startsGroup =
+        !previousResult ||
+        previousResult.categoryId !== result.categoryId ||
+        previousResult.subsectionId !== result.subsectionId;
 
-      const startsSubsection =
-        startsDomain || previousResult.subsectionId !== result.subsectionId;
+      const showSubsection =
+        result.subsectionLabel &&
+        result.subsectionLabel !== result.categoryLabel;
 
       return (
         <div key={result.controlId}>
-          {startsDomain ? (
-            <div className="ll:mt-1.5 ll:px-2 ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
+          {startsGroup ? (
+            <div className="ll:mt-2 ll:mb-0.5 ll:truncate ll:px-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground ll:first:mt-0">
               {result.categoryLabel}
-            </div>
-          ) : null}
-          {startsSubsection ? (
-            <div className="ll:px-2 ll:pt-0.5 ll:text-[11px] ll:font-semibold ll:text-gray-300">
-              {result.subsectionLabel}
+              {showSubsection ? ` › ${result.subsectionLabel}` : null}
             </div>
           ) : null}
           <button
@@ -62,7 +65,7 @@ export const SettingsSearchResults: FC<SettingsSearchResultsProps> = ({
             aria-selected={index === selectedResultIndex}
             onMouseEnter={() => onSelectIndex(index)}
             onClick={() => onOpen(result)}
-            className="ll-custom-cursor-pointer ll:mt-px ll:flex ll:w-full ll:items-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-start ll:text-[11px] ll:leading-4 ll:text-gray-200 ll:hover:bg-accent/60 ll:aria-selected:bg-accent ll:aria-selected:text-foreground"
+            className="ll-custom-cursor-pointer ll:flex ll:w-full ll:items-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-2 ll:py-1 ll:text-start ll:text-[11px] ll:leading-4 ll:text-foreground ll:hover:bg-accent/60 ll:aria-selected:bg-accent ll:aria-selected:text-foreground"
           >
             <span className="ll:truncate">{result.label}</span>
           </button>

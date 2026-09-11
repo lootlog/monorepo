@@ -33,7 +33,7 @@ export const SettingsListRow: FC<SettingsListRowProps> = ({
       <span className="ll:flex ll:shrink-0 ll:items-center">{leading}</span>
     ) : null}
     <div className="ll:min-w-0 ll:flex-1">
-      <div className="ll:truncate ll:text-xs ll:leading-4 ll:text-gray-100">
+      <div className="ll:truncate ll:text-xs ll:leading-4 ll:text-foreground">
         {title}
       </div>
       {description ? (

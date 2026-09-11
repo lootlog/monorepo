@@ -87,8 +87,7 @@ describe("SettingsTabs", () => {
       "discord",
     );
 
-    expect(screen.getByText("Powiadomienia")).toBeInTheDocument();
-    expect(screen.getByText("Routing")).toBeInTheDocument();
+    expect(screen.getByText("Powiadomienia › Routing")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: "Routing na serwery" }),
     ).toBeInTheDocument();
@@ -103,7 +102,8 @@ describe("SettingsTabs", () => {
       "głośność główna",
     );
 
-    expect(screen.getAllByText("Dźwięki")).toHaveLength(2);
+    // A single-subsection domain gets one heading, without a repeated name.
+    expect(screen.getAllByText("Dźwięki")).toHaveLength(1);
     expect(
       screen.getByRole("option", { name: "Głośność główna" }),
     ).toBeInTheDocument();

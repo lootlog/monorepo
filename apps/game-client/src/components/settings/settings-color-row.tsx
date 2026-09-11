@@ -55,13 +55,13 @@ export const SettingsColorRow: FC<SettingsColorRowProps> = ({
       <button
         type="button"
         aria-label={editLabel}
-        className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-0 ll:py-1 ll:text-left ll:text-xs ll:text-gray-100 ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-ring"
+        className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-0 ll:py-1 ll:text-left ll:text-xs ll:text-foreground ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-ring"
       >
         {content}
       </button>,
     )
   ) : (
-    <span className="ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2 ll:py-1 ll:text-xs ll:text-gray-100">
+    <span className="ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2 ll:py-1 ll:text-xs ll:text-foreground">
       {content}
     </span>
   );

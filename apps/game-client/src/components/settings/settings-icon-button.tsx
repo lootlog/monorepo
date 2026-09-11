@@ -37,7 +37,7 @@ export const SettingsIconButton = forwardRef<
           className={cn(
             "ll-custom-cursor-pointer ll:flex ll:size-6 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:transition-colors ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:cursor-not-allowed ll:disabled:opacity-50 ll:[&_svg]:size-3.5",
             variant === "default"
-              ? "ll:text-gray-300 ll:hover:bg-white/5 ll:hover:text-gray-100"
+              ? "ll:text-muted-foreground ll:hover:bg-white/5 ll:hover:text-foreground"
               : "ll:text-destructive ll:hover:bg-destructive/10",
             className,
           )}

@@ -1,5 +1,6 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import {
@@ -155,7 +156,7 @@ export const TimersSettingsColors: FC = () => {
         controlId="timer-colors-list"
         title={t("settings.timers.colors.standardColorsTitle")}
       >
-        <div id="timer-colors-list" className="ll:flex ll:flex-col ll:gap-0.5">
+        <SettingsList>
           {visibleDefaultColors.map((colorId) => {
             const selection: TimerColorSelection = {
               id: colorId,
@@ -187,7 +188,7 @@ export const TimersSettingsColors: FC = () => {
               />
             );
           })}
-        </div>
+        </SettingsList>
         <HiddenColorsList
           hiddenColors={hiddenDefaultColors}
           colorNames={defaultColorNames}
@@ -218,7 +219,7 @@ export const TimersSettingsColors: FC = () => {
         }
       >
         {Object.keys(customColors).length > 0 ? (
-          <div className="ll:flex ll:flex-col ll:gap-0.5">
+          <SettingsList>
             {Object.values(customColors).map((color) => {
               const selection: TimerColorSelection = {
                 id: color.id,
@@ -241,7 +242,7 @@ export const TimersSettingsColors: FC = () => {
                 />
               );
             })}
-          </div>
+          </SettingsList>
         ) : null}
       </SettingsSection>
     </SettingsTabLayout>

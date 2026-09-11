@@ -55,10 +55,10 @@ export const SettingsVolumeControl: FC<SettingsVolumeControlProps> = ({
             aria-pressed={muted}
             disabled={disabled}
             onClick={onMuteToggle}
-            className="ll-custom-cursor-pointer ll:flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-300 ll:transition-colors ll:hover:bg-white/5 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:opacity-50"
+            className="ll-custom-cursor-pointer ll:flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-muted-foreground ll:transition-colors ll:hover:bg-white/5 ll:hover:text-foreground ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:opacity-50"
           >
             {muted ? (
-              <VolumeX className="ll:size-4 ll:text-red-400" aria-hidden />
+              <VolumeX className="ll:size-4 ll:text-destructive" aria-hidden />
             ) : (
               <Volume2 className="ll:size-4" aria-hidden />
             )}

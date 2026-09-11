@@ -66,7 +66,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
           <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-muted-foreground">
             {t("settings.timers.colors.nameLabel")}
             <Input
-              className="ll:text-popover-foreground ll:border-foreground/20"
+              className="ll:border-border ll:text-popover-foreground"
               value={nameDraft}
               onChange={(event) => setNameDraft(event.target.value)}
               onBlur={commitName}
@@ -94,7 +94,7 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
                 onOpenChange(false);
               }}
             >
-              <RotateCcw className="ll:size-3" />
+              <RotateCcw className="ll:size-3.5" />
               {t("settings.timers.colors.resetColorTitle")}
             </Button>
           ) : null}
@@ -102,13 +102,13 @@ export const TimerColorActionsPopover: FC<TimerColorActionsPopoverProps> = ({
           <Button
             type="button"
             variant="menu"
-            className="ll:w-full ll:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
+            className="ll:w-full ll:text-destructive ll:hover:bg-destructive/10 ll:focus-visible:bg-destructive/10"
             onClick={() => {
               onDelete();
               onOpenChange(false);
             }}
           >
-            <Trash2 className="ll:size-3" />
+            <Trash2 className="ll:size-3.5" />
             {isDefault
               ? t("settings.timers.colors.hideColorTitle")
               : t("settings.timers.colors.deleteColorTitle")}

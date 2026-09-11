@@ -40,7 +40,7 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       {...dataAttributes}
       className={cn(
         "ll:relative ll:flex ll:flex-col ll:rounded-sm ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
-        "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-gray-400/20 ll:[section+&]:before:content-['']",
+        "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-border ll:[section+&]:before:content-['']",
         description ? "ll:gap-2" : "ll:gap-1",
         className,
       )}

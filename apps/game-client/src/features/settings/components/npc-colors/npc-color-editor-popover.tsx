@@ -1,3 +1,4 @@
+import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -93,18 +94,18 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
         }}
       >
         <div className="ll:flex ll:flex-col ll:gap-3">
-          <div className="ll:flex ll:items-start ll:justify-between ll:gap-2">
-            <div>
-              <div className="ll:text-sm ll:font-semibold ll:text-popover-foreground">
-                {t(`common:npcTypes.${npcType.toLowerCase()}`)}
-              </div>
-              <div className="ll:text-[10px] ll:text-muted-foreground">
-                {saving
-                  ? t("settings.npcColors.saving")
-                  : colorDraft === defaultColor
-                    ? t("settings.npcColors.default")
-                    : t("settings.npcColors.overridden")}
-              </div>
+          <div>
+            <SettingsSectionHeader
+              as="h4"
+              className="ll:px-0"
+              title={t(`common:npcTypes.${npcType.toLowerCase()}`)}
+            />
+            <div className="ll:text-[11px] ll:text-muted-foreground">
+              {saving
+                ? t("settings.npcColors.saving")
+                : colorDraft === defaultColor
+                  ? t("settings.npcColors.default")
+                  : t("settings.npcColors.overridden")}
             </div>
           </div>
 
@@ -119,7 +120,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
                 onDraftChange(nextColor);
               }}
               onBlur={() => commitColor(colorDraft)}
-              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-9 ll:w-12 ll:p-1"
+              className="ll:h-9 ll:w-12 ll:border-border ll:p-1 ll:text-popover-foreground"
               aria-label={t("settings.npcColors.picker")}
             />
             <Input
@@ -136,7 +137,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
 
                 if (event.key === "Escape") rollbackAndClose();
               }}
-              className="ll:text-popover-foreground ll:border-foreground/20 ll:w-28 ll:font-mono ll:uppercase"
+              className="ll:w-28 ll:border-border ll:font-mono ll:uppercase ll:text-popover-foreground"
               aria-label={t("settings.npcColors.hex")}
             />
           </div>
@@ -145,25 +146,25 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
             <div className="ll:text-[11px] ll:text-muted-foreground">
               {t("settings.npcColors.preview")}
             </div>
-            <div className="ll:rounded-sm ll:bg-muted ll:px-2 ll:py-1 ll:text-xs">
+            <div className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1 ll:text-xs">
               <span className="ll:text-muted-foreground">[21:37] </span>
               <strong style={{ color: surfaceColors.text }}>
                 {t(`common:npcTypes.${npcType.toLowerCase()}`)}
               </strong>
             </div>
             <div
-              className="ll:rounded-sm ll:border ll:px-2 ll:py-1 ll:text-xs ll:text-white"
+              className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1 ll:text-xs ll:text-foreground"
               style={{
-                borderColor: surfaceColors.border,
+                boxShadow: `inset 0 0 0 1px ${surfaceColors.border}`,
                 backgroundColor: surfaceColors.background,
               }}
             >
               {t("settings.npcColors.notificationPreview")}
             </div>
             <div
-              className="ll:rounded-sm ll:border ll:px-2 ll:py-1 ll:text-xs ll:text-white"
+              className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1 ll:text-xs ll:text-foreground"
               style={{
-                borderColor: surfaceColors.border,
+                boxShadow: `inset 0 0 0 1px ${surfaceColors.border}`,
                 backgroundColor: surfaceColors.background,
               }}
             >
@@ -184,7 +185,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
                 onReset();
               }}
             >
-              <RotateCcw className="ll:size-3" />
+              <RotateCcw className="ll:size-3.5" />
               {t("settings.npcColors.reset")}
             </Button>
           </div>
