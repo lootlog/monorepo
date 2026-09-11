@@ -5,9 +5,10 @@ import {
   getCharacterSettingsScopeId,
   isSettingsDomain,
 } from "@lootlog/domain/settings-documents";
-import type {
-  PatchSettingsDocuments,
-  SettingsDocumentLayer,
+import {
+  GUILD_SETTINGS_DOCUMENTS_MAX_GUILDS,
+  type PatchSettingsDocuments,
+  type SettingsDocumentLayer,
   SettingsDomain,
   SettingsDomainResolution,
   SettingsScope,
@@ -33,6 +34,15 @@ export interface SettingsDocumentsResponse {
   domains: Partial<Record<SettingsDomain, SettingsDomainResolution>>;
 }
 
+export interface GuildSettingsContext {
+  domains: SettingsDomain[];
+  guildIds: string[];
+}
+
+export interface GuildSettingsDocumentsResponse {
+  guilds: Record<string, SettingsDocumentsResponse>;
+}
+
 export type SettingsDocumentsFailure =
   | SettingsRequestError
   | SettingsPersistenceError;
@@ -42,6 +52,14 @@ export interface SettingsDocuments {
     userId: string,
     context: SettingsContext,
   ) => Effect.Effect<SettingsDocumentsResponse, SettingsDocumentsFailure>;
+  /**
+   * Guild-scoped documents for every listed guild the user is an active
+   * member of; other guilds are left out instead of failing the request.
+   */
+  readonly getGuildPreferences: (
+    userId: string,
+    context: GuildSettingsContext,
+  ) => Effect.Effect<GuildSettingsDocumentsResponse, SettingsDocumentsFailure>;
   readonly patchPreferences: (
     userId: string,
     payload: PatchSettingsDocuments,
@@ -49,6 +67,9 @@ export interface SettingsDocuments {
   readonly parseDomains: (
     domainsValue: string,
   ) => Effect.Effect<SettingsDomain[], SettingsRequestError>;
+  readonly parseGuildIds: (
+    guildIdsValue: string,
+  ) => Effect.Effect<string[], SettingsRequestError>;
 }
 
 const requestError = (status: 400 | 403, message: string) =>
@@ -181,6 +202,45 @@ const validateScopes = (
     }
   });
 
+type StoredDocuments = Effect.Success<
+  ReturnType<SettingsDocumentsRepositoryService["findDocuments"]>
+>;
+
+/** Resolves each domain from the stored documents matching `scopes`, in order. */
+const resolveDomains = (
+  domains: SettingsDomain[],
+  scopes: ReadonlyArray<SettingsScope>,
+  documents: StoredDocuments,
+): SettingsDocumentsResponse["domains"] => {
+  const resolved: SettingsDocumentsResponse["domains"] = {};
+
+  for (const domain of domains) {
+    const layers: SettingsDocumentLayer[] = scopes.flatMap((scope) => {
+      const document = documents.find(
+        (candidate) =>
+          candidate.domain === domain &&
+          candidate.scopeType === scope.type &&
+          candidate.scopeId === scope.id,
+      );
+
+      return document
+        ? [
+            {
+              scope,
+              overrides: isRecord(document.overrides) ? document.overrides : {},
+              schemaVersion: document.schemaVersion,
+              updatedAt: document.updatedAt,
+            },
+          ]
+        : [];
+    });
+
+    resolved[domain] = resolveSettingsDomain(domain, layers);
+  }
+
+  return resolved;
+};
+
 export const makeSettingsDocuments = (
   repository: SettingsDocumentsRepositoryService,
 ): SettingsDocuments => {
@@ -198,35 +258,51 @@ export const makeSettingsDocuments = (
         scopes,
       );
 
-      const domains: SettingsDocumentsResponse["domains"] = {};
+      return { domains: resolveDomains(context.domains, scopes, documents) };
+    });
 
-      for (const domain of context.domains) {
-        const layers: SettingsDocumentLayer[] = scopes.flatMap((scope) => {
-          const document = documents.find(
-            (candidate) =>
-              candidate.domain === domain &&
-              candidate.scopeType === scope.type &&
-              candidate.scopeId === scope.id,
-          );
+  const getGuildPreferences: SettingsDocuments["getGuildPreferences"] = (
+    userId,
+    context,
+  ) =>
+    Effect.gen(function* () {
+      const access = yield* requestApiKeyAccess;
+      const guildIds = [...new Set(context.guildIds)];
 
-          return document
-            ? [
-                {
-                  scope,
-                  overrides: isRecord(document.overrides)
-                    ? document.overrides
-                    : {},
-                  schemaVersion: document.schemaVersion,
-                  updatedAt: document.updatedAt,
-                },
-              ]
-            : [];
-        });
-
-        domains[domain] = resolveSettingsDomain(domain, layers);
+      if (
+        access &&
+        guildIds.some((guildId) => !access.organizationIds.includes(guildId))
+      ) {
+        return yield* requestError(
+          403,
+          "Guild settings are outside the API key scope",
+        );
       }
 
-      return { domains };
+      const memberGuildIds = yield* repository.findActiveGuildMemberships(
+        userId,
+        guildIds,
+      );
+
+      const scopes: SettingsScope[] = memberGuildIds.map((guildId) => ({
+        type: "GUILD",
+        id: guildId,
+      }));
+
+      const documents =
+        scopes.length === 0
+          ? []
+          : yield* repository.findDocuments(userId, context.domains, scopes);
+
+      const guilds: GuildSettingsDocumentsResponse["guilds"] = {};
+
+      for (const scope of scopes) {
+        guilds[scope.id] = {
+          domains: resolveDomains(context.domains, [scope], documents),
+        };
+      }
+
+      return { guilds };
     });
 
   const patchPreferences: SettingsDocuments["patchPreferences"] = (
@@ -252,15 +328,48 @@ export const makeSettingsDocuments = (
           ),
         );
 
+      const operationsContext = getContextFromOperations(payload.operations);
+
+      // A client that sends its read context gets the documents resolved the
+      // way it reads them, so the response can replace its cache entry.
       return yield* getPreferences(
         userId,
-        getContextFromOperations(payload.operations),
+        payload.context
+          ? {
+              domains: operationsContext.domains,
+              gameAccountId: payload.context.gameAccountId,
+              characterId: payload.context.characterId,
+              guildId: payload.context.guildId,
+            }
+          : operationsContext,
       );
     });
 
   return {
     getPreferences,
+    getGuildPreferences,
     patchPreferences,
+    parseGuildIds: (guildIdsValue) => {
+      const guildIds = [
+        ...new Set(
+          guildIdsValue
+            .split(",")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0),
+        ),
+      ];
+
+      return guildIds.length === 0
+        ? Effect.fail(requestError(400, "At least one guild id is required"))
+        : guildIds.length > GUILD_SETTINGS_DOCUMENTS_MAX_GUILDS
+          ? Effect.fail(
+              requestError(
+                400,
+                `At most ${GUILD_SETTINGS_DOCUMENTS_MAX_GUILDS} guild ids per request`,
+              ),
+            )
+          : Effect.succeed(guildIds);
+    },
     parseDomains: (domainsValue) => {
       const domains = [
         ...new Set(domainsValue.split(",").map((item) => item.trim())),

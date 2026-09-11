@@ -1,7 +1,10 @@
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
+  GuildSettingsDocumentsResponseSchema,
   SettingsDocumentsResponseSchema,
+  type GuildSettingsDocumentsQuery,
+  type GuildSettingsDocumentsResponse,
   type SettingsDocumentsResponse,
   type PatchSettingsDocuments,
   type SettingsDocumentsQuery,
@@ -13,6 +16,8 @@ import { applicationErrorResponse } from "../../application-error-response.js";
 import {
   SettingsRequestError,
   makeSettingsDocuments,
+  type GuildSettingsDocumentsResponse as ServiceGuildSettingsDocumentsResponse,
+  type SettingsDocumentsResponse as ServiceSettingsDocumentsResponse,
 } from "#src/settings-documents/settings-documents.service";
 import { makeSoundSettings } from "#src/sound-settings/sound-settings.service";
 import { makeTimerSettings } from "#src/timer-settings/timer-settings.service";
@@ -54,6 +59,11 @@ type SettingsDocumentsOperation = Effect.Effect<
   SettingsOperationError
 >;
 
+type GuildSettingsDocumentsOperation = Effect.Effect<
+  GuildSettingsDocumentsResponse,
+  SettingsOperationError
+>;
+
 export class SettingsData extends Context.Service<
   SettingsData,
   {
@@ -79,6 +89,10 @@ export class SettingsData extends Context.Service<
       userId: string,
       query: SettingsDocumentsQuery,
     ) => SettingsDocumentsOperation;
+    readonly getGuildPreferences: (
+      userId: string,
+      query: GuildSettingsDocumentsQuery,
+    ) => GuildSettingsDocumentsOperation;
     readonly patchPreferences: (
       userId: string,
       payload: PatchSettingsDocuments,
@@ -102,9 +116,20 @@ export class SettingsData extends Context.Service<
           Effect.mapError((cause) => new SettingsOperationError({ cause })),
         );
 
-      const settingsDocumentsResponse = (value: unknown) =>
+      const settingsDocumentsResponse = (
+        value: ServiceSettingsDocumentsResponse,
+      ) =>
         Schema.decodeUnknownEffect(
           Schema.toType(SettingsDocumentsResponseSchema),
+        )(value).pipe(
+          Effect.mapError((cause) => new SettingsOperationError({ cause })),
+        );
+
+      const guildSettingsDocumentsResponse = (
+        value: ServiceGuildSettingsDocumentsResponse,
+      ) =>
+        Schema.decodeUnknownEffect(
+          Schema.toType(GuildSettingsDocumentsResponseSchema),
         )(value).pipe(
           Effect.mapError((cause) => new SettingsOperationError({ cause })),
         );
@@ -131,6 +156,17 @@ export class SettingsData extends Context.Service<
               }),
             ),
           ).pipe(Effect.flatMap(settingsDocumentsResponse)),
+        getGuildPreferences: (userId, query) =>
+          operation(
+            Effect.flatMap(
+              Effect.all([
+                documents.parseDomains(query.domains),
+                documents.parseGuildIds(query.guildIds),
+              ]),
+              ([domains, guildIds]) =>
+                documents.getGuildPreferences(userId, { domains, guildIds }),
+            ),
+          ).pipe(Effect.flatMap(guildSettingsDocumentsResponse)),
         patchPreferences: (userId, payload) =>
           operation(documents.patchPreferences(userId, payload)).pipe(
             Effect.flatMap(settingsDocumentsResponse),
@@ -209,6 +245,12 @@ export const migrateTimerSettings = (payload: MigrateTimerSettingsRequest) =>
 export const getPreferences = (query: SettingsDocumentsQuery) =>
   withIdentity("SettingsDocumentsControllerGetPreferences", (userId, data) =>
     data.getPreferences(userId, query),
+  );
+
+export const getGuildPreferences = (query: GuildSettingsDocumentsQuery) =>
+  withIdentity(
+    "SettingsDocumentsControllerGetGuildPreferences",
+    (userId, data) => data.getGuildPreferences(userId, query),
   );
 
 export const patchPreferences = (payload: PatchSettingsDocuments) =>

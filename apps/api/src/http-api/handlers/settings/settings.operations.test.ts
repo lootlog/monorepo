@@ -57,6 +57,7 @@ const makeData = (overrides: Partial<SettingsData["Service"]> = {}) =>
     updateGlobalTimerSettings: () => Effect.succeed(timerSettings),
     getGuildTimerSettings: () => Effect.succeed({}),
     updateGuildTimerSettings: () => Effect.succeed({}),
+    getGuildPreferences: () => Effect.succeed({ guilds: {} }),
     migrateTimerSettings: () => Effect.succeed({ message: "ok" }),
     getPreferences: () => Effect.succeed({ domains: {} }),
     patchPreferences: () => Effect.succeed({ domains: {} }),
@@ -82,6 +83,8 @@ describe("settings HttpApi handlers", () => {
       getPreferences: () => Effect.succeed({ domains: {} }),
       patchPreferences: () => Effect.succeed({ domains: {} }),
       parseDomains: () => Effect.succeed([]),
+      parseGuildIds: () => Effect.succeed([]),
+      getGuildPreferences: () => Effect.succeed({ guilds: {} }),
     };
 
     const timerService = makeTimerSettings(settingsDocuments);

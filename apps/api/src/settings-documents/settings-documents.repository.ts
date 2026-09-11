@@ -55,6 +55,11 @@ export interface SettingsDocumentsRepositoryService {
     userId: string,
     guildId: string,
   ) => Effect.Effect<boolean, SettingsPersistenceError>;
+  /** The subset of `guildIds` the user is an active member of. */
+  readonly findActiveGuildMemberships: (
+    userId: string,
+    guildIds: ReadonlyArray<string>,
+  ) => Effect.Effect<string[], SettingsPersistenceError>;
   readonly applyOperations: (
     userId: string,
     operations: ReadonlyArray<SettingsOperation>,
@@ -249,6 +254,25 @@ export class SettingsDocumentsRepository extends Context.Service<
               Effect.map((rows) => rows.length > 0),
               Effect.mapError(persistenceError),
             ),
+        findActiveGuildMemberships: (userId, guildIds) =>
+          guildIds.length === 0
+            ? Effect.succeed([])
+            : database
+                .select({ guildId: memberTable.guildId })
+                .from(memberTable)
+                .where(
+                  and(
+                    eq(memberTable.globalUserId, userId),
+                    inArray(memberTable.guildId, [...guildIds]),
+                    eq(memberTable.active, true),
+                  ),
+                )
+                .pipe(
+                  Effect.map((rows) => [
+                    ...new Set(rows.map((row) => row.guildId)),
+                  ]),
+                  Effect.mapError(persistenceError),
+                ),
         applyOperations: (userId, operations) =>
           applyOperationsAttempt(userId, operations, 0),
       });

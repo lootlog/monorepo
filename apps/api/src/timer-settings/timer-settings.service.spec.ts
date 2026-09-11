@@ -29,6 +29,11 @@ describe("timer settings Effect module", () => {
       parseDomains: () => {
         throw new Error("Unexpected domain parser");
       },
+      parseGuildIds: () => {
+        throw new Error("Unexpected guild id parser");
+      },
+      getGuildPreferences: () =>
+        Effect.die("Unexpected guild preferences read"),
       patchPreferences: () => Effect.die("Unexpected preferences patch"),
       getPreferences: vi
         .fn<Parameters<typeof makeTimerSettings>[0]["getPreferences"]>()
@@ -73,6 +78,11 @@ describe("timer settings Effect module", () => {
       parseDomains: () => {
         throw new Error("Unexpected domain parser");
       },
+      parseGuildIds: () => {
+        throw new Error("Unexpected guild id parser");
+      },
+      getGuildPreferences: () =>
+        Effect.die("Unexpected guild preferences read"),
       getPreferences: () => Effect.die("Unexpected preferences read"),
       patchPreferences: vi.fn(() => Effect.succeed(response)),
     };
@@ -112,6 +122,11 @@ describe("timer settings Effect module", () => {
       parseDomains: () => {
         throw new Error("Unexpected domain parser");
       },
+      parseGuildIds: () => {
+        throw new Error("Unexpected guild id parser");
+      },
+      getGuildPreferences: () =>
+        Effect.die("Unexpected guild preferences read"),
       getPreferences: () => Effect.die("Unexpected preferences read"),
       patchPreferences: vi
         .fn<Parameters<typeof makeTimerSettings>[0]["patchPreferences"]>()

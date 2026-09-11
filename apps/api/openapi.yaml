@@ -3508,6 +3508,78 @@ paths:
             schema:
               $ref: "#/components/schemas/PatchSettingsDocumentsDto"
         required: true
+  /preferences/guilds:
+    get:
+      tags:
+        - preferences
+      operationId: SettingsDocumentsController_getGuildPreferences
+      parameters:
+        - name: domains
+          in: query
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: guildIds
+          in: query
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GuildSettingsDocumentsResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildSettingsDocumentsResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      summary: Get guild-scoped settings for several guilds in one request
   /guilds/{guildId}/loots:
     get:
       tags:
@@ -17710,6 +17782,29 @@ components:
       required:
         - domains
       additionalProperties: false
+    GuildSettingsDocumentsResponseDto_Output:
+      type: object
+      properties:
+        guilds:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+      required:
+        - guilds
+      additionalProperties: false
+    SettingsDocumentsContextDto:
+      type: object
+      properties:
+        gameAccountId:
+          type: string
+          minLength: 1
+        characterId:
+          type: string
+          minLength: 1
+        guildId:
+          type: string
+          minLength: 1
+      additionalProperties: false
     PatchSettingsDocumentsDto:
       type: object
       properties:
@@ -17760,6 +17855,8 @@ components:
               - scope
             additionalProperties: false
           minItems: 1
+        context:
+          $ref: "#/components/schemas/SettingsDocumentsContextDto"
       required:
         - operations
       additionalProperties: false

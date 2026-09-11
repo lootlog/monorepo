@@ -1,6 +1,7 @@
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
+  getGuildPreferences,
   getPreferences,
   patchPreferences,
   toSettingsHttpResponse,
@@ -13,6 +14,9 @@ export const PreferencesHandlers = HttpApiBuilder.group(
     handlers
       .handle("SettingsDocumentsControllerGetPreferences", ({ query }) =>
         toSettingsHttpResponse(getPreferences(query)),
+      )
+      .handle("SettingsDocumentsControllerGetGuildPreferences", ({ query }) =>
+        toSettingsHttpResponse(getGuildPreferences(query)),
       )
       .handle("SettingsDocumentsControllerPatchPreferences", ({ payload }) =>
         toSettingsHttpResponse(patchPreferences(payload)),
