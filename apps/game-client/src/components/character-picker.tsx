@@ -26,6 +26,7 @@ export const CharacterPicker: FC<CharacterPickerProps> = ({
   <TilePicker
     aria-label={ariaLabel}
     className={className}
+    contentClassName="ll:p-2.5 ll:pb-4"
     value={value ? [value] : []}
     onValueChange={([nextValue]) => {
       // Pressing the selected character again must not clear the choice.

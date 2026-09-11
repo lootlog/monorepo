@@ -277,7 +277,7 @@ export const NotificationCategoryForm: FC<NotificationCategoryFormProps> = ({
           disabled={!watchShow}
           onToggle={toggleGuild}
           emptyStateLabel={t("settings.notifications.emptyGuilds")}
-          className="ll:-mx-1 ll:w-[calc(100%+0.5rem)]"
+          className="ll:-mx-1.5 ll:w-[calc(100%+0.75rem)]"
         />
       </SettingsRow>
     </form>

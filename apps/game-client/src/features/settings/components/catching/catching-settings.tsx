@@ -226,7 +226,7 @@ export const CatchingSettings = () => {
           characters={characters}
           value={selectedCharacterId}
           onValueChange={setRequestedCharacterId}
-          className="ll:px-1"
+          className="ll:px-0.5"
         />
         {selectedCharacterId ? (
           <CatchingSettingsForm

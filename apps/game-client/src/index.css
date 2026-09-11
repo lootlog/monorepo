@@ -48,6 +48,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-selected: var(--selected);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -90,6 +91,8 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  /* Marks the active item of a picker, tab strip or similar selection. */
+  --selected: oklch(0.145 0 0);
 }
 
 #lootlog-root.dark-theme,
@@ -112,6 +115,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --selected: oklch(1 0 0);
 }
 
 body.si :is(#lootlog-root, .ll-theme-boundary) * {
