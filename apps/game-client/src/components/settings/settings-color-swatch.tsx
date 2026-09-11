@@ -18,7 +18,10 @@ export const SettingsColorSwatch: FC<SettingsColorSwatchProps> = ({
 }) => (
   <span
     aria-hidden
-    className={cn("ll:block ll:size-4 ll:shrink-0 ll:rounded", className)}
+    className={cn(
+      "ll:block ll:size-4 ll:shrink-0 ll:rounded ll:transition-[background-color,box-shadow] ll:duration-300",
+      className,
+    )}
     style={{
       backgroundColor,
       boxShadow: `inset 0 0 0 1.5px ${borderColor}`,

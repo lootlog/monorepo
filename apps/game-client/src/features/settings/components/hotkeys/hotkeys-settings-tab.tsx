@@ -37,6 +37,12 @@ export const HotkeysSettingsTab = () => {
   );
 
   const [captureError, setCaptureError] = useState<string | null>(null);
+
+  const [lastAssignment, setLastAssignment] = useState<{
+    action: HotkeyAction;
+    at: number;
+  } | null>(null);
+
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -50,6 +56,7 @@ export const HotkeysSettingsTab = () => {
       }
 
       setCaptureError(null);
+      setLastAssignment({ action: capturingAction, at: Date.now() });
       setCapturingAction(null);
     };
 
@@ -143,6 +150,11 @@ export const HotkeysSettingsTab = () => {
                   })}
                   modified={!isDefaultBinding(config.action, binding)}
                   resetLabel={t("common:actions.reset")}
+                  assignedAt={
+                    lastAssignment?.action === config.action
+                      ? lastAssignment.at
+                      : undefined
+                  }
                   onCaptureToggle={() => {
                     setCaptureError(null);
                     setCapturingAction(isCapturing ? null : config.action);

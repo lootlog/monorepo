@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import type { FC, ReactNode } from "react";
+import type { CSSProperties, FC, ReactNode } from "react";
 
 type SettingsListRowProps = {
   /** Avatar, icon or swatch shown before the text. */
@@ -9,6 +9,7 @@ type SettingsListRowProps = {
   /** Trailing controls: buttons, badges, popover triggers. */
   children?: ReactNode;
   className?: string;
+  style?: CSSProperties;
 };
 
 /**
@@ -22,8 +23,10 @@ export const SettingsListRow: FC<SettingsListRowProps> = ({
   description,
   children,
   className,
+  style,
 }) => (
   <div
+    style={style}
     className={cn(
       "ll:flex ll:min-h-9 ll:items-center ll:gap-2.5 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-colors ll:hover:bg-white/5",
       className,

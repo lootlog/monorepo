@@ -39,7 +39,7 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:relative ll:flex ll:flex-col ll:rounded-sm ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:relative ll:flex ll:flex-col ll:rounded-sm ll:transition-[background-color,box-shadow] ll:duration-500 ll:data-[settings-highlighted]:duration-150 ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
         "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-border ll:[section+&]:before:content-['']",
         description ? "ll:gap-3" : "ll:gap-2",
         className,

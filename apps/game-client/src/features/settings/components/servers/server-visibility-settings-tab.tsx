@@ -23,6 +23,12 @@ type VisibilityFilter = "all" | "visible" | "hidden";
 
 const VISIBILITY_FILTERS: VisibilityFilter[] = ["all", "visible", "hidden"];
 
+const REVEAL_STAGGER_MS = 40;
+
+/** Rows brought back by "show all" light up one after another. */
+const REVEALED_ROW_CLASS_NAME =
+  "ll:animate-in ll:fade-in-0 ll:slide-in-from-left-1 ll:fill-mode-backwards ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
+
 export const ServerVisibilitySettingsTab = () => {
   const { t } = useTranslation();
   const guildsQuery = useUsersControllerGetCurrentUserAccessibleGuilds();
@@ -32,6 +38,12 @@ export const ServerVisibilitySettingsTab = () => {
 
   const [visibilityFilter, setVisibilityFilter] =
     useState<VisibilityFilter>("all");
+
+  /** Guilds revealed by the last "show all", in list order; `at` counts batches. */
+  const [revealBatch, setRevealBatch] = useState<{
+    at: number;
+    guildIds: string[];
+  } | null>(null);
 
   const hiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
@@ -102,14 +114,23 @@ export const ServerVisibilitySettingsTab = () => {
                   variant="outline"
                   size="sm"
                   disabled={!hasHiddenGuilds || updatePreferences.isPending}
-                  onClick={() =>
+                  onClick={() => {
+                    const guildIds = orderedGuilds
+                      .filter((guild) => hiddenGuildIdSet.has(guild.id))
+                      .map((guild) => guild.id);
+
+                    setRevealBatch((previous) => ({
+                      at: (previous?.at ?? 0) + 1,
+                      guildIds,
+                    }));
+
                     updatePreferences.mutate({
                       hiddenGuildIds: hiddenGuildIds.filter(
                         (hiddenGuildId) =>
                           !accessibleGuildIdSet.has(hiddenGuildId),
                       ),
-                    })
-                  }
+                    });
+                  }}
                 >
                   {hasHiddenGuilds
                     ? t("settings.servers.showAllCount", {
@@ -153,13 +174,28 @@ export const ServerVisibilitySettingsTab = () => {
                   const isVisible = !hiddenGuildIdSet.has(guild.id);
                   const switchId = `server-visibility-${guild.id}`;
 
+                  const revealIndex =
+                    revealBatch?.guildIds.indexOf(guild.id) ?? -1;
+
+                  const revealed = isVisible && revealIndex >= 0;
+
                   return (
                     <SettingsListRow
-                      key={guild.id}
+                      key={
+                        revealed ? `${guild.id}-${revealBatch?.at}` : guild.id
+                      }
+                      className={cn(revealed && REVEALED_ROW_CLASS_NAME)}
+                      style={
+                        revealed
+                          ? {
+                              animationDelay: `${revealIndex * REVEAL_STAGGER_MS}ms`,
+                            }
+                          : undefined
+                      }
                       leading={
                         <Avatar
                           className={cn(
-                            "ll:size-6 ll:rounded ll:bg-black/20 ll:transition-opacity",
+                            "ll:size-6 ll:rounded ll:bg-black/20 ll:transition-opacity ll:duration-200",
                             !isVisible && "ll:opacity-50",
                           )}
                         >
@@ -183,7 +219,7 @@ export const ServerVisibilitySettingsTab = () => {
                         <label
                           htmlFor={switchId}
                           className={cn(
-                            "ll-custom-cursor-pointer ll:block ll:truncate ll:transition-colors",
+                            "ll-custom-cursor-pointer ll:block ll:truncate ll:transition-colors ll:duration-200",
                             !isVisible && "ll:text-muted-foreground",
                           )}
                         >

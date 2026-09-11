@@ -584,6 +584,10 @@ for (const domain of SETTINGS_MANIFEST) {
 export const getControlLocation = (controlId: string) =>
   controlLocations.get(controlId);
 
+/** Catalog keys a control writes, for per-row save marks. */
+export const getControlSettingKeys = (controlId: string) =>
+  controlLocations.get(controlId)?.control.settingKeys;
+
 export const isSettingsControlId = (
   value: string,
 ): value is SettingsControlId => controlLocations.has(value);

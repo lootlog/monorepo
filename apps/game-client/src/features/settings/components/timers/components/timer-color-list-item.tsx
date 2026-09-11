@@ -18,6 +18,7 @@ type TimerColorListItemProps = {
   onCommit: (draft: ColorEditData) => void;
   onReset: () => void;
   onDelete: () => void;
+  className?: string;
 };
 
 export const TimerColorListItem: FC<TimerColorListItemProps> = ({
@@ -31,6 +32,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
   onCommit,
   onReset,
   onDelete,
+  className,
 }) => {
   const { t } = useTranslation();
 
@@ -47,6 +49,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
 
   return (
     <SettingsColorRow
+      className={className}
       name={data.name}
       meta={data.borderColor}
       borderColor={data.borderColor}
