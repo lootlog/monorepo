@@ -6,14 +6,28 @@ import {
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
-import type { SoundCategory } from "@/features/settings/components/sounds/types";
-import { Bell, Crosshair, type LucideIcon } from "lucide-react";
+import type {
+  ConfigurableSoundCategory,
+  VisibleSoundCategory,
+} from "@/features/settings/components/sounds/types";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+/** Volume a muted category comes back to when unmuted. */
+const UNMUTED_VOLUME = 0.5;
+
+export type SoundField = { label: string; key: string };
+
+export type SoundCategoryDefinition = {
+  id: ConfigurableSoundCategory;
+  label: string;
+  description: string;
+  fields: readonly SoundField[];
+};
+
 export function useSoundSettingsForm() {
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const { data: soundSettings, isLoading } = useSoundSettings();
+  const { data: settings, isLoading } = useSoundSettings();
   const { mutate: updateSettings } = useUpdateSoundSettings();
   const masterVolume = useSettingsStore((state) => state.masterVolume);
   const setMasterVolume = useSettingsStore((state) => state.setMasterVolume);
@@ -26,91 +40,72 @@ export function useSoundSettingsForm() {
   const { playSoundTest } = useSoundPlayback();
   const { t } = useTranslation();
 
-  const settings = soundSettings;
-
-  const [mutedCategories, setMutedCategories] = useState<
-    Record<SoundCategory, boolean>
-  >({
-    notifications: false,
-    detector: false,
-    timers: false,
-    pings: false,
-  });
-
-  const serverVolumes = {
-    notifications: soundSettings?.notificationsVolume ?? 0.5,
-    detector: soundSettings?.detectorVolume ?? 0.5,
-    timers: soundSettings?.timersVolume ?? 0.5,
-    pings: soundSettings?.pingsVolume ?? 0,
+  const serverVolumes: Record<VisibleSoundCategory, number> = {
+    notifications: settings?.notificationsVolume ?? UNMUTED_VOLUME,
+    detector: settings?.detectorVolume ?? UNMUTED_VOLUME,
+    pings: settings?.pingsVolume ?? 0,
   };
 
+  // Drag previews live locally; a fresh server document resets the preview.
   const [localVolumeState, setLocalVolumeState] = useState({
-    source: soundSettings,
+    source: settings,
     values: serverVolumes,
   });
 
-  const localVolumes =
-    localVolumeState.source === soundSettings
+  const volumes =
+    localVolumeState.source === settings
       ? localVolumeState.values
       : serverVolumes;
 
-  const setLocalVolumes = (
-    update: (currentVolumes: typeof localVolumes) => typeof localVolumes,
-  ) => {
-    setLocalVolumeState((currentState) => {
-      const currentVolumes =
-        currentState.source === soundSettings
-          ? currentState.values
-          : serverVolumes;
-
-      return {
-        source: soundSettings,
-        values: update(currentVolumes),
-      };
+  const setVolume = (category: VisibleSoundCategory, value: number) => {
+    setLocalVolumeState({
+      source: settings,
+      values: { ...volumes, [category]: value },
     });
+  };
+
+  const commitVolume = (category: VisibleSoundCategory, value: number) => {
+    setVolume(category, value);
+    updateSettings({ [`${category}Volume`]: value });
+  };
+
+  // A muted category is persisted as volume 0, so muting needs no extra flag.
+  const toggleMuted = (category: VisibleSoundCategory) => {
+    commitVolume(category, volumes[category] === 0 ? UNMUTED_VOLUME : 0);
   };
 
   const [urlErrors, setUrlErrors] = useState<
     Record<string, Record<string, string>>
   >({});
 
-  const notificationNpcTypes = [
-    { label: t("common:npcTypes.message"), key: "message" },
+  const notificationFields = [
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
     { label: t("common:npcTypes.hero"), key: NpcType.HERO },
     { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
     { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
+    { label: t("common:npcTypes.message"), key: "message" },
   ] as const;
 
-  const detectorNpcTypes = notificationNpcTypes.filter(
+  const detectorFields = notificationFields.filter(
     (field) => field.key !== "message",
   );
 
   // The "timers" category stays out of the UI while timer sounds are
   // unsupported; its persisted config and volume are preserved untouched.
-  const categories: {
-    id: Exclude<SoundCategory, "pings" | "timers">;
-    label: string;
-    icon: LucideIcon;
-    fields: typeof notificationNpcTypes | typeof detectorNpcTypes;
-  }[] = [
+  const categories: SoundCategoryDefinition[] = [
     {
       id: "notifications",
       label: t("settings.sounds.categories.notifications.label"),
-      icon: Bell,
-      fields: notificationNpcTypes,
+      description: t("settings.sounds.categories.notifications.description"),
+      fields: notificationFields,
     },
     {
       id: "detector",
       label: t("settings.sounds.categories.detector.label"),
-      icon: Crosshair,
-      fields: detectorNpcTypes,
+      description: t("settings.sounds.categories.detector.description"),
+      fields: detectorFields,
     },
   ];
-
-  // The shared settings patch queue already debounces and merges nested
-  // sound configuration patches.
-  const queueSoundConfigPatch = updateSettings;
 
   return {
     isLoading,
@@ -123,13 +118,12 @@ export function useSoundSettingsForm() {
     playSoundTest,
     t,
     settings,
-    mutedCategories,
-    setMutedCategories,
-    localVolumes,
-    setLocalVolumes,
+    volumes,
+    setVolume,
+    commitVolume,
+    toggleMuted,
     urlErrors,
     setUrlErrors,
     categories,
-    queueSoundConfigPatch,
   };
 }

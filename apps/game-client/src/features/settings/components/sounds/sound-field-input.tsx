@@ -7,6 +7,8 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 interface SoundFieldInputProps {
+  /** Category the sound belongs to; keeps the input id unique per section. */
+  category: string;
   /** Sound config key; NPC type keys get a coloured chip label. */
   fieldKey: string;
   label: string;
@@ -20,6 +22,7 @@ interface SoundFieldInputProps {
 const NON_NPC_FIELD_KEYS = new Set(["message"]);
 
 export const SoundFieldInput: FC<SoundFieldInputProps> = ({
+  category,
   fieldKey,
   label,
   soundUrl,
@@ -29,7 +32,7 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
   onPlaySound,
 }) => {
   const { t } = useTranslation();
-  const inputId = `sound-url-${fieldKey}`;
+  const inputId = `sound-url-${category}-${fieldKey}`;
 
   return (
     <SettingsRow
