@@ -47,7 +47,7 @@ export const SettingsCharacterPicker: FC<SettingsCharacterPickerProps> = ({
         <CharacterSprite
           aria-hidden
           icon={character.icon}
-          className="ll:shrink-0 ll:rounded-sm ll:bg-black/25"
+          className="ll:shrink-0"
         />
       );
 
