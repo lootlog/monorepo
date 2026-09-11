@@ -247,9 +247,8 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    // Neither rule names Fobos yet, so both offer the fill; take the first.
     await user.click(
-      screen.getAllByRole("button", { name: "Wstaw obecny świat: Fobos" })[0],
+      screen.getAllByRole("button", { name: "Wstaw aktualny świat" })[0],
     );
 
     await waitFor(() => {

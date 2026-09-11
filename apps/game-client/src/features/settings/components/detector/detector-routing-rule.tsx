@@ -1,14 +1,13 @@
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
-import { Button } from "@/components/ui/button";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import {
   LEVEL_MAX,
   LEVEL_MIN,
 } from "@/features/settings/components/detector/use-detector-routing-form";
 import type { GuildIdentity as Guild } from "@/lib/api/generated-helpers";
-import { Send, Trash2, TriangleAlert } from "lucide-react";
+import { MapPin, Send, Trash2, TriangleAlert } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -148,26 +147,16 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
           htmlFor={worldInputId}
           label={t("settings.detector.routing.worldLabel")}
           description={t("settings.detector.routing.worldDescription")}
-          control="wide"
-          controlClassName="ll:w-64 ll:gap-1"
+          controlClassName="ll:gap-1"
         >
           {worldField}
-          {canUseCurrentWorld ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="ll:shrink-0"
-              aria-label={t("settings.detector.routing.useCurrentWorldLabel", {
-                world: currentWorldLabel,
-              })}
-              onClick={() => onUseCurrentWorld(currentWorldLabel)}
-            >
-              {t("settings.detector.routing.useCurrentWorld", {
-                world: currentWorldLabel,
-              })}
-            </Button>
-          ) : null}
+          <SettingsIconButton
+            label={t("settings.detector.routing.useCurrentWorldLabel")}
+            disabled={!canUseCurrentWorld}
+            onClick={() => onUseCurrentWorld(currentWorldLabel)}
+          >
+            <MapPin />
+          </SettingsIconButton>
         </SettingsRow>
         <SettingsRow
           layout="stacked"
