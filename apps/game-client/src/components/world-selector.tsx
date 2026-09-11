@@ -1,13 +1,17 @@
 import { z } from "zod";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxTrigger,
+  ComboboxValue,
+} from "@/components/ui/combobox";
 import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
@@ -27,7 +31,8 @@ const recentWorldsSchema = z.array(z.string());
 
 type WorldOption = { value: string; label: string };
 
-type WorldGroup = { id: string; label: string; options: WorldOption[] };
+/** Base UI filters grouped items when each group carries an `items` array. */
+type WorldGroup = { value: string; label: string; items: WorldOption[] };
 
 const DEFAULT_RECENT_WORLDS: string[] = [];
 
@@ -152,35 +157,39 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
 
     if (recent.length > 0) {
       groups.push({
-        id: "recent",
+        value: "recent",
         label: t("worldSelector.recent"),
-        options: recent,
+        items: recent,
       });
     }
 
     if (rest.length > 0) {
       groups.push({
-        id: "all",
+        value: "all",
         label: t("worldSelector.allWorlds"),
-        options: rest,
+        items: rest,
       });
     }
 
     return groups;
   }, [recentWorlds, t, worlds]);
 
-  const handleWorldChange = (newWorld: string) => {
-    if (!guildId) return;
+  const selectedOption =
+    worldGroups
+      .flatMap((group) => group.items)
+      .find((option) => option.value === world) ?? null;
 
-    if (newWorld) {
-      const updatedRecent = [
-        newWorld,
-        ...(recentWorlds?.filter((w) => w !== newWorld) ?? []),
-      ].slice(0, MAX_RECENT_WORLDS);
+  const handleWorldChange = (option: WorldOption | null) => {
+    if (!guildId || !option) return;
 
-      setRecentWorlds(updatedRecent);
-    }
+    const newWorld = option.value;
 
+    const updatedRecent = [
+      newWorld,
+      ...(recentWorlds?.filter((w) => w !== newWorld) ?? []),
+    ].slice(0, MAX_RECENT_WORLDS);
+
+    setRecentWorlds(updatedRecent);
     setWorld(guildId, newWorld);
   };
 
@@ -197,30 +206,39 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     : t("worldSelector.placeholder");
 
   return (
-    <Select
-      value={world ?? null}
+    <Combobox<WorldOption>
+      items={worldGroups}
+      value={selectedOption}
       onValueChange={handleWorldChange}
+      isItemEqualToValue={(item, selected) => item.value === selected.value}
       disabled={disabled || isLoading}
+      autoHighlight
     >
-      <SelectTrigger
+      <ComboboxTrigger
         size="sm"
         aria-label={t("worldSelector.placeholder")}
         className={cn("ll:mb-1", className)}
       >
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {worldGroups.map((group) => (
-          <SelectGroup key={group.id}>
-            <SelectLabel>{group.label}</SelectLabel>
-            {group.options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
-      </SelectContent>
-    </Select>
+        <ComboboxValue placeholder={placeholder} />
+      </ComboboxTrigger>
+      <ComboboxContent>
+        <ComboboxInput placeholder={t("worldSelector.searchPlaceholder")} />
+        <ComboboxEmpty>{t("worldSelector.empty")}</ComboboxEmpty>
+        <ComboboxList>
+          {(group: WorldGroup) => (
+            <ComboboxGroup key={group.value} items={group.items}>
+              <ComboboxLabel>{group.label}</ComboboxLabel>
+              <ComboboxCollection>
+                {(option: WorldOption) => (
+                  <ComboboxItem key={option.value} value={option}>
+                    {option.label}
+                  </ComboboxItem>
+                )}
+              </ComboboxCollection>
+            </ComboboxGroup>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 };
