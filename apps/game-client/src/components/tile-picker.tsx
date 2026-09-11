@@ -10,14 +10,19 @@ type TilePickerProps = {
   onValueChange: (value: string[]) => void;
   "aria-label"?: string;
   className?: string;
+  /** Padding around the tiles, inside the scroll viewport. */
+  contentClassName?: string;
   disabled?: boolean;
   multiple?: boolean;
+  /** Gap between tiles, in spacing units. */
+  spacing?: number;
 };
 
 /**
  * Row of `TilePickerItem`s. The row never wraps; longer lists scroll
- * horizontally (the mouse wheel scrolls it too). The inner padding keeps the
- * items' focus rings clear of the scroll viewport edge.
+ * horizontally (the mouse wheel scrolls it too). The spacing and inner padding
+ * keep the items' selection rings and focus outlines clear of their neighbours
+ * and the scroll viewport edge.
  */
 export const TilePicker: FC<TilePickerProps> = ({
   children,
@@ -25,8 +30,10 @@ export const TilePicker: FC<TilePickerProps> = ({
   onValueChange,
   "aria-label": ariaLabel,
   className,
+  contentClassName,
   disabled,
   multiple,
+  spacing = 1.5,
 }) => (
   <TooltipProvider>
     <ScrollArea
@@ -37,12 +44,12 @@ export const TilePicker: FC<TilePickerProps> = ({
       <ToggleGroup
         aria-label={ariaLabel}
         variant="outline"
-        spacing={1}
+        spacing={spacing}
         multiple={multiple}
         disabled={disabled}
         value={value}
         onValueChange={onValueChange}
-        className="ll:w-max ll:p-1 ll:pb-2.5"
+        className={cn("ll:w-max ll:p-1.5 ll:pb-3", contentClassName)}
       >
         {children}
       </ToggleGroup>

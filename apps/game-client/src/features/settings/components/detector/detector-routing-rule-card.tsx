@@ -138,7 +138,7 @@ export const DetectorRoutingRuleCard: FC<DetectorRoutingRuleCardProps> = ({
                 guilds={guilds}
                 onToggle={onToggleGuild}
                 selectedGuildIds={selectedGuildIds}
-                className="ll:-mx-1 ll:w-[calc(100%+0.5rem)]"
+                className="ll:-mx-1.5 ll:w-[calc(100%+0.75rem)]"
               />
             </SettingsRow>
           </div>

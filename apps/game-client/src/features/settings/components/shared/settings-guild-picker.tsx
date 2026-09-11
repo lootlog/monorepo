@@ -34,6 +34,7 @@ export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
       multiple
       aria-label={ariaLabel}
       className={className}
+      spacing={2.5}
       disabled={disabled}
       value={selectedGuildIds}
       onValueChange={(nextGuildIds) => {
