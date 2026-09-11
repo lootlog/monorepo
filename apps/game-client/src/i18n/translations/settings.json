@@ -316,14 +316,14 @@
       "highlight": "Podświetlenie",
       "notifySound": "Dźwięk",
       "detectDescription": "Główny włącznik. Gdy jest wyłączony, wykrywacz pomija potwory tego typu.",
-      "autoSendDescription": "Wysyła wykrycie na serwery od razu, bez pytania. Serwery ustawisz w sekcji „Gdzie wysyłać zgłoszenia” poniżej.",
+      "autoSendDescription": "Wysyła wykrycie na serwery od razu, bez pytania. Lootlogi ustawisz w sekcji „Gdzie wysyłać powiadomienia” poniżej.",
       "notifyWindowDescription": "Pokazuje okno z wykrytym potworem.",
       "highlightDescription": "Wyróżnia wykrytego potwora kolorem tego typu.",
       "notifySoundDescription": "Odtwarza dźwięk przy wykryciu. Dźwięki zmienisz w zakładce Dźwięki."
     },
     "routing": {
-      "sectionTitle": "Gdzie wysyłać zgłoszenia",
-      "sectionDescription": "Wykryty potwór trafia na serwery Discord z każdej reguły, do której pasuje jego poziom i świat. Bez pasującej reguły zgłoszenie nie zostanie wysłane.",
+      "sectionTitle": "Gdzie wysyłać powiadomienia",
+      "sectionDescription": "Wykryty potwór trafia na Lootlogi z każdej reguły, do której pasuje jego poziom i świat. Bez pasującej reguły powiadomienie nie zostanie wysłane.",
       "addRuleButton": "Dodaj regułę",
       "emptyState": "Nie masz jeszcze żadnej reguły, więc wykrywacz nic nie wysyła na Discord. Dodaj regułę i zaznacz serwery, na które mają trafiać zgłoszenia.",
       "ruleLabel": "Reguła {{index}}",
