@@ -276,7 +276,7 @@ export const DebugTab: FC = () => {
           layout="stacked"
         >
           <textarea
-            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/25 ll:p-2 ll:font-mono ll:text-[11px] ll:text-gray-100 ll:outline-none ll:focus-visible:border-ring"
+            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/25 ll:p-2 ll:font-mono ll:text-xs ll:text-gray-100 ll:outline-none ll:focus-visible:border-ring"
             id="debug-raw-json"
             onChange={(event) => {
               setRawJson(event.target.value);
@@ -313,7 +313,7 @@ export const DebugTab: FC = () => {
           </Button>
         }
       >
-        <SettingsPanel className="ll:max-h-32 ll:overflow-y-auto ll:font-mono ll:text-[11px]">
+        <SettingsPanel className="ll:max-h-32 ll:overflow-y-auto ll:font-mono ll:text-xs">
           {eventLog.length === 0 ? (
             <SettingsEmptyState className="ll:bg-transparent ll:px-0 ll:py-0">
               {t("settings.debug.noEvents")}

@@ -100,7 +100,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
               className="ll:px-0"
               title={t(`common:npcTypes.${npcType.toLowerCase()}`)}
             />
-            <div className="ll:text-[11px] ll:text-muted-foreground">
+            <div className="ll:text-xs ll:text-muted-foreground">
               {saving
                 ? t("settings.npcColors.saving")
                 : colorDraft === defaultColor
@@ -143,10 +143,10 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
           </div>
 
           <div className="ll:grid ll:gap-1.5">
-            <div className="ll:text-[11px] ll:text-muted-foreground">
+            <div className="ll:text-xs ll:text-muted-foreground">
               {t("settings.npcColors.preview")}
             </div>
-            <div className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1.5 ll:text-xs">
+            <div className="ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1.5 ll:text-[13px]">
               <span className="ll:text-muted-foreground">[21:37] </span>
               <strong style={{ color: surfaceColors.text }}>
                 {t(`common:npcTypes.${npcType.toLowerCase()}`)}

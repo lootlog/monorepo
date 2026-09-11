@@ -76,7 +76,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
           <label
             htmlFor={htmlFor}
             className={cn(
-              "ll-custom-cursor-pointer ll:flex ll:items-center ll:text-xs ll:leading-4 ll:text-foreground",
+              "ll-custom-cursor-pointer ll:flex ll:items-center ll:text-[13px] ll:leading-[18px] ll:text-foreground",
               labelClassName,
             )}
             style={labelStyle}
@@ -86,7 +86,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
         ) : (
           <div
             className={cn(
-              "ll:flex ll:items-center ll:text-xs ll:leading-4 ll:text-foreground",
+              "ll:flex ll:items-center ll:text-[13px] ll:leading-[18px] ll:text-foreground",
               labelClassName,
             )}
             style={labelStyle}
@@ -100,7 +100,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
           // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
           <p
             className={cn(
-              "ll:m-0 ll:mt-0.5 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground",
+              "ll:m-0 ll:mt-0.5 ll:text-xs ll:leading-4 ll:text-muted-foreground",
               htmlFor && "ll-custom-cursor-pointer",
             )}
             onClick={

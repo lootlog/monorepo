@@ -37,15 +37,15 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
           className={cn(
             "ll:m-0",
             Heading === "h3"
-              ? "ll:text-[10px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground"
-              : "ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground",
+              ? "ll:text-[11px] ll:font-semibold ll:uppercase ll:leading-4 ll:tracking-wide ll:text-muted-foreground"
+              : "ll:text-[13px] ll:font-semibold ll:leading-[18px] ll:text-foreground",
           )}
         >
           {title}
         </Heading>
       ) : null}
       {description ? (
-        <p className="ll:m-0 ll:mt-1 ll:max-w-[80ch] ll:text-[11px] ll:leading-[15px] ll:text-pretty ll:text-muted-foreground">
+        <p className="ll:m-0 ll:mt-1 ll:max-w-[80ch] ll:text-xs ll:leading-[17px] ll:text-pretty ll:text-muted-foreground">
           {description}
         </p>
       ) : null}

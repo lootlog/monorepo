@@ -156,11 +156,10 @@ export const ServerVisibilitySettingsTab = () => {
                   return (
                     <SettingsListRow
                       key={guild.id}
-                      className="ll:py-0.5"
                       leading={
                         <Avatar
                           className={cn(
-                            "ll:size-5 ll:rounded ll:bg-black/20 ll:transition-opacity",
+                            "ll:size-6 ll:rounded ll:bg-black/20 ll:transition-opacity",
                             !isVisible && "ll:opacity-50",
                           )}
                         >
@@ -173,7 +172,7 @@ export const ServerVisibilitySettingsTab = () => {
                           ) : (
                             <AvatarFallback
                               aria-hidden
-                              className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[10px] ll:font-semibold"
+                              className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[11px] ll:font-semibold"
                             >
                               {guild.name.charAt(0).toUpperCase()}
                             </AvatarFallback>

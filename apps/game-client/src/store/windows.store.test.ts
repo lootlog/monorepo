@@ -87,8 +87,8 @@ describe("windows store", () => {
 
   it("uses the new settings default size", () => {
     expect(useWindowsStore.getState().settings.size).toEqual({
-      width: 760,
-      height: 520,
+      width: 820,
+      height: 560,
     });
   });
 

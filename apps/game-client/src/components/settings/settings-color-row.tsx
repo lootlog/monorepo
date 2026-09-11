@@ -1,6 +1,5 @@
 import { SettingsColorSwatch } from "./settings-color-swatch";
 import { SettingsListRow } from "./settings-list-row";
-import { cn } from "cn";
 import type { FC, ReactNode } from "react";
 
 type SettingsColorRowProps = {
@@ -49,7 +48,7 @@ export const SettingsColorRow: FC<SettingsColorRowProps> = ({
       <span className="ll:min-w-0 ll:flex-1 ll:truncate">
         {name}
         {meta ? (
-          <span className="ll:ml-2 ll:font-mono ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+          <span className="ll:ml-2 ll:font-mono ll:text-[11px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
             {meta}
           </span>
         ) : null}
@@ -68,19 +67,19 @@ export const SettingsColorRow: FC<SettingsColorRowProps> = ({
       <button
         type="button"
         aria-label={editLabel}
-        className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2.5 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-0 ll:py-1 ll:text-left ll:text-xs ll:text-foreground ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-ring"
+        className="ll-custom-cursor-pointer ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2.5 ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-0 ll:py-0 ll:text-left ll:text-[13px] ll:font-semibold ll:text-foreground ll:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-ring"
       >
         {content}
       </button>,
     )
   ) : (
-    <span className="ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2.5 ll:py-1 ll:text-xs ll:text-foreground">
+    <span className="ll:flex ll:w-full ll:min-w-0 ll:items-center ll:gap-2.5 ll:py-0 ll:text-[13px] ll:font-semibold ll:text-foreground">
       {content}
     </span>
   );
 
   return (
-    <SettingsListRow className={cn("ll:py-0.5", className)} title={title}>
+    <SettingsListRow className={className} title={title}>
       {preview ? (
         <span className="ll:mr-1 ll:flex ll:shrink-0 ll:items-center">
           {preview}

@@ -28,7 +28,7 @@ export const SettingsSubsectionBar: FC<SettingsSubsectionBarProps> = ({
     {/* Matches the search field height so both columns share one top row. */}
     <TabsList
       aria-label={label}
-      className="ll:w-full ll:group-data-horizontal/tabs:h-7"
+      className="ll:w-full ll:group-data-horizontal/tabs:h-8"
     >
       {options.map((option) => (
         <TabsTrigger key={option.id} value={option.id}>

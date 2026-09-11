@@ -62,7 +62,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
           <div className="ll:truncate ll:font-medium ll:text-foreground">
             {getActionLabel(action.actionType)}
           </div>
-          <div className="ll:truncate ll:text-[10px] ll:text-muted-foreground">
+          <div className="ll:truncate ll:text-[11px] ll:text-muted-foreground">
             {action.actionType}
           </div>
         </TableCell>
@@ -111,7 +111,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
             <div className="ll:flex ll:flex-col ll:gap-2">
               <div className="ll:grid ll:gap-2 ll:@min-[448px]/settings:grid-cols-2">
                 <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                  <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
+                  <span className="ll:text-xs ll:font-semibold ll:text-muted-foreground">
                     {t("settings.logs.actionPayload")}
                   </span>
                   <pre className={LOG_PRE_CLASS_NAME}>
@@ -119,7 +119,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
                   </pre>
                 </div>
                 <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-1">
-                  <span className="ll:text-[11px] ll:font-semibold ll:text-muted-foreground">
+                  <span className="ll:text-xs ll:font-semibold ll:text-muted-foreground">
                     {t("settings.logs.actionDetails")}
                   </span>
                   <pre className={LOG_PRE_CLASS_NAME}>
@@ -157,7 +157,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
                   </TableBody>
                 </Table>
               ) : (
-                <p className="ll:m-0 ll:text-[11px] ll:text-muted-foreground">
+                <p className="ll:m-0 ll:text-xs ll:text-muted-foreground">
                   {t("settings.logs.noRequests")}
                 </p>
               )}

@@ -72,7 +72,7 @@ export const SettingsSliderField: FC<SettingsSliderFieldProps> = ({
           }}
         />
       </span>
-      <span className="ll:w-10 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">
+      <span className="ll:w-10 ll:shrink-0 ll:text-right ll:text-xs ll:tabular-nums ll:text-muted-foreground">
         {readout}
       </span>
     </span>

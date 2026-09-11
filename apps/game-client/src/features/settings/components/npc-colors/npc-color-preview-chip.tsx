@@ -24,7 +24,7 @@ export const NpcColorPreviewChip: FC<NpcColorPreviewChipProps> = ({
     <span
       aria-hidden
       className={cn(
-        "ll:inline-flex ll:max-w-32 ll:items-center ll:truncate ll:rounded-sm ll:px-1.5 ll:py-0.5 ll:text-[11px] ll:font-semibold ll:leading-4",
+        "ll:inline-flex ll:max-w-32 ll:items-center ll:truncate ll:rounded-sm ll:px-1.5 ll:py-0.5 ll:text-xs ll:font-semibold ll:leading-4",
         className,
       )}
       style={{

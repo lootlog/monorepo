@@ -12,7 +12,7 @@ export const SettingsEmptyState: FC<SettingsEmptyStateProps> = ({
 }) => (
   <p
     className={cn(
-      "ll:m-0 ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1.5 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground",
+      "ll:m-0 ll:rounded-sm ll:bg-black/25 ll:px-2 ll:py-1.5 ll:text-xs ll:leading-4 ll:text-muted-foreground",
       className,
     )}
   >

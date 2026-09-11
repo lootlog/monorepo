@@ -57,7 +57,7 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
     >
       <th
         scope="row"
-        className="ll:h-9 ll:whitespace-nowrap ll:px-2 ll:text-left ll:align-middle ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground"
+        className="ll:h-9 ll:whitespace-nowrap ll:px-2 ll:text-left ll:align-middle ll:text-[13px] ll:font-semibold ll:leading-4 ll:text-foreground"
       >
         {title}
       </th>

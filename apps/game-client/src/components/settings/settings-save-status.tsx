@@ -44,7 +44,7 @@ export const SettingsSaveStatus: FC = () => {
       role="status"
       aria-live="polite"
       data-ll-draggable="false"
-      className="ll:flex ll:h-5 ll:items-center ll:gap-1 ll:text-[11px] ll:leading-none"
+      className="ll:flex ll:h-5 ll:items-center ll:gap-1 ll:text-xs ll:leading-none"
     >
       {visible ? (
         <>

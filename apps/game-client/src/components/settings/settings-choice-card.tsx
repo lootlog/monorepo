@@ -110,7 +110,7 @@ const SettingsChoiceCard: FC<SettingsChoiceCardProps<string>> = ({
     className="ll-custom-cursor-pointer ll:group ll:flex ll:min-w-0 ll:flex-col ll:gap-0.5 ll:rounded-sm ll:border-0 ll:bg-black/25 ll:p-2 ll:text-left ll:transition-[background-color,box-shadow] ll:hover:bg-white/5 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:disabled:opacity-60 ll:data-[selected=true]:bg-primary/15 ll:data-[selected=true]:shadow-[inset_0_0_0_1px_var(--color-primary)] ll:data-[selected=true]:hover:bg-primary/20"
   >
     <span className="ll:flex ll:w-full ll:items-start ll:justify-between ll:gap-2">
-      <span className="ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground">
+      <span className="ll:text-[13px] ll:font-semibold ll:leading-4 ll:text-foreground">
         {option.title}
       </span>
       <span
@@ -122,7 +122,7 @@ const SettingsChoiceCard: FC<SettingsChoiceCardProps<string>> = ({
       </span>
     </span>
     {option.description ? (
-      <span className="ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
+      <span className="ll:text-xs ll:leading-4 ll:text-muted-foreground">
         {option.description}
       </span>
     ) : null}

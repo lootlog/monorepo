@@ -28,6 +28,8 @@ export const ChatFiltersSettings = () => {
             <SettingsRow
               key={npcType}
               htmlFor={controlId}
+              className="ll:py-2"
+              labelClassName="ll:font-semibold"
               label={<NpcTypeChip npcType={npcType}>{label}</NpcTypeChip>}
             >
               <Switch

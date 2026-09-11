@@ -73,7 +73,7 @@ export const InformationSettingsTab = () => {
             controlClassName="ll:gap-1"
           >
             <span
-              className="ll:min-w-0 ll:flex-1 ll:select-text ll:truncate ll:text-right ll:font-mono ll:text-[11px] ll:tabular-nums ll:text-muted-foreground"
+              className="ll:min-w-0 ll:flex-1 ll:select-text ll:truncate ll:text-right ll:font-mono ll:text-xs ll:tabular-nums ll:text-muted-foreground"
               title={row.value}
             >
               {row.value}

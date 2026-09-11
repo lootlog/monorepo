@@ -10,8 +10,8 @@ export const inputVariantClasses = {
 };
 
 export const inputSizeClasses = {
-  sm: "ll:h-6 ll:px-1",
-  md: "ll:h-7 ll:px-2",
+  sm: "ll:h-7 ll:px-1.5",
+  md: "ll:h-8 ll:px-2",
 };
 
 export type InputVariant = keyof typeof inputVariantClasses;
@@ -40,7 +40,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           inputVariantClasses[variant],
           variant !== "borderless" &&
             "ll:focus-visible:border-ring ll:focus-visible:ring-ring/50 ll:focus-visible:ring-[3px]",
-          "ll:text-white ll:text-xs",
+          "ll:text-white ll:text-[13px]",
           {
             "ll:!cursor-not-allowed": props.disabled,
           },
