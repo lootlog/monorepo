@@ -426,6 +426,7 @@
     "title": "Ustawienia łapania lootu i timerów",
     "description": "Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci.",
     "characterTitle": "Postać",
+    "characterDescription": "Każda postać ma własny zakres zbierania. Wybierz postać, której ustawienia chcesz zmienić.",
     "characterLabel": "Postać",
     "applyToAllButton": "Aplikuj do wszystkich postaci",
     "applyNoneFailed": "Nie udało się zaktualizować żadnej postaci",
@@ -433,8 +434,10 @@
     "applyFailed": "Nie udało się skopiować ustawień do wszystkich postaci",
     "form": {
       "collectionRangeTitle": "Zakres zbierania",
-      "serversTitle": "Lootlogi",
-      "activeCount": "Aktywne: {{selectedCount}}/{{totalCount}}",
+      "serversTitle": "Do których Lootlogów",
+      "serversLabel": "Lootlogi",
+      "serversDescription": "Looty i timery tej postaci trafiają tylko do zaznaczonych Lootlogów; kliknij Lootloga, aby go włączyć lub wyłączyć.",
+      "activeCount": "{{selectedCount}} z {{totalCount}}",
       "emptyGuilds": "Brak Lootlogów do skonfigurowania dla tej postaci."
     }
   },

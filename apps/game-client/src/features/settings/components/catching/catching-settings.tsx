@@ -7,7 +7,7 @@ import {
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
-import { CharacterPicker } from "@/components/character-picker";
+import { SettingsCharacterPicker } from "@/features/settings/components/shared/settings-character-picker";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
@@ -224,43 +224,45 @@ export const CatchingSettings = () => {
   return (
     <SettingsTabLayout>
       <SettingsSection
-        controlId="catching-range"
         title={t("settings.catching.characterTitle")}
-        contentClassName="ll:gap-1"
+        description={t("settings.catching.characterDescription")}
       >
-        <CharacterPicker
-          aria-label={t("settings.catching.characterLabel")}
-          characters={characters}
-          value={selectedCharacterId}
-          onValueChange={setRequestedCharacterId}
-        />
-        {selectedCharacterId ? (
-          <CatchingSettingsForm
-            key={selectedCharacterId}
-            characterId={selectedCharacterId}
+        <div className="ll:px-2 ll:py-0.5">
+          <SettingsCharacterPicker
+            aria-label={t("settings.catching.characterLabel")}
+            characters={characters}
+            value={selectedCharacterId}
             disabled={applyToAllMutation.isPending}
-            onSelectionChange={(catchingGuildIds) => {
-              selectionByCharacterIdRef.current = {
-                ...selectionByCharacterIdRef.current,
-                [selectedCharacterId]: catchingGuildIds,
-              };
-            }}
-            actions={
-              characters.length > 1 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleApplyToAllCharacters}
-                  loading={applyToAllMutation.isPending}
-                >
-                  {t("settings.catching.applyToAllButton")}
-                </Button>
-              ) : null
-            }
+            onValueChange={setRequestedCharacterId}
           />
-        ) : null}
+        </div>
       </SettingsSection>
+      {selectedCharacterId ? (
+        <CatchingSettingsForm
+          key={selectedCharacterId}
+          characterId={selectedCharacterId}
+          disabled={applyToAllMutation.isPending}
+          onSelectionChange={(catchingGuildIds) => {
+            selectionByCharacterIdRef.current = {
+              ...selectionByCharacterIdRef.current,
+              [selectedCharacterId]: catchingGuildIds,
+            };
+          }}
+          actions={
+            characters.length > 1 ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleApplyToAllCharacters}
+                loading={applyToAllMutation.isPending}
+              >
+                {t("settings.catching.applyToAllButton")}
+              </Button>
+            ) : null
+          }
+        />
+      ) : null}
     </SettingsTabLayout>
   );
 };
