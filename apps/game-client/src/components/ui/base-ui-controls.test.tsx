@@ -68,19 +68,19 @@ describe("Base UI control adapters", () => {
     expect(onValueChange).toHaveBeenCalledWith(["column"], expect.any(Object));
   });
 
-  it("keeps the array-valued slider interface and accessible name", () => {
+  it("renders one thumb per value and forwards keyboard changes", () => {
     const onValueChange =
       vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueChange"]>>();
 
-    const onValueCommit =
-      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommit"]>>();
+    const onValueCommitted =
+      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommitted"]>>();
 
-    render(
+    const { rerender } = render(
       <Slider
         aria-label="Volume"
-        value={[25]}
+        value={25}
         onValueChange={onValueChange}
-        onValueCommit={onValueCommit}
+        onValueCommitted={onValueCommitted}
       />,
     );
 
@@ -90,131 +90,11 @@ describe("Base UI control adapters", () => {
     fireEvent.keyDown(slider, { key: "ArrowRight" });
     fireEvent.keyUp(slider, { key: "ArrowRight" });
 
-    expect(onValueChange).toHaveBeenCalledWith([26], expect.any(Object));
-    expect(onValueCommit).toHaveBeenCalledWith([26]);
-  });
+    expect(onValueChange).toHaveBeenCalledWith(26, expect.any(Object));
+    expect(onValueCommitted).toHaveBeenCalledWith(26, expect.any(Object));
 
-  it("starts the slider in snap interaction mode", () => {
-    const { container } = render(
-      <Slider aria-label="Volume" defaultValue={[25]} />,
-    );
-
-    const sliderRoot = container.querySelector('[data-slot="slider"]');
-
-    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
-  });
-
-  it("positions the slider thumb directly inside the control", () => {
-    render(<Slider aria-label="Volume" defaultValue={[25]} />);
-
-    const sliderInput = screen.getByRole("slider", { name: "Volume" });
-    const sliderThumb = sliderInput.parentElement;
-    const sliderControl = sliderThumb?.parentElement;
-
-    expect(sliderThumb).not.toBeNull();
-    expect(sliderControl).toHaveClass("ll:touch-none");
-    expect(sliderControl?.firstElementChild).not.toBe(sliderThumb);
-  });
-
-  it("keeps the array-valued slider interface for pointer changes", () => {
-    const onValueChange =
-      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueChange"]>>();
-
-    const onValueCommit =
-      vi.fn<NonNullable<ComponentProps<typeof Slider>["onValueCommit"]>>();
-
-    const { container } = render(
-      <Slider
-        aria-label="Volume"
-        value={[25]}
-        onValueChange={onValueChange}
-        onValueCommit={onValueCommit}
-      />,
-    );
-
-    const sliderInput = screen.getByRole("slider", { name: "Volume" });
-    const sliderControl = sliderInput.parentElement?.parentElement;
-    const sliderRoot = container.querySelector('[data-slot="slider"]');
-
-    expect(sliderControl).not.toBeNull();
-
-    if (!sliderControl) {
-      throw new Error("Slider control was not rendered");
-    }
-
-    sliderControl.getBoundingClientRect = () => ({
-      bottom: 8,
-      height: 8,
-      left: 0,
-      right: 100,
-      top: 0,
-      width: 100,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    });
-    sliderControl.setPointerCapture = vi.fn<HTMLElement["setPointerCapture"]>();
-    sliderControl.hasPointerCapture = vi.fn<() => boolean>(() => true);
-    sliderControl.releasePointerCapture =
-      vi.fn<HTMLElement["releasePointerCapture"]>();
-
-    fireEvent.pointerDown(sliderControl, {
-      button: 0,
-      clientX: 75,
-      clientY: 4,
-      pointerId: 1,
-      pointerType: "mouse",
-    });
-    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
-
-    expect(onValueChange).toHaveBeenCalledWith([75], expect.any(Object));
-
-    fireEvent.pointerMove(document, {
-      buttons: 1,
-      clientX: 80,
-      clientY: 4,
-      pointerId: 1,
-      pointerType: "mouse",
-    });
-    expect(sliderRoot).toHaveAttribute("data-interaction", "direct");
-    fireEvent.pointerUp(document, {
-      button: 0,
-      clientX: 80,
-      clientY: 4,
-      pointerId: 1,
-      pointerType: "mouse",
-    });
-    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
-
-    expect(onValueChange).toHaveBeenLastCalledWith([80], expect.any(Object));
-    expect(onValueCommit).toHaveBeenCalledWith([80]);
-  });
-
-  it("uses direct motion for thumb drags and resets it on pointer cancel", () => {
-    const { container } = render(
-      <Slider aria-label="Volume" defaultValue={[25]} />,
-    );
-
-    const sliderRoot = container.querySelector('[data-slot="slider"]');
-
-    const sliderThumb = screen.getByRole("slider", {
-      name: "Volume",
-    }).parentElement;
-
-    if (!sliderThumb) throw new Error("Slider thumb was not rendered");
-    fireEvent.pointerDown(sliderThumb, {
-      button: 0,
-      clientX: 25,
-      pointerId: 2,
-      pointerType: "mouse",
-    });
-    expect(sliderRoot).toHaveAttribute("data-interaction", "direct");
-
-    fireEvent.pointerCancel(document, {
-      pointerId: 2,
-      pointerType: "mouse",
-    });
-    expect(sliderRoot).toHaveAttribute("data-interaction", "snap");
+    rerender(<Slider aria-label="Range" value={[10, 40]} />);
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
   });
 
   it("reflects controlled collapsible values", () => {

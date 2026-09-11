@@ -125,15 +125,12 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                 min={0}
                 max={100}
                 step={1}
-                value={[draft.backgroundAlpha]}
-                onValueChange={(value) =>
-                  setDraft({ ...draft, backgroundAlpha: value[0] })
+                value={draft.backgroundAlpha}
+                onValueChange={(backgroundAlpha) =>
+                  setDraft({ ...draft, backgroundAlpha })
                 }
-                onValueCommit={(value) => {
-                  const nextDraft = {
-                    ...draft,
-                    backgroundAlpha: value[0],
-                  };
+                onValueCommitted={(backgroundAlpha) => {
+                  const nextDraft = { ...draft, backgroundAlpha };
 
                   setDraft(nextDraft);
                   onCommit(nextDraft);
@@ -148,7 +145,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
           </label>
 
           <div className="ll:flex ll:flex-col ll:gap-1">
-            <span className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+            <span className="ll:text-[11px] ll:text-muted-foreground">
               {t("settings.timers.colors.previewLabel")}
             </span>
             <TimerTileView

@@ -41,20 +41,22 @@ export const DetectorSettingsTab = () => {
   return (
     <SettingsTabLayout contentClassName="ll:gap-3">
       <div className="ll:relative">
-        <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
-          <TabsList className="ll:w-full">
+        <SettingsSection controlId="detector-types">
+          <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
+            <TabsList className="ll:w-full">
+              {categoryTabs.map((tab) => (
+                <TabsTrigger key={tab.key} value={tab.key}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {categoryTabs.map((tab) => (
-              <TabsTrigger key={tab.key} value={tab.key}>
-                {tab.label}
-              </TabsTrigger>
+              <TabsContent key={tab.key} value={tab.key}>
+                {tab.content}
+              </TabsContent>
             ))}
-          </TabsList>
-          {categoryTabs.map((tab) => (
-            <TabsContent key={tab.key} value={tab.key}>
-              {tab.content}
-            </TabsContent>
-          ))}
-        </Tabs>
+          </Tabs>
+        </SettingsSection>
 
         <SettingsSection>
           <DetectorRoutingSettingsTabForm />

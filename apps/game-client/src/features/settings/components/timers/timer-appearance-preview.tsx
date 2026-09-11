@@ -13,7 +13,7 @@ export const TimerAppearancePreview = () => {
       className="ll:rounded-lg ll:border ll:border-border ll:bg-gray-950/85 ll:p-3 ll:shadow-lg"
       aria-label={t("settings.timers.preview.ariaLabel")}
     >
-      <div className="ll:mb-2 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wider ll:text-primary">
+      <div className="ll:mb-2 ll:text-xs ll:font-semibold ll:text-foreground">
         {t("settings.timers.preview.label")}
       </div>
       <div

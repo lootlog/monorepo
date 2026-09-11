@@ -34,20 +34,20 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-sm)] ll:rounded-sm ll:transition-[background-color,box-shadow] ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:flex ll:flex-col ll:gap-1 ll:border-0 ll:border-gray-400/30 ll:transition-[background-color,box-shadow] ll:[&:not(:first-child)]:border-t ll:[&:not(:first-child)]:pt-4 ll:data-[settings-highlighted]:bg-primary/10 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
         className,
       )}
     >
       {hasHeader ? (
-        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:border-0 ll:border-b ll:border-gray-400/30 ll:px-2 ll:pb-1">
+        <div className="ll:flex ll:items-end ll:justify-between ll:gap-2 ll:px-2">
           <div className="ll:min-w-0 ll:flex-1">
             {title ? (
-              <h3 className="ll:m-0 ll:text-[length:var(--ll-settings-label-font-size)] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+              <h3 className="ll:m-0 ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground">
                 {title}
               </h3>
             ) : null}
             {description ? (
-              <p className="ll:m-0 ll:text-[length:var(--ll-settings-meta-font-size)] ll:leading-[var(--ll-settings-meta-line-height)] ll:text-muted-foreground">
+              <p className="ll:m-0 ll:text-[11px] ll:leading-[14px] ll:text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -55,7 +55,7 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
           {actions ? <div className="ll:shrink-0">{actions}</div> : null}
         </div>
       ) : null}
-      <div className={cn("ll:flex ll:flex-col", contentClassName)}>
+      <div className={cn("ll:flex ll:flex-col ll:gap-0.5", contentClassName)}>
         {children}
       </div>
     </section>

@@ -1,6 +1,4 @@
-import { SETTINGS_COMPACT_WIDTH } from "@/components/settings/settings-density";
 import { SettingsNav } from "@/components/settings/settings-nav";
-import { SettingsRecentlyChanged } from "@/components/settings/settings-recently-changed";
 import { SettingsSearchField } from "@/components/settings/settings-search-field";
 import {
   getSettingsSearchOptionId,
@@ -20,6 +18,7 @@ import { ExperimentalSettingsTab } from "@/features/settings/components/experime
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
+import { InterfaceSettingsTab } from "@/features/settings/components/appearance/interface-settings-tab";
 import { InformationSettingsTab } from "@/features/settings/components/information/information-settings-tab";
 import { LogsSettingsTab } from "@/features/settings/components/logs/logs-settings-tab";
 import { NotificationMutesSettingsTab } from "@/features/settings/components/notification-mutes/notification-mutes-settings-tab";
@@ -34,7 +33,6 @@ import {
   resolveSettingsPath,
   type SettingsSubsectionValue,
 } from "@/features/settings/constants/settings-tabs";
-import { useRecentlyChangedStore } from "@/features/settings/recently-changed.store";
 import {
   getVisibleSettingsManifest,
   isSettingsControlId,
@@ -51,14 +49,13 @@ import {
   Activity,
   Bell,
   Clock,
-  Database,
   FlaskConical,
   Info,
   Keyboard,
   MessageSquare,
   Palette,
-  Server,
   Settings,
+  Swords,
   Volume2,
   type LucideIcon,
 } from "lucide-react";
@@ -67,12 +64,11 @@ import { useTranslation } from "react-i18next";
 
 const ICONS = {
   settings: Settings,
-  server: Server,
   palette: Palette,
   messageSquare: MessageSquare,
   clock: Clock,
-  database: Database,
   bell: Bell,
+  swords: Swords,
   volume2: Volume2,
   keyboard: Keyboard,
   flaskConical: FlaskConical,
@@ -88,6 +84,7 @@ const SETTINGS_CONTENT = {
   "chat-appearance": () => <ChatAppearanceSettingsForm />,
   "chat-filters": () => <ChatFiltersSettings />,
   "npc-colors": () => <NpcColorsSettings />,
+  interface: () => <InterfaceSettingsTab />,
   "timer-appearance": () => <TimersSettingsAppearance />,
   "timer-colors": () => <TimersSettingsColors />,
   "timer-behavior": () => <TimersSettingsGeneral />,
@@ -107,6 +104,9 @@ const SETTINGS_CONTENT = {
 
 const isSearchShortcut = (event: KeyboardEvent) =>
   (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f";
+
+/** Window width below which the domain list collapses to an icon rail. */
+const SETTINGS_COMPACT_WIDTH = 600;
 
 export const SettingsTabs = () => {
   const { t } = useTranslation();
@@ -133,13 +133,7 @@ export const SettingsTabs = () => {
 
   const overlayOpen = useSettingsUiStore((state) => state.overlayOpen);
   const setOverlayOpen = useSettingsUiStore((state) => state.setOverlayOpen);
-  const view = useSettingsUiStore((state) => state.view);
-  const setView = useSettingsUiStore((state) => state.setView);
   const openControl = useSettingsUiStore((state) => state.openControl);
-
-  const hasRecentEntries = useRecentlyChangedStore(
-    (state) => state.entries.length > 0,
-  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const path = resolveSettingsPath(activeTab, activeSubsection);
@@ -161,7 +155,6 @@ export const SettingsTabs = () => {
   );
 
   const isCompact = settingsWidth < SETTINGS_COMPACT_WIDTH;
-  const showRecent = view === "recent" && hasRecentEntries && !query;
 
   useEffect(() => {
     if (overlayOpen) searchInputRef.current?.focus();
@@ -180,7 +173,6 @@ export const SettingsTabs = () => {
       domain.subsections[0];
 
     setSettingsPath(domain.id, subsection.id);
-    setView("path");
     setOverlayOpen(false);
   };
 
@@ -298,7 +290,7 @@ export const SettingsTabs = () => {
         label: t(domain.labelKey),
         icon: ICONS[domain.icon],
       }))}
-      activeDomainId={showRecent ? "" : activeDomain.id}
+      activeDomainId={activeDomain.id}
       compact={isCompact}
       label={t("settings.nav.domains")}
       searchLabel={t("settings.search.ariaLabel")}
@@ -309,7 +301,7 @@ export const SettingsTabs = () => {
 
   return (
     <Tabs
-      value={showRecent ? "recent" : activeDomain.id}
+      value={activeDomain.id}
       onValueChange={(domainId) => navigate(String(domainId))}
       className="ll:h-full ll:min-h-0 ll:w-full ll:gap-0"
     >
@@ -319,7 +311,7 @@ export const SettingsTabs = () => {
         search={search}
         searchOverlayOpen={overlayOpen}
         subsections={
-          !showRecent && activeDomain.subsections.length > 1 ? (
+          activeDomain.subsections.length > 1 ? (
             <SettingsSubsectionBar
               label={t("settings.nav.subsections")}
               options={activeDomain.subsections.map((subsection) => ({
@@ -335,16 +327,12 @@ export const SettingsTabs = () => {
         }
         onKeyDown={handleShellKeyDown}
       >
-        {showRecent ? (
-          <SettingsRecentlyChanged />
-        ) : (
-          <TabsContent
-            value={activeDomain.id}
-            className="ll:mt-0 ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]"
-          >
-            {SETTINGS_CONTENT[selectedSubsection]()}
-          </TabsContent>
-        )}
+        <TabsContent
+          value={activeDomain.id}
+          className="ll:mt-0 ll:flex ll:flex-col ll:gap-6"
+        >
+          {SETTINGS_CONTENT[selectedSubsection]()}
+        </TabsContent>
       </SettingsWindowShell>
     </Tabs>
   );

@@ -142,7 +142,7 @@ export const NpcColorEditorPopover: FC<NpcColorEditorPopoverProps> = ({
           </div>
 
           <div className="ll:grid ll:gap-2">
-            <div className="ll:text-[10px] ll:uppercase ll:tracking-wide ll:text-muted-foreground">
+            <div className="ll:text-[11px] ll:text-muted-foreground">
               {t("settings.npcColors.preview")}
             </div>
             <div className="ll:rounded-sm ll:bg-muted ll:px-2 ll:py-1 ll:text-xs">

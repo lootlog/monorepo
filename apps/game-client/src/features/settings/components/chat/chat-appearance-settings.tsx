@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { recordRecentlyChanged } from "@/features/settings/recently-changed.store";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
@@ -51,7 +50,7 @@ export const ChatAppearanceSettingsForm = () => {
     : METADATA_KEYS.filter((key) => key !== "showGuildLabel");
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-[var(--ll-settings-space-xl)]">
+    <div className="ll:flex ll:min-w-0 ll:flex-col ll:gap-4">
       <SettingsSection
         controlId="chat-preset"
         title={t("settings.chat.preset.section")}
@@ -59,7 +58,6 @@ export const ChatAppearanceSettingsForm = () => {
           activePreset === "custom" ? (
             <Button
               onClick={() => {
-                recordRecentlyChanged("chat-preset");
                 applyPreset("readable");
               }}
               type="button"
@@ -73,7 +71,7 @@ export const ChatAppearanceSettingsForm = () => {
         }
       >
         <div
-          className="ll:grid ll:gap-[var(--ll-settings-space-sm)] ll:px-2 ll:pt-1"
+          className="ll:grid ll:gap-1 ll:px-2 ll:pt-1"
           id="chat-preset"
           style={{
             gridTemplateColumns:
@@ -85,7 +83,6 @@ export const ChatAppearanceSettingsForm = () => {
             name={t("settings.chat.preset.readable")}
             npcTypeColors={npcTypeColors}
             onSelect={() => {
-              recordRecentlyChanged("chat-preset");
               applyPreset("readable");
             }}
             selected={activePreset === "readable"}
@@ -96,7 +93,6 @@ export const ChatAppearanceSettingsForm = () => {
             name={t("settings.chat.preset.compact")}
             npcTypeColors={npcTypeColors}
             onSelect={() => {
-              recordRecentlyChanged("chat-preset");
               applyPreset("compact");
             }}
             selected={activePreset === "compact"}
@@ -127,7 +123,6 @@ export const ChatAppearanceSettingsForm = () => {
             value={[draft.npcLayout]}
             onValueChange={([npcLayout]: ("tile" | "inline")[]) => {
               if (!npcLayout) return;
-              recordRecentlyChanged("chat-npc-layout");
               updateAndCommit({ npcLayout });
             }}
           >
@@ -142,7 +137,7 @@ export const ChatAppearanceSettingsForm = () => {
         <SettingsRow
           controlId="chat-font-scale"
           label={t("settings.chat.fontScale.label")}
-          controlClassName="ll:w-40"
+          controlClassName="ll:w-48 ll:gap-2"
         >
           <Slider
             id="chat-font-scale"
@@ -150,37 +145,37 @@ export const ChatAppearanceSettingsForm = () => {
             min={CHAT_FONT_SCALE_MIN_PERCENT}
             max={CHAT_FONT_SCALE_MAX_PERCENT}
             step={5}
-            value={[draft.fontScalePercent]}
-            formatValue={(value) => `${value}%`}
-            formatEndpoint={(value) => `${value}%`}
-            onValueChange={([fontScalePercent]) =>
+            value={draft.fontScalePercent}
+            onValueChange={(fontScalePercent) =>
               updateDraft({ fontScalePercent })
             }
-            onValueCommit={([fontScalePercent]) => {
-              recordRecentlyChanged("chat-font-scale");
+            onValueCommitted={(fontScalePercent) => {
               commit({ fontScalePercent });
             }}
           />
+          <span className="ll:w-10 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">
+            {draft.fontScalePercent}%
+          </span>
         </SettingsRow>
         <SettingsRow
           controlId="chat-message-gap"
           label={t("settings.chat.messageGap.label")}
-          controlClassName="ll:w-40"
+          controlClassName="ll:w-48 ll:gap-2"
         >
           <Slider
             id="chat-message-gap"
             aria-label={t("settings.chat.messageGap.label")}
             min={CHAT_MESSAGE_GAP_MIN_PX}
             max={CHAT_MESSAGE_GAP_MAX_PX}
-            value={[draft.messageGapPx]}
-            formatValue={(value) => `${value}px`}
-            formatEndpoint={(value) => `${value}px`}
-            onValueChange={([messageGapPx]) => updateDraft({ messageGapPx })}
-            onValueCommit={([messageGapPx]) => {
-              recordRecentlyChanged("chat-message-gap");
+            value={draft.messageGapPx}
+            onValueChange={(messageGapPx) => updateDraft({ messageGapPx })}
+            onValueCommitted={(messageGapPx) => {
               commit({ messageGapPx });
             }}
           />
+          <span className="ll:w-10 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">
+            {draft.messageGapPx}px
+          </span>
         </SettingsRow>
       </SettingsSection>
 
@@ -189,27 +184,28 @@ export const ChatAppearanceSettingsForm = () => {
         title={t("settings.chat.metadata.title")}
       >
         {visibleMetadataKeys.map((key) => (
-          <SettingsRow key={key} label={t(`settings.chat.metadata.${key}`)}>
+          <SettingsRow
+            key={key}
+            htmlFor={`chat-metadata-${key}`}
+            label={t(`settings.chat.metadata.${key}`)}
+          >
             <Switch
-              aria-label={t(`settings.chat.metadata.${key}`)}
+              id={`chat-metadata-${key}`}
               checked={draft[key]}
               onCheckedChange={(checked) => {
-                recordRecentlyChanged("chat-metadata");
                 updateAndCommit({ [key]: checked });
               }}
             />
           </SettingsRow>
         ))}
         <SettingsRow
+          htmlFor="chat-metadata-show-npc-location"
           label={t("settings.chat.metadata.showNpcLocationAndCoordinates")}
         >
           <Switch
-            aria-label={t(
-              "settings.chat.metadata.showNpcLocationAndCoordinates",
-            )}
+            id="chat-metadata-show-npc-location"
             checked={draft.showNpcLocationAndCoordinates}
             onCheckedChange={(checked) => {
-              recordRecentlyChanged("chat-metadata");
               updateAndCommit({ showNpcLocationAndCoordinates: checked });
             }}
           />

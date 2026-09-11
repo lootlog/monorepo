@@ -7,7 +7,6 @@ import {
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
-import { useRecentlyChangedStore } from "@/features/settings/recently-changed.store";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
 import { SETTINGS_MANIFEST } from "@/features/settings/settings-manifest";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -46,22 +45,24 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders twelve domain tabs in order and opens the selected domain", async () => {
+  it("renders eleven domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
-    const tabs = screen.getAllByRole("tab");
+    const tabs = within(
+      screen.getByRole("tablist", { name: "Działy ustawień" }),
+    ).getAllByRole("tab");
+
     const tabNames = tabs.map((tab) => tab.textContent);
     const soundsTab = screen.getByRole("tab", { name: "Dźwięki" });
 
     expect(tabNames).toEqual([
       "Ogólne",
-      "Serwery",
       "Wygląd",
       "Chat",
       "Timery",
-      "Dane z gry",
       "Powiadomienia",
+      "Panel walk",
       "Dźwięki",
       "Sterowanie",
       "Eksperymentalne",
@@ -84,7 +85,7 @@ describe("SettingsTabs", () => {
       "discord",
     );
 
-    expect(screen.getByText("Dane z gry")).toBeInTheDocument();
+    expect(screen.getByText("Powiadomienia")).toBeInTheDocument();
     expect(screen.getByText("Wykrywacz")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: "Routing na serwery" }),
@@ -129,6 +130,8 @@ describe("SettingsTabs", () => {
     const user = userEvent.setup();
     render();
 
+    await user.click(screen.getByRole("tab", { name: "Sterowanie" }));
+
     expect(
       screen.queryByRole("tablist", { name: "Sekcje ustawień" }),
     ).not.toBeInTheDocument();
@@ -159,7 +162,9 @@ describe("SettingsTabs", () => {
 
     render();
 
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "Szukaj w ustawieniach" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dźwięki" })).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "Szukaj w ustawieniach" }),
@@ -181,9 +186,7 @@ describe("SettingsTabs keyboard and start view", () => {
       configurable: true,
       value: vi.fn<HTMLElement["scrollIntoView"]>(),
     });
-    useRecentlyChangedStore.getState().clear();
     useSettingsUiStore.getState().reset();
-    useSettingsUiStore.getState().setView("path");
     useWindowsStore.setState((state) => ({
       ...state,
       settings: {
@@ -254,24 +257,6 @@ describe("SettingsTabs keyboard and start view", () => {
     );
     expect(search).toHaveValue("");
   });
-
-  it("starts on recently changed settings and jumps back to the control", async () => {
-    const user = userEvent.setup();
-    useRecentlyChangedStore.getState().record("chat-font-scale");
-    useSettingsUiStore.getState().setView("recent");
-    render();
-
-    expect(screen.getByText("Ostatnio zmieniane")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Skala tekstu/ }));
-
-    await waitFor(() =>
-      expect(
-        document.querySelector('[data-settings-control="chat-font-scale"]'),
-      ).toHaveAttribute("data-settings-highlighted", "true"),
-    );
-    expect(useWindowsStore.getState().settings.state?.activeTab).toBe("chat");
-    expect(screen.queryByText("Ostatnio zmieniane")).not.toBeInTheDocument();
-  });
 });
 
 describe("SettingsTabs manifest coverage", () => {
@@ -283,7 +268,6 @@ describe("SettingsTabs manifest coverage", () => {
       soundSettingValues(createSoundSettings()),
     );
     useSettingsUiStore.getState().reset();
-    useSettingsUiStore.getState().setView("path");
     useWindowsStore.setState((state) => ({
       ...state,
       settings: { ...state.settings, size: { width: 760, height: 520 } },

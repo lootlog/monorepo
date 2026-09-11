@@ -13,8 +13,8 @@ interface CategoryVolumeControlProps {
   label: string;
   volume: number;
   isMuted: boolean;
-  onVolumeChange: (value: number[]) => void;
-  onVolumeCommit: (value: number[]) => void;
+  onVolumeChange: (value: number) => void;
+  onVolumeCommit: (value: number) => void;
   onMuteToggle: (e: React.MouseEvent) => void;
 }
 
@@ -30,7 +30,7 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="ll:flex ll:min-h-[var(--ll-settings-control-height)] ll:flex-1 ll:items-center ll:gap-2">
+    <div className="ll:flex ll:min-h-6 ll:flex-1 ll:items-center ll:gap-2">
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="ll:flex ll:items-center">{icon}</span>
@@ -67,11 +67,10 @@ export const CategoryVolumeControl: FC<CategoryVolumeControlProps> = ({
           min={0}
           max={1}
           step={0.01}
-          value={[volume]}
+          aria-label={label}
+          value={volume}
           onValueChange={onVolumeChange}
-          onValueCommit={onVolumeCommit}
-          formatValue={(v) => `${Math.round(v * 100)}%`}
-          showEndpoints={false}
+          onValueCommitted={onVolumeCommit}
         />
       </div>
       <span className="ll:w-9 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">

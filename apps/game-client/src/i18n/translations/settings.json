@@ -11,7 +11,7 @@
     "notifications": "Powiadomienia",
     "notificationMutes": "Wyciszenia",
     "sounds": "Dźwięki",
-    "battlePanel": "Panel walk (beta)",
+    "battlePanel": "Panel walk",
     "hotkeys": "Skróty klawiszowe",
     "logs": "Logi",
     "information": "Informacje",
@@ -19,12 +19,11 @@
   },
   "domains": {
     "general": "Ogólne",
-    "servers": "Serwery",
     "appearance": "Wygląd",
     "chat": "Chat",
     "timers": "Timery",
-    "gameData": "Dane z gry",
     "notifications": "Powiadomienia",
+    "battlePanel": "Panel walk",
     "sounds": "Dźwięki",
     "controls": "Sterowanie",
     "experimental": "Eksperymentalne",
@@ -33,13 +32,18 @@
   },
   "subsections": {
     "behavior": "Zachowanie",
-    "serverVisibility": "Widoczność",
+    "serverVisibility": "Serwery",
     "chatAppearance": "Wygląd",
     "chatFilters": "Filtry",
     "npcColors": "Kolory NPC",
-    "timerAppearance": "Wygląd timerów",
-    "timerColors": "Kolory timerów",
-    "timerBehavior": "Działanie timerów"
+    "timerAppearance": "Wygląd",
+    "timerColors": "Kolory",
+    "timerBehavior": "Działanie",
+    "catching": "Zakres zbierania",
+    "interface": "Interfejs",
+    "notificationRules": "Reguły",
+    "experimentalFeatures": "Funkcje",
+    "battleDataCollection": "Zbieranie danych"
   },
   "servers": {
     "title": "Widoczność serwerów",
@@ -346,7 +350,8 @@
       "toggleRuleLabel": "Przełącz regułę {{index}}",
       "guildOverflowLabel": "+{{count}}",
       "guildOverflowTooltip": "{{count}} kolejnych serwerów"
-    }
+    },
+    "typesTitle": "Wykrywanie typów NPC"
   },
   "timers": {
     "title": "Ustawienia timerów",
@@ -604,13 +609,11 @@
     "error": "Błąd zapisu",
     "retry": "Ponów"
   },
-  "recent": {
-    "title": "Ostatnio zmieniane",
-    "description": "Ustawienia, które ostatnio zmieniałeś. Kliknij, aby do nich wrócić.",
-    "clear": "Wyczyść"
-  },
   "nav": {
     "domains": "Działy ustawień",
     "subsections": "Sekcje ustawień"
+  },
+  "appearance": {
+    "interfaceTitle": "Interfejs"
   }
 }

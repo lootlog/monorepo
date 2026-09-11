@@ -55,7 +55,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
   if (compact) {
     return (
       <div
-        className="ll:flex ll:h-full ll:w-9 ll:shrink-0 ll:flex-col ll:items-center ll:gap-0.5 ll:border-0 ll:border-e ll:border-gray-400/30 ll:bg-black/15 ll:px-1 ll:py-1"
+        className="ll:flex ll:h-full ll:w-full ll:flex-col ll:items-center ll:gap-0.5 ll:pe-2"
         onKeyDown={moveRailFocus}
       >
         <button
@@ -86,8 +86,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
 
   return (
     <TabsList
-      variant="line"
-      className="ll:h-auto ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-0.5 ll:p-0 ll:group-data-horizontal/tabs:h-auto"
+      className="ll:h-auto ll:w-full ll:flex-col ll:items-stretch ll:justify-start ll:gap-0.5 ll:rounded-none ll:bg-transparent ll:p-0 ll:group-data-horizontal/tabs:h-auto"
       aria-label={label}
       aria-orientation="vertical"
     >
@@ -95,7 +94,7 @@ export const SettingsNav: FC<SettingsNavProps> = ({
         <TabsTrigger
           key={domain.id}
           value={domain.id}
-          className="ll:h-auto ll:min-h-7 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:ps-1.5 ll:pe-2 ll:py-1 ll:text-start ll:text-xs ll:font-semibold ll:text-muted-foreground ll:transition-none ll:hover:bg-accent/60 ll:hover:text-foreground ll:data-active:bg-accent! ll:data-active:text-foreground! ll:after:hidden"
+          className="ll:h-auto ll:min-h-7 ll:w-full ll:justify-start ll:gap-2 ll:rounded-sm ll:px-2 ll:py-1 ll:text-start"
         >
           <domain.icon className="ll:size-3.5 ll:shrink-0" aria-hidden="true" />
           <span className="ll:truncate">{domain.label}</span>

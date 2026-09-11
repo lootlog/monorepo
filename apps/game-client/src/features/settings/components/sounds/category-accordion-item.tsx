@@ -19,8 +19,8 @@ interface CategoryAccordionItemProps {
   fields: ReadonlyArray<{ label: string; key: string }>;
   categoryConfig: Record<string, { volume: number; soundUrl: string }>;
   urlErrors: Record<string, string>;
-  onVolumeChange: (value: number[]) => void;
-  onVolumeCommit: (value: number[]) => void;
+  onVolumeChange: (value: number) => void;
+  onVolumeCommit: (value: number) => void;
   onMuteToggle: (e: React.MouseEvent) => void;
   onSoundUrlChange: (key: string, value: string) => void;
   onPlaySound: (key: string, soundUrl: string) => void;

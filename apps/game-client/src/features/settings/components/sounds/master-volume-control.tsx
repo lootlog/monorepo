@@ -12,8 +12,8 @@ import { useTranslation } from "react-i18next";
 interface MasterVolumeControlProps {
   isMuted: boolean;
   volume: number;
-  onVolumeChange: (value: number[]) => void;
-  onVolumeCommit: (value: number[]) => void;
+  onVolumeChange: (value: number) => void;
+  onVolumeCommit: (value: number) => void;
   onMuteToggle: () => void;
 }
 
@@ -63,11 +63,9 @@ export const MasterVolumeControl: FC<MasterVolumeControlProps> = ({
           min={0}
           max={1}
           step={0.01}
-          value={[volume]}
+          value={volume}
           onValueChange={onVolumeChange}
-          onValueCommit={onVolumeCommit}
-          formatValue={(value) => `${Math.round(value * 100)}%`}
-          showEndpoints={false}
+          onValueCommitted={onVolumeCommit}
         />
       </div>
       <span className="ll:w-9 ll:shrink-0 ll:text-right ll:text-[11px] ll:tabular-nums ll:text-muted-foreground">

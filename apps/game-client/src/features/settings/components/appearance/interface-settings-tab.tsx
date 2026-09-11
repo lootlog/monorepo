@@ -6,32 +6,32 @@ import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-export const GeneralSettingsTab: FC = () => {
-  const allowWorldSelection = useSettingsStore(
-    (state) => state.allowWorldSelection,
+export const InterfaceSettingsTab: FC = () => {
+  const animationEffectsEnabled = useSettingsStore(
+    (state) => state.animationEffectsEnabled,
   );
 
-  const toggleAllowWorldSelection = useSettingsStore(
-    (state) => state.toggleAllowWorldSelection,
+  const toggleAnimationEffects = useSettingsStore(
+    (state) => state.toggleAnimationEffects,
   );
 
   const { t } = useTranslation();
 
   return (
     <SettingsTabLayout>
-      <SettingsSection title={t("settings.general.behaviorTitle")}>
+      <SettingsSection title={t("settings.appearance.interfaceTitle")}>
         <SettingsRow
-          controlId="allow-world-selection"
-          htmlFor="allow-world-selection"
-          label={t("settings.general.allowWorldSelectionLabel")}
-          description={t("settings.general.allowWorldSelectionDescription")}
+          controlId="animation-effects"
+          htmlFor="animation-effects"
+          label={t("settings.general.animationEffectsLabel")}
+          description={t("settings.general.animationEffectsDescription")}
         >
           <Switch
-            checked={allowWorldSelection}
+            checked={animationEffectsEnabled}
             onCheckedChange={() => {
-              toggleAllowWorldSelection();
+              toggleAnimationEffects();
             }}
-            id="allow-world-selection"
+            id="animation-effects"
           />
         </SettingsRow>
       </SettingsSection>

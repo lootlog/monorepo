@@ -19,23 +19,13 @@ export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
   className,
   contentClassName,
 }) => (
-  <div
-    className={cn(
-      "ll:flex ll:w-full ll:flex-col ll:gap-[var(--ll-settings-space-lg)]",
-      className,
-    )}
-  >
+  <div className={cn("ll:flex ll:w-full ll:flex-col ll:gap-2", className)}>
     {actions ? (
       <div className="ll:flex ll:items-center ll:justify-end ll:gap-2 ll:px-2">
         {actions}
       </div>
     ) : null}
-    <div
-      className={cn(
-        "ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)]",
-        contentClassName,
-      )}
-    >
+    <div className={cn("ll:flex ll:flex-col ll:gap-4", contentClassName)}>
       {children}
     </div>
   </div>

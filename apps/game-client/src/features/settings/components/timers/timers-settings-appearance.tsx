@@ -13,13 +13,16 @@ export const TimersSettingsAppearance: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="ll:grid ll:grid-cols-1 ll:gap-[var(--ll-settings-space-xl)] min-[680px]:ll:grid-cols-[minmax(0,1fr)_220px]">
-      <div className="ll:order-2 ll:flex ll:flex-col ll:gap-[var(--ll-settings-space-xl)] min-[680px]:ll:order-1">
+    <div className="ll:grid ll:grid-cols-1 ll:gap-6 min-[680px]:ll:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="ll:order-2 ll:flex ll:flex-col ll:gap-4 min-[680px]:ll:order-1">
         <SettingsSection
           controlId="timer-visibility"
           title={t("settings.timers.appearance.visibilityTitle")}
         >
-          <SettingsRow label={t("settings.timers.appearance.showLevelLabel")}>
+          <SettingsRow
+            htmlFor="show-level"
+            label={t("settings.timers.appearance.showLevelLabel")}
+          >
             <Switch
               checked={displayConfig.showLevel}
               onCheckedChange={(checked) => {
@@ -28,7 +31,10 @@ export const TimersSettingsAppearance: FC = () => {
               id="show-level"
             />
           </SettingsRow>
-          <SettingsRow label={t("settings.timers.appearance.showTypeLabel")}>
+          <SettingsRow
+            htmlFor="show-type"
+            label={t("settings.timers.appearance.showTypeLabel")}
+          >
             <Switch
               checked={displayConfig.showType}
               onCheckedChange={(checked) => {
@@ -85,9 +91,10 @@ export const TimersSettingsAppearance: FC = () => {
               min={8}
               max={16}
               step={0.5}
-              value={[displayConfig.fontSize]}
-              onValueChange={(value) =>
-                setDisplayConfig({ ...displayConfig, fontSize: value[0] })
+              aria-label={t("settings.timers.appearance.fontSizeLabel")}
+              value={displayConfig.fontSize}
+              onValueChange={(fontSize) =>
+                setDisplayConfig({ ...displayConfig, fontSize })
               }
             />
           </SettingsRow>
@@ -99,12 +106,10 @@ export const TimersSettingsAppearance: FC = () => {
               min={0}
               max={240}
               step={1}
-              value={[displayConfig.minColumnWidth]}
-              onValueChange={(value) =>
-                setDisplayConfig({
-                  ...displayConfig,
-                  minColumnWidth: value[0],
-                })
+              aria-label={t("settings.timers.appearance.minWidthLabel")}
+              value={displayConfig.minColumnWidth}
+              onValueChange={(minColumnWidth) =>
+                setDisplayConfig({ ...displayConfig, minColumnWidth })
               }
             />
           </SettingsRow>

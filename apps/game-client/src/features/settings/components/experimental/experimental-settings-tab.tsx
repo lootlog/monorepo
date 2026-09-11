@@ -7,7 +7,6 @@ import {
   useCurrentGameAccountPreferences,
   useUpdateGameAccountPreferences,
 } from "@/features/settings/persistence/use-game-account-preferences";
-import { recordRecentlyChanged } from "@/features/settings/recently-changed.store";
 import { useGameStore } from "@/store/game.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,6 +31,7 @@ export const ExperimentalSettingsTab: FC = () => {
           <>
             <SettingsRow
               controlId="map-pings"
+              htmlFor="map-pings"
               label={t("settings.experimental.mapPingsLabel")}
               description={t("settings.experimental.mapPingsDescription")}
             >
@@ -39,7 +39,6 @@ export const ExperimentalSettingsTab: FC = () => {
                 checked={accountPreferences?.pings.enabled ?? false}
                 disabled={controlsDisabled}
                 onCheckedChange={(enabled) => {
-                  recordRecentlyChanged("map-pings");
                   updateAccountPreferences.mutate({ pings: { enabled } });
                 }}
                 id="map-pings"
@@ -47,6 +46,7 @@ export const ExperimentalSettingsTab: FC = () => {
             </SettingsRow>
             <SettingsRow
               controlId="air-tags"
+              htmlFor="air-tags"
               label={t("settings.experimental.airTagsLabel")}
               description={t("settings.experimental.airTagsDescription")}
             >
@@ -54,7 +54,6 @@ export const ExperimentalSettingsTab: FC = () => {
                 checked={accountPreferences?.airTags?.enabled ?? false}
                 disabled={controlsDisabled}
                 onCheckedChange={(enabled) => {
-                  recordRecentlyChanged("air-tags");
                   updateAccountPreferences.mutate({ airTags: { enabled } });
                 }}
                 id="air-tags"
