@@ -1,5 +1,6 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { useTimersStore } from "@/store/timers.store";
 import { RotateCcw } from "lucide-react";
@@ -30,7 +31,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   }
 
   return (
-    <>
+    <SettingsList>
       {uniqueHiddenTimers.map((timer) => (
         <SettingsListRow key={timer} title={timer}>
           <SettingsIconButton
@@ -41,6 +42,6 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
           </SettingsIconButton>
         </SettingsListRow>
       ))}
-    </>
+    </SettingsList>
   );
 };

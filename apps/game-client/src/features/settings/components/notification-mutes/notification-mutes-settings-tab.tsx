@@ -1,4 +1,5 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -59,42 +60,44 @@ export const NotificationMutesSettingsTab = () => {
             {t("settings.notificationMutes.emptyPlayers")}
           </SettingsEmptyState>
         ) : (
-          sortedPlayers.map((player) => {
-            const name =
-              player.displayName ||
-              t("settings.notificationMutes.unknownPlayer");
+          <SettingsList>
+            {sortedPlayers.map((player) => {
+              const name =
+                player.displayName ||
+                t("settings.notificationMutes.unknownPlayer");
 
-            return (
-              <SettingsListRow
-                key={player.discordId}
-                leading={
-                  <Avatar className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20">
-                    <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100">
-                      {name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                }
-                title={name}
-                description={player.discordId}
-              >
-                <Button
-                  variant="ghost"
-                  className="ll:px-2"
-                  disabled={isActionsDisabled}
-                  onClick={() =>
-                    updateNotificationMutes.mutate({
-                      players: mutes.players.filter(
-                        (currentPlayer) =>
-                          currentPlayer.discordId !== player.discordId,
-                      ),
-                    })
+              return (
+                <SettingsListRow
+                  key={player.discordId}
+                  leading={
+                    <Avatar className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20">
+                      <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100">
+                        {name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   }
+                  title={name}
+                  description={player.discordId}
                 >
-                  {t("common:actions.remove")}
-                </Button>
-              </SettingsListRow>
-            );
-          })
+                  <Button
+                    variant="ghost"
+                    className="ll:px-2"
+                    disabled={isActionsDisabled}
+                    onClick={() =>
+                      updateNotificationMutes.mutate({
+                        players: mutes.players.filter(
+                          (currentPlayer) =>
+                            currentPlayer.discordId !== player.discordId,
+                        ),
+                      })
+                    }
+                  >
+                    {t("common:actions.remove")}
+                  </Button>
+                </SettingsListRow>
+              );
+            })}
+          </SettingsList>
         )}
       </SettingsSection>
 
@@ -109,43 +112,45 @@ export const NotificationMutesSettingsTab = () => {
             {t("settings.notificationMutes.emptyNpcs")}
           </SettingsEmptyState>
         ) : (
-          sortedNpcs.map((npc) => (
-            <SettingsListRow
-              key={npc.npcKey}
-              leading={
-                npc.icon ? (
-                  <img
-                    src={npc.icon}
-                    alt=""
-                    className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20 ll:object-contain"
-                  />
-                ) : undefined
-              }
-              title={npc.name}
-              description={[
-                npc.npcType,
-                t("settings.notificationMutes.npcLevel", { level: npc.lvl }),
-                npc.prof,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            >
-              <Button
-                variant="ghost"
-                className="ll:px-2"
-                disabled={isActionsDisabled}
-                onClick={() =>
-                  updateNotificationMutes.mutate({
-                    npcs: mutes.npcs.filter(
-                      (currentNpc) => currentNpc.npcKey !== npc.npcKey,
-                    ),
-                  })
+          <SettingsList>
+            {sortedNpcs.map((npc) => (
+              <SettingsListRow
+                key={npc.npcKey}
+                leading={
+                  npc.icon ? (
+                    <img
+                      src={npc.icon}
+                      alt=""
+                      className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20 ll:object-contain"
+                    />
+                  ) : undefined
                 }
+                title={npc.name}
+                description={[
+                  npc.npcType,
+                  t("settings.notificationMutes.npcLevel", { level: npc.lvl }),
+                  npc.prof,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               >
-                {t("common:actions.remove")}
-              </Button>
-            </SettingsListRow>
-          ))
+                <Button
+                  variant="ghost"
+                  className="ll:px-2"
+                  disabled={isActionsDisabled}
+                  onClick={() =>
+                    updateNotificationMutes.mutate({
+                      npcs: mutes.npcs.filter(
+                        (currentNpc) => currentNpc.npcKey !== npc.npcKey,
+                      ),
+                    })
+                  }
+                >
+                  {t("common:actions.remove")}
+                </Button>
+              </SettingsListRow>
+            ))}
+          </SettingsList>
         )}
       </SettingsSection>
     </SettingsTabLayout>

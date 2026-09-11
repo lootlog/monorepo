@@ -1,5 +1,6 @@
 import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { AsyncContent } from "@/components/async-content";
+import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
@@ -142,48 +143,50 @@ export const ServerVisibilitySettingsTab = () => {
                 {t("settings.servers.noResults")}
               </SettingsEmptyState>
             ) : (
-              filteredGuilds.map((guild) => {
-                const isVisible = !hiddenGuildIdSet.has(guild.id);
-                const switchId = `server-visibility-${guild.id}`;
+              <SettingsList>
+                {filteredGuilds.map((guild) => {
+                  const isVisible = !hiddenGuildIdSet.has(guild.id);
+                  const switchId = `server-visibility-${guild.id}`;
 
-                return (
-                  <SettingsRow
-                    key={guild.id}
-                    htmlFor={switchId}
-                    label={
-                      <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
-                        <Avatar className="ll:size-6 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
-                          {guild.icon ? (
-                            <img
-                              src={guild.icon}
-                              alt=""
-                              className="ll:h-full ll:w-full ll:object-cover"
-                            />
-                          ) : (
-                            <AvatarFallback
-                              aria-hidden
-                              className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-md ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100"
-                            >
-                              {guild.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <span className="ll:truncate">{guild.name}</span>
-                      </span>
-                    }
-                    disabled={updatePreferences.isPending}
-                  >
-                    <Switch
-                      id={switchId}
-                      checked={isVisible}
-                      disabled={updatePreferences.isPending}
-                      onCheckedChange={(checked) =>
-                        updateGuildVisibility(guild.id, checked)
+                  return (
+                    <SettingsRow
+                      key={guild.id}
+                      htmlFor={switchId}
+                      label={
+                        <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
+                          <Avatar className="ll:size-6 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
+                            {guild.icon ? (
+                              <img
+                                src={guild.icon}
+                                alt=""
+                                className="ll:h-full ll:w-full ll:object-cover"
+                              />
+                            ) : (
+                              <AvatarFallback
+                                aria-hidden
+                                className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-md ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100"
+                              >
+                                {guild.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <span className="ll:truncate">{guild.name}</span>
+                        </span>
                       }
-                    />
-                  </SettingsRow>
-                );
-              })
+                      disabled={updatePreferences.isPending}
+                    >
+                      <Switch
+                        id={switchId}
+                        checked={isVisible}
+                        disabled={updatePreferences.isPending}
+                        onCheckedChange={(checked) =>
+                          updateGuildVisibility(guild.id, checked)
+                        }
+                      />
+                    </SettingsRow>
+                  );
+                })}
+              </SettingsList>
             )}
           </SettingsSection>
         )}
