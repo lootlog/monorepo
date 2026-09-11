@@ -89,7 +89,7 @@ const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
     trailing={
       <span
         aria-hidden
-        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary ll:text-primary-foreground ll:opacity-0 ll:transition-opacity ll:group-data-pressed/picker-card:opacity-100"
+        className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:bg-primary ll:text-primary-foreground ll:scale-50 ll:opacity-0 ll:transition-[opacity,transform] ll:duration-200 ll:ease-[cubic-bezier(0.2,0,0,1)] ll:group-data-pressed/picker-card:scale-100 ll:group-data-pressed/picker-card:opacity-100"
       >
         <Check className="ll:size-3" />
       </span>

@@ -12,6 +12,8 @@ type SettingsPickerCardProps = {
   subtitle?: ReactNode;
   /** Trailing indicator, e.g. a check mark on multi-choice pickers. */
   trailing?: ReactNode;
+  /** Status pinned to the card's top-right corner, e.g. a save badge. */
+  badge?: ReactNode;
   className?: string;
 };
 
@@ -29,6 +31,7 @@ export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
   title,
   subtitle,
   trailing,
+  badge,
   className,
 }) => (
   <ToggleGroupItem
@@ -36,7 +39,7 @@ export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
     aria-label={label}
     title={label}
     className={cn(
-      "ll-custom-cursor-pointer ll:group/picker-card ll:h-auto ll:min-w-0 ll:justify-start ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-black/25 ll:p-1.5 ll:pr-2 ll:text-left ll:font-normal",
+      "ll-custom-cursor-pointer ll:group/picker-card ll:relative ll:h-auto ll:min-w-0 ll:justify-start ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-black/25 ll:p-1.5 ll:pr-2 ll:text-left ll:font-normal",
       "ll:transition-[background-color,box-shadow,opacity] ll:hover:bg-white/5",
       "ll:data-pressed:bg-primary/15 ll:data-pressed:hover:bg-primary/20 ll:data-pressed:shadow-[inset_0_0_0_1px_var(--color-primary)]",
       "ll:not-disabled:not-data-pressed:opacity-70 ll:not-disabled:not-data-pressed:hover:opacity-100 ll:not-disabled:not-data-pressed:focus-visible:opacity-100",
@@ -57,6 +60,11 @@ export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
       ) : null}
     </span>
     {trailing}
+    {badge ? (
+      <span className="ll:pointer-events-none ll:absolute ll:-top-1 ll:-right-1">
+        {badge}
+      </span>
+    ) : null}
   </ToggleGroupItem>
 );
 

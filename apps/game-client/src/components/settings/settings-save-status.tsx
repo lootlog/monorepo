@@ -1,15 +1,12 @@
 import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
 import { Button } from "@/components/ui/button";
+import { SETTINGS_SAVE_ICON_ENTER_CLASS_NAME } from "@/components/settings/settings-save-badge";
 import { cn } from "cn";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
 const SAVED_VISIBLE_MS = 1500;
-
-/** Contextual icon entrance: scale 0.25, blur 4px, opacity 0 -> rest. */
-const ICON_ENTER_CLASS_NAME =
-  "ll:flex ll:items-center ll:animate-in ll:fade-in-0 ll:zoom-in-[0.25] ll:blur-in-[4px] ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
 
 const LABEL_ENTER_CLASS_NAME = "ll:animate-in ll:fade-in-0 ll:duration-150";
 
@@ -48,7 +45,7 @@ export const SettingsSaveStatus: FC = () => {
     >
       {visible ? (
         <>
-          <span key={status} className={ICON_ENTER_CLASS_NAME}>
+          <span key={status} className={SETTINGS_SAVE_ICON_ENTER_CLASS_NAME}>
             {status === "error" ? (
               <AlertCircle
                 className="ll:size-3.5 ll:text-destructive"

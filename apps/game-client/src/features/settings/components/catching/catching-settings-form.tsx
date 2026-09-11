@@ -1,3 +1,4 @@
+import type { SettingsSaveBadgeStatus } from "@/components/settings/settings-save-badge";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
@@ -20,6 +21,8 @@ type CatchingSettingsFormProps = {
   /** Trailing actions of the servers section, e.g. "apply to all characters". */
   actions?: ReactNode;
   onSelectionChange?: (catchingGuildIds: string[]) => void;
+  /** Follows this character's own write: saving, then saved or error. */
+  onSaveStateChange?: (status: SettingsSaveBadgeStatus) => void;
 };
 
 const FormSchema = z.object({
@@ -33,6 +36,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   disabled = false,
   actions,
   onSelectionChange,
+  onSaveStateChange,
 }) => {
   const { t } = useTranslation();
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
@@ -60,7 +64,24 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   const {
     mutate: updateLootlogCharacterConfig,
     isPending: isUpdatingLootlogConfig,
+    status: updateStatus,
   } = useUpdateLootlogCharactersConfig();
+
+  // The callback is read through a ref so the report follows the mutation
+  // status alone; a parent re-render (e.g. from the report itself) must not
+  // re-run it.
+  const onSaveStateChangeRef = useRef(onSaveStateChange);
+
+  useEffect(() => {
+    onSaveStateChangeRef.current = onSaveStateChange;
+  }, [onSaveStateChange]);
+
+  useEffect(() => {
+    if (updateStatus === "pending") onSaveStateChangeRef.current?.("saving");
+    else if (updateStatus === "success")
+      onSaveStateChangeRef.current?.("saved");
+    else if (updateStatus === "error") onSaveStateChangeRef.current?.("error");
+  }, [updateStatus]);
 
   const { control, reset, setValue, subscribe } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -158,7 +179,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       description={t("settings.catching.form.serversDescription")}
       actions={
         <div className="ll:flex ll:items-center ll:gap-3">
-          <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
+          <span
+            key={selectedCount}
+            className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground ll:animate-in ll:fade-in-0 ll:duration-200"
+          >
             {t("settings.catching.form.activeCount", {
               selectedCount,
               totalCount: totalGuilds,
@@ -168,7 +192,8 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
         </div>
       }
     >
-      <div className="ll:px-2 ll:py-0.5">
+      {/* Mounted per character, so the fade marks the switch. */}
+      <div className="ll:px-2 ll:py-0.5 ll:animate-in ll:fade-in-0 ll:duration-200">
         <SettingsGuildPicker
           aria-label={t("settings.catching.form.serversLabel")}
           guilds={guilds}

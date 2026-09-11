@@ -8,6 +8,7 @@ import {
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
 import { SettingsCharacterPicker } from "@/features/settings/components/shared/settings-character-picker";
+import { useSaveMarks } from "@/features/settings/components/shared/use-save-marks";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
@@ -50,6 +51,7 @@ export const CatchingSettings = () => {
     useState(initialCharacterId);
 
   const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
+  const { marks: saveMarkByCharacterId, mark: markCharacters } = useSaveMarks();
   const { t } = useTranslation();
 
   const characters = characterList ?? [];
@@ -99,6 +101,7 @@ export const CatchingSettings = () => {
     },
     onMutate: async ({ catchingGuildIds, targetCharacterIds }) => {
       reportSettingsSave.saving();
+      markCharacters(targetCharacterIds, "saving");
       await queryClient.cancelQueries({ queryKey });
 
       const previousSelectionByCharacterId = {
@@ -156,11 +159,13 @@ export const CatchingSettings = () => {
     ) => {
       if (failureCount === 0) {
         reportSettingsSave.saved();
+        markCharacters(variables.targetCharacterIds, "saved");
 
         return;
       }
 
       reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
+      markCharacters(variables.targetCharacterIds, "error");
 
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
@@ -186,6 +191,7 @@ export const CatchingSettings = () => {
     },
     onError: (_error, variables, context) => {
       reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
+      markCharacters(variables.targetCharacterIds, "error");
 
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
@@ -232,6 +238,7 @@ export const CatchingSettings = () => {
             aria-label={t("settings.catching.characterLabel")}
             characters={characters}
             value={selectedCharacterId}
+            saveMarkByCharacterId={saveMarkByCharacterId}
             disabled={applyToAllMutation.isPending}
             onValueChange={setRequestedCharacterId}
           />
@@ -242,6 +249,9 @@ export const CatchingSettings = () => {
           key={selectedCharacterId}
           characterId={selectedCharacterId}
           disabled={applyToAllMutation.isPending}
+          onSaveStateChange={(status) =>
+            markCharacters([selectedCharacterId], status)
+          }
           onSelectionChange={(catchingGuildIds) => {
             selectionByCharacterIdRef.current = {
               ...selectionByCharacterIdRef.current,
