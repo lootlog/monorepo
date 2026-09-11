@@ -4,7 +4,7 @@
   },
   "domains": {
     "general": "Ogólne",
-    "servers": "Serwery",
+    "servers": "Lootlogi",
     "appearance": "Wygląd",
     "chat": "Chat",
     "timers": "Timery",
@@ -19,7 +19,7 @@
   },
   "subsections": {
     "behavior": "Zachowanie",
-    "serverVisibility": "Serwery",
+    "serverVisibility": "Lootlogi",
     "chatAppearance": "Wygląd",
     "chatFilters": "Filtry",
     "npcColors": "Kolory NPC",
@@ -41,10 +41,10 @@
     "debug": "Debug"
   },
   "servers": {
-    "title": "Widoczność serwerów",
-    "description": "Ukryte serwery znikną z przełączników w grze. Powiadomienia i przetwarzanie w tle nadal będą działać.",
-    "listTitle": "Serwery Lootloga",
-    "searchPlaceholder": "Szukaj serwera",
+    "title": "Widoczność Lootlogów",
+    "description": "Ukryte Lootlogi znikną z przełączników w grze. Powiadomienia i przetwarzanie w tle nadal będą działać.",
+    "listTitle": "Twoje Lootlogi",
+    "searchPlaceholder": "Szukaj Lootloga",
     "filters": {
       "all": "Wszystkie",
       "visible": "Widoczne",
@@ -56,10 +56,10 @@
     "presenceDescription": "Wybierz organizacje, które mogą widzieć Twoją obecność w grze. Bez wyboru obecność nie jest publikowana, dopóki Lootlog nie dopasuje organizacji do bieżącego klanu.",
     "presenceLabel": "Obecność: {{name}}",
     "presenceSwitchLabel": "Publikuj obecność w organizacji {{name}}",
-    "loading": "Ładowanie serwerów…",
-    "loadError": "Nie udało się pobrać listy serwerów.",
-    "noGuilds": "Nie masz jeszcze dostępu do żadnego serwera Lootloga.",
-    "noResults": "Nie znaleziono serwerów pasujących do wybranych filtrów."
+    "loading": "Ładowanie Lootlogów…",
+    "loadError": "Nie udało się pobrać listy Lootlogów.",
+    "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
+    "noResults": "Nie znaleziono Lootlogów pasujących do wybranych filtrów."
   },
   "search": {
     "placeholder": "Szukaj",
@@ -281,15 +281,15 @@
     },
     "autoHideLabel": "Znika po",
     "autoHideDescription": "Po ilu sekundach powiadomienie samo zniknie. 0 = zostaje, aż je zamkniesz.",
-    "serversTitle": "Z których serwerów",
-    "emptyGuilds": "Nie należysz do żadnego serwera z Lootlogiem.",
+    "serversTitle": "Z których Lootlogów",
+    "emptyGuilds": "Nie należysz do żadnego Lootloga.",
     "rulesTitle": "Co pokazywać",
     "summaryDisabled": "Wyłączone",
-    "serversDescription": "Zgłoszenia trafiają do Ciebie tylko z zaznaczonych serwerów Discord. Kliknij ikonę serwera, aby go włączyć lub wyłączyć.",
+    "serversDescription": "Powiadomienia trafiają do Ciebie tylko z zaznaczonych Lootlogów. Kliknij ikonę Lootloga, aby go włączyć lub wyłączyć.",
     "rulesDescription": "Każdy wiersz to jeden typ powiadomienia. Włącz „Pokazuj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
     "categoryHeader": "Typ",
     "cellLabel": "{{category}}: {{setting}}",
-    "serversPickerLabel": "Serwery: {{category}}",
+    "serversPickerLabel": "Lootlogi: {{category}}",
     "serversSelected": "{{selected}} z {{total}}"
   },
   "mutes": {
@@ -316,7 +316,7 @@
       "highlight": "Podświetlenie",
       "notifySound": "Dźwięk",
       "detectDescription": "Główny włącznik. Gdy jest wyłączony, wykrywacz pomija potwory tego typu.",
-      "autoSendDescription": "Wysyła wykrycie na serwery od razu, bez pytania. Lootlogi ustawisz w sekcji „Gdzie wysyłać powiadomienia” poniżej.",
+      "autoSendDescription": "Wysyła wykrycie na Lootlogi od razu, bez pytania. Lootlogi ustawisz w sekcji „Gdzie wysyłać powiadomienia” poniżej.",
       "notifyWindowDescription": "Pokazuje okno z wykrytym potworem.",
       "highlightDescription": "Wyróżnia wykrytego potwora kolorem tego typu.",
       "notifySoundDescription": "Odtwarza dźwięk przy wykryciu. Dźwięki zmienisz w zakładce Dźwięki."
@@ -325,7 +325,7 @@
       "sectionTitle": "Gdzie wysyłać powiadomienia",
       "sectionDescription": "Wykryty potwór trafia na Lootlogi z każdej reguły, do której pasuje jego poziom i świat. Bez pasującej reguły powiadomienie nie zostanie wysłane.",
       "addRuleButton": "Dodaj regułę",
-      "emptyState": "Nie masz jeszcze żadnej reguły, więc wykrywacz nic nie wysyła na Discord. Dodaj regułę i zaznacz serwery, na które mają trafiać zgłoszenia.",
+      "emptyState": "Nie masz jeszcze żadnej reguły, więc wykrywacz nic nie wysyła na Lootlogi. Dodaj regułę i zaznacz Lootlogi, na które mają trafiać powiadomienia.",
       "ruleLabel": "Reguła {{index}}",
       "ruleNameLabel": "Nazwa reguły",
       "ruleNamePlaceholder": "Reguła {{index}} – nadaj jej nazwę",
@@ -336,21 +336,21 @@
       "worldDescription": "Zostaw puste, aby reguła działała na każdym świecie.",
       "worldPlaceholder": "Każdy świat",
       "useCurrentWorldLabel": "Wstaw aktualny świat",
-      "guildSelectionLabel": "Serwery Discord",
-      "guildSelectionDescription": "Zaznaczone: {{selected}} z {{total}}. Kliknij ikonę serwera, aby go włączyć lub wyłączyć.",
-      "guildPickerLabel": "Serwery: {{name}}",
-      "noGuildsAvailable": "Nie należysz do żadnego serwera z Lootlogiem.",
+      "guildSelectionLabel": "Lootlogi",
+      "guildSelectionDescription": "Zaznaczone: {{selected}} z {{total}}. Kliknij ikonę Lootloga, aby go włączyć lub wyłączyć.",
+      "guildPickerLabel": "Lootlogi: {{name}}",
+      "noGuildsAvailable": "Nie należysz do żadnego Lootloga.",
       "deleteRuleLabel": "Usuń regułę {{name}}",
       "summary": "Wysyła na {{guilds}}: {{levels}}, {{world}}",
-      "noGuildsBadge": "Nic nie wysyła – zaznacz serwer",
+      "noGuildsBadge": "Nic nie wysyła – zaznacz Lootloga",
       "summaryEveryLevel": "każdy poziom",
       "summaryLevels": "poziom {{min}}–{{max}}",
       "summaryEveryWorld": "każdy świat",
       "summaryWorld": "świat {{world}}",
-      "summaryGuilds_one": "{{count}} serwer",
-      "summaryGuilds_few": "{{count}} serwery",
-      "summaryGuilds_many": "{{count}} serwerów",
-      "summaryGuilds_other": "{{count}} serwerów"
+      "summaryGuilds_one": "{{count}} Lootlog",
+      "summaryGuilds_few": "{{count}} Lootlogi",
+      "summaryGuilds_many": "{{count}} Lootlogów",
+      "summaryGuilds_other": "{{count}} Lootlogów"
     },
     "typesTitle": "Które potwory wykrywać",
     "categoryHeader": "Typ",
@@ -438,20 +438,20 @@
     "applyFailed": "Nie udało się skopiować ustawień do wszystkich postaci",
     "form": {
       "collectionRangeTitle": "Zakres zbierania",
-      "serversTitle": "Serwery",
+      "serversTitle": "Lootlogi",
       "activeCount": "Aktywne: {{selectedCount}}/{{totalCount}}",
-      "emptyGuilds": "Brak serwerów do skonfigurowania dla tej postaci."
+      "emptyGuilds": "Brak Lootlogów do skonfigurowania dla tej postaci."
     }
   },
   "hiddenTimers": {
     "title": "Ukryte timery",
     "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
     "scopeTitle": "Zakres listy",
-    "ungroupedDescription": "Wybierz serwer, dla którego chcesz zobaczyć ukryte timery.",
+    "ungroupedDescription": "Wybierz Lootloga, dla którego chcesz zobaczyć ukryte timery.",
     "emptyGuilds": "Brak gildii do wyboru.",
     "listTitle": "Ukryte timery",
     "emptyState": "Brak ukrytych timerów.",
-    "guildLabel": "Serwer"
+    "guildLabel": "Lootlog"
   },
   "sounds": {
     "title": "Ustawienia dźwięków",

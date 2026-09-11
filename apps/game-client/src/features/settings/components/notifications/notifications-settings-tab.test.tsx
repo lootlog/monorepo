@@ -78,7 +78,7 @@ describe("NotificationsSettingsTab", () => {
     expect(document.getElementById("HERO-auto-hide-timeout")).toBeDisabled();
 
     for (const tile of within(
-      screen.getByRole("group", { name: "Serwery: Heros" }),
+      screen.getByRole("group", { name: "Lootlogi: Heros" }),
     ).getAllByRole("button")) {
       expect(tile).toBeDisabled();
     }
@@ -126,7 +126,7 @@ describe("NotificationsSettingsTab", () => {
     );
     render();
 
-    const picker = screen.getByRole("group", { name: "Serwery: Heros" });
+    const picker = screen.getByRole("group", { name: "Lootlogi: Heros" });
     const [firstGuild] = within(picker).getAllByRole("button");
 
     if (!firstGuild) throw new Error("no guild tile");

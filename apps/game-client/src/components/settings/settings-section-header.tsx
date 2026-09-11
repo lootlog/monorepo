@@ -27,7 +27,7 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
 }) => (
   <div
     className={cn(
-      "ll:flex ll:flex-wrap ll:items-center ll:justify-between ll:gap-x-4 ll:gap-y-1 ll:px-2",
+      "ll:flex ll:flex-wrap ll:items-center ll:justify-between ll:gap-x-6 ll:gap-y-1 ll:px-2",
       className,
     )}
   >

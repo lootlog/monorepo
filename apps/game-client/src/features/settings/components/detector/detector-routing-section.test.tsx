@@ -93,14 +93,14 @@ describe("DetectorRoutingSection", () => {
     expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
     expect(screen.getAllByLabelText("Od levela")).toHaveLength(2);
     expect(screen.getAllByLabelText("Do levela")).toHaveLength(2);
-    expect(screen.getByLabelText("Serwery: Bossy hero")).toBeInTheDocument();
-    expect(screen.getByLabelText("Serwery: Reguła 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lootlogi: Bossy hero")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lootlogi: Reguła 2")).toBeInTheDocument();
 
     expect(
-      screen.getByText("Wysyła na 5 serwerów: poziom 20–80, świat Pandora"),
+      screen.getByText("Wysyła na 5 Lootlogów: poziom 20–80, świat Pandora"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Wysyła na 1 serwer: poziom 120–240, każdy świat"),
+      screen.getByText("Wysyła na 1 Lootlog: poziom 120–240, każdy świat"),
     ).toBeInTheDocument();
   });
 
@@ -176,16 +176,16 @@ describe("DetectorRoutingSection", () => {
     });
   });
 
-  it("warns that a new rule sends nothing until a server is chosen, and removes a rule", async () => {
+  it("warns that a new rule sends nothing until a Lootlog is chosen, and removes a rule", async () => {
     const user = userEvent.setup();
 
     render();
 
     await user.click(screen.getByRole("button", { name: "Dodaj regułę" }));
 
-    expect(screen.getByLabelText("Serwery: Reguła 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lootlogi: Reguła 3")).toBeInTheDocument();
     expect(
-      screen.getByText("Nic nie wysyła – zaznacz serwer"),
+      screen.getByText("Nic nie wysyła – zaznacz Lootloga"),
     ).toBeInTheDocument();
 
     await user.click(
@@ -193,7 +193,7 @@ describe("DetectorRoutingSection", () => {
     );
 
     expect(
-      screen.queryByText("Wysyła na 1 serwer: poziom 120–240, każdy świat"),
+      screen.queryByText("Wysyła na 1 Lootlog: poziom 120–240, każdy świat"),
     ).not.toBeInTheDocument();
     expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
   });
@@ -208,7 +208,7 @@ describe("DetectorRoutingSection", () => {
     await user.type(nameInput, "  Gordion hero  ");
     await user.tab();
 
-    expect(screen.getByLabelText("Serwery: Gordion hero")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lootlogi: Gordion hero")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(savedBody()).toEqual(
