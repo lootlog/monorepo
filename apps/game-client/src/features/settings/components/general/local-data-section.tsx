@@ -19,7 +19,8 @@ export const LocalDataSection: FC = () => {
         controlId="clear-local-data"
         label={t("settings.general.clearLocalDataLabel")}
         description={t("settings.general.clearLocalDataDescription")}
-        controlClassName="ll:gap-2"
+        control="wide"
+        controlClassName="ll:justify-end ll:gap-2"
       >
         {armed ? (
           <>

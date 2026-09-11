@@ -16,6 +16,8 @@ export const WindowLayoutSection: FC = () => {
         controlId="reset-window-layout"
         label={t("settings.general.resetWindowLayoutLabel")}
         description={t("settings.general.resetWindowLayoutDescription")}
+        control="wide"
+        controlClassName="ll:justify-end"
       >
         <Button
           size="sm"
