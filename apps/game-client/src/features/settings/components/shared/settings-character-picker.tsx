@@ -43,12 +43,18 @@ export const SettingsCharacterPicker: FC<SettingsCharacterPickerProps> = ({
     className={cn(settingsPickerGridClassName, className)}
   >
     {characters.map((character) => {
+      // The sprite sheet frame is 32×48; it is scaled to 3/4 so the card
+      // stays close to the server card height.
       const sprite = (
-        <CharacterSprite
+        <span
           aria-hidden
-          icon={character.icon}
-          className="ll:shrink-0"
-        />
+          className="ll:flex ll:h-9 ll:w-6 ll:shrink-0 ll:items-center ll:justify-center"
+        >
+          <CharacterSprite
+            icon={character.icon}
+            className="ll:shrink-0 ll:scale-75"
+          />
+        </span>
       );
 
       return (
