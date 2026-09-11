@@ -535,7 +535,7 @@ export const DebugTab: FC = () => {
           layout="stacked"
         >
           <textarea
-            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/20 ll:p-2 ll:font-mono ll:text-[11px] ll:text-gray-100 ll:outline-none ll:focus-visible:border-ring"
+            className="ll:w-full ll:min-h-24 ll:resize-y ll:rounded-sm ll:border ll:border-input ll:bg-black/25 ll:p-2 ll:font-mono ll:text-[11px] ll:text-gray-100 ll:outline-none ll:focus-visible:border-ring"
             id="debug-raw-json"
             onChange={(event) => {
               setRawJson(event.target.value);

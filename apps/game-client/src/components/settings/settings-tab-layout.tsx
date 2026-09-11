@@ -25,7 +25,7 @@ export const SettingsTabLayout: FC<SettingsTabLayoutProps> = ({
         {actions}
       </div>
     ) : null}
-    <div className={cn("ll:flex ll:flex-col ll:gap-4", contentClassName)}>
+    <div className={cn("ll:flex ll:flex-col ll:gap-3", contentClassName)}>
       {children}
     </div>
   </div>
