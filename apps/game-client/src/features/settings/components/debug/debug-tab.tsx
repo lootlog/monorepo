@@ -508,7 +508,8 @@ export const DebugTab: FC = () => {
           >
             <SelectTrigger
               aria-label={t("settings.debug.templateLabel")}
-              className="ll:w-40 ll:text-xs"
+              size="sm"
+              className="ll:w-40"
             >
               <SelectValue />
             </SelectTrigger>

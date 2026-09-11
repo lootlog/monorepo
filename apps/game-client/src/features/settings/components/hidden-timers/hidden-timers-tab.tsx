@@ -59,7 +59,7 @@ export const HiddenTimersTab = () => {
                 value={selectedGuildId}
                 onValueChange={setRequestedGuildId}
               >
-                <SelectTrigger id="hidden-timers-guild">
+                <SelectTrigger id="hidden-timers-guild" size="sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
