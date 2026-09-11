@@ -46,7 +46,6 @@ export const MutedPlayersSettingsTab = () => {
         title={t("settings.mutes.playersTitle", {
           count: mutes.players.length,
         })}
-        description={t("settings.mutes.playersDescription")}
       >
         {players.length === 0 ? (
           <SettingsEmptyState>
