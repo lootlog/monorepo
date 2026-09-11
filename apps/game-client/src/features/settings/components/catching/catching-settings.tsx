@@ -11,6 +11,7 @@ import { CharacterPicker } from "@/components/character-picker";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
+import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useGameStore } from "@/store/game.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -97,6 +98,7 @@ export const CatchingSettings = () => {
       };
     },
     onMutate: async ({ catchingGuildIds, targetCharacterIds }) => {
+      reportSettingsSave.saving();
       await queryClient.cancelQueries({ queryKey });
 
       const previousSelectionByCharacterId = {
@@ -149,12 +151,16 @@ export const CatchingSettings = () => {
     },
     onSuccess: (
       { failureCount, successCount, totalCount },
-      _variables,
+      variables,
       context,
     ) => {
       if (failureCount === 0) {
+        reportSettingsSave.saved();
+
         return;
       }
+
+      reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
 
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
@@ -178,7 +184,9 @@ export const CatchingSettings = () => {
         }),
       );
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, variables, context) => {
+      reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
+
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }

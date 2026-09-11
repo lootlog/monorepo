@@ -1,4 +1,3 @@
-import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
 import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
 import { Button } from "@/components/ui/button";
 import { cn } from "cn";
@@ -19,6 +18,7 @@ export const SettingsSaveStatus: FC = () => {
   const { t } = useTranslation("settings");
   const status = useSettingsSaveStatusStore((state) => state.status);
   const savedAt = useSettingsSaveStatusStore((state) => state.savedAt);
+  const retry = useSettingsSaveStatusStore((state) => state.retry);
   // The "saved" confirmation hides itself after a moment; the timeout records
   // which save it already hid so the value derives from state during render.
   const [hiddenSavedAt, setHiddenSavedAt] = useState<number | null>(null);
@@ -80,11 +80,11 @@ export const SettingsSaveStatus: FC = () => {
           >
             {t(`saveStatus.${status}`)}
           </span>
-          {status === "error" ? (
+          {status === "error" && retry ? (
             <Button
               variant="link"
               size="xs"
-              onClick={() => void settingsPatchQueue.retry()}
+              onClick={retry}
               className="ll:h-4 ll:px-1 ll:font-semibold"
             >
               {t("saveStatus.retry")}

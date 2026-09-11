@@ -1,3 +1,4 @@
+import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/game.store";
 import {
@@ -20,7 +21,7 @@ export const useUpdateLootlogCharactersConfig = () => {
       })
     : ["user-lootlog-config", "unavailable"];
 
-  return useMutation({
+  const mutation = useMutation({
     mutationKey: [
       "userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig",
     ],
@@ -36,8 +37,10 @@ export const useUpdateLootlogCharactersConfig = () => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
+      reportSettingsSave.saved();
     },
     onMutate: async (variables) => {
+      reportSettingsSave.saving();
       await queryClient.cancelQueries({ queryKey });
 
       const previousData =
@@ -59,10 +62,14 @@ export const useUpdateLootlogCharactersConfig = () => {
 
       return { previousData };
     },
-    onError: (_err, _variables, context) => {
+    onError: (_err, variables, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
+
+      reportSettingsSave.failed(() => mutation.mutate(variables));
     },
   });
+
+  return mutation;
 };

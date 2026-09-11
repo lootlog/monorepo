@@ -23,7 +23,10 @@ describe("SettingsSaveStatus", () => {
     useSettingsSaveStatusStore.getState().setStatus("saving");
     expect(await screen.findByText("Zapisywanie…")).toBeInTheDocument();
 
-    useSettingsSaveStatusStore.getState().setStatus("error");
+    useSettingsSaveStatusStore
+      .getState()
+      .setStatus("error", () => void settingsPatchQueue.retry());
+
     await user.click(await screen.findByRole("button", { name: "Ponów" }));
 
     expect(retry).toHaveBeenCalledTimes(1);
