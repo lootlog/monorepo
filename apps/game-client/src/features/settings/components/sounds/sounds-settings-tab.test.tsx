@@ -96,6 +96,9 @@ describe("SoundsSettingsTab", () => {
     const user = userEvent.setup();
     render();
 
+    // The category volume row sits inside the collapsed category.
+    await user.click(screen.getByRole("button", { name: "Powiadomienia" }));
+
     const notificationsSlider = screen.getByRole("slider", {
       name: "Powiadomienia",
     });

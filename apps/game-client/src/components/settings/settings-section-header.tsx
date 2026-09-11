@@ -23,7 +23,7 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
 }) => (
   <div
     className={cn(
-      "ll:flex ll:min-h-6 ll:items-end ll:justify-between ll:gap-2 ll:px-2",
+      "ll:flex ll:min-h-6 ll:flex-wrap ll:items-end ll:justify-between ll:gap-x-2 ll:gap-y-1 ll:px-2",
       className,
     )}
   >

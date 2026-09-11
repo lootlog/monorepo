@@ -1,4 +1,5 @@
 import { SettingsCategoryAccordion } from "@/components/settings/settings-category-accordion";
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
@@ -49,9 +50,7 @@ export function SoundsSettingsTab() {
   if (isLoading) {
     return (
       <SettingsTabLayout>
-        <p className="ll:m-0 ll:px-2 ll:text-xs ll:text-muted-foreground">
-          {t("settings.sounds.loading")}
-        </p>
+        <SettingsEmptyState>{t("settings.sounds.loading")}</SettingsEmptyState>
       </SettingsTabLayout>
     );
   }
@@ -66,7 +65,7 @@ export function SoundsSettingsTab() {
         <SettingsRow
           controlId="sound-master-volume"
           label={t("settings.sounds.masterVolume")}
-          controlClassName="ll:w-56"
+          control="wide"
         >
           <SettingsVolumeControl
             label={t("settings.sounds.masterVolume")}
@@ -85,7 +84,8 @@ export function SoundsSettingsTab() {
         {gameInterface === "ni" ? (
           <SettingsRow
             label={t("settings.sounds.categories.pings.label")}
-            controlClassName="ll:w-56 ll:gap-1"
+            control="wide"
+            controlClassName="ll:gap-1"
           >
             <SettingsVolumeControl
               label={t("settings.sounds.categories.pings.label")}
@@ -135,7 +135,7 @@ export function SoundsSettingsTab() {
         controlId="sound-categories"
         title={t("settings.sounds.categoriesTitle")}
       >
-        <SettingsCategoryAccordion className="ll:px-2">
+        <SettingsCategoryAccordion>
           {categories.map((category) => {
             const configKey = `${category.id}Config` as const;
             const categoryConfig = settings?.[configKey] ?? {};

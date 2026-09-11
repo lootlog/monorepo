@@ -4,7 +4,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
+import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsSliderField } from "@/components/settings/settings-slider-field";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -60,9 +61,11 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
         className="ll:w-[min(340px,calc(100vw-16px))] ll:p-3"
       >
         <div className="ll:flex ll:flex-col ll:gap-3">
-          <div className="ll:text-xs ll:font-semibold ll:text-popover-foreground">
-            {data.name}
-          </div>
+          <SettingsSectionHeader
+            as="h4"
+            className="ll:px-0"
+            title={data.name}
+          />
 
           <div className="ll:grid ll:grid-cols-2 ll:gap-2">
             {(
@@ -84,7 +87,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                       setDraft({ ...draft, [field]: event.target.value })
                     }
                     onBlur={() => onCommit(draft)}
-                    className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-9 ll:shrink-0 ll:p-1"
+                    className="ll:h-7 ll:w-8 ll:shrink-0 ll:border-border ll:p-0.5 ll:text-popover-foreground"
                     aria-label={t(`settings.timers.colors.${labelKey}`)}
                   />
                   <Input
@@ -110,7 +113,7 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
                         onOpenChange(false);
                       }
                     }}
-                    className="ll:text-popover-foreground ll:border-foreground/20 ll:min-w-0 ll:flex-1 ll:font-mono ll:text-[10px] ll:uppercase"
+                    className="ll:min-w-0 ll:flex-1 ll:border-border ll:font-mono ll:text-[10px] ll:uppercase ll:text-popover-foreground"
                     aria-label={t(`settings.timers.colors.${ariaKey}`)}
                   />
                 </div>
@@ -120,28 +123,23 @@ export const TimerColorQuickPopover: FC<TimerColorQuickPopoverProps> = ({
 
           <label className="ll:flex ll:flex-col ll:gap-1 ll:text-[10px] ll:text-muted-foreground">
             {t("settings.timers.colors.transparencyLabel")}
-            <div className="ll:flex ll:items-center ll:gap-2">
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={draft.backgroundAlpha}
-                onValueChange={(backgroundAlpha) =>
-                  setDraft({ ...draft, backgroundAlpha })
-                }
-                onValueCommitted={(backgroundAlpha) => {
-                  const nextDraft = { ...draft, backgroundAlpha };
+            <SettingsSliderField
+              min={0}
+              max={100}
+              step={1}
+              unit="%"
+              value={draft.backgroundAlpha}
+              onValueChange={(backgroundAlpha) =>
+                setDraft({ ...draft, backgroundAlpha })
+              }
+              onCommit={(backgroundAlpha) => {
+                const nextDraft = { ...draft, backgroundAlpha };
 
-                  setDraft(nextDraft);
-                  onCommit(nextDraft);
-                }}
-                className="ll:flex-1"
-                aria-label={t("settings.timers.colors.transparencyAria")}
-              />
-              <span className="ll:w-8 ll:text-right ll:text-xs ll:text-popover-foreground">
-                {draft.backgroundAlpha}%
-              </span>
-            </div>
+                setDraft(nextDraft);
+                onCommit(nextDraft);
+              }}
+              aria-label={t("settings.timers.colors.transparencyAria")}
+            />
           </label>
 
           <div className="ll:flex ll:flex-col ll:gap-1">

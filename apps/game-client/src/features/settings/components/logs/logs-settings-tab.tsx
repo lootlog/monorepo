@@ -2,8 +2,8 @@ import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -181,14 +181,18 @@ export const LogsSettingsTab: FC = () => {
           </div>
         }
       >
-        <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-2 ll:px-2 ll:pt-2 ll:pb-1">
-          <SearchInput
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder={t("settings.logs.searchPlaceholder")}
-            value={searchTerm}
-          />
+        <SettingsToolbar
+          search={{
+            value: searchTerm,
+            placeholder: t("settings.logs.searchPlaceholder"),
+            onChange: (event) => setSearchTerm(event.target.value),
+            onClear: () => setSearchTerm(""),
+            clearLabel: t("settings.search.clear"),
+          }}
+        >
           <Select onValueChange={setActionTypeFilter} value={actionTypeFilter}>
             <SelectTrigger
+              size="sm"
               aria-label={t("settings.logs.actionTypeAria")}
               className={FILTER_CONTROL_CLASS_NAME}
             >
@@ -213,6 +217,7 @@ export const LogsSettingsTab: FC = () => {
             value={statusFilter}
           >
             <SelectTrigger
+              size="sm"
               aria-label={t("settings.logs.statusAria")}
               className={FILTER_CONTROL_CLASS_NAME}
             >
@@ -226,9 +231,9 @@ export const LogsSettingsTab: FC = () => {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </SettingsToolbar>
         {filteredActions.length > 0 ? (
-          <div className="ll:px-2">
+          <div className="ll:overflow-x-auto ll:rounded-sm">
             <Table>
               <TableHeader>
                 <TableRow>

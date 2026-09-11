@@ -133,7 +133,7 @@ const isDeferredRoutingSyncField = (fieldName: string | null) => {
   return /^routingRules\.\d+\.(name|world)$/.test(fieldName);
 };
 
-export const toggleOpenRuleId = (
+const toggleOpenRuleId = (
   currentOpenRuleIds: string[],
   ruleId: string,
   open: boolean,

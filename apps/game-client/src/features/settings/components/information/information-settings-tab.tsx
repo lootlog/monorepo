@@ -69,9 +69,13 @@ export const InformationSettingsTab = () => {
           <SettingsRow
             key={row.label}
             label={row.label}
+            control="wide"
             controlClassName="ll:gap-1"
           >
-            <span className="ll:block ll:max-w-64 ll:select-text ll:break-all ll:text-right ll:font-mono ll:text-[11px] ll:text-gray-200">
+            <span
+              className="ll:min-w-0 ll:flex-1 ll:select-text ll:truncate ll:text-right ll:font-mono ll:text-[11px] ll:tabular-nums ll:text-muted-foreground"
+              title={row.value}
+            >
               {row.value}
             </span>
             {copyValue ? (

@@ -66,7 +66,6 @@ export const TimersSettingsGeneral: FC = () => {
           controlId="timer-countdown"
           label={t("settings.timers.general.countdownLabel")}
           description={t("settings.timers.general.countdownDescription")}
-          controlClassName="ll:w-28"
         >
           <ToggleGroup
             className="ll:ml-auto"

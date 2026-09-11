@@ -457,6 +457,8 @@
     "invalidUrl": "Nieprawidłowy URL",
     "volumeTitle": "Głośność",
     "masterVolume": "Głośność główna",
+    "categoryVolume": "Głośność kategorii",
+    "categoryMuted": "Wyciszona",
     "categories": {
       "notifications": {
         "label": "Powiadomienia"

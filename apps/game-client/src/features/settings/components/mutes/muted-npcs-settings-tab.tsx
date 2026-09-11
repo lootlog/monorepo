@@ -5,7 +5,7 @@ import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { SearchInput } from "@/components/ui/search-input";
+import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { matchesMuteSearch } from "@/features/settings/components/mutes/mutes-search";
 import {
   useCurrentUserNotificationMutes,
@@ -30,19 +30,19 @@ export const MutedNpcsSettingsTab = () => {
 
   return (
     <SettingsTabLayout>
-      <search className="ll:flex">
-        <SearchInput
-          value={search}
-          placeholder={t("settings.mutes.npcsSearchPlaceholder")}
-          onChange={(event) => setSearch(event.target.value)}
-          onClear={() => setSearch("")}
-          clearLabel={t("settings.search.clear")}
-        />
-      </search>
       <SettingsSection
         controlId="muted-npcs"
         title={t("settings.mutes.npcsTitle", { count: mutes.npcs.length })}
       >
+        <SettingsToolbar
+          search={{
+            value: search,
+            placeholder: t("settings.mutes.npcsSearchPlaceholder"),
+            onChange: (event) => setSearch(event.target.value),
+            onClear: () => setSearch(""),
+            clearLabel: t("settings.search.clear"),
+          }}
+        />
         {npcs.length === 0 ? (
           <SettingsEmptyState>
             {mutes.npcs.length === 0

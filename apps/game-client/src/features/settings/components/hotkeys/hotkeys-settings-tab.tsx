@@ -28,8 +28,6 @@ for (const config of HOTKEY_ACTIONS) {
 
 const categories = Array.from(groupedActions);
 
-const HOTKEY_CONTROL_CLASS_NAME = "ll:justify-end";
-
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { bindings, setBinding, resetBinding, resetAll } = useHotkeysStore();
@@ -129,12 +127,12 @@ export const HotkeysSettingsTab = () => {
                 label={actionLabel}
                 description={
                   error ? (
-                    <span className="ll:text-red-400">{error}</span>
+                    <span className="ll:text-destructive">{error}</span>
                   ) : config.descriptionKey ? (
                     t(config.descriptionKey)
                   ) : undefined
                 }
-                controlClassName={HOTKEY_CONTROL_CLASS_NAME}
+                control="wide"
               >
                 <SettingsKeybindField
                   binding={binding}

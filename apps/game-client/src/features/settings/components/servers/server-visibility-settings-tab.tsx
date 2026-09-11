@@ -5,9 +5,9 @@ import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/ui/search-input";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -89,102 +89,106 @@ export const ServerVisibilitySettingsTab = () => {
             {t("settings.servers.noGuilds")}
           </SettingsEmptyState>
         ) : (
-          <SettingsSection
-            controlId="server-visibility"
-            title={t("settings.servers.listTitle")}
-            actions={
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={!hasHiddenGuilds || updatePreferences.isPending}
-                onClick={() =>
-                  updatePreferences.mutate({
-                    hiddenGuildIds: hiddenGuildIds.filter(
-                      (hiddenGuildId) =>
-                        !accessibleGuildIdSet.has(hiddenGuildId),
-                    ),
-                  })
-                }
-              >
-                {t("settings.servers.showAll")}
-              </Button>
-            }
-          >
-            <div className="ll:flex ll:items-center ll:gap-2 ll:px-2 ll:pt-2 ll:pb-1">
-              <search className="ll:flex ll:min-w-0 ll:flex-1">
-                <SearchInput
-                  value={query}
-                  placeholder={t("settings.servers.searchPlaceholder")}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </search>
-              <ToggleGroup
-                variant="outline"
-                size="sm"
-                spacing={0}
-                value={[visibilityFilter]}
-                onValueChange={([value]: VisibilityFilter[]) => {
-                  if (value) setVisibilityFilter(value);
+          <>
+            <SettingsSection
+              controlId="server-visibility"
+              title={t("settings.servers.listTitle")}
+              actions={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={!hasHiddenGuilds || updatePreferences.isPending}
+                  onClick={() =>
+                    updatePreferences.mutate({
+                      hiddenGuildIds: hiddenGuildIds.filter(
+                        (hiddenGuildId) =>
+                          !accessibleGuildIdSet.has(hiddenGuildId),
+                      ),
+                    })
+                  }
+                >
+                  {t("settings.servers.showAll")}
+                </Button>
+              }
+            >
+              <SettingsToolbar
+                search={{
+                  value: query,
+                  placeholder: t("settings.servers.searchPlaceholder"),
+                  onChange: (event) => setQuery(event.target.value),
+                  onClear: () => setQuery(""),
+                  clearLabel: t("settings.search.clear"),
                 }}
               >
-                {VISIBILITY_FILTERS.map((filter) => (
-                  <ToggleGroupItem key={filter} value={filter}>
-                    {t(`settings.servers.filters.${filter}`)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-            {filteredGuilds.length === 0 ? (
-              <SettingsEmptyState>
-                {t("settings.servers.noResults")}
-              </SettingsEmptyState>
-            ) : (
-              <SettingsList>
-                {filteredGuilds.map((guild) => {
-                  const isVisible = !hiddenGuildIdSet.has(guild.id);
-                  const switchId = `server-visibility-${guild.id}`;
+                <ToggleGroup
+                  variant="outline"
+                  size="sm"
+                  spacing={0}
+                  value={[visibilityFilter]}
+                  onValueChange={([value]: VisibilityFilter[]) => {
+                    if (value) setVisibilityFilter(value);
+                  }}
+                >
+                  {VISIBILITY_FILTERS.map((filter) => (
+                    <ToggleGroupItem key={filter} value={filter}>
+                      {t(`settings.servers.filters.${filter}`)}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </SettingsToolbar>
+              {filteredGuilds.length === 0 ? (
+                <SettingsEmptyState>
+                  {t("settings.servers.noResults")}
+                </SettingsEmptyState>
+              ) : (
+                <SettingsList>
+                  {filteredGuilds.map((guild) => {
+                    const isVisible = !hiddenGuildIdSet.has(guild.id);
+                    const switchId = `server-visibility-${guild.id}`;
 
-                  return (
-                    <SettingsRow
-                      key={guild.id}
-                      htmlFor={switchId}
-                      label={
-                        <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
-                          <Avatar className="ll:size-6 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
-                            {guild.icon ? (
-                              <img
-                                src={guild.icon}
-                                alt=""
-                                className="ll:h-full ll:w-full ll:object-cover"
-                              />
-                            ) : (
-                              <AvatarFallback
-                                aria-hidden
-                                className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-md ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100"
-                              >
-                                {guild.name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <span className="ll:truncate">{guild.name}</span>
-                        </span>
-                      }
-                      disabled={updatePreferences.isPending}
-                    >
-                      <Switch
-                        id={switchId}
-                        checked={isVisible}
-                        disabled={updatePreferences.isPending}
-                        onCheckedChange={(checked) =>
-                          updateGuildVisibility(guild.id, checked)
+                    return (
+                      <SettingsRow
+                        key={guild.id}
+                        htmlFor={switchId}
+                        label={
+                          <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
+                            <Avatar className="ll:size-6 ll:shrink-0 ll:rounded-sm ll:bg-black/20">
+                              {guild.icon ? (
+                                <img
+                                  src={guild.icon}
+                                  alt=""
+                                  className="ll:h-full ll:w-full ll:object-cover"
+                                />
+                              ) : (
+                                <AvatarFallback
+                                  aria-hidden
+                                  className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[10px] ll:font-semibold"
+                                >
+                                  {guild.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <span className="ll:truncate">{guild.name}</span>
+                          </span>
                         }
-                      />
-                    </SettingsRow>
-                  );
-                })}
-              </SettingsList>
-            )}
-          </SettingsSection>
+                        disabled={updatePreferences.isPending}
+                      >
+                        <Switch
+                          id={switchId}
+                          checked={isVisible}
+                          disabled={updatePreferences.isPending}
+                          onCheckedChange={(checked) =>
+                            updateGuildVisibility(guild.id, checked)
+                          }
+                        />
+                      </SettingsRow>
+                    );
+                  })}
+                </SettingsList>
+              )}
+            </SettingsSection>
+          </>
         )}
       </AsyncContent>
     </SettingsTabLayout>

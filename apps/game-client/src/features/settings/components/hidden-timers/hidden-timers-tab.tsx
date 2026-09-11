@@ -41,13 +41,13 @@ export const HiddenTimersTab = () => {
     <SettingsTabLayout>
       {!generalConfig.timersGrouping ? (
         <SettingsSection title={t("settings.hiddenTimers.scopeTitle")}>
-          <SettingsRow
-            htmlFor="hidden-timers-guild"
-            label={t("settings.hiddenTimers.guildLabel")}
-            description={t("settings.hiddenTimers.ungroupedDescription")}
-            controlClassName="ll:w-48"
-          >
-            {guilds && guilds.length > 0 ? (
+          {guilds && guilds.length > 0 ? (
+            <SettingsRow
+              htmlFor="hidden-timers-guild"
+              label={t("settings.hiddenTimers.guildLabel")}
+              description={t("settings.hiddenTimers.ungroupedDescription")}
+              control="wide"
+            >
               <Select
                 value={selectedGuildId}
                 onValueChange={setRequestedGuildId}
@@ -59,13 +59,13 @@ export const HiddenTimersTab = () => {
                   {guilds.map((guild) => (
                     <SelectItem key={guild.id} value={guild.id}>
                       <span className="ll:inline-flex ll:min-w-0 ll:items-center ll:gap-1.5">
-                        <Avatar className="ll:size-4 ll:shrink-0 ll:rounded-sm">
+                        <Avatar className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:bg-black/20">
                           <AvatarImage
                             src={guild.icon ?? undefined}
                             alt=""
                             className="ll:h-full ll:w-full ll:object-cover"
                           />
-                          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-gray-800 ll:text-[9px] ll:font-semibold ll:text-gray-100">
+                          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/20 ll:text-[9px] ll:font-semibold ll:text-foreground">
                             {guild.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -75,12 +75,12 @@ export const HiddenTimersTab = () => {
                   ))}
                 </SelectContent>
               </Select>
-            ) : (
-              <SettingsEmptyState className="ll:w-full">
-                {t("settings.hiddenTimers.emptyGuilds")}
-              </SettingsEmptyState>
-            )}
-          </SettingsRow>
+            </SettingsRow>
+          ) : (
+            <SettingsEmptyState>
+              {t("settings.hiddenTimers.emptyGuilds")}
+            </SettingsEmptyState>
+          )}
         </SettingsSection>
       ) : null}
       <SettingsSection

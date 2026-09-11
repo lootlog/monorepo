@@ -3,6 +3,12 @@ import type { CSSProperties, FC, ReactNode } from "react";
 import type { SettingsControlId } from "@/features/settings/settings-manifest";
 import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 
+/**
+ * Width of a wide control (slider, select, text input, keybind) in a row.
+ * Every wide control shares it so their left edges line up down a section.
+ */
+export const SETTINGS_WIDE_CONTROL_CLASS_NAME = "ll:w-48 ll:max-w-full";
+
 type SettingsRowProps = {
   /** Manifest id; enables search highlighting and "recently changed". */
   controlId?: SettingsControlId;
@@ -14,6 +20,11 @@ type SettingsRowProps = {
   disabled?: boolean;
   /** Stack the control under the label instead of on the right. */
   layout?: "inline" | "stacked";
+  /**
+   * `wide` controls (sliders, selects, inputs) take one shared width and drop
+   * under the label when the content column is too narrow to fit both.
+   */
+  control?: "auto" | "wide";
   className?: string;
   labelClassName?: string;
   labelStyle?: CSSProperties;
@@ -32,6 +43,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
   children,
   disabled = false,
   layout = "inline",
+  control = "auto",
   className,
   labelClassName,
   labelStyle,
@@ -40,15 +52,21 @@ export const SettingsRow: FC<SettingsRowProps> = ({
   const { ref, dataAttributes } =
     useSettingsControlHighlight<HTMLDivElement>(controlId);
 
+  const stacked = layout === "stacked";
+  const wide = control === "wide";
+
   return (
     <div
       ref={ref}
       {...dataAttributes}
       className={cn(
         "ll:flex ll:min-h-6 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-[background-color,box-shadow] ll:hover:bg-white/5 ll:data-[settings-highlighted]:bg-primary/15 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
-        layout === "inline"
-          ? "ll:items-center ll:justify-between ll:gap-4"
-          : "ll:flex-col ll:items-stretch ll:gap-1.5",
+        stacked
+          ? "ll:flex-col ll:items-stretch ll:gap-1.5"
+          : "ll:items-center ll:justify-between ll:gap-4",
+        !stacked &&
+          wide &&
+          "ll:@max-[384px]/settings:flex-col ll:@max-[384px]/settings:items-stretch ll:@max-[384px]/settings:gap-1.5",
         disabled && "ll:opacity-60",
         className,
       )}
@@ -58,7 +76,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
           <label
             htmlFor={htmlFor}
             className={cn(
-              "ll-custom-cursor-pointer ll:flex ll:items-center ll:text-xs ll:leading-4 ll:text-gray-100",
+              "ll-custom-cursor-pointer ll:flex ll:items-center ll:text-xs ll:leading-4 ll:text-foreground",
               labelClassName,
             )}
             style={labelStyle}
@@ -68,7 +86,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
         ) : (
           <div
             className={cn(
-              "ll:flex ll:items-center ll:text-xs ll:leading-4 ll:text-gray-100",
+              "ll:flex ll:items-center ll:text-xs ll:leading-4 ll:text-foreground",
               labelClassName,
             )}
             style={labelStyle}
@@ -98,7 +116,9 @@ export const SettingsRow: FC<SettingsRowProps> = ({
       <div
         className={cn(
           "ll:flex ll:shrink-0 ll:items-center",
-          layout === "stacked" && "ll:pt-0.5",
+          stacked && "ll:pt-0.5",
+          wide && SETTINGS_WIDE_CONTROL_CLASS_NAME,
+          !stacked && wide && "ll:@max-[384px]/settings:w-full",
           controlClassName,
         )}
       >

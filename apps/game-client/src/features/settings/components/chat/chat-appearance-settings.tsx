@@ -121,7 +121,7 @@ export const ChatAppearanceSettingsForm = () => {
           controlId="chat-font-scale"
           label={t("settings.chat.fontScale.label")}
           description={t("settings.chat.fontScale.description")}
-          controlClassName="ll:w-48"
+          control="wide"
         >
           <SettingsSliderField
             id="chat-font-scale"
@@ -143,7 +143,7 @@ export const ChatAppearanceSettingsForm = () => {
           controlId="chat-message-gap"
           label={t("settings.chat.messageGap.label")}
           description={t("settings.chat.messageGap.description")}
-          controlClassName="ll:w-48"
+          control="wide"
         >
           <SettingsSliderField
             id="chat-message-gap"

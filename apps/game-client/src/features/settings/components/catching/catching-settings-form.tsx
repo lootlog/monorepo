@@ -169,7 +169,6 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
         disabled={isInteractionDisabled}
         onToggle={handleGuildToggle}
         emptyStateLabel={t("settings.catching.form.emptyGuilds")}
-        className="ll:px-0.5"
       />
     </div>
   );

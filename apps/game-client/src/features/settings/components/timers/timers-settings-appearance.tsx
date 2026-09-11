@@ -57,7 +57,6 @@ export const TimersSettingsAppearance: FC = () => {
           description={t(
             "settings.timers.appearance.singleTimerDisplayModeDescription",
           )}
-          controlClassName="ll:w-40"
         >
           <ToggleGroup
             className="ll:ml-auto"
@@ -90,7 +89,7 @@ export const TimersSettingsAppearance: FC = () => {
         <SettingsRow
           label={t("settings.timers.appearance.fontSizeLabel")}
           description={t("settings.timers.appearance.fontSizeDescription")}
-          controlClassName="ll:w-48"
+          control="wide"
         >
           <SettingsSliderField
             id="timer-font-size"
@@ -109,7 +108,7 @@ export const TimersSettingsAppearance: FC = () => {
         <SettingsRow
           label={t("settings.timers.appearance.minWidthLabel")}
           description={t("settings.timers.appearance.minWidthDescription")}
-          controlClassName="ll:w-48"
+          control="wide"
         >
           <SettingsSliderField
             id="timer-min-width"

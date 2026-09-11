@@ -114,10 +114,14 @@ describe("DetectorRoutingSettingsTab", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Rozwiń regułę Bossy hero" }),
-    ).toHaveTextContent("lvl 20–80 · świat Pandora · 5 serwerów");
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("lvl 20–80 · świat Pandora · 5 serwerów"),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Rozwiń regułę Reguła 2" }),
-    ).toHaveTextContent("lvl 120–240 · 1 serwer");
+    ).toBeInTheDocument();
+    expect(screen.getByText("lvl 120–240 · 1 serwer")).toBeInTheDocument();
   });
 
   it("keeps multiple rules expanded at the same time", async () => {

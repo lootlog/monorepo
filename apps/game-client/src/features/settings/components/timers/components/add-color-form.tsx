@@ -1,7 +1,8 @@
+import { SettingsRow } from "@/components/settings/settings-row";
+import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
+import { SettingsSliderField } from "@/components/settings/settings-slider-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SettingsSliderField } from "@/components/settings/settings-slider-field";
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,11 +16,18 @@ interface AddColorFormProps {
   }) => void;
 }
 
+const DEFAULT_COLOR = "#3b82f6";
+
+const DEFAULT_ALPHA = 20;
+
+const COLOR_INPUT_CLASS_NAME =
+  "ll:h-7 ll:w-8 ll:border-border ll:p-0.5 ll:text-popover-foreground";
+
 export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
   const [name, setName] = useState("");
-  const [borderColor, setBorderColor] = useState("#3b82f6");
-  const [backgroundColor, setBackgroundColor] = useState("#3b82f6");
-  const [backgroundAlpha, setBackgroundAlpha] = useState(20);
+  const [borderColor, setBorderColor] = useState(DEFAULT_COLOR);
+  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_COLOR);
+  const [backgroundAlpha, setBackgroundAlpha] = useState(DEFAULT_ALPHA);
   const { t } = useTranslation();
   const bgWithAlpha = `${backgroundColor}${alphaToHex(backgroundAlpha)}`;
 
@@ -27,56 +35,63 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
     if (!name.trim()) return;
     onAdd({ name: name.trim(), borderColor, backgroundColor: bgWithAlpha });
     setName("");
-    setBorderColor("#3b82f6");
-    setBackgroundColor("#3b82f6");
-    setBackgroundAlpha(20);
+    setBorderColor(DEFAULT_COLOR);
+    setBackgroundColor(DEFAULT_COLOR);
+    setBackgroundAlpha(DEFAULT_ALPHA);
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-2">
-      <h3 className="ll:text-sm ll:font-semibold">
-        {t("settings.timers.colors.addTitle")}
-      </h3>
+    <div className="ll:flex ll:flex-col ll:gap-1">
+      <SettingsSectionHeader
+        as="h4"
+        className="ll:px-0"
+        title={t("settings.timers.colors.addTitle")}
+      />
 
-      <div className="ll:flex ll:flex-col ll:gap-2">
-        <div className="ll:flex ll:items-center ll:gap-2">
+      <div className="ll:flex ll:flex-col ll:-mx-2">
+        <SettingsRow
+          htmlFor="add-color-name"
+          label={t("settings.timers.colors.nameLabel")}
+          control="wide"
+        >
           <Input
+            id="add-color-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("settings.timers.colors.namePlaceholder")}
-            className="ll:text-popover-foreground ll:border-foreground/20 ll:min-w-0 ll:flex-1 ll:text-xs"
+            className="ll:border-border ll:text-popover-foreground"
           />
-          <div className="ll:flex ll:items-center ll:gap-1">
-            <Label className="ll:text-[11px]">
-              {t("settings.timers.colors.borderLabel")}
-            </Label>
-            <Input
-              type="color"
-              value={stripAlphaChannel(borderColor)}
-              onChange={(e) => setBorderColor(e.target.value)}
-              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-8 ll:p-1"
-              aria-label={t("settings.timers.colors.borderAria")}
-            />
-          </div>
-
-          <div className="ll:flex ll:items-center ll:gap-1">
-            <Label className="ll:text-[11px]">
-              {t("settings.timers.colors.backgroundLabel")}
-            </Label>
-            <Input
-              type="color"
-              value={stripAlphaChannel(backgroundColor)}
-              onChange={(e) => setBackgroundColor(e.target.value)}
-              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-8 ll:p-1"
-              aria-label={t("settings.timers.colors.backgroundAria")}
-            />
-          </div>
-        </div>
-
-        <div className="ll:flex ll:gap-1 ll:flex-col ll:w-full">
-          <Label className="ll:text-[11px]">
-            {t("settings.timers.colors.transparencyLabel")}
-          </Label>
+        </SettingsRow>
+        <SettingsRow
+          htmlFor="add-color-border"
+          label={t("settings.timers.colors.borderLabel")}
+        >
+          <Input
+            id="add-color-border"
+            type="color"
+            value={stripAlphaChannel(borderColor)}
+            onChange={(e) => setBorderColor(e.target.value)}
+            className={COLOR_INPUT_CLASS_NAME}
+            aria-label={t("settings.timers.colors.borderAria")}
+          />
+        </SettingsRow>
+        <SettingsRow
+          htmlFor="add-color-background"
+          label={t("settings.timers.colors.backgroundLabel")}
+        >
+          <Input
+            id="add-color-background"
+            type="color"
+            value={stripAlphaChannel(backgroundColor)}
+            onChange={(e) => setBackgroundColor(e.target.value)}
+            className={COLOR_INPUT_CLASS_NAME}
+            aria-label={t("settings.timers.colors.backgroundAria")}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label={t("settings.timers.colors.transparencyLabel")}
+          control="wide"
+        >
           <SettingsSliderField
             min={0}
             max={100}
@@ -87,33 +102,26 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
             onValueChange={setBackgroundAlpha}
             onCommit={setBackgroundAlpha}
           />
-        </div>
+        </SettingsRow>
+        <SettingsRow
+          label={t("settings.timers.colors.previewLabel")}
+          control="wide"
+        >
+          <TimerTileView
+            customBorderColor={borderColor}
+            customBackgroundColor={bgWithAlpha}
+            displayMode="row"
+            fontSize={10}
+            label={t("common:preview.name")}
+            timeLabel={t("common:preview.time")}
+          />
+        </SettingsRow>
+      </div>
 
-        <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-2">
-          <div className="ll:gap-1 ll:flex ll:flex-col">
-            <Label className="ll:text-[11px]">
-              {t("settings.timers.colors.previewLabel")}
-            </Label>
-
-            <TimerTileView
-              customBorderColor={borderColor}
-              customBackgroundColor={bgWithAlpha}
-              displayMode="row"
-              fontSize={10}
-              label={t("common:preview.name")}
-              timeLabel={t("common:preview.time")}
-            />
-          </div>
-
-          <Button
-            size="sm"
-            onClick={handleAdd}
-            disabled={!name.trim()}
-            className="ll:w-full"
-          >
-            {t("settings.timers.colors.addButton")}
-          </Button>
-        </div>
+      <div className="ll:flex ll:justify-end ll:pt-1">
+        <Button size="sm" onClick={handleAdd} disabled={!name.trim()}>
+          {t("settings.timers.colors.addButton")}
+        </Button>
       </div>
     </div>
   );

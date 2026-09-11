@@ -1,4 +1,5 @@
 import { SettingsCategoryAccordionItem } from "@/components/settings/settings-category-accordion";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsVolumeControl } from "@/components/settings/settings-volume-row";
 import type { FC, MouseEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -51,21 +52,24 @@ export const CategoryAccordionItem: FC<CategoryAccordionItemProps> = ({
         </span>
       }
       triggerLabel={label}
-      headerControls={
-        <div className="ll:w-48">
-          <SettingsVolumeControl
-            label={label}
-            muteLabel={t("common:actions.mute")}
-            unmuteLabel={t("common:actions.unmute")}
-            volume={volume}
-            muted={isMuted}
-            onVolumeChange={onVolumeChange}
-            onVolumeCommit={onVolumeCommit}
-            onMuteToggle={onMuteToggle}
-          />
-        </div>
+      summary={
+        isMuted
+          ? t("settings.sounds.categoryMuted")
+          : `${Math.round(volume * 100)}%`
       }
     >
+      <SettingsRow label={t("settings.sounds.categoryVolume")} control="wide">
+        <SettingsVolumeControl
+          label={label}
+          muteLabel={t("common:actions.mute")}
+          unmuteLabel={t("common:actions.unmute")}
+          volume={volume}
+          muted={isMuted}
+          onVolumeChange={onVolumeChange}
+          onVolumeCommit={onVolumeCommit}
+          onMuteToggle={onMuteToggle}
+        />
+      </SettingsRow>
       {fields.map((field) => {
         const config = categoryConfig[field.key] ?? DEFAULT_NPC_CONFIG;
         const soundUrl = config.soundUrl ?? "";

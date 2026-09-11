@@ -4,8 +4,8 @@ import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { SearchInput } from "@/components/ui/search-input";
 import { matchesMuteSearch } from "@/features/settings/components/mutes/mutes-search";
 import {
   useCurrentUserNotificationMutes,
@@ -32,21 +32,21 @@ export const MutedPlayersSettingsTab = () => {
 
   return (
     <SettingsTabLayout>
-      <search className="ll:flex">
-        <SearchInput
-          value={search}
-          placeholder={t("settings.mutes.playersSearchPlaceholder")}
-          onChange={(event) => setSearch(event.target.value)}
-          onClear={() => setSearch("")}
-          clearLabel={t("settings.search.clear")}
-        />
-      </search>
       <SettingsSection
         controlId="muted-players"
         title={t("settings.mutes.playersTitle", {
           count: mutes.players.length,
         })}
       >
+        <SettingsToolbar
+          search={{
+            value: search,
+            placeholder: t("settings.mutes.playersSearchPlaceholder"),
+            onChange: (event) => setSearch(event.target.value),
+            onClear: () => setSearch(""),
+            clearLabel: t("settings.search.clear"),
+          }}
+        />
         {players.length === 0 ? (
           <SettingsEmptyState>
             {mutes.players.length === 0
@@ -59,8 +59,8 @@ export const MutedPlayersSettingsTab = () => {
               <SettingsListRow
                 key={player.discordId}
                 leading={
-                  <Avatar className="ll:size-6 ll:rounded-sm ll:border ll:border-white/10 ll:bg-black/20">
-                    <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100">
+                  <Avatar className="ll:size-6 ll:rounded-sm ll:bg-black/20">
+                    <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:text-[10px] ll:font-semibold">
                       {player.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

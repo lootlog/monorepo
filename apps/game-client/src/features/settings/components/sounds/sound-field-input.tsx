@@ -42,9 +42,10 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
         )
       }
       description={
-        error ? <span className="ll:text-red-400">{error}</span> : undefined
+        error ? <span className="ll:text-destructive">{error}</span> : undefined
       }
-      controlClassName="ll:w-64 ll:gap-1"
+      control="wide"
+      controlClassName="ll:gap-1"
     >
       <Input
         id={inputId}
@@ -54,7 +55,9 @@ export const SoundFieldInput: FC<SoundFieldInputProps> = ({
         aria-invalid={error ? true : undefined}
         onChange={(event) => onSoundUrlChange(event.target.value)}
         className={
-          error ? "ll:border-red-500 ll:focus-visible:ring-red-500" : undefined
+          error
+            ? "ll:border-destructive ll:focus-visible:ring-destructive"
+            : undefined
         }
       />
       <SettingsIconButton
