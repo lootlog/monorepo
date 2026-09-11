@@ -1,6 +1,11 @@
 import { cn } from "cn";
 import type { CSSProperties, FC, ReactNode } from "react";
-import type { SettingsControlId } from "@/features/settings/settings-manifest";
+import {
+  getControlSettingKeys,
+  type SettingsControlId,
+} from "@/features/settings/settings-manifest";
+import { useSettingsKeysSaveMark } from "@/features/settings/persistence/settings-save-status.store";
+import { SettingsSaveBadge } from "./settings-save-badge";
 import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 
 /**
@@ -52,6 +57,18 @@ export const SettingsRow: FC<SettingsRowProps> = ({
   const { ref, dataAttributes } =
     useSettingsControlHighlight<HTMLDivElement>(controlId);
 
+  const saveMark = useSettingsKeysSaveMark(
+    controlId ? getControlSettingKeys(controlId) : undefined,
+  );
+
+  const saveBadge = saveMark ? (
+    <SettingsSaveBadge
+      key={saveMark.at}
+      status={saveMark.status}
+      className="ll:ml-1.5 ll:size-3.5"
+    />
+  ) : null;
+
   const stacked = layout === "stacked";
   const wide = control === "wide";
 
@@ -60,7 +77,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
       ref={ref}
       {...dataAttributes}
       className={cn(
-        "ll:flex ll:min-h-6 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-[background-color,box-shadow] ll:hover:bg-white/5 ll:data-[settings-highlighted]:bg-primary/15 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
+        "ll:flex ll:min-h-6 ll:rounded-sm ll:px-2 ll:py-1.5 ll:transition-[background-color,box-shadow] ll:duration-500 ll:hover:bg-white/5 ll:hover:duration-150 ll:data-[settings-highlighted]:duration-150 ll:data-[settings-highlighted]:bg-primary/15 ll:data-[settings-highlighted]:shadow-[inset_0_0_0_1px_var(--color-primary)]",
         stacked
           ? "ll:flex-col ll:items-stretch ll:gap-1.5"
           : "ll:items-center ll:justify-between ll:gap-4",
@@ -82,6 +99,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
             style={labelStyle}
           >
             {label}
+            {saveBadge}
           </label>
         ) : (
           <div
@@ -92,6 +110,7 @@ export const SettingsRow: FC<SettingsRowProps> = ({
             style={labelStyle}
           >
             {label}
+            {saveBadge}
           </div>
         )}
         {description ? (

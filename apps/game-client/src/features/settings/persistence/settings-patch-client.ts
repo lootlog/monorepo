@@ -12,6 +12,7 @@ import {
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import type { QueryKey } from "@tanstack/react-query";
+import { isRecord } from "@lootlog/schema/records";
 import { toast } from "sonner";
 import {
   applySettingsOperation,
@@ -109,6 +110,19 @@ export const settingsPatchQueue = createSettingsPatchQueue({
   },
 });
 
+/** Dotted leaf paths of a patch `set`, e.g. `{ a: { b: 1 } }` -> `["a.b"]`. */
+const collectLeafPaths = (
+  value: Record<string, unknown>,
+  prefix = "",
+): string[] =>
+  Object.entries(value).flatMap(([key, nested]) => {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    return isRecord(nested) && Object.keys(nested).length > 0
+      ? collectLeafPaths(nested, path)
+      : [path];
+  });
+
 export type EnqueueSettingsPatchInput = {
   domain: SettingsDomain;
   set?: Record<string, unknown>;
@@ -142,10 +156,20 @@ export const enqueueSettingsPatch = ({
       ? [getGuildTimersDocumentsQueryKey(scope.id)]
       : [getCurrentSettingsDocumentsQueryKey()];
 
+  const settingKeys = [...collectLeafPaths(set), ...unset].map(
+    (path) => `${domain}.${path}`,
+  );
+
+  const saveStatusStore = useSettingsSaveStatusStore.getState();
+  saveStatusStore.markKeys(settingKeys, "saving");
+
   settingsPatchQueue.enqueue({
     operation: { domain, scope, set, unset },
     queryKeys,
-    afterSave,
+    afterSave: () => {
+      saveStatusStore.markKeys(settingKeys, "saved");
+      afterSave?.();
+    },
   });
 
   return true;

@@ -207,7 +207,8 @@ body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
   animation-iteration-count: infinite !important;
 }
 
-@keyframes ll-chat-npc-count-bump {
+/* Short elastic scale bump: a value or icon acknowledging a change. */
+@keyframes ll-bump {
   0%,
   100% {
     transform: scale(1);
@@ -224,8 +225,30 @@ body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
 }
 
 #lootlog-root .ll-chat-npc-count-bump {
-  animation: ll-chat-npc-count-bump 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ll-bump 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: right center;
+}
+
+#lootlog-root .ll-settings-bump {
+  animation: ll-bump 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+}
+
+/* Keybind field waiting for a key: the outline breathes instead of blinking. */
+@keyframes ll-keybind-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0
+      color-mix(in oklab, var(--color-primary) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-primary) 45%, transparent);
+  }
+}
+
+#lootlog-root .ll-keybind-breathe {
+  animation: ll-keybind-breathe 1.6s ease-in-out infinite;
 }
 
 @keyframes ll-npc-detection-flash {

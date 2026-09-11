@@ -34,6 +34,10 @@ type TimerColorSelection = {
 const selectionKey = (selection: TimerColorSelection) =>
   `${selection.kind}:${selection.id}`;
 
+/** A row added or restored in this session slides into the list once. */
+const ENTERED_ROW_CLASS_NAME =
+  "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
+
 const getTimerColorEditData = (
   selection: TimerColorSelection,
   customColors: Record<string, CustomTimerColor>,
@@ -101,6 +105,9 @@ export const TimersSettingsColors: FC = () => {
     key: string;
     data: ColorEditData;
   } | null>(null);
+
+  /** Key of the row that just joined the list (added or restored). */
+  const [enteredKey, setEnteredKey] = useState<string | null>(null);
 
   const hiddenColorIds = new Set(hiddenDefaultColors);
 
@@ -181,8 +188,15 @@ export const TimersSettingsColors: FC = () => {
   };
 
   const handleAddColor = (data: Omit<CustomTimerColor, "id">) => {
-    addCustomColor({ id: `custom-${Date.now()}`, ...data });
+    const id = `custom-${Date.now()}`;
+    addCustomColor({ id, ...data });
+    setEnteredKey(selectionKey({ id, kind: "custom" }));
     setOpenPopover(null);
+  };
+
+  const handleRestoreColor = (colorId: string) => {
+    setEnteredKey(selectionKey({ id: colorId, kind: "default" }));
+    restoreDefaultColor(colorId);
   };
 
   const renderItem = (selection: TimerColorSelection) => {
@@ -193,6 +207,7 @@ export const TimersSettingsColors: FC = () => {
       <TimerColorListItem
         key={key}
         itemKey={key}
+        className={enteredKey === key ? ENTERED_ROW_CLASS_NAME : undefined}
         data={getData(selection)}
         isDefault={isDefault}
         isModified={isDefault ? isDefaultModified(selection.id) : true}
@@ -244,7 +259,7 @@ export const TimersSettingsColors: FC = () => {
         <HiddenColorsList
           hiddenColors={hiddenDefaultColors}
           colorNames={defaultColorNames}
-          onRestore={restoreDefaultColor}
+          onRestore={handleRestoreColor}
         />
       </SettingsSection>
 
