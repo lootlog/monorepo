@@ -13,6 +13,22 @@ const APPEARANCE_FIELDS = [
   "hiddenDefaultColors",
 ] as const;
 
+/**
+ * Record-valued appearance fields. The server applies `set` per leaf path, so
+ * a key dropped from one of these maps must be sent as an `unset` path or the
+ * stored entry survives the save.
+ */
+const APPEARANCE_MAP_FIELDS = [
+  "customColors",
+  "defaultColorNames",
+  "overriddenDefaultColors",
+] as const;
+
+type AppearanceMapField = (typeof APPEARANCE_MAP_FIELDS)[number];
+
+const isAppearanceMapField = (field: string): field is AppearanceMapField =>
+  APPEARANCE_MAP_FIELDS.some((mapField) => mapField === field);
+
 /** Timer settings stored in the `timers` domain at user scope. */
 const BEHAVIOR_FIELDS = [
   "generalConfig",
@@ -36,10 +52,14 @@ export const invalidateTimerLists = () =>
 
 /**
  * Writes a timers store payload to the settings documents. Cleared timer
- * colors become `unset` paths so the server removes them instead of keeping
- * a stale assignment.
+ * colors and entries removed from the colour maps (compared with `previous`)
+ * become `unset` paths so the server removes them instead of keeping a stale
+ * value; an emptied map is written whole.
  */
-export const syncTimerSettings = (payload: UpdateTimerSettingsPayload) => {
+export const syncTimerSettings = (
+  payload: UpdateTimerSettingsPayload,
+  previous: Pick<UpdateTimerSettingsPayload, AppearanceMapField> = {},
+) => {
   const appearance: Record<string, unknown> = {};
   const unsetAppearance: string[] = [];
   const behavior: Record<string, unknown> = {};
@@ -62,6 +82,12 @@ export const syncTimerSettings = (payload: UpdateTimerSettingsPayload) => {
 
       appearance[field] = assigned;
       continue;
+    }
+
+    if (isAppearanceMapField(field) && Object.keys(value).length > 0) {
+      for (const key of Object.keys(previous[field] ?? {})) {
+        if (!(key in value)) unsetAppearance.push(`timers.${field}.${key}`);
+      }
     }
 
     appearance[field] = value;

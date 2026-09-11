@@ -107,8 +107,9 @@ export const useTimersStore = create<TimersState>()(
       const setGlobalSettings = (
         payload: UpdateTimerSettingsPayload & Partial<TimersState>,
       ) => {
+        const previous = get();
         setWithTimestamp(() => payload);
-        syncTimerSettings(payload);
+        syncTimerSettings(payload, previous);
       };
 
       const updateGuildTimerList = (
