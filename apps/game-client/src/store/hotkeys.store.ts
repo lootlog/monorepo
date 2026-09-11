@@ -48,7 +48,7 @@ export type HotkeyCategory = "communication" | "windows" | "party";
 export type HotkeyActionConfig = {
   action: HotkeyAction;
   labelKey: string;
-  descriptionKey: string;
+  descriptionKey?: string;
   category: HotkeyCategory;
   scope: HotkeyScope;
   defaultBinding: HotkeyBinding;
@@ -63,15 +63,17 @@ export const HOTKEY_CATEGORY_KEYS: Record<HotkeyCategory, string> = {
 export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   ...(
     [
-      { action: "chat-position", key: "P" },
-      { action: "chat-help", key: "H" },
-      { action: "join-party-gathering", key: "" },
-      { action: "create-party-gathering", key: "" },
+      { action: "chat-position", key: "P", hasDescription: true },
+      { action: "chat-help", key: "H", hasDescription: true },
+      { action: "join-party-gathering", key: "", hasDescription: true },
+      { action: "create-party-gathering", key: "", hasDescription: false },
     ] as const
-  ).map(({ action, key }) => ({
+  ).map(({ action, key, hasDescription }) => ({
     action,
     labelKey: `chat:quickActions.hotkeys.${action}.label`,
-    descriptionKey: `chat:quickActions.hotkeys.${action}.description`,
+    descriptionKey: hasDescription
+      ? `chat:quickActions.hotkeys.${action}.description`
+      : undefined,
     category: "communication" as const,
     scope: "global" as const,
     defaultBinding: {
@@ -85,7 +87,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-command",
     labelKey: "settings.hotkeys.actions.toggle-command.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-command.description",
     category: "communication",
     scope: "global",
     defaultBinding: {
@@ -99,7 +100,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-chat",
     labelKey: "settings.hotkeys.actions.toggle-chat.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-chat.description",
     category: "communication",
     scope: "global",
     defaultBinding: {
@@ -113,7 +113,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-settings",
     labelKey: "settings.hotkeys.actions.toggle-settings.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-settings.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -127,7 +126,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-timers",
     labelKey: "settings.hotkeys.actions.toggle-timers.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-timers.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -141,8 +139,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-online-players",
     labelKey: "settings.hotkeys.actions.toggle-online-players.label",
-    descriptionKey:
-      "settings.hotkeys.actions.toggle-online-players.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -156,7 +152,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-quick-access",
     labelKey: "settings.hotkeys.actions.toggle-quick-access.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-quick-access.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
