@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lootlog game-client sandbox</title>
+    <!-- Margonem provides Arimo; Lootlog windows inherit it from the game page. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="./sandbox.css" />
+  </head>
+  <body>
+    <!-- Minimal stand-ins for the NI game DOM that Lootlog integrates with. -->
+    <div class="sandbox-game">
+      <div id="GAME_CANVAS" class="sandbox-game-canvas">
+        <span>Margonem (sandbox)</span>
+      </div>
+      <div class="right-column">
+        <div class="inner-wrapper">
+          <div class="right-main-column-wrapper">
+            <div class="bottom-wrapper"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="sandbox-panel-root"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -22,8 +22,10 @@
   "include": [
     "src",
     "extension",
+    "sandbox",
     "wxt.config.ts",
     "vite.shared.ts",
+    "vite.sandbox.config.ts",
     ".wxt/wxt.d.ts"
   ]
 }
