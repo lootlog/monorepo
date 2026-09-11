@@ -114,7 +114,7 @@ export const ServerVisibilitySettingsTab = () => {
               </Button>
             }
           >
-            <div className="ll:flex ll:items-center ll:gap-2 ll:px-2 ll:pb-1">
+            <div className="ll:flex ll:items-center ll:gap-2 ll:px-2 ll:pt-2 ll:pb-1">
               <search className="ll:flex ll:min-w-0 ll:flex-1">
                 <SearchInput
                   value={query}
