@@ -15,8 +15,8 @@ type SettingsSectionHeaderProps = {
  * a group nested inside it (a regular heading with an optional description).
  *
  * The title always sits on the first line so every tab starts at the same
- * offset; a 24px action control is centred on that line without growing the
- * header, and a description only adds height below it.
+ * offset. Actions are centred against the whole text block (title plus
+ * description) so they read the same in every section.
  */
 export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
   title,
@@ -27,7 +27,7 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
 }) => (
   <div
     className={cn(
-      "ll:flex ll:flex-wrap ll:items-start ll:justify-between ll:gap-x-2 ll:gap-y-1 ll:px-2",
+      "ll:flex ll:flex-wrap ll:items-center ll:justify-between ll:gap-x-4 ll:gap-y-1 ll:px-2",
       className,
     )}
   >
@@ -51,9 +51,7 @@ export const SettingsSectionHeader: FC<SettingsSectionHeaderProps> = ({
       ) : null}
     </div>
     {actions ? (
-      <div className="ll:-my-1 ll:flex ll:shrink-0 ll:items-center">
-        {actions}
-      </div>
+      <div className="ll:flex ll:shrink-0 ll:items-center">{actions}</div>
     ) : null}
   </div>
 );
