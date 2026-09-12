@@ -1,14 +1,12 @@
 import type { FC } from "react";
-import { Blend, Lock, Unlock, XIcon } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Blend, Lock, LockOpen, X } from "lucide-react";
+import { WindowActionButton } from "@/components/window-action-button";
 import type { WindowOpacity } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
+
+const ICON_SIZE = 14;
 
 interface WindowTitleBarProps {
   title: string;
@@ -22,6 +20,12 @@ interface WindowTitleBarProps {
   onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }
 
+/**
+ * Three-column bar: feature actions, title, window controls. The side columns
+ * never shrink below their content and split the remaining width evenly, so
+ * the title stays centred when there is room and truncates instead of being
+ * covered when there is not.
+ */
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   title,
   actions,
@@ -41,80 +45,63 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
     onOpacityChange(OPACITY_LEVELS[nextIndex]);
   };
 
+  const lockLabel = isLocked
+    ? t("windowControls.unlockWindow")
+    : t("windowControls.lockWindow");
+
   return (
     <div
-      className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0"
+      className="ll:grid ll:h-7 ll:shrink-0 ll:select-none ll:grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] ll:items-center ll:gap-1 ll:px-0.5"
       onPointerDown={onPointerDown}
       style={{ touchAction: "none" }}
     >
       <div
-        className="ll:flex ll:items-center ll:gap-1"
+        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start"
         data-ll-draggable="false"
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              data-ll-draggable="false"
-              aria-label={t("windowControls.changeOpacity")}
-              className="ll-custom-cursor-pointer ll:mt-0.5 ll:text-gray-300 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:inline-flex ll:items-center ll:justify-center ll:bg-transparent ll:border-0 ll:p-0"
-              onClick={handleOpacityChange}
-            >
-              <Blend size="14" aria-hidden="true" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t("windowControls.changeOpacity")}</TooltipContent>
-        </Tooltip>
         {actions}
       </div>
-      <div className="ll:bg-transparent ll:leading-7 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-        <p className="ll:text-[12px] ll:text-[beige] ll:[text-shadow:1px_1px_1px_black] ll:top-1">
-          {title}
-        </p>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              data-ll-draggable="false"
-              aria-label={
-                isLocked
-                  ? t("windowControls.unlockWindow")
-                  : t("windowControls.lockWindow")
-              }
-              className="ll:absolute ll:-right-5 ll:text-gray-300 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:inline-flex ll:items-center ll:justify-center ll:bg-transparent ll:border-0 ll:p-0"
-              onClick={onLockToggle}
-            >
-              {isLocked ? (
-                <Lock size="14" aria-hidden="true" />
-              ) : (
-                <Unlock size="14" aria-hidden="true" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isLocked
-              ? t("windowControls.unlockWindow")
-              : t("windowControls.lockWindow")}
-          </TooltipContent>
-        </Tooltip>
+      <p
+        className="ll:min-w-0 ll:truncate ll:px-1 ll:text-center ll:text-[12px] ll:leading-none ll:font-semibold ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]"
+        title={title}
+      >
+        {title}
+      </p>
+      <div
+        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-end"
+        data-ll-draggable="false"
+      >
+        <WindowActionButton
+          label={t("windowControls.changeOpacity")}
+          tooltip={t("windowControls.opacityLevel", {
+            level: opacity,
+            max: OPACITY_LEVELS.length,
+          })}
+          onClick={handleOpacityChange}
+        >
+          <Blend size={ICON_SIZE} aria-hidden="true" />
+        </WindowActionButton>
+        <WindowActionButton
+          label={lockLabel}
+          pressed={isLocked}
+          onClick={onLockToggle}
+        >
+          {isLocked ? (
+            <Lock size={ICON_SIZE} aria-hidden="true" />
+          ) : (
+            <LockOpen size={ICON_SIZE} aria-hidden="true" />
+          )}
+        </WindowActionButton>
+        {closable && (
+          <WindowActionButton
+            label={t("windowControls.closeWindow")}
+            destructive
+            onClick={onClose}
+          >
+            <X size={ICON_SIZE} aria-hidden="true" />
+          </WindowActionButton>
+        )}
       </div>
-      {closable && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              data-ll-draggable="false"
-              aria-label={t("windowControls.closeWindow")}
-              className="ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:focus-visible:outline-2 ll:inline-flex ll:items-center ll:justify-center ll:bg-transparent ll:border-0 ll:p-0"
-              onClick={onClose}
-            >
-              <XIcon size="18" aria-hidden="true" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t("windowControls.closeWindow")}</TooltipContent>
-        </Tooltip>
-      )}
     </div>
   );
 };

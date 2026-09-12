@@ -104,7 +104,6 @@ describe("timers controls", () => {
 
     const actions = (underBag: boolean) => (
       <TimersActions
-        underBag={underBag}
         timerFiltersEnabled={!underBag}
         toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
         colorFiltersEnabled={underBag}

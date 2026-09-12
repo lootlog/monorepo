@@ -65,7 +65,8 @@
     "changeOpacity": "Zmień przezroczystość",
     "unlockWindow": "Odblokuj okno",
     "lockWindow": "Zablokuj okno",
-    "closeWindow": "Zamknij okno"
+    "closeWindow": "Zamknij okno",
+    "opacityLevel": "Przezroczystość: {{level}}/{{max}} (kliknij, aby zmienić)"
   },
   "guildSwitcher": {
     "allServers": "Wszystkie serwery",

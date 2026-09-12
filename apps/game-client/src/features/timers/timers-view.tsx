@@ -214,9 +214,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   if (isUnderBag) {
     return (
       <UnderBagTimers>
-        <div className="ll:flex ll:gap-1">
+        <div className="ll:flex ll:h-6 ll:shrink-0 ll:items-center ll:gap-0.5">
           <TimersActions
-            underBag
             timerFiltersEnabled={resolvedTimerFiltersEnabled}
             toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
             colorFiltersEnabled={resolvedColorFiltersEnabled}
@@ -226,9 +225,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             showHiddenTimers={showHiddenTimers}
             setShowHiddenTimers={setShowHiddenTimers}
           />
-        </div>
-        <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-          <p className="ll:text-[12px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
+          <p className="ll:ml-auto ll:min-w-0 ll:truncate ll:pr-1 ll:text-[12px] ll:leading-none ll:font-semibold ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]">
             {t("underBag.title")}
           </p>
         </div>
