@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useTimerTileModel } from "@/features/timers/hooks/use-timer-tile-model";
 import type { TimersWindowModel } from "@/features/timers/hooks/use-timers-window-model";
 import { resolveTimerRowColors } from "@/features/timers/model/timer-colors";
-import { formatLevelTag } from "@/features/timers/model/timer-labels";
+import { formatLevelSuffix } from "@/features/timers/model/timer-labels";
 import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
 import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/background";
 import { TimerTileInteractions } from "../shared/timer-tile-interactions";
@@ -59,7 +59,7 @@ export const ModernTimerTile: FC<ModernTimerTileProps> = ({ timer, model }) => {
           timer={timer}
           countdownMode={model.appearance.countdownMode}
           badge={modern.showTypeBadge ? tile.display.shortname : ""}
-          levelTag={modern.showLevel ? formatLevelTag(timer.npc) : ""}
+          levelTag={modern.showLevel ? formatLevelSuffix(timer.npc).trim() : ""}
         />
         {tile.actions.isPinned && (
           <Pin
