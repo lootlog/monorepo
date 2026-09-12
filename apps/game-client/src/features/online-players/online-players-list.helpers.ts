@@ -1,3 +1,4 @@
+import { clamp } from "@/lib/clamp";
 import type { MargonemCharacter } from "@/api/characters.api";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getFixedT } from "@/i18n/get-fixed-t";
@@ -37,12 +38,8 @@ export const DEFAULT_ONLINE_PLAYERS_FILTERS: OnlinePlayersFiltersValue = {
   selectedProfession: ALL_PROFESSIONS_VALUE,
 };
 
-export const clampOnlinePlayerLevel = (level: number) => {
-  return Math.max(
-    MIN_ONLINE_PLAYER_LEVEL,
-    Math.min(MAX_ONLINE_PLAYER_LEVEL, level),
-  );
-};
+export const clampOnlinePlayerLevel = (level: number) =>
+  clamp(level, MIN_ONLINE_PLAYER_LEVEL, MAX_ONLINE_PLAYER_LEVEL);
 
 export const getPresenceCharacter = (
   presence: PlayerPresence,

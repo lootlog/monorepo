@@ -9,8 +9,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
+import {
+  getDefaultColorName,
+  getTimerColorHex,
+  TIMERS_COLORS,
+} from "@/features/timers/model/timer-colors";
 import { useTimersStore } from "@/store/timers.store";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
@@ -20,7 +23,6 @@ import {
   alphaToHex,
   hexToAlpha,
   stripAlphaChannel,
-  getTimerColorHex,
   type ColorEditData,
 } from "./components/color-utils";
 import { HiddenColorsList } from "./components/hidden-colors-list";

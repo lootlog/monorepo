@@ -1,31 +1,11 @@
-import { getNpcTypeNames } from "@/constants/margonem";
 import type { Timer } from "@/api/timers.api";
+import { getTimerColorConfig } from "@/features/timers/model/timer-colors";
+import {
+  formatLevelSuffix,
+  getTimerShortname,
+} from "@/features/timers/model/timer-labels";
 import { useTimersStore } from "@/store/timers.store";
-import { getTimerColorConfig } from "../utils/timer-helpers";
 import { useShallow } from "zustand/react/shallow";
-
-const MANUAL_TIMER_MARGONEM_TYPE = 999;
-
-const getTimerShortname = (timer: Timer, showType: boolean) => {
-  if (!showType) {
-    return "";
-  }
-
-  const typeShortname = getNpcTypeNames(timer.npc.type)?.shortname;
-
-  const manualTimer =
-    Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
-
-  if (manualTimer && typeShortname) {
-    return `[M][${typeShortname}]`;
-  }
-
-  if (manualTimer) {
-    return "[M]";
-  }
-
-  return `[${typeShortname ?? "M"}]`;
-};
 
 export const useTimerDisplay = (timer: Timer) => {
   const {
@@ -54,12 +34,11 @@ export const useTimerDisplay = (timer: Timer) => {
   const isPending = timer.isPending ?? false;
   const resetIndicator = timer.wasReset ? "[R] " : "";
 
-  const shortname = getTimerShortname(timer, displayConfig.showType);
+  const shortname = displayConfig.showType ? getTimerShortname(timer) : "";
 
-  const npcDetails =
-    displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
-      ? ` (${timer.npc.lvl}${timer.npc.prof.charAt(0).toLowerCase()})`
-      : "";
+  const npcDetails = displayConfig.showLevel
+    ? formatLevelSuffix(timer.npc)
+    : "";
 
   return {
     isPending,

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { expect, it } from "vitest";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 
 it("loads scoped history only when opened and restores the timer into its world cache", async () => {

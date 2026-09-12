@@ -2,11 +2,11 @@ import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
 import { describe, expect, it } from "vitest";
 import {
+  calculateTimeLeft,
   filterTimersByRemovalTime,
   getTimerTimeLeft,
-  isManualTimer,
   type TimerWithTimeLeft,
-} from "./timers-utils";
+} from "./timer-time";
 
 const createTimer = (overrides: Partial<Timer> = {}): Timer => ({
   guildId: "guild-1",
@@ -31,7 +31,7 @@ const createTimer = (overrides: Partial<Timer> = {}): Timer => ({
   ...overrides,
 });
 
-describe("timers-utils", () => {
+describe("timer-time", () => {
   it("calculates Timer time from an explicit epoch", () => {
     const epoch = new Date("2026-04-22T10:00:00.000Z").getTime();
 
@@ -64,11 +64,9 @@ describe("timers-utils", () => {
     expect(filterTimersByRemovalTime(timers, 30_000)).toEqual([timers[0]]);
   });
 
-  it("recognizes manual Timers", () => {
-    expect(
-      isManualTimer(
-        createTimer({ npc: { ...createTimer().npc, margonemType: 999 } }),
-      ),
-    ).toBe(true);
+  it("chooses the countdown based on mode and min-spawn state", () => {
+    expect(calculateTimeLeft(5_000, 10_000, "max", false)).toBe(10_000);
+    expect(calculateTimeLeft(5_000, 10_000, "min", false)).toBe(5_000);
+    expect(calculateTimeLeft(-1, 10_000, "min", true)).toBe(10_000);
   });
 });

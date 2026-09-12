@@ -1,5 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { AddTimerForm } from "@/features/timers/components/add-timer-form";
+import { AddTimerForm } from "@/features/timers/components/add-timer/add-timer-form";
 import { useWindowsStore } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 

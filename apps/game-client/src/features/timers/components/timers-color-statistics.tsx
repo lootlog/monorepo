@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getTimerColor } from "@/features/timers/constants/timer-colors";
+import { getTimerColor } from "@/features/timers/model/timer-colors";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 

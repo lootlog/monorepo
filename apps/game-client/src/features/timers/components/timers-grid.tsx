@@ -10,7 +10,7 @@ import {
 } from "@lootlog/client/main";
 
 import { useQueries } from "@tanstack/react-query";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
+import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
 import { TimerClockProvider } from "./timer-clock-provider";
 
 type TimersGridProps = {

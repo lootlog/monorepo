@@ -16,8 +16,8 @@ import { useTimersStore } from "@/store/timers.store";
 import {
   createTimerFixture,
   createTimerMemberFixture,
-} from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+} from "@/features/timers/model/timer-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
 import { SingleTimer } from "./single-timer";
 

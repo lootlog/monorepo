@@ -1,3 +1,4 @@
+import { clamp } from "@/lib/clamp";
 import type { MapPingType } from "@lootlog/schema/map-ping";
 import type { MapTile } from "./map-ping-controller";
 
@@ -106,10 +107,7 @@ export const clampMapPingWheelCenter = (
       return viewportSize / 2;
     }
 
-    return Math.min(
-      Math.max(coordinate, minimumCenter),
-      viewportSize - minimumCenter,
-    );
+    return clamp(coordinate, minimumCenter, viewportSize - minimumCenter);
   };
 
   return {

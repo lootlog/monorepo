@@ -1,5 +1,5 @@
 import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
-import { clearTimerEpochCache } from "@/features/timers/utils/timers-utils";
+import { clearTimerEpochCache } from "@/features/timers/model/timer-time";
 import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-tooltip-catching-guilds-coordinator";
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimersCache } from "./use-timers-cache";
-import { createTimerFixture as createTimer } from "@/features/timers/timer-fixtures";
+import { createTimerFixture as createTimer } from "@/features/timers/model/timer-fixtures";
 
 describe("useTimersCache", () => {
   let queryClient: QueryClient;

@@ -2,16 +2,19 @@ import { Input } from "@/components/ui/input";
 import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/api/npcs.api";
 import { cn } from "cn";
+import { clamp } from "@/lib/clamp";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
-import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
+import {
+  getDefaultColorName,
+  TIMERS_COLORS,
+} from "@/features/timers/model/timer-colors";
 
 const NPC_TYPES_OPTIONS = [
   NpcType.ELITE2,
@@ -23,10 +26,6 @@ const NPC_TYPES_OPTIONS = [
 const MAX_LVL = 500;
 
 const MIN_LVL = 0;
-
-const clampValue = (value: number, min: number, max: number): number => {
-  return Math.max(min, Math.min(max, value));
-};
 
 type TimersFiltersProps = {
   filtersKey: string;
@@ -65,7 +64,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     if (Number.isNaN(numericValue)) return;
     setTimersFilters(filtersKey, {
       ...filters,
-      [field]: clampValue(numericValue, MIN_LVL, MAX_LVL),
+      [field]: clamp(numericValue, MIN_LVL, MAX_LVL),
     });
   };
 

@@ -1,3 +1,4 @@
+import { clamp } from "@/lib/clamp";
 import { Input } from "@/components/ui/input";
 import { cn } from "cn";
 import { useRef, useState, type FC, type KeyboardEvent } from "react";
@@ -29,7 +30,7 @@ export const clampSettingsNumber = (
   step = 1,
 ) => {
   if (Number.isNaN(value)) return min;
-  const clamped = Math.min(max, Math.max(min, value));
+  const clamped = clamp(value, min, max);
 
   return step >= 1 ? Math.round(clamped) : clamped;
 };

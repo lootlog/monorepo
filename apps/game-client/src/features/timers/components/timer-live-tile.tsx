@@ -1,7 +1,9 @@
 import type { Timer } from "@/api/timers.api";
 import { parseMsToTime } from "@lootlog/datetime";
-import { calculateTimeLeft } from "../utils/timer-helpers";
-import { getTimerTimeLeft } from "../utils/timers-utils";
+import {
+  calculateTimeLeft,
+  getTimerTimeLeft,
+} from "@/features/timers/model/timer-time";
 import { useTimerClockEpoch } from "./timer-clock-provider";
 import { TimerTileView, type TimerTileViewProps } from "./timer-tile-view";
 

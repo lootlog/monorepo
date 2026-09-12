@@ -3,7 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { expect, it, onTestFinished } from "vitest";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { useCreateManualTimer } from "./use-create-manual-timer";
 
 it("creates a manual timer and invalidates the timer query family", async () => {

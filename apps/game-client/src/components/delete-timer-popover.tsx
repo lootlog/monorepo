@@ -15,8 +15,8 @@ import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
 
-import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
-import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
+import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
+import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/model/timer-permissions";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";

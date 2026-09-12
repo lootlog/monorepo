@@ -1,4 +1,4 @@
-import { createTimerFixture } from "../timer-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";

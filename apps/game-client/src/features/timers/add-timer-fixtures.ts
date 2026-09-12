@@ -7,8 +7,11 @@ import {
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { createTimerGuildFixture, createTimerFixture } from "./timer-fixtures";
-import { createTimerHttpFixture } from "./timer-http-fixtures";
+import {
+  createTimerGuildFixture,
+  createTimerFixture,
+} from "@/features/timers/model/timer-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 
 export const createAddTimerFixture = ({
   hiddenGuildIds = [],

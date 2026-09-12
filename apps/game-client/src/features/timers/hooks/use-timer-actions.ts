@@ -4,7 +4,7 @@ import {
 } from "@lootlog/client/main";
 import { getApiErrorStringField } from "@lootlog/client/transport";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
+import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useShallow } from "zustand/react/shallow";

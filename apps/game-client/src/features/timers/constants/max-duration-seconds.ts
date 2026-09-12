@@ -1,1 +1,0 @@
-export const MAX_DURATION_SECONDS = 300 * 3600;

@@ -1,3 +1,4 @@
+import { clamp } from "@/lib/clamp";
 import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
 import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
 import {
@@ -13,9 +14,7 @@ export const LEVEL_MIN = 0;
 
 export const LEVEL_MAX = 500;
 
-export const clampLevel = (value: number) => {
-  return Math.min(LEVEL_MAX, Math.max(LEVEL_MIN, value));
-};
+export const clampLevel = (value: number) => clamp(value, LEVEL_MIN, LEVEL_MAX);
 
 const createRoutingRuleId = () => {
   if (window.crypto?.randomUUID) {

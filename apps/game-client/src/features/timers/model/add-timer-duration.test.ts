@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { MAX_DURATION_SECONDS } from "../constants/max-duration-seconds";
-import { parseDurationToSeconds } from "./add-timer-form-helpers";
+import {
+  MAX_DURATION_SECONDS,
+  formatSecondsToDuration,
+  parseDurationToSeconds,
+} from "./add-timer-duration";
 
-describe("add-timer-form-helpers", () => {
+describe("add-timer-duration", () => {
   describe("parseDurationToSeconds", () => {
     it("parses hours, minutes, and seconds in mixed formats", () => {
       expect(parseDurationToSeconds("1h 2m 3s")).toBe(3723);
@@ -25,6 +28,16 @@ describe("add-timer-form-helpers", () => {
       const overLimit = `${Math.ceil(MAX_DURATION_SECONDS / 3600) + 24}h`;
 
       expect(parseDurationToSeconds(overLimit)).toBe(MAX_DURATION_SECONDS);
+    });
+  });
+
+  describe("formatSecondsToDuration", () => {
+    it("round-trips through parseDurationToSeconds", () => {
+      for (const seconds of [0, 45, 900, 3723, 7205, MAX_DURATION_SECONDS]) {
+        expect(parseDurationToSeconds(formatSecondsToDuration(seconds))).toBe(
+          seconds,
+        );
+      }
     });
   });
 });

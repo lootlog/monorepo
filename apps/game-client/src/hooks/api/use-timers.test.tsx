@@ -2,7 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { expect, it, onTestFinished } from "vitest";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimers } from "./use-timers";
 

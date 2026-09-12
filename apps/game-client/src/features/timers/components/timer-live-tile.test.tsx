@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createTimerFixture } from "../timer-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
 
 import { TimerLiveTile } from "./timer-live-tile";
@@ -28,6 +28,7 @@ describe("TimerLiveTile", () => {
     render(
       <TimerClockProvider>
         <TimerLiveTile
+          colors={{}}
           countdownMode="min"
           displayMode="row"
           fontSize={11}

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createTimerFixture,
   createTimerMemberFixture,
-} from "../timer-fixtures";
+} from "@/features/timers/model/timer-fixtures";
 import type { Timer } from "@/api/timers.api";
 import { TimerTooltip } from "./timer-tooltip";
 

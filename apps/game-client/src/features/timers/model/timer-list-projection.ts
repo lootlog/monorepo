@@ -1,14 +1,13 @@
 import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
+import { getDefaultColorName, TIMERS_COLORS } from "./timer-colors";
+import { isManualTimer } from "./timer-kind";
 import {
   getTimerEpoch,
   getTimerTimeLeft,
-  isManualTimer,
   type TimerWithTimeLeft,
-} from "@/features/timers/utils/timers-utils";
+} from "./timer-time";
 import { DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
 import type { GuildMember } from "@/types/guild-member";
 

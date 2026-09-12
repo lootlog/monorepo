@@ -12,8 +12,6 @@ export type TimerWithTimeLeft = Timer & {
   }>;
 };
 
-const MANUAL_TIMER_MARGONEM_TYPE = 999;
-
 const TIMER_EPOCH_CACHE_LIMIT = 20_000;
 
 const timerEpochByTimestamp = new Map<string, number>();
@@ -44,9 +42,6 @@ export const getTimerEpoch = (timestamp: string): number => {
   return epoch;
 };
 
-export const isManualTimer = (timer: Timer) =>
-  Number(timer.npc.margonemType) === MANUAL_TIMER_MARGONEM_TYPE;
-
 export const getTimerTimeLeft = (
   timer: Timer,
   now = Date.now(),
@@ -73,4 +68,18 @@ export const filterTimersByRemovalTime = (
   removeTimerAfterMs: number,
 ): TimerWithTimeLeft[] => {
   return timers.filter((t) => t.maxTimeLeft > -removeTimerAfterMs);
+};
+
+/** The countdown shown on a tile: max time unless the user counts to min and it has not passed. */
+export const calculateTimeLeft = (
+  minTimeLeft: number,
+  maxTimeLeft: number,
+  countdownMode: "min" | "max",
+  isMinSpawnTime: boolean,
+) => {
+  if (countdownMode === "max" || isMinSpawnTime) {
+    return maxTimeLeft;
+  }
+
+  return minTimeLeft;
 };

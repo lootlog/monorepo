@@ -15,8 +15,8 @@ import {
   testRuntimeWindow,
 } from "@/test/test-runtime-window";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { createTimerFixture } from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { useTimerActions } from "./use-timer-actions";
 
 const message = vi.fn<(text: string) => void>();

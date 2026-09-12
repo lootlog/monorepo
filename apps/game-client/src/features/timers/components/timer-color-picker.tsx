@@ -7,8 +7,10 @@ import { cn } from "cn";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { FC } from "react";
-import { TIMERS_COLORS } from "../constants/timer-colors";
-import { getDefaultColorName } from "../utils/get-default-color-name";
+import {
+  getDefaultColorName,
+  TIMERS_COLORS,
+} from "@/features/timers/model/timer-colors";
 
 type CustomColor = {
   id: string;

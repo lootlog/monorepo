@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
+import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
 import { cn } from "cn";
 import { useTimersStore } from "@/store/timers.store";
 import { Loader2 } from "lucide-react";
@@ -19,9 +19,12 @@ import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import { TimerLiveTile } from "./timer-live-tile";
-import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
+import { resolveTimerTileColors } from "@/features/timers/model/timer-colors";
+import {
+  canDeleteTimer,
+  canResetTimer,
+} from "@/features/timers/model/timer-permissions";
 import { useGameStore } from "@/store/game.store";
-import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 import { useShallow } from "zustand/react/shallow";
 
 type SingleTimerProps = {
@@ -59,10 +62,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     })),
   );
 
-  const canDelete =
-    accessPolicy?.allowsAny(REQUIRED_DELETE_PERMISSIONS) ?? false;
-
-  const canReset = accessPolicy?.allowsAny(REQUIRED_RESET_PERMISSIONS) ?? false;
+  const canDelete = canDeleteTimer(accessPolicy);
+  const canReset = canResetTimer(accessPolicy);
 
   const {
     isPinned,
@@ -109,16 +110,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               )}
               <TimerLiveTile
                 id={timer.npc.id.toString()}
-                color={
-                  customColor || overriddenColor ? undefined : selectedColor
-                }
-                customBorderColor={
-                  customColor?.borderColor || overriddenColor?.borderColor
-                }
-                customBackgroundColor={
-                  customColor?.backgroundColor ||
-                  overriddenColor?.backgroundColor
-                }
+                colors={resolveTimerTileColors({
+                  selectedColor,
+                  customColor,
+                  overriddenColor,
+                })}
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}

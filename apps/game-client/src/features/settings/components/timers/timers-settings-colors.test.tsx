@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
+import { getDefaultColorName } from "@/features/timers/model/timer-colors";
 import { useTimersStore } from "@/store/timers.store";
 import { TimersSettingsColors } from "./timers-settings-colors";
 

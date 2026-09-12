@@ -11,7 +11,7 @@ import {
   useTimersControllerGetTimerHistory,
 } from "@lootlog/client/main";
 
-import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
+import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
 import { History } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";

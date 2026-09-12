@@ -1,4 +1,5 @@
 import { TimerTileView } from "@/features/timers/components/timer-tile-view";
+import { resolveTimerTileColors } from "@/features/timers/model/timer-colors";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,8 +27,11 @@ export const TimerColorPreviewChip: FC<TimerColorPreviewChipProps> = ({
   return (
     <span aria-hidden className={cn("ll:flex ll:w-32", className)}>
       <TimerTileView
-        customBorderColor={borderColor}
-        customBackgroundColor={backgroundColor}
+        colors={resolveTimerTileColors({
+          selectedColor: "custom",
+          customColor: { id: "custom", name: "", borderColor, backgroundColor },
+          overriddenColor: undefined,
+        })}
         displayMode="row"
         fontSize={fontSize}
         label={t("common:preview.name")}

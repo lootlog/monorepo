@@ -2,7 +2,7 @@ import type { Timer } from "@/api/timers.api";
 import {
   getTimerListRemovalTimers,
   projectTimerList,
-} from "@/features/timers/timer-list-projection";
+} from "@/features/timers/model/timer-list-projection";
 import { useTimerRemovalBoundary } from "@/features/timers/hooks/use-timer-removal-boundary";
 
 type UseTimerListProjectionInput = Omit<

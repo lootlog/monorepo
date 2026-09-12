@@ -10,8 +10,8 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { createTimerFixture } from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 
 type MenuProps = ComponentProps<typeof TimerContextMenuContent>;

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { expect, it, vi } from "vitest";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { TimersFooter } from "./timers-footer";
 
 it("shows color totals, disconnected status and the add action with history only outside grouping", async () => {

@@ -12,8 +12,8 @@ import {
   createTimerFixture,
   createTimerGuildFixture,
   createTimerMemberFixture,
-} from "../timer-fixtures";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
+} from "@/features/timers/model/timer-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { TimersGrid } from "./timers-grid";
 
 const NOW = Date.parse("2026-04-22T10:00:00.000Z");

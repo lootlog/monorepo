@@ -1,9 +1,7 @@
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import { DeleteTimerPopover } from "@/components/delete-timer-popover";
-import {
-  isManualTimer,
-  type TimerWithTimeLeft,
-} from "@/features/timers/utils/timers-utils";
+import { isManualTimer } from "@/features/timers/model/timer-kind";
+import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
 import {
   Eye,
   EyeOff,

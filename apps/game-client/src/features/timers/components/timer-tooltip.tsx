@@ -3,11 +3,11 @@ import { format } from "@/utils/local-date";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { formatLevelSuffix } from "@/features/timers/model/timer-labels";
 import {
-  getLevelSuffix,
-  getTimerMembers,
   getMembersWithGuilds,
-} from "../utils/timer-helpers";
+  getTimerMembers,
+} from "@/features/timers/model/timer-members";
 
 type TimerTooltipProps = {
   guildNamesById: Record<string, string>;
@@ -19,7 +19,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   timer,
 }) => {
   const { t } = useTranslation("timers");
-  const levelSuffix = getLevelSuffix(timer.npc);
+  const levelSuffix = formatLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
 
   const membersWithGuilds =

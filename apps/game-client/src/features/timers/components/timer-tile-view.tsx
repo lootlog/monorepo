@@ -1,12 +1,10 @@
 import { Tile } from "@/components/ui/tile";
 import { cn } from "cn";
-import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import type { TimerTileColors } from "@/features/timers/model/timer-colors";
 import type { FC } from "react";
 
 export type TimerTileViewProps = {
-  color?: keyof typeof TIMERS_COLORS | string;
-  customBorderColor?: string;
-  customBackgroundColor?: string;
+  colors: TimerTileColors;
   displayMode: "column" | "row";
   fontSize: number;
   hasPassedRedThreshold?: boolean;
@@ -18,9 +16,7 @@ export type TimerTileViewProps = {
 };
 
 export const TimerTileView: FC<TimerTileViewProps> = ({
-  color,
-  customBorderColor,
-  customBackgroundColor,
+  colors,
   displayMode,
   fontSize,
   hasPassedRedThreshold = false,
@@ -30,12 +26,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   label,
   timeLabel,
 }) => (
-  <Tile
-    id={id}
-    color={color}
-    customBorderColor={customBorderColor}
-    customBackgroundColor={customBackgroundColor}
-  >
+  <Tile id={id} className={colors.className} style={colors.style}>
     <span
       className={cn(
         "ll:flex ll:h-full ll:w-full ll:min-w-0 ll:justify-between ll:px-1 ll:text-[11px]",

@@ -2,8 +2,8 @@ import { act, render, screen } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
-import { createTimerFixture } from "./timer-fixtures";
-import { createTimerViewFixture } from "./timer-view-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
+import { createTimerViewFixture } from "@/features/timers/model/timer-view-fixtures";
 import { TimersView } from "./timers-view";
 
 const NOW = Date.parse("2026-07-20T10:00:00.000Z");

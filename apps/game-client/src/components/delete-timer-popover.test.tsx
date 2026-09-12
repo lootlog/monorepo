@@ -7,11 +7,11 @@ import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
 } from "@lootlog/client/main";
-import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import {
   createTimerFixture,
   createTimerGuildFixture,
-} from "@/features/timers/timer-fixtures";
+} from "@/features/timers/model/timer-fixtures";
 import {
   ContextMenu,
   ContextMenuTrigger,

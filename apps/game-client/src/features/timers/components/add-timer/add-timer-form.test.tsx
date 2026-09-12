@@ -5,7 +5,7 @@ import { expect, it, onTestFinished } from "vitest";
 import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { createAddTimerFixture } from "../add-timer-fixtures";
+import { createAddTimerFixture } from "../../add-timer-fixtures";
 import { AddTimerForm } from "./add-timer-form";
 
 const npc: SearchTimersNpcResponseDtoOutput = {

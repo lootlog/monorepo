@@ -8,8 +8,8 @@ import { useTimersStore, DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { createTimerFixture } from "./timer-fixtures";
-import { createTimerViewFixture } from "./timer-view-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
+import { createTimerViewFixture } from "@/features/timers/model/timer-view-fixtures";
 import { Timers } from "./timers";
 
 const createVisibleTimer = () =>

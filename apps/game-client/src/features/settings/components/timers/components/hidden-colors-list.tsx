@@ -6,11 +6,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
+import {
+  getDefaultColorName,
+  getTimerColorHex,
+} from "@/features/timers/model/timer-colors";
 import { ChevronRight, RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { getTimerColorHex } from "./color-utils";
 
 interface HiddenColorsListProps {
   hiddenColors: string[];

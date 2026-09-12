@@ -8,8 +8,8 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
-import { createTimerFixture } from "../timer-fixtures";
+import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
+import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
 import { TimerHistoryPopover } from "./timer-history-popover";
 
 it("opens a timer's history from its context menu and restores the selected entry", async () => {
