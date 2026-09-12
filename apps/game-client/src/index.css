@@ -167,18 +167,22 @@
   letter-spacing: var(--tracking-normal);
 }
 
-body.si :is(#lootlog-root, .ll-theme-boundary) * {
+body.si #lootlog-root *,
+body.si .ll-theme-boundary * {
   /* Matches NI behaviour */
   user-select: none;
 }
 
-body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport],
-body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport] * {
+body #lootlog-root [data-chat-viewport],
+body .ll-theme-boundary [data-chat-viewport],
+body #lootlog-root [data-chat-viewport] *,
+body .ll-theme-boundary [data-chat-viewport] * {
   -webkit-user-select: text;
   user-select: text;
 }
 
-body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
+body.si #lootlog-root .ll-custom-cursor-pointer *,
+body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   /* Needed because SI has * { cursor: default } */
   cursor: inherit;
 }
@@ -192,6 +196,12 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   pointer-events: auto;
 }
 
+/*
+ * Universal-subject rules are matched against every element the game inserts.
+ * Keep each ancestor as a single id or class (a selector list, never a
+ * multi-argument `:is()`/`:where()`) so Chrome can fast-reject them from the
+ * ancestor filter, and keep the number of such rules minimal.
+ */
 #lootlog-root *,
 .ll-theme-boundary * {
   font-family: Arimo, Calibri, Segoe;
@@ -240,9 +250,12 @@ body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
   will-change: opacity, transform;
 }
 
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *,
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *::before,
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *::after {
+#lootlog-root.ll-reduced-motion *,
+.ll-theme-boundary.ll-reduced-motion *,
+#lootlog-root.ll-reduced-motion *::before,
+.ll-theme-boundary.ll-reduced-motion *::before,
+#lootlog-root.ll-reduced-motion *::after,
+.ll-theme-boundary.ll-reduced-motion *::after {
   scroll-behavior: auto !important;
   transition-delay: 0ms !important;
   transition-duration: 0ms !important;
@@ -362,6 +375,14 @@ body:has(> #lootlog-root) .b_wrapper {
 }
 
 body:has(> #lootlog-root) .all\:b {
+  display: none !important;
+}
+
+/* Newer Margonem builds render banners as a swiper inside .bottom-wrapper. */
+body:has(> #lootlog-root)
+  .right-main-column-wrapper
+  > .bottom-wrapper
+  > .banners {
   display: none !important;
 }
 
