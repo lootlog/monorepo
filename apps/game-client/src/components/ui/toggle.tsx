@@ -10,6 +10,9 @@ const toggleVariants = cva(
         default: "ll:bg-transparent",
         outline:
           "ll:border ll:border-input ll:bg-transparent ll:hover:bg-muted",
+        /** Flat toolbar segment: no border or rounding, graphite when pressed. */
+        toolbar:
+          "ll:rounded-none ll:border-0 ll:bg-transparent ll:font-normal ll:text-gray-300 ll:hover:bg-white/8 ll:hover:text-white ll:data-pressed:bg-white/15 ll:data-pressed:text-white ll:data-pressed:hover:bg-white/20",
       },
       size: {
         default:

@@ -1,4 +1,8 @@
-import { Input, type InputSize } from "@/components/ui/input";
+import {
+  Input,
+  type InputSize,
+  type InputVariant,
+} from "@/components/ui/input";
 import { cn } from "cn";
 import { Search, X } from "lucide-react";
 import { forwardRef, type ComponentProps } from "react";
@@ -10,6 +14,8 @@ type SearchInputProps = Omit<
   value: string;
   placeholder: string;
   size?: InputSize;
+  /** Defaults to the filled toolbar look; `borderless` for flat filter bands. */
+  variant?: Extract<InputVariant, "filled" | "borderless">;
   /** Renders a clear button while the value is non-empty. */
   onClear?: () => void;
   clearLabel?: string;
@@ -22,7 +28,15 @@ type SearchInputProps = Omit<
  */
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   function SearchInput(
-    { size = "md", value, onClear, clearLabel, className, ...props },
+    {
+      size = "md",
+      variant = "filled",
+      value,
+      onClear,
+      clearLabel,
+      className,
+      ...props
+    },
     ref,
   ) {
     const showClear = Boolean(onClear) && value.length > 0;
@@ -37,7 +51,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <Input
           ref={ref}
           type="text"
-          variant="filled"
+          variant={variant}
           size={size}
           value={value}
           autoComplete="off"

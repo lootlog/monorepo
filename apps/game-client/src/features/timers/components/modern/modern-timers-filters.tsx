@@ -30,9 +30,18 @@ type ModernTimersFiltersProps = {
   colorFiltersEnabled: boolean;
 };
 
+/** Hairline between two controls of the band. */
+const FilterDivider: FC = () => (
+  <span aria-hidden className="ll:h-4 ll:w-px ll:shrink-0 ll:bg-white/15" />
+);
+
+const LEVEL_INPUT_CLASS_NAME =
+  "input-no-spinner ll:h-7 ll:w-8 ll:px-0 ll:text-center ll:text-[12px]";
+
 /**
- * One row of same-height controls (search, level range, NPC types) like the
- * online players window, plus a row of colour chips when colour filters are on.
+ * One flat band of same-height controls separated by hairlines: search,
+ * level range and NPC ranks. No boxes, no rounding; the band's top and
+ * bottom separators come from the surface.
  */
 export const ModernTimersFilters: FC<ModernTimersFiltersProps> = ({
   filtersKey,
@@ -81,39 +90,45 @@ export const ModernTimersFilters: FC<ModernTimersFiltersProps> = ({
   ];
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1">
-      <div className="ll:flex ll:items-center ll:gap-1">
+    <div className="ll:flex ll:flex-col">
+      <div className="ll:flex ll:h-7 ll:items-center">
         <SearchInput
           size="sm"
+          variant="borderless"
           placeholder={t("filters.searchPlaceholder")}
           value={searchText}
           onChange={handleSearchChange}
           onClear={clearSearch}
           clearLabel={t("actions.clear", { ns: "common" })}
         />
+        <FilterDivider />
         <Input
+          variant="borderless"
           aria-label={t("filters.minPlaceholder")}
           value={filters.minLvl.toString()}
           onChange={(event) => handleLevelChange("minLvl", event)}
-          className="ll:w-9 input-no-spinner ll:px-0.5 ll:text-center"
+          className={LEVEL_INPUT_CLASS_NAME}
           max={TIMER_FILTER_MAX_LVL}
           min={TIMER_FILTER_MIN_LVL}
           type="number"
           inputMode="numeric"
         />
+        <FilterDivider />
         <Input
+          variant="borderless"
           aria-label={t("filters.maxPlaceholder")}
           value={filters.maxLvl.toString()}
           onChange={(event) => handleLevelChange("maxLvl", event)}
-          className="ll:w-9 input-no-spinner ll:px-0.5 ll:text-center"
+          className={LEVEL_INPUT_CLASS_NAME}
           max={TIMER_FILTER_MAX_LVL}
           min={TIMER_FILTER_MIN_LVL}
           type="number"
           inputMode="numeric"
         />
+        <FilterDivider />
         <ToggleGroup
           multiple
-          variant="outline"
+          variant="toolbar"
           size="sm"
           spacing={0}
           value={[...selectedNpcTypes]}
@@ -125,14 +140,13 @@ export const ModernTimersFilters: FC<ModernTimersFiltersProps> = ({
             if (changed) toggleNpcType(changed);
           }}
           aria-label={t("filters.typesLabel")}
-          className="ll:shrink-0"
+          className="ll:h-full ll:shrink-0 ll:rounded-none"
         >
           {TIMER_FILTER_NPC_TYPES.map((type) => (
             <ToggleGroupItem
               key={type}
               value={type}
               aria-label={NPC_NAMES[type].longname}
-              className="ll:px-1.5 ll:text-[11px]"
               onContextMenu={(event) => selectOnlyNpcType(event, type)}
             >
               {NPC_NAMES[type].shortname}
@@ -144,7 +158,7 @@ export const ModernTimersFilters: FC<ModernTimersFiltersProps> = ({
         <div
           role="group"
           aria-label={t("filters.colorsLabel")}
-          className="ll:flex ll:flex-wrap ll:items-center ll:gap-1"
+          className="ll:flex ll:flex-wrap ll:items-center ll:gap-1 ll:border-0 ll:border-t ll:border-solid ll:border-white/15 ll:px-1.5 ll:py-1"
         >
           {colorChips.map((chip) => {
             const isSelected = selectedColors.has(chip.id);

@@ -57,7 +57,7 @@ export const ModernTimersSurface: FC<TimersLayoutProps> = ({
         <ModernTimersHeader allowWorldSelection={scope.allowWorldSelection} />
       )}
       {showFiltersBar && (
-        <div className="ll:shrink-0 ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40 ll:bg-black/20 ll:p-1">
+        <div className="ll:shrink-0 ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40 ll:bg-black/20">
           <ModernTimersFilters
             filtersKey={scope.settingsKey}
             colors={appearance.colors}
