@@ -196,6 +196,55 @@ describe("useUpdateUserPreferences", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
+  it("derives a queued update from the optimistic cache and keeps it past the earlier response", async () => {
+    const firstDeferred =
+      Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+
+    const secondDeferred =
+      Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+
+    const previousData = createTestUserPreferences();
+    const queryKey = UsersModule.getUsersControllerGetUserPreferencesQueryKey();
+
+    const readHiddenGuildIds = () =>
+      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(queryKey)
+        ?.hiddenGuildIds;
+
+    respond
+      .mockReturnValueOnce(firstDeferred.promise)
+      .mockReturnValueOnce(secondDeferred.promise);
+    queryClient.setQueryData(queryKey, previousData);
+
+    const { result } = renderHook(() => useUpdateUserPreferences(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      result.current.mutateFromCurrent((current) => ({
+        hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), "guild-1"],
+      }));
+      result.current.mutateFromCurrent((current) => ({
+        hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), "guild-2"],
+      }));
+    });
+
+    // The second updater saw the first one's optimistic value.
+    expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
+    await waitFor(() => expect(respond).toHaveBeenCalledTimes(1));
+
+    // The first response predates the queued update and must not undo it.
+    firstDeferred.resolve({ ...previousData, hiddenGuildIds: ["guild-1"] });
+    await waitFor(() => expect(respond).toHaveBeenCalledTimes(2));
+    expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
+
+    secondDeferred.resolve({
+      ...previousData,
+      hiddenGuildIds: ["guild-1", "guild-2"],
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
+  });
+
   it("restores the previous cache entry when the mutation fails", async () => {
     const previousData = createTestUserPreferences();
 

@@ -72,12 +72,12 @@ export const MutedPlayersSettingsTab = () => {
                   label={t("settings.mutes.removeLabel", { name: player.name })}
                   disabled={isActionsDisabled}
                   onClick={() =>
-                    updateNotificationMutes.mutate({
-                      players: mutes.players.filter(
+                    updateNotificationMutes.mutateFromCurrent((current) => ({
+                      players: current.players.filter(
                         (currentPlayer) =>
                           currentPlayer.discordId !== player.discordId,
                       ),
-                    })
+                    }))
                   }
                 >
                   <Trash2 />

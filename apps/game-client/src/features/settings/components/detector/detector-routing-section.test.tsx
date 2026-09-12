@@ -1,4 +1,9 @@
-import { render as renderUi, screen, waitFor } from "@testing-library/react";
+import {
+  render as renderUi,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -168,6 +173,43 @@ describe("DetectorRoutingSection", () => {
         }),
       );
     });
+  });
+
+  it("keeps both Lootlogi clicked in quick succession out of the saved rule", async () => {
+    const user = userEvent.setup();
+
+    render();
+
+    // Neither click waits for the other: the second must build on the
+    // first's optimistic state, so the saved rule drops both Lootlogi.
+    await user.click(
+      screen.getByRole("button", { name: "Gamma", pressed: true }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Delta", pressed: true }),
+    );
+
+    await waitFor(() => {
+      expect(savedBody()).toEqual(
+        gameDataOperations({
+          detector: {
+            routingRules: [
+              { ...firstRule, guildIds: ["guild-1", "guild-2", "guild-5"] },
+              secondRule,
+            ],
+          },
+        }),
+      );
+    });
+
+    expect(harness.request).toHaveBeenCalledTimes(1);
+    const picker = within(screen.getByLabelText("Lootlogi: Bossy hero"));
+    expect(
+      picker.getByRole("button", { name: "Gamma", pressed: false }),
+    ).toBeInTheDocument();
+    expect(
+      picker.getByRole("button", { name: "Delta", pressed: false }),
+    ).toBeInTheDocument();
   });
 
   it("warns that a new rule sends nothing until a Lootlog is chosen, and removes a rule", async () => {

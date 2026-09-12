@@ -16,7 +16,7 @@ import { reportSettingsSave } from "@/features/settings/persistence/settings-sav
 import { useGameStore } from "@/store/game.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const CatchingSettings = () => {
@@ -50,7 +50,6 @@ export const CatchingSettings = () => {
   const [requestedCharacterId, setRequestedCharacterId] =
     useState(initialCharacterId);
 
-  const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
   const { marks: saveMarkByCharacterId, mark: markCharacters } = useSaveMarks();
   const { t } = useTranslation();
 
@@ -104,10 +103,6 @@ export const CatchingSettings = () => {
       markCharacters(targetCharacterIds, "saving");
       await queryClient.cancelQueries({ queryKey });
 
-      const previousSelectionByCharacterId = {
-        ...selectionByCharacterIdRef.current,
-      };
-
       const previousData =
         queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
           queryKey,
@@ -141,16 +136,7 @@ export const CatchingSettings = () => {
         },
       );
 
-      const nextSelections = { ...selectionByCharacterIdRef.current };
-      targetCharacterIds.forEach((characterId) => {
-        nextSelections[characterId] = catchingGuildIds;
-      });
-      selectionByCharacterIdRef.current = nextSelections;
-
-      return {
-        previousData,
-        previousSelectionByCharacterId,
-      };
+      return { previousData };
     },
     onSuccess: (
       { failureCount, successCount, totalCount },
@@ -169,11 +155,6 @@ export const CatchingSettings = () => {
 
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
-      }
-
-      if (context?.previousSelectionByCharacterId) {
-        selectionByCharacterIdRef.current =
-          context.previousSelectionByCharacterId;
       }
 
       if (successCount === 0) {
@@ -197,11 +178,6 @@ export const CatchingSettings = () => {
         queryClient.setQueryData(queryKey, context.previousData);
       }
 
-      if (context?.previousSelectionByCharacterId) {
-        selectionByCharacterIdRef.current =
-          context.previousSelectionByCharacterId;
-      }
-
       toast.error(t("settings.catching.applyFailed"));
     },
     onSettled: async () => {
@@ -217,9 +193,7 @@ export const CatchingSettings = () => {
     );
 
     const activeCharacterSelection =
-      selectionByCharacterIdRef.current[selectedCharacterId] ??
-      lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ??
-      [];
+      lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ?? [];
 
     applyToAllMutation.mutate({
       catchingGuildIds: activeCharacterSelection,
@@ -252,12 +226,6 @@ export const CatchingSettings = () => {
           onSaveStateChange={(status) =>
             markCharacters([selectedCharacterId], status)
           }
-          onSelectionChange={(catchingGuildIds) => {
-            selectionByCharacterIdRef.current = {
-              ...selectionByCharacterIdRef.current,
-              [selectedCharacterId]: catchingGuildIds,
-            };
-          }}
           actions={
             characters.length > 1 ? (
               <Button
