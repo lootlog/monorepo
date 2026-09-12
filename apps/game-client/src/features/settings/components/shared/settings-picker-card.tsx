@@ -20,8 +20,8 @@ type SettingsPickerCardProps = {
 /**
  * Grid cell of a settings picker: a toggle styled as a card with a visual,
  * a title and an optional subtitle. Selected cards are tinted and outlined
- * with the primary colour; unselected ones are dimmed a little so the chosen
- * ones read at a glance. Style `trailing` with `group-data-pressed/picker-card`
+ * green; unselected ones sit on a graphite surface so they still read as
+ * clickable, dimmed a little so the chosen ones stand out. Style `trailing` with `group-data-pressed/picker-card`
  * to reveal it only on selected cards.
  */
 export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
@@ -39,10 +39,10 @@ export const SettingsPickerCard: FC<SettingsPickerCardProps> = ({
     aria-label={label}
     title={label}
     className={cn(
-      "ll-custom-cursor-pointer ll:group/picker-card ll:relative ll:h-auto ll:min-w-0 ll:justify-start ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-black/25 ll:p-1.5 ll:pr-2 ll:text-left ll:font-normal",
-      "ll:transition-[background-color,box-shadow,opacity] ll:hover:bg-white/5",
-      "ll:data-pressed:bg-primary/15 ll:data-pressed:hover:bg-primary/20 ll:data-pressed:shadow-[inset_0_0_0_1px_var(--color-primary)]",
-      "ll:not-disabled:not-data-pressed:opacity-70 ll:not-disabled:not-data-pressed:hover:opacity-100 ll:not-disabled:not-data-pressed:focus-visible:opacity-100",
+      "ll-custom-cursor-pointer ll:group/picker-card ll:relative ll:h-auto ll:min-w-0 ll:justify-start ll:gap-2 ll:rounded-sm ll:border-0 ll:bg-white/8 ll:p-1.5 ll:pr-2 ll:text-left ll:font-normal",
+      "ll:transition-[background-color,box-shadow,opacity] ll:hover:bg-white/12",
+      "ll:data-pressed:bg-emerald-500/15 ll:data-pressed:hover:bg-emerald-500/20 ll:data-pressed:shadow-[inset_0_0_0_1px_var(--color-emerald-500)]",
+      "ll:not-disabled:not-data-pressed:opacity-80 ll:not-disabled:not-data-pressed:hover:opacity-100 ll:not-disabled:not-data-pressed:focus-visible:opacity-100",
       "ll:focus-visible:ring-0 ll:focus-visible:outline-2 ll:focus-visible:outline-offset-2 ll:focus-visible:outline-ring",
       "ll:disabled:opacity-60",
       className,
