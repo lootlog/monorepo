@@ -1,4 +1,5 @@
-import { TimersView } from "@/features/timers/timers-view";
+import { TimersUnderBag } from "@/features/timers/components/timers-under-bag";
+import { TimersWindow } from "@/features/timers/components/timers-window";
 import { useWindowPresence } from "@/hooks/ui/use-window-presence";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 import { useGameStore } from "@/store/game.store";
@@ -16,15 +17,15 @@ export const Timers = () => {
 
   const gameInterface = useGameStore((state) => state.game?.interface);
   const isUnderBag = timersUnderBag && gameInterface === "ni";
-  const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);
+  const { shouldRender } = useWindowPresence(open);
 
   if (isUnderBag) {
-    return <TimersView isOpen isUnderBag />;
+    return <TimersUnderBag />;
   }
 
-  if (!shouldRenderTimersView) {
+  if (!shouldRender) {
     return null;
   }
 
-  return <TimersView isOpen={open} isUnderBag={false} />;
+  return <TimersWindow isOpen={open} />;
 };

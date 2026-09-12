@@ -100,5 +100,9 @@
   "states": {
     "unknown": "Nieznana",
     "unknownNeutral": "Nieznane"
+  },
+  "realtime": {
+    "connectedToServers": "Połączono z serwerami:",
+    "notConnected": "Nie połączono z żadnym serwerem"
   }
 }

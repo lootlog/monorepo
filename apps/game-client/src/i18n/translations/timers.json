@@ -30,10 +30,6 @@
     "max": "Max:",
     "reset": "⟳ Timer został zresetowany"
   },
-  "connection": {
-    "connectedToServers": "Połączono z serwerami:",
-    "notConnected": "Nie połączono z żadnym serwerem"
-  },
   "emptyState": {
     "filteredTitle": "Brak pasujących timerów",
     "showAll": "Pokaż wszystkie",

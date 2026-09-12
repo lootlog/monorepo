@@ -1,4 +1,4 @@
-import { TimerTileView } from "@/features/timers/components/timer-tile-view";
+import { LegacyTimerTileView } from "@/features/timers/components/legacy/legacy-timer-tile-view";
 import { resolveTimerTileColors } from "@/features/timers/model/timer-colors";
 import { cn } from "cn";
 import type { FC } from "react";
@@ -26,7 +26,7 @@ export const TimerColorPreviewChip: FC<TimerColorPreviewChipProps> = ({
 
   return (
     <span aria-hidden className={cn("ll:flex ll:w-32", className)}>
-      <TimerTileView
+      <LegacyTimerTileView
         colors={resolveTimerTileColors({
           selectedColor: "custom",
           customColor: { id: "custom", name: "", borderColor, backgroundColor },

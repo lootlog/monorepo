@@ -11,8 +11,11 @@ import type { Timer } from "@/api/timers.api";
 import { createTimerGuildFixture } from "./timer-fixtures";
 import { createTimerHttpFixture } from "./timer-http-fixtures";
 
-export const createTimerViewFixture = (timers: Timer[] = []) => {
-  const fixture = createTimerHttpFixture();
+export const createTimerViewFixture = (
+  timers: Timer[] = [],
+  respond?: Parameters<typeof createTimerHttpFixture>[0],
+) => {
+  const fixture = createTimerHttpFixture(respond);
   useTimersStore.setState(useTimersStore.getInitialState(), true);
   useTimersStore.setState((state) => ({
     generalConfig: {

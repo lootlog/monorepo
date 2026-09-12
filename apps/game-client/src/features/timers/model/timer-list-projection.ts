@@ -305,20 +305,20 @@ const areTimerFiltersActive = (
   return filters.selectedColors.length > 0;
 };
 
+export type TimerColorStatistic = {
+  color: string;
+  active: number;
+  total: number;
+  name: string;
+  bgColor?: string;
+  borderColor?: string;
+};
+
 const calculateColorStatistics = (
   timers: TimerWithTimeLeft[],
   preferences: TimerListPreferences,
-) => {
-  const statistics: Record<
-    string,
-    {
-      active: number;
-      bgColor?: string;
-      borderColor?: string;
-      name: string;
-      total: number;
-    }
-  > = {};
+): TimerColorStatistic[] => {
+  const statistics: Record<string, Omit<TimerColorStatistic, "color">> = {};
 
   for (const color of Object.keys(TIMERS_COLORS)) {
     const overriddenColor = preferences.overriddenDefaultColors[color];
