@@ -21240,11 +21240,23 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
                 "additionalProperties": false
               },
               "HERO": {
@@ -21263,11 +21275,23 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
                 "additionalProperties": false
               },
               "COLOSSUS": {
@@ -21286,11 +21310,23 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
                 "additionalProperties": false
               },
               "TITAN": {
@@ -21309,11 +21345,23 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
                 "additionalProperties": false
               },
               "message": {
@@ -21332,11 +21380,23 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
                 "additionalProperties": false
               },
               "party-gathering": {
@@ -21355,11 +21415,23 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
                 },
-                "required": ["show", "highlight", "ignoreOtherWorlds", "sound"],
+                "required": [
+                  "show",
+                  "highlight",
+                  "ignoreOtherWorlds",
+                  "guildIds",
+                  "sound"
+                ],
                 "additionalProperties": false
               }
             },
@@ -21607,6 +21679,12 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
@@ -21628,6 +21706,12 @@
                   "autoHideTimeout": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   },
                   "sound": {
                     "type": "boolean"
@@ -21651,6 +21735,12 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
@@ -21672,6 +21762,12 @@
                   "autoHideTimeout": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   },
                   "sound": {
                     "type": "boolean"
@@ -21695,6 +21791,12 @@
                     "type": "number",
                     "minimum": 0
                   },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "sound": {
                     "type": "boolean"
                   }
@@ -21716,6 +21818,12 @@
                   "autoHideTimeout": {
                     "type": "number",
                     "minimum": 0
+                  },
+                  "guildIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   },
                   "sound": {
                     "type": "boolean"

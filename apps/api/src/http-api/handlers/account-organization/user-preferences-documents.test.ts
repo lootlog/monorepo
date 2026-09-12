@@ -182,7 +182,8 @@ test("legacy preference routes write only settings documents", async () => {
     await run(
       data.updateUserGameAccountPreferences(identity.userId, "account-1", {
         airTags: { enabled: true },
-        notifications: { TITAN: { sound: true } },
+        // A deployed client still sends the server list per type.
+        notifications: { TITAN: { sound: true, guildIds: ["guild-1"] } },
       }),
     );
 
@@ -219,7 +220,11 @@ test("legacy preference routes write only settings documents", async () => {
 
     expect(game).toMatchObject({
       airTags: { enabled: true },
-      notifications: { TITAN: { sound: true } },
+      notifications: {
+        guildIds: ["guild-1"],
+        TITAN: { sound: true, guildIds: ["guild-1"] },
+        HERO: { guildIds: ["guild-1"] },
+      },
       hasStoredAirTags: true,
       hasStoredNotifications: true,
       hasStoredDetector: false,

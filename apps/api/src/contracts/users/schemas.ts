@@ -34,6 +34,10 @@ const GameNotificationPreferences = Schema.Struct({
       }),
     ),
   ),
+  // Deployed Game clients read and send a server list per type. The route
+  // mirrors the shared `notifications.guildIds` here and folds per-type lists
+  // from requests back into it.
+  guildIds: Schema.Array(Schema.String),
   sound: Schema.Boolean,
 });
 

@@ -37,7 +37,7 @@ import {
   memberToRoleTable,
   roleTable,
   timerTable,
-  userGameAccountSettingsTable,
+  userSettingDocumentTable,
 } from "../src/database/drizzle/schema.js";
 
 const caller = {
@@ -297,10 +297,14 @@ describe("API HTTP boundary", () => {
     const accountId = "stored-routing-test";
     const rule = { id: "existing", minLevel: 10, maxLevel: 100, guildIds: [] };
     await databaseRuntime.runPromise(
-      database.insert(userGameAccountSettingsTable).values({
+      database.insert(userSettingDocumentTable).values({
         userId: caller.userId,
-        accountId,
-        settings: { detector: { routingRules: [rule] } },
+        domain: "gameData",
+        scopeType: "GAME_ACCOUNT",
+        scopeId: accountId,
+        overrides: { detector: { routingRules: [rule] } },
+        schemaVersion: 1,
+        createdAt: new Date(),
         updatedAt: new Date(),
       }),
     );

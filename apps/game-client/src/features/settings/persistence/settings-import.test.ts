@@ -41,6 +41,7 @@ describe("planSettingsImport", () => {
   it("imports only browser values that differ from defaults where the server holds defaults", () => {
     const plan = planSettingsImport({
       documents: createSettingsDocuments(),
+      guildDocuments: { guilds: { "guild-1": createSettingsDocuments() } },
       local: localSnapshot,
       done: {},
       accessibleGuildIds: ["guild-1"],
@@ -82,6 +83,40 @@ describe("planSettingsImport", () => {
     ]);
   });
 
+  it("keeps a guild list already stored on the server over a stale local copy", () => {
+    const guildScope = { type: "GUILD", id: "guild-1" } as const;
+
+    const plan = planSettingsImport({
+      documents: createSettingsDocuments(),
+      guildDocuments: {
+        guilds: {
+          "guild-1": createSettingsDocuments(
+            { "timers.hiddenTimers": ["server"] },
+            guildScope,
+          ),
+        },
+      },
+      local: localSnapshot,
+      done: { appearance: true, controls: true, general: true, gameData: true },
+      accessibleGuildIds: ["guild-1"],
+      hasCharacterScope: true,
+    });
+
+    expect(plan.patches).toEqual([
+      {
+        domain: "timers",
+        set: {
+          generalConfig: localTimers.generalConfig,
+          hiddenTimers: ["a"],
+        },
+      },
+      {
+        domain: "appearance",
+        set: { timers: { timersColors: { Tanroth: "red" } } },
+      },
+    ]);
+  });
+
   it("lets stored server values win over local ones", () => {
     const documents = applySettingsDocumentValues(createSettingsDocuments(), {
       "timers.generalConfig": { removeTimerAfterMs: 10_000 },
@@ -91,6 +126,7 @@ describe("planSettingsImport", () => {
 
     const plan = planSettingsImport({
       documents,
+      guildDocuments: undefined,
       local: localSnapshot,
       done: { gameData: true },
       accessibleGuildIds: [],
@@ -112,6 +148,7 @@ describe("planSettingsImport", () => {
 
     const plan = planSettingsImport({
       documents: createSettingsDocuments(),
+      guildDocuments: undefined,
       local: { ...localSnapshot, timers: null },
       done: readSettingsImportState().done,
       accessibleGuildIds: [],

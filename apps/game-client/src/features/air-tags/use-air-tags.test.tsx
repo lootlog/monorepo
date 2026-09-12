@@ -1,3 +1,4 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { act, renderHook } from "@testing-library/react";
 import {
   accountPreferenceValues,
@@ -6,10 +7,7 @@ import {
 } from "@/test/settings-documents-fixtures";
 import { describe, expect, it } from "vitest";
 import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { createAirTagTest } from "./air-tag-test";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { useAirTags } from "./use-air-tags";
@@ -18,7 +16,7 @@ const settings = (
   enabled: boolean,
 ): UserGameAccountPreferencesResponseDtoOutput => ({
   accountId: "202",
-  notifications: createNotificationsSettings(),
+  notifications: createNotificationsResponse(),
   detector: createDetectorSettings(),
   pings: { enabled: false },
   airTags: { enabled },
