@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
+import type { TimersLayout } from "@lootlog/schema/timer-settings";
 import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
 import {
   createTimerViewFixture,
@@ -32,18 +33,32 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const mountTimers = (
+type MountOptions = {
+  timers?: ReturnType<typeof createVisibleTimer>[];
+  open?: boolean;
+  underBag?: boolean;
+  alwaysVisible?: boolean;
+  layout?: TimersLayout;
+};
+
+const mountTimers = ({
   timers = [createVisibleTimer()],
   open = true,
   underBag = true,
   alwaysVisible = false,
-) => {
+  layout = "modern",
+}: MountOptions = {}) => {
   const fixture = createTimerViewFixture(timers);
 
-  if (alwaysVisible)
-    seedTimerSettings(fixture.queryClient, {
-      "timers.alwaysVisibleExpiredTimers": { gefion: ["Tanroth"] },
-    });
+  const settings: Parameters<typeof seedTimerSettings>[1] = {
+    "timers.layout": layout,
+  };
+
+  if (alwaysVisible) {
+    settings["timers.alwaysVisibleExpiredTimers"] = { gefion: ["Tanroth"] };
+  }
+
+  seedTimerSettings(fixture.queryClient, settings);
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
@@ -59,44 +74,54 @@ const mountTimers = (
   return fixture;
 };
 
-it("updates the countdown without remounting the tile and removes it at the expiry boundary", () => {
-  mountTimers();
-  const label = screen.getByText(/\[H\] Tanroth/);
-  expect(screen.getByText("00:00:05")).toBeVisible();
-  act(() => vi.advanceTimersByTime(1000));
-  expect(screen.getByText("00:00:04")).toBeVisible();
-  expect(screen.getByText(/\[H\] Tanroth/)).toBe(label);
-  act(() => vi.advanceTimersByTime(34_000));
-  expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
-  expect(screen.getByText("Brak timerów")).toBeVisible();
-});
-
-it("moves an always-visible expired timer below active timers at the removal boundary", () => {
-  mountTimers(
-    [createVisibleTimer(), createVisibleTimer("Mushita", 60)],
-    true,
-    true,
-    true,
+// Legacy prefixes the type ("[H] Tanroth"), modern suffixes the level tag.
+const timerNames = () =>
+  screen.getAllByText(/(Tanroth|Mushita)/).map((node) =>
+    node.textContent
+      ?.replace(/^\[.*?\]\s*/, "")
+      .replace(/\s*\(?\d+\w\)?\s*$/, "")
+      .trim(),
   );
-  expect(
-    screen.getAllByText(/\[H\]/).map((node) => node.textContent?.trim()),
-  ).toEqual(["[H] Tanroth", "[H] Mushita"]);
-  act(() => vi.advanceTimersByTime(35_000));
-  expect(
-    screen.getAllByText(/\[H\]/).map((node) => node.textContent?.trim()),
-  ).toEqual(["[H] Mushita", "[H] Tanroth"]);
-});
+
+it.each<TimersLayout>(["legacy", "modern"])(
+  "updates the countdown without remounting the tile and removes it at the expiry boundary (%s)",
+  (layout) => {
+    mountTimers({ layout });
+    const label = screen.getByText(/Tanroth/);
+    expect(screen.getByText("00:00:05")).toBeVisible();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText("00:00:04")).toBeVisible();
+    expect(screen.getByText(/Tanroth/)).toBe(label);
+    act(() => vi.advanceTimersByTime(34_000));
+    expect(screen.queryByText(/Tanroth/)).not.toBeInTheDocument();
+    expect(screen.getByText("Brak timerów")).toBeVisible();
+  },
+);
+
+it.each<TimersLayout>(["legacy", "modern"])(
+  "moves an always-visible expired timer below active timers at the removal boundary (%s)",
+  (layout) => {
+    mountTimers({
+      timers: [createVisibleTimer(), createVisibleTimer("Mushita", 60)],
+      alwaysVisible: true,
+      layout,
+    });
+    expect(timerNames()).toEqual(["Tanroth", "Mushita"]);
+    act(() => vi.advanceTimersByTime(35_000));
+    expect(timerNames()).toEqual(["Mushita", "Tanroth"]);
+  },
+);
 
 it.each(["empty", "closed"] as const)(
   "does not start a countdown interval for an %s surface",
   (state) => {
     const intervals = vi.spyOn(globalThis, "setInterval");
-    mountTimers(
-      state === "empty" ? [] : [createVisibleTimer()],
-      state !== "closed",
-      state !== "closed",
-    );
+    mountTimers({
+      timers: state === "empty" ? [] : [createVisibleTimer()],
+      open: state !== "closed",
+      underBag: state !== "closed",
+    });
     expect(intervals).not.toHaveBeenCalled();
-    expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tanroth/)).not.toBeInTheDocument();
   },
 );

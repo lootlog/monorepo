@@ -3,6 +3,8 @@ import { useShallow } from "zustand/react/shallow";
 import type {
   CustomTimerColor,
   TimersDisplayConfig,
+  TimersLayout,
+  TimersModernAppearanceSettings,
 } from "@lootlog/schema/timer-settings";
 import type { Timer } from "@/api/timers.api";
 import { useTimers } from "@/hooks/api/use-timers";
@@ -64,6 +66,7 @@ export type TimersColorPreferences = {
 };
 
 export type TimersWindowModel = {
+  layout: TimersLayout;
   scope: TimersScope;
   list: {
     timers: TimerWithTimeLeft[];
@@ -78,6 +81,7 @@ export type TimersWindowModel = {
   toolbar: TimersToolbarModel;
   appearance: {
     displayConfig: TimersDisplayConfig;
+    modern: TimersModernAppearanceSettings;
     compactView: boolean;
     countdownMode: "min" | "max";
     colors: TimersColorPreferences;
@@ -181,6 +185,7 @@ export const useTimersWindowModel = (
   const access = useTimerAccessPolicies(getTimerGuildIds(projection.timers));
 
   return {
+    layout: behavior.layout,
     scope,
     list: {
       timers: projection.timers,
@@ -216,6 +221,7 @@ export const useTimersWindowModel = (
     },
     appearance: {
       displayConfig: appearance.displayConfig,
+      modern: appearance.modern,
       compactView: behavior.generalConfig.compactView,
       countdownMode: behavior.generalConfig.countdownMode,
       colors: {

@@ -14,7 +14,10 @@ const MIN_WINDOW_HEIGHT = 108;
 export const TimersWindow: FC<TimersWindowProps> = ({ isOpen }) => {
   const { t } = useTranslation("timers");
   const model = useTimersWindowModel("window", isOpen);
-  const { compactView } = model.appearance;
+
+  // Compact view belongs to the legacy layout; the modern one hides parts
+  // through its own appearance switches instead.
+  const compactView = model.layout === "legacy" && model.appearance.compactView;
 
   return (
     <DraggableWindow

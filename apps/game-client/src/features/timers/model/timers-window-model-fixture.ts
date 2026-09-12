@@ -1,16 +1,19 @@
 import { vi } from "vitest";
+import { TIMERS_MODERN_COMFORTABLE_PRESET } from "@lootlog/schema/timer-settings";
 import type { TimersWindowModel } from "@/features/timers/hooks/use-timers-window-model";
 
 export type TimersWindowModelOverrides = {
+  layout?: TimersWindowModel["layout"];
   scope?: Partial<TimersWindowModel["scope"]>;
   list?: Partial<TimersWindowModel["list"]>;
   async?: Partial<TimersWindowModel["async"]>;
   toolbar?: Partial<TimersWindowModel["toolbar"]>;
   appearance?: Partial<
-    Omit<TimersWindowModel["appearance"], "displayConfig" | "colors">
+    Omit<TimersWindowModel["appearance"], "displayConfig" | "colors" | "modern">
   > & {
     displayConfig?: Partial<TimersWindowModel["appearance"]["displayConfig"]>;
     colors?: Partial<TimersWindowModel["appearance"]["colors"]>;
+    modern?: Partial<TimersWindowModel["appearance"]["modern"]>;
   };
   access?: Partial<TimersWindowModel["access"]>;
   actions?: Partial<TimersWindowModel["actions"]>;
@@ -20,6 +23,7 @@ export type TimersWindowModelOverrides = {
 export const createTimersWindowModelFixture = (
   overrides: TimersWindowModelOverrides = {},
 ): TimersWindowModel => ({
+  layout: overrides.layout ?? "modern",
   scope: {
     guildId: "guild-1",
     settingsKey: "guild-1",
@@ -76,6 +80,10 @@ export const createTimersWindowModelFixture = (
       overriddenDefaultColors: {},
       hiddenDefaultColors: [],
       ...overrides.appearance?.colors,
+    },
+    modern: {
+      ...TIMERS_MODERN_COMFORTABLE_PRESET,
+      ...overrides.appearance?.modern,
     },
   },
   access: {

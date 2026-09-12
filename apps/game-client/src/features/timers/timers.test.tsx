@@ -54,26 +54,30 @@ const mountTimers = (
   return { ...fixture, view };
 };
 
-it("deduplicates timers and shows the same visible state in the regular and under-bag surfaces", async () => {
-  const fixture = mountTimers((value) =>
-    value.queryClient.setQueryData(queryKeys.timers("gefion"), [
-      createVisibleTimer(),
-      { ...createVisibleTimer(), updatedAt: "2099-04-22T09:59:01.000Z" },
-    ]),
-  );
+it.each(["legacy", "modern"] as const)(
+  "deduplicates timers and shows the same visible state in the regular and under-bag surfaces (%s layout)",
+  async (layout) => {
+    const fixture = mountTimers((value) => {
+      value.queryClient.setQueryData(queryKeys.timers("gefion"), [
+        createVisibleTimer(),
+        { ...createVisibleTimer(), updatedAt: "2099-04-22T09:59:01.000Z" },
+      ]);
+      seedTimerSettings(value.queryClient, { "timers.layout": layout });
+    });
 
-  expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
-  expect(
-    within(fixture.gameColumn).queryByText(/\[H\] Tanroth/),
-  ).not.toBeInTheDocument();
-  seedTimerSettings(fixture.queryClient, {
-    "timers.generalConfig": { timersUnderBag: true },
-  });
-  expect(
-    await within(fixture.gameColumn).findByText(/\[H\] Tanroth/),
-  ).toBeVisible();
-  expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
-});
+    expect(screen.getAllByText(/Tanroth/)).toHaveLength(1);
+    expect(
+      within(fixture.gameColumn).queryByText(/Tanroth/),
+    ).not.toBeInTheDocument();
+    seedTimerSettings(fixture.queryClient, {
+      "timers.generalConfig": { timersUnderBag: true },
+    });
+    expect(
+      await within(fixture.gameColumn).findByText(/Tanroth/),
+    ).toBeVisible();
+    expect(screen.getAllByText(/Tanroth/)).toHaveLength(1);
+  },
+);
 
 it("opens add timer with the selected guild without changing the saved creation preference", async () => {
   const user = userEvent.setup();
@@ -82,7 +86,7 @@ it("opens add timer with the selected guild without changing the saved creation 
       selectedGuildIdsForTimersByCharId: { "101": ["guild-2"] },
     }),
   );
-  await user.click(screen.getByRole("button", { name: "+" }));
+  await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
   expect(useWindowsStore.getState()["add-timer"]).toMatchObject({
     open: true,
     state: { guildId: "guild-1" },
@@ -102,7 +106,7 @@ it("recovers from empty filters without erasing the user's saved hidden timers",
     });
   });
 
-  expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Tanroth/)).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
   expect(useTimerFiltersStore.getState().searchText).toBe("");
   expect(useTimerFiltersStore.getState().timersFilters["guild-1"]).toEqual(
@@ -110,7 +114,7 @@ it("recovers from empty filters without erasing the user's saved hidden timers",
   );
   expect(readGuildTimerLists("guild-1").hiddenTimers).toEqual(["timer-1"]);
   expect(fixture.requests).toHaveLength(0);
-  expect(screen.getByText(/\[H\] Tanroth/)).toBeVisible();
+  expect(screen.getByText(/Tanroth/)).toBeVisible();
 });
 
 it("retries a failed world request and displays the recovered timer", async () => {
@@ -152,7 +156,7 @@ it("retries a failed world request and displays the recovered timer", async () =
     await screen.findByText("Nie udało się załadować timerów"),
   ).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
-  expect(await screen.findByText(/\[H\] Tanroth/)).toBeVisible();
+  expect(await screen.findByText(/Tanroth/)).toBeVisible();
   expect(requests).toHaveLength(2);
   expect(
     requests.every(
@@ -173,7 +177,7 @@ it("uses the game world under the NI bag when world selection is disabled", () =
     });
   });
 
-  expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
+  expect(within(fixture.gameColumn).getByText(/Tanroth/)).toBeVisible();
   expect(
     fixture.queryClient
       .getQueryCache()
@@ -206,7 +210,7 @@ it.each(["filtered", "closed"] as const)(
     });
 
     expect(intervals).not.toHaveBeenCalled();
-    expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tanroth/)).not.toBeInTheDocument();
     expect(
       fixture.queryClient
         .getQueryCache()

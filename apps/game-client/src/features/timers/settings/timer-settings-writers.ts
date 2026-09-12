@@ -4,6 +4,7 @@ import type {
   TimersDisplayConfig,
   TimersGeneralConfig,
   TimersLayout,
+  TimersModernAppearanceSettings,
 } from "@lootlog/schema/timer-settings";
 import {
   enqueueSettingsPatch,
@@ -159,6 +160,11 @@ export const setExpiredTimerAlwaysVisible = (
 
 export const setTimerDisplayConfig = (config: TimersDisplayConfig) =>
   writeAppearance({ displayConfig: config });
+
+/** Modern layout appearance; leaves merge server-side so a patch may be partial. */
+export const setTimersModernAppearance = (
+  patch: Partial<TimersModernAppearanceSettings>,
+) => writeAppearance({ modern: patch });
 
 /** Assigns a colour to an NPC name; clearing sends an unset so no stale id survives. */
 export const setTimerColor = (npcName: string, colorId?: string) =>

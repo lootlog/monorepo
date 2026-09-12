@@ -176,5 +176,37 @@
       "legacy": "Klasyczny",
       "modern": "Nowy"
     }
+  },
+  "modernAppearance": {
+    "presetSection": "Nowy układ",
+    "presetLabel": "Gotowe ustawienia nowego układu",
+    "presets": {
+      "comfortable": "Czytelny",
+      "comfortableDescription": "Większe kafelki, nagłówek, filtry i stopka widoczne.",
+      "compact": "Kompaktowy",
+      "compactDescription": "Mniejsze kafelki, bez filtrów i stopki - najmniej miejsca na ekranie."
+    },
+    "scaleSection": "Rozmiar nowego układu",
+    "fontScaleLabel": "Skala tekstu",
+    "fontScaleDescription": "Skaluje tekst i wysokość kafelków nowego układu.",
+    "gapLabel": "Odstęp między kafelkami",
+    "minColumnWidthLabel": "Minimalna szerokość kolumny",
+    "minColumnWidthDescription": "Przy szerokim oknie kafelki układają się w tyle kolumn, ile zmieści się przy tej szerokości.",
+    "visibilitySection": "Elementy nowego układu",
+    "switches": {
+      "showHeader": "Nagłówek z serwerami",
+      "showHeaderDescription": "Wybór Lootloga i świata nad listą timerów.",
+      "showFiltersBar": "Pasek filtrów",
+      "showFiltersBarDescription": "Wyszukiwarka, zakres poziomów i typy potworów, gdy filtry są włączone.",
+      "showFooter": "Stopka",
+      "showFooterDescription": "Statystyki kolorów, stan połączenia, historia i dodawanie timera.",
+      "showTypeBadge": "Znacznik typu",
+      "showTypeBadgeDescription": "Skrót typu potwora (E2, H, T) na kafelku.",
+      "showLevel": "Poziom potwora",
+      "showLevelDescription": "Poziom i profesja obok nazwy.",
+      "showProgress": "Pasek postępu",
+      "showProgressDescription": "Cienka linia pokazująca, ile czasu do odrodzenia już minęło."
+    },
+    "legacyNote": "Ustawienia poniżej dotyczą klasycznego układu."
   }
 }

@@ -41,7 +41,7 @@ it("renders the timers into the bag column with the host theme and stops wheel p
     lootlogRoot.remove();
   });
 
-  const tile = screen.getByText(/\[H\] Tanroth/);
+  const tile = screen.getByText(/Tanroth/);
   expect(fixture.gameColumn.contains(tile)).toBe(true);
   const portal = fixture.gameColumn.querySelector(".bottom-wrapper > div");
   expect(portal).toHaveClass("ll-theme-boundary", "dark-theme");

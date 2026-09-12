@@ -303,6 +303,12 @@ const MANIFEST = [
         labelKey: "settings.subsections.timerAppearance",
         controls: [
           {
+            id: "timers-modern-appearance",
+            labelKey: "timers:modernAppearance.presetSection",
+            aliases: ["nowy układ", "kompaktowy", "czytelny", "skala"],
+            settingKeys: ["appearance.timers.modern"],
+          },
+          {
             id: "timer-visibility",
             labelKey: "settings.timers.appearance.visibilityTitle",
             settingKeys: ["appearance.timers.displayConfig"],
