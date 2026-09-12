@@ -21,7 +21,7 @@ type WindowActionButtonProps = {
 
 /**
  * Icon button used in draggable window title bars and their toolbars. The
- * 24px hit area is larger than the 14px glyph so players can hit it without
+ * 20px hit area is larger than the 14px glyph so players can hit it without
  * aiming, and `data-ll-draggable="false"` keeps a press from starting a drag.
  */
 export const WindowActionButton: FC<WindowActionButtonProps> = ({
@@ -41,7 +41,7 @@ export const WindowActionButton: FC<WindowActionButtonProps> = ({
         aria-label={label}
         aria-pressed={pressed}
         className={cn(
-          "ll-custom-cursor-pointer ll:relative ll:inline-flex ll:size-6 ll:shrink-0 ll:appearance-none ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-300 ll:transition-colors ll:duration-100 ll:outline-none ll:focus-visible:ring-2 ll:focus-visible:ring-blue-400/70",
+          "ll-custom-cursor-pointer ll:relative ll:inline-flex ll:size-5 ll:shrink-0 ll:appearance-none ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:text-gray-300 ll:transition-colors ll:duration-100 ll:outline-none ll:focus-visible:ring-2 ll:focus-visible:ring-blue-400/70",
           pressed
             ? "ll:bg-blue-400/15 ll:text-blue-200 ll:hover:bg-blue-400/25 ll:hover:text-blue-100"
             : destructive

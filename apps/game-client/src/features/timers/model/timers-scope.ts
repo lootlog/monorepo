@@ -1,4 +1,4 @@
-import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
+import { GLOBAL_TIMER_SETTINGS_KEY } from "@/features/timers/settings/timer-settings-documents";
 
 export type TimersScopeInput = {
   characterId: string;

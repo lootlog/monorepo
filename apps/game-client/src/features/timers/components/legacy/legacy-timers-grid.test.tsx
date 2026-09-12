@@ -8,14 +8,18 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { useTimersStore } from "@/store/timers.store";
 import { useTimersWindowModel } from "@/features/timers/hooks/use-timers-window-model";
 import {
   createTimerFixture,
   createTimerGuildFixture,
   createTimerMemberFixture,
 } from "@/features/timers/model/timer-fixtures";
-import { createTimerViewFixture } from "@/features/timers/model/timer-view-fixtures";
+import {
+  createTimerViewFixture,
+  seedGuildTimerLists,
+  seedTimerSettings,
+} from "@/features/timers/model/timer-view-fixtures";
+import type { SettingsDocumentValues } from "@/test/settings-documents-fixtures";
 import { TimersActions } from "../shared/timers-actions";
 import { LegacyTimersGrid } from "./legacy-timers-grid";
 
@@ -60,13 +64,16 @@ afterEach(() => {
 
 const mountGrid = (
   timers: ReturnType<typeof createTimer>[],
-  storeState: Partial<ReturnType<typeof useTimersStore.getState>> = {},
+  settings: SettingsDocumentValues = {},
   respond?: Parameters<typeof createTimerViewFixture>[1],
 ) => {
   const fixture = createTimerViewFixture(timers, respond);
-  useTimersStore.setState({
-    hiddenTimers: { "guild-1": ["Mushita"], global: ["Mushita"] },
-    ...storeState,
+  seedGuildTimerLists(fixture.queryClient, {
+    "guild-1": { hiddenTimers: ["Mushita"] },
+  });
+  seedTimerSettings(fixture.queryClient, {
+    "timers.hiddenTimers": ["Mushita"],
+    ...settings,
   });
 
   const view = render(
@@ -92,7 +99,7 @@ it("renders guild metadata and hidden state and applies each organization's real
       createTimer("Mushita"),
       createTimer("Furruk", "guild-2"),
     ],
-    { timersColors: { Tanroth: "red" } },
+    { "appearance.timers.timersColors": { Tanroth: "red" } },
     (request) =>
       Response.json(
         new URL(request.url).pathname.includes("guild-1")
@@ -110,9 +117,9 @@ it("renders guild metadata and hidden state and applies each organization's real
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
     [createTimerGuildFixture()],
   );
-  useTimersStore.setState((state) => ({
-    generalConfig: { ...state.generalConfig, timersGrouping: true },
-  }));
+  seedTimerSettings(fixture.queryClient, {
+    "timers.generalConfig": { timersGrouping: true },
+  });
   await waitFor(() => expect(fixture.requests).toHaveLength(2));
   expect(
     fixture.requests.map((request) => new URL(request.url).pathname).sort(),
@@ -152,8 +159,8 @@ it("shows pending and hidden states with the configured custom color", async () 
   const user = userEvent.setup();
 
   const { view } = mountGrid([{ ...createTimer("Mushita"), isPending: true }], {
-    timersColors: { Mushita: "custom-1" },
-    customColors: {
+    "appearance.timers.timersColors": { Mushita: "custom-1" },
+    "appearance.timers.customColors": {
       "custom-1": {
         id: "custom-1",
         name: "Custom",

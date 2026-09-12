@@ -1,15 +1,23 @@
-import { act, render, screen, within, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { useTimersStore, DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
+import {
+  DEFAULT_TIMERS_FILTERS,
+  useTimerFiltersStore,
+} from "@/features/timers/timer-filters.store";
+import { readGuildTimerLists } from "@/features/timers/settings/timer-settings-writers";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
-import { createTimerViewFixture } from "@/features/timers/model/timer-view-fixtures";
+import {
+  createTimerViewFixture,
+  seedGuildTimerLists,
+  seedTimerSettings,
+} from "@/features/timers/model/timer-view-fixtures";
 import { Timers } from "./timers";
 
 const createVisibleTimer = () =>
@@ -46,7 +54,7 @@ const mountTimers = (
   return { ...fixture, view };
 };
 
-it("deduplicates timers and shows the same visible state in the regular and under-bag surfaces", () => {
+it("deduplicates timers and shows the same visible state in the regular and under-bag surfaces", async () => {
   const fixture = mountTimers((value) =>
     value.queryClient.setQueryData(queryKeys.timers("gefion"), [
       createVisibleTimer(),
@@ -58,12 +66,12 @@ it("deduplicates timers and shows the same visible state in the regular and unde
   expect(
     within(fixture.gameColumn).queryByText(/\[H\] Tanroth/),
   ).not.toBeInTheDocument();
-  act(() =>
-    useTimersStore.setState((state) => ({
-      generalConfig: { ...state.generalConfig, timersUnderBag: true },
-    })),
-  );
-  expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
+  seedTimerSettings(fixture.queryClient, {
+    "timers.generalConfig": { timersUnderBag: true },
+  });
+  expect(
+    await within(fixture.gameColumn).findByText(/\[H\] Tanroth/),
+  ).toBeVisible();
   expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
 });
 
@@ -86,21 +94,22 @@ it("opens add timer with the selected guild without changing the saved creation 
 
 it("recovers from empty filters without erasing the user's saved hidden timers", async () => {
   const user = userEvent.setup();
-  mountTimers(() =>
-    useTimersStore.setState({
-      timerFiltersSearchText: "missing",
-      hiddenTimers: { "guild-1": ["timer-1"] },
-    }),
-  );
+
+  const fixture = mountTimers((value) => {
+    useTimerFiltersStore.setState({ searchText: "missing" });
+    seedGuildTimerLists(value.queryClient, {
+      "guild-1": { hiddenTimers: ["timer-1"] },
+    });
+  });
+
   expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
-  expect(useTimersStore.getState().timerFiltersSearchText).toBe("");
-  expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual(
+  expect(useTimerFiltersStore.getState().searchText).toBe("");
+  expect(useTimerFiltersStore.getState().timersFilters["guild-1"]).toEqual(
     DEFAULT_TIMERS_FILTERS,
   );
-  expect(useTimersStore.getState().hiddenTimers).toEqual({
-    "guild-1": ["timer-1"],
-  });
+  expect(readGuildTimerLists("guild-1").hiddenTimers).toEqual(["timer-1"]);
+  expect(fixture.requests).toHaveLength(0);
   expect(screen.getByText(/\[H\] Tanroth/)).toBeVisible();
 });
 
@@ -159,9 +168,9 @@ it("uses the game world under the NI bag when world selection is disabled", () =
     value.queryClient.setQueryData(queryKeys.timers("pandora"), [
       createVisibleTimer(),
     ]);
-    useTimersStore.setState((state) => ({
-      generalConfig: { ...state.generalConfig, timersUnderBag: true },
-    }));
+    seedTimerSettings(value.queryClient, {
+      "timers.generalConfig": { timersUnderBag: true },
+    });
   });
 
   expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
@@ -185,14 +194,15 @@ it.each(["filtered", "closed"] as const)(
     vi.useFakeTimers();
     const intervals = vi.spyOn(globalThis, "setInterval");
 
-    const fixture = mountTimers(() => {
+    const fixture = mountTimers((value) => {
       if (state === "closed")
         useWindowsStore.getState().setOpen("timers", false);
-      else
-        useTimersStore.setState((value) => ({
-          timerFiltersSearchText: "missing",
-          generalConfig: { ...value.generalConfig, timersUnderBag: true },
-        }));
+      else {
+        useTimerFiltersStore.setState({ searchText: "missing" });
+        seedTimerSettings(value.queryClient, {
+          "timers.generalConfig": { timersUnderBag: true },
+        });
+      }
     });
 
     expect(intervals).not.toHaveBeenCalled();

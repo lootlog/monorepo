@@ -13,15 +13,16 @@ export const useTimerTileModel = (
   timer: TimerWithTimeLeft,
   model: TimersWindowModel,
 ) => {
-  const display = useTimerDisplay(timer);
+  const display = useTimerDisplay(timer, model.appearance);
 
-  const actions = useTimerActions(
-    timer,
-    model.scope.settingsKey,
-    model.scope.world,
-    model.access.guildIds,
-    model.scope.isGrouping,
-  );
+  const actions = useTimerActions(timer, {
+    settingsKey: model.scope.settingsKey,
+    world: model.scope.world,
+    guildIds: model.access.guildIds,
+    isGrouping: model.scope.isGrouping,
+    pinnedTimers: model.list.pinnedTimers,
+    alwaysVisibleExpiredTimers: model.list.alwaysVisibleExpiredTimers,
+  });
 
   const policy = model.access.policiesByGuildId[timer.guildId];
 

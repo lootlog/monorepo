@@ -4,47 +4,44 @@ import {
 } from "@lootlog/client/main";
 import { getApiErrorStringField } from "@lootlog/client/transport";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
+import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
-import { useTimersStore } from "@/store/timers.store";
+import { GLOBAL_TIMER_SETTINGS_KEY } from "@/features/timers/settings/timer-settings-documents";
+import {
+  setExpiredTimerAlwaysVisible,
+  setTimerColor,
+  setTimerHidden,
+  setTimerPinned,
+} from "@/features/timers/settings/timer-settings-writers";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { useShallow } from "zustand/react/shallow";
+
+export type TimerActionsContext = {
+  /** Key of the hidden/pinned lists the tile belongs to. */
+  settingsKey: string;
+  world: string | undefined;
+  /** Every accessible organization, for the "everywhere" variants. */
+  guildIds: string[];
+  isGrouping: boolean;
+  pinnedTimers: readonly string[];
+  alwaysVisibleExpiredTimers: Record<string, string[]>;
+};
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
-  settingsKey: string,
-  world: string | undefined,
-  guildIds: string[],
-  timersGrouping = false,
+  {
+    settingsKey,
+    world,
+    guildIds,
+    isGrouping: timersGrouping,
+    pinnedTimers,
+    alwaysVisibleExpiredTimers,
+  }: TimerActionsContext,
 ) => {
   const t = getFixedT("timers");
+  const isPinned = pinnedTimers.includes(timer.npc.name);
 
-  const {
-    hideTimer,
-    revealTimer,
-    pinTimer,
-    unpinTimer,
-    setTimerColor,
-    showExpiredTimerAlways,
-    hideExpiredTimerAlways,
-    isPinned,
-    isAlwaysVisibleExpiredTimer,
-  } = useTimersStore(
-    useShallow((state) => ({
-      hideTimer: state.hideTimer,
-      revealTimer: state.revealTimer,
-      pinTimer: state.pinTimer,
-      unpinTimer: state.unpinTimer,
-      setTimerColor: state.setTimerColor,
-      showExpiredTimerAlways: state.showExpiredTimerAlways,
-      hideExpiredTimerAlways: state.hideExpiredTimerAlways,
-      isPinned:
-        state.pinnedTimers[settingsKey]?.includes(timer.npc.name) ?? false,
-      isAlwaysVisibleExpiredTimer:
-        state.alwaysVisibleExpiredTimers[timer.world]?.includes(
-          timer.timerKey,
-        ) ?? false,
-    })),
-  );
+  const isAlwaysVisibleExpiredTimer =
+    alwaysVisibleExpiredTimers[timer.world]?.includes(timer.timerKey) ?? false;
 
   const getResetTimerErrorMessage = (cause: unknown) => {
     const apiMessage = getApiErrorStringField(cause, "message");
@@ -68,52 +65,53 @@ export const useTimerActions = (
 
   const handleHideTimer = () => {
     if (!settingsKey) return;
-    hideTimer(settingsKey, timer.npc.name);
+    setTimerHidden(settingsKey, timer.npc.name, true);
   };
 
-  const applyToAllTimerScopes = (action: typeof hideTimer) => {
+  const applyToAllTimerScopes = (
+    action: (settingsKey: string, npcName: string) => void,
+  ) => {
     if (!settingsKey || guildIds.length === 0) return;
     guildIds.forEach((guildId) => action(guildId, timer.npc.name));
-    action("global", timer.npc.name);
+    action(GLOBAL_TIMER_SETTINGS_KEY, timer.npc.name);
   };
 
-  const handleHideTimerForAll = () => applyToAllTimerScopes(hideTimer);
+  const handleHideTimerForAll = () =>
+    applyToAllTimerScopes((key, npcName) => setTimerHidden(key, npcName, true));
 
   const handleShowTimer = () => {
     if (!settingsKey) return;
-    revealTimer(settingsKey, timer.npc.name);
+    setTimerHidden(settingsKey, timer.npc.name, false);
   };
 
-  const handleShowTimerForAll = () => applyToAllTimerScopes(revealTimer);
+  const handleShowTimerForAll = () =>
+    applyToAllTimerScopes((key, npcName) =>
+      setTimerHidden(key, npcName, false),
+    );
 
   const handlePinTimer = () => {
     if (!settingsKey) return;
-
-    if (isPinned) {
-      unpinTimer(settingsKey, timer.npc.name);
-
-      return;
-    }
-
-    pinTimer(settingsKey, timer.npc.name);
+    setTimerPinned(settingsKey, timer.npc.name, !isPinned);
   };
 
-  const handlePinTimerForAll = () => applyToAllTimerScopes(pinTimer);
+  const handlePinTimerForAll = () =>
+    applyToAllTimerScopes((key, npcName) => setTimerPinned(key, npcName, true));
 
-  const handleUnpinTimerForAll = () => applyToAllTimerScopes(unpinTimer);
+  const handleUnpinTimerForAll = () =>
+    applyToAllTimerScopes((key, npcName) =>
+      setTimerPinned(key, npcName, false),
+    );
 
   const handleTimerColorChange = (color?: string) => {
     setTimerColor(timer.npc.name, color);
   };
 
   const handleToggleAlwaysVisibleExpiredTimer = () => {
-    if (isAlwaysVisibleExpiredTimer) {
-      hideExpiredTimerAlways(timer.world, timer.timerKey);
-
-      return;
-    }
-
-    showExpiredTimerAlways(timer.world, timer.timerKey);
+    setExpiredTimerAlwaysVisible(
+      timer.world,
+      timer.timerKey,
+      !isAlwaysVisibleExpiredTimer,
+    );
   };
 
   const handleRestartTimer = async () => {
@@ -197,5 +195,3 @@ export const useTimerActions = (
     handleDeleteTimer,
   };
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

@@ -4,7 +4,8 @@ import { SettingsSliderField } from "@/components/settings/settings-slider-field
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useTimersStore } from "@/store/timers.store";
+import { setTimerDisplayConfig } from "@/features/timers/settings/timer-settings-writers";
+import { useTimerAppearanceSettings } from "@/features/timers/settings/use-timer-settings";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -12,7 +13,8 @@ const formatFontSize = (value: number) =>
   `${Number.isInteger(value) ? value : value.toFixed(1)}px`;
 
 export const TimersSettingsAppearance: FC = () => {
-  const { displayConfig, setDisplayConfig } = useTimersStore();
+  const { displayConfig } = useTimerAppearanceSettings().appearance;
+  const setDisplayConfig = setTimerDisplayConfig;
   const { t } = useTranslation();
 
   return (

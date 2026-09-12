@@ -4,19 +4,55 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useTimersStore } from "@/store/timers.store";
+import {
+  TIMERS_LAYOUTS,
+  type TimersLayout,
+} from "@lootlog/schema/timer-settings";
+import {
+  setTimerGeneralConfig,
+  setTimersLayout,
+} from "@/features/timers/settings/timer-settings-writers";
+import { useTimerBehaviorSettings } from "@/features/timers/settings/use-timer-settings";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 const MAX_REMOVE_TIMER_AFTER_SECONDS = 120;
 
 export const TimersSettingsGeneral: FC = () => {
-  const { generalConfig, setGeneralConfig } = useTimersStore();
-
+  const { behavior } = useTimerBehaviorSettings();
+  const { generalConfig, layout } = behavior;
+  const setGeneralConfig = setTimerGeneralConfig;
   const { t } = useTranslation();
 
   return (
     <SettingsTabLayout>
+      <SettingsSection
+        controlId="timer-layout"
+        title={t("settingsLayout.title", { ns: "timers" })}
+      >
+        <SettingsRow
+          controlId="timers-layout"
+          label={t("settingsLayout.label", { ns: "timers" })}
+          description={t("settingsLayout.description", { ns: "timers" })}
+        >
+          <ToggleGroup
+            className="ll:ml-auto"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            onValueChange={([value]: TimersLayout[]) => {
+              if (value) setTimersLayout(value);
+            }}
+            value={[layout]}
+          >
+            {TIMERS_LAYOUTS.map((option) => (
+              <ToggleGroupItem key={option} value={option}>
+                {t(`settingsLayout.options.${option}`, { ns: "timers" })}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </SettingsRow>
+      </SettingsSection>
       <SettingsSection
         controlId="timer-behavior"
         title={t("settings.timers.general.behaviorTitle")}

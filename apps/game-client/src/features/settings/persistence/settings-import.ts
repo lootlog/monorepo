@@ -2,7 +2,7 @@
 import { storageKey } from "@/lib/storage-key";
 import { isObjectRecord } from "@lootlog/schema/records";
 import type { SettingsDomain } from "@lootlog/schema/settings-documents";
-import { decodeTimerSettings } from "@/store/timer-settings-codec";
+import { decodeLegacyTimerSnapshot } from "@/features/timers/settings/legacy-timer-snapshot";
 import {
   areSettingsValuesEqual,
   getSettingsDefaultValue,
@@ -11,7 +11,7 @@ import {
   type SettingsDocuments,
 } from "./settings-documents";
 import type { EnqueueSettingsPatchInput } from "./settings-patch-client";
-import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
+import { GLOBAL_TIMER_SETTINGS_KEY } from "@/features/timers/settings/timer-settings-documents";
 
 export const SETTINGS_IMPORT_STORAGE_KEY = storageKey("ll:settings:import");
 
@@ -115,7 +115,7 @@ const differsFromDefault = (
 
 const collectTimerBehaviorImport = (
   documents: SettingsDocuments,
-  timers: ReturnType<typeof decodeTimerSettings>,
+  timers: ReturnType<typeof decodeLegacyTimerSnapshot>,
 ) => {
   const behavior: Record<string, unknown> = {};
 
@@ -145,7 +145,7 @@ const collectTimerBehaviorImport = (
 
 const collectTimerAppearanceImport = (
   documents: SettingsDocuments,
-  timers: ReturnType<typeof decodeTimerSettings>,
+  timers: ReturnType<typeof decodeLegacyTimerSnapshot>,
 ) => {
   const appearance: Record<string, unknown> = {};
 
@@ -176,7 +176,7 @@ const collectTimerAppearanceImport = (
 };
 
 const collectGuildTimerListImports = (
-  timers: ReturnType<typeof decodeTimerSettings>,
+  timers: ReturnType<typeof decodeLegacyTimerSnapshot>,
   accessibleGuildIds: readonly string[],
   guildDocuments: GuildSettingsDocuments | undefined,
 ) => {
@@ -211,7 +211,7 @@ const planTimersImport = (
   { documents, guildDocuments, local, accessibleGuildIds }: ImportContext,
   plan: ImportPlan,
 ) => {
-  const timers = decodeTimerSettings(local.timers);
+  const timers = decodeLegacyTimerSnapshot(local.timers);
   plan.domains.push("timers");
 
   if (timers.updatedAt === undefined) return;

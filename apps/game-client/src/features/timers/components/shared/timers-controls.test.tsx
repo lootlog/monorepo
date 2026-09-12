@@ -2,17 +2,29 @@ import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
-import { useTimersStore } from "@/store/timers.store";
+import { useTimerFiltersStore } from "@/features/timers/timer-filters.store";
+import type { TimersColorPreferences } from "@/features/timers/hooks/use-timers-window-model";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 
-const resetStore = () =>
-  useTimersStore.setState(useTimersStore.getInitialState(), true);
+const colors: TimersColorPreferences = {
+  timersColors: {},
+  customColors: {
+    "custom-1": {
+      id: "custom-1",
+      name: "Custom One",
+      backgroundColor: "#abc",
+      borderColor: "#def",
+    },
+  },
+  defaultColorNames: { red: "Red" },
+  overriddenDefaultColors: {},
+  hiddenDefaultColors: ["blue"],
+};
 
-beforeEach(() => {
-  resetStore();
-  useTimersStore.setState({
+const resetStore = () =>
+  useTimerFiltersStore.setState({
     timersFilters: {
       "guild-1": {
         minLvl: 10,
@@ -21,44 +33,43 @@ beforeEach(() => {
         selectedColors: ["red"],
       },
     },
-    customColors: {
-      "custom-1": {
-        id: "custom-1",
-        name: "Custom One",
-        backgroundColor: "#abc",
-        borderColor: "#def",
-      },
-    },
-    defaultColorNames: { red: "Red" },
-    overriddenDefaultColors: {},
-    hiddenDefaultColors: ["blue"],
-    colorFiltersEnabled: true,
+    searchText: "",
   });
-});
 
-afterEach(resetStore);
+const renderFilters = () =>
+  render(
+    <TimersFilters filtersKey="guild-1" colors={colors} colorFiltersEnabled />,
+  );
+
+beforeEach(resetStore);
+
+afterEach(() =>
+  useTimerFiltersStore.setState({ timersFilters: {}, searchText: "" }),
+);
 
 describe("timers controls", () => {
   it("updates actual search, clamped level ranges, npc types, and color filters", async () => {
     const user = userEvent.setup();
-    render(<TimersFilters filtersKey="guild-1" />);
+    renderFilters();
     fireEvent.change(screen.getByPlaceholderText("Szukaj..."), {
       target: { value: "tan" },
     });
-    expect(useTimersStore.getState().timerFiltersSearchText).toBe("tan");
+    expect(useTimerFiltersStore.getState().searchText).toBe("tan");
     fireEvent.change(screen.getByPlaceholderText("Od"), {
       target: { value: "-50" },
     });
     fireEvent.change(screen.getByPlaceholderText("Do"), {
       target: { value: "999" },
     });
-    expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
+    expect(
+      useTimerFiltersStore.getState().timersFilters["guild-1"],
+    ).toMatchObject({
       minLvl: 0,
       maxLvl: 500,
     });
     await user.click(screen.getByRole("button", { name: "H" }));
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
+      useTimerFiltersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
     ).toEqual([]);
     const custom = screen.getAllByRole("button").at(-1);
 
@@ -67,13 +78,13 @@ describe("timers controls", () => {
     expect(await screen.findByText("Custom One")).toBeVisible();
     await user.click(custom);
     expect(
-      useTimersStore.getState().timersFilters["guild-1"].selectedColors,
+      useTimerFiltersStore.getState().timersFilters["guild-1"].selectedColors,
     ).toEqual(["red", "custom-1"]);
   });
 
   it("selects only the right-clicked npc type and preserves the other filters", () => {
-    useTimersStore.getState().setTimersFilters("guild-1", {
-      ...useTimersStore.getState().timersFilters["guild-1"],
+    useTimerFiltersStore.getState().setTimersFilters("guild-1", {
+      ...useTimerFiltersStore.getState().timersFilters["guild-1"],
       selectedNpcTypes: [
         NpcType.ELITE2,
         NpcType.ELITE3,
@@ -81,12 +92,12 @@ describe("timers controls", () => {
         NpcType.TITAN,
       ],
     });
-    render(<TimersFilters filtersKey="guild-1" />);
+    renderFilters();
     const button = screen.getByRole("button", { name: "E2" });
     const event = createEvent.contextMenu(button);
     fireEvent(button, event);
     expect(event.defaultPrevented).toBe(true);
-    expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual({
+    expect(useTimerFiltersStore.getState().timersFilters["guild-1"]).toEqual({
       minLvl: 10,
       maxLvl: 200,
       selectedNpcTypes: [NpcType.ELITE2],

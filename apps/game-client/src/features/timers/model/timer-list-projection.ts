@@ -8,7 +8,7 @@ import {
   getTimerTimeLeft,
   type TimerWithTimeLeft,
 } from "./timer-time";
-import { DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
+import { DEFAULT_TIMERS_FILTERS } from "@/features/timers/timer-filters.store";
 import type { GuildMember } from "@/types/guild-member";
 
 type TimerListFilters = {

@@ -1,7 +1,9 @@
 import { render as renderUi, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import { useTimersStore } from "@/store/timers.store";
+import { seedGuildTimerLists } from "@/features/timers/model/timer-view-fixtures";
+import { readGuildTimerLists } from "@/features/timers/settings/timer-settings-writers";
+import { seedSettingsDocumentValues } from "@/test/settings-documents-fixtures";
 import { HiddenTimersTab } from "./hidden-timers-tab";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 
@@ -13,20 +15,15 @@ const render = () =>
 describe("HiddenTimersTab", () => {
   beforeEach(() => {
     harness = createGuildPreferencesTest();
-    useTimersStore.setState({
-      hiddenTimers: {
-        "guild-1": ["Alpha hidden boss"],
-        "guild-2": ["Beta hidden boss"],
-        global: ["Global hidden boss"],
-      },
+    seedGuildTimerLists(harness.queryClient, {
+      "guild-1": { hiddenTimers: ["Alpha hidden boss"] },
+      "guild-2": { hiddenTimers: ["Beta hidden boss"] },
+      "guild-3": {},
     });
-    useTimersStore.setState((state) => ({
-      ...state,
-      generalConfig: {
-        ...state.generalConfig,
-        timersGrouping: false,
-      },
-    }));
+    seedSettingsDocumentValues(harness.queryClient, {
+      "timers.hiddenTimers": ["Global hidden boss"],
+      "timers.generalConfig": { timersGrouping: false },
+    });
   });
 
   it("auto-selects the first guild and lets the user switch the scope", async () => {
@@ -53,19 +50,15 @@ describe("HiddenTimersTab", () => {
 
     await user.click(screen.getByRole("button", { name: "Przywróć" }));
 
-    expect(useTimersStore.getState().hiddenTimers["guild-1"]).toEqual([]);
+    expect(readGuildTimerLists("guild-1").hiddenTimers).toEqual([]);
     expect(screen.queryByText("Alpha hidden boss")).not.toBeInTheDocument();
     expect(screen.getByText("Brak ukrytych timerów.")).toBeInTheDocument();
   });
 
   it("hides the selector when grouping is enabled", () => {
-    useTimersStore.setState((state) => ({
-      ...state,
-      generalConfig: {
-        ...state.generalConfig,
-        timersGrouping: true,
-      },
-    }));
+    seedSettingsDocumentValues(harness.queryClient, {
+      "timers.generalConfig": { timersGrouping: true },
+    });
 
     render();
 

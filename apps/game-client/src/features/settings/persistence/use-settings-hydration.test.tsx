@@ -11,7 +11,6 @@ import {
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
-import { useTimersStore } from "@/store/timers.store";
 import { markSettingsImportDone } from "./settings-import";
 import { settingsPatchQueue } from "./settings-patch-client";
 import { useSettingsHydration } from "./use-settings-hydration";
@@ -74,59 +73,9 @@ describe("useSettingsHydration", () => {
     settingsPatchQueue.reset();
     setTestRuntimeGame();
     useGlobalStore.setState({ gameState: { gameInitialized: true } });
-    useTimersStore.setState(useTimersStore.getInitialState(), true);
 
     for (const domain of SETTINGS_DOMAINS) markSettingsImportDone(domain);
     respond(harness);
-  });
-
-  it("projects user and guild timer documents into the timers store", async () => {
-    seedSettingsDocuments(
-      harness.queryClient,
-      createSettingsDocuments({
-        "timers.generalConfig": {
-          removeTimerAfterMs: 5_000,
-          compactView: true,
-        },
-        "timers.hiddenTimers": ["global-hidden"],
-        "appearance.timers.displayConfig": { fontSize: 15 },
-        "gameData.detector": { HERO: { detect: false } },
-        "notifications.presentation": {},
-      }),
-    );
-
-    renderHook(() => useSettingsHydration(), { wrapper: harness.wrapper });
-
-    await waitFor(() =>
-      expect(useTimersStore.getState().hiddenTimers["guild-1"]).toEqual([
-        "hidden-guild-1",
-      ]),
-    );
-    expect(useTimersStore.getState().generalConfig).toMatchObject({
-      removeTimerAfterMs: 5_000,
-      compactView: true,
-      timersGrouping: false,
-    });
-    expect(useTimersStore.getState().displayConfig.fontSize).toBe(15);
-    expect(useTimersStore.getState().hiddenTimers.global).toEqual([
-      "global-hidden",
-    ]);
-    expect(patchBodies).toEqual([]);
-
-    // A refetched document with the same content must not replace store
-    // values, or every settings save would re-render the timers feature.
-    const { generalConfig, displayConfig, hiddenTimers } =
-      useTimersStore.getState();
-
-    seedSettingsDocuments(
-      harness.queryClient,
-      structuredClone(readSeededSettingsDocuments(harness.queryClient)!),
-    );
-    await waitFor(() => expect(harness.queryClient.isFetching()).toBe(0));
-
-    expect(useTimersStore.getState().generalConfig).toBe(generalConfig);
-    expect(useTimersStore.getState().displayConfig).toBe(displayConfig);
-    expect(useTimersStore.getState().hiddenTimers).toBe(hiddenTimers);
   });
 
   it("seeds notification and detector defaults once per account and releases queued detections", async () => {

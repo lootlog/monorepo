@@ -275,6 +275,12 @@ const MANIFEST = [
         labelKey: "settings.subsections.timerBehavior",
         controls: [
           {
+            id: "timers-layout",
+            labelKey: "timers:settingsLayout.title",
+            aliases: ["układ", "klasyczny", "nowy"],
+            settingKeys: ["timers.layout"],
+          },
+          {
             id: "timer-behavior",
             labelKey: "settings.timers.general.behaviorTitle",
             aliases: ["grupowanie", "torby", "kompaktowy"],

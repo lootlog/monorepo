@@ -4,36 +4,24 @@ import {
   formatLevelSuffix,
   getTimerShortname,
 } from "@/features/timers/model/timer-labels";
-import { useTimersStore } from "@/store/timers.store";
-import { useShallow } from "zustand/react/shallow";
+import type { TimersWindowModel } from "./use-timers-window-model";
 
-export const useTimerDisplay = (timer: Timer) => {
-  const {
-    selectedColor,
-    customColor,
-    overriddenColor,
-    displayConfig,
-    countdownMode,
-  } = useTimersStore(
-    useShallow((state) => {
-      const colorConfig = getTimerColorConfig(
-        timer.npc.name,
-        state.timersColors,
-        state.customColors,
-        state.overriddenDefaultColors,
-      );
+/** Presentation values of one tile derived from the timer and the surface appearance. */
+export const useTimerDisplay = (
+  timer: Timer,
+  appearance: TimersWindowModel["appearance"],
+) => {
+  const { displayConfig, countdownMode, colors } = appearance;
 
-      return {
-        ...colorConfig,
-        displayConfig: state.displayConfig,
-        countdownMode: state.generalConfig.countdownMode,
-      };
-    }),
+  const colorConfig = getTimerColorConfig(
+    timer.npc.name,
+    colors.timersColors,
+    colors.customColors,
+    colors.overriddenDefaultColors,
   );
 
   const isPending = timer.isPending ?? false;
   const resetIndicator = timer.wasReset ? "[R] " : "";
-
   const shortname = displayConfig.showType ? getTimerShortname(timer) : "";
 
   const npcDetails = displayConfig.showLevel
@@ -42,9 +30,7 @@ export const useTimerDisplay = (timer: Timer) => {
 
   return {
     isPending,
-    selectedColor,
-    customColor,
-    overriddenColor,
+    ...colorConfig,
     resetIndicator,
     shortname,
     npcDetails,

@@ -1,15 +1,12 @@
 /* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
 import { useEffect, useRef } from "react";
-import { isObjectRecord } from "@lootlog/schema/records";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { migrateHotkeysState, useHotkeysStore } from "@/store/hotkeys.store";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
-import { TIMERS_STORAGE_KEY, useTimersStore } from "@/store/timers.store";
-import { decodeTimerSettings } from "@/store/timer-settings-codec";
-import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
+import { readLegacyTimerSnapshot } from "@/features/timers/settings/legacy-timer-snapshot";
 import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import {
   createDetectorSettings,
@@ -17,7 +14,6 @@ import {
 } from "@/lib/game-account-preferences";
 import { getGuildIds } from "@/lib/api/generated-helpers";
 import {
-  areSettingsValuesEqual,
   hasStoredSettingsValue,
   selectSettingsValue,
   type SettingsDocuments,
@@ -36,153 +32,7 @@ import {
   useSettingsDocuments,
 } from "./use-settings-documents";
 
-/** Projects user-scoped timer documents into the timers store. */
-export const applyTimerDocuments = (documents: SettingsDocuments) => {
-  const decoded = decodeTimerSettings({
-    generalConfig: selectSettingsValue(documents, "timers.generalConfig"),
-    alwaysVisibleExpiredTimers: selectSettingsValue(
-      documents,
-      "timers.alwaysVisibleExpiredTimers",
-    ),
-    timerFiltersEnabled: selectSettingsValue(
-      documents,
-      "timers.timerFiltersEnabled",
-    ),
-    colorFiltersEnabled: selectSettingsValue(
-      documents,
-      "timers.colorFiltersEnabled",
-    ),
-    timersSortOrder: selectSettingsValue(documents, "timers.timersSortOrder"),
-    displayConfig: selectSettingsValue(
-      documents,
-      "appearance.timers.displayConfig",
-    ),
-    customColors: selectSettingsValue(
-      documents,
-      "appearance.timers.customColors",
-    ),
-    timersColors: selectSettingsValue(
-      documents,
-      "appearance.timers.timersColors",
-    ),
-    defaultColorNames: selectSettingsValue(
-      documents,
-      "appearance.timers.defaultColorNames",
-    ),
-    overriddenDefaultColors: selectSettingsValue(
-      documents,
-      "appearance.timers.overriddenDefaultColors",
-    ),
-    hiddenDefaultColors: selectSettingsValue(
-      documents,
-      "appearance.timers.hiddenDefaultColors",
-    ),
-  });
-
-  const store = useTimersStore.getState();
-  const updatedAt = documents.domains.timers?.updatedAt;
-
-  const next: Partial<TimersProjection> = {
-    generalConfig: { ...store.generalConfig, ...decoded.generalConfig },
-    displayConfig: { ...store.displayConfig, ...decoded.displayConfig },
-    alwaysVisibleExpiredTimers:
-      decoded.alwaysVisibleExpiredTimers ?? store.alwaysVisibleExpiredTimers,
-    timerFiltersEnabled:
-      decoded.timerFiltersEnabled ?? store.timerFiltersEnabled,
-    colorFiltersEnabled:
-      decoded.colorFiltersEnabled ?? store.colorFiltersEnabled,
-    timersSortOrder: decoded.timersSortOrder ?? store.timersSortOrder,
-    customColors: decoded.customColors ?? store.customColors,
-    timersColors: decoded.timersColors ?? store.timersColors,
-    defaultColorNames: decoded.defaultColorNames ?? store.defaultColorNames,
-    overriddenDefaultColors:
-      decoded.overriddenDefaultColors ?? store.overriddenDefaultColors,
-    hiddenDefaultColors:
-      decoded.hiddenDefaultColors ?? store.hiddenDefaultColors,
-  };
-
-  if (updatedAt) next.updatedAt = Date.parse(updatedAt);
-
-  setTimersStateIfChanged(next);
-  setGuildTimerLists(
-    GLOBAL_TIMER_SETTINGS_KEY,
-    selectSettingsValue(documents, "timers.hiddenTimers"),
-    selectSettingsValue(documents, "timers.pinnedTimers"),
-  );
-};
-
-type TimersState = ReturnType<typeof useTimersStore.getState>;
-
-type TimersProjection = Pick<
-  TimersState,
-  | "updatedAt"
-  | "generalConfig"
-  | "displayConfig"
-  | "alwaysVisibleExpiredTimers"
-  | "timerFiltersEnabled"
-  | "colorFiltersEnabled"
-  | "timersSortOrder"
-  | "customColors"
-  | "timersColors"
-  | "defaultColorNames"
-  | "overriddenDefaultColors"
-  | "hiddenDefaultColors"
->;
-
-/**
- * Writes only the keys whose value changed, so a refetched document with the
- * same content leaves store identities (and their subscribers) untouched.
- */
-const setTimersStateIfChanged = (next: Partial<TimersProjection>) => {
-  const store = useTimersStore.getState();
-  const changed: Partial<TimersProjection> = {};
-
-  // SAFETY: `next` is built from TimersProjection keys only.
-  for (const key of Object.keys(next) as (keyof TimersProjection)[]) {
-    if (!areSettingsValuesEqual(store[key], next[key])) {
-      Object.assign(changed, { [key]: next[key] });
-    }
-  }
-
-  if (Object.keys(changed).length > 0) useTimersStore.setState(changed);
-};
-
-const setGuildTimerLists = (
-  key: string,
-  hiddenTimers: string[],
-  pinnedTimers: string[],
-) => {
-  const store = useTimersStore.getState();
-
-  const changed: Partial<Pick<TimersState, "hiddenTimers" | "pinnedTimers">> =
-    {};
-
-  if (!areSettingsValuesEqual(store.hiddenTimers[key], hiddenTimers)) {
-    changed.hiddenTimers = { ...store.hiddenTimers, [key]: hiddenTimers };
-  }
-
-  if (!areSettingsValuesEqual(store.pinnedTimers[key], pinnedTimers)) {
-    changed.pinnedTimers = { ...store.pinnedTimers, [key]: pinnedTimers };
-  }
-
-  if (Object.keys(changed).length > 0) useTimersStore.setState(changed);
-};
-
-/** Projects one guild's timer document into the per-guild lists. */
-export const applyGuildTimerDocuments = (
-  guildId: string,
-  documents: SettingsDocuments,
-) => {
-  setGuildTimerLists(
-    guildId,
-    selectSettingsValue(documents, "timers.hiddenTimers"),
-    selectSettingsValue(documents, "timers.pinnedTimers"),
-  );
-};
-
 const applyProjections = (documents: SettingsDocuments) => {
-  applyTimerDocuments(documents);
-
   if (hasStoredSettingsValue(documents, "controls.hotkeys")) {
     useHotkeysStore
       .getState()
@@ -212,20 +62,9 @@ const applyProjections = (documents: SettingsDocuments) => {
   }
 };
 
-const readPersistedTimersState = () => {
-  try {
-    const raw = localStorage.getItem(TIMERS_STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : null;
-
-    return isObjectRecord(parsed) ? parsed.state : null;
-  } catch {
-    return null;
-  }
-};
-
 const readLocalSnapshot = () => {
   return {
-    timers: readPersistedTimersState(),
+    timers: readLegacyTimerSnapshot(),
     hotkeys: useHotkeysStore.getState().bindings,
     allowWorldSelection: useSettingsStore.getState().allowWorldSelection,
     battlePanel: {
@@ -312,14 +151,6 @@ export const useSettingsHydration = () => {
     guildDocuments,
     guildIds,
   ]);
-
-  useEffect(() => {
-    if (!guildDocuments) return;
-
-    for (const [guildId, documents] of Object.entries(guildDocuments.guilds)) {
-      applyGuildTimerDocuments(guildId, documents);
-    }
-  }, [guildDocuments]);
 
   useEffect(() => {
     if (

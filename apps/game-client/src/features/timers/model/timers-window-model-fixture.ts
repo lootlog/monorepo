@@ -32,6 +32,8 @@ export const createTimersWindowModelFixture = (
     timers: [],
     hiddenTimerNames: new Set(),
     hiddenTimers: [],
+    pinnedTimers: [],
+    alwaysVisibleExpiredTimers: {},
     colorStatistics: [],
     areFiltersActive: false,
     ...overrides.list,

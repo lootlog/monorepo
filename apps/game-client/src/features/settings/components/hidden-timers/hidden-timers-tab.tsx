@@ -11,13 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
-import { useTimersStore } from "@/store/timers.store";
+import { useTimerBehaviorSettings } from "@/features/timers/settings/use-timer-settings";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 
 export const HiddenTimersTab = () => {
-  const { generalConfig } = useTimersStore();
+  const { generalConfig } = useTimerBehaviorSettings().behavior;
 
   const { data: guilds, isFetched } =
     useUsersControllerGetCurrentUserAccessibleGuilds();

@@ -1,14 +1,35 @@
 import { normalizeTimerResponse, type Timer } from "@/api/timers.api";
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import {
   fixtureValue,
   nestedFixtureValue,
   optionalFixtureValue,
 } from "@/test-utils/fixture-value";
-import { useTimersStore } from "@/store/timers.store";
+import { createTimersWindowModelFixture } from "@/features/timers/model/timers-window-model-fixture";
 import { useTimerDisplay } from "./use-timer-display";
+
+const appearance = createTimersWindowModelFixture({
+  appearance: {
+    countdownMode: "min",
+    displayConfig: { showLevel: true },
+    colors: {
+      timersColors: { Tanroth: "custom-red", Mushita: "white" },
+      customColors: {
+        "custom-red": {
+          id: "custom-red",
+          name: "Custom red",
+          borderColor: "#f00",
+          backgroundColor: "#fee",
+        },
+      },
+      overriddenDefaultColors: {
+        white: { borderColor: "#111", backgroundColor: "#333" },
+      },
+    },
+  },
+}).appearance;
 
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
   guildId: "guild-1",
@@ -38,46 +59,9 @@ const createTimer = (overrides?: Partial<Timer>): Timer => ({
 });
 
 describe("useTimerDisplay", () => {
-  beforeEach(() => {
-    useTimersStore.setState({
-      timersColors: {
-        Tanroth: "custom-red",
-        Mushita: "white",
-      },
-      customColors: {
-        "custom-red": {
-          id: "custom-red",
-          name: "Custom red",
-          borderColor: "#f00",
-          backgroundColor: "#fee",
-        },
-      },
-      overriddenDefaultColors: {
-        white: {
-          borderColor: "#111",
-          backgroundColor: "#333",
-        },
-      },
-      displayConfig: {
-        showType: true,
-        showLevel: true,
-        fontSize: 11,
-        minColumnWidth: 120,
-        singleTimerDisplayMode: "row",
-      },
-      generalConfig: {
-        removeTimerAfterMs: 30_000,
-        timersGrouping: false,
-        timersUnderBag: false,
-        countdownMode: "min",
-        compactView: false,
-      },
-    });
-  });
-
   it("builds display data for a regular timer with a custom color", () => {
     const { result } = renderHook(() =>
-      useTimerDisplay(createTimer({ wasReset: true })),
+      useTimerDisplay(createTimer({ wasReset: true }), appearance),
     );
 
     expect(result.current).toMatchObject({
@@ -107,6 +91,7 @@ describe("useTimerDisplay", () => {
             margonemType: 999,
           },
         }),
+        appearance,
       ),
     );
 
@@ -127,6 +112,7 @@ describe("useTimerDisplay", () => {
             location: "Ruins",
           },
         }),
+        appearance,
       ),
     );
 
@@ -142,6 +128,7 @@ describe("useTimerDisplay", () => {
             type: NpcType.ELITE2,
           },
         }),
+        appearance,
       ),
     );
 
@@ -158,6 +145,7 @@ describe("useTimerDisplay", () => {
           },
           isPending: true,
         }),
+        appearance,
       ),
     );
 
@@ -171,21 +159,5 @@ describe("useTimerDisplay", () => {
       },
       countdownMode: "min",
     });
-  });
-
-  it("does not rerender a timer when an unrelated timer setting changes", () => {
-    let renderCount = 0;
-
-    renderHook(() => {
-      renderCount += 1;
-
-      return useTimerDisplay(createTimer());
-    });
-
-    act(() => {
-      useTimersStore.setState({ timerFiltersSearchText: "unrelated" });
-    });
-
-    expect(renderCount).toBe(1);
   });
 });

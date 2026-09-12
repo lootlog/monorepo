@@ -4,24 +4,38 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
-import { QueryClient } from "@tanstack/react-query";
 import { configureApiClients } from "@lootlog/client/transport";
 import { queryKeys } from "@/features/public-api/query-keys";
+import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
+import { queryClient } from "@/lib/query-client";
+import {
+  createSettingsDocuments,
+  readSeededSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
 import {
   createTimerFixture,
   createTimerHistoryFixture,
 } from "./timer-fixtures";
 
+const PREFERENCES_PATH = "/preferences";
+
+/**
+ * Real HTTP boundary for timer tests on the shared query client, so writes
+ * through the settings patch queue land in the same cache the hooks read.
+ * Settings saves answer with the seeded documents; other requests go to
+ * `respond` or default to the history fixture.
+ */
 export const createTimerHttpFixture = (
   respond?: (request: Request) => Response | Promise<Response>,
 ) => {
   const requests: Request[] = [];
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: Infinity },
-      mutations: { retry: false },
-    },
+  queryClient.clear();
+  settingsPatchQueue.reset();
+  queryClient.setDefaultOptions({
+    queries: { retry: false, gcTime: Infinity, staleTime: Infinity },
+    mutations: { retry: false },
   });
 
   queryClient.setQueryData(
@@ -42,6 +56,7 @@ export const createTimerHttpFixture = (
     getUsersControllerGetUserPreferencesQueryKey(),
     preferences,
   );
+  seedSettingsDocuments(queryClient, createSettingsDocuments());
   const history = createTimerHistoryFixture();
 
   const restored = createTimerFixture({
@@ -56,6 +71,21 @@ export const createTimerHttpFixture = (
       baseUrl: "https://api.example.test",
       fetch: (input, init) => {
         const request = new Request(input, init);
+        const { pathname } = new URL(request.url);
+
+        if (
+          pathname === PREFERENCES_PATH ||
+          pathname.startsWith(`${PREFERENCES_PATH}/`)
+        ) {
+          return Promise.resolve(
+            Response.json(
+              pathname === PREFERENCES_PATH
+                ? readSeededSettingsDocuments(queryClient)
+                : { guilds: {} },
+            ),
+          );
+        }
+
         requests.push(request);
 
         return Promise.resolve(
@@ -73,6 +103,7 @@ export const createTimerHttpFixture = (
     history,
     restored,
     cleanup: () => {
+      settingsPatchQueue.reset();
       queryClient.clear();
       restoreApi();
     },

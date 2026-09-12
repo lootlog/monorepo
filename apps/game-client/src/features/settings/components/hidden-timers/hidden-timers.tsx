@@ -2,7 +2,12 @@ import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsListRow } from "@/components/settings/settings-list-row";
-import { useTimersStore } from "@/store/timers.store";
+import { GLOBAL_TIMER_SETTINGS_KEY } from "@/features/timers/settings/timer-settings-documents";
+import { setTimerHidden } from "@/features/timers/settings/timer-settings-writers";
+import {
+  useGuildTimerLists,
+  useTimerBehaviorSettings,
+} from "@/features/timers/settings/use-timer-settings";
 import { RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,15 +17,18 @@ type HiddenTimersProps = {
 };
 
 export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
-  const { hiddenTimers, revealTimer, generalConfig } = useTimersStore();
+  const { generalConfig } = useTimerBehaviorSettings().behavior;
   const { t } = useTranslation();
 
-  const key = generalConfig.timersGrouping ? "global" : guildId;
-  const hiddenTimersForAccount = key ? hiddenTimers[key] : undefined;
+  const key = generalConfig.timersGrouping
+    ? GLOBAL_TIMER_SETTINGS_KEY
+    : guildId;
 
-  const uniqueHiddenTimers = Array.from(
-    new Set(hiddenTimersForAccount ?? []),
-  ).toSorted((a, b) => a.localeCompare(b));
+  const { hiddenTimers } = useGuildTimerLists(key ?? "");
+
+  const uniqueHiddenTimers = Array.from(new Set(hiddenTimers)).toSorted(
+    (a, b) => a.localeCompare(b),
+  );
 
   if (!key || uniqueHiddenTimers.length === 0) {
     return (
@@ -36,7 +44,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
         <SettingsListRow key={timer} title={timer}>
           <SettingsIconButton
             label={t("common:actions.restore")}
-            onClick={() => revealTimer(key, timer)}
+            onClick={() => setTimerHidden(key, timer, false)}
           >
             <RotateCcw aria-hidden="true" />
           </SettingsIconButton>

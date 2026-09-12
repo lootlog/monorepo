@@ -8,7 +8,6 @@ import type { Timer } from "@/api/timers.api";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { TimerColorStatistic } from "@/features/timers/model/timer-list-projection";
 import type { OverriddenTimerColor } from "@/features/timers/model/timer-colors";
@@ -21,6 +20,20 @@ import {
   resolveTimersScope,
   type TimersScope,
 } from "@/features/timers/model/timers-scope";
+import {
+  setColorFiltersEnabled,
+  setTimerFiltersEnabled,
+  setTimersSortOrder,
+} from "@/features/timers/settings/timer-settings-writers";
+import {
+  useGuildTimerLists,
+  useTimerAppearanceSettings,
+  useTimerBehaviorSettings,
+} from "@/features/timers/settings/use-timer-settings";
+import {
+  DEFAULT_TIMERS_FILTERS,
+  useTimerFiltersStore,
+} from "@/features/timers/timer-filters.store";
 import {
   useTimerAccessPolicies,
   type TimerAccess,
@@ -56,6 +69,8 @@ export type TimersWindowModel = {
     timers: TimerWithTimeLeft[];
     hiddenTimerNames: ReadonlySet<string>;
     hiddenTimers: string[];
+    pinnedTimers: string[];
+    alwaysVisibleExpiredTimers: Record<string, string[]>;
     colorStatistics: TimerColorStatistic[];
     areFiltersActive: boolean;
   };
@@ -112,30 +127,8 @@ export const useTimersWindowModel = (
       })),
     );
 
-  const store = useTimersStore(
-    useShallow((state) => ({
-      hiddenTimers: state.hiddenTimers,
-      pinnedTimers: state.pinnedTimers,
-      generalConfig: state.generalConfig,
-      timerFiltersEnabled: state.timerFiltersEnabled ?? false,
-      toggleTimerFiltersEnabled: state.toggleTimerFiltersEnabled,
-      colorFiltersEnabled: state.colorFiltersEnabled ?? false,
-      toggleColorFiltersEnabled: state.toggleColorFiltersEnabled,
-      timerFiltersSearchText: state.timerFiltersSearchText ?? "",
-      setTimerFiltersSearchText: state.setTimerFiltersSearchText,
-      timersSortOrder: state.timersSortOrder ?? "asc",
-      setTimersSortOrder: state.setTimersSortOrder,
-      timersFilters: state.timersFilters,
-      setTimersFilters: state.setTimersFilters,
-      displayConfig: state.displayConfig,
-      timersColors: state.timersColors,
-      customColors: state.customColors,
-      defaultColorNames: state.defaultColorNames,
-      overriddenDefaultColors: state.overriddenDefaultColors,
-      hiddenDefaultColors: state.hiddenDefaultColors,
-      alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
-    })),
-  );
+  const { behavior } = useTimerBehaviorSettings();
+  const { appearance } = useTimerAppearanceSettings();
 
   const scope = resolveTimersScope({
     characterId,
@@ -143,16 +136,21 @@ export const useTimersWindowModel = (
     worldByGuildId,
     allowWorldSelection,
     gameWorld,
-    isGrouping: store.generalConfig.timersGrouping,
+    isGrouping: behavior.generalConfig.timersGrouping,
   });
+
+  const lists = useGuildTimerLists(scope.settingsKey);
+
+  const { filters, searchText, resetFilters } = useTimerFiltersStore(
+    useShallow((state) => ({
+      filters: state.timersFilters[scope.settingsKey] ?? DEFAULT_TIMERS_FILTERS,
+      searchText: state.searchText,
+      resetFilters: state.resetFilters,
+    })),
+  );
 
   const timersQuery = useTimers({ world: scope.world });
   const [showHidden, setShowHidden] = useState(false);
-
-  const filters =
-    store.timersFilters[scope.settingsKey] ?? DEFAULT_TIMERS_FILTERS;
-
-  const hiddenTimers = store.hiddenTimers[scope.settingsKey] ?? [];
 
   const projection = useTimerListProjection({
     context: { guildId: scope.guildId ?? "", isGrouping: scope.isGrouping },
@@ -160,22 +158,22 @@ export const useTimersWindowModel = (
     filters: {
       maxLvl: filters.maxLvl,
       minLvl: filters.minLvl,
-      searchText: store.timerFiltersSearchText,
+      searchText,
       selectedColors: filters.selectedColors,
       selectedNpcTypes: filters.selectedNpcTypes,
       showHiddenTimers: showHidden,
     },
     preferences: {
-      alwaysVisibleExpiredTimers: store.alwaysVisibleExpiredTimers,
-      colorFiltersEnabled: store.colorFiltersEnabled,
-      customColors: store.customColors,
-      defaultColorNames: store.defaultColorNames,
-      hiddenTimers,
-      overriddenDefaultColors: store.overriddenDefaultColors,
-      pinnedTimers: store.pinnedTimers[scope.settingsKey] ?? [],
-      removeTimerAfterMs: store.generalConfig.removeTimerAfterMs,
-      sortOrder: store.timersSortOrder,
-      timersColors: store.timersColors,
+      alwaysVisibleExpiredTimers: behavior.alwaysVisibleExpiredTimers,
+      colorFiltersEnabled: behavior.colorFiltersEnabled,
+      customColors: appearance.customColors,
+      defaultColorNames: appearance.defaultColorNames,
+      hiddenTimers: lists.hiddenTimers,
+      overriddenDefaultColors: appearance.overriddenDefaultColors,
+      pinnedTimers: lists.pinnedTimers,
+      removeTimerAfterMs: behavior.generalConfig.removeTimerAfterMs,
+      sortOrder: behavior.timersSortOrder,
+      timersColors: appearance.timersColors,
     },
     timers: timersQuery.data ?? EMPTY_TIMERS,
   });
@@ -186,8 +184,10 @@ export const useTimersWindowModel = (
     scope,
     list: {
       timers: projection.timers,
-      hiddenTimerNames: new Set(hiddenTimers),
-      hiddenTimers,
+      hiddenTimerNames: new Set(lists.hiddenTimers),
+      hiddenTimers: lists.hiddenTimers,
+      pinnedTimers: lists.pinnedTimers,
+      alwaysVisibleExpiredTimers: behavior.alwaysVisibleExpiredTimers,
       colorStatistics: projection.colorStatistics,
       areFiltersActive: projection.areFiltersActive,
     },
@@ -203,25 +203,27 @@ export const useTimersWindowModel = (
       },
     },
     toolbar: {
-      filtersEnabled: store.timerFiltersEnabled,
-      toggleFilters: store.toggleTimerFiltersEnabled,
-      colorFiltersEnabled: store.colorFiltersEnabled,
-      toggleColorFilters: store.toggleColorFiltersEnabled,
-      sortOrder: store.timersSortOrder,
-      setSortOrder: store.setTimersSortOrder,
+      filtersEnabled: behavior.timerFiltersEnabled,
+      toggleFilters: () =>
+        setTimerFiltersEnabled(!behavior.timerFiltersEnabled),
+      colorFiltersEnabled: behavior.colorFiltersEnabled,
+      toggleColorFilters: () =>
+        setColorFiltersEnabled(!behavior.colorFiltersEnabled),
+      sortOrder: behavior.timersSortOrder,
+      setSortOrder: setTimersSortOrder,
       showHidden,
       setShowHidden,
     },
     appearance: {
-      displayConfig: store.displayConfig,
-      compactView: store.generalConfig.compactView,
-      countdownMode: store.generalConfig.countdownMode,
+      displayConfig: appearance.displayConfig,
+      compactView: behavior.generalConfig.compactView,
+      countdownMode: behavior.generalConfig.countdownMode,
       colors: {
-        timersColors: store.timersColors,
-        customColors: store.customColors,
-        defaultColorNames: store.defaultColorNames,
-        overriddenDefaultColors: store.overriddenDefaultColors,
-        hiddenDefaultColors: store.hiddenDefaultColors,
+        timersColors: appearance.timersColors,
+        customColors: appearance.customColors,
+        defaultColorNames: appearance.defaultColorNames,
+        overriddenDefaultColors: appearance.overriddenDefaultColors,
+        hiddenDefaultColors: appearance.hiddenDefaultColors,
       },
     },
     access,
@@ -229,15 +231,10 @@ export const useTimersWindowModel = (
       openAddTimer: () =>
         setOpen("add-timer", true, { guildId: scope.guildId }),
       resetFilters: () => {
-        store.setTimerFiltersSearchText("");
-        store.setTimersFilters(scope.settingsKey, {
-          ...DEFAULT_TIMERS_FILTERS,
-          selectedColors: [...DEFAULT_TIMERS_FILTERS.selectedColors],
-          selectedNpcTypes: [...DEFAULT_TIMERS_FILTERS.selectedNpcTypes],
-        });
+        resetFilters(scope.settingsKey);
         setShowHidden(true);
       },
-      close: () => setOpen(surface === "window" ? "timers" : "timers", false),
+      close: () => setOpen("timers", false),
     },
   };
 };

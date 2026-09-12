@@ -14,7 +14,17 @@ import {
   getTimerColorHex,
   TIMERS_COLORS,
 } from "@/features/timers/model/timer-colors";
-import { useTimersStore } from "@/store/timers.store";
+import {
+  deleteCustomColor,
+  hideDefaultColor,
+  overrideDefaultColor,
+  resetAllDefaultColors,
+  resetDefaultColor,
+  restoreDefaultColor,
+  saveCustomColor,
+  setDefaultColorName,
+} from "@/features/timers/settings/timer-settings-writers";
+import { useTimerAppearanceSettings } from "@/features/timers/settings/use-timer-settings";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -85,19 +95,10 @@ const getTimerColorEditData = (
 export const TimersSettingsColors: FC = () => {
   const {
     customColors,
-    addCustomColor,
-    updateCustomColor,
-    deleteCustomColor,
     defaultColorNames,
-    setDefaultColorName,
     overriddenDefaultColors,
-    updateDefaultColor,
-    resetDefaultColor,
-    resetAllDefaultColors,
-    deleteDefaultColor,
     hiddenDefaultColors,
-    restoreDefaultColor,
-  } = useTimersStore();
+  } = useTimerAppearanceSettings().appearance;
 
   const { t } = useTranslation();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
@@ -154,7 +155,7 @@ export const TimersSettingsColors: FC = () => {
 
       if (!currentColor) return;
 
-      updateCustomColor(selection.id, {
+      saveCustomColor({
         ...currentColor,
         name: data.name,
         borderColor: data.borderColor,
@@ -180,7 +181,10 @@ export const TimersSettingsColors: FC = () => {
       data.backgroundColor !== stored.backgroundColor ||
       data.backgroundAlpha !== stored.backgroundAlpha
     ) {
-      updateDefaultColor(selection.id, data.borderColor, backgroundColor);
+      overrideDefaultColor(selection.id, {
+        borderColor: data.borderColor,
+        backgroundColor,
+      });
     }
   };
 
@@ -191,7 +195,7 @@ export const TimersSettingsColors: FC = () => {
 
   const handleAddColor = (data: Omit<CustomTimerColor, "id">) => {
     const id = `custom-${Date.now()}`;
-    addCustomColor({ id, ...data });
+    saveCustomColor({ id, ...data });
     setEnteredKey(selectionKey({ id, kind: "custom" }));
     setOpenPopover(null);
   };
@@ -224,7 +228,7 @@ export const TimersSettingsColors: FC = () => {
         onDelete={() => {
           setDraft(null);
 
-          if (isDefault) deleteDefaultColor(selection.id);
+          if (isDefault) hideDefaultColor(selection.id);
           else deleteCustomColor(selection.id);
         }}
       />

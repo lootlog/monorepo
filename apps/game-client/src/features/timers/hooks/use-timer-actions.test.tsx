@@ -8,14 +8,28 @@ import {
   onTestFinished,
   vi,
 } from "vitest";
-import { useTimersStore } from "@/store/timers.store";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
+import type { ReactNode } from "react";
 import { useGameStore } from "@/store/game.store";
+import { seedGuildTimerLists } from "@/features/timers/model/timer-view-fixtures";
+import {
+  readGuildTimerLists,
+  readTimerAppearance,
+} from "@/features/timers/settings/timer-settings-writers";
+import {
+  useGuildTimerLists,
+  useTimerBehaviorSettings,
+} from "@/features/timers/settings/use-timer-settings";
 import {
   setTestRuntimeGame,
   testRuntimeWindow,
 } from "@/test/test-runtime-window";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { createTimerFixture } from "@/features/timers/model/timer-fixtures";
+import {
+  createTimerFixture,
+  createTimerGuildFixture,
+} from "@/features/timers/model/timer-fixtures";
 import { createTimerHttpFixture } from "@/features/timers/model/timer-http-fixtures";
 import { useTimerActions } from "./use-timer-actions";
 
@@ -24,7 +38,6 @@ const message = vi.fn<(text: string) => void>();
 const originalMessage = testRuntimeWindow.message;
 
 beforeEach(() => {
-  useTimersStore.setState(useTimersStore.getInitialState(), true);
   setTestRuntimeGame({
     hero: {
       accountId: "200",
@@ -39,7 +52,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  useTimersStore.setState(useTimersStore.getInitialState(), true);
   useGameStore.getState().clearGame();
   testRuntimeWindow.message = originalMessage;
 });
@@ -67,14 +79,36 @@ const mountActions = (
     ],
   };
 
-  const hook = renderHook(() =>
-    useTimerActions(
-      timer,
-      "guild-1",
-      "pandora",
-      ["guild-1", "guild-2"],
-      grouped,
-    ),
+  fixture.queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [
+      createTimerGuildFixture(),
+      createTimerGuildFixture({ id: "guild-2", name: "Beta" }),
+    ],
+  );
+  seedGuildTimerLists(fixture.queryClient, { "guild-1": {}, "guild-2": {} });
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={fixture.queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+
+  const hook = renderHook(
+    () => {
+      const lists = useGuildTimerLists("guild-1");
+      const { behavior } = useTimerBehaviorSettings();
+
+      return useTimerActions(timer, {
+        settingsKey: "guild-1",
+        world: "pandora",
+        guildIds: ["guild-1", "guild-2"],
+        isGrouping: grouped,
+        pinnedTimers: lists.pinnedTimers,
+        alwaysVisibleExpiredTimers: behavior.alwaysVisibleExpiredTimers,
+      });
+    },
+    { wrapper },
   );
 
   onTestFinished(() => {
@@ -85,51 +119,56 @@ const mountActions = (
   return { ...fixture, result: hook.result };
 };
 
+// Query cache notifications reach React on the next macrotask.
+const run = (action: () => void) =>
+  act(async () => {
+    action();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
 describe("useTimerActions", () => {
-  it("changes visibility, pinning and colors in the real store and reverses those states", () => {
+  it("changes visibility, pinning and colors through the settings documents and reverses those states", async () => {
     const { result } = mountActions();
-    act(() => result.current.handleHideTimer());
-    expect(useTimersStore.getState().hiddenTimers["guild-1"]).toContain(
+
+    const hiddenEverywhere = () =>
+      ["guild-1", "guild-2", "global"].map(
+        (key) => readGuildTimerLists(key).hiddenTimers,
+      );
+
+    await run(() => result.current.handleHideTimer());
+    expect(readGuildTimerLists("guild-1").hiddenTimers).toContain("Tanroth");
+    await run(() => result.current.handleHideTimerForAll());
+    expect(hiddenEverywhere()).toEqual([["Tanroth"], ["Tanroth"], ["Tanroth"]]);
+    await run(() => result.current.handleShowTimer());
+    expect(readGuildTimerLists("guild-1").hiddenTimers).not.toContain(
       "Tanroth",
     );
-    act(() => result.current.handleHideTimerForAll());
-    expect(useTimersStore.getState().hiddenTimers).toMatchObject({
-      "guild-1": ["Tanroth"],
-      "guild-2": ["Tanroth"],
-      global: ["Tanroth"],
-    });
-    act(() => result.current.handleShowTimer());
-    expect(useTimersStore.getState().hiddenTimers["guild-1"]).not.toContain(
-      "Tanroth",
-    );
-    act(() => result.current.handleShowTimerForAll());
-    expect(
-      Object.values(useTimersStore.getState().hiddenTimers).flat(),
-    ).not.toContain("Tanroth");
-    act(() => result.current.handlePinTimer());
+    await run(() => result.current.handleShowTimerForAll());
+    expect(hiddenEverywhere().flat()).not.toContain("Tanroth");
+    await run(() => result.current.handlePinTimer());
     expect(result.current.isPinned).toBe(true);
-    act(() => result.current.handlePinTimer());
+    await run(() => result.current.handlePinTimer());
     expect(result.current.isPinned).toBe(false);
-    act(() => result.current.handleTimerColorChange("red"));
-    expect(useTimersStore.getState().timersColors.Tanroth).toBe("red");
-    act(() => result.current.handleToggleAlwaysVisibleExpiredTimer());
+    await run(() => result.current.handleTimerColorChange("red"));
+    expect(readTimerAppearance().timersColors.Tanroth).toBe("red");
+    await run(() => result.current.handleToggleAlwaysVisibleExpiredTimer());
     expect(result.current.isAlwaysVisibleExpiredTimer).toBe(true);
-    act(() => result.current.handleToggleAlwaysVisibleExpiredTimer());
+    await run(() => result.current.handleToggleAlwaysVisibleExpiredTimer());
     expect(result.current.isAlwaysVisibleExpiredTimer).toBe(false);
   });
 
-  it("pins and unpins across organizations and the global scope", () => {
+  it("pins and unpins across organizations and the global scope", async () => {
     const { result } = mountActions();
-    act(() => result.current.handlePinTimerForAll());
-    expect(useTimersStore.getState().pinnedTimers).toMatchObject({
-      "guild-1": ["Tanroth"],
-      "guild-2": ["Tanroth"],
-      global: ["Tanroth"],
-    });
-    act(() => result.current.handleUnpinTimerForAll());
-    expect(
-      Object.values(useTimersStore.getState().pinnedTimers).flat(),
-    ).not.toContain("Tanroth");
+
+    const pinnedEverywhere = () =>
+      ["guild-1", "guild-2", "global"].map(
+        (key) => readGuildTimerLists(key).pinnedTimers,
+      );
+
+    await run(() => result.current.handlePinTimerForAll());
+    expect(pinnedEverywhere()).toEqual([["Tanroth"], ["Tanroth"], ["Tanroth"]]);
+    await run(() => result.current.handleUnpinTimerForAll());
+    expect(pinnedEverywhere().flat()).not.toContain("Tanroth");
   });
 
   it.each([false, true])(

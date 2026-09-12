@@ -59,7 +59,11 @@ export const LegacyTimersSurface: FC<TimersLayoutProps> = ({
           <WorldSelector />
         )}
         {showChrome && toolbar.filtersEnabled && (
-          <TimersFilters filtersKey={scope.settingsKey} />
+          <TimersFilters
+            filtersKey={scope.settingsKey}
+            colors={appearance.colors}
+            colorFiltersEnabled={toolbar.colorFiltersEnabled}
+          />
         )}
 
         <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:py-1">

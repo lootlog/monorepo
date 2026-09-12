@@ -167,5 +167,14 @@
     "useLocal": "Użyj ustawień lokalnych",
     "useRemote": "Użyj ustawień z serwera",
     "warning": "Uwaga: Wybrane ustawienia nadpiszą drugą wersję."
+  },
+  "settingsLayout": {
+    "title": "Układ okna",
+    "label": "Wersja układu",
+    "description": "Nowy układ jest domyślny. Klasyczny układ pozostaje dostępny przez pewien czas.",
+    "options": {
+      "legacy": "Klasyczny",
+      "modern": "Nowy"
+    }
   }
 }

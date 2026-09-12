@@ -3,7 +3,12 @@ import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/api/npcs.api";
 import { cn } from "cn";
 import { clamp } from "@/lib/clamp";
-import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
+import { useShallow } from "zustand/react/shallow";
+import type { TimersColorPreferences } from "@/features/timers/hooks/use-timers-window-model";
+import {
+  DEFAULT_TIMERS_FILTERS,
+  useTimerFiltersStore,
+} from "@/features/timers/timer-filters.store";
 import type { FC } from "react";
 import {
   Tooltip,
@@ -29,24 +34,38 @@ const MIN_LVL = 0;
 
 type TimersFiltersProps = {
   filtersKey: string;
+  colors: TimersColorPreferences;
+  colorFiltersEnabled: boolean;
 };
 
-export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
+export const TimersFilters: FC<TimersFiltersProps> = ({
+  filtersKey,
+  colors,
+  colorFiltersEnabled,
+}) => {
   const { t } = useTranslation("timers");
 
   const {
-    timerFiltersSearchText,
-    setTimerFiltersSearchText,
-    timersFilters,
-    setTimersFilters,
     customColors,
     defaultColorNames,
     overriddenDefaultColors,
     hiddenDefaultColors,
-    colorFiltersEnabled,
-  } = useTimersStore();
+  } = colors;
 
-  const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
+  const {
+    filters,
+    searchText: timerFiltersSearchText,
+    setSearchText: setTimerFiltersSearchText,
+    setTimersFilters,
+  } = useTimerFiltersStore(
+    useShallow((state) => ({
+      filters: state.timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS,
+      searchText: state.searchText,
+      setSearchText: state.setSearchText,
+      setTimersFilters: state.setTimersFilters,
+    })),
+  );
+
   const selectedNpcTypes = new Set(filters.selectedNpcTypes);
   const selectedColors = new Set(filters.selectedColors);
   const hiddenColors = new Set(hiddenDefaultColors);

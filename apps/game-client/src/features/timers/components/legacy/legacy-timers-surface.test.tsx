@@ -7,7 +7,6 @@ import {
   getGuildsControllerGetGuildPermissionsQueryKey,
 } from "@lootlog/client/main";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { useTimersStore } from "@/store/timers.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -24,7 +23,6 @@ import type { TimersSurfaceKind } from "@/features/timers/hooks/use-timers-windo
 import { LegacyTimersSurface } from "./legacy-timers-surface";
 
 beforeEach(() => {
-  useTimersStore.setState(useTimersStore.getInitialState(), true);
   setTestRuntimeGame({
     hero: { accountId: "200", characterId: "101" },
     world: "pandora",
