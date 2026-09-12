@@ -42,10 +42,13 @@ no version 1 rows remain.
 `drizzle/migrations/20260910185220_settings_documents_backfill` copies
 `UserGameAccountSettings` rows into documents (`pings`, `detector`, `airTags`,
 `notifications` presentation per game account; global mutes from the sentinel
-`__global-notification-mutes__` row). It is idempotent: `ON CONFLICT DO NOTHING`
-keeps an existing document, so rerunning it never overwrites newer writes. The
-migration is a single `INSERT ... SELECT` per target document type and takes a
-short lock proportional to the legacy table size.
+`__global-notification-mutes__` row). It is idempotent and the newer side wins:
+a legacy row updated after the existing document merges its keys over that
+document (earlier dual-written documents stopped receiving writes while the
+legacy routes kept accepting them), a document updated after the legacy row is
+kept, and rerunning changes nothing because equal timestamps never satisfy the
+update predicate. The migration is a single `INSERT ... SELECT` per target
+document type and takes a short lock proportional to the legacy table size.
 
 Deploy the API with this migration before shipping a Game client that writes
 `notifications` or `gameData` documents directly. Otherwise a client document
