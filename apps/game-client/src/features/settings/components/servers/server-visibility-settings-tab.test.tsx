@@ -41,18 +41,20 @@ describe("ServerVisibilitySettingsTab", () => {
     });
   });
 
-  it("shows ordered guilds with avatars and visibility state", () => {
+  it("shows ordered guilds with visibility state", () => {
     render();
 
-    expect(
-      document.querySelector(
-        'img[src="https://cdn.discordapp.com/icons/guild-2/beta.png"]',
-      ),
-    ).toBeInTheDocument();
     expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: "Beta" })).not.toBeChecked();
-    expect(screen.getByRole("switch", { name: "Alpha" })).toBeChecked();
-    expect(screen.getByRole("switch", { name: "Gamma" })).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: "Beta", pressed: false }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Alpha", pressed: true }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Gamma", pressed: true }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 z 3")).toBeInTheDocument();
   });
 
   it("filters hidden guilds and searches by name", () => {
@@ -73,11 +75,7 @@ describe("ServerVisibilitySettingsTab", () => {
   it("saves the full hidden guild snapshot", async () => {
     render();
 
-    fireEvent.click(
-      screen.getByRole("switch", {
-        name: "Alpha",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
 
     await waitFor(() =>
       expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
@@ -91,6 +89,36 @@ describe("ServerVisibilitySettingsTab", () => {
     await waitFor(() => expect(harness.queryClient.isMutating()).toBe(0));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(harness.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides two guilds clicked in quick succession", async () => {
+    render();
+
+    // The second click lands before the first save has finished; each write
+    // must build on the previous optimistic list, not on the rendered one.
+    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gamma" }));
+
+    await waitFor(() => expect(harness.request).toHaveBeenCalledTimes(2));
+
+    expect(harness.request.mock.calls[1]?.[1]?.body).toBe(
+      JSON.stringify({
+        hiddenGuildIds: [
+          "guild-2",
+          "temporarily-unavailable",
+          "guild-1",
+          "guild-3",
+        ],
+      }),
+    );
+
+    await waitFor(() => expect(harness.queryClient.isMutating()).toBe(0));
+    expect(
+      screen.getByRole("button", { name: "Alpha", pressed: false }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Gamma", pressed: false }),
+    ).toBeInTheDocument();
   });
 
   it("shows every guild with one reset action", async () => {
@@ -136,7 +164,7 @@ describe("ServerVisibilitySettingsTab", () => {
     render();
 
     expect(
-      screen.queryByRole("switch", {
+      screen.queryByRole("button", {
         name: "Publikuj obecność w organizacji Alpha",
       }),
     ).not.toBeInTheDocument();

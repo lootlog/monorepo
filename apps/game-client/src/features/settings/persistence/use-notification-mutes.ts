@@ -8,7 +8,10 @@ import {
   selectSettingsValue,
   type SettingsDocuments,
 } from "./settings-documents";
-import { enqueueSettingsPatch } from "./settings-patch-client";
+import {
+  enqueueSettingsPatch,
+  readCurrentSettingsDocuments,
+} from "./settings-patch-client";
 import { useSettingsSaveStatus } from "./settings-save-status.store";
 import { useSettingsDocuments } from "./use-settings-documents";
 
@@ -56,5 +59,19 @@ export const useUpdateNotificationMutes = () => {
     enqueueSettingsPatch({ domain: "notifications", set: { mutes } });
   };
 
-  return { mutate, isPending: status === "saving" };
+  /**
+   * Builds the patch from the mutes as they are in the cache right now,
+   * pending patches included, so a removal derived from them never restores
+   * an entry that an earlier click has already removed.
+   */
+  const mutateFromCurrent = (
+    updater: (current: NotificationMutes) => NotificationMutesPatch,
+  ) =>
+    mutate(
+      updater(
+        getNotificationMutesFromDocuments(readCurrentSettingsDocuments()),
+      ),
+    );
+
+  return { mutate, mutateFromCurrent, isPending: status === "saving" };
 };

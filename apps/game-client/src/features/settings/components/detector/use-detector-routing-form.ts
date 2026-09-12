@@ -1,13 +1,13 @@
 import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
-import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
+import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
+import {
+  getGameAccountPreferences,
+  useUpdateGameAccountPreferences,
+} from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
-import { zodResolver } from "@hookform/resolvers/zod";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
-import { useEffect, useEffectEvent, useState } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import * as z from "zod";
 
 export const LEVEL_MIN = 0;
 
@@ -16,21 +16,6 @@ export const LEVEL_MAX = 500;
 export const clampLevel = (value: number) => {
   return Math.min(LEVEL_MAX, Math.max(LEVEL_MIN, value));
 };
-
-const DetectorRoutingRuleSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().optional(),
-  minLevel: z.number().min(LEVEL_MIN).max(LEVEL_MAX),
-  maxLevel: z.number().min(LEVEL_MIN).max(LEVEL_MAX),
-  world: z.string().optional(),
-  guildIds: z.array(z.string()),
-});
-
-const FormSchema = z.object({
-  routingRules: z.array(DetectorRoutingRuleSchema),
-});
-
-type FormData = z.infer<typeof FormSchema>;
 
 const createRoutingRuleId = () => {
   if (window.crypto?.randomUUID) {
@@ -42,10 +27,8 @@ const createRoutingRuleId = () => {
 
 const createEmptyRoutingRule = (): DetectorRoutingRule => ({
   id: createRoutingRuleId(),
-  name: "",
   minLevel: LEVEL_MIN,
   maxLevel: LEVEL_MAX,
-  world: "",
   guildIds: [],
 });
 
@@ -57,15 +40,6 @@ export const normalizeRoutingRuleText = (name?: string) => {
   const trimmedName = name.trim();
 
   return trimmedName.length > 0 ? trimmedName : undefined;
-};
-
-const cloneRoutingRules = (routingRules: DetectorRoutingRule[]) => {
-  return routingRules.map((rule) => ({
-    ...rule,
-    name: rule.name,
-    world: rule.world,
-    guildIds: [...rule.guildIds],
-  }));
 };
 
 const normalizeRoutingRules = (
@@ -125,179 +99,72 @@ const areRoutingRulesEqual = (
   );
 };
 
-const isDeferredRoutingSyncField = (fieldName: string | null) => {
-  if (!fieldName) {
-    return false;
-  }
-
-  return /^routingRules\.\d+\.(name|world)$/.test(fieldName);
-};
-
+/**
+ * Delivery rules for the detector. Every edit is written straight through the
+ * shared settings patch queue, which updates the cache optimistically and
+ * re-applies pending patches when a server response lands. The rule list is
+ * read from the cache at the moment of the edit, not from the render that
+ * produced the click: a re-render lags the cache by a tick, so the previous
+ * click of a rapid series would otherwise be dropped from the saved list.
+ */
 export function useDetectorRoutingForm() {
-  const {
-    accountId,
-    isFetched,
-    settings: accountSettings,
-  } = useCurrentGameAccountDetectorSettings();
-
+  const { accountId, settings } = useCurrentGameAccountDetectorSettings();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+  const { mutate } = useUpdateGameAccountPreferences();
 
-  const updateUserGameAccountPreferences = useUpdateGameAccountPreferences();
+  const readRoutingRules = () =>
+    getEffectiveDetectorSettings(
+      accountId
+        ? getGameAccountPreferences(readCurrentSettingsDocuments(), accountId)
+        : undefined,
+    ).routingRules;
 
-  const currentRoutingRules = accountSettings.routingRules;
-
-  const [deferredSyncField, setDeferredSyncField] = useState<string | null>(
-    null,
-  );
-
-  const debouncedUpdate = useDebouncedCallback(
-    (
-      payload: Parameters<typeof updateUserGameAccountPreferences.mutate>[0],
-    ) => {
-      updateUserGameAccountPreferences.mutate(payload);
-    },
-    300,
-  );
-
-  const { control, reset, setValue, formState, register, getValues } =
-    useForm<FormData>({
-      resolver: zodResolver(FormSchema),
-      defaultValues: {
-        routingRules: cloneRoutingRules(currentRoutingRules),
-      },
-    });
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "routingRules",
-    keyName: "fieldKey",
-  });
-
-  useEffect(() => {
-    const nextFormValues = {
-      routingRules: cloneRoutingRules(currentRoutingRules),
-    };
-
-    const currentFormValues = getValues().routingRules ?? [];
-
-    if (areRoutingRulesEqual(currentFormValues, currentRoutingRules)) {
-      reset(nextFormValues, {
-        keepValues: true,
-      });
-
+  const save = (
+    produce: (current: DetectorRoutingRule[]) => DetectorRoutingRule[],
+  ) => {
+    if (!accountId || !guilds) {
       return;
     }
 
-    reset(nextFormValues);
-  }, [currentRoutingRules, getValues, reset]);
-
-  const watchedData = useWatch({ control });
-  const routingRules = watchedData.routingRules ?? [];
-
-  const availableGuildIds = guilds?.map((guild) => guild.id) ?? [];
-  const availableGuildIdsJson = JSON.stringify(availableGuildIds);
-
-  const syncCurrentValues = () => {
-    if (!accountId || !guilds || !isFetched) {
-      return;
-    }
+    const currentRoutingRules = readRoutingRules();
 
     const nextRoutingRules = normalizeRoutingRules(
-      getValues().routingRules ?? [],
-      availableGuildIds,
+      produce(currentRoutingRules),
+      guilds.map((guild) => guild.id),
     );
 
     if (areRoutingRulesEqual(nextRoutingRules, currentRoutingRules)) {
       return;
     }
 
-    debouncedUpdate({
-      detector: {
-        routingRules: nextRoutingRules,
-      },
-    });
+    mutate({ detector: { routingRules: nextRoutingRules } });
   };
 
-  const syncFromEffect = useEffectEvent(syncCurrentValues);
-
-  useEffect(() => {
-    if (!formState.isDirty || isDeferredRoutingSyncField(deferredSyncField)) {
-      return;
-    }
-
-    syncFromEffect();
-  }, [
-    accountId,
-    availableGuildIdsJson,
-    currentRoutingRules,
-    debouncedUpdate,
-    deferredSyncField,
-    formState.isDirty,
-    guilds,
-    isFetched,
-    getValues,
-    watchedData,
-  ]);
-
-  const toggleGuild = (ruleIndex: number, guildId: string) => {
-    if (!guilds) {
-      return;
-    }
-
-    const selectedGuildIds = routingRules[ruleIndex]?.guildIds ?? [];
-
-    const normalizedGuildIds = toggleAvailableGuild(
-      guilds,
-      selectedGuildIds,
-      guildId,
+  const updateRule = (
+    ruleId: string,
+    produce: (rule: DetectorRoutingRule) => DetectorRoutingRule,
+  ) =>
+    save((current) =>
+      current.map((rule) => (rule.id === ruleId ? produce(rule) : rule)),
     );
-
-    setValue(`routingRules.${ruleIndex}.guildIds`, normalizedGuildIds, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  };
-
-  const setLevelRange = (
-    ruleIndex: number,
-    [minLevel, maxLevel]: [number, number],
-  ) => {
-    setValue(`routingRules.${ruleIndex}.minLevel`, minLevel, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-    setValue(`routingRules.${ruleIndex}.maxLevel`, maxLevel, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-    syncCurrentValues();
-  };
-
-  const setWorld = (ruleIndex: number, world: string) => {
-    setValue(`routingRules.${ruleIndex}.world`, world, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-    syncCurrentValues();
-  };
-
-  const addRoutingRule = () => {
-    append(createEmptyRoutingRule(), {
-      shouldFocus: false,
-    });
-  };
 
   return {
     guilds,
-    setDeferredSyncField,
-    register,
-    fields,
-    remove,
-    routingRules,
-    syncCurrentValues,
-    toggleGuild,
-    setLevelRange,
-    setWorld,
-    addRoutingRule,
+    routingRules: settings.routingRules,
+    addRoutingRule: () =>
+      save((current) => [...current, createEmptyRoutingRule()]),
+    removeRule: (ruleId: string) =>
+      save((current) => current.filter((rule) => rule.id !== ruleId)),
+    toggleGuild: (ruleId: string, guildId: string) =>
+      updateRule(ruleId, (rule) => ({
+        ...rule,
+        guildIds: toggleAvailableGuild(guilds ?? [], rule.guildIds, guildId),
+      })),
+    setLevelRange: (ruleId: string, [minLevel, maxLevel]: [number, number]) =>
+      updateRule(ruleId, (rule) => ({ ...rule, minLevel, maxLevel })),
+    setWorld: (ruleId: string, world: string) =>
+      updateRule(ruleId, (rule) => ({ ...rule, world })),
+    setName: (ruleId: string, name: string) =>
+      updateRule(ruleId, (rule) => ({ ...rule, name })),
   };
 }

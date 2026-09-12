@@ -82,11 +82,11 @@ export const MutedNpcsSettingsTab = () => {
                   label={t("settings.mutes.removeLabel", { name: npc.name })}
                   disabled={isActionsDisabled}
                   onClick={() =>
-                    updateNotificationMutes.mutate({
-                      npcs: mutes.npcs.filter(
+                    updateNotificationMutes.mutateFromCurrent((current) => ({
+                      npcs: current.npcs.filter(
                         (currentNpc) => currentNpc.npcKey !== npc.npcKey,
                       ),
-                    })
+                    }))
                   }
                 >
                   <Trash2 />

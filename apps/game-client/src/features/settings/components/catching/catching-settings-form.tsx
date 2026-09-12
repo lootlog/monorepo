@@ -2,11 +2,7 @@ import type { SettingsSaveBadgeStatus } from "@/components/settings/settings-sav
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { type FC, type ReactNode, useEffect, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
-import * as z from "zod";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
-import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useTranslation } from "react-i18next";
 import {
   useUsersControllerGetCurrentUserAccessibleGuilds,
@@ -21,22 +17,20 @@ type CatchingSettingsFormProps = {
   disabled?: boolean;
   /** Trailing actions of the servers section, e.g. "apply to all characters". */
   actions?: ReactNode;
-  onSelectionChange?: (catchingGuildIds: string[]) => void;
   /** Follows this character's own write: saving, then saved or error. */
   onSaveStateChange?: (status: SettingsSaveBadgeStatus) => void;
 };
 
-const FormSchema = z.object({
-  catchingGuildIds: z.array(z.string()),
-});
-
-type FormData = z.infer<typeof FormSchema>;
-
+/**
+ * Lootlogi one character reports to. The selection is the cached config
+ * itself: each toggle writes the next list straight through the mutation,
+ * which updates the cache optimistically and serializes rapid clicks, so a
+ * click never snaps back when an earlier response lands.
+ */
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
   disabled = false,
   actions,
-  onSelectionChange,
   onSaveStateChange,
 }) => {
   const { t } = useTranslation();
@@ -62,8 +56,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       },
     );
 
-  const { mutate: updateLootlogCharacterConfig, status: updateStatus } =
-    useUpdateLootlogCharactersConfig();
+  const {
+    mutateFromCurrent: updateLootlogCharacterConfig,
+    status: updateStatus,
+  } = useUpdateLootlogCharactersConfig();
 
   // The callback is read through a ref so the report follows the mutation
   // status alone; a parent re-render (e.g. from the report itself) must not
@@ -81,80 +77,8 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     else if (updateStatus === "error") onSaveStateChangeRef.current?.("error");
   }, [updateStatus]);
 
-  const { control, reset, setValue, subscribe } = useForm<FormData>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      catchingGuildIds: [],
-    },
-  });
-
-  const configByCharacterId = lootlogCharactersConfig?.[characterId];
-  const isInitializedRef = useRef(false);
-  const isResettingRef = useRef(false);
-
   const selectedGuildIds =
-    useWatch({ control, name: "catchingGuildIds" }) ?? [];
-
-  useEffect(() => {
-    const nextCatchingGuildIds = configByCharacterId?.catchingGuildIds ?? [];
-
-    isResettingRef.current = true;
-    reset({
-      catchingGuildIds: nextCatchingGuildIds,
-    });
-
-    const initializationTimeoutId = setTimeout(() => {
-      isResettingRef.current = false;
-      isInitializedRef.current = true;
-    }, 0);
-
-    return () => clearTimeout(initializationTimeoutId);
-  }, [
-    guilds,
-    lootlogCharactersConfig,
-    reset,
-    characterId,
-    configByCharacterId,
-  ]);
-
-  useEffect(() => {
-    let debounceTimerId: ReturnType<typeof setTimeout> | null = null;
-
-    const unsubscribe = subscribe({
-      formState: { values: true },
-      callback: ({ values }) => {
-        if (!isInitializedRef.current || isResettingRef.current) return;
-
-        if (debounceTimerId) {
-          clearTimeout(debounceTimerId);
-        }
-
-        // The write is queued from this moment; report it like the settings
-        // patch queue does instead of waiting for the debounce to fire.
-        onSaveStateChangeRef.current?.("saving");
-        reportSettingsSave.saving();
-
-        debounceTimerId = setTimeout(() => {
-          const catchingGuildIds = (values.catchingGuildIds ?? []).filter(
-            (id): id is string => typeof id === "string",
-          );
-
-          updateLootlogCharacterConfig({
-            characterId,
-            catchingGuildIds,
-          });
-        }, 500);
-      },
-    });
-
-    return () => {
-      unsubscribe();
-
-      if (debounceTimerId) {
-        clearTimeout(debounceTimerId);
-      }
-    };
-  }, [characterId, subscribe, updateLootlogCharacterConfig]);
+    lootlogCharactersConfig?.[characterId]?.catchingGuildIds ?? [];
 
   // The write is optimistic and replaces the whole list, so the picker stays
   // usable while a save is in flight; only the initial load blocks it.
@@ -162,17 +86,19 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   const totalGuilds = guilds?.length ?? 0;
   const selectedCount = selectedGuildIds.length;
 
+  // Derived from the cache at click time, not from this render: a re-render
+  // lags the cache by a tick, so the previous click of a rapid series would
+  // otherwise be missing from the saved list.
   const handleGuildToggle = (guildId: string) => {
-    const isSelected = selectedGuildIds.includes(guildId);
+    updateLootlogCharacterConfig((current) => {
+      const currentGuildIds = current?.[characterId]?.catchingGuildIds ?? [];
 
-    const nextSelectedGuildIds = isSelected
-      ? selectedGuildIds.filter((id) => id !== guildId)
-      : [...selectedGuildIds, guildId];
-
-    onSelectionChange?.(nextSelectedGuildIds);
-    setValue("catchingGuildIds", nextSelectedGuildIds, {
-      shouldDirty: true,
-      shouldTouch: true,
+      return {
+        characterId,
+        catchingGuildIds: currentGuildIds.includes(guildId)
+          ? currentGuildIds.filter((id) => id !== guildId)
+          : [...currentGuildIds, guildId],
+      };
     });
   };
 
