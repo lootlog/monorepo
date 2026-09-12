@@ -231,6 +231,9 @@ export const useDrag = ({
     if (!startDrag(evt.clientX * scale, evt.clientY * scale)) return;
 
     activePointerIdRef.current = evt.pointerId;
+    // The default action of this press would start a text selection that then
+    // grows across the document while the window moves.
+    evt.preventDefault();
     evt.stopPropagation();
   };
 

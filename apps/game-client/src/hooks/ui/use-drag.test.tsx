@@ -97,6 +97,54 @@ describe("useDrag", () => {
     ).toContain("pointermove");
   });
 
+  it("cancels the press default so a drag does not start a text selection", () => {
+    const element = document.createElement("div");
+    vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+
+    const { result } = renderHook(() =>
+      useDrag({
+        ref,
+        onDragStop: vi.fn<(position: { x: number; y: number }) => void>(),
+      }),
+    );
+
+    const { getByTestId } = render(
+      <div
+        data-testid="drag-target"
+        onPointerDown={result.current.handlePointerDown}
+      />,
+    );
+
+    const pointerDown = new MouseEvent("pointerdown", {
+      bubbles: true,
+      button: 0,
+      cancelable: true,
+      clientX: 10,
+      clientY: 10,
+    });
+
+    Object.assign(pointerDown, {
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: "mouse",
+    });
+
+    getByTestId("drag-target").dispatchEvent(pointerDown);
+
+    expect(pointerDown.defaultPrevented).toBe(true);
+  });
+
   it("moves with a coalesced transform and commits the position on drag end", () => {
     let scheduledFrame: FrameRequestCallback | null = null;
 

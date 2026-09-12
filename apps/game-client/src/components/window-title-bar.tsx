@@ -21,7 +21,8 @@ interface WindowTitleBarProps {
 }
 
 /**
- * Three-column bar: feature actions, title, window controls. The side columns
+ * Three-column bar: window controls and feature actions on the left (the
+ * order Margonem's own windows use), title, close on the right. The side columns
  * never shrink below their content and split the remaining width evenly, so
  * the title stays centred when there is room and truncates instead of being
  * covered when there is not.
@@ -59,18 +60,6 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start"
         data-ll-draggable="false"
       >
-        {actions}
-      </div>
-      <p
-        className="ll:min-w-0 ll:truncate ll:px-1 ll:text-center ll:text-[12px] ll:leading-none ll:font-semibold ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]"
-        title={title}
-      >
-        {title}
-      </p>
-      <div
-        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-end"
-        data-ll-draggable="false"
-      >
         <WindowActionButton
           label={t("windowControls.changeOpacity")}
           tooltip={t("windowControls.opacityLevel", {
@@ -92,6 +81,18 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
             <LockOpen size={ICON_SIZE} aria-hidden="true" />
           )}
         </WindowActionButton>
+        {actions}
+      </div>
+      <p
+        className="ll:min-w-0 ll:truncate ll:px-1 ll:text-center ll:text-[12px] ll:leading-none ll:font-semibold ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]"
+        title={title}
+      >
+        {title}
+      </p>
+      <div
+        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-end"
+        data-ll-draggable="false"
+      >
         {closable && (
           <WindowActionButton
             label={t("windowControls.closeWindow")}
