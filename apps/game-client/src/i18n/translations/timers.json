@@ -180,21 +180,21 @@
     }
   },
   "modernAppearance": {
-    "presetSection": "Nowy układ",
-    "presetLabel": "Gotowe ustawienia nowego układu",
+    "presetSection": "Gotowe ustawienia",
+    "presetLabel": "Gotowe ustawienia wyglądu",
     "presets": {
       "comfortable": "Czytelny",
-      "comfortableDescription": "Ikony potworów, większe wiersze, nagłówek i stopka widoczne.",
+      "comfortableDescription": "Większe wiersze, nagłówek, filtry i stopka widoczne.",
       "compact": "Kompaktowy",
-      "compactDescription": "Same nazwy ze skrótem rangi, bez filtrów i stopki - najmniej miejsca."
+      "compactDescription": "Mniejsze wiersze, bez filtrów i stopki - najmniej miejsca."
     },
-    "scaleSection": "Rozmiar nowego układu",
+    "scaleSection": "Rozmiar",
     "fontScaleLabel": "Skala tekstu",
-    "fontScaleDescription": "Skaluje tekst i wysokość kafelków nowego układu.",
-    "gapLabel": "Odstęp między kafelkami",
+    "fontScaleDescription": "Skaluje tekst i wysokość wierszy.",
+    "gapLabel": "Odstęp między wierszami",
     "minColumnWidthLabel": "Minimalna szerokość kolumny",
-    "minColumnWidthDescription": "Przy szerokim oknie kafelki układają się w tyle kolumn, ile zmieści się przy tej szerokości.",
-    "visibilitySection": "Elementy nowego układu",
+    "minColumnWidthDescription": "Przy szerokim oknie timery układają się w tyle kolumn, ile zmieści się przy tej szerokości.",
+    "visibilitySection": "Elementy okna",
     "switches": {
       "showHeader": "Nagłówek z serwerami",
       "showHeaderDescription": "Wybór Lootloga i świata nad listą timerów.",
@@ -202,14 +202,10 @@
       "showFiltersBarDescription": "Wyszukiwarka, zakres poziomów i typy potworów, gdy filtry są włączone.",
       "showFooter": "Stopka",
       "showFooterDescription": "Statystyki kolorów, stan połączenia, historia i dodawanie timera.",
-      "showAvatar": "Ikona potwora",
-      "showAvatarDescription": "Grafika potwora po lewej stronie wiersza, jak w czacie.",
       "showTypeBadge": "Znacznik typu",
-      "showTypeBadgeDescription": "Skrót rangi (E2, H, T) przed nazwą; przydatny, gdy ikona jest wyłączona.",
+      "showTypeBadgeDescription": "Skrót rangi (E2, H, T) przed nazwą potwora.",
       "showLevel": "Poziom potwora",
-      "showLevelDescription": "Poziom i profesja obok nazwy.",
-      "showProgress": "Pasek postępu",
-      "showProgressDescription": "Wypełnienie wiersza pokazujące, ile czasu do odrodzenia już minęło."
+      "showLevelDescription": "Poziom i profesja obok nazwy."
     }
   },
   "legacySettings": {

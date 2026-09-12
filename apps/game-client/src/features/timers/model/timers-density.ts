@@ -6,13 +6,12 @@ export type TimersDensityStyle = CSSProperties & {
   "--ll-timers-badge-font-size": string;
   "--ll-timers-line-height": string;
   "--ll-timers-row-min-height": string;
-  "--ll-timers-avatar-height": string;
-  "--ll-timers-avatar-width": string;
   "--ll-timers-gap": string;
   "--ll-timers-min-column": string;
   "--ll-timers-space-xs": string;
   "--ll-timers-space-sm": string;
-  "--ll-timers-space-md": string;
+  "--ll-timers-row-padding-x": string;
+  "--ll-timers-row-padding-y": string;
 };
 
 const formatScaledPixels = (pixels: number, scale: number) =>
@@ -33,13 +32,12 @@ export const getTimersDensityStyle = ({
     "--ll-timers-font-size": formatScaledPixels(12, scale),
     "--ll-timers-badge-font-size": formatScaledPixels(10, scale),
     "--ll-timers-line-height": formatScaledPixels(16, scale),
-    "--ll-timers-row-min-height": formatScaledPixels(22, scale),
-    "--ll-timers-avatar-height": formatScaledPixels(22, scale),
-    "--ll-timers-avatar-width": formatScaledPixels(18, scale),
+    "--ll-timers-row-min-height": formatScaledPixels(20, scale),
     "--ll-timers-gap": `${gapPx}px`,
     "--ll-timers-min-column": `${minColumnWidth}px`,
     "--ll-timers-space-xs": formatScaledPixels(2, scale),
     "--ll-timers-space-sm": formatScaledPixels(4, scale),
-    "--ll-timers-space-md": formatScaledPixels(6, scale),
+    "--ll-timers-row-padding-x": formatScaledPixels(5, scale),
+    "--ll-timers-row-padding-y": formatScaledPixels(6, scale),
   };
 };

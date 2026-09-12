@@ -159,17 +159,6 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   color: var(--foreground);
 }
 
-/* Modern timer tile progress line: one animation per tile, no per-second styles. */
-@keyframes ll-timer-progress {
-  from {
-    transform: scaleX(0);
-  }
-
-  to {
-    transform: scaleX(1);
-  }
-}
-
 @keyframes ll-window-enter {
   from {
     opacity: 0;

@@ -3,9 +3,9 @@ import { getTimersDensityStyle } from "./timers-density";
 
 describe("getTimersDensityStyle", () => {
   it.each([
-    [70, "8.4px", "15.4px"],
-    [100, "12px", "22px"],
-    [150, "18px", "33px"],
+    [70, "8.4px", "14px"],
+    [100, "12px", "20px"],
+    [150, "18px", "30px"],
   ])(
     "scales the tile typography and row height at %s%%",
     (fontScalePercent, fontSize, rowMinHeight) => {

@@ -2,16 +2,12 @@ import { cn } from "cn";
 import { Loader2, Pin, RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { NpcTile } from "@/components/npc-tile";
 import { useTimerTileModel } from "@/features/timers/hooks/use-timer-tile-model";
 import type { TimersWindowModel } from "@/features/timers/hooks/use-timers-window-model";
 import { resolveTimerRowColors } from "@/features/timers/model/timer-colors";
 import { formatLevelTag } from "@/features/timers/model/timer-labels";
 import type { TimerWithTimeLeft } from "@/features/timers/model/timer-time";
-import {
-  getSubtleBackgroundColor,
-  getTextColor,
-} from "@/utils/notifications-and-detector/background";
+import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/background";
 import { TimerTileInteractions } from "../shared/timer-tile-interactions";
 import { ModernTimerTileFace } from "./modern-timer-tile-face";
 
@@ -23,15 +19,13 @@ type ModernTimerTileProps = {
 /**
  * One timer as a chat-style bubble: the row is tinted with the NPC rank
  * colour from the user's palette, or with the colour the player assigned to
- * the timer when there is one; the sprite sits on the left, the countdown on
- * the right. Only the face ticks; this component re-renders with the model
+ * the timer when there is one; the countdown sits on the right. Only the face ticks; this component re-renders with the model
  * or timer.
  */
 export const ModernTimerTile: FC<ModernTimerTileProps> = ({ timer, model }) => {
   const { t } = useTranslation("timers");
   const tile = useTimerTileModel(timer, model);
   const { modern, npcTypeColors } = model.appearance;
-  const rankColor = getTextColor(timer.npc.type, true, npcTypeColors);
   const assigned = resolveTimerRowColors(tile.display);
 
   const rowStyle = assigned.style ?? {
@@ -43,20 +37,13 @@ export const ModernTimerTile: FC<ModernTimerTileProps> = ({ timer, model }) => {
       <div
         role="listitem"
         className={cn(
-          "ll-custom-cursor-pointer ll:relative ll:isolate ll:flex ll:min-h-(--ll-timers-row-min-height) ll:min-w-0 ll:items-center ll:gap-(--ll-timers-space-sm) ll:overflow-hidden ll:rounded-sm ll:px-(--ll-timers-space-sm) ll:py-(--ll-timers-space-md) ll:transition-[filter] ll:duration-100 ll:hover:brightness-125 ll:motion-reduce:transition-none",
+          "ll-custom-cursor-pointer ll:relative ll:flex ll:min-h-(--ll-timers-row-min-height) ll:min-w-0 ll:items-center ll:gap-(--ll-timers-space-sm) ll:overflow-hidden ll:rounded-sm ll:px-(--ll-timers-row-padding-x) ll:py-(--ll-timers-row-padding-y) ll:transition-[filter] ll:duration-100 ll:hover:brightness-125 ll:motion-reduce:transition-none",
           assigned.className,
           tile.isHidden && "ll:opacity-50",
           tile.isPending && "ll:opacity-60",
         )}
         style={rowStyle}
       >
-        {modern.showAvatar && (
-          <NpcTile
-            npc={{ icon: timer.npc.icon, nick: timer.npc.name }}
-            containerClassName="ll:h-(--ll-timers-avatar-height) ll:w-(--ll-timers-avatar-width) ll:shrink-0 ll:items-center ll:justify-center"
-            className="ll:h-auto ll:max-h-(--ll-timers-avatar-height) ll:w-auto ll:max-w-(--ll-timers-avatar-width) ll:rounded-none ll:object-contain"
-          />
-        )}
         {tile.isPending ? (
           <Loader2
             aria-label={t("contextMenu.creating")}
@@ -69,11 +56,8 @@ export const ModernTimerTile: FC<ModernTimerTileProps> = ({ timer, model }) => {
           />
         ) : null}
         <ModernTimerTileFace
-          key={`${timer.updatedAt ?? ""}:${timer.maxSpawnTime}`}
           timer={timer}
           countdownMode={model.appearance.countdownMode}
-          showProgress={modern.showProgress}
-          progressColor={rankColor}
           badge={modern.showTypeBadge ? tile.display.shortname : ""}
           levelTag={modern.showLevel ? formatLevelTag(timer.npc) : ""}
         />

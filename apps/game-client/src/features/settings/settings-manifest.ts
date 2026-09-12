@@ -305,7 +305,7 @@ const MANIFEST = [
           {
             id: "timers-modern-appearance",
             labelKey: "timers:modernAppearance.presetSection",
-            aliases: ["nowy układ", "kompaktowy", "czytelny", "skala"],
+            aliases: ["kompaktowy", "czytelny", "skala"],
             settingKeys: ["appearance.timers.modern"],
           },
         ],

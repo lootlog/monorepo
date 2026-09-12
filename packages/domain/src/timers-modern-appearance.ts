@@ -32,10 +32,8 @@ const BOOLEAN_KEYS = [
   "showHeader",
   "showFiltersBar",
   "showFooter",
-  "showAvatar",
   "showTypeBadge",
   "showLevel",
-  "showProgress",
 ] as const;
 
 export const normalizeTimersModernAppearance = (
@@ -66,10 +64,8 @@ export const normalizeTimersModernAppearance = (
     showHeader: fallback.showHeader,
     showFiltersBar: fallback.showFiltersBar,
     showFooter: fallback.showFooter,
-    showAvatar: fallback.showAvatar,
     showTypeBadge: fallback.showTypeBadge,
     showLevel: fallback.showLevel,
-    showProgress: fallback.showProgress,
   };
 
   for (const key of BOOLEAN_KEYS) {
