@@ -1,36 +1,30 @@
 import { Input } from "@/components/ui/input";
 import { NPC_NAMES } from "@/constants/margonem";
-import { NpcType } from "@/api/npcs.api";
 import { cn } from "cn";
-import { clamp } from "@/lib/clamp";
-import { useShallow } from "zustand/react/shallow";
-import type { TimersColorPreferences } from "@/features/timers/hooks/use-timers-window-model";
-import {
-  DEFAULT_TIMERS_FILTERS,
-  useTimerFiltersStore,
-} from "@/features/timers/timer-filters.store";
 import type { FC } from "react";
+import {
+  getDefaultColorName,
+  TIMERS_COLORS,
+} from "@/features/timers/model/timer-colors";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
+import type { TimersColorPreferences } from "@/features/timers/hooks/use-timers-window-model";
 import {
-  getDefaultColorName,
-  TIMERS_COLORS,
-} from "@/features/timers/model/timer-colors";
+  TIMER_FILTER_MAX_LVL,
+  TIMER_FILTER_MIN_LVL,
+  TIMER_FILTER_NPC_TYPES,
+  useTimersFiltersController,
+} from "@/features/timers/hooks/use-timers-filters-controller";
 
-const NPC_TYPES_OPTIONS = [
-  NpcType.ELITE2,
-  NpcType.ELITE3,
-  NpcType.HERO,
-  NpcType.TITAN,
-];
+const NPC_TYPES_OPTIONS = TIMER_FILTER_NPC_TYPES;
 
-const MAX_LVL = 500;
+const MAX_LVL = TIMER_FILTER_MAX_LVL;
 
-const MIN_LVL = 0;
+const MIN_LVL = TIMER_FILTER_MIN_LVL;
 
 type TimersFiltersProps = {
   filtersKey: string;
@@ -38,6 +32,7 @@ type TimersFiltersProps = {
   colorFiltersEnabled: boolean;
 };
 
+/** The legacy layout's filter block, kept as it was. */
 export const TimersFilters: FC<TimersFiltersProps> = ({
   filtersKey,
   colors,
@@ -55,66 +50,16 @@ export const TimersFilters: FC<TimersFiltersProps> = ({
   const {
     filters,
     searchText: timerFiltersSearchText,
-    setSearchText: setTimerFiltersSearchText,
-    setTimersFilters,
-  } = useTimerFiltersStore(
-    useShallow((state) => ({
-      filters: state.timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS,
-      searchText: state.searchText,
-      setSearchText: state.setSearchText,
-      setTimersFilters: state.setTimersFilters,
-    })),
-  );
+    selectedNpcTypes,
+    selectedColors,
+    handleSearchChange,
+    handleLevelChange,
+    toggleNpcType: handleToggleNpcType,
+    selectOnlyNpcType: handleSelectOnlyNpcType,
+    toggleColor: handleToggleColor,
+  } = useTimersFiltersController(filtersKey);
 
-  const selectedNpcTypes = new Set(filters.selectedNpcTypes);
-  const selectedColors = new Set(filters.selectedColors);
   const hiddenColors = new Set(hiddenDefaultColors);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTimerFiltersSearchText(e.target.value);
-  };
-
-  const handleLevelChange = (
-    field: "minLvl" | "maxLvl",
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const numericValue = Number(event.target.value);
-
-    if (Number.isNaN(numericValue)) return;
-    setTimersFilters(filtersKey, {
-      ...filters,
-      [field]: clamp(numericValue, MIN_LVL, MAX_LVL),
-    });
-  };
-
-  const handleToggleNpcType = (npcType: NpcType) => {
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedNpcTypes: filters.selectedNpcTypes.includes(npcType)
-        ? filters.selectedNpcTypes.filter((type) => type !== npcType)
-        : [...filters.selectedNpcTypes, npcType],
-    });
-  };
-
-  const handleSelectOnlyNpcType = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    npcType: NpcType,
-  ) => {
-    event.preventDefault();
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedNpcTypes: [npcType],
-    });
-  };
-
-  const handleToggleColor = (colorId: string) => {
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedColors: selectedColors.has(colorId)
-        ? filters.selectedColors.filter((id) => id !== colorId)
-        : [...filters.selectedColors, colorId],
-    });
-  };
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">

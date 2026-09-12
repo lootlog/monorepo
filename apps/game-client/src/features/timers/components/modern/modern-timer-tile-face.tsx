@@ -32,10 +32,10 @@ export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
     <>
       <span
         className={cn(
-          "ll:shrink-0 ll:tabular-nums ll:font-semibold",
+          "ll:shrink-0 ll:tabular-nums",
           phase === "expired" && "ll:text-red-400",
           phase === "afterMin" && "ll:text-amber-300",
-          phase === "active" && "ll:text-gray-100",
+          phase === "active" && "ll:text-muted-foreground",
         )}
       >
         {timeLabel}
@@ -43,7 +43,7 @@ export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
       {progressStyle && phase === "active" && (
         <span
           aria-hidden
-          className="ll:pointer-events-none ll:absolute ll:inset-x-0 ll:bottom-0 ll:h-px ll:origin-left ll:bg-white/50 ll:motion-reduce:hidden"
+          className="ll:pointer-events-none ll:absolute ll:inset-x-(--ll-timers-space-sm) ll:bottom-0 ll:h-px ll:origin-left ll:bg-white/25 ll:motion-reduce:hidden"
           style={progressStyle}
         />
       )}

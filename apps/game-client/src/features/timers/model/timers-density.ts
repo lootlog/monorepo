@@ -27,10 +27,10 @@ export const getTimersDensityStyle = ({
   const scale = fontScalePercent / 100;
 
   return {
-    "--ll-timers-font-size": formatScaledPixels(11, scale),
-    "--ll-timers-badge-font-size": formatScaledPixels(9, scale),
-    "--ll-timers-line-height": formatScaledPixels(14, scale),
-    "--ll-timers-row-min-height": formatScaledPixels(20, scale),
+    "--ll-timers-font-size": formatScaledPixels(12, scale),
+    "--ll-timers-badge-font-size": formatScaledPixels(10, scale),
+    "--ll-timers-line-height": formatScaledPixels(16, scale),
+    "--ll-timers-row-min-height": formatScaledPixels(18, scale),
     "--ll-timers-gap": `${gapPx}px`,
     "--ll-timers-min-column": `${minColumnWidth}px`,
     "--ll-timers-space-xs": formatScaledPixels(2, scale),

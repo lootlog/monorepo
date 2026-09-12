@@ -19,7 +19,7 @@ export const ModernTimersFooter: FC<ModernTimersFooterProps> = ({ model }) => {
   const { scope, list, actions } = model;
 
   return (
-    <div className="ll:flex ll:h-7 ll:shrink-0 ll:items-center ll:gap-1 ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/30 ll:px-1">
+    <div className="ll:flex ll:h-7 ll:shrink-0 ll:items-center ll:gap-1 ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40 ll:px-1">
       <TimersColorStatistics colorStatistics={list.colorStatistics} />
       <RealtimeConnectionIndicator />
       <span className="ll:flex-1" />

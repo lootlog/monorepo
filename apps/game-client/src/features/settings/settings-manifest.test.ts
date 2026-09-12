@@ -57,6 +57,7 @@ describe("settings manifest persistence references", () => {
     expect(subsectionsOf("timers")).toEqual([
       "timer-behavior",
       "timer-appearance",
+      "timer-legacy",
       "timer-colors",
       "hidden-timers",
     ]);

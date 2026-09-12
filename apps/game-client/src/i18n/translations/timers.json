@@ -10,7 +10,9 @@
   "filters": {
     "searchPlaceholder": "Szukaj...",
     "minPlaceholder": "Od",
-    "maxPlaceholder": "Do"
+    "maxPlaceholder": "Do",
+    "typesLabel": "Typy potworów",
+    "colorsLabel": "Kolory timerów"
   },
   "toolbar": {
     "hideFilters": "Ukryj filtry",
@@ -206,7 +208,10 @@
       "showLevelDescription": "Poziom i profesja obok nazwy.",
       "showProgress": "Pasek postępu",
       "showProgressDescription": "Cienka linia pokazująca, ile czasu do odrodzenia już minęło."
-    },
-    "legacyNote": "Ustawienia poniżej dotyczą klasycznego układu."
+    }
+  },
+  "legacySettings": {
+    "title": "Klasyczny układ",
+    "description": "Te ustawienia działają tylko w klasycznym układzie okna timerów."
   }
 }

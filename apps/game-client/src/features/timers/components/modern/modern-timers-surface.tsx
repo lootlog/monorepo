@@ -8,7 +8,7 @@ import { getTimersDensityStyle } from "@/features/timers/model/timers-density";
 import type { TimersLayoutProps } from "../timers-surface";
 import { TimersActions } from "../shared/timers-actions";
 import { TimersEmptyState } from "../shared/timers-empty-state";
-import { TimersFilters } from "../shared/timers-filters";
+import { ModernTimersFilters } from "./modern-timers-filters";
 import { ModernTimersFooter } from "./modern-timers-footer";
 import { ModernTimersGrid } from "./modern-timers-grid";
 import { ModernTimersHeader } from "./modern-timers-header";
@@ -57,8 +57,8 @@ export const ModernTimersSurface: FC<TimersLayoutProps> = ({
         <ModernTimersHeader allowWorldSelection={scope.allowWorldSelection} />
       )}
       {showFiltersBar && (
-        <div className="ll:shrink-0 ll:border-0 ll:border-b ll:border-solid ll:border-gray-400/30 ll:px-1 ll:pb-1">
-          <TimersFilters
+        <div className="ll:shrink-0 ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40 ll:bg-black/20 ll:p-1">
+          <ModernTimersFilters
             filtersKey={scope.settingsKey}
             colors={appearance.colors}
             colorFiltersEnabled={toolbar.colorFiltersEnabled}
@@ -66,7 +66,7 @@ export const ModernTimersSurface: FC<TimersLayoutProps> = ({
         </div>
       )}
 
-      <div className="ll:flex ll:min-h-0 ll:w-full ll:flex-1">
+      <div className="ll:flex ll:min-h-0 ll:w-full ll:flex-1 ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40">
         <AsyncContent
           error={async.initialError}
           errorLabel={t("states.loadError")}
@@ -83,7 +83,7 @@ export const ModernTimersSurface: FC<TimersLayoutProps> = ({
           ) : (
             <ScrollArea
               data-testid="timers-scroll-container"
-              className="ll:h-full ll:w-full! ll:px-1 ll:py-(--ll-timers-space-sm)"
+              className="ll:h-full ll:w-full! ll:py-(--ll-timers-space-xs)"
             >
               <ModernTimersGrid model={model} />
             </ScrollArea>

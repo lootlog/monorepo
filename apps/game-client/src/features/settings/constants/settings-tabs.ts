@@ -49,6 +49,7 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   "chat-filters": "chat",
   "timer-behavior": "timers",
   "timer-appearance": "timers",
+  "timer-legacy": "timers",
   "timer-colors": "timers",
   "hidden-timers": "timers",
   "notification-rules": "notifications",

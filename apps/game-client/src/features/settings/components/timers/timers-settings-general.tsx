@@ -83,19 +83,6 @@ export const TimersSettingsGeneral: FC = () => {
             id="timers-under-bag"
           />
         </SettingsRow>
-        <SettingsRow
-          htmlFor="compact-view"
-          label={t("settings.timers.general.compactViewLabel")}
-          description={t("settings.timers.general.compactViewDescription")}
-        >
-          <Switch
-            checked={generalConfig.compactView}
-            onCheckedChange={(value) =>
-              setGeneralConfig({ ...generalConfig, compactView: value })
-            }
-            id="compact-view"
-          />
-        </SettingsRow>
       </SettingsSection>
       <SettingsSection title={t("settings.timers.general.countdownTitle")}>
         <SettingsRow

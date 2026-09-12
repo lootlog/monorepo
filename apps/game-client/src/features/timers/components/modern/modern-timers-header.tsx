@@ -10,7 +10,7 @@ type ModernTimersHeaderProps = {
 export const ModernTimersHeader: FC<ModernTimersHeaderProps> = ({
   allowWorldSelection,
 }) => (
-  <div className="ll:flex ll:shrink-0 ll:flex-col ll:gap-(--ll-timers-space-xs) ll:px-1 ll:pt-(--ll-timers-space-xs) ll:pb-(--ll-timers-space-sm)">
+  <div className="ll:flex ll:shrink-0 ll:flex-col ll:gap-1 ll:p-1">
     <GuildSwitcher className="ll:min-w-0" />
     {allowWorldSelection && <WorldSelector />}
   </div>

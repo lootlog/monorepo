@@ -161,6 +161,36 @@ export const brightenHexColor = (color: string, percent: number): string => {
 
 const HOVER_BRIGHTNESS_PERCENT = 20;
 
+/**
+ * Background-only variant for borderless rows: the palette tint (with its
+ * hover) for stock colours, the custom or overridden background inline
+ * otherwise. The default colour paints nothing so plain rows stay flat.
+ */
+export const resolveTimerRowColors = ({
+  selectedColor,
+  customColor,
+  overriddenColor,
+}: TimerColorConfig): TimerTileColors => {
+  const explicit = customColor ?? overriddenColor;
+
+  if (explicit) {
+    const style: CSSProperties & Record<`--${string}`, string> = {
+      backgroundColor: explicit.backgroundColor,
+      "--ll-tile-bg-hover": brightenHexColor(
+        explicit.backgroundColor,
+        HOVER_BRIGHTNESS_PERCENT,
+      ),
+    };
+
+    return { style };
+  }
+
+  if (selectedColor === DEFAULT_TIMER_COLOR_ID) return {};
+  const stock = getTimerColor(selectedColor);
+
+  return stock ? { className: stock.bg } : {};
+};
+
 export type TimerTileColors = {
   /** Palette classes when the colour is a stock entry without overrides. */
   className?: string;

@@ -19,6 +19,7 @@ import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
+import { TimersSettingsLegacy } from "@/features/settings/components/timers/timers-settings-legacy";
 import type { SettingsSubsectionValue } from "@/features/settings/constants/settings-tabs";
 import type { SettingsIconName } from "@/features/settings/settings-manifest";
 import {
@@ -73,6 +74,7 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   "chat-filters": ChatFiltersSettings,
   "timer-behavior": TimersSettingsGeneral,
   "timer-appearance": TimersSettingsAppearance,
+  "timer-legacy": TimersSettingsLegacy,
   "timer-colors": TimersSettingsColors,
   "hidden-timers": HiddenTimersTab,
   "notification-rules": NotificationsSettingsTab,

@@ -23,6 +23,9 @@ export const TimersWindow: FC<TimersWindowProps> = ({ isOpen }) => {
     <DraggableWindow
       isOpen={isOpen}
       id="timers"
+      contentClassName={
+        model.layout === "modern" ? "ll:-mx-1 ll:-mb-1" : undefined
+      }
       title={t("window.title")}
       onClose={model.actions.close}
       minHeight={MIN_WINDOW_HEIGHT}

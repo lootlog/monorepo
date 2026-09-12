@@ -283,7 +283,7 @@ const MANIFEST = [
           {
             id: "timer-behavior",
             labelKey: "settings.timers.general.behaviorTitle",
-            aliases: ["grupowanie", "torby", "kompaktowy"],
+            aliases: ["grupowanie", "torby"],
             settingKeys: [
               "timers.generalConfig",
               "timers.timerFiltersEnabled",
@@ -307,6 +307,18 @@ const MANIFEST = [
             labelKey: "timers:modernAppearance.presetSection",
             aliases: ["nowy układ", "kompaktowy", "czytelny", "skala"],
             settingKeys: ["appearance.timers.modern"],
+          },
+        ],
+      },
+      {
+        id: "timer-legacy",
+        labelKey: "timers:legacySettings.title",
+        controls: [
+          {
+            id: "timer-legacy-behavior",
+            labelKey: "settings.timers.general.compactViewLabel",
+            aliases: ["kompaktowy", "klasyczny"],
+            settingKeys: ["timers.generalConfig"],
           },
           {
             id: "timer-visibility",
