@@ -11,9 +11,9 @@ type ModernTimerTileFaceProps = {
 };
 
 /**
- * The ticking part of a modern tile: name, level and countdown share the
- * phase colour (white, orange after the minimum time, red after the maximum),
- * so the whole row reads the same way the classic layout did.
+ * The ticking part of a modern tile: the name stays white, the countdown
+ * carries the phase colour (white, orange after the minimum time, red after
+ * the maximum).
  */
 export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
   timer,
@@ -32,12 +32,7 @@ export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
 
   return (
     <>
-      <span
-        className={cn(
-          "ll:flex ll:min-w-0 ll:flex-1 ll:items-baseline ll:gap-(--ll-timers-space-xs)",
-          phaseClassName,
-        )}
-      >
+      <span className="ll:flex ll:min-w-0 ll:flex-1 ll:items-baseline ll:gap-(--ll-timers-space-xs) ll:text-white">
         {badge && (
           <span className="ll:shrink-0 ll:text-(--ll-timers-badge-font-size) ll:opacity-75">
             {badge}
