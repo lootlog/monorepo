@@ -37,7 +37,7 @@ export const getTimersDensityStyle = ({
     "--ll-timers-min-column": `${minColumnWidth}px`,
     "--ll-timers-space-xs": formatScaledPixels(2, scale),
     "--ll-timers-space-sm": formatScaledPixels(4, scale),
-    "--ll-timers-row-padding-x": formatScaledPixels(5, scale),
+    "--ll-timers-row-padding-x": formatScaledPixels(7, scale),
     "--ll-timers-row-padding-y": formatScaledPixels(6, scale),
   };
 };
