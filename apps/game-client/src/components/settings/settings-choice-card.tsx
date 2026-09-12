@@ -14,7 +14,8 @@ type SettingsChoiceCardsProps<Value extends string> = {
   id?: string;
   label: string;
   options: readonly SettingsChoiceOption<Value>[];
-  value: Value;
+  /** `null` renders the group with no selected card. */
+  value: Value | null;
   disabled?: boolean;
   onChange: (value: Value) => void;
   className?: string;
@@ -22,7 +23,7 @@ type SettingsChoiceCardsProps<Value extends string> = {
 
 const findIndex = <Value extends string>(
   options: readonly SettingsChoiceOption<Value>[],
-  value: Value,
+  value: Value | null,
 ) =>
   Math.max(
     0,
@@ -42,6 +43,10 @@ export const SettingsChoiceCards = <Value extends string>({
   onChange,
   className,
 }: SettingsChoiceCardsProps<Value>) => {
+  // With nothing selected the first enabled card carries the roving tab stop.
+  const focusableValue =
+    options.find((option) => !option.disabled)?.value ?? null;
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const delta =
       event.key === "ArrowRight" || event.key === "ArrowDown"
@@ -83,7 +88,7 @@ export const SettingsChoiceCards = <Value extends string>({
           option={option}
           selected={option.value === value}
           disabled={disabled || option.disabled === true}
-          tabIndex={option.value === value ? 0 : -1}
+          tabIndex={option.value === (value ?? focusableValue) ? 0 : -1}
           onSelect={() => onChange(option.value)}
         />
       ))}

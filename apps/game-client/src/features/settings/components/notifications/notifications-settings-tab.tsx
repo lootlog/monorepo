@@ -17,7 +17,6 @@ import { SettingsGuildPicker } from "@/features/settings/components/shared/setti
 import { NpcType } from "@/api/npcs.api";
 import type { NotificationType } from "@lootlog/schema/account-preferences";
 import { Bell, Globe, Highlighter, TimerOff, Volume2 } from "lucide-react";
-import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 type NotificationCategory = {
@@ -35,8 +34,15 @@ const SWITCH_COLUMNS = [
 export const NotificationsSettingsTab = () => {
   const { t } = useTranslation();
 
-  const { control, guilds, guildIds, rules, setSwitchForAll, toggleGuild } =
-    useNotificationRulesForm();
+  const {
+    guilds,
+    guildIds,
+    rules,
+    setSwitch,
+    setAutoHideTimeout,
+    setSwitchForAll,
+    toggleGuild,
+  } = useNotificationRulesForm();
 
   const categories: NotificationCategory[] = [
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
@@ -115,43 +121,35 @@ export const NotificationsSettingsTab = () => {
                     const isDisabled = column.key !== "show" && !enabled;
 
                     return (
-                      <Controller
+                      <Switch
                         key={column.key}
-                        name={`rules.${category.key}.${column.key}`}
-                        control={control}
-                        render={({ field }) => (
-                          <Switch
-                            id={`${category.key}-${column.key}`}
-                            aria-label={cellLabel(
-                              t(`settings.notifications.toggles.${column.key}`),
-                            )}
-                            checked={field.value}
-                            disabled={isDisabled}
-                            onCheckedChange={field.onChange}
-                          />
+                        id={`${category.key}-${column.key}`}
+                        aria-label={cellLabel(
+                          t(`settings.notifications.toggles.${column.key}`),
                         )}
+                        checked={rules[category.key][column.key]}
+                        disabled={isDisabled}
+                        onCheckedChange={(checked) =>
+                          setSwitch(category.key, column.key, checked)
+                        }
                       />
                     );
                   }),
-                  <Controller
+                  <SettingsNumberField
                     key="autoHideTimeout"
-                    name={`rules.${category.key}.autoHideTimeout`}
-                    control={control}
-                    render={({ field }) => (
-                      <SettingsNumberField
-                        id={`${category.key}-auto-hide-timeout`}
-                        aria-label={cellLabel(
-                          t("settings.notifications.autoHideLabel"),
-                        )}
-                        value={field.value ?? 0}
-                        min={AUTO_HIDE_MIN_SECONDS}
-                        max={AUTO_HIDE_MAX_SECONDS}
-                        unit="s"
-                        variant="cell"
-                        disabled={!enabled}
-                        onCommit={field.onChange}
-                      />
+                    id={`${category.key}-auto-hide-timeout`}
+                    aria-label={cellLabel(
+                      t("settings.notifications.autoHideLabel"),
                     )}
+                    value={rules[category.key].autoHideTimeout ?? 0}
+                    min={AUTO_HIDE_MIN_SECONDS}
+                    max={AUTO_HIDE_MAX_SECONDS}
+                    unit="s"
+                    variant="cell"
+                    disabled={!enabled}
+                    onCommit={(seconds) =>
+                      setAutoHideTimeout(category.key, seconds)
+                    }
                   />,
                 ]}
               />

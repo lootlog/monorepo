@@ -11,6 +11,7 @@ import {
 } from "@lootlog/client/main";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { queryClient } from "@/lib/query-client";
+import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
 import {
   createSettingsDocuments,
   seedSettingsDocuments,
@@ -34,8 +35,10 @@ export const createTestGuild = (
 });
 
 export const createGuildPreferencesTest = () => {
-  // Persistence helpers read the shared client, so tests must seed it.
+  // Persistence helpers read the shared client and queue, so tests must
+  // seed the one and drop patches the previous test left pending in the other.
   queryClient.clear();
+  settingsPatchQueue.reset();
   queryClient.setDefaultOptions({
     queries: { retry: false, staleTime: Infinity },
     mutations: { retry: false },
@@ -86,6 +89,7 @@ export const createGuildPreferencesTest = () => {
 
   onTestFinished(() => {
     restore();
+    settingsPatchQueue.reset();
     queryClient.clear();
   });
 

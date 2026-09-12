@@ -224,7 +224,14 @@ const MANIFEST = [
           {
             id: "chat-metadata",
             labelKey: "settings.chat.metadata.title",
-            aliases: ["avatar", "gildia", "poziom", "lokacja", "koordynaty"],
+            aliases: [
+              "avatar",
+              "lootlog",
+              "gildia",
+              "poziom",
+              "lokacja",
+              "koordynaty",
+            ],
             settingKeys: [
               "appearance.chat.showTimestamp",
               "appearance.chat.showGuildLabel",
