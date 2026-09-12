@@ -1,10 +1,17 @@
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -16,7 +23,7 @@ import {
   LOG_STATUS_VALUES,
   type LogStatusFilter,
 } from "@/features/settings/components/logs/logs.constants";
-import { LogsActionCard } from "@/features/settings/components/logs/logs-action-card";
+import { LogsActionRow } from "@/features/settings/components/logs/logs-action-row";
 import {
   getActionLabel,
   getStatusLabel,
@@ -36,7 +43,7 @@ const getLogsExportFileName = (): string => {
   return `lootlog-logs-${new Date().toISOString().replaceAll(":", "-")}.json`;
 };
 
-const FILTER_CONTROL_CLASS_NAME = "ll:w-full ll:text-xs";
+const FILTER_CONTROL_CLASS_NAME = "ll:w-36";
 
 export const LogsSettingsTab: FC = () => {
   const actions = useLogsStore((state) => state.actions);
@@ -132,34 +139,11 @@ export const LogsSettingsTab: FC = () => {
   };
 
   return (
-    <SettingsTabLayout
-      title={t("settings.logs.title")}
-      description={t("settings.logs.description")}
-      actions={
-        <div className="ll:flex ll:items-center ll:gap-2">
-          <Button
-            className="ll:h-6 ll:px-2"
-            disabled={filteredActions.length === 0}
-            onClick={handleExportLogs}
-            type="button"
-            variant="ghost"
-          >
-            {t("common:actions.exportJson")}
-          </Button>
-          <Button
-            className="ll:h-6 ll:px-2"
-            disabled={actions.length === 0}
-            onClick={clearActions}
-            type="button"
-            variant="ghost"
-          >
-            {t("common:actions.clear")}
-          </Button>
-        </div>
-      }
-    >
+    <SettingsTabLayout>
       <SettingsSection title={t("settings.logs.consoleDebugTitle")}>
-        <SettingsControlRow
+        <SettingsRow
+          controlId="loot-debug-logging"
+          htmlFor="loot-debug-logging"
           label={t("settings.logs.lootDebugLoggingLabel")}
           description={t("settings.logs.lootDebugLoggingDescription")}
         >
@@ -168,90 +152,108 @@ export const LogsSettingsTab: FC = () => {
             id="loot-debug-logging"
             onCheckedChange={setLootDebugLoggingEnabled}
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
 
       <SettingsSection
-        title={t("settings.logs.filtersTitle")}
-        description={t("settings.logs.filtersDescription")}
-      >
-        <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-[minmax(0,1fr)_minmax(0,9rem)_minmax(0,9rem)] ll:sm:items-center">
-          <div className="ll:min-w-0">
-            <Input
-              className={FILTER_CONTROL_CLASS_NAME}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder={t("settings.logs.searchPlaceholder")}
-              value={searchTerm}
-            />
-          </div>
-          <div className="ll:min-w-0">
-            <Select
-              onValueChange={setActionTypeFilter}
-              value={actionTypeFilter}
-            >
-              <SelectTrigger
-                aria-label={t("settings.logs.actionTypeAria")}
-                className={FILTER_CONTROL_CLASS_NAME}
-              >
-                <SelectValue
-                  placeholder={t("settings.logs.actionTypePlaceholder")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {actionTypeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="ll:min-w-0">
-            <Select
-              onValueChange={(value) =>
-                setStatusFilter(
-                  LOG_STATUS_VALUES.find((status) => status === value) ?? "all",
-                )
-              }
-              value={statusFilter}
-            >
-              <SelectTrigger
-                aria-label={t("settings.logs.statusAria")}
-                className={FILTER_CONTROL_CLASS_NAME}
-              >
-                <SelectValue
-                  placeholder={t("settings.logs.statusPlaceholder")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {logStatusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </SettingsSection>
-
-      <SettingsSection
+        controlId="logs-list"
         title={t("settings.logs.listTitle")}
-        description={t("settings.logs.listDescription", {
-          visibleCount: filteredActions.length,
-          totalCount: actions.length,
-        })}
+        actions={
+          <div className="ll:flex ll:items-center ll:gap-2">
+            <Button
+              size="sm"
+              disabled={filteredActions.length === 0}
+              onClick={handleExportLogs}
+              type="button"
+              variant="outline"
+            >
+              {t("common:actions.exportJson")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={actions.length === 0}
+              onClick={clearActions}
+              type="button"
+              variant="outline"
+            >
+              {t("common:actions.clear")}
+            </Button>
+          </div>
+        }
       >
-        {filteredActions.length > 0 ? (
-          <div className="ll:flex ll:flex-col ll:gap-2">
-            {filteredActions.map((action) => (
-              <LogsActionCard
-                action={action}
-                key={action.id}
-                onCopyAction={handleCopyAction}
-                onCopyRequest={handleCopyRequest}
+        <SettingsToolbar
+          search={{
+            value: searchTerm,
+            placeholder: t("settings.logs.searchPlaceholder"),
+            onChange: (event) => setSearchTerm(event.target.value),
+            onClear: () => setSearchTerm(""),
+            clearLabel: t("settings.search.clear"),
+          }}
+        >
+          <Select onValueChange={setActionTypeFilter} value={actionTypeFilter}>
+            <SelectTrigger
+              size="sm"
+              aria-label={t("settings.logs.actionTypeAria")}
+              className={FILTER_CONTROL_CLASS_NAME}
+            >
+              <SelectValue
+                placeholder={t("settings.logs.actionTypePlaceholder")}
               />
-            ))}
+            </SelectTrigger>
+            <SelectContent>
+              {actionTypeOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            onValueChange={(value) =>
+              setStatusFilter(
+                LOG_STATUS_VALUES.find((status) => status === value) ?? "all",
+              )
+            }
+            value={statusFilter}
+          >
+            <SelectTrigger
+              size="sm"
+              aria-label={t("settings.logs.statusAria")}
+              className={FILTER_CONTROL_CLASS_NAME}
+            >
+              <SelectValue placeholder={t("settings.logs.statusPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {logStatusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SettingsToolbar>
+        {filteredActions.length > 0 ? (
+          <div className="ll:overflow-x-auto ll:rounded-sm">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("settings.logs.columns.time")}</TableHead>
+                  <TableHead>{t("settings.logs.columns.action")}</TableHead>
+                  <TableHead>{t("settings.logs.columns.status")}</TableHead>
+                  <TableHead className="ll:w-0" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActions.map((action) => (
+                  <LogsActionRow
+                    action={action}
+                    key={action.id}
+                    onCopyAction={handleCopyAction}
+                    onCopyRequest={handleCopyRequest}
+                  />
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <SettingsEmptyState>

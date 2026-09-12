@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { searchSettings, type SettingsSearchItem } from "./settings-search";
+import {
+  findSearchMatchRanges,
+  searchSettings,
+  type SettingsSearchItem,
+} from "./settings-search";
 
 const searchItems: SettingsSearchItem[] = [
   {
@@ -14,8 +18,8 @@ const searchItems: SettingsSearchItem[] = [
     order: 0,
   },
   {
-    categoryId: "game-data",
-    categoryLabel: "Dane z gry",
+    categoryId: "notifications",
+    categoryLabel: "Powiadomienia",
     subsectionId: "detector",
     subsectionLabel: "Wykrywacz NPC",
     controlId: "detector-routing",
@@ -37,5 +41,40 @@ describe("searchSettings", () => {
 
   it("matches explicit aliases and preserves manifest order for ties", () => {
     expect(searchSettings(searchItems, "discord")).toEqual([searchItems[1]]);
+  });
+
+  it("allows two typos in a long word but none in a short one", () => {
+    expect(searchSettings(searchItems, "wiadomsoci")).toEqual([searchItems[0]]);
+    expect(searchSettings(searchItems, "gpa")).toEqual([]);
+  });
+
+  it("requires every word of a multi-word query to match, across fields", () => {
+    expect(searchSettings(searchItems, "routing gildii")).toEqual([
+      searchItems[1],
+    ]);
+    expect(searchSettings(searchItems, "routing wiadomosci")).toEqual([]);
+  });
+
+  it("ranks a label hit above a description-only hit", () => {
+    const descriptionOnly: SettingsSearchItem = {
+      ...searchItems[1],
+      controlId: "detector-types",
+      label: "Typy potworów",
+      description: "Wybierz, o których NPC ma powiadamiać routing.",
+      order: 0,
+    };
+
+    expect(
+      searchSettings([descriptionOnly, searchItems[1]], "routing").map(
+        (item) => item.controlId,
+      ),
+    ).toEqual(["detector-routing", "detector-types"]);
+  });
+
+  it("reports the matched ranges of a label ignoring diacritics", () => {
+    expect(findSearchMatchRanges("Odstęp wiadomości", "odstep wiad")).toEqual([
+      { start: 0, end: 6 },
+      { start: 7, end: 11 },
+    ]);
   });
 });

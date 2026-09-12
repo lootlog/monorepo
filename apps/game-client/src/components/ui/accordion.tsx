@@ -86,7 +86,7 @@ const AccordionTrigger = React.forwardRef<
     <BaseAccordion.Trigger
       ref={ref}
       className={cn(
-        "ll:flex ll:w-full ll:items-center ll:justify-between ll:py-2 ll:px-3 ll:text-sm ll:font-medium ll:text-white ll:transition-all ll:hover:bg-gray-400/20 ll:border ll:border-gray-400 ll:rounded-sm ll-custom-cursor-pointer ll:bg-transparent ll:[&[data-panel-open]>svg]:rotate-180",
+        "ll:flex ll:w-full ll:items-center ll:justify-between ll:py-2 ll:px-3 ll:text-sm ll:font-medium ll:text-white ll:transition-all ll:hover:bg-accent ll:border ll:border-border ll:rounded-sm ll-custom-cursor-pointer ll:bg-transparent ll:[&[data-panel-open]>svg]:rotate-180",
         disabled && "ll:cursor-not-allowed ll:hover:bg-transparent",
         className,
       )}

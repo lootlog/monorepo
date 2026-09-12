@@ -1,23 +1,21 @@
 import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
 import { cn } from "cn";
 
 const toggleVariants = cva(
-  "ll:inline-flex ll:outline-none ll:border-none ll:items-center ll:justify-center ll:gap-2 ll:rounded-md ll:text-sm ll:font-medium ll:transition-colors ll:hover:bg-muted ll:hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[pressed]:bg-accent data-[pressed]:text-white [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "ll:group/toggle ll:inline-flex ll:items-center ll:justify-center ll:gap-1 ll:rounded-sm ll:text-[13px] ll:font-medium ll:whitespace-nowrap ll:transition-all ll:outline-none ll:hover:bg-muted ll:hover:text-foreground ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:data-pressed:bg-primary ll:data-pressed:text-primary-foreground ll:data-pressed:hover:bg-primary/90 ll:dark:aria-invalid:ring-destructive/40 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-4 ll-custom-cursor-pointer",
   {
     variants: {
       variant: {
-        default:
-          "ll:bg-muted ll:data-[pressed]:bg-primary ll:data-[pressed]:text-accent-foreground/100 ll:hover:text-accent-foreground/100 ll:text-accent-foreground/50",
+        default: "ll:bg-transparent",
         outline:
-          "ll:bg-transparent ll:shadow-sm ll:hover:bg-accent ll:hover:text-accent-foreground",
+          "ll:border ll:border-input ll:bg-transparent ll:hover:bg-muted",
       },
       size: {
-        default: "ll:h-9 ll:px-2 ll:min-w-9",
-        sm: "ll:h-8 ll:px-1.5 ll:min-w-8",
-        lg: "ll:h-10 ll:px-2.5 ll:min-w-10",
-        xs: "ll:h-6 ll:px-3 ll:min-w-6 ll:text-xs ll:font-semibold",
+        default:
+          "ll:h-8 ll:min-w-8 ll:px-2.5 ll:has-data-[icon=inline-end]:pr-2 ll:has-data-[icon=inline-start]:pl-2",
+        sm: "ll:h-7 ll:min-w-7 ll:rounded-sm ll:px-2 ll:text-xs ll:has-data-[icon=inline-end]:pr-1.5 ll:has-data-[icon=inline-start]:pl-1.5 ll:[&_svg:not([class*=size-])]:size-3.5",
+        lg: "ll:h-9 ll:min-w-9 ll:px-2.5 ll:has-data-[icon=inline-end]:pr-2 ll:has-data-[icon=inline-start]:pl-2",
       },
     },
     defaultVariants: {
@@ -27,17 +25,19 @@ const toggleVariants = cva(
   },
 );
 
-const Toggle = React.forwardRef<
-  HTMLButtonElement,
-  BaseToggle.Props & VariantProps<typeof toggleVariants>
->(({ className, variant, size, ...props }, ref) => (
-  <BaseToggle
-    ref={ref}
-    className={cn(toggleVariants({ variant, size, className }))}
-    {...props}
-  />
-));
-
-Toggle.displayName = "Toggle";
+function Toggle({
+  className,
+  variant = "default",
+  size = "default",
+  ...props
+}: BaseToggle.Props & VariantProps<typeof toggleVariants>) {
+  return (
+    <BaseToggle
+      data-slot="toggle"
+      className={cn(toggleVariants({ variant, size, className }))}
+      {...props}
+    />
+  );
+}
 
 export { Toggle, toggleVariants };

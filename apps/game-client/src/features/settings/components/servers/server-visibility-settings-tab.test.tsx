@@ -41,25 +41,20 @@ describe("ServerVisibilitySettingsTab", () => {
     });
   });
 
-  it("shows ordered guilds with avatars and visibility counts", () => {
+  it("shows ordered guilds with visibility state", () => {
     render();
 
-    expect(screen.getByText("2 widoczne")).toBeInTheDocument();
-    expect(screen.getByText("1 ukryty")).toBeInTheDocument();
-    expect(screen.getByAltText("Beta")).toHaveAttribute(
-      "src",
-      "https://cdn.discordapp.com/icons/guild-2/beta.png",
-    );
     expect(screen.getByText("A")).toBeInTheDocument();
     expect(
-      screen
-        .getAllByRole("switch")
-        .map((control) => control.getAttribute("aria-label")),
-    ).toEqual([
-      "Pokaż Beta w grze",
-      "Pokaż Alpha w grze",
-      "Pokaż Gamma w grze",
-    ]);
+      screen.getByRole("button", { name: "Beta", pressed: false }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Alpha", pressed: true }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Gamma", pressed: true }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 z 3")).toBeInTheDocument();
   });
 
   it("filters hidden guilds and searches by name", () => {
@@ -70,7 +65,7 @@ describe("ServerVisibilitySettingsTab", () => {
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Wszystkie" }));
-    fireEvent.change(screen.getByPlaceholderText("Szukaj serwera"), {
+    fireEvent.change(screen.getByPlaceholderText("Szukaj..."), {
       target: { value: "gamma" },
     });
     expect(screen.getByText("Gamma")).toBeInTheDocument();
@@ -80,11 +75,7 @@ describe("ServerVisibilitySettingsTab", () => {
   it("saves the full hidden guild snapshot", async () => {
     render();
 
-    fireEvent.click(
-      screen.getByRole("switch", {
-        name: "Pokaż Alpha w grze",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
 
     await waitFor(() =>
       expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
@@ -93,12 +84,49 @@ describe("ServerVisibilitySettingsTab", () => {
         }),
       ),
     );
+
+    // The save response seeds the cache; no preferences refetch may follow.
+    await waitFor(() => expect(harness.queryClient.isMutating()).toBe(0));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(harness.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides two guilds clicked in quick succession", async () => {
+    render();
+
+    // The second click lands before the first save has finished; each write
+    // must build on the previous optimistic list, not on the rendered one.
+    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gamma" }));
+
+    await waitFor(() => expect(harness.request).toHaveBeenCalledTimes(2));
+
+    expect(harness.request.mock.calls[1]?.[1]?.body).toBe(
+      JSON.stringify({
+        hiddenGuildIds: [
+          "guild-2",
+          "temporarily-unavailable",
+          "guild-1",
+          "guild-3",
+        ],
+      }),
+    );
+
+    await waitFor(() => expect(harness.queryClient.isMutating()).toBe(0));
+    expect(
+      screen.getByRole("button", { name: "Alpha", pressed: false }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Gamma", pressed: false }),
+    ).toBeInTheDocument();
   });
 
   it("shows every guild with one reset action", async () => {
     render();
 
-    fireEvent.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Pokaż wszystkie (1)" }),
+    );
 
     await waitFor(() =>
       expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
@@ -136,7 +164,7 @@ describe("ServerVisibilitySettingsTab", () => {
     render();
 
     expect(
-      screen.queryByRole("switch", {
+      screen.queryByRole("button", {
         name: "Publikuj obecność w organizacji Alpha",
       }),
     ).not.toBeInTheDocument();

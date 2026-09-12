@@ -1,13 +1,13 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { act, renderHook } from "@testing-library/react";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
 import { describe, expect, it } from "vitest";
-import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { createAirTagTest } from "./air-tag-test";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { useAirTags } from "./use-air-tags";
@@ -16,7 +16,7 @@ const settings = (
   enabled: boolean,
 ): UserGameAccountPreferencesResponseDtoOutput => ({
   accountId: "202",
-  notifications: createNotificationsSettings(),
+  notifications: createNotificationsResponse(),
   detector: createDetectorSettings(),
   pings: { enabled: false },
   airTags: { enabled },
@@ -51,11 +51,9 @@ const update = {
 describe("useAirTags", () => {
   it("ignores incoming targets and sends no subscription while disabled", async () => {
     const test = createAirTagTest();
-    test.queryClient.setQueryData(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "202",
-      }),
-      settings(false),
+    seedSettingsDocuments(
+      test.queryClient,
+      createSettingsDocuments(accountPreferenceValues(settings(false))),
     );
     const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
     await test.join();
@@ -69,11 +67,9 @@ describe("useAirTags", () => {
   });
   it("applies updates only while ready and clears state on unmount", async () => {
     const test = createAirTagTest();
-    test.queryClient.setQueryData(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "202",
-      }),
-      settings(true),
+    seedSettingsDocuments(
+      test.queryClient,
+      createSettingsDocuments(accountPreferenceValues(settings(true))),
     );
     const view = renderHook(() => useAirTags(), { wrapper: test.wrapper });
     await test.join();

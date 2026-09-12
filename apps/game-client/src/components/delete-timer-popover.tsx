@@ -135,6 +135,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
 
             return (
               <Button
+                size="xs"
                 type="button"
                 key={guild.guildId}
                 variant="menu"

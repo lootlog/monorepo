@@ -22,6 +22,7 @@ export function ChatGatheringMenu({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          size="xs"
           type="button"
           variant="ghost"
           className="ll:relative ll:z-10 ll:h-[24px] ll:w-[28px] ll:shrink-0 ll:border-0"

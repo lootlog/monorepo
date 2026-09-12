@@ -164,7 +164,13 @@ it("opens quick actions with current shortcuts and sends position without changi
     screen.queryByRole("button", { name: "Pozycja" }),
   ).not.toBeInTheDocument();
   await user.click(trigger);
-  expect(screen.getByText("Ctrl + Alt + P")).toBeVisible();
+  expect(
+    screen.getByText(
+      (content, element) =>
+        element?.getAttribute("data-slot") === "kbd-group" &&
+        element.textContent === "Ctrl + Alt + P",
+    ),
+  ).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Pozycja" }));
   await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
   await waitFor(() => expect(trigger).toHaveFocus());

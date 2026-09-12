@@ -24,7 +24,7 @@ export function ChatGatheringListItem({
   const { t } = useTranslation("chat");
 
   return (
-    <li className="ll-party-gathering-card ll:min-w-0 ll:border-solid ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:p-2 ll:last:border-b-0">
+    <li className="ll-party-gathering-card ll:min-w-0 ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:p-2 ll:last:border-b-0">
       <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-1">
         <div className="ll:min-w-0 ll:flex-1 ll:truncate">
           <ChatGatheringHeader
@@ -38,8 +38,9 @@ export function ChatGatheringListItem({
       <div className="ll:mt-1 ll:flex ll:items-center ll:justify-between ll:gap-2">
         {hidden ? (
           <Button
+            size="xs"
             variant="ghost"
-            className="ll:h-6 ll:border-0 ll:p-0 ll:text-[10px] ll:text-purple-200 ll:underline ll:underline-offset-2"
+            className="ll:h-6 ll:border-0 ll:p-0 ll:text-[10px] ll:text-primary ll:underline ll:underline-offset-2"
             aria-label={t("gatherings.restoreNamed", {
               name:
                 gathering.npc?.name ??
@@ -56,8 +57,9 @@ export function ChatGatheringListItem({
           </span>
         )}
         <Button
+          size="xs"
           variant="ghost"
-          className="ll:h-6 ll:gap-1 ll:border ll:border-purple-400/40 ll:bg-purple-500/20 ll:px-1.5 ll:text-[11px]"
+          className="ll:h-6 ll:gap-1 ll:border ll:border-border ll:bg-accent ll:px-1.5 ll:text-[11px]"
           disabled={disabled || pending}
           onClick={onApply}
         >

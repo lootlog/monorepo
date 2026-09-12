@@ -1,13 +1,12 @@
 import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { AsyncContent } from "@/components/async-content";
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/ui/search-input";
-import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import {
   useUserPreferences,
   useUpdateUserPreferences,
@@ -18,6 +17,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
+
+const VISIBILITY_FILTERS: VisibilityFilter[] = ["all", "visible", "hidden"];
 
 export const ServerVisibilitySettingsTab = () => {
   const { t } = useTranslation();
@@ -37,11 +38,13 @@ export const ServerVisibilitySettingsTab = () => {
     preferencesQuery.data?.guildsOrder,
   );
 
-  const visibleCount = orderedGuilds.filter(
-    (guild) => !hiddenGuildIdSet.has(guild.id),
-  ).length;
+  const visibleGuildIds = orderedGuilds.flatMap((guild) =>
+    hiddenGuildIdSet.has(guild.id) ? [] : [guild.id],
+  );
 
-  const hiddenCount = orderedGuilds.length - visibleCount;
+  const hiddenGuildCount = orderedGuilds.length - visibleGuildIds.length;
+  const hasHiddenGuilds = hiddenGuildCount > 0;
+
   const normalizedQuery = query.trim().toLocaleLowerCase();
 
   const filteredGuilds = orderedGuilds.filter((guild) => {
@@ -60,58 +63,30 @@ export const ServerVisibilitySettingsTab = () => {
 
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
 
-  const updateGuildVisibility = (guildId: string, isVisible: boolean) => {
-    const nextHiddenGuildIds = isVisible
-      ? hiddenGuildIds.filter((hiddenGuildId) => hiddenGuildId !== guildId)
-      : [...hiddenGuildIds, guildId];
+  // Derived from the cache at click time: rapid clicks each build on the
+  // previous optimistic state instead of the one this render was given.
+  const toggleGuildVisibility = (guildId: string) => {
+    updatePreferences.mutateFromCurrent((current) => {
+      const currentHiddenGuildIds = current?.hiddenGuildIds ?? [];
 
-    updatePreferences.mutate({ hiddenGuildIds: nextHiddenGuildIds });
+      return {
+        hiddenGuildIds: currentHiddenGuildIds.includes(guildId)
+          ? currentHiddenGuildIds.filter(
+              (hiddenGuildId) => hiddenGuildId !== guildId,
+            )
+          : [...currentHiddenGuildIds, guildId],
+      };
+    });
   };
 
-  let saveStatus: string | null = null;
-
-  if (updatePreferences.isPending) {
-    saveStatus = t("settings.servers.saving");
-  } else if (updatePreferences.isError) {
-    saveStatus = t("settings.servers.saveError");
-  } else if (updatePreferences.isSuccess) {
-    saveStatus = t("settings.servers.saved");
-  }
-
   return (
-    <SettingsTabLayout
-      title={t("settings.servers.title")}
-      description={t("settings.servers.description")}
-      actions={
-        saveStatus ? (
-          <div className="ll:flex ll:items-center ll:gap-2">
-            <span
-              aria-live="polite"
-              className="ll:text-[11px] ll:text-gray-400"
-            >
-              {saveStatus}
-            </span>
-            {updatePreferences.isError && updatePreferences.variables ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() =>
-                  updatePreferences.mutate(updatePreferences.variables)
-                }
-              >
-                {t("actions.retry")}
-              </Button>
-            ) : null}
-          </div>
-        ) : null
-      }
-    >
+    <SettingsTabLayout>
       <AsyncContent
         error={guildsQuery.error ?? preferencesQuery.error}
         errorLabel={t("settings.servers.loadError")}
         isLoading={guildsQuery.isLoading || preferencesQuery.isLoading}
         loadingLabel={t("settings.servers.loading")}
-        retryLabel={t("actions.retry")}
+        retryLabel={t("actions.retry", { ns: "common" })}
         onRetry={() => {
           void guildsQuery.refetch();
           void preferencesQuery.refetch();
@@ -123,103 +98,79 @@ export const ServerVisibilitySettingsTab = () => {
           </SettingsEmptyState>
         ) : (
           <SettingsSection
+            controlId="server-visibility"
             title={t("settings.servers.listTitle")}
+            description={t("settings.servers.description")}
             actions={
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={hiddenCount === 0 || updatePreferences.isPending}
-                onClick={() =>
-                  updatePreferences.mutate({
-                    hiddenGuildIds: hiddenGuildIds.filter(
-                      (hiddenGuildId) =>
-                        !accessibleGuildIdSet.has(hiddenGuildId),
-                    ),
-                  })
-                }
-              >
-                {t("settings.servers.showAll")}
-              </Button>
-            }
-          >
-            <search className="ll:w-full">
-              <SearchInput
-                value={query}
-                placeholder={t("settings.servers.searchPlaceholder")}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </search>
-            <div className="ll:flex ll:flex-wrap ll:items-center ll:justify-between ll:gap-2">
-              <div className="ll:flex ll:gap-1">
-                {(["all", "visible", "hidden"] as const).map((filter) => (
-                  <Button
-                    key={filter}
-                    type="button"
-                    variant="ghost"
-                    aria-pressed={visibilityFilter === filter}
-                    className="ll:px-2 ll:aria-pressed:border-purple-400 ll:aria-pressed:bg-purple-500/20"
-                    onClick={() => setVisibilityFilter(filter)}
-                  >
-                    {t(`settings.servers.filters.${filter}`)}
-                  </Button>
-                ))}
-              </div>
-              <div className="ll:flex ll:items-center ll:gap-2">
-                <span className="ll:text-[11px] ll:text-gray-400">
+              <div className="ll:flex ll:items-center ll:gap-3">
+                <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
                   {t("settings.servers.visibleCount", {
-                    count: visibleCount,
+                    visibleCount: visibleGuildIds.length,
+                    totalCount: orderedGuilds.length,
                   })}
                 </span>
-                <span className="ll:text-[11px] ll:text-gray-400">
-                  {t("settings.servers.hiddenCount", { count: hiddenCount })}
-                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!hasHiddenGuilds || updatePreferences.isPending}
+                  onClick={() => {
+                    updatePreferences.mutateFromCurrent((current) => ({
+                      hiddenGuildIds: (current?.hiddenGuildIds ?? []).filter(
+                        (hiddenGuildId) =>
+                          !accessibleGuildIdSet.has(hiddenGuildId),
+                      ),
+                    }));
+                  }}
+                >
+                  {hasHiddenGuilds
+                    ? t("settings.servers.showAllCount", {
+                        count: hiddenGuildCount,
+                      })
+                    : t("settings.servers.showAll")}
+                </Button>
               </div>
-            </div>
+            }
+          >
+            <SettingsToolbar
+              search={{
+                value: query,
+                placeholder: t("settings.servers.searchPlaceholder"),
+                onChange: (event) => setQuery(event.target.value),
+                onClear: () => setQuery(""),
+                clearLabel: t("settings.search.clear"),
+              }}
+            >
+              <ToggleGroup
+                variant="outline"
+                size="sm"
+                spacing={0}
+                value={[visibilityFilter]}
+                onValueChange={([value]: VisibilityFilter[]) => {
+                  if (value) setVisibilityFilter(value);
+                }}
+              >
+                {VISIBILITY_FILTERS.map((filter) => (
+                  <ToggleGroupItem key={filter} value={filter}>
+                    {t(`settings.servers.filters.${filter}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </SettingsToolbar>
             {filteredGuilds.length === 0 ? (
               <SettingsEmptyState>
                 {t("settings.servers.noResults")}
               </SettingsEmptyState>
             ) : (
-              filteredGuilds.map((guild) => {
-                const isVisible = !hiddenGuildIdSet.has(guild.id);
-
-                return (
-                  <SettingsControlRow
-                    key={guild.id}
-                    id={`server-visibility-${guild.id}`}
-                    label={
-                      <div className="ll:flex ll:min-w-0 ll:items-center ll:gap-2.5">
-                        <Avatar className="ll:size-8 ll:shrink-0 ll:rounded-md ll:border ll:border-white/10 ll:bg-black/20">
-                          {guild.icon ? (
-                            <img
-                              src={guild.icon}
-                              alt={guild.name}
-                              className="ll:h-full ll:w-full ll:object-cover"
-                            />
-                          ) : (
-                            <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-md ll:bg-gray-800 ll:text-[10px] ll:font-semibold ll:text-gray-100">
-                              {guild.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <span className="ll:truncate">{guild.name}</span>
-                      </div>
-                    }
-                    disabled={updatePreferences.isPending}
-                  >
-                    <Switch
-                      checked={isVisible}
-                      disabled={updatePreferences.isPending}
-                      aria-label={t("settings.servers.switchLabel", {
-                        name: guild.name,
-                      })}
-                      onCheckedChange={(checked) =>
-                        updateGuildVisibility(guild.id, checked)
-                      }
-                    />
-                  </SettingsControlRow>
-                );
-              })
+              <div className="ll:px-2 ll:py-0.5">
+                <SettingsGuildPicker
+                  aria-label={t("settings.servers.listTitle")}
+                  guilds={filteredGuilds}
+                  selectedGuildIds={visibleGuildIds}
+                  onToggle={toggleGuildVisibility}
+                  emptyStateLabel={t("settings.servers.noResults")}
+                />
+              </div>
             )}
           </SettingsSection>
         )}

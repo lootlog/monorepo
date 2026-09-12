@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -77,7 +77,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
     <form
       noValidate
       onSubmit={handleSubmit(onSubmit)}
-      className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden ll:w-full"
+      className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:w-full"
     >
       {visibleGuilds.length !== 1 && (
         <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
@@ -95,8 +95,8 @@ export function AddTimerForm(props: AddTimerFormProps) {
           data-testid="add-timer-scroll-container"
           className="ll:h-full ll:w-full"
         >
-          <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:px-1 ll:box-border">
-            <div className="ll:relative ll:w-full ll:box-border">
+          <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:px-1">
+            <div className="ll:relative ll:w-full">
               <Label htmlFor="npcSearch">{t("addForm.searchNpcLabel")}</Label>
               <Input
                 id="npcSearch"
@@ -169,7 +169,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
               />
             </div>
 
-            <div className="ll:w-full ll:box-border">
+            <div className="ll:w-full">
               <Label htmlFor="name">{t("addForm.nameLabel")}</Label>
               <Input
                 id="name"
@@ -187,7 +187,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
               />
             </div>
 
-            <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-2 ll:w-full ll:box-border">
+            <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-2 ll:w-full">
               <div className="ll:min-w-0">
                 <Label htmlFor="lvl">{t("addForm.lvlLabel")}</Label>
                 <Input
@@ -235,7 +235,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
               </div>
             </div>
 
-            <div className="ll:w-full ll:box-border">
+            <div className="ll:w-full">
               <Label htmlFor="minDuration">
                 {t("addForm.minDurationLabel")}
               </Label>
@@ -251,7 +251,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
               />
             </div>
 
-            <div className="ll:w-full ll:box-border">
+            <div className="ll:w-full">
               <Label htmlFor="maxDuration">
                 {t("addForm.maxDurationLabel")}
               </Label>
@@ -267,21 +267,18 @@ export function AddTimerForm(props: AddTimerFormProps) {
               />
             </div>
 
-            <div className="ll:mt-2">
-              <Checkbox
+            <div className="ll:mt-2 ll:flex ll:items-center ll:gap-2">
+              <Switch
                 id="customDates"
                 checked={customDatesEnabled}
-                onChange={(e) =>
-                  handleCustomDatesToggle(e.currentTarget.checked)
-                }
-              >
-                {t("addForm.customDates")}
-              </Checkbox>
+                onCheckedChange={(checked) => handleCustomDatesToggle(checked)}
+              />
+              <Label htmlFor="customDates">{t("addForm.customDates")}</Label>
             </div>
 
             {customDatesEnabled && (
-              <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:box-border">
-                <div className="ll:w-full ll:box-border">
+              <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full">
+                <div className="ll:w-full">
                   <Label htmlFor="startDate">
                     {t("addForm.startDateLabel")}
                   </Label>
@@ -295,7 +292,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
                     message={getFieldErrorMessage(errors.startDate)}
                   />
                 </div>
-                <div className="ll:w-full ll:box-border">
+                <div className="ll:w-full">
                   <Label htmlFor="endDate">{t("addForm.endDateLabel")}</Label>
                   <Input
                     id="endDate"

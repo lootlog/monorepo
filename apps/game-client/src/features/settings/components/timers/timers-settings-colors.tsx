@@ -1,4 +1,8 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsList } from "@/components/settings/settings-list";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -27,6 +31,13 @@ type TimerColorSelection = {
   kind: "custom" | "default";
 };
 
+const selectionKey = (selection: TimerColorSelection) =>
+  `${selection.kind}:${selection.id}`;
+
+/** A row added or restored in this session slides into the list once. */
+const ENTERED_ROW_CLASS_NAME =
+  "ll:animate-in ll:fade-in-0 ll:slide-in-from-top-1 ll:duration-300 ll:ease-[cubic-bezier(0.2,0,0,1)]";
+
 const getTimerColorEditData = (
   selection: TimerColorSelection,
   customColors: Record<string, CustomTimerColor>,
@@ -42,8 +53,8 @@ const getTimerColorEditData = (
     if (color) {
       return {
         name: color.name,
-        borderColor: color.borderColor,
-        backgroundColor: stripAlphaChannel(color.backgroundColor),
+        borderColor: color.borderColor.toUpperCase(),
+        backgroundColor: stripAlphaChannel(color.backgroundColor).toUpperCase(),
         backgroundAlpha: hexToAlpha(color.backgroundColor),
       };
     }
@@ -55,19 +66,17 @@ const getTimerColorEditData = (
   };
 
   const overridden = overriddenDefaultColors[selection.id];
+  const borderColor = overridden?.borderColor ?? defaults.border;
+  const backgroundColor = overridden?.backgroundColor ?? defaults.background;
 
   return {
     name:
       defaultColorNames[selection.id] ??
       getDefaultColorName(selection.id) ??
       selection.id,
-    borderColor: overridden?.borderColor ?? defaults.border,
-    backgroundColor: stripAlphaChannel(
-      overridden?.backgroundColor ?? defaults.background,
-    ),
-    backgroundAlpha: hexToAlpha(
-      overridden?.backgroundColor ?? defaults.background,
-    ),
+    borderColor: borderColor.toUpperCase(),
+    backgroundColor: stripAlphaChannel(backgroundColor).toUpperCase(),
+    backgroundAlpha: hexToAlpha(backgroundColor),
   };
 };
 
@@ -82,6 +91,7 @@ export const TimersSettingsColors: FC = () => {
     overriddenDefaultColors,
     updateDefaultColor,
     resetDefaultColor,
+    resetAllDefaultColors,
     deleteDefaultColor,
     hiddenDefaultColors,
     restoreDefaultColor,
@@ -89,175 +99,205 @@ export const TimersSettingsColors: FC = () => {
 
   const { t } = useTranslation();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+
+  /** Live values of the colour being edited; rows repaint before the save. */
+  const [draft, setDraft] = useState<{
+    key: string;
+    data: ColorEditData;
+  } | null>(null);
+
+  /** Key of the row that just joined the list (added or restored). */
+  const [enteredKey, setEnteredKey] = useState<string | null>(null);
+
   const hiddenColorIds = new Set(hiddenDefaultColors);
 
   const visibleDefaultColors = Object.keys(TIMERS_COLORS).filter(
     (colorId) => !hiddenColorIds.has(colorId),
   );
 
-  const getEditData = (selection: TimerColorSelection) =>
-    getTimerColorEditData(
+  const isDefaultModified = (colorId: string) => {
+    const persistedName = defaultColorNames[colorId];
+
+    return (
+      overriddenDefaultColors[colorId] !== undefined ||
+      (persistedName !== undefined &&
+        persistedName !== getDefaultColorName(colorId))
+    );
+  };
+
+  const anyDefaultModified = Object.keys(TIMERS_COLORS).some(isDefaultModified);
+
+  const getData = (selection: TimerColorSelection) => {
+    const key = selectionKey(selection);
+
+    return draft?.key === key
+      ? draft.data
+      : getTimerColorEditData(
+          selection,
+          customColors,
+          defaultColorNames,
+          overriddenDefaultColors,
+        );
+  };
+
+  const commit = (selection: TimerColorSelection, data: ColorEditData) => {
+    const backgroundColor = `${data.backgroundColor}${alphaToHex(
+      data.backgroundAlpha,
+    )}`;
+
+    setDraft({ key: selectionKey(selection), data });
+
+    if (selection.kind === "custom") {
+      const currentColor = customColors[selection.id];
+
+      if (!currentColor) return;
+
+      updateCustomColor(selection.id, {
+        ...currentColor,
+        name: data.name,
+        borderColor: data.borderColor,
+        backgroundColor,
+      });
+
+      return;
+    }
+
+    const stored = getTimerColorEditData(
       selection,
       customColors,
       defaultColorNames,
       overriddenDefaultColors,
     );
 
-  const commitAppearance = (
-    selection: TimerColorSelection,
-    data: ColorEditData,
-  ) => {
-    if (selection.kind === "custom") {
-      const currentColor = customColors[selection.id];
-
-      if (!currentColor) return;
-      updateCustomColor(selection.id, {
-        ...currentColor,
-        borderColor: data.borderColor,
-        backgroundColor: `${data.backgroundColor}${alphaToHex(
-          data.backgroundAlpha,
-        )}`,
-      });
-
-      return;
+    if (data.name !== stored.name) {
+      setDefaultColorName(selection.id, data.name);
     }
 
-    updateDefaultColor(
-      selection.id,
-      data.borderColor,
-      `${data.backgroundColor}${alphaToHex(data.backgroundAlpha)}`,
-    );
+    if (
+      data.borderColor !== stored.borderColor ||
+      data.backgroundColor !== stored.backgroundColor ||
+      data.backgroundAlpha !== stored.backgroundAlpha
+    ) {
+      updateDefaultColor(selection.id, data.borderColor, backgroundColor);
+    }
   };
 
-  const commitName = (selection: TimerColorSelection, name: string) => {
-    if (selection.kind === "custom") {
-      const currentColor = customColors[selection.id];
-
-      if (!currentColor) return;
-      updateCustomColor(selection.id, { ...currentColor, name });
-
-      return;
-    }
-
-    setDefaultColorName(selection.id, name);
+  const setOpen = (selection: TimerColorSelection, open: boolean) => {
+    setOpenPopover(open ? selectionKey(selection) : null);
+    setDraft(null);
   };
 
   const handleAddColor = (data: Omit<CustomTimerColor, "id">) => {
-    addCustomColor({ id: `custom-${Date.now()}`, ...data });
+    const id = `custom-${Date.now()}`;
+    addCustomColor({ id, ...data });
+    setEnteredKey(selectionKey({ id, kind: "custom" }));
     setOpenPopover(null);
   };
 
+  const handleRestoreColor = (colorId: string) => {
+    setEnteredKey(selectionKey({ id: colorId, kind: "default" }));
+    restoreDefaultColor(colorId);
+  };
+
+  const renderItem = (selection: TimerColorSelection) => {
+    const key = selectionKey(selection);
+    const isDefault = selection.kind === "default";
+
+    return (
+      <TimerColorListItem
+        key={key}
+        itemKey={key}
+        className={enteredKey === key ? ENTERED_ROW_CLASS_NAME : undefined}
+        data={getData(selection)}
+        isDefault={isDefault}
+        isModified={isDefault ? isDefaultModified(selection.id) : true}
+        open={openPopover === key}
+        onOpenChange={(open) => setOpen(selection, open)}
+        onDraftChange={(data) => setDraft({ key, data })}
+        onCommit={(data) => commit(selection, data)}
+        onReset={() => {
+          setDraft(null);
+          resetDefaultColor(selection.id);
+        }}
+        onDelete={() => {
+          setDraft(null);
+
+          if (isDefault) deleteDefaultColor(selection.id);
+          else deleteCustomColor(selection.id);
+        }}
+      />
+    );
+  };
+
   return (
-    <div className="ll:flex ll:flex-col ll:gap-3">
-      <section className="ll:flex ll:flex-col ll:gap-1.5">
-        <div className="ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-gray-400">
-          {t("settings.timers.colors.standardColorsTitle")}
-        </div>
-        <div
-          id="timer-colors-list"
-          className="ll:grid ll:grid-cols-2 ll:gap-1.5"
-        >
-          {visibleDefaultColors.map((colorId) => {
-            const selection: TimerColorSelection = {
-              id: colorId,
-              kind: "default",
-            };
+    <SettingsTabLayout>
+      <SettingsSection
+        controlId="timer-colors-list"
+        title={t("settings.timers.colors.standardColorsTitle")}
+        description={t("settings.timers.colors.standardColorsDescription")}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!anyDefaultModified}
+            title={t("settings.timers.colors.resetAllDescription")}
+            onClick={() => {
+              setDraft(null);
+              resetAllDefaultColors();
+            }}
+          >
+            {t("settings.timers.colors.resetAll")}
+          </Button>
+        }
+      >
+        <SettingsList>
+          {visibleDefaultColors.map((colorId) =>
+            renderItem({ id: colorId, kind: "default" }),
+          )}
+        </SettingsList>
+        <HiddenColorsList
+          hiddenColors={hiddenDefaultColors}
+          colorNames={defaultColorNames}
+          onRestore={handleRestoreColor}
+        />
+      </SettingsSection>
 
-            const overridden = overriddenDefaultColors[colorId];
-            const editData = getEditData(selection);
-            const persistedName = defaultColorNames[colorId];
-
-            const isModified =
-              overridden !== undefined ||
-              (persistedName !== undefined &&
-                persistedName !== getDefaultColorName(colorId));
-
-            return (
-              <TimerColorListItem
-                key={colorId}
-                color={overridden ? undefined : colorId}
-                customBorderColor={overridden?.borderColor}
-                customBackgroundColor={overridden?.backgroundColor}
-                data={editData}
-                isDefault
-                isModified={isModified}
-                itemKey={`default:${colorId}`}
-                openPopover={openPopover}
-                onOpenPopoverChange={setOpenPopover}
-                onCommit={(data) => commitAppearance(selection, data)}
-                onNameCommit={(name) => commitName(selection, name)}
-                onReset={() => resetDefaultColor(colorId)}
-                onDelete={() => deleteDefaultColor(colorId)}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="ll:flex ll:flex-col ll:gap-1.5">
-        <div className="ll:flex ll:items-center ll:justify-between">
-          <div className="ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-wide ll:text-gray-400">
-            {t("settings.timers.colors.customColorsTitle")}
-          </div>
+      <SettingsSection
+        title={t("settings.timers.colors.customColorsTitle")}
+        description={t("settings.timers.colors.customColorsDescription")}
+        actions={
           <Popover
             open={openPopover === "add"}
             onOpenChange={(open) => setOpenPopover(open ? "add" : null)}
           >
             <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="ll:size-7 ll:p-0"
-                aria-label={t("settings.timers.colors.addTitle")}
-              >
-                <Plus className="ll:size-3.5" />
-              </Button>
+              <SettingsIconButton label={t("settings.timers.colors.addTitle")}>
+                <Plus />
+              </SettingsIconButton>
             </PopoverTrigger>
             <PopoverContent
               role="dialog"
               align="end"
-              className="ll:w-[min(340px,calc(100vw-16px))] ll:p-3"
+              className="ll:w-[min(360px,calc(100vw-16px))] ll:p-3"
             >
               <AddColorForm onAdd={handleAddColor} />
             </PopoverContent>
           </Popover>
-        </div>
-
+        }
+      >
         {Object.keys(customColors).length > 0 ? (
-          <div className="ll:grid ll:grid-cols-2 ll:gap-1.5">
-            {Object.values(customColors).map((color) => {
-              const selection: TimerColorSelection = {
-                id: color.id,
-                kind: "custom",
-              };
-
-              return (
-                <TimerColorListItem
-                  key={color.id}
-                  customBorderColor={color.borderColor}
-                  customBackgroundColor={color.backgroundColor}
-                  data={getEditData(selection)}
-                  isDefault={false}
-                  isModified
-                  itemKey={`custom:${color.id}`}
-                  openPopover={openPopover}
-                  onOpenPopoverChange={setOpenPopover}
-                  onCommit={(data) => commitAppearance(selection, data)}
-                  onNameCommit={(name) => commitName(selection, name)}
-                  onReset={() => undefined}
-                  onDelete={() => deleteCustomColor(color.id)}
-                />
-              );
-            })}
-          </div>
-        ) : null}
-      </section>
-
-      <HiddenColorsList
-        hiddenColors={hiddenDefaultColors}
-        colorNames={defaultColorNames}
-        onRestore={restoreDefaultColor}
-      />
-    </div>
+          <SettingsList>
+            {Object.values(customColors).map((color) =>
+              renderItem({ id: color.id, kind: "custom" }),
+            )}
+          </SettingsList>
+        ) : (
+          <p className="ll:m-0 ll:px-2 ll:text-xs ll:text-muted-foreground">
+            {t("settings.timers.colors.customColorsEmpty")}
+          </p>
+        )}
+      </SettingsSection>
+    </SettingsTabLayout>
   );
 };

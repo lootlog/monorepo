@@ -1,15 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
+import { getUsersControllerGetUserPreferencesQueryKey } from "@lootlog/client/main";
+import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
+import { queryClient } from "@/lib/query-client";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 
-import {
-  registerGlobalSettingsMutation,
-  disposeTimerSettingsSync,
-} from "./timer-settings-sync";
-import type {
-  UpdateTimerSettingsPayload,
-  CustomTimerColor,
-} from "@lootlog/schema/timer-settings";
+// The queue is the real boundary; only its enqueue side is observed so no
+// request leaves the test.
+const enqueue = vi
+  .spyOn(settingsPatchQueue, "enqueue")
+  .mockImplementation(() => {});
 
-const syncGlobal = vi.fn<(payload: UpdateTimerSettingsPayload) => void>();
+const operations = () => enqueue.mock.calls.map(([patch]) => patch.operation);
+
+const patchesFor = (domain: "timers" | "appearance") =>
+  operations().filter((operation) => operation.domain === domain);
+
+const userScope = { type: "USER", id: "user" } as const;
 
 import { NpcType } from "@/api/npcs.api";
 import { TIMERS_STORAGE_KEY, useTimersStore } from "./timers.store";
@@ -30,7 +37,6 @@ const resetTimersStore = () => {
     colorFiltersEnabled: false,
     timerFiltersSearchText: "",
     timersSortOrder: "asc",
-    syncEnabled: true,
     generalConfig: {
       removeTimerAfterMs: 30000,
       timersGrouping: false,
@@ -49,15 +55,22 @@ const resetTimersStore = () => {
 };
 
 afterEach(() => {
-  disposeTimerSettingsSync();
   vi.useRealTimers();
 });
 
 describe("timers.store", () => {
   beforeEach(() => {
-    syncGlobal.mockReset();
+    enqueue.mockClear();
+    queryClient.clear();
+    queryClient.setQueryData(getUsersControllerGetUserPreferencesQueryKey(), {
+      userId: "user",
+      guildsOrder: [],
+      hiddenGuildIds: [],
+      theme: "default",
+      chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
+      mutes: { players: [], npcs: [] },
+    });
     vi.useFakeTimers();
-    registerGlobalSettingsMutation(syncGlobal);
     window.localStorage.removeItem(TIMERS_STORAGE_KEY);
     resetTimersStore();
   });
@@ -79,6 +92,12 @@ describe("timers.store", () => {
     });
     expect(useTimersStore.getState().pinnedTimers).toEqual({
       "guild-1": ["timer-7"],
+    });
+    expect(operations().at(-1)).toEqual({
+      domain: "timers",
+      scope: { type: "GUILD", id: "guild-1" },
+      set: { pinnedTimers: ["timer-7"] },
+      unset: [],
     });
   });
 
@@ -130,8 +149,6 @@ describe("timers.store", () => {
     vi.advanceTimersByTime(500);
     store.setTimersSortOrder("desc");
     vi.advanceTimersByTime(500);
-    store.setSyncEnabled(false);
-    vi.advanceTimersByTime(500);
     store.setTimersFilters("global", {
       minLvl: 50,
       maxLvl: 150,
@@ -144,7 +161,6 @@ describe("timers.store", () => {
       generalConfig: nextGeneralConfig,
       displayConfig: nextDisplayConfig,
       timersSortOrder: "desc",
-      syncEnabled: false,
       timersFilters: {
         global: {
           minLvl: 50,
@@ -155,18 +171,13 @@ describe("timers.store", () => {
       },
     });
     expect(useTimersStore.getState().updatedAt).toEqual(expect.any(Number));
-    expect(syncGlobal).toHaveBeenCalledWith({
-      generalConfig: nextGeneralConfig,
-    });
-    expect(syncGlobal).toHaveBeenCalledWith({
-      displayConfig: nextDisplayConfig,
-    });
-    expect(syncGlobal).toHaveBeenCalledWith({
-      timersSortOrder: "desc",
-    });
-    expect(syncGlobal).toHaveBeenCalledWith({
-      syncEnabled: false,
-    });
+    expect(patchesFor("timers").map((patch) => patch.set)).toEqual([
+      { generalConfig: nextGeneralConfig },
+      { timersSortOrder: "desc" },
+    ]);
+    expect(patchesFor("appearance").map((patch) => patch.set)).toEqual([
+      { timers: { displayConfig: nextDisplayConfig } },
+    ]);
   });
 
   it("updates always visible expired timers and syncs global settings", () => {
@@ -182,21 +193,11 @@ describe("timers.store", () => {
     expect(useTimersStore.getState().alwaysVisibleExpiredTimers).toEqual({
       experimental: [],
     });
-    expect(syncGlobal).toHaveBeenNthCalledWith(1, {
-      alwaysVisibleExpiredTimers: {
-        experimental: ["123:test-boss"],
-      },
-    });
-    expect(syncGlobal).toHaveBeenNthCalledWith(2, {
-      alwaysVisibleExpiredTimers: {
-        experimental: ["123:test-boss"],
-      },
-    });
-    expect(syncGlobal).toHaveBeenNthCalledWith(3, {
-      alwaysVisibleExpiredTimers: {
-        experimental: [],
-      },
-    });
+    expect(patchesFor("timers").map((patch) => patch.set)).toEqual([
+      { alwaysVisibleExpiredTimers: { experimental: ["123:test-boss"] } },
+      { alwaysVisibleExpiredTimers: { experimental: ["123:test-boss"] } },
+      { alwaysVisibleExpiredTimers: { experimental: [] } },
+    ]);
   });
 
   it("deletes custom colors and clears matching timer assignments", () => {
@@ -225,12 +226,13 @@ describe("timers.store", () => {
       Tanroth: undefined,
       Heros: "default-1",
     });
-    expect(syncGlobal).toHaveBeenCalledWith({
-      customColors: {},
-      timersColors: {
-        Tanroth: undefined,
-        Heros: "default-1",
+    expect(operations().at(-1)).toEqual({
+      domain: "appearance",
+      scope: userScope,
+      set: {
+        timers: { customColors: {}, timersColors: { Heros: "default-1" } },
       },
+      unset: ["timers.timersColors.Tanroth"],
     });
   });
 
@@ -269,10 +271,17 @@ describe("timers.store", () => {
     expect(useTimersStore.getState().hiddenDefaultColors).toEqual([]);
     expect(useTimersStore.getState().defaultColorNames).toEqual({});
     expect(useTimersStore.getState().overriddenDefaultColors).toEqual({});
-    expect(syncGlobal).toHaveBeenLastCalledWith({
-      hiddenDefaultColors: [],
-      overriddenDefaultColors: {},
-      defaultColorNames: {},
+    expect(operations().at(-1)).toEqual({
+      domain: "appearance",
+      scope: userScope,
+      set: {
+        timers: {
+          hiddenDefaultColors: [],
+          overriddenDefaultColors: {},
+          defaultColorNames: {},
+        },
+      },
+      unset: [],
     });
   });
 
@@ -294,10 +303,75 @@ describe("timers.store", () => {
     expect(useTimersStore.getState().hiddenDefaultColors).toEqual([]);
     expect(useTimersStore.getState().defaultColorNames).toEqual({});
     expect(useTimersStore.getState().overriddenDefaultColors).toEqual({});
-    expect(syncGlobal).toHaveBeenLastCalledWith({
-      overriddenDefaultColors: {},
-      defaultColorNames: {},
+    expect(operations().at(-1)).toEqual({
+      domain: "appearance",
+      scope: userScope,
+      set: { timers: { overriddenDefaultColors: {}, defaultColorNames: {} } },
+      unset: [],
     });
+  });
+
+  it("unsets colour map entries removed while other entries remain", () => {
+    useTimersStore.setState({
+      customColors: {
+        "custom-1": {
+          id: "custom-1",
+          name: "Bosses",
+          borderColor: "#111111",
+          backgroundColor: "#22222233",
+        },
+        "custom-2": {
+          id: "custom-2",
+          name: "Titans",
+          borderColor: "#333333",
+          backgroundColor: "#44444433",
+        },
+      },
+      defaultColorNames: { red: "Alarm", green: "Safe" },
+      overriddenDefaultColors: {
+        red: { borderColor: "#111111", backgroundColor: "#22222233" },
+        green: { borderColor: "#333333", backgroundColor: "#44444433" },
+      },
+    });
+
+    useTimersStore.getState().resetDefaultColor("red");
+    useTimersStore.getState().deleteCustomColor("custom-1");
+    vi.advanceTimersByTime(500);
+
+    expect(
+      patchesFor("appearance").map(({ set, unset }) => ({ set, unset })),
+    ).toEqual([
+      {
+        set: {
+          timers: {
+            overriddenDefaultColors: {
+              green: { borderColor: "#333333", backgroundColor: "#44444433" },
+            },
+            defaultColorNames: { green: "Safe" },
+          },
+        },
+        unset: [
+          "timers.defaultColorNames.red",
+          "timers.overriddenDefaultColors.red",
+        ],
+      },
+      {
+        set: {
+          timers: {
+            customColors: {
+              "custom-2": {
+                id: "custom-2",
+                name: "Titans",
+                borderColor: "#333333",
+                backgroundColor: "#44444433",
+              },
+            },
+            timersColors: {},
+          },
+        },
+        unset: ["timers.customColors.custom-1"],
+      },
+    ]);
   });
 
   it("persists only the partialized timer state", () => {

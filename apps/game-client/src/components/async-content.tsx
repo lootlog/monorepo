@@ -54,6 +54,8 @@ export const AsyncContent: FC<AsyncContentProps> = ({
         <span>{errorLabel}</span>
         {onRetry ? (
           <Button
+            variant="secondary"
+            size="xs"
             className="ll:h-6 ll:gap-1.5 ll:px-2"
             onClick={onRetry}
             type="button"

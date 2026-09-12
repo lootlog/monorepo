@@ -16,6 +16,7 @@ export function ChatGatheringHideButton({
   return (
     <ChatGatheringMenu>
       <Button
+        size="xs"
         type="button"
         variant="menu"
         aria-label={label}

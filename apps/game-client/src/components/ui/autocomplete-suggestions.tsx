@@ -49,7 +49,7 @@ export const AutocompleteSuggestions = <T,>({
 
     return (
       <div
-        className={`ll:absolute ll:z-50 ll:mt-1 ll:flex ll:w-full ll:items-center ll:justify-center ll:gap-2 ll:rounded-sm ll:border ll:border-gray-400 ll:bg-black/95 ll:px-3 ll:py-2 ll:text-xs ll:text-gray-300 ${className}`}
+        className={`ll:absolute ll:z-50 ll:mt-1 ll:flex ll:w-full ll:items-center ll:justify-center ll:gap-2 ll:rounded-sm ll:border ll:border-border ll:bg-black/95 ll:px-3 ll:py-2 ll:text-xs ll:text-muted-foreground ${className}`}
         role="status"
       >
         <Loader2
@@ -70,6 +70,7 @@ export const AutocompleteSuggestions = <T,>({
         <span>{errorMessage}</span>
         {onRetry ? (
           <Button
+            size="xs"
             aria-label={t("actions.retry")}
             className="ll:size-5 ll:p-0"
             onClick={onRetry}
@@ -90,9 +91,9 @@ export const AutocompleteSuggestions = <T,>({
   if (showNoResults && !hasResults) {
     return (
       <div
-        className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-gray-400 ll:rounded-sm ${className}`}
+        className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-border ll:rounded-sm ${className}`}
       >
-        <p className="ll:text-xs ll:text-gray-400 ll:text-center ll:px-3 ll:py-2">
+        <p className="ll:text-xs ll:text-muted-foreground ll:text-center ll:px-3 ll:py-2">
           {resolvedNoResultsMessage}
         </p>
       </div>
@@ -102,7 +103,7 @@ export const AutocompleteSuggestions = <T,>({
   if (isOpen && hasResults) {
     return (
       <div
-        className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-gray-400 ll:rounded-sm ll:max-h-48 ll:overflow-y-auto ${className}`}
+        className={`ll:absolute ll:z-50 ll:w-full ll:mt-1 ll:bg-black/95 ll:border ll:border-border ll:rounded-sm ll:max-h-48 ll:overflow-y-auto ${className}`}
       >
         {items.map((item, index) => {
           const isSelected = index === selectedIndex;

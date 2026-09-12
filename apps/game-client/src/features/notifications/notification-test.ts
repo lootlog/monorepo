@@ -1,17 +1,19 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { onTestFinished, vi } from "vitest";
 import { createRealtimeTest } from "@/test/realtime-test";
 import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
-  getSoundSettingsControllerGetSettingsQueryKey,
   type UserGameAccountPreferencesResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
   type SoundSettingsResponseDto,
 } from "@lootlog/client/main";
 import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+  accountPreferenceValues,
+  seedSettingsDocumentValues,
+  soundSettingValues,
+  userPreferenceValues,
+} from "@/test/settings-documents-fixtures";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -21,7 +23,7 @@ export const createNotificationTest = () => {
 
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "1",
-    notifications: createNotificationsSettings(["guild-1"]),
+    notifications: createNotificationsResponse(["guild-1"]),
     detector: createDetectorSettings(),
     pings: { enabled: false },
     airTags: { enabled: false },
@@ -62,23 +64,29 @@ export const createNotificationTest = () => {
   };
 
   const setPreferences = () =>
-    test.queryClient.setQueryData(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({
-        accountId: "1",
+    seedSettingsDocumentValues(
+      test.queryClient,
+      accountPreferenceValues({
+        ...preferences,
+        notifications: { ...preferences.notifications },
       }),
-      { ...preferences, notifications: { ...preferences.notifications } },
     );
 
-  const setUserPreferences = () =>
+  const setUserPreferences = () => {
     test.queryClient.setQueryData(
       getUsersControllerGetUserPreferencesQueryKey(),
       { ...userPreferences, mutes: { ...userPreferences.mutes } },
     );
+    seedSettingsDocumentValues(
+      test.queryClient,
+      userPreferenceValues({ mutes: { ...userPreferences.mutes } }),
+    );
+  };
 
   const setSounds = () =>
-    test.queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      { ...soundSettings },
+    seedSettingsDocumentValues(
+      test.queryClient,
+      soundSettingValues({ ...soundSettings }),
     );
 
   setPreferences();

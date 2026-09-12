@@ -1,157 +1,203 @@
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import { Check, ChevronDown, Search } from "lucide-react";
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "cn";
-import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+  selectGroupLabelClassName,
+  selectItemClassName,
+  selectPopupClassName,
+  selectTriggerClassName,
+} from "./select";
+import { getLootlogPortalContainer } from "./theme-boundary";
 
-export interface ComboboxOption {
-  value: string;
-  label: string;
-}
+/**
+ * Searchable select (shadcn Base UI combobox). The trigger, popup and items
+ * share the plain select's classes; the only visible difference is the
+ * search field at the top of the list.
+ */
+const Combobox = BaseCombobox.Root;
 
-export interface ComboboxGroup {
-  id: string;
-  label?: string;
-  options: ComboboxOption[];
-}
-
-interface ComboboxProps {
-  value?: string;
-  onValueChange?: (value: string) => void;
-  options?: ComboboxOption[];
-  groups?: ComboboxGroup[];
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyText?: string;
-  className?: string;
-  disabled?: boolean;
-  triggerClassName?: string;
-  contentClassName?: string;
-}
-
-const EMPTY_OPTIONS: ComboboxOption[] = [];
-
-const EMPTY_GROUPS: ComboboxGroup[] = [];
-
-export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
-  (
-    {
-      value,
-      onValueChange,
-      options = EMPTY_OPTIONS,
-      groups = EMPTY_GROUPS,
-      placeholder = "Select option...",
-      searchPlaceholder = "Search...",
-      emptyText = "No results found.",
-      disabled = false,
-      triggerClassName,
-      contentClassName,
-    },
-    ref,
-  ) => {
-    const [open, setOpen] = React.useState(false);
-
-    const selectedOption = React.useMemo(() => {
-      const allOptions =
-        groups.length > 0 ? groups.flatMap((g) => g.options) : options;
-
-      return allOptions.find((option) => option.value === value);
-    }, [value, options, groups]);
-
-    const handleSelect = (currentValue: string) => {
-      onValueChange?.(currentValue);
-      setOpen(false);
-    };
-
-    const renderOptions = (opts: ComboboxOption[]) => {
-      return opts.map((option) => (
-        <CommandItem
-          key={option.value}
-          value={option.value}
-          onSelect={handleSelect}
-          className="ll:cursor-pointer ll:pr-8"
-        >
-          <span className="ll:absolute ll:right-2 ll:flex ll:h-3.5 ll:w-3.5 ll:items-center ll:justify-center">
-            {value === option.value && <Check className="ll:h-4 ll:w-4" />}
-          </span>
-          {option.label}
-        </CommandItem>
-      ));
-    };
-
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            ref={ref}
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "ll:justify-between ll:gap-2 ll:px-1",
-              triggerClassName,
-            )}
-            disabled={disabled}
-          >
-            <span className="ll:truncate">
-              {selectedOption ? selectedOption.label : placeholder}
-            </span>
-            <ChevronsUpDown className="ll:h-4 ll:w-4 ll:shrink-0 ll:opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className={cn("ll:p-0 ll:box-border ll:w-full", contentClassName)}
-        >
-          <Command className="ll:bg-transparent ll:w-full">
-            <CommandInput placeholder={searchPlaceholder} />
-            <CommandList className="ll:max-h-none ll:overflow-visible">
-              <ScrollArea className="ll:max-h-60">
-                <CommandEmpty className="ll:text-popover-foreground ll:text-xs ll:py-2 ll:px-2">
-                  {emptyText}
-                </CommandEmpty>
-                {groups.length > 0 ? (
-                  groups.map((group, index) => (
-                    <React.Fragment key={group.id}>
-                      <CommandGroup
-                        heading={group.label}
-                        className="ll:text-muted-foreground ll:text-[10px] ll:font-sans [&_[cmdk-group-heading]]:ll:text-[10px] [&_[cmdk-group-heading]]:ll:font-semibold [&_[cmdk-group-heading]]:ll:text-muted-foreground [&_[cmdk-group-heading]]:ll:pl-3 [&_[cmdk-group-heading]]:ll:pr-2 [&_[cmdk-group-heading]]:ll:py-1"
-                      >
-                        <div className="ll:flex ll:flex-col ll:gap-0.5 ll:px-0 ll:mt-2">
-                          {renderOptions(group.options)}
-                        </div>
-                      </CommandGroup>
-                      {index < groups.length - 1 && (
-                        <CommandSeparator className="ll:my-1" />
-                      )}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <CommandGroup>
-                    <div className="ll:flex ll:flex-col ll:gap-0.5 ll:px-0">
-                      {renderOptions(options)}
-                    </div>
-                  </CommandGroup>
-                )}
-              </ScrollArea>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
-  },
+const ComboboxValue = (props: BaseCombobox.Value.Props) => (
+  <BaseCombobox.Value {...props} />
 );
 
-Combobox.displayName = "Combobox";
+type ComboboxTriggerProps = BaseCombobox.Trigger.Props & {
+  size?: "sm" | "default";
+};
+
+const ComboboxTrigger = React.forwardRef<
+  HTMLButtonElement,
+  ComboboxTriggerProps
+>(({ className, children, size = "default", ...props }, ref) => (
+  <BaseCombobox.Trigger
+    ref={ref}
+    data-slot="combobox-trigger"
+    data-size={size}
+    className={cn(selectTriggerClassName, className)}
+    {...props}
+  >
+    {children}
+    <BaseCombobox.Icon
+      render=<ChevronDown className="ll:size-3.5 ll:opacity-70" />
+    />
+  </BaseCombobox.Trigger>
+));
+
+ComboboxTrigger.displayName = "ComboboxTrigger";
+
+type ComboboxContentProps = BaseCombobox.Popup.Props &
+  Pick<
+    BaseCombobox.Positioner.Props,
+    "align" | "alignOffset" | "side" | "sideOffset" | "collisionPadding"
+  >;
+
+const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
+  (
+    {
+      align = "start",
+      alignOffset,
+      className,
+      collisionPadding = 8,
+      side = "bottom",
+      sideOffset = 4,
+      ...props
+    },
+    ref,
+  ) => (
+    <BaseCombobox.Portal container={getLootlogPortalContainer()}>
+      <BaseCombobox.Positioner
+        align={align}
+        alignOffset={alignOffset}
+        collisionPadding={collisionPadding}
+        side={side}
+        sideOffset={sideOffset}
+        // Same overlay layer as the select: above every draggable window.
+        className="ll:z-[500] ll:min-w-[var(--anchor-width)]"
+      >
+        <BaseCombobox.Popup
+          ref={ref}
+          data-slot="combobox-content"
+          className={cn(
+            selectPopupClassName,
+            "ll:group/combobox-content ll:flex ll:w-[var(--anchor-width)] ll:max-w-[var(--available-width)] ll:flex-col ll:overflow-hidden",
+            className,
+          )}
+          {...props}
+        />
+      </BaseCombobox.Positioner>
+    </BaseCombobox.Portal>
+  ),
+);
+
+ComboboxContent.displayName = "ComboboxContent";
+
+/** Search field pinned to the top of the popup. */
+const ComboboxInput = React.forwardRef<
+  HTMLInputElement,
+  BaseCombobox.Input.Props
+>(({ className, ...props }, ref) => (
+  <div className="ll:relative ll:shrink-0 ll:border-0 ll:border-b ll:border-solid ll:border-border ll:p-1">
+    <Search
+      className="ll:pointer-events-none ll:absolute ll:start-2.5 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:text-muted-foreground"
+      strokeWidth={1.5}
+      aria-hidden="true"
+    />
+    <BaseCombobox.Input
+      ref={ref}
+      data-slot="combobox-input"
+      autoComplete="off"
+      spellCheck={false}
+      onMouseDown={(event) => event.stopPropagation()}
+      className={cn(
+        "ll:flex ll:h-6 ll:w-full ll:min-w-0 ll:rounded-sm ll:border ll:border-transparent ll:bg-transparent ll:ps-6 ll:pe-2 ll:text-[11px] ll:text-foreground ll:outline-none ll:placeholder:text-muted-foreground ll:focus-visible:border-ring",
+        className,
+      )}
+      {...props}
+    />
+  </div>
+));
+
+ComboboxInput.displayName = "ComboboxInput";
+
+const ComboboxList = React.forwardRef<HTMLDivElement, BaseCombobox.List.Props>(
+  ({ className, ...props }, ref) => (
+    <BaseCombobox.List
+      ref={ref}
+      data-slot="combobox-list"
+      className={cn(
+        "ll:flex ll:min-h-0 ll:w-full ll:flex-col ll:overflow-y-auto ll:overscroll-contain ll:p-1 ll:data-[empty]:p-0",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+
+ComboboxList.displayName = "ComboboxList";
+
+const ComboboxItem = React.forwardRef<HTMLDivElement, BaseCombobox.Item.Props>(
+  ({ className, children, ...props }, ref) => (
+    <BaseCombobox.Item
+      ref={ref}
+      data-slot="combobox-item"
+      className={cn(selectItemClassName, className)}
+      {...props}
+    >
+      <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1.5 ll:truncate">
+        {children}
+      </span>
+      <BaseCombobox.ItemIndicator
+        render=<span className="ll:absolute ll:right-2 ll:flex ll:size-3.5 ll:items-center ll:justify-center" />
+      >
+        <Check className="ll:size-3.5" />
+      </BaseCombobox.ItemIndicator>
+    </BaseCombobox.Item>
+  ),
+);
+
+ComboboxItem.displayName = "ComboboxItem";
+
+const ComboboxGroup = (props: BaseCombobox.Group.Props) => (
+  <BaseCombobox.Group data-slot="combobox-group" {...props} />
+);
+
+const ComboboxLabel = ({
+  className,
+  ...props
+}: BaseCombobox.GroupLabel.Props) => (
+  <BaseCombobox.GroupLabel
+    data-slot="combobox-label"
+    className={cn(selectGroupLabelClassName, className)}
+    {...props}
+  />
+);
+
+const ComboboxCollection = (props: BaseCombobox.Collection.Props) => (
+  <BaseCombobox.Collection {...props} />
+);
+
+const ComboboxEmpty = ({ className, ...props }: BaseCombobox.Empty.Props) => (
+  <BaseCombobox.Empty
+    data-slot="combobox-empty"
+    className={cn(
+      // Base UI keeps the element mounted; show it only when nothing matches.
+      "ll:hidden ll:px-2 ll:py-2 ll:text-[11px] ll:text-muted-foreground ll:group-data-[empty]/combobox-content:block",
+      className,
+    )}
+    {...props}
+  />
+);
+
+export {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxTrigger,
+  ComboboxValue,
+};

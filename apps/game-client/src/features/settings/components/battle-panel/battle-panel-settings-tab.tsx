@@ -1,4 +1,4 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
@@ -13,21 +13,22 @@ export const BattlePanelSettingsTab: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <SettingsTabLayout
-      title={t("settings.battlePanel.title")}
-      description={t("settings.battlePanel.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection title={t("settings.battlePanel.dataCollectionTitle")}>
-        <SettingsControlRow
+        <SettingsRow
+          controlId="battle-data-collection"
+          htmlFor="battle-collection-enabled"
           label={t("settings.battlePanel.enableCollectionLabel")}
           description={t("settings.battlePanel.enableCollectionDescription")}
         >
           <Switch
             checked={isBattleCollectionEnabled}
-            onCheckedChange={toggleBattleCollection}
+            onCheckedChange={() => {
+              toggleBattleCollection();
+            }}
             id="battle-collection-enabled"
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
     </SettingsTabLayout>
   );

@@ -27,7 +27,6 @@ describe("TimersEmptyState", () => {
 
     expect(screen.getByText("Brak timerów")).toBeVisible();
     expect(screen.getByRole("status")).toHaveClass(
-      "ll:box-border",
       "ll:h-full",
       "ll:items-center",
       "ll:justify-center",

@@ -110,7 +110,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
       <ContextMenuItem
         onClick={onPin}
         data-active={isPinned}
-        className="ll:text-white ll:data-[active=true]:bg-white/10 ll:data-[active=true]:data-[highlighted]:bg-white/20 ll:data-[active=true]:hover:bg-white/20 ll:data-[active=true]:focus-visible:bg-white/20"
+        className="ll:text-white ll:data-[active=true]:bg-primary ll:data-[active=true]:text-primary-foreground ll:data-[active=true]:data-[highlighted]:bg-primary/90 ll:data-[active=true]:hover:bg-primary/90 ll:data-[active=true]:focus-visible:bg-primary/90"
       >
         {isPinned ? (
           <PinOff className="ll:h-4 ll:w-4 ll:mr-2" />
@@ -129,7 +129,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
       <ContextMenuItem
         onClick={isHidden ? onShow : onHide}
         data-active={isHidden}
-        className="ll:text-white ll:data-[active=true]:bg-white/10 ll:data-[active=true]:data-[highlighted]:bg-white/20 ll:data-[active=true]:hover:bg-white/20 ll:data-[active=true]:focus-visible:bg-white/20"
+        className="ll:text-white ll:data-[active=true]:bg-primary ll:data-[active=true]:text-primary-foreground ll:data-[active=true]:data-[highlighted]:bg-primary/90 ll:data-[active=true]:hover:bg-primary/90 ll:data-[active=true]:focus-visible:bg-primary/90"
       >
         {isHidden ? (
           <Eye className="ll:h-4 ll:w-4 ll:mr-2" />
@@ -149,7 +149,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         <ContextMenuItem
           onClick={onToggleAlwaysVisibleExpiredTimer}
           data-active={isAlwaysVisibleExpiredTimer}
-          className="ll:text-white ll:data-[active=true]:bg-white/10 ll:data-[active=true]:data-[highlighted]:bg-white/20 ll:data-[active=true]:hover:bg-white/20 ll:data-[active=true]:focus-visible:bg-white/20"
+          className="ll:text-white ll:data-[active=true]:bg-primary ll:data-[active=true]:text-primary-foreground ll:data-[active=true]:data-[highlighted]:bg-primary/90 ll:data-[active=true]:hover:bg-primary/90 ll:data-[active=true]:focus-visible:bg-primary/90"
         >
           {isAlwaysVisibleExpiredTimer ? (
             <EyeOff className="ll:h-4 ll:w-4 ll:mr-2" />

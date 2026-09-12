@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { GatewayEvent } from "@/config/gateway";
-import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
+import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import type { AirTagUpdateEvent } from "@lootlog/schema/air-tag";

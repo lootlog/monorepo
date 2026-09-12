@@ -1,11 +1,9 @@
+import { SettingsSectionHeader } from "@/components/settings/settings-section-header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { TimerTileView } from "@/features/timers/components/timer-tile-view";
 import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { stripAlphaChannel, alphaToHex } from "./color-utils";
+import { alphaToHex, type ColorEditData } from "./color-utils";
+import { TimerColorEditorFields } from "./timer-color-editor-fields";
 
 interface AddColorFormProps {
   onAdd: (data: {
@@ -15,123 +13,50 @@ interface AddColorFormProps {
   }) => void;
 }
 
+const EMPTY_DRAFT: ColorEditData = {
+  name: "",
+  borderColor: "#3B82F6",
+  backgroundColor: "#3B82F6",
+  backgroundAlpha: 20,
+};
+
 export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
-  const [name, setName] = useState("");
-  const [borderColor, setBorderColor] = useState("#3b82f6");
-  const [backgroundColor, setBackgroundColor] = useState("#3b82f6");
-  const [backgroundAlpha, setBackgroundAlpha] = useState(20);
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
   const { t } = useTranslation();
-  const bgWithAlpha = `${backgroundColor}${alphaToHex(backgroundAlpha)}`;
+  const name = draft.name.trim();
 
   const handleAdd = () => {
-    if (!name.trim()) return;
-    onAdd({ name: name.trim(), borderColor, backgroundColor: bgWithAlpha });
-    setName("");
-    setBorderColor("#3b82f6");
-    setBackgroundColor("#3b82f6");
-    setBackgroundAlpha(20);
+    if (!name) return;
+
+    onAdd({
+      name,
+      borderColor: draft.borderColor,
+      backgroundColor: `${draft.backgroundColor}${alphaToHex(
+        draft.backgroundAlpha,
+      )}`,
+    });
+    setDraft(EMPTY_DRAFT);
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-2">
-      <h3 className="ll:text-sm ll:font-semibold">
-        {t("settings.timers.colors.addTitle")}
-      </h3>
+    <div className="ll:flex ll:flex-col ll:gap-3">
+      <SettingsSectionHeader
+        as="h4"
+        className="ll:px-0"
+        title={t("settings.timers.colors.addTitle")}
+      />
 
-      <div className="ll:flex ll:flex-col ll:gap-2">
-        <div className="ll:flex ll:items-center ll:gap-2">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("settings.timers.colors.namePlaceholder")}
-            className="ll:text-popover-foreground ll:border-foreground/20 ll:min-w-0 ll:flex-1 ll:text-xs"
-          />
-          <div className="ll:flex ll:items-center ll:gap-1">
-            <Label className="ll:text-[11px]">
-              {t("settings.timers.colors.borderLabel")}
-            </Label>
-            <Input
-              type="color"
-              value={stripAlphaChannel(borderColor)}
-              onChange={(e) => setBorderColor(e.target.value)}
-              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-8 ll:p-1"
-              aria-label={t("settings.timers.colors.borderAria")}
-            />
-          </div>
+      <TimerColorEditorFields
+        idPrefix="add-color"
+        draft={draft}
+        onDraftChange={setDraft}
+        onCommit={setDraft}
+      />
 
-          <div className="ll:flex ll:items-center ll:gap-1">
-            <Label className="ll:text-[11px]">
-              {t("settings.timers.colors.backgroundLabel")}
-            </Label>
-            <Input
-              type="color"
-              value={stripAlphaChannel(backgroundColor)}
-              onChange={(e) => setBackgroundColor(e.target.value)}
-              className="ll:text-popover-foreground ll:border-foreground/20 ll:h-8 ll:w-8 ll:p-1"
-              aria-label={t("settings.timers.colors.backgroundAria")}
-            />
-          </div>
-        </div>
-
-        <div className="ll:flex ll:gap-1 ll:flex-col ll:w-full">
-          <Label className="ll:text-[11px]">
-            {t("settings.timers.colors.transparencyLabel")}
-          </Label>
-          <div className="ll:flex ll:gap-4">
-            <div className="ll:w-full">
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={[backgroundAlpha]}
-                onValueChange={(v) => setBackgroundAlpha(v[0])}
-                className="ll:h-6"
-                aria-label={t("settings.timers.colors.transparencyAria")}
-              />
-            </div>
-            <div className="ll:flex ll:items-center ll:gap-1">
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                value={backgroundAlpha}
-                onChange={(e) =>
-                  setBackgroundAlpha(
-                    Math.max(0, Math.min(100, Number(e.target.value) || 0)),
-                  )
-                }
-                className="ll:text-popover-foreground ll:border-foreground/20 ll:w-12"
-              />
-              <span className="ll:text-muted-foreground ll:text-sm">%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-2">
-          <div className="ll:gap-1 ll:flex ll:flex-col">
-            <Label className="ll:text-[11px]">
-              {t("settings.timers.colors.previewLabel")}
-            </Label>
-
-            <TimerTileView
-              customBorderColor={borderColor}
-              customBackgroundColor={bgWithAlpha}
-              displayMode="row"
-              fontSize={10}
-              label={t("common:preview.name")}
-              timeLabel={t("common:preview.time")}
-            />
-          </div>
-
-          <Button
-            variant="menu"
-            onClick={handleAdd}
-            disabled={!name.trim()}
-            className="ll:h-7 ll:w-full"
-          >
-            {t("settings.timers.colors.addButton")}
-          </Button>
-        </div>
+      <div className="ll:flex ll:justify-end ll:pt-1">
+        <Button size="sm" onClick={handleAdd} disabled={!name}>
+          {t("settings.timers.colors.addButton")}
+        </Button>
       </div>
     </div>
   );

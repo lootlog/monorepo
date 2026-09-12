@@ -38,7 +38,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   >
     <span
       className={cn(
-        "ll:flex ll:h-full ll:w-full ll:min-w-0 ll:justify-between ll:px-1 ll:text-[11px] ll:box-border",
+        "ll:flex ll:h-full ll:w-full ll:min-w-0 ll:justify-between ll:px-1 ll:text-[11px]",
         {
           "ll:text-red-500": hasPassedRedThreshold,
           "ll:text-orange-400": isMinSpawnTime && !hasPassedRedThreshold,

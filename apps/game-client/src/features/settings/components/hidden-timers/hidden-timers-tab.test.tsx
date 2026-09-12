@@ -36,13 +36,26 @@ describe("HiddenTimersTab", () => {
 
     expect(screen.getByText("Alpha hidden boss")).toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Wybierz gildię Beta: Wyłączone",
-      }),
-    );
+    const guildSelect = screen.getByRole("combobox", { name: "Lootlog" });
+
+    expect(guildSelect).toHaveTextContent("Alpha");
+
+    await user.click(guildSelect);
+    await user.click(await screen.findByRole("option", { name: /Beta/ }));
 
     expect(screen.getByText("Beta hidden boss")).toBeInTheDocument();
+  });
+
+  it("restores a hidden timer from the list", async () => {
+    const user = userEvent.setup();
+
+    render();
+
+    await user.click(screen.getByRole("button", { name: "Przywróć" }));
+
+    expect(useTimersStore.getState().hiddenTimers["guild-1"]).toEqual([]);
+    expect(screen.queryByText("Alpha hidden boss")).not.toBeInTheDocument();
+    expect(screen.getByText("Brak ukrytych timerów.")).toBeInTheDocument();
   });
 
   it("hides the selector when grouping is enabled", () => {
@@ -57,9 +70,7 @@ describe("HiddenTimersTab", () => {
     render();
 
     expect(
-      screen.queryByRole("button", {
-        name: "Wybierz gildię Alpha: Wyłączone",
-      }),
+      screen.queryByRole("combobox", { name: "Lootlog" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Global hidden boss")).toBeInTheDocument();
     expect(screen.queryByText("Alpha hidden boss")).not.toBeInTheDocument();

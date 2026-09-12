@@ -71,7 +71,7 @@ export const TimersContent: FC<TimersContentProps> = ({
   return (
     <span
       className={cn(
-        "ll:relative ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
+        "ll:relative ll:h-full ll:flex ll:flex-1 ll:flex-col ll:pt-1 ll:w-full",
         {
           "ll:pt-0! ll:h-[calc(100%-2rem)]": isUnderBag,
         },

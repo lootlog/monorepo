@@ -111,10 +111,7 @@ const isNotificationVisible = ({
     return false;
   }
 
-  if (
-    Array.isArray(notificationSettings.guildIds) &&
-    !notificationSettings.guildIds.includes(notification.guildId)
-  ) {
+  if (settings.guildIds?.includes(notification.guildId) === false) {
     return false;
   }
 

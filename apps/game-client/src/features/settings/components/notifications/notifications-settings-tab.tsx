@@ -1,33 +1,186 @@
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { NpcTypeChip } from "@/components/settings/npc-type-chip";
 import {
-  NotificationCategoryTabs,
-  type NotificationCategoryTab,
-} from "@/features/settings/components/notifications/notification-category-tabs";
+  SettingsMatrix,
+  type SettingsMatrixColumn,
+} from "@/components/settings/settings-matrix";
+import { SettingsMatrixRow } from "@/components/settings/settings-matrix-row";
+import { SettingsNumberField } from "@/components/settings/settings-number-field";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Switch } from "@/components/ui/switch";
+import {
+  AUTO_HIDE_MAX_SECONDS,
+  AUTO_HIDE_MIN_SECONDS,
+  useNotificationRulesForm,
+} from "@/features/settings/components/notifications/use-notification-rules-form";
+import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
 import { NpcType } from "@/api/npcs.api";
+import type { NotificationType } from "@lootlog/schema/account-preferences";
+import { Bell, Globe, Highlighter, TimerOff, Volume2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export const NotificationsSettingsTab = () => {
-  const { t } = useTranslation(["settings", "common"]);
+type NotificationCategory = {
+  label: string;
+  key: NotificationType;
+};
 
-  const categories: NotificationCategoryTab[] = [
+const SWITCH_COLUMNS = [
+  { key: "show", icon: Bell, primary: true },
+  { key: "ignoreOtherWorlds", icon: Globe },
+  { key: "highlight", icon: Highlighter },
+  { key: "sound", icon: Volume2 },
+] as const;
+
+export const NotificationsSettingsTab = () => {
+  const { t } = useTranslation();
+
+  const {
+    guilds,
+    guildIds,
+    rules,
+    setSwitch,
+    setAutoHideTimeout,
+    setSwitchForAll,
+    toggleGuild,
+  } = useNotificationRulesForm();
+
+  const categories: NotificationCategory[] = [
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
     { label: t("common:npcTypes.hero"), key: NpcType.HERO },
     { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
     { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
     { label: t("common:npcTypes.message"), key: "message" },
+    { label: t("common:npcTypes.partyGathering"), key: "party-gathering" },
+  ];
+
+  const columns: SettingsMatrixColumn[] = [
+    ...SWITCH_COLUMNS.map((column) => {
+      const editableRules = categories.flatMap((category) => {
+        const rule = rules[category.key];
+
+        return column.key === "show" || rule.show ? [rule] : [];
+      });
+
+      return {
+        key: column.key,
+        icon: column.icon,
+        primary: "primary" in column,
+        label: t(`settings.notifications.toggles.${column.key}`),
+        description: t(
+          `settings.notifications.toggles.${column.key}Description`,
+        ),
+        bulk: {
+          checked:
+            editableRules.length > 0 &&
+            editableRules.every((rule) => rule[column.key]),
+          onChange: (checked: boolean) => setSwitchForAll(column.key, checked),
+        },
+      };
+    }),
     {
-      label: t("common:npcTypes.partyGathering"),
-      key: "party-gathering",
+      key: "autoHideTimeout",
+      icon: TimerOff,
+      label: t("settings.notifications.autoHideLabel"),
+      description: t("settings.notifications.autoHideDescription"),
     },
   ];
 
   return (
-    <SettingsTabLayout
-      title={t("notifications.title")}
-      description={t("notifications.description")}
-      contentClassName="ll:gap-3"
-    >
-      <NotificationCategoryTabs categories={categories} />
+    <SettingsTabLayout>
+      <SettingsSection
+        controlId="notification-rules"
+        title={t("settings.notifications.rulesTitle")}
+        description={t("settings.notifications.rulesDescription")}
+      >
+        <SettingsMatrix
+          label={t("settings.notifications.rulesTitle")}
+          rowHeader={t("settings.notifications.categoryHeader")}
+          columns={columns}
+          className="ll:mt-2"
+        >
+          {categories.map((category) => {
+            const enabled = rules[category.key].show;
+
+            const cellLabel = (setting: string) =>
+              t("settings.notifications.cellLabel", {
+                category: category.label,
+                setting,
+              });
+
+            return (
+              <SettingsMatrixRow
+                key={category.key}
+                dimmed={!enabled}
+                title={
+                  <NpcTypeChip npcType={category.key}>
+                    {category.label}
+                  </NpcTypeChip>
+                }
+                cells={[
+                  ...SWITCH_COLUMNS.map((column) => {
+                    const isDisabled = column.key !== "show" && !enabled;
+
+                    return (
+                      <Switch
+                        key={column.key}
+                        id={`${category.key}-${column.key}`}
+                        aria-label={cellLabel(
+                          t(`settings.notifications.toggles.${column.key}`),
+                        )}
+                        checked={rules[category.key][column.key]}
+                        disabled={isDisabled}
+                        onCheckedChange={(checked) =>
+                          setSwitch(category.key, column.key, checked)
+                        }
+                      />
+                    );
+                  }),
+                  <SettingsNumberField
+                    key="autoHideTimeout"
+                    id={`${category.key}-auto-hide-timeout`}
+                    aria-label={cellLabel(
+                      t("settings.notifications.autoHideLabel"),
+                    )}
+                    value={rules[category.key].autoHideTimeout ?? 0}
+                    min={AUTO_HIDE_MIN_SECONDS}
+                    max={AUTO_HIDE_MAX_SECONDS}
+                    unit="s"
+                    variant="cell"
+                    disabled={!enabled}
+                    onCommit={(seconds) =>
+                      setAutoHideTimeout(category.key, seconds)
+                    }
+                  />,
+                ]}
+              />
+            );
+          })}
+        </SettingsMatrix>
+      </SettingsSection>
+      <SettingsSection
+        controlId="notification-servers"
+        title={t("settings.notifications.serversTitle")}
+        description={t("settings.notifications.serversDescription")}
+        actions={
+          <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
+            {t("settings.notifications.serversSelected", {
+              selected: guildIds.length,
+              total: guilds?.length ?? 0,
+            })}
+          </span>
+        }
+      >
+        <div className="ll:px-2 ll:py-0.5">
+          <SettingsGuildPicker
+            aria-label={t("settings.notifications.serversPickerLabel")}
+            guilds={guilds}
+            selectedGuildIds={guildIds}
+            emptyStateLabel={t("settings.notifications.emptyGuilds")}
+            onToggle={toggleGuild}
+            className="ll:w-full"
+          />
+        </div>
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };

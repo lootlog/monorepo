@@ -19,6 +19,8 @@ import { makeUserAccountDeletion } from "#src/http-api/handlers/account-organiza
 import { makeUserGuildList } from "#src/http-api/handlers/account-organization/user-guild-list.data-layer";
 import { makeUserGuildPermissions } from "#src/http-api/handlers/account-organization/user-guild-permissions.data-layer";
 import { makeUserPreferencesData } from "#src/http-api/handlers/account-organization/user-preferences.data-layer";
+import { SettingsDocumentsRepository } from "#src/settings-documents/settings-documents.repository";
+import { makeSettingsDocuments } from "#src/settings-documents/settings-documents.service";
 import {
   AccountOrganizationData,
   AccountOrganizationOperationError,
@@ -106,6 +108,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
     const httpClient = yield* HttpClient.HttpClient;
     const database = yield* ApiDatabase;
     const config = yield* ApiRuntimeConfig;
+    const settingsRepository = yield* SettingsDocumentsRepository;
 
     const cacheAttempt = <A>(operation: () => PromiseLike<A>) =>
       Effect.tryPromise({ try: operation, catch: (cause) => cause });
@@ -160,7 +163,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
         }),
     });
 
-    const preferences = makeUserPreferencesData(database);
+    const preferences = makeUserPreferencesData(
+      database,
+      makeSettingsDocuments(settingsRepository),
+    );
 
     const getManageableUserGuilds = makeManageableGuilds(
       ({ userId, discordId }) => discord.getUserGuilds(userId, discordId),
@@ -258,7 +264,7 @@ export const accountOrganizationOperationsLive = Layer.effect(
       ...preferences,
     });
   }),
-);
+).pipe(Layer.provide(SettingsDocumentsRepository.layerDatabase));
 
 export const accountOrganizationData = Layer.effect(
   AccountOrganizationData,

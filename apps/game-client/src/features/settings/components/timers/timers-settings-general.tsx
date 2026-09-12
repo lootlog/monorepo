@@ -1,71 +1,28 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsNumberField } from "@/components/settings/settings-number-field";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { Input } from "@/components/ui/input";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
-import { type FC, useState } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
+const MAX_REMOVE_TIMER_AFTER_SECONDS = 120;
 
 export const TimersSettingsGeneral: FC = () => {
-  const { generalConfig, setGeneralConfig, syncEnabled, setSyncEnabled } =
-    useTimersStore();
+  const { generalConfig, setGeneralConfig } = useTimersStore();
 
   const { t } = useTranslation();
 
-  const [inputValue, setInputValue] = useState<string>(() =>
-    (generalConfig.removeTimerAfterMs / 1000).toString(),
-  );
-
-  const handleRemoveTimerAfterMsChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = e.target.value;
-    setInputValue(value);
-
-    if (value === "") {
-      setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
-
-      return;
-    }
-
-    const num = Number.parseInt(value, 10);
-
-    if (Number.isNaN(num)) {
-      setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
-
-      return;
-    }
-
-    if (num < 0 || num > MAX_REMOVE_TIMER_AFTER_MS / 1000) {
-      setGeneralConfig({
-        ...generalConfig,
-        removeTimerAfterMs: MAX_REMOVE_TIMER_AFTER_MS,
-      });
-      setInputValue((MAX_REMOVE_TIMER_AFTER_MS / 1000).toString());
-
-      return;
-    }
-
-    setGeneralConfig({ ...generalConfig, removeTimerAfterMs: num * 1000 });
-  };
-
   return (
-    <div className="ll:flex ll:flex-col ll:gap-3">
-      <SettingsSection title={t("settings.timers.general.behaviorTitle")}>
-        <SettingsControlRow
-          label={t("settings.timers.general.syncLabel")}
-          description={t("settings.timers.general.syncDescription")}
-        >
-          <Switch
-            checked={syncEnabled ?? true}
-            onCheckedChange={setSyncEnabled}
-            id="sync-enabled"
-          />
-        </SettingsControlRow>
-        <SettingsControlRow
+    <SettingsTabLayout>
+      <SettingsSection
+        controlId="timer-behavior"
+        title={t("settings.timers.general.behaviorTitle")}
+      >
+        <SettingsRow
+          htmlFor="timers-grouping"
           label={t("settings.timers.general.groupingLabel")}
           description={t("settings.timers.general.groupingDescription")}
         >
@@ -76,8 +33,9 @@ export const TimersSettingsGeneral: FC = () => {
             }
             id="timers-grouping"
           />
-        </SettingsControlRow>
-        <SettingsControlRow
+        </SettingsRow>
+        <SettingsRow
+          htmlFor="timers-under-bag"
           label={t("settings.timers.general.underBagLabel")}
           description={t("settings.timers.general.underBagDescription")}
         >
@@ -88,8 +46,9 @@ export const TimersSettingsGeneral: FC = () => {
             }
             id="timers-under-bag"
           />
-        </SettingsControlRow>
-        <SettingsControlRow
+        </SettingsRow>
+        <SettingsRow
+          htmlFor="compact-view"
           label={t("settings.timers.general.compactViewLabel")}
           description={t("settings.timers.general.compactViewDescription")}
         >
@@ -100,19 +59,20 @@ export const TimersSettingsGeneral: FC = () => {
             }
             id="compact-view"
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
       <SettingsSection title={t("settings.timers.general.countdownTitle")}>
-        <SettingsControlRow
+        <SettingsRow
+          controlId="timer-countdown"
           label={t("settings.timers.general.countdownLabel")}
           description={t("settings.timers.general.countdownDescription")}
-          controlClassName="ll:w-28"
         >
           <ToggleGroup
             className="ll:ml-auto"
-            type="single"
-            size="xs"
-            onValueChange={(value: "min" | "max") => {
+            variant="outline"
+            size="sm"
+            spacing={0}
+            onValueChange={([value]: ("min" | "max")[]) => {
               if (value) {
                 setGeneralConfig({
                   ...generalConfig,
@@ -120,7 +80,7 @@ export const TimersSettingsGeneral: FC = () => {
                 });
               }
             }}
-            value={generalConfig.countdownMode}
+            value={[generalConfig.countdownMode]}
           >
             <ToggleGroupItem value="max">
               {t("settings.timers.general.countdownMax")}
@@ -129,22 +89,29 @@ export const TimersSettingsGeneral: FC = () => {
               {t("settings.timers.general.countdownMin")}
             </ToggleGroupItem>
           </ToggleGroup>
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
       <SettingsSection title={t("settings.timers.general.fadeTitle")}>
-        <SettingsControlRow
+        <SettingsRow
+          htmlFor="timers-remove-after"
           label={t("settings.timers.general.removeTimerAfterLabel")}
           description={t("settings.timers.general.removeTimerAfterDescription")}
-          controlClassName="ll:w-10"
         >
-          <Input
-            type="text"
-            value={inputValue}
-            max={120}
-            onChange={handleRemoveTimerAfterMsChange}
+          <SettingsNumberField
+            id="timers-remove-after"
+            min={0}
+            max={MAX_REMOVE_TIMER_AFTER_SECONDS}
+            unit="s"
+            value={generalConfig.removeTimerAfterMs / 1000}
+            onCommit={(seconds) =>
+              setGeneralConfig({
+                ...generalConfig,
+                removeTimerAfterMs: seconds * 1000,
+              })
+            }
           />
-        </SettingsControlRow>
+        </SettingsRow>
       </SettingsSection>
-    </div>
+    </SettingsTabLayout>
   );
 };

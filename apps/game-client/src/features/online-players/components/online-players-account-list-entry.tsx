@@ -55,7 +55,7 @@ const getHighlightClassName = ({
   }
 
   if (isPartyMember) {
-    return "ll:border-purple-400 ll:bg-purple-500/10";
+    return "ll:border-ring ll:bg-accent";
   }
 
   if (isSameClan) {
@@ -252,6 +252,8 @@ export const OnlinePlayersAccountListEntry: FC<
                 </span>
                 {canInviteToParty ? (
                   <Button
+                    variant="secondary"
+                    size="xs"
                     type="button"
                     className="ll:h-5 ll:min-w-5 ll:w-5 ll:p-0 ll:shrink-0"
                     onClick={handleInviteToParty}

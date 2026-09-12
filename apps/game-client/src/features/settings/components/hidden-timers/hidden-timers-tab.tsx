@@ -1,6 +1,15 @@
-import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
+import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
 import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
@@ -29,32 +38,55 @@ export const HiddenTimersTab = () => {
   }
 
   return (
-    <SettingsTabLayout
-      title={t("settings.hiddenTimers.title")}
-      description={t("settings.hiddenTimers.description")}
-    >
+    <SettingsTabLayout>
+      {!generalConfig.timersGrouping ? (
+        <SettingsSection title={t("settings.hiddenTimers.scopeTitle")}>
+          {guilds && guilds.length > 0 ? (
+            <SettingsRow
+              htmlFor="hidden-timers-guild"
+              label={t("settings.hiddenTimers.guildLabel")}
+              description={t("settings.hiddenTimers.ungroupedDescription")}
+              control="wide"
+            >
+              <Select
+                value={selectedGuildId}
+                onValueChange={setRequestedGuildId}
+              >
+                <SelectTrigger id="hidden-timers-guild" size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {guilds.map((guild) => (
+                    <SelectItem key={guild.id} value={guild.id}>
+                      <span className="ll:inline-flex ll:min-w-0 ll:items-center ll:gap-1.5">
+                        <Avatar className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:bg-black/20">
+                          <AvatarImage
+                            src={guild.icon ?? undefined}
+                            alt=""
+                            className="ll:h-full ll:w-full ll:object-cover"
+                          />
+                          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/20 ll:text-[9px] ll:font-semibold ll:text-foreground">
+                            {guild.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="ll:truncate">{guild.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingsRow>
+          ) : (
+            <SettingsEmptyState>
+              {t("settings.hiddenTimers.emptyGuilds")}
+            </SettingsEmptyState>
+          )}
+        </SettingsSection>
+      ) : null}
       <SettingsSection
-        title={t("settings.hiddenTimers.scopeTitle")}
-        description={
-          generalConfig.timersGrouping
-            ? t("settings.hiddenTimers.groupedDescription")
-            : t("settings.hiddenTimers.ungroupedDescription")
-        }
+        controlId="hidden-timers-list"
+        title={t("settings.hiddenTimers.listTitle")}
       >
-        {!generalConfig.timersGrouping ? (
-          <div className="ll:w-full">
-            <SettingsGuildSelectionGrid
-              guilds={guilds}
-              selectedGuildId={selectedGuildId}
-              selectionMode="single"
-              onSelect={setRequestedGuildId}
-              emptyStateLabel={t("settings.hiddenTimers.emptyGuilds")}
-              variant="compact"
-            />
-          </div>
-        ) : null}
-      </SettingsSection>
-      <SettingsSection title={t("settings.hiddenTimers.listTitle")}>
         <HiddenTimers guildId={selectedGuildId} />
       </SettingsSection>
     </SettingsTabLayout>

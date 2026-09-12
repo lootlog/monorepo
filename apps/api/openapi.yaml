@@ -393,7 +393,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve account-scoped game preferences for a specific Margonem account
+      description: "Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Get user game account preferences
     patch:
       tags:
@@ -451,7 +451,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Update account-scoped game preferences for a specific Margonem account
+      description: "Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Update user game account preferences
       requestBody:
         content:
@@ -3091,7 +3091,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve user global timer settings
+      description: "Retrieve user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Get global timer settings
     patch:
       tags:
@@ -3149,7 +3149,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Update user global timer settings
+      description: "Update user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Update global timer settings
       requestBody:
         content:
@@ -3222,7 +3222,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve user timer settings for a specific guild
+      description: "Retrieve user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Get guild-specific timer settings
     patch:
       tags:
@@ -3288,7 +3288,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Update user timer settings for a specific guild
+      description: "Update user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Update guild-specific timer settings
       requestBody:
         content:
@@ -3351,7 +3351,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Migrate timer settings from localStorage to backend with conflict resolution
+      description: "Migrate timer settings from localStorage to backend with conflict resolution. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Migrate localStorage settings to backend
       requestBody:
         content:
@@ -3508,6 +3508,78 @@ paths:
             schema:
               $ref: "#/components/schemas/PatchSettingsDocumentsDto"
         required: true
+  /preferences/guilds:
+    get:
+      tags:
+        - preferences
+      operationId: SettingsDocumentsController_getGuildPreferences
+      parameters:
+        - name: domains
+          in: query
+          schema:
+            type: string
+            minLength: 1
+          required: true
+        - name: guildIds
+          in: query
+          schema:
+            type: string
+            minLength: 1
+          required: true
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: GuildSettingsDocumentsResponseDto_Output
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildSettingsDocumentsResponseDto_Output"
+        "400":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                    required:
+                      - message
+                    additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      summary: Get guild-scoped settings for several guilds in one request
   /guilds/{guildId}/loots:
     get:
       tags:
@@ -8790,7 +8862,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve user sound settings
+      description: "Retrieve user sound settings. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Get sound settings
     patch:
       tags:
@@ -8848,7 +8920,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Update user sound settings
+      description: "Update user sound settings. Deprecated: use GET/PATCH /preferences (settings documents)."
       summary: Update sound settings
       requestBody:
         content:
@@ -15074,6 +15146,10 @@ components:
         notifications:
           type: object
           properties:
+            guildIds:
+              type: array
+              items:
+                type: string
             ELITE2:
               type: object
               properties:
@@ -15225,6 +15301,7 @@ components:
                 - sound
               additionalProperties: false
           required:
+            - guildIds
             - ELITE2
             - HERO
             - COLOSSUS
@@ -15396,6 +15473,10 @@ components:
         notifications:
           type: object
           properties:
+            guildIds:
+              type: array
+              items:
+                type: string
             ELITE2:
               type: object
               properties:
@@ -17755,6 +17836,29 @@ components:
       required:
         - domains
       additionalProperties: false
+    GuildSettingsDocumentsResponseDto_Output:
+      type: object
+      properties:
+        guilds:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
+      required:
+        - guilds
+      additionalProperties: false
+    SettingsDocumentsContextDto:
+      type: object
+      properties:
+        gameAccountId:
+          type: string
+          minLength: 1
+        characterId:
+          type: string
+          minLength: 1
+        guildId:
+          type: string
+          minLength: 1
+      additionalProperties: false
     PatchSettingsDocumentsDto:
       type: object
       properties:
@@ -17805,6 +17909,8 @@ components:
               - scope
             additionalProperties: false
           minItems: 1
+        context:
+          $ref: "#/components/schemas/SettingsDocumentsContextDto"
       required:
         - operations
       additionalProperties: false

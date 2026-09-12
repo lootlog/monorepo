@@ -9,6 +9,7 @@ type NpcTileProps = {
   containerClassName?: string;
 };
 
+/** NPC sprite scaled into a 28×40 list slot. */
 export const NpcTile: FC<NpcTileProps> = ({
   npc,
   className,
@@ -20,13 +21,13 @@ export const NpcTile: FC<NpcTileProps> = ({
   return (
     <span
       className={cn(
-        "ll:w-12 ll:flex ll:items-center ll:justify-center",
+        "ll:flex ll:h-10 ll:w-7 ll:shrink-0 ll:items-center ll:justify-center",
         containerClassName,
       )}
     >
       <img
         className={cn(
-          "ll-custom-cursor-pointer ll:rounded-lg ll:max-w-12",
+          "ll-custom-cursor-pointer ll:max-h-10 ll:w-auto ll:max-w-7 ll:rounded-lg ll:object-contain",
           className,
         )}
         draggable={false}

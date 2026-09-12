@@ -1,17 +1,20 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
   type UserGameAccountPreferencesResponseDtoOutput,
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
-import { createRealtimeTest } from "@/test/realtime-test";
 import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+  userPreferenceValues,
+} from "@/test/settings-documents-fixtures";
+import { createRealtimeTest } from "@/test/realtime-test";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useGameStore } from "@/store/game.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -43,7 +46,7 @@ const notification = (index: number) => ({
 const prepare = () => {
   const test = createRealtimeTest();
   useGameStore.setState({ game: null });
-  const settings = createNotificationsSettings(["guild-1"]);
+  const settings = createNotificationsResponse(["guild-1"]);
   settings["party-gathering"].sound = false;
 
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
@@ -62,11 +65,20 @@ const prepare = () => {
   const ready = async (mutedDiscordIds: string[] = []) => {
     await act(() => {
       setTestRuntimeGame({ hero: { accountId: "202" } });
-      test.queryClient.setQueryData(
-        getUsersControllerGetUserGameAccountPreferencesQueryKey({
-          accountId: "202",
+      seedSettingsDocuments(
+        test.queryClient,
+        createSettingsDocuments({
+          ...accountPreferenceValues(preferences),
+          ...userPreferenceValues({
+            mutes: {
+              players: mutedDiscordIds.map((discordId) => ({
+                discordId,
+                displayName: discordId,
+              })),
+              npcs: [],
+            },
+          }),
         }),
-        preferences,
       );
       test.queryClient.setQueryData<UserPreferencesResponseDtoOutput>(
         getUsersControllerGetUserPreferencesQueryKey(),

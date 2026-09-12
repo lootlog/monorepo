@@ -1,128 +1,139 @@
-import type {
-  UpdateTimerSettingsPayload,
-  UpdateGuildTimerSettingsPayload,
-} from "@lootlog/schema/timer-settings";
-import { useTimersStore } from "./timers.store";
+/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
+import { queryClient } from "@/lib/query-client";
+import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
 
-let syncTimeoutId: NodeJS.Timeout | null = null;
+/** Timer settings whose documents live under `appearance.timers.*`. */
+const APPEARANCE_FIELDS = [
+  "displayConfig",
+  "customColors",
+  "timersColors",
+  "defaultColorNames",
+  "overriddenDefaultColors",
+  "hiddenDefaultColors",
+] as const;
 
-const guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
+/**
+ * Record-valued appearance fields. The server applies `set` per leaf path, so
+ * a key dropped from one of these maps must be sent as an `unset` path or the
+ * stored entry survives the save.
+ */
+const APPEARANCE_MAP_FIELDS = [
+  "customColors",
+  "defaultColorNames",
+  "overriddenDefaultColors",
+] as const;
 
-let pendingGlobalPayload: UpdateTimerSettingsPayload = {};
+type AppearanceMapField = (typeof APPEARANCE_MAP_FIELDS)[number];
 
-const pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
-  new Map();
+const isAppearanceMapField = (field: string): field is AppearanceMapField =>
+  APPEARANCE_MAP_FIELDS.some((mapField) => mapField === field);
 
-const SYNC_DEBOUNCE_MS = 500;
+/** Timer settings stored in the `timers` domain at user scope. */
+const BEHAVIOR_FIELDS = [
+  "generalConfig",
+  "alwaysVisibleExpiredTimers",
+  "timerFiltersEnabled",
+  "colorFiltersEnabled",
+  "timersSortOrder",
+] as const;
 
-type MutateGlobalFn = (payload: UpdateTimerSettingsPayload) => void;
+/** Settings key used by the timers feature when timers are grouped across guilds. */
+export const GLOBAL_TIMER_SETTINGS_KEY = "global";
 
-let globalMutateFn: MutateGlobalFn | null = null;
+const hasTimersQueryKey = (queryKey: readonly unknown[]) =>
+  typeof queryKey[0] === "string" && queryKey[0].startsWith("/timers");
 
-const globalMutationRegistrations = new Map<symbol, MutateGlobalFn>();
+/** The timer list API applies always-visible expired timers server-side. */
+export const invalidateTimerLists = () =>
+  void queryClient.invalidateQueries({
+    predicate: ({ queryKey }) => hasTimersQueryKey(queryKey),
+  });
 
-const selectLatestGlobalMutation = (): void => {
-  const registeredMutations = [...globalMutationRegistrations.values()];
-  globalMutateFn = registeredMutations[registeredMutations.length - 1] ?? null;
-};
-
-export const disposeTimerSettingsSync = (): void => {
-  if (syncTimeoutId) {
-    clearTimeout(syncTimeoutId);
-    syncTimeoutId = null;
-  }
-
-  guildSyncTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
-  guildSyncTimeouts.clear();
-  pendingGlobalPayload = {};
-  pendingGuildPayloads.clear();
-  globalMutationRegistrations.clear();
-  globalMutateFn = null;
-};
-
-export const registerGlobalSettingsMutation = (
-  mutateFn: MutateGlobalFn,
-): (() => void) => {
-  const registrationId = Symbol("timer-settings-global-mutation");
-  globalMutationRegistrations.set(registrationId, mutateFn);
-  globalMutateFn = mutateFn;
-
-  let registered = true;
-
-  return () => {
-    if (!registered) return;
-
-    registered = false;
-    globalMutationRegistrations.delete(registrationId);
-    selectLatestGlobalMutation();
-
-    if (globalMutationRegistrations.size === 0) {
-      disposeTimerSettingsSync();
-    }
-  };
-};
-
-export const debouncedSyncGlobalSettings = (
+/**
+ * Writes a timers store payload to the settings documents. Cleared timer
+ * colors and entries removed from the colour maps (compared with `previous`)
+ * become `unset` paths so the server removes them instead of keeping a stale
+ * value; an emptied map is written whole.
+ */
+export const syncTimerSettings = (
   payload: UpdateTimerSettingsPayload,
+  previous: Pick<UpdateTimerSettingsPayload, AppearanceMapField> = {},
 ) => {
-  pendingGlobalPayload = { ...pendingGlobalPayload, ...payload };
+  const appearance: Record<string, unknown> = {};
+  const unsetAppearance: string[] = [];
+  const behavior: Record<string, unknown> = {};
 
-  if (syncTimeoutId) {
-    clearTimeout(syncTimeoutId);
-  }
+  for (const field of APPEARANCE_FIELDS) {
+    const value = payload[field];
 
-  syncTimeoutId = setTimeout(() => {
-    syncTimeoutId = null;
-    const payloadToSend = { ...pendingGlobalPayload };
-    pendingGlobalPayload = {};
+    if (value === undefined) continue;
 
-    if (payloadToSend.syncEnabled === undefined) {
-      const { syncEnabled } = useTimersStore.getState();
+    if (field === "timersColors") {
+      const assigned: Record<string, string> = {};
 
-      if (!syncEnabled) {
-        return;
+      for (const [npcName, colorId] of Object.entries(value)) {
+        if (colorId === undefined) {
+          unsetAppearance.push(`timers.timersColors.${npcName}`);
+        } else {
+          assigned[npcName] = colorId;
+        }
+      }
+
+      appearance[field] = assigned;
+      continue;
+    }
+
+    if (isAppearanceMapField(field) && Object.keys(value).length > 0) {
+      for (const key of Object.keys(previous[field] ?? {})) {
+        if (!(key in value)) unsetAppearance.push(`timers.${field}.${key}`);
       }
     }
 
-    if (!globalMutateFn) {
-      console.warn("[TimerSync] Global mutation not registered, skipping sync");
-
-      return;
-    }
-
-    globalMutateFn(payloadToSend);
-  }, SYNC_DEBOUNCE_MS);
-};
-
-export const debouncedSyncGuildSettings = (
-  guildId: string,
-  payload: UpdateGuildTimerSettingsPayload,
-) => {
-  const existingPayload = pendingGuildPayloads.get(guildId) ?? {};
-  pendingGuildPayloads.set(guildId, { ...existingPayload, ...payload });
-
-  const existingTimeout = guildSyncTimeouts.get(guildId);
-
-  if (existingTimeout) {
-    clearTimeout(existingTimeout);
+    appearance[field] = value;
   }
 
-  const timeoutId = setTimeout(() => {
-    pendingGuildPayloads.delete(guildId);
+  for (const field of BEHAVIOR_FIELDS) {
+    if (payload[field] !== undefined) behavior[field] = payload[field];
+  }
 
-    const { syncEnabled } = useTimersStore.getState();
+  if (Object.keys(appearance).length > 0 || unsetAppearance.length > 0) {
+    enqueueSettingsPatch({
+      domain: "appearance",
+      set: Object.keys(appearance).length > 0 ? { timers: appearance } : {},
+      unset: unsetAppearance,
+    });
+  }
 
-    if (!syncEnabled) {
-      guildSyncTimeouts.delete(guildId);
+  if (Object.keys(behavior).length > 0) {
+    enqueueSettingsPatch({
+      domain: "timers",
+      set: behavior,
+      afterSave: invalidateTimerLists,
+    });
+  }
+};
 
-      return;
-    }
+/**
+ * Hidden and pinned timers are stored per guild document; the grouped
+ * ("global") list lives on the user document.
+ */
+export const syncGuildTimerList = (
+  settingsKey: string,
+  field: "hiddenTimers" | "pinnedTimers",
+  timerIds: string[],
+) => {
+  if (settingsKey === GLOBAL_TIMER_SETTINGS_KEY) {
+    return enqueueSettingsPatch({
+      domain: "timers",
+      set: { [field]: timerIds },
+    });
+  }
 
-    console.warn(
-      `[TimerSync] Guild mutation not registered for ${guildId}, skipping sync`,
-    );
-    guildSyncTimeouts.delete(guildId);
-  }, SYNC_DEBOUNCE_MS);
-
-  guildSyncTimeouts.set(guildId, timeoutId);
+  return enqueueSettingsPatch({
+    domain: "timers",
+    set: { [field]: timerIds },
+    scopeType: "GUILD",
+    guildId: settingsKey,
+  });
 };

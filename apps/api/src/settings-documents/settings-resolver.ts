@@ -1,4 +1,3 @@
-import { isRecord } from "@lootlog/schema/records";
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
@@ -11,7 +10,18 @@ import type {
   SettingsValueSource,
 } from "@lootlog/schema/settings-documents";
 
-export type JsonRecord = Record<string, unknown>;
+import {
+  cloneValue,
+  collectLeafPaths,
+  getPath,
+  hasPath,
+  pathsOverlap,
+  setPath,
+  unsetPath,
+  type SettingsJsonRecord,
+} from "@lootlog/domain/settings-paths";
+
+export type JsonRecord = SettingsJsonRecord;
 
 interface ApplySettingsPatchInput {
   domain: SettingsDomain;
@@ -20,119 +30,6 @@ interface ApplySettingsPatchInput {
   set: JsonRecord;
   unset: ReadonlyArray<string>;
 }
-
-const cloneValue = <TValue>(value: TValue): TValue => structuredClone(value);
-
-const getPath = (value: JsonRecord, path: string): unknown => {
-  let currentValue: unknown = value;
-
-  for (const segment of path.split(".")) {
-    if (!isRecord(currentValue) || !(segment in currentValue)) {
-      return undefined;
-    }
-
-    currentValue = currentValue[segment];
-  }
-
-  return currentValue;
-};
-
-const hasPath = (value: JsonRecord, path: string) => {
-  const segments = path.split(".");
-  let currentValue: unknown = value;
-
-  for (const segment of segments) {
-    if (!isRecord(currentValue) || !(segment in currentValue)) {
-      return false;
-    }
-
-    currentValue = currentValue[segment];
-  }
-
-  return true;
-};
-
-const setPath = (target: JsonRecord, path: string, value: unknown) => {
-  const segments = path.split(".");
-  const finalSegment = segments.pop();
-
-  if (!finalSegment) {
-    return;
-  }
-
-  let currentTarget = target;
-
-  for (const segment of segments) {
-    const nestedValue = currentTarget[segment];
-    const child = isRecord(nestedValue) ? nestedValue : {};
-    currentTarget[segment] = child;
-    currentTarget = child;
-  }
-
-  currentTarget[finalSegment] = cloneValue(value);
-};
-
-const unsetPath = (target: JsonRecord, path: string) => {
-  const segments = path.split(".");
-  const finalSegment = segments.pop();
-
-  if (!finalSegment) {
-    return;
-  }
-
-  const parents: Array<{ parent: JsonRecord; segment: string }> = [];
-  let currentTarget = target;
-
-  for (const segment of segments) {
-    const nestedValue = currentTarget[segment];
-
-    if (!isRecord(nestedValue)) {
-      return;
-    }
-
-    parents.push({ parent: currentTarget, segment });
-    currentTarget = nestedValue;
-  }
-
-  delete currentTarget[finalSegment];
-
-  for (const { parent, segment } of parents.reverse()) {
-    const nestedValue = parent[segment];
-
-    if (isRecord(nestedValue) && Object.keys(nestedValue).length === 0) {
-      delete parent[segment];
-    }
-  }
-};
-
-const collectLeafPaths = (
-  value: JsonRecord,
-  prefix = "",
-): Array<{ path: string; value: unknown }> => {
-  const paths: Array<{ path: string; value: unknown }> = [];
-
-  for (const [key, nestedValue] of Object.entries(value)) {
-    const path = prefix ? `${prefix}.${key}` : key;
-
-    if (isRecord(nestedValue)) {
-      const nestedPaths = collectLeafPaths(nestedValue, path);
-
-      if (nestedPaths.length > 0) {
-        paths.push(...nestedPaths);
-        continue;
-      }
-    }
-
-    paths.push({ path, value: nestedValue });
-  }
-
-  return paths;
-};
-
-const pathsOverlap = (leftPath: string, rightPath: string) =>
-  leftPath === rightPath ||
-  leftPath.startsWith(`${rightPath}.`) ||
-  rightPath.startsWith(`${leftPath}.`);
 
 const getFieldDefinition = (domain: SettingsDomain, path: string) => {
   const fields = SETTINGS_CATALOG[domain].fields;

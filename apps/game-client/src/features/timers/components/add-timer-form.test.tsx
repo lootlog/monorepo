@@ -160,7 +160,9 @@ it("selects an autocomplete NPC and submits custom spawn dates", async () => {
     "0h 2m 0s",
   );
   expect(screen.getByLabelText("Poziom")).toHaveValue(120);
-  await user.click(screen.getByLabelText("Niestandardowe daty spawnu"));
+  await user.click(
+    screen.getByRole("switch", { name: "Niestandardowe daty spawnu" }),
+  );
   expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue("");
   fireEvent.change(screen.getByLabelText("Data startu"), {
     target: { value: "2026-04-22T10:00" },

@@ -7,6 +7,8 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
+  GuildSettingsDocumentsQuerySchema,
+  GuildSettingsDocumentsResponseSchema,
   SettingsDocumentsResponseSchema,
   SettingsDocumentsQuerySchema,
   PatchSettingsDocumentsSchema,
@@ -27,6 +29,26 @@ export class PreferencesGroup extends HttpApiGroup.make("preferences").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "SettingsDocumentsController_getPreferences")
     .annotate(OpenApi.Summary, "Get effective settings for multiple domains"),
+  HttpApiEndpoint.get(
+    "SettingsDocumentsControllerGetGuildPreferences",
+    "/preferences/guilds",
+    {
+      query: GuildSettingsDocumentsQuerySchema,
+      success: GuildSettingsDocumentsResponseSchema,
+      error: [400, 403].map((status) =>
+        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
+      ),
+    },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(
+      OpenApi.Identifier,
+      "SettingsDocumentsController_getGuildPreferences",
+    )
+    .annotate(
+      OpenApi.Summary,
+      "Get guild-scoped settings for several guilds in one request",
+    ),
   HttpApiEndpoint.patch(
     "SettingsDocumentsControllerPatchPreferences",
     "/preferences",

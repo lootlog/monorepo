@@ -18,7 +18,10 @@ export class SoundSettingsGroup extends HttpApiGroup.make("sound-settings").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "SoundSettingsController_getSettings")
     .annotate(OpenApi.Summary, "Get sound settings")
-    .annotate(OpenApi.Description, "Retrieve user sound settings"),
+    .annotate(
+      OpenApi.Description,
+      "Retrieve user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).",
+    ),
   HttpApiEndpoint.patch(
     "SoundSettingsControllerUpdateSettings",
     "/sound-settings",
@@ -31,5 +34,8 @@ export class SoundSettingsGroup extends HttpApiGroup.make("sound-settings").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "SoundSettingsController_updateSettings")
     .annotate(OpenApi.Summary, "Update sound settings")
-    .annotate(OpenApi.Description, "Update user sound settings"),
+    .annotate(
+      OpenApi.Description,
+      "Update user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).",
+    ),
 ) {}

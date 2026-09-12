@@ -87,8 +87,8 @@ describe("windows store", () => {
 
   it("uses the new settings default size", () => {
     expect(useWindowsStore.getState().settings.size).toEqual({
-      width: 760,
-      height: 520,
+      width: 820,
+      height: 560,
     });
   });
 
@@ -207,9 +207,52 @@ describe("windows store", () => {
     useWindowsStore.getState().setSettingsActiveTab("npc-detector");
 
     expect(useWindowsStore.getState().settings.state).toEqual({
-      activeTab: "game-data",
+      activeTab: "detector",
       activeSubsection: "detector",
     });
+  });
+
+  it("resets window geometry while keeping open state and the settings page", () => {
+    useWindowsStore.setState((state) => ({
+      settings: {
+        ...state.settings,
+        open: true,
+        position: { x: 300, y: 200 },
+        hasDefinedPosition: true,
+        size: { width: 500, height: 400 },
+        state: { activeTab: "sounds", activeSubsection: "sounds" },
+      },
+      timers: {
+        ...state.timers,
+        open: false,
+        position: { x: 40, y: 40 },
+        hasDefinedPosition: true,
+        opacity: 2,
+        locked: true,
+        maxContentHeight: 300,
+      },
+    }));
+
+    useWindowsStore.getState().resetWindowLayout();
+
+    const { settings, timers } = useWindowsStore.getState();
+    const defaults = useWindowsStore.getInitialState();
+
+    expect(settings).toMatchObject({
+      open: true,
+      position: defaults.settings.position,
+      hasDefinedPosition: false,
+      size: defaults.settings.size,
+      state: { activeTab: "sounds", activeSubsection: "sounds" },
+    });
+    expect(timers).toMatchObject({
+      open: false,
+      position: defaults.timers.position,
+      hasDefinedPosition: false,
+      opacity: defaults.timers.opacity,
+      locked: false,
+    });
+    expect(timers.maxContentHeight).toBeUndefined();
   });
 });
 
@@ -263,7 +306,7 @@ describe("migrateWindowsState", () => {
       height: 470,
     });
     expect(migrated).toHaveProperty("settings.state", {
-      activeTab: "game-data",
+      activeTab: "detector",
       activeSubsection: "detector",
     });
   });
@@ -310,6 +353,86 @@ describe("migrateWindowsState", () => {
     ).toHaveProperty("settings.state", {
       activeTab: "appearance",
       activeSubsection: "npc-colors",
+    });
+  });
+
+  it("moves the persisted notification mutes path into the mutes domain", () => {
+    const migrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          state: {
+            activeTab: "notifications",
+            activeSubsection: "notification-mutes",
+          },
+        },
+        windowFocusHistory: [],
+      },
+      15,
+    );
+
+    expect(migrated).toHaveProperty("settings.state", {
+      activeTab: "mutes",
+      activeSubsection: "muted-players",
+    });
+  });
+
+  it("moves the persisted routing subsection into the detector subsection", () => {
+    const migrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          state: {
+            activeTab: "notifications",
+            activeSubsection: "routing",
+          },
+        },
+        windowFocusHistory: [],
+      },
+      16,
+    );
+
+    expect(migrated).toHaveProperty("settings.state", {
+      activeTab: "detector",
+      activeSubsection: "detector",
+    });
+  });
+
+  it("moves the retired interface page into general and catching into its own domain", () => {
+    const interfaceMigrated = migrateWindowsState(
+      {
+        settings: {
+          open: true,
+          position: { x: 12, y: 34 },
+          state: { activeTab: "appearance", activeSubsection: "interface" },
+        },
+        windowFocusHistory: [],
+      },
+      17,
+    );
+
+    expect(interfaceMigrated).toHaveProperty("settings.position", {
+      x: 12,
+      y: 34,
+    });
+    expect(interfaceMigrated).toHaveProperty("settings.state", {
+      activeTab: "general",
+      activeSubsection: "behavior",
+    });
+
+    const catchingMigrated = migrateWindowsState(
+      {
+        settings: {
+          state: { activeTab: "general", activeSubsection: "catching" },
+        },
+        windowFocusHistory: [],
+      },
+      17,
+    );
+
+    expect(catchingMigrated).toHaveProperty("settings.state", {
+      activeTab: "catching",
+      activeSubsection: "catching",
     });
   });
 

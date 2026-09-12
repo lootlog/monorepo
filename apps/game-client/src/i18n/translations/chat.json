@@ -157,19 +157,18 @@
     "hotkeys": {
       "chat-position": {
         "label": "Wyślij pozycję",
-        "description": "Wysyła pozycję do organizacji wybranej u góry czatu."
+        "description": "Wysyła Twoją pozycję na czat."
       },
       "chat-help": {
         "label": "Wezwij pomoc",
-        "description": "Wysyła wezwanie pomocy do organizacji wybranej u góry czatu."
+        "description": "Wysyła prośbę o pomoc z Twoją pozycją."
       },
       "create-party-gathering": {
-        "label": "Utwórz grupę — Party finder",
-        "description": "Otwiera formularz tworzenia grupy."
+        "label": "Utwórz grupę (Party finder)"
       },
       "join-party-gathering": {
         "label": "Zgłoś się do zbiórki",
-        "description": "Zgłasza do zbiórki widocznej na pasku czatu. Ponowne użycie wycofuje zgłoszenie."
+        "description": "Zapisuje na zbiórkę z paska czatu. Ponowne użycie wypisuje."
       }
     },
     "positionSent": "Wysłano pozycję"

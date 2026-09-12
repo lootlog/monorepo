@@ -1,5 +1,8 @@
 import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import {
+  seedSettingsDocumentValues,
+  soundSettingValues,
+} from "@/test/settings-documents-fixtures";
 import { DEFAULT_SOUND_URLS } from "@/features/settings/config/default-sounds";
 import { queryClient } from "@/lib/query-client";
 import { useSettingsStore } from "@/store/settings.store";
@@ -60,9 +63,9 @@ describe("playSound", () => {
   });
 
   it("plays a map ping using settings from the generated query cache", () => {
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings(),
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(createSoundSettings()),
     );
 
     playSound("pings", "mapPing");
@@ -75,9 +78,9 @@ describe("playSound", () => {
   });
 
   it("reuses the preloaded media element for repeated pings", () => {
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings(),
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(createSoundSettings()),
     );
 
     playSound("pings", "mapPing");
@@ -91,9 +94,9 @@ describe("playSound", () => {
   });
 
   it("stays silent when ping sounds are muted", () => {
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings({ pingsVolume: 0 }),
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(createSoundSettings({ pingsVolume: 0 })),
     );
 
     playSound("pings", "mapPing");
@@ -102,9 +105,9 @@ describe("playSound", () => {
   });
 
   it("uses device-local master volume instead of the server value", () => {
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings({ masterVolume: 0.1 }),
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(createSoundSettings({ masterVolume: 0.1 })),
     );
     useSettingsStore.getState().setMasterVolume(0.75);
 
@@ -114,9 +117,9 @@ describe("playSound", () => {
   });
 
   it("stays silent when quick mute is enabled without changing volume", () => {
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings(),
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(createSoundSettings()),
     );
     useSettingsStore.getState().setMasterVolume(0.75);
     useSettingsStore.getState().toggleSoundsMuted();
@@ -128,9 +131,9 @@ describe("playSound", () => {
   });
 
   it("applies a contextual ping playback profile", () => {
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings(),
+    seedSettingsDocumentValues(
+      queryClient,
+      soundSettingValues(createSoundSettings()),
     );
 
     playSound("pings", "mapPing", {

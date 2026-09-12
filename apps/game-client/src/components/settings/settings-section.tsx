@@ -1,59 +1,62 @@
 import { cn } from "cn";
 import type { FC, ReactNode } from "react";
+import type { SettingsControlId } from "@/features/settings/settings-manifest";
+import { SettingsSectionHeader } from "./settings-section-header";
+import { useSettingsControlHighlight } from "./use-settings-control-highlight";
 
 type SettingsSectionProps = {
+  /** Manifest id when the whole section is one searchable control. */
+  controlId?: SettingsControlId;
   title?: ReactNode;
+  /** Explains the whole group; rows under it stay label-only. */
   description?: ReactNode;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
   contentClassName?: string;
-  titleClassName?: string;
-  descriptionClassName?: string;
 };
 
+/**
+ * A titled group of rows. Consecutive sections are divided by a hairline
+ * drawn in the gap above them, so a highlight hugs only the section itself.
+ */
 export const SettingsSection: FC<SettingsSectionProps> = ({
+  controlId,
   title,
   description,
   children,
   actions,
   className,
   contentClassName,
-  titleClassName,
-  descriptionClassName,
 }) => {
   const hasHeader = title || description || actions;
 
+  const { ref, dataAttributes } =
+    useSettingsControlHighlight<HTMLElement>(controlId);
+
   return (
-    <section className={cn("ll:flex ll:flex-col ll:gap-2.5", className)}>
+    <section
+      ref={ref}
+      {...dataAttributes}
+      className={cn(
+        "ll:relative ll:flex ll:flex-col ll:rounded-sm",
+        // The highlight is a pseudo-element that overhangs the section by a
+        // few pixels, so it breathes around the title and the last row
+        // without changing the layout.
+        "ll:after:pointer-events-none ll:after:absolute ll:after:-inset-x-1 ll:after:-inset-y-2 ll:after:rounded-md ll:after:bg-primary/10 ll:after:opacity-0 ll:after:shadow-[inset_0_0_0_1px_var(--color-primary)] ll:after:transition-opacity ll:after:duration-500 ll:after:content-[''] ll:data-[settings-highlighted]:after:opacity-100 ll:data-[settings-highlighted]:after:duration-150",
+        "ll:[section+&]:before:pointer-events-none ll:[section+&]:before:absolute ll:[section+&]:before:inset-x-2 ll:[section+&]:before:-top-3 ll:[section+&]:before:h-px ll:[section+&]:before:bg-border ll:[section+&]:before:content-['']",
+        description ? "ll:gap-3" : "ll:gap-2",
+        className,
+      )}
+    >
       {hasHeader ? (
-        <div className="ll:flex ll:items-start ll:justify-between ll:gap-3">
-          <div className="ll:min-w-0 ll:flex-1 ll:space-y-1">
-            {title ? (
-              <h3
-                className={cn(
-                  "ll:text-xs ll:font-medium ll:uppercase ll:text-gray-400",
-                  titleClassName,
-                )}
-              >
-                {title}
-              </h3>
-            ) : null}
-            {description ? (
-              <p
-                className={cn(
-                  "ll:m-0 ll:text-[11px] ll:leading-4 ll:text-gray-400",
-                  descriptionClassName,
-                )}
-              >
-                {description}
-              </p>
-            ) : null}
-          </div>
-          {actions ? <div className="ll:shrink-0">{actions}</div> : null}
-        </div>
+        <SettingsSectionHeader
+          title={title}
+          description={description}
+          actions={actions}
+        />
       ) : null}
-      <div className={cn("ll:flex ll:flex-col ll:gap-2", contentClassName)}>
+      <div className={cn("ll:flex ll:flex-col ll:gap-0.5", contentClassName)}>
         {children}
       </div>
     </section>

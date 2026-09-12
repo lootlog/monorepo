@@ -1,27 +1,22 @@
 import { Button } from "@/components/ui/button";
-import {
-  SETTINGS_SUBTABS_LIST_CLASS_NAME,
-  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
-  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
-} from "@/components/settings/settings-styles";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
   userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig,
   type UserLootlogConfigAccountResponseDtoOutput,
 } from "@lootlog/client/main";
-import { CharacterTile } from "@/components/character-tile";
+import { SettingsCharacterPicker } from "@/features/settings/components/shared/settings-character-picker";
+import { useSaveMarks } from "@/features/settings/components/shared/use-save-marks";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { CatchingSettingsForm } from "@/features/settings/components/catching/catching-settings-form";
+import { reportSettingsSave } from "@/features/settings/persistence/settings-save-status.store";
 import { useGameStore } from "@/store/game.store";
-import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const CatchingSettings = () => {
@@ -55,16 +50,18 @@ export const CatchingSettings = () => {
   const [requestedCharacterId, setRequestedCharacterId] =
     useState(initialCharacterId);
 
-  const selectionByCharacterIdRef = useRef<Record<string, string[]>>({});
+  const { marks: saveMarkByCharacterId, mark: markCharacters } = useSaveMarks();
   const { t } = useTranslation();
 
-  const requestedCharacterExists = characterList?.some(
+  const characters = characterList ?? [];
+
+  const requestedCharacterExists = characters.some(
     (character) => String(character.id) === requestedCharacterId,
   );
 
   const selectedCharacterId = requestedCharacterExists
     ? requestedCharacterId
-    : String(characterList?.[0]?.id ?? "");
+    : String(characters[0]?.id ?? "");
 
   const applyToAllMutation = useMutation({
     mutationKey: ["apply-catching-config-to-all-characters", accountId],
@@ -102,11 +99,9 @@ export const CatchingSettings = () => {
       };
     },
     onMutate: async ({ catchingGuildIds, targetCharacterIds }) => {
+      reportSettingsSave.saving();
+      markCharacters(targetCharacterIds, "saving");
       await queryClient.cancelQueries({ queryKey });
-
-      const previousSelectionByCharacterId = {
-        ...selectionByCharacterIdRef.current,
-      };
 
       const previousData =
         queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
@@ -141,35 +136,25 @@ export const CatchingSettings = () => {
         },
       );
 
-      const nextSelections = { ...selectionByCharacterIdRef.current };
-      targetCharacterIds.forEach((characterId) => {
-        nextSelections[characterId] = catchingGuildIds;
-      });
-      selectionByCharacterIdRef.current = nextSelections;
-
-      return {
-        previousData,
-        previousSelectionByCharacterId,
-      };
+      return { previousData };
     },
     onSuccess: (
       { failureCount, successCount, totalCount },
-      _variables,
+      variables,
       context,
     ) => {
       if (failureCount === 0) {
-        toast.success(t("settings.catching.applySuccess"));
+        reportSettingsSave.saved();
+        markCharacters(variables.targetCharacterIds, "saved");
 
         return;
       }
 
+      reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
+      markCharacters(variables.targetCharacterIds, "error");
+
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
-      }
-
-      if (context?.previousSelectionByCharacterId) {
-        selectionByCharacterIdRef.current =
-          context.previousSelectionByCharacterId;
       }
 
       if (successCount === 0) {
@@ -185,14 +170,12 @@ export const CatchingSettings = () => {
         }),
       );
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, variables, context) => {
+      reportSettingsSave.failed(() => applyToAllMutation.mutate(variables));
+      markCharacters(variables.targetCharacterIds, "error");
+
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
-      }
-
-      if (context?.previousSelectionByCharacterId) {
-        selectionByCharacterIdRef.current =
-          context.previousSelectionByCharacterId;
       }
 
       toast.error(t("settings.catching.applyFailed"));
@@ -203,16 +186,14 @@ export const CatchingSettings = () => {
   });
 
   const handleApplyToAllCharacters = () => {
-    if (!characterList || characterList.length <= 1) return;
+    if (characters.length <= 1) return;
 
-    const targetCharacterIds = characterList.map((character) =>
+    const targetCharacterIds = characters.map((character) =>
       String(character.id),
     );
 
     const activeCharacterSelection =
-      selectionByCharacterIdRef.current[selectedCharacterId] ??
-      lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ??
-      [];
+      lootlogCharactersConfig?.[selectedCharacterId]?.catchingGuildIds ?? [];
 
     applyToAllMutation.mutate({
       catchingGuildIds: activeCharacterSelection,
@@ -221,66 +202,45 @@ export const CatchingSettings = () => {
   };
 
   return (
-    <SettingsTabLayout
-      title={t("settings.catching.title")}
-      description={t("settings.catching.description")}
-    >
+    <SettingsTabLayout>
       <SettingsSection
         title={t("settings.catching.characterTitle")}
         description={t("settings.catching.characterDescription")}
       >
-        <Tabs
-          value={selectedCharacterId}
-          onValueChange={setRequestedCharacterId}
-          className="ll:w-full ll:gap-3"
-        >
-          <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
-            {characterList?.map((character) => (
-              <TabsTrigger
-                key={character.id}
-                value={`${character.id}`}
-                className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
-              >
-                <CharacterTile character={character} />
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {characterList && characterList.length > 1 ? (
-            <div className="ll:flex ll:justify-end">
+        <div className="ll:px-2 ll:py-0.5">
+          <SettingsCharacterPicker
+            aria-label={t("settings.catching.characterLabel")}
+            characters={characters}
+            value={selectedCharacterId}
+            saveMarkByCharacterId={saveMarkByCharacterId}
+            disabled={applyToAllMutation.isPending}
+            onValueChange={setRequestedCharacterId}
+          />
+        </div>
+      </SettingsSection>
+      {selectedCharacterId ? (
+        <CatchingSettingsForm
+          key={selectedCharacterId}
+          characterId={selectedCharacterId}
+          disabled={applyToAllMutation.isPending}
+          onSaveStateChange={(status) =>
+            markCharacters([selectedCharacterId], status)
+          }
+          actions={
+            characters.length > 1 ? (
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
+                size="sm"
                 onClick={handleApplyToAllCharacters}
-                disabled={applyToAllMutation.isPending}
-                className="ll:mt-0 ll:h-7 ll:min-w-44 ll:gap-2 ll:px-3 ll:text-[11px] ll:font-semibold"
+                loading={applyToAllMutation.isPending}
               >
-                {applyToAllMutation.isPending ? (
-                  <Loader2 className="ll:size-3.5 ll:animate-spin" />
-                ) : null}
                 {t("settings.catching.applyToAllButton")}
               </Button>
-            </div>
-          ) : null}
-          {characterList?.map((character) => (
-            <TabsContent
-              key={character.id}
-              value={`${character.id}`}
-              className={SETTINGS_SUBTAB_CONTENT_CLASS_NAME}
-            >
-              <CatchingSettingsForm
-                characterId={character.id.toString()}
-                disabled={applyToAllMutation.isPending}
-                onSelectionChange={(catchingGuildIds) => {
-                  selectionByCharacterIdRef.current = {
-                    ...selectionByCharacterIdRef.current,
-                    [String(character.id)]: catchingGuildIds,
-                  };
-                }}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
-      </SettingsSection>
+            ) : null
+          }
+        />
+      ) : null}
     </SettingsTabLayout>
   );
 };

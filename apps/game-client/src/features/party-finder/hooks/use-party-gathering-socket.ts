@@ -5,7 +5,7 @@ import { useNotificationPresenter } from "@/features/notifications/hooks/use-not
 import { isNotificationMuted } from "@/features/notifications/utils/notification-mutes";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
+import { useCurrentUserNotificationMutes } from "@/features/settings/persistence/use-notification-mutes";
 import { useBufferedSocketIngress } from "@/hooks/use-buffered-socket-ingress";
 import { useGameStore } from "@/store/game.store";
 import {
@@ -62,13 +62,13 @@ export const usePartyGatheringSocket = () => {
           ) {
             return [];
           }
+        }
 
-          if (
-            Array.isArray(typeSettings.guildIds) &&
-            !typeSettings.guildIds.includes(data.guildId)
-          ) {
-            return [];
-          }
+        if (
+          currentSettings &&
+          !currentSettings.guildIds.includes(data.guildId)
+        ) {
+          return [];
         }
 
         const notification: PartyGatheringNotification = {

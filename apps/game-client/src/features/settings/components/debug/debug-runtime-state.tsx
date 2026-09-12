@@ -53,25 +53,25 @@ export function DebugRuntimeState() {
   return (
     <>
       <SettingsSection title={t("settings.debug.partyStateTitle")}>
-        <SettingsPanel className="ll:p-2">
+        <SettingsPanel className="ll:font-mono ll:text-xs">
           {partyMembers.length === 0 ? (
-            <SettingsEmptyState className="ll:border-none ll:bg-transparent ll:px-0 ll:py-0">
+            <SettingsEmptyState className="ll:bg-transparent ll:px-0 ll:py-0">
               {t("settings.debug.noPartyMembers")}
             </SettingsEmptyState>
           ) : (
             partyMembers.map((member) => (
               <div
                 key={member.characterId}
-                className="ll:text-xs ll:flex ll:gap-2 ll:items-center"
+                className="ll:flex ll:items-center ll:gap-2"
               >
-                <span className="ll:text-white">{member.name}</span>
-                <span className="ll:text-gray-400">
+                <span className="ll:text-gray-100">{member.name}</span>
+                <span className="ll:text-muted-foreground">
                   {t("settings.debug.partyMemberId", {
                     id: member.characterId,
                   })}
                 </span>
                 {member.isLeader && (
-                  <span className="ll:text-yellow-400">
+                  <span className="ll:text-amber-200">
                     {t("settings.debug.leader")}
                   </span>
                 )}
@@ -82,8 +82,8 @@ export function DebugRuntimeState() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.characterTooltipStateTitle")}>
-        <SettingsPanel className="ll:p-2 ll:space-y-2">
-          <div className="ll:text-xs ll:text-gray-400">
+        <SettingsPanel className="ll:space-y-1 ll:font-mono ll:text-xs">
+          <div className="ll:text-muted-foreground">
             <div>
               {t("settings.debug.characterTooltip.shiftPressed", {
                 value: tooltipIsShiftPressed
@@ -106,7 +106,7 @@ export function DebugRuntimeState() {
               })}
             </div>
           </div>
-          <pre className="ll:max-h-40 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:text-[10px] ll:leading-4 ll:text-gray-300">
+          <pre className="ll:m-0 ll:max-h-40 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:leading-4 ll:text-gray-300">
             {JSON.stringify(
               {
                 activeOther: tooltipActiveOtherData
@@ -128,19 +128,19 @@ export function DebugRuntimeState() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.othersStateTitle")}>
-        <SettingsPanel className="ll:p-2 ll:space-y-2">
-          <div className="ll:text-xs ll:text-gray-400">
+        <SettingsPanel className="ll:space-y-1 ll:font-mono ll:text-xs">
+          <div className="ll:text-muted-foreground">
             {t("settings.debug.othersCount", { count: debugOthers.length })}
           </div>
-          <pre className="ll:max-h-48 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:text-[10px] ll:leading-4 ll:text-gray-300">
+          <pre className="ll:m-0 ll:max-h-48 ll:overflow-auto ll:whitespace-pre-wrap ll:break-words ll:leading-4 ll:text-gray-300">
             {JSON.stringify(debugOthers, null, 2)}
           </pre>
         </SettingsPanel>
       </SettingsSection>
 
       <SettingsSection title={t("settings.debug.systemInfoTitle")}>
-        <SettingsPanel className="ll:space-y-1">
-          <p className="ll:text-xs ll:text-gray-400">
+        <SettingsPanel className="ll:space-y-0.5 ll:font-mono ll:text-xs">
+          <p className="ll:m-0 ll:text-muted-foreground">
             {t("settings.debug.zoomFactor", {
               value:
                 zoomFactor !== null
@@ -148,7 +148,7 @@ export function DebugRuntimeState() {
                   : t("settings.debug.notAvailable"),
             })}
           </p>
-          <p className="ll:text-xs ll:text-gray-400">
+          <p className="ll:m-0 ll:text-muted-foreground">
             {t("settings.debug.mode", { mode: import.meta.env.MODE })}
           </p>
         </SettingsPanel>

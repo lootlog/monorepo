@@ -373,12 +373,7 @@ describe("OnlinePlayersList", () => {
     expect(await screen.findByText("Nikt nie jest teraz online")).toBeVisible();
     expect(
       screen.getByText("Nikt nie jest teraz online").closest('[role="status"]'),
-    ).toHaveClass(
-      "ll:box-border",
-      "ll:h-full",
-      "ll:items-center",
-      "ll:justify-center",
-    );
+    ).toHaveClass("ll:h-full", "ll:items-center", "ll:justify-center");
   });
 
   it("shows no access feedback when online players permission is missing", async () => {

@@ -37,11 +37,11 @@ describe("scoped theme styles", () => {
       </>,
     );
 
-    expect(["4px", "calc(8px - 4px)"]).toContain(
+    expect(["6px", "calc(10px * 0.6)"]).toContain(
       getComputedStyle(screen.getByText("Timer")).borderRadius,
     );
     const guildButtonStyles = getComputedStyle(screen.getByRole("button"));
-    expect(["4px", "calc(8px - 4px)"]).toContain(
+    expect(["6px", "calc(10px * 0.6)"]).toContain(
       guildButtonStyles.borderRadius,
     );
     expect(guildButtonStyles.boxShadow).toContain("1px");

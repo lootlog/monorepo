@@ -79,49 +79,6 @@ describe("useUpdateUserPreferences", () => {
     });
   });
 
-  it("optimistically merges player mute updates without replacing NPC mutes", async () => {
-    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
-    const previousData = createTestUserPreferences();
-    const nextPlayers = [{ discordId: "discord-2", displayName: "Beta" }];
-
-    const payload: UpdateUserPreferencesDto = {
-      mutes: {
-        players: nextPlayers,
-      },
-    };
-
-    respond.mockReturnValue(deferred.promise);
-    queryClient.setQueryData(
-      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-      previousData,
-    );
-
-    const { result } = renderHook(() => useUpdateUserPreferences(), {
-      wrapper: createWrapper(queryClient),
-    });
-
-    act(() => {
-      result.current.mutate(payload);
-    });
-
-    await waitFor(() => {
-      expect(
-        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-        ),
-      ).toEqual({
-        ...previousData,
-        mutes: {
-          players: nextPlayers,
-          npcs: previousData.mutes.npcs,
-        },
-      });
-    });
-
-    deferred.resolve(previousData);
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-  });
-
   it("optimistically merges a partial chat appearance patch", async () => {
     const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
     const previousData = createTestUserPreferences();
@@ -239,58 +196,53 @@ describe("useUpdateUserPreferences", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
-  it("optimistically merges NPC mute updates without replacing player mutes", async () => {
-    const deferred = Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+  it("derives a queued update from the optimistic cache and keeps it past the earlier response", async () => {
+    const firstDeferred =
+      Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+
+    const secondDeferred =
+      Promise.withResolvers<UserPreferencesResponseDtoOutput>();
+
     const previousData = createTestUserPreferences();
+    const queryKey = UsersModule.getUsersControllerGetUserPreferencesQueryKey();
 
-    const nextNpcs = [
-      {
-        npcKey: "npc-2",
-        npcId: 2,
-        name: "Maddok",
-        npcType: "TITAN" as const,
-        lvl: 300,
-        prof: null,
-        icon: null,
-      },
-    ];
+    const readHiddenGuildIds = () =>
+      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(queryKey)
+        ?.hiddenGuildIds;
 
-    const payload: UpdateUserPreferencesDto = {
-      mutes: {
-        npcs: nextNpcs,
-      },
-    };
-
-    respond.mockReturnValue(deferred.promise);
-    queryClient.setQueryData(
-      UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-      previousData,
-    );
+    respond
+      .mockReturnValueOnce(firstDeferred.promise)
+      .mockReturnValueOnce(secondDeferred.promise);
+    queryClient.setQueryData(queryKey, previousData);
 
     const { result } = renderHook(() => useUpdateUserPreferences(), {
       wrapper: createWrapper(queryClient),
     });
 
     act(() => {
-      result.current.mutate(payload);
+      result.current.mutateFromCurrent((current) => ({
+        hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), "guild-1"],
+      }));
+      result.current.mutateFromCurrent((current) => ({
+        hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), "guild-2"],
+      }));
     });
 
-    await waitFor(() => {
-      expect(
-        queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-          UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
-        ),
-      ).toEqual({
-        ...previousData,
-        mutes: {
-          players: previousData.mutes.players,
-          npcs: nextNpcs,
-        },
-      });
-    });
+    // The second updater saw the first one's optimistic value.
+    expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
+    await waitFor(() => expect(respond).toHaveBeenCalledTimes(1));
 
-    deferred.resolve(previousData);
+    // The first response predates the queued update and must not undo it.
+    firstDeferred.resolve({ ...previousData, hiddenGuildIds: ["guild-1"] });
+    await waitFor(() => expect(respond).toHaveBeenCalledTimes(2));
+    expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
+
+    secondDeferred.resolve({
+      ...previousData,
+      hiddenGuildIds: ["guild-1", "guild-2"],
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(readHiddenGuildIds()).toEqual(["guild-1", "guild-2"]);
   });
 
   it("restores the previous cache entry when the mutation fails", async () => {
@@ -364,5 +316,12 @@ describe("useUpdateUserPreferences", () => {
     });
 
     expect(result.current.isSuccess).toBe(true);
+    // The response is the full document: no refetch may follow the save.
+    expect(
+      queryClient.getQueryState(
+        UsersModule.getUsersControllerGetUserPreferencesQueryKey(),
+      )?.isInvalidated,
+    ).toBe(false);
+    expect(respond).toHaveBeenCalledTimes(1);
   });
 });

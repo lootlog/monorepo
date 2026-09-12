@@ -37,7 +37,7 @@ export function ExtensionLogin() {
       <section
         aria-label={t("auth.extensionTitle")}
         aria-busy={checking}
-        className="ll:box-border ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:justify-between ll:gap-3 ll:overflow-auto ll:p-3 ll:text-xs"
+        className="ll:flex ll:h-full ll:min-h-0 ll:flex-col ll:justify-between ll:gap-3 ll:overflow-auto ll:p-3 ll:text-xs"
       >
         <p role="status" className="ll:m-0 ll:text-gray-200 ll:leading-relaxed">
           {message}
@@ -52,6 +52,8 @@ export function ExtensionLogin() {
             {t("auth.signIn")}
           </a>
           <Button
+            variant="secondary"
+            size="xs"
             type="button"
             className="ll:h-7 ll:px-3 ll:focus-visible:outline-2"
             disabled={checking}

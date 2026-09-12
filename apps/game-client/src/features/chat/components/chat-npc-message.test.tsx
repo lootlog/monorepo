@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
 import { createChatTestWrapper } from "../chat-test-wrapper";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import userEvent from "@testing-library/user-event";
@@ -10,11 +11,10 @@ import {
 } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MessageType } from "@/api/chat.api";
-import {
-  getSettingsDocumentsControllerGetPreferencesQueryKey,
-  type ChatMessageResponseDtoOutput as ChatMessageType,
-  type MemberSummaryResponseDtoOutput as GuildMember,
-  type SettingsDocumentsResponseDtoOutput,
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
+  SettingsDocumentsResponseDtoOutput,
 } from "@lootlog/client/main";
 
 import { ChatNpcMessage } from "./chat-npc-message";
@@ -99,15 +99,23 @@ describe("ChatNpcMessage", () => {
     };
 
     harness.queryClient.setQueryData(
-      getSettingsDocumentsControllerGetPreferencesQueryKey({
-        domains: "chat",
-      }),
+      getCurrentSettingsDocumentsQueryKey(),
       settingsDocuments,
     );
 
+    // A real server answers a patch with the patched document; the cache
+    // holds that state optimistically, so echo it back.
     const patchRequest = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(Response.json(settingsDocuments));
+      .mockImplementation(() =>
+        Promise.resolve(
+          Response.json(
+            harness.queryClient.getQueryData(
+              getCurrentSettingsDocumentsQueryKey(),
+            ),
+          ),
+        ),
+      );
 
     harness.request.mockImplementation(patchRequest);
     renderUi(
@@ -139,6 +147,7 @@ describe("ChatNpcMessage", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       ),
     );

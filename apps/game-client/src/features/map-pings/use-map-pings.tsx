@@ -1,14 +1,10 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
-import { useCurrentGameAccountPreferences } from "@/hooks/use-current-game-account-preferences";
+import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useGameStore } from "@/store/game.store";
-import { queryClient } from "@/lib/query-client";
 import { playSound } from "@/lib/sound-playback";
 import { useGlobalStore } from "@/store/global.store";
-import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
+import { readSettingsValue } from "@/features/settings/persistence/settings-snapshot";
 
 import {
   isMapPingType,
@@ -54,12 +50,7 @@ const areMapPingsEnabled = () => {
     return false;
   }
 
-  const preferences =
-    queryClient.getQueryData<UserGameAccountPreferencesResponseDtoOutput>(
-      getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }),
-    );
-
-  return preferences?.pings.enabled ?? false;
+  return readSettingsValue("gameData.pings").enabled ?? false;
 };
 
 const onMapPingCancel = () => {

@@ -1,10 +1,7 @@
+import type { SettingsSaveBadgeStatus } from "@/components/settings/settings-save-badge";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsGuildSelectionGrid } from "@/features/settings/components/shared/settings-guild-selection-grid";
-import { type FC, useEffect, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
-import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
+import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,19 +15,23 @@ import { useGameStore } from "@/store/game.store";
 type CatchingSettingsFormProps = {
   characterId: string;
   disabled?: boolean;
-  onSelectionChange?: (catchingGuildIds: string[]) => void;
+  /** Trailing actions of the servers section, e.g. "apply to all characters". */
+  actions?: ReactNode;
+  /** Follows this character's own write: saving, then saved or error. */
+  onSaveStateChange?: (status: SettingsSaveBadgeStatus) => void;
 };
 
-const FormSchema = z.object({
-  catchingGuildIds: z.array(z.string()),
-});
-
-type FormData = z.infer<typeof FormSchema>;
-
+/**
+ * Lootlogi one character reports to. The selection is the cached config
+ * itself: each toggle writes the next list straight through the mutation,
+ * which updates the cache optimistically and serializes rapid clicks, so a
+ * click never snaps back when an earlier response lands.
+ */
 export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
   disabled = false,
-  onSelectionChange,
+  actions,
+  onSaveStateChange,
 }) => {
   const { t } = useTranslation();
   const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
@@ -56,128 +57,79 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     );
 
   const {
-    mutate: updateLootlogCharacterConfig,
-    isPending: isUpdatingLootlogConfig,
+    mutateFromCurrent: updateLootlogCharacterConfig,
+    status: updateStatus,
   } = useUpdateLootlogCharactersConfig();
 
-  const { control, reset, setValue, subscribe } = useForm<FormData>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      catchingGuildIds: [],
-    },
-  });
+  // The callback is read through a ref so the report follows the mutation
+  // status alone; a parent re-render (e.g. from the report itself) must not
+  // re-run it.
+  const onSaveStateChangeRef = useRef(onSaveStateChange);
 
-  const configByCharacterId = lootlogCharactersConfig?.[characterId];
-  const isInitializedRef = useRef(false);
-  const isResettingRef = useRef(false);
+  useEffect(() => {
+    onSaveStateChangeRef.current = onSaveStateChange;
+  }, [onSaveStateChange]);
+
+  useEffect(() => {
+    if (updateStatus === "pending") onSaveStateChangeRef.current?.("saving");
+    else if (updateStatus === "success")
+      onSaveStateChangeRef.current?.("saved");
+    else if (updateStatus === "error") onSaveStateChangeRef.current?.("error");
+  }, [updateStatus]);
 
   const selectedGuildIds =
-    useWatch({ control, name: "catchingGuildIds" }) ?? [];
+    lootlogCharactersConfig?.[characterId]?.catchingGuildIds ?? [];
 
-  useEffect(() => {
-    const nextCatchingGuildIds = configByCharacterId?.catchingGuildIds ?? [];
-
-    isResettingRef.current = true;
-    reset({
-      catchingGuildIds: nextCatchingGuildIds,
-    });
-
-    const initializationTimeoutId = setTimeout(() => {
-      isResettingRef.current = false;
-      isInitializedRef.current = true;
-    }, 0);
-
-    return () => clearTimeout(initializationTimeoutId);
-  }, [
-    guilds,
-    lootlogCharactersConfig,
-    reset,
-    characterId,
-    configByCharacterId,
-  ]);
-
-  useEffect(() => {
-    let debounceTimerId: ReturnType<typeof setTimeout> | null = null;
-
-    const unsubscribe = subscribe({
-      formState: { values: true },
-      callback: ({ values }) => {
-        if (!isInitializedRef.current || isResettingRef.current) return;
-
-        if (debounceTimerId) {
-          clearTimeout(debounceTimerId);
-        }
-
-        debounceTimerId = setTimeout(() => {
-          const catchingGuildIds = (values.catchingGuildIds ?? []).filter(
-            (id): id is string => typeof id === "string",
-          );
-
-          updateLootlogCharacterConfig({
-            characterId,
-            catchingGuildIds,
-          });
-        }, 500);
-      },
-    });
-
-    return () => {
-      unsubscribe();
-
-      if (debounceTimerId) {
-        clearTimeout(debounceTimerId);
-      }
-    };
-  }, [characterId, subscribe, updateLootlogCharacterConfig]);
-
-  const isPending = isLootlogConfigLoading || isUpdatingLootlogConfig;
-  const isInteractionDisabled = isPending || disabled;
+  // The write is optimistic and replaces the whole list, so the picker stays
+  // usable while a save is in flight; only the initial load blocks it.
+  const isInteractionDisabled = isLootlogConfigLoading || disabled;
   const totalGuilds = guilds?.length ?? 0;
   const selectedCount = selectedGuildIds.length;
 
+  // Derived from the cache at click time, not from this render: a re-render
+  // lags the cache by a tick, so the previous click of a rapid series would
+  // otherwise be missing from the saved list.
   const handleGuildToggle = (guildId: string) => {
-    const isSelected = selectedGuildIds.includes(guildId);
+    updateLootlogCharacterConfig((current) => {
+      const currentGuildIds = current?.[characterId]?.catchingGuildIds ?? [];
 
-    const nextSelectedGuildIds = isSelected
-      ? selectedGuildIds.filter((id) => id !== guildId)
-      : [...selectedGuildIds, guildId];
-
-    onSelectionChange?.(nextSelectedGuildIds);
-    setValue("catchingGuildIds", nextSelectedGuildIds, {
-      shouldDirty: true,
-      shouldTouch: true,
+      return {
+        characterId,
+        catchingGuildIds: currentGuildIds.includes(guildId)
+          ? currentGuildIds.filter((id) => id !== guildId)
+          : [...currentGuildIds, guildId],
+      };
     });
   };
 
   return (
-    <div className="ll:relative ll:py-1">
-      <SettingsSection
-        title={t("settings.catching.form.collectionRangeTitle")}
-        description={t("settings.catching.form.collectionRangeDescription")}
-        actions={
-          <div className="ll:flex ll:items-center ll:gap-2">
-            <div className="ll:rounded-sm ll:border ll:border-gray-600/80 ll:bg-gray-900/70 ll:px-2 ll:py-1 ll:text-[10px] ll:font-semibold ll:uppercase ll:tracking-[0.08em] ll:text-gray-300">
-              {t("settings.catching.form.activeCount", {
-                selectedCount,
-                totalCount: totalGuilds,
-              })}
-            </div>
-            {isPending ? (
-              <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
-            ) : null}
-          </div>
-        }
-        contentClassName="ll:gap-3"
-      >
-        <SettingsGuildSelectionGrid
+    <SettingsSection
+      controlId="catching-range"
+      title={t("settings.catching.form.serversTitle")}
+      description={t("settings.catching.form.serversDescription")}
+      actions={
+        <div className="ll:flex ll:items-center ll:gap-3">
+          <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
+            {t("settings.catching.form.activeCount", {
+              selectedCount,
+              totalCount: totalGuilds,
+            })}
+          </span>
+          {actions}
+        </div>
+      }
+    >
+      {/* Mounted per character, so the fade marks the switch. */}
+      <div className="ll:px-2 ll:py-0.5 ll:animate-in ll:fade-in-0 ll:duration-200">
+        <SettingsGuildPicker
+          aria-label={t("settings.catching.form.serversLabel")}
           guilds={guilds}
           selectedGuildIds={selectedGuildIds}
           disabled={isInteractionDisabled}
           onToggle={handleGuildToggle}
           emptyStateLabel={t("settings.catching.form.emptyGuilds")}
-          variant="compact"
         />
-      </SettingsSection>
-    </div>
+      </div>
+    </SettingsSection>
   );
 };

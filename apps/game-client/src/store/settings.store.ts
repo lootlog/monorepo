@@ -1,16 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:settings:state");
-
-export const migrateSettingsState = (persistedState: unknown) => {
-  if (typeof persistedState !== "object" || persistedState === null) {
-    return {};
-  }
-
-  return persistedState;
-};
 
 interface SettingsState {
   animationEffectsEnabled: boolean;
@@ -33,13 +26,14 @@ interface SettingsState {
   setMasterVolume: (volume: number) => void;
   setWorld: (guildId: string, world: string) => void;
   toggleAnimationEffects: () => void;
+  setAllowWorldSelection: (enabled: boolean) => void;
   toggleAllowWorldSelection: () => void;
   toggleSoundsMuted: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       animationEffectsEnabled: true,
       lootDebugLoggingEnabled: false,
       masterVolume: 0.5,
@@ -112,8 +106,17 @@ export const useSettingsStore = create<SettingsState>()(
           animationEffectsEnabled: !state.animationEffectsEnabled,
         }));
       },
+      setAllowWorldSelection: (allowWorldSelection) => {
+        if (get().allowWorldSelection === allowWorldSelection) return;
+        set({ allowWorldSelection });
+      },
       toggleAllowWorldSelection: () => {
-        set((state) => ({ allowWorldSelection: !state.allowWorldSelection }));
+        const allowWorldSelection = !get().allowWorldSelection;
+        set({ allowWorldSelection });
+        enqueueSettingsPatch({
+          domain: "general",
+          set: { allowWorldSelection },
+        });
       },
       toggleSoundsMuted: () => {
         set((state) => ({ soundsMuted: !state.soundsMuted }));
@@ -134,7 +137,6 @@ export const useSettingsStore = create<SettingsState>()(
         presenceOrganizationIdsByCharId: state.presenceOrganizationIdsByCharId,
       }),
       storage: createJSONStorage(() => localStorage),
-      migrate: migrateSettingsState,
       version: 6,
     },
   ),

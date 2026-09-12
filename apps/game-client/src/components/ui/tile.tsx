@@ -63,8 +63,8 @@ export const Tile: FC<TileProps> = ({
     <span
       id={id}
       className={cn(
-        "ll-custom-cursor-pointer ll:w-full ll:flex ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:py-0.5 ll:bg-gray-500/30 ll:transition-colors ll:motion-reduce:transition-none",
-        !customBackgroundColor && "ll:hover:bg-gray-400/30",
+        "ll-custom-cursor-pointer ll:w-full ll:flex ll:items-center ll:justify-center ll:border-border ll:border ll:rounded-sm ll:py-0.5 ll:bg-secondary ll:transition-colors ll:motion-reduce:transition-none",
+        !customBackgroundColor && "ll:hover:bg-accent",
         borderColor,
         bgColor,
         className,
