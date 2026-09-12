@@ -12,6 +12,7 @@ export type TimersDensityStyle = CSSProperties & {
   "--ll-timers-min-column": string;
   "--ll-timers-space-xs": string;
   "--ll-timers-space-sm": string;
+  "--ll-timers-space-md": string;
 };
 
 const formatScaledPixels = (pixels: number, scale: number) =>
@@ -39,5 +40,6 @@ export const getTimersDensityStyle = ({
     "--ll-timers-min-column": `${minColumnWidth}px`,
     "--ll-timers-space-xs": formatScaledPixels(2, scale),
     "--ll-timers-space-sm": formatScaledPixels(4, scale),
+    "--ll-timers-space-md": formatScaledPixels(6, scale),
   };
 };

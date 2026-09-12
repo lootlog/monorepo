@@ -161,21 +161,6 @@ export const brightenHexColor = (color: string, percent: number): string => {
 
 const HOVER_BRIGHTNESS_PERCENT = 20;
 
-/** The solid hex of the assigned colour, for a small accent; nothing for the default. */
-export const resolveTimerAccentColor = ({
-  selectedColor,
-  customColor,
-  overriddenColor,
-}: TimerColorConfig): string | undefined => {
-  const explicit = customColor ?? overriddenColor;
-
-  if (explicit) return explicit.borderColor;
-
-  return selectedColor === DEFAULT_TIMER_COLOR_ID
-    ? undefined
-    : getTimerColorHex(selectedColor)?.border;
-};
-
 /**
  * Background-only variant for borderless rows: the palette tint (with its
  * hover) for stock colours, the custom or overridden background inline
