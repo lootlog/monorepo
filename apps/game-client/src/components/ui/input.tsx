@@ -22,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           evt.stopPropagation();
         }}
         className={cn(
-          "ll:placeholder:text-muted-foreground ll:selection:bg-primary ll:selection:text-primary-foreground ll:flex ll:h-6 ll:w-full ll:min-w-0 ll:bg-transparent ll:px-1 ll:py-1 ll:transition-[color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:cursor-not-allowed ll:disabled:opacity-50",
+          "ll:placeholder:text-muted-foreground ll:[&::selection]:bg-primary ll:[&::selection]:text-primary-foreground ll:flex ll:h-6 ll:w-full ll:min-w-0 ll:bg-transparent ll:px-1 ll:py-1 ll:transition-[color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:cursor-not-allowed ll:disabled:opacity-50",
           inputVariantClasses[variant],
           variant === "default" &&
             "ll:focus-visible:border-ring ll:focus-visible:ring-ring/50 ll:focus-visible:ring-[3px]",

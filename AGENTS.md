@@ -226,6 +226,14 @@ Before calling a change complete, account for every applicable item:
   workflows.
 - Keep Margonem globals behind the approved bridge and adapters. Isolate
   observers so one failure cannot affect the game or another observer.
+- In `apps/game-client`, the Lootlog stylesheet is matched against every
+  element the game inserts, so keep selectors cheap for the game's own style
+  recalcs. Do not add Tailwind `has-*`, `group-has-*`, or `selection:`
+  variants, `:has()` with state pseudo-classes, or new rules whose subject is a
+  universal `*`. Universal rules belong only in the scoped reset in `index.css`,
+  with each ancestor as a single id or class, never a multi-argument `:is()`
+  or `:where()`. Restart the dev server after removing utility classes:
+  Tailwind keeps stale candidates in dev mode.
 - Add a deployable service only when its scaling, failure, data, security, or
   release boundary justifies independent deployment.
 - Import from the module that owns a symbol. Do not create source files that
