@@ -33,7 +33,7 @@ export const ModernTimerTile: FC<ModernTimerTileProps> = ({ timer, model }) => {
       <div
         role="listitem"
         className={cn(
-          "ll-custom-cursor-pointer ll:relative ll:flex ll:min-h-(--ll-timers-row-min-height) ll:min-w-0 ll:items-center ll:gap-(--ll-timers-space-xs) ll:px-(--ll-timers-space-sm) ll:py-(--ll-timers-space-xs) ll:text-foreground ll:transition-colors ll:duration-100 ll:motion-reduce:transition-none",
+          "ll-custom-cursor-pointer ll:relative ll:flex ll:min-h-(--ll-timers-row-min-height) ll:min-w-0 ll:items-center ll:gap-(--ll-timers-space-xs) ll:px-(--ll-timers-space-sm) ll:py-(--ll-timers-space-sm) ll:text-foreground ll:transition-colors ll:duration-100 ll:motion-reduce:transition-none",
           rowColors.style?.backgroundColor
             ? "ll:hover:bg-(--ll-tile-bg-hover)"
             : !rowColors.className && "ll:hover:bg-white/5",

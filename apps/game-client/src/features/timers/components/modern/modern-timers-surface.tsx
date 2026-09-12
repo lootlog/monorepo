@@ -83,7 +83,7 @@ export const ModernTimersSurface: FC<TimersLayoutProps> = ({
           ) : (
             <ScrollArea
               data-testid="timers-scroll-container"
-              className="ll:h-full ll:w-full! ll:py-(--ll-timers-space-xs)"
+              className="ll:h-full ll:w-full!"
             >
               <ModernTimersGrid model={model} />
             </ScrollArea>
