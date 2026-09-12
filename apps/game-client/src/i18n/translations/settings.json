@@ -98,14 +98,12 @@
   },
   "chat": {
     "preset": {
-      "section": "Preset",
-      "label": "Sposób prezentacji",
+      "section": "Gotowe ustawienia",
+      "label": "Gotowe ustawienia wyglądu",
       "readable": "Czytelny",
       "readableDescription": "Większy tekst i więcej przestrzeni - najłatwiejszy do czytania.",
       "compact": "Kompaktowy",
-      "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach.",
-      "custom": "Własny",
-      "customDescription": "Twoje ręczne zmiany poniżej."
+      "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach."
     },
     "advanced": {
       "title": "Więcej opcji"
@@ -133,12 +131,12 @@
     "metadata": {
       "title": "Widoczne informacje",
       "showTimestamp": "Czas wiadomości",
-      "showGuildLabel": "Gildia",
+      "showGuildLabel": "Lootlog",
       "showNpcAvatar": "Avatar NPC",
       "showNpcLevel": "Poziom NPC",
       "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC",
       "showTimestampDescription": "Godzina wysłania przy każdej wiadomości.",
-      "showGuildLabelDescription": "Nazwa gildii nadawcy obok wiadomości.",
+      "showGuildLabelDescription": "Nazwa Lootloga, z którego pochodzi wiadomość, w widoku wszystkich serwerów.",
       "showNpcAvatarDescription": "Ikona potwora w wiadomościach o NPC.",
       "showNpcLevelDescription": "Poziom potwora w wiadomościach o NPC.",
       "showNpcLocationAndCoordinatesDescription": "Nazwa mapy i koordynaty w wiadomościach o NPC."

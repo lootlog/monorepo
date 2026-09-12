@@ -28,7 +28,7 @@ const METADATA_KEYS = [
   "showNpcLocationAndCoordinates",
 ] as const;
 
-type ChatPresetChoice = "readable" | "compact" | "custom";
+type ChatPresetChoice = "readable" | "compact";
 
 export const ChatAppearanceSettingsForm = () => {
   const { t } = useTranslation();
@@ -42,6 +42,10 @@ export const ChatAppearanceSettingsForm = () => {
 
   const activePreset = getChatAppearancePreset(draft);
 
+  // Hand-tuned values leave every preset card unselected.
+  const selectedPreset: ChatPresetChoice | null =
+    activePreset === "custom" ? null : activePreset;
+
   const presetOptions: SettingsChoiceOption<ChatPresetChoice>[] = [
     {
       value: "readable",
@@ -52,13 +56,6 @@ export const ChatAppearanceSettingsForm = () => {
       value: "compact",
       title: t("settings.chat.preset.compact"),
       description: t("settings.chat.preset.compactDescription"),
-    },
-    // Always in the grid so switching to custom values shifts nothing below.
-    {
-      value: "custom",
-      title: t("settings.chat.preset.custom"),
-      description: t("settings.chat.preset.customDescription"),
-      disabled: activePreset !== "custom",
     },
   ];
 
@@ -76,10 +73,8 @@ export const ChatAppearanceSettingsForm = () => {
           id="chat-preset"
           label={t("settings.chat.preset.label")}
           options={presetOptions}
-          value={activePreset}
-          onChange={(preset) => {
-            if (preset !== "custom") applyPreset(preset);
-          }}
+          value={selectedPreset}
+          onChange={applyPreset}
         />
       </SettingsSection>
 

@@ -100,6 +100,58 @@ describe("DetectorSettingsTab", () => {
     });
   });
 
+  it("keeps a switch toggled while an earlier save is still in flight", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.detector.TITAN.detect = false;
+    initial.detector.HERO.detect = false;
+    seedAccountPreferences(initial);
+
+    const firstResponse = createSettingsDocuments(
+      accountPreferenceValues({
+        ...initial,
+        detector: {
+          ...initial.detector,
+          TITAN: { ...initial.detector.TITAN, detect: true },
+        },
+      }),
+    );
+
+    let resolveFirst: (() => void) | undefined;
+    harness.request
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = () => resolve(Response.json(firstResponse));
+          }),
+      )
+      .mockImplementation(() =>
+        Promise.resolve(
+          Response.json(readSeededSettingsDocuments(harness.queryClient)),
+        ),
+      );
+    render();
+
+    await user.click(screen.getByRole("switch", { name: "Tytan: Wykrywaj" }));
+    await waitFor(() => expect(harness.request).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole("switch", { name: "Heros: Wykrywaj" }));
+    expect(document.getElementById("HERO-detect")).toBeChecked();
+    await act(async () => {
+      resolveFirst?.();
+      // Let the response land before any follow-up save could re-apply it.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(document.getElementById("HERO-detect")).toBeChecked();
+
+    await waitFor(() => expect(harness.request).toHaveBeenCalledTimes(2));
+    expect(document.getElementById("HERO-detect")).toBeChecked();
+    expect(document.getElementById("TITAN-detect")).toBeChecked();
+    const body = JSON.parse(String(harness.request.mock.calls[1]?.[1]?.body));
+    expect(body.operations[0].set.detector.HERO.detect).toBe(true);
+  });
+
   it("applies refreshed account preferences without restarting the form reset loop", async () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
 

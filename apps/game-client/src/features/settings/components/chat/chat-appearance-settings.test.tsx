@@ -75,7 +75,7 @@ describe("ChatAppearanceSettingsForm", () => {
     );
 
     expect(
-      screen.queryByRole("switch", { name: "Gildia" }),
+      screen.queryByRole("switch", { name: "Lootlog" }),
     ).not.toBeInTheDocument();
 
     act(() => useSettingsStore.setState({ allowWorldSelection: true }));
@@ -85,10 +85,10 @@ describe("ChatAppearanceSettingsForm", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByRole("switch", { name: "Gildia" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Lootlog" })).toBeInTheDocument();
   });
 
-  it("applies a preset from the preset radio group and offers a custom option only for custom values", async () => {
+  it("applies a preset from the preset radio group", async () => {
     const user = userEvent.setup();
     const queryClient = harness.queryClient;
 
@@ -99,7 +99,7 @@ describe("ChatAppearanceSettingsForm", () => {
     );
 
     expect(screen.getByRole("radio", { name: /^Czytelny/ })).toBeChecked();
-    expect(screen.getByRole("radio", { name: /^Własny/ })).toBeDisabled();
+    expect(screen.queryByRole("radio", { name: /^Własny/ })).toBeNull();
 
     await user.click(screen.getByRole("radio", { name: /^Kompaktowy/ }));
 
@@ -121,7 +121,7 @@ describe("ChatAppearanceSettingsForm", () => {
     expect(screen.getByRole("radio", { name: /^Kompaktowy/ })).toBeChecked();
   });
 
-  it("offers the custom option only when the stored values match no preset", () => {
+  it("leaves every preset unselected when the stored values match no preset", () => {
     const queryClient = harness.queryClient;
     queryClient.setQueryData(getCurrentSettingsDocumentsQueryKey(), {
       domains: {
@@ -141,8 +141,10 @@ describe("ChatAppearanceSettingsForm", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByRole("radio", { name: /^Własny/ })).toBeChecked();
     expect(screen.getByRole("radio", { name: /^Czytelny/ })).not.toBeChecked();
+    expect(
+      screen.getByRole("radio", { name: /^Kompaktowy/ }),
+    ).not.toBeChecked();
   });
 
   it("keeps slider changes local until the interaction is committed", async () => {

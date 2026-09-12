@@ -12,7 +12,6 @@ import { useDetectorTypesForm } from "@/features/settings/components/detector/us
 import { NpcType } from "@/api/npcs.api";
 import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
 import { AppWindow, Highlighter, Radar, Send, Volume2 } from "lucide-react";
-import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 const COLUMNS = [
@@ -25,7 +24,7 @@ const COLUMNS = [
 
 export const DetectorSettingsTab = () => {
   const { t } = useTranslation();
-  const { control, setSwitchForAll, types } = useDetectorTypesForm();
+  const { setSwitch, setSwitchForAll, types } = useDetectorTypesForm();
 
   const categories: Array<{ label: string; key: DetectorNpcType }> = [
     { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
@@ -85,24 +84,18 @@ export const DetectorSettingsTab = () => {
                   const isDisabled = column.key !== "detect" && !enabled;
 
                   return (
-                    <Controller
+                    <Switch
                       key={column.key}
-                      name={`types.${category.key}.${column.key}`}
-                      control={control}
-                      render={({ field }) => (
-                        <Switch
-                          id={`${category.key}-${column.key}`}
-                          aria-label={t("settings.detector.cellLabel", {
-                            category: category.label,
-                            setting: t(
-                              `settings.detector.toggles.${column.key}`,
-                            ),
-                          })}
-                          checked={field.value}
-                          disabled={isDisabled}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
+                      id={`${category.key}-${column.key}`}
+                      aria-label={t("settings.detector.cellLabel", {
+                        category: category.label,
+                        setting: t(`settings.detector.toggles.${column.key}`),
+                      })}
+                      checked={types[category.key][column.key]}
+                      disabled={isDisabled}
+                      onCheckedChange={(checked) =>
+                        setSwitch(category.key, column.key, checked)
+                      }
                     />
                   );
                 })}
