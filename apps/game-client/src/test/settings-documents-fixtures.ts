@@ -2,6 +2,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { cloneValue, setPath } from "@lootlog/domain/settings-paths";
+import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import type {
   SettingsDocumentsResponseDtoOutput,
@@ -74,8 +75,12 @@ export const createSettingsDocuments = (
   return { domains };
 };
 
+type AccountPreferenceValuesInput = Partial<
+  Omit<UserGameAccountPreferencesResponseDtoOutput, "notifications">
+> & { notifications?: NotificationsSettings };
+
 export const accountPreferenceValues = (
-  preferences: Partial<UserGameAccountPreferencesResponseDtoOutput>,
+  preferences: AccountPreferenceValuesInput,
 ) => ({
   "gameData.detector":
     preferences.hasStoredDetector === false ? undefined : preferences.detector,

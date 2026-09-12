@@ -289,6 +289,29 @@ describe("settings documents Effect module", () => {
     ).toEqual(["USER", "CHARACTER"]);
   });
 
+  it("rejects an invalid response context before committing the patch", async () => {
+    const repository = createRepository();
+    const service = makeSettingsDocuments(repository);
+
+    await expect(
+      Effect.runPromise(
+        service.patchPreferences("user-1", {
+          operations: [
+            {
+              domain: "appearance",
+              scope: { type: "USER", id: "user-1" },
+              set: { chat: { fontScalePercent: 110 } },
+              unset: [],
+            },
+          ],
+          // A character without its game account cannot be resolved.
+          context: { characterId: "char-1" },
+        }),
+      ),
+    ).rejects.toThrow("require a game account context");
+    expect(repository.applyOperations).not.toHaveBeenCalled();
+  });
+
   it("sorts a patch batch before delegating the serializable transaction", async () => {
     const repository = createRepository();
     const service = makeSettingsDocuments(repository);

@@ -1,3 +1,4 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import {
   accountPreferenceValues,
@@ -13,10 +14,7 @@ import type {
   SoundSettingsResponseDto,
 } from "@lootlog/client/main";
 import { createRealtimeTest } from "@/test/realtime-test";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
@@ -32,7 +30,7 @@ const preferences = (
   enabled: boolean,
 ): UserGameAccountPreferencesResponseDtoOutput => ({
   accountId: "1",
-  notifications: createNotificationsSettings(),
+  notifications: createNotificationsResponse(),
   detector: createDetectorSettings(),
   pings: { enabled },
   airTags: { enabled: true },

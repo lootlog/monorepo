@@ -25,6 +25,8 @@ import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance
 import {
   DETECTOR_NPC_TYPES,
   NOTIFICATION_TYPES,
+  type NotificationSettings,
+  type NotificationType,
   type UserGameAccountPreferences,
 } from "@lootlog/schema/account-preferences";
 import type {
@@ -171,6 +173,49 @@ const gamePreferencesResponse = (
       hasStoredPings ||
       hasStoredAirTags,
   };
+};
+
+type LegacyNotificationSettings = NotificationSettings & { guildIds: string[] };
+
+/**
+ * Deployed Game clients read the server list from every notification type, so
+ * the legacy route mirrors the shared list into each type until they update.
+ */
+const withLegacyTypeGuildIds = (value: UserGameAccountPreferences) => {
+  const { notifications } = value;
+
+  const mirror = (type: NotificationType): LegacyNotificationSettings => ({
+    ...notifications[type],
+    guildIds: [...notifications.guildIds],
+  });
+
+  return {
+    ...value,
+    notifications: {
+      guildIds: [...notifications.guildIds],
+      ELITE2: mirror("ELITE2"),
+      HERO: mirror("HERO"),
+      COLOSSUS: mirror("COLOSSUS"),
+      TITAN: mirror("TITAN"),
+      message: mirror("message"),
+      "party-gathering": mirror("party-gathering"),
+    },
+  };
+};
+
+/** Per-type lists sent by deployed Game clients; folded into the shared list. */
+const legacyTypeGuildIds = (
+  notifications: UpdateUserGameAccountPreferencesRequest["notifications"],
+) => {
+  const lists = NOTIFICATION_TYPES.flatMap(
+    (type) => notifications?.[type]?.guildIds ?? [],
+  );
+
+  const present = NOTIFICATION_TYPES.some(
+    (type) => notifications?.[type]?.guildIds !== undefined,
+  );
+
+  return present ? [...new Set(lists)] : undefined;
 };
 
 const readPreferences = (
@@ -411,7 +456,8 @@ export const makeUserPreferencesData = (
     if (
       (yield* requestApiKeyAccess) &&
       (payload.detector?.routingRules !== undefined ||
-        payload.notifications?.guildIds !== undefined)
+        payload.notifications?.guildIds !== undefined ||
+        legacyTypeGuildIds(payload.notifications) !== undefined)
     ) {
       return yield* new PermissionDeniedError(
         "Organization preference routing requires a session",
@@ -423,9 +469,13 @@ export const makeUserPreferencesData = (
     const notifications = cloneNotifications(current.notifications);
 
     if (payload.notifications) {
-      if (payload.notifications.guildIds) {
+      const guildIds =
+        payload.notifications.guildIds ??
+        legacyTypeGuildIds(payload.notifications);
+
+      if (guildIds) {
         notifications.guildIds = normalizeGuildIds(
-          payload.notifications.guildIds,
+          guildIds,
           notifications.guildIds,
         );
       }
@@ -547,6 +597,7 @@ export const makeUserPreferencesData = (
       mapError(
         getUserGameAccountPreferences(userId, accountId).pipe(
           Effect.flatMap(scopeGamePreferences),
+          Effect.map(withLegacyTypeGuildIds),
         ),
       ),
     updateUserPreferences: (
@@ -566,6 +617,7 @@ export const makeUserPreferencesData = (
       mapError(
         updateUserGameAccountPreferences(userId, accountId, payload).pipe(
           Effect.flatMap(scopeGamePreferences),
+          Effect.map(withLegacyTypeGuildIds),
         ),
       ),
   };

@@ -7,6 +7,25 @@ export type SettingsJsonRecord = Record<string, unknown>;
 export const cloneValue = <TValue>(value: TValue): TValue =>
   structuredClone(value);
 
+const FORBIDDEN_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
+
+/**
+ * Paths come from client patches; a segment that names a prototype property
+ * would let `setPath` reach `Object.prototype` through a freshly cloned
+ * record, so such paths are rejected before any write.
+ */
+const splitWritablePath = (path: string) => {
+  const segments = path.split(".");
+
+  for (const segment of segments) {
+    if (FORBIDDEN_SEGMENTS.has(segment)) {
+      throw new Error(`Unsafe setting path: ${path}`);
+    }
+  }
+
+  return segments;
+};
+
 export const getPath = (value: SettingsJsonRecord, path: string): unknown => {
   let currentValue: unknown = value;
 
@@ -41,7 +60,7 @@ export const setPath = (
   path: string,
   value: unknown,
 ) => {
-  const segments = path.split(".");
+  const segments = splitWritablePath(path);
   const finalSegment = segments.pop();
 
   if (!finalSegment) {
@@ -61,7 +80,7 @@ export const setPath = (
 };
 
 export const unsetPath = (target: SettingsJsonRecord, path: string) => {
-  const segments = path.split(".");
+  const segments = splitWritablePath(path);
   const finalSegment = segments.pop();
 
   if (!finalSegment) {

@@ -1,3 +1,4 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { onTestFinished, vi } from "vitest";
 import { createRealtimeTest } from "@/test/realtime-test";
 import {
@@ -12,10 +13,7 @@ import {
   soundSettingValues,
   userPreferenceValues,
 } from "@/test/settings-documents-fixtures";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -25,7 +23,7 @@ export const createNotificationTest = () => {
 
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "1",
-    notifications: createNotificationsSettings(["guild-1"]),
+    notifications: createNotificationsResponse(["guild-1"]),
     detector: createDetectorSettings(),
     pings: { enabled: false },
     airTags: { enabled: false },

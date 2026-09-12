@@ -15162,12 +15162,17 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               required:
                 - show
                 - highlight
                 - ignoreOtherWorlds
+                - guildIds
                 - sound
               additionalProperties: false
             HERO:
@@ -15182,12 +15187,17 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               required:
                 - show
                 - highlight
                 - ignoreOtherWorlds
+                - guildIds
                 - sound
               additionalProperties: false
             COLOSSUS:
@@ -15202,12 +15212,17 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               required:
                 - show
                 - highlight
                 - ignoreOtherWorlds
+                - guildIds
                 - sound
               additionalProperties: false
             TITAN:
@@ -15222,12 +15237,17 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               required:
                 - show
                 - highlight
                 - ignoreOtherWorlds
+                - guildIds
                 - sound
               additionalProperties: false
             message:
@@ -15242,12 +15262,17 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               required:
                 - show
                 - highlight
                 - ignoreOtherWorlds
+                - guildIds
                 - sound
               additionalProperties: false
             party-gathering:
@@ -15262,12 +15287,17 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               required:
                 - show
                 - highlight
                 - ignoreOtherWorlds
+                - guildIds
                 - sound
               additionalProperties: false
           required:
@@ -15459,6 +15489,10 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               additionalProperties: false
@@ -15474,6 +15508,10 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               additionalProperties: false
@@ -15489,6 +15527,10 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               additionalProperties: false
@@ -15504,6 +15546,10 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               additionalProperties: false
@@ -15519,6 +15565,10 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               additionalProperties: false
@@ -15534,6 +15584,10 @@ components:
                 autoHideTimeout:
                   type: number
                   minimum: 0
+                guildIds:
+                  type: array
+                  items:
+                    type: string
                 sound:
                   type: boolean
               additionalProperties: false

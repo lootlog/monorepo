@@ -252,14 +252,18 @@ export const makeSettingsDocuments = (
       const scopes = yield* getContextScopes(userId, context);
       yield* validateScopes(repository, userId, scopes);
 
-      const documents = yield* repository.findDocuments(
-        userId,
-        context.domains,
-        scopes,
-      );
-
-      return { domains: resolveDomains(context.domains, scopes, documents) };
+      return yield* readResolved(userId, context.domains, scopes);
     });
+
+  const readResolved = (
+    userId: string,
+    domains: SettingsDomain[],
+    scopes: SettingsScope[],
+  ) =>
+    Effect.map(
+      repository.findDocuments(userId, domains, scopes),
+      (documents) => ({ domains: resolveDomains(domains, scopes, documents) }),
+    );
 
   const getGuildPreferences: SettingsDocuments["getGuildPreferences"] = (
     userId,
@@ -325,6 +329,24 @@ export const makeSettingsDocuments = (
       const scopes = payload.operations.map((operation) => operation.scope);
       yield* validateScopes(repository, userId, scopes);
 
+      const operationsContext = getContextFromOperations(payload.operations);
+
+      // A client that sends its read context gets the documents resolved the
+      // way it reads them, so the response can replace its cache entry. The
+      // context is validated before the write so a rejected context cannot
+      // fail a patch that has already been committed.
+      const responseContext: SettingsContext = payload.context
+        ? {
+            domains: operationsContext.domains,
+            gameAccountId: payload.context.gameAccountId,
+            characterId: payload.context.characterId,
+            guildId: payload.context.guildId,
+          }
+        : operationsContext;
+
+      const responseScopes = yield* getContextScopes(userId, responseContext);
+      yield* validateScopes(repository, userId, responseScopes);
+
       const sortedOperations = [...payload.operations].sort((left, right) =>
         getOperationKey(left).localeCompare(getOperationKey(right)),
       );
@@ -339,20 +361,10 @@ export const makeSettingsDocuments = (
           ),
         );
 
-      const operationsContext = getContextFromOperations(payload.operations);
-
-      // A client that sends its read context gets the documents resolved the
-      // way it reads them, so the response can replace its cache entry.
-      return yield* getPreferences(
+      return yield* readResolved(
         userId,
-        payload.context
-          ? {
-              domains: operationsContext.domains,
-              gameAccountId: payload.context.gameAccountId,
-              characterId: payload.context.characterId,
-              guildId: payload.context.guildId,
-            }
-          : operationsContext,
+        responseContext.domains,
+        responseScopes,
       );
     });
 

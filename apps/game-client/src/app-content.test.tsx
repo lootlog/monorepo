@@ -1,3 +1,4 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import {
   accountPreferenceValues,
   createSettingsDocuments,
@@ -15,10 +16,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { createRealtimeTest } from "@/test/realtime-test";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useWindowsStore } from "@/store/windows.store";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 
@@ -42,7 +40,7 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
 
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "202",
-    notifications: createNotificationsSettings(),
+    notifications: createNotificationsResponse(),
     detector: createDetectorSettings(),
     pings: { enabled: true },
     airTags: { enabled: false },

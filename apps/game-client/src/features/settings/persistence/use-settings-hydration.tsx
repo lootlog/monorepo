@@ -256,7 +256,11 @@ export const useSettingsHydration = () => {
 
   const guildIds = getGuildIds(guilds);
 
-  const guildDocuments = useGuildTimersDocuments(guildIds).data;
+  const guildDocumentsQuery = useGuildTimersDocuments(guildIds);
+  const guildDocuments = guildDocumentsQuery.data;
+
+  const areGuildDocumentsReady =
+    guildIds.length === 0 || guildDocumentsQuery.isFetched;
 
   const importedRef = useRef(false);
   const seededAccountsRef = useRef<Set<string>>(new Set());
@@ -264,11 +268,14 @@ export const useSettingsHydration = () => {
   useEffect(() => {
     if (!documents.data || !areGuildsFetched || areGuildsFetching) return;
 
-    if (!importedRef.current) {
+    // The import decides per guild list whether the server already holds one,
+    // so it waits for the guild documents the same way it waits for the user's.
+    if (!importedRef.current && areGuildDocumentsReady) {
       importedRef.current = true;
 
       const plan = planSettingsImport({
         documents: documents.data,
+        guildDocuments,
         local: readLocalSnapshot(),
         done: readSettingsImportState().done,
         accessibleGuildIds: guildIds,
@@ -297,10 +304,12 @@ export const useSettingsHydration = () => {
     applyProjections(readCurrentSettingsDocuments() ?? documents.data);
   }, [
     accountId,
+    areGuildDocumentsReady,
     areGuildsFetched,
     areGuildsFetching,
     characterId,
     documents.data,
+    guildDocuments,
     guildIds,
   ]);
 

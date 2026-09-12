@@ -7,6 +7,7 @@ import {
   areSettingsValuesEqual,
   getSettingsDefaultValue,
   hasStoredSettingsValue,
+  type GuildSettingsDocuments,
   type SettingsDocuments,
 } from "./settings-documents";
 import type { EnqueueSettingsPatchInput } from "./settings-patch-client";
@@ -77,6 +78,8 @@ type ImportPlan = {
 
 type ImportContext = {
   documents: SettingsDocuments;
+  /** Guild timer documents of every accessible guild; required to import guild lists. */
+  guildDocuments: GuildSettingsDocuments | undefined;
   local: LocalSettingsSnapshot;
   done: SettingsImportState["done"];
   accessibleGuildIds: readonly string[];
@@ -101,7 +104,7 @@ const TIMER_APPEARANCE_FIELDS = [
 ] as const;
 
 const isImportable = (
-  documents: SettingsDocuments,
+  documents: SettingsDocuments | undefined,
   key: Parameters<typeof hasStoredSettingsValue>[1],
 ) => !hasStoredSettingsValue(documents, key);
 
@@ -175,15 +178,19 @@ const collectTimerAppearanceImport = (
 const collectGuildTimerListImports = (
   timers: ReturnType<typeof decodeTimerSettings>,
   accessibleGuildIds: readonly string[],
+  guildDocuments: GuildSettingsDocuments | undefined,
 ) => {
   const patches: EnqueueSettingsPatchInput[] = [];
 
   for (const field of ["hiddenTimers", "pinnedTimers"] as const) {
     for (const [guildId, list] of Object.entries(timers[field] ?? {})) {
+      // A guild list already stored on the server (by another browser or the
+      // legacy migration endpoint) wins over a stale local copy.
       if (
         guildId === GLOBAL_TIMER_SETTINGS_KEY ||
         list.length === 0 ||
-        !accessibleGuildIds.includes(guildId)
+        !accessibleGuildIds.includes(guildId) ||
+        !isImportable(guildDocuments?.guilds[guildId], `timers.${field}`)
       ) {
         continue;
       }
@@ -201,7 +208,7 @@ const collectGuildTimerListImports = (
 };
 
 const planTimersImport = (
-  { documents, local, accessibleGuildIds }: ImportContext,
+  { documents, guildDocuments, local, accessibleGuildIds }: ImportContext,
   plan: ImportPlan,
 ) => {
   const timers = decodeTimerSettings(local.timers);
@@ -211,7 +218,7 @@ const planTimersImport = (
   const behavior = collectTimerBehaviorImport(documents, timers);
   const appearance = collectTimerAppearanceImport(documents, timers);
   plan.patches.push(
-    ...collectGuildTimerListImports(timers, accessibleGuildIds),
+    ...collectGuildTimerListImports(timers, accessibleGuildIds, guildDocuments),
   );
 
   if (Object.keys(behavior).length > 0) {
