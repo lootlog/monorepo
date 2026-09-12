@@ -106,6 +106,18 @@ describe("settings resolver", () => {
     expect(isValid("TITAN")).toBe(false);
   });
 
+  it("defaults the timers layout to modern and accepts only the two layouts", () => {
+    const { defaultValue, isValid, scopes } =
+      SETTINGS_CATALOG.timers.fields.layout;
+
+    expect(defaultValue).toBe("modern");
+    expect(scopes).toEqual(["USER"]);
+    expect(isValid("legacy")).toBe(true);
+    expect(isValid("modern")).toBe(true);
+    expect(isValid("classic")).toBe(false);
+    expect(isValid(true)).toBe(false);
+  });
+
   it("keeps backfilled legacy preference shapes and rejects malformed ones", () => {
     const { gameData, notifications, controls } = SETTINGS_CATALOG;
 

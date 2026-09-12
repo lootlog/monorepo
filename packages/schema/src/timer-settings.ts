@@ -21,7 +21,66 @@ export interface TimersGeneralConfig {
   timersGrouping: boolean;
   timersUnderBag: boolean;
   countdownMode: "min" | "max";
+  /** Legacy layout only: hides the title bar, filters and footer. */
+  compactView: boolean;
 }
+
+export const TIMERS_LAYOUTS = ["legacy", "modern"] as const;
+
+export type TimersLayout = (typeof TIMERS_LAYOUTS)[number];
+
+export const DEFAULT_TIMERS_LAYOUT: TimersLayout = "modern";
+
+export const TIMERS_MODERN_FONT_SCALE_MIN_PERCENT = 70;
+
+export const TIMERS_MODERN_FONT_SCALE_MAX_PERCENT = 150;
+
+export const TIMERS_MODERN_GAP_MIN_PX = 0;
+
+export const TIMERS_MODERN_GAP_MAX_PX = 8;
+
+export const TIMERS_MODERN_MIN_COLUMN_WIDTH_MIN_PX = 60;
+
+export const TIMERS_MODERN_MIN_COLUMN_WIDTH_MAX_PX = 320;
+
+export type TimersModernAppearancePreset = "comfortable" | "compact" | "custom";
+
+/** Appearance of the modern timers layout; the legacy layout keeps `displayConfig`. */
+export interface TimersModernAppearanceSettings {
+  fontScalePercent: number;
+  gapPx: number;
+  minColumnWidth: number;
+  showHeader: boolean;
+  showFiltersBar: boolean;
+  showFooter: boolean;
+  showTypeBadge: boolean;
+  showLevel: boolean;
+  showProgress: boolean;
+}
+
+export const TIMERS_MODERN_COMFORTABLE_PRESET = {
+  fontScalePercent: 100,
+  gapPx: 4,
+  minColumnWidth: 140,
+  showHeader: true,
+  showFiltersBar: true,
+  showFooter: true,
+  showTypeBadge: true,
+  showLevel: true,
+  showProgress: true,
+} as const satisfies TimersModernAppearanceSettings;
+
+export const TIMERS_MODERN_COMPACT_PRESET = {
+  fontScalePercent: 90,
+  gapPx: 2,
+  minColumnWidth: 110,
+  showHeader: true,
+  showFiltersBar: false,
+  showFooter: false,
+  showTypeBadge: true,
+  showLevel: false,
+  showProgress: false,
+} as const satisfies TimersModernAppearanceSettings;
 
 export interface TimersDisplayConfig {
   showType: boolean;

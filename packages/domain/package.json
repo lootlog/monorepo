@@ -21,6 +21,7 @@
     "./scoring": "./src/scoring.ts",
     "./settings-documents": "./src/settings-documents.ts",
     "./settings-paths": "./src/settings-paths.ts",
+    "./timers-modern-appearance": "./src/timers-modern-appearance.ts",
     "./guild-preferences": "./src/guild-preferences.ts",
     "./guild-documents": "./src/guild-documents.ts"
   },

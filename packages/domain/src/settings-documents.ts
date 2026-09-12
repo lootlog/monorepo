@@ -12,6 +12,12 @@ import {
   isHexAppearanceColor,
 } from "@lootlog/schema/npc-appearance";
 import { NpcTypeSchema, type NpcTypeEnum } from "@lootlog/schema/npc-type";
+import {
+  DEFAULT_TIMERS_LAYOUT,
+  TIMERS_LAYOUTS,
+  TIMERS_MODERN_COMFORTABLE_PRESET,
+  type TimersModernAppearanceSettings,
+} from "@lootlog/schema/timer-settings";
 import type {
   AirTagPreferences,
   DetectorSettings,
@@ -296,6 +302,11 @@ export const SETTINGS_CATALOG = {
         guildScopes,
         isStringArray,
       ),
+      "timers.modern": field<TimersModernAppearanceSettings>(
+        TIMERS_MODERN_COMFORTABLE_PRESET,
+        userScopes,
+        isRecord,
+      ),
     },
   },
   chat: {
@@ -315,10 +326,12 @@ export const SETTINGS_CATALOG = {
           timersGrouping: false,
           timersUnderBag: false,
           countdownMode: "max",
+          compactView: false,
         },
         guildScopes,
         isRecord,
       ),
+      layout: field(DEFAULT_TIMERS_LAYOUT, userScopes, isOneOf(TIMERS_LAYOUTS)),
       alwaysVisibleExpiredTimers: field({}, guildScopes, isRecord),
       timerFiltersEnabled: field(true, guildScopes, isBoolean),
       colorFiltersEnabled: field(false, guildScopes, isBoolean),
