@@ -1,4 +1,5 @@
-import { SettingsControlRow } from "@/components/settings/settings-control-row";
+import { SettingsKeybindField } from "@/components/settings/settings-keybind-field";
+import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { useGameStore } from "@/store/game.store";
 import {
   HOTKEY_ACTIONS,
   HOTKEY_CATEGORY_KEYS,
-  formatBinding,
+  isDefaultBinding,
   useHotkeysStore,
   type HotkeyAction,
   type HotkeyActionConfig,
@@ -27,8 +28,6 @@ for (const config of HOTKEY_ACTIONS) {
 
 const categories = Array.from(groupedActions);
 
-const HOTKEY_CONTROL_CLASS_NAME = "ll:w-44";
-
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
   const { bindings, setBinding, resetBinding, resetAll } = useHotkeysStore();
@@ -38,6 +37,12 @@ export const HotkeysSettingsTab = () => {
   );
 
   const [captureError, setCaptureError] = useState<string | null>(null);
+
+  const [lastAssignment, setLastAssignment] = useState<{
+    action: HotkeyAction;
+    at: number;
+  } | null>(null);
+
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -51,6 +56,7 @@ export const HotkeysSettingsTab = () => {
       }
 
       setCaptureError(null);
+      setLastAssignment({ action: capturingAction, at: Date.now() });
       setCapturingAction(null);
     };
 
@@ -105,83 +111,71 @@ export const HotkeysSettingsTab = () => {
   }, [capturingAction, setBinding, t]);
 
   return (
-    <SettingsTabLayout
-      title={t("settings.hotkeys.title")}
-      description={t("settings.hotkeys.description")}
-    >
-      <div className="ll:flex ll:flex-col ll:gap-4">
-        {categories.map(([category, actions]) => (
-          <SettingsSection
-            key={category}
-            title={t(HOTKEY_CATEGORY_KEYS[category])}
-          >
-            {actions.map((config) => {
-              if (config.action === "map-ping" && gameInterface !== "ni") {
-                return null;
-              }
+    <SettingsTabLayout>
+      {categories.map(([category, actions], index) => (
+        <SettingsSection
+          key={category}
+          controlId={index === 0 ? "hotkeys" : undefined}
+          title={t(HOTKEY_CATEGORY_KEYS[category])}
+        >
+          {actions.map((config) => {
+            if (config.action === "map-ping" && gameInterface !== "ni") {
+              return null;
+            }
 
-              const binding = bindings[config.action];
-              const isCapturing = capturingAction === config.action;
+            const binding = bindings[config.action];
+            const isCapturing = capturingAction === config.action;
+            const actionLabel = t(config.labelKey);
+            const error = isCapturing ? captureError : null;
 
-              return (
-                <SettingsControlRow
-                  key={config.action}
-                  label={t(config.labelKey)}
-                  description={t(config.descriptionKey)}
-                  controlClassName={HOTKEY_CONTROL_CLASS_NAME}
-                >
-                  <div className="ll:flex ll:w-full ll:items-center ll:justify-end ll:gap-1.5">
-                    <Button
-                      className={`ll:min-w-0 ll:flex-1 ll:px-2 ll:text-[10px] ${
-                        isCapturing
-                          ? "ll:border-blue-400 ll:bg-blue-400/10 ll:text-blue-400 ll:hover:bg-blue-400/20"
-                          : ""
-                      }`}
-                      onClick={() => {
-                        setCaptureError(null);
-                        setCapturingAction(isCapturing ? null : config.action);
-                      }}
-                      type="button"
-                    >
-                      {isCapturing
-                        ? t("settings.hotkeys.capture")
-                        : formatBinding(binding)}
-                    </Button>
-                    <Button
-                      className="ll:px-2 ll:text-[10px]"
-                      onClick={() => resetBinding(config.action)}
-                      type="button"
-                      variant="ghost"
-                    >
-                      {t("common:actions.reset")}
-                    </Button>
-                  </div>
-                  {isCapturing && captureError ? (
-                    <p className="ll:text-[10px] ll:text-red-400">
-                      {captureError}
-                    </p>
-                  ) : null}
-                </SettingsControlRow>
-              );
-            })}
-          </SettingsSection>
-        ))}
-        <SettingsSection title={t("settings.hotkeys.resetTitle")}>
-          <SettingsControlRow
-            label={t("settings.hotkeys.restoreDefaultsLabel")}
-            description={t("settings.hotkeys.restoreDefaultsDescription")}
-            controlClassName="ll:w-28"
-          >
-            <Button
-              onClick={resetAll}
-              className="ll:w-full ll:px-2"
-              type="button"
-            >
-              {t("settings.hotkeys.restoreButton")}
-            </Button>
-          </SettingsControlRow>
+            return (
+              <SettingsRow
+                key={config.action}
+                label={actionLabel}
+                description={
+                  error ? (
+                    <span className="ll:text-destructive">{error}</span>
+                  ) : config.descriptionKey ? (
+                    t(config.descriptionKey)
+                  ) : undefined
+                }
+                control="wide"
+              >
+                <SettingsKeybindField
+                  binding={binding}
+                  capturing={isCapturing}
+                  captureLabel={t("settings.hotkeys.capture")}
+                  label={t("settings.hotkeys.changeLabel", {
+                    action: actionLabel,
+                  })}
+                  modified={!isDefaultBinding(config.action, binding)}
+                  resetLabel={t("common:actions.reset")}
+                  assignedAt={
+                    lastAssignment?.action === config.action
+                      ? lastAssignment.at
+                      : undefined
+                  }
+                  onCaptureToggle={() => {
+                    setCaptureError(null);
+                    setCapturingAction(isCapturing ? null : config.action);
+                  }}
+                  onReset={() => resetBinding(config.action)}
+                />
+              </SettingsRow>
+            );
+          })}
         </SettingsSection>
-      </div>
+      ))}
+      <SettingsSection title={t("settings.hotkeys.restoreDefaultsTitle")}>
+        <SettingsRow
+          label={t("settings.hotkeys.restoreDefaultsLabel")}
+          description={t("settings.hotkeys.restoreDefaultsDescription")}
+        >
+          <Button variant="outline" size="sm" onClick={resetAll} type="button">
+            {t("common:actions.restore")}
+          </Button>
+        </SettingsRow>
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };

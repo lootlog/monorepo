@@ -80,6 +80,7 @@ export function ChatOwnGatheringBar({
           {participationButton}
           <ChatGatheringMenu side="top">
             <Button
+              size="xs"
               variant="menu"
               className="ll:w-full ll:justify-start ll:gap-2"
               onClick={() => setOpen("party-finder", true)}
@@ -88,6 +89,7 @@ export function ChatOwnGatheringBar({
               {t("gatherings.manage")}
             </Button>
             <Button
+              size="xs"
               variant="menu"
               className="ll:mt-1 ll:w-full ll:justify-start ll:gap-2 ll:text-red-400"
               aria-label={actionLabel}

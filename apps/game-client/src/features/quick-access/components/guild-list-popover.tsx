@@ -48,7 +48,11 @@ export const GuildListPopover = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <Button className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6">
+            <Button
+              variant="secondary"
+              size="xs"
+              className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
+            >
               <SquareArrowOutUpRight size="16" />
             </Button>
           </PopoverTrigger>
@@ -69,6 +73,7 @@ export const GuildListPopover = () => {
         ) : (
           <div className="ll:space-y-0">
             <Button
+              size="xs"
               variant="menu"
               className="ll:w-full ll:justify-between ll:h-auto"
               onClick={handleDashboardClick}
@@ -78,7 +83,7 @@ export const GuildListPopover = () => {
             </Button>
 
             {guilds && guilds.length > 0 && (
-              <div className="ll:border-0 ll:border-t ll:border-solid ll:border-gray-400/40" />
+              <div className="ll:border-0 ll:border-t ll:border-gray-400/40" />
             )}
 
             {guilds && guilds.length > 0 ? (
@@ -88,6 +93,7 @@ export const GuildListPopover = () => {
                 <div className="ll:space-y-0">
                   {guilds.map((guild) => (
                     <Button
+                      size="xs"
                       variant="menu"
                       key={guild.id}
                       className="ll:w-full ll:justify-between ll:h-auto"

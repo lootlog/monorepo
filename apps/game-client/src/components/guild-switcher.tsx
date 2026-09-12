@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AvatarFallback } from "@/components/ui/avatar";
-import { type FC, useEffect, useRef } from "react";
+import { type FC, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
@@ -141,10 +141,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   );
 
   const hiddenGuildIds = userPreferences?.hiddenGuildIds;
-  const latestHiddenGuildIds = useRef(hiddenGuildIds ?? []);
-  useEffect(() => {
-    latestHiddenGuildIds.current = hiddenGuildIds ?? [];
-  }, [hiddenGuildIds]);
   useEffect(() => {
     if (!isFetched || !arePreferencesFetched || visibleGuilds.length === 0)
       return;
@@ -206,27 +202,27 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   };
 
   const hideGuild = (guildIdToHide: string, guildName: string) => {
-    const confirmedHiddenGuildIds = hiddenGuildIds ?? [];
-
-    if (confirmedHiddenGuildIds.includes(guildIdToHide)) {
+    if (hiddenGuildIds?.includes(guildIdToHide)) {
       return;
     }
 
-    updatePreferences.mutate(
-      {
-        hiddenGuildIds: [...confirmedHiddenGuildIds, guildIdToHide],
-      },
+    // Both writes derive from the cache at the moment they run, so a hide
+    // followed by a quick undo, or two hides in a row, never drop each other.
+    updatePreferences.mutateFromCurrent(
+      (current) => ({
+        hiddenGuildIds: [...(current?.hiddenGuildIds ?? []), guildIdToHide],
+      }),
       {
         onSuccess: () => {
           toast.success(t("guildSwitcher.hidden", { name: guildName }), {
             action: {
               label: t("actions.undo"),
               onClick: () =>
-                updatePreferences.mutate({
-                  hiddenGuildIds: latestHiddenGuildIds.current.filter(
+                updatePreferences.mutateFromCurrent((current) => ({
+                  hiddenGuildIds: (current?.hiddenGuildIds ?? []).filter(
                     (hiddenGuildId) => hiddenGuildId !== guildIdToHide,
                   ),
-                }),
+                })),
             },
           });
         },
@@ -248,7 +244,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
       <TooltipProvider>
         <div
           className={cn(
-            "ll:mt-1 ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:box-border ll:rounded-sm ll:border ll:border-gray-700/90 ll:bg-gray-900/60 ll:pl-2 ll:pr-0.5",
+            "ll:mt-1 ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:rounded-sm ll:border ll:border-gray-700/90 ll:bg-gray-900/60 ll:pl-2 ll:pr-0.5",
             className,
           )}
           role="status"
@@ -259,12 +255,13 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                size="xs"
                 type="button"
                 variant="ghost"
                 aria-label={t("actions.openSettings")}
                 onClick={() =>
                   setOpen("settings", true, {
-                    activeTab: "servers",
+                    activeTab: "general",
                     activeSubsection: "visibility",
                   })
                 }

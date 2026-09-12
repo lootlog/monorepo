@@ -82,6 +82,8 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
               <Tooltip key={guild.id}>
                 <TooltipTrigger asChild>
                   <Button
+                    variant="secondary"
+                    size="xs"
                     type="button"
                     onClick={() => handleToggle(guild.id)}
                     disabled={disabled}

@@ -1,4 +1,8 @@
 import { act } from "@testing-library/react";
+import {
+  createSettingsDocuments,
+  readSeededSettingsDocuments,
+} from "./settings-documents-fixtures";
 import { QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { onTestFinished, vi } from "vitest";
@@ -89,7 +93,10 @@ export const createRealtimeTest = () => {
 
     if (url.pathname === "/sound-settings") return Response.json(soundSettings);
 
-    if (url.pathname === "/preferences") return Response.json({ domains: {} });
+    if (url.pathname === "/preferences")
+      return Response.json(
+        readSeededSettingsDocuments(queryClient) ?? createSettingsDocuments(),
+      );
 
     if (url.pathname.endsWith("/members/summary")) return Response.json([]);
 

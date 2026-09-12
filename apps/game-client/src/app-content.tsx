@@ -15,7 +15,6 @@ import { QuickAccess } from "@/features/quick-access/quick-access";
 import { Settings } from "@/features/settings/settings";
 import { Timers } from "@/features/timers/timers";
 import { Toaster } from "@lootlog/ui/components/sonner";
-import { useGameAccountPreferencesSync } from "@/hooks/use-game-account-preferences-sync";
 import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handlers";
 import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
@@ -27,15 +26,14 @@ import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
 import { usePartyReadyRoomSocket } from "@/features/party-finder/hooks/use-party-ready-room-socket";
 import { usePartyReadyRoomSync } from "@/features/party-finder/hooks/use-party-ready-room-sync";
-import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
-import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
+import { useSettingsHydration } from "@/features/settings/persistence/use-settings-hydration";
 import { useSelectedLootlogGuildInitialization } from "@/hooks/use-selected-lootlog-guild";
 
 export const AppContent = () => {
   useGameEventHandlers();
   useInit();
   useSelectedLootlogGuildInitialization();
-  useGameAccountPreferencesSync();
+  useSettingsHydration();
   const mapPingHotkeyHandlers = useMapPings();
   useAirTags();
   const { sendHelp, sendPosition } = useChatQuickActions();
@@ -44,14 +42,11 @@ export const AppContent = () => {
     onChatHelp: () => void sendHelp(),
     onChatPosition: () => void sendPosition(),
   });
-  useTimerSettingsMutationsRegistry();
   usePartyGatheringSocket();
   usePartyReadyRoomSocket();
   usePartyReadyRoomSync();
   usePartyReadyRoomExpiry();
   usePartyReadyRoomObserver();
-
-  const { ConflictDialog } = useTimerSettingsSync();
 
   const gameInitialized = useGlobalStore((state) =>
     Boolean(state.gameState.gameInitialized),
@@ -79,7 +74,6 @@ export const AppContent = () => {
       <PartyFinder />
       <CreatePartyGathering />
       <MapPingWheel />
-      {ConflictDialog}
     </>
   );
 };

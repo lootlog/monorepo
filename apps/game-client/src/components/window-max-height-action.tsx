@@ -25,6 +25,7 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          size="xs"
           variant="ghost"
           aria-label={t("windowAutoHeight.maxHeightAria", {
             height: currentMaxHeight,

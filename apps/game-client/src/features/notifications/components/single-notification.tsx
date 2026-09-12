@@ -102,13 +102,7 @@ const renderLeadingVisual = (
   }
 
   if (isRegularNotification(notification) && notification.npc) {
-    return (
-      <NpcTile
-        npc={notification.npc}
-        className="ll:w-auto ll:max-w-7 ll:max-h-10 ll:object-contain"
-        containerClassName="ll:w-7 ll:h-10 ll:shrink-0"
-      />
-    );
+    return <NpcTile npc={notification.npc} />;
   }
 
   return (
@@ -405,6 +399,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
@@ -427,6 +422,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   aria-label={t("actions.joinAria")}
                   className="ll:size-7 ll:px-0"
@@ -459,6 +455,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="destructive"
                   aria-label={t("actions.closeAria")}
                   className="ll:size-7 ll:px-0"

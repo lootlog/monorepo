@@ -209,10 +209,7 @@ export const NpcsList: FC<NpcsListProps> = ({
   );
 
   return (
-    <ScrollArea
-      ref={scrollViewportRef}
-      className="ll:w-full ll:box-border ll:h-full"
-    >
+    <ScrollArea ref={scrollViewportRef} className="ll:w-full ll:h-full">
       <ul
         ref={listContentRef}
         className="ll:relative ll:w-full ll:m-0 ll:p-0 ll:list-none"

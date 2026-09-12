@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Vite replaces these values at compilation, so stubEnv cannot exercise missing build metadata.
@@ -9,7 +10,8 @@ const { buildMetadata, buildTimestamp, commitSha } = vi.hoisted(() => ({
 }));
 
 // eslint-disable-next-line anti-slop/no-module-mocking -- Vite hard-defines these build metadata literals before execution; stubEnv cannot vary the missing-SHA boundary.
-vi.mock("@/config/app", () => ({
+vi.mock(import("@/config/app"), async (importOriginal) => ({
+  ...(await importOriginal()),
   APP_ENVIRONMENT: "production",
   BUILD_TIMESTAMP: buildTimestamp,
   get COMMIT_SHA() {
@@ -34,9 +36,6 @@ describe("InformationSettingsTab", () => {
       timeZone: "UTC",
     }).format(new Date(buildTimestamp));
 
-    expect(
-      screen.getByRole("heading", { name: "Informacje o kliencie" }),
-    ).toBeInTheDocument();
     expect(screen.getByText("Wersja klienta")).toBeInTheDocument();
     expect(screen.getByText("1.0.1")).toBeInTheDocument();
     expect(screen.getByText("Commit SHA")).toBeInTheDocument();
@@ -47,11 +46,23 @@ describe("InformationSettingsTab", () => {
     expect(screen.getByText(formattedBuildTimestamp)).toBeInTheDocument();
   });
 
-  it("shows a fallback when commit sha is unavailable", () => {
+  it("shows a fallback without a copy action when commit sha is unavailable", () => {
     buildMetadata.commitSha = "";
 
     render(<InformationSettingsTab />);
 
     expect(screen.getByText("Brak danych")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Kopiuj Commit SHA" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("copies the commit sha to the clipboard", async () => {
+    const user = userEvent.setup();
+    render(<InformationSettingsTab />);
+
+    await user.click(screen.getByRole("button", { name: "Kopiuj Commit SHA" }));
+
+    expect(await navigator.clipboard.readText()).toBe(commitSha);
   });
 });

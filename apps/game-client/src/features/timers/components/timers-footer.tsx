@@ -37,7 +37,7 @@ export const TimersFooter: FC<TimersFooterProps> = ({
   const { t } = useTranslation("timers");
 
   return (
-    <div className="ll:flex ll:items-center ll:pt-1 ll:pb-0.5 ll:px-1 ll:h-6 ll:w-full ll:box-border ll:relative">
+    <div className="ll:flex ll:items-center ll:pt-1 ll:pb-0.5 ll:px-1 ll:h-6 ll:w-full ll:relative">
       <TimersColorStatistics colorStatistics={colorStatistics} />
       <TimersConnectionStatus />
       {!isGrouping && guildId && world && (
@@ -48,6 +48,8 @@ export const TimersFooter: FC<TimersFooterProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            variant="secondary"
+            size="xs"
             type="button"
             className="ll:text-[12px] ll:border ll:border-gray-400 ll:px-4 ll-custom-cursor-pointer ll:mx-auto"
             onClick={onAddTimer}

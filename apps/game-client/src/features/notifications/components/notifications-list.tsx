@@ -5,8 +5,10 @@ import {
   getNotificationSettingsKey,
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
-import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
-import { useCurrentUserNotificationMutes } from "@/hooks/use-current-user-notification-mutes";
+import {
+  useCurrentUserNotificationMutes,
+  useUpdateNotificationMutes,
+} from "@/features/settings/persistence/use-notification-mutes";
 import {
   buildCurrentCharacterPayload,
   getGuildNamesById,
@@ -72,7 +74,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const manualRemovalTimeoutsRef = useRef(new Map<string, number>());
   const membersByGuildId = useNotificationGuildMembers(visibleNotifications);
   const { isReady: isMutesReady, mutes } = useCurrentUserNotificationMutes();
-  const updateUserPreferences = useUpdateUserPreferences();
+  const updateNotificationMutes = useUpdateNotificationMutes();
   const applyToReadyRoom = usePartyReadyRoomControllerApply();
 
   const mergeReadyRoomProjection = usePartyFinderStore(
@@ -161,7 +163,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   );
 
   const handleUpdateMutes = (mutesPatch: NotificationMutesPatch) => {
-    updateUserPreferences.mutate({ mutes: mutesPatch });
+    updateNotificationMutes.mutate(mutesPatch);
   };
 
   const handleJoinReadyRoom = (notification: StoredNotification) => {
@@ -242,7 +244,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         animationEffectsEnabled={animationEffectsEnabled}
         isJoiningReadyRoom={applyToReadyRoom.isPending}
         isMutesReady={isMutesReady}
-        isMutePending={updateUserPreferences.isPending}
+        isMutePending={updateNotificationMutes.isPending}
         mutes={mutes}
         onJoinReadyRoom={handleJoinReadyRoom}
         onPauseAutoHide={pauseNotificationAutoHide}
@@ -257,7 +259,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   return (
     <ScrollArea
       ref={scrollViewportRef}
-      className="ll:h-full ll:max-h-[inherit] ll:w-full ll:box-border"
+      className="ll:h-full ll:max-h-[inherit] ll:w-full"
     >
       <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
         {renderedNotifications.map((notification) => {

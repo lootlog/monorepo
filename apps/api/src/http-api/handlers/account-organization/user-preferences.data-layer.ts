@@ -1,7 +1,22 @@
 /* oxlint-disable eslint/complexity -- preference migrations intentionally normalize every optional legacy field at one boundary. */
 import { isRecord, isObjectRecord } from "@lootlog/schema/records";
-import { and, eq } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import {
+  cloneDetector,
+  cloneMutes,
+  cloneNotifications,
+  normalizeAirTags,
+  normalizeDetector,
+  normalizeDetectorType,
+  normalizeGuildIds,
+  normalizeMutedNpcs,
+  normalizeMutedPlayers,
+  normalizeNotification,
+  normalizeNotifications,
+  normalizePings,
+  normalizeRoutingRules,
+} from "@lootlog/domain/account-preferences";
+import { eq } from "drizzle-orm";
+import { Clock, Effect, type Schema } from "effect";
 import {
   mergeChatAppearanceSettings,
   normalizeChatAppearanceSettings,
@@ -10,22 +25,11 @@ import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance
 import {
   DETECTOR_NPC_TYPES,
   NOTIFICATION_TYPES,
-  defaultAirTagPreferences,
-  defaultDetectorSettings,
-  defaultMapPingPreferences,
-  defaultNotificationsSettings,
-  type AirTagPreferences,
-  type DetectorRoutingRule,
-  type DetectorSettings,
-  type DetectorTypeSettings,
-  type MapPingPreferences,
   type NotificationSettings,
-  type NotificationsSettings,
+  type NotificationType,
   type UserGameAccountPreferences,
 } from "@lootlog/schema/account-preferences";
 import type {
-  MutedNpcPreference,
-  MutedPlayerPreference,
   NotificationMutes,
   UserPreferences,
 } from "@lootlog/schema/user-preferences";
@@ -36,96 +40,36 @@ import {
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  userGameAccountSettingsTable,
-  userSettingDocumentTable,
-  userSettingsTable,
-} from "#src/database/drizzle/schema";
-import { applySettingsPatch } from "#src/settings-documents/settings-resolver";
+import { userSettingsTable } from "#src/database/drizzle/schema";
+import type {
+  SettingsDocuments,
+  SettingsDocumentsResponse,
+} from "#src/settings-documents/settings-documents.service";
+import type {
+  PatchSettingsDocuments,
+  SettingsDomainResolution,
+} from "@lootlog/schema/settings-documents";
 import type {
   UpdateUserGameAccountPreferencesRequest,
   UpdateUserPreferencesRequest,
 } from "#src/contracts/users/schemas";
 import { AccountOrganizationOperationError } from "./account-organization.operations.js";
 
-const GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID = "__global-notification-mutes__";
+type JsonValue = typeof Schema.Json.Type;
 
-const DETECTOR_LEVEL_MIN = 0;
+type SettingsOperation = PatchSettingsDocuments["operations"][number];
 
-const DETECTOR_LEVEL_MAX = 500;
+const toJson = <TValue extends object>(value: TValue): JsonValue =>
+  // SAFETY: every caller passes a normalized preference record built from plain
+  // JSON-compatible values, so the structured clone is a JSON object.
+  structuredClone(value) as JsonValue;
 
-const cloneMutes = (
-  mutes: NotificationMutes = { players: [], npcs: [] },
-): NotificationMutes => ({
-  players: (mutes.players ?? []).map((player) => ({ ...player })),
-  npcs: (mutes.npcs ?? []).map((npc) => ({ ...npc })),
-});
-
-const normalizeMutedPlayers = (players: unknown): MutedPlayerPreference[] => {
-  if (!Array.isArray(players)) return [];
-  const values = new Map<string, MutedPlayerPreference>();
-
-  for (const player of players) {
-    if (
-      !isObjectRecord(player) ||
-      typeof player.discordId !== "string" ||
-      player.discordId.length === 0
-    ) {
-      continue;
-    }
-
-    values.set(player.discordId, {
-      discordId: player.discordId,
-      displayName:
-        typeof player.displayName === "string" ? player.displayName : "",
-    });
-  }
-
-  return [...values.values()];
-};
-
-const normalizeMutedNpcs = (npcs: unknown): MutedNpcPreference[] => {
-  if (!Array.isArray(npcs)) return [];
-  const values = new Map<string, MutedNpcPreference>();
-
-  for (const npc of npcs) {
-    if (!isObjectRecord(npc)) continue;
-    const npcType = DETECTOR_NPC_TYPES.find((type) => type === npc.npcType);
-
-    if (
-      typeof npc.npcKey !== "string" ||
-      npc.npcKey.length === 0 ||
-      typeof npc.name !== "string" ||
-      npc.name.length === 0 ||
-      typeof npc.npcId !== "number" ||
-      !Number.isInteger(npc.npcId) ||
-      npcType === undefined ||
-      typeof npc.lvl !== "number" ||
-      Number.isNaN(npc.lvl)
-    ) {
-      continue;
-    }
-
-    values.set(npc.npcKey, {
-      npcKey: npc.npcKey,
-      npcId: npc.npcId,
-      name: npc.name,
-      npcType,
-      lvl: Math.max(1, Math.trunc(npc.lvl)),
-      prof: typeof npc.prof === "string" ? npc.prof : null,
-      icon: typeof npc.icon === "string" ? npc.icon : null,
-    });
-  }
-
-  return [...values.values()];
-};
-
-const storedMutes = (settings: unknown): NotificationMutes => {
-  if (!isRecord(settings)) {
-    return cloneMutes();
-  }
-
-  const mutes = isObjectRecord(settings.mutes) ? settings.mutes : undefined;
+const storedMutes = (
+  notifications: SettingsDomainResolution | undefined,
+): NotificationMutes => {
+  const mutes = isObjectRecord(notifications?.effective.mutes)
+    ? notifications.effective.mutes
+    : undefined;
 
   return {
     players: normalizeMutedPlayers(mutes?.players),
@@ -165,232 +109,60 @@ const response = (
   mutes: cloneMutes(mutes),
 });
 
-// Storage documents preserve fields from other preference versions during patching.
-type StoredGamePreferences = Record<string, unknown>;
+type StoredGamePreferences = {
+  notifications?: unknown;
+  detector?: unknown;
+  pings?: unknown;
+  airTags?: unknown;
+};
 
+const hasStoredSource = (
+  resolution: SettingsDomainResolution | undefined,
+  path: string,
+) => {
+  const source = resolution?.sources[path];
+
+  return source !== undefined && source !== "DEFAULT";
+};
+
+// Only values with a stored layer count as present; catalog defaults stay "unset".
 const storedGamePreferences = (
-  settings: unknown,
-): StoredGamePreferences | null => (isRecord(settings) ? settings : null);
+  documents: SettingsDocumentsResponse,
+): StoredGamePreferences => {
+  const gameData = documents.domains.gameData;
+  const notifications = documents.domains.notifications;
+  const stored: StoredGamePreferences = {};
 
-const cloneNotifications = (
-  settings: NotificationsSettings,
-): NotificationsSettings => {
-  const copy = { ...settings };
+  if (hasStoredSource(notifications, "presentation"))
+    stored.notifications = notifications?.effective.presentation;
 
-  for (const type of NOTIFICATION_TYPES) {
-    copy[type] = { ...settings[type], guildIds: [...settings[type].guildIds] };
-  }
+  if (hasStoredSource(gameData, "detector"))
+    stored.detector = gameData?.effective.detector;
 
-  return copy;
-};
+  if (hasStoredSource(gameData, "pings"))
+    stored.pings = gameData?.effective.pings;
 
-const normalizeNotification = (
-  raw: unknown,
-  fallback: NotificationSettings,
-): NotificationSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
+  if (hasStoredSource(gameData, "airTags"))
+    stored.airTags = gameData?.effective.airTags;
 
-  return {
-    show: typeof settings?.show === "boolean" ? settings.show : fallback.show,
-    highlight:
-      typeof settings?.highlight === "boolean"
-        ? settings.highlight
-        : fallback.highlight,
-    ignoreOtherWorlds:
-      typeof settings?.ignoreOtherWorlds === "boolean"
-        ? settings.ignoreOtherWorlds
-        : fallback.ignoreOtherWorlds,
-    autoHideTimeout:
-      typeof settings?.autoHideTimeout === "number" &&
-      settings.autoHideTimeout >= 0
-        ? settings.autoHideTimeout
-        : fallback.autoHideTimeout,
-    guildIds: Array.isArray(settings?.guildIds)
-      ? settings.guildIds.filter(
-          (guildId): guildId is string => typeof guildId === "string",
-        )
-      : [...fallback.guildIds],
-    sound:
-      typeof settings?.sound === "boolean" ? settings.sound : fallback.sound,
-  };
-};
-
-const normalizeNotifications = (raw: unknown): NotificationsSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-  const normalized = cloneNotifications(defaultNotificationsSettings);
-
-  for (const type of NOTIFICATION_TYPES) {
-    normalized[type] = normalizeNotification(
-      settings?.[type],
-      settings?.[type] === undefined
-        ? defaultNotificationsSettings[type]
-        : { ...defaultNotificationsSettings[type], ignoreOtherWorlds: false },
-    );
-  }
-
-  return normalized;
-};
-
-const normalizeDetectorType = (
-  raw: unknown,
-  fallback: DetectorTypeSettings,
-): DetectorTypeSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    detect:
-      typeof settings?.detect === "boolean" ? settings.detect : fallback.detect,
-    autoSend:
-      typeof settings?.autoSend === "boolean"
-        ? settings.autoSend
-        : fallback.autoSend,
-    notifyWindow:
-      typeof settings?.notifyWindow === "boolean"
-        ? settings.notifyWindow
-        : fallback.notifyWindow,
-    highlight:
-      typeof settings?.highlight === "boolean"
-        ? settings.highlight
-        : fallback.highlight,
-    notifySound:
-      typeof settings?.notifySound === "boolean"
-        ? settings.notifySound
-        : fallback.notifySound,
-  };
-};
-
-const normalizeRoutingRules = (
-  rules: ReadonlyArray<unknown>,
-): DetectorRoutingRule[] => {
-  const result: DetectorRoutingRule[] = [];
-
-  for (const [index, rule] of rules.entries()) {
-    if (!isObjectRecord(rule)) continue;
-
-    const rawMin =
-      typeof rule.minLevel === "number" ? Math.trunc(rule.minLevel) : null;
-
-    const rawMax =
-      typeof rule.maxLevel === "number" ? Math.trunc(rule.maxLevel) : null;
-
-    if (
-      rawMin === null ||
-      rawMax === null ||
-      Number.isNaN(rawMin) ||
-      Number.isNaN(rawMax)
-    ) {
-      continue;
-    }
-
-    const boundedMin = Math.min(
-      DETECTOR_LEVEL_MAX,
-      Math.max(DETECTOR_LEVEL_MIN, rawMin),
-    );
-
-    const boundedMax = Math.min(
-      DETECTOR_LEVEL_MAX,
-      Math.max(DETECTOR_LEVEL_MIN, rawMax),
-    );
-
-    const name = typeof rule.name === "string" ? rule.name.trim() : undefined;
-
-    const world =
-      typeof rule.world === "string" ? rule.world.trim() : undefined;
-
-    const normalizedRule: DetectorRoutingRule = {
-      id:
-        typeof rule.id === "string" && rule.id.length > 0
-          ? rule.id
-          : `rule-${index + 1}`,
-      minLevel: Math.min(boundedMin, boundedMax),
-      maxLevel: Math.max(boundedMin, boundedMax),
-      guildIds: Array.isArray(rule.guildIds)
-        ? rule.guildIds.filter(
-            (guildId): guildId is string => typeof guildId === "string",
-          )
-        : [],
-    };
-
-    if (name) normalizedRule.name = name;
-
-    if (world) normalizedRule.world = world;
-    result.push(normalizedRule);
-  }
-
-  return result;
-};
-
-const cloneDetector = (settings: DetectorSettings): DetectorSettings => {
-  const copy = {
-    ...settings,
-    routingRules: settings.routingRules.map((rule) => ({
-      ...rule,
-      guildIds: [...rule.guildIds],
-    })),
-  };
-
-  for (const type of DETECTOR_NPC_TYPES) copy[type] = { ...settings[type] };
-
-  return copy;
-};
-
-const normalizeDetector = (raw: unknown): DetectorSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-  const normalized = cloneDetector(defaultDetectorSettings);
-  normalized.routingRules = Array.isArray(settings?.routingRules)
-    ? normalizeRoutingRules(settings.routingRules)
-    : defaultDetectorSettings.routingRules.map((rule) => ({
-        ...rule,
-        guildIds: [...rule.guildIds],
-      }));
-
-  for (const type of DETECTOR_NPC_TYPES) {
-    normalized[type] = normalizeDetectorType(
-      settings?.[type],
-      defaultDetectorSettings[type],
-    );
-  }
-
-  return normalized;
-};
-
-const normalizePings = (raw: unknown): MapPingPreferences => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    enabled:
-      typeof settings?.enabled === "boolean"
-        ? settings.enabled
-        : defaultMapPingPreferences.enabled,
-  };
-};
-
-const normalizeAirTags = (raw: unknown): AirTagPreferences => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    enabled:
-      typeof settings?.enabled === "boolean"
-        ? settings.enabled
-        : defaultAirTagPreferences.enabled,
-  };
+  return stored;
 };
 
 const gamePreferencesResponse = (
   accountId: string,
-  stored: StoredGamePreferences | null,
+  stored: StoredGamePreferences,
 ): UserGameAccountPreferences => {
-  const hasStoredNotifications = stored?.notifications !== undefined;
-  const hasStoredDetector = stored?.detector !== undefined;
-  const hasStoredPings = stored?.pings !== undefined;
-  const hasStoredAirTags = stored?.airTags !== undefined;
+  const hasStoredNotifications = stored.notifications !== undefined;
+  const hasStoredDetector = stored.detector !== undefined;
+  const hasStoredPings = stored.pings !== undefined;
+  const hasStoredAirTags = stored.airTags !== undefined;
 
   return {
     accountId,
-    notifications: normalizeNotifications(stored?.notifications),
-    detector: normalizeDetector(stored?.detector),
-    pings: normalizePings(stored?.pings),
-    airTags: normalizeAirTags(stored?.airTags),
+    notifications: normalizeNotifications(stored.notifications),
+    detector: normalizeDetector(stored.detector),
+    pings: normalizePings(stored.pings),
+    airTags: normalizeAirTags(stored.airTags),
     hasStoredNotifications,
     hasStoredDetector,
     hasStoredPings,
@@ -403,8 +175,52 @@ const gamePreferencesResponse = (
   };
 };
 
+type LegacyNotificationSettings = NotificationSettings & { guildIds: string[] };
+
+/**
+ * Deployed Game clients read the server list from every notification type, so
+ * the legacy route mirrors the shared list into each type until they update.
+ */
+const withLegacyTypeGuildIds = (value: UserGameAccountPreferences) => {
+  const { notifications } = value;
+
+  const mirror = (type: NotificationType): LegacyNotificationSettings => ({
+    ...notifications[type],
+    guildIds: [...notifications.guildIds],
+  });
+
+  return {
+    ...value,
+    notifications: {
+      guildIds: [...notifications.guildIds],
+      ELITE2: mirror("ELITE2"),
+      HERO: mirror("HERO"),
+      COLOSSUS: mirror("COLOSSUS"),
+      TITAN: mirror("TITAN"),
+      message: mirror("message"),
+      "party-gathering": mirror("party-gathering"),
+    },
+  };
+};
+
+/** Per-type lists sent by deployed Game clients; folded into the shared list. */
+const legacyTypeGuildIds = (
+  notifications: UpdateUserGameAccountPreferencesRequest["notifications"],
+) => {
+  const lists = NOTIFICATION_TYPES.flatMap(
+    (type) => notifications?.[type]?.guildIds ?? [],
+  );
+
+  const present = NOTIFICATION_TYPES.some(
+    (type) => notifications?.[type]?.guildIds !== undefined,
+  );
+
+  return present ? [...new Set(lists)] : undefined;
+};
+
 const readPreferences = (
   database: typeof ApiDatabase.Service,
+  settingsDocuments: SettingsDocuments,
   userId: string,
 ) =>
   Effect.all(
@@ -415,39 +231,22 @@ const readPreferences = (
         .where(eq(userSettingsTable.userId, userId))
         .limit(1)
         .pipe(Effect.map((rows) => rows[0] ?? null)),
-      mutes: database
-        .select({ settings: userGameAccountSettingsTable.settings })
-        .from(userGameAccountSettingsTable)
-        .where(
-          and(
-            eq(userGameAccountSettingsTable.userId, userId),
-            eq(
-              userGameAccountSettingsTable.accountId,
-              GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-            ),
-          ),
-        )
-        .limit(1)
-        .pipe(Effect.map((rows) => storedMutes(rows[0]?.settings))),
-      appearance: database
-        .select({ overrides: userSettingDocumentTable.overrides })
-        .from(userSettingDocumentTable)
-        .where(
-          and(
-            eq(userSettingDocumentTable.userId, userId),
-            eq(userSettingDocumentTable.domain, "appearance"),
-            eq(userSettingDocumentTable.scopeType, "USER"),
-            eq(userSettingDocumentTable.scopeId, userId),
-          ),
-        )
-        .limit(1)
-        .pipe(Effect.map((rows) => rows[0]?.overrides)),
+      documents: settingsDocuments.getPreferences(userId, {
+        domains: ["appearance", "notifications"],
+      }),
     },
     { concurrency: "unbounded" },
+  ).pipe(
+    Effect.map(({ settings, documents }) => ({
+      settings,
+      mutes: storedMutes(documents.domains.notifications),
+      appearance: documents.domains.appearance?.effective,
+    })),
   );
 
 export const makeUserPreferencesData = (
   database: typeof ApiDatabase.Service,
+  settingsDocuments: SettingsDocuments,
 ) => {
   const visibleOrganizationIds = Effect.gen(function* () {
     if (!(yield* requestApiKeyAccess)) return undefined;
@@ -480,11 +279,9 @@ export const makeUserPreferencesData = (
 
       if (!ids) return value;
       const notifications = cloneNotifications(value.notifications);
-
-      for (const type of NOTIFICATION_TYPES)
-        notifications[type].guildIds = notifications[type].guildIds.filter(
-          (id) => ids.has(id),
-        );
+      notifications.guildIds = notifications.guildIds.filter((id) =>
+        ids.has(id),
+      );
 
       return {
         ...value,
@@ -501,22 +298,17 @@ export const makeUserPreferencesData = (
     });
 
   const readGamePreferences = (userId: string, accountId: string) =>
-    database
-      .select({ settings: userGameAccountSettingsTable.settings })
-      .from(userGameAccountSettingsTable)
-      .where(
-        and(
-          eq(userGameAccountSettingsTable.userId, userId),
-          eq(userGameAccountSettingsTable.accountId, accountId),
-        ),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => storedGamePreferences(rows[0]?.settings)));
+    settingsDocuments
+      .getPreferences(userId, {
+        domains: ["gameData", "notifications"],
+        gameAccountId: accountId,
+      })
+      .pipe(Effect.map(storedGamePreferences));
 
   const getUserPreferences = Effect.fn("getUserPreferences")(function* (
     userId: string,
   ) {
-    const current = yield* readPreferences(database, userId);
+    const current = yield* readPreferences(database, settingsDocuments, userId);
 
     return response(
       userId,
@@ -540,16 +332,11 @@ export const makeUserPreferencesData = (
       );
     }
 
-    const current = yield* readPreferences(database, userId);
-
-    const legacyAppearance =
-      current.settings && "chatAppearance" in current.settings
-        ? current.settings.chatAppearance
-        : undefined;
+    const current = yield* readPreferences(database, settingsDocuments, userId);
 
     const nextAppearance = payload.chatAppearance
       ? mergeChatAppearanceSettings(
-          chatAppearance(current.appearance, legacyAppearance),
+          chatAppearance(current.appearance),
           payload.chatAppearance,
         )
       : undefined;
@@ -603,61 +390,29 @@ export const makeUserPreferencesData = (
       );
     }
 
+    const userScope = { type: "USER", id: userId } as const;
+    const operations: SettingsOperation[] = [];
+
     if (payload.mutes) {
-      writes.push(
-        database
-          .insert(userGameAccountSettingsTable)
-          .values({
-            userId,
-            accountId: GLOBAL_NOTIFICATION_MUTES_ACCOUNT_ID,
-            settings: { mutes: nextMutes },
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [
-              userGameAccountSettingsTable.userId,
-              userGameAccountSettingsTable.accountId,
-            ],
-            set: { settings: { mutes: nextMutes }, updatedAt: now },
-          }),
-      );
+      operations.push({
+        domain: "notifications",
+        scope: userScope,
+        set: { mutes: toJson(nextMutes) },
+        unset: [],
+      });
     }
 
     if (nextAppearance) {
-      const overrides = applySettingsPatch({
+      operations.push({
         domain: "appearance",
-        scope: { type: "USER", id: userId },
-        currentOverrides: isRecord(current.appearance)
-          ? current.appearance
-          : {},
-        set: { chat: nextAppearance },
+        scope: userScope,
+        set: { chat: toJson(nextAppearance) },
         unset: [],
       });
+    }
 
-      writes.push(
-        database
-          .insert(userSettingDocumentTable)
-          .values({
-            userId,
-            domain: "appearance",
-            scopeType: "USER",
-            scopeId: userId,
-            overrides,
-            schemaVersion: 1,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [
-              userSettingDocumentTable.userId,
-              userSettingDocumentTable.domain,
-              userSettingDocumentTable.scopeType,
-              userSettingDocumentTable.scopeId,
-            ],
-            set: { overrides, schemaVersion: 1, updatedAt: now },
-          }),
-      );
+    if (operations.length > 0) {
+      writes.push(settingsDocuments.patchPreferences(userId, { operations }));
     }
 
     yield* Effect.all(writes, { concurrency: "unbounded", discard: true });
@@ -678,7 +433,7 @@ export const makeUserPreferencesData = (
           }
         : current.settings,
       nextMutes,
-      nextAppearance ?? chatAppearance(current.appearance, legacyAppearance),
+      nextAppearance ?? chatAppearance(current.appearance),
     );
   });
 
@@ -701,9 +456,8 @@ export const makeUserPreferencesData = (
     if (
       (yield* requestApiKeyAccess) &&
       (payload.detector?.routingRules !== undefined ||
-        NOTIFICATION_TYPES.some(
-          (type) => payload.notifications?.[type]?.guildIds !== undefined,
-        ))
+        payload.notifications?.guildIds !== undefined ||
+        legacyTypeGuildIds(payload.notifications) !== undefined)
     ) {
       return yield* new PermissionDeniedError(
         "Organization preference routing requires a session",
@@ -715,15 +469,23 @@ export const makeUserPreferencesData = (
     const notifications = cloneNotifications(current.notifications);
 
     if (payload.notifications) {
+      const guildIds =
+        payload.notifications.guildIds ??
+        legacyTypeGuildIds(payload.notifications);
+
+      if (guildIds) {
+        notifications.guildIds = normalizeGuildIds(
+          guildIds,
+          notifications.guildIds,
+        );
+      }
+
       for (const type of NOTIFICATION_TYPES) {
         const patch = payload.notifications[type];
 
         if (patch) {
           notifications[type] = normalizeNotification(
-            {
-              ...patch,
-              guildIds: patch.guildIds ? [...patch.guildIds] : undefined,
-            },
+            patch,
             notifications[type],
           );
         }
@@ -758,38 +520,48 @@ export const makeUserPreferencesData = (
     );
 
     const hasStoredNotifications =
-      stored?.notifications !== undefined ||
-      payload.notifications !== undefined;
+      stored.notifications !== undefined || payload.notifications !== undefined;
 
     const hasStoredDetector =
-      stored?.detector !== undefined || payload.detector !== undefined;
+      stored.detector !== undefined || payload.detector !== undefined;
 
     const hasStoredPings =
-      stored?.pings !== undefined || payload.pings !== undefined;
+      stored.pings !== undefined || payload.pings !== undefined;
 
     const hasStoredAirTags =
-      stored?.airTags !== undefined || payload.airTags !== undefined;
+      stored.airTags !== undefined || payload.airTags !== undefined;
 
-    const settings = { ...stored };
+    const accountScope = { type: "GAME_ACCOUNT", id: accountId } as const;
+    const gameDataSet: Record<string, JsonValue> = {};
 
-    if (hasStoredNotifications) settings.notifications = notifications;
+    if (payload.detector !== undefined) gameDataSet.detector = toJson(detector);
 
-    if (hasStoredDetector) settings.detector = detector;
+    if (payload.pings !== undefined) gameDataSet.pings = toJson(pings);
 
-    if (hasStoredPings) settings.pings = pings;
+    if (payload.airTags !== undefined) gameDataSet.airTags = toJson(airTags);
+    const operations: SettingsOperation[] = [];
 
-    if (hasStoredAirTags) settings.airTags = airTags;
-    const now = new Date(yield* Clock.currentTimeMillis);
-    yield* database
-      .insert(userGameAccountSettingsTable)
-      .values({ userId, accountId, settings, createdAt: now, updatedAt: now })
-      .onConflictDoUpdate({
-        target: [
-          userGameAccountSettingsTable.userId,
-          userGameAccountSettingsTable.accountId,
-        ],
-        set: { settings, updatedAt: now },
+    if (Object.keys(gameDataSet).length > 0) {
+      operations.push({
+        domain: "gameData",
+        scope: accountScope,
+        set: gameDataSet,
+        unset: [],
       });
+    }
+
+    if (payload.notifications !== undefined) {
+      operations.push({
+        domain: "notifications",
+        scope: accountScope,
+        set: { presentation: toJson(notifications) },
+        unset: [],
+      });
+    }
+
+    if (operations.length > 0) {
+      yield* settingsDocuments.patchPreferences(userId, { operations });
+    }
 
     return {
       accountId,
@@ -825,6 +597,7 @@ export const makeUserPreferencesData = (
       mapError(
         getUserGameAccountPreferences(userId, accountId).pipe(
           Effect.flatMap(scopeGamePreferences),
+          Effect.map(withLegacyTypeGuildIds),
         ),
       ),
     updateUserPreferences: (
@@ -844,6 +617,7 @@ export const makeUserPreferencesData = (
       mapError(
         updateUserGameAccountPreferences(userId, accountId, payload).pipe(
           Effect.flatMap(scopeGamePreferences),
+          Effect.map(withLegacyTypeGuildIds),
         ),
       ),
   };

@@ -1,6 +1,9 @@
 import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
+import {
+  migrateSettingsDocument,
+  SETTINGS_CATALOG,
+} from "@lootlog/domain/settings-documents";
 import type {
   PatchSettingsDocuments,
   SettingsDomain,
@@ -52,6 +55,11 @@ export interface SettingsDocumentsRepositoryService {
     userId: string,
     guildId: string,
   ) => Effect.Effect<boolean, SettingsPersistenceError>;
+  /** The subset of `guildIds` the user is an active member of. */
+  readonly findActiveGuildMemberships: (
+    userId: string,
+    guildIds: ReadonlyArray<string>,
+  ) => Effect.Effect<string[], SettingsPersistenceError>;
   readonly applyOperations: (
     userId: string,
     operations: ReadonlyArray<SettingsOperation>,
@@ -113,12 +121,21 @@ export class SettingsDocumentsRepository extends Context.Service<
                 let nextOverrides: JsonRecord;
 
                 try {
+                  // Bring the stored document to the catalog version before
+                  // patching, so the row written below matches the version
+                  // it is stamped with.
+                  const currentOverrides = isRecord(current?.overrides)
+                    ? migrateSettingsDocument(
+                        operation.domain,
+                        current.overrides,
+                        current.schemaVersion,
+                      )
+                    : {};
+
                   nextOverrides = applySettingsPatch({
                     domain: operation.domain,
                     scope: operation.scope,
-                    currentOverrides: isRecord(current?.overrides)
-                      ? current.overrides
-                      : {},
+                    currentOverrides,
                     set: operation.set,
                     unset: operation.unset,
                   });
@@ -237,6 +254,25 @@ export class SettingsDocumentsRepository extends Context.Service<
               Effect.map((rows) => rows.length > 0),
               Effect.mapError(persistenceError),
             ),
+        findActiveGuildMemberships: (userId, guildIds) =>
+          guildIds.length === 0
+            ? Effect.succeed([])
+            : database
+                .select({ guildId: memberTable.guildId })
+                .from(memberTable)
+                .where(
+                  and(
+                    eq(memberTable.globalUserId, userId),
+                    inArray(memberTable.guildId, [...guildIds]),
+                    eq(memberTable.active, true),
+                  ),
+                )
+                .pipe(
+                  Effect.map((rows) => [
+                    ...new Set(rows.map((row) => row.guildId)),
+                  ]),
+                  Effect.mapError(persistenceError),
+                ),
         applyOperations: (userId, operations) =>
           applyOperationsAttempt(userId, operations, 0),
       });

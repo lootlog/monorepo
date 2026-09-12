@@ -1,16 +1,13 @@
 import { useEffect } from "react";
-import { useSoundSettings } from "@/hooks/api/use-sound-settings";
+import {
+  readSoundSettings,
+  useSoundSettings,
+} from "@/features/settings/persistence/use-sound-settings";
 import {
   DEFAULT_SOUND_URLS,
   getDefaultSoundUrl,
 } from "@/features/settings/config/default-sounds";
-import { useQueryClient } from "@tanstack/react-query";
 import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
-import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
-import {
-  getSoundSettingsControllerGetSettingsQueryKey,
-  type SoundSettingsResponseDto,
-} from "@lootlog/client/main";
 
 import {
   acquireSoundPlayback,
@@ -22,9 +19,6 @@ import { useSettingsStore } from "@/store/settings.store";
 type SoundCategory = "notifications" | "detector" | "timers" | "pings";
 
 type ConfigurableSoundCategory = Exclude<SoundCategory, "pings">;
-
-const SOUND_SETTINGS_QUERY_KEY =
-  getSoundSettingsControllerGetSettingsQueryKey();
 
 let hasAudioInteraction = navigator.userActivation?.hasBeenActive ?? false;
 
@@ -44,14 +38,9 @@ const getSoundUrl = (
 };
 
 export const useSoundPlayback = () => {
-  const { data: soundSettingsData } = useSoundSettings();
-  const queryClient = useQueryClient();
+  const { data: soundSettings } = useSoundSettings();
   const masterVolume = useSettingsStore((state) => state.masterVolume);
   const soundsMuted = useSettingsStore((state) => state.soundsMuted);
-
-  const soundSettings = soundSettingsData
-    ? normalizeSoundSettings(soundSettingsData)
-    : undefined;
 
   useEffect(() => acquireSoundPlayback(), []);
 
@@ -114,17 +103,8 @@ export const useSoundPlayback = () => {
     };
   }, [masterVolume, soundSettings, soundsMuted]);
 
-  const getLatestSettings = (): UserSoundSettings | undefined => {
-    const cached = queryClient.getQueryData<SoundSettingsResponseDto>(
-      SOUND_SETTINGS_QUERY_KEY,
-    );
-
-    if (cached) {
-      return normalizeSoundSettings(cached);
-    }
-
-    return soundSettings;
-  };
+  const getLatestSettings = (): UserSoundSettings | undefined =>
+    readSoundSettings() ?? soundSettings;
 
   const playSounds = (category: SoundCategory, keys: Iterable<string>) => {
     const settings = getLatestSettings();

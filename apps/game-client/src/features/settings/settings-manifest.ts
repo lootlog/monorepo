@@ -6,14 +6,18 @@ import type { SettingsCatalogKey } from "@lootlog/domain/settings-documents";
 
 export type SettingsIconName =
   | "settings"
+  | "crosshair"
   | "server"
   | "palette"
   | "messageSquare"
   | "clock"
-  | "database"
   | "bell"
+  | "radar"
+  | "bellOff"
+  | "swords"
   | "volume2"
   | "keyboard"
+  | "flaskConical"
   | "activity"
   | "info";
 
@@ -33,7 +37,7 @@ export interface SettingsControlManifestItem {
 export interface SettingsSubsectionManifestItem {
   id: SettingsSubsectionValue;
   labelKey: string;
-  controls: SettingsControlManifestItem[];
+  controls: readonly SettingsControlManifestItem[];
   visible?: () => boolean;
 }
 
@@ -41,10 +45,10 @@ export interface SettingsDomainManifestItem {
   id: SettingsDomainValue;
   labelKey: string;
   icon: SettingsIconName;
-  subsections: SettingsSubsectionManifestItem[];
+  subsections: readonly SettingsSubsectionManifestItem[];
 }
 
-export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
+const MANIFEST = [
   {
     id: "general",
     labelKey: "settings.domains.general",
@@ -54,6 +58,18 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
         id: "behavior",
         labelKey: "settings.subsections.behavior",
         controls: [
+          {
+            id: "account-status",
+            labelKey: "settings.general.accountLabel",
+            descriptionKey: "settings.general.statusTitle",
+            aliases: ["konto", "sesja", "logowanie", "discord", "cookies"],
+          },
+          {
+            id: "connection-status",
+            labelKey: "settings.general.connectionLabel",
+            descriptionKey: "settings.general.statusTitle",
+            aliases: ["połączenie", "realtime", "websocket", "gateway"],
+          },
           {
             id: "allow-world-selection",
             labelKey: "settings.general.allowWorldSelectionLabel",
@@ -71,10 +87,35 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
             },
           },
           {
-            id: "map-pings",
-            labelKey: "settings.general.mapPingsLabel",
-            descriptionKey: "settings.general.mapPingsDescription",
-            settingKeys: ["gameData.pings"],
+            id: "reset-window-layout",
+            labelKey: "settings.general.resetWindowLayoutLabel",
+            descriptionKey: "settings.general.resetWindowLayoutDescription",
+            aliases: ["okna", "położenie", "pozycja", "rozmiar", "reset"],
+          },
+          {
+            id: "clear-local-data",
+            labelKey: "settings.general.clearLocalDataLabel",
+            descriptionKey: "settings.general.clearLocalDataDescription",
+            aliases: ["cache", "pamięć", "storage", "wyczyść", "reset"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "catching",
+    labelKey: "settings.domains.catching",
+    icon: "crosshair",
+    subsections: [
+      {
+        id: "catching",
+        labelKey: "settings.subsections.catching",
+        controls: [
+          {
+            id: "catching-range",
+            labelKey: "settings.catching.form.collectionRangeTitle",
+            aliases: ["łupy", "lootlog", "zbieranie"],
+            settingKeys: ["gameData.lootlog"],
           },
         ],
       },
@@ -132,45 +173,6 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
           },
         ],
       },
-      {
-        id: "timer-appearance",
-        labelKey: "settings.subsections.timerAppearance",
-        controls: [
-          {
-            id: "timer-visibility",
-            labelKey: "settings.timers.appearance.visibilityTitle",
-            settingKeys: ["appearance.timers.displayConfig"],
-          },
-          {
-            id: "timer-layout",
-            labelKey: "settings.timers.appearance.layoutTitle",
-            settingKeys: ["appearance.timers.displayConfig"],
-          },
-          {
-            id: "timer-scale",
-            labelKey: "settings.timers.appearance.scaleTitle",
-            settingKeys: ["appearance.timers.displayConfig"],
-          },
-        ],
-      },
-      {
-        id: "timer-colors",
-        labelKey: "settings.subsections.timerColors",
-        controls: [
-          {
-            id: "timer-colors-list",
-            labelKey: "settings.timers.colors.listTitle",
-            aliases: ["barwy", "kolor timera"],
-            settingKeys: [
-              "appearance.timers.customColors",
-              "appearance.timers.timersColors",
-              "appearance.timers.defaultColorNames",
-              "appearance.timers.overriddenDefaultColors",
-              "appearance.timers.hiddenDefaultColors",
-            ],
-          },
-        ],
-      },
     ],
   },
   {
@@ -222,7 +224,14 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
           {
             id: "chat-metadata",
             labelKey: "settings.chat.metadata.title",
-            aliases: ["avatar", "gildia", "poziom", "lokacja", "koordynaty"],
+            aliases: [
+              "avatar",
+              "lootlog",
+              "gildia",
+              "poziom",
+              "lokacja",
+              "koordynaty",
+            ],
             settingKeys: [
               "appearance.chat.showTimestamp",
               "appearance.chat.showGuildLabel",
@@ -268,12 +277,12 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
           {
             id: "timer-behavior",
             labelKey: "settings.timers.general.behaviorTitle",
+            aliases: ["grupowanie", "torby", "kompaktowy"],
             settingKeys: [
               "timers.generalConfig",
               "timers.timerFiltersEnabled",
               "timers.colorFiltersEnabled",
               "timers.timersSortOrder",
-              "timers.syncEnabled",
             ],
           },
           {
@@ -284,54 +293,53 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
         ],
       },
       {
+        id: "timer-appearance",
+        labelKey: "settings.subsections.timerAppearance",
+        controls: [
+          {
+            id: "timer-visibility",
+            labelKey: "settings.timers.appearance.visibilityTitle",
+            settingKeys: ["appearance.timers.displayConfig"],
+          },
+          {
+            id: "timer-layout",
+            labelKey: "settings.timers.appearance.layoutTitle",
+            settingKeys: ["appearance.timers.displayConfig"],
+          },
+          {
+            id: "timer-scale",
+            labelKey: "settings.timers.appearance.scaleTitle",
+            aliases: ["czcionka", "szerokość"],
+            settingKeys: ["appearance.timers.displayConfig"],
+          },
+        ],
+      },
+      {
+        id: "timer-colors",
+        labelKey: "settings.subsections.timerColors",
+        controls: [
+          {
+            id: "timer-colors-list",
+            labelKey: "settings.timers.colors.listTitle",
+            aliases: ["barwy", "kolor timera"],
+            settingKeys: [
+              "appearance.timers.customColors",
+              "appearance.timers.timersColors",
+              "appearance.timers.defaultColorNames",
+              "appearance.timers.overriddenDefaultColors",
+              "appearance.timers.hiddenDefaultColors",
+            ],
+          },
+        ],
+      },
+      {
         id: "hidden-timers",
-        labelKey: "settings.tabs.hiddenTimers",
+        labelKey: "settings.subsections.hiddenTimers",
         controls: [
           {
             id: "hidden-timers-list",
             labelKey: "settings.hiddenTimers.listTitle",
             settingKeys: ["timers.hiddenTimers", "timers.pinnedTimers"],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "game-data",
-    labelKey: "settings.domains.gameData",
-    icon: "database",
-    subsections: [
-      {
-        id: "catching",
-        labelKey: "settings.tabs.catching",
-        controls: [
-          {
-            id: "catching-range",
-            labelKey: "settings.catching.form.collectionRangeTitle",
-            settingKeys: ["gameData.lootlog"],
-          },
-        ],
-      },
-      {
-        id: "detector",
-        labelKey: "settings.tabs.detector",
-        controls: [
-          {
-            id: "detector-routing",
-            labelKey: "settings.detector.routing.sectionTitle",
-            aliases: ["discord", "serwery"],
-            settingKeys: ["gameData.detector"],
-          },
-        ],
-      },
-      {
-        id: "battle-panel",
-        labelKey: "settings.tabs.battlePanel",
-        controls: [
-          {
-            id: "battle-data-collection",
-            labelKey: "settings.battlePanel.dataCollectionTitle",
-            settingKeys: ["gameData.battlePanel"],
           },
         ],
       },
@@ -344,22 +352,97 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
     subsections: [
       {
         id: "notification-rules",
-        labelKey: "settings.tabs.notifications",
+        labelKey: "settings.subsections.notificationRules",
         controls: [
           {
             id: "notification-rules",
             labelKey: "settings.notifications.title",
+            aliases: ["elita", "heros", "kolos", "tytan", "auto ukrywanie"],
+            settingKeys: ["notifications.presentation"],
+          },
+          {
+            id: "notification-servers",
+            labelKey: "settings.notifications.serversTitle",
+            descriptionKey: "settings.notifications.serversDescription",
+            aliases: ["serwery", "discord", "gildie"],
+            settingKeys: ["notifications.presentation"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "detector",
+    labelKey: "settings.domains.detector",
+    icon: "radar",
+    subsections: [
+      {
+        id: "detector",
+        labelKey: "settings.subsections.detector",
+        controls: [
+          {
+            id: "detector-types",
+            labelKey: "settings.detector.typesTitle",
+            descriptionKey: "settings.detector.description",
+            aliases: ["wykrywacz", "elita", "heros", "kolos", "tytan"],
+            settingKeys: ["gameData.detector"],
+          },
+          {
+            id: "detector-routing",
+            labelKey: "settings.detector.routing.sectionTitle",
+            descriptionKey: "settings.detector.routing.sectionDescription",
+            aliases: ["routing", "discord", "serwery", "wykrywacz", "wysyłka"],
+            settingKeys: ["gameData.detector"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mutes",
+    labelKey: "settings.domains.mutes",
+    icon: "bellOff",
+    subsections: [
+      {
+        id: "muted-players",
+        labelKey: "settings.subsections.mutedPlayers",
+        controls: [
+          {
+            id: "muted-players",
+            labelKey: "settings.mutes.players",
+            aliases: ["wyciszenia", "wycisz", "gracze"],
+            settingKeys: ["notifications.mutes"],
           },
         ],
       },
       {
-        id: "notification-mutes",
-        labelKey: "settings.tabs.notificationMutes",
+        id: "muted-npcs",
+        labelKey: "settings.subsections.mutedNpcs",
         controls: [
           {
-            id: "notification-mutes",
-            labelKey: "settings.notificationMutes.title",
+            id: "muted-npcs",
+            labelKey: "settings.mutes.npcs",
+            aliases: ["wyciszenia", "wycisz", "potwory", "npc"],
             settingKeys: ["notifications.mutes"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "battle-panel",
+    labelKey: "settings.domains.battlePanel",
+    icon: "swords",
+    subsections: [
+      {
+        id: "battle-panel",
+        labelKey: "settings.subsections.battleDataCollection",
+        controls: [
+          {
+            id: "battle-data-collection",
+            labelKey: "settings.battlePanel.dataCollectionTitle",
+            aliases: ["walki", "panel walk"],
+            settingKeys: ["gameData.battlePanel"],
           },
         ],
       },
@@ -372,12 +455,39 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
     subsections: [
       {
         id: "sounds",
-        labelKey: "settings.tabs.sounds",
+        labelKey: "settings.subsections.sounds",
         controls: [
           {
             id: "sound-master-volume",
-            labelKey: "settings.sounds.masterVolume",
+            labelKey: "settings.sounds.masterTitle",
+            descriptionKey: "settings.sounds.masterDescription",
+            aliases: ["wycisz", "głośność"],
             settingKeys: ["device.masterVolume", "device.soundsMuted"],
+          },
+          {
+            id: "sound-notifications",
+            labelKey: "settings.sounds.categories.notifications.label",
+            descriptionKey:
+              "settings.sounds.categories.notifications.description",
+            aliases: ["głośność", "powiadomienia", "dźwięk"],
+            settingKeys: [
+              "sounds.notificationsVolume",
+              "sounds.notificationsConfig",
+            ],
+          },
+          {
+            id: "sound-detector",
+            labelKey: "settings.sounds.categories.detector.label",
+            descriptionKey: "settings.sounds.categories.detector.description",
+            aliases: ["głośność", "wykrywacz", "dźwięk"],
+            settingKeys: ["sounds.detectorVolume", "sounds.detectorConfig"],
+          },
+          {
+            id: "sound-pings",
+            labelKey: "settings.sounds.categories.pings.label",
+            descriptionKey: "settings.sounds.categories.pings.description",
+            aliases: ["głośność", "pingi", "mapa"],
+            settingKeys: ["sounds.pingsVolume"],
           },
         ],
       },
@@ -390,12 +500,39 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
     subsections: [
       {
         id: "hotkeys",
-        labelKey: "settings.tabs.hotkeys",
+        labelKey: "settings.subsections.hotkeys",
         controls: [
           {
             id: "hotkeys",
             labelKey: "settings.hotkeys.title",
             settingKeys: ["controls.hotkeys"],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "experimental",
+    labelKey: "settings.domains.experimental",
+    icon: "flaskConical",
+    subsections: [
+      {
+        id: "experimental",
+        labelKey: "settings.subsections.experimentalFeatures",
+        controls: [
+          {
+            id: "map-pings",
+            labelKey: "settings.experimental.mapPingsLabel",
+            descriptionKey: "settings.experimental.mapPingsDescription",
+            aliases: ["pingi", "mapa"],
+            settingKeys: ["gameData.pings"],
+          },
+          {
+            id: "air-tags",
+            labelKey: "settings.experimental.airTagsLabel",
+            descriptionKey: "settings.experimental.airTagsDescription",
+            aliases: ["airtag", "widoczność"],
+            settingKeys: ["gameData.airTags"],
           },
         ],
       },
@@ -408,17 +545,24 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
     subsections: [
       {
         id: "logs",
-        labelKey: "settings.tabs.logs",
+        labelKey: "settings.subsections.logs",
         controls: [
           {
-            id: "logs-filters",
-            labelKey: "settings.logs.filtersTitle",
+            id: "loot-debug-logging",
+            labelKey: "settings.logs.lootDebugLoggingLabel",
+            descriptionKey: "settings.logs.lootDebugLoggingDescription",
+            aliases: ["konsola", "debug"],
+          },
+          {
+            id: "logs-list",
+            labelKey: "settings.logs.listTitle",
+            aliases: ["akcje", "requesty", "api"],
           },
         ],
       },
       {
         id: "debug",
-        labelKey: "settings.tabs.debug",
+        labelKey: "settings.subsections.debug",
         controls: [],
         visible: () => import.meta.env.DEV,
       },
@@ -441,4 +585,50 @@ export const SETTINGS_MANIFEST: SettingsDomainManifestItem[] = [
       },
     ],
   },
-];
+] as const satisfies readonly SettingsDomainManifestItem[];
+
+export const SETTINGS_MANIFEST: readonly SettingsDomainManifestItem[] =
+  MANIFEST;
+
+/** Every control id declared in the manifest; rows and search share it. */
+export type SettingsControlId =
+  (typeof MANIFEST)[number]["subsections"][number]["controls"][number]["id"];
+
+export interface SettingsControlLocation {
+  domain: SettingsDomainValue;
+  subsection: SettingsSubsectionValue;
+  control: SettingsControlManifestItem;
+}
+
+const controlLocations = new Map<string, SettingsControlLocation>();
+
+for (const domain of SETTINGS_MANIFEST) {
+  for (const subsection of domain.subsections) {
+    for (const control of subsection.controls) {
+      controlLocations.set(control.id, {
+        domain: domain.id,
+        subsection: subsection.id,
+        control,
+      });
+    }
+  }
+}
+
+export const getControlLocation = (controlId: string) =>
+  controlLocations.get(controlId);
+
+/** Catalog keys a control writes, for per-row save marks. */
+export const getControlSettingKeys = (controlId: string) =>
+  controlLocations.get(controlId)?.control.settingKeys;
+
+export const isSettingsControlId = (
+  value: string,
+): value is SettingsControlId => controlLocations.has(value);
+
+export const getVisibleSettingsManifest = () =>
+  SETTINGS_MANIFEST.map((domain) => ({
+    ...domain,
+    subsections: domain.subsections.filter(
+      (subsection) => subsection.visible?.() ?? true,
+    ),
+  }));

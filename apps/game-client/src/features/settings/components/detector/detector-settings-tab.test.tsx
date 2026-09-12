@@ -1,4 +1,9 @@
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  readSeededSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
 import { createGameAccountPreferences } from "@/test/game-account-preferences-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
@@ -7,6 +12,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Profiler } from "react";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -14,6 +20,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { DetectorSettingsTab } from "./detector-settings-tab";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
+
+const seedAccountPreferences = (
+  preferences: Parameters<typeof accountPreferenceValues>[0],
+) =>
+  seedSettingsDocuments(
+    harness.queryClient,
+    createSettingsDocuments(accountPreferenceValues(preferences)),
+  );
 
 beforeEach(() => {
   harness = createGuildPreferencesTest();
@@ -41,39 +55,113 @@ const render = () => {
 };
 
 describe("DetectorSettingsTab", () => {
-  it("renders translated tab copy instead of raw settings keys", () => {
+  it("shows every option of every NPC type at once and keeps dependent switches disabled until detect is on", () => {
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.detector.HERO.detect = false;
+    initial.detector.COLOSSUS.detect = true;
+    seedAccountPreferences(initial);
     render();
 
     expect(
-      screen.getByRole("heading", { name: "Ustawienia wykrywacza" }),
+      screen.getByRole("table", { name: "Które potwory wykrywać" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Skonfiguruj wspólny routing komunikatów oraz lokalne wykrywanie NPC dla każdego typu.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Elita 2" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Heros" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Kolos" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Tytan" })).toBeInTheDocument();
-    expect(
-      screen.queryByText("settings.detector.title"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { expanded: false })).toBeNull();
+
+    for (const type of ["ELITE2", "HERO", "COLOSSUS", "TITAN"]) {
+      expect(document.getElementById(`${type}-detect`)).toBeInTheDocument();
+    }
+
+    expect(document.getElementById("HERO-detect")).not.toBeChecked();
+    expect(document.getElementById("HERO-autoSend")).toBeDisabled();
+    expect(document.getElementById("HERO-highlight")).toBeDisabled();
+    expect(document.getElementById("COLOSSUS-autoSend")).toBeEnabled();
   });
+
+  it("saves only the NPC type whose switch changed", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.detector.TITAN.detect = false;
+    seedAccountPreferences(initial);
+    harness.request.mockImplementation(() =>
+      Promise.resolve(
+        Response.json(readSeededSettingsDocuments(harness.queryClient)),
+      ),
+    );
+    render();
+
+    await user.click(screen.getByRole("switch", { name: "Tytan: Wykrywaj" }));
+
+    await waitFor(() => {
+      const body = JSON.parse(String(harness.request.mock.calls[0]?.[1]?.body));
+      expect(Object.keys(body.operations[0].set.detector)).toEqual(["TITAN"]);
+      expect(body.operations[0].set.detector.TITAN.detect).toBe(true);
+    });
+  });
+
+  it("keeps a switch toggled while an earlier save is still in flight", async () => {
+    const user = userEvent.setup();
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    const initial = createGameAccountPreferences("202");
+    initial.detector.TITAN.detect = false;
+    initial.detector.HERO.detect = false;
+    seedAccountPreferences(initial);
+
+    const firstResponse = createSettingsDocuments(
+      accountPreferenceValues({
+        ...initial,
+        detector: {
+          ...initial.detector,
+          TITAN: { ...initial.detector.TITAN, detect: true },
+        },
+      }),
+    );
+
+    let resolveFirst: (() => void) | undefined;
+    harness.request
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = () => resolve(Response.json(firstResponse));
+          }),
+      )
+      .mockImplementation(() =>
+        Promise.resolve(
+          Response.json(readSeededSettingsDocuments(harness.queryClient)),
+        ),
+      );
+    render();
+
+    await user.click(screen.getByRole("switch", { name: "Tytan: Wykrywaj" }));
+    await waitFor(() => expect(harness.request).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole("switch", { name: "Heros: Wykrywaj" }));
+    expect(document.getElementById("HERO-detect")).toBeChecked();
+    await act(async () => {
+      resolveFirst?.();
+      // Let the response land before any follow-up save could re-apply it.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(document.getElementById("HERO-detect")).toBeChecked();
+
+    await waitFor(() => expect(harness.request).toHaveBeenCalledTimes(2));
+    expect(document.getElementById("HERO-detect")).toBeChecked();
+    expect(document.getElementById("TITAN-detect")).toBeChecked();
+    const body = JSON.parse(String(harness.request.mock.calls[1]?.[1]?.body));
+    expect(body.operations[0].set.detector.HERO.detect).toBe(true);
+  });
+
   it("applies refreshed account preferences without restarting the form reset loop", async () => {
     setTestRuntimeGame({ hero: { accountId: "202" } });
 
-    const key = getUsersControllerGetUserGameAccountPreferencesQueryKey({
-      accountId: "202",
-    });
-
     const initial = createGameAccountPreferences("202");
-    harness.queryClient.setQueryData(key, initial);
+    seedAccountPreferences(initial);
     render();
     const control = document.getElementById("ELITE2-detect");
     expect(control).not.toBeChecked();
     act(() =>
-      harness.queryClient.setQueryData(key, {
+      seedAccountPreferences({
         ...initial,
         detector: {
           ...initial.detector,

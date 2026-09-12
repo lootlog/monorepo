@@ -1,3 +1,10 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+} from "@/test/settings-documents-fixtures";
+import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
 import {
   act,
   fireEvent,
@@ -6,16 +13,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import {
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
+import type { UserGameAccountPreferencesResponseDtoOutput } from "@lootlog/client/main";
 import { createNativeRuntime } from "@/test/native-runtime";
 import { createRealtimeTest } from "@/test/realtime-test";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useWindowsStore } from "@/store/windows.store";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 
@@ -39,7 +40,7 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
 
   const preferences: UserGameAccountPreferencesResponseDtoOutput = {
     accountId: "202",
-    notifications: createNotificationsSettings(),
+    notifications: createNotificationsResponse(),
     detector: createDetectorSettings(),
     pings: { enabled: true },
     airTags: { enabled: false },
@@ -50,12 +51,6 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
     hasStoredPreferences: true,
   };
 
-  test.queryClient.setQueryData(
-    getUsersControllerGetUserGameAccountPreferencesQueryKey({
-      accountId: "202",
-    }),
-    preferences,
-  );
   useWindowsStore.getState().setOpen("quick-access", true);
   const canvas = document.createElement("canvas");
   canvas.id = "GAME_CANVAS";
@@ -65,9 +60,20 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(
     new DOMRect(0, 0, 640, 640),
   );
+  // The documents key follows the character that joins below.
+  seedSettingsDocuments(
+    test.queryClient,
+    createSettingsDocuments(accountPreferenceValues(preferences)),
+    { gameAccountId: "202", characterId: "101" },
+  );
   const view = render(<AppContent />, { wrapper: test.wrapper });
   test.open();
   await test.join();
+  // Settings hydration imports browser-only settings on first start; wait for
+  // that write to settle so a cache refresh does not interrupt the press.
+  await waitFor(() =>
+    expect(useSettingsSaveStatusStore.getState().status).not.toBe("saving"),
+  );
   fireEvent.mouseDown(canvas, { button: 1, clientX: 400, clientY: 272 });
   await waitFor(() =>
     expect(mapPingInteractionController.getSnapshot()).not.toBeNull(),

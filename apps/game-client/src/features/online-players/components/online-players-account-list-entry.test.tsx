@@ -283,7 +283,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-purple-400")).not.toBeNull();
+    expect(container.querySelector(".ll\\:border-ring")).not.toBeNull();
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -338,7 +338,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(container.querySelector(".ll\\:border-yellow-400")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-purple-400")).toBeNull();
+    expect(container.querySelector(".ll\\:border-ring")).toBeNull();
     expect(container.querySelector(".ll\\:border-green-500")).toBeNull();
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });

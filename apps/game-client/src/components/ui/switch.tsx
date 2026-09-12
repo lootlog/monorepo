@@ -1,22 +1,27 @@
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
-import * as React from "react";
 import { cn } from "cn";
 
-const Switch = React.forwardRef<HTMLElement, BaseSwitch.Root.Props>(
-  ({ className, ...props }, ref) => (
+type SwitchProps = BaseSwitch.Root.Props & {
+  size?: "sm" | "default";
+};
+
+function Switch({ className, size = "sm", ...props }: SwitchProps) {
+  return (
     <BaseSwitch.Root
+      data-slot="switch"
+      data-size={size}
       className={cn(
-        "ll:peer ll:inline-flex ll:h-4 ll:w-9 ll:shrink-0 ll-custom-cursor-pointer ll:items-center ll:rounded-sm ll:border ll:border-gray-400 ll:box-border ll:shadow-sm ll:transition-colors ll:focus-visible:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-ring ll:data-[disabled]:cursor-not-allowed ll:data-[disabled]:opacity-50 ll:data-[checked]:bg-purple-500/80 ll:data-[checked]:border-purple-400 ll:data-[unchecked]:bg-gray-700 ll:px-0.5",
+        "ll:peer ll:group/switch ll:relative ll:inline-flex ll:shrink-0 ll:items-center ll:rounded-full ll:border ll:border-transparent ll:transition-all ll:outline-none ll:group-focus-within/field-label:border-transparent ll:group-focus-within/field-label:ring-0 ll:after:absolute ll:after:-inset-x-3 ll:after:-inset-y-2 ll:focus-visible:border-ring ll:focus-visible:ring-3 ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-3 ll:aria-invalid:ring-destructive/20 ll:data-[size=default]:h-[18.4px] ll:data-[size=default]:w-[32px] ll:data-[size=sm]:h-[14px] ll:data-[size=sm]:w-[24px] ll:dark:aria-invalid:border-destructive/50 ll:dark:aria-invalid:ring-destructive/40 ll:data-[checked]:bg-primary ll:data-[unchecked]:bg-input ll:dark:data-[unchecked]:bg-input/80 ll:data-[disabled]:cursor-not-allowed ll:data-[disabled]:opacity-50 ll-custom-cursor-pointer",
         className,
       )}
       {...props}
-      ref={ref}
     >
-      <BaseSwitch.Thumb className="ll:pointer-events-none ll:block ll:h-2.5 ll:w-3.5 ll:rounded-sm ll:bg-white ll:shadow-md ll:ring-0 ll:transition-transform ll:data-[checked]:translate-x-4 ll:data-[unchecked]:translate-x-0" />
+      <BaseSwitch.Thumb
+        data-slot="switch-thumb"
+        className="ll:pointer-events-none ll:block ll:rounded-full ll:bg-background ll:ring-0 ll:transition-transform ll:group-data-[size=default]/switch:size-4 ll:group-data-[size=sm]/switch:size-3 ll:group-data-[size=default]/switch:data-[checked]:translate-x-[calc(100%-2px)] ll:group-data-[size=sm]/switch:data-[checked]:translate-x-[calc(100%-2px)] ll:dark:data-[checked]:bg-primary-foreground ll:group-data-[size=default]/switch:data-[unchecked]:translate-x-0 ll:group-data-[size=sm]/switch:data-[unchecked]:translate-x-0 ll:dark:data-[unchecked]:bg-foreground"
+      />
     </BaseSwitch.Root>
-  ),
-);
-
-Switch.displayName = "Switch";
+  );
+}
 
 export { Switch };

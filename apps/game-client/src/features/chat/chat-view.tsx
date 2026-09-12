@@ -27,10 +27,10 @@ import {
   resolveChatReplyNames,
 } from "./chat-reply.helpers";
 import {
-  useChatSettingsDocuments,
+  useChatAppearanceSettings,
   useNpcTypeColors,
-} from "@/hooks/api/use-settings-documents";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+} from "@/features/settings/persistence/use-appearance-settings";
+import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
 import { useSocket } from "@/contexts/socket-context";
@@ -158,9 +158,7 @@ export const ChatView = ({
   } = useVisibleLootlogGuilds();
 
   const { npcTypeColors } = useNpcTypeColors();
-
-  const chatAppearance =
-    preferences.data?.chatAppearance ?? CHAT_APPEARANCE_READABLE_PRESET;
+  const { chatAppearance } = useChatAppearanceSettings();
 
   const filtersVisible = useChatStore((state) => state.filtersVisible);
   const chatFilter = useChatStore((state) => state.chatFilter);
@@ -213,7 +211,7 @@ export const ChatView = ({
 
     if (next !== undefined) setSelectedGuildId(next);
   }, [selectedGuildId, setSelectedGuildId, visibleGuilds]);
-  const { hiddenNpcTypes } = useChatSettingsDocuments();
+  const { hiddenNpcTypes } = useHiddenNpcTypes();
   const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
   const hiddenNpcTypesKey = [...hiddenNpcTypes].sort().join(",");
   // Server message/access subscriptions and rank filters invalidate persisted read entries.
@@ -371,7 +369,7 @@ export const ChatView = ({
           )}
           <div className="ll:relative ll:shrink-0 ll:z-10">{gatheringBar}</div>
           <div
-            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
+            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
           >
             <ChatConnectionStatus
               status={{

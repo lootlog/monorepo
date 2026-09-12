@@ -2,75 +2,66 @@
   "window": {
     "title": "Ustawienia"
   },
-  "tabs": {
-    "general": "Ogólne",
-    "timers": "Timery",
-    "catching": "Dodawanie łupów i timerów",
-    "hiddenTimers": "Ukryte timery",
-    "detector": "Wykrywacz",
-    "notifications": "Powiadomienia",
-    "notificationMutes": "Wyciszenia",
-    "sounds": "Dźwięki",
-    "battlePanel": "Panel walk (beta)",
-    "hotkeys": "Skróty klawiszowe",
-    "logs": "Logi",
-    "information": "Informacje",
-    "debug": "Debug"
-  },
   "domains": {
     "general": "Ogólne",
-    "servers": "Serwery",
+    "catching": "Zakres zbierania",
+    "servers": "Lootlogi",
     "appearance": "Wygląd",
     "chat": "Chat",
     "timers": "Timery",
-    "gameData": "Dane z gry",
     "notifications": "Powiadomienia",
+    "detector": "Wykrywacz",
+    "mutes": "Wyciszenia",
+    "battlePanel": "Panel walk",
     "sounds": "Dźwięki",
     "controls": "Sterowanie",
+    "experimental": "Eksperymentalne",
     "diagnostics": "Diagnostyka",
     "information": "Informacje"
   },
   "subsections": {
     "behavior": "Zachowanie",
-    "serverVisibility": "Widoczność",
+    "serverVisibility": "Lootlogi",
     "chatAppearance": "Wygląd",
     "chatFilters": "Filtry",
     "npcColors": "Kolory NPC",
-    "timerAppearance": "Wygląd timerów",
-    "timerColors": "Kolory timerów",
-    "timerBehavior": "Działanie timerów"
+    "timerAppearance": "Wygląd",
+    "timerColors": "Kolory",
+    "timerBehavior": "Działanie",
+    "catching": "Zakres zbierania",
+    "notificationRules": "Reguły",
+    "experimentalFeatures": "Funkcje",
+    "battleDataCollection": "Zbieranie danych",
+    "hiddenTimers": "Ukryte timery",
+    "detector": "Wykrywacz",
+    "mutedPlayers": "Gracze",
+    "mutedNpcs": "Potwory",
+    "sounds": "Dźwięki",
+    "hotkeys": "Skróty klawiszowe",
+    "logs": "Logi",
+    "debug": "Debug"
   },
   "servers": {
-    "title": "Widoczność serwerów",
-    "description": "Ukryte serwery znikną z przełączników w grze. Powiadomienia i przetwarzanie w tle nadal będą działać.",
-    "listTitle": "Serwery Lootloga",
-    "searchPlaceholder": "Szukaj serwera",
+    "title": "Widoczność Lootlogów",
+    "description": "Ukryte Lootlogi znikną z przełączników w grze. Powiadomienia i przetwarzanie w tle nadal będą działać.",
+    "listTitle": "Twoje Lootlogi",
+    "searchPlaceholder": "Szukaj...",
     "filters": {
       "all": "Wszystkie",
       "visible": "Widoczne",
       "hidden": "Ukryte"
     },
     "showAll": "Pokaż wszystkie",
-    "switchLabel": "Pokaż {{name}} w grze",
+    "showAllCount": "Pokaż wszystkie ({{count}})",
+    "visibleCount": "{{visibleCount}} z {{totalCount}}",
     "presenceTitle": "Publikowanie obecności",
     "presenceDescription": "Wybierz organizacje, które mogą widzieć Twoją obecność w grze. Bez wyboru obecność nie jest publikowana, dopóki Lootlog nie dopasuje organizacji do bieżącego klanu.",
     "presenceLabel": "Obecność: {{name}}",
     "presenceSwitchLabel": "Publikuj obecność w organizacji {{name}}",
-    "visibleCount_one": "{{count}} widoczny",
-    "visibleCount_few": "{{count}} widoczne",
-    "visibleCount_many": "{{count}} widocznych",
-    "visibleCount_other": "{{count}} widocznych",
-    "hiddenCount_one": "{{count}} ukryty",
-    "hiddenCount_few": "{{count}} ukryte",
-    "hiddenCount_many": "{{count}} ukrytych",
-    "hiddenCount_other": "{{count}} ukrytych",
-    "loading": "Ładowanie serwerów…",
-    "loadError": "Nie udało się pobrać listy serwerów.",
-    "noGuilds": "Nie masz jeszcze dostępu do żadnego serwera Lootloga.",
-    "noResults": "Nie znaleziono serwerów pasujących do wybranych filtrów.",
-    "saving": "Zapisywanie…",
-    "saved": "Zapisano",
-    "saveError": "Nie udało się zapisać zmian. Przywróciliśmy poprzedni stan."
+    "loading": "Ładowanie Lootlogów…",
+    "loadError": "Nie udało się pobrać listy Lootlogów.",
+    "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
+    "noResults": "Nie znaleziono Lootlogów pasujących do wybranych filtrów."
   },
   "search": {
     "placeholder": "Szukaj",
@@ -108,14 +99,12 @@
   },
   "chat": {
     "preset": {
-      "section": "Preset",
-      "label": "Sposób prezentacji",
+      "section": "Gotowe ustawienia",
+      "label": "Gotowe ustawienia wyglądu",
       "readable": "Czytelny",
       "readableDescription": "Większy tekst i więcej przestrzeni - najłatwiejszy do czytania.",
       "compact": "Kompaktowy",
-      "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach.",
-      "custom": "Własne ustawienia",
-      "restoreReadable": "Przywróć domyślne"
+      "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach."
     },
     "advanced": {
       "title": "Więcej opcji"
@@ -133,34 +122,25 @@
       "example": "Wariant w linii zajmuje mniej miejsca w gęstym czacie."
     },
     "fontScale": {
-      "label": "Skala tekstu"
+      "label": "Skala tekstu",
+      "description": "Wielkość tekstu wiadomości względem domyślnej."
     },
     "messageGap": {
-      "label": "Odstęp wiadomości"
+      "label": "Odstęp wiadomości",
+      "description": "Pionowy odstęp między kolejnymi wiadomościami."
     },
     "metadata": {
       "title": "Widoczne informacje",
       "showTimestamp": "Czas wiadomości",
-      "showGuildLabel": "Gildia",
+      "showGuildLabel": "Lootlog",
       "showNpcAvatar": "Avatar NPC",
       "showNpcLevel": "Poziom NPC",
-      "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC"
-    },
-    "save": {
-      "saving": "Zapisywanie…",
-      "saved": "Zapisano",
-      "error": "Nie udało się zapisać wyglądu czatu. Przywrócono ustawienia z serwera."
-    },
-    "preview": {
-      "ariaLabel": "Podgląd wyglądu czatu",
-      "label": "Podgląd",
-      "player": "Lunara",
-      "level": "85 lvl",
-      "message": "Spotkajmy się przy wejściu.",
-      "guild": "Strażnicy Północy",
-      "npc": "Mroczny Łowca",
-      "npcMessage": "pojawił się na mapie",
-      "location": "Stare Ruiny"
+      "showNpcLocationAndCoordinates": "Lokacja i koordynaty NPC",
+      "showTimestampDescription": "Godzina wysłania przy każdej wiadomości.",
+      "showGuildLabelDescription": "Nazwa Lootloga, z którego pochodzi wiadomość, w widoku wszystkich serwerów.",
+      "showNpcAvatarDescription": "Ikona potwora w wiadomościach o NPC.",
+      "showNpcLevelDescription": "Poziom potwora w wiadomościach o NPC.",
+      "showNpcLocationAndCoordinatesDescription": "Nazwa mapy i koordynaty w wiadomościach o NPC."
     }
   },
   "npcColors": {
@@ -172,22 +152,48 @@
     "default": "Kolor domyślny",
     "overridden": "Kolor użytkownika",
     "saving": "Zapisywanie…",
-    "saveError": "Nie udało się zapisać kolorów NPC.",
     "picker": "Wybierz kolor",
     "hex": "Kolor HEX",
     "editColor": "Edytuj kolor NPC",
     "preview": "Podgląd powierzchni",
     "notificationPreview": "Powiadomienie o wykryciu potwora",
-    "detectorPreview": "Potwór widoczny w wykrywaczu"
+    "detectorPreview": "Potwór widoczny w wykrywaczu",
+    "resetAllDescription": "Wraca do domyślnej palety dla wszystkich typów potworów."
   },
   "general": {
     "title": "Ustawienia ogólne",
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
     "behaviorTitle": "Zachowanie dodatku",
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
-    "allowWorldSelectionDescription": "Nie działa na zgrupowanych timerach.",
+    "allowWorldSelectionDescription": "Pozwala wybrać świat przy dodawaniu timera; nie działa na zgrupowanych timerach.",
     "animationEffectsLabel": "Efekty animacji",
     "animationEffectsDescription": "Włącz płynne animacje interfejsu. Wyłącz na słabszym komputerze, aby ograniczyć lagi.",
+    "statusTitle": "Stan dodatku",
+    "accountLabel": "Konto",
+    "accountChecking": "Sprawdzanie sesji…",
+    "accountSignedIn": "Zalogowano jako {{name}}",
+    "accountSignedOut": "Niezalogowany",
+    "accountError": "Nie udało się sprawdzić sesji",
+    "accountSignedOutHint": "Zaloguj się na stronie Lootloga i sprawdź sesję. Jeśli po zalogowaniu nadal widzisz ten komunikat, zezwól w przeglądarce na ciasteczka innych firm dla lootlog.pl.",
+    "connectionLabel": "Połączenie z serwerem",
+    "connectionConnected": "Połączono ({{count}} Lootlogów)",
+    "connectionJoining": "Łączenie z Lootlogami…",
+    "connectionDisconnected": "Brak połączenia",
+    "windowsTitle": "Okna",
+    "resetWindowLayoutLabel": "Przywróć domyślne położenie okien",
+    "resetWindowLayoutDescription": "Ustawia wszystkie okna dodatku w domyślnych miejscach i rozmiarach. Otwarte okna pozostają otwarte.",
+    "resetWindowLayoutAction": "Przywróć",
+    "resetWindowLayoutDone": "Przywrócono domyślne położenie okien",
+    "localDataTitle": "Dane lokalne",
+    "clearLocalDataLabel": "Wyczyść dane lokalne",
+    "clearLocalDataDescription": "Usuwa dane dodatku zapisane w tej przeglądarce (okna, timery, logi, lokalne preferencje) i przeładowuje grę. Ustawienia zapisane na serwerze zostają.",
+    "clearLocalDataAction": "Wyczyść",
+    "clearLocalDataConfirm": "Potwierdź",
+    "clearLocalDataCancel": "Anuluj"
+  },
+  "experimental": {
+    "sectionTitle": "Funkcje eksperymentalne",
+    "newInterfaceOnly": "Funkcje eksperymentalne są dostępne tylko w nowym interfejsie gry.",
     "mapPingsLabel": "Pingi na mapie",
     "mapPingsDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie.",
     "airTagsLabel": "AirTagi - współdzielona widoczność",
@@ -201,7 +207,10 @@
     "commitShaLabel": "Commit SHA",
     "environmentLabel": "Środowisko",
     "buildTimestampLabel": "Data builda (UTC)",
-    "notAvailable": "Brak danych"
+    "notAvailable": "Brak danych",
+    "copy": "Kopiuj {{label}}",
+    "copied": "Skopiowano",
+    "copyFailed": "Nie udało się skopiować"
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu"
@@ -232,6 +241,7 @@
     "description": "Skonfiguruj skróty klawiaturowe i przyciski myszy.",
     "capture": "Naciśnij klawisz lub przycisk myszy...",
     "conflict": "Ten skrót jest już przypisany do innej akcji.",
+    "changeLabel": "Zmień skrót: {{action}}",
     "modifiers": {
       "ctrl": "Ctrl",
       "alt": "Alt",
@@ -242,10 +252,7 @@
       "3": "Wstecz",
       "4": "Dalej"
     },
-    "resetTitle": "Reset",
     "restoreDefaultsLabel": "Przywróć domyślne",
-    "restoreDefaultsDescription": "Usuń własne przypisania i wróć do domyślnej konfiguracji skrótów.",
-    "restoreButton": "Przywróć",
     "categories": {
       "communication": "Komunikacja",
       "windows": "Okna",
@@ -253,113 +260,124 @@
     },
     "actions": {
       "toggle-command": {
-        "label": "Konsola",
-        "description": "Otwórz/zamknij okno komendy"
+        "label": "Konsola"
       },
       "toggle-chat": {
-        "label": "Chat",
-        "description": "Otwórz/zamknij okno czatu"
+        "label": "Chat"
       },
       "toggle-settings": {
-        "label": "Ustawienia",
-        "description": "Otwórz/zamknij ustawienia"
+        "label": "Ustawienia"
       },
       "toggle-timers": {
-        "label": "Timery",
-        "description": "Otwórz/zamknij okno timerów"
+        "label": "Timery"
       },
       "toggle-online-players": {
-        "label": "Gracze online",
-        "description": "Otwórz/zamknij okno graczy online"
+        "label": "Gracze online"
       },
       "toggle-quick-access": {
-        "label": "Quick access",
-        "description": "Otwórz/zamknij okno quick access"
+        "label": "Quick access"
       },
       "invite-all": {
         "label": "Zaproś wszystkich",
-        "description": "Zaproś wszystkich z party findera"
+        "description": "Zaprasza do grupy wszystkich zapisanych na Twoją zbiórkę."
       },
       "map-ping": {
         "label": "Ping na mapie",
-        "description": "Oznacz kafelek pod kursorem na mapie lub Podręcznej mapie"
+        "description": "Oznacza miejsce pod kursorem na mapie."
       }
-    }
+    },
+    "restoreDefaultsTitle": "Reset",
+    "restoreDefaultsDescription": "Cofa wszystkie zmienione skróty."
   },
   "notifications": {
     "title": "Ustawienia powiadomień",
-    "description": "Skonfiguruj ustawienia powiadomień. Możesz dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą one prezentowane.",
     "toggles": {
-      "show": "Wyświetlaj",
-      "ignoreOtherWorlds": "Ignoruj inne światy",
+      "show": "Pokazuj",
+      "ignoreOtherWorlds": "Mój świat",
       "highlight": "Podświetlenie",
-      "sound": "Powiadom dźwiękiem"
+      "sound": "Dźwięk",
+      "showDescription": "Główny włącznik. Gdy jest wyłączony, powiadomienia tego typu nie pojawią się w grze.",
+      "ignoreOtherWorldsDescription": "Pokazuj tylko zgłoszenia ze świata, na którym grasz. Wyłącz, aby widzieć też inne światy.",
+      "highlightDescription": "Wyróżnia okno powiadomienia kolorem tego typu.",
+      "soundDescription": "Odtwarza dźwięk przy nowym powiadomieniu. Dźwięki zmienisz w zakładce Dźwięki."
     },
-    "autoHideLabel": "Auto ukrywanie",
-    "autoHideDescription": "Sekundy, 0 = wyłączone.",
-    "serversTitle": "Serwery",
-    "emptyGuilds": "Brak gildii do skonfigurowania dla tej kategorii."
+    "autoHideLabel": "Znika po",
+    "autoHideDescription": "Po ilu sekundach powiadomienie samo zniknie. 0 = zostaje, aż je zamkniesz.",
+    "serversTitle": "Z których Lootlogów",
+    "emptyGuilds": "Nie należysz do żadnego Lootloga.",
+    "rulesTitle": "Co pokazywać",
+    "serversDescription": "Jeden wybór dla wszystkich typów powiadomień. Dostajesz tylko powiadomienia z zaznaczonych Lootlogów; kliknij Lootloga, aby go włączyć lub wyłączyć.",
+    "rulesDescription": "Każdy wiersz to jeden typ powiadomienia. Włącz „Pokazuj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
+    "categoryHeader": "Typ",
+    "cellLabel": "{{category}}: {{setting}}",
+    "serversPickerLabel": "Lootlogi",
+    "serversSelected": "{{selected}} z {{total}}"
   },
-  "notificationMutes": {
-    "title": "Wyciszenia",
-    "description": "Zarządzaj globalną listą wyciszonych graczy i potworów. Te wyciszenia działają na wszystkich kontach.",
-    "tabs": {
-      "players": "Gracze",
-      "npcs": "Potwory"
-    },
-    "searchPlayersPlaceholder": "Szukaj gracza...",
-    "searchNpcsPlaceholder": "Szukaj potwora...",
-    "emptyPlayers": "Brak wyników dla graczy.",
-    "emptyNpcs": "Brak wyników dla potworów.",
+  "mutes": {
+    "players": "Wyciszeni gracze",
+    "playersTitle": "Wyciszeni gracze ({{count}})",
+    "playersSearchPlaceholder": "Szukaj gracza",
+    "noPlayers": "Nie masz wyciszonych graczy.",
+    "noPlayerResults": "Brak graczy pasujących do wyszukiwania.",
     "unknownPlayer": "Nieznany",
-    "npcLevel": "lvl {{level}}"
+    "npcs": "Wyciszone potwory",
+    "npcsTitle": "Wyciszone potwory ({{count}})",
+    "npcsSearchPlaceholder": "Szukaj potwora",
+    "noNpcs": "Nie masz wyciszonych potworów.",
+    "noNpcResults": "Brak potworów pasujących do wyszukiwania.",
+    "removeLabel": "Usuń wyciszenie: {{name}}"
   },
   "detector": {
     "title": "Ustawienia wykrywacza",
-    "description": "Skonfiguruj wspólny routing komunikatów oraz lokalne wykrywanie NPC dla każdego typu.",
-    "routingTitle": "Routing",
+    "description": "Każdy wiersz to jeden typ potwora. Włącz „Wykrywaj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
     "toggles": {
       "detect": "Wykrywaj",
-      "autoSend": "Auto wysyłanie",
-      "notifyWindow": "Okno powiadomienia",
+      "autoSend": "Auto wysyłka",
+      "notifyWindow": "Okno",
       "highlight": "Podświetlenie",
-      "notifySound": "Powiadom dźwiękiem"
+      "notifySound": "Dźwięk",
+      "detectDescription": "Główny włącznik. Gdy jest wyłączony, wykrywacz pomija potwory tego typu.",
+      "autoSendDescription": "Wysyła wykrycie na Lootlogi od razu, bez pytania. Lootlogi ustawisz w sekcji „Gdzie wysyłać powiadomienia” poniżej.",
+      "notifyWindowDescription": "Pokazuje okno z wykrytym potworem.",
+      "highlightDescription": "Wyróżnia wykrytego potwora kolorem tego typu.",
+      "notifySoundDescription": "Odtwarza dźwięk przy wykryciu. Dźwięki zmienisz w zakładce Dźwięki."
     },
     "routing": {
-      "sectionTitle": "Routing na serwery",
-      "sectionDescription": "Wspólny routing dla całego wykrywacza. Nakładające się zakresy wysyłają komunikaty na wszystkie dopasowane serwery. Zakres leveli dotyczy poziomu NPC, nie gracza.",
+      "sectionTitle": "Gdzie wysyłać powiadomienia",
+      "sectionDescription": "Wykryty potwór trafia na Lootlogi z każdej reguły, do której pasuje jego poziom i świat. Bez pasującej reguły powiadomienie nie zostanie wysłane.",
       "addRuleButton": "Dodaj regułę",
-      "emptyState": "Brak reguł routingu. Detector będzie działał lokalnie bez wysyłki na Discord.",
+      "emptyState": "Nie masz jeszcze żadnej reguły, więc wykrywacz nic nie wysyła na Lootlogi. Dodaj regułę i zaznacz Lootlogi, na które mają trafiać powiadomienia.",
       "ruleLabel": "Reguła {{index}}",
       "ruleNameLabel": "Nazwa reguły",
-      "selectedGuildsBadge": "Serwery {{count}}",
-      "minLevelBadge": "Od: {{level}}",
-      "maxLevelBadge": "Do: {{level}}",
-      "worldBadge": "Świat: {{world}}",
+      "ruleNamePlaceholder": "Reguła {{index}} – nadaj jej nazwę",
       "minLevelLabel": "Od levela",
       "maxLevelLabel": "Do levela",
+      "levelRangeLabel": "Poziom potwora",
       "worldLabel": "Świat",
-      "guildSelectionLabel": "Na jakie serwery wysyłać",
-      "noGuildsSelected": "Brak serwerów",
-      "noGuildsAvailable": "Brak serwerów do wyboru.",
-      "deleteRuleLabel": "Usuń regułę {{index}}",
-      "toggleRuleLabel": "Przełącz regułę {{index}}",
-      "guildOverflowLabel": "+{{count}}",
-      "guildOverflowTooltip": "{{count}} kolejnych serwerów"
-    }
+      "worldPlaceholder": "Każdy świat",
+      "useCurrentWorldLabel": "Wstaw aktualny świat",
+      "guildSelectionLabel": "Lootlogi",
+      "selectedCount": "{{selected}} z {{total}}",
+      "guildPickerLabel": "Lootlogi: {{name}}",
+      "noGuildsAvailable": "Nie należysz do żadnego Lootloga.",
+      "deleteRuleLabel": "Usuń regułę {{name}}",
+      "noGuildsBadge": "Nic nie wysyła – zaznacz Lootloga"
+    },
+    "typesTitle": "Które potwory wykrywać",
+    "categoryHeader": "Typ",
+    "cellLabel": "{{category}}: {{setting}}"
   },
   "timers": {
     "title": "Ustawienia timerów",
     "description": "Skonfiguruj ustawienia dotyczące wyświetlania i działania timerów.",
     "subTabs": {
       "general": "Ogólne",
+      "catching": "Zakres zbierania",
       "appearance": "Wygląd",
       "colors": "Kolory"
     },
     "general": {
       "behaviorTitle": "Zachowanie",
-      "syncLabel": "Synchronizuj ustawienia",
-      "syncDescription": "Synchronizuje ustawienia timerów z serwerem.",
       "groupingLabel": "Grupuj timery",
       "groupingDescription": "Łączy timery z różnych lootlogów w jeden zbiorczy.",
       "underBagLabel": "Timery pod torbami",
@@ -373,7 +391,7 @@
       "countdownMin": "Min",
       "fadeTitle": "Wygaszanie",
       "removeTimerAfterLabel": "Czas usunięcia timera po wyzerowaniu",
-      "removeTimerAfterDescription": "W sekundach."
+      "removeTimerAfterDescription": "Po ilu sekundach od wyzerowania timer znika z listy."
     },
     "appearance": {
       "visibilityTitle": "Widoczność",
@@ -386,16 +404,25 @@
       "singleTimerDisplayModeRow": "Wiersze",
       "scaleTitle": "Skala",
       "fontSizeLabel": "Wielkość czcionki",
-      "minWidthLabel": "Minimalna szerokość pojedynczego timera"
+      "minWidthLabel": "Minimalna szerokość pojedynczego timera",
+      "showLevelDescription": "Poziom potwora obok nazwy timera.",
+      "showTypeDescription": "Skrót typu potwora przed nazwą timera.",
+      "fontSizeDescription": "Wielkość tekstu w kafelkach timerów.",
+      "minWidthDescription": "Najmniejsza szerokość kafelka; większa wartość oznacza mniej kolumn."
     },
     "colors": {
       "listTitle": "Lista kolorów",
       "standardColorsTitle": "Standardowe",
+      "standardColorsDescription": "Paleta kolorów dostępna dla każdego timera. Możesz zmienić nazwę, ramkę i tło każdego z nich.",
       "customColorsTitle": "Własne",
+      "customColorsDescription": "Dodatkowe kolory, które tworzysz sam.",
+      "customColorsEmpty": "Nie dodano jeszcze własnych kolorów.",
+      "resetAll": "Przywróć wszystkie",
+      "resetAllDescription": "Wraca do domyślnych nazw i kolorów wszystkich standardowych kolorów.",
       "standardColor": "Kolor standardowy",
       "customColor": "Kolor własny",
       "nameLabel": "Nazwa",
-      "resetColorTitle": "Przywróć domyślny wygląd",
+      "resetColorTitle": "Przywróć domyślny",
       "hideColorTitle": "Ukryj kolor",
       "deleteColorTitle": "Usuń kolor",
       "addTitle": "Dodaj kolor",
@@ -407,75 +434,68 @@
       "backgroundAria": "Kolor tła",
       "backgroundHexAria": "Kolor tła HEX",
       "editColorAria": "Edytuj kolor",
-      "actionsAria": "Więcej ustawień koloru",
       "modified": "Zmieniony",
       "transparencyLabel": "Przezroczystość",
       "transparencyAria": "Przezroczystość tła",
       "previewLabel": "Podgląd",
       "addButton": "Dodaj",
-      "hiddenDefaultsTitle": "Usunięte domyślne kolory",
+      "hiddenCount": "Ukryte ({{count}})",
       "restoreColorTitle": "Przywróć kolor"
-    },
-    "preview": {
-      "ariaLabel": "Podgląd wyglądu timera",
-      "label": "Podgląd",
-      "npc": "Mroczny Łowca"
     }
   },
   "catching": {
     "title": "Ustawienia łapania lootu i timerów",
     "description": "Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci.",
     "characterTitle": "Postać",
-    "characterDescription": "Wybierz postać, a potem wskaż gildie, które mają odbierać z niej dane.",
+    "characterDescription": "Każda postać ma własny zakres zbierania. Wybierz postać, której ustawienia chcesz zmienić.",
+    "characterLabel": "Postać",
     "applyToAllButton": "Aplikuj do wszystkich postaci",
-    "applySuccess": "Ustawienia skopiowane do wszystkich postaci",
     "applyNoneFailed": "Nie udało się zaktualizować żadnej postaci",
     "applyPartialFailed": "Zaktualizowano {{successCount}}/{{totalCount}} postaci. Część zmian się nie udała.",
     "applyFailed": "Nie udało się skopiować ustawień do wszystkich postaci",
     "form": {
       "collectionRangeTitle": "Zakres zbierania",
-      "collectionRangeDescription": "Kliknij gildię, aby włączyć lub wyłączyć odbieranie lootów i timerów dla tej postaci.",
-      "activeCount": "{{selectedCount}}/{{totalCount}} aktywne",
-      "emptyGuilds": "Brak gildii do skonfigurowania dla tej postaci."
+      "serversTitle": "Do których Lootlogów",
+      "serversLabel": "Lootlogi",
+      "serversDescription": "Looty i timery tej postaci trafiają tylko do zaznaczonych Lootlogów; kliknij Lootloga, aby go włączyć lub wyłączyć.",
+      "activeCount": "{{selectedCount}} z {{totalCount}}",
+      "emptyGuilds": "Brak Lootlogów do skonfigurowania dla tej postaci."
     }
   },
   "hiddenTimers": {
     "title": "Ukryte timery",
     "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
     "scopeTitle": "Zakres listy",
-    "groupedDescription": "Grupowanie jest włączone, więc ustawienia działają globalnie bez podziału na serwer.",
-    "ungroupedDescription": "Wybierz serwer, dla którego chcesz zobaczyć ukryte timery.",
+    "ungroupedDescription": "Wybierz Lootloga, dla którego chcesz zobaczyć ukryte timery.",
     "emptyGuilds": "Brak gildii do wyboru.",
     "listTitle": "Ukryte timery",
-    "emptyState": "Brak ukrytych timerów."
+    "emptyState": "Brak ukrytych timerów.",
+    "guildLabel": "Lootlog"
   },
   "sounds": {
     "title": "Ustawienia dźwięków",
     "description": "Skonfiguruj dźwięki dla różnych funkcji.",
     "loading": "Ładowanie ustawień...",
-    "categoriesTitle": "Kategorie dźwięków",
-    "categoriesDescription": "Dostosuj głośność i dźwięki dla każdej kategorii osobno.",
     "invalidUrl": "Nieprawidłowy URL",
-    "temporarilyUnavailable": "Tymczasowo niedostępne",
-    "supportedFormats": "Obsługiwane formaty: mp3, wav, ogg. Zostaw puste, aby użyć domyślnego dźwięku.",
-    "masterVolume": "Głośność główna",
-    "test": "Odtwórz dźwięk testowy",
+    "masterTitle": "Głośność główna",
+    "masterDescription": "Skaluje wszystkie dźwięki Lootloga na tym urządzeniu. Głośność każdej kategorii ustawisz poniżej.",
+    "masterVolume": "Głośność",
+    "categoryVolume": "Głośność",
     "categories": {
       "notifications": {
         "label": "Powiadomienia",
-        "description": "Dźwięki odgrywane są przy różnych powiadomieniach."
+        "description": "Dźwięk okna powiadomień dla każdego typu. Puste pole gra dźwięk domyślny; formaty: mp3, wav, ogg."
       },
       "detector": {
         "label": "Wykrywacz",
-        "description": "Dźwięki odgrywane są, gdy wykrywacz znajdzie NPC."
+        "description": "Dźwięk wykrywacza dla każdego typu. Puste pole gra dźwięk domyślny."
       },
       "timers": {
-        "label": "Timery",
-        "description": "Dźwięki odgrywane są, gdy timer wejdzie na minimalny czas respawnu."
+        "label": "Timery"
       },
       "pings": {
         "label": "Pingi na mapie",
-        "description": "Dźwięk odgrywany przy pingach odebranych od innych graczy."
+        "description": "Dźwięk pingów, które grupa stawia na mapie."
       }
     }
   },
@@ -485,31 +505,24 @@
     "consoleDebugTitle": "Diagnostyka konsoli",
     "lootDebugLoggingLabel": "Loguj tworzenie łupów",
     "lootDebugLoggingDescription": "Zapisuje w konsoli przeglądarki pełny przebieg tworzenia łupów z walk i dialogów. Logi zawierają pełne payloady, w tym nazwy oraz identyfikatory kont, postaci i NPC.",
-    "filtersTitle": "Filtry",
-    "filtersDescription": "Zawęź wpisy po typie, statusie lub fragmencie treści.",
     "searchPlaceholder": "Szukaj w logach",
     "actionTypeAria": "Typ akcji",
     "actionTypePlaceholder": "Typ akcji",
     "statusAria": "Status akcji",
     "statusPlaceholder": "Status akcji",
     "listTitle": "Lista akcji",
-    "listDescription": "Widoczne akcje: {{visibleCount}} z {{totalCount}}.",
     "emptyState": "Brak akcji pasujących do aktualnych filtrów.",
     "exportSuccess": "Logi wyeksportowane do pliku",
     "exportFailed": "Nie udało się wyeksportować logów",
     "copyFailed": "Nie udało się skopiować logu",
     "copyActionSuccess": "Akcja skopiowana do schowka",
     "copyRequestSuccess": "Request skopiowany do schowka",
-    "requestsCount": "Requesty: {{count}}",
-    "successCount": "Sukcesy: {{count}}",
-    "errorCount": "Błędy: {{count}}",
     "actionPayload": "Payload akcji",
     "actionDetails": "Szczegóły akcji",
     "toggleActionDetails": "Przełącz szczegóły akcji",
     "noRequests": "Brak zapisanych requestów dla tej akcji.",
     "payload": "Payload",
     "response": "Odpowiedź",
-    "statusCode": "Kod statusu: {{statusCode}}",
     "statuses": {
       "all": "Wszystkie statusy",
       "success": "Sukces",
@@ -538,16 +551,26 @@
       "update_user_game_account_preferences": "Aktualizacja preferencji konta gry",
       "update_lootlog_characters_config": "Aktualizacja konfiguracji postaci"
     },
-    "allActions": "Wszystkie akcje"
+    "allActions": "Wszystkie akcje",
+    "toggleRequestDetails": "Przełącz szczegóły requestu",
+    "columns": {
+      "time": "Czas",
+      "action": "Akcja",
+      "status": "Status"
+    },
+    "requestColumns": {
+      "method": "Metoda",
+      "url": "URL",
+      "status": "Status",
+      "time": "Czas"
+    }
   },
   "debug": {
     "title": "Debug",
     "description": "Narzędzia pomocnicze do ręcznego wywoływania eventów i podglądu stanu klienta.",
     "eventTemplatesTitle": "Szablony eventów",
     "npcDetectorTitle": "Eventy wykrywacza NPC",
-    "npcDetectorDescription": "Wywołuje wykrycie NPC przez wykrywacz (wymaga włączonych ustawień wykrywacza).",
     "partyEventsTitle": "Eventy grupy",
-    "partyEventsDescription": "Wywołuje zmiany członków grupy.",
     "rawJsonTitle": "Surowy event JSON",
     "eventLogTitle": "Log eventów",
     "partyStateTitle": "Stan grupy",
@@ -555,7 +578,6 @@
     "othersStateTitle": "Stan graczy na mapie",
     "othersCount": "Liczba graczy: {{count}}",
     "systemInfoTitle": "Informacje systemowe",
-    "loadTemplate": "Wczytaj {{label}}",
     "triggerCustomEvent": "Wywołaj własny event",
     "noEvents": "Nie wywołano żadnych eventów",
     "noPartyMembers": "Brak członków grupy",
@@ -592,13 +614,43 @@
       "partyJoin": "Dołączenie do grupy",
       "partyLeave": "Opuszczenie grupy",
       "customJson": "Własny JSON"
-    }
+    },
+    "run": "Wywołaj",
+    "rawJsonLabel": "Treść eventu",
+    "rawJsonDescription": "Wklej obiekt eventu Margonem i wywołaj go ręcznie w kliencie.",
+    "actions": {
+      "npcSpawnDescription": "Dodaje testowego NPC o id 999999 na aktualnej mapie.",
+      "npcDeleteDescription": "Usuwa testowego NPC o id 999999.",
+      "killNpcDescription": "Kończy walkę z tym samym testowym bossem.",
+      "killNpcUniqueDescription": "Kończy walkę z bossem o losowym id, więc każde wywołanie tworzy nowy wpis.",
+      "townChangeDescription": "Symuluje przejście na testową mapę.",
+      "lootFightDescription": "Wywołuje okno łupu po walce.",
+      "lootDialogDescription": "Wywołuje okno łupu z dialogu.",
+      "lootLegendaryDescription": "Wywołuje łup legendarny z elity II na podstawie aktualnego stanu gry.",
+      "partyJoinDescription": "Ustawia grupę z dwoma testowymi członkami.",
+      "partyLeaveDescription": "Opróżnia listę członków grupy."
+    },
+    "templateLabel": "Szablon",
+    "templateDescription": "Wczytuje wybrany szablon do pola poniżej."
   },
   "chatFilters": {
     "npcMessages": {
       "title": "Wiadomości NPC w chacie",
-      "description": "Wyłącz typy NPC, których wiadomości nie chcesz widzieć w chacie. Wyłączone typy nie pojawiają się w chacie i nie wywołują powiadomień o wzmiankach."
-    },
-    "saveError": "Nie udało się zapisać filtrów chatu."
+      "description": "Wyłączony typ NPC znika z chatu i nie wywołuje powiadomień o wzmiankach. Typ ukryjesz też prawym przyciskiem myszy na jego wiadomości."
+    }
+  },
+  "saveStatus": {
+    "saving": "Zapisywanie…",
+    "saved": "Zapisano",
+    "error": "Błąd zapisu",
+    "retry": "Ponów"
+  },
+  "nav": {
+    "domains": "Działy ustawień",
+    "subsections": "Sekcje ustawień"
+  },
+  "matrix": {
+    "enableAll": "Kliknij nagłówek, aby włączyć we wszystkich wierszach.",
+    "disableAll": "Kliknij nagłówek, aby wyłączyć we wszystkich wierszach."
   }
 }

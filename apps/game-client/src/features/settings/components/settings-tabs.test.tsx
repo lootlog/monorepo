@@ -1,11 +1,22 @@
-import { render as renderUi, screen, waitFor } from "@testing-library/react";
+import {
+  render as renderUi,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
+import { useSettingsUiStore } from "@/features/settings/settings-ui.store";
+import { SETTINGS_MANIFEST } from "@/features/settings/settings-manifest";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { createSoundSettings } from "@/test/sound-settings-fixtures";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import {
+  seedSettingsDocumentValues,
+  soundSettingValues,
+} from "@/test/settings-documents-fixtures";
 
 let harness: ReturnType<typeof createGuildPreferencesTest>;
 
@@ -16,9 +27,9 @@ import { SettingsTabs } from "./settings-tabs";
 describe("SettingsTabs", () => {
   beforeEach(() => {
     harness = createGuildPreferencesTest();
-    harness.queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      createSoundSettings(),
+    seedSettingsDocumentValues(
+      harness.queryClient,
+      soundSettingValues(createSoundSettings()),
     );
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
@@ -34,24 +45,31 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders eleven domain tabs in order and opens the selected domain", async () => {
+  it("renders fifteen domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
-    const tabs = screen.getAllByRole("tab");
+    const tabs = within(
+      screen.getByRole("tablist", { name: "Działy ustawień" }),
+    ).getAllByRole("tab");
+
     const tabNames = tabs.map((tab) => tab.textContent);
     const soundsTab = screen.getByRole("tab", { name: "Dźwięki" });
 
     expect(tabNames).toEqual([
       "Ogólne",
-      "Serwery",
+      "Zakres zbierania",
+      "Lootlogi",
       "Wygląd",
       "Chat",
       "Timery",
-      "Dane z gry",
       "Powiadomienia",
+      "Wykrywacz",
+      "Wyciszenia",
+      "Panel walk",
       "Dźwięki",
       "Sterowanie",
+      "Eksperymentalne",
       "Diagnostyka",
       "Informacje",
     ]);
@@ -71,10 +89,9 @@ describe("SettingsTabs", () => {
       "discord",
     );
 
-    expect(screen.getByText("Dane z gry")).toBeInTheDocument();
     expect(screen.getByText("Wykrywacz")).toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: "Routing na serwery" }),
+      screen.getByRole("option", { name: "Gdzie wysyłać powiadomienia" }),
     ).toBeInTheDocument();
   });
 
@@ -87,7 +104,8 @@ describe("SettingsTabs", () => {
       "głośność główna",
     );
 
-    expect(screen.getAllByText("Dźwięki")).toHaveLength(2);
+    // A single-subsection domain gets one heading, without a repeated name.
+    expect(screen.getAllByText("Dźwięki")).toHaveLength(1);
     expect(
       screen.getByRole("option", { name: "Głośność główna" }),
     ).toBeInTheDocument();
@@ -116,14 +134,24 @@ describe("SettingsTabs", () => {
     const user = userEvent.setup();
     render();
 
+    await user.click(screen.getByRole("tab", { name: "Sterowanie" }));
+
     expect(
-      screen.queryByRole("button", { name: "Zachowanie" }),
+      screen.queryByRole("tablist", { name: "Sekcje ustawień" }),
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "Chat" }));
 
-    expect(screen.getByRole("button", { name: "Wygląd" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Filtry" })).toBeInTheDocument();
+    const subsections = within(
+      screen.getByRole("tablist", { name: "Sekcje ustawień" }),
+    );
+
+    expect(
+      subsections.getByRole("tab", { name: "Wygląd" }),
+    ).toBeInTheDocument();
+    expect(
+      subsections.getByRole("tab", { name: "Filtry" }),
+    ).toBeInTheDocument();
   });
 
   it("uses an icon rail and opens the overlaid search panel when compact", async () => {
@@ -138,7 +166,9 @@ describe("SettingsTabs", () => {
 
     render();
 
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", { name: "Szukaj w ustawieniach" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dźwięki" })).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "Szukaj w ustawieniach" }),
@@ -147,4 +177,126 @@ describe("SettingsTabs", () => {
       screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
     ).toBeInTheDocument();
   });
+});
+
+describe("SettingsTabs keyboard and start view", () => {
+  beforeEach(() => {
+    harness = createGuildPreferencesTest();
+    seedSettingsDocumentValues(
+      harness.queryClient,
+      soundSettingValues(createSoundSettings()),
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: vi.fn<HTMLElement["scrollIntoView"]>(),
+    });
+    useSettingsUiStore.getState().reset();
+    useWindowsStore.setState((state) => ({
+      ...state,
+      settings: {
+        ...state.settings,
+        open: true,
+        size: { width: 760, height: 520 },
+        state: { activeTab: "general" },
+      },
+    }));
+  });
+
+  it("focuses search with Ctrl+F only while focus is inside the window and closes on Escape", async () => {
+    const user = userEvent.setup();
+    render();
+
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    outside.focus();
+    await user.keyboard("{Control>}f{/Control}");
+    expect(
+      screen.getByRole("textbox", { name: "Szukaj w ustawieniach" }),
+    ).not.toHaveFocus();
+
+    screen.getByRole("tab", { name: "Ogólne" }).focus();
+    await user.keyboard("{Control>}f{/Control}");
+
+    const search = screen.getByRole("textbox", {
+      name: "Szukaj w ustawieniach",
+    });
+
+    expect(search).toHaveFocus();
+
+    await user.type(search, "skala");
+    await user.keyboard("{Escape}");
+    expect(search).toHaveValue("");
+    expect(useWindowsStore.getState().settings.open).toBe(true);
+
+    await user.keyboard("{Escape}");
+    expect(useWindowsStore.getState().settings.open).toBe(false);
+    outside.remove();
+  });
+
+  it("opens the selected search result with the keyboard and marks it active for assistive tech", async () => {
+    const user = userEvent.setup();
+    render();
+
+    const search = screen.getByRole("textbox", {
+      name: "Szukaj w ustawieniach",
+    });
+
+    await user.type(search, "chat");
+    await user.keyboard("{ArrowDown}");
+
+    const options = screen.getAllByRole("option");
+
+    expect(options[1]).toHaveAttribute("aria-selected", "true");
+    expect(search).toHaveAttribute("aria-activedescendant", options[1]?.id);
+
+    await user.keyboard("{Enter}");
+
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-settings-highlighted="true"]'),
+      ).toHaveAttribute(
+        "data-settings-control",
+        options[1]?.id.replace("settings-search-option-", ""),
+      ),
+    );
+    expect(search).toHaveValue("");
+  });
+});
+
+describe("SettingsTabs manifest coverage", () => {
+  beforeEach(() => {
+    harness = createGuildPreferencesTest();
+    setTestRuntimeGame({ interface: "ni" });
+    seedSettingsDocumentValues(
+      harness.queryClient,
+      soundSettingValues(createSoundSettings()),
+    );
+    useSettingsUiStore.getState().reset();
+    useWindowsStore.setState((state) => ({
+      ...state,
+      settings: { ...state.settings, size: { width: 760, height: 520 } },
+    }));
+  });
+
+  // Catching needs the character list API and debug is development-only.
+  const uncoveredSubsections = new Set(["catching", "debug"]);
+
+  for (const domain of SETTINGS_MANIFEST) {
+    for (const subsection of domain.subsections) {
+      if (uncoveredSubsections.has(subsection.id)) continue;
+
+      it(`renders every manifest control of ${domain.id}/${subsection.id}`, async () => {
+        useWindowsStore.getState().setSettingsPath(domain.id, subsection.id);
+        render();
+
+        await waitFor(() => {
+          for (const control of subsection.controls) {
+            expect(
+              document.querySelector(`[data-settings-control="${control.id}"]`),
+            ).toBeInTheDocument();
+          }
+        });
+      });
+    }
+  }
 });

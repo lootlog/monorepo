@@ -1,17 +1,20 @@
+import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import {
+  accountPreferenceValues,
+  createSettingsDocuments,
+  seedSettingsDocuments,
+  seedSettingsDocumentValues,
+  soundSettingValues,
+} from "@/test/settings-documents-fixtures";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  getSoundSettingsControllerGetSettingsQueryKey,
-  getUsersControllerGetUserGameAccountPreferencesQueryKey,
-  type UserGameAccountPreferencesResponseDtoOutput,
-  type SoundSettingsResponseDto,
+import type {
+  UserGameAccountPreferencesResponseDtoOutput,
+  SoundSettingsResponseDto,
 } from "@lootlog/client/main";
 import { createRealtimeTest } from "@/test/realtime-test";
-import {
-  createNotificationsSettings,
-  createDetectorSettings,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
@@ -27,7 +30,7 @@ const preferences = (
   enabled: boolean,
 ): UserGameAccountPreferencesResponseDtoOutput => ({
   accountId: "1",
-  notifications: createNotificationsSettings(),
+  notifications: createNotificationsResponse(),
   detector: createDetectorSettings(),
   pings: { enabled },
   airTags: { enabled: true },
@@ -61,11 +64,10 @@ const setup = async ({
 } = {}) => {
   const test = createRealtimeTest();
 
-  const preferenceKey = getUsersControllerGetUserGameAccountPreferencesQueryKey(
-    { accountId: "1" },
+  seedSettingsDocuments(
+    test.queryClient,
+    createSettingsDocuments(accountPreferenceValues(preferences(enabled))),
   );
-
-  test.queryClient.setQueryData(preferenceKey, preferences(enabled));
   useGlobalStore.setState({ gameState: { gameInitialized: joined } });
 
   if (oldInterface) {
@@ -143,10 +145,7 @@ const setup = async ({
     updatedAt: "2026-01-01",
   };
 
-  test.queryClient.setQueryData(
-    getSoundSettingsControllerGetSettingsQueryKey(),
-    sound,
-  );
+  seedSettingsDocumentValues(test.queryClient, soundSettingValues(sound));
 
   const event = (outside = false) => {
     const element = outside ? document.createElement("div") : canvas;
@@ -180,7 +179,10 @@ const setup = async ({
     );
 
   const setEnabled = (value: boolean) =>
-    test.queryClient.setQueryData(preferenceKey, preferences(value));
+    seedSettingsDocumentValues(
+      test.queryClient,
+      accountPreferenceValues(preferences(value)),
+    );
 
   return {
     ...test,

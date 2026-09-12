@@ -1,12 +1,10 @@
 import { QueryClientProvider } from "@tanstack/react-query";
+import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  getSettingsDocumentsControllerGetPreferencesQueryKey,
-  type SettingsDocumentsResponseDtoOutput,
-} from "@lootlog/client/main";
+import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/client/main";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { ChatFiltersSettings } from "./chat-filters-settings";
 
@@ -30,9 +28,7 @@ describe("ChatFiltersSettings", () => {
     harness = createGuildPreferencesTest();
     harness.setPreferences({ userId: "user-1" });
     harness.queryClient.setQueryData(
-      getSettingsDocumentsControllerGetPreferencesQueryKey({
-        domains: "chat",
-      }),
+      getCurrentSettingsDocumentsQueryKey(),
       settingsDocuments,
     );
     patchRequest
@@ -48,10 +44,6 @@ describe("ChatFiltersSettings", () => {
         <ChatFiltersSettings />
       </QueryClientProvider>,
     );
-
-    expect(
-      screen.getByRole("heading", { name: "Wiadomości NPC w chacie" }),
-    ).toBeInTheDocument();
     expect(screen.queryByText(/chatFilters\./)).not.toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Tytan" })).not.toBeChecked();
     expect(screen.getByRole("switch", { name: "Heros" })).toBeChecked();
@@ -69,6 +61,7 @@ describe("ChatFiltersSettings", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       );
     });

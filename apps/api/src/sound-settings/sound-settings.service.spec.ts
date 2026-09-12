@@ -44,6 +44,10 @@ const createSettingsDocumentsMock = (
     parseDomains: () => {
       throw new Error("Unexpected domain parser");
     },
+    parseGuildIds: () => {
+      throw new Error("Unexpected guild id parser");
+    },
+    getGuildPreferences: () => Effect.die("Unexpected guild preferences read"),
     getPreferences,
     patchPreferences,
   };

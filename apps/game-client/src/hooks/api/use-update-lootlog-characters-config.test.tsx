@@ -5,10 +5,18 @@ import { expect, it, onTestFinished } from "vitest";
 import { useGameStore } from "@/store/game.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import { useUpdateLootlogCharactersConfig } from "./use-update-lootlog-characters-config";
 
 it("waits for canonical identity before submitting character config", async () => {
-  const fixture = createTimerHttpFixture(() => Response.json({}));
+  const savedEntry = {
+    userId: "user-1",
+    accountId: "202",
+    characterId: "101",
+    catchingGuildIds: ["12"],
+  };
+
+  const fixture = createTimerHttpFixture(() => Response.json(savedEntry));
   onTestFinished(fixture.cleanup);
   useGameStore.getState().clearGame();
 
@@ -41,4 +49,17 @@ it("waits for canonical identity before submitting character config", async () =
     catchingGuildIds: ["12"],
     characterId: "101",
   });
+
+  // The saved entry lands in the account map without a refetch.
+  const queryKey =
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId: "202",
+    });
+
+  expect(fixture.queryClient.getQueryData(queryKey)).toEqual({
+    "101": savedEntry,
+  });
+  expect(fixture.queryClient.getQueryState(queryKey)?.isInvalidated).toBe(
+    false,
+  );
 });

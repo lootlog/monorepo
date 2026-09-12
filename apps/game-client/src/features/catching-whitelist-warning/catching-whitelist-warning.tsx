@@ -128,10 +128,20 @@ export const CatchingWhitelistWarning: FC = () => {
           <p className="ll:mb-3">{t("content.description")}</p>
         </div>
         <div className="ll:flex ll:gap-2 ll:justify-end">
-          <Button onClick={handleClose} className="ll:px-3 ll:py-1">
+          <Button
+            variant="secondary"
+            size="xs"
+            onClick={handleClose}
+            className="ll:px-3 ll:py-1"
+          >
             {t("common:actions.close")}
           </Button>
-          <Button onClick={handleOpenSettings} className="ll:px-3 ll:py-1">
+          <Button
+            variant="secondary"
+            size="xs"
+            onClick={handleOpenSettings}
+            className="ll:px-3 ll:py-1"
+          >
             {t("common:actions.openSettings")}
           </Button>
         </div>

@@ -1,4 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
+import { getChatAppearanceFromDocuments } from "@/features/settings/persistence/use-appearance-settings";
+import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persistence/settings-patch-client";
 import {
   act,
   fireEvent,
@@ -7,15 +9,14 @@ import {
   waitFor,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
+import {
+  CHAT_APPEARANCE_COMPACT_PRESET,
+  CHAT_APPEARANCE_READABLE_PRESET,
+} from "@lootlog/schema/chat-appearance";
 import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  getSettingsDocumentsControllerGetPreferencesQueryKey,
-  type SettingsDocumentsResponseDtoOutput,
-  type UserPreferencesResponseDtoOutput,
-} from "@lootlog/client/main";
+import type { SettingsDocumentsResponseDtoOutput } from "@lootlog/client/main";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { useSettingsStore } from "@/store/settings.store";
 
@@ -45,14 +46,22 @@ describe("ChatAppearanceSettingsForm", () => {
     useSettingsStore.setState({ allowWorldSelection: false });
     harness.setPreferences({ userId: "user-1" });
     harness.queryClient.setQueryData(
-      getSettingsDocumentsControllerGetPreferencesQueryKey({
-        domains: "appearance",
-      }),
+      getCurrentSettingsDocumentsQueryKey(),
       settingsDocuments,
     );
+    // A real server answers a patch with the patched document; the cache
+    // holds that state optimistically, so echo it back.
     patchRequest
       .mockReset()
-      .mockResolvedValue(Response.json(settingsDocuments));
+      .mockImplementation(() =>
+        Promise.resolve(
+          Response.json(
+            harness.queryClient.getQueryData(
+              getCurrentSettingsDocumentsQueryKey(),
+            ),
+          ),
+        ),
+      );
     harness.request.mockImplementation(patchRequest);
   });
 
@@ -66,7 +75,7 @@ describe("ChatAppearanceSettingsForm", () => {
     );
 
     expect(
-      screen.queryByRole("switch", { name: "Gildia" }),
+      screen.queryByRole("switch", { name: "Lootlog" }),
     ).not.toBeInTheDocument();
 
     act(() => useSettingsStore.setState({ allowWorldSelection: true }));
@@ -76,7 +85,66 @@ describe("ChatAppearanceSettingsForm", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByRole("switch", { name: "Gildia" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Lootlog" })).toBeInTheDocument();
+  });
+
+  it("applies a preset from the preset radio group", async () => {
+    const user = userEvent.setup();
+    const queryClient = harness.queryClient;
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ChatAppearanceSettingsForm />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("radio", { name: /^Czytelny/ })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: /^Własny/ })).toBeNull();
+
+    await user.click(screen.getByRole("radio", { name: /^Kompaktowy/ }));
+
+    await waitFor(() => {
+      expect(patchRequest.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({
+          operations: [
+            {
+              domain: "appearance",
+              scope: { type: "USER", id: "user-1" },
+              set: { chat: CHAT_APPEARANCE_COMPACT_PRESET },
+              unset: [],
+            },
+          ],
+          context: {},
+        }),
+      );
+    });
+    expect(screen.getByRole("radio", { name: /^Kompaktowy/ })).toBeChecked();
+  });
+
+  it("leaves every preset unselected when the stored values match no preset", () => {
+    const queryClient = harness.queryClient;
+    queryClient.setQueryData(getCurrentSettingsDocumentsQueryKey(), {
+      domains: {
+        appearance: {
+          ...settingsDocuments.domains.appearance,
+          effective: {
+            chat: { ...CHAT_APPEARANCE_READABLE_PRESET, fontScalePercent: 70 },
+            npcColors: DEFAULT_NPC_TYPE_COLORS,
+          },
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ChatAppearanceSettingsForm />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("radio", { name: /^Czytelny/ })).not.toBeChecked();
+    expect(
+      screen.getByRole("radio", { name: /^Kompaktowy/ }),
+    ).not.toBeChecked();
   });
 
   it("keeps slider changes local until the interaction is committed", async () => {
@@ -124,11 +192,10 @@ describe("ChatAppearanceSettingsForm", () => {
       pointerType: "mouse",
     });
 
-    expect(screen.queryByText("Własne ustawienia")).not.toBeInTheDocument();
     expect(
-      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-        harness.preferencesKey,
-      )?.chatAppearance.fontScalePercent,
+      getChatAppearanceFromDocuments(
+        queryClient.getQueryData(getCurrentSettingsDocumentsQueryKey()),
+      ).fontScalePercent,
     ).toBe(100);
     expect(patchRequest).not.toHaveBeenCalled();
 
@@ -141,9 +208,9 @@ describe("ChatAppearanceSettingsForm", () => {
     });
 
     expect(
-      queryClient.getQueryData<UserPreferencesResponseDtoOutput>(
-        harness.preferencesKey,
-      )?.chatAppearance.fontScalePercent,
+      getChatAppearanceFromDocuments(
+        queryClient.getQueryData(getCurrentSettingsDocumentsQueryKey()),
+      ).fontScalePercent,
     ).toBe(70);
     await waitFor(() => expect(patchRequest).toHaveBeenCalledOnce());
   });
@@ -180,6 +247,7 @@ describe("ChatAppearanceSettingsForm", () => {
               unset: [],
             },
           ],
+          context: {},
         }),
       );
     });

@@ -1,3 +1,4 @@
+import { cloneNotifications } from "@lootlog/domain/account-preferences";
 import {
   DETECTOR_NPC_TYPES,
   defaultDetectorSettings,
@@ -7,15 +8,6 @@ import {
   type NotificationsSettings,
   type UserGameAccountPreferences,
 } from "@lootlog/schema/account-preferences";
-import { getUsersControllerGetUserGameAccountPreferencesQueryKey } from "@lootlog/client/main";
-
-const UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX =
-  "update-user-game-account-preferences";
-
-// SAFETY: The schema-owned default literal contains exactly the six NotificationType keys.
-const notificationSettingTypes = Object.keys(
-  defaultNotificationsSettings,
-) as Array<keyof NotificationsSettings>;
 
 type GameAccountNotificationPreferences = Pick<
   UserGameAccountPreferences,
@@ -27,48 +19,12 @@ type GameAccountDetectorPreferences = Pick<
   "detector" | "hasStoredDetector"
 >;
 
-export const getUserGameAccountPreferencesQueryKey = (accountId: string) =>
-  getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId });
-
-export const getUpdateUserGameAccountPreferencesMutationKey = (
-  accountId: string,
-) =>
-  [
-    UPDATE_USER_GAME_ACCOUNT_PREFERENCES_MUTATION_KEY_PREFIX,
-    accountId,
-  ] as const;
-
-const cloneNotificationsSettings = (
-  settings: NotificationsSettings,
-): NotificationsSettings => {
-  return notificationSettingTypes.reduce(
-    (acc, notificationType) => {
-      acc[notificationType] = {
-        ...settings[notificationType],
-        guildIds: [...settings[notificationType].guildIds],
-      };
-
-      return acc;
-    },
-    { ...settings },
-  );
-};
-
-export const createNotificationsSettings = (guildIds: string[] = []) => {
-  const settings = cloneNotificationsSettings(defaultNotificationsSettings);
-
-  return notificationSettingTypes.reduce(
-    (acc, notificationType) => {
-      acc[notificationType] = {
-        ...settings[notificationType],
-        guildIds: [...guildIds],
-      };
-
-      return acc;
-    },
-    { ...settings },
-  );
-};
+export const createNotificationsSettings = (
+  guildIds: string[] = [],
+): NotificationsSettings => ({
+  ...cloneNotifications(defaultNotificationsSettings),
+  guildIds: [...guildIds],
+});
 
 export const cloneDetectorSettings = (
   settings: DetectorSettings,
@@ -99,10 +55,10 @@ export const getEffectiveNotificationSettings = (
   preferences?: GameAccountNotificationPreferences | null,
 ) => {
   if (!preferences) {
-    return cloneNotificationsSettings(defaultNotificationsSettings);
+    return cloneNotifications(defaultNotificationsSettings);
   }
 
-  return cloneNotificationsSettings(preferences.notifications);
+  return cloneNotifications(preferences.notifications);
 };
 
 export const getEffectiveDetectorSettings = (

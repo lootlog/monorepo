@@ -1,14 +1,15 @@
 import { waitFor } from "@testing-library/react";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getSoundSettingsControllerGetSettingsQueryKey } from "@lootlog/client/main";
+import {
+  seedSettingsDocumentValues,
+  soundSettingValues,
+  type SettingsDocumentValues,
+} from "@/test/settings-documents-fixtures";
 import type { UserSoundSettings } from "@lootlog/schema/sound-settings";
 import { useSettingsStore } from "@/store/settings.store";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createDetectorSettings,
-  getUserGameAccountPreferencesQueryKey,
-} from "@/lib/game-account-preferences";
+import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { queryClient } from "@/lib/query-client";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -31,6 +32,8 @@ let restoreApi: () => void = () => {};
 
 const play = vi.fn<HTMLMediaElement["play"]>().mockResolvedValue();
 
+let soundValues: SettingsDocumentValues = {};
+
 const readyPreferences = (overrides?: {
   detect?: boolean;
   autoSend?: boolean;
@@ -51,11 +54,11 @@ const readyPreferences = (overrides?: {
   detector.HERO.notifySound = overrides?.notifySound ?? false;
   detector.routingRules = overrides?.routingRules ?? [];
 
-  queryClient.setQueryData(getUserGameAccountPreferencesQueryKey("202"), {
-    accountId: "202",
-    detector,
-    hasStoredDetector: true,
-  });
+  seedSettingsDocumentValues(
+    queryClient,
+    { ...soundValues, "gameData.detector": detector },
+    { type: "GAME_ACCOUNT", id: "202" },
+  );
 };
 
 const createNpcEvent = (overrides?: {
@@ -184,10 +187,7 @@ describe("NpcsDetectionProcessor", () => {
       timersConfig: {},
     };
 
-    queryClient.setQueryData(
-      getSoundSettingsControllerGetSettingsQueryKey(),
-      sound,
-    );
+    soundValues = soundSettingValues(sound);
     processor = new NpcsDetectionProcessor();
     processor.cleanup();
     useNpcsStore.getState().clearNpcs();

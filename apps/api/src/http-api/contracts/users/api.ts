@@ -102,7 +102,7 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Summary, "Get user game account preferences")
     .annotate(
       OpenApi.Description,
-      "Retrieve account-scoped game preferences for a specific Margonem account",
+      "Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).",
     ),
   HttpApiEndpoint.patch(
     "UsersControllerUpdateUserGameAccountPreferences",
@@ -121,6 +121,6 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Summary, "Update user game account preferences")
     .annotate(
       OpenApi.Description,
-      "Update account-scoped game preferences for a specific Margonem account",
+      "Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).",
     ),
 ) {}

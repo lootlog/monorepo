@@ -1,5 +1,5 @@
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import type { MargonemCharacter } from "@/api/characters.api";
+import { CharacterSprite } from "@/components/character-sprite";
 import { cn } from "cn";
 import {
   Tooltip,
@@ -23,14 +23,12 @@ export const CharacterTile: FC<CharacterTileProps> = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
+        <CharacterSprite
+          icon={character.icon}
           className={cn(
-            "ll:w-8 ll:h-12 ll:relative ll-custom-cursor-pointer ll:rounded-lg",
+            "ll:relative ll-custom-cursor-pointer ll:rounded-lg",
             className,
           )}
-          style={{
-            backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${character.icon})`,
-          }}
         >
           {isAfk ? (
             <>
@@ -38,7 +36,7 @@ export const CharacterTile: FC<CharacterTileProps> = ({
               <AlertTriangle className="ll:absolute ll:-right-0.5 ll:-top-0.5 ll:z-10 ll:h-5 ll:w-5 ll:text-orange-500" />
             </>
           ) : null}
-        </div>
+        </CharacterSprite>
       </TooltipTrigger>
       <TooltipContent side="top" className="ll:z-9999">
         <span className="ll:font-semibold">

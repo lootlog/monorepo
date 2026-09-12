@@ -44,7 +44,7 @@ describe("UnderBagTimers", () => {
 
     if (!timersContainer) throw new Error("Expected timers portal container");
     expect(timersContainer).toHaveClass("ll-theme-boundary", "dark-theme");
-    expect(["4px", "calc(8px - 4px)"]).toContain(
+    expect(["6px", "calc(10px * 0.6)"]).toContain(
       getComputedStyle(screen.getByText("TimersInPortal")).borderRadius,
     );
     fireEvent.wheel(timersContainer);

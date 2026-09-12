@@ -256,11 +256,7 @@ export const NpcListItem = ({
           />
         ) : null
       ) : null}
-      <NpcTile
-        npc={npc}
-        className="ll:w-auto ll:max-w-7 ll:max-h-10 ll:object-contain"
-        containerClassName="ll:w-7 ll:h-10 ll:shrink-0"
-      />
+      <NpcTile npc={npc} />
       <div className="ll:relative ll:flex ll:flex-col ll:flex-1 ll:min-w-0">
         <div className="ll:flex ll:text-xs ll:gap-1 ll:overflow-hidden">
           <span className="ll:font-semibold ll:truncate ll:min-w-0">
@@ -283,6 +279,7 @@ export const NpcListItem = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                size="xs"
                 variant="ghost"
                 className={`${ACTION_BUTTON_CLASS_NAME} ll:border-yellow-500/40 ll:hover:bg-yellow-500/10`}
                 onClick={handleOpenDetectorSettings}
@@ -304,6 +301,7 @@ export const NpcListItem = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   className={`ll:relative ${ACTION_BUTTON_CLASS_NAME}`}
                   disabled={isSendingNpcNotification || npc.notificationSent}
@@ -361,6 +359,7 @@ export const NpcListItem = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  size="xs"
                   variant="ghost"
                   className={ACTION_BUTTON_CLASS_NAME}
                   disabled={
@@ -387,6 +386,7 @@ export const NpcListItem = ({
         )}
         {hasMultipleNpcs && (
           <Button
+            size="xs"
             variant="destructive"
             aria-label={t("actions.removeNpcAria")}
             className={ACTION_BUTTON_CLASS_NAME}

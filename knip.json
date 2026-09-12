@@ -29,10 +29,11 @@
       ]
     },
     "apps/game-client": {
-      "entry": ["src/main.tsx", "scripts/**/*.{ts,mjs}"],
+      "entry": ["src/main.tsx", "sandbox/main.ts", "scripts/**/*.{ts,mjs}"],
       "project": [
         "src/**/*.{ts,tsx}",
         "test/**/*.{ts,tsx}",
+        "sandbox/**/*.{ts,tsx}",
         "scripts/**/*.{ts,mjs}",
         "*.{ts,mts,js,mjs}",
         "*.config.{ts,mts,js,mjs}",

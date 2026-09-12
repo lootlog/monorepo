@@ -1,93 +1,110 @@
-import { SettingsSection } from "@/components/settings/settings-section";
-import { SettingsSyncStatus } from "@/components/settings/settings-sync-status";
-import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { NpcTypeChip } from "@/components/settings/npc-type-chip";
 import {
-  SETTINGS_SUBTABS_LIST_CLASS_NAME,
-  SETTINGS_SUBTAB_CONTENT_CLASS_NAME,
-  SETTINGS_SUBTAB_TRIGGER_CLASS_NAME,
-} from "@/components/settings/settings-styles";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DetectorRoutingSettingsTabForm } from "@/features/settings/components/detector/detector-routing-settings-tab-form";
-import { DetectorSettingsTabForm } from "@/features/settings/components/detector/detector-settings-tab-form";
+  SettingsMatrix,
+  type SettingsMatrixColumn,
+} from "@/components/settings/settings-matrix";
+import { SettingsMatrixRow } from "@/components/settings/settings-matrix-row";
+import { SettingsSection } from "@/components/settings/settings-section";
+import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
+import { Switch } from "@/components/ui/switch";
+import { DetectorRoutingSection } from "@/features/settings/components/detector/detector-routing-section";
+import { useDetectorTypesForm } from "@/features/settings/components/detector/use-detector-types-form";
 import { NpcType } from "@/api/npcs.api";
-import { useGameAccountPreferencesSyncIndicator } from "@/hooks/use-game-account-preferences-sync-status";
 import type { DetectorNpcType } from "@lootlog/schema/account-preferences";
-import type { ReactNode } from "react";
+import { AppWindow, Highlighter, Radar, Send, Volume2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export const DetectorSettingsTab = () => {
-  const resolvedVisibleStatus = useGameAccountPreferencesSyncIndicator();
-  const { t } = useTranslation(["settings", "common"]);
+const COLUMNS = [
+  { key: "detect", icon: Radar, primary: true },
+  { key: "autoSend", icon: Send },
+  { key: "notifyWindow", icon: AppWindow },
+  { key: "highlight", icon: Highlighter },
+  { key: "notifySound", icon: Volume2 },
+] as const;
 
-  const categoryTabs: Array<{
-    label: string;
-    key: DetectorNpcType;
-    content: ReactNode;
-  }> = [
-    {
-      label: t("common:npcTypes.elite2"),
-      key: NpcType.ELITE2,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.ELITE2} />,
-    },
-    {
-      label: t("common:npcTypes.hero"),
-      key: NpcType.HERO,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.HERO} />,
-    },
-    {
-      label: t("common:npcTypes.colossus"),
-      key: NpcType.COLOSSUS,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.COLOSSUS} />,
-    },
-    {
-      label: t("common:npcTypes.titan"),
-      key: NpcType.TITAN,
-      content: <DetectorSettingsTabForm categoryKey={NpcType.TITAN} />,
-    },
+export const DetectorSettingsTab = () => {
+  const { t } = useTranslation();
+  const { setSwitch, setSwitchForAll, types } = useDetectorTypesForm();
+
+  const categories: Array<{ label: string; key: DetectorNpcType }> = [
+    { label: t("common:npcTypes.elite2"), key: NpcType.ELITE2 },
+    { label: t("common:npcTypes.hero"), key: NpcType.HERO },
+    { label: t("common:npcTypes.colossus"), key: NpcType.COLOSSUS },
+    { label: t("common:npcTypes.titan"), key: NpcType.TITAN },
   ];
 
-  return (
-    <SettingsTabLayout
-      title={t("detector.title")}
-      description={t("detector.description")}
-      contentClassName="ll:gap-3"
-    >
-      <div className="ll:relative">
-        <div className="ll:sticky ll:top-0 ll:z-10 ll:flex ll:h-0 ll:justify-end ll:pointer-events-none">
-          <SettingsSyncStatus
-            status={resolvedVisibleStatus}
-            errorLabel={t("common:syncStatus.error")}
-            savingLabel={t("common:syncStatus.saving")}
-            syncingLabel={t("common:syncStatus.syncing")}
-          />
-        </div>
-        <Tabs defaultValue={NpcType.ELITE2} className="ll:w-full ll:gap-3">
-          <TabsList className={SETTINGS_SUBTABS_LIST_CLASS_NAME}>
-            {categoryTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.key}
-                value={tab.key}
-                className={SETTINGS_SUBTAB_TRIGGER_CLASS_NAME}
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {categoryTabs.map((tab) => (
-            <TabsContent
-              key={tab.key}
-              value={tab.key}
-              className={SETTINGS_SUBTAB_CONTENT_CLASS_NAME}
-            >
-              {tab.content}
-            </TabsContent>
-          ))}
-        </Tabs>
+  const columns: SettingsMatrixColumn[] = COLUMNS.map((column) => {
+    const editableTypes = categories.flatMap((category) => {
+      const type = types[category.key];
 
-        <SettingsSection>
-          <DetectorRoutingSettingsTabForm />
-        </SettingsSection>
-      </div>
+      return column.key === "detect" || type.detect ? [type] : [];
+    });
+
+    return {
+      key: column.key,
+      icon: column.icon,
+      primary: "primary" in column,
+      label: t(`settings.detector.toggles.${column.key}`),
+      description: t(`settings.detector.toggles.${column.key}Description`),
+      bulk: {
+        checked:
+          editableTypes.length > 0 &&
+          editableTypes.every((type) => type[column.key]),
+        onChange: (checked: boolean) => setSwitchForAll(column.key, checked),
+      },
+    };
+  });
+
+  return (
+    <SettingsTabLayout>
+      <SettingsSection
+        controlId="detector-types"
+        title={t("settings.detector.typesTitle")}
+        description={t("settings.detector.description")}
+      >
+        <SettingsMatrix
+          label={t("settings.detector.typesTitle")}
+          rowHeader={t("settings.detector.categoryHeader")}
+          columns={columns}
+          className="ll:mt-2"
+        >
+          {categories.map((category) => {
+            const enabled = types[category.key].detect;
+
+            return (
+              <SettingsMatrixRow
+                key={category.key}
+                dimmed={!enabled}
+                title={
+                  <NpcTypeChip npcType={category.key}>
+                    {category.label}
+                  </NpcTypeChip>
+                }
+                cells={COLUMNS.map((column) => {
+                  const isDisabled = column.key !== "detect" && !enabled;
+
+                  return (
+                    <Switch
+                      key={column.key}
+                      id={`${category.key}-${column.key}`}
+                      aria-label={t("settings.detector.cellLabel", {
+                        category: category.label,
+                        setting: t(`settings.detector.toggles.${column.key}`),
+                      })}
+                      checked={types[category.key][column.key]}
+                      disabled={isDisabled}
+                      onCheckedChange={(checked) =>
+                        setSwitch(category.key, column.key, checked)
+                      }
+                    />
+                  );
+                })}
+              />
+            );
+          })}
+        </SettingsMatrix>
+      </SettingsSection>
+      <DetectorRoutingSection />
     </SettingsTabLayout>
   );
 };

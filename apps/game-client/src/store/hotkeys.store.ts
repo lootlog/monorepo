@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
 import i18n from "@/i18n/config";
+import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 
 const STORAGE_KEY = storageKey("ll:hotkeys:state");
 
@@ -47,7 +48,7 @@ export type HotkeyCategory = "communication" | "windows" | "party";
 export type HotkeyActionConfig = {
   action: HotkeyAction;
   labelKey: string;
-  descriptionKey: string;
+  descriptionKey?: string;
   category: HotkeyCategory;
   scope: HotkeyScope;
   defaultBinding: HotkeyBinding;
@@ -62,15 +63,17 @@ export const HOTKEY_CATEGORY_KEYS: Record<HotkeyCategory, string> = {
 export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   ...(
     [
-      { action: "chat-position", key: "P" },
-      { action: "chat-help", key: "H" },
-      { action: "join-party-gathering", key: "" },
-      { action: "create-party-gathering", key: "" },
+      { action: "chat-position", key: "P", hasDescription: true },
+      { action: "chat-help", key: "H", hasDescription: true },
+      { action: "join-party-gathering", key: "", hasDescription: true },
+      { action: "create-party-gathering", key: "", hasDescription: false },
     ] as const
-  ).map(({ action, key }) => ({
+  ).map(({ action, key, hasDescription }) => ({
     action,
     labelKey: `chat:quickActions.hotkeys.${action}.label`,
-    descriptionKey: `chat:quickActions.hotkeys.${action}.description`,
+    descriptionKey: hasDescription
+      ? `chat:quickActions.hotkeys.${action}.description`
+      : undefined,
     category: "communication" as const,
     scope: "global" as const,
     defaultBinding: {
@@ -84,7 +87,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-command",
     labelKey: "settings.hotkeys.actions.toggle-command.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-command.description",
     category: "communication",
     scope: "global",
     defaultBinding: {
@@ -98,7 +100,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-chat",
     labelKey: "settings.hotkeys.actions.toggle-chat.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-chat.description",
     category: "communication",
     scope: "global",
     defaultBinding: {
@@ -112,7 +113,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-settings",
     labelKey: "settings.hotkeys.actions.toggle-settings.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-settings.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -126,7 +126,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-timers",
     labelKey: "settings.hotkeys.actions.toggle-timers.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-timers.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -140,8 +139,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-online-players",
     labelKey: "settings.hotkeys.actions.toggle-online-players.label",
-    descriptionKey:
-      "settings.hotkeys.actions.toggle-online-players.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -155,7 +152,6 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
   {
     action: "toggle-quick-access",
     labelKey: "settings.hotkeys.actions.toggle-quick-access.label",
-    descriptionKey: "settings.hotkeys.actions.toggle-quick-access.description",
     category: "windows",
     scope: "global",
     defaultBinding: {
@@ -294,7 +290,12 @@ interface HotkeysState {
   setBinding: (action: HotkeyAction, binding: HotkeyBinding) => boolean;
   resetBinding: (action: HotkeyAction) => void;
   resetAll: () => void;
+  /** Replaces bindings from the settings documents without writing back. */
+  applyBindings: (bindings: Record<HotkeyAction, HotkeyBinding>) => void;
 }
+
+const syncBindings = (bindings: Record<HotkeyAction, HotkeyBinding>) =>
+  enqueueSettingsPatch({ domain: "controls", set: { hotkeys: bindings } });
 
 export const useHotkeysStore = create<HotkeysState>()(
   persist<HotkeysState, [], [], Pick<HotkeysState, "bindings">>(
@@ -313,6 +314,7 @@ export const useHotkeysStore = create<HotkeysState>()(
         set((state) => ({
           bindings: { ...state.bindings, [action]: binding },
         }));
+        syncBindings(get().bindings);
 
         return true;
       },
@@ -326,8 +328,19 @@ export const useHotkeysStore = create<HotkeysState>()(
             [action]: { ...config.defaultBinding },
           },
         }));
+        syncBindings(get().bindings);
       },
-      resetAll: () => set({ bindings: getDefaultBindings() }),
+      resetAll: () => {
+        set({ bindings: getDefaultBindings() });
+        syncBindings(get().bindings);
+      },
+      applyBindings: (bindings) => {
+        if (JSON.stringify(get().bindings) === JSON.stringify(bindings)) {
+          return;
+        }
+
+        set({ bindings });
+      },
     }),
     {
       name: STORAGE_KEY,
@@ -369,9 +382,40 @@ export const bindingsEqual = (
   );
 };
 
-export const formatBinding = (binding: HotkeyBinding): string => {
+/** True when the binding structurally equals the action's default. */
+export const isDefaultBinding = (
+  action: HotkeyAction,
+  binding: HotkeyBinding,
+): boolean => {
+  const config = HOTKEY_ACTIONS.find((c) => c.action === action);
+
+  if (!config) return false;
+  const defaultBinding = config.defaultBinding;
+
+  if (
+    binding.type !== defaultBinding.type ||
+    binding.shift !== defaultBinding.shift ||
+    binding.ctrl !== defaultBinding.ctrl ||
+    binding.alt !== defaultBinding.alt
+  ) {
+    return false;
+  }
+
+  if (binding.type === "keyboard" && defaultBinding.type === "keyboard") {
+    return binding.key === defaultBinding.key;
+  }
+
+  return (
+    binding.type === "mouse" &&
+    defaultBinding.type === "mouse" &&
+    binding.button === defaultBinding.button
+  );
+};
+
+/** Binding as key caps: modifiers first, then the key or mouse button. */
+export const formatBindingParts = (binding: HotkeyBinding): string[] => {
   if (binding.type === "keyboard" && !binding.key)
-    return i18n.t("chat:quickActions.unassigned");
+    return [i18n.t("chat:quickActions.unassigned")];
   const parts: string[] = [];
 
   if (binding.ctrl) parts.push(i18n.t("settings.hotkeys.modifiers.ctrl"));
@@ -386,5 +430,8 @@ export const formatBinding = (binding: HotkeyBinding): string => {
     parts.push(i18n.t(`settings.hotkeys.mouseButtons.${binding.button}`));
   }
 
-  return parts.join(" + ");
+  return parts;
 };
+
+export const formatBinding = (binding: HotkeyBinding): string =>
+  formatBindingParts(binding).join(" + ");

@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./access-policy": "./src/access-policy.ts",
+    "./account-preferences": "./src/account-preferences.ts",
     "./air-tag": "./src/air-tag.ts",
     "./chat-message-permissions": "./src/chat-message-permissions.ts",
     "./chat-appearance": "./src/chat-appearance.ts",
@@ -19,6 +20,7 @@
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
     "./settings-documents": "./src/settings-documents.ts",
+    "./settings-paths": "./src/settings-paths.ts",
     "./guild-preferences": "./src/guild-preferences.ts",
     "./guild-documents": "./src/guild-documents.ts"
   },

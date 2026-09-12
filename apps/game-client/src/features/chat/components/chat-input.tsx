@@ -12,9 +12,12 @@ import {
   type ChatInputProps,
 } from "./use-chat-input-controller";
 
+const FOCUS_RING_CLASSES =
+  "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]";
+
 const CHAT_INPUT_FOCUS_CLASSES = {
-  default:
-    "ll:focus-within:border-ring ll:focus-within:ring-ring/50 ll:focus-within:ring-[3px]",
+  default: FOCUS_RING_CLASSES,
+  filled: FOCUS_RING_CLASSES,
   borderless: "",
 };
 
@@ -64,7 +67,7 @@ export function ChatInput(props: ChatInputProps) {
       )}
     >
       {replyDraft && (
-        <div className="ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40">
+        <div className="ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40">
           <ChatReplyPreview
             variant="compact"
             reply={replyDraft}
@@ -89,7 +92,7 @@ export function ChatInput(props: ChatInputProps) {
       />
       <div
         className={cn("ll:flex ll:items-center ll:gap-1", {
-          "ll:border-solid ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:pl-1":
+          "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:pl-1":
             variant === "borderless",
         })}
       >
@@ -157,6 +160,7 @@ export function ChatInput(props: ChatInputProps) {
                 </div>
                 <div className="ll:flex ll:justify-end ll:gap-2">
                   <Button
+                    size="xs"
                     variant="menu"
                     type="button"
                     onClick={() => {
@@ -167,6 +171,7 @@ export function ChatInput(props: ChatInputProps) {
                     {t("input.clearChatConfirm.cancel")}
                   </Button>
                   <Button
+                    size="xs"
                     variant="menu"
                     type="button"
                     disabled={isClearingChat}

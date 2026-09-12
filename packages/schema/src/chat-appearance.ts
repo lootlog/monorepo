@@ -56,8 +56,8 @@ export const CHAT_APPEARANCE_READABLE_PRESET = {
 
 export const CHAT_APPEARANCE_COMPACT_PRESET = {
   npcLayout: "inline",
-  fontScalePercent: 90,
-  messageGapPx: 0,
+  fontScalePercent: 95,
+  messageGapPx: 2,
   showTimestamp: true,
   showGuildLabel: true,
   showNpcAvatar: false,

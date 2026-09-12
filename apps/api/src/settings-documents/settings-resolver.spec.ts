@@ -62,6 +62,41 @@ describe("settings resolver", () => {
     expect(SETTINGS_CATALOG.appearance.schemaVersion).toBe(3);
   });
 
+  it("lifts the per-type notification server lists into one shared list", () => {
+    expect(
+      migrateSettingsDocument(
+        "notifications",
+        {
+          presentation: {
+            HERO: { show: true, guildIds: ["1", "2"] },
+            TITAN: { show: false, guildIds: ["2", "3"] },
+            message: { show: true },
+          },
+        },
+        1,
+      ),
+    ).toEqual({
+      presentation: {
+        guildIds: ["1", "2", "3"],
+        HERO: { show: true },
+        TITAN: { show: false },
+        message: { show: true },
+      },
+    });
+    expect(SETTINGS_CATALOG.notifications.schemaVersion).toBe(2);
+    expect(
+      SETTINGS_CATALOG.notifications.fields.presentation.isValid({
+        guildIds: ["1"],
+        HERO: { show: true },
+      }),
+    ).toBe(true);
+    expect(
+      SETTINGS_CATALOG.notifications.fields.presentation.isValid({
+        guildIds: "1",
+      }),
+    ).toBe(false);
+  });
+
   it("accepts only known NPC ranks for hidden chat NPC types", () => {
     const { isValid } = SETTINGS_CATALOG.chat.fields.hiddenNpcTypes;
 
@@ -69,6 +104,32 @@ describe("settings resolver", () => {
     expect(isValid([])).toBe(true);
     expect(isValid(["DRAGON"])).toBe(false);
     expect(isValid("TITAN")).toBe(false);
+  });
+
+  it("keeps backfilled legacy preference shapes and rejects malformed ones", () => {
+    const { gameData, notifications, controls } = SETTINGS_CATALOG;
+
+    expect(gameData.fields.detector.isValid({ HERO: { detect: false } })).toBe(
+      true,
+    );
+    expect(gameData.fields.detector.isValid({ routingRules: [{}] })).toBe(true);
+    expect(gameData.fields.detector.isValid({ routingRules: "none" })).toBe(
+      false,
+    );
+    expect(gameData.fields.pings.isValid({ enabled: true })).toBe(true);
+    expect(gameData.fields.pings.isValid({ enabled: "yes" })).toBe(false);
+    expect(
+      notifications.fields.presentation.isValid({ HERO: { show: true } }),
+    ).toBe(true);
+    expect(notifications.fields.presentation.isValid({ HERO: true })).toBe(
+      false,
+    );
+    expect(
+      notifications.fields.mutes.isValid({ players: [{ discordId: "1" }] }),
+    ).toBe(true);
+    expect(notifications.fields.mutes.isValid({ players: "1" })).toBe(false);
+    expect(controls.fields.hotkeys.isValid({ "toggle-chat": {} })).toBe(true);
+    expect(controls.fields.hotkeys.isValid({ "toggle-chat": "k" })).toBe(false);
   });
 
   it("keeps chat values on the user layer while ignoring lower scopes", () => {

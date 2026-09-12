@@ -433,6 +433,7 @@ export type UserGameAccountPreferencesResponseDtoOutputNotificationsPartyGatheri
 };
 
 export type UserGameAccountPreferencesResponseDtoOutputNotifications = {
+  guildIds: string[];
   ELITE2: UserGameAccountPreferencesResponseDtoOutputNotificationsELITE2;
   HERO: UserGameAccountPreferencesResponseDtoOutputNotificationsHERO;
   COLOSSUS: UserGameAccountPreferencesResponseDtoOutputNotificationsCOLOSSUS;
@@ -582,6 +583,7 @@ export type UpdateUserGameAccountPreferencesDtoNotificationsPartyGathering = {
 };
 
 export type UpdateUserGameAccountPreferencesDtoNotifications = {
+  guildIds?: string[];
   ELITE2?: UpdateUserGameAccountPreferencesDtoNotificationsELITE2;
   HERO?: UpdateUserGameAccountPreferencesDtoNotificationsHERO;
   COLOSSUS?: UpdateUserGameAccountPreferencesDtoNotificationsCOLOSSUS;
@@ -2112,6 +2114,21 @@ export interface SettingsDocumentsResponseDtoOutput {
   domains: SettingsDocumentsResponseDtoOutputDomains;
 }
 
+export type GuildSettingsDocumentsResponseDtoOutputGuilds = {[key: string]: SettingsDocumentsResponseDtoOutput};
+
+export interface GuildSettingsDocumentsResponseDtoOutput {
+  guilds: GuildSettingsDocumentsResponseDtoOutputGuilds;
+}
+
+export interface SettingsDocumentsContextDto {
+  /** @minLength 1 */
+  gameAccountId?: string;
+  /** @minLength 1 */
+  characterId?: string;
+  /** @minLength 1 */
+  guildId?: string;
+}
+
 export type PatchSettingsDocumentsDtoOperationsItemDomain = typeof PatchSettingsDocumentsDtoOperationsItemDomain[keyof typeof PatchSettingsDocumentsDtoOperationsItemDomain];
 
 
@@ -2155,6 +2172,7 @@ export type PatchSettingsDocumentsDtoOperationsItem = {
 export interface PatchSettingsDocumentsDto {
   /** @minItems 1 */
   operations: PatchSettingsDocumentsDtoOperationsItem[];
+  context?: SettingsDocumentsContextDto;
 }
 
 export type LootResponseDtoSource = typeof LootResponseDtoSource[keyof typeof LootResponseDtoSource];
@@ -10528,6 +10546,29 @@ export type SettingsDocumentsControllerPatchPreferences429 = {
   message: string;
 };
 
+export type SettingsDocumentsControllerGetGuildPreferencesParams = {
+/**
+ * @minLength 1
+ */
+domains: string;
+/**
+ * @minLength 1
+ */
+guildIds: string;
+};
+
+export type SettingsDocumentsControllerGetGuildPreferences401 = {
+  message: string;
+};
+
+export type SettingsDocumentsControllerGetGuildPreferences403 = HttpErrorResponse | {
+  message: string;
+};
+
+export type SettingsDocumentsControllerGetGuildPreferences429 = {
+  message: string;
+};
+
 export type LootsControllerFetchLootsByGuildIdPathParameters = {
  guildId: string,
  }
@@ -14060,7 +14101,7 @@ export const getUsersControllerGetUserGameAccountPreferencesUrl = ({ accountId }
 }
 
 /**
- * Retrieve account-scoped game preferences for a specific Margonem account
+ * Retrieve account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get user game account preferences
  */
 export const usersControllerGetUserGameAccountPreferences = async ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<UserGameAccountPreferencesResponseDtoOutput> => {
@@ -14204,7 +14245,7 @@ export const getUsersControllerUpdateUserGameAccountPreferencesUrl = ({ accountI
 }
 
 /**
- * Update account-scoped game preferences for a specific Margonem account
+ * Update account-scoped game preferences for a specific Margonem account. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update user game account preferences
  */
 export const usersControllerUpdateUserGameAccountPreferences = async ({ accountId }: UsersControllerUpdateUserGameAccountPreferencesPathParameters,
@@ -18927,7 +18968,7 @@ export const getTimerSettingsControllerGetGlobalSettingsUrl = () => {
 }
 
 /**
- * Retrieve user global timer settings
+ * Retrieve user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get global timer settings
  */
 export const timerSettingsControllerGetGlobalSettings = async ( options?: Parameters<typeof mainFetch>[1]): Promise<TimerSettingsResponseDto> => {
@@ -19071,7 +19112,7 @@ export const getTimerSettingsControllerUpdateGlobalSettingsUrl = () => {
 }
 
 /**
- * Update user global timer settings
+ * Update user global timer settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update global timer settings
  */
 export const timerSettingsControllerUpdateGlobalSettings = async (updateTimerSettingsDto: UpdateTimerSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<TimerSettingsResponseDto> => {
@@ -19150,7 +19191,7 @@ export const getTimerSettingsControllerGetGuildSettingsUrl = ({ guildId }: Timer
 }
 
 /**
- * Retrieve user timer settings for a specific guild
+ * Retrieve user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get guild-specific timer settings
  */
 export const timerSettingsControllerGetGuildSettings = async ({ guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<GuildTimerSettingsResponseDto> => {
@@ -19294,7 +19335,7 @@ export const getTimerSettingsControllerUpdateGuildSettingsUrl = ({ guildId }: Ti
 }
 
 /**
- * Update user timer settings for a specific guild
+ * Update user timer settings for a specific guild. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update guild-specific timer settings
  */
 export const timerSettingsControllerUpdateGuildSettings = async ({ guildId }: TimerSettingsControllerUpdateGuildSettingsPathParameters,
@@ -19374,7 +19415,7 @@ export const getTimerSettingsControllerMigrateSettingsUrl = () => {
 }
 
 /**
- * Migrate timer settings from localStorage to backend with conflict resolution
+ * Migrate timer settings from localStorage to backend with conflict resolution. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Migrate localStorage settings to backend
  */
 export const timerSettingsControllerMigrateSettings = async (migrateTimerSettingsDto: MigrateTimerSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<void> => {
@@ -19671,6 +19712,156 @@ export const useSettingsDocumentsControllerPatchPreferences = <TError = ErrorTyp
       > => {
       return useMutation(getSettingsDocumentsControllerPatchPreferencesMutationOptions(options), queryClient);
     }
+
+export const getSettingsDocumentsControllerGetGuildPreferencesUrl = (params: SettingsDocumentsControllerGetGuildPreferencesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/preferences/guilds?${stringifiedParams}` : `/preferences/guilds`
+}
+
+/**
+ * @summary Get guild-scoped settings for several guilds in one request
+ */
+export const settingsDocumentsControllerGetGuildPreferences = async (params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: Parameters<typeof mainFetch>[1]): Promise<GuildSettingsDocumentsResponseDtoOutput> => {
+
+  return mainFetch<GuildSettingsDocumentsResponseDtoOutput>(getSettingsDocumentsControllerGetGuildPreferencesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSettingsDocumentsControllerGetGuildPreferencesQueryKey = (params?: SettingsDocumentsControllerGetGuildPreferencesParams,) => {
+    return [
+    `/preferences/guilds`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSettingsDocumentsControllerGetGuildPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>>(params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSettingsDocumentsControllerGetGuildPreferencesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>> = ({ signal }) => settingsDocumentsControllerGetGuildPreferences(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SettingsDocumentsControllerGetGuildPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>>
+export type SettingsDocumentsControllerGetGuildPreferencesQueryError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>
+
+
+export function useSettingsDocumentsControllerGetGuildPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>>(
+ params: SettingsDocumentsControllerGetGuildPreferencesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSettingsDocumentsControllerGetGuildPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>>(
+ params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSettingsDocumentsControllerGetGuildPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>>(
+ params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get guild-scoped settings for several guilds in one request
+ */
+
+export function useSettingsDocumentsControllerGetGuildPreferences<TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>>(
+ params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSettingsDocumentsControllerGetGuildPreferencesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get guild-scoped settings for several guilds in one request
+ */
+export const prefetchSettingsDocumentsControllerGetGuildPreferencesQuery = async <TData = Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError = ErrorType<HttpErrorResponse | SettingsDocumentsControllerGetGuildPreferences401 | SettingsDocumentsControllerGetGuildPreferences403 | SettingsDocumentsControllerGetGuildPreferences429>>(
+ queryClient: QueryClient, params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getSettingsDocumentsControllerGetGuildPreferencesQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get guild-scoped settings for several guilds in one request
+ */
+export const invalidateSettingsDocumentsControllerGetGuildPreferences = async (
+ queryClient: QueryClient, params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getSettingsDocumentsControllerGetGuildPreferencesQueryKey(params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get guild-scoped settings for several guilds in one request
+ */
+export const useSetSettingsDocumentsControllerGetGuildPreferencesQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: SettingsDocumentsControllerGetGuildPreferencesParams | undefined,updater: Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined | ((old: Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined) => Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined)) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>>({ queryKey: getSettingsDocumentsControllerGetGuildPreferencesQueryKey(params) }, updater);
+  };
+}
+
+/**
+ * @summary Get guild-scoped settings for several guilds in one request
+ */
+export const useGetSettingsDocumentsControllerGetGuildPreferencesQueryData = () => {
+  const queryClient = useQueryClient();
+  return (params: SettingsDocumentsControllerGetGuildPreferencesParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>>(getSettingsDocumentsControllerGetGuildPreferencesQueryKey(params));
+}
+
+
 
 export const getLootsControllerFetchLootsByGuildIdUrl = ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
     params?: LootsControllerFetchLootsByGuildIdParams,) => {
@@ -26831,7 +27022,7 @@ export const getSoundSettingsControllerGetSettingsUrl = () => {
 }
 
 /**
- * Retrieve user sound settings
+ * Retrieve user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Get sound settings
  */
 export const soundSettingsControllerGetSettings = async ( options?: Parameters<typeof mainFetch>[1]): Promise<SoundSettingsResponseDto> => {
@@ -26975,7 +27166,7 @@ export const getSoundSettingsControllerUpdateSettingsUrl = () => {
 }
 
 /**
- * Update user sound settings
+ * Update user sound settings. Deprecated: use GET/PATCH /preferences (settings documents).
  * @summary Update sound settings
  */
 export const soundSettingsControllerUpdateSettings = async (updateSoundSettingsDto: UpdateSoundSettingsDto, options?: Parameters<typeof mainFetch>[1]): Promise<SoundSettingsResponseDto> => {

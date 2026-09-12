@@ -1,11 +1,11 @@
+import { SettingsColorRow } from "@/components/settings/settings-color-row";
+import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { Button } from "@/components/ui/button";
-import {
-  getNpcTypeColorsFromSettingsDocuments,
-  updateNpcTypeColorsInSettingsDocuments,
-  useAppearanceSettingsDocuments,
-} from "@/hooks/api/use-settings-documents";
-import { useUserPreferences } from "@/hooks/api/use-user-preferences";
+import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
+import { useSettingsSaveStatus } from "@/features/settings/persistence/settings-save-status.store";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import {
   COMBAT_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
@@ -16,98 +16,39 @@ import {
   deriveNpcSurfaceColors,
   normalizeAppearanceColor,
 } from "@lootlog/domain/npc-appearance";
-import {
-  getSettingsDocumentsControllerGetPreferencesQueryKey,
-  settingsDocumentsControllerPatchPreferences,
-  type SettingsDocumentsResponseDtoOutput,
-} from "@lootlog/client/main";
-
-import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { NpcColorEditorPopover } from "./npc-color-editor-popover";
-
-const initialQueue = Promise.resolve();
+import { NpcColorPreviewChip } from "./npc-color-preview-chip";
 
 export const NpcColorsSettings = () => {
   const { t } = useTranslation();
-  const preferences = useUserPreferences();
-  const settingsDocuments = useAppearanceSettingsDocuments();
-  const queryClient = useQueryClient();
+  const { npcTypeColors, data } = useNpcTypeColors();
+  const status = useSettingsSaveStatus();
 
-  const serverDraft = getNpcTypeColorsFromSettingsDocuments(
-    settingsDocuments.data,
+  const [draftState, setDraftState] = useState<{
+    source: typeof data;
+    value: NpcTypeColors;
+  }>({ source: data, value: npcTypeColors });
+
+  const draft = draftState.source === data ? draftState.value : npcTypeColors;
+  const [openType, setOpenType] = useState<CombatNpcType | null>(null);
+  const saving = status === "saving";
+
+  const anyModified = COMBAT_NPC_TYPES.some(
+    (npcType) => draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType],
   );
 
-  const [draftState, setDraftState] = useState({
-    source: settingsDocuments.data,
-    value: serverDraft,
-  });
+  const setDraft = (patch: Partial<NpcTypeColors>) =>
+    setDraftState({ source: data, value: { ...draft, ...patch } });
 
-  const draft =
-    draftState.source === settingsDocuments.data
-      ? draftState.value
-      : serverDraft;
-
-  const [openType, setOpenType] = useState<CombatNpcType | null>(null);
-  const [saving, setSaving] = useState(false);
-  const queue = useRef(initialQueue);
-  const generation = useRef(0);
-
-  const updateCache = (patch: Partial<NpcTypeColors>) => {
-    queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
-      getSettingsDocumentsControllerGetPreferencesQueryKey(
-        settingsDocuments.params,
-      ),
-      (current) => updateNpcTypeColorsInSettingsDocuments(current, patch),
-    );
-  };
-
-  const commit = (patch: Partial<NpcTypeColors>, unset: string[] = []) => {
-    const userId = preferences.data?.userId;
-
-    if (!userId) return;
-
-    const currentGeneration = generation.current;
-    setSaving(true);
-    queue.current = queue.current
-      .then(async () => {
-        if (currentGeneration !== generation.current) return;
-
-        try {
-          const response = await settingsDocumentsControllerPatchPreferences({
-            operations: [
-              {
-                domain: "appearance",
-                scope: { type: "USER", id: userId },
-                set: Object.keys(patch).length > 0 ? { npcColors: patch } : {},
-                unset,
-              },
-            ],
-          });
-
-          const nextColors = getNpcTypeColorsFromSettingsDocuments(response);
-          queryClient.setQueryData<SettingsDocumentsResponseDtoOutput>(
-            getSettingsDocumentsControllerGetPreferencesQueryKey(
-              settingsDocuments.params,
-            ),
-            (current) =>
-              updateNpcTypeColorsInSettingsDocuments(current, nextColors),
-          );
-          setDraftState({
-            source: settingsDocuments.data,
-            value: nextColors,
-          });
-        } catch {
-          generation.current += 1;
-          await settingsDocuments.refetch();
-          toast.error(t("settings.npcColors.saveError"));
-        }
-      })
-      .finally(() => setSaving(false));
-  };
+  const commit = (patch: Partial<NpcTypeColors>, unset: string[] = []) =>
+    enqueueSettingsPatch({
+      domain: "appearance",
+      set: Object.keys(patch).length > 0 ? { npcColors: patch } : {},
+      unset,
+    });
 
   const updateDraft = (npcType: CombatNpcType, value: string) => {
     const color = normalizeAppearanceColor(
@@ -115,113 +56,93 @@ export const NpcColorsSettings = () => {
       DEFAULT_NPC_TYPE_COLORS[npcType],
     );
 
-    const patch = { [npcType]: color } satisfies Partial<NpcTypeColors>;
-    setDraftState({
-      source: settingsDocuments.data,
-      value: { ...draft, ...patch },
-    });
-    updateCache(patch);
+    setDraft({ [npcType]: color });
 
     return color;
   };
 
   const resetType = (npcType: CombatNpcType) => {
     const defaultColor = DEFAULT_NPC_TYPE_COLORS[npcType];
-    const patch = { [npcType]: defaultColor };
-    setDraftState({
-      source: settingsDocuments.data,
-      value: { ...draft, ...patch },
-    });
-    updateCache(patch);
+    setDraft({ [npcType]: defaultColor });
     commit({}, [`npcColors.${npcType}`]);
   };
 
+  const resetAll = () => {
+    setDraft(DEFAULT_NPC_TYPE_COLORS);
+    commit(
+      {},
+      COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
+    );
+  };
+
   return (
-    <SettingsTabLayout
-      title={t("settings.npcColors.title")}
-      description={t("settings.npcColors.description")}
-      actions={
-        <Button
-          type="button"
-          variant="ghost"
-          className="ll:gap-2 ll:px-2"
-          onClick={() => {
-            setDraftState({
-              source: settingsDocuments.data,
-              value: DEFAULT_NPC_TYPE_COLORS,
-            });
-            updateCache(DEFAULT_NPC_TYPE_COLORS);
-            commit(
-              {},
-              COMBAT_NPC_TYPES.map((npcType) => `npcColors.${npcType}`),
-            );
-          }}
-        >
-          <RotateCcw className="ll:size-3" />
-          {t("settings.npcColors.resetAll")}
-        </Button>
-      }
-    >
-      <div
-        id="npc-type-colors"
-        className="ll:grid ll:grid-cols-1 ll:gap-1.5 min-[680px]:ll:grid-cols-2"
+    <SettingsTabLayout>
+      <SettingsSection
+        controlId="npc-type-colors"
+        title={t("settings.npcColors.title")}
+        description={t("settings.npcColors.description")}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!anyModified}
+            title={t("settings.npcColors.resetAllDescription")}
+            onClick={resetAll}
+          >
+            {t("settings.npcColors.resetAll")}
+          </Button>
+        }
       >
         {COMBAT_NPC_TYPES.map((npcType) => {
-          const surfaceColors = deriveNpcSurfaceColors(draft[npcType]);
-
-          const isModified =
-            draft[npcType] !== DEFAULT_NPC_TYPE_COLORS[npcType];
-
+          const color = draft[npcType];
+          const surfaceColors = deriveNpcSurfaceColors(color);
+          const isModified = color !== DEFAULT_NPC_TYPE_COLORS[npcType];
           const npcTypeLabel = t(`common:npcTypes.${npcType.toLowerCase()}`);
 
           return (
-            <NpcColorEditorPopover
+            <SettingsColorRow
               key={npcType}
-              color={draft[npcType]}
-              defaultColor={DEFAULT_NPC_TYPE_COLORS[npcType]}
-              npcType={npcType}
-              open={openType === npcType}
-              saving={saving && openType === npcType}
-              onOpenChange={(open) => setOpenType(open ? npcType : null)}
-              onDraftChange={(color) => updateDraft(npcType, color)}
-              onCommit={(color) => {
-                const normalizedColor = updateDraft(npcType, color);
-                commit({ [npcType]: normalizedColor });
-              }}
-              onReset={() => resetType(npcType)}
-            >
-              <button
-                type="button"
-                className="ll:flex ll:h-9 ll:min-w-0 ll:items-center ll:gap-2 ll:rounded-sm ll:border ll:border-solid ll:border-gray-500/40 ll:bg-gray-900/50 ll:px-2 ll:text-left ll:text-xs ll:text-white ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-purple-400 ll-custom-cursor-pointer"
-                style={{
-                  borderColor:
-                    openType === npcType ? surfaceColors.border : undefined,
-                  backgroundColor:
-                    openType === npcType ? surfaceColors.background : undefined,
-                }}
-                aria-label={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
-              >
-                <span
-                  className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:border ll:border-solid"
-                  style={{
-                    backgroundColor: draft[npcType],
-                    borderColor: draft[npcType],
+              name={npcTypeLabel}
+              meta={color}
+              borderColor={color}
+              backgroundColor={surfaceColors.background}
+              editLabel={`${t("settings.npcColors.editColor")}: ${npcTypeLabel}`}
+              editTrigger={(trigger) => (
+                <NpcColorEditorPopover
+                  color={color}
+                  defaultColor={DEFAULT_NPC_TYPE_COLORS[npcType]}
+                  npcType={npcType}
+                  open={openType === npcType}
+                  saving={saving && openType === npcType}
+                  onOpenChange={(open) => setOpenType(open ? npcType : null)}
+                  onDraftChange={(nextColor) => updateDraft(npcType, nextColor)}
+                  onCommit={(nextColor) => {
+                    const normalizedColor = updateDraft(npcType, nextColor);
+                    commit({ [npcType]: normalizedColor });
                   }}
-                />
-                <span className="ll:min-w-0 ll:flex-1 ll:truncate">
+                  onReset={() => resetType(npcType)}
+                >
+                  {trigger}
+                </NpcColorEditorPopover>
+              )}
+              preview={
+                <NpcColorPreviewChip color={color}>
                   {npcTypeLabel}
-                </span>
-                {isModified ? (
-                  <span
-                    className="ll:size-1.5 ll:shrink-0 ll:rounded-full ll:bg-purple-400"
-                    title={t("settings.npcColors.modified")}
-                  />
-                ) : null}
-              </button>
-            </NpcColorEditorPopover>
+                </NpcColorPreviewChip>
+              }
+            >
+              <SettingsIconButton
+                label={`${t("settings.npcColors.reset")}: ${npcTypeLabel}`}
+                disabled={!isModified}
+                onClick={() => resetType(npcType)}
+              >
+                <RotateCcw />
+              </SettingsIconButton>
+            </SettingsColorRow>
           );
         })}
-      </div>
+      </SettingsSection>
     </SettingsTabLayout>
   );
 };

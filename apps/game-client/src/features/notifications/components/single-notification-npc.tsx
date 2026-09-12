@@ -32,7 +32,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           ({notification.npc.x}, {notification.npc.y})
         </span>
         {notification.isGatheringParty && (
-          <span className="ll:shrink-0 ll:font-semibold ll:text-purple-300">
+          <span className="ll:shrink-0 ll:font-semibold ll:text-primary">
             {t("content.gatheringParty")}
           </span>
         )}

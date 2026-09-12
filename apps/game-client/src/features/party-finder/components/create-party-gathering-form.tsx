@@ -154,6 +154,8 @@ export const CreatePartyGatheringForm = () => {
       )}
 
       <Button
+        variant="secondary"
+        size="xs"
         type="submit"
         disabled={isCreatingPartyGathering}
         className="ll:mt-2"

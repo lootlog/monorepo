@@ -98,10 +98,7 @@ export const ChatInputEditor = forwardRef<
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div
-        className={cn(
-          "ll:relative ll:h-full ll:w-full ll:min-w-0 ll:box-border",
-          className,
-        )}
+        className={cn("ll:relative ll:h-full ll:w-full ll:min-w-0", className)}
       >
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -122,7 +119,7 @@ export const ChatInputEditor = forwardRef<
                   : undefined,
             }}
             className={cn(
-              "ll:box-border ll:block ll:content-center ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-0 ll:text-xs ll:leading-[14px] ll:text-white ll:caret-white ll:cursor-text ll:outline-none ll:whitespace-pre ll:[&>p]:m-0",
+              "ll:block ll:content-center ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-0 ll:text-xs ll:leading-[14px] ll:text-white ll:caret-white ll:cursor-text ll:outline-none ll:whitespace-pre ll:[&>p]:m-0",
               disabled && "ll:cursor-not-allowed ll:opacity-50",
             )}
             onMouseDown={(event) => {
