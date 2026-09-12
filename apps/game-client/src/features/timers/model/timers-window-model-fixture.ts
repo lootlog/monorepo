@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import { DEFAULT_NPC_TYPE_COLORS } from "@lootlog/schema/npc-appearance";
 import { TIMERS_MODERN_COMFORTABLE_PRESET } from "@lootlog/schema/timer-settings";
 import type { TimersWindowModel } from "@/features/timers/hooks/use-timers-window-model";
 
@@ -9,7 +10,10 @@ export type TimersWindowModelOverrides = {
   async?: Partial<TimersWindowModel["async"]>;
   toolbar?: Partial<TimersWindowModel["toolbar"]>;
   appearance?: Partial<
-    Omit<TimersWindowModel["appearance"], "displayConfig" | "colors" | "modern">
+    Omit<
+      TimersWindowModel["appearance"],
+      "displayConfig" | "colors" | "modern" | "npcTypeColors"
+    >
   > & {
     displayConfig?: Partial<TimersWindowModel["appearance"]["displayConfig"]>;
     colors?: Partial<TimersWindowModel["appearance"]["colors"]>;
@@ -64,6 +68,7 @@ export const createTimersWindowModelFixture = (
   appearance: {
     compactView: false,
     countdownMode: "max",
+    npcTypeColors: DEFAULT_NPC_TYPE_COLORS,
     ...overrides.appearance,
     displayConfig: {
       showType: true,

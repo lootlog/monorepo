@@ -7,6 +7,8 @@ import type {
   TimersModernAppearanceSettings,
 } from "@lootlog/schema/timer-settings";
 import type { Timer } from "@/api/timers.api";
+import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
+import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
@@ -82,6 +84,8 @@ export type TimersWindowModel = {
   appearance: {
     displayConfig: TimersDisplayConfig;
     modern: TimersModernAppearanceSettings;
+    /** The user's NPC rank colours, shared with chat so both windows agree. */
+    npcTypeColors: NpcTypeColors;
     compactView: boolean;
     countdownMode: "min" | "max";
     colors: TimersColorPreferences;
@@ -133,6 +137,7 @@ export const useTimersWindowModel = (
 
   const { behavior } = useTimerBehaviorSettings();
   const { appearance } = useTimerAppearanceSettings();
+  const { npcTypeColors } = useNpcTypeColors();
 
   const scope = resolveTimersScope({
     characterId,
@@ -222,6 +227,7 @@ export const useTimersWindowModel = (
     appearance: {
       displayConfig: appearance.displayConfig,
       modern: appearance.modern,
+      npcTypeColors,
       compactView: behavior.generalConfig.compactView,
       countdownMode: behavior.generalConfig.countdownMode,
       colors: {

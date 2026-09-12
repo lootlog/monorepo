@@ -53,6 +53,7 @@ export interface TimersModernAppearanceSettings {
   showHeader: boolean;
   showFiltersBar: boolean;
   showFooter: boolean;
+  showAvatar: boolean;
   showTypeBadge: boolean;
   showLevel: boolean;
   showProgress: boolean;
@@ -60,26 +61,28 @@ export interface TimersModernAppearanceSettings {
 
 export const TIMERS_MODERN_COMFORTABLE_PRESET = {
   fontScalePercent: 100,
-  gapPx: 4,
-  minColumnWidth: 140,
+  gapPx: 2,
+  minColumnWidth: 220,
   showHeader: true,
   showFiltersBar: true,
   showFooter: true,
-  showTypeBadge: true,
+  showAvatar: true,
+  showTypeBadge: false,
   showLevel: true,
   showProgress: true,
 } as const satisfies TimersModernAppearanceSettings;
 
 export const TIMERS_MODERN_COMPACT_PRESET = {
   fontScalePercent: 90,
-  gapPx: 2,
-  minColumnWidth: 110,
+  gapPx: 1,
+  minColumnWidth: 160,
   showHeader: true,
   showFiltersBar: false,
   showFooter: false,
+  showAvatar: false,
   showTypeBadge: true,
   showLevel: false,
-  showProgress: false,
+  showProgress: true,
 } as const satisfies TimersModernAppearanceSettings;
 
 export interface TimersDisplayConfig {

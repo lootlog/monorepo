@@ -24,6 +24,7 @@ const MODERN_SWITCHES = [
   "showHeader",
   "showFiltersBar",
   "showFooter",
+  "showAvatar",
   "showTypeBadge",
   "showLevel",
   "showProgress",

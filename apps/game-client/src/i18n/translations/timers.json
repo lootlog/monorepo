@@ -184,9 +184,9 @@
     "presetLabel": "Gotowe ustawienia nowego układu",
     "presets": {
       "comfortable": "Czytelny",
-      "comfortableDescription": "Większe kafelki, nagłówek, filtry i stopka widoczne.",
+      "comfortableDescription": "Ikony potworów, większe wiersze, nagłówek i stopka widoczne.",
       "compact": "Kompaktowy",
-      "compactDescription": "Mniejsze kafelki, bez filtrów i stopki - najmniej miejsca na ekranie."
+      "compactDescription": "Same nazwy ze skrótem rangi, bez filtrów i stopki - najmniej miejsca."
     },
     "scaleSection": "Rozmiar nowego układu",
     "fontScaleLabel": "Skala tekstu",
@@ -202,12 +202,14 @@
       "showFiltersBarDescription": "Wyszukiwarka, zakres poziomów i typy potworów, gdy filtry są włączone.",
       "showFooter": "Stopka",
       "showFooterDescription": "Statystyki kolorów, stan połączenia, historia i dodawanie timera.",
+      "showAvatar": "Ikona potwora",
+      "showAvatarDescription": "Grafika potwora po lewej stronie wiersza, jak w czacie.",
       "showTypeBadge": "Znacznik typu",
-      "showTypeBadgeDescription": "Skrót typu potwora (E2, H, T) na kafelku.",
+      "showTypeBadgeDescription": "Skrót rangi (E2, H, T) przed nazwą; przydatny, gdy ikona jest wyłączona.",
       "showLevel": "Poziom potwora",
       "showLevelDescription": "Poziom i profesja obok nazwy.",
       "showProgress": "Pasek postępu",
-      "showProgressDescription": "Cienka linia pokazująca, ile czasu do odrodzenia już minęło."
+      "showProgressDescription": "Wypełnienie wiersza pokazujące, ile czasu do odrodzenia już minęło."
     }
   },
   "legacySettings": {

@@ -9,17 +9,20 @@ type ModernTimerTileFaceProps = {
   timer: Timer;
   countdownMode: "min" | "max";
   showProgress: boolean;
+  /** Colour of the fill that grows across the row as the respawn nears. */
+  progressColor: string;
 };
 
 /**
- * The ticking part of a modern tile: the countdown text and the progress line.
- * Only the text node changes per second; the line is one CSS animation set
- * once at mount (the parent remounts the face when the spawn window changes).
+ * The ticking part of a modern tile: the countdown text and the progress
+ * fill. Only the text node changes per second; the fill is one CSS animation
+ * set at mount (the parent remounts the face when the spawn window changes).
  */
 export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
   timer,
   countdownMode,
   showProgress,
+  progressColor,
 }) => {
   const mountEpoch = useTimerClockEpoch();
   const { timeLabel, phase } = useTimerCountdown(timer, countdownMode);
@@ -32,10 +35,10 @@ export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
     <>
       <span
         className={cn(
-          "ll:shrink-0 ll:tabular-nums",
-          phase === "expired" && "ll:text-red-400",
-          phase === "afterMin" && "ll:text-amber-300",
-          phase === "active" && "ll:text-muted-foreground",
+          "ll:relative ll:shrink-0 ll:tabular-nums ll:font-medium",
+          phase === "expired" && "ll:text-red-300",
+          phase === "afterMin" && "ll:text-amber-200",
+          phase === "active" && "ll:text-gray-50",
         )}
       >
         {timeLabel}
@@ -43,8 +46,11 @@ export const ModernTimerTileFace: FC<ModernTimerTileFaceProps> = ({
       {progressStyle && phase === "active" && (
         <span
           aria-hidden
-          className="ll:pointer-events-none ll:absolute ll:inset-x-(--ll-timers-space-sm) ll:bottom-0 ll:h-px ll:origin-left ll:bg-white/25 ll:motion-reduce:hidden"
-          style={progressStyle}
+          className="ll:pointer-events-none ll:absolute ll:inset-y-0 ll:start-0 ll:-z-10 ll:w-full ll:origin-left ll:motion-reduce:hidden"
+          style={{
+            ...progressStyle,
+            backgroundColor: `color-mix(in srgb, ${progressColor} 22%, transparent)`,
+          }}
         />
       )}
     </>
