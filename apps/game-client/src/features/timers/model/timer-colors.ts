@@ -161,10 +161,13 @@ export const brightenHexColor = (color: string, percent: number): string => {
 
 const HOVER_BRIGHTNESS_PERCENT = 20;
 
+const ROW_TINT_PERCENT = 32;
+
 /**
- * Background-only variant for borderless rows: the palette tint (with its
- * hover) for stock colours, the custom or overridden background inline
- * otherwise. The default colour paints nothing so plain rows stay flat.
+ * Background of a borderless row: the assigned colour as an inline tint so
+ * it wins over any rank tint the row would otherwise carry. Stock colours mix
+ * their palette hue at a fixed strength, custom and overridden colours use
+ * their own background. The default colour paints nothing.
  */
 export const resolveTimerRowColors = ({
   selectedColor,
@@ -186,9 +189,15 @@ export const resolveTimerRowColors = ({
   }
 
   if (selectedColor === DEFAULT_TIMER_COLOR_ID) return {};
-  const stock = getTimerColor(selectedColor);
+  const hex = getTimerColorHex(selectedColor);
 
-  return stock ? { className: stock.bg } : {};
+  return hex
+    ? {
+        style: {
+          backgroundColor: `color-mix(in srgb, ${hex.border} ${ROW_TINT_PERCENT}%, transparent)`,
+        },
+      }
+    : {};
 };
 
 export type TimerTileColors = {

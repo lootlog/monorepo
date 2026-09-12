@@ -37,7 +37,7 @@ export const ModernTimerTile: FC<ModernTimerTileProps> = ({ timer, model }) => {
       <div
         role="listitem"
         className={cn(
-          "ll-custom-cursor-pointer ll:relative ll:flex ll:min-h-(--ll-timers-row-min-height) ll:min-w-0 ll:items-center ll:gap-(--ll-timers-space-sm) ll:overflow-hidden ll:rounded-sm ll:px-(--ll-timers-row-padding-x) ll:py-(--ll-timers-row-padding-y) ll:transition-[filter] ll:duration-100 ll:hover:brightness-125 ll:motion-reduce:transition-none",
+          "ll-custom-cursor-pointer ll:relative ll:flex ll:min-h-(--ll-timers-row-min-height) ll:min-w-0 ll:items-center ll:gap-(--ll-timers-space-sm) ll:overflow-hidden ll:px-(--ll-timers-row-padding-x) ll:py-(--ll-timers-row-padding-y) ll:transition-[filter] ll:duration-100 ll:hover:brightness-125 ll:motion-reduce:transition-none",
           assigned.className,
           tile.isHidden && "ll:opacity-50",
           tile.isPending && "ll:opacity-60",
