@@ -11,21 +11,33 @@
  * Scoped stand-in for the Tailwind preflight, which cannot be loaded because
  * it would restyle the game page. shadcn primitives assume border-box sizing
  * and a solid zero-width border on every element.
+ *
+ * Universal-subject rules are matched against every element the game inserts.
+ * Keep each ancestor as a single id or class (a selector list, never a
+ * multi-argument `:is()`/`:where()`) so Chrome can fast-reject them from the
+ * ancestor filter, and keep the number of such rules minimal. The preflight
+ * stays wrapped in `:where()` so it keeps zero specificity and utilities such
+ * as `ll:border` or `ll:bg-primary` still win.
  */
-:where(#lootlog-root, .ll-theme-boundary) *,
-:where(#lootlog-root, .ll-theme-boundary) *::before,
-:where(#lootlog-root, .ll-theme-boundary) *::after {
+:where(#lootlog-root) *,
+:where(.ll-theme-boundary) *,
+:where(#lootlog-root) *::before,
+:where(.ll-theme-boundary) *::before,
+:where(#lootlog-root) *::after,
+:where(.ll-theme-boundary) *::after {
   box-sizing: border-box;
   border: 0 solid;
+  font-family: Arimo, Calibri, Segoe;
 }
 
-:where(#lootlog-root, .ll-theme-boundary)
-  :is(button, input, select, textarea, optgroup) {
+:where(#lootlog-root) :is(button, input, select, textarea, optgroup),
+:where(.ll-theme-boundary) :is(button, input, select, textarea, optgroup) {
   font: inherit;
   color: inherit;
 }
 
-:where(#lootlog-root, .ll-theme-boundary) button {
+:where(#lootlog-root) button,
+:where(.ll-theme-boundary) button {
   background-color: transparent;
 }
 
@@ -118,18 +130,22 @@
   --selected: oklch(1 0 0);
 }
 
-body.si :is(#lootlog-root, .ll-theme-boundary) * {
+body.si #lootlog-root *,
+body.si .ll-theme-boundary * {
   /* Matches NI behaviour */
   user-select: none;
 }
 
-body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport],
-body :is(#lootlog-root, .ll-theme-boundary) [data-chat-viewport] * {
+body #lootlog-root [data-chat-viewport],
+body .ll-theme-boundary [data-chat-viewport],
+body #lootlog-root [data-chat-viewport] *,
+body .ll-theme-boundary [data-chat-viewport] * {
   -webkit-user-select: text;
   user-select: text;
 }
 
-body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
+body.si #lootlog-root .ll-custom-cursor-pointer *,
+body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   /* Needed because SI has * { cursor: default } */
   cursor: inherit;
 }
@@ -141,11 +157,6 @@ body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
 #lootlog-root,
 .ll-theme-boundary {
   color: var(--foreground);
-}
-
-#lootlog-root *,
-.ll-theme-boundary * {
-  font-family: Arimo, Calibri, Segoe;
 }
 
 @keyframes ll-window-enter {
@@ -191,9 +202,12 @@ body.si :is(#lootlog-root, .ll-theme-boundary) .ll-custom-cursor-pointer * {
   will-change: opacity, transform;
 }
 
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *,
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *::before,
-:is(#lootlog-root, .ll-theme-boundary).ll-reduced-motion *::after {
+#lootlog-root.ll-reduced-motion *,
+.ll-theme-boundary.ll-reduced-motion *,
+#lootlog-root.ll-reduced-motion *::before,
+.ll-theme-boundary.ll-reduced-motion *::before,
+#lootlog-root.ll-reduced-motion *::after,
+.ll-theme-boundary.ll-reduced-motion *::after {
   scroll-behavior: auto !important;
   transition-delay: 0ms !important;
   transition-duration: 0ms !important;
@@ -336,6 +350,14 @@ body:has(> #lootlog-root) .b_wrapper {
 }
 
 body:has(> #lootlog-root) .all\:b {
+  display: none !important;
+}
+
+/* Newer Margonem builds render banners as a swiper inside .bottom-wrapper. */
+body:has(> #lootlog-root)
+  .right-main-column-wrapper
+  > .bottom-wrapper
+  > .banners {
   display: none !important;
 }
 
