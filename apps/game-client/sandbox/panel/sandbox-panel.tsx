@@ -23,6 +23,7 @@ const SCENARIO_GROUPS: readonly SandboxScenario["group"][] = [
   "Map",
   "Players",
   "Hero",
+  "Timers",
 ];
 
 function switchInterface(next: "ni" | "si") {

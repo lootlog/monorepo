@@ -60,6 +60,15 @@ Scenario builders reuse
 `src/features/settings/components/debug/debug-game-events.ts`, which the
 settings debug tab also uses.
 
+The `Timers` group does not emit packets. `timers-seed-20` and
+`timers-seed-200` put a mixed set of timers (types, colours, pending, reset,
+expired, a manual one, several organizations) into the query cache for the
+current world, `timers-expire-first` makes the first timer expire in three
+seconds, the `toggle-*` scenarios write the layout, under-bag, grouping and
+compact settings through the real settings documents, and `timers-profile`
+logs long tasks and frame gaps over ten seconds so both layouts can be
+compared while their countdowns tick.
+
 ## Limits
 
 - The Margonem account proof request fails, so the gateway marks the character

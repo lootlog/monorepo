@@ -11,13 +11,24 @@ import {
 } from "@/features/settings/components/debug/debug-game-events";
 import { useGameStore } from "@/store/game.store";
 import type { SandboxWorld } from "./fake-runtime/world";
+import { TIMERS_SCENARIOS, type SandboxAction } from "./timers-scenarios";
 
 export type SandboxScenario = {
   id: string;
   label: string;
-  group: "NPC" | "Battle" | "Map" | "Players" | "Hero";
-  build: (world: SandboxWorld) => GameEvent | null;
+  group: "NPC" | "Battle" | "Map" | "Players" | "Hero" | "Timers";
+  /** A packet to emit through the native seam, or an action to run directly. */
+  build: (world: SandboxWorld) => SandboxScenarioResult | null;
 };
+
+export type SandboxScenarioResult =
+  | { kind: "packet"; event: GameEvent }
+  | { kind: "action"; run: SandboxAction };
+
+export const packet = (event: GameEvent): SandboxScenarioResult => ({
+  kind: "packet",
+  event,
+});
 
 let nextOtherId = 710_000;
 
@@ -27,7 +38,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
       id: `spawn-${key}`,
       label: `Spawn ${key}`,
       group: "NPC",
-      build: () => createDetectorEvent(preset),
+      build: () => packet(createDetectorEvent(preset)),
     }),
   ),
   {
@@ -38,7 +49,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
       const id = Object.keys(world.npcs).at(-1);
 
       return id
-        ? { ...createBaseEvent(), npcs_del: [{ id: Number(id) }] }
+        ? packet({ ...createBaseEvent(), npcs_del: [{ id: Number(id) }] })
         : null;
     },
   },
@@ -46,7 +57,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     id: "kill-unique",
     label: "Kill unique boss",
     group: "Battle",
-    build: () => createUniqueKillNpcEvent(),
+    build: () => packet(createUniqueKillNpcEvent()),
   },
   {
     id: "legendary-loot",
@@ -55,32 +66,31 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     build: () => {
       const game = useGameStore.getState().game;
 
-      return game ? createDebugLegendaryLootEvent(game) : null;
+      return game ? packet(createDebugLegendaryLootEvent(game)) : null;
     },
   },
   {
     id: "town-change",
     label: "Change map",
     group: "Map",
-    build: () => ({
-      ...DEBUG_EVENT_TEMPLATES.townChange.event,
-      ev: Date.now(),
-    }),
+    build: () =>
+      packet({ ...DEBUG_EVENT_TEMPLATES.townChange.event, ev: Date.now() }),
   },
   {
     id: "town-ithan",
     label: "Back to Ithan",
     group: "Map",
-    build: () => ({
-      ...DEBUG_EVENT_TEMPLATES.townChange.event,
-      ev: Date.now(),
-      town: {
-        ...DEBUG_EVENT_TEMPLATES.townChange.event.town,
-        id: 1,
-        name: "Ithan",
-        visibility: 0,
-      },
-    }),
+    build: () =>
+      packet({
+        ...DEBUG_EVENT_TEMPLATES.townChange.event,
+        ev: Date.now(),
+        town: {
+          ...DEBUG_EVENT_TEMPLATES.townChange.event.town,
+          id: 1,
+          name: "Ithan",
+          visibility: 0,
+        },
+      }),
   },
   {
     id: "other-enter",
@@ -89,7 +99,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     build: (world) => {
       const id = nextOtherId++;
 
-      return {
+      return packet({
         ...createBaseEvent(),
         other: {
           [String(id)]: {
@@ -111,7 +121,7 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
             relation: 0,
           },
         },
-      };
+      });
     },
   },
   {
@@ -121,40 +131,51 @@ export const SANDBOX_SCENARIOS: readonly SandboxScenario[] = [
     build: (world) => {
       const id = Object.keys(world.others).at(-1);
 
-      return id ? { ...createBaseEvent(), other: { [id]: { del: 1 } } } : null;
+      return id
+        ? packet({ ...createBaseEvent(), other: { [id]: { del: 1 } } })
+        : null;
     },
   },
   {
     id: "party-join",
     label: "Party join",
     group: "Players",
-    build: () => createPartyJoinEvent(),
+    build: () => packet(createPartyJoinEvent()),
   },
   {
     id: "party-leave",
     label: "Party leave",
     group: "Players",
-    build: () => createPartyLeaveEvent(),
+    build: () => packet(createPartyLeaveEvent()),
   },
   {
     id: "hero-move",
     label: "Hero step",
     group: "Hero",
-    build: (world) => ({
-      ...createBaseEvent(),
-      h: { x: (world.hero.x + 1) % 64, y: world.hero.y },
-    }),
+    build: (world) =>
+      packet({
+        ...createBaseEvent(),
+        h: { x: (world.hero.x + 1) % 64, y: world.hero.y },
+      }),
   },
   {
     id: "afk-on",
     label: "AFK on",
     group: "Hero",
-    build: () => ({ ...DEBUG_EVENT_TEMPLATES.afkOn.event, ev: Date.now() }),
+    build: () =>
+      packet({ ...DEBUG_EVENT_TEMPLATES.afkOn.event, ev: Date.now() }),
   },
   {
     id: "afk-off",
     label: "AFK off",
     group: "Hero",
-    build: () => ({ ...DEBUG_EVENT_TEMPLATES.afkOff.event, ev: Date.now() }),
+    build: () =>
+      packet({ ...DEBUG_EVENT_TEMPLATES.afkOff.event, ev: Date.now() }),
   },
+  ...TIMERS_SCENARIOS.map(({ id, label, group, run }): SandboxScenario => ({
+    id,
+    label,
+    group,
+    build: () => ({ kind: "action", run }),
+  })),
 ];

@@ -28,12 +28,17 @@ export function mountSandboxPanel(runtime: SandboxRuntime): void {
     world: runtime.world,
     emit: runtime.emit,
     run: (scenarioId) => {
-      const event = SANDBOX_SCENARIOS.find(
+      const result = SANDBOX_SCENARIOS.find(
         ({ id }) => id === scenarioId,
       )?.build(runtime.world);
 
-      if (!event) return false;
-      runtime.emit(event);
+      if (!result) return false;
+
+      if (result.kind === "action") {
+        result.run();
+      } else {
+        runtime.emit(result.event);
+      }
 
       return true;
     },
