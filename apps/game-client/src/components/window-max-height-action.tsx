@@ -1,10 +1,5 @@
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "cn";
+import { WindowActionButton } from "@/components/window-action-button";
+import { UnfoldVertical } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -14,6 +9,7 @@ type WindowMaxHeightActionProps = {
   onClick: () => void;
 };
 
+/** Arms the resize handle to set the window's maximum content height. */
 export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
   currentMaxHeight,
   isArmed,
@@ -21,33 +17,18 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
 }) => {
   const { t } = useTranslation("common");
 
+  const tooltip = isArmed
+    ? t("windowAutoHeight.armedTooltip")
+    : t("windowAutoHeight.idleTooltip", { height: currentMaxHeight });
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          size="xs"
-          variant="ghost"
-          aria-label={t("windowAutoHeight.maxHeightAria", {
-            height: currentMaxHeight,
-          })}
-          className={cn(
-            "ll:h-4 ll:min-w-10 ll:px-1.5 ll:text-[10px] ll:leading-none",
-            isArmed
-              ? "ll:border-blue-400/70 ll:bg-blue-400/15 ll:text-blue-200"
-              : "ll:border-gray-500/40 ll:bg-transparent ll:text-gray-300 ll:hover:border-gray-400/50 ll:hover:text-gray-200",
-          )}
-          onClick={onClick}
-        >
-          {t("windowAutoHeight.maxHeightLabel", {
-            height: currentMaxHeight,
-          })}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">
-        {isArmed
-          ? t("windowAutoHeight.armedTooltip")
-          : t("windowAutoHeight.idleTooltip")}
-      </TooltipContent>
-    </Tooltip>
+    <WindowActionButton
+      label={t("windowAutoHeight.maxHeightAria", { height: currentMaxHeight })}
+      tooltip={tooltip}
+      pressed={isArmed}
+      onClick={onClick}
+    >
+      <UnfoldVertical size={14} aria-hidden="true" />
+    </WindowActionButton>
   );
 };

@@ -5,10 +5,9 @@
     "syncing": "Synchronizowanie..."
   },
   "windowAutoHeight": {
-    "idleTooltip": "Ustaw maksymalną wysokość okna. Kliknij, a potem przeciągnij uchwyt w prawym dolnym rogu.",
+    "idleTooltip": "Maksymalna wysokość okna: {{height}} px. Kliknij, a potem przeciągnij uchwyt w prawym dolnym rogu, aby ją zmienić.",
     "armedTooltip": "Przeciągnij uchwyt w prawym dolnym rogu, aby ustawić maksymalną wysokość. Szerokość okna nadal możesz zmieniać tym samym uchwytem.",
-    "maxHeightAria": "Ustaw maksymalną wysokość okna na {{height}} pikseli",
-    "maxHeightLabel": "{{height}} px"
+    "maxHeightAria": "Ustaw maksymalną wysokość okna na {{height}} pikseli"
   },
   "actions": {
     "resizeWindow": "Zmień rozmiar okna strzałkami; Shift zmienia rozmiar o 10 pikseli",
