@@ -152,7 +152,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
               value={type}
               className={cn(
                 FILTER_DIVIDER_CLASS_NAME,
-                "ll:h-full ll:min-w-0! ll:rounded-none! ll:px-1!",
+                "ll:h-full ll:min-w-6! ll:rounded-none! ll:px-1!",
               )}
               onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
             >
