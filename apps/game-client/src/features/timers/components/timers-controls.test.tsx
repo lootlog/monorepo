@@ -122,24 +122,30 @@ describe("timers controls", () => {
     ).toHaveFocus();
     await user.keyboard("{Enter}");
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.enableColorFilters") }),
+      screen.getByRole("button", { name: t("toolbar.options") }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: t("toolbar.colorFilters") }),
     );
     await user.click(
       screen.getByRole("button", { name: t("toolbar.sortDesc") }),
     );
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.showHiddenTimers") }),
+      screen.getByRole("button", { name: t("toolbar.hiddenTimers") }),
     );
     expect(toggleTimerFiltersEnabled).toHaveBeenCalledOnce();
     expect(toggleColorFiltersEnabled).toHaveBeenCalledOnce();
     expect(setTimersSortOrder).toHaveBeenCalledWith("desc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(true);
     view.rerender(actions(true));
+    expect(
+      screen.getByRole("button", { name: t("toolbar.colorFilters") }),
+    ).toHaveAttribute("aria-pressed", "true");
     await user.click(
       screen.getByRole("button", { name: t("toolbar.sortAsc") }),
     );
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.hideHiddenTimers") }),
+      screen.getByRole("button", { name: t("toolbar.hiddenTimers") }),
     );
     expect(setTimersSortOrder).toHaveBeenCalledWith("asc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(false);
