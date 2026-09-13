@@ -143,7 +143,7 @@ it("renders real controls and timer tiles while retaining scroll and window drag
   fireEvent.pointerDown(scrollContainer);
   fireEvent.pointerDown(label);
   expect(onPointerDown).toHaveBeenCalledTimes(2);
-  await user.click(screen.getByRole("button", { name: "+" }));
+  await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
   expect(onAddTimer).toHaveBeenCalledOnce();
 });
 
@@ -159,7 +159,9 @@ it("offers filter recovery in compact mode without the regular toolbar or footer
   expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
   expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "+" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Dodaj timer" }),
+  ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
   expect(onResetFilters).toHaveBeenCalledOnce();
 });

@@ -74,7 +74,7 @@ it("opens add timer with the selected guild without changing the saved creation 
       selectedGuildIdsForTimersByCharId: { "101": ["guild-2"] },
     }),
   );
-  await user.click(screen.getByRole("button", { name: "+" }));
+  await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
   expect(useWindowsStore.getState()["add-timer"]).toMatchObject({
     open: true,
     state: { guildId: "guild-1" },
