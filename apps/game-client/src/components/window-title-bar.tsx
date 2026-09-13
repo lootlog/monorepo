@@ -60,7 +60,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       >
         {actions}
       </div>
-      <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-[12px] ll:leading-none ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]">
+      <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
         {title}
       </p>
       <div
