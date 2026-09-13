@@ -173,7 +173,8 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   const selectedGuildIds = selectedValues ?? [];
 
   const resolvedButtonClassName = cn(
-    variant === "strip" && "ll:rounded-none after:ll:rounded-none",
+    variant === "strip" &&
+      "ll:rounded-none after:ll:rounded-none hover:ll:scale-100",
     buttonClassName,
   );
 
@@ -383,7 +384,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
         <div
           className={cn(
             "ll:flex ll:w-max ll:min-w-full ll:gap-1",
-            isStrip ? "ll:px-1 ll:py-1" : "ll:mt-1",
+            isStrip ? "ll:px-1" : "ll:mt-1",
           )}
         >
           {content}
