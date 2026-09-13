@@ -50,17 +50,30 @@ export const selectItemClassName =
 export const selectGroupLabelClassName =
   "ll:px-2 ll:py-1.5 ll:text-xs ll:text-muted-foreground";
 
+/** `strip` triggers sit flat inside a toolbar strip: no rounding, no ring, an inset focus outline. */
+export const selectTriggerStripClassName =
+  "ll:rounded-none ll:border-x-0 ll:border-y ll:border-gray-400/40 ll:bg-black/20 ll:hover:bg-black/30 ll:hover:text-foreground ll:focus-visible:border-gray-400/40 ll:focus-visible:ring-0 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring ll:data-[popup-open]:border-gray-400/40 ll:data-[popup-open]:ring-0 ll:data-[popup-open]:bg-black/30";
+
 type SelectTriggerProps = BaseSelect.Trigger.Props & {
   size?: "sm" | "default";
+  variant?: "default" | "strip";
 };
 
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, children, size = "default", ...props }, ref) => (
+  (
+    { className, children, size = "default", variant = "default", ...props },
+    ref,
+  ) => (
     <BaseSelect.Trigger
       ref={ref}
       data-slot="select-trigger"
       data-size={size}
-      className={cn(selectTriggerClassName, className)}
+      data-variant={variant}
+      className={cn(
+        selectTriggerClassName,
+        variant === "strip" && selectTriggerStripClassName,
+        className,
+      )}
       {...props}
     >
       {children}

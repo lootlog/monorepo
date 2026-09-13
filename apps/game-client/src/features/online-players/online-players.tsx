@@ -28,6 +28,7 @@ export const OnlinePlayers = () => {
       title={t("window.title")}
       onClose={() => setOpen("online-players", false)}
       variant="default"
+      contentClassName="ll:-mx-1"
       minHeight={108}
       minWidth={242}
       actions=<OnlinePlayersActions

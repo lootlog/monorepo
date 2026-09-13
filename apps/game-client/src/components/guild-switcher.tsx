@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import {
@@ -371,12 +372,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   return (
     <TooltipProvider>
       <ScrollArea
-        className={cn(
-          "ll:w-full",
-          isStrip &&
-            "ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20",
-          className,
-        )}
+        className={cn("ll:w-full", isStrip && toolbarStripClassName, className)}
         orientation="horizontal"
       >
         <div

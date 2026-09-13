@@ -1,6 +1,11 @@
 import { SearchInput } from "@/components/ui/search-input";
 import { Input } from "@/components/ui/input";
 import {
+  toolbarStripClassName,
+  toolbarStripDividerClassName,
+} from "@/components/ui/toolbar-strip";
+import { cn } from "cn";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -38,9 +43,15 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
   const { t } = useTranslation("onlinePlayers");
 
   return (
-    <div className="ll:pb-1 ll:flex ll:gap-1">
+    <div
+      className={cn(
+        toolbarStripClassName,
+        "ll:-mt-px ll:flex ll:h-7 ll:min-w-0 ll:items-stretch",
+      )}
+    >
       <SearchInput
         size="sm"
+        variant="borderless"
         placeholder={t("search.placeholder")}
         value={searchQuery}
         onChange={onSearchChange}
@@ -49,7 +60,11 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
         aria-label={t("filters.minLvlLabel")}
         value={filters.minLvl.toString()}
         onChange={onMinLvlChange}
-        className="ll:w-9 input-no-spinner ll:px-0.5 ll:text-center"
+        className={cn(
+          toolbarStripDividerClassName,
+          "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+        )}
+        variant="borderless"
         max={MAX_ONLINE_PLAYER_LEVEL}
         min={MIN_ONLINE_PLAYER_LEVEL}
         type="number"
@@ -59,7 +74,11 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
         aria-label={t("filters.maxLvlLabel")}
         value={filters.maxLvl.toString()}
         onChange={onMaxLvlChange}
-        className="ll:w-9 input-no-spinner ll:px-0.5 ll:text-center"
+        className={cn(
+          toolbarStripDividerClassName,
+          "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+        )}
+        variant="borderless"
         max={MAX_ONLINE_PLAYER_LEVEL}
         min={MIN_ONLINE_PLAYER_LEVEL}
         type="number"
@@ -71,7 +90,12 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
       >
         <SelectTrigger
           aria-label={t("filters.professionLabel")}
-          className="ll:w-12 ll:px-1"
+          className={cn(
+            toolbarStripDividerClassName,
+            "ll:h-full ll:w-12 ll:shrink-0 ll:border-y-0 ll:bg-transparent ll:px-1",
+          )}
+          size="sm"
+          variant="strip"
         >
           <SelectValue />
         </SelectTrigger>
