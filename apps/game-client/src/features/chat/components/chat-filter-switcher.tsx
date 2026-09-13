@@ -40,7 +40,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
             className={cn(
               "ll:relative ll:flex ll:min-w-0 ll:h-full ll:items-center ll:justify-center ll:gap-1 ll:rounded-none ll:border-0 ll:px-1 ll:py-0 ll:text-[11px] ll:leading-none ll:font-semibold ll:cursor-pointer ll:transition-none ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:focus-visible:-outline-offset-2",
               value === option.value
-                ? "ll:bg-zinc-700 ll:text-white ll:hover:bg-zinc-600"
+                ? "ll:bg-zinc-800 ll:text-white ll:hover:bg-zinc-700"
                 : "ll:bg-transparent ll:text-muted-foreground ll:hover:bg-white/5",
             )}
           >
