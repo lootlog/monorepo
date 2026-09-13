@@ -227,7 +227,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           />
         </div>
         <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-          <p className="ll:text-[12px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
+          <p className="ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
             {t("underBag.title")}
           </p>
         </div>
