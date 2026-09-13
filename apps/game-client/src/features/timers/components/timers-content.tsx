@@ -104,7 +104,7 @@ export const TimersContent: FC<TimersContentProps> = ({
 
       <div
         className={cn(
-          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:py-1",
+          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full",
           !isUnderBag && "ll:px-1",
         )}
       >
