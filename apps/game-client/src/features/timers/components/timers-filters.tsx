@@ -26,6 +26,10 @@ const MAX_LVL = 500;
 
 const MIN_LVL = 0;
 
+/** Vertical rule between neighbouring controls of the flat filters strip. */
+const FILTER_DIVIDER_CLASS_NAME =
+  "ll:border-0 ll:border-l ll:border-solid ll:border-gray-400/40";
+
 const clampValue = (value: number, min: number, max: number): number => {
   return Math.max(min, Math.min(max, value));
 };
@@ -91,10 +95,11 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">
-      <div className="ll:flex ll:min-w-0 ll:flex-nowrap ll:items-center ll:gap-1">
+    <div className="ll:-mx-1 ll:flex ll:flex-col ll:border-b ll:border-x-0 ll:border-t-0 ll:border-gray-400/40 ll:bg-black/20">
+      <div className="ll:flex ll:h-7 ll:min-w-0 ll:items-stretch">
         <SearchInput
           size="sm"
+          variant="borderless"
           placeholder={t("filters.searchPlaceholder")}
           value={timerFiltersSearchText ?? ""}
           onChange={handleSearchChange}
@@ -106,25 +111,33 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           aria-label={t("filters.minLvlLabel")}
           value={filters.minLvl.toString()}
           onChange={(event) => handleLevelChange("minLvl", event)}
-          className="ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
+          className={cn(
+            FILTER_DIVIDER_CLASS_NAME,
+            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+          )}
           max={MAX_LVL}
           min={MIN_LVL}
           type="number"
           inputMode="numeric"
+          variant="borderless"
         />
         <Input
           aria-label={t("filters.maxLvlLabel")}
           value={filters.maxLvl.toString()}
           onChange={(event) => handleLevelChange("maxLvl", event)}
-          className="ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
+          className={cn(
+            FILTER_DIVIDER_CLASS_NAME,
+            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+          )}
           min={MIN_LVL}
           max={MAX_LVL}
           type="number"
           inputMode="numeric"
+          variant="borderless"
         />
         <ToggleGroup
           aria-label={t("filters.npcTypesLabel")}
-          className="ll:shrink-0"
+          className="ll:h-full ll:shrink-0 ll:rounded-none"
           multiple
           onValueChange={(selectedNpcTypes: NpcType[]) =>
             setTimersFilters(filtersKey, { ...filters, selectedNpcTypes })
@@ -132,13 +145,15 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           size="sm"
           spacing={0}
           value={filters.selectedNpcTypes}
-          variant="outline"
         >
           {NPC_TYPES_OPTIONS.map((type) => (
             <ToggleGroupItem
               key={type}
               value={type}
-              className="ll:min-w-0! ll:px-1!"
+              className={cn(
+                FILTER_DIVIDER_CLASS_NAME,
+                "ll:h-full ll:min-w-0! ll:rounded-none! ll:px-1!",
+              )}
               onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
             >
               {NPC_NAMES[type].shortname}
@@ -147,7 +162,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
         </ToggleGroup>
       </div>
       {colorFiltersEnabled && (
-        <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-wrap ll:border ll:border-input ll:rounded-sm ll:p-1">
+        <div className="ll:flex ll:flex-row ll:flex-wrap ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-1 ll:py-1">
           {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);
