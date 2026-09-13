@@ -172,11 +172,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   const selectedValue = value !== undefined ? value : guildId;
   const selectedGuildIds = selectedValues ?? [];
 
-  const resolvedButtonClassName = cn(
-    variant === "strip" &&
-      "ll:rounded-none after:ll:rounded-none hover:ll:scale-100",
-    buttonClassName,
-  );
+  const resolvedButtonClassName = buttonClassName;
 
   const status = getGuildSwitcherStatus({
     arePreferencesFetched,
@@ -296,6 +292,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
       {allowAll && !multiple && visibleGuilds.length > 0 && (
         <GuildButton
           key="all"
+          variant={variant}
           isSelected={"all" === selectedValue}
           disabled={disabled}
           onClick={() => handleChange("all")}
@@ -311,6 +308,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
       {visibleGuilds.map((guild) => (
         <GuildSwitcherItem
           key={guild.id}
+          variant={variant}
           isSelected={
             multiple
               ? selectedGuildIdSet.has(guild.id)
@@ -384,7 +382,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
         <div
           className={cn(
             "ll:flex ll:w-max ll:min-w-full ll:gap-1",
-            isStrip ? "ll:px-1" : "ll:mt-1",
+            isStrip ? "ll:-ml-px ll:gap-0" : "ll:mt-1",
           )}
         >
           {content}

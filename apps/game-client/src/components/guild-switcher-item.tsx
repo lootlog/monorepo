@@ -19,6 +19,7 @@ type GuildSwitcherItemProps = {
   onClick: () => void;
   onHide: () => void;
   unreadBadge: string | null;
+  variant?: "default" | "strip";
 };
 
 export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
@@ -30,11 +31,13 @@ export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
   onClick,
   onHide,
   unreadBadge,
+  variant = "default",
 }) => (
   <ContextMenu>
     <ContextMenuTrigger asChild>
       <div>
         <GuildButton
+          variant={variant}
           isSelected={isSelected}
           disabled={disabled}
           onClick={onClick}
