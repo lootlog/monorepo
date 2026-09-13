@@ -242,7 +242,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   return (
     <div className="ll:relative ll:h-full ll:w-full">
-      <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
+      <div className="ll:pointer-events-auto ll:absolute ll:right-2 ll:top-1 ll:z-20">
         <AsyncStatusIndicator
           active={hasRefreshError(hasLoaded, error)}
           kind="error"
@@ -265,10 +265,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
       <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:pt-1">
         {filtersVisible && (
           <>
-            <div className="ll:flex ll:gap-1 ll:pb-1">
-              <GuildSwitcher />
-            </div>
-            {allowWorldSelection && <WorldSelector />}
+            <GuildSwitcher className="ll:-mt-px" variant="strip" />
+            {allowWorldSelection && (
+              <WorldSelector className="ll:-mt-px" variant="strip" />
+            )}
 
             <OnlinePlayersFilters
               searchQuery={searchQuery}
@@ -280,7 +280,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             />
           </>
         )}
-        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:mt-1">
+        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:px-1 ll:pt-1">
           <AsyncContent
             error={!hasLoaded ? error : null}
             errorLabel={t("states.loadError")}
