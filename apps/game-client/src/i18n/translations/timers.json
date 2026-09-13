@@ -10,7 +10,11 @@
   "filters": {
     "searchPlaceholder": "Szukaj...",
     "minPlaceholder": "Od",
-    "maxPlaceholder": "Do"
+    "maxPlaceholder": "Do",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "minLvlLabel": "Poziom od",
+    "maxLvlLabel": "Poziom do",
+    "npcTypesLabel": "Typy potworów"
   },
   "toolbar": {
     "hideFilters": "Ukryj filtry",
@@ -29,10 +33,6 @@
     "min": "Min:",
     "max": "Max:",
     "reset": "⟳ Timer został zresetowany"
-  },
-  "connection": {
-    "connectedToServers": "Połączono z serwerami:",
-    "notConnected": "Nie połączono z żadnym serwerem"
   },
   "emptyState": {
     "filteredTitle": "Brak pasujących timerów",

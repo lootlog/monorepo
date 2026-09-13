@@ -31,10 +31,10 @@ export const TimersColorStatistics: FC<TimersColorStatisticsProps> = ({
     <Tooltip>
       <TooltipTrigger
         aria-label={t("colorStatistics.title")}
-        className="ll:absolute ll:left-1 ll:inline-flex ll:border-0 ll:bg-transparent ll:p-0 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
+        className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
       >
         <Info
-          className="ll-custom-cursor-pointer ll:stroke-gray-400 ll:hover:stroke-gray-200 ll:transition-colors"
+          className="ll:stroke-gray-400 ll:hover:stroke-gray-200 ll:transition-colors"
           size={14}
         />
       </TooltipTrigger>

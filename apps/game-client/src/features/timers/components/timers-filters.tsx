@@ -1,4 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/api/npcs.api";
 import { cn } from "cn";
@@ -48,7 +50,6 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   } = useTimersStore();
 
   const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
-  const selectedNpcTypes = new Set(filters.selectedNpcTypes);
   const selectedColors = new Set(filters.selectedColors);
   const hiddenColors = new Set(hiddenDefaultColors);
 
@@ -66,15 +67,6 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     setTimersFilters(filtersKey, {
       ...filters,
       [field]: clampValue(numericValue, MIN_LVL, MAX_LVL),
-    });
-  };
-
-  const handleToggleNpcType = (npcType: NpcType) => {
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedNpcTypes: filters.selectedNpcTypes.includes(npcType)
-        ? filters.selectedNpcTypes.filter((type) => type !== npcType)
-        : [...filters.selectedNpcTypes, npcType],
     });
   };
 
@@ -100,65 +92,62 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">
-      <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-nowrap">
-        <Input
+      <div className="ll:flex ll:min-w-0 ll:flex-wrap ll:items-center ll:gap-1">
+        <SearchInput
+          size="sm"
           placeholder={t("filters.searchPlaceholder")}
-          value={timerFiltersSearchText}
+          value={timerFiltersSearchText ?? ""}
           onChange={handleSearchChange}
+          onClear={() => setTimerFiltersSearchText("")}
+          clearLabel={t("filters.clearSearch")}
+          className="ll:min-w-24"
         />
-        <div className="ll:w-18">
-          <Input
-            placeholder={t("filters.minPlaceholder")}
-            value={filters.minLvl.toString()}
-            onChange={(event) => handleLevelChange("minLvl", event)}
-            className="ll:w-8 input-no-spinner"
-            max={MAX_LVL}
-            min={MIN_LVL}
-            type="number"
-            inputMode="numeric"
-          />
-        </div>
-        <div className="ll:w-18">
-          <Input
-            placeholder={t("filters.maxPlaceholder")}
-            value={filters.maxLvl.toString()}
-            onChange={(event) => handleLevelChange("maxLvl", event)}
-            className="ll:w-8 input-no-spinner"
-            min={MIN_LVL}
-            max={MAX_LVL}
-            type="number"
-            inputMode="numeric"
-          />
-        </div>
-        <div className="ll:flex ll-custom-cursor-pointer ll:items-center ll:justify-center ll:border-gray-400 ll:border ll:rounded-sm ll:bg-gray-500/30 ll:transition-colors ll:motion-reduce:transition-none">
-          {NPC_TYPES_OPTIONS.map((type, index) => {
-            const npc = NPC_NAMES[type];
-            const isSelected = selectedNpcTypes.has(type);
-            const isNotLast = index < NPC_TYPES_OPTIONS.length - 1;
-
-            return (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => handleToggleNpcType(type)}
-                onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
-                className={cn(
-                  "ll:bg-transparent ll:border-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:flex ll:items-center ll:justify-center ll:gap-2 ll:hover:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:text-white ll:text-xs",
-                  {
-                    "ll:border-r ll:border-r-white": isNotLast,
-                    "ll:bg-gray-400/30": isSelected,
-                  },
-                )}
-              >
-                {npc.shortname}
-              </button>
-            );
-          })}
-        </div>
+        <Input
+          aria-label={t("filters.minLvlLabel")}
+          value={filters.minLvl.toString()}
+          onChange={(event) => handleLevelChange("minLvl", event)}
+          className="ll:w-9 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
+          max={MAX_LVL}
+          min={MIN_LVL}
+          type="number"
+          inputMode="numeric"
+        />
+        <Input
+          aria-label={t("filters.maxLvlLabel")}
+          value={filters.maxLvl.toString()}
+          onChange={(event) => handleLevelChange("maxLvl", event)}
+          className="ll:w-9 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
+          min={MIN_LVL}
+          max={MAX_LVL}
+          type="number"
+          inputMode="numeric"
+        />
+        <ToggleGroup
+          aria-label={t("filters.npcTypesLabel")}
+          className="ll:shrink-0"
+          multiple
+          onValueChange={(selectedNpcTypes: NpcType[]) =>
+            setTimersFilters(filtersKey, { ...filters, selectedNpcTypes })
+          }
+          size="sm"
+          spacing={0}
+          value={filters.selectedNpcTypes}
+          variant="outline"
+        >
+          {NPC_TYPES_OPTIONS.map((type) => (
+            <ToggleGroupItem
+              key={type}
+              value={type}
+              className="ll:min-w-0 ll:px-1"
+              onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
+            >
+              {NPC_NAMES[type].shortname}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
       {colorFiltersEnabled && (
-        <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-wrap ll:border-gray-400 ll:border ll:rounded-sm ll:p-1">
+        <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-wrap ll:border ll:border-input ll:rounded-sm ll:p-1">
           {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);
