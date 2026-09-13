@@ -92,7 +92,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">
-      <div className="ll:flex ll:min-w-0 ll:flex-wrap ll:items-center ll:gap-1">
+      <div className="ll:flex ll:min-w-0 ll:flex-nowrap ll:items-center ll:gap-1">
         <SearchInput
           size="sm"
           placeholder={t("filters.searchPlaceholder")}
@@ -100,13 +100,13 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           onChange={handleSearchChange}
           onClear={() => setTimerFiltersSearchText("")}
           clearLabel={t("filters.clearSearch")}
-          className="ll:min-w-24"
+          className="ll:min-w-0"
         />
         <Input
           aria-label={t("filters.minLvlLabel")}
           value={filters.minLvl.toString()}
           onChange={(event) => handleLevelChange("minLvl", event)}
-          className="ll:w-9 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
+          className="ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
           max={MAX_LVL}
           min={MIN_LVL}
           type="number"
@@ -116,7 +116,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           aria-label={t("filters.maxLvlLabel")}
           value={filters.maxLvl.toString()}
           onChange={(event) => handleLevelChange("maxLvl", event)}
-          className="ll:w-9 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
+          className="ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center"
           min={MIN_LVL}
           max={MAX_LVL}
           type="number"
@@ -138,7 +138,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
             <ToggleGroupItem
               key={type}
               value={type}
-              className="ll:min-w-0 ll:px-1"
+              className="ll:min-w-0! ll:px-1!"
               onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
             >
               {NPC_NAMES[type].shortname}
