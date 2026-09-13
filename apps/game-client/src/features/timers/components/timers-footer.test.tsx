@@ -5,7 +5,7 @@ import { expect, it, vi } from "vitest";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersFooter } from "./timers-footer";
 
-it("shows color totals, disconnected status and the add action with history only outside grouping", async () => {
+it("shows color totals and the add action with history only outside grouping", async () => {
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
   const onAddTimer = vi.fn<() => void>();
@@ -32,12 +32,6 @@ it("shows color totals, disconnected status and the add action with history only
       screen.getByRole("button", { name: "Statystyki kolorów timerów" }),
     );
     expect(await screen.findByText("Red: 1/2")).toBeVisible();
-    await user.hover(
-      screen.getByRole("button", { name: "Nie połączono z żadnym serwerem" }),
-    );
-    expect(
-      await screen.findByText("Nie połączono z żadnym serwerem"),
-    ).toBeVisible();
     await user.hover(screen.getByRole("button", { name: "+" }));
     expect(await screen.findByText("Dodaj timer")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "+" }));

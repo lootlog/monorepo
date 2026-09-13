@@ -77,7 +77,7 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
+      <div className="ll:pointer-events-auto ll:absolute ll:right-2 ll:top-1 ll:z-20">
         <AsyncStatusIndicator
           active={refreshError}
           kind="error"
@@ -92,13 +92,22 @@ export const TimersContent: FC<TimersContentProps> = ({
           label={t("states.refreshing")}
         />
       </div>
-      {!compactView && !isGrouping && <GuildSwitcher className="ll:mb-1!" />}
-      {!compactView && allowWorldSelection && !isGrouping && <WorldSelector />}
-      {!compactView && timerFiltersEnabled && (
-        <TimersFilters filtersKey={settingsKey} />
-      )}
+      <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
+        {!compactView && !isGrouping && <GuildSwitcher className="ll:mb-1!" />}
+        {!compactView && allowWorldSelection && !isGrouping && (
+          <WorldSelector />
+        )}
+        {!compactView && timerFiltersEnabled && (
+          <TimersFilters filtersKey={settingsKey} />
+        )}
+      </div>
 
-      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:py-1">
+      <div
+        className={cn(
+          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:py-1",
+          !isUnderBag && "ll:px-1",
+        )}
+      >
         <AsyncContent
           error={error}
           errorLabel={t("states.loadError")}

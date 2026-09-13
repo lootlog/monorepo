@@ -57,11 +57,11 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
       <PopoverTrigger asChild>
         <button
           aria-label={historyLabel}
-          className="ll-custom-cursor-pointer ll:mt-0.5 ll:border-0 ll:bg-transparent ll:p-0 ll:leading-none ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors"
+          className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:leading-none ll:text-gray-400 ll:hover:text-gray-200 ll:transition-colors ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
           title={historyLabel}
           type="button"
         >
-          <History className="ll:h-3.5 ll:w-3.5" />
+          <History size={14} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="ll:w-80 ll:p-1" align="end" side="top">

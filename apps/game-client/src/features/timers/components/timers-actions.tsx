@@ -1,14 +1,9 @@
 import { Eye, EyeOff, Filter, Palette, SortAsc, SortDesc } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { TimersToolbarButton } from "./timers-toolbar-button";
 
 type TimersActionsProps = {
-  underBag?: boolean;
   timerFiltersEnabled?: boolean;
   toggleTimerFiltersEnabled: () => void;
   colorFiltersEnabled?: boolean;
@@ -19,11 +14,12 @@ type TimersActionsProps = {
   setShowHiddenTimers: (show: boolean) => void;
 };
 
+const ICON_SIZE = 14;
+
 export const TimersActions: FC<TimersActionsProps> = ({
-  underBag = false,
-  timerFiltersEnabled,
+  timerFiltersEnabled = false,
   toggleTimerFiltersEnabled,
-  colorFiltersEnabled,
+  colorFiltersEnabled = false,
   toggleColorFiltersEnabled,
   timersSortOrder,
   setTimersSortOrder,
@@ -31,126 +27,55 @@ export const TimersActions: FC<TimersActionsProps> = ({
   setShowHiddenTimers,
 }) => {
   const { t } = useTranslation("timers");
+  const sortDesc = timersSortOrder === "desc";
 
-  const leadingIconClassName = underBag
-    ? "ll:-mt-0.5 ll:h-5 ll:mb-1"
-    : "ll:mt-0.5";
-
-  return [
-    <Tooltip key="filters-tooltip">
-      <TooltipTrigger
-        aria-label={t(
+  return (
+    <>
+      <TimersToolbarButton
+        label={t(
           timerFiltersEnabled ? "toolbar.hideFilters" : "toolbar.showFilters",
         )}
+        active={timerFiltersEnabled}
         onClick={toggleTimerFiltersEnabled}
-        className="ll:border-0 ll:p-0 ll:bg-transparent ll:leading-none"
-      >
-        <Filter
-          key="filters"
-          className={`ll-custom-cursor-pointer ${leadingIconClassName} ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors`}
-          size="14"
-        />
-      </TooltipTrigger>
-      <TooltipContent side="top">
-        {timerFiltersEnabled
-          ? t("toolbar.hideFilters")
-          : t("toolbar.showFilters")}
-      </TooltipContent>
-    </Tooltip>,
-
-    <Tooltip key="color-filters-tooltip">
-      <TooltipTrigger
-        aria-label={t(
+        icon=<Filter size={ICON_SIZE} aria-hidden="true" />
+      />
+      <TimersToolbarButton
+        label={t(
           colorFiltersEnabled
             ? "toolbar.disableColorFilters"
             : "toolbar.enableColorFilters",
         )}
+        active={colorFiltersEnabled}
         onClick={toggleColorFiltersEnabled}
-        className="ll:border-0 ll:p-0 ll:bg-transparent ll:leading-none"
-      >
-        <Palette
-          key="color-filters"
-          className={`ll-custom-cursor-pointer ${leadingIconClassName} ll:hover:stroke-gray-100 ll:transition-colors ${
-            colorFiltersEnabled
-              ? "ll:stroke-blue-400 ll:fill-blue-400/20"
-              : "ll:stroke-gray-300"
-          }`}
-          size="14"
-        />
-      </TooltipTrigger>
-      <TooltipContent side="top">
-        {colorFiltersEnabled
-          ? t("toolbar.disableColorFilters")
-          : t("toolbar.enableColorFilters")}
-      </TooltipContent>
-    </Tooltip>,
-
-    timersSortOrder === "desc" ? (
-      <Tooltip key="sort-desc-tooltip">
-        <TooltipTrigger
-          aria-label={t("toolbar.sortAsc")}
-          onClick={() => setTimersSortOrder("asc")}
-          className="ll:border-0 ll:p-0 ll:bg-transparent ll:leading-none"
-        >
-          <SortDesc
-            key="sort-desc"
-            className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-            size="14"
-          />
-        </TooltipTrigger>
-        <TooltipContent side="top">{t("toolbar.sortAsc")}</TooltipContent>
-      </Tooltip>
-    ) : (
-      <Tooltip key="sort-asc-tooltip">
-        <TooltipTrigger
-          aria-label={t("toolbar.sortDesc")}
-          onClick={() => setTimersSortOrder("desc")}
-          className="ll:border-0 ll:p-0 ll:bg-transparent ll:leading-none"
-        >
-          <SortAsc
-            key="sort-asc"
-            className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-            size="14"
-          />
-        </TooltipTrigger>
-        <TooltipContent side="top">{t("toolbar.sortDesc")}</TooltipContent>
-      </Tooltip>
-    ),
-
-    showHiddenTimers ? (
-      <Tooltip key="show-hidden-tooltip">
-        <TooltipTrigger
-          aria-label={t("toolbar.hideHiddenTimers")}
-          onClick={() => setShowHiddenTimers(false)}
-          className="ll:border-0 ll:p-0 ll:bg-transparent ll:leading-none"
-        >
-          <Eye
-            key="show-hidden"
-            className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-            size="14"
-          />
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          {t("toolbar.hideHiddenTimers")}
-        </TooltipContent>
-      </Tooltip>
-    ) : (
-      <Tooltip key="hide-hidden-tooltip">
-        <TooltipTrigger
-          aria-label={t("toolbar.showHiddenTimers")}
-          onClick={() => setShowHiddenTimers(true)}
-          className="ll:border-0 ll:p-0 ll:bg-transparent ll:leading-none"
-        >
-          <EyeOff
-            key="hide-hidden"
-            className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-            size="14"
-          />
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          {t("toolbar.showHiddenTimers")}
-        </TooltipContent>
-      </Tooltip>
-    ),
-  ];
+        icon=<Palette size={ICON_SIZE} aria-hidden="true" />
+      />
+      <TimersToolbarButton
+        label={t(sortDesc ? "toolbar.sortAsc" : "toolbar.sortDesc")}
+        onClick={() => setTimersSortOrder(sortDesc ? "asc" : "desc")}
+        icon={
+          sortDesc ? (
+            <SortDesc size={ICON_SIZE} aria-hidden="true" />
+          ) : (
+            <SortAsc size={ICON_SIZE} aria-hidden="true" />
+          )
+        }
+      />
+      <TimersToolbarButton
+        label={t(
+          showHiddenTimers
+            ? "toolbar.hideHiddenTimers"
+            : "toolbar.showHiddenTimers",
+        )}
+        active={showHiddenTimers}
+        onClick={() => setShowHiddenTimers(!showHiddenTimers)}
+        icon={
+          showHiddenTimers ? (
+            <Eye size={ICON_SIZE} aria-hidden="true" />
+          ) : (
+            <EyeOff size={ICON_SIZE} aria-hidden="true" />
+          )
+        }
+      />
+    </>
+  );
 };

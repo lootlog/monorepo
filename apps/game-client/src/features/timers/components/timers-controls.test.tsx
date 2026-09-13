@@ -46,10 +46,10 @@ describe("timers controls", () => {
       target: { value: "tan" },
     });
     expect(useTimersStore.getState().timerFiltersSearchText).toBe("tan");
-    fireEvent.change(screen.getByPlaceholderText("Od"), {
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "-50" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Do"), {
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "999" },
     });
     expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
@@ -104,7 +104,6 @@ describe("timers controls", () => {
 
     const actions = (underBag: boolean) => (
       <TimersActions
-        underBag={underBag}
         timerFiltersEnabled={!underBag}
         toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
         colorFiltersEnabled={underBag}
