@@ -95,7 +95,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   };
 
   return (
-    <div className="ll:-mx-1 ll:flex ll:flex-col ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20">
+    <div className="ll:-mx-1 ll:-mt-px ll:flex ll:flex-col ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20">
       <div className="ll:flex ll:h-7 ll:min-w-0 ll:items-stretch">
         <SearchInput
           size="sm"

@@ -95,7 +95,7 @@ export const TimersContent: FC<TimersContentProps> = ({
       <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
         {!compactView && !isGrouping && <GuildSwitcher className="ll:mb-1!" />}
         {!compactView && allowWorldSelection && !isGrouping && (
-          <WorldSelector />
+          <WorldSelector className="ll:-mx-1 ll:w-auto" variant="strip" />
         )}
         {!compactView && timerFiltersEnabled && (
           <TimersFilters filtersKey={settingsKey} />
