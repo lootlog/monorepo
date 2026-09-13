@@ -32,9 +32,7 @@ it("shows color totals and the add action with history only outside grouping", a
       screen.getByRole("button", { name: "Statystyki kolorów timerów" }),
     );
     expect(await screen.findByText("Red: 1/2")).toBeVisible();
-    await user.hover(screen.getByRole("button", { name: "+" }));
-    expect(await screen.findByText("Dodaj timer")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: "+" }));
+    await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
     expect(onAddTimer).toHaveBeenCalledOnce();
     view.rerender(footer(true));
     expect(
