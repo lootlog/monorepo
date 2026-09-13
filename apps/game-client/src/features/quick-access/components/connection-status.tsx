@@ -13,8 +13,8 @@ import { useSocket } from "@/contexts/socket-context";
 import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
 import { useTranslation } from "react-i18next";
 
-export const TimersConnectionStatus: FC = () => {
-  const { t } = useTranslation("timers");
+export const ConnectionStatus: FC = () => {
+  const { t } = useTranslation("quickAccess");
   const { connected, joined, joinedGuilds } = useSocket();
 
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
@@ -39,14 +39,16 @@ export const TimersConnectionStatus: FC = () => {
               ? "connection.connectedToServers"
               : "connection.notConnected",
           )}
-          className={cn(
-            "ll:p-0 ll:border-0 ll:size-3 ll:rounded-full ll:absolute ll:left-6 ll:cursor-pointer",
-            {
+          className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:shrink-0 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
+        >
+          <span
+            aria-hidden="true"
+            className={cn("ll:size-2.5 ll:rounded-full", {
               "ll:bg-red-400": !connectedToServers,
               "ll:bg-green-400": connectedToServers,
-            },
-          )}
-        />
+            })}
+          />
+        </button>
       </TooltipTrigger>
       <TooltipContent>
         {connectedToServers ? (

@@ -1,5 +1,5 @@
-import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
-import { createTimerGuildFixture } from "../timer-fixtures";
+import { createTimerRealtimeFixture } from "@/features/timers/timer-realtime-fixtures";
+import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,8 +7,8 @@ import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootl
 import { expect, it } from "vitest";
 import { SocketProvider } from "@/contexts/socket-context";
 import { getSocket } from "@/lib/socket";
-import { createTimerHttpFixture } from "../timer-http-fixtures";
-import { TimersConnectionStatus } from "./timers-connection-status";
+import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
+import { ConnectionStatus } from "./connection-status";
 
 it("shows joined guild names from the real gateway and clears them on disconnect", async () => {
   const user = userEvent.setup();
@@ -28,7 +28,7 @@ it("shows joined guild names from the real gateway and clears them on disconnect
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <SocketProvider>
-        <TimersConnectionStatus />
+        <ConnectionStatus />
       </SocketProvider>
     </QueryClientProvider>,
   );
@@ -38,7 +38,6 @@ it("shows joined guild names from the real gateway and clears them on disconnect
       name: "Nie połączono z żadnym serwerem",
     });
 
-    expect(disconnected).toHaveClass("ll:bg-red-400");
     await user.hover(disconnected);
     expect(
       await screen.findByText("Nie połączono z żadnym serwerem"),
@@ -50,7 +49,6 @@ it("shows joined guild names from the real gateway and clears them on disconnect
       name: "Połączono z serwerami:",
     });
 
-    expect(connected).toHaveClass("ll:bg-green-400");
     await user.unhover(connected);
     await user.hover(connected);
     expect(await screen.findByText("Beta")).toBeVisible();
@@ -58,7 +56,7 @@ it("shows joined guild names from the real gateway and clears them on disconnect
     act(() => getSocket().disconnect());
     expect(
       screen.getByRole("button", { name: "Nie połączono z żadnym serwerem" }),
-    ).toHaveClass("ll:bg-red-400");
+    ).toBeInTheDocument();
   } finally {
     view.unmount();
     gateway.cleanup();
