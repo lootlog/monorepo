@@ -15,7 +15,27 @@ type GuildButtonProps = PropsWithChildren<{
   onClick: () => void;
   tooltipLabel: string;
   unreadBadge?: string | null;
+  /** `strip` renders a flush tab-like tile for the guild switcher strip. */
+  variant?: "default" | "strip";
 }>;
+
+const DEFAULT_CLASS_NAME = cn(
+  "ll:rounded-sm ll:border-2",
+  "ll:transition-[transform,box-shadow,border-color,background-color,opacity]",
+  "hover:ll:scale-105",
+  "ll:border-gray-700/90 ll:bg-gray-900/60 hover:ll:border-gray-500 hover:ll:bg-gray-800/70",
+  "after:ll:pointer-events-none after:ll:absolute after:ll:inset-0 after:ll:rounded-[2px] after:ll:opacity-0 after:ll:transition-opacity",
+);
+
+const DEFAULT_SELECTED_CLASS_NAME =
+  "ll:border-ring ll:bg-accent ll:ring-1 ll:ring-ring after:ll:bg-primary/15 after:ll:opacity-100";
+
+/** Flush tiles divided by hairlines, dimmed until hovered; the active one is bright and underlined. */
+const STRIP_CLASS_NAME =
+  "ll:rounded-none ll:border-0 ll:border-l ll:border-solid ll:border-gray-400/40 ll:bg-transparent ll:opacity-60 ll:transition-[opacity,background-color] ll:motion-reduce:transition-none ll:hover:bg-white/5 ll:hover:opacity-100";
+
+const STRIP_SELECTED_CLASS_NAME =
+  "ll:opacity-100 ll:after:pointer-events-none ll:after:absolute ll:after:inset-x-0 ll:after:bottom-0 ll:after:h-0.5 ll:after:bg-blue-400";
 
 export const GuildButton: FC<GuildButtonProps> = ({
   className,
@@ -24,6 +44,7 @@ export const GuildButton: FC<GuildButtonProps> = ({
   onClick,
   tooltipLabel,
   unreadBadge,
+  variant = "default",
   children,
 }) => (
   <Tooltip>
@@ -37,18 +58,15 @@ export const GuildButton: FC<GuildButtonProps> = ({
         aria-label={tooltipLabel}
         aria-pressed={isSelected}
         className={cn(
-          "ll:relative ll:flex ll:items-center ll:justify-center ll:overflow-visible ll:rounded-sm ll:border-2",
-          "ll:transition-[transform,box-shadow,border-color,background-color,opacity]",
-          "hover:ll:scale-105",
+          "ll:relative ll:flex ll:items-center ll:justify-center ll:overflow-visible",
           "disabled:ll:opacity-50 disabled:ll:cursor-not-allowed",
           "ll:size-7 ll:p-0 ll:shrink-0",
-          "ll:border-gray-700/90 ll:bg-gray-900/60 hover:ll:border-gray-500 hover:ll:bg-gray-800/70",
-          "after:ll:pointer-events-none after:ll:absolute after:ll:inset-0 after:ll:rounded-[2px] after:ll:opacity-0 after:ll:transition-opacity",
+          variant === "strip" ? STRIP_CLASS_NAME : DEFAULT_CLASS_NAME,
           !disabled && "ll-custom-cursor-pointer",
-          {
-            "ll:border-ring ll:bg-accent ll:ring-1 ll:ring-ring after:ll:bg-primary/15 after:ll:opacity-100":
-              isSelected,
-          },
+          isSelected &&
+            (variant === "strip"
+              ? STRIP_SELECTED_CLASS_NAME
+              : DEFAULT_SELECTED_CLASS_NAME),
           className,
         )}
       >
