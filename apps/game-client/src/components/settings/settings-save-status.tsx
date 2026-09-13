@@ -1,16 +1,21 @@
 import { useSettingsSaveStatusStore } from "@/features/settings/persistence/settings-save-status.store";
-import { Button } from "@/components/ui/button";
-import { SETTINGS_SAVE_ICON_ENTER_CLASS_NAME } from "@/components/settings/settings-save-badge";
-import { cn } from "cn";
-import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { SettingsSaveBadge } from "@/components/settings/settings-save-badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 
 const SAVED_VISIBLE_MS = 1500;
 
-const LABEL_ENTER_CLASS_NAME = "ll:animate-in ll:fade-in-0 ll:duration-150";
-
-/** Title bar indicator for the shared settings write queue. */
+/**
+ * Title bar indicator for the shared settings write queue: a small badge next
+ * to the window title (spinner, green check, red error). The label lives in
+ * the tooltip and a visually hidden live region; a failed save turns the
+ * badge into a retry button.
+ */
 export const SettingsSaveStatus: FC = () => {
   const { t } = useTranslation("settings");
   const status = useSettingsSaveStatusStore((state) => state.status);
@@ -36,59 +41,41 @@ export const SettingsSaveStatus: FC = () => {
     status === "error" ||
     (status === "saved" && savedAt !== null && savedAt !== hiddenSavedAt);
 
+  const label = visible ? t(`saveStatus.${status}`) : null;
+
   return (
     <div
       role="status"
       aria-live="polite"
       data-ll-draggable="false"
-      className="ll:flex ll:h-5 ll:items-center ll:gap-1 ll:text-xs ll:leading-none"
+      className="ll:flex ll:size-4 ll:shrink-0 ll:items-center ll:justify-center"
     >
       {visible ? (
-        <>
-          <span key={status} className={SETTINGS_SAVE_ICON_ENTER_CLASS_NAME}>
-            {status === "error" ? (
-              <AlertCircle
-                className="ll:size-3.5 ll:text-destructive"
-                strokeWidth={1.5}
-                aria-hidden="true"
-              />
-            ) : status === "saving" ? (
-              <Loader2
-                className="ll:size-3.5 ll:animate-spin ll:text-muted-foreground"
-                strokeWidth={1.5}
-                aria-hidden="true"
-              />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {status === "error" && retry ? (
+              <button
+                type="button"
+                aria-label={t("saveStatus.retry")}
+                className="ll-custom-cursor-pointer ll:flex ll:appearance-none ll:rounded-full ll:border-0 ll:bg-transparent ll:p-0 ll:outline-none ll:focus-visible:ring-2 ll:focus-visible:ring-blue-400/70"
+                onClick={retry}
+              >
+                <SettingsSaveBadge status={status} />
+              </button>
             ) : (
-              <Check
-                className="ll:size-3.5 ll:text-emerald-300"
-                strokeWidth={1.5}
-                aria-hidden="true"
-              />
+              <span className="ll:flex">
+                <SettingsSaveBadge status={status} />
+              </span>
             )}
-          </span>
-          <span
-            key={`${status}-label`}
-            className={cn(
-              LABEL_ENTER_CLASS_NAME,
-              status === "error"
-                ? "ll:text-destructive"
-                : "ll:text-muted-foreground",
-            )}
-          >
-            {t(`saveStatus.${status}`)}
-          </span>
-          {status === "error" && retry ? (
-            <Button
-              variant="link"
-              size="xs"
-              onClick={retry}
-              className="ll:h-4 ll:px-1 ll:font-semibold"
-            >
-              {t("saveStatus.retry")}
-            </Button>
-          ) : null}
-        </>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {status === "error" && retry
+              ? `${label}. ${t("saveStatus.retryHint")}`
+              : label}
+          </TooltipContent>
+        </Tooltip>
       ) : null}
+      {label ? <span className="ll:sr-only">{label}</span> : null}
     </div>
   );
 };

@@ -21,6 +21,8 @@ export type DraggableWindowFrameProps = {
   id: WindowId;
   actions?: React.ReactNode;
   title: string;
+  /** Small indicator rendered right after the title, e.g. a save status. */
+  titleAddon?: React.ReactNode;
   onClose?: () => void;
   variant?: "default" | "small";
   heightMode?: "fixed" | "auto-up-to-max" | "css-auto-up-to-max";
@@ -440,6 +442,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     id,
     actions,
     title,
+    titleAddon,
     onClose,
     heightMode,
     widthMode,
@@ -1056,6 +1059,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     id,
     actions,
     title,
+    titleAddon,
     onClose,
     minWidth,
     minHeight,

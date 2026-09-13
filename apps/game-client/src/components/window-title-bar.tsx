@@ -10,6 +10,7 @@ const ICON_SIZE = 14;
 
 interface WindowTitleBarProps {
   title: string;
+  titleAddon?: React.ReactNode;
   actions?: React.ReactNode;
   closable: boolean;
   opacity: WindowOpacity;
@@ -29,6 +30,7 @@ interface WindowTitleBarProps {
  */
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   title,
+  titleAddon,
   actions,
   closable,
   opacity,
@@ -52,7 +54,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
 
   return (
     <div
-      className="ll:grid ll:h-7 ll:shrink-0 ll:select-none ll:grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] ll:items-center ll:gap-1 ll:px-0.5"
+      className="ll:grid ll:h-6 ll:shrink-0 ll:select-none ll:grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] ll:items-center ll:gap-1 ll:px-0.5"
       onPointerDown={onPointerDown}
       style={{ touchAction: "none" }}
     >
@@ -83,12 +85,15 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         </WindowActionButton>
         {actions}
       </div>
-      <p
-        className="ll:min-w-0 ll:truncate ll:px-1 ll:text-center ll:text-[12px] ll:leading-none ll:font-semibold ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]"
-        title={title}
-      >
-        {title}
-      </p>
+      <div className="ll:flex ll:min-w-0 ll:items-center ll:justify-center ll:gap-1.5 ll:px-1">
+        <p
+          className="ll:m-0 ll:min-w-0 ll:truncate ll:text-[12px] ll:leading-none ll:font-semibold ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]"
+          title={title}
+        >
+          {title}
+        </p>
+        {titleAddon}
+      </div>
       <div
         className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-end"
         data-ll-draggable="false"
@@ -99,7 +104,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
             destructive
             onClick={onClose}
           >
-            <X size={ICON_SIZE} aria-hidden="true" />
+            <X size={16} aria-hidden="true" />
           </WindowActionButton>
         )}
       </div>

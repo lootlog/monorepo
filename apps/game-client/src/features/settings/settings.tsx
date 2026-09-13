@@ -44,7 +44,7 @@ export const Settings = () => {
       id="settings"
       title={t("settings.window.title")}
       onClose={() => setOpen("settings", false)}
-      actions=<SettingsSaveStatus />
+      titleAddon=<SettingsSaveStatus />
       variant="default"
       minHeight={440}
       minWidth={420}

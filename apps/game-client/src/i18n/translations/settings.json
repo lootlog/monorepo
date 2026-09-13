@@ -643,7 +643,8 @@
     "saving": "Zapisywanie…",
     "saved": "Zapisano",
     "error": "Błąd zapisu",
-    "retry": "Ponów"
+    "retry": "Ponów",
+    "retryHint": "Kliknij, aby ponowić"
   },
   "nav": {
     "domains": "Działy ustawień",

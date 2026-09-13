@@ -31,6 +31,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     id,
     actions,
     title,
+    titleAddon,
     onClose,
     minWidth,
     minHeight,
@@ -128,6 +129,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
           <div ref={titleBarRef}>
             <WindowTitleBar
               title={title}
+              titleAddon={titleAddon}
               actions={actions}
               closable={closable}
               opacity={opacity}
