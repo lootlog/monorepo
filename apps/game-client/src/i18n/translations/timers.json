@@ -19,12 +19,11 @@
   "toolbar": {
     "hideFilters": "Ukryj filtry",
     "showFilters": "Pokaż filtry",
-    "disableColorFilters": "Wyłącz filtry po kolorze",
-    "enableColorFilters": "Włącz filtry po kolorze",
+    "options": "Opcje timerów",
+    "colorFilters": "Filtry po kolorze",
+    "hiddenTimers": "Pokaż ukryte timery",
     "sortAsc": "Sortuj rosnąco",
     "sortDesc": "Sortuj malejąco",
-    "hideHiddenTimers": "Ukryj ukryte timery",
-    "showHiddenTimers": "Pokaż ukryte timery",
     "history": "Historia timerów"
   },
   "tooltip": {

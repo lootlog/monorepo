@@ -1,7 +1,19 @@
-import { Eye, EyeOff, Filter, Palette, SortAsc, SortDesc } from "lucide-react";
-import type { FC } from "react";
+import {
+  ArrowDownNarrowWide,
+  ArrowUpNarrowWide,
+  Check,
+  Filter,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { TimersToolbarButton } from "./timers-toolbar-button";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { WindowActionButton } from "@/components/window-action-button";
 
 type TimersActionsProps = {
   timerFiltersEnabled?: boolean;
@@ -16,6 +28,18 @@ type TimersActionsProps = {
 
 const ICON_SIZE = 14;
 
+type OptionItem = {
+  key: string;
+  label: string;
+  checked?: boolean;
+  icon?: ReactNode;
+  onSelect: () => void;
+};
+
+/**
+ * Filters get a dedicated toggle; the rarer options share one menu so the
+ * title bar keeps room for the title at the minimum window width.
+ */
 export const TimersActions: FC<TimersActionsProps> = ({
   timerFiltersEnabled = false,
   toggleTimerFiltersEnabled,
@@ -27,55 +51,77 @@ export const TimersActions: FC<TimersActionsProps> = ({
   setShowHiddenTimers,
 }) => {
   const { t } = useTranslation("timers");
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const sortDesc = timersSortOrder === "desc";
+
+  const options: OptionItem[] = [
+    {
+      key: "color-filters",
+      label: t("toolbar.colorFilters"),
+      checked: colorFiltersEnabled,
+      onSelect: toggleColorFiltersEnabled,
+    },
+    {
+      key: "hidden-timers",
+      label: t("toolbar.hiddenTimers"),
+      checked: showHiddenTimers,
+      onSelect: () => setShowHiddenTimers(!showHiddenTimers),
+    },
+    {
+      key: "sort",
+      label: t(sortDesc ? "toolbar.sortAsc" : "toolbar.sortDesc"),
+      icon: sortDesc ? (
+        <ArrowUpNarrowWide size={ICON_SIZE} aria-hidden="true" />
+      ) : (
+        <ArrowDownNarrowWide size={ICON_SIZE} aria-hidden="true" />
+      ),
+      onSelect: () => setTimersSortOrder(sortDesc ? "asc" : "desc"),
+    },
+  ];
 
   return (
     <>
-      <TimersToolbarButton
+      <WindowActionButton
         label={t(
           timerFiltersEnabled ? "toolbar.hideFilters" : "toolbar.showFilters",
         )}
         active={timerFiltersEnabled}
         onClick={toggleTimerFiltersEnabled}
-        icon=<Filter size={ICON_SIZE} aria-hidden="true" />
-      />
-      <TimersToolbarButton
-        label={t(
-          colorFiltersEnabled
-            ? "toolbar.disableColorFilters"
-            : "toolbar.enableColorFilters",
-        )}
-        active={colorFiltersEnabled}
-        onClick={toggleColorFiltersEnabled}
-        icon=<Palette size={ICON_SIZE} aria-hidden="true" />
-      />
-      <TimersToolbarButton
-        label={t(sortDesc ? "toolbar.sortAsc" : "toolbar.sortDesc")}
-        onClick={() => setTimersSortOrder(sortDesc ? "asc" : "desc")}
-        icon={
-          sortDesc ? (
-            <SortDesc size={ICON_SIZE} aria-hidden="true" />
-          ) : (
-            <SortAsc size={ICON_SIZE} aria-hidden="true" />
-          )
-        }
-      />
-      <TimersToolbarButton
-        label={t(
-          showHiddenTimers
-            ? "toolbar.hideHiddenTimers"
-            : "toolbar.showHiddenTimers",
-        )}
-        active={showHiddenTimers}
-        onClick={() => setShowHiddenTimers(!showHiddenTimers)}
-        icon={
-          showHiddenTimers ? (
-            <Eye size={ICON_SIZE} aria-hidden="true" />
-          ) : (
-            <EyeOff size={ICON_SIZE} aria-hidden="true" />
-          )
-        }
-      />
+      >
+        <Filter size={ICON_SIZE} aria-hidden="true" />
+      </WindowActionButton>
+      <Popover open={optionsOpen} onOpenChange={setOptionsOpen}>
+        <PopoverTrigger asChild>
+          <WindowActionButton
+            label={t("toolbar.options")}
+            active={optionsOpen}
+            onClick={() => setOptionsOpen((open) => !open)}
+          >
+            <SlidersHorizontal size={ICON_SIZE} aria-hidden="true" />
+          </WindowActionButton>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="ll-action-menu ll:w-48 ll:overflow-hidden ll:p-0"
+        >
+          {options.map((option) => (
+            <Button
+              key={option.key}
+              size="xs"
+              variant="menu"
+              aria-pressed={option.checked}
+              className="ll:w-full ll:justify-between"
+              onClick={option.onSelect}
+            >
+              <span>{option.label}</span>
+              {option.icon ??
+                (option.checked ? (
+                  <Check size={ICON_SIZE} aria-hidden="true" />
+                ) : null)}
+            </Button>
+          ))}
+        </PopoverContent>
+      </Popover>
     </>
   );
 };
