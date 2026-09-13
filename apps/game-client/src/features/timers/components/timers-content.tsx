@@ -124,7 +124,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           ) : (
             <ScrollArea
               data-testid="timers-scroll-container"
-              className="ll:h-full ll:w-full!"
+              className="ll:h-full ll:w-full! ll:pt-1"
             >
               <TimersGrid
                 timers={sortedTimers}
