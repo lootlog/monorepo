@@ -5,6 +5,7 @@ import {
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { ConnectionStatus } from "@/features/quick-access/components/connection-status";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   MessagesSquare,
@@ -81,6 +82,7 @@ export const QuickAccess = () => {
           ))}
 
           <GuildListPopover />
+          <ConnectionStatus />
         </div>
       </ScrollArea>
     </DraggableWindow>
