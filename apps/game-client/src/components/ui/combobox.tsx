@@ -23,25 +23,40 @@ const ComboboxValue = (props: BaseCombobox.Value.Props) => (
 
 type ComboboxTriggerProps = BaseCombobox.Trigger.Props & {
   size?: "sm" | "default";
+  /** `strip` renders a flat, full-width bar for stacking with other toolbar strips. */
+  variant?: "default" | "strip";
 };
+
+const comboboxTriggerStripClassName =
+  "ll:rounded-none ll:border-x-0 ll:border-y ll:border-gray-400/40 ll:bg-black/20 ll:hover:bg-black/30 ll:hover:text-foreground ll:focus-visible:border-gray-400/40 ll:focus-visible:ring-0 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring ll:data-[popup-open]:border-gray-400/40 ll:data-[popup-open]:ring-0 ll:data-[popup-open]:bg-black/30";
 
 const ComboboxTrigger = React.forwardRef<
   HTMLButtonElement,
   ComboboxTriggerProps
->(({ className, children, size = "default", ...props }, ref) => (
-  <BaseCombobox.Trigger
-    ref={ref}
-    data-slot="combobox-trigger"
-    data-size={size}
-    className={cn(selectTriggerClassName, className)}
-    {...props}
-  >
-    {children}
-    <BaseCombobox.Icon
-      render=<ChevronDown className="ll:size-3.5 ll:opacity-70" />
-    />
-  </BaseCombobox.Trigger>
-));
+>(
+  (
+    { className, children, size = "default", variant = "default", ...props },
+    ref,
+  ) => (
+    <BaseCombobox.Trigger
+      ref={ref}
+      data-slot="combobox-trigger"
+      data-size={size}
+      data-variant={variant}
+      className={cn(
+        selectTriggerClassName,
+        variant === "strip" && comboboxTriggerStripClassName,
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <BaseCombobox.Icon
+        render=<ChevronDown className="ll:size-3.5 ll:opacity-70" />
+      />
+    </BaseCombobox.Trigger>
+  ),
+);
 
 ComboboxTrigger.displayName = "ComboboxTrigger";
 
