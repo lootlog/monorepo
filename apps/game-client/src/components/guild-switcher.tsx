@@ -37,6 +37,8 @@ type GuildSwitcherProps = {
   unreadCountByGuildId?: Record<string, number>;
   unreadGuildIds?: ReadonlySet<string>;
   value?: string;
+  /** `strip` renders the scroll layout as a flat, full-width bar that stacks with other toolbar strips. */
+  variant?: "default" | "strip";
 };
 
 const resolveGuildSwitcherProps = (props: GuildSwitcherProps) => ({
@@ -48,6 +50,7 @@ const resolveGuildSwitcherProps = (props: GuildSwitcherProps) => ({
   gridClassName: props.gridClassName ?? "",
   layout: props.layout ?? "scroll",
   multiple: props.multiple ?? false,
+  variant: props.variant ?? "default",
 });
 
 type GuildSwitcherStatusInput = {
@@ -112,6 +115,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     unreadCountByGuildId,
     unreadGuildIds,
     value,
+    variant,
   } = resolveGuildSwitcherProps(props);
 
   const { t } = useTranslation("common");
@@ -167,7 +171,11 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
 
   const selectedValue = value !== undefined ? value : guildId;
   const selectedGuildIds = selectedValues ?? [];
-  const resolvedButtonClassName = buttonClassName;
+
+  const resolvedButtonClassName = cn(
+    variant === "strip" && "ll:rounded-none after:ll:rounded-none",
+    buttonClassName,
+  );
 
   const status = getGuildSwitcherStatus({
     arePreferencesFetched,
@@ -234,6 +242,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   };
 
   const selectedGuildIdSet = new Set(selectedGuildIds);
+  const isStrip = variant === "strip";
 
   if (status === "single") {
     return null;
@@ -363,10 +372,20 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   return (
     <TooltipProvider>
       <ScrollArea
-        className={cn("ll:w-full", className)}
+        className={cn(
+          "ll:w-full",
+          isStrip &&
+            "ll:border-y ll:border-x-0 ll:border-gray-400/40 ll:bg-black/20",
+          className,
+        )}
         orientation="horizontal"
       >
-        <div className="ll:mt-1 ll:flex ll:w-max ll:min-w-full ll:gap-1">
+        <div
+          className={cn(
+            "ll:flex ll:w-max ll:min-w-full ll:gap-1",
+            isStrip ? "ll:px-1 ll:py-1" : "ll:mt-1",
+          )}
+        >
           {content}
         </div>
       </ScrollArea>
