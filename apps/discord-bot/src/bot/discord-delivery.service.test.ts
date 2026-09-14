@@ -128,6 +128,8 @@ describe("Discord delivery", () => {
     expect(send).toHaveBeenCalledWith({
       content: "**Boss alert**\nTanroth spawned",
       allowedMentions: undefined,
+      nonce: expect.stringMatching(/^[0-9a-f]{25}$/),
+      enforceNonce: true,
     });
     expect(publish).toHaveBeenCalledWith(
       "default",
@@ -167,6 +169,8 @@ describe("Discord delivery", () => {
     expect(send).toHaveBeenCalledWith({
       content: "<@&123> alert",
       allowedMentions: { roles: ["123"] },
+      nonce: expect.stringMatching(/^[0-9a-f]{25}$/),
+      enforceNonce: true,
     });
   });
 
@@ -271,16 +275,51 @@ describe("Discord delivery", () => {
     const serverError = await deliverChannelMessage({
       users: { fetch: mock() },
       channels: {
-        fetch: mock(async () =>
-          sendableChannel(async () => {
-            throw discordApiError(0, 500, "Internal Server Error");
-          }),
-        ),
+        fetch: mock(async () => {
+          throw discordApiError(0, 500, "Internal Server Error");
+        }),
       },
     });
 
     expect(serverError.result).toEqual(
       expect.objectContaining({ retryable: true, errorCode: "0" }),
+    );
+  });
+
+  test("retries a send only when Discord certainly did not apply it", async () => {
+    // A 5xx after the POST may follow a message Discord already created, and
+    // the API would post it again on retry.
+    const ambiguous = await deliverChannelMessage({
+      users: { fetch: mock() },
+      channels: {
+        fetch: mock(async () =>
+          sendableChannel(async () => {
+            throw discordApiError(0, 502, "Bad Gateway");
+          }),
+        ),
+      },
+    });
+
+    expect(ambiguous.result).toEqual(
+      expect.objectContaining({ retryable: false, errorCode: "0" }),
+    );
+    expect(ambiguous.log).toEqual(
+      expect.objectContaining({ operation: "send", retryable: false }),
+    );
+
+    const rateLimited = await deliverChannelMessage({
+      users: { fetch: mock() },
+      channels: {
+        fetch: mock(async () =>
+          sendableChannel(async () => {
+            throw rateLimitError();
+          }),
+        ),
+      },
+    });
+
+    expect(rateLimited.result).toEqual(
+      expect.objectContaining({ retryable: true, errorCode: "RATE_LIMITED" }),
     );
   });
 

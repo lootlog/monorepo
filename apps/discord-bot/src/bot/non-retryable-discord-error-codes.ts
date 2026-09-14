@@ -38,7 +38,7 @@ export const isPermanentDiscordError = (cause: unknown): boolean =>
  */
 export const isRetryableDiscordError = (cause: unknown): boolean => {
   if (cause instanceof DiscordAPIError) {
-    return cause.status >= 500 || cause.status === 429;
+    return cause.status >= 500 || isRateLimit(cause);
   }
 
   if (cause instanceof RateLimitError || cause instanceof HTTPError)
@@ -52,6 +52,22 @@ export const isRetryableDiscordError = (cause: unknown): boolean => {
       ))
   );
 };
+
+const isRateLimit = (cause: unknown) =>
+  cause instanceof RateLimitError ||
+  (cause instanceof DiscordAPIError && cause.status === 429);
+
+/**
+ * Whether a failed Discord mutation certainly never reached Discord, so
+ * repeating it cannot duplicate its effect: the request was rejected by the
+ * rate limiter or no connection was established. A 5xx, a reset connection or
+ * an unknown error may follow a request Discord already applied.
+ */
+export const isRetryableDiscordSendError = (cause: unknown): boolean =>
+  isRateLimit(cause) ||
+  (cause instanceof Error &&
+    (cause.message.includes("ECONNREFUSED") ||
+      cause.message.includes("EAI_AGAIN")));
 
 /**
  * A stable, token-free code describing a Discord SDK failure.

@@ -11,6 +11,7 @@ import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import {
   discordErrorCode,
   isRetryableDiscordError,
+  isRetryableDiscordSendError,
 } from "./non-retryable-discord-error-codes.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
 
@@ -54,12 +55,26 @@ const notificationContent = (command: DiscordNotificationSendCommand) => {
   return truncateToDiscordLimit(`**${command.title}**\n${command.message}`);
 };
 
+/**
+ * Discord deduplicates message creation by nonce for a few minutes when
+ * `enforceNonce` is set, so a repeated send of the same job returns the
+ * existing message instead of posting it again. Nonces are limited to 25
+ * characters, so the job id is hashed.
+ */
+const messageNonce = (notificationJobId: string) =>
+  new Bun.CryptoHasher("sha256")
+    .update(notificationJobId)
+    .digest("hex")
+    .slice(0, 25);
+
 const messageOptions = (command: DiscordNotificationSendCommand) => ({
   content: notificationContent(command),
   allowedMentions:
     command.target.targetType === NotificationTargetType.DM
       ? undefined
       : command.allowedMentions,
+  nonce: messageNonce(command.notificationJobId),
+  enforceNonce: true,
 });
 
 const deliveryFailure = (
@@ -71,7 +86,11 @@ const deliveryFailure = (
     operation,
     errorCode: options?.errorCode ?? discordErrorCode(cause),
     reason: cause instanceof Error ? cause.message : String(cause),
-    retryable: options?.retryable ?? isRetryableDiscordError(cause),
+    retryable:
+      options?.retryable ??
+      (operation === "send"
+        ? isRetryableDiscordSendError(cause)
+        : isRetryableDiscordError(cause)),
   });
 
 type DeliveryMessage = { readonly id: string };
@@ -114,9 +133,10 @@ export const makeDiscordDelivery = (
 
   /**
    * A lookup that times out never reached a visible side effect, so it can be
-   * repeated. A send that times out may already have produced a message, so it
-   * is reported as a permanent failure with its own code instead of risking a
-   * duplicate delivery.
+   * repeated. A send that fails ambiguously (timeout, 5xx, reset connection)
+   * may already have produced a message, so it is reported as a permanent
+   * failure instead of risking a duplicate delivery; only a rate limited or
+   * never-connected send is retried.
    */
   const step = <A>(
     operation: Exclude<DeliveryOperation, "publish" | "resolve-channel">,
