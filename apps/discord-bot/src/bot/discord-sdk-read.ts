@@ -1,5 +1,5 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Cause, Effect, Schema } from "effect";
+import { Cause, Effect, Schedule, Schema } from "effect";
 import { DiscordAPIError } from "discord.js";
 
 const nonRetryableErrorCodes = new Set([
@@ -18,6 +18,15 @@ export class DiscordSdkReadFailure extends TaggedErrorClass<DiscordSdkReadFailur
     retryable: Schema.Boolean,
   },
 ) {}
+
+/**
+ * Two bounded retries with a short jittered backoff: an immediate retry after a
+ * 10 second timeout only re-enters the same saturated REST queue.
+ */
+const retrySchedule = Schedule.exponential("500 millis").pipe(
+  Schedule.jittered,
+  Schedule.upTo({ times: 2 }),
+);
 
 export const discordSdkRead = <A>(
   operation: string,
@@ -52,5 +61,10 @@ export const discordSdkRead = <A>(
         attributes: { adapter: "discord-sdk", retryCount: currentRetryCount },
       }),
     );
-  }).pipe(Effect.retry({ times: 2, while: (error) => error.retryable }));
+  }).pipe(
+    Effect.retry({
+      schedule: retrySchedule,
+      while: (error) => error.retryable,
+    }),
+  );
 };
