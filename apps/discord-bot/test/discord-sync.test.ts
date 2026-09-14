@@ -8,8 +8,9 @@ import {
   type APITextChannel,
   type APIChannel,
   type APIRole,
+  type GuildBasedChannel,
 } from "discord.js";
-import { Effect } from "effect";
+import { Effect, Fiber } from "effect";
 import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { makeDiscordSync } from "../src/bot/discord-sync.service.js";
@@ -102,8 +103,13 @@ async function fixture(cacheMembers = true) {
   let channels = [channel];
   const restCalls: string[] = [];
   let memberFetchError: Error | undefined;
+  let channelsGate: Promise<void> | undefined;
   spyOn(client.rest, "get").mockImplementation(async (route) => {
     restCalls.push(String(route));
+
+    if (route === `/guilds/${guildId}/channels` && channelsGate) {
+      await channelsGate;
+    }
 
     if (route === `/guilds/${guildId}`) return guild;
 
@@ -193,10 +199,34 @@ async function fixture(cacheMembers = true) {
     failMemberFetch: (error: Error | undefined) => {
       memberFetchError = error;
     },
+    gateChannels: (gate: Promise<void>) => {
+      channelsGate = gate;
+    },
   };
 }
 
 const channelsRoute = `/guilds/${guildId}/channels`;
+
+/**
+ * Applies a gateway CHANNEL_UPDATE the way discord.js does: the cached channel
+ * is cloned, then patched in place, and the clone is what handlers receive as
+ * `oldChannel`.
+ */
+type GatewayChannelPatch = Partial<Omit<APITextChannel, "type">> &
+  Pick<APIChannel, "type">;
+
+const gatewayUpdate = (
+  channel: GuildBasedChannel,
+  data: GatewayChannelPatch,
+) => {
+  // SAFETY: `_update` is discord.js's internal Base method used by the
+  // ChannelUpdate action; it exists on every cached structure.
+  const patchable = channel as GuildBasedChannel & {
+    _update: (data: GatewayChannelPatch) => GuildBasedChannel;
+  };
+
+  return patchable._update(data);
+};
 
 const missingAccessError = () =>
   new DiscordAPIError(
@@ -464,6 +494,59 @@ describe("Discord SDK to RabbitMQ contracts", () => {
       expect.objectContaining({
         channel: expect.objectContaining({ name: "renamed" }),
       }),
+    );
+  });
+
+  test("publishes a permission overwrite change delivered through the gateway update path", async () => {
+    const f = await fixture();
+    const channel = await f.fetchChannel();
+
+    // discord.js clones the cached channel and patches it in place on a
+    // gateway CHANNEL_UPDATE; the handler receives that clone and the patched
+    // channel, so the projection key must see the overwrite change.
+    const withOverwrite = {
+      ...f.channel,
+      permission_overwrites: [{ id: botId, type: 1, allow: "3072", deny: "0" }],
+    };
+
+    const old = gatewayUpdate(channel, withOverwrite);
+
+    await Effect.runPromise(f.sync.handleChannelUpdate(old, channel));
+    expect(f.events.at(-1)?.payload).toEqual(
+      expect.objectContaining({
+        channel: expect.objectContaining({ canView: true, canSend: true }),
+      }),
+    );
+
+    const unchanged = gatewayUpdate(channel, {
+      ...withOverwrite,
+      topic: "new topic",
+    });
+
+    await Effect.runPromise(f.sync.handleChannelUpdate(unchanged, channel));
+    expect(f.events).toHaveLength(1);
+  });
+
+  test("keeps a coalesced refresh alive when the first caller is interrupted", async () => {
+    const f = await fixture();
+    let releaseChannels: (() => void) | undefined;
+
+    const gate = new Promise<void>((resolve) => {
+      releaseChannels = resolve;
+    });
+
+    f.gateChannels(gate);
+    const leader = Effect.runFork(f.sync.getGuildChannels(guildId));
+
+    while (!f.restCalls.includes(channelsRoute)) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    const follower = Effect.runPromise(f.sync.refreshGuildChannels(guildId));
+    await Effect.runPromise(Fiber.interrupt(leader));
+    releaseChannels?.();
+    await expect(follower).resolves.toEqual(
+      expect.objectContaining({ channels: [expect.anything()] }),
     );
   });
 
