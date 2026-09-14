@@ -48,12 +48,14 @@ export const discordSdkRead = <A>(
         }),
     }).pipe(
       Effect.timeout("10 seconds"),
+      // The SDK promise cannot be cancelled, so a timed out request is still
+      // queued in the REST manager; retrying would stack another one on top.
       Effect.mapError((error) =>
         Cause.isTimeoutError(error)
           ? new DiscordSdkReadFailure({
               operation,
               cause: new Error(`${operation} timed out`),
-              retryable: true,
+              retryable: false,
             })
           : error,
       ),

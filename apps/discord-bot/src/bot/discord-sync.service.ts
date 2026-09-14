@@ -421,6 +421,9 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
   /**
    * Concurrent HTTP refreshes of the same guild share one REST round trip.
+   * The load runs in a detached fiber so a caller that disconnects only gives
+   * up its own wait instead of interrupting the load every other caller
+   * shares.
    */
   const coalescedGuildChannelsPayload = (guildId: string) =>
     Effect.gen(function* () {
@@ -435,13 +438,16 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
 
       inFlightRefreshes.set(guildId, deferred);
 
-      return yield* loadGuildChannelsPayload(guildId).pipe(
+      yield* loadGuildChannelsPayload(guildId).pipe(
         Effect.onExit((exit) => {
           inFlightRefreshes.delete(guildId);
 
           return Effect.asVoid(Deferred.done(deferred, exit));
         }),
+        Effect.forkDetach,
       );
+
+      return yield* Deferred.await(deferred);
     });
 
   const publishSyncFailed = (guildId: string, cause: DiscordSyncFailure) =>
