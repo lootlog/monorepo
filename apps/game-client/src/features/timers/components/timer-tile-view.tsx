@@ -32,7 +32,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     id={id}
     color={color}
     customBackgroundColor={customBackgroundColor}
-    className="ll:rounded-none ll:border-0 ll:py-[3px] ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]"
+    className="ll:rounded-none ll:border-0 ll:py-[5px] ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]"
   >
     <span
       className={cn(
