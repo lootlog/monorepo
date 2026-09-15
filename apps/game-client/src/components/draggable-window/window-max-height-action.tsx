@@ -43,7 +43,7 @@ export const WindowMaxHeightAction: FC<WindowMaxHeightActionProps> = ({
           })}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="top">
+      <TooltipContent>
         {isArmed
           ? t("windowAutoHeight.armedTooltip")
           : t("windowAutoHeight.idleTooltip")}

@@ -110,7 +110,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
                     </Avatar>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">
+                <TooltipContent>
                   <p className="ll:font-semibold">{guild.name}</p>
                 </TooltipContent>
               </Tooltip>

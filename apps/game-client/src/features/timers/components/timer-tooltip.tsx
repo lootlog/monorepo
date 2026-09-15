@@ -37,7 +37,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 
   return (
-    <div className="ll:flex ll:min-w-44 ll:flex-col ll:gap-2 ll:py-0.5">
+    <div className="ll:flex ll:flex-col ll:gap-2 ll:py-0.5">
       <div className="ll:text-sm ll:font-semibold ll:leading-4">
         {timer.npc.name} <span>{levelSuffix}</span>
       </div>

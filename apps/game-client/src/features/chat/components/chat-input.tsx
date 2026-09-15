@@ -62,7 +62,12 @@ export function ChatInput(props: ChatInputProps) {
 
   const composeRow = (
     <>
-      <div className="ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible">
+      <div
+        className={cn(
+          "ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible",
+          variant === "borderless" && "ll:self-stretch",
+        )}
+      >
         <Popover open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
           <div
             ref={clearConfirmAnchorRef}

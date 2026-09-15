@@ -47,7 +47,7 @@ export const ConnectionStatus: FC = () => {
           />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom" align="start">
+      <TooltipContent>
         {connectedToServers ? (
           <div className="ll:flex ll:flex-col ll:gap-1">
             <div className="ll:font-semibold">

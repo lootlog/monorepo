@@ -114,7 +114,9 @@ describe("NotificationsSettingsTab", () => {
   });
 
   it("switches a whole column on unless every editable row is already on, skipping rows that are off", async () => {
-    const user = userEvent.setup();
+    // The column header is a tooltip trigger; hovering it would count
+    // cursor-tracking tooltip commits against the form-reset guard above.
+    const user = userEvent.setup({ skipHover: true });
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");
     initial.notifications.HERO.show = true;

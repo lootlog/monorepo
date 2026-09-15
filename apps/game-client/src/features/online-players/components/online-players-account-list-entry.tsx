@@ -267,7 +267,7 @@ export const OnlinePlayersAccountListEntry: FC<
             </span>
           </TooltipTrigger>
         </ContextMenuTrigger>
-        <TooltipContent side="top">
+        <TooltipContent>
           <span className="ll:flex ll:flex-col ll:gap-0.5">
             <span>{memberName}</span>
             {canInviteToParty ? (
