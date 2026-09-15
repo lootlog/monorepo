@@ -11,7 +11,7 @@ const notification: StoredNotification = {
   notificationId: "notif-1",
   discordId: "discord-1",
   guildId: "guild-1",
-  world: "pandora",
+  world: "luvia",
   createdAt: "2026-04-17T10:00:00.000Z",
   message: "Hej",
   servers: ["guild-1"],

@@ -23,7 +23,7 @@ describe("useNotifications", () => {
           notificationId: "notification-1",
           guildId: "guild-1",
           discordId: "other-discord-id",
-          world: "pandora",
+          world: "luvia",
           createdAt: "2026-04-22T10:00:00.000Z",
           message: "test message",
         },

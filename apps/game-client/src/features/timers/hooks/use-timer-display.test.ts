@@ -13,7 +13,7 @@ import { useTimerDisplay } from "./use-timer-display";
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
   guildId: "guild-1",
   timerKey: "timer-1",
-  world: "pandora",
+  world: "luvia",
   npcId: 10,
   minSpawnTime: "2026-04-22T10:00:00.000Z",
   maxSpawnTime: "2026-04-22T10:05:00.000Z",

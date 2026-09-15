@@ -155,8 +155,8 @@ it("retries a failed world request and displays the recovered timer", async () =
 
 it("uses the game world under the NI bag when world selection is disabled", () => {
   const fixture = mountTimers((value) => {
-    setTestRuntimeGame({ interface: "ni", world: "pandora" });
-    value.queryClient.setQueryData(queryKeys.timers("pandora"), [
+    setTestRuntimeGame({ interface: "ni", world: "luvia" });
+    value.queryClient.setQueryData(queryKeys.timers("luvia"), [
       createVisibleTimer(),
     ]);
     useTimersStore.setState((state) => ({
@@ -168,7 +168,7 @@ it("uses the game world under the NI bag when world selection is disabled", () =
   expect(
     fixture.queryClient
       .getQueryCache()
-      .find({ queryKey: queryKeys.timers("pandora") })
+      .find({ queryKey: queryKeys.timers("luvia") })
       ?.getObserversCount(),
   ).toBe(1);
   expect(

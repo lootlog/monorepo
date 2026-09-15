@@ -124,7 +124,7 @@ const incrementalBattleEvents = [
 const battleContext = {
   accountId: "account-1",
   characterId: "220",
-  world: "pandora",
+  world: "luvia",
 };
 
 const authHeaders = {

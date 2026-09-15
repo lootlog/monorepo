@@ -60,7 +60,7 @@ describe("game account preferences helpers", () => {
           id: "rule-1",
           minLevel: 100,
           maxLevel: 200,
-          world: "  Pandora ",
+          world: "  luvia ",
           guildIds: ["guild-1"],
         },
         {
@@ -72,7 +72,7 @@ describe("game account preferences helpers", () => {
         },
       ],
       175,
-      "pandora",
+      "luvia",
     );
 
     expect(guildIds).toEqual(["guild-1"]);

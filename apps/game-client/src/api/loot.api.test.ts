@@ -59,7 +59,7 @@ describe("createLoot", () => {
         },
       ],
       source: "FIGHT",
-      world: "pandora",
+      world: "luvia",
     };
 
     const response = {
@@ -90,7 +90,7 @@ describe("createLoot", () => {
       accountId: "1",
       characterId: "2",
       location: "Map",
-      world: "pandora",
+      world: "luvia",
       source: "FIGHT",
       loots: [],
       npcs: [],

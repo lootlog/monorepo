@@ -17,7 +17,7 @@ it("does not refetch fresh timer data on focus or remount", async () => {
     </QueryClientProvider>
   );
 
-  const first = renderHook(() => useTimers({ world: "pandora" }), { wrapper });
+  const first = renderHook(() => useTimers({ world: "luvia" }), { wrapper });
   await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
   expect(fixture.requests).toHaveLength(1);
   await act(async () => {
@@ -26,7 +26,7 @@ it("does not refetch fresh timer data on focus or remount", async () => {
   });
   expect(fixture.requests).toHaveLength(1);
   first.unmount();
-  renderHook(() => useTimers({ world: "pandora" }), { wrapper });
+  renderHook(() => useTimers({ world: "luvia" }), { wrapper });
   await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
   expect(fixture.requests).toHaveLength(1);
 });

@@ -20,11 +20,11 @@ beforeEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
   setTestRuntimeGame({
     hero: { accountId: "200", characterId: "101" },
-    world: "pandora",
+    world: "luvia",
   });
   useSettingsStore.setState({
     guildIdByCharId: { "101": "guild-1" },
-    worldByGuildId: { "guild-1": "pandora" },
+    worldByGuildId: { "guild-1": "luvia" },
   });
 });
 
@@ -39,7 +39,7 @@ const mountContent = (
   const fixture = createTimerHttpFixture((request) =>
     Response.json(
       new URL(request.url).pathname.endsWith("/worlds")
-        ? ["pandora", "gefion"]
+        ? ["luvia", "gefion"]
         : [],
     ),
   );
@@ -53,7 +53,7 @@ const mountContent = (
   );
   fixture.queryClient.setQueryData(
     getGuildsControllerGetWorldsByGuildIdQueryKey({ guildId: "guild-1" }),
-    ["pandora", "gefion"],
+    ["luvia", "gefion"],
   );
   fixture.queryClient.setQueryData(
     getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
@@ -79,7 +79,7 @@ const mountContent = (
           timerFiltersEnabled
           isUnderBag={false}
           minColumnWidth={180}
-          world="pandora"
+          world="luvia"
           onAddTimer={onAddTimer}
           onResetFilters={onResetFilters}
           onRetry={onRetry}
@@ -147,7 +147,7 @@ it("renders real controls and timer tiles while retaining scroll and window drag
 
   const { onAddTimer, onPointerDown } = mountContent({ sortedTimers: [timer] });
   expect(screen.getByPlaceholderText("Szukaj...")).toBeVisible();
-  expect(screen.getByRole("combobox")).toHaveTextContent(/pandora/i);
+  expect(screen.getByRole("combobox")).toHaveTextContent(/luvia/i);
   const label = screen.getByText(/\[H\] Tanroth/);
   expect(label).toBeVisible();
   const scrollContainer = screen.getByTestId("timers-scroll-container");

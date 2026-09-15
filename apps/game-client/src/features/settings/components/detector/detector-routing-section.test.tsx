@@ -53,7 +53,7 @@ const firstRule: DetectorRoutingRule = {
   name: "Bossy hero",
   minLevel: 20,
   maxLevel: 80,
-  world: "Pandora",
+  world: "luvia",
   guildIds: ["guild-1", "guild-2", "guild-3", "guild-4", "guild-5"],
 };
 

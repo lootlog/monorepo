@@ -39,7 +39,7 @@ describe("api.service logging", () => {
     };
 
     const payload = {
-      world: "pandora",
+      world: "luvia",
       source: "FIGHT",
       location: "Karka-han",
       npcs: [],
@@ -158,7 +158,7 @@ describe("api.service logging", () => {
     await expect(
       createLoot(
         {
-          world: "pandora",
+          world: "luvia",
           source: "DIALOG",
           location: "Karka-han",
           npcs: [],
@@ -222,7 +222,7 @@ describe("api.service logging", () => {
     };
 
     const payload = {
-      world: "pandora",
+      world: "luvia",
       source: "FIGHT",
       location: "Karka-han",
       npcs: [],
@@ -323,7 +323,7 @@ describe("api.service logging", () => {
     );
 
     const response = await createNotification({
-      world: "pandora",
+      world: "luvia",
       guildIds: ["guild-1"],
       message: "Ping",
     });

@@ -24,7 +24,7 @@ export const SANDBOX_CHARACTERS: readonly MargonemCharlistEntry[] = [
   {
     id: 700000,
     nick: "Kapitan Rzepa",
-    world: "pandora",
+    world: "luvia",
     lvl: 247,
     prof: "w",
     gender: "m",
@@ -36,7 +36,7 @@ export const SANDBOX_CHARACTERS: readonly MargonemCharlistEntry[] = [
   {
     id: 700001,
     nick: "Mglisty Borsuk",
-    world: "pandora",
+    world: "luvia",
     lvl: 183,
     prof: "m",
     gender: "m",
@@ -48,7 +48,7 @@ export const SANDBOX_CHARACTERS: readonly MargonemCharlistEntry[] = [
   {
     id: 700002,
     nick: "Cicha Jarzebina",
-    world: "pandora",
+    world: "luvia",
     lvl: 96,
     prof: "t",
     gender: "m",
@@ -60,7 +60,7 @@ export const SANDBOX_CHARACTERS: readonly MargonemCharlistEntry[] = [
   {
     id: 700003,
     nick: "Zelazny Kaczor",
-    world: "pandora",
+    world: "luvia",
     lvl: 58,
     prof: "p",
     gender: "m",
@@ -72,7 +72,7 @@ export const SANDBOX_CHARACTERS: readonly MargonemCharlistEntry[] = [
   {
     id: 700004,
     nick: "Opat Kminek",
-    world: "pandora",
+    world: "luvia",
     lvl: 31,
     prof: "b",
     gender: "m",

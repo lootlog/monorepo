@@ -37,7 +37,7 @@ const notification = (id = 500): StoredNotification => ({
   listKey: `notification-${id}`,
   receivedAtMs: Date.now(),
   servers: ["guild-1"],
-  world: "pandora",
+  world: "luvia",
   guildId: "guild-1",
   discordId: "user-1",
   createdAt: new Date().toISOString(),
@@ -52,7 +52,7 @@ const configKey =
 
 const createFixture = () => {
   setTestRuntimeGame({
-    world: "pandora",
+    world: "luvia",
     hero: { accountId: "202", characterId: "101" },
     map: { id: 3327, name: "Urwisko", visibility: 30 },
   });
@@ -215,7 +215,7 @@ it("sends native respawn details and actor identity to the timer endpoint", asyn
     respBaseSeconds: 30,
     characterId: "101",
     accountId: "202",
-    world: "pandora",
+    world: "luvia",
     npc: {
       icon: "npc.gif",
       id: 500,

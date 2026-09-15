@@ -74,17 +74,17 @@ it("shows daily source worlds on keyboard focus without restoring the details pa
         {
           date: "2026-09-01",
           value: 3600,
-          worlds: ["luvia", "pandora"],
+          worlds: ["luvia", "zorza"],
           worldsComplete: true,
         },
       ]}
       formatValue={() => "1 godz. 0 min"}
     />,
   );
-  const day = screen.getByRole("button", { name: /Światy: Luvia, Pandora/ });
+  const day = screen.getByRole("button", { name: /Światy: Luvia, Zorza/ });
   day.focus();
   expect((await screen.findByRole("tooltip")).textContent).toContain(
-    "Światy: Luvia, Pandora",
+    "Światy: Luvia, Zorza",
   );
   expect(document.querySelector("p[aria-live=polite]")).toBeNull();
 });

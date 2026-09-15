@@ -9,7 +9,7 @@ import type { GuildMember } from "@/types/guild-member";
 export const createTimerFixture = (overrides: Partial<Timer> = {}): Timer => ({
   guildId: "guild-1",
   timerKey: "timer-1",
-  world: "pandora",
+  world: "luvia",
   npcId: 10,
   minSpawnTime: "2026-04-22T10:00:00.000Z",
   maxSpawnTime: "2026-04-22T10:05:00.000Z",
@@ -46,7 +46,7 @@ export const createTimerHistoryFixture = (
   id: 1,
   guildId: "guild-1",
   guildName: "Lootlog",
-  world: "pandora",
+  world: "luvia",
   timerKey: "123:tanroth",
   npcId: 123,
   npc: {
