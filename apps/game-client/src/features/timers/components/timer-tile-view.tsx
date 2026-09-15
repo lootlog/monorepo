@@ -45,7 +45,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     <span
       id={id}
       className={cn(
-        "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)] ll:transition-colors ll:motion-reduce:transition-none",
+        "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:transition-colors ll:motion-reduce:transition-none",
         "ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
         hasPassedRedThreshold ? "ll:text-gray-400" : "ll:text-white",
         {
