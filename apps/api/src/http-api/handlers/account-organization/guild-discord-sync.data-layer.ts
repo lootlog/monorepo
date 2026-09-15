@@ -212,10 +212,17 @@ const discordSyncErrorMessage = (error: unknown) =>
       ? error.message
       : "Unknown Discord sync error";
 
+/**
+ * Records a failed synchronization. `FAILED` is terminal until a manual
+ * refresh; a bot-reported `STALE` keeps the projection eligible for the
+ * automatic refresh in `getSelectableGuildChannels`, and `NOT_FOUND` records
+ * that the bot lost access to the guild.
+ */
 const recordFailure = (
   database: typeof ApiDatabase.Service,
   guildId: string,
   error: unknown,
+  status: DiscordGuildSyncState["status"] = DiscordGuildSyncStatus.FAILED,
 ) =>
   Effect.gen(function* () {
     const guild = yield* database
@@ -230,7 +237,7 @@ const recordFailure = (
       .insert(discordGuildSyncStateTable)
       .values({
         guildId,
-        status: DiscordGuildSyncStatus.FAILED,
+        status,
         hasRequiredPermissions: false,
         requiredPermissions: [],
         grantedPermissions: [],
@@ -246,7 +253,7 @@ const recordFailure = (
       .onConflictDoUpdate({
         target: discordGuildSyncStateTable.guildId,
         set: {
-          status: DiscordGuildSyncStatus.FAILED,
+          status,
           lastAttemptAt: now,
           lastError: discordSyncErrorMessage(error),
           updatedAt: now,
@@ -557,6 +564,6 @@ export const makeGuildDiscordSyncData = (
       readonly status: DiscordGuildSyncState["status"];
       readonly lastAttemptAt: string;
       readonly lastError: string | null;
-    }) => recordFailure(database, event.guildId, event.lastError),
+    }) => recordFailure(database, event.guildId, event.lastError, event.status),
   };
 };
