@@ -68,8 +68,8 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      {/* Under the bag only the strips keep the game's inset; the list below
-          bleeds to the column edges so the tile accents sit on the border. */}
+      {/* Under the bag the strips keep the game's inset; the list below keeps
+          only the right inset so the tile accents sit on the left border. */}
       <div
         className={cn(
           "ll:flex ll:flex-col",
@@ -104,7 +104,12 @@ export const TimersContent: FC<TimersContentProps> = ({
         />
       </div>
 
-      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
+      <div
+        className={cn(
+          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full",
+          isUnderBag && "ll:pr-1.5",
+        )}
+      >
         <AsyncContent
           error={error}
           errorLabel={t("states.loadError")}
