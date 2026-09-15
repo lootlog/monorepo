@@ -99,9 +99,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
                 )}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="ll:text-xs">
-              {color.name}
-            </TooltipContent>
+            <TooltipContent side="top">{color.name}</TooltipContent>
           </Tooltip>
         ))}
       </div>

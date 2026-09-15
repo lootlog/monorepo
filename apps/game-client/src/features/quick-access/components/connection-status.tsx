@@ -53,7 +53,7 @@ export const ConnectionStatus: FC = () => {
             <div className="ll:font-semibold">
               {t("connection.connectedToServers")}
             </div>
-            <div className="ll:flex ll:flex-col ll:gap-0.5 ll:text-gray-300">
+            <div className="ll:flex ll:flex-col ll:gap-0.5 ll:text-muted-foreground">
               {joinedGuilds.map((g) => (
                 <div key={g}>
                   {guilds?.find((guild) => guild.id === g)?.name || g}

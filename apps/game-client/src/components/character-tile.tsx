@@ -38,7 +38,7 @@ export const CharacterTile: FC<CharacterTileProps> = ({
           ) : null}
         </CharacterSprite>
       </TooltipTrigger>
-      <TooltipContent side="top" className="ll:z-9999">
+      <TooltipContent side="top">
         <span className="ll:font-semibold">
           {character.nick} ({character.lvl}
           {character.prof})
