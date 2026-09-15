@@ -5,6 +5,7 @@ import {
   toolbarStripBleedClassName,
   toolbarStripClassName,
   toolbarStripDividerClassName,
+  toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
 import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/api/npcs.api";
@@ -103,7 +104,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
         "ll:flex ll:flex-col",
       )}
     >
-      <div className="ll:flex ll:h-7 ll:min-w-0 ll:items-stretch">
+      <div className={toolbarStripRowClassName}>
         <SearchInput
           size="sm"
           variant="borderless"

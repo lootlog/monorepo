@@ -170,6 +170,30 @@ describe("OnlinePlayersList", () => {
     ).toHaveClass("ll:animate-spin");
   });
 
+  it("explains a missing gateway session instead of loading forever, then loads once joined", async () => {
+    vi.useFakeTimers();
+
+    const offlineView = renderUi(
+      <OnlinePlayersList viewMode="accounts" filtersVisible />,
+      { wrapper: harness.wrapper },
+    );
+
+    act(() => vi.advanceTimersByTime(1000));
+    expect(
+      screen.getByText(
+        "Brak połączenia z serwerem - nie można pobrać graczy online",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Spróbuj ponownie" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("status", { busy: true })).toBeNull();
+    vi.useRealTimers();
+    offlineView.unmount();
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+    expect(screen.getByText("Hero (123w)")).toBeVisible();
+  });
+
   it("allows retrying an initial presence acknowledgement timeout", async () => {
     vi.useFakeTimers();
     harness.fetchPresence.mockReturnValue(

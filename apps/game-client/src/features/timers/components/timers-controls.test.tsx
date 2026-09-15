@@ -118,14 +118,18 @@ describe("timers controls", () => {
     const view = render(actions(false));
     await user.tab();
     expect(
-      screen.getByRole("button", { name: t("toolbar.hideFilters") }),
+      screen.getByRole("button", { name: t("toolbar.options") }),
     ).toHaveFocus();
     await user.keyboard("{Enter}");
+
+    const filtersOption = await screen.findByRole("button", {
+      name: t("toolbar.filters"),
+    });
+
+    expect(filtersOption).toHaveAttribute("aria-pressed", "true");
+    await user.click(filtersOption);
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.options") }),
-    );
-    await user.click(
-      await screen.findByRole("button", { name: t("toolbar.colorFilters") }),
+      screen.getByRole("button", { name: t("toolbar.colorFilters") }),
     );
     await user.click(
       screen.getByRole("button", { name: t("toolbar.sortDesc") }),

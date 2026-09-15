@@ -242,6 +242,12 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   const selectedGuildIdSet = new Set(selectedGuildIds);
   const isStrip = variant === "strip";
 
+  // Inside a strip the status fills the bar and borrows its rules instead of
+  // drawing its own pill.
+  const statusLayout = isStrip ? "strip" : "inline";
+
+  const statusClassName = isStrip ? "ll:mt-0 ll:border-y-0" : undefined;
+
   if (status === "single") {
     return null;
   }
@@ -334,8 +340,10 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     content = (
       <AsyncStatusIndicator
         active
+        className={statusClassName}
         delay
         kind="loading"
+        layout={statusLayout}
         label={t("async.loadingGuilds")}
       />
     );
@@ -343,7 +351,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     content = (
       <AsyncStatusIndicator
         active
+        className={statusClassName}
         kind="error"
+        layout={statusLayout}
         label={t("async.guildsError")}
         onRetry={() => {
           void Promise.all([refetch(), refetchPreferences()]);
@@ -378,7 +388,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
         <div
           className={cn(
             "ll:flex ll:w-max ll:min-w-full ll:gap-1",
-            isStrip ? "ll:-ml-px ll:gap-0" : "ll:mt-1",
+            isStrip ? "ll:-ml-px ll:h-7 ll:items-center ll:gap-0" : "ll:mt-1",
           )}
         >
           {content}

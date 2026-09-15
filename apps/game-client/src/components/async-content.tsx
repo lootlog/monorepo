@@ -1,4 +1,4 @@
-import { AlertCircle, RotateCcw } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { Button } from "@/components/ui/button";
@@ -56,11 +56,10 @@ export const AsyncContent: FC<AsyncContentProps> = ({
           <Button
             variant="secondary"
             size="xs"
-            className="ll:h-6 ll:gap-1.5 ll:px-2"
+            className="ll:h-6 ll:px-2"
             onClick={onRetry}
             type="button"
           >
-            <RotateCcw aria-hidden className="ll:size-3" />
             {retryLabel}
           </Button>
         ) : null}

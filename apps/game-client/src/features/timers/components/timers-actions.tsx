@@ -2,7 +2,6 @@ import {
   ArrowDownNarrowWide,
   ArrowUpNarrowWide,
   Check,
-  Filter,
   SlidersHorizontal,
 } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
@@ -37,8 +36,8 @@ type OptionItem = {
 };
 
 /**
- * Filters get a dedicated toggle; the rarer options share one menu so the
- * title bar keeps room for the title at the minimum window width.
+ * Every option, filters included, lives in one menu so the title bar keeps
+ * room for the title at the minimum window width.
  */
 export const TimersActions: FC<TimersActionsProps> = ({
   timerFiltersEnabled = false,
@@ -55,6 +54,12 @@ export const TimersActions: FC<TimersActionsProps> = ({
   const sortDesc = timersSortOrder === "desc";
 
   const options: OptionItem[] = [
+    {
+      key: "filters",
+      label: t("toolbar.filters"),
+      checked: timerFiltersEnabled,
+      onSelect: toggleTimerFiltersEnabled,
+    },
     {
       key: "color-filters",
       label: t("toolbar.colorFilters"),
@@ -81,15 +86,6 @@ export const TimersActions: FC<TimersActionsProps> = ({
 
   return (
     <>
-      <WindowActionButton
-        label={t(
-          timerFiltersEnabled ? "toolbar.hideFilters" : "toolbar.showFilters",
-        )}
-        active={timerFiltersEnabled}
-        onClick={toggleTimerFiltersEnabled}
-      >
-        <Filter size={ICON_SIZE} aria-hidden="true" />
-      </WindowActionButton>
       <Popover open={optionsOpen} onOpenChange={setOptionsOpen}>
         <PopoverTrigger asChild>
           <WindowActionButton
