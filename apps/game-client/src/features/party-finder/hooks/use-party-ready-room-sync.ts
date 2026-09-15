@@ -24,19 +24,14 @@ export function usePartyReadyRoomSync(): void {
     (state) => state.setReadyRoomsSynchronized,
   );
 
-  // Cleanup cancels the latest timer; disposed and aborted guards prevent pending requests from scheduling another.
-  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     setReadyRoomsSynchronized(false);
 
     if (!joined) return;
     let controller: AbortController | undefined;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let disposed = false;
 
     const synchronize = () => {
       controller?.abort();
-      clearTimeout(timer);
       const request = new AbortController();
       controller = request;
 
@@ -46,7 +41,7 @@ export function usePartyReadyRoomSync(): void {
 
       void partyReadyRoomControllerList({ signal: request.signal })
         .then((projections) => {
-          if (disposed || request.signal.aborted) return;
+          if (request.signal.aborted) return;
           applyAuthoritativeSync(
             projections.flatMap((projection) =>
               projection.schemaVersion === 3
@@ -57,13 +52,9 @@ export function usePartyReadyRoomSync(): void {
           );
         })
         .catch((cause: unknown) => {
-          if (disposed || request.signal.aborted) return;
+          if (request.signal.aborted) return;
           setReadyRoomsSynchronized(false);
           console.warn("Failed to synchronize party Ready Rooms", cause);
-        })
-        .finally(() => {
-          if (!disposed && !request.signal.aborted)
-            timer = setTimeout(synchronize, 30_000);
         });
     };
 
@@ -76,9 +67,7 @@ export function usePartyReadyRoomSync(): void {
     socket?.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
-      disposed = true;
       controller?.abort();
-      clearTimeout(timer);
       socket?.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
   }, [

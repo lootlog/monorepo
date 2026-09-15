@@ -83,27 +83,40 @@ describe("usePartyReadyRoomSync", () => {
       });
     });
   });
-  it("recovers a missed room and removes revoked access without reconnecting", async () => {
+  it("synchronizes once per gateway join instead of polling", async () => {
     vi.useFakeTimers();
     listReadyRooms
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([createProjection(1)])
       .mockResolvedValueOnce([]);
     const { unmount } = renderHook(() => usePartyReadyRoomSync());
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(usePartyFinderStore.getState().projections).toEqual({});
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(30_000);
-    });
     expect(usePartyFinderStore.getState().projections["room-1"]).toBeDefined();
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.advanceTimersByTimeAsync(10 * 60_000);
     });
-    expect(usePartyFinderStore.getState().projections).toEqual({});
+    expect(listReadyRooms).toHaveBeenCalledTimes(1);
+    expect(usePartyFinderStore.getState().projections["room-1"]).toBeDefined();
+    act(() => {
+      useGlobalStore
+        .getState()
+        .setSocketState({ connected: false, joined: false });
+    });
+    expect(usePartyFinderStore.getState().readyRoomsSynchronized).toBe(false);
+    act(() => {
+      useGlobalStore
+        .getState()
+        .setSocketState({ connected: true, joined: true });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(listReadyRooms).toHaveBeenCalledTimes(2);
+    expect(usePartyFinderStore.getState()).toMatchObject({
+      readyRoomsSynchronized: true,
+      projections: {},
+    });
     unmount();
-    await vi.advanceTimersByTimeAsync(30_000);
-    expect(listReadyRooms).toHaveBeenCalledTimes(3);
   });
 });
