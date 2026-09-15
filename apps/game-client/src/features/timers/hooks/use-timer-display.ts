@@ -2,6 +2,7 @@ import { getNpcTypeNames } from "@/constants/margonem";
 import type { Timer } from "@/api/timers.api";
 import { useTimersStore } from "@/store/timers.store";
 import { getTimerColorConfig } from "../utils/timer-helpers";
+import { resolveTimerColorPaint } from "../constants/timer-colors";
 import { useShallow } from "zustand/react/shallow";
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
@@ -51,6 +52,12 @@ export const useTimerDisplay = (timer: Timer) => {
     }),
   );
 
+  const paint = resolveTimerColorPaint(
+    selectedColor,
+    customColor,
+    overriddenColor,
+  );
+
   const isPending = timer.isPending ?? false;
   const resetIndicator = timer.wasReset ? "[R] " : "";
 
@@ -64,8 +71,7 @@ export const useTimerDisplay = (timer: Timer) => {
   return {
     isPending,
     selectedColor,
-    customColor,
-    overriddenColor,
+    paint,
     resetIndicator,
     shortname,
     npcDetails,

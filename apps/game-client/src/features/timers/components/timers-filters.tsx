@@ -135,7 +135,9 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);
-            const overridden = overriddenDefaultColors[colorId];
+
+            const swatchColor =
+              overriddenDefaultColors[colorId]?.borderColor ?? color.accent;
 
             return (
               <Tooltip key={colorId}>
@@ -149,20 +151,14 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                     onClick={() => handleToggleColor(colorId)}
                     className={cn(
                       "ll:p-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:size-4 ll:rounded-md ll:border ll-custom-cursor-pointer ll:transition-colors ll:motion-reduce:transition-none",
-                      !overridden && color?.bgNoOpacity,
-                      !overridden && color?.border,
                       {
                         "ll:ring-2 ll:ring-white": isSelected,
                       },
                     )}
-                    style={
-                      overridden
-                        ? {
-                            backgroundColor: overridden.backgroundColor,
-                            borderColor: overridden.borderColor,
-                          }
-                        : undefined
-                    }
+                    style={{
+                      backgroundColor: swatchColor,
+                      borderColor: swatchColor,
+                    }}
                   />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -190,7 +186,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                       },
                     )}
                     style={{
-                      backgroundColor: color.backgroundColor,
+                      backgroundColor: color.borderColor,
                       borderColor: color.borderColor,
                     }}
                   />
