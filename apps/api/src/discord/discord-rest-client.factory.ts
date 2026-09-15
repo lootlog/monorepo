@@ -6,7 +6,7 @@ import {
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
 import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
-import { AuthService } from "#src/auth/auth.service";
+import type { AuthService } from "#src/auth/auth.service";
 import { AccountNotFoundError } from "#src/auth/errors/account-not-found.error";
 import { AuthBadRequestError } from "#src/auth/errors/auth-bad-request.error";
 import { AuthServiceUnavailableError } from "#src/auth/errors/auth-service-unavailable.error";
@@ -25,7 +25,7 @@ export class DiscordRestClientFactory {
   private readonly restClients = new Map<string, CachedDiscordRestClient>();
 
   constructor(
-    private readonly authService: AuthService,
+    private readonly authService: Pick<AuthService, "getIdpToken">,
     private readonly runPromise = Effect.runPromise,
   ) {}
 
@@ -107,12 +107,22 @@ export class DiscordRestClientFactory {
     }
   }
 
+  /**
+   * A REST instance registers two `setInterval` sweepers in its constructor
+   * and only `clearHashSweeper`/`clearHandlerSweeper` remove them. The timers
+   * keep every instance, its route caches and its bearer token reachable for
+   * the process lifetime, while this factory creates one instance per user per
+   * cache window. The sweepers are disabled: these clients live for
+   * {@link restClientCacheTtlMs} and are pruned, so nothing needs sweeping.
+   */
   private createRestClient(accessToken: string): REST {
     return new REST({
       version: "10",
       authPrefix: "Bearer",
       timeout: this.restTimeout,
       rejectOnRateLimit: ["/users"],
+      hashSweepInterval: 0,
+      handlerSweepInterval: 0,
     }).setToken(accessToken);
   }
 

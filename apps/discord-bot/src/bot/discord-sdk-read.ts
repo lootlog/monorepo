@@ -1,14 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Cause, Effect, Schema } from "effect";
-import { DiscordAPIError } from "discord.js";
-
-const nonRetryableErrorCodes = new Set([
-  10_003, 10_004, 10_013, 50_001, 50_013,
-]);
-
-const isRetryable = (cause: unknown) =>
-  !(cause instanceof DiscordAPIError) ||
-  !nonRetryableErrorCodes.has(Number(cause.code));
+import { Cause, Effect, Schedule, Schema } from "effect";
+import { isPermanentDiscordError } from "./non-retryable-discord-error-codes.js";
 
 export class DiscordSdkReadFailure extends TaggedErrorClass<DiscordSdkReadFailure>()(
   "DiscordSdkReadFailure",
@@ -18,6 +10,15 @@ export class DiscordSdkReadFailure extends TaggedErrorClass<DiscordSdkReadFailur
     retryable: Schema.Boolean,
   },
 ) {}
+
+/**
+ * Two bounded retries with a short jittered backoff: an immediate retry after a
+ * 10 second timeout only re-enters the same saturated REST queue.
+ */
+const retrySchedule = Schedule.exponential("500 millis").pipe(
+  Schedule.jittered,
+  Schedule.upTo({ times: 2 }),
+);
 
 export const discordSdkRead = <A>(
   operation: string,
@@ -35,16 +36,18 @@ export const discordSdkRead = <A>(
         new DiscordSdkReadFailure({
           operation,
           cause,
-          retryable: isRetryable(cause),
+          retryable: !isPermanentDiscordError(cause),
         }),
     }).pipe(
       Effect.timeout("10 seconds"),
+      // The SDK promise cannot be cancelled, so a timed out request is still
+      // queued in the REST manager; retrying would stack another one on top.
       Effect.mapError((error) =>
         Cause.isTimeoutError(error)
           ? new DiscordSdkReadFailure({
               operation,
               cause: new Error(`${operation} timed out`),
-              retryable: true,
+              retryable: false,
             })
           : error,
       ),
@@ -52,5 +55,10 @@ export const discordSdkRead = <A>(
         attributes: { adapter: "discord-sdk", retryCount: currentRetryCount },
       }),
     );
-  }).pipe(Effect.retry({ times: 2, while: (error) => error.retryable }));
+  }).pipe(
+    Effect.retry({
+      schedule: retrySchedule,
+      while: (error) => error.retryable,
+    }),
+  );
 };
