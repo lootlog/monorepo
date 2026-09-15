@@ -68,7 +68,14 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
+      {/* Under the bag only the strips keep the game's inset; the list below
+          bleeds to the column edges so the tile accents sit on the border. */}
+      <div
+        className={cn(
+          "ll:flex ll:flex-col",
+          isUnderBag ? "ll:pl-4 ll:pr-1.5" : "ll:px-1",
+        )}
+      >
         {!compactView && !isGrouping && (
           <div
             className={cn(toolbarStripBleedClassName, toolbarStripClassName)}
