@@ -1,11 +1,12 @@
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  QuickAccessButton,
-  type QuickAccessButtonProps,
-} from "@/features/quick-access/components/quick-access-button";
-import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { toolbarStripDividerClassName } from "@/components/ui/toolbar-strip";
 import { ConnectionStatus } from "@/features/quick-access/components/connection-status";
+import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import {
+  QuickAccessWindowButton,
+  type QuickAccessWindowButtonProps,
+} from "@/features/quick-access/components/quick-access-window-button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   MessagesSquare,
@@ -17,41 +18,54 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+const ICON_SIZE = 16;
+
+/**
+ * Lootlog's "start bar": one tile per window, lit while that window is open.
+ * Players tuck it under Margonem's top bar, so the default height stays at
+ * one row of tiles and only the width grows with the tile count.
+ */
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const open = useWindowsStore((state) => state["quick-access"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
-  const buttons: QuickAccessButtonProps[] = [
+  const buttons: QuickAccessWindowButtonProps[] = [
     {
-      id: "create-party-gathering",
-      title: t("buttons.partyFinder"),
-      icon: <Swords size="16" />,
+      windowId: "create-party-gathering",
+      label: t("buttons.partyFinder"),
+      icon: <Swords size={ICON_SIZE} aria-hidden="true" />,
+      hotkeyAction: "create-party-gathering",
     },
     {
-      id: "timers",
-      title: t("buttons.timers"),
-      icon: <Timer size="16" />,
+      windowId: "timers",
+      label: t("buttons.timers"),
+      icon: <Timer size={ICON_SIZE} aria-hidden="true" />,
+      hotkeyAction: "toggle-timers",
     },
     {
-      id: "online-players",
-      title: t("buttons.onlinePlayers"),
-      icon: <Users size="16" />,
+      windowId: "online-players",
+      label: t("buttons.onlinePlayers"),
+      icon: <Users size={ICON_SIZE} aria-hidden="true" />,
+      hotkeyAction: "toggle-online-players",
     },
     {
-      id: "chat",
-      title: t("buttons.chat"),
-      icon: <MessagesSquare size="16" />,
+      windowId: "chat",
+      label: t("buttons.chat"),
+      icon: <MessagesSquare size={ICON_SIZE} aria-hidden="true" />,
+      hotkeyAction: "toggle-chat",
     },
     {
-      id: "command",
-      title: t("buttons.command"),
-      icon: <Terminal size="16" />,
+      windowId: "command",
+      label: t("buttons.command"),
+      icon: <Terminal size={ICON_SIZE} aria-hidden="true" />,
+      hotkeyAction: "toggle-command",
     },
     {
-      id: "settings",
-      title: t("buttons.settings"),
-      icon: <Settings size="16" />,
+      windowId: "settings",
+      label: t("buttons.settings"),
+      icon: <Settings size={ICON_SIZE} aria-hidden="true" />,
+      hotkeyAction: "toggle-settings",
     },
   ];
 
@@ -64,25 +78,22 @@ export const QuickAccess = () => {
       minWidth={250}
       onClose={() => setOpen("quick-access", false)}
       closable={false}
+      actions=<ConnectionStatus />
     >
       <ScrollArea
         className="ll:h-full ll:w-full"
         data-ll-quick-access-horizontal-scroll=""
         orientation="horizontal"
       >
-        <div className="ll:flex ll:w-max ll:gap-1 ll:px-1 ll:py-1">
+        <div className="ll:flex ll:h-full ll:w-max ll:min-w-full ll:items-center ll:gap-0.5 ll:px-0.5">
           {buttons.map((button) => (
-            <QuickAccessButton
-              key={button.id}
-              id={button.id}
-              title={button.title}
-              icon={button.icon}
-              href={button.href}
-            />
+            <QuickAccessWindowButton key={button.windowId} {...button} />
           ))}
-
+          <div
+            aria-hidden="true"
+            className={`${toolbarStripDividerClassName} ll:mx-1 ll:h-4`}
+          />
           <GuildListPopover />
-          <ConnectionStatus />
         </div>
       </ScrollArea>
     </DraggableWindow>

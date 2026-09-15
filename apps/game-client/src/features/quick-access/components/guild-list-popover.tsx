@@ -7,11 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { QuickAccessButton } from "@/features/quick-access/components/quick-access-button";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
@@ -38,26 +34,18 @@ export const GuildListPopover = () => {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              variant="secondary"
-              size="xs"
-              className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
-            >
-              <SquareArrowOutUpRight size="16" />
-            </Button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <span>{t("guildPopover.lootlogPage")}</span>
-        </TooltipContent>
-      </Tooltip>
+      <PopoverTrigger asChild>
+        <QuickAccessButton
+          label={t("guildPopover.lootlogPage")}
+          icon=<SquareArrowOutUpRight size={16} aria-hidden="true" />
+          active={open}
+        />
+      </PopoverTrigger>
 
       <PopoverContent
         className="ll-action-menu ll:w-48 ll:p-0 ll:overflow-hidden"
         align="start"
+        side="bottom"
       >
         {isLoading ? (
           <div className="ll:flex ll:items-center ll:justify-center ll:py-3">
