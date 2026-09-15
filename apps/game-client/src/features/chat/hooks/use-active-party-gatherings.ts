@@ -28,7 +28,6 @@ export function useActivePartyGatherings() {
       !!session?.user.id &&
       !!world &&
       areVisibleGuildsResolved,
-    refetchInterval: 30_000,
     staleTime: 0,
   });
 
