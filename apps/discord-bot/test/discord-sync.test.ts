@@ -8,8 +8,9 @@ import {
   type APITextChannel,
   type APIChannel,
   type APIRole,
+  type GuildBasedChannel,
 } from "discord.js";
-import { Effect } from "effect";
+import { Effect, Fiber } from "effect";
 import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { makeDiscordSync } from "../src/bot/discord-sync.service.js";
@@ -100,7 +101,16 @@ async function fixture(cacheMembers = true) {
   };
 
   let channels = [channel];
+  const restCalls: string[] = [];
+  let memberFetchError: Error | undefined;
+  let channelsGate: Promise<void> | undefined;
   spyOn(client.rest, "get").mockImplementation(async (route) => {
+    restCalls.push(String(route));
+
+    if (route === `/guilds/${guildId}/channels` && channelsGate) {
+      await channelsGate;
+    }
+
     if (route === `/guilds/${guildId}`) return guild;
 
     if (route === `/guilds/${guildId}/roles/${roleId}`) return role;
@@ -109,7 +119,9 @@ async function fixture(cacheMembers = true) {
 
     if (route === `/guilds/${guildId}/channels`) return channels;
 
-    if (route === `/guilds/${guildId}/members/${botId}`)
+    if (route === `/guilds/${guildId}/members/${botId}`) {
+      if (memberFetchError) throw memberFetchError;
+
       return {
         user,
         roles: [],
@@ -118,6 +130,7 @@ async function fixture(cacheMembers = true) {
         mute: false,
         flags: 0,
       };
+    }
 
     if (route === `/users/${botId}`) return user;
     throw new Error(`Unexpected Discord REST route: ${route}`);
@@ -182,8 +195,48 @@ async function fixture(cacheMembers = true) {
     removeChannels: () => {
       channels = [];
     },
+    restCalls,
+    failMemberFetch: (error: Error | undefined) => {
+      memberFetchError = error;
+    },
+    gateChannels: (gate: Promise<void>) => {
+      channelsGate = gate;
+    },
   };
 }
+
+const channelsRoute = `/guilds/${guildId}/channels`;
+
+/**
+ * Applies a gateway CHANNEL_UPDATE the way discord.js does: the cached channel
+ * is cloned, then patched in place, and the clone is what handlers receive as
+ * `oldChannel`.
+ */
+type GatewayChannelPatch = Partial<Omit<APITextChannel, "type">> &
+  Pick<APIChannel, "type">;
+
+const gatewayUpdate = (
+  channel: GuildBasedChannel,
+  data: GatewayChannelPatch,
+) => {
+  // SAFETY: `_update` is discord.js's internal Base method used by the
+  // ChannelUpdate action; it exists on every cached structure.
+  const patchable = channel as GuildBasedChannel & {
+    _update: (data: GatewayChannelPatch) => GuildBasedChannel;
+  };
+
+  return patchable._update(data);
+};
+
+const missingAccessError = () =>
+  new DiscordAPIError(
+    { message: "Missing Access", code: 50001 },
+    50001,
+    403,
+    "GET",
+    `https://discord.com/api/v10/guilds/${guildId}/members/${botId}`,
+    {},
+  );
 
 describe("Discord SDK to RabbitMQ contracts", () => {
   test("creates a guild without an icon and includes the SDK default role color", async () => {
@@ -399,6 +452,155 @@ describe("Discord SDK to RabbitMQ contracts", () => {
       routingKey: RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
       payload: expect.objectContaining({ guildId, channelId }),
     });
+  });
+
+  test("serves gateway channel events from the cache without a REST refetch", async () => {
+    const f = await fixture();
+    const channel = await f.fetchChannel();
+    f.restCalls.length = 0;
+    await Effect.runPromise(
+      Effect.all(
+        Array.from({ length: 5 }, () => f.sync.handleChannelCreate(channel)),
+        { concurrency: "unbounded" },
+      ),
+    );
+    await Effect.runPromise(f.sync.handleChannelDelete(channel));
+    expect(f.restCalls.filter((route) => route === channelsRoute)).toEqual([]);
+    expect(f.events.map((event) => event.routingKey)).toEqual([
+      ...Array.from(
+        { length: 5 },
+        () => RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
+      ),
+      RabbitRoutingKey.DISCORD_GUILD_CHANNEL_DELETED,
+    ]);
+  });
+
+  test("ignores channel updates that do not change the synced projection", async () => {
+    const f = await fixture();
+    const original = await f.fetchChannel();
+    f.sdkGuild.channels.cache.delete(channelId);
+    f.client.channels.cache.delete(channelId);
+    const sameProjection = await f.fetchChannel();
+    await Effect.runPromise(
+      f.sync.handleChannelUpdate(original, sameProjection),
+    );
+    expect(f.events).toEqual([]);
+    f.channel.name = "renamed";
+    f.sdkGuild.channels.cache.delete(channelId);
+    f.client.channels.cache.delete(channelId);
+    const renamed = await f.fetchChannel();
+    await Effect.runPromise(f.sync.handleChannelUpdate(original, renamed));
+    expect(f.events.at(-1)?.payload).toEqual(
+      expect.objectContaining({
+        channel: expect.objectContaining({ name: "renamed" }),
+      }),
+    );
+  });
+
+  test("publishes a permission overwrite change delivered through the gateway update path", async () => {
+    const f = await fixture();
+    const channel = await f.fetchChannel();
+
+    // discord.js clones the cached channel and patches it in place on a
+    // gateway CHANNEL_UPDATE; the handler receives that clone and the patched
+    // channel, so the projection key must see the overwrite change.
+    const withOverwrite = {
+      ...f.channel,
+      permission_overwrites: [{ id: botId, type: 1, allow: "3072", deny: "0" }],
+    };
+
+    const old = gatewayUpdate(channel, withOverwrite);
+
+    await Effect.runPromise(f.sync.handleChannelUpdate(old, channel));
+    expect(f.events.at(-1)?.payload).toEqual(
+      expect.objectContaining({
+        channel: expect.objectContaining({ canView: true, canSend: true }),
+      }),
+    );
+
+    const unchanged = gatewayUpdate(channel, {
+      ...withOverwrite,
+      topic: "new topic",
+    });
+
+    await Effect.runPromise(f.sync.handleChannelUpdate(unchanged, channel));
+    expect(f.events).toHaveLength(1);
+  });
+
+  test("keeps a coalesced refresh alive when the first caller is interrupted", async () => {
+    const f = await fixture();
+    let releaseChannels: (() => void) | undefined;
+
+    const gate = new Promise<void>((resolve) => {
+      releaseChannels = resolve;
+    });
+
+    f.gateChannels(gate);
+    const leader = Effect.runFork(f.sync.getGuildChannels(guildId));
+
+    while (!f.restCalls.includes(channelsRoute)) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    const follower = Effect.runPromise(f.sync.refreshGuildChannels(guildId));
+    await Effect.runPromise(Fiber.interrupt(leader));
+    releaseChannels?.();
+    await expect(follower).resolves.toEqual(
+      expect.objectContaining({ channels: [expect.anything()] }),
+    );
+  });
+
+  test("reports a failed gateway sync downstream and recovers on the next event", async () => {
+    const f = await fixture(false);
+    const channel = await f.fetchChannel();
+    f.failMemberFetch(missingAccessError());
+    await expect(
+      Effect.runPromise(f.sync.handleChannelCreate(channel)),
+    ).rejects.toThrow();
+    expect(f.events.at(-1)).toEqual({
+      routingKey: RabbitRoutingKey.DISCORD_GUILD_CHANNELS_SYNC_FAILED,
+      payload: expect.objectContaining({
+        guildId,
+        status: "STALE",
+        lastError: expect.stringContaining("Missing Access"),
+      }),
+    });
+    f.failMemberFetch(undefined);
+    await Effect.runPromise(f.sync.handleChannelCreate(channel));
+    expect(f.events.at(-1)).toEqual({
+      routingKey: RabbitRoutingKey.DISCORD_GUILD_CHANNEL_UPSERTED,
+      payload: expect.objectContaining({
+        syncState: expect.objectContaining({ status: "SYNCED" }),
+      }),
+    });
+  });
+
+  test("coalesces concurrent channel refreshes of one guild into a single REST read", async () => {
+    const f = await fixture();
+    f.restCalls.length = 0;
+
+    const payloads = await Effect.runPromise(
+      Effect.all(
+        [
+          f.sync.getGuildChannels(guildId),
+          f.sync.refreshGuildChannels(guildId),
+          f.sync.getGuildChannels(guildId),
+        ],
+        { concurrency: "unbounded" },
+      ),
+    );
+
+    expect(f.restCalls.filter((route) => route === channelsRoute)).toEqual([
+      channelsRoute,
+    ]);
+    expect(payloads.map((payload) => payload.channels.length)).toEqual([
+      1, 1, 1,
+    ]);
+    f.restCalls.length = 0;
+    await Effect.runPromise(f.sync.refreshGuildChannels(guildId));
+    expect(f.restCalls.filter((route) => route === channelsRoute)).toEqual([
+      channelsRoute,
+    ]);
   });
 
   test("ignores unsupported channel types", async () => {
