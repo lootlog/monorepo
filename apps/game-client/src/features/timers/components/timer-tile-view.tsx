@@ -1,6 +1,9 @@
 import { cn } from "cn";
 import type { CSSProperties, FC } from "react";
-import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
+import {
+  isUnpaintedTimerColor,
+  type TimerColorPaint,
+} from "@/features/timers/constants/timer-colors";
 
 export type TimerTileViewProps = {
   paint: TimerColorPaint;
@@ -8,6 +11,12 @@ export type TimerTileViewProps = {
   fontSize: number;
   hasPassedRedThreshold?: boolean;
   id?: string;
+  /**
+   * Every other grid row of unpainted tiles (no colour, or expired) gets a
+   * lighter fill so neighbouring records stay apart; coloured tiles keep
+   * their own fill so a colour reads the same on every row.
+   */
+  isAlternateRow?: boolean;
   isMinSpawnTime?: boolean;
   isPending?: boolean;
   label: string;
@@ -15,6 +24,23 @@ export type TimerTileViewProps = {
 };
 
 const EXPIRED_FILL = "rgba(255, 255, 255, 0.04)";
+
+const ALTERNATE_ROW_FILL = "rgba(255, 255, 255, 0.08)";
+
+const resolveFill = (
+  paint: TimerColorPaint,
+  hasPassedRedThreshold: boolean,
+  isAlternateRow: boolean,
+) => {
+  if (
+    isAlternateRow &&
+    (hasPassedRedThreshold || isUnpaintedTimerColor(paint))
+  ) {
+    return ALTERNATE_ROW_FILL;
+  }
+
+  return hasPassedRedThreshold ? EXPIRED_FILL : paint.fill;
+};
 
 /** An expired tile keeps a dimmed stripe so its colour group stays readable. */
 const dimAccent = (accent: string) =>
@@ -26,6 +52,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   fontSize,
   hasPassedRedThreshold = false,
   id,
+  isAlternateRow = false,
   isMinSpawnTime = false,
   isPending = false,
   label,
@@ -37,7 +64,11 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     "--ll-timer-accent": hasPassedRedThreshold
       ? dimAccent(paint.accent)
       : paint.accent,
-    "--ll-timer-fill": hasPassedRedThreshold ? EXPIRED_FILL : paint.fill,
+    "--ll-timer-fill": resolveFill(
+      paint,
+      hasPassedRedThreshold,
+      isAlternateRow,
+    ),
     fontSize: `${fontSize}px`,
   } as CSSProperties;
 
