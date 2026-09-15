@@ -1,8 +1,6 @@
-import { X } from "lucide-react";
 import { useId, type FC, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import {
   toolbarStripClassName,
   toolbarStripRowClassName,
@@ -16,19 +14,18 @@ type AddTimerPanelProps = {
   className?: string;
 };
 
-const ICON_SIZE = 14;
-
 /**
  * Overlay that covers the timers list while the user adds a manual timer. It
  * stays inside the window, so the title bar and the "+" action remain reachable
- * and the target Lootlog is the one the window already shows.
+ * and the target Lootlog is the one the window already shows. Cancel in the
+ * form footer and Escape are the ways out.
  */
 export const AddTimerPanel: FC<AddTimerPanelProps> = ({
   guildId,
   onClose,
   className,
 }) => {
-  const { t } = useTranslation(["timers", "common"]);
+  const { t } = useTranslation("timers");
   const titleId = useId();
   const { visibleGuilds } = useLootlogGuilds();
   const guildName = visibleGuilds.find((guild) => guild.id === guildId)?.name;
@@ -53,23 +50,20 @@ export const AddTimerPanel: FC<AddTimerPanelProps> = ({
         className={cn(
           toolbarStripClassName,
           toolbarStripRowClassName,
-          "ll:-mt-px ll:shrink-0 ll:items-center ll:justify-between ll:gap-2 ll:px-2",
+          "ll:-mt-px ll:shrink-0 ll:items-center ll:px-3",
         )}
       >
         <span
           id={titleId}
           className="ll:flex ll:min-w-0 ll:items-baseline ll:gap-1.5 ll:text-xs ll:font-semibold ll:text-gray-100"
         >
-          {t("timers:window.addTitle")}
+          {t("window.addTitle")}
           {guildName ? (
             <span className="ll:truncate ll:text-[11px] ll:font-normal ll:text-gray-400">
               {guildName}
             </span>
           ) : null}
         </span>
-        <WindowActionButton label={t("common:actions.close")} onClick={onClose}>
-          <X size={ICON_SIZE} aria-hidden="true" />
-        </WindowActionButton>
       </div>
       <AddTimerForm guildId={guildId} onClose={onClose} />
     </div>
