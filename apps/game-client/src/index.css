@@ -41,6 +41,21 @@
   background-color: transparent;
 }
 
+/*
+ * Base UI hides the native scrollbar of a ScrollArea viewport with a hoisted
+ * inline <style>, which the game page does not always apply. Without it the
+ * `overflow: scroll` viewport reserves a native track and every list under
+ * the bag ends short of the strips above it. Own the rule here so it ships
+ * with the rest of the stylesheet on every installation method.
+ */
+[data-ll-scroll-area-viewport] {
+  scrollbar-width: none;
+}
+
+[data-ll-scroll-area-viewport]::-webkit-scrollbar {
+  display: none;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
