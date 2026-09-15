@@ -10,6 +10,7 @@ import {
 } from "@lootlog/client/main";
 
 import { History } from "lucide-react";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TimerHistoryList } from "./timer-history-list";
@@ -20,6 +21,8 @@ type GlobalTimerHistoryPopoverProps = {
 };
 
 const GLOBAL_TIMER_HISTORY_LIMIT = 10;
+
+const ICON_SIZE = 14;
 
 export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
   guildId,
@@ -55,16 +58,15 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          aria-label={historyLabel}
-          className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:leading-none ll:text-gray-400 ll:hover:text-gray-200 ll:transition-colors ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
-          title={historyLabel}
-          type="button"
+        <WindowActionButton
+          label={historyLabel}
+          active={open}
+          onClick={() => setOpen((value) => !value)}
         >
-          <History size={14} />
-        </button>
+          <History size={ICON_SIZE} aria-hidden="true" />
+        </WindowActionButton>
       </PopoverTrigger>
-      <PopoverContent className="ll:w-80 ll:p-1" align="end" side="top">
+      <PopoverContent className="ll:w-80 ll:p-1" align="start" side="bottom">
         <TimerHistoryList
           history={history}
           isLoading={isLoading}

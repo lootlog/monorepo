@@ -89,7 +89,7 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
             aria-label={t("filters.professionLabel")}
             className={cn(
               toolbarStripLightDividerClassName,
-              "ll:h-full ll:w-12 ll:shrink-0 ll:border-y-0 ll:bg-transparent ll:px-1",
+              "ll:data-[size=sm]:h-full ll:w-22 ll:shrink-0 ll:gap-1 ll:[&>span]:block ll:[&>span]:flex-1 ll:[&>span]:text-center ll:[&_svg]:size-3 ll:border-y-0 ll:bg-transparent ll:data-[size=sm]:ps-1 ll:data-[size=sm]:pe-0.5",
             )}
             size="sm"
             variant="strip"

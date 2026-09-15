@@ -5,16 +5,13 @@ type WindowFooterProps = {
   children: ReactNode;
   /** Extra classes for the outer bar, e.g. a bleed into the window padding. */
   className?: string;
-  /** Extra classes for the 28px content row, e.g. spacing between children. */
+  /** Extra classes for the 32px content row, e.g. spacing between children. */
   rowClassName?: string;
 };
 
-/** Bleeds the footer through the 4px window padding so it sits on the frame. */
-export const windowFooterBleedClassName = "ll:-mx-1 ll:-mb-1 ll:w-auto";
-
 /**
- * Bottom bar of a draggable window: one rule on top and a 28px content row,
- * the same size as a toolbar strip so stacked bars line up across windows.
+ * Bottom bar of a draggable window: one rule on top and a 32px content row,
+ * one step taller than a toolbar strip so the bottom edge reads as a footer.
  */
 export const WindowFooter: FC<WindowFooterProps> = ({
   children,
@@ -27,7 +24,7 @@ export const WindowFooter: FC<WindowFooterProps> = ({
       className,
     )}
   >
-    <div className={cn("ll:flex ll:h-7 ll:items-center", rowClassName)}>
+    <div className={cn("ll:flex ll:h-8 ll:items-center", rowClassName)}>
       {children}
     </div>
   </div>

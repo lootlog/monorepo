@@ -1,9 +1,11 @@
 import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 
@@ -105,18 +107,26 @@ describe("timers controls", () => {
     const toggleColorFiltersEnabled = vi.fn<() => void>();
     const setTimersSortOrder = vi.fn<(order: "asc" | "desc") => void>();
     const setShowHiddenTimers = vi.fn<(show: boolean) => void>();
+    const onAddTimer = vi.fn<() => void>();
+    const fixture = createTimerHttpFixture();
 
     const actions = (underBag: boolean) => (
-      <TimersActions
-        timerFiltersEnabled={!underBag}
-        toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-        colorFiltersEnabled={underBag}
-        toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-        timersSortOrder={underBag ? "desc" : "asc"}
-        setTimersSortOrder={setTimersSortOrder}
-        showHiddenTimers={underBag}
-        setShowHiddenTimers={setShowHiddenTimers}
-      />
+      <QueryClientProvider client={fixture.queryClient}>
+        <TimersActions
+          timerFiltersEnabled={!underBag}
+          toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+          colorFiltersEnabled={underBag}
+          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+          timersSortOrder={underBag ? "desc" : "asc"}
+          setTimersSortOrder={setTimersSortOrder}
+          showHiddenTimers={underBag}
+          setShowHiddenTimers={setShowHiddenTimers}
+          guildId="guild-1"
+          world="luvia"
+          isGrouping={underBag}
+          onAddTimer={onAddTimer}
+        />
+      </QueryClientProvider>
     );
 
     const view = render(actions(false));
@@ -157,5 +167,17 @@ describe("timers controls", () => {
     );
     expect(setTimersSortOrder).toHaveBeenCalledWith("asc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(false);
+    expect(
+      screen.queryByRole("button", { name: t("toolbar.history") }),
+    ).not.toBeInTheDocument();
+    view.rerender(actions(false));
+    expect(
+      screen.getByRole("button", { name: t("toolbar.history") }),
+    ).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.addTimer") }),
+    );
+    expect(onAddTimer).toHaveBeenCalledOnce();
+    fixture.cleanup();
   });
 });

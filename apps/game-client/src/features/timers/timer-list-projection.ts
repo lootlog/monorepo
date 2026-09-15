@@ -1,8 +1,6 @@
 import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import type { Timer } from "@/api/timers.api";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
-import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import {
   getTimerEpoch,
   getTimerTimeLeft,
@@ -21,23 +19,10 @@ type TimerListFilters = {
   showHiddenTimers: boolean;
 };
 
-type CustomColor = {
-  id: string;
-  name: string;
-  backgroundColor: string;
-  borderColor: string;
-};
-
 type TimerListPreferences = {
   alwaysVisibleExpiredTimers: Record<string, string[]>;
   colorFiltersEnabled: boolean;
-  customColors: Record<string, CustomColor>;
-  defaultColorNames: Record<string, string>;
   hiddenTimers: string[];
-  overriddenDefaultColors: Record<
-    string,
-    { backgroundColor: string; borderColor: string }
-  >;
   pinnedTimers: string[];
   removeTimerAfterMs: number;
   sortOrder: "asc" | "desc";
@@ -306,57 +291,6 @@ const areTimerFiltersActive = (
   return filters.selectedColors.length > 0;
 };
 
-const calculateColorStatistics = (
-  timers: TimerWithTimeLeft[],
-  preferences: TimerListPreferences,
-) => {
-  const statistics: Record<
-    string,
-    {
-      active: number;
-      bgColor?: string;
-      borderColor?: string;
-      name: string;
-      total: number;
-    }
-  > = {};
-
-  for (const color of Object.keys(TIMERS_COLORS)) {
-    const overriddenColor = preferences.overriddenDefaultColors[color];
-    statistics[color] = {
-      active: 0,
-      bgColor: overriddenColor?.backgroundColor,
-      borderColor: overriddenColor?.borderColor,
-      name: preferences.defaultColorNames[color] ?? getDefaultColorName(color),
-      total: 0,
-    };
-  }
-
-  for (const color of Object.values(preferences.customColors)) {
-    statistics[color.id] = {
-      active: 0,
-      bgColor: color.backgroundColor,
-      borderColor: color.borderColor,
-      name: color.name,
-      total: 0,
-    };
-  }
-
-  for (const color of Object.values(preferences.timersColors)) {
-    if (color && statistics[color]) statistics[color].total++;
-  }
-
-  for (const timer of timers) {
-    const color = preferences.timersColors[timer.npc.name];
-
-    if (color && statistics[color]) statistics[color].active++;
-  }
-
-  return Object.entries(statistics).flatMap(([color, statistic]) =>
-    statistic.total > 0 ? [{ color, ...statistic }] : [],
-  );
-};
-
 const getDeduplicatedTimers = (timers: Timer[], isGrouping: boolean) => {
   if (isGrouping) return timers;
 
@@ -423,7 +357,6 @@ export const projectTimerList = ({
       filters,
       filters.showHiddenTimers ? 0 : preferences.hiddenTimers.length,
     ),
-    colorStatistics: calculateColorStatistics(sortedTimers, preferences),
     timers: sortedTimers,
   };
 };
