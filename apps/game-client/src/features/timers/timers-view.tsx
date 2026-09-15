@@ -221,7 +221,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       <UnderBagTimers>
         {/* Mirrors the window title bar: actions lead, the title sits in the
             middle column, and the empty trailing column keeps it centered. */}
-        <div className="ll:grid ll:h-7 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
+        <div className="ll:grid ll:h-7 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:pl-4 ll:pr-1.5">
           <div className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start">
             <TimersActions
               timerFiltersEnabled={resolvedTimerFiltersEnabled}
