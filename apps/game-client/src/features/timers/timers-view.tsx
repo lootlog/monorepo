@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Timer } from "@/api/timers.api";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { AddTimerPanel } from "@/features/timers/components/add-timer-panel";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
 import { useSocket } from "@/contexts/socket-context";
@@ -82,6 +83,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     selectedWorld && allowWorldSelection ? selectedWorld : defaultWorld;
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const [addTimerOpen, setAddTimerOpen] = useState(false);
 
   const {
     hiddenTimers,
@@ -191,8 +193,12 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   });
 
   const handleAddTimer = () => {
-    setOpen("add-timer", true, { guildId });
+    setAddTimerOpen((open) => !open);
   };
+
+  const addTimerOverlay = addTimerOpen ? (
+    <AddTimerPanel guildId={guildId} onClose={() => setAddTimerOpen(false)} />
+  ) : null;
 
   const handleResetFilters = () => {
     setTimerFiltersSearchText("");
@@ -220,6 +226,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             guildId={guildId}
             world={desiredWorld}
             isGrouping={generalConfig.timersGrouping}
+            addTimerOpen={addTimerOpen}
             onAddTimer={handleAddTimer}
           />
         </div>
@@ -248,6 +255,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           refreshError={timersRefreshError}
           refreshing={timersRefreshing}
           stale={timersStale}
+          overlay={addTimerOverlay}
         />
       </UnderBagTimers>
     );
@@ -277,6 +285,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             guildId={guildId}
             world={desiredWorld}
             isGrouping={generalConfig.timersGrouping}
+            addTimerOpen={addTimerOpen}
             onAddTimer={handleAddTimer}
           />
         ) : undefined
@@ -303,6 +312,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           refreshError={timersRefreshError}
           refreshing={timersRefreshing}
           stale={timersStale}
+          overlay={addTimerOverlay}
         />
       </div>
     </DraggableWindow>

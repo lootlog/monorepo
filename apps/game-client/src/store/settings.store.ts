@@ -13,11 +13,9 @@ interface SettingsState {
   allowWorldSelection?: boolean;
   worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
-  selectedGuildIdsForTimersByCharId: Record<string, string[]>;
   presenceOrganizationIdsByCharId: Record<string, string[]>;
   ensureGuildId: (charId: string, orderedGuildIds: string[]) => void;
   setGuildId: (charId: string, guildId: string) => void;
-  setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
   setPresenceOrganizationIds: (
     charId: string,
     organizationIds: string[],
@@ -41,7 +39,6 @@ export const useSettingsStore = create<SettingsState>()(
       allowWorldSelection: false,
       worldByGuildId: {},
       guildIdByCharId: {},
-      selectedGuildIdsForTimersByCharId: {},
       presenceOrganizationIdsByCharId: {},
       ensureGuildId: (charId, orderedGuildIds) => {
         set((state) => {
@@ -71,14 +68,6 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           guildIdByCharId: { ...state.guildIdByCharId, [charId]: guildId },
         })),
-      setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => {
-        set((state) => ({
-          selectedGuildIdsForTimersByCharId: {
-            ...state.selectedGuildIdsForTimersByCharId,
-            [charId]: guildIds,
-          },
-        }));
-      },
       setPresenceOrganizationIds: (charId, organizationIds) => {
         set((state) => ({
           presenceOrganizationIdsByCharId: {
@@ -132,8 +121,6 @@ export const useSettingsStore = create<SettingsState>()(
         allowWorldSelection: state.allowWorldSelection,
         worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,
-        selectedGuildIdsForTimersByCharId:
-          state.selectedGuildIdsForTimersByCharId,
         presenceOrganizationIdsByCharId: state.presenceOrganizationIdsByCharId,
       }),
       storage: createJSONStorage(() => localStorage),

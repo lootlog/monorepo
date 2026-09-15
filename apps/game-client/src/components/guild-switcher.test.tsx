@@ -261,12 +261,6 @@ describe("GuildSwitcher", () => {
 
     expect(screen.queryByText("*")).not.toBeInTheDocument();
     expect(screen.getByText("Wszystkie serwery są ukryte")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveClass(
-      "ll:h-7",
-      "ll:w-full",
-      "ll:border-gray-700/90",
-      "ll:bg-gray-900/60",
-    );
     expect(
       container.querySelector("[data-ll-scroll-area-viewport]"),
     ).not.toBeInTheDocument();

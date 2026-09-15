@@ -320,7 +320,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
         {filtersVisible && (
           <>
             <div className={cn(toolbarStripClassName, "ll:-mt-px")}>
-              <GuildSwitcher variant="strip" />
+              <GuildSwitcher />
             </div>
             {allowWorldSelection && (
               <WorldSelector className="ll:-mt-px" variant="strip" />

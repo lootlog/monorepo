@@ -1,6 +1,5 @@
 import "@/index.css";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { GuildButton } from "@/components/guild-button";
 import { Tile } from "@/components/ui/tile";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,29 +21,12 @@ describe("scoped theme styles", () => {
     document.getElementById("lootlog-root")?.remove();
   });
 
-  it("preserves rounded timer tiles and guild-selector triggers", () => {
-    renderInsideLootlogRoot(
-      <>
-        <Tile>Timer</Tile>
-        <GuildButton
-          disabled={false}
-          isSelected
-          onClick={() => undefined}
-          tooltipLabel="Guild"
-        >
-          G
-        </GuildButton>
-      </>,
-    );
+  it("preserves rounded timer tiles", () => {
+    renderInsideLootlogRoot(<Tile>Timer</Tile>);
 
     expect(["6px", "calc(10px * 0.6)"]).toContain(
       getComputedStyle(screen.getByText("Timer")).borderRadius,
     );
-    const guildButtonStyles = getComputedStyle(screen.getByRole("button"));
-    expect(["6px", "calc(10px * 0.6)"]).toContain(
-      guildButtonStyles.borderRadius,
-    );
-    expect(guildButtonStyles.boxShadow).toContain("1px");
   });
 
   it("preserves the purple focus ring on inputs", () => {

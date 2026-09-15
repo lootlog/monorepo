@@ -28,6 +28,7 @@ type TimersActionsProps = {
   guildId?: string;
   world?: string;
   isGrouping: boolean;
+  addTimerOpen: boolean;
   onAddTimer: () => void;
 };
 
@@ -44,7 +45,8 @@ type OptionItem = {
 /**
  * Every option, filters included, lives in one menu so the title bar keeps
  * room for the title at the minimum window width. History and manual timer
- * creation sit next to it as plain icon actions.
+ * creation sit next to it as plain icon actions; the "+" stays lit while the
+ * add timer panel covers the list.
  */
 export const TimersActions: FC<TimersActionsProps> = ({
   timerFiltersEnabled = false,
@@ -58,6 +60,7 @@ export const TimersActions: FC<TimersActionsProps> = ({
   guildId,
   world,
   isGrouping,
+  addTimerOpen,
   onAddTimer,
 }) => {
   const { t } = useTranslation("timers");
@@ -132,7 +135,11 @@ export const TimersActions: FC<TimersActionsProps> = ({
       {!isGrouping && guildId && world && (
         <GlobalTimerHistoryPopover guildId={guildId} world={world} />
       )}
-      <WindowActionButton label={t("toolbar.addTimer")} onClick={onAddTimer}>
+      <WindowActionButton
+        label={t("toolbar.addTimer")}
+        active={addTimerOpen}
+        onClick={onAddTimer}
+      >
         <Plus size={ICON_SIZE} aria-hidden="true" />
       </WindowActionButton>
     </>

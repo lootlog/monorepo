@@ -1,5 +1,4 @@
 import { useChatQuickActions } from "@/features/chat/hooks/use-chat-quick-actions";
-import { AddTimer } from "@/features/timers/add-timer";
 import { AnimationEffectsRootClass } from "@/components/animation-effects-root-class";
 import { BackendPreferencesWarning } from "@/features/backend-preferences-warning/backend-preferences-warning";
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
@@ -60,7 +59,6 @@ export const AppContent = () => {
     <>
       <AnimationEffectsRootClass />
       <Timers />
-      <AddTimer />
       <Settings />
       <Chat />
       <CommandWindow />

@@ -23,38 +23,20 @@ import { Button } from "@/components/ui/button";
 import { GuildSwitcherItem } from "@/components/guild-switcher-item";
 import { toast } from "sonner";
 
+/**
+ * The one Lootlog picker for in-game windows: a flat, full-width tile row the
+ * caller wraps in a toolbar strip. Uncontrolled, it drives the character's
+ * global selection; with `value`/`onChange` the caller owns the selection
+ * (chat also offers the "all" scope).
+ */
 type GuildSwitcherProps = {
-  disabled?: boolean;
   allowAll?: boolean;
   className?: string;
-  gridClassName?: string;
-  buttonClassName?: string;
-  layout?: "scroll" | "grid";
-  multiple?: boolean;
   onChange?: (guildId: string) => void;
-  onToggle?: (guildId: string) => void;
-  selectedValues?: string[];
   unreadCountByGuildId?: Record<string, number>;
   unreadGuildIds?: ReadonlySet<string>;
   value?: string;
-  /**
-   * `strip` renders the scroll layout as a flat, full-width tile row without
-   * rules of its own; the caller wraps it in a toolbar strip container.
-   */
-  variant?: "default" | "strip";
 };
-
-const resolveGuildSwitcherProps = (props: GuildSwitcherProps) => ({
-  ...props,
-  allowAll: props.allowAll ?? false,
-  buttonClassName: props.buttonClassName ?? "",
-  className: props.className ?? "",
-  disabled: props.disabled ?? false,
-  gridClassName: props.gridClassName ?? "",
-  layout: props.layout ?? "scroll",
-  multiple: props.multiple ?? false,
-  variant: props.variant ?? "default",
-});
 
 type GuildSwitcherStatusInput = {
   arePreferencesFetched: boolean;
@@ -103,24 +85,14 @@ const getGuildSwitcherStatus = ({
   return "ready" as const;
 };
 
-export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
-  const {
-    disabled,
-    allowAll,
-    className,
-    gridClassName,
-    buttonClassName,
-    layout,
-    multiple,
-    onChange,
-    onToggle,
-    selectedValues,
-    unreadCountByGuildId,
-    unreadGuildIds,
-    value,
-    variant,
-  } = resolveGuildSwitcherProps(props);
-
+export const GuildSwitcher: FC<GuildSwitcherProps> = ({
+  allowAll = false,
+  className,
+  onChange,
+  unreadCountByGuildId,
+  unreadGuildIds,
+  value,
+}) => {
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
 
@@ -151,8 +123,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     if (!isFetched || !arePreferencesFetched || visibleGuilds.length === 0)
       return;
 
-    if (multiple) return;
-
     if (!onChange) return;
     const currentValue = value;
 
@@ -165,16 +135,12 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     allowAll,
     arePreferencesFetched,
     isFetched,
-    multiple,
     onChange,
     value,
     visibleGuilds,
   ]);
 
   const selectedValue = value !== undefined ? value : guildId;
-  const selectedGuildIds = selectedValues ?? [];
-
-  const resolvedButtonClassName = buttonClassName;
 
   const status = getGuildSwitcherStatus({
     arePreferencesFetched,
@@ -189,14 +155,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   });
 
   const handleChange = (newGuildId: string) => {
-    if (disabled) return;
-
-    if (multiple) {
-      onToggle?.(newGuildId);
-
-      return;
-    }
-
     if (onChange) {
       onChange(newGuildId);
 
@@ -240,14 +198,9 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     );
   };
 
-  const selectedGuildIdSet = new Set(selectedGuildIds);
-  const isStrip = variant === "strip";
-
-  // Inside a strip the status fills the bar and borrows its rules instead of
-  // drawing its own pill.
-  const statusLayout = isStrip ? "strip" : "inline";
-
-  const statusClassName = isStrip ? "ll:mt-0 ll:border-y-0" : undefined;
+  // The status fills the strip and borrows its rules instead of drawing its
+  // own pill.
+  const statusClassName = "ll:mt-0 ll:border-y-0";
 
   if (status === "single") {
     return null;
@@ -258,7 +211,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
       <TooltipProvider>
         <div
           className={cn(
-            "ll:mt-1 ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:rounded-sm ll:border ll:border-gray-700/90 ll:bg-gray-900/60 ll:pl-2 ll:pr-0.5",
+            "ll:flex ll:h-7 ll:w-full ll:items-center ll:justify-between ll:pl-2 ll:pr-0.5",
             className,
           )}
           role="status"
@@ -279,7 +232,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
                     activeSubsection: "visibility",
                   })
                 }
-                className="ll:size-6 ll:shrink-0 ll:border-gray-700/90 ll:bg-transparent ll:text-gray-400 hover:ll:bg-gray-800/70 hover:ll:text-gray-200"
+                className="ll:size-6 ll:shrink-0 ll:bg-transparent ll:text-gray-400 hover:ll:bg-white/5 hover:ll:text-gray-200"
               >
                 <Settings className="ll:size-3.5" />
               </Button>
@@ -297,23 +250,15 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
 
   let content = (
     <>
-      {allowAll && !multiple && visibleGuilds.length > 0 && (
+      {allowAll && visibleGuilds.length > 0 && (
         <GuildButton
           key="all"
-          variant={variant}
           isSelected={"all" === selectedValue}
-          disabled={disabled}
           onClick={() => handleChange("all")}
           tooltipLabel={t("guildSwitcher.allServers")}
-          className={resolvedButtonClassName}
           unreadBadge={null}
         >
-          <AvatarFallback
-            className={cn(
-              "ll:font-semibold ll:text-xl ll:mt-1.5",
-              isStrip && "ll:rounded-none",
-            )}
-          >
+          <AvatarFallback className="ll:mt-1.5 ll:rounded-none ll:text-xl ll:font-semibold">
             *
           </AvatarFallback>
         </GuildButton>
@@ -321,18 +266,11 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
       {visibleGuilds.map((guild) => (
         <GuildSwitcherItem
           key={guild.id}
-          variant={variant}
-          isSelected={
-            multiple
-              ? selectedGuildIdSet.has(guild.id)
-              : guild.id === selectedValue
-          }
-          disabled={disabled}
+          isSelected={guild.id === selectedValue}
           onClick={() => handleChange(guild.id)}
           onHide={() => hideGuild(guild.id, guild.name)}
           hideLabel={t("guildSwitcher.hideInGameClient")}
           guild={guild}
-          buttonClassName={resolvedButtonClassName}
           unreadBadge={
             formatChatUnreadBadge(unreadCountByGuildId?.[guild.id]) ??
             (unreadGuildIds?.has(guild.id) ? "•" : null)
@@ -349,7 +287,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
         className={statusClassName}
         delay
         kind="loading"
-        layout={statusLayout}
+        layout="strip"
         label={t("async.loadingGuilds")}
       />
     );
@@ -359,7 +297,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
         active
         className={statusClassName}
         kind="error"
-        layout={statusLayout}
+        layout="strip"
         label={t("async.guildsError")}
         onRetry={() => {
           void Promise.all([refetch(), refetchPreferences()]);
@@ -369,34 +307,13 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
     );
   }
 
-  if (layout === "grid") {
-    return (
-      <TooltipProvider>
-        <div
-          className={cn(
-            "ll:mt-1 ll:grid ll:grid-cols-4 ll:gap-1",
-            className,
-            gridClassName,
-          )}
-        >
-          {content}
-        </div>
-      </TooltipProvider>
-    );
-  }
-
   return (
     <TooltipProvider>
       <ScrollArea
         className={cn("ll:w-full", className)}
         orientation="horizontal"
       >
-        <div
-          className={cn(
-            "ll:flex ll:w-max ll:min-w-full ll:gap-1",
-            isStrip ? "ll:-ml-px ll:h-7 ll:items-center ll:gap-0" : "ll:mt-1",
-          )}
-        >
+        <div className="ll:-ml-px ll:flex ll:h-7 ll:w-max ll:min-w-full ll:items-center">
           {content}
         </div>
       </ScrollArea>

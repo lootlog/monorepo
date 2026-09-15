@@ -35,7 +35,6 @@ export function ChatViewHeader({
         onChange={onGuildChange}
         unreadCountByGuildId={unreadCountByGuildId}
         unreadGuildIds={unreadGuildIds}
-        variant="strip"
       />
       {actions ? (
         <div
