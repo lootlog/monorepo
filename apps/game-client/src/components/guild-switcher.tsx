@@ -237,7 +237,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
                 <Settings className="ll:size-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
+            <TooltipContent>
               <p className="ll:font-semibold">{t("actions.openSettings")}</p>
             </TooltipContent>
           </Tooltip>

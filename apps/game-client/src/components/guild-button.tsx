@@ -55,7 +55,7 @@ export const GuildButton: FC<GuildButtonProps> = ({
         ) : null}
       </Button>
     </TooltipTrigger>
-    <TooltipContent side="bottom">
+    <TooltipContent>
       <p className="ll:font-semibold">{tooltipLabel}</p>
     </TooltipContent>
   </Tooltip>

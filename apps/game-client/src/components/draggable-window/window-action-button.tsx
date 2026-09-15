@@ -40,6 +40,6 @@ export const WindowActionButton: FC<WindowActionButtonProps> = ({
         {children}
       </button>
     </TooltipTrigger>
-    <TooltipContent side="bottom">{label}</TooltipContent>
+    <TooltipContent>{label}</TooltipContent>
   </Tooltip>
 );

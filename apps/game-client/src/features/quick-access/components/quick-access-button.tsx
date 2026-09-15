@@ -68,7 +68,7 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
         ) : null}
       </button>
     </TooltipTrigger>
-    <TooltipContent side="bottom">
+    <TooltipContent>
       <div className="ll:flex ll:items-center ll:gap-2">
         <span>{label}</span>
         {isAssigned(binding) ? <HotkeyCaps binding={binding} /> : null}

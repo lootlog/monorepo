@@ -162,7 +162,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         </ContextMenuContent>
       </ContextMenu>
 
-      <TooltipContent side="right">
+      <TooltipContent className="ll:w-64 ll:max-w-64">
         <TimerTooltip timer={timer} guildNamesById={guildNamesById} />
       </TooltipContent>
     </Tooltip>

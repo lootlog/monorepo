@@ -165,7 +165,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                     }
                   />
                 </TooltipTrigger>
-                <TooltipContent side="top">
+                <TooltipContent>
                   {defaultColorNames[colorId] ?? getDefaultColorName(colorId)}
                 </TooltipContent>
               </Tooltip>
@@ -195,7 +195,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                     }}
                   />
                 </TooltipTrigger>
-                <TooltipContent side="top">{color.name}</TooltipContent>
+                <TooltipContent>{color.name}</TooltipContent>
               </Tooltip>
             );
           })}
