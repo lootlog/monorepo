@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { cn } from "cn";
 import type { FC } from "react";
 import {
@@ -5,10 +6,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
 import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
 import { useTranslation } from "react-i18next";
@@ -17,13 +14,9 @@ export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
   const { connected, joined, joinedGuilds } = useSocket();
 
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const {
+    guildsQuery: { data: guilds },
+  } = useLootlogGuilds();
 
   const connectedToServers =
     summarizeRealtimeConnection({ connected, joined, joinedGuilds }) ===

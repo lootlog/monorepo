@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +13,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LOOTLOG_APP_URL } from "@/config/app";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
 import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,14 +21,10 @@ export const GuildListPopover = () => {
   const { t } = useTranslation("quickAccess");
   const [open, setOpen] = useState(false);
 
-  const { data: guilds, isLoading } =
-    useUsersControllerGetCurrentUserAccessibleGuilds({
-      query: {
-        queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-        refetchOnMount: false,
-        staleTime: 1000 * 60 * 5,
-      },
-    });
+  const {
+    guildsQuery: { isLoading },
+    orderedGuilds: guilds,
+  } = useLootlogGuilds();
 
   const handleGuildClick = (guildId: string) => {
     window.open(`${LOOTLOG_APP_URL}/${guildId}`, "_blank", "noopener");
@@ -82,11 +75,11 @@ export const GuildListPopover = () => {
               <ExternalLink className="ll:w-3 ll:h-3 ll:text-muted-foreground" />
             </Button>
 
-            {guilds && guilds.length > 0 && (
+            {guilds.length > 0 && (
               <div className="ll:border-0 ll:border-t ll:border-gray-400/40" />
             )}
 
-            {guilds && guilds.length > 0 ? (
+            {guilds.length > 0 ? (
               <ScrollArea
                 className={`ll:max-h-[240px] ${guilds.length <= 6 ? "ll:h-auto" : ""}`}
               >

@@ -18,7 +18,7 @@ import {
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 const SECONDS_IN_HOUR = 3600;
 
@@ -351,7 +351,7 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     useSettingsStore();
 
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { visibleGuilds } = useVisibleLootlogGuilds();
+  const { visibleGuilds } = useLootlogGuilds();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);

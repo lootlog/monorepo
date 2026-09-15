@@ -6,7 +6,7 @@ import {
 } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { getEffectiveDetectorSettings } from "@/lib/game-account-preferences";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 
 export const LEVEL_MIN = 0;
@@ -109,7 +109,12 @@ const areRoutingRulesEqual = (
  */
 export function useDetectorRoutingForm() {
   const { accountId, settings } = useCurrentGameAccountDetectorSettings();
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+
+  const {
+    guildsQuery: { data: accessibleGuilds },
+    orderedGuilds: guilds,
+  } = useLootlogGuilds();
+
   const { mutate } = useUpdateGameAccountPreferences();
 
   const readRoutingRules = () =>
@@ -122,7 +127,7 @@ export function useDetectorRoutingForm() {
   const save = (
     produce: (current: DetectorRoutingRule[]) => DetectorRoutingRule[],
   ) => {
-    if (!accountId || !guilds) {
+    if (!accountId || !accessibleGuilds) {
       return;
     }
 
@@ -158,7 +163,7 @@ export function useDetectorRoutingForm() {
     toggleGuild: (ruleId: string, guildId: string) =>
       updateRule(ruleId, (rule) => ({
         ...rule,
-        guildIds: toggleAvailableGuild(guilds ?? [], rule.guildIds, guildId),
+        guildIds: toggleAvailableGuild(guilds, rule.guildIds, guildId),
       })),
     setLevelRange: (ruleId: string, [minLevel, maxLevel]: [number, number]) =>
       updateRule(ruleId, (rule) => ({ ...rule, minLevel, maxLevel })),

@@ -5,7 +5,7 @@ import { partyReadyRoomControllerActive } from "@lootlog/client/main";
 import { useSocket } from "@/contexts/socket-context";
 import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
 
 export const ACTIVE_GATHERINGS_QUERY_KEY = ["active-party-gatherings"];
@@ -15,7 +15,7 @@ export function useActivePartyGatherings() {
   const world = useGameStore((state) => state.game?.world ?? "");
   const { socket, connected, joined } = useSocket();
   const { data: session } = useSession();
-  const { visibleGuilds, areVisibleGuildsResolved } = useVisibleLootlogGuilds();
+  const { visibleGuilds, areVisibleGuildsResolved } = useLootlogGuilds();
   const queryClient = useQueryClient();
 
   const query = useQuery({

@@ -1,10 +1,9 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import type { FC } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
 } from "@lootlog/client/main";
@@ -26,13 +25,9 @@ export const TimersGrid: FC<TimersGridProps> = ({
   hiddenTimers,
   minColumnWidth,
 }) => {
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const {
+    guildsQuery: { data: guilds },
+  } = useLootlogGuilds();
 
   const guildIds = getGuildIds(guilds);
   const guildNamesById = getGuildNamesById(guilds);

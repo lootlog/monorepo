@@ -1,7 +1,7 @@
 import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
 import { useUpdateGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
 import { useCurrentGameAccountNotificationSettings } from "@/hooks/use-current-game-account-notification-settings";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {
   NOTIFICATION_TYPES,
   type NotificationSettings,
@@ -23,7 +23,12 @@ type NotificationSwitch = "show" | "ignoreOtherWorlds" | "highlight" | "sound";
  */
 export function useNotificationRulesForm() {
   const { settings } = useCurrentGameAccountNotificationSettings();
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+
+  const {
+    guildsQuery: { data: accessibleGuilds },
+    orderedGuilds: guilds,
+  } = useLootlogGuilds();
+
   const { mutate } = useUpdateGameAccountPreferences();
 
   const setRule = (
@@ -44,7 +49,7 @@ export function useNotificationRulesForm() {
     setRule(type, { autoHideTimeout: seconds });
 
   const toggleGuild = (guildId: string) => {
-    if (!guilds) return;
+    if (!accessibleGuilds) return;
 
     mutate({
       notifications: {

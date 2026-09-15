@@ -23,8 +23,7 @@ interface WindowTitleBarProps {
 /**
  * Window-specific actions lead, window controls trail, and the title sits in
  * the middle column so it stays centered and truncates before anything
- * overlaps at narrow widths. Close stands apart from the other controls so a
- * slip on lock or opacity does not dismiss the window.
+ * overlaps at narrow widths.
  */
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   title,
@@ -88,7 +87,6 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         {closable && (
           <WindowActionButton
             label={t("windowControls.closeWindow")}
-            className="ll:ml-1.5"
             onClick={() => onClose?.()}
           >
             <X size={16} aria-hidden="true" />

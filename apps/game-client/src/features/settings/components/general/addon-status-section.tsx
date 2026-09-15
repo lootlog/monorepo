@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,6 @@ import { LOOTLOG_APP_URL } from "@/config/app";
 import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
 import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -51,14 +48,9 @@ export const AddonStatusSection: FC = () => {
     joinedGuilds,
   });
 
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-      enabled: joinedGuilds.length > 0,
-    },
-  });
+  const {
+    guildsQuery: { data: guilds },
+  } = useLootlogGuilds();
 
   const joinedGuildNames = joinedGuilds.map(
     (guildId) => guilds?.find((guild) => guild.id === guildId)?.name ?? guildId,

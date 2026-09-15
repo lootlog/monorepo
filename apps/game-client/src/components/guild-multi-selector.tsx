@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useTranslation } from "react-i18next";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 
@@ -29,11 +29,9 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
   const { t } = useTranslation("common");
 
   const {
-    data: guilds,
-    error,
-    isLoading,
-    refetch,
-  } = useUsersControllerGetCurrentUserAccessibleGuilds();
+    guildsQuery: { data: guilds, error, isLoading, refetch },
+    visibleGuilds,
+  } = useLootlogGuilds();
 
   const handleToggle = (guildId: string) => {
     if (disabled) return;
@@ -75,7 +73,7 @@ export const GuildMultiSelector: FC<GuildMultiSelectorProps> = ({
               retryLabel={t("actions.retry")}
             />
           ) : null}
-          {guilds?.map((guild) => {
+          {visibleGuilds.map((guild) => {
             const isSelected = selectedGuildIds.has(guild.id);
 
             return (

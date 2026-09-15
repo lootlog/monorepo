@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import type { SettingsSaveBadgeStatus } from "@/components/settings/settings-save-badge";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
@@ -5,7 +6,6 @@ import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useTranslation } from "react-i18next";
 import {
-  useUsersControllerGetCurrentUserAccessibleGuilds,
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
 } from "@lootlog/client/main";
@@ -41,7 +41,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       accountId,
     });
 
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+  const { orderedGuilds: guilds } = useLootlogGuilds();
 
   const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
     useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
@@ -83,7 +83,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   // The write is optimistic and replaces the whole list, so the picker stays
   // usable while a save is in flight; only the initial load blocks it.
   const isInteractionDisabled = isLootlogConfigLoading || disabled;
-  const totalGuilds = guilds?.length ?? 0;
+  const totalGuilds = guilds.length;
   const selectedCount = selectedGuildIds.length;
 
   // Derived from the cache at click time, not from this render: a re-render
