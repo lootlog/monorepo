@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,16 +7,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { QuickAccessButton } from "@/features/quick-access/components/quick-access-button";
 import { LOOTLOG_APP_URL } from "@/config/app";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-} from "@lootlog/client/main";
 import { ExternalLink, Loader2, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,14 +17,10 @@ export const GuildListPopover = () => {
   const { t } = useTranslation("quickAccess");
   const [open, setOpen] = useState(false);
 
-  const { data: guilds, isLoading } =
-    useUsersControllerGetCurrentUserAccessibleGuilds({
-      query: {
-        queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-        refetchOnMount: false,
-        staleTime: 1000 * 60 * 5,
-      },
-    });
+  const {
+    guildsQuery: { isLoading },
+    orderedGuilds: guilds,
+  } = useLootlogGuilds();
 
   const handleGuildClick = (guildId: string) => {
     window.open(`${LOOTLOG_APP_URL}/${guildId}`, "_blank", "noopener");
@@ -45,26 +34,18 @@ export const GuildListPopover = () => {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              variant="secondary"
-              size="xs"
-              className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
-            >
-              <SquareArrowOutUpRight size="16" />
-            </Button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <span>{t("guildPopover.lootlogPage")}</span>
-        </TooltipContent>
-      </Tooltip>
+      <PopoverTrigger asChild>
+        <QuickAccessButton
+          label={t("guildPopover.lootlogPage")}
+          icon=<SquareArrowOutUpRight size={16} aria-hidden="true" />
+          active={open}
+        />
+      </PopoverTrigger>
 
       <PopoverContent
         className="ll-action-menu ll:w-48 ll:p-0 ll:overflow-hidden"
         align="start"
+        side="bottom"
       >
         {isLoading ? (
           <div className="ll:flex ll:items-center ll:justify-center ll:py-3">
@@ -82,11 +63,11 @@ export const GuildListPopover = () => {
               <ExternalLink className="ll:w-3 ll:h-3 ll:text-muted-foreground" />
             </Button>
 
-            {guilds && guilds.length > 0 && (
+            {guilds.length > 0 && (
               <div className="ll:border-0 ll:border-t ll:border-gray-400/40" />
             )}
 
-            {guilds && guilds.length > 0 ? (
+            {guilds.length > 0 ? (
               <ScrollArea
                 className={`ll:max-h-[240px] ${guilds.length <= 6 ? "ll:h-auto" : ""}`}
               >

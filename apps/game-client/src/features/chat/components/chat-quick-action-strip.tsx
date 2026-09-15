@@ -78,7 +78,7 @@ export const ChatQuickActionStrip = ({ guildId }: { guildId?: string }) => {
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent side="top">{t("quickActions.menu")}</TooltipContent>
+        <TooltipContent>{t("quickActions.menu")}</TooltipContent>
       </Tooltip>
       <PopoverContent
         side="top"

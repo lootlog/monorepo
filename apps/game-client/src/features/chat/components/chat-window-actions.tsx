@@ -2,7 +2,7 @@ import { useChatStore } from "@/store/chat.store";
 import { CHAT_INTEGRATION_ENABLED } from "../chat.constants";
 import { ListFilter, Dock, SquareArrowOutUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ChatActionButton } from "./chat-action-button";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import { ChatSettingsButton } from "./chat-settings-button";
 
 type ChatWindowActionsProps = {
@@ -32,29 +32,23 @@ export const ChatWindowActions = ({
     : t("integration.attach");
 
   return (
-    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
+    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-0.5">
       <ChatSettingsButton />
-      <ChatActionButton
+      <WindowActionButton
         label={filterLabel}
-        pressed={filtersVisible}
+        active={filtersVisible}
         onClick={toggleFiltersVisible}
       >
         <ListFilter size={14} aria-hidden="true" />
-        {filtersVisible && (
-          <span
-            aria-hidden="true"
-            className="ll:absolute ll:right-0 ll:bottom-0 ll:size-1.5 ll:rounded-full ll:bg-primary"
-          />
-        )}
-      </ChatActionButton>
+      </WindowActionButton>
       {CHAT_INTEGRATION_ENABLED && (canIntegrate || integrated) && (
-        <ChatActionButton label={integrationLabel} onClick={toggleIntegrated}>
+        <WindowActionButton label={integrationLabel} onClick={toggleIntegrated}>
           {integrated ? (
             <SquareArrowOutUpRight size={14} />
           ) : (
             <Dock size={14} />
           )}
-        </ChatActionButton>
+        </WindowActionButton>
       )}
     </div>
   );

@@ -33,7 +33,7 @@ const game = {
   },
   interface: "ni",
   map: { id: 1, name: "Ithan", visibility: 30 },
-  world: "pandora",
+  world: "luvia",
 } satisfies RuntimeGameSnapshot;
 
 const lootRequests = () =>
@@ -94,7 +94,7 @@ describe("debug legendary loot event", () => {
 
     await vi.waitFor(() => expect(lootRequests()).toHaveLength(1));
     expect(await lootRequests()[0].json()).toMatchObject({
-      world: "pandora",
+      world: "luvia",
       location: "Ithan",
       source: "FIGHT",
       accountId: "202",

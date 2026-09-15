@@ -39,10 +39,10 @@ function Select<Value extends string>({
  * searchable field looks exactly like a plain select.
  */
 export const selectTriggerClassName =
-  "ll:flex ll:w-full ll:min-w-0 ll:items-center ll:justify-between ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-input ll:bg-input/30 ll:text-[13px] ll:text-foreground ll:outline-none ll:transition-[color,box-shadow,background-color,border-color] ll:hover:bg-accent ll:hover:text-accent-foreground ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:data-[popup-open]:border-ring ll:data-[popup-open]:ring-[3px] ll:data-[popup-open]:ring-ring/50 ll:data-[disabled]:cursor-not-allowed ll:data-[disabled]:opacity-50 ll:data-[size=default]:h-8 ll:data-[size=default]:px-2 ll:data-[size=sm]:h-7 ll:data-[size=sm]:px-1.5 ll:data-[size=sm]:text-xs ll:[&>span]:min-w-0 ll:[&>span]:flex ll:[&>span]:items-center ll:[&>span]:gap-1.5 ll:[&>span]:truncate ll:[&>span]:text-left ll:[&>span[data-placeholder]]:text-muted-foreground ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=text-])]:text-muted-foreground ll-custom-cursor-pointer";
+  "ll:flex ll:w-full ll:min-w-0 ll:items-center ll:justify-between ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-input ll:bg-input/30 ll:text-[13px] ll:text-foreground ll:outline-none ll:transition-[color,box-shadow,background-color,border-color] ll:hover:bg-accent ll:hover:text-accent-foreground ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:data-[popup-open]:border-ring ll:data-[popup-open]:ring-[3px] ll:data-[popup-open]:ring-ring/50 ll:data-[disabled]:cursor-not-allowed ll:data-[disabled]:opacity-50 ll:pt-px ll:data-[size=default]:h-8 ll:data-[size=default]:px-2 ll:data-[size=sm]:h-7 ll:data-[size=sm]:px-1.5 ll:data-[size=sm]:text-xs ll:[&>span]:min-w-0 ll:[&>span]:flex ll:[&>span]:items-center ll:[&>span]:gap-1.5 ll:[&>span]:truncate ll:[&>span]:text-left ll:[&>span[data-placeholder]]:text-muted-foreground ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=text-])]:text-muted-foreground ll-custom-cursor-pointer";
 
 export const selectPopupClassName =
-  "ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-[8rem] ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-sm ll:border ll:border-border ll:bg-popover ll:text-popover-foreground ll:shadow-lg ll:origin-[var(--transform-origin)] ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2";
+  "ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-[8rem] ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-md ll:bg-black ll:border ll:border-white/50 ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:text-popover-foreground ll:origin-[var(--transform-origin)] ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2";
 
 export const selectItemClassName =
   "ll:relative ll:flex ll:min-h-7 ll:w-full ll:select-none ll:items-center ll:gap-1.5 ll:rounded-sm ll:py-1 ll:pl-2 ll:pr-7 ll:text-xs ll:text-popover-foreground ll:outline-none ll:transition-colors ll:data-[highlighted]:bg-primary/15 ll:data-[highlighted]:text-foreground ll:data-[disabled]:pointer-events-none ll:data-[disabled]:opacity-50 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=text-])]:text-muted-foreground ll-custom-cursor-pointer";
@@ -50,17 +50,34 @@ export const selectItemClassName =
 export const selectGroupLabelClassName =
   "ll:px-2 ll:py-1.5 ll:text-xs ll:text-muted-foreground";
 
+/** `strip` triggers sit flat inside a toolbar strip: no rounding, no ring, an inset focus outline. */
+/**
+ * The strip trigger carries the strip rules itself, so it is 30px tall like
+ * every other toolbar strip (28px content row plus the 1px rule on each side).
+ */
+export const selectTriggerStripClassName =
+  "ll:data-[size=sm]:h-[30px] ll:rounded-none ll:border-x-0 ll:border-y ll:border-gray-400/40 ll:bg-black/20 ll:hover:bg-black/30 ll:hover:text-foreground ll:focus-visible:border-gray-400/40 ll:focus-visible:ring-0 ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring ll:data-[popup-open]:border-gray-400/40 ll:data-[popup-open]:ring-0 ll:data-[popup-open]:bg-black/30";
+
 type SelectTriggerProps = BaseSelect.Trigger.Props & {
   size?: "sm" | "default";
+  variant?: "default" | "strip";
 };
 
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, children, size = "default", ...props }, ref) => (
+  (
+    { className, children, size = "default", variant = "default", ...props },
+    ref,
+  ) => (
     <BaseSelect.Trigger
       ref={ref}
       data-slot="select-trigger"
       data-size={size}
-      className={cn(selectTriggerClassName, className)}
+      data-variant={variant}
+      className={cn(
+        selectTriggerClassName,
+        variant === "strip" && selectTriggerStripClassName,
+        className,
+      )}
       {...props}
     >
       {children}

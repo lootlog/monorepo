@@ -96,9 +96,10 @@ describe("SingleTimer", () => {
     const label = screen.getByText(/\[R\] \[H\] Tanroth/);
     expect(label).toHaveTextContent("(120w)");
     expect(screen.getByText("00:00:10")).toBeVisible();
-    expect(view.container.querySelector('[id="10"]')).toHaveClass(
-      "ll:bg-red-500/20",
-    );
+    expect(view.container.querySelector('[id="10"]')).toHaveStyle({
+      "--ll-timer-accent": "#ef4444",
+      "--ll-timer-fill": "#ef444459",
+    });
     await user.hover(label);
     expect(await screen.findByText("Tester (Alpha)")).toBeVisible();
     await user.pointer({ keys: "[MouseRight]", target: label });
@@ -160,8 +161,8 @@ describe("SingleTimer", () => {
     });
     const tile = view.container.querySelector('[id="10"]');
     expect(tile).toHaveStyle({
-      borderColor: "#111111",
-      backgroundColor: "#222222",
+      "--ll-timer-accent": "#111111",
+      "--ll-timer-fill": "#222222",
     });
     expect(tile?.parentElement).toHaveClass("ll:opacity-50");
     expect(screen.getByText("00:00:10").parentElement).toHaveClass(

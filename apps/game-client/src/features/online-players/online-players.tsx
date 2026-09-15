@@ -1,4 +1,4 @@
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { OnlinePlayersActions } from "@/features/online-players/components/online-players-actions";
 import { OnlinePlayersList } from "@/features/online-players/components/online-players-list";
 import { useOnlinePlayersStore } from "@/store/online-players.store";
@@ -28,6 +28,7 @@ export const OnlinePlayers = () => {
       title={t("window.title")}
       onClose={() => setOpen("online-players", false)}
       variant="default"
+      contentClassName="ll:-mx-1 ll:-mb-1"
       minHeight={108}
       minWidth={242}
       actions=<OnlinePlayersActions

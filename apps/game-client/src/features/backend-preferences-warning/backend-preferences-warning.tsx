@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { Button } from "@/components/ui/button";
 import { storageKey } from "@/lib/storage-key";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";

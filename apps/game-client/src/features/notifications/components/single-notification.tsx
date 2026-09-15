@@ -415,7 +415,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">{actionLabel}</TooltipContent>
+              <TooltipContent>{actionLabel}</TooltipContent>
             </Tooltip>
           ) : null}
           {showJoinAction ? (
@@ -436,9 +436,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">
-                {t("actions.joinAria")}
-              </TooltipContent>
+              <TooltipContent>{t("actions.joinAria")}</TooltipContent>
             </Tooltip>
           ) : null}
           <NotificationMuteMenu
@@ -464,9 +462,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                   <XIcon size={12} />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">
-                {t("actions.closeAria")}
-              </TooltipContent>
+              <TooltipContent>{t("actions.closeAria")}</TooltipContent>
             </Tooltip>
           ) : null}
         </div>

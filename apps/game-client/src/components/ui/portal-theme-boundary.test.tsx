@@ -35,12 +35,6 @@ const expectContentInsideThemeBoundary = (testId: string) => {
   expect(content.closest("#lootlog-root.dark-theme")).not.toBeNull();
 };
 
-const expectSmallRadius = (testId: string) => {
-  expect(["6px", "calc(10px * 0.6)"]).toContain(
-    getComputedStyle(screen.getByTestId(testId)).borderRadius,
-  );
-};
-
 describe("overlay theme boundary", () => {
   afterEach(() => {
     document.getElementById("lootlog-root")?.remove();
@@ -55,7 +49,6 @@ describe("overlay theme boundary", () => {
     );
 
     expectContentInsideThemeBoundary("tooltip-content");
-    expectSmallRadius("tooltip-content");
 
     const tooltipPositioner =
       screen.getByTestId("tooltip-content").parentElement;
@@ -201,7 +194,6 @@ describe("overlay theme boundary", () => {
     );
 
     expectContentInsideThemeBoundary("select-content");
-    expectSmallRadius("select-content");
     expect(screen.getByRole("combobox")).toHaveTextContent("One");
 
     // Draggable windows carry their own z-index; a select opened inside one

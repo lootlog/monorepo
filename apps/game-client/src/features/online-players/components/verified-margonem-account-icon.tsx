@@ -4,7 +4,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "cn";
-import { BadgeCheck } from "lucide-react";
+import { Check } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -23,15 +23,15 @@ export const VerifiedMargonemAccountIcon: FC<
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "ll:inline-flex ll:size-4 ll:items-center ll:justify-center ll:rounded-full ll:bg-sky-500/15 ll:text-sky-300 ll:ring-1 ll:ring-sky-400/40",
+            "ll:inline-flex ll:size-3.5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-full ll:text-sky-400/80",
             className,
           )}
           aria-label={label}
         >
-          <BadgeCheck className="ll:size-3" />
+          <Check aria-hidden="true" strokeWidth={2.5} className="ll:size-2.5" />
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top" className="ll:z-9999">
+      <TooltipContent>
         <span className="ll:font-semibold">{label}</span>
       </TooltipContent>
     </Tooltip>

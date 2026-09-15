@@ -7,6 +7,7 @@ import {
   selectItemClassName,
   selectPopupClassName,
   selectTriggerClassName,
+  selectTriggerStripClassName,
 } from "./select";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
@@ -23,25 +24,37 @@ const ComboboxValue = (props: BaseCombobox.Value.Props) => (
 
 type ComboboxTriggerProps = BaseCombobox.Trigger.Props & {
   size?: "sm" | "default";
+  /** `strip` renders a flat, full-width bar for stacking with other toolbar strips. */
+  variant?: "default" | "strip";
 };
 
 const ComboboxTrigger = React.forwardRef<
   HTMLButtonElement,
   ComboboxTriggerProps
->(({ className, children, size = "default", ...props }, ref) => (
-  <BaseCombobox.Trigger
-    ref={ref}
-    data-slot="combobox-trigger"
-    data-size={size}
-    className={cn(selectTriggerClassName, className)}
-    {...props}
-  >
-    {children}
-    <BaseCombobox.Icon
-      render=<ChevronDown className="ll:size-3.5 ll:opacity-70" />
-    />
-  </BaseCombobox.Trigger>
-));
+>(
+  (
+    { className, children, size = "default", variant = "default", ...props },
+    ref,
+  ) => (
+    <BaseCombobox.Trigger
+      ref={ref}
+      data-slot="combobox-trigger"
+      data-size={size}
+      data-variant={variant}
+      className={cn(
+        selectTriggerClassName,
+        variant === "strip" && selectTriggerStripClassName,
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <BaseCombobox.Icon
+        render=<ChevronDown className="ll:size-3.5 ll:opacity-70" />
+      />
+    </BaseCombobox.Trigger>
+  ),
+);
 
 ComboboxTrigger.displayName = "ComboboxTrigger";
 

@@ -27,6 +27,8 @@ export type OnlinePlayersAccessState = "allowed" | "forbidden";
 
 export type PlayersPresenceState = AsyncResourceState & {
   accessState: OnlinePlayersAccessState;
+  /** A scope is selected but the gateway session is not joined, so nothing was requested. */
+  disconnected: boolean;
   hasLoaded: boolean;
   onlinePlayers: PlayerPresenceResponse;
   setOnlinePlayers: Dispatch<SetStateAction<PlayerPresenceResponse>>;
@@ -429,15 +431,21 @@ export const usePlayersPresence = (
   }, [socket, joined, connected, scopeKey]);
 
   const hasScope = Boolean(selectedGuildId && world);
+  const online = connected && joined;
+
+  const awaitingFirstSnapshot =
+    hasScope &&
+    !visiblePresenceResource.loaded &&
+    !visiblePresenceResource.error;
 
   return {
     accessState: visiblePresenceResource.accessState,
+    // The first snapshot is requested only once the gateway session is joined,
+    // so an offline gateway must surface as a state instead of endless loading.
+    disconnected: awaitingFirstSnapshot && !online,
     error: visiblePresenceResource.error,
     hasLoaded: visiblePresenceResource.loaded,
-    initialLoading:
-      hasScope &&
-      !visiblePresenceResource.loaded &&
-      !visiblePresenceResource.error,
+    initialLoading: awaitingFirstSnapshot && online,
     onlinePlayers: visiblePresenceResource.onlinePlayers,
     refreshing:
       visiblePresenceResource.loading && visiblePresenceResource.loaded,

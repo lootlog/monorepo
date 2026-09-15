@@ -72,7 +72,7 @@ it("submits actual mapped PvP events with stable identity and clears finished st
   expect(await fixture.battles()[0]?.json()).toMatchObject({
     accountId: "67890",
     characterId: "12345",
-    world: "pandora",
+    world: "luvia",
     submissionId: expect.stringMatching(/^[a-f0-9]{64}$/),
     events: [
       {
@@ -145,7 +145,7 @@ it("records only the highest-weight defeated NPC", async () => {
   await processor.handle(end);
   expect(fixture.kills()).toHaveLength(1);
   expect(await fixture.kills()[0]?.json()).toMatchObject({
-    world: "pandora",
+    world: "luvia",
     characterId: "12345",
     accountId: "67890",
     npc: { id: -200, name: "Titan", wt: 101 },

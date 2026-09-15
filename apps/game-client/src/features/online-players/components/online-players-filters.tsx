@@ -1,6 +1,12 @@
 import { SearchInput } from "@/components/ui/search-input";
 import { Input } from "@/components/ui/input";
 import {
+  toolbarStripLightClassName,
+  toolbarStripLightDividerClassName,
+  toolbarStripRowClassName,
+} from "@/components/ui/toolbar-strip";
+import { cn } from "cn";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -38,54 +44,70 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
   const { t } = useTranslation("onlinePlayers");
 
   return (
-    <div className="ll:pb-1 ll:flex ll:gap-1">
-      <SearchInput
-        size="sm"
-        placeholder={t("search.placeholder")}
-        value={searchQuery}
-        onChange={onSearchChange}
-      />
-      <Input
-        aria-label={t("filters.minLvlLabel")}
-        value={filters.minLvl.toString()}
-        onChange={onMinLvlChange}
-        className="ll:w-9 input-no-spinner ll:px-0.5 ll:text-center"
-        max={MAX_ONLINE_PLAYER_LEVEL}
-        min={MIN_ONLINE_PLAYER_LEVEL}
-        type="number"
-        inputMode="numeric"
-      />
-      <Input
-        aria-label={t("filters.maxLvlLabel")}
-        value={filters.maxLvl.toString()}
-        onChange={onMaxLvlChange}
-        className="ll:w-9 input-no-spinner ll:px-0.5 ll:text-center"
-        max={MAX_ONLINE_PLAYER_LEVEL}
-        min={MIN_ONLINE_PLAYER_LEVEL}
-        type="number"
-        inputMode="numeric"
-      />
-      <Select
-        value={filters.selectedProfession}
-        onValueChange={onProfessionChange}
-      >
-        <SelectTrigger
-          aria-label={t("filters.professionLabel")}
-          className="ll:w-12 ll:px-1"
+    <div className={toolbarStripLightClassName}>
+      <div className={toolbarStripRowClassName}>
+        <SearchInput
+          size="sm"
+          variant="borderless"
+          placeholder={t("search.placeholder")}
+          value={searchQuery}
+          onChange={onSearchChange}
+        />
+        <Input
+          aria-label={t("filters.minLvlLabel")}
+          value={filters.minLvl.toString()}
+          onChange={onMinLvlChange}
+          className={cn(
+            toolbarStripLightDividerClassName,
+            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+          )}
+          variant="borderless"
+          max={MAX_ONLINE_PLAYER_LEVEL}
+          min={MIN_ONLINE_PLAYER_LEVEL}
+          type="number"
+          inputMode="numeric"
+        />
+        <Input
+          aria-label={t("filters.maxLvlLabel")}
+          value={filters.maxLvl.toString()}
+          onChange={onMaxLvlChange}
+          className={cn(
+            toolbarStripLightDividerClassName,
+            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+          )}
+          variant="borderless"
+          max={MAX_ONLINE_PLAYER_LEVEL}
+          min={MIN_ONLINE_PLAYER_LEVEL}
+          type="number"
+          inputMode="numeric"
+        />
+        <Select
+          value={filters.selectedProfession}
+          onValueChange={onProfessionChange}
         >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="ll:min-w-28">
-          <SelectItem value={ALL_PROFESSIONS_VALUE}>
-            {t("filters.professions.all")}
-          </SelectItem>
-          {PROFESSION_OPTIONS.map((profession) => (
-            <SelectItem key={profession} value={profession}>
-              {t(`filters.professions.${profession}`)}
+          <SelectTrigger
+            aria-label={t("filters.professionLabel")}
+            className={cn(
+              toolbarStripLightDividerClassName,
+              "ll:data-[size=sm]:h-full ll:w-22 ll:shrink-0 ll:gap-1 ll:[&>span]:block ll:[&>span]:flex-1 ll:[&>span]:text-center ll:[&_svg]:size-3 ll:border-y-0 ll:bg-transparent ll:data-[size=sm]:ps-1 ll:data-[size=sm]:pe-0.5",
+            )}
+            size="sm"
+            variant="strip"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="ll:min-w-28">
+            <SelectItem value={ALL_PROFESSIONS_VALUE}>
+              {t("filters.professions.all")}
             </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+            {PROFESSION_OPTIONS.map((profession) => (
+              <SelectItem key={profession} value={profession}>
+                {t(`filters.professions.${profession}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };

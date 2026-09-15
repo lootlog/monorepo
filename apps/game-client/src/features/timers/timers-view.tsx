@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Timer } from "@/api/timers.api";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { AddTimerPanel } from "@/features/timers/components/add-timer-panel";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
+import { useSocket } from "@/contexts/socket-context";
 import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-projection";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useTimers } from "@/hooks/api/use-timers";
@@ -81,6 +83,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     selectedWorld && allowWorldSelection ? selectedWorld : defaultWorld;
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const [addTimerOpen, setAddTimerOpen] = useState(false);
 
   const {
     hiddenTimers,
@@ -98,9 +101,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setTimersFilters,
     displayConfig,
     timersColors,
-    customColors,
-    defaultColorNames,
-    overriddenDefaultColors,
     alwaysVisibleExpiredTimers,
   } = useTimersStore(
     useShallow((state) => ({
@@ -119,9 +119,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       setTimersFilters: state.setTimersFilters,
       displayConfig: state.displayConfig,
       timersColors: state.timersColors,
-      customColors: state.customColors,
-      defaultColorNames: state.defaultColorNames,
-      overriddenDefaultColors: state.overriddenDefaultColors,
       alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
     })),
   );
@@ -134,9 +131,14 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     refetch: refetchTimers,
   } = useTimers({ world: desiredWorld });
 
+  const { connected, joined } = useSocket();
+
   const hasTimersResponse = timers !== undefined;
   const initialTimersLoading = timersLoading && !hasTimersResponse;
   const timersRefreshError = Boolean(timersError) && hasTimersResponse;
+  // Realtime updates stop while the gateway is down, so a loaded list may
+  // already be behind the server.
+  const timersStale = hasTimersResponse && (!connected || !joined);
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
@@ -164,11 +166,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     timers,
   });
 
-  const {
-    areFiltersActive,
-    colorStatistics,
-    timers: sortedTimers,
-  } = useTimerListProjection({
+  const { areFiltersActive, timers: sortedTimers } = useTimerListProjection({
     context: {
       guildId: guildId ?? "",
       isGrouping: generalConfig.timersGrouping,
@@ -185,10 +183,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     preferences: {
       alwaysVisibleExpiredTimers,
       colorFiltersEnabled: resolvedColorFiltersEnabled,
-      customColors,
-      defaultColorNames,
       hiddenTimers: hiddenTimersForSettings,
-      overriddenDefaultColors,
       pinnedTimers: pinnedTimersForSettings,
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
       sortOrder,
@@ -198,8 +193,18 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   });
 
   const handleAddTimer = () => {
-    setOpen("add-timer", true, { guildId });
+    setAddTimerOpen((open) => !open);
   };
+
+  // The window frame is rounded; the panel follows its bottom corners so it
+  // does not overlap the border.
+  const addTimerOverlay = addTimerOpen ? (
+    <AddTimerPanel
+      guildId={guildId}
+      onClose={() => setAddTimerOpen(false)}
+      className={isUnderBag ? undefined : "ll:rounded-b-md"}
+    />
+  ) : null;
 
   const handleResetFilters = () => {
     setTimerFiltersSearchText("");
@@ -216,7 +221,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       <UnderBagTimers>
         <div className="ll:flex ll:gap-1">
           <TimersActions
-            underBag
             timerFiltersEnabled={resolvedTimerFiltersEnabled}
             toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
             colorFiltersEnabled={resolvedColorFiltersEnabled}
@@ -225,10 +229,15 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             setTimersSortOrder={setTimersSortOrder}
             showHiddenTimers={showHiddenTimers}
             setShowHiddenTimers={setShowHiddenTimers}
+            guildId={guildId}
+            world={desiredWorld}
+            isGrouping={generalConfig.timersGrouping}
+            addTimerOpen={addTimerOpen}
+            onAddTimer={handleAddTimer}
           />
         </div>
         <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-          <p className="ll:text-[12px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
+          <p className="ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
             {t("underBag.title")}
           </p>
         </div>
@@ -237,16 +246,12 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}
           areFiltersActive={areFiltersActive}
-          colorStatistics={colorStatistics}
-          guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
           allowWorldSelection={resolvedAllowWorldSelection}
           timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag
           minColumnWidth={displayConfig.minColumnWidth}
-          onAddTimer={handleAddTimer}
           onResetFilters={handleResetFilters}
-          world={desiredWorld}
           compactView={generalConfig.compactView}
           error={!hasTimersResponse ? timersError : null}
           initialLoading={initialTimersLoading}
@@ -255,6 +260,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           }}
           refreshError={timersRefreshError}
           refreshing={timersRefreshing}
+          stale={timersStale}
+          overlay={addTimerOverlay}
         />
       </UnderBagTimers>
     );
@@ -267,6 +274,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       title={t("window.title")}
       onClose={() => setOpen("timers", false)}
       minHeight={108}
+      contentClassName={
+        generalConfig.compactView ? undefined : "ll:-mx-1 ll:-mb-1"
+      }
       disableTitle={generalConfig.compactView}
       draggableContent={generalConfig.compactView}
       actions={
@@ -280,6 +290,11 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             setTimersSortOrder={setTimersSortOrder}
             showHiddenTimers={showHiddenTimers}
             setShowHiddenTimers={setShowHiddenTimers}
+            guildId={guildId}
+            world={desiredWorld}
+            isGrouping={generalConfig.timersGrouping}
+            addTimerOpen={addTimerOpen}
+            onAddTimer={handleAddTimer}
           />
         ) : undefined
       }
@@ -290,16 +305,12 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}
           areFiltersActive={areFiltersActive}
-          colorStatistics={colorStatistics}
-          guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
           allowWorldSelection={resolvedAllowWorldSelection}
           timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag={false}
           minColumnWidth={displayConfig.minColumnWidth}
-          onAddTimer={handleAddTimer}
           onResetFilters={handleResetFilters}
-          world={desiredWorld}
           compactView={generalConfig.compactView}
           error={!hasTimersResponse ? timersError : null}
           initialLoading={initialTimersLoading}
@@ -308,6 +319,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           }}
           refreshError={timersRefreshError}
           refreshing={timersRefreshing}
+          stale={timersStale}
+          overlay={addTimerOverlay}
         />
       </div>
     </DraggableWindow>

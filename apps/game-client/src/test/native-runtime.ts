@@ -22,6 +22,6 @@ export function createNativeRuntime() {
     map: { d: { id: 42, name: "Ithan", visibility: 30 } },
     npcs: { check: () => ({}) },
     others: { check: () => ({}) },
-    worldConfig: { getWorldName: () => "pandora" },
+    worldConfig: { getWorldName: () => "luvia" },
   };
 }

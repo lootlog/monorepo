@@ -1,4 +1,4 @@
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { SettingsSaveStatus } from "@/components/settings/settings-save-status";
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 import { useSettingsUiStore } from "@/features/settings/settings-ui.store";

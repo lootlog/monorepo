@@ -33,7 +33,7 @@ export function ChatGatheringCounters({
           </span>
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }

@@ -24,7 +24,7 @@ const createPresence = (
   mapName: "Ithan",
   isAfk: false,
   player: {
-    world: "pandora",
+    world: "luvia",
     name: "Hero",
     lvl: 123,
     icon: "hero.gif",
@@ -44,7 +44,7 @@ const createPresence = (
 });
 
 const getAccountTile = (container: HTMLElement) => {
-  const tile = container.querySelector(".ll\\:mb-0\\.5");
+  const tile = container.querySelector(".ll-custom-cursor-pointer");
 
   expect(tile).not.toBeNull();
 
@@ -104,7 +104,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(screen.getByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • pandora")).toBeVisible();
+    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Torneg • pandora")).toBeVisible();
+    expect(screen.getByText("Torneg • luvia")).toBeVisible();
   });
 
   it("shows Margonem verification only for verified presence", () => {
@@ -230,7 +230,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry
         presence={createPresence({
           player: {
-            world: "pandora",
+            world: "luvia",
             name: "Hero",
             lvl: 123,
             icon: "hero.gif",
@@ -242,7 +242,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Ithan • pandora")).toBeVisible();
+    expect(screen.getByText("Ithan • luvia")).toBeVisible();
   });
 
   it("invites the character to party from the right-side button", () => {
@@ -283,7 +283,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-ring")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-accent")).not.toBeNull();
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -337,9 +337,9 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-yellow-400")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-ring")).toBeNull();
-    expect(container.querySelector(".ll\\:border-green-500")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-accent")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -370,7 +370,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-green-500")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-green-500\\/15")).not.toBeNull();
     expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
   });
 
@@ -387,8 +387,8 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:border-orange-500")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-green-500")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -403,8 +403,8 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:border-yellow-400")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-orange-500")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).toBeNull();
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -440,7 +440,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry
         presence={createPresence({
           player: {
-            world: "pandora",
+            world: "luvia",
             name: "Hero Name",
             lvl: 123,
             icon: "hero.gif",

@@ -291,9 +291,7 @@ export const NpcListItem = ({
                 />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top">
-              {t("actions.noMatchingGuilds")}
-            </TooltipContent>
+            <TooltipContent>{t("actions.noMatchingGuilds")}</TooltipContent>
           </Tooltip>
         )}
         {resolvedGuildIds.length > 0 && (
@@ -350,7 +348,7 @@ export const NpcListItem = ({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">
+              <TooltipContent>
                 {npc.notificationSent
                   ? t("actions.messageSent")
                   : t("actions.message")}
@@ -374,7 +372,7 @@ export const NpcListItem = ({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">
+              <TooltipContent>
                 {isCreatingNpcPartyGathering
                   ? t("actions.gatheringParty")
                   : hasActivePartyGathering

@@ -148,10 +148,7 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
         </span>
       </TooltipTrigger>
       {tooltipOpen && (
-        <TooltipContent
-          side="right"
-          className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:rounded-lg ll:border ll:border-white/50 ll:bg-popover ll:p-0 ll:text-popover-foreground ll:text-left ll:shadow-md"
-        >
+        <TooltipContent className="ll:w-72 ll:max-w-72 ll:overflow-hidden ll:p-0 ll:text-left">
           <div className="ll:p-2">
             <div className="ll:flex ll:items-center ll:gap-2">
               <span className="ll:flex ll:h-6 ll:w-6 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:bg-muted">

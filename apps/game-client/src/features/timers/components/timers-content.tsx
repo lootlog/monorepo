@@ -1,47 +1,40 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { WorldSelector } from "@/components/world-selector";
 import { TimersFilters } from "./timers-filters";
 import { TimersGrid } from "./timers-grid";
 import { TimersEmptyState } from "./timers-empty-state";
-import { TimersFooter } from "./timers-footer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "cn";
+import {
+  toolbarStripBleedClassName,
+  toolbarStripClassName,
+} from "@/components/ui/toolbar-strip";
 import { AsyncContent } from "@/components/async-content";
 import { useTranslation } from "react-i18next";
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
-
-type ColorStat = {
-  color: string;
-  total: number;
-  active: number;
-  name: string;
-  bgColor?: string;
-  borderColor?: string;
-};
+import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 
 type TimersContentProps = {
   sortedTimers: TimerWithTimeLeft[];
   settingsKey: string;
   hiddenTimers: string[];
   areFiltersActive: boolean;
-  colorStatistics: ColorStat[];
-  guildId?: string;
   isGrouping: boolean;
   allowWorldSelection: boolean;
   timerFiltersEnabled: boolean;
   isUnderBag: boolean;
   minColumnWidth: number;
-  onAddTimer: () => void;
   onResetFilters: () => void;
-  world?: string;
   compactView?: boolean;
   error?: unknown;
   initialLoading?: boolean;
   onRetry?: () => void;
   refreshError?: boolean;
   refreshing?: boolean;
+  stale?: boolean;
+  /** Covers the strips and the list, e.g. the add timer panel. */
+  overlay?: ReactNode;
 };
 
 export const TimersContent: FC<TimersContentProps> = ({
@@ -49,22 +42,20 @@ export const TimersContent: FC<TimersContentProps> = ({
   settingsKey,
   hiddenTimers,
   areFiltersActive,
-  colorStatistics,
-  guildId,
   isGrouping,
   allowWorldSelection,
   timerFiltersEnabled,
   isUnderBag,
   minColumnWidth,
-  onAddTimer,
   onResetFilters,
-  world,
   compactView = false,
   error = null,
   initialLoading = false,
   onRetry,
   refreshError = false,
   refreshing = false,
+  stale = false,
+  overlay,
 }) => {
   const { t } = useTranslation(["timers", "common"]);
 
@@ -77,28 +68,36 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
-        <AsyncStatusIndicator
-          active={refreshError}
-          kind="error"
-          label={t("states.refreshError")}
+      <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
+        {!compactView && !isGrouping && (
+          <div
+            className={cn(toolbarStripBleedClassName, toolbarStripClassName)}
+          >
+            <GuildSwitcher />
+          </div>
+        )}
+        {!compactView && allowWorldSelection && !isGrouping && (
+          <WorldSelector
+            className={toolbarStripBleedClassName}
+            variant="strip"
+          />
+        )}
+        {!compactView && timerFiltersEnabled && (
+          <TimersFilters filtersKey={settingsKey} />
+        )}
+        <ConnectionStatusStrip
+          className={cn(!isUnderBag && toolbarStripBleedClassName)}
+          error={refreshError}
+          errorLabel={t("states.refreshError")}
+          offline={stale}
+          offlineLabel={t("states.offline")}
+          refreshing={refreshing}
+          refreshingLabel={t("states.refreshing")}
           onRetry={onRetry}
-          retryLabel={t("actions.retry", { ns: "common" })}
-        />
-        <AsyncStatusIndicator
-          active={!refreshError && refreshing}
-          delay
-          kind="loading"
-          label={t("states.refreshing")}
         />
       </div>
-      {!compactView && !isGrouping && <GuildSwitcher className="ll:mb-1!" />}
-      {!compactView && allowWorldSelection && !isGrouping && <WorldSelector />}
-      {!compactView && timerFiltersEnabled && (
-        <TimersFilters filtersKey={settingsKey} />
-      )}
 
-      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:py-1">
+      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
         <AsyncContent
           error={error}
           errorLabel={t("states.loadError")}
@@ -115,7 +114,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           ) : (
             <ScrollArea
               data-testid="timers-scroll-container"
-              className="ll:h-full ll:w-full! ll:py-1"
+              className="ll:h-full ll:w-full!"
             >
               <TimersGrid
                 timers={sortedTimers}
@@ -127,16 +126,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           )}
         </AsyncContent>
       </div>
-
-      {!compactView && (
-        <TimersFooter
-          colorStatistics={colorStatistics}
-          guildId={guildId}
-          isGrouping={isGrouping}
-          onAddTimer={onAddTimer}
-          world={world}
-        />
-      )}
+      {overlay}
     </span>
   );
 };

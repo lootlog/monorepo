@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
 import { useNotificationGuildMembers } from "@/features/notifications/hooks/use-notification-guild-members";
@@ -13,11 +14,7 @@ import {
   buildCurrentCharacterPayload,
   getGuildNamesById,
 } from "@/lib/api/generated-helpers";
-import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
-  usePartyReadyRoomControllerApply,
-} from "@lootlog/client/main";
+import { usePartyReadyRoomControllerApply } from "@lootlog/client/main";
 
 import {
   type StoredNotification,
@@ -54,13 +51,9 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 }) => {
   const visibleNotifications = notifications ?? EMPTY_NOTIFICATIONS;
 
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const {
+    guildsQuery: { data: guilds },
+  } = useLootlogGuilds();
 
   const guildNamesById = getGuildNamesById(guilds);
   const notificationsCount = visibleNotifications.length;

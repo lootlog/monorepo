@@ -25,7 +25,7 @@ import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 const recentWorldsSchema = z.array(z.string());
 
@@ -42,6 +42,7 @@ const recentWorldsKey = (accountId: string, characterId: string) =>
 type WorldSelectorProps = {
   disabled?: boolean;
   className?: string;
+  variant?: "default" | "strip";
 };
 
 const MAX_RECENT_WORLDS = 3;
@@ -49,11 +50,11 @@ const MAX_RECENT_WORLDS = 3;
 export const WorldSelector: FC<WorldSelectorProps> = ({
   disabled = false,
   className = "",
+  variant = "default",
 }) => {
   const { t } = useTranslation("common");
 
-  const { guildsQuery, preferencesQuery, visibleGuilds } =
-    useVisibleLootlogGuilds();
+  const { guildsQuery, preferencesQuery, visibleGuilds } = useLootlogGuilds();
 
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",
@@ -216,8 +217,9 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     >
       <ComboboxTrigger
         size="sm"
+        variant={variant}
         aria-label={t("worldSelector.placeholder")}
-        className={cn("ll:mb-1", className)}
+        className={cn(variant === "default" && "ll:mb-1", className)}
       >
         <ComboboxValue placeholder={placeholder} />
       </ComboboxTrigger>

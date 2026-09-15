@@ -114,7 +114,7 @@ const setInitialNpcs = (npcs: GameNpc[]) => {
     },
     interface: "ni",
     map: { id: 1, name: "Ithan", visibility: 30 },
-    world: "pandora",
+    world: "luvia",
   });
 };
 
@@ -520,7 +520,7 @@ describe("NpcsDetectionProcessor", () => {
             id: "rule-1",
             minLevel: 200,
             maxLevel: 260,
-            world: mode === "any-world" ? undefined : "pandora",
+            world: mode === "any-world" ? undefined : "luvia",
             guildIds: ["guild-1", "guild-2"],
           },
         ],
@@ -533,7 +533,7 @@ describe("NpcsDetectionProcessor", () => {
 
       if (!first) throw new Error("Expected notification request");
       expect(await first.json()).toMatchObject({
-        world: "pandora",
+        world: "luvia",
         guildIds: ["guild-1", "guild-2"],
         npc: {
           id: 500,

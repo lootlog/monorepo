@@ -12,7 +12,7 @@ it("loads scoped history only when opened and restores the timer into its world 
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <GlobalTimerHistoryPopover guildId="guild-1" world="pandora" />
+      <GlobalTimerHistoryPopover guildId="guild-1" world="luvia" />
     </QueryClientProvider>,
   );
 
@@ -24,7 +24,7 @@ it("loads scoped history only when opened and restores the timer into its world 
     expect(url.pathname).toBe("/timers/history");
     expect(Object.fromEntries(url.searchParams)).toEqual({
       guildId: "guild-1",
-      world: "pandora",
+      world: "luvia",
       limit: "10",
     });
     await user.hover(screen.getByText("Tanroth"));
@@ -33,7 +33,7 @@ it("loads scoped history only when opened and restores the timer into its world 
     await user.click(screen.getByRole("button", { name: "Przywróć timer" }));
     await waitFor(() =>
       expect(
-        fixture.queryClient.getQueryData(queryKeys.timers("pandora")),
+        fixture.queryClient.getQueryData(queryKeys.timers("luvia")),
       ).toEqual([
         expect.objectContaining({
           timerKey: fixture.history.timerKey,

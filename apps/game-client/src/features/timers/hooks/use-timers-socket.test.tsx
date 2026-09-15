@@ -17,7 +17,7 @@ function TimerListener() {
 it("updates world cache only while joined and subscribed, including listener cleanup", async () => {
   const fixture = createTimerHttpFixture();
   const gateway = createTimerRealtimeFixture();
-  const key = queryKeys.timers("pandora");
+  const key = queryKeys.timers("luvia");
 
   const content = (listening: boolean) => (
     <QueryClientProvider client={fixture.queryClient}>

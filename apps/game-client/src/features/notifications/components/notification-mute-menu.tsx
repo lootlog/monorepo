@@ -103,9 +103,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{muteButton}</TooltipTrigger>
-        <TooltipContent side="top">
-          {t("actions.muteOptionsAria")}
-        </TooltipContent>
+        <TooltipContent>{t("actions.muteOptionsAria")}</TooltipContent>
       </Tooltip>
     );
   }
@@ -114,9 +112,7 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <Tooltip>
         <TooltipTrigger asChild>{muteButton}</TooltipTrigger>
-        <TooltipContent side="top">
-          {t("actions.muteOptionsAria")}
-        </TooltipContent>
+        <TooltipContent>{t("actions.muteOptionsAria")}</TooltipContent>
       </Tooltip>
       <PopoverContent
         anchor={muteButtonRef}

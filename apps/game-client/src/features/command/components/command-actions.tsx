@@ -17,7 +17,7 @@ export const CommandActions = () => {
           size="14"
         />
       </TooltipTrigger>
-      <TooltipContent side="top">{t("actions.infoTooltip")}</TooltipContent>
+      <TooltipContent>{t("actions.infoTooltip")}</TooltipContent>
     </Tooltip>,
   ];
 };

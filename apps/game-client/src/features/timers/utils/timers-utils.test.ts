@@ -27,7 +27,7 @@ const createTimer = (overrides: Partial<Timer> = {}): Timer => ({
   timerKey: "timer-1",
   updatedAt: "2026-04-22T10:00:00.000Z",
   wasReset: false,
-  world: "pandora",
+  world: "luvia",
   ...overrides,
 });
 

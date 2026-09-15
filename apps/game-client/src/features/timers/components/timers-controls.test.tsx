@@ -1,9 +1,11 @@
 import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NpcType } from "@/api/npcs.api";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
+import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersActions } from "./timers-actions";
 import { TimersFilters } from "./timers-filters";
 
@@ -46,20 +48,22 @@ describe("timers controls", () => {
       target: { value: "tan" },
     });
     expect(useTimersStore.getState().timerFiltersSearchText).toBe("tan");
-    fireEvent.change(screen.getByPlaceholderText("Od"), {
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
       target: { value: "-50" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Do"), {
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
       target: { value: "999" },
     });
     expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
       minLvl: 0,
       maxLvl: 500,
     });
-    await user.click(screen.getByRole("button", { name: "H" }));
+    await user.click(screen.getByRole("button", { name: "Typy potworów" }));
+    await user.click(await screen.findByRole("button", { name: "heros" }));
     expect(
       useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
     ).toEqual([]);
+    await user.keyboard("{Escape}");
     const custom = screen.getAllByRole("button").at(-1);
 
     if (!custom) throw new Error("Expected custom color trigger");
@@ -71,7 +75,8 @@ describe("timers controls", () => {
     ).toEqual(["red", "custom-1"]);
   });
 
-  it("selects only the right-clicked npc type and preserves the other filters", () => {
+  it("selects only the right-clicked npc type and preserves the other filters", async () => {
+    const user = userEvent.setup();
     useTimersStore.getState().setTimersFilters("guild-1", {
       ...useTimersStore.getState().timersFilters["guild-1"],
       selectedNpcTypes: [
@@ -82,7 +87,8 @@ describe("timers controls", () => {
       ],
     });
     render(<TimersFilters filtersKey="guild-1" />);
-    const button = screen.getByRole("button", { name: "E2" });
+    await user.click(screen.getByRole("button", { name: "Typy potworów" }));
+    const button = await screen.findByRole("button", { name: "elita II" });
     const event = createEvent.contextMenu(button);
     fireEvent(button, event);
     expect(event.defaultPrevented).toBe(true);
@@ -101,48 +107,78 @@ describe("timers controls", () => {
     const toggleColorFiltersEnabled = vi.fn<() => void>();
     const setTimersSortOrder = vi.fn<(order: "asc" | "desc") => void>();
     const setShowHiddenTimers = vi.fn<(show: boolean) => void>();
+    const onAddTimer = vi.fn<() => void>();
+    const fixture = createTimerHttpFixture();
 
     const actions = (underBag: boolean) => (
-      <TimersActions
-        underBag={underBag}
-        timerFiltersEnabled={!underBag}
-        toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-        colorFiltersEnabled={underBag}
-        toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-        timersSortOrder={underBag ? "desc" : "asc"}
-        setTimersSortOrder={setTimersSortOrder}
-        showHiddenTimers={underBag}
-        setShowHiddenTimers={setShowHiddenTimers}
-      />
+      <QueryClientProvider client={fixture.queryClient}>
+        <TimersActions
+          timerFiltersEnabled={!underBag}
+          toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+          colorFiltersEnabled={underBag}
+          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+          timersSortOrder={underBag ? "desc" : "asc"}
+          setTimersSortOrder={setTimersSortOrder}
+          showHiddenTimers={underBag}
+          setShowHiddenTimers={setShowHiddenTimers}
+          guildId="guild-1"
+          world="luvia"
+          isGrouping={underBag}
+          addTimerOpen={underBag}
+          onAddTimer={onAddTimer}
+        />
+      </QueryClientProvider>
     );
 
     const view = render(actions(false));
     await user.tab();
     expect(
-      screen.getByRole("button", { name: t("toolbar.hideFilters") }),
+      screen.getByRole("button", { name: t("toolbar.options") }),
     ).toHaveFocus();
     await user.keyboard("{Enter}");
+
+    const filtersOption = await screen.findByRole("button", {
+      name: t("toolbar.filters"),
+    });
+
+    expect(filtersOption).toHaveAttribute("aria-pressed", "true");
+    await user.click(filtersOption);
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.enableColorFilters") }),
+      screen.getByRole("button", { name: t("toolbar.colorFilters") }),
     );
     await user.click(
       screen.getByRole("button", { name: t("toolbar.sortDesc") }),
     );
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.showHiddenTimers") }),
+      screen.getByRole("button", { name: t("toolbar.hiddenTimers") }),
     );
     expect(toggleTimerFiltersEnabled).toHaveBeenCalledOnce();
     expect(toggleColorFiltersEnabled).toHaveBeenCalledOnce();
     expect(setTimersSortOrder).toHaveBeenCalledWith("desc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(true);
     view.rerender(actions(true));
+    expect(
+      screen.getByRole("button", { name: t("toolbar.colorFilters") }),
+    ).toHaveAttribute("aria-pressed", "true");
     await user.click(
       screen.getByRole("button", { name: t("toolbar.sortAsc") }),
     );
     await user.click(
-      screen.getByRole("button", { name: t("toolbar.hideHiddenTimers") }),
+      screen.getByRole("button", { name: t("toolbar.hiddenTimers") }),
     );
     expect(setTimersSortOrder).toHaveBeenCalledWith("asc");
     expect(setShowHiddenTimers).toHaveBeenCalledWith(false);
+    expect(
+      screen.queryByRole("button", { name: t("toolbar.history") }),
+    ).not.toBeInTheDocument();
+    view.rerender(actions(false));
+    expect(
+      screen.getByRole("button", { name: t("toolbar.history") }),
+    ).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: t("toolbar.addTimer") }),
+    );
+    expect(onAddTimer).toHaveBeenCalledOnce();
+    fixture.cleanup();
   });
 });

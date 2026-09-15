@@ -14,5 +14,9 @@
     "lootlogPage": "Strona Lootloga",
     "dashboard": "Dashboard",
     "emptyGuilds": "Nie masz żadnych gildii"
+  },
+  "connection": {
+    "connectedToServers": "Połączono z serwerami:",
+    "notConnected": "Nie połączono z żadnym serwerem"
   }
 }

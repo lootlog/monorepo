@@ -59,7 +59,7 @@ export function ChatGatheringInviteButton({
           )}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }

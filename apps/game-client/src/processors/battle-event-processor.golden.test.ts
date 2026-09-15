@@ -63,7 +63,7 @@ describe("BattleEventProcessor golden payload", () => {
       },
       interface: "ni",
       map: { id: 1, name: "Map", visibility: 30 },
-      world: "pandora",
+      world: "luvia",
     });
   });
 
@@ -76,7 +76,7 @@ describe("BattleEventProcessor golden payload", () => {
 
     expect(fixture.battles()).toHaveLength(1);
     expect(await fixture.battles()[0]?.text()).toBe(
-      '{"accountId":"67890","characterId":"12345","submissionId":"07d2abdf7167ebc04c5968489e8039f6a9dd9ea89bae26777ec2433b5a5831d1","events":[{"f":{"m":["alpha"],"init":"1","w":{"111":{"icon":"one.gif","lvl":100,"name":"Player1","originalId":111,"prof":"w","team":1},"222":{"icon":"two.gif","lvl":101,"name":"Player2","originalId":222,"prof":"m","team":2}}}},{"f":{"m":["omega"],"endBattle":1}}],"world":"pandora"}',
+      '{"accountId":"67890","characterId":"12345","submissionId":"caa56b24ec6eea4d1999bf8cecd663e45929e567e7fa98e1f6cd8f61d2d62552","events":[{"f":{"m":["alpha"],"init":"1","w":{"111":{"icon":"one.gif","lvl":100,"name":"Player1","originalId":111,"prof":"w","team":1},"222":{"icon":"two.gif","lvl":101,"name":"Player2","originalId":222,"prof":"m","team":2}}}},{"f":{"m":["omega"],"endBattle":1}}],"world":"luvia"}',
     );
     expect(useBattleStore.getState().lastBattleHash).toBe(
       "90757b5e1de33a79eca635bda0f55da404fb206359ef757da52057ce2653b5f1",

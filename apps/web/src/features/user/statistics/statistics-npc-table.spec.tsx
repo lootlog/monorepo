@@ -11,7 +11,7 @@ it("keeps live total and aligned comparison distinct without inventing growth pe
     <StatisticsNpcTable
       npcs={[
         {
-          world: "pandora",
+          world: "luvia",
           npcId: 1,
           npcName: "Testowy potwór",
           npcType: "HERO",

@@ -4,6 +4,7 @@ import { createTimerFixture } from "../timer-fixtures";
 import { TimerClockProvider } from "./timer-clock-provider";
 
 import { TimerLiveTile } from "./timer-live-tile";
+import { TIMERS_COLORS } from "../constants/timer-colors";
 
 const NOW = new Date("2026-07-20T10:00:00.000Z");
 
@@ -32,6 +33,7 @@ describe("TimerLiveTile", () => {
           displayMode="row"
           fontSize={11}
           label="Tanroth"
+          paint={TIMERS_COLORS.white}
           timer={createTimer()}
         />
       </TimerClockProvider>,
@@ -47,15 +49,11 @@ describe("TimerLiveTile", () => {
     act(() => {
       vi.advanceTimersByTime(4_000);
     });
-    expect(screen.getByText("00:00:00").parentElement).toHaveClass(
-      "ll:text-orange-400",
-    );
+    expect(screen.getByText("00:00:00")).toHaveClass("ll:text-orange-300");
 
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
-    expect(screen.getByText("-00:00:01").parentElement).toHaveClass(
-      "ll:text-red-500",
-    );
+    expect(screen.getByText("-00:00:01")).toHaveClass("ll:text-red-400");
   });
 });

@@ -1,10 +1,9 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
-import type { FC } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { SingleTimer } from "./single-timer";
 import { getGuildIds, getGuildNamesById } from "@/lib/api/generated-helpers";
 import {
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
   getGuildsControllerGetGuildPermissionsQueryKey,
   getGuildsControllerGetGuildPermissionsQueryOptions,
 } from "@lootlog/client/main";
@@ -20,19 +19,43 @@ type TimersGridProps = {
   minColumnWidth: number;
 };
 
+/**
+ * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap, so
+ * row parity computed here matches the rows the browser lays out.
+ */
+const countGridColumns = (gridWidth: number, minColumnWidth: number) =>
+  Math.max(1, Math.floor(gridWidth / minColumnWidth));
+
+const useGridWidth = () => {
+  const gridRef = useRef<HTMLSpanElement>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+
+    if (!grid || typeof ResizeObserver === "undefined") return;
+
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      if (entry) setGridWidth(entry.contentRect.width);
+    });
+
+    resizeObserver.observe(grid);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  return { gridRef, gridWidth };
+};
+
 export const TimersGrid: FC<TimersGridProps> = ({
   timers,
   settingsKey,
   hiddenTimers,
   minColumnWidth,
 }) => {
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const {
+    guildsQuery: { data: guilds },
+  } = useLootlogGuilds();
 
   const guildIds = getGuildIds(guilds);
   const guildNamesById = getGuildNamesById(guilds);
@@ -65,17 +88,21 @@ export const TimersGrid: FC<TimersGridProps> = ({
   );
 
   const hiddenTimerNames = new Set(hiddenTimers);
+  const { gridRef, gridWidth } = useGridWidth();
+  const columnCount = countGridColumns(gridWidth, minColumnWidth);
 
   return (
     <TimerClockProvider>
       <span
-        className="ll:grid ll:gap-0.5 ll:w-full"
+        ref={gridRef}
+        className="ll:grid ll:w-full"
         style={{
           gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
         }}
       >
-        {timers.map((timer) => {
+        {timers.map((timer, index) => {
           const isHidden = hiddenTimerNames.has(timer.npc.name);
+          const isAlternateRow = Math.floor(index / columnCount) % 2 === 1;
 
           return (
             <SingleTimer
@@ -86,6 +113,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
               timer={timer}
               settingsKey={settingsKey}
               isHidden={isHidden}
+              isAlternateRow={isAlternateRow}
             />
           );
         })}

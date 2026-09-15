@@ -4,10 +4,8 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
-import { useWindowsStore } from "@/store/windows.store";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
-import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
@@ -18,7 +16,6 @@ import {
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
 
 const SECONDS_IN_HOUR = 3600;
 
@@ -249,66 +246,16 @@ const createFormSchema = (t: TimerFormTranslation) =>
 type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 export type AddTimerFormProps = {
-  initialGuildId?: string;
+  /**
+   * The timer lands on the Lootlog the timers window currently shows; without
+   * one (no Lootlog yet, or the "all" chat scope) the form cannot submit.
+   */
+  guildId?: string;
+  onClose: () => void;
 };
 
-type GuildSelection = {
-  contextKey: string;
-  guildId: string;
-};
-
-const getPreferredGuildId = (
-  initialGuildId: string | undefined,
-  savedGuildId: string | undefined,
-  currentGuildId: string | undefined,
-  availableGuildIds: ReadonlySet<string>,
-  firstVisibleGuildId: string | undefined,
-) => {
-  if (initialGuildId && availableGuildIds.has(initialGuildId)) {
-    return initialGuildId;
-  }
-
-  if (savedGuildId && availableGuildIds.has(savedGuildId)) {
-    return savedGuildId;
-  }
-
-  if (currentGuildId && availableGuildIds.has(currentGuildId)) {
-    return currentGuildId;
-  }
-
-  return firstVisibleGuildId ?? "";
-};
-
-const resolveStoredGuildIds = (
-  characterId: string,
-  guildIdByCharId: Record<string, string>,
-  selectedGuildIdsByCharId: Record<string, string[]>,
-) => {
-  if (!characterId) {
-    return { currentGuildId: undefined, savedGuildId: undefined };
-  }
-
-  return {
-    currentGuildId: guildIdByCharId[characterId],
-    savedGuildId: selectedGuildIdsByCharId[characterId]?.[0],
-  };
-};
-
-const getSelectedGuildId = (
-  selection: GuildSelection | null,
-  contextKey: string,
-  availableGuildIds: ReadonlySet<string>,
-  preferredGuildId: string,
-) => {
-  if (
-    selection?.contextKey === contextKey &&
-    availableGuildIds.has(selection.guildId)
-  ) {
-    return selection.guildId;
-  }
-
-  return preferredGuildId;
-};
+const resolveTargetGuildId = (guildId: string | undefined) =>
+  guildId && guildId !== "all" ? guildId : "";
 
 const shouldShowNoNpcResults = ({
   debouncedSearch,
@@ -338,57 +285,21 @@ const getNpcSearchParams = (world: string | undefined, search: string) => ({
   world: world ?? "",
 });
 
-export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
+export function useAddTimerForm({ guildId, onClose }: AddTimerFormProps) {
   const { t } = useTranslation("timers");
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
-
-  const characterId = useGameStore(
-    (state) => state.game?.hero.characterId ?? "",
-  );
-
-  const { selectedGuildIdsForTimersByCharId, guildIdByCharId } =
-    useSettingsStore();
-
-  const setOpen = useWindowsStore((state) => state.setOpen);
-  const { visibleGuilds } = useVisibleLootlogGuilds();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const [selectedGuildSelection, setSelectedGuildSelection] =
-    useState<GuildSelection | null>(null);
-
   const selectedNpcRef = useRef<SearchTimersNpcResponseDtoOutput | null>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { currentGuildId, savedGuildId } = resolveStoredGuildIds(
-    characterId,
-    guildIdByCharId,
-    selectedGuildIdsForTimersByCharId,
-  );
-
-  const guildSelectionContextKey = `${characterId}:${initialGuildId ?? ""}:${savedGuildId ?? ""}`;
-  const availableGuildIds = new Set(visibleGuilds.map((guild) => guild.id));
-
-  const preferredGuildId = getPreferredGuildId(
-    initialGuildId,
-    savedGuildId,
-    currentGuildId,
-    availableGuildIds,
-    visibleGuilds[0]?.id,
-  );
-
-  const selectedGuildId = getSelectedGuildId(
-    selectedGuildSelection,
-    guildSelectionContextKey,
-    availableGuildIds,
-    preferredGuildId,
-  );
-
+  const selectedGuildId = resolveTargetGuildId(guildId);
   const searchGuildId = selectedGuildId;
   const npcSearchParams = getNpcSearchParams(world, debouncedSearch);
 
@@ -411,13 +322,6 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
       },
     },
   );
-
-  const handleGuildSelectionChange = (guildId: string) => {
-    setSelectedGuildSelection({
-      contextKey: guildSelectionContextKey,
-      guildId,
-    });
-  };
 
   const {
     register,
@@ -489,7 +393,9 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
       handleNpcSelect(npcResults[selectedIndex]);
-    } else if (e.key === "Escape") {
+    } else if (e.key === "Escape" && showSuggestions) {
+      // Escape dismisses the suggestions first; the panel closes on the next one.
+      e.stopPropagation();
       setShowSuggestions(false);
       setSelectedIndex(-1);
     }
@@ -537,11 +443,7 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
       timerData.maxSeconds = parseDurationToSeconds(data.maxDuration);
     }
 
-    createManualTimer(timerData, {
-      onSuccess: () => {
-        setOpen("add-timer", false);
-      },
-    });
+    createManualTimer(timerData, { onSuccess: onClose });
   };
 
   const [startDate, endDate, watchedNpcType] = useWatch({
@@ -565,7 +467,6 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
   return {
     t,
     isPending,
-    visibleGuilds,
     searchQuery,
     setSearchQuery,
     showSuggestions,
@@ -580,7 +481,6 @@ export function useAddTimerForm({ initialGuildId }: AddTimerFormProps) {
     npcSearchFailed,
     npcSearchLoading,
     retryNpcSearch,
-    handleGuildSelectionChange,
     register,
     handleSubmit,
     setValue,

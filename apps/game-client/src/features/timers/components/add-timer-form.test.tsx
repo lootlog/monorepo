@@ -1,10 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { expect, it, onTestFinished } from "vitest";
+import { expect, it, onTestFinished, vi } from "vitest";
 import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
-import { useSettingsStore } from "@/store/settings.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { createAddTimerFixture } from "../add-timer-fixtures";
 import { AddTimerForm } from "./add-timer-form";
 
@@ -23,15 +21,15 @@ const npc: SearchTimersNpcResponseDtoOutput = {
 };
 
 const mountForm = (
-  initialGuildId?: string,
-  hiddenGuildIds: string[] = [],
+  guildId: string | undefined = "guild-1",
   npcResults: SearchTimersNpcResponseDtoOutput[] = [],
 ) => {
-  const fixture = createAddTimerFixture({ hiddenGuildIds, npcResults });
+  const fixture = createAddTimerFixture({ npcResults });
+  const onClose = vi.fn();
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <AddTimerForm initialGuildId={initialGuildId} />
+      <AddTimerForm guildId={guildId} onClose={onClose} />
     </QueryClientProvider>,
   );
 
@@ -40,7 +38,7 @@ const mountForm = (
     fixture.cleanup();
   });
 
-  return fixture;
+  return { ...fixture, onClose };
 };
 
 const fillDurations = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -69,60 +67,36 @@ const selectNpc = async (user: ReturnType<typeof userEvent.setup>) => {
   expect(screen.getByLabelText("Nazwa")).toHaveValue("Tanroth");
 };
 
-it("uses saved guild selection, preserves it after a local selection, submits durations and closes on success", async () => {
+it("submits durations to the window's guild and closes on success", async () => {
   const user = userEvent.setup();
   const fixture = mountForm();
-  expect(screen.getByRole("button", { name: "Beta" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
   expect(screen.getByLabelText("Nazwa")).toHaveAttribute("maxLength", "50");
-  const scroll = screen.getByTestId("add-timer-scroll-container");
-  expect(scroll).toHaveClass("ll:h-full", "ll:overflow-hidden");
-  expect(scroll.querySelector("[data-ll-scroll-area-viewport]")).toHaveStyle({
-    overflowX: "hidden",
-    overflowY: "scroll",
-  });
-  await user.click(screen.getByRole("button", { name: "Alpha" }));
   await fillDurations(user);
   expect(await submit(user, fixture)).toMatchObject({
     name: "Tanroth",
-    world: "pandora",
+    world: "luvia",
     minSeconds: 60,
     maxSeconds: 120,
   });
   expect(fixture.posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
-  await waitFor(() =>
-    expect(useWindowsStore.getState()["add-timer"].open).toBe(false),
-  );
-  expect(useSettingsStore.getState().selectedGuildIdsForTimersByCharId).toEqual(
-    { "101": ["guild-2"] },
-  );
+  await waitFor(() => expect(fixture.onClose).toHaveBeenCalledOnce());
 });
 
-it("prefers the initial guild without overwriting the saved selection", () => {
-  mountForm("guild-1");
-  expect(screen.getByRole("button", { name: "Alpha" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(useSettingsStore.getState().selectedGuildIdsForTimersByCharId).toEqual(
-    { "101": ["guild-2"] },
-  );
-});
-
-it("uses the only visible guild without a server picker", async () => {
+it("closes without a request from the cancel button", async () => {
   const user = userEvent.setup();
-  const fixture = mountForm(undefined, ["guild-2"]);
-  expect(screen.queryByText("Serwer")).not.toBeInTheDocument();
-  await fillDurations(user);
-  await submit(user, fixture);
-  expect(fixture.posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
+  const fixture = mountForm();
+  await user.click(screen.getByRole("button", { name: "Anuluj" }));
+  expect(fixture.onClose).toHaveBeenCalledOnce();
+  expect(fixture.posts()).toHaveLength(0);
 });
 
-it("disables submission without showing a required selection error when every guild is hidden", () => {
-  mountForm(undefined, ["guild-1", "guild-2"]);
-  expect(screen.queryByText("Wybierz serwer")).not.toBeInTheDocument();
+it("disables submission when the window has no guild to add the timer to", () => {
+  mountForm("");
+  expect(screen.getByRole("button", { name: "Dodaj" })).toBeDisabled();
+});
+
+it('disables submission for the chat-only "all" scope', () => {
+  mountForm("all");
   expect(screen.getByRole("button", { name: "Dodaj" })).toBeDisabled();
 });
 
@@ -151,7 +125,7 @@ it("omits optional level, profession and NPC type when left empty", async () => 
 
 it("selects an autocomplete NPC and submits custom spawn dates", async () => {
   const user = userEvent.setup();
-  const fixture = mountForm(undefined, [], [npc]);
+  const fixture = mountForm("guild-1", [npc]);
   await selectNpc(user);
   expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue(
     "0h 1m 20s",
@@ -182,7 +156,7 @@ it("selects an autocomplete NPC and submits custom spawn dates", async () => {
 
 it("retains the visible level but omits the hidden profession after changing the selected NPC's name", async () => {
   const user = userEvent.setup();
-  const fixture = mountForm(undefined, [], [npc]);
+  const fixture = mountForm("guild-1", [npc]);
   await selectNpc(user);
   await user.clear(screen.getByLabelText("Nazwa"));
   await user.type(screen.getByLabelText("Nazwa"), "Inny timer");
@@ -193,7 +167,7 @@ it("retains the visible level but omits the hidden profession after changing the
 
 it("omits a cleared autocomplete level", async () => {
   const user = userEvent.setup();
-  const fixture = mountForm(undefined, [], [npc]);
+  const fixture = mountForm("guild-1", [npc]);
   await selectNpc(user);
   await user.clear(screen.getByLabelText("Poziom"));
   expect(await submit(user, fixture)).not.toHaveProperty("lvl");

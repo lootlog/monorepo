@@ -83,7 +83,7 @@ export function ChatGatheringJoinButton({
           />
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top">
+      <TooltipContent>
         {getTooltipContent(label, statusLabel, shortcut, featured)}
       </TooltipContent>
     </Tooltip>

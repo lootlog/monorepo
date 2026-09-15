@@ -10,18 +10,23 @@
   "filters": {
     "searchPlaceholder": "Szukaj...",
     "minPlaceholder": "Od",
-    "maxPlaceholder": "Do"
+    "maxPlaceholder": "Do",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "minLvlLabel": "Poziom od",
+    "maxLvlLabel": "Poziom do",
+    "npcTypesLabel": "Typy potworów",
+    "npcTypes": "Typy",
+    "npcTypesOnlyHint": "Prawy klik: tylko ten typ"
   },
   "toolbar": {
-    "hideFilters": "Ukryj filtry",
-    "showFilters": "Pokaż filtry",
-    "disableColorFilters": "Wyłącz filtry po kolorze",
-    "enableColorFilters": "Włącz filtry po kolorze",
+    "filters": "Filtry",
+    "options": "Opcje timerów",
+    "colorFilters": "Filtry po kolorze",
+    "hiddenTimers": "Pokaż ukryte timery",
     "sortAsc": "Sortuj rosnąco",
     "sortDesc": "Sortuj malejąco",
-    "hideHiddenTimers": "Ukryj ukryte timery",
-    "showHiddenTimers": "Pokaż ukryte timery",
-    "history": "Historia timerów"
+    "history": "Historia timerów",
+    "addTimer": "Dodaj timer"
   },
   "tooltip": {
     "addedBy": "Dodane przez:",
@@ -29,10 +34,6 @@
     "min": "Min:",
     "max": "Max:",
     "reset": "⟳ Timer został zresetowany"
-  },
-  "connection": {
-    "connectedToServers": "Połączono z serwerami:",
-    "notConnected": "Nie połączono z żadnym serwerem"
   },
   "emptyState": {
     "filteredTitle": "Brak pasujących timerów",
@@ -44,7 +45,7 @@
     "loadError": "Nie udało się załadować timerów",
     "refreshError": "Nie udało się odświeżyć timerów",
     "refreshing": "Odświeżanie timerów",
-    "offline": "Dane timerów mogą być nieaktualne"
+    "offline": "Połączenie przerwane - timery mogą być nieaktualne"
   },
   "contextMenu": {
     "color": "Kolor",
@@ -114,11 +115,7 @@
     "violet": "Fioletowy",
     "purple": "Purpurowy",
     "pink": "Różowy",
-    "white": "Biały"
-  },
-  "colorStatistics": {
-    "title": "Statystyki kolorów timerów",
-    "empty": "Brak ustawionych kolorów"
+    "white": "Bez koloru"
   },
   "addForm": {
     "validation": {
@@ -134,8 +131,6 @@
       "endDateRequired": "Data końca jest wymagana",
       "endDateAfterStart": "Data końca musi być późniejsza niż data startu"
     },
-    "guildLabel": "Serwer",
-    "guildRequired": "Wybierz serwer",
     "searchNpcLabel": "Szukaj potwora",
     "searchNpcPlaceholder": "Wpisz nazwę potwora...",
     "npcSearching": "Szukanie potwora...",
@@ -158,10 +153,8 @@
     "windowLabel": "Okno:",
     "invalidRange": "Nieprawidłowy zakres",
     "submitting": "Dodawanie...",
-    "submit": "Dodaj"
-  },
-  "footer": {
-    "addTimer": "Dodaj timer"
+    "submit": "Dodaj",
+    "cancel": "Anuluj"
   },
   "conflictDialog": {
     "description": "Twoje ustawienia timerów zostały zmodyfikowane na wielu urządzeniach. Którą wersję chcesz zachować?",

@@ -61,7 +61,14 @@
     "loading": "Ładowanie Lootlogów…",
     "loadError": "Nie udało się pobrać listy Lootlogów.",
     "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
-    "noResults": "Nie znaleziono Lootlogów pasujących do wybranych filtrów."
+    "noResults": "Nie znaleziono Lootlogów pasujących do wybranych filtrów.",
+    "order": {
+      "handleLabel": "Przenieś {{name}} (pozycja {{position}} z {{count}})",
+      "handleHint": "Przeciągnij, aby zmienić kolejność. Strzałki góra/dół przenoszą o jedną pozycję.",
+      "filteredHint": "Wyczyść wyszukiwanie i filtry, aby zmieniać kolejność.",
+      "moved": "{{name}}: pozycja {{position}} z {{count}}",
+      "description": "Kolejność z listy obowiązuje w przełącznikach Lootlogów w grze."
+    }
   },
   "search": {
     "placeholder": "Szukaj",

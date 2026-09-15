@@ -12,6 +12,12 @@ type AsyncStatusIndicatorProps = {
   onRetry?: () => void;
   retryLabel?: string;
   className?: string;
+  /**
+   * `strip` renders a full-width toolbar strip that stacks with the other
+   * strips (rules only on top and bottom); `inline` renders a pill sized to
+   * its label.
+   */
+  layout?: "inline" | "strip";
 };
 
 export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
@@ -22,6 +28,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
   onRetry,
   retryLabel,
   className,
+  layout = "inline",
 }) => {
   const delayedVisible = useDelayedVisibility(active && delay);
   const visible = active && (!delay || delayedVisible);
@@ -34,7 +41,10 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
     <div
       aria-live="polite"
       className={cn(
-        "ll:inline-flex ll:min-h-5 ll:items-center ll:gap-1.5 ll:rounded-sm ll:border ll:px-2 ll:py-0.5 ll:text-[10px] ll:leading-none ll:shadow-sm",
+        "ll:min-h-5 ll:items-center ll:gap-1.5 ll:rounded-sm ll:border ll:px-2 ll:py-0.5 ll:text-[10px] ll:leading-none ll:shadow-sm",
+        layout === "strip"
+          ? "ll:-mt-px ll:flex ll:h-7 ll:w-full ll:rounded-none ll:border-x-0 ll:shadow-none"
+          : "ll:inline-flex",
         kind === "error"
           ? "ll:border-red-500/50 ll:bg-red-950/85 ll:text-red-200"
           : kind === "warning"
@@ -54,7 +64,7 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
       ) : (
         <AlertCircle aria-hidden className="ll:size-3" />
       )}
-      <span>{label}</span>
+      <span className="ll:min-w-0 ll:flex-1">{label}</span>
       {onRetry && retryLabel ? (
         <Button
           size="xs"
