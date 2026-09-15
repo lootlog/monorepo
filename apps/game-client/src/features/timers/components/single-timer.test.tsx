@@ -97,7 +97,7 @@ describe("SingleTimer", () => {
     expect(label).toHaveTextContent("(120w)");
     expect(screen.getByText("00:00:10")).toBeVisible();
     expect(view.container.querySelector('[id="10"]')).toHaveClass(
-      "ll:bg-red-500/20",
+      "ll:from-red-500/60",
     );
     await user.hover(label);
     expect(await screen.findByText("Tester (Alpha)")).toBeVisible();
@@ -160,9 +160,9 @@ describe("SingleTimer", () => {
     });
     const tile = view.container.querySelector('[id="10"]');
     expect(tile).toHaveStyle({
-      borderColor: "#111111",
-      backgroundColor: "#222222",
+      backgroundImage: "linear-gradient(90deg, #222222, rgba(0, 0, 0, 0.45))",
     });
+    expect(tile).not.toHaveStyle({ borderColor: "#111111" });
     expect(tile?.parentElement).toHaveClass("ll:opacity-50");
     expect(screen.getByText("00:00:10").parentElement).toHaveClass(
       "ll:opacity-60",

@@ -274,7 +274,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       title={t("window.title")}
       onClose={() => setOpen("timers", false)}
       minHeight={108}
-      contentClassName={generalConfig.compactView ? undefined : "ll:-mx-1"}
+      contentClassName={
+        generalConfig.compactView ? undefined : "ll:-mx-1 ll:-mb-1"
+      }
       disableTitle={generalConfig.compactView}
       draggableContent={generalConfig.compactView}
       actions={

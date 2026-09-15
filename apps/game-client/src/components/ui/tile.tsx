@@ -6,7 +6,6 @@ type TileProps = {
   children?: React.ReactNode;
   id?: string;
   color?: string;
-  customBorderColor?: string;
   customBackgroundColor?: string;
   className?: string;
   onDoubleClick?: () => void;
@@ -35,7 +34,6 @@ export const Tile: FC<TileProps> = ({
   children,
   id,
   color,
-  customBorderColor,
   customBackgroundColor,
   className = "",
   onDoubleClick,
@@ -47,16 +45,12 @@ export const Tile: FC<TileProps> = ({
 
   const customStyles: React.CSSProperties = {};
 
-  if (customBorderColor) {
-    customStyles.borderColor = customBorderColor;
-  }
-
   if (customBackgroundColor) {
     const bgToUse = isHovered
       ? increaseBrightness(customBackgroundColor, 20)
       : customBackgroundColor;
 
-    customStyles.backgroundColor = bgToUse;
+    customStyles.backgroundImage = `linear-gradient(90deg, ${bgToUse}, rgba(0, 0, 0, 0.45))`;
   }
 
   return (

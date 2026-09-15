@@ -157,6 +157,9 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
 #lootlog-root,
 .ll-theme-boundary {
   color: var(--foreground);
+  /* SI sets `body { line-height: 1 }`; NI leaves it at `normal`. Pin it so
+     Lootlog renders the same on both interfaces. */
+  line-height: normal;
 }
 
 @keyframes ll-window-enter {
