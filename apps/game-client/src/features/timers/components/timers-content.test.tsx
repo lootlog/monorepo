@@ -59,7 +59,6 @@ const mountContent = (
     getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
     [],
   );
-  const onAddTimer = vi.fn<() => void>();
   const onRetry = vi.fn<() => void>();
   const onResetFilters = vi.fn<() => void>();
   const onPointerDown = vi.fn<() => void>();
@@ -72,15 +71,11 @@ const mountContent = (
           settingsKey="guild-1"
           hiddenTimers={[]}
           areFiltersActive={false}
-          colorStatistics={[]}
-          guildId="guild-1"
           isGrouping={false}
           allowWorldSelection
           timerFiltersEnabled
           isUnderBag={false}
           minColumnWidth={180}
-          world="luvia"
-          onAddTimer={onAddTimer}
           onResetFilters={onResetFilters}
           onRetry={onRetry}
           {...overrides}
@@ -94,7 +89,7 @@ const mountContent = (
     fixture.cleanup();
   });
 
-  return { onAddTimer, onRetry, onResetFilters, onPointerDown };
+  return { onRetry, onResetFilters, onPointerDown };
 };
 
 it("shows delayed loading feedback without falsely presenting an empty timer list", () => {
@@ -137,15 +132,13 @@ it("lets users retry an initial request failure", async () => {
 });
 
 it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
-  const user = userEvent.setup();
-
   const timer = {
     ...createTimerFixture(),
     minTimeLeft: 60_000,
     maxTimeLeft: 120_000,
   };
 
-  const { onAddTimer, onPointerDown } = mountContent({ sortedTimers: [timer] });
+  const { onPointerDown } = mountContent({ sortedTimers: [timer] });
   expect(screen.getByPlaceholderText("Szukaj...")).toBeVisible();
   expect(screen.getByRole("combobox")).toHaveTextContent(/luvia/i);
   const label = screen.getByText(/\[H\] Tanroth/);
@@ -162,11 +155,9 @@ it("renders real controls and timer tiles while retaining scroll and window drag
   fireEvent.pointerDown(scrollContainer);
   fireEvent.pointerDown(label);
   expect(onPointerDown).toHaveBeenCalledTimes(2);
-  await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
-  expect(onAddTimer).toHaveBeenCalledOnce();
 });
 
-it("offers filter recovery in compact mode without the regular toolbar or footer", async () => {
+it("offers filter recovery in compact mode without the regular toolbar", async () => {
   const user = userEvent.setup();
 
   const { onResetFilters } = mountContent({
@@ -178,9 +169,6 @@ it("offers filter recovery in compact mode without the regular toolbar or footer
   expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
   expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: "Dodaj timer" }),
-  ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
   expect(onResetFilters).toHaveBeenCalledOnce();
 });

@@ -99,9 +99,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setTimersFilters,
     displayConfig,
     timersColors,
-    customColors,
-    defaultColorNames,
-    overriddenDefaultColors,
     alwaysVisibleExpiredTimers,
   } = useTimersStore(
     useShallow((state) => ({
@@ -120,9 +117,6 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       setTimersFilters: state.setTimersFilters,
       displayConfig: state.displayConfig,
       timersColors: state.timersColors,
-      customColors: state.customColors,
-      defaultColorNames: state.defaultColorNames,
-      overriddenDefaultColors: state.overriddenDefaultColors,
       alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
     })),
   );
@@ -170,11 +164,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     timers,
   });
 
-  const {
-    areFiltersActive,
-    colorStatistics,
-    timers: sortedTimers,
-  } = useTimerListProjection({
+  const { areFiltersActive, timers: sortedTimers } = useTimerListProjection({
     context: {
       guildId: guildId ?? "",
       isGrouping: generalConfig.timersGrouping,
@@ -191,10 +181,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     preferences: {
       alwaysVisibleExpiredTimers,
       colorFiltersEnabled: resolvedColorFiltersEnabled,
-      customColors,
-      defaultColorNames,
       hiddenTimers: hiddenTimersForSettings,
-      overriddenDefaultColors,
       pinnedTimers: pinnedTimersForSettings,
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
       sortOrder,
@@ -230,6 +217,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             setTimersSortOrder={setTimersSortOrder}
             showHiddenTimers={showHiddenTimers}
             setShowHiddenTimers={setShowHiddenTimers}
+            guildId={guildId}
+            world={desiredWorld}
+            isGrouping={generalConfig.timersGrouping}
+            onAddTimer={handleAddTimer}
           />
         </div>
         <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
@@ -242,16 +233,12 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}
           areFiltersActive={areFiltersActive}
-          colorStatistics={colorStatistics}
-          guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
           allowWorldSelection={resolvedAllowWorldSelection}
           timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag
           minColumnWidth={displayConfig.minColumnWidth}
-          onAddTimer={handleAddTimer}
           onResetFilters={handleResetFilters}
-          world={desiredWorld}
           compactView={generalConfig.compactView}
           error={!hasTimersResponse ? timersError : null}
           initialLoading={initialTimersLoading}
@@ -287,6 +274,10 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             setTimersSortOrder={setTimersSortOrder}
             showHiddenTimers={showHiddenTimers}
             setShowHiddenTimers={setShowHiddenTimers}
+            guildId={guildId}
+            world={desiredWorld}
+            isGrouping={generalConfig.timersGrouping}
+            onAddTimer={handleAddTimer}
           />
         ) : undefined
       }
@@ -297,16 +288,12 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimersForSettings}
           areFiltersActive={areFiltersActive}
-          colorStatistics={colorStatistics}
-          guildId={guildId}
           isGrouping={generalConfig.timersGrouping}
           allowWorldSelection={resolvedAllowWorldSelection}
           timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag={false}
           minColumnWidth={displayConfig.minColumnWidth}
-          onAddTimer={handleAddTimer}
           onResetFilters={handleResetFilters}
-          world={desiredWorld}
           compactView={generalConfig.compactView}
           error={!hasTimersResponse ? timersError : null}
           initialLoading={initialTimersLoading}

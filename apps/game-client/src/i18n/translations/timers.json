@@ -25,7 +25,8 @@
     "hiddenTimers": "Pokaż ukryte timery",
     "sortAsc": "Sortuj rosnąco",
     "sortDesc": "Sortuj malejąco",
-    "history": "Historia timerów"
+    "history": "Historia timerów",
+    "addTimer": "Dodaj timer"
   },
   "tooltip": {
     "addedBy": "Dodane przez:",
@@ -116,10 +117,6 @@
     "pink": "Różowy",
     "white": "Biały"
   },
-  "colorStatistics": {
-    "title": "Statystyki kolorów timerów",
-    "empty": "Brak ustawionych kolorów"
-  },
   "addForm": {
     "validation": {
       "nameRequired": "Nazwa jest wymagana",
@@ -159,9 +156,6 @@
     "invalidRange": "Nieprawidłowy zakres",
     "submitting": "Dodawanie...",
     "submit": "Dodaj"
-  },
-  "footer": {
-    "addTimer": "Dodaj timer"
   },
   "conflictDialog": {
     "description": "Twoje ustawienia timerów zostały zmodyfikowane na wielu urządzeniach. Którą wersję chcesz zachować?",

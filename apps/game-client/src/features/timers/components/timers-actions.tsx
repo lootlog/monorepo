@@ -2,6 +2,7 @@ import {
   ArrowDownNarrowWide,
   ArrowUpNarrowWide,
   Check,
+  Plus,
   SlidersHorizontal,
 } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
@@ -13,6 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 
 type TimersActionsProps = {
   timerFiltersEnabled?: boolean;
@@ -23,6 +25,10 @@ type TimersActionsProps = {
   setTimersSortOrder: (order: "asc" | "desc") => void;
   showHiddenTimers: boolean;
   setShowHiddenTimers: (show: boolean) => void;
+  guildId?: string;
+  world?: string;
+  isGrouping: boolean;
+  onAddTimer: () => void;
 };
 
 const ICON_SIZE = 14;
@@ -37,7 +43,8 @@ type OptionItem = {
 
 /**
  * Every option, filters included, lives in one menu so the title bar keeps
- * room for the title at the minimum window width.
+ * room for the title at the minimum window width. History and manual timer
+ * creation sit next to it as plain icon actions.
  */
 export const TimersActions: FC<TimersActionsProps> = ({
   timerFiltersEnabled = false,
@@ -48,6 +55,10 @@ export const TimersActions: FC<TimersActionsProps> = ({
   setTimersSortOrder,
   showHiddenTimers,
   setShowHiddenTimers,
+  guildId,
+  world,
+  isGrouping,
+  onAddTimer,
 }) => {
   const { t } = useTranslation("timers");
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -118,6 +129,12 @@ export const TimersActions: FC<TimersActionsProps> = ({
           ))}
         </PopoverContent>
       </Popover>
+      {!isGrouping && guildId && world && (
+        <GlobalTimerHistoryPopover guildId={guildId} world={world} />
+      )}
+      <WindowActionButton label={t("toolbar.addTimer")} onClick={onAddTimer}>
+        <Plus size={ICON_SIZE} aria-hidden="true" />
+      </WindowActionButton>
     </>
   );
 };

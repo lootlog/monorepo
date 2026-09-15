@@ -38,10 +38,7 @@ const createProjectionInput = (
   preferences: {
     alwaysVisibleExpiredTimers: {},
     colorFiltersEnabled: false,
-    customColors: {},
-    defaultColorNames: {},
     hiddenTimers: [],
-    overriddenDefaultColors: {},
     pinnedTimers: [],
     removeTimerAfterMs: 30_000,
     sortOrder: "asc",
@@ -82,10 +79,7 @@ describe("projectTimerList", () => {
         preferences: {
           alwaysVisibleExpiredTimers: {},
           colorFiltersEnabled: true,
-          customColors: {},
-          defaultColorNames: { red: "Red" },
           hiddenTimers: [],
-          overriddenDefaultColors: {},
           pinnedTimers: [],
           removeTimerAfterMs: 30_000,
           sortOrder: "asc",
@@ -104,14 +98,6 @@ describe("projectTimerList", () => {
 
     expect(result).toEqual({
       areFiltersActive: true,
-      colorStatistics: [
-        expect.objectContaining({
-          active: 1,
-          color: "red",
-          name: "Red",
-          total: 1,
-        }),
-      ],
       timers: [
         expect.objectContaining({
           actorCharactersByMemberId: { "77": actorCharacter },
@@ -287,50 +273,6 @@ describe("projectTimerList", () => {
       "Pinned",
       "Active",
       "Always visible",
-    ]);
-  });
-
-  it("derives color statistics from visible Timers and all configured assignments", () => {
-    const result = projectTimerList(
-      createProjectionInput({
-        preferences: {
-          ...createProjectionInput().preferences,
-          customColors: {
-            custom: {
-              backgroundColor: "#111111",
-              borderColor: "#222222",
-              id: "custom",
-              name: "Custom",
-            },
-          },
-          defaultColorNames: { red: "Crimson" },
-          overriddenDefaultColors: {
-            red: { backgroundColor: "#333333", borderColor: "#444444" },
-          },
-          timersColors: {
-            Hidden: "custom",
-            Tanroth: "red",
-          },
-        },
-        timers: [createTimer()],
-      }),
-    );
-
-    expect(result.colorStatistics).toEqual([
-      expect.objectContaining({
-        active: 1,
-        bgColor: "#333333",
-        borderColor: "#444444",
-        color: "red",
-        name: "Crimson",
-        total: 1,
-      }),
-      expect.objectContaining({
-        active: 0,
-        color: "custom",
-        name: "Custom",
-        total: 1,
-      }),
     ]);
   });
 

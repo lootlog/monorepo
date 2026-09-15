@@ -5,7 +5,6 @@ import { WorldSelector } from "@/components/world-selector";
 import { TimersFilters } from "./timers-filters";
 import { TimersGrid } from "./timers-grid";
 import { TimersEmptyState } from "./timers-empty-state";
-import { TimersFooter } from "./timers-footer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "cn";
 import {
@@ -15,32 +14,18 @@ import {
 import { AsyncContent } from "@/components/async-content";
 import { useTranslation } from "react-i18next";
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
-import { windowFooterBleedClassName } from "@/components/draggable-window/window-footer";
-
-type ColorStat = {
-  color: string;
-  total: number;
-  active: number;
-  name: string;
-  bgColor?: string;
-  borderColor?: string;
-};
 
 type TimersContentProps = {
   sortedTimers: TimerWithTimeLeft[];
   settingsKey: string;
   hiddenTimers: string[];
   areFiltersActive: boolean;
-  colorStatistics: ColorStat[];
-  guildId?: string;
   isGrouping: boolean;
   allowWorldSelection: boolean;
   timerFiltersEnabled: boolean;
   isUnderBag: boolean;
   minColumnWidth: number;
-  onAddTimer: () => void;
   onResetFilters: () => void;
-  world?: string;
   compactView?: boolean;
   error?: unknown;
   initialLoading?: boolean;
@@ -55,16 +40,12 @@ export const TimersContent: FC<TimersContentProps> = ({
   settingsKey,
   hiddenTimers,
   areFiltersActive,
-  colorStatistics,
-  guildId,
   isGrouping,
   allowWorldSelection,
   timerFiltersEnabled,
   isUnderBag,
   minColumnWidth,
-  onAddTimer,
   onResetFilters,
-  world,
   compactView = false,
   error = null,
   initialLoading = false,
@@ -147,17 +128,6 @@ export const TimersContent: FC<TimersContentProps> = ({
           )}
         </AsyncContent>
       </div>
-
-      {!compactView && (
-        <TimersFooter
-          className={cn(!isUnderBag && windowFooterBleedClassName)}
-          colorStatistics={colorStatistics}
-          guildId={guildId}
-          isGrouping={isGrouping}
-          onAddTimer={onAddTimer}
-          world={world}
-        />
-      )}
     </span>
   );
 };
