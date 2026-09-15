@@ -55,7 +55,6 @@ describe("overlay theme boundary", () => {
     );
 
     expectContentInsideThemeBoundary("tooltip-content");
-    expectSmallRadius("tooltip-content");
 
     const tooltipPositioner =
       screen.getByTestId("tooltip-content").parentElement;

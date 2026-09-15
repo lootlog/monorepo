@@ -31,7 +31,7 @@ export const VerifiedMargonemAccountIcon: FC<
           <BadgeCheck className="ll:size-3" />
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top" className="ll:z-9999">
+      <TooltipContent side="top">
         <span className="ll:font-semibold">{label}</span>
       </TooltipContent>
     </Tooltip>

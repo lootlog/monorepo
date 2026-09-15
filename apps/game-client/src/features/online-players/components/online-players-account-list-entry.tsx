@@ -271,7 +271,7 @@ export const OnlinePlayersAccountListEntry: FC<
           <span className="ll:flex ll:flex-col ll:gap-0.5">
             <span>{memberName}</span>
             {canInviteToParty ? (
-              <span className="ll:text-gray-300">
+              <span className="ll:text-muted-foreground">
                 {t("actions.doubleClickInviteParty")}
               </span>
             ) : null}

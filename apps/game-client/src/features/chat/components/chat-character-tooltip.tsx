@@ -20,18 +20,16 @@ export const ChatCharacterTooltip: FC<ChatCharacterTooltipProps> = ({
     <TooltipTrigger asChild className="ll:cursor-pointer">
       {children}
     </TooltipTrigger>
-    <TooltipContent className="ll:bg-black ll:px-1.5 ll:py-1">
-      <div className="ll:flex ll:items-center ll:gap-1">
+    <TooltipContent className="ll:px-2 ll:py-1.5">
+      <div className="ll:flex ll:items-center ll:gap-2">
         <CharacterTile
           character={character}
-          className="ll:max-h-6 ll:origin-left ll:scale-75 ll:-my-1 ll:-ml-1"
+          className="ll:max-h-6 ll:origin-left ll:scale-75 ll:-my-1 ll:-mr-2"
         />
-        <div className="ll:leading-tight">
-          <div className="ll:font-semibold ll:text-[11px]">
-            {character.nick} ({character.lvl}
-            {character.prof})
-          </div>
-        </div>
+        <span className="ll:font-semibold">
+          {character.nick} ({character.lvl}
+          {character.prof})
+        </span>
       </div>
     </TooltipContent>
   </Tooltip>
