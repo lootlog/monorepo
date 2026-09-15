@@ -83,8 +83,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const {
     isPending,
     selectedColor,
-    customColor,
-    overriddenColor,
+    paint,
     resetIndicator,
     shortname,
     npcDetails,
@@ -109,13 +108,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               )}
               <TimerLiveTile
                 id={timer.npc.id.toString()}
-                color={
-                  customColor || overriddenColor ? undefined : selectedColor
-                }
-                customBackgroundColor={
-                  customColor?.backgroundColor ||
-                  overriddenColor?.backgroundColor
-                }
+                paint={paint}
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}

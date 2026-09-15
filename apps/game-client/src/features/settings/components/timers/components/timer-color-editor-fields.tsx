@@ -115,6 +115,7 @@ export const TimerColorEditorFields: FC<TimerColorEditorFieldsProps> = ({
         </span>
         <div className="ll:rounded-sm ll:bg-black/25 ll:p-2">
           <TimerColorPreviewChip
+            borderColor={draft.borderColor}
             backgroundColor={`${draft.backgroundColor}${alphaToHex(
               draft.backgroundAlpha,
             )}`}
