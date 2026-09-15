@@ -39,6 +39,10 @@ export const isTimerColor = (
 export const getTimerColor = (color: string): TimerColorPaint | undefined =>
   isTimerColor(color) ? TIMERS_COLORS[color] : undefined;
 
+/** "Bez koloru" leaves the row background to the list, not to the colour. */
+export const isUnpaintedTimerColor = (paint: TimerColorPaint): boolean =>
+  paint.fill === TIMERS_COLORS.white.fill;
+
 type StoredTimerColor = {
   backgroundColor: string;
   borderColor: string;
