@@ -41,7 +41,7 @@ const ContextMenuContent = React.forwardRef<
       <BaseContextMenu.Popup
         ref={ref}
         className={cn(
-          "ll-action-menu ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-32 ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-lg ll:border ll:border-white/50 ll:p-0 ll:text-popover-foreground ll:shadow-md ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:origin-[var(--transform-origin)] ll:bg-popover ll:flex ll:flex-col ll:gap-0 ll:text-xs",
+          "ll-action-menu ll:z-[500] ll:max-h-[var(--available-height)] ll:min-w-32 ll:overflow-y-auto ll:overflow-x-hidden ll:rounded-lg ll:bg-black ll:border ll:border-white/50 ll:shadow-[2px_2px_3px_3px_rgba(12,13,13,0.4)] ll:p-0 ll:text-popover-foreground ll:animate-in ll:fade-in-0 ll:zoom-in-95 data-[ending-style]:ll:animate-out data-[ending-style]:ll:fade-out-0 data-[ending-style]:ll:zoom-out-95 data-[side=bottom]:ll:slide-in-from-top-2 data-[side=left]:ll:slide-in-from-right-2 data-[side=right]:ll:slide-in-from-left-2 data-[side=top]:ll:slide-in-from-bottom-2 ll:origin-[var(--transform-origin)] ll:flex ll:flex-col ll:gap-0 ll:text-xs",
           className,
         )}
         {...props}
