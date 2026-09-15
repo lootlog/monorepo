@@ -64,11 +64,14 @@ export const TimersContent: FC<TimersContentProps> = ({
       className={cn(
         "ll:relative ll:h-full ll:flex ll:flex-1 ll:flex-col ll:pt-1 ll:w-full",
         {
-          "ll:pt-0! ll:h-[calc(100%-2rem)]": isUnderBag,
+          // The strips bleed 4px past their container, the same as they do
+          // through the window padding; pull the whole content out by that
+          // much so the list and the add timer overlay line up with them.
+          "ll:pt-0! ll:h-auto ll:min-h-0 ll:-mx-1 ll:w-auto": isUnderBag,
         },
       )}
     >
-      <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
+      <div className="ll:flex ll:flex-col ll:px-1">
         {!compactView && !isGrouping && (
           <div
             className={cn(toolbarStripBleedClassName, toolbarStripClassName)}
@@ -86,7 +89,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           <TimersFilters filtersKey={settingsKey} />
         )}
         <ConnectionStatusStrip
-          className={cn(!isUnderBag && toolbarStripBleedClassName)}
+          className={toolbarStripBleedClassName}
           error={refreshError}
           errorLabel={t("states.refreshError")}
           offline={stale}
