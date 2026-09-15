@@ -2,7 +2,7 @@ import { useChatStore } from "@/store/chat.store";
 import { CHAT_INTEGRATION_ENABLED } from "../chat.constants";
 import { ListFilter, Dock, SquareArrowOutUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { WindowActionButton } from "@/components/window-action-button";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import { ChatSettingsButton } from "./chat-settings-button";
 
 type ChatWindowActionsProps = {

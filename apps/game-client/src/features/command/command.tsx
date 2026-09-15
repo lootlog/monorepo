@@ -1,6 +1,6 @@
 import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
 import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { MessageType } from "@/api/chat.api";
 import { useGameStore } from "@/store/game.store";

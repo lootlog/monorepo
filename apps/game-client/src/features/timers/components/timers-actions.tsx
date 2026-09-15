@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { WindowActionButton } from "@/components/window-action-button";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 
 type TimersActionsProps = {
   timerFiltersEnabled?: boolean;

@@ -1,5 +1,5 @@
-import { DraggableWindow } from "@/components/draggable-window";
-import { WindowMaxHeightAction } from "@/components/window-max-height-action";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";

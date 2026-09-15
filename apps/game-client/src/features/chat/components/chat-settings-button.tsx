@@ -1,7 +1,7 @@
 import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { WindowActionButton } from "@/components/window-action-button";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 
 export const ChatSettingsButton = () => {
   const { t } = useTranslation("chat");

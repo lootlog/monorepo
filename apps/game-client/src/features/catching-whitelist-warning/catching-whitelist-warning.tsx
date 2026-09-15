@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { type FC, useEffect, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { Button } from "@/components/ui/button";
 import { useGameStore } from "@/store/game.store";

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { cn } from "cn";
+import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { TimersColorStatistics } from "./timers-color-statistics";
 import { Plus } from "lucide-react";
 import {
@@ -39,33 +39,29 @@ export const TimersFooter: FC<TimersFooterProps> = ({
   const { t } = useTranslation("timers");
 
   return (
-    <div
-      className={cn(
-        "ll:w-full ll:shrink-0 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40",
-        className,
-      )}
+    <WindowFooter
+      className={className}
+      rowClassName="ll:justify-between ll:px-1.5"
     >
-      <div className="ll:flex ll:h-7 ll:items-center ll:justify-between ll:px-1.5">
-        <TimersColorStatistics colorStatistics={colorStatistics} />
-        <div className="ll:flex ll:items-center ll:gap-1">
-          {!isGrouping && guildId && world && (
-            <GlobalTimerHistoryPopover guildId={guildId} world={world} />
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label={t("footer.addTimer")}
-                onClick={onAddTimer}
-                className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-solid ll:border-gray-400/40 ll:bg-zinc-800 ll:p-0 ll:text-gray-200 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-zinc-700 ll:hover:text-white ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
-              >
-                <Plus size={14} aria-hidden="true" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">{t("footer.addTimer")}</TooltipContent>
-          </Tooltip>
-        </div>
+      <TimersColorStatistics colorStatistics={colorStatistics} />
+      <div className="ll:flex ll:items-center ll:gap-1">
+        {!isGrouping && guildId && world && (
+          <GlobalTimerHistoryPopover guildId={guildId} world={world} />
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t("footer.addTimer")}
+              onClick={onAddTimer}
+              className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:items-center ll:justify-center ll:rounded-sm ll:border ll:border-solid ll:border-gray-400/40 ll:bg-zinc-800 ll:p-0 ll:text-gray-200 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-zinc-700 ll:hover:text-white ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
+            >
+              <Plus size={14} aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t("footer.addTimer")}</TooltipContent>
+        </Tooltip>
       </div>
-    </div>
+    </WindowFooter>
   );
 };

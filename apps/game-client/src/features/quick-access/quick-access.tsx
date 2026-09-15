@@ -1,4 +1,4 @@
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   QuickAccessButton,

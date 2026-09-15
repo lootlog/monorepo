@@ -1,7 +1,7 @@
 import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ChatViewHeader } from "./components/chat-view-header";
 import { ChatComposeArea } from "./components/chat-compose-area";
 import { ChatMessageList } from "./components/chat-message-list";

@@ -1,4 +1,4 @@
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { OnlinePlayersActions } from "@/features/online-players/components/online-players-actions";
 import { OnlinePlayersList } from "@/features/online-players/components/online-players-list";
 import { useOnlinePlayersStore } from "@/store/online-players.store";
