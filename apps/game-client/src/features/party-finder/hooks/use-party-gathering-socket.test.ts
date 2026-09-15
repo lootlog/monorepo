@@ -29,7 +29,7 @@ const notification = (index: number) => ({
       notificationId: `notification-${index}`,
       guildId: "guild-1",
       discordId: `discord-${index}`,
-      world: "pandora",
+      world: "luvia",
       createdAt: "2026-04-17T10:00:00.000Z",
       character: {
         nick: `Hero ${index}`,

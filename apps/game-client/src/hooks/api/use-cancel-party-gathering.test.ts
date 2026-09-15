@@ -57,7 +57,7 @@ describe("useCancelPartyGathering", () => {
         icon: "test.gif",
       },
       guildIds: ["guild-1"],
-      world: "pandora",
+      world: "luvia",
       status: "ACTIVE",
       revision: 1,
       createdAt: "2026-07-13T10:00:00.000Z",

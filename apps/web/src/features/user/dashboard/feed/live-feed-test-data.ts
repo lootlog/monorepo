@@ -4,7 +4,7 @@ export const feedKill = {
   id: "kill:organization:world:npc:minute",
   type: "kill",
   occurredAt: "2026-09-06T12:00:00Z",
-  world: "pandora",
+  world: "luvia",
   guild: { id: "organization", name: "Organizacja", vanityUrl: null },
   npc: { id: 1, name: "Heros", type: "HERO", lvl: 100, icon: null },
   count: 1,

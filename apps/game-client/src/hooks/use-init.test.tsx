@@ -81,6 +81,6 @@ describe("useInit", () => {
       engine.communication.parseJSON({});
     });
     expect(useGlobalStore.getState().gameState.gameInitialized).toBe(true);
-    expect(useGameStore.getState().game?.world).toBe("pandora");
+    expect(useGameStore.getState().game?.world).toBe("luvia");
   });
 });

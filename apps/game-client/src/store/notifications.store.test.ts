@@ -28,7 +28,7 @@ const createNotification = (
   notificationId: "notification-1",
   discordId: "discord-1",
   guildId: "guild-1",
-  world: "pandora",
+  world: "luvia",
   createdAt: "2026-04-17T10:00:00.000Z",
   message: "Hej",
   servers: ["guild-1"],
@@ -43,7 +43,7 @@ const createPartyGatheringNotification = (overrides?: {
   notificationId: overrides?.notificationId ?? "party-1",
   guildId: overrides?.guildId ?? "guild-1",
   discordId: "discord-7",
-  world: overrides?.world ?? "pandora",
+  world: overrides?.world ?? "luvia",
   createdAt: "2026-04-17T10:00:00.000Z",
   character: {
     nick: "Hero",
@@ -201,7 +201,7 @@ describe("notifications.store", () => {
       latestNotificationAnimationCycle: 7,
     });
 
-    useNotificationsStore.getState().removeNotificationByNpcId(500, "pandora");
+    useNotificationsStore.getState().removeNotificationByNpcId(500, "luvia");
 
     expect(useNotificationsStore.getState().notifications).toEqual([
       expect.objectContaining({
@@ -246,18 +246,18 @@ describe("notifications.store", () => {
 
     useNotificationsStore.setState({
       notifications: [
-        createStoredNpcNotification("npc-100-pandora", 100, "pandora"),
-        createStoredNpcNotification("npc-200-pandora", 200, "pandora"),
+        createStoredNpcNotification("npc-100-luvia", 100, "luvia"),
+        createStoredNpcNotification("npc-200-luvia", 200, "luvia"),
         createStoredNpcNotification("npc-100-gefion", 100, "gefion"),
         keptMessage,
       ],
       notificationAutoHideByListKey: {
-        "npc-100-pandora": {
+        "npc-100-luvia": {
           deadlineMs: 1_000,
           pausedRemainingMs: null,
           durationMs: 1_000,
         },
-        "npc-200-pandora": {
+        "npc-200-luvia": {
           deadlineMs: 1_000,
           pausedRemainingMs: null,
           durationMs: 1_000,
@@ -279,7 +279,7 @@ describe("notifications.store", () => {
 
     useNotificationsStore
       .getState()
-      .removeNotificationsByNpcIds([100, 200], "pandora");
+      .removeNotificationsByNpcIds([100, 200], "luvia");
 
     expect(
       useNotificationsStore

@@ -33,7 +33,7 @@ describe("useTimersCache", () => {
     result.current.upsertTimer(createTimer({ timerKey: "socket-timer" }));
 
     const timers = await queryClient.fetchQuery({
-      queryKey: queryKeys.timers("pandora"),
+      queryKey: queryKeys.timers("luvia"),
       queryFn: fetchTimers,
       staleTime: 30_000,
     });
@@ -52,13 +52,13 @@ describe("useTimersCache", () => {
     const { result } = renderHook(() => useTimersCache(), { wrapper });
 
     result.current.removeTimer({
-      world: "pandora",
+      world: "luvia",
       guildId: "guild-1",
       timerKey: "socket-timer",
     });
 
     const timers = await queryClient.fetchQuery({
-      queryKey: queryKeys.timers("pandora"),
+      queryKey: queryKeys.timers("luvia"),
       queryFn: fetchTimers,
       staleTime: 30_000,
     });
@@ -68,7 +68,7 @@ describe("useTimersCache", () => {
   });
 
   it("upserts timers by identity and clears their pending flag", () => {
-    queryClient.setQueryData(queryKeys.timers("pandora"), [
+    queryClient.setQueryData(queryKeys.timers("luvia"), [
       createTimer({
         isPending: true,
       }),
@@ -83,7 +83,7 @@ describe("useTimersCache", () => {
       }),
     );
 
-    expect(queryClient.getQueryData(queryKeys.timers("pandora"))).toEqual([
+    expect(queryClient.getQueryData(queryKeys.timers("luvia"))).toEqual([
       expect.objectContaining({
         updatedAt: "2026-04-22T10:01:00.000Z",
         isPending: false,
@@ -92,7 +92,7 @@ describe("useTimersCache", () => {
   });
 
   it("appends new timers and removes them by world, guild, and key", () => {
-    queryClient.setQueryData(queryKeys.timers("pandora"), [
+    queryClient.setQueryData(queryKeys.timers("luvia"), [
       createTimer({
         timerKey: "timer-1",
       }),
@@ -117,20 +117,20 @@ describe("useTimersCache", () => {
       }),
     );
     result.current.removeTimer({
-      world: "pandora",
+      world: "luvia",
       guildId: "guild-1",
       timerKey: "timer-2",
     });
 
     expect(
-      (
-        queryClient.getQueryData<Timer[]>(queryKeys.timers("pandora")) ?? []
-      ).map((timer) => timer.timerKey),
+      (queryClient.getQueryData<Timer[]>(queryKeys.timers("luvia")) ?? []).map(
+        (timer) => timer.timerKey,
+      ),
     ).toEqual(["timer-1", "timer-3"]);
   });
 
   it("does not refetch the full timers query after an authoritative socket delete", () => {
-    queryClient.setQueryData(queryKeys.timers("pandora"), [
+    queryClient.setQueryData(queryKeys.timers("luvia"), [
       createTimer({
         timerKey: "timer-1",
       }),
@@ -140,12 +140,12 @@ describe("useTimersCache", () => {
     const { result } = renderHook(() => useTimersCache(), { wrapper });
 
     result.current.removeTimer({
-      world: "pandora",
+      world: "luvia",
       guildId: "guild-1",
       timerKey: "timer-1",
     });
 
-    expect(queryClient.getQueryData(queryKeys.timers("pandora"))).toEqual([]);
+    expect(queryClient.getQueryData(queryKeys.timers("luvia"))).toEqual([]);
     expect(invalidateQueriesSpy).not.toHaveBeenCalled();
   });
 });

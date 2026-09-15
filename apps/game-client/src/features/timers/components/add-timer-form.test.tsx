@@ -87,7 +87,7 @@ it("uses saved guild selection, preserves it after a local selection, submits du
   await fillDurations(user);
   expect(await submit(user, fixture)).toMatchObject({
     name: "Tanroth",
-    world: "pandora",
+    world: "luvia",
     minSeconds: 60,
     maxSeconds: 120,
   });

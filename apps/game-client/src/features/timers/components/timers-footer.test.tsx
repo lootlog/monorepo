@@ -15,7 +15,7 @@ it("shows color totals and the add action with history only outside grouping", a
       <TimersFooter
         colorStatistics={[{ color: "red", total: 2, active: 1, name: "Red" }]}
         guildId="guild-1"
-        world="pandora"
+        world="luvia"
         isGrouping={isGrouping}
         onAddTimer={onAddTimer}
       />

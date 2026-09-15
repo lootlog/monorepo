@@ -156,7 +156,7 @@ function createCoordination(
       }, 0),
       warningCount: heroes.filter((hero) => hero.priority === "WARNING").length,
     },
-    world: "pandora",
+    world: "luvia",
   };
 }
 
@@ -198,7 +198,7 @@ function createHero(
       npcId: 123,
       overdueMs: null,
       status: "OPEN",
-      world: "pandora",
+      world: "luvia",
       ...timerOverrides,
     },
   };

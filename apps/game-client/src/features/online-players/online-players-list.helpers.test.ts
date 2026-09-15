@@ -25,7 +25,7 @@ const createPresence = ({
   platform: "game",
   isAfk: false,
   player: {
-    world: "pandora",
+    world: "luvia",
     name,
     lvl,
     icon: `${name}.gif`,
@@ -52,7 +52,7 @@ describe("online players list helpers", () => {
       lvl: 0,
       nick: "",
       prof: "",
-      world: "pandora",
+      world: "luvia",
     });
   });
 

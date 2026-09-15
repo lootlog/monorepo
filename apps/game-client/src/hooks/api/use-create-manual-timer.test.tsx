@@ -24,7 +24,7 @@ it("creates a manual timer and invalidates the timer query family", async () => 
     result.current.mutateAsync({
       guildIds: ["guild-1"],
       name: "Tanroth",
-      world: "pandora",
+      world: "luvia",
       minSeconds: 30,
       maxSeconds: 60,
     }),
@@ -32,12 +32,11 @@ it("creates a manual timer and invalidates the timer query family", async () => 
   expect(fixture.requests).toHaveLength(1);
   expect(await fixture.requests[0].json()).toMatchObject({
     name: "Tanroth",
-    world: "pandora",
+    world: "luvia",
     minSeconds: 30,
     maxSeconds: 60,
   });
   expect(
-    fixture.queryClient.getQueryState(queryKeys.timers("pandora"))
-      ?.isInvalidated,
+    fixture.queryClient.getQueryState(queryKeys.timers("luvia"))?.isInvalidated,
   ).toBe(true);
 });

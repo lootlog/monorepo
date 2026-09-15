@@ -24,7 +24,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
     applicantCount: 0,
     inPartyCount: 0,
     guildIds: ["guild-1"],
-    world: "pandora",
+    world: "luvia",
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
   };
@@ -83,7 +83,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
           notificationId: "generic",
           guildId: "guild-1",
           discordId: "organizer-discord",
-          world: "pandora",
+          world: "luvia",
           createdAt: room.createdAt,
           character: {
             nick: "Organizer",
@@ -123,7 +123,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
           notificationId: "npc",
           guildId: "guild-1",
           discordId: "organizer-discord",
-          world: "pandora",
+          world: "luvia",
           createdAt: room.createdAt,
           isGatheringParty: true,
           npc,

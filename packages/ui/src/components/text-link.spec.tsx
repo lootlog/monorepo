@@ -31,9 +31,7 @@ it("preserves anchor composition and keyboard activation", async () => {
 
   render(
     <TextLink
-      render={
-        <a href="/statistics?world=pandora#activity" onClick={activate} />
-      }
+      render={<a href="/statistics?world=luvia#activity" onClick={activate} />}
     >
       Statistics
     </TextLink>,
@@ -46,6 +44,6 @@ it("preserves anchor composition and keyboard activation", async () => {
   await user.keyboard("{Enter}");
   expect(activate).toHaveBeenCalledOnce();
   expect(screen.getByRole("link").getAttribute("href")).toBe(
-    "/statistics?world=pandora#activity",
+    "/statistics?world=luvia#activity",
   );
 });

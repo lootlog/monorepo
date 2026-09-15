@@ -24,7 +24,7 @@ const createPresence = (
   mapName: "Ithan",
   isAfk: false,
   player: {
-    world: "pandora",
+    world: "luvia",
     name: "Hero",
     lvl: 123,
     icon: "hero.gif",
@@ -104,7 +104,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(screen.getByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • pandora")).toBeVisible();
+    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Torneg • pandora")).toBeVisible();
+    expect(screen.getByText("Torneg • luvia")).toBeVisible();
   });
 
   it("shows Margonem verification only for verified presence", () => {
@@ -230,7 +230,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry
         presence={createPresence({
           player: {
-            world: "pandora",
+            world: "luvia",
             name: "Hero",
             lvl: 123,
             icon: "hero.gif",
@@ -242,7 +242,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Ithan • pandora")).toBeVisible();
+    expect(screen.getByText("Ithan • luvia")).toBeVisible();
   });
 
   it("invites the character to party from the right-side button", () => {
@@ -440,7 +440,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry
         presence={createPresence({
           player: {
-            world: "pandora",
+            world: "luvia",
             name: "Hero Name",
             lvl: 123,
             icon: "hero.gif",

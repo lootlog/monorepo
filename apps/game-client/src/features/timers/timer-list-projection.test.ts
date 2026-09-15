@@ -150,8 +150,8 @@ describe("projectTimerList", () => {
             timerKey: "tanroth",
           }),
           createTimer({
-            timerKey: "manual-pandora",
-            world: "pandora",
+            timerKey: "manual-luvia",
+            world: "luvia",
             npc: {
               ...createTimer().npc,
               margonemType: 999,
@@ -251,7 +251,7 @@ describe("projectTimerList", () => {
         epoch,
         preferences: {
           ...createProjectionInput().preferences,
-          alwaysVisibleExpiredTimers: { pandora: ["always-visible"] },
+          alwaysVisibleExpiredTimers: { luvia: ["always-visible"] },
           pinnedTimers: ["Pinned"],
         },
         timers: [

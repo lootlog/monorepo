@@ -33,7 +33,7 @@ describe("npc notification helpers", () => {
           id: "rule-1",
           minLevel: 200,
           maxLevel: 260,
-          world: "pandora",
+          world: "luvia",
           guildIds: ["guild-1", "guild-2"],
         },
         {
@@ -49,7 +49,7 @@ describe("npc notification helpers", () => {
 
     expect(routing).toEqual({
       guildIds: ["guild-1", "guild-2"],
-      world: "pandora",
+      world: "luvia",
     });
   });
 
@@ -73,7 +73,7 @@ describe("npc notification helpers", () => {
         icon: "event-icon.gif",
         type: 3,
       },
-      world: "pandora",
+      world: "luvia",
       guildIds: ["guild-1"],
     });
   });

@@ -146,7 +146,7 @@ export const createRealtimeTest = () => {
   ) => {
     await act(async () => {
       const joined = getSocket().join({
-        world: "pandora",
+        world: "luvia",
         name: "Current Hero",
         lvl: 300,
         icon: "hero.gif",

@@ -222,7 +222,7 @@ it("passes each day's source worlds independently in both activity tabs", async 
         date: "2026-09-02",
         onlineSeconds: 1800,
         partial: false,
-        worlds: ["pandora"],
+        worlds: ["luvia"],
         worldsComplete: false,
       },
     ],
@@ -234,7 +234,7 @@ it("passes each day's source worlds independently in both activity tabs", async 
         date: "2026-09-01",
         kills: 12,
         partial: false,
-        worlds: ["gordion", "luvia"],
+        worlds: ["gordion", "zorza"],
       },
       {
         date: "2026-09-02",
@@ -255,7 +255,7 @@ it("passes each day's source worlds independently in both activity tabs", async 
     screen
       .getByRole("button", { name: /1 września/ })
       .getAttribute("aria-label"),
-  ).not.toContain("Pandora");
+  ).not.toContain("Zorza");
   expect(
     screen
       .getByRole("button", { name: /2 września/ })
@@ -267,7 +267,7 @@ it("passes each day's source worlds independently in both activity tabs", async 
     screen
       .getByRole("button", { name: /1 września/ })
       .getAttribute("aria-label"),
-  ).toContain("Światy: Gordion, Luvia");
+  ).toContain("Światy: Gordion, Zorza");
   expect(
     screen
       .getByRole("button", { name: /2 września/ })
