@@ -1,14 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Effect, Schedule, Schema } from "effect";
-import { DiscordAPIError } from "discord.js";
-
-const nonRetryableErrorCodes = new Set([
-  10_003, 10_004, 10_013, 50_001, 50_013,
-]);
-
-const isRetryable = (cause: unknown) =>
-  !(cause instanceof DiscordAPIError) ||
-  !nonRetryableErrorCodes.has(Number(cause.code));
+import { isPermanentDiscordError } from "./non-retryable-discord-error-codes.js";
 
 export class DiscordSdkReadFailure extends TaggedErrorClass<DiscordSdkReadFailure>()(
   "DiscordSdkReadFailure",
@@ -44,7 +36,7 @@ export const discordSdkRead = <A>(
         new DiscordSdkReadFailure({
           operation,
           cause,
-          retryable: isRetryable(cause),
+          retryable: !isPermanentDiscordError(cause),
         }),
     }).pipe(
       Effect.timeout("10 seconds"),
