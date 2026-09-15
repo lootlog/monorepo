@@ -64,7 +64,7 @@ export const TimersContent: FC<TimersContentProps> = ({
       className={cn(
         "ll:relative ll:h-full ll:flex ll:flex-1 ll:flex-col ll:pt-1 ll:w-full",
         {
-          "ll:pt-0! ll:h-[calc(100%-2rem)]": isUnderBag,
+          "ll:pt-0! ll:h-auto ll:min-h-0": isUnderBag,
         },
       )}
     >
