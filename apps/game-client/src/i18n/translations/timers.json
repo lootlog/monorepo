@@ -14,7 +14,9 @@
     "clearSearch": "Wyczyść wyszukiwanie",
     "minLvlLabel": "Poziom od",
     "maxLvlLabel": "Poziom do",
-    "npcTypesLabel": "Typy potworów"
+    "npcTypesLabel": "Typy potworów",
+    "npcTypes": "Typy",
+    "npcTypesOnlyHint": "Prawy klik: tylko ten typ"
   },
   "toolbar": {
     "filters": "Filtry",
