@@ -20,3 +20,15 @@ export const toolbarStripDividerClassName =
 
 /** Bleeds a strip through the 4px window padding and onto the previous strip's rule. */
 export const toolbarStripBleedClassName = "ll:-mx-1 ll:-mt-px ll:w-auto";
+
+/**
+ * A quieter strip for tools that act on the list below (filters). No fill and
+ * no rule of its own on top, so it leans on whatever strip ends above it and
+ * reads as one step lighter than the guild switcher and world selector.
+ */
+export const toolbarStripLightClassName =
+  "ll:border-b ll:border-x-0 ll:border-t-0 ll:border-gray-400/25";
+
+/** Vertical rule between controls inside a light strip. */
+export const toolbarStripLightDividerClassName =
+  "ll:border-0 ll:border-l ll:border-solid ll:border-gray-400/25";

@@ -1,14 +1,12 @@
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   toolbarStripBleedClassName,
-  toolbarStripClassName,
-  toolbarStripDividerClassName,
+  toolbarStripLightClassName,
+  toolbarStripLightDividerClassName,
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
-import { NPC_NAMES } from "@/constants/margonem";
-import { NpcType } from "@/api/npcs.api";
+import { TimersNpcTypeFilter } from "./timers-npc-type-filter";
 import { cn } from "cn";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
@@ -20,13 +18,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
-
-const NPC_TYPES_OPTIONS = [
-  NpcType.ELITE2,
-  NpcType.ELITE3,
-  NpcType.HERO,
-  NpcType.TITAN,
-];
 
 const MAX_LVL = 500;
 
@@ -76,17 +67,6 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     });
   };
 
-  const handleSelectOnlyNpcType = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    npcType: NpcType,
-  ) => {
-    event.preventDefault();
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedNpcTypes: [npcType],
-    });
-  };
-
   const handleToggleColor = (colorId: string) => {
     setTimersFilters(filtersKey, {
       ...filters,
@@ -100,8 +80,8 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     <div
       className={cn(
         toolbarStripBleedClassName,
-        toolbarStripClassName,
-        "ll:flex ll:flex-col",
+        toolbarStripLightClassName,
+        "ll:mt-0 ll:flex ll:flex-col",
       )}
     >
       <div className={toolbarStripRowClassName}>
@@ -120,7 +100,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           value={filters.minLvl.toString()}
           onChange={(event) => handleLevelChange("minLvl", event)}
           className={cn(
-            toolbarStripDividerClassName,
+            toolbarStripLightDividerClassName,
             "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
           )}
           max={MAX_LVL}
@@ -134,7 +114,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           value={filters.maxLvl.toString()}
           onChange={(event) => handleLevelChange("maxLvl", event)}
           className={cn(
-            toolbarStripDividerClassName,
+            toolbarStripLightDividerClassName,
             "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
           )}
           min={MIN_LVL}
@@ -143,34 +123,15 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           inputMode="numeric"
           variant="borderless"
         />
-        <ToggleGroup
-          aria-label={t("filters.npcTypesLabel")}
-          className="ll:h-full ll:shrink-0 ll:rounded-none"
-          multiple
-          onValueChange={(selectedNpcTypes: NpcType[]) =>
+        <TimersNpcTypeFilter
+          selectedNpcTypes={filters.selectedNpcTypes}
+          onChange={(selectedNpcTypes) =>
             setTimersFilters(filtersKey, { ...filters, selectedNpcTypes })
           }
-          size="sm"
-          spacing={0}
-          value={filters.selectedNpcTypes}
-        >
-          {NPC_TYPES_OPTIONS.map((type) => (
-            <ToggleGroupItem
-              key={type}
-              value={type}
-              className={cn(
-                toolbarStripDividerClassName,
-                "ll:h-full ll:min-w-6! ll:rounded-none! ll:px-1!",
-              )}
-              onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
-            >
-              {NPC_NAMES[type].shortname}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        />
       </div>
       {colorFiltersEnabled && (
-        <div className="ll:flex ll:flex-row ll:flex-wrap ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-1 ll:py-1">
+        <div className="ll:flex ll:flex-row ll:flex-wrap ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/25 ll:px-1 ll:py-1">
           {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);

@@ -1,8 +1,8 @@
 import { SearchInput } from "@/components/ui/search-input";
 import { Input } from "@/components/ui/input";
 import {
-  toolbarStripClassName,
-  toolbarStripDividerClassName,
+  toolbarStripLightClassName,
+  toolbarStripLightDividerClassName,
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
 import { cn } from "cn";
@@ -44,7 +44,7 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
   const { t } = useTranslation("onlinePlayers");
 
   return (
-    <div className={cn(toolbarStripClassName, "ll:-mt-px")}>
+    <div className={toolbarStripLightClassName}>
       <div className={toolbarStripRowClassName}>
         <SearchInput
           size="sm"
@@ -58,7 +58,7 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
           value={filters.minLvl.toString()}
           onChange={onMinLvlChange}
           className={cn(
-            toolbarStripDividerClassName,
+            toolbarStripLightDividerClassName,
             "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
           )}
           variant="borderless"
@@ -72,7 +72,7 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
           value={filters.maxLvl.toString()}
           onChange={onMaxLvlChange}
           className={cn(
-            toolbarStripDividerClassName,
+            toolbarStripLightDividerClassName,
             "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
           )}
           variant="borderless"
@@ -88,7 +88,7 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
           <SelectTrigger
             aria-label={t("filters.professionLabel")}
             className={cn(
-              toolbarStripDividerClassName,
+              toolbarStripLightDividerClassName,
               "ll:h-full ll:w-12 ll:shrink-0 ll:border-y-0 ll:bg-transparent ll:px-1",
             )}
             size="sm"

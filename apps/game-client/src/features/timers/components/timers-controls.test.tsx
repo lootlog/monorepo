@@ -56,10 +56,12 @@ describe("timers controls", () => {
       minLvl: 0,
       maxLvl: 500,
     });
-    await user.click(screen.getByRole("button", { name: "H" }));
+    await user.click(screen.getByRole("button", { name: "Typy potworów" }));
+    await user.click(await screen.findByRole("button", { name: "heros" }));
     expect(
       useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
     ).toEqual([]);
+    await user.keyboard("{Escape}");
     const custom = screen.getAllByRole("button").at(-1);
 
     if (!custom) throw new Error("Expected custom color trigger");
@@ -71,7 +73,8 @@ describe("timers controls", () => {
     ).toEqual(["red", "custom-1"]);
   });
 
-  it("selects only the right-clicked npc type and preserves the other filters", () => {
+  it("selects only the right-clicked npc type and preserves the other filters", async () => {
+    const user = userEvent.setup();
     useTimersStore.getState().setTimersFilters("guild-1", {
       ...useTimersStore.getState().timersFilters["guild-1"],
       selectedNpcTypes: [
@@ -82,7 +85,8 @@ describe("timers controls", () => {
       ],
     });
     render(<TimersFilters filtersKey="guild-1" />);
-    const button = screen.getByRole("button", { name: "E2" });
+    await user.click(screen.getByRole("button", { name: "Typy potworów" }));
+    const button = await screen.findByRole("button", { name: "elita II" });
     const event = createEvent.contextMenu(button);
     fireEvent(button, event);
     expect(event.defaultPrevented).toBe(true);
