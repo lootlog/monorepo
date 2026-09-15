@@ -345,7 +345,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
           refreshingLabel={t("states.refreshing")}
           onRetry={retry}
         />
-        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:px-1 ll:pt-1">
+        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
           <AsyncContent
             error={initialLoad.error}
             errorLabel={t(initialLoad.errorLabelKey)}

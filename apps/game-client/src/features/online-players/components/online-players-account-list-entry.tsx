@@ -47,19 +47,19 @@ const getHighlightClassName = ({
   isSameClan: boolean;
 }) => {
   if (isSelf) {
-    return "ll:border-yellow-400 ll:bg-yellow-500/10";
+    return "ll:bg-yellow-500/15";
   }
 
   if (isAfk) {
-    return "ll:border-orange-500 ll:bg-orange-500/10";
+    return "ll:bg-orange-500/15";
   }
 
   if (isPartyMember) {
-    return "ll:border-ring ll:bg-accent";
+    return "ll:bg-accent";
   }
 
   if (isSameClan) {
-    return "ll:border-green-500 ll:bg-green-500/10";
+    return "ll:bg-green-500/15";
   }
 
   return undefined;
@@ -224,7 +224,7 @@ export const OnlinePlayersAccountListEntry: FC<
             <span className="ll:block ll:w-full">
               <Tile
                 className={cn(
-                  "ll:px-1 ll:flex-row ll:items-center ll:justify-between ll:gap-1 ll:mb-0.5",
+                  "ll:px-[5px] ll:flex-row ll:items-center ll:justify-between ll:gap-1 ll:rounded-none ll:border-0 ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]",
                   highlightClassName,
                 )}
                 onDoubleClick={handleDoubleClick}

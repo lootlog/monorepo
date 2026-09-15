@@ -44,7 +44,7 @@ const createPresence = (
 });
 
 const getAccountTile = (container: HTMLElement) => {
-  const tile = container.querySelector(".ll\\:mb-0\\.5");
+  const tile = container.querySelector(".ll-custom-cursor-pointer");
 
   expect(tile).not.toBeNull();
 
@@ -283,7 +283,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-ring")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-accent")).not.toBeNull();
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -337,9 +337,9 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-yellow-400")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-ring")).toBeNull();
-    expect(container.querySelector(".ll\\:border-green-500")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-accent")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -370,7 +370,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:border-green-500")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-green-500\\/15")).not.toBeNull();
     expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
   });
 
@@ -387,8 +387,8 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:border-orange-500")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-green-500")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -403,8 +403,8 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:border-yellow-400")).not.toBeNull();
-    expect(container.querySelector(".ll\\:border-orange-500")).toBeNull();
+    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
+    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).toBeNull();
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
