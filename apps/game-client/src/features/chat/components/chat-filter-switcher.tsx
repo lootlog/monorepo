@@ -21,7 +21,7 @@ export function ChatFilterSwitcher({ value, onValueChange, unread }: Props) {
   ] as const;
 
   return (
-    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-y ll:border-x-0 ll:border-gray-400/40">
+    <div className="ll:-mt-px ll:flex ll:shrink-0 ll:items-center ll:gap-1 ll:border-y ll:border-x-0 ll:border-gray-400/40">
       <ToggleGroup
         value={[value]}
         onValueChange={(values) => {

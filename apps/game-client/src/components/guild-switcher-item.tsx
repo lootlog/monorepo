@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { GuildButton } from "@/components/guild-button";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -48,9 +49,17 @@ export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
           <AvatarImage
             src={guild.icon ?? undefined}
             alt={guild.name}
-            className="ll:size-full ll:rounded-sm ll:object-cover"
+            className={cn(
+              "ll:size-full ll:object-cover",
+              variant === "strip" ? "ll:rounded-none" : "ll:rounded-sm",
+            )}
           />
-          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:text-xs ll:font-semibold ll:leading-none">
+          <AvatarFallback
+            className={cn(
+              "ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:text-xs ll:font-semibold ll:leading-none",
+              variant === "strip" && "ll:rounded-none",
+            )}
+          >
             {guild.name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </GuildButton>

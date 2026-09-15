@@ -30,7 +30,7 @@ export function ChatViewHeader({
     >
       <GuildSwitcher
         allowAll
-        className="ll:min-w-0 ll:flex-1 ll:border-y-0 ll:bg-transparent"
+        className="ll:min-w-0 ll:flex-1"
         value={selectedGuildId}
         onChange={onGuildChange}
         unreadCountByGuildId={unreadCountByGuildId}

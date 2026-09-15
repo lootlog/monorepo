@@ -1,5 +1,4 @@
 import { cn } from "cn";
-import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
 import {
@@ -38,7 +37,10 @@ type GuildSwitcherProps = {
   unreadCountByGuildId?: Record<string, number>;
   unreadGuildIds?: ReadonlySet<string>;
   value?: string;
-  /** `strip` renders the scroll layout as a flat, full-width bar that stacks with other toolbar strips. */
+  /**
+   * `strip` renders the scroll layout as a flat, full-width tile row without
+   * rules of its own; the caller wraps it in a toolbar strip container.
+   */
   variant?: "default" | "strip";
 };
 
@@ -307,7 +309,12 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
           className={resolvedButtonClassName}
           unreadBadge={null}
         >
-          <AvatarFallback className="ll:font-semibold ll:text-xl ll:mt-1.5">
+          <AvatarFallback
+            className={cn(
+              "ll:font-semibold ll:text-xl ll:mt-1.5",
+              isStrip && "ll:rounded-none",
+            )}
+          >
             *
           </AvatarFallback>
         </GuildButton>
@@ -382,7 +389,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   return (
     <TooltipProvider>
       <ScrollArea
-        className={cn("ll:w-full", isStrip && toolbarStripClassName, className)}
+        className={cn("ll:w-full", className)}
         orientation="horizontal"
       >
         <div
