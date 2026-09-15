@@ -1,4 +1,4 @@
-import { WindowActionButton } from "@/components/window-action-button";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
 import { Filter, List, MapPinned } from "lucide-react";
 import type { FC } from "react";

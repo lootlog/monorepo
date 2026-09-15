@@ -6,6 +6,7 @@ import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview"
 import { ChatMentionSuggestions } from "@/features/chat/components/chat-mention-suggestions";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
+import { WindowFooter } from "@/components/draggable-window/window-footer";
 import { Loader2 } from "lucide-react";
 import {
   useChatInputController,
@@ -59,6 +60,107 @@ export function ChatInput(props: ChatInputProps) {
     autofocus,
   } = useChatInputController(props);
 
+  const composeRow = (
+    <>
+      <div className="ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible">
+        <Popover open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
+          <div
+            ref={clearConfirmAnchorRef}
+            className={cn(
+              CHAT_INPUT_SHELL_CLASS,
+              inputVariantClasses[variant],
+              variant === "borderless" && "ll:h-full",
+              !isPending && CHAT_INPUT_FOCUS_CLASSES[variant],
+              variant === "default" &&
+                "ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+            )}
+          >
+            <ChatInputEditor
+              ref={editorRef}
+              autoFocus={autofocus}
+              caretIndex={caretIndex}
+              disabled={isPending || !selectedGuildId}
+              message={messageValue}
+              mentionContext={mentionContext}
+              placeholder={t("input.placeholder")}
+              onChange={(nextMessage, nextCaretIndex) => {
+                setMessageValue(nextMessage);
+                setCaretIndex(nextCaretIndex);
+                setDismissedMentionKey(null);
+                setTabCompletionSession(null);
+                setRequestedMentionIndex(-1);
+
+                if (nextMessage.trim() !== "/clr") {
+                  setIsClearConfirmOpen(false);
+                }
+              }}
+              onCaretChange={setCaretIndex}
+              onKeyDown={handleInputKeyDown}
+            />
+            {isPending ? (
+              <Loader2
+                aria-label={t("input.pending")}
+                className="ll:pointer-events-none ll:absolute ll:right-1 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:animate-spin ll:motion-reduce:animate-none"
+              />
+            ) : null}
+          </div>
+          <PopoverContent
+            anchor={clearConfirmAnchorRef}
+            side="top"
+            align="start"
+            className="ll:w-64"
+            initialFocus={false}
+            finalFocus={false}
+          >
+            <div className="ll:flex ll:flex-col ll:gap-2">
+              <div className="ll:flex ll:flex-col ll:gap-1">
+                <p className="ll:text-xs ll:font-semibold ll:text-popover-foreground">
+                  {t("input.clearChatConfirm.title")}
+                </p>
+                <p className="ll:text-[11px] ll:text-muted-foreground">
+                  {t("input.clearChatConfirm.description")}
+                </p>
+              </div>
+              <div className="ll:flex ll:justify-end ll:gap-2">
+                <Button
+                  size="xs"
+                  variant="menu"
+                  type="button"
+                  onClick={() => {
+                    setIsClearConfirmOpen(false);
+                    focusEditorCaret(caretIndex);
+                  }}
+                >
+                  {t("input.clearChatConfirm.cancel")}
+                </Button>
+                <Button
+                  size="xs"
+                  variant="menu"
+                  type="button"
+                  disabled={isClearingChat}
+                  className="ll:text-red-700 ll:in-[.dark-theme]:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
+                  onClick={() => {
+                    void handleClearChatConfirm();
+                  }}
+                >
+                  {isClearingChat ? (
+                    <Loader2
+                      aria-hidden
+                      className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
+                    />
+                  ) : (
+                    t("input.clearChatConfirm.confirm")
+                  )}
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <ChatQuickActionStrip guildId={selectedGuildId} />
+    </>
+  );
+
   return (
     <form
       className={cn(
@@ -90,112 +192,13 @@ export function ChatInput(props: ChatInputProps) {
         selectedIndex={selectedMentionIndex}
         onSelect={handleSuggestionSelect}
       />
-      <div
-        className={cn("ll:flex ll:items-center ll:gap-1", {
-          "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:pl-1":
-            variant === "borderless",
-        })}
-      >
-        <div className="ll:relative ll:min-w-0 ll:flex-1 ll:overflow-visible">
-          <Popover
-            open={isClearConfirmOpen}
-            onOpenChange={setIsClearConfirmOpen}
-          >
-            <div
-              ref={clearConfirmAnchorRef}
-              className={cn(
-                CHAT_INPUT_SHELL_CLASS,
-                inputVariantClasses[variant],
-                variant === "borderless" && "ll:h-8",
-                !isPending && CHAT_INPUT_FOCUS_CLASSES[variant],
-                variant === "default" &&
-                  "ll:bg-black/92 ll:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
-              )}
-            >
-              <ChatInputEditor
-                ref={editorRef}
-                autoFocus={autofocus}
-                caretIndex={caretIndex}
-                disabled={isPending || !selectedGuildId}
-                message={messageValue}
-                mentionContext={mentionContext}
-                placeholder={t("input.placeholder")}
-                onChange={(nextMessage, nextCaretIndex) => {
-                  setMessageValue(nextMessage);
-                  setCaretIndex(nextCaretIndex);
-                  setDismissedMentionKey(null);
-                  setTabCompletionSession(null);
-                  setRequestedMentionIndex(-1);
-
-                  if (nextMessage.trim() !== "/clr") {
-                    setIsClearConfirmOpen(false);
-                  }
-                }}
-                onCaretChange={setCaretIndex}
-                onKeyDown={handleInputKeyDown}
-              />
-              {isPending ? (
-                <Loader2
-                  aria-label={t("input.pending")}
-                  className="ll:pointer-events-none ll:absolute ll:right-1 ll:top-1/2 ll:size-3.5 ll:-translate-y-1/2 ll:animate-spin ll:motion-reduce:animate-none"
-                />
-              ) : null}
-            </div>
-            <PopoverContent
-              anchor={clearConfirmAnchorRef}
-              side="top"
-              align="start"
-              className="ll:w-64"
-              initialFocus={false}
-              finalFocus={false}
-            >
-              <div className="ll:flex ll:flex-col ll:gap-2">
-                <div className="ll:flex ll:flex-col ll:gap-1">
-                  <p className="ll:text-xs ll:font-semibold ll:text-popover-foreground">
-                    {t("input.clearChatConfirm.title")}
-                  </p>
-                  <p className="ll:text-[11px] ll:text-muted-foreground">
-                    {t("input.clearChatConfirm.description")}
-                  </p>
-                </div>
-                <div className="ll:flex ll:justify-end ll:gap-2">
-                  <Button
-                    size="xs"
-                    variant="menu"
-                    type="button"
-                    onClick={() => {
-                      setIsClearConfirmOpen(false);
-                      focusEditorCaret(caretIndex);
-                    }}
-                  >
-                    {t("input.clearChatConfirm.cancel")}
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="menu"
-                    type="button"
-                    disabled={isClearingChat}
-                    className="ll:text-red-700 ll:in-[.dark-theme]:text-red-400 ll:hover:bg-red-500/10 ll:focus-visible:bg-red-500/10"
-                    onClick={() => {
-                      void handleClearChatConfirm();
-                    }}
-                  >
-                    {isClearingChat ? (
-                      <Loader2
-                        aria-hidden
-                        className="ll:size-3 ll:animate-spin ll:motion-reduce:animate-none"
-                      />
-                    ) : (
-                      t("input.clearChatConfirm.confirm")
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-        <ChatQuickActionStrip guildId={selectedGuildId} />
-      </div>
+      {variant === "borderless" ? (
+        <WindowFooter rowClassName="ll:gap-1 ll:pl-1">
+          {composeRow}
+        </WindowFooter>
+      ) : (
+        <div className="ll:flex ll:items-center ll:gap-1">{composeRow}</div>
+      )}
     </form>
   );
 }

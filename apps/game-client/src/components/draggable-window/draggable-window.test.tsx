@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 
 const resizeObserverCallbacks: Array<() => void> = [];

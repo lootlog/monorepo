@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/lib/auth-client";
 import { LOOTLOG_APP_URL } from "@/config/app";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
 

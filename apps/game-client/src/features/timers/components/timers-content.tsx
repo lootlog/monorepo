@@ -15,6 +15,7 @@ import {
 import { AsyncContent } from "@/components/async-content";
 import { useTranslation } from "react-i18next";
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
+import { windowFooterBleedClassName } from "@/components/draggable-window/window-footer";
 
 type ColorStat = {
   color: string;
@@ -149,7 +150,7 @@ export const TimersContent: FC<TimersContentProps> = ({
 
       {!compactView && (
         <TimersFooter
-          className={cn(!isUnderBag && "ll:-mx-1 ll:-mb-1 ll:w-auto")}
+          className={cn(!isUnderBag && windowFooterBleedClassName)}
           colorStatistics={colorStatistics}
           guildId={guildId}
           isGrouping={isGrouping}

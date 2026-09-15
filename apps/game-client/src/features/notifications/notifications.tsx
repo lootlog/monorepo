@@ -1,5 +1,5 @@
-import { DraggableWindow } from "@/components/draggable-window";
-import { WindowMaxHeightAction } from "@/components/window-max-height-action";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NotificationsList } from "@/features/notifications/components/notifications-list";
 import { useNotifications } from "@/features/notifications/hooks/use-notifications";
 import { useVisibleNotifications } from "@/features/notifications/hooks/use-visible-notifications";

@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Blend, Lock, Unlock, X } from "lucide-react";
-import { WindowActionButton } from "@/components/window-action-button";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import type { WindowOpacity } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 

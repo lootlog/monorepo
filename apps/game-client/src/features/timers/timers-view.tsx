@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import type { Timer } from "@/api/timers.api";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
 import { useSocket } from "@/contexts/socket-context";
