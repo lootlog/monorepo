@@ -41,6 +41,10 @@ const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
 const fieldLabelClassName =
   "ll:mb-0.5 ll:block ll:text-[11px] ll:font-medium ll:text-gray-300";
 
+/** Makes the type select sit in line with the text inputs around it. */
+const selectFieldClassName =
+  "ll:border-border ll:bg-transparent ll:px-1.5 ll:text-[13px] ll:text-white ll:hover:bg-transparent ll:hover:text-white";
+
 const getSpawnWindowLabel = (
   startDate: string,
   endDate: string,
@@ -225,7 +229,12 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 }}
                 disabled={isPending}
               >
-                <SelectTrigger id="npcType" aria-label={t("addForm.typeLabel")}>
+                <SelectTrigger
+                  id="npcType"
+                  size="sm"
+                  aria-label={t("addForm.typeLabel")}
+                  className={selectFieldClassName}
+                >
                   <SelectValue placeholder={t("addForm.typePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
