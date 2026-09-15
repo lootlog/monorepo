@@ -70,7 +70,12 @@ export const GuildButton: FC<GuildButtonProps> = ({
           className,
         )}
       >
-        <Avatar className="ll:size-full ll:flex ll:items-center ll:justify-center">
+        <Avatar
+          className={cn(
+            "ll:size-full ll:flex ll:items-center ll:justify-center",
+            variant === "strip" && "ll:rounded-none",
+          )}
+        >
           {children}
         </Avatar>
         {unreadBadge ? (

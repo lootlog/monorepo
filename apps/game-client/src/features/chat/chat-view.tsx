@@ -377,9 +377,7 @@ export const ChatView = ({
             failedGuildCount={failedGuildIds.length}
             onRetry={retryChatData}
           />
-          <div
-            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
-          >
+          <div className="ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden">
             <div className="ll:absolute ll:right-2 ll:bottom-2 ll:z-20">
               {hiddenGatherings}
             </div>

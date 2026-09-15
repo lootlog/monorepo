@@ -8,7 +8,10 @@ import { TimersEmptyState } from "./timers-empty-state";
 import { TimersFooter } from "./timers-footer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "cn";
-import { toolbarStripBleedClassName } from "@/components/ui/toolbar-strip";
+import {
+  toolbarStripBleedClassName,
+  toolbarStripClassName,
+} from "@/components/ui/toolbar-strip";
 import { AsyncContent } from "@/components/async-content";
 import { useTranslation } from "react-i18next";
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
@@ -82,10 +85,11 @@ export const TimersContent: FC<TimersContentProps> = ({
     >
       <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
         {!compactView && !isGrouping && (
-          <GuildSwitcher
-            className={toolbarStripBleedClassName}
-            variant="strip"
-          />
+          <div
+            className={cn(toolbarStripBleedClassName, toolbarStripClassName)}
+          >
+            <GuildSwitcher variant="strip" />
+          </div>
         )}
         {!compactView && allowWorldSelection && !isGrouping && (
           <WorldSelector
