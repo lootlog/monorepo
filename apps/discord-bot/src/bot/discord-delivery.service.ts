@@ -1,27 +1,37 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Cause, Clock, Effect, Result, Schema } from "effect";
+import { Cause, Clock, Duration, Effect, Result, Schema } from "effect";
 import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
 import {
   NotificationTargetType,
   type DiscordNotificationDeliveryResultEvent,
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
-import { ChannelType, DiscordAPIError } from "discord.js";
+import { ChannelType } from "discord.js";
 import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { NON_RETRYABLE_DISCORD_ERROR_CODES } from "./non-retryable-discord-error-codes.js";
+import {
+  discordErrorCode,
+  isRetryableDiscordError,
+  isRetryableDiscordSendError,
+} from "./non-retryable-discord-error-codes.js";
 import type { RabbitPublisher } from "./rabbit-publisher.js";
 
 const discordMessageLimit = 2000;
 
+const DeliveryOperation = Schema.Literals([
+  "fetch-channel",
+  "resolve-channel",
+  "fetch-user",
+  "create-dm",
+  "publish",
+  "send",
+]);
+
+type DeliveryOperation = typeof DeliveryOperation.Type;
+
 export class DiscordDeliveryFailure extends TaggedErrorClass<DiscordDeliveryFailure>()(
   "DiscordDeliveryFailure",
   {
-    operation: Schema.Literals([
-      "fetch-channel",
-      "fetch-user",
-      "publish",
-      "send",
-    ]),
+    operation: DeliveryOperation,
     errorCode: Schema.String,
     reason: Schema.String,
     retryable: Schema.Boolean,
@@ -45,44 +55,42 @@ const notificationContent = (command: DiscordNotificationSendCommand) => {
   return truncateToDiscordLimit(`**${command.title}**\n${command.message}`);
 };
 
+/**
+ * Discord deduplicates message creation by nonce for a few minutes when
+ * `enforceNonce` is set, so a repeated send of the same job returns the
+ * existing message instead of posting it again. Nonces are limited to 25
+ * characters, so the job id is hashed.
+ */
+const messageNonce = (notificationJobId: string) =>
+  new Bun.CryptoHasher("sha256")
+    .update(notificationJobId)
+    .digest("hex")
+    .slice(0, 25);
+
 const messageOptions = (command: DiscordNotificationSendCommand) => ({
   content: notificationContent(command),
   allowedMentions:
     command.target.targetType === NotificationTargetType.DM
       ? undefined
       : command.allowedMentions,
+  nonce: messageNonce(command.notificationJobId),
+  enforceNonce: true,
 });
 
-const isRetryableDiscordError = (cause: unknown) => {
-  if (cause instanceof DiscordAPIError) {
-    return !NON_RETRYABLE_DISCORD_ERROR_CODES.has(Number(cause.code));
-  }
-
-  return (
-    cause instanceof Error &&
-    (cause.name === "AbortError" ||
-      cause.message.includes("ETIMEDOUT") ||
-      cause.message.includes("ECONNRESET") ||
-      cause.message.includes("ECONNREFUSED") ||
-      cause.message.includes("fetch failed"))
-  );
-};
-
-const discordErrorCode = (cause: unknown) => {
-  if (cause instanceof DiscordAPIError) return String(cause.code);
-
-  return cause instanceof Error ? cause.name : "UNKNOWN_DISCORD_ERROR";
-};
-
 const deliveryFailure = (
-  operation: DiscordDeliveryFailure["operation"],
+  operation: DeliveryOperation,
   cause: unknown,
+  options?: { retryable?: boolean; errorCode?: string },
 ) =>
   new DiscordDeliveryFailure({
     operation,
-    errorCode: discordErrorCode(cause),
+    errorCode: options?.errorCode ?? discordErrorCode(cause),
     reason: cause instanceof Error ? cause.message : String(cause),
-    retryable: isRetryableDiscordError(cause),
+    retryable:
+      options?.retryable ??
+      (operation === "send"
+        ? isRetryableDiscordSendError(cause)
+        : isRetryableDiscordError(cause)),
   });
 
 type DeliveryMessage = { readonly id: string };
@@ -111,10 +119,52 @@ export interface DiscordDeliveryClient {
   };
 }
 
+export interface DiscordDeliveryOptions {
+  /** Upper bound for one Discord SDK step; defaults to 10 seconds. */
+  readonly stepTimeout?: Duration.Input;
+}
+
 export const makeDiscordDelivery = (
   publisher: RabbitPublisher,
   client: DiscordDeliveryClient,
+  options?: DiscordDeliveryOptions,
 ) => {
+  const stepTimeout = options?.stepTimeout ?? "10 seconds";
+
+  /**
+   * A lookup that times out never reached a visible side effect, so it can be
+   * repeated. A send that fails ambiguously (timeout, 5xx, reset connection)
+   * may already have produced a message, so it is reported as a permanent
+   * failure instead of risking a duplicate delivery; only a rate limited or
+   * never-connected send is retried.
+   */
+  const step = <A>(
+    operation: Exclude<DeliveryOperation, "publish" | "resolve-channel">,
+    execute: () => Promise<A>,
+  ) =>
+    Effect.tryPromise({
+      try: execute,
+      catch: (cause) => deliveryFailure(operation, cause),
+    }).pipe(
+      Effect.timeout(stepTimeout),
+      Effect.mapError((error) =>
+        Cause.isTimeoutError(error)
+          ? deliveryFailure(
+              operation,
+              new Error(`Discord ${operation} timed out`),
+              {
+                errorCode:
+                  operation === "send" ? "SEND_TIMEOUT" : "LOOKUP_TIMEOUT",
+                retryable: operation !== "send",
+              },
+            )
+          : error,
+      ),
+      Effect.withSpan(`DiscordDelivery_${operation}`, {
+        attributes: { adapter: "discord-sdk", retryCount: 0 },
+      }),
+    );
+
   const publishDeliveryResult = (
     payload: DiscordNotificationDeliveryResultEvent,
   ) =>
@@ -126,7 +176,7 @@ export const makeDiscordDelivery = (
       )
       .pipe(
         Effect.mapError((error) => deliveryFailure("publish", error)),
-        Effect.timeout("10 seconds"),
+        Effect.timeout(stepTimeout),
         Effect.mapError((error) =>
           Cause.isTimeoutError(error)
             ? deliveryFailure(
@@ -140,58 +190,58 @@ export const makeDiscordDelivery = (
         }),
       );
 
-  const sendDirectMessage = (command: DiscordNotificationSendCommand) =>
-    Effect.tryPromise({
-      try: async () => {
-        const user = await client.users.fetch(command.target.externalId);
-        const directMessageChannel = await user.createDM();
+  const sendDirectMessage = Effect.fn("DiscordDelivery_sendDirectMessage")(
+    function* (command: DiscordNotificationSendCommand) {
+      const user = yield* step("fetch-user", () =>
+        client.users.fetch(command.target.externalId),
+      );
 
-        return directMessageChannel.send(messageOptions(command));
-      },
-      catch: (error) => deliveryFailure("fetch-user", error),
-    }).pipe(
-      Effect.map((message) => ({ id: message.id })),
-      Effect.timeout("10 seconds"),
-      Effect.mapError((error) =>
-        Cause.isTimeoutError(error)
-          ? deliveryFailure("send", new Error("Discord DM send timed out"))
-          : error,
-      ),
-      Effect.withSpan("DiscordDelivery_sendDirectMessage", {
-        attributes: { adapter: "discord-sdk", retryCount: 0 },
-      }),
+      const directMessageChannel = yield* step("create-dm", () =>
+        user.createDM(),
+      );
+
+      const message = yield* step("send", () =>
+        directMessageChannel.send(messageOptions(command)),
+      );
+
+      return { id: message.id };
+    },
+  );
+
+  const sendGuildChannelMessage = Effect.fn(
+    "DiscordDelivery_sendGuildChannelMessage",
+  )(function* (command: DiscordNotificationSendCommand) {
+    const channel = yield* step("fetch-channel", () =>
+      client.channels.fetch(command.target.externalId),
     );
 
-  const sendGuildChannelMessage = (command: DiscordNotificationSendCommand) =>
-    Effect.tryPromise({
-      try: async () => {
-        const channel = await client.channels.fetch(command.target.externalId);
+    if (!channel) {
+      return yield* deliveryFailure(
+        "resolve-channel",
+        new Error("Discord channel was not found"),
+        { errorCode: "CHANNEL_NOT_FOUND", retryable: false },
+      );
+    }
 
-        if (
-          !channel ||
-          channel.type === ChannelType.DM ||
-          !channel.isTextBased() ||
-          !channel.isSendable() ||
-          !channel.send
-        ) {
-          throw new Error("Discord channel is not text-based");
-        }
+    if (
+      channel.type === ChannelType.DM ||
+      !channel.isTextBased() ||
+      !channel.isSendable() ||
+      !channel.send
+    ) {
+      return yield* deliveryFailure(
+        "resolve-channel",
+        new Error("Discord channel is not text-based"),
+        { errorCode: "CHANNEL_NOT_SENDABLE", retryable: false },
+      );
+    }
 
-        return channel.send(messageOptions(command));
-      },
-      catch: (error) => deliveryFailure("fetch-channel", error),
-    }).pipe(
-      Effect.map((message) => ({ id: message.id })),
-      Effect.timeout("10 seconds"),
-      Effect.mapError((error) =>
-        Cause.isTimeoutError(error)
-          ? deliveryFailure("send", new Error("Discord channel send timed out"))
-          : error,
-      ),
-      Effect.withSpan("DiscordDelivery_sendGuildChannelMessage", {
-        attributes: { adapter: "discord-sdk", retryCount: 0 },
-      }),
-    );
+    const send = channel.send.bind(channel);
+
+    const message = yield* step("send", () => send(messageOptions(command)));
+
+    return { id: message.id };
+  });
 
   const sendNotification = Effect.fn("DiscordDelivery_sendNotification")(
     function* (command: DiscordNotificationSendCommand) {
@@ -213,10 +263,16 @@ export const makeDiscordDelivery = (
         return;
       }
 
+      // Structured, token-free failure context: which step failed, Discord's
+      // own code and message, and whether the API will retry. Target ids and
+      // message content stay out of the log.
       yield* Effect.logError("Failed to send Discord notification").pipe(
         Effect.annotateLogs({
           notificationJobId: command.notificationJobId,
+          targetType: command.target.targetType,
           operation: delivery.failure.operation,
+          errorCode: delivery.failure.errorCode,
+          reason: delivery.failure.reason,
           retryable: delivery.failure.retryable,
         }),
       );
