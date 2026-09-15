@@ -196,8 +196,14 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setAddTimerOpen((open) => !open);
   };
 
+  // The window frame is rounded; the panel follows its bottom corners so it
+  // does not overlap the border.
   const addTimerOverlay = addTimerOpen ? (
-    <AddTimerPanel guildId={guildId} onClose={() => setAddTimerOpen(false)} />
+    <AddTimerPanel
+      guildId={guildId}
+      onClose={() => setAddTimerOpen(false)}
+      className={isUnderBag ? undefined : "ll:rounded-b-md"}
+    />
   ) : null;
 
   const handleResetFilters = () => {

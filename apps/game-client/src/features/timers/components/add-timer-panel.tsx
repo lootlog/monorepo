@@ -13,6 +13,7 @@ import { AddTimerForm } from "./add-timer-form";
 type AddTimerPanelProps = {
   guildId?: string;
   onClose: () => void;
+  className?: string;
 };
 
 const ICON_SIZE = 14;
@@ -22,7 +23,11 @@ const ICON_SIZE = 14;
  * stays inside the window, so the title bar and the "+" action remain reachable
  * and the target Lootlog is the one the window already shows.
  */
-export const AddTimerPanel: FC<AddTimerPanelProps> = ({ guildId, onClose }) => {
+export const AddTimerPanel: FC<AddTimerPanelProps> = ({
+  guildId,
+  onClose,
+  className,
+}) => {
   const { t } = useTranslation(["timers", "common"]);
   const titleId = useId();
   const { visibleGuilds } = useLootlogGuilds();
@@ -39,7 +44,10 @@ export const AddTimerPanel: FC<AddTimerPanelProps> = ({ guildId, onClose }) => {
       role="dialog"
       aria-labelledby={titleId}
       onKeyDown={handleKeyDown}
-      className="ll:absolute ll:inset-0 ll:z-20 ll:flex ll:flex-col ll:bg-black/90"
+      className={cn(
+        "ll:absolute ll:inset-0 ll:z-20 ll:flex ll:flex-col ll:overflow-hidden ll:bg-black/90",
+        className,
+      )}
     >
       <div
         className={cn(
