@@ -11,7 +11,7 @@ import { cn } from "cn";
 import { toolbarStripBleedClassName } from "@/components/ui/toolbar-strip";
 import { AsyncContent } from "@/components/async-content";
 import { useTranslation } from "react-i18next";
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 
 type ColorStat = {
   color: string;
@@ -43,6 +43,7 @@ type TimersContentProps = {
   onRetry?: () => void;
   refreshError?: boolean;
   refreshing?: boolean;
+  stale?: boolean;
 };
 
 export const TimersContent: FC<TimersContentProps> = ({
@@ -66,6 +67,7 @@ export const TimersContent: FC<TimersContentProps> = ({
   onRetry,
   refreshError = false,
   refreshing = false,
+  stale = false,
 }) => {
   const { t } = useTranslation(["timers", "common"]);
 
@@ -78,21 +80,6 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      <div className="ll:pointer-events-auto ll:absolute ll:right-2 ll:top-1 ll:z-20">
-        <AsyncStatusIndicator
-          active={refreshError}
-          kind="error"
-          label={t("states.refreshError")}
-          onRetry={onRetry}
-          retryLabel={t("actions.retry", { ns: "common" })}
-        />
-        <AsyncStatusIndicator
-          active={!refreshError && refreshing}
-          delay
-          kind="loading"
-          label={t("states.refreshing")}
-        />
-      </div>
       <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
         {!compactView && !isGrouping && (
           <GuildSwitcher
@@ -109,6 +96,16 @@ export const TimersContent: FC<TimersContentProps> = ({
         {!compactView && timerFiltersEnabled && (
           <TimersFilters filtersKey={settingsKey} />
         )}
+        <ConnectionStatusStrip
+          className={cn(!isUnderBag && toolbarStripBleedClassName)}
+          error={refreshError}
+          errorLabel={t("states.refreshError")}
+          offline={stale}
+          offlineLabel={t("states.offline")}
+          refreshing={refreshing}
+          refreshingLabel={t("states.refreshing")}
+          onRetry={onRetry}
+        />
       </div>
 
       <div
@@ -148,6 +145,7 @@ export const TimersContent: FC<TimersContentProps> = ({
 
       {!compactView && (
         <TimersFooter
+          className={cn(!isUnderBag && "ll:-mx-1 ll:-mb-1 ll:w-auto")}
           colorStatistics={colorStatistics}
           guildId={guildId}
           isGrouping={isGrouping}

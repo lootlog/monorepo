@@ -17,8 +17,7 @@
     "npcTypesLabel": "Typy potworów"
   },
   "toolbar": {
-    "hideFilters": "Ukryj filtry",
-    "showFilters": "Pokaż filtry",
+    "filters": "Filtry",
     "options": "Opcje timerów",
     "colorFilters": "Filtry po kolorze",
     "hiddenTimers": "Pokaż ukryte timery",
@@ -43,7 +42,7 @@
     "loadError": "Nie udało się załadować timerów",
     "refreshError": "Nie udało się odświeżyć timerów",
     "refreshing": "Odświeżanie timerów",
-    "offline": "Dane timerów mogą być nieaktualne"
+    "offline": "Połączenie przerwane - timery mogą być nieaktualne"
   },
   "contextMenu": {
     "color": "Kolor",

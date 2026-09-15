@@ -368,18 +368,18 @@ export const ChatView = ({
             />
           )}
           <div className="ll:relative ll:shrink-0 ll:z-10">{gatheringBar}</div>
+          <ChatConnectionStatus
+            status={{
+              partialError,
+              offline: showOfflineStatus,
+              refreshing: showRefreshingStatus,
+            }}
+            failedGuildCount={failedGuildIds.length}
+            onRetry={retryChatData}
+          />
           <div
             className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
           >
-            <ChatConnectionStatus
-              status={{
-                partialError,
-                offline: showOfflineStatus,
-                refreshing: showRefreshingStatus,
-              }}
-              failedGuildCount={failedGuildIds.length}
-              onRetry={retryChatData}
-            />
             <div className="ll:absolute ll:right-2 ll:bottom-2 ll:z-20">
               {hiddenGatherings}
             </div>
