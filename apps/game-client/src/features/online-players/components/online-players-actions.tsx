@@ -1,6 +1,6 @@
 import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import type { OnlinePlayersViewMode } from "@/features/online-players/online-players.types";
-import { Filter, List, MapPinned } from "lucide-react";
+import { List, ListFilter, MapPinned } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -31,7 +31,7 @@ export const OnlinePlayersActions: FC<OnlinePlayersActionsProps> = ({
         active={filtersVisible}
         onClick={toggleFiltersVisible}
       >
-        <Filter size={ICON_SIZE} aria-hidden="true" />
+        <ListFilter size={ICON_SIZE} aria-hidden="true" />
       </WindowActionButton>
       <WindowActionButton
         label={t(

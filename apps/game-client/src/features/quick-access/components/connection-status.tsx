@@ -10,6 +10,7 @@ import { useSocket } from "@/contexts/socket-context";
 import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
 import { useTranslation } from "react-i18next";
 
+/** Gateway connection dot for the quick access title bar; lists joined guilds on hover. */
 export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
   const { connected, joined, joinedGuilds } = useSocket();
@@ -27,27 +28,32 @@ export const ConnectionStatus: FC = () => {
       <TooltipTrigger asChild>
         <button
           type="button"
+          data-ll-draggable="false"
           aria-label={t(
             connectedToServers
               ? "connection.connectedToServers"
               : "connection.notConnected",
           )}
-          className="ll-custom-cursor-pointer ll:inline-flex ll:size-6 ll:shrink-0 ll:items-center ll:justify-center ll:border-0 ll:bg-transparent ll:p-0 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-blue-400"
+          className="ll-custom-cursor-pointer ll:inline-flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
         >
           <span
             aria-hidden="true"
-            className={cn("ll:size-2.5 ll:rounded-full", {
-              "ll:bg-red-400": !connectedToServers,
-              "ll:bg-green-400": connectedToServers,
+            className={cn("ll:size-2 ll:rounded-full", {
+              "ll:bg-red-400 ll:shadow-[0_0_5px_rgba(248,113,113,0.7)]":
+                !connectedToServers,
+              "ll:bg-green-400 ll:shadow-[0_0_5px_rgba(74,222,128,0.7)]":
+                connectedToServers,
             })}
           />
         </button>
       </TooltipTrigger>
-      <TooltipContent>
+      <TooltipContent side="bottom" align="start">
         {connectedToServers ? (
-          <div className="ll:flex ll:flex-col ll:gap-2">
-            <div>{t("connection.connectedToServers")}</div>
-            <div>
+          <div className="ll:flex ll:flex-col ll:gap-1">
+            <div className="ll:font-semibold">
+              {t("connection.connectedToServers")}
+            </div>
+            <div className="ll:flex ll:flex-col ll:gap-0.5 ll:text-gray-300">
               {joinedGuilds.map((g) => (
                 <div key={g}>
                   {guilds?.find((guild) => guild.id === g)?.name || g}
