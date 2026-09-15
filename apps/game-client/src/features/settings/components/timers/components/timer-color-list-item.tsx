@@ -40,12 +40,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
     data.backgroundAlpha,
   )}`;
 
-  const preview = (
-    <TimerColorPreviewChip
-      borderColor={data.borderColor}
-      backgroundColor={backgroundColor}
-    />
-  );
+  const preview = <TimerColorPreviewChip backgroundColor={backgroundColor} />;
 
   return (
     <SettingsColorRow

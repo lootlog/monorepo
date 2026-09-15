@@ -96,7 +96,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     <Tooltip>
       <ContextMenu>
         <TooltipTrigger asChild>
-          <ContextMenuTrigger className="ll:h-full ll:pr-px">
+          <ContextMenuTrigger className="ll:h-full">
             <div
               className={cn("ll:relative ll:h-full", {
                 "ll:opacity-50": isHidden,
@@ -111,9 +111,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 id={timer.npc.id.toString()}
                 color={
                   customColor || overriddenColor ? undefined : selectedColor
-                }
-                customBorderColor={
-                  customColor?.borderColor || overriddenColor?.borderColor
                 }
                 customBackgroundColor={
                   customColor?.backgroundColor ||

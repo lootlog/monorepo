@@ -4,18 +4,18 @@ import {
 } from "@/features/timers/constants/timer-colors";
 
 const TAILWIND_TO_HEX = {
-  red: { border: "#ef4444", background: "#ef444433" },
-  orange: { border: "#f97316", background: "#f9731633" },
-  yellow: { border: "#eab308", background: "#eab30833" },
-  lime: { border: "#84cc16", background: "#84cc1633" },
-  green: { border: "#22c55e", background: "#22c55e33" },
-  teal: { border: "#14b8a6", background: "#14b8a633" },
-  sky: { border: "#0ea5e9", background: "#0ea5e933" },
-  blue: { border: "#3730a3", background: "#3730a333" },
-  violet: { border: "#a78bfa", background: "#a78bfa33" },
-  purple: { border: "#9333ea", background: "#9333ea33" },
-  pink: { border: "#ec4899", background: "#ec489933" },
-  white: { border: "#9ca3af", background: "#9ca3af33" },
+  red: { border: "#ef4444", background: "#ef444499" },
+  orange: { border: "#f97316", background: "#f9731699" },
+  yellow: { border: "#eab308", background: "#eab30899" },
+  lime: { border: "#84cc16", background: "#84cc1699" },
+  green: { border: "#22c55e", background: "#22c55e99" },
+  teal: { border: "#14b8a6", background: "#14b8a699" },
+  sky: { border: "#0ea5e9", background: "#0ea5e999" },
+  blue: { border: "#3730a3", background: "#3730a399" },
+  violet: { border: "#a78bfa", background: "#a78bfa99" },
+  purple: { border: "#9333ea", background: "#9333ea99" },
+  pink: { border: "#ec4899", background: "#ec489999" },
+  white: { border: "#9ca3af", background: "#9ca3af00" },
 } satisfies Record<
   keyof typeof TIMERS_COLORS,
   { border: string; background: string }

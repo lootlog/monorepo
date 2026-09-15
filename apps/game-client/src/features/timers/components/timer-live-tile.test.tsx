@@ -47,15 +47,11 @@ describe("TimerLiveTile", () => {
     act(() => {
       vi.advanceTimersByTime(4_000);
     });
-    expect(screen.getByText("00:00:00").parentElement).toHaveClass(
-      "ll:text-orange-400",
-    );
+    expect(screen.getByText("00:00:00")).toHaveClass("ll:text-orange-300");
 
     act(() => {
       vi.advanceTimersByTime(1_000);
     });
-    expect(screen.getByText("-00:00:01").parentElement).toHaveClass(
-      "ll:text-red-500",
-    );
+    expect(screen.getByText("-00:00:01")).toHaveClass("ll:text-red-400");
   });
 });

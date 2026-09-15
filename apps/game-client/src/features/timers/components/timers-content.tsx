@@ -97,12 +97,7 @@ export const TimersContent: FC<TimersContentProps> = ({
         />
       </div>
 
-      <div
-        className={cn(
-          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full",
-          !isUnderBag && "ll:px-1",
-        )}
-      >
+      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
         <AsyncContent
           error={error}
           errorLabel={t("states.loadError")}
@@ -119,7 +114,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           ) : (
             <ScrollArea
               data-testid="timers-scroll-container"
-              className="ll:h-full ll:w-full! ll:pt-1"
+              className="ll:h-full ll:w-full!"
             >
               <TimersGrid
                 timers={sortedTimers}
