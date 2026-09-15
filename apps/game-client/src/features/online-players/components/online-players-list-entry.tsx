@@ -41,7 +41,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
               className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
             />
             {presence.margonemAccountVerified ? (
-              <VerifiedMargonemAccountIcon className="ll:absolute ll:-right-1 ll:-top-1 ll:z-20 ll:size-3.5 ll:bg-gray-950/90" />
+              <VerifiedMargonemAccountIcon className="ll:absolute ll:-right-0.5 ll:-top-0.5 ll:z-20 ll:size-3 ll:bg-gray-950/80" />
             ) : null}
           </span>
         ))}
