@@ -68,14 +68,7 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      {/* Under the bag the strips keep the game's inset; the list below keeps
-          only the right inset so the tile accents sit on the left border. */}
-      <div
-        className={cn(
-          "ll:flex ll:flex-col",
-          isUnderBag ? "ll:pl-4 ll:pr-1.5" : "ll:px-1",
-        )}
-      >
+      <div className={cn("ll:flex ll:flex-col", !isUnderBag && "ll:px-1")}>
         {!compactView && !isGrouping && (
           <div
             className={cn(toolbarStripBleedClassName, toolbarStripClassName)}
@@ -104,12 +97,7 @@ export const TimersContent: FC<TimersContentProps> = ({
         />
       </div>
 
-      <div
-        className={cn(
-          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full",
-          isUnderBag && "ll:pr-1.5",
-        )}
-      >
+      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
         <AsyncContent
           error={error}
           errorLabel={t("states.loadError")}
