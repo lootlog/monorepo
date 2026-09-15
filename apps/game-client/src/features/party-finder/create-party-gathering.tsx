@@ -1,4 +1,4 @@
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { CreatePartyGatheringForm } from "@/features/party-finder/components/create-party-gathering-form";
 import { useTranslation } from "react-i18next";

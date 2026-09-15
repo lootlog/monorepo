@@ -33,7 +33,7 @@ import type { CreateBattleInput } from "./create-battle.js";
 const data: CreateBattleInput = {
   accountId: "account-1",
   characterId: "220",
-  world: "pandora",
+  world: "luvia",
   events: [
     {
       ev: 1_785_091_976.6,

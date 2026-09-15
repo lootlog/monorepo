@@ -20,7 +20,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   const color = useMemberColor(guildMember);
 
   return (
-    <Tile className="ll:px-1 ll:flex ll:flex-row ll:justify-between ll:mb-0.5">
+    <Tile className="ll:px-[5px] ll:flex ll:flex-row ll:justify-between ll:rounded-none ll:border-0 ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]">
       <div
         className={cn(
           "ll:font-semibold ll:text-[11px] ll:min-w-16 ll:max-w-32 ll:whitespace-nowrap ll:truncate",
@@ -41,7 +41,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
               className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
             />
             {presence.margonemAccountVerified ? (
-              <VerifiedMargonemAccountIcon className="ll:absolute ll:-right-1 ll:-top-1 ll:z-20 ll:size-3.5 ll:bg-gray-950/90" />
+              <VerifiedMargonemAccountIcon className="ll:absolute ll:-right-0.5 ll:-top-0.5 ll:z-20 ll:size-3 ll:bg-gray-950/80" />
             ) : null}
           </span>
         ))}

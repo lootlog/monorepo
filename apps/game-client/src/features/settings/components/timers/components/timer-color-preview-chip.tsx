@@ -4,6 +4,7 @@ import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type TimerColorPreviewChipProps = {
+  /** Stripe colour on the tile's left edge. */
   borderColor: string;
   /** Background colour including its alpha channel. */
   backgroundColor: string;
@@ -26,8 +27,7 @@ export const TimerColorPreviewChip: FC<TimerColorPreviewChipProps> = ({
   return (
     <span aria-hidden className={cn("ll:flex ll:w-32", className)}>
       <TimerTileView
-        customBorderColor={borderColor}
-        customBackgroundColor={backgroundColor}
+        paint={{ accent: borderColor, fill: backgroundColor }}
         displayMode="row"
         fontSize={fontSize}
         label={t("common:preview.name")}

@@ -14,18 +14,20 @@ import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidde
 import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
 
-  const { data: guilds, isFetched } =
-    useUsersControllerGetCurrentUserAccessibleGuilds();
+  const {
+    guildsQuery: { isFetched },
+    orderedGuilds: guilds,
+  } = useLootlogGuilds();
 
   const [requestedGuildId, setRequestedGuildId] = useState("");
   const { t } = useTranslation();
 
-  const requestedGuildExists = guilds?.some(
+  const requestedGuildExists = guilds.some(
     (guild) => guild.id === requestedGuildId,
   );
 
@@ -34,14 +36,14 @@ export const HiddenTimersTab = () => {
   if (!generalConfig.timersGrouping && isFetched) {
     selectedGuildId = requestedGuildExists
       ? requestedGuildId
-      : (guilds?.[0]?.id ?? "");
+      : (guilds[0]?.id ?? "");
   }
 
   return (
     <SettingsTabLayout>
       {!generalConfig.timersGrouping ? (
         <SettingsSection title={t("settings.hiddenTimers.scopeTitle")}>
-          {guilds && guilds.length > 0 ? (
+          {guilds.length > 0 ? (
             <SettingsRow
               htmlFor="hidden-timers-guild"
               label={t("settings.hiddenTimers.guildLabel")}

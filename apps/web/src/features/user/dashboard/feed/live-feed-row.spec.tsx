@@ -170,7 +170,7 @@ it("preserves the kill statistics link and displays grouped count in its footer"
   expect(within(link).getByText(name)).toBeTruthy();
   expect(screen.getByText("×12")).toBeTruthy();
   expect(within(link).queryByText("×12")).toBeNull();
-  expect(screen.getByText("Pandora")).toBeTruthy();
+  expect(screen.getByText("Luvia")).toBeTruthy();
   expect(screen.getByText("2 godziny temu").getAttribute("datetime")).toBe(
     feedKill.occurredAt,
   );
@@ -288,7 +288,7 @@ it("places all kill organizations in the header before world and time metadata",
 
   expect(organization.getAttribute("href")).toBe("/second");
   expect(
-    organization.compareDocumentPosition(screen.getByText("Pandora")) &
+    organization.compareDocumentPosition(screen.getByText("Luvia")) &
       Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   expect(screen.getByText("×1")).toBeTruthy();

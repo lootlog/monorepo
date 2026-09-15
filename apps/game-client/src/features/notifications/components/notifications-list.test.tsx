@@ -73,7 +73,7 @@ describe("NotificationsList", () => {
   });
 
   it("opens chat with the joined gathering after applying from a notification", async () => {
-    const room = createChatReadyRoom({ world: "pandora" });
+    const room = createChatReadyRoom({ world: "luvia" });
 
     const gathering: StoredNotification = {
       ...notification,

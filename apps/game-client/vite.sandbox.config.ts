@@ -9,7 +9,7 @@ const SANDBOX_PATH = "/sandbox/";
 const LOCAL_STACK_URL = "http://localhost";
 
 // The gateway classifies a socket as a Game client only for Margonem origins.
-const SANDBOX_GAME_ORIGIN = "https://pandora.margonem.pl";
+const SANDBOX_GAME_ORIGIN = "https://luvia.margonem.pl";
 
 const proxyTo = (origin: string, ws = false): ProxyOptions => ({
   target: LOCAL_STACK_URL,

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -9,13 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GuildSwitcher } from "@/components/guild-switcher";
 import {
   CreateManualTimerDtoType,
   type SearchTimersNpcResponseDtoOutput,
 } from "@lootlog/client/main";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { getNpcTypeNames } from "@/constants/margonem";
+import { cn } from "cn";
 import { TimerFormFieldError } from "./timer-form-field-error";
 import {
   useAddTimerForm,
@@ -37,11 +38,34 @@ const MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS = {
 
 const getFieldErrorMessage = (error?: { message?: string }) => error?.message;
 
+const fieldLabelClassName =
+  "ll:mb-0.5 ll:block ll:text-[11px] ll:font-medium ll:text-gray-300";
+
+/** Makes the type select sit in line with the text inputs around it. */
+const selectFieldClassName =
+  "ll:border-border ll:bg-transparent ll:px-1.5 ll:text-[13px] ll:text-white ll:hover:bg-transparent ll:hover:text-white";
+
+const getSpawnWindowLabel = (
+  startDate: string,
+  endDate: string,
+  invalidRangeLabel: string,
+) => {
+  const minutes = Math.floor(
+    (new Date(endDate).getTime() - new Date(startDate).getTime()) / 60000,
+  );
+
+  return minutes > 0 ? `${minutes}m` : invalidRangeLabel;
+};
+
+/**
+ * Manual timer form shown as an overlay inside the timers window. The target
+ * Lootlog comes from the window's own switcher, so the form only asks for the
+ * monster and its respawn window.
+ */
 export function AddTimerForm(props: AddTimerFormProps) {
   const {
     t,
     isPending,
-    visibleGuilds,
     searchQuery,
     setSearchQuery,
     showSuggestions,
@@ -56,7 +80,6 @@ export function AddTimerForm(props: AddTimerFormProps) {
     npcSearchFailed,
     npcSearchLoading,
     retryNpcSearch,
-    handleGuildSelectionChange,
     register,
     handleSubmit,
     setValue,
@@ -77,166 +100,162 @@ export function AddTimerForm(props: AddTimerFormProps) {
     <form
       noValidate
       onSubmit={handleSubmit(onSubmit)}
-      className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:w-full"
+      className="ll:flex ll:min-h-0 ll:w-full ll:flex-1 ll:flex-col"
     >
-      {visibleGuilds.length !== 1 && (
-        <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
-          {visibleGuilds.length > 1 && <Label>{t("addForm.guildLabel")}</Label>}
-          <GuildSwitcher
-            value={selectedGuildId}
-            onChange={handleGuildSelectionChange}
-            disabled={isPending}
-          />
-        </div>
-      )}
-
-      <div className="ll:min-h-0 ll:flex-1 ll:overflow-hidden">
-        <ScrollArea
-          data-testid="add-timer-scroll-container"
-          className="ll:h-full ll:w-full"
-        >
-          <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:px-1">
-            <div className="ll:relative ll:w-full">
-              <Label htmlFor="npcSearch">{t("addForm.searchNpcLabel")}</Label>
-              <Input
-                id="npcSearch"
-                autoComplete="off"
-                placeholder={t("addForm.searchNpcPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  selectedNpcRef.current = null;
-                  setShowSuggestions(true);
-                  setSelectedIndex(-1);
-                }}
-                onKeyDown={handleSearchKeyDown}
-                onBlur={() => {
-                  if (blurTimeoutRef.current) {
-                    clearTimeout(blurTimeoutRef.current);
-                  }
-
-                  blurTimeoutRef.current = setTimeout(() => {
-                    setShowSuggestions(false);
-                    blurTimeoutRef.current = null;
-                  }, 200);
-                }}
-              />
-              <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>
-                items={npcResults ?? []}
-                errorMessage={
-                  showSuggestions && npcSearchFailed
-                    ? t("addForm.npcSearchError")
-                    : undefined
+      <ScrollArea
+        data-testid="add-timer-scroll-container"
+        className="ll:min-h-0 ll:w-full ll:flex-1"
+      >
+        <div className="ll:flex ll:w-full ll:flex-col ll:gap-2 ll:px-3 ll:py-2">
+          <div className="ll:relative ll:w-full">
+            <Label htmlFor="npcSearch" className={fieldLabelClassName}>
+              {t("addForm.searchNpcLabel")}
+            </Label>
+            <Input
+              id="npcSearch"
+              autoComplete="off"
+              autoFocus
+              placeholder={t("addForm.searchNpcPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                selectedNpcRef.current = null;
+                setShowSuggestions(true);
+                setSelectedIndex(-1);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              onBlur={() => {
+                if (blurTimeoutRef.current) {
+                  clearTimeout(blurTimeoutRef.current);
                 }
-                isLoading={showSuggestions && npcSearchLoading}
-                isOpen={showSuggestions && !!hasSearchResults}
-                loadingMessage={t("addForm.npcSearching")}
-                onRetry={() => {
-                  void retryNpcSearch();
-                }}
-                onSelect={handleNpcSelect}
-                selectedIndex={selectedIndex}
-                keyExtractor={(npc) => npc.npcId}
-                renderItem={(npc, _index, isSelected) => {
-                  const longname =
-                    getNpcTypeNames(npc.type)?.longname ??
-                    t("addForm.mobFallback");
 
-                  const npcDetails =
-                    npc.lvl > 0 && npc.prof
-                      ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
-                      : "";
+                blurTimeoutRef.current = setTimeout(() => {
+                  setShowSuggestions(false);
+                  blurTimeoutRef.current = null;
+                }, 200);
+              }}
+            />
+            <AutocompleteSuggestions<SearchTimersNpcResponseDtoOutput>
+              items={npcResults ?? []}
+              errorMessage={
+                showSuggestions && npcSearchFailed
+                  ? t("addForm.npcSearchError")
+                  : undefined
+              }
+              isLoading={showSuggestions && npcSearchLoading}
+              isOpen={showSuggestions && !!hasSearchResults}
+              loadingMessage={t("addForm.npcSearching")}
+              onRetry={() => {
+                void retryNpcSearch();
+              }}
+              onSelect={handleNpcSelect}
+              selectedIndex={selectedIndex}
+              keyExtractor={(npc) => npc.npcId}
+              renderItem={(npc, _index, isSelected) => {
+                const longname =
+                  getNpcTypeNames(npc.type)?.longname ??
+                  t("addForm.mobFallback");
 
-                  return (
-                    <div
-                      className={`ll:px-3 ll:py-2 ll:text-xs ll:border-b ll:border-gray-600/50 last:ll:border-b-0 ${
-                        isSelected
-                          ? "ll:bg-blue-500/30"
-                          : "ll:hover:bg-gray-700/50"
-                      }`}
-                    >
-                      <div className="ll:font-semibold ll:text-white">
-                        {npc.name}
-                      </div>
-                      <div className="ll:text-gray-400 ll:text-[10px]">
-                        {longname} • {npcDetails}
-                      </div>
-                    </div>
-                  );
-                }}
-                noResultsMessage={t("addForm.npcNotFound")}
-                showNoResults={showNoResults}
-              />
-            </div>
+                const npcDetails =
+                  npc.lvl > 0 && npc.prof
+                    ? `${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
+                    : "";
 
-            <div className="ll:w-full">
-              <Label htmlFor="name">{t("addForm.nameLabel")}</Label>
-              <Input
-                id="name"
-                autoComplete="off"
-                placeholder={t("addForm.namePlaceholder")}
-                maxLength={MAX_NPC_NAME_LENGTH}
-                {...nameField}
-                onChange={(event) => {
-                  selectedNpcRef.current = null;
-                  nameField.onChange(event);
-                }}
-              />
-              <TimerFormFieldError
-                message={getFieldErrorMessage(errors.name)}
-              />
-            </div>
-
-            <div className="ll:grid ll:grid-cols-1 ll:gap-2 ll:sm:grid-cols-2 ll:w-full">
-              <div className="ll:min-w-0">
-                <Label htmlFor="lvl">{t("addForm.lvlLabel")}</Label>
-                <Input
-                  id="lvl"
-                  type="number"
-                  min={MIN_NPC_LEVEL}
-                  max={MAX_NPC_LEVEL}
-                  step={1}
-                  autoComplete="off"
-                  placeholder={t("addForm.lvlPlaceholder")}
-                  {...register("lvl")}
-                />
-                <TimerFormFieldError
-                  message={getFieldErrorMessage(errors.lvl)}
-                />
-              </div>
-              <div className="ll:min-w-0">
-                <Label htmlFor="npcType">{t("addForm.typeLabel")}</Label>
-                <Select
-                  value={selectedNpcType}
-                  onValueChange={(value) => {
-                    setValue("type", resolveManualTimerNpcType(value));
-                  }}
-                  disabled={isPending}
-                >
-                  <SelectTrigger
-                    id="npcType"
-                    aria-label={t("addForm.typeLabel")}
+                return (
+                  <div
+                    className={cn(
+                      "ll:border-b ll:border-x-0 ll:border-t-0 ll:border-gray-600/50 ll:px-2 ll:py-1.5 ll:text-xs last:ll:border-b-0",
+                      isSelected ? "ll:bg-blue-500/30" : "ll:hover:bg-white/5",
+                    )}
                   >
-                    <SelectValue placeholder={t("addForm.typePlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EMPTY_NPC_TYPE_VALUE}>
-                      {t("addForm.typePlaceholder")}
-                    </SelectItem>
-                    {MANUAL_TIMER_NPC_TYPES.map((npcType) => (
-                      <SelectItem key={npcType} value={npcType}>
-                        {t(
-                          `common:npcTypes.${MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS[npcType]}`,
-                        )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                    <div className="ll:font-semibold ll:text-white">
+                      {npc.name}
+                    </div>
+                    <div className="ll:text-[10px] ll:text-gray-400">
+                      {[longname, npcDetails].filter(Boolean).join(" • ")}
+                    </div>
+                  </div>
+                );
+              }}
+              noResultsMessage={t("addForm.npcNotFound")}
+              showNoResults={showNoResults}
+            />
+          </div>
 
-            <div className="ll:w-full">
-              <Label htmlFor="minDuration">
+          <div className="ll:w-full">
+            <Label htmlFor="name" className={fieldLabelClassName}>
+              {t("addForm.nameLabel")}
+            </Label>
+            <Input
+              id="name"
+              autoComplete="off"
+              placeholder={t("addForm.namePlaceholder")}
+              maxLength={MAX_NPC_NAME_LENGTH}
+              {...nameField}
+              onChange={(event) => {
+                selectedNpcRef.current = null;
+                nameField.onChange(event);
+              }}
+            />
+            <TimerFormFieldError message={getFieldErrorMessage(errors.name)} />
+          </div>
+
+          <div className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
+            <div className="ll:min-w-0">
+              <Label htmlFor="lvl" className={fieldLabelClassName}>
+                {t("addForm.lvlLabel")}
+              </Label>
+              <Input
+                id="lvl"
+                type="number"
+                min={MIN_NPC_LEVEL}
+                max={MAX_NPC_LEVEL}
+                step={1}
+                autoComplete="off"
+                inputMode="numeric"
+                placeholder={t("addForm.lvlPlaceholder")}
+                {...register("lvl")}
+              />
+              <TimerFormFieldError message={getFieldErrorMessage(errors.lvl)} />
+            </div>
+            <div className="ll:min-w-0">
+              <Label htmlFor="npcType" className={fieldLabelClassName}>
+                {t("addForm.typeLabel")}
+              </Label>
+              <Select
+                value={selectedNpcType}
+                onValueChange={(value) => {
+                  setValue("type", resolveManualTimerNpcType(value));
+                }}
+                disabled={isPending}
+              >
+                <SelectTrigger
+                  id="npcType"
+                  size="sm"
+                  aria-label={t("addForm.typeLabel")}
+                  className={selectFieldClassName}
+                >
+                  <SelectValue placeholder={t("addForm.typePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EMPTY_NPC_TYPE_VALUE}>
+                    {t("addForm.typePlaceholder")}
+                  </SelectItem>
+                  {MANUAL_TIMER_NPC_TYPES.map((npcType) => (
+                    <SelectItem key={npcType} value={npcType}>
+                      {t(
+                        `common:npcTypes.${MANUAL_TIMER_NPC_TYPE_TRANSLATION_KEYS[npcType]}`,
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="ll:grid ll:w-full ll:grid-cols-2 ll:gap-2">
+            <div className="ll:min-w-0">
+              <Label htmlFor="minDuration" className={fieldLabelClassName}>
                 {t("addForm.minDurationLabel")}
               </Label>
               <Input
@@ -250,9 +269,8 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 message={getFieldErrorMessage(errors.minDuration)}
               />
             </div>
-
-            <div className="ll:w-full">
-              <Label htmlFor="maxDuration">
+            <div className="ll:min-w-0">
+              <Label htmlFor="maxDuration" className={fieldLabelClassName}>
                 {t("addForm.maxDurationLabel")}
               </Label>
               <Input
@@ -266,68 +284,86 @@ export function AddTimerForm(props: AddTimerFormProps) {
                 message={getFieldErrorMessage(errors.maxDuration)}
               />
             </div>
-
-            <div className="ll:mt-2 ll:flex ll:items-center ll:gap-2">
-              <Switch
-                id="customDates"
-                checked={customDatesEnabled}
-                onCheckedChange={(checked) => handleCustomDatesToggle(checked)}
-              />
-              <Label htmlFor="customDates">{t("addForm.customDates")}</Label>
-            </div>
-
-            {customDatesEnabled && (
-              <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full">
-                <div className="ll:w-full">
-                  <Label htmlFor="startDate">
-                    {t("addForm.startDateLabel")}
-                  </Label>
-                  <Input
-                    id="startDate"
-                    type="datetime-local"
-                    {...register("startDate")}
-                    className="ll:text-xs"
-                  />
-                  <TimerFormFieldError
-                    message={getFieldErrorMessage(errors.startDate)}
-                  />
-                </div>
-                <div className="ll:w-full">
-                  <Label htmlFor="endDate">{t("addForm.endDateLabel")}</Label>
-                  <Input
-                    id="endDate"
-                    type="datetime-local"
-                    {...register("endDate")}
-                    className="ll:text-xs"
-                  />
-                  <TimerFormFieldError
-                    message={getFieldErrorMessage(errors.endDate)}
-                  />
-                </div>
-                {startDate && endDate && (
-                  <p className="ll:text-xs ll:text-gray-400">
-                    {t("addForm.windowLabel")}{" "}
-                    {new Date(endDate).getTime() -
-                      new Date(startDate).getTime() >
-                    0
-                      ? `${Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / 60000)}m`
-                      : t("addForm.invalidRange")}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
-        </ScrollArea>
-      </div>
 
-      <div className="ll:flex ll:justify-center ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1 ll:shrink-0">
-        <button
-          type="submit"
-          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:px-4"
-          disabled={isPending || !selectedGuildId}
+          <div className="ll:flex ll:items-center ll:gap-2 ll:pt-1">
+            <Switch
+              id="customDates"
+              checked={customDatesEnabled}
+              onCheckedChange={(checked) => handleCustomDatesToggle(checked)}
+            />
+            <Label
+              htmlFor="customDates"
+              className="ll:text-[11px] ll:font-medium ll:text-gray-300"
+            >
+              {t("addForm.customDates")}
+            </Label>
+          </div>
+
+          {customDatesEnabled && (
+            <div className="ll:flex ll:w-full ll:flex-col ll:gap-2">
+              <div className="ll:w-full">
+                <Label htmlFor="startDate" className={fieldLabelClassName}>
+                  {t("addForm.startDateLabel")}
+                </Label>
+                <Input
+                  id="startDate"
+                  type="datetime-local"
+                  {...register("startDate")}
+                  className="ll:text-xs"
+                />
+                <TimerFormFieldError
+                  message={getFieldErrorMessage(errors.startDate)}
+                />
+              </div>
+              <div className="ll:w-full">
+                <Label htmlFor="endDate" className={fieldLabelClassName}>
+                  {t("addForm.endDateLabel")}
+                </Label>
+                <Input
+                  id="endDate"
+                  type="datetime-local"
+                  {...register("endDate")}
+                  className="ll:text-xs"
+                />
+                <TimerFormFieldError
+                  message={getFieldErrorMessage(errors.endDate)}
+                />
+              </div>
+              {startDate && endDate && (
+                <p className="ll:text-[11px] ll:text-gray-400">
+                  {t("addForm.windowLabel")}{" "}
+                  {getSpawnWindowLabel(
+                    startDate,
+                    endDate,
+                    t("addForm.invalidRange"),
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      <div className="ll:flex ll:shrink-0 ll:items-center ll:justify-end ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-3 ll:py-1.5">
+        <Button
+          type="button"
+          size="xs"
+          variant="ghost"
+          onClick={props.onClose}
+          disabled={isPending}
         >
-          {isPending ? t("addForm.submitting") : t("addForm.submit")}
-        </button>
+          {t("addForm.cancel")}
+        </Button>
+        <Button
+          type="submit"
+          size="xs"
+          variant="secondary"
+          loading={isPending}
+          disabled={!selectedGuildId}
+        >
+          {t("addForm.submit")}
+        </Button>
       </div>
     </form>
   );

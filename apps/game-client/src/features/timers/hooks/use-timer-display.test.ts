@@ -13,7 +13,7 @@ import { useTimerDisplay } from "./use-timer-display";
 const createTimer = (overrides?: Partial<Timer>): Timer => ({
   guildId: "guild-1",
   timerKey: "timer-1",
-  world: "pandora",
+  world: "luvia",
   npcId: 10,
   minSpawnTime: "2026-04-22T10:00:00.000Z",
   maxSpawnTime: "2026-04-22T10:05:00.000Z",
@@ -83,13 +83,7 @@ describe("useTimerDisplay", () => {
     expect(result.current).toMatchObject({
       isPending: false,
       selectedColor: "custom-red",
-      customColor: {
-        id: "custom-red",
-        name: "Custom red",
-        borderColor: "#f00",
-        backgroundColor: "#fee",
-      },
-      overriddenColor: undefined,
+      paint: { accent: "#f00", fill: "#fee" },
       resetIndicator: "[R] ",
       npcDetails: " (120w)",
       countdownMode: "min",
@@ -164,11 +158,7 @@ describe("useTimerDisplay", () => {
     expect(result.current).toMatchObject({
       isPending: true,
       selectedColor: "white",
-      customColor: undefined,
-      overriddenColor: {
-        borderColor: "#111",
-        backgroundColor: "#333",
-      },
+      paint: { accent: "#111", fill: "#333" },
       countdownMode: "min",
     });
   });

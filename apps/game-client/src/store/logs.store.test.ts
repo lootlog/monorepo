@@ -15,14 +15,14 @@ describe("useLogsStore", () => {
   it("keeps actions only in memory", () => {
     const actionId = useLogsStore.getState().appendAction({
       actionType: "create_loot",
-      payload: { world: "pandora" },
+      payload: { world: "luvia" },
     });
 
     useLogsStore.getState().appendRequest({
       actionId,
       method: "POST",
       endpoint: "/loots",
-      payload: { world: "pandora" },
+      payload: { world: "luvia" },
       response: { id: 15 },
       statusCode: 201,
       status: "success",
@@ -150,7 +150,7 @@ describe("useLogsStore", () => {
   it("clears all actions", () => {
     useLogsStore.getState().appendAction({
       actionType: "create_loot",
-      payload: { world: "pandora" },
+      payload: { world: "luvia" },
     });
 
     useLogsStore.getState().clearActions();

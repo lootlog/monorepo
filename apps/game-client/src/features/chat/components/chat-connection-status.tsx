@@ -1,4 +1,4 @@
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { useTranslation } from "react-i18next";
 
 type Props = {
@@ -15,29 +15,18 @@ export function ChatConnectionStatus({
   const { t } = useTranslation("chat");
 
   return (
-    <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20 ll:flex ll:max-w-[calc(100%-8px)] ll:items-start ll:gap-1">
-      <AsyncStatusIndicator
-        active={status.partialError}
-        kind="error"
-        label={
-          failedGuildCount > 0
-            ? t("states.status.partialError", { count: failedGuildCount })
-            : t("states.refreshError")
-        }
-        onRetry={onRetry}
-        retryLabel={t("actions.retry", { ns: "common" })}
-      />
-      <AsyncStatusIndicator
-        active={status.offline}
-        kind="warning"
-        label={t("states.offline")}
-      />
-      <AsyncStatusIndicator
-        active={status.refreshing}
-        delay
-        kind="loading"
-        label={t("states.refreshing")}
-      />
-    </div>
+    <ConnectionStatusStrip
+      error={status.partialError}
+      errorLabel={
+        failedGuildCount > 0
+          ? t("states.partialError", { count: failedGuildCount })
+          : t("states.refreshError")
+      }
+      offline={status.offline}
+      offlineLabel={t("states.offline")}
+      refreshing={status.refreshing}
+      refreshingLabel={t("states.refreshing")}
+      onRetry={onRetry}
+    />
   );
 }

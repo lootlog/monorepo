@@ -166,6 +166,41 @@ describe("useDrag", () => {
     expect(onDragStop).toHaveBeenCalledWith({ x: 29, y: 39 });
   });
 
+  it("cancels the pointerdown default action so a drag does not start a text selection", () => {
+    const element = document.createElement("div");
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    const { getByTestId } = render(
+      <div
+        data-testid="drag-target"
+        onPointerDown={result.current.handlePointerDown}
+      />,
+    );
+
+    const event = new Event("pointerdown", {
+      bubbles: true,
+      cancelable: true,
+    });
+
+    Object.assign(event, {
+      button: 0,
+      buttons: 1,
+      clientX: 10,
+      clientY: 10,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: "mouse",
+    });
+
+    act(() => {
+      getByTestId("drag-target").dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(result.current.isDragging).toBe(true);
+  });
+
   it("ignores another pointer and ends the active session on pointer cancel", () => {
     const element = document.createElement("div");
     vi.spyOn(element, "getBoundingClientRect").mockReturnValue({

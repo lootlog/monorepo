@@ -23,7 +23,10 @@ import {
 } from "@/features/online-players/online-players-list.helpers";
 import { useShallow } from "zustand/react/shallow";
 import { AsyncContent } from "@/components/async-content";
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { cn } from "cn";
+import { ConnectionStatusStrip } from "@/components/connection-status-strip";
+import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { SearchX, ShieldX, UsersRound } from "lucide-react";
@@ -45,8 +48,62 @@ const areOnlinePlayerFiltersActive = (
       DEFAULT_ONLINE_PLAYERS_FILTERS.selectedProfession,
   ].some(Boolean);
 
-const hasRefreshError = (hasLoaded: boolean, cause: unknown): boolean =>
-  hasLoaded && Boolean(cause);
+type InitialLoadInput = {
+  disconnected: boolean;
+  error: unknown;
+  guildId: string | undefined;
+  guildsQuery: { error: unknown; isLoading: boolean };
+  hasLoaded: boolean;
+  initialLoading: boolean;
+};
+
+type InitialLoad = {
+  error: unknown;
+  errorLabelKey: "states.loadError" | "states.disconnected";
+  loading: boolean;
+};
+
+const GATEWAY_OFFLINE = new Error("Realtime gateway is not connected");
+
+/**
+ * Without an Organization there is no presence scope to fetch, so the only
+ * thing that can load or fail is the Organization list itself. With a scope
+ * but no gateway session nothing is requested, which the user must see too.
+ */
+const resolveInitialLoad = ({
+  disconnected,
+  error,
+  guildId,
+  guildsQuery,
+  hasLoaded,
+  initialLoading,
+}: InitialLoadInput): InitialLoad => {
+  if (hasLoaded) {
+    return { error: null, errorLabelKey: "states.loadError", loading: false };
+  }
+
+  if (disconnected) {
+    return {
+      error: GATEWAY_OFFLINE,
+      errorLabelKey: "states.disconnected",
+      loading: false,
+    };
+  }
+
+  if (guildId) {
+    return {
+      error,
+      errorLabelKey: "states.loadError",
+      loading: initialLoading,
+    };
+  }
+
+  return {
+    error: error ?? guildsQuery.error,
+    errorLabelKey: "states.loadError",
+    loading: initialLoading || guildsQuery.isLoading,
+  };
+};
 
 export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
   viewMode,
@@ -74,6 +131,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const {
     accessState,
+    disconnected,
     error,
     hasLoaded,
     initialLoading,
@@ -82,6 +140,22 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     retry,
     stale,
   } = usePlayersPresence(guildId, world ?? defaultWorld);
+
+  const { guildsQuery } = useLootlogGuilds();
+
+  const initialLoad = resolveInitialLoad({
+    disconnected,
+    error,
+    guildId,
+    guildsQuery,
+    hasLoaded,
+    initialLoading,
+  });
+
+  const retryAll = () => {
+    retry();
+    void guildsQuery.refetch();
+  };
 
   const filtersByGuildId = useOnlinePlayersStore(
     (state) => state.filtersByGuildId,
@@ -242,33 +316,15 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   return (
     <div className="ll:relative ll:h-full ll:w-full">
-      <div className="ll:pointer-events-auto ll:absolute ll:right-1 ll:top-1 ll:z-20">
-        <AsyncStatusIndicator
-          active={hasRefreshError(hasLoaded, error)}
-          kind="error"
-          label={t("states.refreshError")}
-          onRetry={retry}
-          retryLabel={t("actions.retry", { ns: "common" })}
-        />
-        <AsyncStatusIndicator
-          active={!error && stale}
-          kind="warning"
-          label={t("states.offline")}
-        />
-        <AsyncStatusIndicator
-          active={!stale && !error && refreshing}
-          delay
-          kind="loading"
-          label={t("states.refreshing")}
-        />
-      </div>
       <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden ll:pt-1">
         {filtersVisible && (
           <>
-            <div className="ll:flex ll:gap-1 ll:pb-1">
+            <div className={cn(toolbarStripClassName, "ll:-mt-px")}>
               <GuildSwitcher />
             </div>
-            {allowWorldSelection && <WorldSelector />}
+            {allowWorldSelection && (
+              <WorldSelector className="ll:-mt-px" variant="strip" />
+            )}
 
             <OnlinePlayersFilters
               searchQuery={searchQuery}
@@ -280,13 +336,22 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             />
           </>
         )}
-        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full ll:mt-1">
+        <ConnectionStatusStrip
+          error={hasLoaded && Boolean(error)}
+          errorLabel={t("states.refreshError")}
+          offline={stale}
+          offlineLabel={t("states.offline")}
+          refreshing={refreshing}
+          refreshingLabel={t("states.refreshing")}
+          onRetry={retry}
+        />
+        <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
           <AsyncContent
-            error={!hasLoaded ? error : null}
-            errorLabel={t("states.loadError")}
-            isLoading={initialLoading}
+            error={initialLoad.error}
+            errorLabel={t(initialLoad.errorLabelKey)}
+            isLoading={initialLoad.loading}
             loadingLabel={t("states.loading")}
-            onRetry={retry}
+            onRetry={retryAll}
             retryLabel={t("actions.retry", { ns: "common" })}
           >
             {listContent}

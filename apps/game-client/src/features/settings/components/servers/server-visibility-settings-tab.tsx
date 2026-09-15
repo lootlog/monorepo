@@ -1,4 +1,3 @@
-import { orderGuilds as orderLootlogGuilds } from "@lootlog/domain/guild-preferences";
 import { AsyncContent } from "@/components/async-content";
 import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsSection } from "@/components/settings/settings-section";
@@ -6,13 +5,10 @@ import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
 import { SettingsToolbar } from "@/components/settings/settings-toolbar";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { SettingsGuildPicker } from "@/features/settings/components/shared/settings-guild-picker";
-import {
-  useUserPreferences,
-  useUpdateUserPreferences,
-} from "@/hooks/api/use-user-preferences";
+import { ServerOrderList } from "@/features/settings/components/servers/server-order-list";
+import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -22,8 +18,7 @@ const VISIBILITY_FILTERS: VisibilityFilter[] = ["all", "visible", "hidden"];
 
 export const ServerVisibilitySettingsTab = () => {
   const { t } = useTranslation();
-  const guildsQuery = useUsersControllerGetCurrentUserAccessibleGuilds();
-  const preferencesQuery = useUserPreferences();
+  const { guildsQuery, preferencesQuery, orderedGuilds } = useLootlogGuilds();
   const updatePreferences = useUpdateUserPreferences();
   const [query, setQuery] = useState("");
 
@@ -32,11 +27,6 @@ export const ServerVisibilitySettingsTab = () => {
 
   const hiddenGuildIds = preferencesQuery.data?.hiddenGuildIds ?? [];
   const hiddenGuildIdSet = new Set(hiddenGuildIds);
-
-  const orderedGuilds = orderLootlogGuilds(
-    guildsQuery.data ?? [],
-    preferencesQuery.data?.guildsOrder,
-  );
 
   const visibleGuildIds = orderedGuilds.flatMap((guild) =>
     hiddenGuildIdSet.has(guild.id) ? [] : [guild.id],
@@ -62,6 +52,7 @@ export const ServerVisibilitySettingsTab = () => {
   });
 
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
+  const isFiltered = normalizedQuery !== "" || visibilityFilter !== "all";
 
   // Derived from the cache at click time: rapid clicks each build on the
   // previous optimistic state instead of the one this render was given.
@@ -77,6 +68,12 @@ export const ServerVisibilitySettingsTab = () => {
           : [...currentHiddenGuildIds, guildId],
       };
     });
+  };
+
+  // The full order is sent, so servers not in the stored order (new ones)
+  // keep their place instead of trailing behind the dragged one.
+  const reorderGuilds = (guildIds: string[]) => {
+    updatePreferences.mutateFromCurrent(() => ({ guildsOrder: guildIds }));
   };
 
   return (
@@ -100,7 +97,7 @@ export const ServerVisibilitySettingsTab = () => {
           <SettingsSection
             controlId="server-visibility"
             title={t("settings.servers.listTitle")}
-            description={t("settings.servers.description")}
+            description={`${t("settings.servers.description")} ${t("settings.servers.order.description")}`}
             actions={
               <div className="ll:flex ll:items-center ll:gap-3">
                 <span className="ll:text-xs ll:leading-4 ll:tabular-nums ll:text-muted-foreground">
@@ -162,15 +159,14 @@ export const ServerVisibilitySettingsTab = () => {
                 {t("settings.servers.noResults")}
               </SettingsEmptyState>
             ) : (
-              <div className="ll:px-2 ll:py-0.5">
-                <SettingsGuildPicker
-                  aria-label={t("settings.servers.listTitle")}
-                  guilds={filteredGuilds}
-                  selectedGuildIds={visibleGuildIds}
-                  onToggle={toggleGuildVisibility}
-                  emptyStateLabel={t("settings.servers.noResults")}
-                />
-              </div>
+              <ServerOrderList
+                aria-label={t("settings.servers.listTitle")}
+                guilds={filteredGuilds}
+                selectedGuildIds={visibleGuildIds}
+                onToggle={toggleGuildVisibility}
+                onReorder={reorderGuilds}
+                reorderDisabled={isFiltered}
+              />
             )}
           </SettingsSection>
         )}

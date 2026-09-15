@@ -50,21 +50,15 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
             {
               id,
               name: defaultColorNames[id] ?? getDefaultColorName(id),
-              className: overriddenDefaultColors[id]
-                ? undefined
-                : `${color.bgNoOpacity} ${color.border}`,
-              style: overriddenDefaultColors[id],
+              swatchColor:
+                overriddenDefaultColors[id]?.borderColor ?? color.accent,
             },
           ],
     ),
     ...Object.values(customColors).map((color) => ({
       id: color.id,
       name: color.name,
-      className: undefined,
-      style: {
-        backgroundColor: color.backgroundColor,
-        borderColor: color.borderColor,
-      },
+      swatchColor: color.borderColor,
     })),
   ];
 
@@ -86,10 +80,12 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
                 aria-pressed={selectedColor === color.id}
                 className={cn(
                   "ll:relative ll:flex ll:aspect-square ll:w-full ll:items-center ll:justify-center ll:p-0 ll:appearance-none ll:rounded-sm ll:border ll-custom-cursor-pointer ll:ring-offset-1 ll:ring-offset-popover ll:hover:outline ll:hover:outline-1 ll:hover:outline-offset-1 ll:hover:outline-foreground/60 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-offset-1 ll:focus-visible:outline-foreground",
-                  color.className,
                   selectedColor === color.id && "ll:ring-1 ll:ring-foreground",
                 )}
-                style={color.style}
+                style={{
+                  backgroundColor: color.swatchColor,
+                  borderColor: color.swatchColor,
+                }}
                 onClick={() => onColorChange(color.id)}
               >
                 {selectedColor === color.id && (
@@ -99,9 +95,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
                 )}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="ll:text-xs">
-              {color.name}
-            </TooltipContent>
+            <TooltipContent>{color.name}</TooltipContent>
           </Tooltip>
         ))}
       </div>

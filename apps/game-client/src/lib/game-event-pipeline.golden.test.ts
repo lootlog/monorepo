@@ -293,7 +293,7 @@ function resetPipelineState(): void {
     },
     interface: "ni",
     map: { id: 13, name: "Nithal", visibility: 30 },
-    world: "pandora",
+    world: "luvia",
   });
   usePartyStore.setState({ members: [] });
   runtimeEventPipeline.install();

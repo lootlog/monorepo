@@ -193,7 +193,7 @@ export const SettingsMatrix: FC<SettingsMatrixProps> = ({
                         {column.label}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="ll:max-w-56">
+                    <TooltipContent className="ll:max-w-56">
                       {column.description}
                       {column.bulk ? (
                         <span className="ll:mt-1 ll:block ll:text-muted-foreground">

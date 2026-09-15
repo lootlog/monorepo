@@ -22,7 +22,7 @@ export const createTimerRealtimeFixture = () => {
   const join = async (organizationIds: string[]) => {
     const pending = getSocket().join(
       {
-        world: "pandora",
+        world: "luvia",
         name: "Hero",
         lvl: 100,
         icon: "hero.gif",

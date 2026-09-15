@@ -68,13 +68,7 @@ const mountActions = (
   };
 
   const hook = renderHook(() =>
-    useTimerActions(
-      timer,
-      "guild-1",
-      "pandora",
-      ["guild-1", "guild-2"],
-      grouped,
-    ),
+    useTimerActions(timer, "guild-1", "luvia", ["guild-1", "guild-2"], grouped),
   );
 
   onTestFinished(() => {
@@ -146,7 +140,7 @@ describe("useTimerActions", () => {
           : ["/guilds/guild-1/timers/timer-1/reset"],
       );
       expect(await requests[0].json()).toEqual({
-        world: "pandora",
+        world: "luvia",
         actorCharacter: {
           accountId: "200",
           characterId: "100",
@@ -198,7 +192,7 @@ describe("useTimerActions", () => {
     expect(new URL(requests[0].url).pathname).toBe(
       "/guilds/guild-1/timers/timer-1",
     );
-    expect(new URL(requests[0].url).searchParams.get("world")).toBe("pandora");
+    expect(new URL(requests[0].url).searchParams.get("world")).toBe("luvia");
     reject = true;
     act(() => result.current.handleDeleteTimer("guild-1", "timer-1"));
     await waitFor(() =>

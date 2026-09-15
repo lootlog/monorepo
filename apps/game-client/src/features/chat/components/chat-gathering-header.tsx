@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { getSelectedChatGuildId, useChatStore } from "@/store/chat.store";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 
 export function ChatGatheringHeader({ organizerDiscordId, guildIds }: Props) {
   const { t } = useTranslation("chat");
-  const { visibleGuilds } = useVisibleLootlogGuilds();
+  const { visibleGuilds } = useLootlogGuilds();
   const selectedGuildId = useChatStore(getSelectedChatGuildId);
   const gatheringGuildIds = new Set(guildIds);
 

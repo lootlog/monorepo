@@ -46,7 +46,7 @@ const remotePing = () => ({
   type: "map-ping.received" as const,
   data: {
     pingId: "remote-1",
-    world: "pandora",
+    world: "luvia",
     mapId: 42,
     type: "attention" as const,
     x: 12,

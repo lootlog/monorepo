@@ -17,7 +17,7 @@ const createNotification = (
   notificationId,
   discordId,
   guildId,
-  world: "pandora",
+  world: "luvia",
   createdAt: "2026-04-17T10:00:00.000Z",
   message: "Hej",
   servers: [guildId],

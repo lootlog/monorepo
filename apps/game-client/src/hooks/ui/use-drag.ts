@@ -231,6 +231,9 @@ export const useDrag = ({
     if (!startDrag(evt.clientX * scale, evt.clientY * scale)) return;
 
     activePointerIdRef.current = evt.pointerId;
+    // Cancelling pointerdown suppresses the compatibility mousedown, whose
+    // default action would start a text selection that follows the drag.
+    evt.preventDefault();
     evt.stopPropagation();
   };
 

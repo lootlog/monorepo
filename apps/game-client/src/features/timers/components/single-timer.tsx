@@ -31,6 +31,7 @@ type SingleTimerProps = {
   timer: TimerWithTimeLeft;
   settingsKey: string;
   isHidden?: boolean;
+  isAlternateRow?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -40,6 +41,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   settingsKey,
   isHidden = false,
+  isAlternateRow = false,
 }) => {
   const world = useGameStore((state) => state.game?.world ?? "unknown");
 
@@ -83,8 +85,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const {
     isPending,
     selectedColor,
-    customColor,
-    overriddenColor,
+    paint,
     resetIndicator,
     shortname,
     npcDetails,
@@ -96,7 +97,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     <Tooltip>
       <ContextMenu>
         <TooltipTrigger asChild>
-          <ContextMenuTrigger className="ll:h-full ll:pr-px">
+          <ContextMenuTrigger className="ll:h-full">
             <div
               className={cn("ll:relative ll:h-full", {
                 "ll:opacity-50": isHidden,
@@ -109,19 +110,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               )}
               <TimerLiveTile
                 id={timer.npc.id.toString()}
-                color={
-                  customColor || overriddenColor ? undefined : selectedColor
-                }
-                customBorderColor={
-                  customColor?.borderColor || overriddenColor?.borderColor
-                }
-                customBackgroundColor={
-                  customColor?.backgroundColor ||
-                  overriddenColor?.backgroundColor
-                }
+                paint={paint}
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}
+                isAlternateRow={isAlternateRow}
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
                 countdownMode={countdownMode}
                 timer={timer}
@@ -162,7 +155,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         </ContextMenuContent>
       </ContextMenu>
 
-      <TooltipContent side="right" className="ll:z-500">
+      <TooltipContent className="ll:w-64 ll:max-w-64">
         <TimerTooltip timer={timer} guildNamesById={guildNamesById} />
       </TooltipContent>
     </Tooltip>

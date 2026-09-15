@@ -32,7 +32,7 @@ describe("TimerColorPicker", () => {
       screen.queryByRole("button", { name: "Granatowy" }),
     ).not.toBeInTheDocument();
     expect(red).toHaveStyle({
-      backgroundColor: "#111111",
+      backgroundColor: "#222222",
       borderColor: "#222222",
     });
     expect(custom).toHaveAttribute("aria-pressed", "true");

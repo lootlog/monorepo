@@ -31,14 +31,14 @@ it("filters lifetime totals by world and carries the selection to statistics", a
           requests.push(url);
 
           const worldTotal =
-            url.searchParams.get("world") === "pandora" ? 12 : 42;
+            url.searchParams.get("world") === "luvia" ? 12 : 42;
 
           const response: UserKillStatsResponseDtoOutput = {
             overview: {
               totalKills:
                 url.searchParams.get("period") === "24h" ? 3 : worldTotal,
               killsByType: { ELITE2: 40, HERO: 2 },
-              killsByWorld: { pandora: 12, zorza: 30 },
+              killsByWorld: { luvia: 12, zorza: 30 },
             },
             topNpcs: [],
           };
@@ -83,18 +83,18 @@ it("filters lifetime totals by world and carries the selection to statistics", a
   expect(screen.getByText("40")).toBeTruthy();
   expect(screen.getAllByText("0")).toHaveLength(2);
   fireEvent.click(screen.getByRole("combobox", { name: "Świat" }));
-  fireEvent.click(await screen.findByRole("option", { name: "Pandora" }));
+  fireEvent.click(await screen.findByRole("option", { name: "Luvia" }));
   await screen.findByText("12");
   expect(
     requests.some(
       (url) =>
-        url.searchParams.get("world") === "pandora" &&
+        url.searchParams.get("world") === "luvia" &&
         url.searchParams.get("period") === "all",
     ),
   ).toBe(true);
   expect(
     screen.getByRole("link", { name: /^Statystyki$/ }).getAttribute("href"),
-  ).toContain("world=pandora");
+  ).toContain("world=luvia");
   fireEvent.click(screen.getByRole("combobox", { name: "Świat" }));
   fireEvent.click(
     await screen.findByRole("option", { name: "Wszystkie światy" }),

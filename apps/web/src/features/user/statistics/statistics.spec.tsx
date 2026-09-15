@@ -50,7 +50,7 @@ function renderStatistics(
             Response.json({
               overview: {
                 totalKills: 5,
-                killsByWorld: { pandora: 5 },
+                killsByWorld: { luvia: 5 },
                 killsByType: {},
               },
               topNpcs: [],
@@ -103,13 +103,13 @@ function renderStatistics(
 
 it("restores URL filters, keeps them while changing tabs, and fetches the selected period", async () => {
   const { router, requests } = renderStatistics(
-    "/@me/statistics?tab=activity&days=90&world=pandora",
+    "/@me/statistics?tab=activity&days=90&world=luvia",
   );
 
   await screen.findByRole("heading", { level: 1, name: "Statystyki" });
   await waitFor(() => expect(requests).toHaveLength(1));
   expect(requests[0]?.searchParams.get("days")).toBe("90");
-  expect(requests[0]?.searchParams.get("world")).toBe("pandora");
+  expect(requests[0]?.searchParams.get("world")).toBe("luvia");
   expect(
     screen
       .getByRole("link", { name: "Aktywność" })
@@ -123,7 +123,7 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
     expect(router.state.location.search).toEqual({
       tab: "monsters",
       days: 90,
-      world: "pandora",
+      world: "luvia",
     }),
   );
   expect(
@@ -143,7 +143,7 @@ it("restores URL filters, keeps them while changing tabs, and fetches the select
       requests.some(
         (request) =>
           request.searchParams.get("days") === "7" &&
-          request.searchParams.get("world") === "pandora",
+          request.searchParams.get("world") === "luvia",
       ),
     ).toBe(true),
   );

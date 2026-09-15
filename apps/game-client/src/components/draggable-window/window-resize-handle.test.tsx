@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { WindowResizeHandle } from "@/components/window-resize-handle";
+import { WindowResizeHandle } from "@/components/draggable-window/window-resize-handle";
 
 const originalOffsetWidthDescriptor = Object.getOwnPropertyDescriptor(
   HTMLDivElement.prototype,

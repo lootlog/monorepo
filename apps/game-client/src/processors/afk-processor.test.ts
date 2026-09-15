@@ -50,7 +50,7 @@ describe("AfkProcessor", () => {
       },
       interface: "ni",
       map: { id: 77, name: "Ithan", visibility: 30 },
-      world: "pandora",
+      world: "luvia",
     });
     wire.receive({
       v: 1,

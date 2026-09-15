@@ -24,9 +24,9 @@ it("discovers gatherings without chat messages and preserves visible state durin
     applicantCount: 0,
     inPartyCount: 0,
     guildIds: ["guild-1"],
-    world: "pandora",
+    world: "luvia",
     createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    expiresAt: new Date(Date.now() + 24 * 60 * 60_000).toISOString(),
   };
 
   const request = vi
@@ -59,6 +59,8 @@ it("discovers gatherings without chat messages and preserves visible state durin
     },
   });
 
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+
   const { result, unmount } = renderHook(useActivePartyGatherings, {
     wrapper: harness.wrapper,
   });
@@ -72,6 +74,11 @@ it("discovers gatherings without chat messages and preserves visible state durin
         "active",
       ]),
     );
+    const requestsAfterJoin = request.mock.calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10 * 60_000);
+    });
+    expect(request).toHaveBeenCalledTimes(requestsAfterJoin);
     const genericRoom = { ...room, notificationId: "generic" };
     request.mockImplementation(async () => Response.json([room, genericRoom]));
     await harness.receive({
@@ -83,7 +90,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
           notificationId: "generic",
           guildId: "guild-1",
           discordId: "organizer-discord",
-          world: "pandora",
+          world: "luvia",
           createdAt: room.createdAt,
           character: {
             nick: "Organizer",
@@ -123,7 +130,7 @@ it("discovers gatherings without chat messages and preserves visible state durin
           notificationId: "npc",
           guildId: "guild-1",
           discordId: "organizer-discord",
-          world: "pandora",
+          world: "luvia",
           createdAt: room.createdAt,
           isGatheringParty: true,
           npc,
@@ -191,5 +198,6 @@ it("discovers gatherings without chat messages and preserves visible state durin
   } finally {
     unmount();
     restoreApi();
+    vi.useRealTimers();
   }
 });

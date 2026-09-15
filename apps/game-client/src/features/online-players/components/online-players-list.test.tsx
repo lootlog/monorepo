@@ -40,7 +40,7 @@ const person = (
     discordId,
     sessionId: `session-${characterId}`,
     character: {
-      world: "pandora",
+      world: "luvia",
       name,
       lvl,
       prof,
@@ -69,11 +69,11 @@ describe("OnlinePlayersList", () => {
   let harness: ReturnType<typeof createOnlinePlayersTest>;
   beforeEach(() => {
     harness = createOnlinePlayersTest();
-    setTestRuntimeGame({ hero: { characterId: "10" }, world: "pandora" });
+    setTestRuntimeGame({ hero: { characterId: "10" }, world: "luvia" });
     useSettingsStore.setState({
       allowWorldSelection: false,
       guildIdByCharId: { "10": "guild-1" },
-      worldByGuildId: { "guild-1": "pandora", "guild-2": "pandora" },
+      worldByGuildId: { "guild-1": "luvia", "guild-2": "luvia" },
     });
     useOnlinePlayersStore.setState(
       useOnlinePlayersStore.getInitialState(),
@@ -92,7 +92,7 @@ describe("OnlinePlayersList", () => {
       Promise.resolve({
         ...createPresenceSnapshot(initialPresences()),
         organizationId,
-        world: "pandora",
+        world: "luvia",
       }),
     );
   });
@@ -147,7 +147,7 @@ describe("OnlinePlayersList", () => {
   it("renders account entries with locations in accounts view", async () => {
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
     expect(await screen.findByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • pandora")).toBeVisible();
+    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
     expect(screen.getByText("Scout (80h)")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
@@ -168,6 +168,30 @@ describe("OnlinePlayersList", () => {
     expect(
       screen.getByRole("status", { busy: true }).querySelector("svg"),
     ).toHaveClass("ll:animate-spin");
+  });
+
+  it("explains a missing gateway session instead of loading forever, then loads once joined", async () => {
+    vi.useFakeTimers();
+
+    const offlineView = renderUi(
+      <OnlinePlayersList viewMode="accounts" filtersVisible />,
+      { wrapper: harness.wrapper },
+    );
+
+    act(() => vi.advanceTimersByTime(1000));
+    expect(
+      screen.getByText(
+        "Brak połączenia z serwerem - nie można pobrać graczy online",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Spróbuj ponownie" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("status", { busy: true })).toBeNull();
+    vi.useRealTimers();
+    offlineView.unmount();
+    await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
+    expect(screen.getByText("Hero (123w)")).toBeVisible();
   });
 
   it("allows retrying an initial presence acknowledgement timeout", async () => {
@@ -212,7 +236,7 @@ describe("OnlinePlayersList", () => {
     expect(playerName).toHaveClass("ll:truncate");
     expect(playerName.parentElement).toHaveClass("ll:min-w-0");
     expect(playerName.parentElement?.parentElement).toHaveClass("ll:min-w-0");
-    expect(screen.getByText(`${map} • pandora`)).toHaveClass("ll:truncate");
+    expect(screen.getByText(`${map} • luvia`)).toHaveClass("ll:truncate");
   });
 
   it("renders account entries sorted by level descending", async () => {

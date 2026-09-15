@@ -125,7 +125,7 @@ beforeEach(() => {
   useNpcsStore.getState().clearNpcs();
   useOthersStore.getState().clearOthers();
   setTestRuntimeGame({
-    world: "pandora",
+    world: "luvia",
     hero: {
       accountId: "202",
       characterId: "101",
@@ -271,7 +271,7 @@ it("sends parsed battle participants and loot then stores the accepted id", asyn
   fixture.processor.handleLootFromBattle(createBattleLootEvent());
   expect(useLootStore.getState().lastLootId).toBeNull();
   expect(await fixture.payload()).toMatchObject({
-    world: "pandora",
+    world: "luvia",
     source: "FIGHT",
     location: "Ithan",
     accountId: "202",

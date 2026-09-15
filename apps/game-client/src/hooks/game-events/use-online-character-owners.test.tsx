@@ -12,7 +12,7 @@ async function setup() {
   useOnlineCharacterOwnersStore.getState().clearOwners();
   useSettingsStore.setState({
     guildIdByCharId: { "1": "guild-1" },
-    worldByGuildId: { "guild-1": "pandora" },
+    worldByGuildId: { "guild-1": "luvia" },
   });
 
   const view = renderHook(() => useOnlineCharacterOwners(), {
@@ -75,7 +75,7 @@ describe("useOnlineCharacterOwners", () => {
     await waitFor(() => expect(test.requests()).toHaveLength(1));
     expect(test.requests()[0]?.data).toEqual({
       organizationId: "guild-1",
-      world: "pandora",
+      world: "luvia",
     });
     await waitFor(() =>
       expect(

@@ -29,7 +29,7 @@ const game = Object.freeze({
   }),
   interface: "ni",
   map: Object.freeze({ id: 10, name: "Map", visibility: 30 }),
-  world: "pandora",
+  world: "luvia",
 }) satisfies RuntimeGameSnapshot;
 
 const npc = Object.freeze({

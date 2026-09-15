@@ -114,7 +114,9 @@ describe("NotificationsSettingsTab", () => {
   });
 
   it("switches a whole column on unless every editable row is already on, skipping rows that are off", async () => {
-    const user = userEvent.setup();
+    // The column header is a tooltip trigger; hovering it would count
+    // cursor-tracking tooltip commits against the form-reset guard above.
+    const user = userEvent.setup({ skipHover: true });
     setTestRuntimeGame({ hero: { accountId: "202" } });
     const initial = createGameAccountPreferences("202");
     initial.notifications.HERO.show = true;
@@ -167,6 +169,24 @@ describe("NotificationsSettingsTab", () => {
         guildIds: ["guild-1"],
       });
     });
+  });
+
+  it("lists servers in the order chosen in the servers tab, hidden ones included", () => {
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    seedAccountPreferences(createGameAccountPreferences("202"));
+    harness.setPreferences({
+      guildsOrder: ["guild-3", "guild-1"],
+      hiddenGuildIds: ["guild-1"],
+    });
+    render();
+
+    const picker = screen.getByRole("group", { name: "Lootlogi" });
+
+    expect(
+      within(picker)
+        .getAllByRole("button")
+        .map((tile) => tile.getAttribute("aria-label")),
+    ).toEqual(["Gamma", "Alpha", "Beta"]);
   });
 
   it("autosaves a committed auto-hide timeout clamped to the allowed range", async () => {

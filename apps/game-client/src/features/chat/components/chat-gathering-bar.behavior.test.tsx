@@ -40,7 +40,7 @@ const createGathering = (
   applicantCount: 0,
   inPartyCount: 0,
   guildIds: ["guild-1"],
-  world: "pandora",
+  world: "luvia",
   createdAt: new Date().toISOString(),
   expiresAt: new Date(Date.now() + 60_000).toISOString(),
   ...overrides,
@@ -207,7 +207,7 @@ it("keeps application errors separate from discovery and blocks duplicate or sta
     expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeEnabled(),
   );
   harness.mutation.mockImplementation(async () =>
-    Response.json(createChatReadyRoom({ world: "pandora" })),
+    Response.json(createChatReadyRoom({ world: "luvia" })),
   );
   fireEvent.click(screen.getByRole("button", { name: "Zgłoś się" }));
   await waitFor(() =>
@@ -228,8 +228,8 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
 
     const room =
       viewer === "ORGANIZER"
-        ? { ...readyRoomOrganizerFixture, world: "pandora" }
-        : createChatReadyRoom({ world: "pandora" });
+        ? { ...readyRoomOrganizerFixture, world: "luvia" }
+        : createChatReadyRoom({ world: "luvia" });
 
     act(() => usePartyFinderStore.getState().mergeProjection(room));
     harness.mutation.mockImplementation(async () =>
@@ -271,7 +271,7 @@ it("shows actual party size independently of applications and opens management",
 
   const room = {
     ...readyRoomOrganizerFixture,
-    world: "pandora",
+    world: "luvia",
     partyMemberCount: 5,
     participants: {
       ...readyRoomOrganizerFixture.participants,
@@ -329,7 +329,7 @@ it("invites applicants only when available, blocks double clicks and recovers af
   act(() =>
     usePartyFinderStore.getState().mergeProjection({
       ...readyRoomOrganizerFixture,
-      world: "pandora",
+      world: "luvia",
     }),
   );
 
@@ -394,7 +394,7 @@ it.each(["OUTSIDE", "IN_PARTY"] as const)(
   "shows the current participant's %s status rather than another applicant's",
   async (partyPresence) => {
     await setup();
-    const room = createChatReadyRoom({ world: "pandora" });
+    const room = createChatReadyRoom({ world: "luvia" });
     const participant = room.participants["participant-1"];
 
     if (!participant) throw new Error("Expected current character fixture");
@@ -448,7 +448,7 @@ it("keeps the hovered signup target and prioritizes an owned room", async () => 
   act(() =>
     usePartyFinderStore
       .getState()
-      .mergeProjection({ ...readyRoomOrganizerFixture, world: "pandora" }),
+      .mergeProjection({ ...readyRoomOrganizerFixture, world: "luvia" }),
   );
   await waitFor(() => {
     for (const signup of screen.getAllByRole("button", { name: "Zgłoś się" }))
@@ -473,8 +473,8 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
 
     const room =
       viewer === "ORGANIZER"
-        ? { ...readyRoomOrganizerFixture, world: "pandora" }
-        : createChatReadyRoom({ world: "pandora" });
+        ? { ...readyRoomOrganizerFixture, world: "luvia" }
+        : createChatReadyRoom({ world: "luvia" });
 
     act(() => usePartyFinderStore.getState().mergeProjection(room));
 
@@ -531,7 +531,7 @@ it("keeps full discovery counts after joining despite a private projection and m
     await screen.findByLabelText("W grupie: 8/10", { exact: false }),
   ).toBeVisible();
   harness.mutation.mockImplementation(async () =>
-    Response.json(createChatReadyRoom({ world: "pandora" })),
+    Response.json(createChatReadyRoom({ world: "luvia" })),
   );
   fireEvent.click(screen.getByRole("button", { name: "Zgłoś się" }));
   await screen.findByRole("button", { name: "Wycofaj zgłoszenie" });
@@ -739,7 +739,7 @@ it("joins the selected organizer from the visible list and enables other signups
     Response.json(
       createChatReadyRoom({
         notificationId: "second-room",
-        world: "pandora",
+        world: "luvia",
         description: "Second",
       }),
     ),
@@ -899,7 +899,7 @@ it("withdraws an existing application with the signup hotkey and ignores repeate
   act(() =>
     usePartyFinderStore
       .getState()
-      .mergeProjection(createChatReadyRoom({ world: "pandora" })),
+      .mergeProjection(createChatReadyRoom({ world: "luvia" })),
   );
   await screen.findByRole("button", { name: "Wycofaj zgłoszenie" });
   vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue(

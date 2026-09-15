@@ -7,11 +7,11 @@ import {
 describe("kill-dedup-key", () => {
   it("builds a user-scoped dedup key", () => {
     const dedupKey = buildUserKillDedupKey("user-1", {
-      world: "pandora",
+      world: "luvia",
       npcId: 12345,
     });
 
-    expect(dedupKey).toBe("kill:dedup:user:user-1:pandora:12345");
+    expect(dedupKey).toBe("kill:dedup:user:user-1:luvia:12345");
   });
 
   it("builds a guild-scoped dedup key", () => {

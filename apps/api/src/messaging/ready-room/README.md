@@ -60,10 +60,12 @@ with an authorized second account, and verify that cancellation removes it.
 Also verify rejection on another world and under a role that cannot read its NPC
 source. Do not print real rosters or account data in deployment logs.
 
-Clients reconcile discovery on connection, relevant realtime events and every
-30 seconds, and expire summaries locally. Owned/joined rooms are also reconciled
-periodically and after permission changes. Chat retention and notification toast
-settings are not the source of active-room truth.
+Clients reconcile discovery on every gateway join and on relevant realtime
+events, and expire summaries locally. Owned/joined rooms are reconciled on every
+gateway join and after permission changes, and expired rooms are re-read on
+their local expiry. Clients must not poll either list on a timer: with thousands
+of concurrent players a periodic refetch overloads the API. Chat retention and
+notification toast settings are not the source of active-room truth.
 
 ## Rollback
 

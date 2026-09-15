@@ -46,7 +46,7 @@ it("opens a timer's history from its context menu and restores the selected entr
       "/guilds/guild-1/timers/123:tanroth/history",
     );
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      world: "pandora",
+      world: "luvia",
       limit: "5",
     });
     await user.hover(screen.getByText("Salvatore (Lootlog)"));
@@ -54,7 +54,7 @@ it("opens a timer's history from its context menu and restores the selected entr
     await user.click(screen.getByRole("button", { name: "Przywróć timer" }));
     await waitFor(() =>
       expect(
-        fixture.queryClient.getQueryData(queryKeys.timers("pandora")),
+        fixture.queryClient.getQueryData(queryKeys.timers("luvia")),
       ).toEqual([
         expect.objectContaining({
           timerKey: fixture.history.timerKey,

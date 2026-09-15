@@ -20,11 +20,11 @@ beforeEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
   setTestRuntimeGame({
     hero: { accountId: "200", characterId: "101" },
-    world: "pandora",
+    world: "luvia",
   });
   useSettingsStore.setState({
     guildIdByCharId: { "101": "guild-1" },
-    worldByGuildId: { "guild-1": "pandora" },
+    worldByGuildId: { "guild-1": "luvia" },
   });
 });
 
@@ -39,7 +39,7 @@ const mountContent = (
   const fixture = createTimerHttpFixture((request) =>
     Response.json(
       new URL(request.url).pathname.endsWith("/worlds")
-        ? ["pandora", "gefion"]
+        ? ["luvia", "gefion"]
         : [],
     ),
   );
@@ -53,13 +53,12 @@ const mountContent = (
   );
   fixture.queryClient.setQueryData(
     getGuildsControllerGetWorldsByGuildIdQueryKey({ guildId: "guild-1" }),
-    ["pandora", "gefion"],
+    ["luvia", "gefion"],
   );
   fixture.queryClient.setQueryData(
     getGuildsControllerGetGuildPermissionsQueryKey({ guildId: "guild-1" }),
     [],
   );
-  const onAddTimer = vi.fn<() => void>();
   const onRetry = vi.fn<() => void>();
   const onResetFilters = vi.fn<() => void>();
   const onPointerDown = vi.fn<() => void>();
@@ -72,15 +71,11 @@ const mountContent = (
           settingsKey="guild-1"
           hiddenTimers={[]}
           areFiltersActive={false}
-          colorStatistics={[]}
-          guildId="guild-1"
           isGrouping={false}
           allowWorldSelection
           timerFiltersEnabled
           isUnderBag={false}
           minColumnWidth={180}
-          world="pandora"
-          onAddTimer={onAddTimer}
           onResetFilters={onResetFilters}
           onRetry={onRetry}
           {...overrides}
@@ -94,7 +89,7 @@ const mountContent = (
     fixture.cleanup();
   });
 
-  return { onAddTimer, onRetry, onResetFilters, onPointerDown };
+  return { onRetry, onResetFilters, onPointerDown };
 };
 
 it("shows delayed loading feedback without falsely presenting an empty timer list", () => {
@@ -108,6 +103,25 @@ it("shows delayed loading feedback without falsely presenting an empty timer lis
   expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
 });
 
+it("warns that loaded timers may be stale while the gateway is disconnected, unless a refresh error already shows", () => {
+  mountContent({ stale: true });
+
+  expect(
+    screen.getByText("Połączenie przerwane - timery mogą być nieaktualne"),
+  ).toBeInTheDocument();
+});
+
+it("hides the stale warning behind a refresh error so the user sees the retry action", () => {
+  mountContent({ stale: true, refreshError: true });
+
+  expect(
+    screen.queryByText("Połączenie przerwane - timery mogą być nieaktualne"),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByText("Nie udało się odświeżyć timerów"),
+  ).toBeInTheDocument();
+});
+
 it("lets users retry an initial request failure", async () => {
   const user = userEvent.setup();
   const { onRetry } = mountContent({ error: new Error("network") });
@@ -118,17 +132,15 @@ it("lets users retry an initial request failure", async () => {
 });
 
 it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
-  const user = userEvent.setup();
-
   const timer = {
     ...createTimerFixture(),
     minTimeLeft: 60_000,
     maxTimeLeft: 120_000,
   };
 
-  const { onAddTimer, onPointerDown } = mountContent({ sortedTimers: [timer] });
+  const { onPointerDown } = mountContent({ sortedTimers: [timer] });
   expect(screen.getByPlaceholderText("Szukaj...")).toBeVisible();
-  expect(screen.getByRole("combobox")).toHaveTextContent(/pandora/i);
+  expect(screen.getByRole("combobox")).toHaveTextContent(/luvia/i);
   const label = screen.getByText(/\[H\] Tanroth/);
   expect(label).toBeVisible();
   const scrollContainer = screen.getByTestId("timers-scroll-container");
@@ -143,11 +155,9 @@ it("renders real controls and timer tiles while retaining scroll and window drag
   fireEvent.pointerDown(scrollContainer);
   fireEvent.pointerDown(label);
   expect(onPointerDown).toHaveBeenCalledTimes(2);
-  await user.click(screen.getByRole("button", { name: "+" }));
-  expect(onAddTimer).toHaveBeenCalledOnce();
 });
 
-it("offers filter recovery in compact mode without the regular toolbar or footer", async () => {
+it("offers filter recovery in compact mode without the regular toolbar", async () => {
   const user = userEvent.setup();
 
   const { onResetFilters } = mountContent({
@@ -159,7 +169,6 @@ it("offers filter recovery in compact mode without the regular toolbar or footer
   expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
   expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "+" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
   expect(onResetFilters).toHaveBeenCalledOnce();
 });

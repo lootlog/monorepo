@@ -49,7 +49,7 @@ export const createTimerHttpFixture = (
     npcId: history.npcId,
   });
 
-  queryClient.setQueryData(queryKeys.timers("pandora"), []);
+  queryClient.setQueryData(queryKeys.timers("luvia"), []);
 
   const restoreApi = configureApiClients({
     main: {

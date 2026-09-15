@@ -1,7 +1,7 @@
 import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { DraggableWindow } from "@/components/draggable-window";
+import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ChatViewHeader } from "./components/chat-view-header";
 import { ChatComposeArea } from "./components/chat-compose-area";
 import { ChatMessageList } from "./components/chat-message-list";
@@ -34,7 +34,7 @@ import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
 import { useSocket } from "@/contexts/socket-context";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {
   getChatUnreadSummary,
   markChatMessagesRead,
@@ -126,7 +126,7 @@ const resolveChatAsyncState = ({
 const resolveChatGuildTargets = (
   selectedGuildId: string,
   visibleGuilds:
-    | ReturnType<typeof useVisibleLootlogGuilds>["visibleGuilds"]
+    | ReturnType<typeof useLootlogGuilds>["visibleGuilds"]
     | undefined,
 ) => ({
   effectiveSelectedGuildId: visibleGuilds?.length === 0 ? "" : selectedGuildId,
@@ -155,7 +155,7 @@ export const ChatView = ({
     guildsQuery,
     preferencesQuery: preferences,
     visibleGuilds: resolvedVisibleGuilds,
-  } = useVisibleLootlogGuilds();
+  } = useLootlogGuilds();
 
   const { npcTypeColors } = useNpcTypeColors();
   const { chatAppearance } = useChatAppearanceSettings();
@@ -368,18 +368,16 @@ export const ChatView = ({
             />
           )}
           <div className="ll:relative ll:shrink-0 ll:z-10">{gatheringBar}</div>
-          <div
-            className={`ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden ${!filtersVisible ? "ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40" : ""}`}
-          >
-            <ChatConnectionStatus
-              status={{
-                partialError,
-                offline: showOfflineStatus,
-                refreshing: showRefreshingStatus,
-              }}
-              failedGuildCount={failedGuildIds.length}
-              onRetry={retryChatData}
-            />
+          <ChatConnectionStatus
+            status={{
+              partialError,
+              offline: showOfflineStatus,
+              refreshing: showRefreshingStatus,
+            }}
+            failedGuildCount={failedGuildIds.length}
+            onRetry={retryChatData}
+          />
+          <div className="ll:relative ll:min-h-0 ll:flex-1 ll:overflow-hidden">
             <div className="ll:absolute ll:right-2 ll:bottom-2 ll:z-20">
               {hiddenGatherings}
             </div>

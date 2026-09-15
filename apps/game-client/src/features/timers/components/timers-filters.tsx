@@ -1,6 +1,12 @@
 import { Input } from "@/components/ui/input";
-import { NPC_NAMES } from "@/constants/margonem";
-import { NpcType } from "@/api/npcs.api";
+import { SearchInput } from "@/components/ui/search-input";
+import {
+  toolbarStripBleedClassName,
+  toolbarStripLightClassName,
+  toolbarStripLightDividerClassName,
+  toolbarStripRowClassName,
+} from "@/components/ui/toolbar-strip";
+import { TimersNpcTypeFilter } from "./timers-npc-type-filter";
 import { cn } from "cn";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
@@ -12,13 +18,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
-
-const NPC_TYPES_OPTIONS = [
-  NpcType.ELITE2,
-  NpcType.ELITE3,
-  NpcType.HERO,
-  NpcType.TITAN,
-];
 
 const MAX_LVL = 500;
 
@@ -48,7 +47,6 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   } = useTimersStore();
 
   const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
-  const selectedNpcTypes = new Set(filters.selectedNpcTypes);
   const selectedColors = new Set(filters.selectedColors);
   const hiddenColors = new Set(hiddenDefaultColors);
 
@@ -69,26 +67,6 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     });
   };
 
-  const handleToggleNpcType = (npcType: NpcType) => {
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedNpcTypes: filters.selectedNpcTypes.includes(npcType)
-        ? filters.selectedNpcTypes.filter((type) => type !== npcType)
-        : [...filters.selectedNpcTypes, npcType],
-    });
-  };
-
-  const handleSelectOnlyNpcType = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    npcType: NpcType,
-  ) => {
-    event.preventDefault();
-    setTimersFilters(filtersKey, {
-      ...filters,
-      selectedNpcTypes: [npcType],
-    });
-  };
-
   const handleToggleColor = (colorId: string) => {
     setTimersFilters(filtersKey, {
       ...filters,
@@ -99,70 +77,67 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">
-      <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-nowrap">
-        <Input
+    <div
+      className={cn(
+        toolbarStripBleedClassName,
+        toolbarStripLightClassName,
+        "ll:mt-0 ll:flex ll:flex-col",
+      )}
+    >
+      <div className={toolbarStripRowClassName}>
+        <SearchInput
+          size="sm"
+          variant="borderless"
           placeholder={t("filters.searchPlaceholder")}
-          value={timerFiltersSearchText}
+          value={timerFiltersSearchText ?? ""}
           onChange={handleSearchChange}
+          onClear={() => setTimerFiltersSearchText("")}
+          clearLabel={t("filters.clearSearch")}
+          className="ll:min-w-0"
         />
-        <div className="ll:w-18">
-          <Input
-            placeholder={t("filters.minPlaceholder")}
-            value={filters.minLvl.toString()}
-            onChange={(event) => handleLevelChange("minLvl", event)}
-            className="ll:w-8 input-no-spinner"
-            max={MAX_LVL}
-            min={MIN_LVL}
-            type="number"
-            inputMode="numeric"
-          />
-        </div>
-        <div className="ll:w-18">
-          <Input
-            placeholder={t("filters.maxPlaceholder")}
-            value={filters.maxLvl.toString()}
-            onChange={(event) => handleLevelChange("maxLvl", event)}
-            className="ll:w-8 input-no-spinner"
-            min={MIN_LVL}
-            max={MAX_LVL}
-            type="number"
-            inputMode="numeric"
-          />
-        </div>
-        <div className="ll:flex ll-custom-cursor-pointer ll:items-center ll:justify-center ll:border-gray-400 ll:border ll:rounded-sm ll:bg-gray-500/30 ll:transition-colors ll:motion-reduce:transition-none">
-          {NPC_TYPES_OPTIONS.map((type, index) => {
-            const npc = NPC_NAMES[type];
-            const isSelected = selectedNpcTypes.has(type);
-            const isNotLast = index < NPC_TYPES_OPTIONS.length - 1;
-
-            return (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => handleToggleNpcType(type)}
-                onContextMenu={(event) => handleSelectOnlyNpcType(event, type)}
-                className={cn(
-                  "ll:bg-transparent ll:border-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:flex ll:items-center ll:justify-center ll:gap-2 ll:hover:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:text-white ll:text-xs",
-                  {
-                    "ll:border-r ll:border-r-white": isNotLast,
-                    "ll:bg-gray-400/30": isSelected,
-                  },
-                )}
-              >
-                {npc.shortname}
-              </button>
-            );
-          })}
-        </div>
+        <Input
+          aria-label={t("filters.minLvlLabel")}
+          value={filters.minLvl.toString()}
+          onChange={(event) => handleLevelChange("minLvl", event)}
+          className={cn(
+            toolbarStripLightDividerClassName,
+            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+          )}
+          max={MAX_LVL}
+          min={MIN_LVL}
+          type="number"
+          inputMode="numeric"
+          variant="borderless"
+        />
+        <Input
+          aria-label={t("filters.maxLvlLabel")}
+          value={filters.maxLvl.toString()}
+          onChange={(event) => handleLevelChange("maxLvl", event)}
+          className={cn(
+            toolbarStripLightDividerClassName,
+            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
+          )}
+          min={MIN_LVL}
+          max={MAX_LVL}
+          type="number"
+          inputMode="numeric"
+          variant="borderless"
+        />
+        <TimersNpcTypeFilter
+          selectedNpcTypes={filters.selectedNpcTypes}
+          onChange={(selectedNpcTypes) =>
+            setTimersFilters(filtersKey, { ...filters, selectedNpcTypes })
+          }
+        />
       </div>
       {colorFiltersEnabled && (
-        <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-wrap ll:border-gray-400 ll:border ll:rounded-sm ll:p-1">
+        <div className="ll:flex ll:flex-row ll:flex-wrap ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/25 ll:px-1 ll:py-1">
           {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);
-            const overridden = overriddenDefaultColors[colorId];
+
+            const swatchColor =
+              overriddenDefaultColors[colorId]?.borderColor ?? color.accent;
 
             return (
               <Tooltip key={colorId}>
@@ -176,23 +151,17 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                     onClick={() => handleToggleColor(colorId)}
                     className={cn(
                       "ll:p-0 ll:focus-visible:outline-2 ll:focus-visible:outline-ring ll:size-4 ll:rounded-md ll:border ll-custom-cursor-pointer ll:transition-colors ll:motion-reduce:transition-none",
-                      !overridden && color?.bgNoOpacity,
-                      !overridden && color?.border,
                       {
                         "ll:ring-2 ll:ring-white": isSelected,
                       },
                     )}
-                    style={
-                      overridden
-                        ? {
-                            backgroundColor: overridden.backgroundColor,
-                            borderColor: overridden.borderColor,
-                          }
-                        : undefined
-                    }
+                    style={{
+                      backgroundColor: swatchColor,
+                      borderColor: swatchColor,
+                    }}
                   />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="ll:text-xs">
+                <TooltipContent>
                   {defaultColorNames[colorId] ?? getDefaultColorName(colorId)}
                 </TooltipContent>
               </Tooltip>
@@ -217,14 +186,12 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                       },
                     )}
                     style={{
-                      backgroundColor: color.backgroundColor,
+                      backgroundColor: color.borderColor,
                       borderColor: color.borderColor,
                     }}
                   />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="ll:text-xs">
-                  {color.name}
-                </TooltipContent>
+                <TooltipContent>{color.name}</TooltipContent>
               </Tooltip>
             );
           })}
