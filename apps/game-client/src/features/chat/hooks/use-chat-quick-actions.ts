@@ -7,7 +7,7 @@ import { MessageType } from "@/api/chat.api";
 import { upsertChatMessage } from "@/features/chat/chat.helpers";
 import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { useNotificationChatOrchestration } from "@/features/chat/hooks/use-notification-chat-orchestration";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { buildChatCharacterData } from "@/lib/api/generated-helpers";
 import { getChatAlarmLocation } from "@/lib/margonem-runtime/adapters/chat-alarm-runtime-adapter";
 import { getSelectedChatGuildId } from "@/store/chat.store";
@@ -20,7 +20,7 @@ export const useChatQuickActions = () => {
   const { t } = useTranslation("chat");
   const queryClient = useQueryClient();
   const reportSendError = useChatSendError();
-  const { visibleGuilds, areVisibleGuildsResolved } = useVisibleLootlogGuilds();
+  const { visibleGuilds, areVisibleGuildsResolved } = useLootlogGuilds();
   const { mutateAsync: send, isPending } = useChatControllerSendChatMessage();
 
   const { startNotificationMessage, isCreatingNotificationMessage } =

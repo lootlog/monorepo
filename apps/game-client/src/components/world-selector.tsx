@@ -25,7 +25,7 @@ import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
 const recentWorldsSchema = z.array(z.string());
 
@@ -54,8 +54,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
 }) => {
   const { t } = useTranslation("common");
 
-  const { guildsQuery, preferencesQuery, visibleGuilds } =
-    useVisibleLootlogGuilds();
+  const { guildsQuery, preferencesQuery, visibleGuilds } = useLootlogGuilds();
 
   const characterId = useGameStore(
     (state) => state.game?.hero.characterId ?? "",

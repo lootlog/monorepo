@@ -14,7 +14,7 @@ import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
 import { useTranslation } from "react-i18next";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useShallow } from "zustand/react/shallow";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useWindowsStore } from "@/store/windows.store";
@@ -124,8 +124,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = (props) => {
   const { t } = useTranslation("common");
   const characterId = useCurrentCharacterId();
 
-  const { guildsQuery, preferencesQuery, visibleGuilds } =
-    useVisibleLootlogGuilds();
+  const { guildsQuery, preferencesQuery, visibleGuilds } = useLootlogGuilds();
 
   const { data: guilds, error, isFetched, isLoading, refetch } = guildsQuery;
 

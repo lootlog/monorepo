@@ -62,14 +62,18 @@ export const SettingsGuildPicker: FC<SettingsGuildPickerProps> = ({
 
 type SettingsGuildPickerItemProps = {
   guild: Guild;
+  className?: string;
 };
 
-const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
+/** One server card; also stacked by the reorderable servers list. */
+export const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
   guild,
+  className,
 }) => (
   <SettingsPickerCard
     value={guild.id}
     label={guild.name}
+    className={className}
     leading={
       <Avatar
         aria-hidden

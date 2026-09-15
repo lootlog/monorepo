@@ -26,7 +26,7 @@ import { AsyncContent } from "@/components/async-content";
 import { cn } from "cn";
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { SearchX, ShieldX, UsersRound } from "lucide-react";
@@ -141,7 +141,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     stale,
   } = usePlayersPresence(guildId, world ?? defaultWorld);
 
-  const { guildsQuery } = useVisibleLootlogGuilds();
+  const { guildsQuery } = useLootlogGuilds();
 
   const initialLoad = resolveInitialLoad({
     disconnected,

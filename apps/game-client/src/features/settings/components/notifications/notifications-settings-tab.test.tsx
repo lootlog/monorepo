@@ -169,6 +169,24 @@ describe("NotificationsSettingsTab", () => {
     });
   });
 
+  it("lists servers in the order chosen in the servers tab, hidden ones included", () => {
+    setTestRuntimeGame({ hero: { accountId: "202" } });
+    seedAccountPreferences(createGameAccountPreferences("202"));
+    harness.setPreferences({
+      guildsOrder: ["guild-3", "guild-1"],
+      hiddenGuildIds: ["guild-1"],
+    });
+    render();
+
+    const picker = screen.getByRole("group", { name: "Lootlogi" });
+
+    expect(
+      within(picker)
+        .getAllByRole("button")
+        .map((tile) => tile.getAttribute("aria-label")),
+    ).toEqual(["Gamma", "Alpha", "Beta"]);
+  });
+
   it("autosaves a committed auto-hide timeout clamped to the allowed range", async () => {
     const user = userEvent.setup();
     setTestRuntimeGame({ hero: { accountId: "202" } });

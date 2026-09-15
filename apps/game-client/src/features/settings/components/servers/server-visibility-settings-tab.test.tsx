@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render as renderUi,
   screen,
@@ -173,5 +174,95 @@ describe("ServerVisibilitySettingsTab", () => {
         "10": ["guild-1"],
       },
     );
+  });
+});
+
+describe("ServerVisibilitySettingsTab ordering", () => {
+  beforeEach(() => {
+    harness = createGuildPreferencesTest();
+    harness.setPreferences({ guildsOrder: ["guild-2", "guild-1"] });
+    useGameStore.getState().clearGame();
+    useSettingsStore.setState({
+      guildIdByCharId: {},
+      presenceOrganizationIdsByCharId: {},
+    });
+  });
+
+  it("moves a server with the keyboard and saves the full order", async () => {
+    render();
+
+    const handles = screen.getAllByRole("button", { name: /^Przenieś/ });
+    expect(handles.map((handle) => handle.getAttribute("aria-label"))).toEqual([
+      "Przenieś Beta (pozycja 1 z 3)",
+      "Przenieś Alpha (pozycja 2 z 3)",
+      "Przenieś Gamma (pozycja 3 z 3)",
+    ]);
+
+    fireEvent.keyDown(handles[2]!, { key: "ArrowUp" });
+
+    await waitFor(() =>
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({ guildsOrder: ["guild-2", "guild-3", "guild-1"] }),
+      ),
+    );
+    expect(
+      screen
+        .getAllByRole("button", { name: /^Przenieś/ })
+        .map((handle) => handle.getAttribute("aria-label")),
+    ).toEqual([
+      "Przenieś Beta (pozycja 1 z 3)",
+      "Przenieś Gamma (pozycja 2 z 3)",
+      "Przenieś Alpha (pozycja 3 z 3)",
+    ]);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Gamma: pozycja 2 z 3",
+    );
+  });
+
+  it("drops a dragged server at the pointer position", async () => {
+    render();
+
+    const rows = screen
+      .getAllByRole("button", { name: /^Przenieś/ })
+      .map((handle) => handle.parentElement!);
+
+    rows.forEach((row, index) => {
+      // SAFETY: the hook reads only top and height from the rect.
+      row.getBoundingClientRect = () =>
+        ({ top: index * 36, height: 36, bottom: index * 36 + 36 }) as DOMRect;
+    });
+
+    const [betaHandle] = screen.getAllByRole("button", { name: /^Przenieś/ });
+
+    fireEvent.pointerDown(betaHandle!, {
+      pointerId: 1,
+      isPrimary: true,
+      button: 0,
+      clientY: 18,
+    });
+    fireEvent.pointerMove(document, {
+      pointerId: 1,
+      pointerType: "mouse",
+      buttons: 1,
+      clientY: 18 + 72,
+    });
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    expect(rows[1]).toHaveStyle({ transform: "translate3d(0, -36px, 0)" });
+    fireEvent.pointerUp(document, { pointerId: 1, clientY: 18 + 72 });
+
+    await waitFor(() =>
+      expect(harness.request.mock.calls[0]?.[1]?.body).toBe(
+        JSON.stringify({ guildsOrder: ["guild-1", "guild-3", "guild-2"] }),
+      ),
+    );
+  });
+
+  it("keeps the order fixed while the list is filtered", () => {
+    render();
+
+    fireEvent.click(screen.getByRole("button", { name: "Widoczne" }));
+
+    const [handle] = screen.getAllByRole("button", { name: /^Przenieś/ });
+    expect(handle).toBeDisabled();
   });
 });

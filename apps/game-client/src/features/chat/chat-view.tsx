@@ -34,7 +34,7 @@ import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
 import { useSocket } from "@/contexts/socket-context";
-import { useVisibleLootlogGuilds } from "@/hooks/use-visible-lootlog-guilds";
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {
   getChatUnreadSummary,
   markChatMessagesRead,
@@ -126,7 +126,7 @@ const resolveChatAsyncState = ({
 const resolveChatGuildTargets = (
   selectedGuildId: string,
   visibleGuilds:
-    | ReturnType<typeof useVisibleLootlogGuilds>["visibleGuilds"]
+    | ReturnType<typeof useLootlogGuilds>["visibleGuilds"]
     | undefined,
 ) => ({
   effectiveSelectedGuildId: visibleGuilds?.length === 0 ? "" : selectedGuildId,
@@ -155,7 +155,7 @@ export const ChatView = ({
     guildsQuery,
     preferencesQuery: preferences,
     visibleGuilds: resolvedVisibleGuilds,
-  } = useVisibleLootlogGuilds();
+  } = useLootlogGuilds();
 
   const { npcTypeColors } = useNpcTypeColors();
   const { chatAppearance } = useChatAppearanceSettings();

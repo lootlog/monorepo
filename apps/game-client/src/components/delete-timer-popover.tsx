@@ -1,3 +1,4 @@
+import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { useState, type FC } from "react";
 import { useQueries } from "@tanstack/react-query";
@@ -11,8 +12,6 @@ import { ContextMenuItem } from "@/components/ui/context-menu";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
   guildsControllerGetGuildPermissions,
-  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
-  useUsersControllerGetCurrentUserAccessibleGuilds,
 } from "@lootlog/client/main";
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
@@ -33,13 +32,9 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
 
-  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds({
-    query: {
-      queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-      refetchOnMount: false,
-      staleTime: 1000 * 60 * 5,
-    },
-  });
+  const {
+    guildsQuery: { data: guilds },
+  } = useLootlogGuilds();
 
   const guildEntries = timer.mergedGuildIds ?? [];
 
