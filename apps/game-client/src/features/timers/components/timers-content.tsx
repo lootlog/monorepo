@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { WorldSelector } from "@/components/world-selector";
@@ -33,6 +33,8 @@ type TimersContentProps = {
   refreshError?: boolean;
   refreshing?: boolean;
   stale?: boolean;
+  /** Covers the strips and the list, e.g. the add timer panel. */
+  overlay?: ReactNode;
 };
 
 export const TimersContent: FC<TimersContentProps> = ({
@@ -53,6 +55,7 @@ export const TimersContent: FC<TimersContentProps> = ({
   refreshError = false,
   refreshing = false,
   stale = false,
+  overlay,
 }) => {
   const { t } = useTranslation(["timers", "common"]);
 
@@ -70,7 +73,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           <div
             className={cn(toolbarStripBleedClassName, toolbarStripClassName)}
           >
-            <GuildSwitcher variant="strip" />
+            <GuildSwitcher />
           </div>
         )}
         {!compactView && allowWorldSelection && !isGrouping && (
@@ -128,6 +131,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           )}
         </AsyncContent>
       </div>
+      {overlay}
     </span>
   );
 };

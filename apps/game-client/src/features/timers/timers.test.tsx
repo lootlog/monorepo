@@ -5,7 +5,6 @@ import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimersStore, DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
-import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { createTimerFixture } from "./timer-fixtures";
@@ -67,21 +66,47 @@ it("deduplicates timers and shows the same visible state in the regular and unde
   expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
 });
 
-it("opens add timer with the selected guild without changing the saved creation preference", async () => {
+it("adds a manual timer from an overlay inside the timers window", async () => {
   const user = userEvent.setup();
-  mountTimers(() =>
-    useSettingsStore.setState({
-      selectedGuildIdsForTimersByCharId: { "101": ["guild-2"] },
-    }),
-  );
+  const fixture = mountTimers();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
-  expect(useWindowsStore.getState()["add-timer"]).toMatchObject({
-    open: true,
-    state: { guildId: "guild-1" },
-  });
-  expect(useSettingsStore.getState().selectedGuildIdsForTimersByCharId).toEqual(
-    { "101": ["guild-2"] },
+  const panel = screen.getByRole("dialog", { name: /Dodaj timer/ });
+  expect(panel).toBeVisible();
+  expect(screen.getByRole("button", { name: "Dodaj timer" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
   );
+  await user.type(within(panel).getByLabelText("Nazwa"), "Tanroth");
+  await user.type(
+    within(panel).getByLabelText("Minimalny czas (max 300h)"),
+    "1m",
+  );
+  await user.type(
+    within(panel).getByLabelText("Maksymalny czas (max 300h)"),
+    "2m",
+  );
+  await user.click(within(panel).getByRole("button", { name: "Dodaj" }));
+
+  const posts = () =>
+    fixture.requests.filter((request) => request.method === "POST");
+
+  await waitFor(() => expect(posts()).toHaveLength(1));
+  expect(posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+  expect(useWindowsStore.getState()).not.toHaveProperty("add-timer");
+});
+
+it("closes the add timer overlay with Escape and keeps the window open", async () => {
+  const user = userEvent.setup();
+  mountTimers();
+  await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
+  expect(screen.getByRole("dialog", { name: /Dodaj timer/ })).toBeVisible();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(useWindowsStore.getState().timers.open).toBe(true);
 });
 
 it("recovers from empty filters without erasing the user's saved hidden timers", async () => {

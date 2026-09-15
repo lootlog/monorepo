@@ -1,4 +1,3 @@
-import { cn } from "cn";
 import { GuildButton } from "@/components/guild-button";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,61 +11,44 @@ import { EyeOff } from "lucide-react";
 import type { FC } from "react";
 
 type GuildSwitcherItemProps = {
-  buttonClassName: string;
-  disabled: boolean;
   guild: GuildIdentity;
   hideLabel: string;
   isSelected: boolean;
   onClick: () => void;
   onHide: () => void;
   unreadBadge: string | null;
-  variant?: "default" | "strip";
 };
 
 export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
-  buttonClassName,
-  disabled,
   guild,
   hideLabel,
   isSelected,
   onClick,
   onHide,
   unreadBadge,
-  variant = "default",
 }) => (
   <ContextMenu>
     <ContextMenuTrigger asChild>
       <div>
         <GuildButton
-          variant={variant}
           isSelected={isSelected}
-          disabled={disabled}
           onClick={onClick}
           tooltipLabel={guild.name}
-          className={buttonClassName}
           unreadBadge={unreadBadge}
         >
           <AvatarImage
             src={guild.icon ?? undefined}
             alt={guild.name}
-            className={cn(
-              "ll:size-full ll:object-cover",
-              variant === "strip" ? "ll:rounded-none" : "ll:rounded-sm",
-            )}
+            className="ll:size-full ll:rounded-none ll:object-cover"
           />
-          <AvatarFallback
-            className={cn(
-              "ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:text-xs ll:font-semibold ll:leading-none",
-              variant === "strip" && "ll:rounded-none",
-            )}
-          >
+          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-none ll:text-xs ll:font-semibold ll:leading-none">
             {guild.name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </GuildButton>
       </div>
     </ContextMenuTrigger>
     <ContextMenuContent>
-      <ContextMenuItem disabled={disabled} onSelect={onHide}>
+      <ContextMenuItem onSelect={onHide}>
         <EyeOff aria-hidden className="ll:mr-1.5 ll:size-3.5" />
         {hideLabel}
       </ContextMenuItem>

@@ -124,6 +124,7 @@ describe("timers controls", () => {
           guildId="guild-1"
           world="luvia"
           isGrouping={underBag}
+          addTimerOpen={underBag}
           onAddTimer={onAddTimer}
         />
       </QueryClientProvider>

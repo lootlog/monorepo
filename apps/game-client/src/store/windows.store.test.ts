@@ -555,23 +555,24 @@ describe("migrateWindowsState", () => {
     expect(migrated).toHaveProperty("npc-detector.maxContentHeight", 220);
   });
 
-  it("adds missing add timer window state for persisted windows", () => {
+  it("drops the removed add timer window from persisted windows", () => {
     const migrated = migrateWindowsState(
       {
         "add-timer": {
-          open: false,
+          open: true,
           position: { x: 0, y: 0 },
           hasDefinedPosition: false,
           size: { width: 242, height: 300 },
           opacity: 4,
           locked: false,
+          state: { guildId: "guild-1" },
         },
         windowFocusHistory: [],
       },
-      6,
+      18,
     );
 
-    expect(migrated).toHaveProperty("add-timer.state", {});
+    expect(migrated).not.toHaveProperty("add-timer");
   });
 
   it("removes old online players feature state from persisted windows", () => {

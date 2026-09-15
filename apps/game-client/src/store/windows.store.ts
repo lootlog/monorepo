@@ -47,14 +47,7 @@ type SettingsWindowState = {
   activeSubsection?: SettingsSubsectionValue;
 };
 
-type AddTimerWindowState = {
-  guildId?: string;
-};
-
-type WindowPayload =
-  | CreateNotificationState
-  | SettingsWindowState
-  | AddTimerWindowState;
+type WindowPayload = CreateNotificationState | SettingsWindowState;
 
 export type WindowId =
   | "extension-login"
@@ -64,7 +57,6 @@ export type WindowId =
   | "chat"
   | "command"
   | "online-players"
-  | "add-timer"
   | "npc-detector"
   | "notifications"
   | "create-notification"
@@ -105,7 +97,6 @@ interface WindowsState {
   chat: WindowData;
   command: WindowData;
   "online-players": WindowData;
-  "add-timer": WindowData & { state: AddTimerWindowState };
   "npc-detector": WindowData;
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
@@ -185,12 +176,6 @@ const inferLegacyDefinedPosition = (
 };
 
 const migrateLegacyWindowEntries = (state: RawPersistedWindows): void => {
-  const addTimer = state["add-timer"];
-
-  if (isObjectRecord(addTimer) && !("state" in addTimer)) {
-    state["add-timer"] = { ...addTimer, state: {} };
-  }
-
   const onlinePlayers = state["online-players"];
 
   if (isObjectRecord(onlinePlayers)) {
@@ -207,7 +192,6 @@ const WINDOW_IDS: WindowId[] = [
   "chat",
   "command",
   "online-players",
-  "add-timer",
   "npc-detector",
   "notifications",
   "create-notification",
@@ -404,6 +388,9 @@ export const migrateWindowsState = (
 
   if (version < 15) delete state["timer-settings-conflict"];
 
+  // Manual timer creation moved into the timers window in version 19.
+  if (version < 19) delete state["add-timer"];
+
   for (const [since, migrate] of SETTINGS_PATH_MIGRATIONS) {
     if (version < since) migrate(state);
   }
@@ -482,10 +469,6 @@ const settingsPayloadSchema = z.looseObject({
     .catch(undefined),
 });
 
-const addTimerPayloadSchema = z.looseObject({
-  guildId: z.string().optional().catch(undefined),
-});
-
 const notificationPayloadSchema = z.looseObject({
   npc: z
     .looseObject({
@@ -519,8 +502,7 @@ const mergePersistedWindows = (
   const merged = { ...raw, ...current };
 
   for (const id of WINDOW_IDS) {
-    if (id === "settings" || id === "add-timer" || id === "create-notification")
-      continue;
+    if (id === "settings" || id === "create-notification") continue;
     merged[id] = parsePersistedWindow(raw[id], current[id]);
   }
 
@@ -529,15 +511,6 @@ const mergePersistedWindows = (
     state: {
       ...current.settings.state,
       ...settingsPayloadSchema.parse(readPersistedWindowPayload(raw.settings)),
-    },
-  };
-  merged["add-timer"] = {
-    ...parsePersistedWindow(raw["add-timer"], current["add-timer"]),
-    state: {
-      ...current["add-timer"].state,
-      ...addTimerPayloadSchema.parse(
-        readPersistedWindowPayload(raw["add-timer"]),
-      ),
     },
   };
   merged["create-notification"] = {
@@ -623,15 +596,6 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
-      },
-      "add-timer": {
-        open: false,
-        position: DEFAULT_POSITION,
-        hasDefinedPosition: false,
-        size: { width: 242, height: 300 },
-        opacity: DEFAULT_OPACITY,
-        locked: false,
-        state: {},
       },
       "npc-detector": {
         open: false,
@@ -903,7 +867,6 @@ export const useWindowsStore = create<WindowsState>()(
               state["online-players"],
               defaults["online-players"],
             ),
-            "add-timer": resetWindow(state["add-timer"], defaults["add-timer"]),
             "npc-detector": resetWindow(
               state["npc-detector"],
               defaults["npc-detector"],
@@ -1006,7 +969,7 @@ export const useWindowsStore = create<WindowsState>()(
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
       ),
-      version: 18,
+      version: 19,
       migrate: migrateWindowsState,
       merge: mergePersistedWindows,
     },
