@@ -106,7 +106,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
         data-testid="add-timer-scroll-container"
         className="ll:min-h-0 ll:w-full ll:flex-1"
       >
-        <div className="ll:flex ll:w-full ll:flex-col ll:gap-2 ll:px-2 ll:py-2">
+        <div className="ll:flex ll:w-full ll:flex-col ll:gap-2 ll:px-3 ll:py-2">
           <div className="ll:relative ll:w-full">
             <Label htmlFor="npcSearch" className={fieldLabelClassName}>
               {t("addForm.searchNpcLabel")}
@@ -345,7 +345,7 @@ export function AddTimerForm(props: AddTimerFormProps) {
         </div>
       </ScrollArea>
 
-      <div className="ll:flex ll:shrink-0 ll:items-center ll:justify-end ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-2 ll:py-1.5">
+      <div className="ll:flex ll:shrink-0 ll:items-center ll:justify-end ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-3 ll:py-1.5">
         <Button
           type="button"
           size="xs"
