@@ -1,8 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import {
-  createLootListReconciliation,
-  type LootListFreshness,
-} from "./loot-list-reconciliation";
+import { createLootListReconciliation } from "./loot-list-reconciliation";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -20,12 +17,9 @@ it("coalesces duplicates and events during a request without concurrent work or 
       }),
   );
 
-  const states: LootListFreshness[] = [];
-
   const coordinator = createLootListReconciliation({
     refresh,
     canRefresh: () => true,
-    onChange: (state) => states.push(state),
   });
 
   for (let event = 0; event < 1000; event++) coordinator.markDirty();
@@ -33,7 +27,6 @@ it("coalesces duplicates and events during a request without concurrent work or 
   expect(refresh).toHaveBeenCalledTimes(1);
 
   for (let event = 0; event < 1000; event++) coordinator.markDirty();
-  await coordinator.retry();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(refresh).toHaveBeenCalledTimes(1);
   finish?.();
@@ -41,12 +34,13 @@ it("coalesces duplicates and events during a request without concurrent work or 
   expect(refresh).toHaveBeenCalledTimes(2);
   finish?.();
   await vi.advanceTimersByTimeAsync(35_000);
-  expect(states[states.length - 1]).toBe("current");
+  expect(refresh).toHaveBeenCalledTimes(2);
   coordinator.dispose();
 });
 
-it("waits while hidden or browsing history, and recovers failed refreshes with a manual retry", async () => {
+it("waits while hidden or browsing history, and recovers failed refreshes automatically in the background", async () => {
   vi.useFakeTimers();
+  vi.spyOn(Math, "random").mockReturnValue(0);
   let visibleAtTop = false;
 
   const refresh = vi
@@ -54,12 +48,9 @@ it("waits while hidden or browsing history, and recovers failed refreshes with a
     .mockRejectedValueOnce(new Error("offline"))
     .mockResolvedValue(undefined);
 
-  const states: LootListFreshness[] = [];
-
   const coordinator = createLootListReconciliation({
     refresh,
     canRefresh: () => visibleAtTop,
-    onChange: (state) => states.push(state),
   });
 
   coordinator.markDirty();
@@ -67,13 +58,12 @@ it("waits while hidden or browsing history, and recovers failed refreshes with a
   expect(refresh).not.toHaveBeenCalled();
   visibleAtTop = true;
   coordinator.resume();
-  await vi.advanceTimersByTimeAsync(35_000);
-  expect(states[states.length - 1]).toBe("error");
-  coordinator.markDirty();
-  await vi.advanceTimersByTimeAsync(120_000);
+  await vi.advanceTimersByTimeAsync(30_000);
   expect(refresh).toHaveBeenCalledTimes(1);
-  await coordinator.retry();
-  expect(states[states.length - 1]).toBe("current");
+  coordinator.markDirty();
+  await vi.advanceTimersByTimeAsync(59_000);
+  expect(refresh).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(6_000);
   expect(refresh).toHaveBeenCalledTimes(2);
   coordinator.markDirty();
   coordinator.dispose();
@@ -95,7 +85,6 @@ it("jitters reconnect reconciliation and bounds 500-client single, burst, duplic
         requestTimes.push(Date.now());
       },
       canRefresh: () => true,
-      onChange: () => undefined,
     }),
   );
 
@@ -143,7 +132,6 @@ it("jitters reconnect reconciliation and bounds 500-client single, burst, duplic
         mixedListRequests++;
       },
       canRefresh: () => true,
-      onChange: () => undefined,
     });
   });
 
@@ -156,4 +144,36 @@ it("jitters reconnect reconciliation and bounds 500-client single, burst, duplic
   expect(mixedListRequests).toBe(250);
 
   for (const client of mixedClients) client.dispose();
+});
+
+it("backs off repeated failures, caps the delay and resets it after recovery", async () => {
+  vi.useFakeTimers();
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  const refresh = vi.fn().mockRejectedValue(new Error("offline"));
+
+  const coordinator = createLootListReconciliation({
+    refresh,
+    canRefresh: () => true,
+  });
+
+  coordinator.markDirty();
+  await vi.advanceTimersByTimeAsync(30_000);
+  expect(refresh).toHaveBeenCalledTimes(1);
+
+  for (const [index, delay] of [
+    60_000, 120_000, 240_000, 300_000, 300_000,
+  ].entries()) {
+    coordinator.markDirty();
+    await vi.advanceTimersByTimeAsync(delay - 1);
+    expect(refresh).toHaveBeenCalledTimes(index + 1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(refresh).toHaveBeenCalledTimes(index + 2);
+  }
+
+  refresh.mockResolvedValue(undefined);
+  await vi.advanceTimersByTimeAsync(300_000);
+  coordinator.markDirty();
+  await vi.advanceTimersByTimeAsync(30_000);
+  expect(refresh).toHaveBeenCalledTimes(8);
+  coordinator.dispose();
 });
