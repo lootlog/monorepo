@@ -281,6 +281,7 @@ export const NpcListItem = ({
                 >
                   {npc.notificationSentAt !== null ? (
                     <NpcNotificationCooldown
+                      key={npc.notificationSentAt}
                       animationEffectsEnabled={animationEffectsEnabled}
                       endsAt={
                         npc.notificationSentAt + NPC_NOTIFICATION_COOLDOWN_MS

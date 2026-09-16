@@ -262,3 +262,37 @@ it("commits a notification cooldown once per second, not on a polling clock", ()
   ).toBeNull();
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it("restarts the countdown when the same NPC is notified again mid-cooldown", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-07-20T12:00:00.000Z"));
+
+  mountNpcs(
+    [{ ...createNpc(1), notificationSentAt: Date.now() }],
+    false,
+    undefined,
+    {
+      ...defaultDetectorSettings,
+      routingRules: [
+        { id: "rule-1", minLevel: 1, maxLevel: 500, guildIds: ["guild-1"] },
+      ],
+    },
+  );
+
+  act(() => vi.advanceTimersByTime(3000));
+  expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+
+  act(() =>
+    useNpcDetectorStore
+      .getState()
+      .setNpcStates([{ npcId: 1, npc: { notificationSentAt: Date.now() } }]),
+  );
+
+  expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
+
+  act(() => vi.advanceTimersByTime(5000));
+  expect(
+    useNpcDetectorStore.getState().npcs.find((npc) => npc.id === 1)
+      ?.notificationSentAt,
+  ).toBeNull();
+});
