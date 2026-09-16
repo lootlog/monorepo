@@ -91,8 +91,25 @@ const createLogId = (): string => {
 
 const textEncoder = new TextEncoder();
 
-const getSerializedByteLength = (value: SerializableValue | LoggedAction) =>
+const serializedByteLengthCache = new WeakMap<LoggedAction, number>();
+
+const measureSerializedByteLength = (value: LoggedAction) =>
   textEncoder.encode(JSON.stringify(value)).byteLength;
+
+/**
+ * Actions are immutable once stored, so their serialized size is measured once.
+ * Every store write re-runs the retention pass over all retained actions; without
+ * this cache each write re-serialized up to 200 actions (several megabytes).
+ */
+const getSerializedByteLength = (value: LoggedAction) => {
+  const cachedByteLength = serializedByteLengthCache.get(value);
+
+  if (cachedByteLength !== undefined) return cachedByteLength;
+  const byteLength = measureSerializedByteLength(value);
+  serializedByteLengthCache.set(value, byteLength);
+
+  return byteLength;
+};
 
 const trimActionRequestsToFit = (
   action: LoggedAction,

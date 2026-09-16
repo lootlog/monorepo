@@ -4,6 +4,7 @@ import { MessageType } from "@/api/chat.api";
 import { CHAT_MESSAGE_LIMIT } from "@lootlog/schema/chat";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
 import {
+  areChatRenderablesEqual,
   deduplicateChatMessages,
   filterChatMessages,
   getCurrentChatMessages,
@@ -666,6 +667,66 @@ describe("chat helpers", () => {
     ).toBe("updated message");
     expect(removeChatMessage(messages, "message-1")).toEqual([]);
   });
+});
+
+it("treats rebuilt rows as equal only while their message content is unchanged", () => {
+  const message = makeChatMessage();
+  const npc = makeChatMessage({ id: "npc-1", type: MessageType.NPC });
+
+  expect(
+    areChatRenderablesEqual(
+      { kind: "message", key: message.id, message },
+      { kind: "message", key: message.id, message },
+    ),
+  ).toBe(true);
+  expect(
+    areChatRenderablesEqual(
+      { kind: "message", key: message.id, message },
+      { kind: "message", key: message.id, message: { ...message } },
+    ),
+  ).toBe(false);
+  expect(
+    areChatRenderablesEqual(
+      {
+        kind: "npc-group",
+        key: "g",
+        message: npc,
+        count: 2,
+        messageIds: ["a", "b"],
+      },
+      {
+        kind: "npc-group",
+        key: "g",
+        message: npc,
+        count: 2,
+        messageIds: ["a", "b"],
+      },
+    ),
+  ).toBe(true);
+  expect(
+    areChatRenderablesEqual(
+      {
+        kind: "npc-group",
+        key: "g",
+        message: npc,
+        count: 2,
+        messageIds: ["a", "b"],
+      },
+      {
+        kind: "npc-group",
+        key: "g",
+        message: npc,
+        count: 3,
+        messageIds: ["a", "b", "c"],
+      },
+    ),
+  ).toBe(false);
+  expect(
+    areChatRenderablesEqual(
+      { kind: "date-divider", key: "d", timestamp: "2026-01-01T10:00:00.000Z" },
+      { kind: "message", key: "d", message },
+    ),
+  ).toBe(false);
 });
 
 it("excludes legacy party cards from every chat filter", () => {

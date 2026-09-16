@@ -24,7 +24,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { format } from "@/utils/local-date";
 import { LoaderCircle, Swords, XIcon } from "lucide-react";
-import { type FC, type ReactNode, useEffect, useRef } from "react";
+import { memo, type ReactNode, useEffect, useRef } from "react";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
@@ -192,7 +192,14 @@ const resolveNotificationActionState = (
   };
 };
 
-export const SingleNotification: FC<SingleNotificationProps> = ({
+/**
+ * Memoized on purpose: the window renders up to 50 rows, each with several
+ * Base UI tooltip roots, and every incoming notification re-rendered all of
+ * them (measured: 41-45 row renders per presentation before, 1 after). Every
+ * prop the list passes must therefore stay referentially stable across
+ * unrelated updates.
+ */
+export const SingleNotification = memo(function SingleNotification({
   animationEffectsEnabled,
   autoHideState,
   categorySettings,
@@ -210,7 +217,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   onUpdateMutes,
   showCloseButton = false,
   npcTypeColors,
-}) => {
+}: SingleNotificationProps) {
   const { t } = useTranslation("notifications");
   const autoHidePathRef = useRef<SVGPathElement>(null);
 
@@ -469,4 +476,4 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       </div>
     </div>
   );
-};
+});

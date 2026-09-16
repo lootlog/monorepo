@@ -39,6 +39,36 @@ export type ChatRenderableMessage =
       message: ChatMessageType;
     };
 
+const areStringListsEqual = (left: string[], right: string[]) =>
+  left.length === right.length &&
+  left.every((value, index) => value === right[index]);
+
+/**
+ * Row objects are rebuilt on every derivation pass, so memoized rows compare
+ * content instead of identity: the same message reference, count and members.
+ */
+export const areChatRenderablesEqual = (
+  left: ChatRenderableMessage,
+  right: ChatRenderableMessage,
+): boolean => {
+  if (left === right) return true;
+
+  if (left.key !== right.key) return false;
+
+  if (left.kind === "date-divider")
+    return right.kind === "date-divider" && left.timestamp === right.timestamp;
+
+  if (left.kind === "message")
+    return right.kind === "message" && left.message === right.message;
+
+  return (
+    right.kind === "npc-group" &&
+    left.message === right.message &&
+    left.count === right.count &&
+    areStringListsEqual(left.messageIds, right.messageIds)
+  );
+};
+
 export const getNextSelectedGuildId = (
   selectedGuildId: string | undefined,
   guilds?: { id: string }[],
