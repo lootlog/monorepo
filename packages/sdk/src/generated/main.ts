@@ -145,6 +145,24 @@ export interface UserFeedResponseDtoOutput {
   items: UserFeedResponseDtoOutputItemsItem[];
 }
 
+export type RequestValidationErrorCode = typeof RequestValidationErrorCode[keyof typeof RequestValidationErrorCode];
+
+
+export const RequestValidationErrorCode = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+} as const;
+
+export type RequestValidationErrorIssuesItem = {
+  path: (string | number)[];
+  message: string;
+};
+
+export interface RequestValidationError {
+  code: RequestValidationErrorCode;
+  message: string;
+  issues: RequestValidationErrorIssuesItem[];
+}
+
 export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout[keyof typeof UserPreferencesResponseDtoOutputChatAppearanceNpcLayout];
 
 

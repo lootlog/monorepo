@@ -316,7 +316,7 @@ export class NpcsDetectionProcessor {
           grp: npc.groupId,
           icon: processedSettings.icon,
           id: npc.id,
-          location: useGameStore.getState().game?.map.name ?? "unknown",
+          location: useGameStore.getState().game?.map.name ?? "",
           lvl: npc.level,
           nick: npc.name,
           notificationSent: false,

@@ -1,11 +1,15 @@
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFriendsStore } from "@/store/friends.store";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
-import type { MargonemRuntimeAdapter } from "./runtime-adapter";
+import {
+  NiRuntimeAdapter,
+  SiRuntimeAdapter,
+  type MargonemRuntimeAdapter,
+} from "./runtime-adapter";
 import { parseRuntimeFacts } from "./runtime-event-parser";
 import { runtimeOtherHandles } from "./runtime-other-handles";
 import { RuntimeStateProjection } from "./runtime-state-projection";
@@ -87,6 +91,7 @@ function createEnvelope(event: GameEvent): RuntimeEventEnvelope {
 }
 
 describe("RuntimeStateProjection", () => {
+  afterEach(() => vi.unstubAllGlobals());
   beforeEach(() => {
     useGameStore.getState().clearGame();
     useNpcsStore.getState().clearNpcs();
@@ -179,6 +184,150 @@ describe("RuntimeStateProjection", () => {
     expect(adapter.getAllNpcs).not.toHaveBeenCalled();
     expect(adapter.getAllOthers).not.toHaveBeenCalled();
   });
+
+  it.each([{ visibility: 12 }, { id: 10 }, { name: "" }])(
+    "preserves the current map and NPCs after a partial town update %j",
+    (town) => {
+      const adapter = createAdapter();
+      const projection = new RuntimeStateProjection({ adapter });
+      projection.bootstrap();
+      const epoch = useGameStore.getState().mapEpoch;
+      projection.apply(createEnvelope({ town }));
+      expect(useGameStore.getState().game?.map).toEqual({
+        ...game.map,
+        visibility: town.visibility ?? game.map.visibility,
+      });
+      expect(useNpcsStore.getState().getNpc(501)).toEqual(npc);
+      expect(useGameStore.getState().mapEpoch).toBe(epoch);
+    },
+  );
+
+  it("recovers a new map name from applied native state without reusing the old map name", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    adapter.getGameSnapshot.mockReturnValue({
+      ...game,
+      map: { id: 11, name: "Native map", visibility: 15 },
+    });
+    projection.apply(createEnvelope({ town: { id: 11 } }));
+    expect(useGameStore.getState().game?.map).toEqual({
+      id: 11,
+      name: "Native map",
+      visibility: 15,
+    });
+    expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
+  });
+
+  it("does not borrow a location from a later native map when processing queued events", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    adapter.getGameSnapshot.mockReturnValue({
+      ...game,
+      map: { id: 12, name: "Future map", visibility: 15 },
+    });
+    projection.apply(createEnvelope({ town: { id: 11 } }));
+    expect(useGameStore.getState().game?.map.name).toBe("");
+    expect(useGameStore.getState().game?.map.id).toBe(11);
+  });
+
+  it("repairs a missing location before capturing a loot ingress snapshot", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    useGameStore
+      .getState()
+      .replaceGame({ ...game, map: { ...game.map, name: "" } });
+
+    const envelope = projection.captureIngress(
+      createEnvelope({ item: {}, loot: { source: "fight", states: {} } }),
+    );
+
+    expect(envelope.ingress.game?.map.name).toBe("Map");
+    expect(useGameStore.getState().game?.map.name).toBe("Map");
+  });
+
+  it("announces recovered map metadata before the ordinary event without changing the native packet", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    adapter.getGameSnapshot.mockImplementation(() => {
+      throw new Error("Map initializing");
+    });
+    projection.apply(createEnvelope({ town: { id: 11 } }));
+    const epoch = useGameStore.getState().mapEpoch;
+    adapter.getGameSnapshot.mockReturnValue({
+      ...game,
+      map: { id: 11, name: "Recovered map", visibility: 30 },
+    });
+    const event = { h: { stasis: 0 } } satisfies GameEvent;
+    const envelope = projection.captureIngress(createEnvelope(event));
+    projection.apply(envelope);
+    expect(envelope.raw).toBe(event);
+    expect(event).not.toHaveProperty("town");
+    expect(envelope.facts.map((fact) => fact.kind)).toEqual(["map", "afk"]);
+    expect(envelope.facts[0]?.event.town).toMatchObject({
+      id: 11,
+      name: "Recovered map",
+    });
+    expect(useGameStore.getState().mapEpoch).toBe(epoch);
+    expect(
+      projection
+        .captureIngress(createEnvelope(event))
+        .facts.map((fact) => fact.kind),
+    ).toEqual(["afk"]);
+  });
+
+  it.each(["ni", "si"] as const)(
+    "recovers the location through the real %s adapter",
+    (runtimeInterface) => {
+      const nativeHero = {
+        account: 2,
+        id: 1,
+        img: "hero.gif",
+        lvl: 300,
+        nick: "Hero",
+        prof: "w",
+        x: 1,
+        y: 2,
+      };
+
+      const nativeMap = { id: 10, name: "Native location", visibility: 30 };
+      const worldConfig = { getWorldName: () => "luvia" };
+      vi.stubGlobal("Engine", {
+        hero: { d: nativeHero },
+        map: { d: nativeMap },
+        worldConfig,
+      });
+      vi.stubGlobal("hero", nativeHero);
+      vi.stubGlobal("map", nativeMap);
+      vi.stubGlobal("g", { worldConfig });
+
+      const nativeAdapter =
+        runtimeInterface === "ni"
+          ? new NiRuntimeAdapter()
+          : new SiRuntimeAdapter();
+
+      const adapter = createAdapter();
+      adapter.getGameSnapshot.mockImplementation(() =>
+        nativeAdapter.getGameSnapshot(),
+      );
+      const projection = new RuntimeStateProjection({ adapter });
+      projection.bootstrap();
+      useGameStore.getState().replaceGame({
+        ...game,
+        interface: runtimeInterface,
+        map: { ...game.map, name: "" },
+      });
+
+      const envelope = projection.captureIngress(
+        createEnvelope({ item: {}, loot: { source: "fight", states: {} } }),
+      );
+
+      expect(envelope.ingress.game?.map.name).toBe("Native location");
+    },
+  );
 
   it("builds NPCs from templates and icons carried by the event", () => {
     const adapter = createAdapter();

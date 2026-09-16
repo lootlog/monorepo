@@ -5,6 +5,7 @@ import {
 } from "@lootlog/client/main";
 
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
+import { requireLocation } from "./require-location";
 
 export type CreateNotificationOptions = CreateNotificationDto;
 
@@ -21,6 +22,10 @@ export function createNotification(
       endpoint: "/messaging",
       payload: options,
     },
-    execute: () => messagingControllerSendNotification(options),
+    execute: () => {
+      if (options.npc) requireLocation(options.npc.location);
+
+      return messagingControllerSendNotification(options);
+    },
   });
 }

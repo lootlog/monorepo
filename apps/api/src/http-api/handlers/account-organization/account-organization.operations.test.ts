@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
 import { Effect, FileSystem, Layer, Path, Schema } from "effect";
@@ -159,6 +160,7 @@ describe("Users and Guilds HttpApi handlers", () => {
           ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
+          Effect.provide(SchemaErrorResponseLive),
         );
 
         return yield* client.guilds.GuildsControllerGetManageableUserGuilds();
@@ -201,6 +203,7 @@ describe("Users and Guilds HttpApi handlers", () => {
           ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
+          Effect.provide(SchemaErrorResponseLive),
         );
 
         return yield* Effect.all([

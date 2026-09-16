@@ -6,6 +6,7 @@ import { mapPingController } from "@/features/map-pings/map-ping-controller";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
+import { useGameStore } from "@/store/game.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 
 export class MapChangeProcessor {
@@ -14,8 +15,16 @@ export class MapChangeProcessor {
   handle(event: GameEvent): void {
     if (!event.town) return;
 
-    const mapId = event.town.id;
-    const mapName = event.town.name;
+    const projectedMap = useGameStore.getState().game?.map;
+    const mapId = event.town.id ?? projectedMap?.id;
+
+    if (mapId === undefined) return;
+
+    const mapName =
+      event.town.name?.trim() ||
+      (projectedMap?.id === mapId ? projectedMap.name : "");
+
+    if (!mapName) return;
     const previousMapId = this.previousMapId;
 
     if (previousMapId === mapId) return;

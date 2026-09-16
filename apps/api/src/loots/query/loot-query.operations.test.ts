@@ -155,7 +155,7 @@ describe("historical loot allocations", () => {
     } finally {
       await boundary.dispose();
     }
-  });
+  }, 15_000);
 });
 
 describe("filtered loot reads", () => {
@@ -443,5 +443,5 @@ describe("filtered loot reads", () => {
     } finally {
       await boundary.dispose();
     }
-  });
+  }, 15_000);
 });

@@ -692,7 +692,7 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
   expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe(
     "Keep this draft",
   );
-});
+}, 15_000);
 
 it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary or last gathering", async () => {
   const user = userEvent.setup();

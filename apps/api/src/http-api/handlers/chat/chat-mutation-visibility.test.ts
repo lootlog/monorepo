@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -189,6 +190,7 @@ describe("chat mutation source visibility", () => {
         HttpRouter.provideRequest(services),
         Layer.provide(BunHttpServer.layerHttpServices),
         Layer.provide(apiKeyEndpointPolicyLayer("main")),
+        Layer.provide(SchemaErrorResponseLive),
       ),
       { disableLogger: true },
     );

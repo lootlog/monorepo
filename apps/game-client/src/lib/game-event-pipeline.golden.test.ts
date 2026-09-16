@@ -468,6 +468,37 @@ describe("game event pipeline golden replay", () => {
     dispatcher.cleanup();
   });
 
+  it("keeps the loot and NPC location after a partial town update", async () => {
+    resetPipelineState();
+    useBattleStore.setState({ battleState: "in-battle" });
+    const dispatcher = new EventDispatcher();
+    pipelineWindow.successData = vi.fn<() => string>(() => "game-result");
+    margonemRuntimeBridge.setupProxies();
+    dispatcher.register();
+
+    dispatchRuntimeEvents([
+      { town: { pvp: 1 } },
+      finalFightEvent,
+      fightLootEvent,
+    ]);
+
+    await vi.waitFor(() => expect(requestsFor("/loots")).toHaveLength(1));
+    expect(requestsFor("/loots")[0]?.body).toEqual(
+      expect.objectContaining({
+        location: "Nithal",
+        npcs: [
+          expect.objectContaining({
+            id: 100,
+            location: "Nithal",
+            name: "Boss",
+          }),
+        ],
+      }),
+    );
+
+    dispatcher.cleanup();
+  });
+
   it.each([
     ["same packet", "legacy"],
     ["next packet", "legacy"],
