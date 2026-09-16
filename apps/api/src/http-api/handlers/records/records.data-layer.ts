@@ -216,16 +216,6 @@ export const recordsDataLayer = (services: RecordsServices) =>
           query.excludeColossus ?? false,
         ),
       ),
-    countLoots: (caller, query) =>
-      lootOperation(
-        "LootsController_countLootsByGuildId",
-        services.loots.countLootsByGuildId(
-          caller.guild,
-          caller.accessPolicy,
-          [...caller.roles],
-          { ...mutableLootQuery(query), limit: 0, cursor: 0 },
-        ),
-      ),
     resolveLootItem: (caller, query) =>
       lootOperation(
         "LootsController_resolveLootItemByHid",

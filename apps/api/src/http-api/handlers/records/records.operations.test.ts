@@ -67,7 +67,6 @@ const makeData = (overrides: Partial<RecordsData["Service"]> = {}) =>
     getMemberKills: unimplemented,
     fetchLoots: unimplemented,
     getLootStats: unimplemented,
-    countLoots: unimplemented,
     resolveLootItem: unimplemented,
     fetchLoot: unimplemented,
     archiveLoot: unimplemented,

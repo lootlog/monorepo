@@ -3,7 +3,6 @@ import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   archiveLoot,
-  countLoots,
   createComment,
   createLoot,
   fetchLoot,
@@ -28,11 +27,6 @@ export const LootsHandlers = HttpApiBuilder.group(
       .handle("LootsControllerGetLootStats", ({ params, query }) =>
         toRecordsHttpResponse(
           getLootStats(optionalPathString(params.guildId), query),
-        ),
-      )
-      .handle("LootsControllerCountLootsByGuildId", ({ params, query }) =>
-        toRecordsHttpResponse(
-          countLoots(optionalPathString(params.guildId), query),
         ),
       )
       .handle("LootsControllerResolveLootItemByHid", ({ params, query }) =>

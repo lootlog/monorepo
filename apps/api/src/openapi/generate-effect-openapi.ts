@@ -67,17 +67,6 @@ const queryParameterSchemas = new Map<string, JsonObject>(
     "LootsController_fetchLootsByGuildId:itemLevelMax": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:playerLevelMin": integerSchema(0, 500),
     "LootsController_fetchLootsByGuildId:playerLevelMax": integerSchema(0, 500),
-    "LootsController_countLootsByGuildId:limit": integerSchema(1, 100),
-    "LootsController_countLootsByGuildId:cursor": integerSchema(
-      Number.MIN_SAFE_INTEGER,
-      Number.MAX_SAFE_INTEGER,
-    ),
-    "LootsController_countLootsByGuildId:npcLevelMin": integerSchema(0, 500),
-    "LootsController_countLootsByGuildId:npcLevelMax": integerSchema(0, 500),
-    "LootsController_countLootsByGuildId:itemLevelMin": integerSchema(0, 500),
-    "LootsController_countLootsByGuildId:itemLevelMax": integerSchema(0, 500),
-    "LootsController_countLootsByGuildId:playerLevelMin": integerSchema(0, 500),
-    "LootsController_countLootsByGuildId:playerLevelMax": integerSchema(0, 500),
     "KillsController_getGuildKillStats:minLvl": integerSchema(0, 500),
     "KillsController_getGuildKillStats:maxLvl": integerSchema(0, 500),
     "KillsController_getUserKillStats:topNpcsLimit": integerSchema(
