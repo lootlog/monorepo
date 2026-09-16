@@ -103,6 +103,24 @@ describe("RedisService", () => {
     expect(client.del).toHaveBeenNthCalledWith(2, "lootlog:timer:c");
   });
 
+  it.each(["member-read:organization", "user-lootlog-config:user"])(
+    "invalidates %s with bounded work and no keyspace scan",
+    async (scope) => {
+      const client = createRedisClient();
+      client.set.mockResolvedValue("OK");
+      const service = createRedisService(client);
+      await service.invalidateScopes(scope);
+      expect(client.set).toHaveBeenCalledTimes(1);
+      expect(client.set).toHaveBeenCalledWith(
+        `lootlog:cache-generation:v1:${scope}`,
+        expect.any(String),
+      );
+      expect(client.scan).not.toHaveBeenCalled();
+      expect(client.keys).not.toHaveBeenCalled();
+      expect(client.del).not.toHaveBeenCalled();
+    },
+  );
+
   it("keeps prefix handling scoped to the beginning of scanned keys", async () => {
     const client = createRedisClient();
     client.scan.mockResolvedValueOnce([

@@ -50,6 +50,7 @@ describe("event deletion Effect module", () => {
         const removeEvent = makeEventDeletion(
           boundary.database,
           {
+            invalidateScopes: () => Promise.resolve(),
             deleteByPattern: () =>
               Promise.reject(new Error("Unexpected cache invalidation")),
           },

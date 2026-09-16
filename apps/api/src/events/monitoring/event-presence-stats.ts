@@ -161,7 +161,7 @@ export const makeEventPresenceStats = (
 
   return {
     get(guildId: string, eventId: string, heroNpcId: string) {
-      const key = cache.getEventKey(guildId, eventId, "hero-presence", {
+      const key = cache.getEventEntry(guildId, eventId, "hero-presence", {
         heroNpcId,
       });
 

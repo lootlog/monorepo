@@ -111,6 +111,7 @@ export const makeUserKillQueries = (
   };
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
+    userId: string,
     key: string,
     label: string,
     schema: S,
@@ -118,7 +119,9 @@ export const makeUserKillQueries = (
   ) =>
     protect(
       `kills.cache.${label}`,
-      cache.getOrSet(key, schema, load, CACHE_TTL_SECONDS),
+      cache.getOrSet(key, schema, load, CACHE_TTL_SECONDS, [
+        `kill-stats:user:${userId}`,
+      ]),
     );
 
   const getUserKillStats = (userId: string, query: GetUserKillStatsDto) => {
@@ -129,6 +132,7 @@ export const makeUserKillQueries = (
     const periodStart = getKillStatsPeriodStart(query.period);
 
     return cached(
+      userId,
       buildKillQueryCacheKey("user-overview", userId, {
         query: { ...query, npcTypes },
       }),
@@ -200,6 +204,7 @@ export const makeUserKillQueries = (
     const periodStart = getKillStatsPeriodStart(query.period);
 
     return cached(
+      userId,
       buildKillQueryCacheKey("user-npcs", userId, { query }),
       "user npc kills",
       UserNpcKillsResponse,
