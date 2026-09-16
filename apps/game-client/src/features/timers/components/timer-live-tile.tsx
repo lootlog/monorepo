@@ -22,6 +22,7 @@ export const TimerLiveTile = ({
   const removeTimerAfterMs = useTimersStore(
     (state) => state.generalConfig.removeTimerAfterMs,
   );
+
   const epoch = useTimerClockEpoch();
   const { maxTimeLeft, minTimeLeft } = getTimerTimeLeft(timer, epoch);
   const isMinSpawnTime = minTimeLeft < 0;
