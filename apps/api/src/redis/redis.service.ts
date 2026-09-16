@@ -62,6 +62,10 @@ const DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS = 2_000;
 
 const DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS = 50;
 
+// Reads renew active scopes; idle metadata expires. A missing scope gets a new
+// random token, so expiry cannot make an old cache fill reachable again.
+const READ_CACHE_GENERATION_TTL_SECONDS = 3_600;
+
 const RELEASE_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
@@ -77,6 +81,7 @@ for i, key in ipairs(KEYS) do
     version = ARGV[i]
     redis.call("SET", key, version)
   end
+  redis.call("EXPIRE", key, ARGV[#KEYS + 1])
   versions[i] = version
 end
 return versions
@@ -163,7 +168,7 @@ export class RedisService {
       const generations = await this.eval<string[]>(
         READ_CACHE_GENERATIONS_SCRIPT,
         scopes.map((scope) => `cache-generation:v1:${scope}`),
-        scopes.map(() => randomUUID()),
+        [...scopes.map(() => randomUUID()), READ_CACHE_GENERATION_TTL_SECONDS],
       );
 
       // Capture before loading: an invalidated in-flight fill stays unreachable.
@@ -327,7 +332,11 @@ export class RedisService {
   async invalidateScopes(...scopes: string[]): Promise<void> {
     await Promise.all(
       scopes.map((scope) =>
-        this.set(`cache-generation:v1:${scope}`, randomUUID()),
+        this.set(
+          `cache-generation:v1:${scope}`,
+          randomUUID(),
+          READ_CACHE_GENERATION_TTL_SECONDS,
+        ),
       ),
     );
   }

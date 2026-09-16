@@ -83,6 +83,75 @@ describe("Read cache Dragonfly integration", () => {
     await runtime.dispose();
   });
 
+  it("expires idle generations and renews existing generations without evicting cached data", async () => {
+    const entry = { key: "ttl:payload", scopes: ["ttl:scope"] };
+    const generationKey = "cache-generation:v1:ttl:scope";
+
+    await write(entry, 1);
+    expect(await cache.pttl(generationKey)).toBeGreaterThan(0);
+    expect(await cache.pttl(generationKey)).toBeLessThanOrEqual(3_600_000);
+    const generation = await cache.get(generationKey);
+
+    if (generation === null) throw new Error("Missing generation");
+
+    // Existing deployments may already have persistent generation keys.
+    await cache.set(generationKey, generation);
+    expect(await cache.pttl(generationKey)).toBe(-1);
+    expect(await read(entry)).toEqual({ value: 1 });
+    expect(await cache.get(generationKey)).toBe(generation);
+    expect(await cache.pttl(generationKey)).toBeGreaterThan(3_500_000);
+
+    await cache.pexpire(generationKey, 10_000);
+    expect(await read(entry)).toEqual({ value: 1 });
+    expect(await cache.pttl(generationKey)).toBeGreaterThan(3_500_000);
+
+    await cache.invalidateScopes(...entry.scopes);
+    expect(await cache.pttl(generationKey)).toBeGreaterThan(0);
+    expect(await cache.pttl(generationKey)).toBeLessThanOrEqual(3_600_000);
+    expect(await cache.get(generationKey)).not.toBe(generation);
+    expect(await read(entry)).toBeNull();
+
+    await cache.invalidateScopes("ttl:unread");
+    expect(await cache.pttl("cache-generation:v1:ttl:unread")).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("does not revive an old fill when its generation expires during loading", async () => {
+    const entry = { key: "expiry:payload", scopes: ["expiry:scope"] };
+    const generationKey = "cache-generation:v1:expiry:scope";
+    const started = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+
+    const stale = cache.getOrSetJson({
+      ...entry,
+      codec,
+      ttlSeconds: 30,
+      factory: async () => {
+        started.resolve();
+        await finish.promise;
+
+        return { value: 1 };
+      },
+    });
+
+    await started.promise;
+    const generation = await cache.get(generationKey);
+
+    try {
+      // Expire through Redis, without a wall-clock sleep in the test.
+      await cache.pexpire(generationKey, 0);
+      expect(await cache.get(generationKey)).toBeNull();
+      expect(await write(entry, 2)).toEqual({ value: 2 });
+      expect(await cache.get(generationKey)).not.toBe(generation);
+    } finally {
+      finish.resolve();
+    }
+
+    expect(await stale).toEqual({ value: 1 });
+    expect(await read(entry)).toEqual({ value: 2 });
+  });
+
   it("invalidates every user/world variant while preserving another organization", async () => {
     const keys = [
       { key: "timer:list:one:user:world", scopes: ["timer:list:one"] },
