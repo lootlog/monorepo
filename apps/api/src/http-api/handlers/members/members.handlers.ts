@@ -8,6 +8,10 @@ import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
+import {
+  MemberBoundary,
+  MemberRefreshJobBoundary,
+} from "./member-response.schema.js";
 import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   Permission,
@@ -15,14 +19,11 @@ import {
 } from "@lootlog/schema/permissions";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  MemberResponse,
   MemberReferencesResponse,
-  MembersResponse,
   MemberSummariesResponse,
   NullableMemberRefreshJobResponse,
   NullableMemberResponse,
   MemberLootlogConfigSummaryResponse,
-  MemberRefreshJobResponse,
 } from "#src/contracts/members/schemas";
 
 export type MembersIdentity = {
@@ -144,7 +145,7 @@ const refreshJobData = <A>(
 ) => Effect.flatMap(MemberRefreshJobData, operation);
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new MembersOperationError({ cause })),
   );
 
@@ -198,9 +199,9 @@ export const getCurrentMember = Effect.fn("getCurrentMember")(function* (
     service.getMe(current, guildId, refresh),
   );
 
-  return yield* decode(
-    refresh ? NullableMemberResponse : NullableMemberResponse,
-    value,
+  // The open contract preserves additional domain fields, including nested dates.
+  return yield* decodeDomainJson(NullableMemberResponse, value).pipe(
+    Effect.mapError((cause) => new MembersOperationError({ cause })),
   );
 });
 
@@ -217,7 +218,9 @@ export const refreshGuildMember = Effect.fn("refreshGuildMember")(function* (
     service.refreshMember(access.guildId, discordId),
   );
 
-  return yield* decode(NullableMemberResponse, value);
+  return yield* decodeDomainJson(NullableMemberResponse, value).pipe(
+    Effect.mapError((cause) => new MembersOperationError({ cause })),
+  );
 });
 
 export const deactivateGuildMember = Effect.fn("deactivateGuildMember")(
@@ -231,7 +234,7 @@ export const deactivateGuildMember = Effect.fn("deactivateGuildMember")(
       service.deactivateMember(access.guildId, discordId),
     );
 
-    return yield* decode(MemberResponse, value);
+    return yield* decode(MemberBoundary, value);
   },
 );
 
@@ -304,7 +307,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               ),
             );
 
-            return yield* decode(MembersResponse, value);
+            return yield* decode(Schema.Array(MemberBoundary), value);
           }),
           [403, 404],
         ),
@@ -364,7 +367,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               service.refreshAllMembers(access.guildId, access.discordId),
             );
 
-            return yield* decode(MemberRefreshJobResponse, value);
+            return yield* decode(MemberRefreshJobBoundary, value);
           }),
           [403, 404],
         ),
@@ -383,7 +386,12 @@ export const MembersHandlers = HttpApiBuilder.group(
               service.getLatestRefreshJob(access.guildId),
             );
 
-            return yield* decode(NullableMemberRefreshJobResponse, value);
+            return yield* decodeDomainJson(
+              NullableMemberRefreshJobResponse,
+              value,
+            ).pipe(
+              Effect.mapError((cause) => new MembersOperationError({ cause })),
+            );
           }),
           [403, 404],
         ),
@@ -402,7 +410,7 @@ export const MembersHandlers = HttpApiBuilder.group(
               service.getRefreshJobStatus(access.guildId, params.jobId),
             );
 
-            return yield* decode(MemberRefreshJobResponse, value);
+            return yield* decode(MemberRefreshJobBoundary, value);
           }),
           [403, 404],
         ),

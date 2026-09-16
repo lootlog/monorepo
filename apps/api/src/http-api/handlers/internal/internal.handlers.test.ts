@@ -4,6 +4,7 @@ import {
 } from "../../../../test/organization-fixtures.js";
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Permission } from "@lootlog/schema/permissions";
 import { OrganizationSummary } from "#src/contracts/shared";
 import { InternalUserPermissionsResponse } from "#src/contracts/internal/schemas";
@@ -57,6 +58,11 @@ describe("internal guild HttpApi handlers", () => {
     );
 
     expect(calls).toEqual([["discord-a", "user-a"]]);
+    expect(response).toEqual(
+      await Effect.runPromise(
+        decodeDomainJson(InternalUserPermissionsResponse, permissions),
+      ),
+    );
     expect(Schema.is(InternalUserPermissionsResponse)(response)).toBe(true);
   });
 
@@ -184,8 +190,96 @@ describe("internal guild HttpApi handlers", () => {
 
     const data = makeInternalGuildsData(persistence, cache);
 
-    const response = await Effect.runPromise(data.getGuild("guild-a"));
+    const response = await Effect.runPromise(
+      getInternalGuild("guild-a").pipe(
+        Effect.provideService(InternalGuildsData, data),
+      ),
+    );
+
     expect(Schema.is(OrganizationSummary)(response)).toBe(true);
     expect(databaseRead).toBe(false);
+  });
+});
+
+describe("internal response validation", () => {
+  it("preserves database dates, cached JSON and absent optional summary fields", async () => {
+    const { icon: _icon, vanityUrl: _vanityUrl, ...withoutOptional } = guild;
+
+    for (const source of [
+      guild,
+      withoutOptional,
+      { ...guild, createdAt: new Date(0), updatedAt: new Date(1) },
+      { ...guild, createdAt: new Date(0).toISOString() },
+    ]) {
+      const data = InternalGuildsData.of({
+        getGuild: () => Effect.succeed(source),
+        getUserPermissions: () => Effect.succeed([]),
+      });
+
+      const response = await Effect.runPromise(
+        getInternalGuild("guild-a").pipe(
+          Effect.provideService(InternalGuildsData, data),
+        ),
+      );
+
+      expect(response).toEqual(
+        await Effect.runPromise(decodeDomainJson(OrganizationSummary, source)),
+      );
+    }
+  });
+
+  it("rejects invalid summary and permission fields without weakening operation failures", async () => {
+    for (const source of [
+      { ...guild, icon: undefined },
+      { ...guild, reservationMaxDurationMinutes: Number.NaN },
+      { ...guild, ownerId: null },
+    ]) {
+      const data = InternalGuildsData.of({
+        getGuild: () => Effect.succeed(source),
+        getUserPermissions: () => Effect.succeed([]),
+      });
+
+      const error = await Effect.runPromise(
+        Effect.flip(
+          getInternalGuild("guild-a").pipe(
+            Effect.provideService(InternalGuildsData, data),
+          ),
+        ),
+      );
+
+      expect(error._tag).toBe("InternalGuildsOperationError");
+      await expect(
+        Effect.runPromise(decodeDomainJson(OrganizationSummary, source)),
+      ).rejects.toBeDefined();
+    }
+
+    const permissions = [
+      {
+        guild: { id: "guild-a", ownerId: "owner" },
+        roles: [
+          {
+            id: "role",
+            lvlRangeFrom: 0,
+            lvlRangeTo: 100,
+            permissions: ["INVALID"],
+          },
+        ],
+      },
+    ];
+
+    const data = InternalGuildsData.of({
+      getGuild: () => Effect.succeed(guild),
+      getUserPermissions: () => Effect.succeed(permissions),
+    });
+
+    const error = await Effect.runPromise(
+      Effect.flip(
+        getInternalUserPermissions("discord-a", "user-a").pipe(
+          Effect.provideService(InternalGuildsData, data),
+        ),
+      ),
+    );
+
+    expect(error._tag).toBe("InternalGuildsOperationError");
   });
 });
