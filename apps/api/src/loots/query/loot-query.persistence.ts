@@ -5,16 +5,7 @@ import {
   mapNpc,
 } from "#src/loots/query/loot-snapshot-mappers";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import {
-  and,
-  asc,
-  count,
-  countDistinct,
-  desc,
-  eq,
-  inArray,
-  isNull,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -371,41 +362,6 @@ export const makeLootQueryPersistence = (
       hydrate(options.guildId, lootIds),
     );
 
-  const countLoots = (options: {
-    readonly guildId: string;
-    readonly permissions: ReadonlyArray<string>;
-    readonly roles: ReadonlyArray<LootQueryVisibilityRole>;
-    readonly filters: LootQueryFilters;
-  }) =>
-    resolveQueryFilters(options.filters).pipe(
-      Effect.flatMap((filters) =>
-        protect(
-          "loots.query.count",
-          database
-            .select({ value: countDistinct(lootTable.id) })
-            .from(lootTable)
-            .innerJoin(
-              organizationLootRecordTable,
-              and(
-                eq(organizationLootRecordTable.lootId, lootTable.id),
-                eq(organizationLootRecordTable.guildId, options.guildId),
-                isNull(organizationLootRecordTable.archivedAt),
-              ),
-            )
-            .where(
-              and(
-                ...buildLootQueryConditions(
-                  filters,
-                  options.permissions,
-                  options.roles,
-                ),
-              ),
-            )
-            .pipe(Effect.map((rows) => rows[0]?.value ?? 0)),
-        ),
-      ),
-    );
-
   const findOne = (options: {
     readonly guildId: string;
     readonly permissions: ReadonlyArray<string>;
@@ -497,7 +453,6 @@ export const makeLootQueryPersistence = (
     readVisibleSummaries,
     findItemSnapshotIds,
     findMany,
-    count: countLoots,
     findOne,
     resolveItemByHid,
   } as const;

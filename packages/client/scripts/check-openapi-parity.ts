@@ -169,7 +169,6 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
     operations: [
       "GET /guilds/{guildId}/loots",
       "GET /guilds/{guildId}/loots/stats",
-      "GET /guilds/{guildId}/loots/count",
       "GET /guilds/{guildId}/loots/items/resolve",
       "GET /guilds/{guildId}/stats/kills",
       "GET /guilds/{guildId}/stats/kills/top-npcs",
@@ -1383,10 +1382,13 @@ if (import.meta.main) {
       assertVerifiedPersonalAddition(service.current, key, current.get(key));
     }
 
-    // User editing was removed; system party-ending updates remain realtime-only.
+    // User editing and the unused Organization loot count endpoint were removed.
     const expectedRemovals =
       service.current === "api"
-        ? ["PATCH /guilds/{guildId}/chat-messages/{messageId}"]
+        ? [
+            "PATCH /guilds/{guildId}/chat-messages/{messageId}",
+            "GET /guilds/{guildId}/loots/count",
+          ]
         : [];
 
     if (

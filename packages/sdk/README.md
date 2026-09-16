@@ -37,6 +37,11 @@ these functions from service OpenAPI documents. `bun run client:check` detects
 drift; `bun run build` builds portable ESM and bundled declarations. Publication
 is a separate explicit release action.
 
+The Organization loot count endpoint (`GET /guilds/{guildId}/loots/count`) and
+`lootsControllerCountLootsByGuildId` SDK function have been removed. Integrations
+must stop requesting a total count before the API removal is deployed. Use the
+paginated loot list to browse records; it does not provide a replacement total.
+
 Builds use the repository's TypeScript 7 catalog version and tsdown. The shared
 `packages/tsconfig.public-api.json` includes workspace source dependencies so
 declarations are bundled without requiring consumers to install private packages.
