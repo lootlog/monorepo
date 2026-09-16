@@ -6,6 +6,24 @@ import {
 } from "./schemas.js";
 
 describe("timer settings contracts", () => {
+  it("preserves both legacy appearance choices without requiring old clients to send one", () => {
+    const decode = Schema.decodeUnknownSync(UpdateTimerSettingsRequest);
+
+    expect(decode({ displayConfig: { fontSize: 12 } })).toEqual({
+      displayConfig: { fontSize: 12 },
+    });
+
+    for (const legacyAppearance of [false, true]) {
+      expect(decode({ displayConfig: { legacyAppearance } })).toEqual({
+        displayConfig: { legacyAppearance },
+      });
+    }
+
+    expect(() =>
+      decode({ displayConfig: { legacyAppearance: "true" } }),
+    ).toThrow();
+  });
+
   it("retains display bounds and partial nested updates", () => {
     const decode = Schema.decodeUnknownSync(UpdateTimerSettingsRequest);
     expect(

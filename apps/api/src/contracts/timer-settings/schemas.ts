@@ -48,6 +48,7 @@ export const UpdateTimerSettingsRequest = Schema.Struct({
   ),
   displayConfig: Schema.optionalKey(
     Schema.Struct({
+      legacyAppearance: Schema.optionalKey(Schema.Boolean),
       showType: Schema.optionalKey(Schema.Boolean),
       showLevel: Schema.optionalKey(Schema.Boolean),
       fontSize: Schema.optionalKey(

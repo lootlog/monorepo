@@ -11,6 +11,44 @@ import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import { describe, expect, it } from "bun:test";
 
 describe("settings resolver", () => {
+  it("defaults timer legacy appearance off for new preferences", () => {
+    expect(resolveSettingsDomain("appearance", []).effective).toMatchObject({
+      timers: { displayConfig: { legacyAppearance: false } },
+    });
+  });
+
+  it.each([false, true])(
+    "persists legacy appearance %s while preserving other timer preferences",
+    (legacyAppearance) => {
+      const scope = { type: "USER", id: "user-1" } as const;
+
+      const overrides = applySettingsPatch({
+        domain: "appearance",
+        scope,
+        currentOverrides: {
+          timers: {
+            displayConfig: {
+              fontSize: 14,
+              legacyAppearance: !legacyAppearance,
+            },
+            timersColors: { "timer-1": "custom-1" },
+          },
+        },
+        set: { timers: { displayConfig: { legacyAppearance } } },
+        unset: [],
+      });
+
+      expect(
+        resolveSettingsDomain("appearance", [{ scope, overrides }]).effective,
+      ).toMatchObject({
+        timers: {
+          displayConfig: { fontSize: 14, legacyAppearance },
+          timersColors: { "timer-1": "custom-1" },
+        },
+      });
+    },
+  );
+
   it("has valid defaults and exactly one inheritance path for every field", () => {
     for (const domain of SETTINGS_DOMAINS) {
       const definition = SETTINGS_CATALOG[domain];

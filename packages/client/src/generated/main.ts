@@ -1989,6 +1989,7 @@ export const UpdateTimerSettingsDtoDisplayConfigSingleTimerDisplayMode = {
 } as const;
 
 export type UpdateTimerSettingsDtoDisplayConfig = {
+  legacyAppearance?: boolean;
   showType?: boolean;
   showLevel?: boolean;
   /**

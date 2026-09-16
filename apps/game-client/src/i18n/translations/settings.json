@@ -404,6 +404,8 @@
       "visibilityTitle": "Widoczność",
       "showLevelLabel": "Wyświetlaj poziom potwora",
       "showTypeLabel": "Wyświetlaj typ potwora",
+      "legacyAppearanceLabel": "Wygląd legacy",
+      "legacyAppearanceDescription": "Przywraca poprzedni wygląd kafelków timerów w oknie i pod torbą.",
       "layoutTitle": "Układ",
       "singleTimerDisplayModeLabel": "Tryb wyświetlania pojedynczego timera",
       "singleTimerDisplayModeDescription": "Kolumny wyświetlają czas pod nazwą timera. Wiersze wyświetlają czas obok nazwy timera.",

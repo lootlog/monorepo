@@ -7,6 +7,7 @@
 export type TimerColorPaint = {
   accent: string;
   fill: string;
+  hoverFill?: string;
 };
 
 const TILE_FILL_ALPHA_HEX = "59";
@@ -36,8 +37,42 @@ export const isTimerColor = (
   color: string,
 ): color is keyof typeof TIMERS_COLORS => Object.hasOwn(TIMERS_COLORS, color);
 
-export const getTimerColor = (color: string): TimerColorPaint | undefined =>
-  isTimerColor(color) ? TIMERS_COLORS[color] : undefined;
+export const getTimerColor = (
+  color: string,
+  legacyAppearance = false,
+): TimerColorPaint | undefined => {
+  if (!isTimerColor(color)) return undefined;
+  const current = TIMERS_COLORS[color];
+
+  if (!legacyAppearance) return current;
+  const accent = current.accent.slice(0, 7);
+
+  return { accent, fill: `${accent}33`, hoverFill: `${accent}66` };
+};
+
+const legacyHoverFill = (color: string): string => {
+  const hex = color.replace("#", "");
+
+  const expanded =
+    hex.length === 3 || hex.length === 4
+      ? [...hex].map((digit) => digit + digit).join("")
+      : hex;
+
+  if (!/^[0-9a-f]{6}([0-9a-f]{2})?$/i.test(expanded)) return color;
+
+  const rgb = [0, 2, 4]
+    .map((offset) =>
+      Math.min(
+        255,
+        Number.parseInt(expanded.slice(offset, offset + 2), 16) + 51,
+      )
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("");
+
+  return `#${rgb}${expanded.slice(6)}`;
+};
 
 /** "Bez koloru" leaves the row background to the list, not to the colour. */
 export const isUnpaintedTimerColor = (paint: TimerColorPaint): boolean =>
@@ -56,15 +91,26 @@ export const resolveTimerColorPaint = (
   selectedColor: string,
   customColor: StoredTimerColor | undefined,
   overriddenColor: StoredTimerColor | undefined,
+  legacyAppearance = false,
 ): TimerColorPaint => {
   const storedColor = customColor ?? overriddenColor;
 
   if (storedColor) {
-    return {
+    const paint: TimerColorPaint = {
       accent: storedColor.borderColor,
       fill: storedColor.backgroundColor,
     };
+
+    if (legacyAppearance) {
+      paint.hoverFill = legacyHoverFill(storedColor.backgroundColor);
+    }
+
+    return paint;
   }
 
-  return getTimerColor(selectedColor) ?? TIMERS_COLORS.white;
+  return (
+    getTimerColor(selectedColor, legacyAppearance) ??
+    getTimerColor("white", legacyAppearance) ??
+    TIMERS_COLORS.white
+  );
 };

@@ -14,7 +14,10 @@ import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { markSettingsImportDone } from "./settings-import";
 import { settingsPatchQueue } from "./settings-patch-client";
-import { useSettingsHydration } from "./use-settings-hydration";
+import {
+  applyTimerDocuments,
+  useSettingsHydration,
+} from "./use-settings-hydration";
 
 type Harness = ReturnType<typeof createGuildPreferencesTest>;
 
@@ -79,6 +82,39 @@ describe("useSettingsHydration", () => {
     for (const domain of SETTINGS_DOMAINS) markSettingsImportDone(domain);
     respond(harness);
   });
+
+  it("resets legacy appearance when an older server document omits it", () => {
+    useTimersStore.setState({
+      displayConfig: {
+        ...useTimersStore.getState().displayConfig,
+        legacyAppearance: true,
+      },
+    });
+    applyTimerDocuments(
+      createSettingsDocuments({
+        "appearance.timers.displayConfig": { fontSize: 14 },
+      }),
+    );
+    expect(useTimersStore.getState().displayConfig).toMatchObject({
+      legacyAppearance: false,
+      fontSize: 14,
+    });
+  });
+
+  it.each([true, false])(
+    "hydrates legacy appearance %s from server documents",
+    (legacyAppearance) => {
+      applyTimerDocuments(
+        createSettingsDocuments({
+          "appearance.timers.displayConfig": { legacyAppearance, fontSize: 14 },
+        }),
+      );
+      expect(useTimersStore.getState().displayConfig).toMatchObject({
+        legacyAppearance,
+        fontSize: 14,
+      });
+    },
+  );
 
   it("projects user and guild timer documents into the timers store", async () => {
     seedSettingsDocuments(

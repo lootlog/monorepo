@@ -59,6 +59,7 @@ describe("useTimerDisplay", () => {
         },
       },
       displayConfig: {
+        legacyAppearance: false,
         showType: true,
         showLevel: true,
         fontSize: 11,
@@ -177,5 +178,79 @@ describe("useTimerDisplay", () => {
     });
 
     expect(renderCount).toBe(1);
+  });
+  it("switches built-in paint immediately without changing stored color preferences", () => {
+    useTimersStore.setState({
+      timersColors: { Tanroth: "white" },
+      overriddenDefaultColors: {},
+    });
+    const colors = useTimersStore.getState().timersColors;
+    const { result } = renderHook(() => useTimerDisplay(createTimer()));
+    expect(result.current.paint).toEqual({
+      accent: "#9ca3af66",
+      fill: "#9ca3af00",
+    });
+    act(() =>
+      useTimersStore.getState().setDisplayConfig({
+        ...useTimersStore.getState().displayConfig,
+        legacyAppearance: true,
+      }),
+    );
+    expect(result.current.paint).toEqual({
+      accent: "#9ca3af",
+      fill: "#9ca3af33",
+      hoverFill: "#9ca3af66",
+    });
+    expect(useTimersStore.getState().timersColors).toBe(colors);
+    act(() =>
+      useTimersStore.getState().setDisplayConfig({
+        ...useTimersStore.getState().displayConfig,
+        legacyAppearance: false,
+      }),
+    );
+    expect(result.current.paint.fill).toBe("#9ca3af00");
+  });
+
+  it("preserves overridden colors when enabling legacy appearance", () => {
+    useTimersStore.setState({
+      timersColors: { Tanroth: "red" },
+      overriddenDefaultColors: {
+        red: { borderColor: "#123456", backgroundColor: "#abcdef33" },
+      },
+    });
+    const { result } = renderHook(() => useTimerDisplay(createTimer()));
+    act(() =>
+      useTimersStore.getState().setDisplayConfig({
+        ...useTimersStore.getState().displayConfig,
+        legacyAppearance: true,
+      }),
+    );
+    expect(result.current.paint).toEqual({
+      accent: "#123456",
+      fill: "#abcdef33",
+      hoverFill: "#deffff33",
+    });
+    expect(useTimersStore.getState().overriddenDefaultColors.red).toEqual({
+      borderColor: "#123456",
+      backgroundColor: "#abcdef33",
+    });
+  });
+  it("preserves custom fills and names across appearance changes", () => {
+    const customColors = useTimersStore.getState().customColors;
+    const { result } = renderHook(() => useTimerDisplay(createTimer()));
+
+    act(() =>
+      useTimersStore.getState().setDisplayConfig({
+        ...useTimersStore.getState().displayConfig,
+        legacyAppearance: true,
+      }),
+    );
+
+    expect(result.current.paint).toEqual({
+      accent: "#f00",
+      fill: "#fee",
+      hoverFill: "#ffffff",
+    });
+    expect(useTimersStore.getState().customColors).toBe(customColors);
   });
 });

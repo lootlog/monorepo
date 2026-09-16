@@ -1,3 +1,4 @@
+import { useTimersStore } from "@/store/timers.store";
 import {
   Tooltip,
   TooltipContent,
@@ -7,7 +8,7 @@ import { cn } from "cn";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { FC } from "react";
-import { TIMERS_COLORS } from "../constants/timer-colors";
+import { TIMERS_COLORS, getTimerColor } from "../constants/timer-colors";
 import { getDefaultColorName } from "../utils/get-default-color-name";
 
 type CustomColor = {
@@ -40,18 +41,26 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
   onColorChange,
 }) => {
   const { t } = useTranslation("timers");
+
+  const legacyAppearance = useTimersStore(
+    (state) => state.displayConfig.legacyAppearance,
+  );
+
   const hiddenColorIds = new Set(hiddenDefaultColors);
 
   const colors = [
-    ...Object.entries(TIMERS_COLORS).flatMap(([id, color]) =>
+    ...Object.entries(TIMERS_COLORS).flatMap(([id]) =>
       hiddenColorIds.has(id)
         ? []
         : [
             {
               id,
-              name: defaultColorNames[id] ?? getDefaultColorName(id),
+              name:
+                defaultColorNames[id] ??
+                getDefaultColorName(id, legacyAppearance),
               swatchColor:
-                overriddenDefaultColors[id]?.borderColor ?? color.accent,
+                overriddenDefaultColors[id]?.borderColor ??
+                getTimerColor(id, legacyAppearance)?.accent,
             },
           ],
     ),

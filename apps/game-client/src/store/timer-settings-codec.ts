@@ -10,6 +10,7 @@ const generalConfig = z.looseObject({
 });
 
 const displayConfig = z.looseObject({
+  legacyAppearance: z.boolean().default(false).catch(false),
   showType: z.boolean().optional(),
   showLevel: z.boolean().optional(),
   fontSize: z.number().optional(),

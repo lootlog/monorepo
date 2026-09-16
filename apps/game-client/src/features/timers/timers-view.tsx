@@ -254,6 +254,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag
           minColumnWidth={displayConfig.minColumnWidth}
+          legacyAppearance={displayConfig.legacyAppearance}
           onResetFilters={handleResetFilters}
           compactView={generalConfig.compactView}
           error={!hasTimersResponse ? timersError : null}
@@ -313,6 +314,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           timerFiltersEnabled={resolvedTimerFiltersEnabled}
           isUnderBag={false}
           minColumnWidth={displayConfig.minColumnWidth}
+          legacyAppearance={displayConfig.legacyAppearance}
           onResetFilters={handleResetFilters}
           compactView={generalConfig.compactView}
           error={!hasTimersResponse ? timersError : null}
