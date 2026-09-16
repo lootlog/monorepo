@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { encode } from "@msgpack/msgpack";
+import { decode, encode } from "@msgpack/msgpack";
 import { Result } from "effect";
 import {
   decodePresenceSnapshot,
@@ -9,6 +9,8 @@ import {
   isPresenceFetchResult,
   decodeRealtimeFrame,
   encodeRealtimeFrame,
+  prepareRealtimeFrame,
+  tryEncodeRealtimeFrame,
   RealtimeCodecError,
   tryDecodeRealtimeFrame,
 } from "../src/realtime/codec.ts";
@@ -67,6 +69,74 @@ describe("realtime MessagePack codec", () => {
       }
     },
   );
+
+  test("prepares canonical frames without exposing unknown envelope or nested fields", () => {
+    const canonical = {
+      v: 1,
+      type: "presence.snapshot",
+      data: {
+        organizationId: "organization-1",
+        revision: 1,
+        presences: [
+          {
+            userId: "user-1",
+            sessionId: "session-1",
+            organizationIds: ["organization-1"],
+            platform: "game",
+            status: "online",
+            confidence: "verified",
+            isAfk: false,
+            lastSeen: 1_000,
+            character: {
+              characterId: "123",
+              accountId: "456",
+              name: "Hero 🐉",
+              world: "Aldous",
+              lvl: 200,
+              prof: "w",
+              icon: "hero.gif",
+            },
+          },
+        ],
+      },
+    } as const;
+
+    const input = {
+      ...canonical,
+      secret: "strip",
+      data: {
+        ...canonical.data,
+        secret: "strip",
+        presences: canonical.data.presences.map((presence) => ({
+          ...presence,
+          secret: "strip",
+          character: { ...presence.character, secret: "strip" },
+        })),
+      },
+    };
+
+    const prepared = prepareRealtimeFrame(input);
+
+    expect(prepared.frame).toStrictEqual(canonical);
+    expect(decode(prepared.bytes)).toStrictEqual(canonical);
+    expect(prepared.bytes).toEqual(encodeRealtimeFrame(input));
+    expect(input.data.presences[0]?.character.secret).toBe("strip");
+  });
+
+  test("preparation retains encoding failures for malformed typed input", () => {
+    const invalid = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: "", payload: {} },
+    } as const;
+
+    expect(() => prepareRealtimeFrame(invalid)).toThrow(RealtimeCodecError);
+    const result = tryEncodeRealtimeFrame(invalid);
+    expect(Result.isFailure(result)).toBe(true);
+
+    if (Result.isFailure(result))
+      expect(result.failure.operation).toBe("encode");
+  });
 
   test("round-trips a client command", () => {
     const frame = {

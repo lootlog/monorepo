@@ -1,6 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { decode, encode } from "@msgpack/msgpack";
-import { Result, Schema } from "effect";
+import { Predicate, Result, Schema } from "effect";
 import {
   PresenceSnapshot,
   MapPingAckSchema,
@@ -22,12 +22,15 @@ export class RealtimeCodecError extends TaggedErrorClass<RealtimeCodecError>()(
 const getErrorMessage = (cause: unknown): string =>
   cause instanceof Error ? cause.message : String(cause);
 
-export const tryEncodeRealtimeFrame = (frame: RealtimeFrameType) =>
+const tryEncodeFrame = (frame: RealtimeFrameType) =>
   Result.try({
     try: () => {
       const validated = Schema.encodeUnknownSync(RealtimeFrame)(frame);
 
-      return encode(validated, { ignoreUndefined: true });
+      return {
+        frame: validated,
+        bytes: encode(validated, { ignoreUndefined: true }),
+      };
     },
     catch: (error) =>
       new RealtimeCodecError({
@@ -36,6 +39,61 @@ export const tryEncodeRealtimeFrame = (frame: RealtimeFrameType) =>
         cause: error,
       }),
   });
+
+export const tryEncodeRealtimeFrame = (frame: RealtimeFrameType) =>
+  Result.map(tryEncodeFrame(frame), ({ bytes }) => bytes);
+
+// Only reuse values that MessagePack would leave unchanged. In particular,
+// open payloads may contain accessors, binary views, undefined or custom objects.
+// Keep the decoder as the authority for normalization and rejected map keys.
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- The codec must inspect schema-validated open payloads for MessagePack normalization.
+const isMessagePackStable = (value: unknown): boolean => {
+  if (Predicate.isNumber(value)) return !Object.is(value, -0);
+
+  if (Predicate.isString(value)) return !/[\uD800-\uDFFF]/u.test(value);
+
+  if (!Predicate.isObjectOrArray(value))
+    return value === null || Predicate.isBoolean(value);
+
+  const prototype: unknown = Object.getPrototypeOf(value);
+  const array = Array.isArray(value);
+
+  if (
+    prototype !== (array ? Array.prototype : Object.prototype) &&
+    prototype !== null
+  )
+    return false;
+
+  const keys = Reflect.ownKeys(value);
+
+  if (array && keys.length !== value.length + 1) return false;
+
+  for (const key of keys) {
+    if (!Predicate.isString(key)) return false;
+
+    if (array && key === "length") continue;
+    const property = Object.getOwnPropertyDescriptor(value, key);
+
+    if (!property?.enumerable || !("value" in property)) return false;
+
+    if (key === "__proto__" || /[\uD800-\uDFFF]/u.test(key)) return false;
+
+    if (!isMessagePackStable(property.value)) return false;
+  }
+
+  return true;
+};
+
+/** Encode once and retain the validated value when no wire normalization is needed. */
+export const prepareRealtimeFrame = (frame: RealtimeFrameType) => {
+  const encoded = Result.getOrThrow(tryEncodeFrame(frame));
+
+  return {
+    bytes: encoded.bytes,
+    // An absent value requests the normal decoder path, never the original input.
+    frame: isMessagePackStable(encoded.frame) ? encoded.frame : undefined,
+  };
+};
 
 export const encodeRealtimeFrame = (
   frame: RealtimeFrameType,

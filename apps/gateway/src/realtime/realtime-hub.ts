@@ -7,6 +7,7 @@ import {
 import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
 import {
   encodeRealtimeFrame,
+  prepareRealtimeFrame,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import {
@@ -330,7 +331,7 @@ export class RealtimeHub {
       readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
     } = {},
   ): Promise<void> {
-    const { message, bytes } = this.createFederatedMessage({
+    const { message, prepared } = this.createFederatedMessage({
       id: publicationId
         ? JSON.stringify([getScopeKey(scope), event.type, publicationId])
         : undefined,
@@ -340,7 +341,7 @@ export class RealtimeHub {
       frame: event,
     });
 
-    this.deliver(message, bytes);
+    this.deliver(message, prepared);
     // Retry federation even when this instance already delivered the publication.
     await this.redis.publish(message);
   }
@@ -357,33 +358,33 @@ export class RealtimeHub {
   ): Promise<void> {
     if (scopes.length === 0) return;
 
-    const { message, bytes } = this.createFederatedMessage({
+    const { message, prepared } = this.createFederatedMessage({
       scopes,
       frame: event,
       ...options,
     });
 
-    this.deliver(message, bytes);
+    this.deliver(message, prepared);
     await this.redis.publish(message);
   }
 
   async publishToUser(userId: string, event: Event): Promise<void> {
-    const { message, bytes } = this.createFederatedMessage({
+    const { message, prepared } = this.createFederatedMessage({
       userId,
       frame: event,
     });
 
-    this.deliver(message, bytes);
+    this.deliver(message, prepared);
     await this.redis.publish(message);
   }
 
   async publishToDiscord(discordId: string, event: Event): Promise<void> {
-    const { message, bytes } = this.createFederatedMessage({
+    const { message, prepared } = this.createFederatedMessage({
       discordId,
       frame: event,
     });
 
-    this.deliver(message, bytes);
+    this.deliver(message, prepared);
     await this.redis.publish(message);
   }
 
@@ -438,8 +439,8 @@ export class RealtimeHub {
       }),
     ];
 
-    for (const { message, bytes } of messages) {
-      this.deliver(message, bytes);
+    for (const { message, prepared } of messages) {
+      this.deliver(message, prepared);
       await this.redis.publish(message);
     }
   }
@@ -476,10 +477,10 @@ export class RealtimeHub {
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
   }) {
-    const bytes = encodeRealtimeFrame(options.frame);
+    const prepared = prepareRealtimeFrame(options.frame);
 
     return {
-      bytes,
+      prepared,
       message: {
         id: options.id ?? crypto.randomUUID(),
         sourceInstanceId: this.instanceId,
@@ -495,7 +496,7 @@ export class RealtimeHub {
         recipientMapId: options.recipientMapId,
         organizationId: options.organizationId,
         presenceAudience: options.presenceAudience,
-        frame: toBase64(bytes),
+        frame: toBase64(prepared.bytes),
       },
     };
   }
@@ -519,17 +520,15 @@ export class RealtimeHub {
     this.deliver(message);
   }
 
-  private deliver(
+  private publicationFrame(
     message: FederatedRealtimeMessage,
-    localBytes?: Uint8Array,
-  ): void {
-    if (!this.remember(message.id)) return;
-
+    local?: ReturnType<typeof prepareRealtimeFrame>,
+  ): Event | undefined {
     if (!message.frame) return;
 
-    const decoded = tryDecodeRealtimeFrame(
-      localBytes ?? fromBase64(message.frame),
-    );
+    const decoded = local?.frame
+      ? Result.succeed(local.frame)
+      : tryDecodeRealtimeFrame(local?.bytes ?? fromBase64(message.frame));
 
     if (Result.isFailure(decoded)) {
       this.logger.warn(
@@ -541,10 +540,21 @@ export class RealtimeHub {
     }
 
     if (!isServerEventFrame(decoded.success)) return;
-    const frame = decoded.success;
+
+    return decoded.success;
+  }
+
+  private deliver(
+    message: FederatedRealtimeMessage,
+    local?: ReturnType<typeof prepareRealtimeFrame>,
+  ): void {
+    if (!this.remember(message.id)) return;
+    const frame = this.publicationFrame(message, local);
+
+    if (!frame) return;
     let jsonFrame: string | undefined;
     // Remote frames must be re-encoded after validation strips unknown fields.
-    let binaryFrame = localBytes;
+    let binaryFrame = local?.bytes;
     const chatFrames = new Map<string, string | Uint8Array>();
 
     for (const socket of this.candidates(message)) {
