@@ -596,8 +596,10 @@ export class PresenceStore {
               metadata.discordId,
             );
           else
-            yield* fromPromise("presence.remove-stale-index", () =>
-              this.redis.command.srem(this.indexKey(organizationId), key),
+            yield* this.mutateOrganization(
+              organizationId,
+              "presence.remove-stale-index",
+              () => this.redis.command.srem(this.indexKey(organizationId), key),
             );
         }
       }
@@ -704,7 +706,7 @@ export class PresenceStore {
 
     return Effect.all(
       [
-        fromPromise("presence.write", () =>
+        this.mutateOrganization(organizationId, "presence.write", () =>
           this.redis.command.set(
             key,
             JSON.stringify(presence),
@@ -712,13 +714,13 @@ export class PresenceStore {
             REDIS_TTL_SECONDS,
           ),
         ),
-        fromPromise("presence.index", () =>
+        this.mutateOrganization(organizationId, "presence.index", () =>
           this.redis.command.sadd(this.indexKey(organizationId), key),
         ),
         fromPromise("presence.register-organization", () =>
           this.redis.command.sadd("presence:organizations", organizationId),
         ),
-        fromPromise("presence.write-metadata", () =>
+        this.mutateOrganization(organizationId, "presence.write-metadata", () =>
           this.redis.command.set(
             this.metadataKey(organizationId, presence.sessionId),
             JSON.stringify({
@@ -743,11 +745,18 @@ export class PresenceStore {
       const key = this.presenceKey(organizationId, sessionId);
       yield* Effect.all(
         [
-          fromPromise("presence.remove", () => this.redis.command.del(key)),
-          fromPromise("presence.remove-metadata", () =>
-            this.redis.command.del(this.metadataKey(organizationId, sessionId)),
+          this.mutateOrganization(organizationId, "presence.remove", () =>
+            this.redis.command.del(key),
           ),
-          fromPromise("presence.remove-index", () =>
+          this.mutateOrganization(
+            organizationId,
+            "presence.remove-metadata",
+            () =>
+              this.redis.command.del(
+                this.metadataKey(organizationId, sessionId),
+              ),
+          ),
+          this.mutateOrganization(organizationId, "presence.remove-index", () =>
             this.redis.command.srem(this.indexKey(organizationId), key),
           ),
         ],
@@ -827,7 +836,11 @@ export class PresenceStore {
         const read = this.readOrganization(organizationId).pipe(
           Effect.timeout("10 seconds"),
           Effect.ensuring(
-            Effect.sync(() => this.pendingSnapshots.delete(organizationId)),
+            Effect.sync(() => {
+              if (this.pendingSnapshots.get(organizationId) === result) {
+                this.pendingSnapshots.delete(organizationId);
+              }
+            }),
           ),
         );
 
@@ -883,8 +896,23 @@ export class PresenceStore {
   }
 
   private nextRevision(organizationId: string): Effect.Effect<number, unknown> {
-    return fromPromise("presence.next-revision", () =>
-      this.redis.command.incr(`presence:revision:${organizationId}`),
+    return this.mutateOrganization(
+      organizationId,
+      "presence.next-revision",
+      () => this.redis.command.incr(`presence:revision:${organizationId}`),
+    );
+  }
+
+  private mutateOrganization<A>(
+    organizationId: string,
+    operation: string,
+    evaluate: () => Promise<A>,
+  ): Effect.Effect<A, RealtimeStoreError> {
+    // Redis commands may settle after their Effect caller is interrupted.
+    return fromPromise(operation, () =>
+      evaluate().finally(() => {
+        this.pendingSnapshots.delete(organizationId);
+      }),
     );
   }
 
