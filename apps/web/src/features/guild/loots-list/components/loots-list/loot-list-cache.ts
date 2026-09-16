@@ -32,12 +32,25 @@ export async function reconcileActiveLootLists(
   );
 }
 
-export async function clearLootPolicyData(queryClient: QueryClient) {
+export async function clearLootPolicyData(
+  queryClient: QueryClient,
+  organizationRoutes?: readonly string[],
+) {
   const lootPath = z.string().regex(/^\/guilds\/[^/]+\/loots(?:\/\d+)?$/);
+  const paths = organizationRoutes?.map((id) => `/guilds/${id}/loots`);
 
   const filters = {
-    predicate: (query: { queryKey: readonly unknown[] }) =>
-      lootPath.safeParse(query.queryKey[0]).success,
+    predicate: (query: { queryKey: readonly unknown[] }) => {
+      const key = lootPath.safeParse(query.queryKey[0]);
+
+      return (
+        key.success &&
+        (paths === undefined ||
+          paths.some(
+            (path) => key.data === path || key.data.startsWith(`${path}/`),
+          ))
+      );
+    },
   };
 
   await queryClient.cancelQueries(filters);

@@ -1,5 +1,11 @@
 // @vitest-environment happy-dom
-import { act, cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createMemoryHistory,
@@ -17,19 +23,26 @@ import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import { createTestGateway } from "@/lib/testing/gateway";
 import { GuildContext } from "@/contexts/guild.context";
 import { ThemeContext } from "@/contexts/theme-context";
+import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useLiveLootList } from "./use-live-loot-list";
 import "@/i18n/config";
 
 function Probe() {
   const list = useLiveLootList();
+  const { setFilters } = useLootsFilters();
 
   return (
-    <output>
-      {JSON.stringify({
-        ids: list.allLoots.map((loot) => loot.id),
-        freshness: list.freshness,
-      })}
-    </output>
+    <>
+      <button onClick={() => void setFilters({ search: "shield" })}>
+        Change filter
+      </button>
+      <output>
+        {JSON.stringify({
+          ids: list.allLoots.map((loot) => loot.id),
+          freshness: list.freshness,
+        })}
+      </output>
+    </>
   );
 }
 
@@ -73,7 +86,10 @@ async function mount(fetchLoots: () => Promise<Response>) {
   const fetch = vi.fn(async (input: RequestInfo | URL) => {
     if (String(input).includes("/loots?")) return fetchLoots();
 
-    return Response.json([{ id: "one", vanityUrl: "alias" }]);
+    return Response.json([
+      { id: "one", vanityUrl: "alias" },
+      { id: "two", vanityUrl: "second-alias" },
+    ]);
   });
 
   onTestFinished(
@@ -106,7 +122,7 @@ async function mount(fetchLoots: () => Promise<Response>) {
               setTheme: () => undefined,
             }}
           >
-            <NuqsTestingAdapter searchParams="search=sword">
+            <NuqsTestingAdapter searchParams="search=sword" hasMemory>
               <RouterProvider router={router} />
             </NuqsTestingAdapter>
           </ThemeContext>
@@ -322,3 +338,117 @@ it.each([
     );
   },
 );
+
+it.each(["reconnect", "permissions"] as const)(
+  "%s restrictions clear only the affected Organization's canonical and alias caches",
+  async (event) => {
+    const { gateway, client } = await mount(async () => Response.json([loot]));
+
+    const policy = (restricted: boolean) =>
+      createAccessPolicySnapshot(
+        ["one", "two"].map((id) => ({
+          guild: { id, ownerId: "owner" },
+          roles: [
+            {
+              permissions: [Permission.LOOTLOG_LOOTS_READ],
+              lvlRangeFrom: 0,
+              lvlRangeTo: restricted && id === "two" ? 100 : 300,
+            },
+          ],
+        })),
+        "member",
+      );
+
+    const baseline = {
+      connectionId: "connection",
+      organizationIds: ["one", "two"],
+      subscriptionScopes: [],
+      accessPolicy: policy(false),
+    };
+
+    await act(async () => {
+      gateway.deliver({ v: 1, type: "session.joined", data: baseline });
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    for (const route of ["one", "alias", "two", "second-alias"]) {
+      client.setQueryData([`/guilds/${route}/loots/1`], loot);
+    }
+
+    client.setQueryData(["/guilds/second-alias/loots", { search: "old" }], {
+      pages: [[loot]],
+      pageParams: [0],
+    });
+    await act(async () => {
+      if (event === "reconnect") {
+        gateway.setConnectionState("disconnected");
+        gateway.setConnectionState("ready");
+        gateway.deliver({
+          v: 1,
+          type: "session.joined",
+          data: { ...baseline, accessPolicy: policy(true) },
+        });
+      } else {
+        gateway.deliver({
+          v: 1,
+          type: "permissions.updated",
+          data: {
+            organizationIds: ["one", "two"],
+            subscriptionScopes: [],
+            accessPolicy: policy(true),
+          },
+        });
+      }
+
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
+    expect(client.getQueryData(["/guilds/one/loots/1"])).toEqual(loot);
+    expect(client.getQueryData(["/guilds/alias/loots/1"])).toEqual(loot);
+    expect(client.getQueryData(["/guilds/two/loots/1"])).toBeUndefined();
+    expect(
+      client.getQueryData(["/guilds/second-alias/loots/1"]),
+    ).toBeUndefined();
+    expect(
+      client.getQueryData(["/guilds/second-alias/loots", { search: "old" }]),
+    ).toBeUndefined();
+  },
+);
+
+it("resumes event reconciliation for new filters after an old filter's refresh fails", async () => {
+  const listRequests = vi
+    .fn<() => Promise<Response>>()
+    .mockResolvedValueOnce(Response.json([loot]))
+    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+    .mockImplementation(async () => Response.json([{ ...loot, id: 2 }]));
+
+  const { gateway, fetch } = await mount(listRequests);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(35_000);
+  });
+  expect(screen.getByRole("status").textContent).toContain(
+    '"freshness":"error"',
+  );
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Change filter" }));
+    await vi.advanceTimersByTimeAsync(250);
+  });
+  expect(screen.getByRole("status").textContent).toContain('"ids":[2]');
+  expect(screen.getByRole("status").textContent).not.toContain(
+    '"freshness":"error"',
+  );
+  await act(async () => {
+    gateway.deliver({
+      v: 1,
+      type: "loot.created",
+      data: { version: 2, guildId: "one", lootId: 3, npcs: [] },
+    });
+    await vi.advanceTimersByTimeAsync(35_000);
+  });
+  expect(listRequests).toHaveBeenCalledTimes(4);
+  expect(
+    fetch.mock.calls.filter(([input]) =>
+      String(input).includes("search=shield"),
+    ),
+  ).toHaveLength(2);
+});

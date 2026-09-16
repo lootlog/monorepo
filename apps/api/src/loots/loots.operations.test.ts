@@ -67,10 +67,14 @@ const loot: LootQueryResult = {
   updatedAt: new Date(0),
 };
 
-const makeOperations = (fetchLootById: LootQueryOperations["fetchLootById"]) =>
+const makeOperations = (
+  fetchLootById: LootQueryOperations["fetchLootById"],
+  isLootVisible = () => Effect.succeed(true),
+) =>
   makeLootsOperations({
     query: {
       fetchLootById,
+      isLootVisible,
       fetchLootsByGuildId: () => Effect.die("Unexpected list read"),
       countLootsByGuildId: () => Effect.die("Unexpected count read"),
       resolveLootItemByHid: () => Effect.die("Unexpected item read"),
@@ -304,6 +308,35 @@ describe("loot detail concurrent reads", () => {
     expect(reads).toBe(2);
     finish.resolve();
     await pending;
+  });
+
+  it("does not share pre-archive data with a request arriving after another replica archives the loot", async () => {
+    const finish = Promise.withResolvers<void>();
+    let visible = true;
+
+    const operations = makeOperations(
+      () =>
+        Effect.promise(async () => {
+          await finish.promise;
+
+          return loot;
+        }),
+      () => Effect.sync(() => visible),
+    );
+
+    const beforeArchive = Effect.runPromise(
+      operations.fetchLootById(guild, policy, [role], 42),
+    );
+
+    visible = false;
+
+    const afterArchive = Effect.runPromise(
+      operations.fetchLootById(guild, policy, [role], 42),
+    );
+
+    finish.resolve();
+    expect(await beforeArchive).toEqual(loot);
+    expect(await afterArchive).toBeNull();
   });
 
   it("falls back to independent reads when the pending-key bound is reached", async () => {

@@ -34,6 +34,7 @@ import type {
 } from "@lootlog/schema/loot-events";
 import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import {
+  hashKey,
   useInfiniteQuery,
   useQueryClient,
   type InfiniteData,
@@ -135,6 +136,15 @@ export const useLiveLootList = () => {
   const currentGuildId = getCurrentGuildId(guilds, guildId);
   const lootQueryParams = getLootQueryParams(filters, world);
 
+  const queryKey = guildId
+    ? getLootsControllerFetchLootsByGuildIdQueryKey(
+        { guildId },
+        lootQueryParams,
+      )
+    : ["loots", "missing-guild"];
+
+  const queryIdentity = hashKey(queryKey);
+
   const {
     data: loots,
     fetchNextPage,
@@ -143,12 +153,7 @@ export const useLiveLootList = () => {
     isLoading,
     isError,
   } = useInfiniteQuery({
-    queryKey: guildId
-      ? getLootsControllerFetchLootsByGuildIdQueryKey(
-          { guildId },
-          lootQueryParams,
-        )
-      : ["loots", "missing-guild"],
+    queryKey,
     queryFn: ({ pageParam, signal }) => {
       if (!guildId) {
         return Promise.resolve(EMPTY_LOOTS);
@@ -191,6 +196,23 @@ export const useLiveLootList = () => {
     },
   );
 
+  const clearRestrictedLoots = useEffectEvent(
+    (organizationIds?: readonly string[]) => {
+      const routes = organizationIds?.flatMap((id) => {
+        const organization = guilds?.find((entry) => entry.id === id);
+        const aliases = [id];
+
+        if (organization?.vanityUrl) aliases.push(organization.vanityUrl);
+
+        if (id === currentGuildId && guildId) aliases.push(guildId);
+
+        return aliases;
+      });
+
+      return clearLootPolicyData(queryClient, routes);
+    },
+  );
+
   useEffect(() => {
     if (!guildId || !world) return;
 
@@ -216,9 +238,36 @@ export const useLiveLootList = () => {
       handleLootShareUpdate(payload);
     };
 
-    const onPermissions = () => {
-      void clearLootPolicyData(queryClient).then(() =>
-        reconciliation.revalidate(),
+    const restrictedOrganizations = (changes: readonly AccessPolicyChange[]) =>
+      changes.flatMap((change) =>
+        change.restricted && change.areas.includes("loots")
+          ? [change.organizationId]
+          : [],
+      );
+
+    const revalidateAccess = (organizationIds?: readonly string[]) => {
+      if (organizationIds?.length === 0) {
+        reconciliation.revalidate();
+
+        return;
+      }
+
+      void clearRestrictedLoots(organizationIds).then(() => {
+        if (
+          organizationIds === undefined ||
+          (currentGuildId && organizationIds.includes(currentGuildId))
+        )
+          reconciliation.revalidate();
+      });
+    };
+
+    const onPermissions = (payload?: {
+      accessPolicyChanges?: readonly AccessPolicyChange[];
+    }) => {
+      revalidateAccess(
+        payload?.accessPolicyChanges
+          ? restrictedOrganizations(payload.accessPolicyChanges)
+          : undefined,
       );
     };
 
@@ -226,20 +275,15 @@ export const useLiveLootList = () => {
       guildIds: string[];
       accessPolicyChanges?: readonly AccessPolicyChange[];
     }) => {
-      const accessRestricted = payload.accessPolicyChanges?.some(
-        (change) => change.restricted && change.areas.includes("loots"),
+      const restricted = restrictedOrganizations(
+        payload.accessPolicyChanges ?? [],
       );
 
-      if (
-        accessRestricted ||
-        (currentGuildId && !payload.guildIds.includes(currentGuildId))
-      ) {
-        onPermissions();
-
-        return;
+      if (currentGuildId && !payload.guildIds.includes(currentGuildId)) {
+        restricted.push(currentGuildId);
       }
 
-      reconciliation.revalidate();
+      revalidateAccess(restricted);
     };
 
     const resume = () => reconciliation.resume();
@@ -260,7 +304,15 @@ export const useLiveLootList = () => {
       socket.off(GatewayEvent.LOOTS_SHARE_UPDATE, onLootShareUpdate);
       document.removeEventListener("visibilitychange", resume);
     };
-  }, [connected, currentGuildId, guildId, queryClient, socket, world]);
+  }, [
+    connected,
+    currentGuildId,
+    guildId,
+    queryClient,
+    socket,
+    world,
+    queryIdentity,
+  ]);
 
   const retryReconciliation = () => {
     scrollElementRef.current?.scrollTo({ top: 0 });
