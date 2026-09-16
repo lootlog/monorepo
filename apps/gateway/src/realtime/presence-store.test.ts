@@ -1,7 +1,7 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect } from "effect";
+import { Effect, Exit } from "effect";
 import { TestClock } from "effect/testing";
 import { PresenceStore } from "./presence-store.js";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
@@ -184,6 +184,253 @@ const secondGuild = (permissions: Permission[]) => ({
 });
 
 describe("PresenceStore", () => {
+  test("shares overlapping snapshot reads while keeping viewer and Organization projections separate", async () => {
+    const redis = new MemoryRedis();
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => 10_000,
+    );
+
+    const publisher = socket({
+      ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      guilds: [...session([]).guilds, secondGuild([])],
+      character: {
+        world: "world-1",
+        characterId: "1",
+        accountId: "1",
+        name: "Hero",
+        lvl: 100,
+        icon: "hero.gif",
+        prof: "w",
+      },
+    });
+
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1", "organization-2"],
+        location: { mapId: 42, map: "Target", x: 4, y: 7 },
+      }),
+    );
+    const gate = Promise.withResolvers<void>();
+    const originalMget = redis.mget.bind(redis);
+
+    const mget = spyOn(redis, "mget").mockImplementation(async (keys) => {
+      await gate.promise;
+
+      return originalMget(keys);
+    });
+
+    const smembers = spyOn(redis, "smembers");
+    const basic = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+
+    const precise = session([
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    ]);
+
+    const snapshots = Promise.all([
+      Effect.runPromise(store.snapshot(basic, "organization-1", "world-1")),
+      Effect.runPromise(store.snapshot(precise, "organization-1", "world-1")),
+      Effect.runPromise(
+        store.snapshot(precise, "organization-1", "other-world"),
+      ),
+      Effect.runPromise(store.snapshot(basic, "organization-2")),
+    ]);
+
+    gate.resolve();
+    const [hidden, visible, otherWorld, otherOrganization] = await snapshots;
+    expect(hidden?.presences).toHaveLength(1);
+    expect(hidden?.presences[0]).not.toHaveProperty("location");
+    expect(visible?.presences[0]).toHaveProperty("location.mapId", 42);
+    expect(otherWorld?.presences).toEqual([]);
+    expect(visible?.presences[0]?.organizationIds).toEqual(["organization-1"]);
+    expect(otherOrganization?.presences[0]?.organizationIds).toEqual([
+      "organization-2",
+    ]);
+    expect(smembers).toHaveBeenCalledTimes(2);
+    expect(mget).toHaveBeenCalledTimes(2);
+    await Effect.runPromise(store.snapshot(basic, "organization-1"));
+    expect(mget).toHaveBeenCalledTimes(3);
+  });
+
+  test.each(["initiator", "follower"])(
+    "cancelling the %s does not cancel another viewer's snapshot",
+    async (cancelled) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      await Effect.runPromise(
+        store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
+      );
+      const gate = Promise.withResolvers<void>();
+      const started = Promise.withResolvers<void>();
+      const originalMget = redis.mget.bind(redis);
+
+      const mget = spyOn(redis, "mget").mockImplementation(async (keys) => {
+        started.resolve();
+        await gate.promise;
+
+        return originalMget(keys);
+      });
+
+      const controller = new AbortController();
+
+      const first = Effect.runPromiseExit(
+        store.snapshot(viewer, "organization-1"),
+        cancelled === "initiator" ? { signal: controller.signal } : undefined,
+      );
+
+      await started.promise;
+
+      const second = Effect.runPromiseExit(
+        store.snapshot(viewer, "organization-1"),
+        cancelled === "follower" ? { signal: controller.signal } : undefined,
+      );
+
+      controller.abort();
+      const interrupted = await (cancelled === "initiator" ? first : second);
+      expect(interrupted._tag).toBe("Failure");
+      gate.resolve();
+      const surviving = await (cancelled === "initiator" ? second : first);
+      expect(Exit.isSuccess(surviving)).toBe(true);
+
+      if (Exit.isSuccess(surviving)) {
+        expect(surviving.value.presences).toMatchObject([
+          { sessionId: "session-1" },
+        ]);
+      }
+
+      expect(mget).toHaveBeenCalledTimes(1);
+      await Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      expect(mget).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  test.each(["smembers", "mget"] as const)(
+    "shares %s failures without caching them after Redis recovers",
+    async (operation) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      await Effect.runPromise(
+        store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
+      );
+      const gate = Promise.withResolvers<void>();
+
+      const failing = spyOn(redis, operation).mockImplementation(async () => {
+        await gate.promise;
+        throw new Error("Redis unavailable");
+      });
+
+      const reads = [
+        Effect.runPromiseExit(store.snapshot(viewer, "organization-1")),
+        Effect.runPromiseExit(store.snapshot(viewer, "organization-1")),
+      ];
+
+      gate.resolve();
+
+      for (const result of await Promise.all(reads))
+        expect(result._tag).toBe("Failure");
+      expect(failing).toHaveBeenCalledTimes(1);
+      failing.mockRestore();
+
+      const recovered = await Effect.runPromise(
+        store.snapshot(viewer, "organization-1"),
+      );
+
+      expect(recovered.presences).toHaveLength(1);
+      expect(recovered.revision).toBe(1);
+    },
+  );
+
+  test("keeps permission checks current and reads updates, disconnects and expiry after shared reads settle", async () => {
+    let now = 10_000;
+    const redis = new MemoryRedis();
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+    );
+
+    const viewer = session([
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    ]);
+
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    const location = { mapId: 42, map: "Target", x: 4, y: 7 };
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        location,
+      }),
+    );
+    const gate = Promise.withResolvers<void>();
+    const started = Promise.withResolvers<void>();
+    const originalMget = redis.mget.bind(redis);
+    spyOn(redis, "mget").mockImplementation(async (keys) => {
+      started.resolve();
+      await gate.promise;
+
+      return originalMget(keys);
+    });
+
+    const snapshots = Promise.all([
+      Effect.runPromise(store.snapshot(viewer, "organization-1")),
+      Effect.runPromise(store.snapshot(viewer, "organization-1")),
+    ]);
+
+    await started.promise;
+    viewer.guilds = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]).guilds;
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        location,
+        isAfk: true,
+      }),
+    );
+    gate.resolve();
+
+    for (const snapshot of await snapshots) {
+      expect(snapshot.presences[0]?.isAfk).toBe(true);
+      expect(snapshot.presences[0]).not.toHaveProperty("location");
+      expect(snapshot.revision).toBe(2);
+    }
+
+    now += PRESENCE_EXPIRY_MS;
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toEqual([]);
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: ["organization-1"] }),
+    );
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toHaveLength(1);
+    await Effect.runPromise(store.disconnect(publisher.data));
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toEqual([]);
+  });
+
   test("batches map metadata while ignoring missing, malformed and other-map sessions", async () => {
     const redis = new MemoryRedis();
 
