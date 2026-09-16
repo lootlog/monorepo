@@ -29,7 +29,8 @@ export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
 }) => (
   <ContextMenu>
     <ContextMenuTrigger asChild>
-      <div>
+      {/* The trailing tile closes the strip with a right rule so the row does not end on an open edge. */}
+      <div className="ll:border-0 ll:border-solid ll:border-gray-400/40 ll:last:border-r">
         <GuildButton
           isSelected={isSelected}
           onClick={onClick}
