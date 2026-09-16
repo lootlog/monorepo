@@ -66,8 +66,17 @@ export function getLootlogRootZIndex(): number {
   return ROOT_Z_INDEX_BY_INTERFACE.ni;
 }
 
+/**
+ * Gates the host layout overrides in `index.css`. A plain body class replaces
+ * `body:has(> #lootlog-root)`: any `:has()` rule makes the browser re-check
+ * the anchor on every subtree the game inserts, which the combat renderer
+ * does dozens of times per packet.
+ */
+const HOST_MOUNTED_CLASS_NAME = "ll-mounted";
+
 function createRootElement(): HTMLDivElement {
   document.getElementById("lootlog-root")?.remove();
+  document.body.classList.add(HOST_MOUNTED_CLASS_NAME);
 
   const rootElement = document.createElement("div");
   rootElement.id = "lootlog-root";
@@ -130,6 +139,7 @@ export function bootstrapGameClient(
           delete runtimeWindow.__lootlogGameClientRuntime;
       },
       () => rootElement?.remove(),
+      () => document.body.classList.remove(HOST_MOUNTED_CLASS_NAME),
     ];
 
     for (const step of steps) {

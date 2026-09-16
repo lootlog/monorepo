@@ -347,35 +347,29 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   cursor: pointer;
 }
 
-body:has(> #lootlog-root) .interface-layer > .main-column > .inner-wrapper {
+body.ll-mounted .interface-layer > .main-column > .inner-wrapper {
   height: 100%;
 }
 
-body:has(> #lootlog-root) .right-main-column-wrapper {
+body.ll-mounted .right-main-column-wrapper {
   height: 100%;
 }
 
-body:has(> #lootlog-root)
-  .inner-wrapper
-  > .right-main-column-wrapper
-  > .bottom-wrapper {
+body.ll-mounted .inner-wrapper > .right-main-column-wrapper > .bottom-wrapper {
   height: calc(100% - 406px);
   width: 253px !important;
 }
 
-body:has(> #lootlog-root) .b_wrapper {
+body.ll-mounted .b_wrapper {
   display: none;
 }
 
-body:has(> #lootlog-root) .all\:b {
+body.ll-mounted .all\:b {
   display: none !important;
 }
 
 /* Newer Margonem builds render banners as a swiper inside .bottom-wrapper. */
-body:has(> #lootlog-root)
-  .right-main-column-wrapper
-  > .bottom-wrapper
-  > .banners {
+body.ll-mounted .right-main-column-wrapper > .bottom-wrapper > .banners {
   display: none !important;
 }
 
