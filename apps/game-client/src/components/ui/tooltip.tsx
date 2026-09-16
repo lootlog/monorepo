@@ -1,11 +1,12 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import * as React from "react";
 import { cn } from "cn";
+import type { CursorTooltipOffsets } from "./cursor-tooltip-placement";
 import {
-  placeTooltipAtCursor,
-  type CursorPoint,
-  type CursorTooltipOffsets,
-} from "./cursor-tooltip-placement";
+  ensureCursorTracking,
+  getCursorPoint,
+  registerCursorFollower,
+} from "./cursor-follower";
 import { getLootlogPortalContainer } from "./theme-boundary";
 
 const TooltipProviderContext = React.createContext(false);
@@ -72,68 +73,16 @@ function TooltipTrigger({ asChild, children, ...props }: TooltipTriggerProps) {
   );
 }
 
-/*
- * Cursor following bypasses React and Base UI on purpose: Base UI's own
- * `trackCursorAxis` re-renders the tooltip and re-runs async positioning on
- * every mousemove, which visibly lags behind the pointer. Instead one passive
- * listener records the pointer and every open tooltip is placed straight on
- * its positioner element, at most once per animation frame.
- */
 const CURSOR_OFFSETS: CursorTooltipOffsets = {
   sideOffset: 14,
   alignOffset: 6,
   padding: 8,
 };
 
-type CursorFollower = { element: HTMLElement; offsets: CursorTooltipOffsets };
-
-const cursorFollowers = new Set<CursorFollower>();
-
-let cursor: CursorPoint | null = null;
-
-let cursorFrame: number | null = null;
-
-let cursorTracked = false;
-
-const placeFollower = ({ element, offsets }: CursorFollower) => {
-  if (!cursor) return;
-
-  const placement = placeTooltipAtCursor(
-    cursor,
-    { width: element.offsetWidth, height: element.offsetHeight },
-    { width: window.innerWidth, height: window.innerHeight },
-    offsets,
-  );
-
-  element.style.position = "fixed";
-  element.style.left = `${placement.left}px`;
-  element.style.top = `${placement.top}px`;
-  element.style.transform = "none";
-};
-
-const scheduleFollowerPlacement = () => {
-  if (cursorFrame !== null || cursorFollowers.size === 0) return;
-
-  cursorFrame = window.requestAnimationFrame(() => {
-    cursorFrame = null;
-    cursorFollowers.forEach(placeFollower);
-  });
-};
-
-const trackCursor = (event: PointerEvent) => {
-  cursor = { x: event.clientX, y: event.clientY };
-  scheduleFollowerPlacement();
-};
-
-const ensureCursorTracking = () => {
-  if (cursorTracked || typeof window === "undefined") return;
-
-  cursorTracked = true;
-  window.addEventListener("pointermove", trackCursor, { passive: true });
-};
-
 /** Anchor for Base UI's own (initial, resize, scroll) positioning: the pointer. */
 const getCursorAnchor = () => {
+  const cursor = getCursorPoint();
+
   if (!cursor) return null;
 
   const { x, y } = cursor;
@@ -182,13 +131,7 @@ function TooltipContent({
   const registerFollower = (element: HTMLDivElement | null) => {
     if (!element || !followsCursor) return undefined;
 
-    const follower: CursorFollower = { element, offsets };
-    cursorFollowers.add(follower);
-    placeFollower(follower);
-
-    return () => {
-      cursorFollowers.delete(follower);
-    };
+    return registerCursorFollower(element, offsets);
   };
 
   return (
