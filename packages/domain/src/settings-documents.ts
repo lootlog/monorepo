@@ -282,7 +282,7 @@ export const SETTINGS_CATALOG = {
           showType: true,
           showLevel: false,
           fontSize: 11,
-          minColumnWidth: 120,
+          minColumnWidth: 140,
           singleTimerDisplayMode: "row",
         },
         guildScopes,
