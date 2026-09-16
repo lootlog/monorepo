@@ -38,6 +38,7 @@
     "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
   },
   "errors": {
+    "missingLocation": "Nie wysłano danych: nie udało się odczytać nazwy mapy z gry.",
     "requestFailed": "Błąd żądania",
     "unknown": "Nieznany błąd"
   },

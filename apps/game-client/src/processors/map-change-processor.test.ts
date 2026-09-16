@@ -84,6 +84,39 @@ describe("MapChangeProcessor", () => {
     processor.handle({});
     expect(test.wire.frames).toEqual([]);
   });
+  it("does not clear current NPCs or publish presence for a partial town update", () => {
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+    useNpcDetectorStore.setState({ npcs: [npc] });
+    useGlobalStore.setState({
+      socketState: { connected: true, joined: true, joinedGuilds: ["guild-1"] },
+    });
+    test.wire.frames.length = 0;
+    processor.handle({ town: { pvp: 1 } });
+    processor.handle(createMapChangeEvent(12, "Torneg"));
+    expect(useNpcDetectorStore.getState().npcs).toEqual([npc]);
+    expect(test.wire.frames).toEqual([]);
+  });
+
+  it("uses the resolved map for partial transition packets", () => {
+    useGlobalStore.setState({
+      socketState: { connected: true, joined: true, joinedGuilds: ["guild-1"] },
+    });
+    setTestRuntimeGame({
+      world: "fobos",
+      map: { id: 13, name: "Nithal", visibility: 30 },
+    });
+    test.wire.frames.length = 0;
+    processor.handle({ town: { id: 13 } });
+    expect(test.wire.frames).toContainEqual(
+      expect.objectContaining({
+        type: "presence.publish",
+        data: expect.objectContaining({
+          location: expect.objectContaining({ mapId: 13, map: "Nithal" }),
+        }),
+      }),
+    );
+  });
+
   it("keeps transport silent when disconnected or no organization is joined", () => {
     processor.handle(createMapChangeEvent(12, "Torneg"));
     useGlobalStore.setState({

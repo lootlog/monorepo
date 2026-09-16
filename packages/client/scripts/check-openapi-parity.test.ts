@@ -6,6 +6,7 @@ import {
   assertVerifiedPersonalAddition,
   normalizeAllowedChanges,
   normalizeApiKeyErrors,
+  normalizeValidationErrors,
   normalizeOpenApiRepresentation,
 } from "./check-openapi-parity.js";
 
@@ -441,4 +442,28 @@ test("API key errors retain domain alternatives and reject removed domain contra
       previous,
     ),
   ).toThrow("replaced an existing 403");
+});
+
+test("validation-error allowance preserves prior bad-request response alternatives", () => {
+  const validation = { $ref: "#/components/schemas/RequestValidationError" };
+  const original = { $ref: "#/components/schemas/HttpErrorResponse" };
+
+  const operation = (
+    schema: { $ref: string } | { anyOf: { $ref: string }[] },
+  ) => ({
+    responses: {
+      "400": { content: { "application/json": { schema } } },
+      "403": httpErrorResponse,
+    },
+  });
+
+  expect(
+    normalizeValidationErrors(operation({ anyOf: [original, validation] })),
+  ).toEqual(operation(original));
+  expect(normalizeValidationErrors(operation(validation))).toEqual({
+    responses: { "403": httpErrorResponse },
+  });
+  expect(normalizeValidationErrors(operation(original))).toEqual(
+    operation(original),
+  );
 });

@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { BunHttpServer } from "@effect/platform-bun";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import {
@@ -43,6 +44,7 @@ export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   Layer.provide(LootlogApiHandlers),
   Layer.provide(ForwardAuthMiddlewareLive),
   Layer.provide(apiKeyEndpointPolicyLayer("main")),
+  Layer.provide(SchemaErrorResponseLive),
 );
 
 /** Complete in-process router used by both the Bun server and HTTP integration tests. */

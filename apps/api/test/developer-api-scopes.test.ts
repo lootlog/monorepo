@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import {
   ApiKeyEndpointPolicy,
   apiKeyEndpointPolicyLayer,
@@ -219,6 +220,7 @@ it("keeps timer/feed sources scoped across concurrent keys and membership loss",
     ),
     Layer.provide(ForwardAuthMiddlewareLive),
     Layer.provide(apiKeyEndpointPolicyLayer("main")),
+    Layer.provide(SchemaErrorResponseLive),
     Layer.provideMerge(Layer.succeed(ApiDatabase, database)),
     Layer.provide(HttpServer.layerServices),
   );

@@ -14,6 +14,7 @@ import {
   normalizeTimerNpc,
 } from "@/lib/api/generated-helpers";
 import type { GuildMember } from "@/types/guild-member";
+import { requireLocation } from "./require-location";
 import {
   getAggregateActionStatus,
   getErrorMessage,
@@ -68,7 +69,11 @@ export function createAutoTimer(
       endpoint: "/timers/auto",
       payload,
     },
-    execute: () => timersControllerCreateAutoTimer(payload),
+    execute: () => {
+      requireLocation(payload.npc.location);
+
+      return timersControllerCreateAutoTimer(payload);
+    },
   });
 }
 

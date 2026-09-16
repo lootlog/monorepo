@@ -91,25 +91,12 @@ function resolveClan(
   return currentClan;
 }
 
-function resolveMap(
-  currentMap: RuntimeGameSnapshot["map"],
-  town: GameEvent["town"],
-): RuntimeGameSnapshot["map"] {
-  return town
-    ? Object.freeze({
-        id: town.id,
-        name: town.name,
-        visibility: town.visibility,
-      })
-    : currentMap;
-}
-
 function patchGame(
   current: RuntimeGameSnapshot,
   event: GameEvent,
+  map: RuntimeGameSnapshot["map"],
 ): RuntimeGameSnapshot {
   const heroPatch = event.h;
-  const town = event.town;
   const warriorStats = getOptionalProperty(heroPatch, "warrior_stats");
   const heroHp = getOptionalProperty(heroPatch, "hp");
   const heroMaxHp = getOptionalProperty(heroPatch, "maxhp");
@@ -157,7 +144,7 @@ function patchGame(
       y: valueOrCurrent(getOptionalProperty(heroPatch, "y"), current.hero.y),
     }),
     interface: current.interface,
-    map: resolveMap(current.map, town),
+    map,
     world: current.world,
   });
 }
@@ -242,6 +229,13 @@ export class RuntimeStateProjection {
 
     if (!event) return envelope;
 
+    const currentGame = useGameStore.getState().game;
+
+    if (currentGame && !currentGame.map.name?.trim()) {
+      const map = this.resolveMap(currentGame.map);
+      useGameStore.getState().replaceGame({ ...currentGame, map });
+    }
+
     const needsGame = envelope.facts.some(
       (fact) =>
         fact.kind === "afk" ||
@@ -296,7 +290,9 @@ export class RuntimeStateProjection {
     if (!event) return;
 
     const currentGame = useGameStore.getState().game;
-    const mapChanged = event.town !== undefined;
+
+    const mapChanged =
+      event.town?.id !== undefined && event.town.id !== currentGame?.map.id;
 
     if (mapChanged) {
       this.icons.clear();
@@ -308,7 +304,16 @@ export class RuntimeStateProjection {
     if (currentGame && (event.h || event.town)) {
       useGameStore
         .getState()
-        .replaceGame(patchGame(currentGame, event), mapChanged);
+        .replaceGame(
+          patchGame(
+            currentGame,
+            event,
+            event.town
+              ? this.resolveMap(currentGame.map, event.town)
+              : currentGame.map,
+          ),
+          mapChanged,
+        );
     }
 
     if (event.other || mapChanged) {
@@ -332,6 +337,36 @@ export class RuntimeStateProjection {
     this.icons.clear();
     this.npcTemplates.clear();
     this.clearStores();
+  }
+
+  private resolveMap(
+    current: RuntimeGameSnapshot["map"],
+    town: NonNullable<GameEvent["town"]> = {},
+  ): RuntimeGameSnapshot["map"] {
+    const id = town.id ?? current.id;
+    const sameMap = id === current.id;
+    let name = town.name?.trim() || (sameMap ? current.name : "") || "";
+
+    let visibility =
+      town.visibility ?? (sameMap ? current.visibility : undefined);
+
+    // NI and SI expose the applied native map through the same
+    // adapter. Only use native state for this map: the event queue may lag behind
+    // another map transition. Never carry the previous map's name to a new id.
+    if (!name.trim() || visibility === undefined) {
+      try {
+        const nativeMap = this.adapter.getGameSnapshot().map;
+
+        if (nativeMap.id === id) {
+          name = name.trim() ? name : nativeMap.name?.trim() || "";
+          visibility ??= nativeMap.visibility;
+        }
+      } catch {
+        // Native state may be unavailable while Margonem initializes a map.
+      }
+    }
+
+    return Object.freeze({ id, name, visibility: visibility ?? 0 });
   }
 
   private cacheNpcMetadata(event: GameEvent): void {

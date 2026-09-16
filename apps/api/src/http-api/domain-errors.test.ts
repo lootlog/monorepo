@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import {
   createGuildFixture,
@@ -184,6 +185,7 @@ describe("domain errors across the HTTP boundary", () => {
             Effect.provide(NotificationsHandlers),
             Effect.provide(bearer),
             Effect.provide(apiKeyEndpointPolicyLayer("main")),
+            Effect.provide(SchemaErrorResponseLive),
           );
 
           const response =
@@ -230,6 +232,7 @@ describe("domain errors across the HTTP boundary", () => {
             Effect.provide(EventsHandlers),
             Effect.provide(bearer),
             Effect.provide(apiKeyEndpointPolicyLayer("main")),
+            Effect.provide(SchemaErrorResponseLive),
           );
 
           const response =
@@ -309,6 +312,7 @@ describe("domain errors across the HTTP boundary", () => {
             ),
             Effect.provide(bearer),
             Effect.provide(apiKeyEndpointPolicyLayer("main")),
+            Effect.provide(SchemaErrorResponseLive),
           );
 
           const response =
