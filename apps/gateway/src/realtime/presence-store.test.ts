@@ -1,9 +1,10 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import { TestClock } from "effect/testing";
 import { PresenceStore } from "./presence-store.js";
+import { RealtimeStoreError } from "./realtime-errors.js";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
@@ -184,6 +185,596 @@ const secondGuild = (permissions: Permission[]) => ({
 });
 
 describe("PresenceStore", () => {
+  test("invalidates snapshots when a Redis write settles after its caller was cancelled", async () => {
+    let now = 10_000;
+    const redis = new MemoryRedis();
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+    );
+
+    const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    const publisher = socket(viewer);
+    const key = "presence:organization-1:session-1";
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: ["organization-1"] }),
+    );
+    redis.values.set(
+      key,
+      JSON.stringify({ ...viewer.presence, discordId: undefined }),
+    );
+    const writeStarted = Promise.withResolvers<string>();
+    const writeGate = Promise.withResolvers<string | null>();
+    const metadataStarted = Promise.withResolvers<void>();
+    const metadataGate = Promise.withResolvers<void>();
+    const originalSet = redis.set.bind(redis);
+    const originalGet = redis.get.bind(redis);
+    spyOn(redis, "set").mockImplementation((target, value, ...options) => {
+      if (target === key) {
+        writeStarted.resolve(value);
+
+        return writeGate.promise;
+      }
+
+      return originalSet(target, value, ...options);
+    });
+    spyOn(redis, "get").mockImplementation(async (target) => {
+      if (target.startsWith("presence:metadata:")) {
+        metadataStarted.resolve();
+        await metadataGate.promise;
+      }
+
+      return originalGet(target);
+    });
+    const controller = new AbortController();
+    now = 11_000;
+
+    const publication = Effect.runPromiseExit(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        isAfk: true,
+      }),
+      { signal: controller.signal },
+    );
+
+    try {
+      const updated = await writeStarted.promise;
+      controller.abort();
+      expect(Exit.isFailure(await publication)).toBe(true);
+      const first = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      await metadataStarted.promise;
+      redis.values.set(key, updated);
+      writeGate.resolve("OK");
+      await writeGate.promise;
+      const later = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      metadataGate.resolve();
+      await first;
+      const snapshot = await later;
+      expect(snapshot.presences[0]?.lastSeen).toBe(11_000);
+      expect(snapshot.presences[0]?.isAfk).toBe(true);
+      expect(snapshot.revision).toBe(1);
+    } finally {
+      controller.abort();
+      writeGate.resolve("OK");
+      metadataGate.resolve();
+      await publication;
+    }
+  });
+
+  test.each(["publish", "disconnect", "heartbeat", "expiry without metadata"])(
+    "does not join a pre-mutation snapshot after %s completes",
+    async (mutation) => {
+      let now = 10_000;
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => now,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      const publisher = socket(viewer);
+      await Effect.runPromise(
+        store.publish(publisher, { organizationIds: ["organization-1"] }),
+      );
+      redis.values.set(
+        "presence:organization-1:session-1",
+        JSON.stringify({ ...viewer.presence, discordId: undefined }),
+      );
+      const metadataStarted = Promise.withResolvers<void>();
+      const metadataGate = Promise.withResolvers<void>();
+      const originalGet = redis.get.bind(redis);
+      let blockMetadata = true;
+      spyOn(redis, "get").mockImplementation(async (key) => {
+        if (blockMetadata && key.startsWith("presence:metadata:")) {
+          blockMetadata = false;
+          metadataStarted.resolve();
+          await metadataGate.promise;
+        }
+
+        return originalGet(key);
+      });
+      const first = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+
+      try {
+        await metadataStarted.promise;
+        now = 11_000;
+
+        if (mutation === "publish") {
+          await Effect.runPromise(
+            store.publish(publisher, {
+              organizationIds: ["organization-1"],
+              isAfk: true,
+            }),
+          );
+        } else if (mutation === "heartbeat") {
+          await Effect.runPromise(
+            store.heartbeat(publisher, viewer.connectionId),
+          );
+        } else if (mutation === "expiry without metadata") {
+          now = 10_000 + PRESENCE_EXPIRY_MS;
+          redis.values.delete("presence:metadata:organization-1:session-1");
+          await Effect.runPromise(store.sweepExpired());
+        } else {
+          await Effect.runPromise(store.disconnect(viewer));
+        }
+
+        const later = Effect.runPromise(
+          store.snapshot(viewer, "organization-1"),
+        );
+
+        metadataGate.resolve();
+        await first;
+        const result = await later;
+        expect(result.revision).toBe(
+          mutation === "publish" || mutation === "disconnect" ? 2 : 1,
+        );
+
+        if (
+          mutation === "disconnect" ||
+          mutation === "expiry without metadata"
+        ) {
+          expect(result.presences).toEqual([]);
+        } else {
+          expect(result.presences[0]?.lastSeen).toBe(11_000);
+          expect(result.presences[0]?.isAfk).toBe(mutation === "publish");
+        }
+      } finally {
+        metadataGate.resolve();
+        await first;
+      }
+    },
+  );
+
+  test.each(["success", "failure"])(
+    "an old snapshot's %s cannot evict the replacement shared read",
+    async (outcome) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      const publisher = socket(viewer);
+      await Effect.runPromise(
+        store.publish(publisher, { organizationIds: ["organization-1"] }),
+      );
+      redis.values.set(
+        "presence:organization-1:session-1",
+        JSON.stringify({ ...viewer.presence, discordId: undefined }),
+      );
+      const metadataStarted = Promise.withResolvers<void>();
+      const metadataGate = Promise.withResolvers<void>();
+      const replacementStarted = Promise.withResolvers<void>();
+      const replacementGate = Promise.withResolvers<void>();
+      const originalGet = redis.get.bind(redis);
+      const originalMget = redis.mget.bind(redis);
+      spyOn(redis, "get").mockImplementation(async (key) => {
+        if (key.startsWith("presence:metadata:")) {
+          metadataStarted.resolve();
+          await metadataGate.promise;
+        }
+
+        return originalGet(key);
+      });
+      let reads = 0;
+      spyOn(redis, "mget").mockImplementation(async (keys) => {
+        reads++;
+
+        if (reads === 2) {
+          replacementStarted.resolve();
+          await replacementGate.promise;
+        }
+
+        return originalMget(keys);
+      });
+
+      const first = Effect.runPromiseExit(
+        store.snapshot(viewer, "organization-1"),
+      );
+
+      try {
+        await metadataStarted.promise;
+        await Effect.runPromise(
+          store.publish(publisher, {
+            organizationIds: ["organization-1"],
+            isAfk: true,
+          }),
+        );
+
+        const replacement = Effect.runPromise(
+          store.snapshot(viewer, "organization-1"),
+        );
+
+        await replacementStarted.promise;
+
+        if (outcome === "success") metadataGate.resolve();
+        else metadataGate.reject(new Error("Legacy metadata read failed"));
+        await first;
+
+        const follower = Effect.runPromise(
+          store.snapshot(viewer, "organization-1"),
+        );
+
+        replacementGate.resolve();
+        const snapshots = await Promise.all([replacement, follower]);
+        expect(reads).toBe(2);
+
+        for (const snapshot of snapshots) {
+          expect(snapshot.presences[0]?.isAfk).toBe(true);
+          expect(snapshot.revision).toBe(2);
+        }
+      } finally {
+        metadataGate.resolve();
+        replacementGate.resolve();
+        await first;
+      }
+    },
+  );
+
+  test.each(["smembers", "mget", "metadata"])(
+    "bounds a stalled %s read and allows a fresh snapshot without waiting for it to settle",
+    async (stage) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      await Effect.runPromise(
+        store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
+      );
+      redis.values.set(
+        "presence:organization-1:session-1",
+        JSON.stringify({ ...viewer.presence, discordId: undefined }),
+      );
+      const stalled = Promise.withResolvers<void>();
+      const started = Promise.withResolvers<void>();
+      let shouldStall = true;
+
+      const pause = async (operation: string) => {
+        if (shouldStall && operation === stage) {
+          started.resolve();
+          await stalled.promise;
+        }
+      };
+
+      const originalSmembers = redis.smembers.bind(redis);
+      const originalMget = redis.mget.bind(redis);
+      const originalGet = redis.get.bind(redis);
+      spyOn(redis, "smembers").mockImplementation(async (key) => {
+        await pause("smembers");
+
+        return originalSmembers(key);
+      });
+      spyOn(redis, "mget").mockImplementation(async (keys) => {
+        await pause("mget");
+
+        return originalMget(keys);
+      });
+      spyOn(redis, "get").mockImplementation(async (key) => {
+        if (key.startsWith("presence:metadata:")) await pause("metadata");
+
+        return originalGet(key);
+      });
+      const errors: unknown[] = [];
+
+      const snapshot = store.snapshot(viewer, "organization-1").pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            errors.push(error);
+          }),
+        ),
+        Effect.exit,
+      );
+
+      try {
+        await Effect.runPromise(
+          Effect.gen(function* () {
+            yield* snapshot.pipe(Effect.forkScoped);
+            yield* Effect.promise(() => started.promise);
+            yield* snapshot.pipe(Effect.forkScoped);
+            yield* TestClock.adjust("10 seconds");
+            expect(errors).toHaveLength(2);
+
+            for (const error of errors) {
+              expect(error).toBeInstanceOf(RealtimeStoreError);
+
+              if (error instanceof RealtimeStoreError) {
+                expect(error.operation).toBe("presence.snapshot");
+                expect(Cause.isTimeoutError(error.cause)).toBe(true);
+              }
+            }
+
+            shouldStall = false;
+            const recovered = yield* store.snapshot(viewer, "organization-1");
+            expect(recovered.presences).toHaveLength(1);
+            expect(recovered.presences[0]?.discordId).toBe("discord-1");
+            expect(recovered.revision).toBe(1);
+          }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
+        );
+      } finally {
+        stalled.resolve();
+      }
+    },
+  );
+
+  test("shares overlapping snapshot reads while keeping viewer and Organization projections separate", async () => {
+    const redis = new MemoryRedis();
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => 10_000,
+    );
+
+    const publisher = socket({
+      ...session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]),
+      guilds: [...session([]).guilds, secondGuild([])],
+      character: {
+        world: "world-1",
+        characterId: "1",
+        accountId: "1",
+        name: "Hero",
+        lvl: 100,
+        icon: "hero.gif",
+        prof: "w",
+      },
+    });
+
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1", "organization-2"],
+        location: { mapId: 42, map: "Target", x: 4, y: 7 },
+      }),
+    );
+    const gate = Promise.withResolvers<void>();
+    const originalMget = redis.mget.bind(redis);
+
+    const mget = spyOn(redis, "mget").mockImplementation(async (keys) => {
+      await gate.promise;
+
+      return originalMget(keys);
+    });
+
+    const smembers = spyOn(redis, "smembers");
+    const basic = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+
+    const precise = session([
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    ]);
+
+    const snapshots = Promise.all([
+      Effect.runPromise(store.snapshot(basic, "organization-1", "world-1")),
+      Effect.runPromise(store.snapshot(precise, "organization-1", "world-1")),
+      Effect.runPromise(
+        store.snapshot(precise, "organization-1", "other-world"),
+      ),
+      Effect.runPromise(store.snapshot(basic, "organization-2")),
+    ]);
+
+    gate.resolve();
+    const [hidden, visible, otherWorld, otherOrganization] = await snapshots;
+    expect(hidden?.presences).toHaveLength(1);
+    expect(hidden?.presences[0]).not.toHaveProperty("location");
+    expect(visible?.presences[0]).toHaveProperty("location.mapId", 42);
+    expect(otherWorld?.presences).toEqual([]);
+    expect(visible?.presences[0]?.organizationIds).toEqual(["organization-1"]);
+    expect(otherOrganization?.presences[0]?.organizationIds).toEqual([
+      "organization-2",
+    ]);
+    expect(smembers).toHaveBeenCalledTimes(2);
+    expect(mget).toHaveBeenCalledTimes(2);
+    await Effect.runPromise(store.snapshot(basic, "organization-1"));
+    expect(mget).toHaveBeenCalledTimes(3);
+  });
+
+  test.each(["initiator", "follower"])(
+    "cancelling the %s does not cancel another viewer's snapshot",
+    async (cancelled) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      await Effect.runPromise(
+        store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
+      );
+      const gate = Promise.withResolvers<void>();
+      const started = Promise.withResolvers<void>();
+      const originalMget = redis.mget.bind(redis);
+
+      const mget = spyOn(redis, "mget").mockImplementation(async (keys) => {
+        started.resolve();
+        await gate.promise;
+
+        return originalMget(keys);
+      });
+
+      const controller = new AbortController();
+
+      const first = Effect.runPromiseExit(
+        store.snapshot(viewer, "organization-1"),
+        cancelled === "initiator" ? { signal: controller.signal } : undefined,
+      );
+
+      await started.promise;
+
+      const second = Effect.runPromiseExit(
+        store.snapshot(viewer, "organization-1"),
+        cancelled === "follower" ? { signal: controller.signal } : undefined,
+      );
+
+      controller.abort();
+      const interrupted = await (cancelled === "initiator" ? first : second);
+      expect(interrupted._tag).toBe("Failure");
+      gate.resolve();
+      const surviving = await (cancelled === "initiator" ? second : first);
+      expect(Exit.isSuccess(surviving)).toBe(true);
+
+      if (Exit.isSuccess(surviving)) {
+        expect(surviving.value.presences).toMatchObject([
+          { sessionId: "session-1" },
+        ]);
+      }
+
+      expect(mget).toHaveBeenCalledTimes(1);
+      await Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      expect(mget).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  test.each(["smembers", "mget"] as const)(
+    "shares %s failures without caching them after Redis recovers",
+    async (operation) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      await Effect.runPromise(
+        store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
+      );
+      const gate = Promise.withResolvers<void>();
+
+      const failing = spyOn(redis, operation).mockImplementation(async () => {
+        await gate.promise;
+        throw new Error("Redis unavailable");
+      });
+
+      const reads = [
+        Effect.runPromiseExit(store.snapshot(viewer, "organization-1")),
+        Effect.runPromiseExit(store.snapshot(viewer, "organization-1")),
+      ];
+
+      gate.resolve();
+
+      for (const result of await Promise.all(reads))
+        expect(result._tag).toBe("Failure");
+      expect(failing).toHaveBeenCalledTimes(1);
+      failing.mockRestore();
+
+      const recovered = await Effect.runPromise(
+        store.snapshot(viewer, "organization-1"),
+      );
+
+      expect(recovered.presences).toHaveLength(1);
+      expect(recovered.revision).toBe(1);
+    },
+  );
+
+  test("keeps permission checks current and reads updates, disconnects and expiry after shared reads settle", async () => {
+    let now = 10_000;
+    const redis = new MemoryRedis();
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+    );
+
+    const viewer = session([
+      Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+      Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+    ]);
+
+    const publisher = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    const location = { mapId: 42, map: "Target", x: 4, y: 7 };
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        location,
+      }),
+    );
+    const gate = Promise.withResolvers<void>();
+    const started = Promise.withResolvers<void>();
+    const originalMget = redis.mget.bind(redis);
+    spyOn(redis, "mget").mockImplementation(async (keys) => {
+      started.resolve();
+      await gate.promise;
+
+      return originalMget(keys);
+    });
+
+    const snapshots = Promise.all([
+      Effect.runPromise(store.snapshot(viewer, "organization-1")),
+      Effect.runPromise(store.snapshot(viewer, "organization-1")),
+    ]);
+
+    await started.promise;
+    viewer.guilds = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]).guilds;
+    await Effect.runPromise(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        location,
+        isAfk: true,
+      }),
+    );
+    gate.resolve();
+
+    for (const snapshot of await snapshots) {
+      expect(snapshot.presences[0]?.isAfk).toBe(true);
+      expect(snapshot.presences[0]).not.toHaveProperty("location");
+      expect(snapshot.revision).toBe(2);
+    }
+
+    now += PRESENCE_EXPIRY_MS;
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toEqual([]);
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: ["organization-1"] }),
+    );
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toHaveLength(1);
+    await Effect.runPromise(store.disconnect(publisher.data));
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toEqual([]);
+  });
+
   test("batches map metadata while ignoring missing, malformed and other-map sessions", async () => {
     const redis = new MemoryRedis();
 

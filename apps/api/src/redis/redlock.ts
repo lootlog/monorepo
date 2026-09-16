@@ -124,13 +124,11 @@ class RedisLockManager {
     duration: number,
     routine: Effect.Effect<A, E, R>,
   ) {
-    const self = this;
-
     return Effect.scoped(
-      Effect.gen(function* () {
+      Effect.gen({ self: this }, function* () {
         const lock = yield* Effect.acquireRelease(
           Effect.tryPromise({
-            try: () => self.acquire(resources, duration),
+            try: () => this.acquire(resources, duration),
             catch: (cause) =>
               cause instanceof ExecutionError
                 ? cause
@@ -146,7 +144,7 @@ class RedisLockManager {
 
         const refreshAfter = Math.max(
           1,
-          duration - self.options.automaticExtensionThreshold,
+          duration - this.options.automaticExtensionThreshold,
         );
 
         const renew = Effect.sleep(refreshAfter).pipe(

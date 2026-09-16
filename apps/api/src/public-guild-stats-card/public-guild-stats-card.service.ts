@@ -211,13 +211,11 @@ export class PublicGuildStatsCardImageAdapter {
   constructor(private readonly httpClient: HttpClientValue) {}
 
   renderCard(data: GuildStatsCardData): Effect.Effect<Buffer, unknown> {
-    const self = this;
-
-    return Effect.gen(function* () {
-      const icon = yield* self.fetchGuildIcon(data.guild.id, data.guild.icon);
+    return Effect.gen({ self: this }, function* () {
+      const icon = yield* this.fetchGuildIcon(data.guild.id, data.guild.icon);
 
       const base = yield* Effect.tryPromise(() =>
-        sharp(Buffer.from(self.buildSvg(data, !icon)))
+        sharp(Buffer.from(this.buildSvg(data, !icon)))
           .png()
           .toBuffer(),
       );

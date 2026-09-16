@@ -132,19 +132,17 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     submission: CreateLootRequest;
     uniqueId: string;
   }): Effect.Effect<CreateLootResponse, unknown> {
-    const self = this;
-
-    return Effect.gen(function* () {
-      const existingLootId = yield* self.repository.findLootIdByUniqueId(
+    return Effect.gen({ self: this }, function* () {
+      const existingLootId = yield* this.repository.findLootIdByUniqueId(
         options.uniqueId,
       );
 
       const { guilds, characterConfig } = yield* Effect.all(
         {
-          guilds: self.repository.findGuildsForPermissions(options.discordId, [
+          guilds: this.repository.findGuildsForPermissions(options.discordId, [
             Permission.LOOTLOG_LOOTS_WRITE,
           ]),
-          characterConfig: self.repository.findCharacterConfig(
+          characterConfig: this.repository.findCharacterConfig(
             options.discordId,
             options.submission.accountId,
             options.submission.characterId,
@@ -171,7 +169,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
             message: ErrorKey.NO_GUILDS_ON_THE_CHARACTER_WHITELIST,
             submittedGuilds: [],
             rejectedGuilds: guilds.map((guild) =>
-              self.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
+              this.createRejectedGuild(guild, "NOT_ON_CHARACTER_WHITELIST"),
             ),
           }),
         );
@@ -179,8 +177,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
       const { lootlogConfigs, members } = yield* Effect.all(
         {
-          lootlogConfigs: self.repository.findLootlogConfigs(filteredGuildIds),
-          members: self.repository.findMembers(
+          lootlogConfigs: this.repository.findLootlogConfigs(filteredGuildIds),
+          members: this.repository.findMembers(
             options.discordId,
             filteredGuildIds,
           ),
@@ -189,7 +187,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       );
 
       const npcData = yield* Effect.try({
-        try: () => self.processNpcs(options.submission.npcs),
+        try: () => this.processNpcs(options.submission.npcs),
         catch: (error) =>
           error instanceof InvalidRequestError
             ? error
@@ -209,7 +207,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         npcData.primary.type,
       );
 
-      const outcome = self.resolveAcceptanceOutcome({
+      const outcome = this.resolveAcceptanceOutcome({
         guilds,
         lootlogConfigs,
         members,
@@ -239,23 +237,23 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         options.submission.source === "FIGHT" &&
         primaryNpcType === NpcType.ELITE2 &&
         options.submission.loots.some(
-          (item) => self.getItemStats(item).rarity === "LEGENDARY",
+          (item) => this.getItemStats(item).rarity === "LEGENDARY",
         )
           ? (options.submission.mapPlayersSnapshot ?? null)
           : null;
 
       if (existingLootId !== null) {
-        yield* self.acceptExistingLoot(
+        yield* this.acceptExistingLoot(
           existingLootId,
           outcome.submissionData,
           socketNpcs,
           mapPlayersSnapshot,
         );
 
-        return self.createResponse(existingLootId, outcome);
+        return this.createResponse(existingLootId, outcome);
       }
 
-      const lootId = yield* self.createNewLoot({
+      const lootId = yield* this.createNewLoot({
         mapPlayersSnapshot,
         npcData,
         outcome,
@@ -263,7 +261,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         submission: options.submission,
         uniqueId: options.uniqueId,
         publications: (lootId) =>
-          self.newLootPublications({
+          this.newLootPublications({
             lootId,
             npcs: npcData.mapped,
             outcome,
@@ -272,7 +270,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           }),
       });
 
-      return self.createResponse(lootId, outcome);
+      return this.createResponse(lootId, outcome);
     });
   }
 
@@ -358,10 +356,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     socketNpcs: LootEventNpc[],
     mapPlayersSnapshot: MapPlayersSnapshot | null,
   ): Effect.Effect<void, unknown> {
-    const self = this;
-
-    return Effect.gen(function* () {
-      const existingRecords = yield* self.repository.findExistingRecords(
+    return Effect.gen({ self: this }, function* () {
+      const existingRecords = yield* this.repository.findExistingRecords(
         lootId,
         submissions.map(({ guildId }) => guildId),
       );
@@ -373,7 +369,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         })),
       );
 
-      const newSubmissions = self.getNewSubmissions(
+      const newSubmissions = this.getNewSubmissions(
         submissions,
         existingSubmissions,
       );
@@ -382,11 +378,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         return;
       }
 
-      yield* self.repository.appendSubmissions(
+      yield* this.repository.appendSubmissions(
         lootId,
         newSubmissions,
         (organizationIds) =>
-          self.createdPublications(lootId, organizationIds, socketNpcs),
+          this.createdPublications(lootId, organizationIds, socketNpcs),
         mapPlayersSnapshot === null
           ? undefined
           : {
@@ -406,16 +402,14 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     uniqueId: string;
     publications: (lootId: number) => LootPublication[];
   }): Effect.Effect<number, unknown> {
-    const self = this;
-
-    return Effect.gen(function* () {
-      const initialAllocation = yield* self.inferInitialAllocation(
+    return Effect.gen({ self: this }, function* () {
+      const initialAllocation = yield* this.inferInitialAllocation(
         options.submission,
         options.npcData.primary,
         options.primaryNpcType,
       );
 
-      return yield* self.repository.createNewLoot(
+      return yield* this.repository.createNewLoot(
         {
           mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
@@ -424,12 +418,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           location: options.submission.location,
           lootShare: initialAllocation.share,
           lootShareSource: initialAllocation.source,
-          items: self.mapLootItemsToPersistence(options.submission.loots),
-          players: self.mapLootPlayersToPersistence(
+          items: this.mapLootItemsToPersistence(options.submission.loots),
+          players: this.mapLootPlayersToPersistence(
             options.submission.players,
             options.submission.world,
           ),
-          npcs: self.mapLootNpcsToPersistence(options.submission.npcs),
+          npcs: this.mapLootNpcsToPersistence(options.submission.npcs),
           submissions: options.outcome.submissionData,
         },
         options.publications,
