@@ -4,7 +4,6 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { encodeDomainJson } from "../../domain-json.schema.js";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   SentNotificationResponse,
@@ -55,10 +54,9 @@ export const sendNotification = (payload: SendNotificationRequest) =>
     const data = yield* MessagingData;
     const result = yield* data.sendNotification(authenticated, payload);
 
-    return yield* encodeDomainJson(result).pipe(
-      Effect.flatMap(Schema.decodeUnknownEffect(SentNotificationResponse)),
-      Effect.mapError((cause) => new MessagingOperationError({ cause })),
-    );
+    return yield* Schema.decodeUnknownEffect(SentNotificationResponse)(
+      result,
+    ).pipe(Effect.mapError((cause) => new MessagingOperationError({ cause })));
   });
 
 export const volunteerForNotification = (

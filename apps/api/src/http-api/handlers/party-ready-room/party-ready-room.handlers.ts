@@ -5,13 +5,12 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { decodeDomainJson } from "../../domain-json.schema.js";
+import { DomainDateTime } from "#src/shared/schema/response-codecs";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
-  ActivePartyGatheringsResponse,
+  ActivePartyGatheringSummary,
   PartyReadyRoomResponse,
   PartyReadyRoomUpdateResponse,
-  PartyReadyRoomsResponse,
   PartyInvitationTargetsResponse,
   type CreatePartyGatheringRequest,
   type ApplyToPartyReadyRoomRequest,
@@ -131,8 +130,42 @@ const accessibleGuildIds = (discordId: string, includeReadable = false) =>
     ),
   );
 
+const ReadyRoomParticipantDomainResponse = Schema.Struct({
+  ...PartyReadyRoomResponse.fields.participants.value.fields,
+  createdAt: DomainDateTime,
+  updatedAt: DomainDateTime,
+});
+
+export const PartyReadyRoomDomainResponse = Schema.Struct({
+  ...PartyReadyRoomResponse.fields,
+  createdAt: DomainDateTime,
+  updatedAt: DomainDateTime,
+  expiresAt: DomainDateTime,
+  participants: Schema.Record(
+    Schema.String,
+    ReadyRoomParticipantDomainResponse,
+  ),
+});
+
+export const PartyReadyRoomsDomainResponse = Schema.Array(
+  PartyReadyRoomDomainResponse,
+);
+
+export const PartyReadyRoomUpdateDomainResponse = Schema.Struct({
+  ...PartyReadyRoomUpdateResponse.fields,
+  projection: Schema.optionalKey(PartyReadyRoomDomainResponse),
+});
+
+export const ActivePartyGatheringsDomainResponse = Schema.Array(
+  Schema.Struct({
+    ...ActivePartyGatheringSummary.fields,
+    createdAt: DomainDateTime,
+    expiresAt: DomainDateTime,
+  }),
+);
+
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new ReadyRoomOperationError({ cause })),
   );
 
@@ -154,7 +187,7 @@ export const activeReadyRooms = Effect.fn("activeReadyRooms")(function* (
     service.active(current, guildIds, world),
   );
 
-  return yield* decode(ActivePartyGatheringsResponse, value);
+  return yield* decode(ActivePartyGatheringsDomainResponse, value);
 });
 
 export const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
@@ -162,7 +195,7 @@ export const listReadyRooms = Effect.fn("listReadyRooms")(function* () {
   const guildIds = yield* accessibleGuildIds(current.discordId);
   const value = yield* data((service) => service.list(current, guildIds));
 
-  return yield* decode(PartyReadyRoomsResponse, value);
+  return yield* decode(PartyReadyRoomsDomainResponse, value);
 });
 
 export const createReadyRoom = Effect.fn("createReadyRoom")(function* (
@@ -186,7 +219,7 @@ export const createReadyRoom = Effect.fn("createReadyRoom")(function* (
     service.create(current, guildIds, payload),
   );
 
-  return yield* decode(PartyReadyRoomResponse, value);
+  return yield* decode(PartyReadyRoomDomainResponse, value);
 });
 
 export const getReadyRoom = Effect.fn("getReadyRoom")(function* (
@@ -199,7 +232,7 @@ export const getReadyRoom = Effect.fn("getReadyRoom")(function* (
     service.get(current, notificationId, guildIds),
   );
 
-  return yield* decode(PartyReadyRoomResponse, value);
+  return yield* decode(PartyReadyRoomDomainResponse, value);
 });
 
 export const applyToReadyRoom = Effect.fn("applyToReadyRoom")(function* (
@@ -213,7 +246,7 @@ export const applyToReadyRoom = Effect.fn("applyToReadyRoom")(function* (
     service.apply(current, notificationId, guildIds, payload),
   );
 
-  return yield* decode(PartyReadyRoomResponse, value);
+  return yield* decode(PartyReadyRoomDomainResponse, value);
 });
 
 export const withdrawFromReadyRoom = Effect.fn("withdrawFromReadyRoom")(
@@ -225,7 +258,7 @@ export const withdrawFromReadyRoom = Effect.fn("withdrawFromReadyRoom")(
       service.withdraw(current, notificationId, payload),
     );
 
-    return yield* decode(PartyReadyRoomUpdateResponse, value);
+    return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
   },
 );
 
@@ -240,7 +273,7 @@ export const removeFromReadyRoom = Effect.fn("removeFromReadyRoom")(function* (
     service.remove(current, notificationId, payload),
   );
 
-  return yield* decode(PartyReadyRoomUpdateResponse, value);
+  return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
 });
 
 export const resolveReadyRoomInvitationTargets = Effect.fn(
@@ -265,7 +298,7 @@ export const observeReadyRoomParty = Effect.fn("observeReadyRoomParty")(
       service.observeParty(current, notificationId, payload),
     );
 
-    return yield* decode(PartyReadyRoomResponse, value);
+    return yield* decode(PartyReadyRoomDomainResponse, value);
   },
 );
 
@@ -280,7 +313,7 @@ export const cancelReadyRoom = Effect.fn("cancelReadyRoom")(function* (
     service.cancel(current, notificationId, payload),
   );
 
-  return yield* decode(PartyReadyRoomUpdateResponse, value);
+  return yield* decode(PartyReadyRoomUpdateDomainResponse, value);
 });
 
 type ReadyRoomHttpFailure = ReadyRoomAccessDenied | ReadyRoomOperationError;
