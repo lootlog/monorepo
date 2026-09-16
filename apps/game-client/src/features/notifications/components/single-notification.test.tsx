@@ -118,7 +118,7 @@ describe("SingleNotification auto-hide perimeter", () => {
       [{ strokeDashoffset: "306" }, { strokeDashoffset: "612" }],
       {
         duration: 15_000,
-        easing: "linear",
+        easing: "steps(150, end)",
         fill: "forwards",
       },
     );

@@ -22,6 +22,7 @@ import {
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
+import { getStrokeDrainEasing } from "@/utils/notifications-and-detector/stroke-drain-easing";
 import { format } from "@/utils/local-date";
 import { LoaderCircle, Swords, XIcon } from "lucide-react";
 import { memo, type ReactNode, useEffect, useRef } from "react";
@@ -303,7 +304,7 @@ export const SingleNotification = memo(function SingleNotification({
       ],
       {
         duration: clampedRemainingMs,
-        easing: "linear",
+        easing: getStrokeDrainEasing(clampedRemainingMs),
         fill: "forwards",
       },
     );
