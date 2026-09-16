@@ -7,6 +7,7 @@ import {
 
 export type TimerTileViewProps = {
   paint: TimerColorPaint;
+  legacyAppearance?: boolean;
   displayMode: "column" | "row";
   fontSize: number;
   hasPassedRedThreshold?: boolean;
@@ -44,8 +45,25 @@ const resolveFill = (
 const dimAccent = (accent: string) =>
   `color-mix(in srgb, ${accent} 40%, transparent)`;
 
+const resolveTextColor = (
+  legacyAppearance: boolean,
+  isExpired: boolean,
+  hasPassedRedThreshold: boolean,
+  isMinSpawnTime: boolean,
+) => {
+  if (!legacyAppearance)
+    return isExpired ? "ll:text-gray-400" : "ll:text-white";
+
+  if (hasPassedRedThreshold) return "ll:text-red-500";
+
+  if (isMinSpawnTime) return "ll:text-orange-400";
+
+  return "ll:text-white";
+};
+
 export const TimerTileView: FC<TimerTileViewProps> = ({
   paint,
+  legacyAppearance = false,
   displayMode,
   fontSize,
   hasPassedRedThreshold = false,
@@ -58,10 +76,14 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   timeLabel,
 }) => {
   // SAFETY: CSSProperties has no index signature for custom properties; the
-  // two `--ll-timer-*` entries are consumed by this element's own classes.
+  // `--ll-timer-*` entries are consumed by this element's own classes.
   const style = {
-    "--ll-timer-accent": isExpired ? dimAccent(paint.accent) : paint.accent,
-    "--ll-timer-fill": resolveFill(paint, isExpired, isAlternateRow),
+    "--ll-timer-accent":
+      isExpired && !legacyAppearance ? dimAccent(paint.accent) : paint.accent,
+    "--ll-timer-fill": legacyAppearance
+      ? paint.fill
+      : resolveFill(paint, isExpired, isAlternateRow),
+    "--ll-timer-hover-fill": paint.hoverFill ?? paint.fill,
     fontSize: `${fontSize}px`,
   } as CSSProperties;
 
@@ -69,12 +91,21 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     <span
       id={id}
       className={cn(
-        "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:transition-colors ll:motion-reduce:transition-none",
-        "ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
-        isExpired ? "ll:text-gray-400" : "ll:text-white",
+        "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:border-solid ll:bg-[var(--ll-timer-fill)] ll:transition-colors ll:motion-reduce:transition-none",
+        legacyAppearance
+          ? "ll:rounded-[2px] ll:border ll:border-[var(--ll-timer-accent)] ll:px-1 ll:py-0.5 ll:hover:bg-[var(--ll-timer-hover-fill)]"
+          : "ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-l-[var(--ll-timer-accent)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
+        resolveTextColor(
+          legacyAppearance,
+          isExpired,
+          hasPassedRedThreshold,
+          isMinSpawnTime,
+        ),
         {
           "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
-            displayMode === "column",
+            displayMode === "column" && !legacyAppearance,
+          "ll:flex-col ll:items-center ll:px-0 ll:leading-[1.05]":
+            displayMode === "column" && legacyAppearance,
           "ll:justify-between": displayMode === "row",
           "ll:opacity-60 ll:blur-[0.5px]": isPending,
         },
@@ -84,15 +115,18 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       <span
         className={cn("ll:min-w-0 ll:truncate ll:whitespace-nowrap", {
           "ll:text-center": displayMode === "column",
+          "ll:w-full": displayMode === "column" && legacyAppearance,
         })}
       >
         {label}
       </span>
       <span
-        className={cn("ll:shrink-0 ll:whitespace-nowrap ll:tabular-nums", {
+        className={cn("ll:shrink-0 ll:whitespace-nowrap", {
           "ll:text-center": displayMode === "column",
-          "ll:text-red-400": hasPassedRedThreshold,
-          "ll:text-orange-300": isMinSpawnTime && !hasPassedRedThreshold,
+          "ll:tabular-nums": !legacyAppearance,
+          "ll:text-red-400": !legacyAppearance && hasPassedRedThreshold,
+          "ll:text-orange-300":
+            !legacyAppearance && isMinSpawnTime && !hasPassedRedThreshold,
         })}
       >
         {timeLabel}

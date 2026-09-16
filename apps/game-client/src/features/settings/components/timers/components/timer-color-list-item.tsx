@@ -9,6 +9,7 @@ import { TimerColorPreviewChip } from "./timer-color-preview-chip";
 
 type TimerColorListItemProps = {
   data: ColorEditData;
+  defaultColorId?: string;
   isDefault: boolean;
   isModified: boolean;
   itemKey: string;
@@ -22,6 +23,7 @@ type TimerColorListItemProps = {
 };
 
 export const TimerColorListItem: FC<TimerColorListItemProps> = ({
+  defaultColorId,
   data,
   isDefault,
   isModified,
@@ -42,6 +44,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
 
   const preview = (
     <TimerColorPreviewChip
+      defaultColorId={defaultColorId}
       borderColor={data.borderColor}
       backgroundColor={backgroundColor}
     />
@@ -57,6 +60,7 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
       editLabel={`${t("settings.timers.colors.editColorAria")}: ${data.name}`}
       editTrigger={(trigger) => (
         <TimerColorEditorPopover
+          defaultColorId={defaultColorId}
           idPrefix={itemKey}
           data={data}
           isDefault={isDefault}

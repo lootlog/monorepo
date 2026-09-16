@@ -115,7 +115,8 @@
     "violet": "Fioletowy",
     "purple": "Purpurowy",
     "pink": "Różowy",
-    "white": "Bez koloru"
+    "white": "Bez koloru",
+    "gray": "Szary"
   },
   "addForm": {
     "validation": {

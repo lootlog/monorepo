@@ -25,6 +25,7 @@ type TimersContentProps = {
   timerFiltersEnabled: boolean;
   isUnderBag: boolean;
   minColumnWidth: number;
+  legacyAppearance?: boolean;
   onResetFilters: () => void;
   compactView?: boolean;
   error?: unknown;
@@ -47,6 +48,7 @@ export const TimersContent: FC<TimersContentProps> = ({
   timerFiltersEnabled,
   isUnderBag,
   minColumnWidth,
+  legacyAppearance = false,
   onResetFilters,
   compactView = false,
   error = null,
@@ -100,7 +102,12 @@ export const TimersContent: FC<TimersContentProps> = ({
         />
       </div>
 
-      <div className="ll:flex ll:min-h-0 ll:flex-1 ll:w-full">
+      <div
+        className={cn(
+          "ll:flex ll:min-h-0 ll:flex-1 ll:w-full",
+          legacyAppearance && "ll:px-1",
+        )}
+      >
         <AsyncContent
           error={error}
           errorLabel={t("states.loadError")}
@@ -117,13 +124,17 @@ export const TimersContent: FC<TimersContentProps> = ({
           ) : (
             <ScrollArea
               data-testid="timers-scroll-container"
-              className="ll:h-full ll:w-full!"
+              className={cn(
+                "ll:h-full ll:w-full!",
+                legacyAppearance && "ll:pt-1",
+              )}
             >
               <TimersGrid
                 timers={sortedTimers}
                 settingsKey={settingsKey}
                 hiddenTimers={hiddenTimers}
                 minColumnWidth={minColumnWidth}
+                legacyAppearance={legacyAppearance}
               />
             </ScrollArea>
           )}

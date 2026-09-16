@@ -111,6 +111,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               <TimerLiveTile
                 id={timer.npc.id.toString()}
                 paint={paint}
+                legacyAppearance={displayConfig.legacyAppearance}
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}

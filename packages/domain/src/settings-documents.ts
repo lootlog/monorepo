@@ -278,6 +278,7 @@ export const SETTINGS_CATALOG = {
       ),
       "timers.displayConfig": field(
         {
+          legacyAppearance: false,
           showType: true,
           showLevel: false,
           fontSize: 11,

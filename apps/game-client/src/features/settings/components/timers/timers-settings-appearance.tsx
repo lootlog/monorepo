@@ -53,6 +53,21 @@ export const TimersSettingsAppearance: FC = () => {
         title={t("settings.timers.appearance.layoutTitle")}
       >
         <SettingsRow
+          htmlFor="timer-legacy-appearance"
+          label={t("settings.timers.appearance.legacyAppearanceLabel")}
+          description={t(
+            "settings.timers.appearance.legacyAppearanceDescription",
+          )}
+        >
+          <Switch
+            id="timer-legacy-appearance"
+            checked={displayConfig.legacyAppearance}
+            onCheckedChange={(legacyAppearance) =>
+              setDisplayConfig({ ...displayConfig, legacyAppearance })
+            }
+          />
+        </SettingsRow>
+        <SettingsRow
           label={t("settings.timers.appearance.singleTimerDisplayModeLabel")}
           description={t(
             "settings.timers.appearance.singleTimerDisplayModeDescription",

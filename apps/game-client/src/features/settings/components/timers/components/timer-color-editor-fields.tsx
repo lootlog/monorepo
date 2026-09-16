@@ -9,6 +9,7 @@ import { TimerColorPreviewChip } from "./timer-color-preview-chip";
 type TimerColorEditorFieldsProps = {
   idPrefix: string;
   draft: ColorEditData;
+  defaultColorId?: string;
   /** Live update for previews; nothing is persisted yet. */
   onDraftChange: (draft: ColorEditData) => void;
   /** Persist the draft once a field is done editing. */
@@ -20,6 +21,7 @@ type TimerColorEditorFieldsProps = {
  * colour. Shared by the editor of an existing colour and the add form.
  */
 export const TimerColorEditorFields: FC<TimerColorEditorFieldsProps> = ({
+  defaultColorId,
   idPrefix,
   draft,
   onDraftChange,
@@ -115,6 +117,7 @@ export const TimerColorEditorFields: FC<TimerColorEditorFieldsProps> = ({
         </span>
         <div className="ll:rounded-sm ll:bg-black/25 ll:p-2">
           <TimerColorPreviewChip
+            defaultColorId={defaultColorId}
             borderColor={draft.borderColor}
             backgroundColor={`${draft.backgroundColor}${alphaToHex(
               draft.backgroundAlpha,

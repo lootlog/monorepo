@@ -64,58 +64,69 @@ describe("timer settings Effect module", () => {
       Effect.runPromise(service.getGlobalSettings("user-1")),
     ).resolves.toMatchObject({
       userId: "user-1",
-      displayConfig: { fontSize: 14 },
+      displayConfig: { fontSize: 14, legacyAppearance: false },
       hiddenDefaultColors: ["legacy"],
       generalConfig: { countdownMode: "min" },
       timersSortOrder: "desc",
     });
   });
 
-  it("patches appearance and behavior atomically", async () => {
-    const response = createResponse();
+  it.each([false, true])(
+    "patches legacy appearance %s and behavior atomically",
+    async (legacyAppearance) => {
+      const response = createResponse({
+        timers: { displayConfig: { fontSize: 13, legacyAppearance } },
+      });
 
-    const settingsDocumentsService = {
-      parseDomains: () => {
-        throw new Error("Unexpected domain parser");
-      },
-      parseGuildIds: () => {
-        throw new Error("Unexpected guild id parser");
-      },
-      getGuildPreferences: () =>
-        Effect.die("Unexpected guild preferences read"),
-      getPreferences: () => Effect.die("Unexpected preferences read"),
-      patchPreferences: vi.fn(() => Effect.succeed(response)),
-    };
+      const settingsDocumentsService = {
+        parseDomains: () => {
+          throw new Error("Unexpected domain parser");
+        },
+        parseGuildIds: () => {
+          throw new Error("Unexpected guild id parser");
+        },
+        getGuildPreferences: () =>
+          Effect.die("Unexpected guild preferences read"),
+        getPreferences: () => Effect.die("Unexpected preferences read"),
+        patchPreferences: vi.fn(() => Effect.succeed(response)),
+      };
 
-    const service = makeTimerSettings(settingsDocumentsService);
+      const service = makeTimerSettings(settingsDocumentsService);
 
-    await Effect.runPromise(
-      service.updateGlobalSettings("user-1", {
-        displayConfig: { fontSize: 13 },
-        timerFiltersEnabled: false,
-      }),
-    );
+      const updated = await Effect.runPromise(
+        service.updateGlobalSettings("user-1", {
+          displayConfig: { fontSize: 13, legacyAppearance },
+          timerFiltersEnabled: false,
+        }),
+      );
 
-    expect(settingsDocumentsService.patchPreferences).toHaveBeenCalledWith(
-      "user-1",
-      {
-        operations: [
-          {
-            domain: "appearance",
-            scope: { type: "USER", id: "user-1" },
-            set: { timers: { displayConfig: { fontSize: 13 } } },
-            unset: [],
-          },
-          {
-            domain: "timers",
-            scope: { type: "USER", id: "user-1" },
-            set: { timerFiltersEnabled: false },
-            unset: [],
-          },
-        ],
-      },
-    );
-  });
+      expect(updated).toMatchObject({
+        displayConfig: { fontSize: 13, legacyAppearance },
+      });
+
+      expect(settingsDocumentsService.patchPreferences).toHaveBeenCalledWith(
+        "user-1",
+        {
+          operations: [
+            {
+              domain: "appearance",
+              scope: { type: "USER", id: "user-1" },
+              set: {
+                timers: { displayConfig: { fontSize: 13, legacyAppearance } },
+              },
+              unset: [],
+            },
+            {
+              domain: "timers",
+              scope: { type: "USER", id: "user-1" },
+              set: { timerFiltersEnabled: false },
+              unset: [],
+            },
+          ],
+        },
+      );
+    },
+  );
 
   it("uses a private guild layer for hidden and pinned timers", async () => {
     const settingsDocumentsService = {

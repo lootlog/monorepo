@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { type FC, useEffect, useRef, useState } from "react";
@@ -17,6 +18,7 @@ type TimersGridProps = {
   settingsKey: string;
   hiddenTimers: string[];
   minColumnWidth: number;
+  legacyAppearance?: boolean;
 };
 
 /**
@@ -52,6 +54,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
   settingsKey,
   hiddenTimers,
   minColumnWidth,
+  legacyAppearance = false,
 }) => {
   const {
     guildsQuery: { data: guilds },
@@ -95,9 +98,12 @@ export const TimersGrid: FC<TimersGridProps> = ({
     <TimerClockProvider>
       <span
         ref={gridRef}
-        className="ll:grid ll:w-full"
+        className={cn(
+          "ll:grid ll:w-full ll:pb-1",
+          legacyAppearance && "ll:gap-0.5",
+        )}
         style={{
-          gridTemplateColumns: `repeat(auto-fit, minmax(${minColumnWidth}px, 1fr))`,
+          gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
         }}
       >
         {timers.map((timer, index) => {
@@ -113,7 +119,7 @@ export const TimersGrid: FC<TimersGridProps> = ({
               timer={timer}
               settingsKey={settingsKey}
               isHidden={isHidden}
-              isAlternateRow={isAlternateRow}
+              isAlternateRow={!legacyAppearance && isAlternateRow}
             />
           );
         })}

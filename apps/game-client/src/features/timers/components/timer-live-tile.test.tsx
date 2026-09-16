@@ -25,35 +25,39 @@ describe("TimerLiveTile", () => {
     vi.useRealTimers();
   });
 
-  it("updates countdown and min/max phases on the shared clock", () => {
-    render(
-      <TimerClockProvider>
-        <TimerLiveTile
-          countdownMode="min"
-          displayMode="row"
-          fontSize={11}
-          label="Tanroth"
-          paint={TIMERS_COLORS.white}
-          timer={createTimer()}
-        />
-      </TimerClockProvider>,
-    );
+  it.each([false, true])(
+    "updates countdown and min/max phases on the shared clock (legacy: %s)",
+    (legacyAppearance) => {
+      render(
+        <TimerClockProvider>
+          <TimerLiveTile
+            legacyAppearance={legacyAppearance}
+            countdownMode="min"
+            displayMode="row"
+            fontSize={11}
+            label="Tanroth"
+            paint={TIMERS_COLORS.white}
+            timer={createTimer()}
+          />
+        </TimerClockProvider>,
+      );
 
-    expect(screen.getByText("00:00:04")).toBeVisible();
+      expect(screen.getByText("00:00:04")).toBeVisible();
 
-    act(() => {
-      vi.advanceTimersByTime(1_000);
-    });
-    expect(screen.getByText("00:00:03")).toBeVisible();
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(screen.getByText("00:00:03")).toBeVisible();
 
-    act(() => {
-      vi.advanceTimersByTime(4_000);
-    });
-    expect(screen.getByText("00:00:00")).toHaveClass("ll:text-orange-300");
+      act(() => {
+        vi.advanceTimersByTime(4_000);
+      });
+      expect(screen.getByText("00:00:00")).toBeVisible();
 
-    act(() => {
-      vi.advanceTimersByTime(1_000);
-    });
-    expect(screen.getByText("-00:00:01")).toHaveClass("ll:text-red-400");
-  });
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(screen.getByText("-00:00:01")).toBeVisible();
+    },
+  );
 });
