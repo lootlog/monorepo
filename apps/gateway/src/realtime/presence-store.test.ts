@@ -1,9 +1,10 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Exit } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import { TestClock } from "effect/testing";
 import { PresenceStore } from "./presence-store.js";
+import { RealtimeStoreError } from "./realtime-errors.js";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
@@ -184,6 +185,96 @@ const secondGuild = (permissions: Permission[]) => ({
 });
 
 describe("PresenceStore", () => {
+  test.each(["smembers", "mget", "metadata"])(
+    "bounds a stalled %s read and allows a fresh snapshot without waiting for it to settle",
+    async (stage) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      await Effect.runPromise(
+        store.publish(socket(viewer), { organizationIds: ["organization-1"] }),
+      );
+      redis.values.set(
+        "presence:organization-1:session-1",
+        JSON.stringify({ ...viewer.presence, discordId: undefined }),
+      );
+      const stalled = Promise.withResolvers<void>();
+      const started = Promise.withResolvers<void>();
+      let shouldStall = true;
+
+      const pause = async (operation: string) => {
+        if (shouldStall && operation === stage) {
+          started.resolve();
+          await stalled.promise;
+        }
+      };
+
+      const originalSmembers = redis.smembers.bind(redis);
+      const originalMget = redis.mget.bind(redis);
+      const originalGet = redis.get.bind(redis);
+      spyOn(redis, "smembers").mockImplementation(async (key) => {
+        await pause("smembers");
+
+        return originalSmembers(key);
+      });
+      spyOn(redis, "mget").mockImplementation(async (keys) => {
+        await pause("mget");
+
+        return originalMget(keys);
+      });
+      spyOn(redis, "get").mockImplementation(async (key) => {
+        if (key.startsWith("presence:metadata:")) await pause("metadata");
+
+        return originalGet(key);
+      });
+      const errors: unknown[] = [];
+
+      const snapshot = store.snapshot(viewer, "organization-1").pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            errors.push(error);
+          }),
+        ),
+        Effect.exit,
+      );
+
+      try {
+        await Effect.runPromise(
+          Effect.gen(function* () {
+            yield* snapshot.pipe(Effect.forkScoped);
+            yield* Effect.promise(() => started.promise);
+            yield* snapshot.pipe(Effect.forkScoped);
+            yield* TestClock.adjust("10 seconds");
+            expect(errors).toHaveLength(2);
+
+            for (const error of errors) {
+              expect(error).toBeInstanceOf(RealtimeStoreError);
+
+              if (error instanceof RealtimeStoreError) {
+                expect(error.operation).toBe("presence.snapshot");
+                expect(Cause.isTimeoutError(error.cause)).toBe(true);
+              }
+            }
+
+            shouldStall = false;
+            const recovered = yield* store.snapshot(viewer, "organization-1");
+            expect(recovered.presences).toHaveLength(1);
+            expect(recovered.presences[0]?.discordId).toBe("discord-1");
+            expect(recovered.revision).toBe(1);
+          }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
+        );
+      } finally {
+        stalled.resolve();
+      }
+    },
+  );
+
   test("shares overlapping snapshot reads while keeping viewer and Organization projections separate", async () => {
     const redis = new MemoryRedis();
 
