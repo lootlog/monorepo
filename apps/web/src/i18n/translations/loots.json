@@ -154,13 +154,6 @@
     "itemActions": {
       "copyId": "Kopiuj ID przedmiotu",
       "showLoots": "Pokaż łupy z tym przedmiotem"
-    },
-    "sync": {
-      "stale": "Lista może być nieaktualna. Odświeżenie nastąpi automatycznie u góry listy (do 35 s).",
-      "error": "Nie udało się odświeżyć listy. Widoczne dane mogą być nieaktualne.",
-      "refreshing": "Odświeżanie listy…",
-      "offline": "Brak połączenia na żywo. Lista może być nieaktualna.",
-      "retry": "Odśwież i wróć na początek"
     }
   },
   "details": {

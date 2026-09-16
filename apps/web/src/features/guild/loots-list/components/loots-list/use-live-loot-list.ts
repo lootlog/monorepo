@@ -20,10 +20,7 @@ import {
   clearLootPolicyData,
 } from "./loot-list-cache";
 
-import {
-  createLootListReconciliation,
-  type LootListFreshness,
-} from "./loot-list-reconciliation";
+import { createLootListReconciliation } from "./loot-list-reconciliation";
 
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
@@ -40,7 +37,7 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 const LOOTS_PAGE_LIMIT = 20;
@@ -125,7 +122,6 @@ export const useLiveLootList = () => {
   const queryClient = useQueryClient();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   const { filters, hasActiveFilters, clearFilters } = useLootsFilters();
-  const [freshness, setFreshness] = useState<LootListFreshness>("current");
 
   const reconciliationRef = useRef<ReturnType<
     typeof createLootListReconciliation
@@ -151,7 +147,6 @@ export const useLiveLootList = () => {
     hasNextPage,
     isFetching,
     isLoading,
-    isError,
   } = useInfiniteQuery({
     queryKey,
     queryFn: ({ pageParam, signal }) => {
@@ -221,7 +216,6 @@ export const useLiveLootList = () => {
         connected &&
         document.visibilityState === "visible" &&
         (scrollElementRef.current?.scrollTop ?? 0) < 1,
-      onChange: setFreshness,
       // Reconciliation happens only at the top; scrolling follows fresh cursors.
       refresh: () => reconcileActiveLootLists(queryClient, guildId),
     });
@@ -247,7 +241,7 @@ export const useLiveLootList = () => {
 
     const revalidateAccess = (organizationIds?: readonly string[]) => {
       if (organizationIds?.length === 0) {
-        reconciliation.revalidate();
+        reconciliation.markDirty();
 
         return;
       }
@@ -257,7 +251,7 @@ export const useLiveLootList = () => {
           organizationIds === undefined ||
           (currentGuildId && organizationIds.includes(currentGuildId))
         )
-          reconciliation.revalidate();
+          reconciliation.markDirty();
       });
     };
 
@@ -287,7 +281,7 @@ export const useLiveLootList = () => {
     };
 
     const resume = () => reconciliation.resume();
-    socket.on(GatewayEvent.CONNECT, reconciliation.revalidate);
+    socket.on(GatewayEvent.CONNECT, reconciliation.markDirty);
     socket.on(GatewayEvent.JOIN, onJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
     socket.on(GatewayEvent.LOOTS_CREATE, onLootCreate);
@@ -297,7 +291,7 @@ export const useLiveLootList = () => {
     return () => {
       reconciliation.dispose();
       reconciliationRef.current = null;
-      socket.off(GatewayEvent.CONNECT, reconciliation.revalidate);
+      socket.off(GatewayEvent.CONNECT, reconciliation.markDirty);
       socket.off(GatewayEvent.JOIN, onJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissions);
       socket.off(GatewayEvent.LOOTS_CREATE, onLootCreate);
@@ -313,11 +307,6 @@ export const useLiveLootList = () => {
     world,
     queryIdentity,
   ]);
-
-  const retryReconciliation = () => {
-    scrollElementRef.current?.scrollTo({ top: 0 });
-    void reconciliationRef.current?.retry();
-  };
 
   const { viewMode } = useViewMode("loots-view-mode");
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
@@ -379,11 +368,7 @@ export const useLiveLootList = () => {
     hasNextPage,
     t,
     themedKey,
-    freshness:
-      isError && freshness !== "refreshing" ? ("error" as const) : freshness,
-    retryReconciliation,
     resumeReconciliation: () => reconciliationRef.current?.resume(),
-    connected,
     virtualizer,
     virtualItems,
     totalCount,
