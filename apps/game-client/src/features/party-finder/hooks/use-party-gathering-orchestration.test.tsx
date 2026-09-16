@@ -29,7 +29,7 @@ const npc = {
   type: 2,
   wt: 80,
   location: "Ithan",
-  notificationSent: false,
+  notificationSentAt: null,
 };
 
 let restoreClient = () => {};

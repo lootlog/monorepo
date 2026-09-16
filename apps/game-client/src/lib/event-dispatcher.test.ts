@@ -129,7 +129,7 @@ it("routes dialog context and NPC detections through their real processors", () 
       nick: "Tanroth",
       lvl: 120,
       location: "Ithan",
-      notificationSent: false,
+      notificationSentAt: null,
     },
   ]);
   expect(useDialogStore.getState().npcContext?.npcId).toBe(7);

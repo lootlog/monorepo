@@ -9,20 +9,49 @@ import { getRuntimeUiScale } from "@/lib/margonem-runtime/adapters/legacy-ui-run
 
 type Position = { x: number; y: number };
 
+/**
+ * Viewport bounds in the game's scaled coordinate space. Reading
+ * `visualViewport` or `innerWidth` forces the host document to lay out, so a
+ * drag session measures once on pointer down and only re-measures when the
+ * visual viewport itself resizes (pinch zoom), never per pointer move.
+ */
+type DragViewport = {
+  scale: number;
+  width: number;
+  height: number;
+};
+
 type DragInfo = {
   offsetX: number;
   offsetY: number;
   width: number;
   height: number;
+  viewport: DragViewport;
 };
 
 const DEFAULT_STATE: Position = { x: 0, y: 0 };
+
+const DEFAULT_DRAG_VIEWPORT: DragViewport = { scale: 1, width: 0, height: 0 };
 
 const DEFAULT_DRAG_INFO: DragInfo = {
   offsetX: 0,
   offsetY: 0,
   width: 0,
   height: 0,
+  viewport: DEFAULT_DRAG_VIEWPORT,
+};
+
+// The scale is fixed for the whole session: the pointer offsets captured on
+// pointer down are expressed in it, so a pinch zoom mid-drag only refreshes
+// the bounds.
+const measureDragViewport = (
+  scale: number = getRuntimeUiScale(),
+): DragViewport => {
+  return {
+    scale,
+    width: (window.visualViewport?.width ?? window.innerWidth) * scale,
+    height: (window.visualViewport?.height ?? window.innerHeight) * scale,
+  };
 };
 
 let dragSessionCounter = 0;
@@ -76,12 +105,14 @@ export const useDrag = ({
     height: number,
     x: number,
     y: number,
+    viewport: DragViewport,
   ) => {
-    const scale = getRuntimeUiScale();
-    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    const scaledViewportWidth = viewportWidth * scale;
-    const scaledViewportHeight = viewportHeight * scale;
+    const {
+      scale,
+      width: scaledViewportWidth,
+      height: scaledViewportHeight,
+    } = viewport;
+
     const scaledWidth = width * scale;
     const scaledHeight = height * scale;
     let nextPosition: Position;
@@ -188,7 +219,7 @@ export const useDrag = ({
     finishDragRef.current = finishDrag;
   });
 
-  const startDrag = (x: number, y: number) => {
+  const startDrag = (x: number, y: number, viewport: DragViewport) => {
     if (isLockedRef.current) return false;
     const draggableElement = ref.current;
 
@@ -203,6 +234,7 @@ export const useDrag = ({
       offsetY: y - finalPositionRef.current.y,
       width,
       height,
+      viewport,
     };
     dragOriginPositionRef.current = finalPositionRef.current;
     isDraggingRef.current = true;
@@ -226,9 +258,10 @@ export const useDrag = ({
 
     if (evt.target.closest("[data-ll-draggable='false']")) return;
 
-    const scale = evt.pointerType === "touch" ? getRuntimeUiScale() : 1;
+    const viewport = measureDragViewport();
+    const scale = evt.pointerType === "touch" ? viewport.scale : 1;
 
-    if (!startDrag(evt.clientX * scale, evt.clientY * scale)) return;
+    if (!startDrag(evt.clientX * scale, evt.clientY * scale, viewport)) return;
 
     activePointerIdRef.current = evt.pointerId;
     // Cancelling pointerdown suppresses the compatibility mousedown, whose
@@ -346,14 +379,22 @@ export const useDrag = ({
       }
 
       evt.preventDefault();
-      const scale = evt.pointerType === "touch" ? getRuntimeUiScale() : 1;
-      const { offsetX, offsetY, width, height } = dragInfoRef.current;
+      const { offsetX, offsetY, width, height, viewport } = dragInfoRef.current;
+      const scale = evt.pointerType === "touch" ? viewport.scale : 1;
       queuePositionRef.current(
         width,
         height,
         evt.clientX * scale - offsetX,
         evt.clientY * scale - offsetY,
+        viewport,
       );
+    };
+
+    const handleViewportResize = () => {
+      dragInfoRef.current = {
+        ...dragInfoRef.current,
+        viewport: measureDragViewport(dragInfoRef.current.viewport.scale),
+      };
     };
 
     const handlePointerEnd = (evt: PointerEvent) => {
@@ -383,6 +424,8 @@ export const useDrag = ({
     document.addEventListener("pointercancel", handlePointerEnd);
     document.addEventListener("pointerdown", handleGlobalPointerDown, true);
     window.addEventListener("blur", handleWindowBlur);
+    const visualViewport = window.visualViewport;
+    visualViewport?.addEventListener("resize", handleViewportResize);
 
     return () => {
       document.removeEventListener("pointermove", handlePointerMove);
@@ -394,6 +437,7 @@ export const useDrag = ({
         true,
       );
       window.removeEventListener("blur", handleWindowBlur);
+      visualViewport?.removeEventListener("resize", handleViewportResize);
     };
   }, [isDragging, isLocked, ref]);
 
@@ -414,6 +458,7 @@ export const useDrag = ({
       height ?? renderedHeight,
       left,
       top,
+      measureDragViewport(),
     );
   };
 

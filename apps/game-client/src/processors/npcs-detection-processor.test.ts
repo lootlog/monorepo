@@ -226,7 +226,7 @@ describe("NpcsDetectionProcessor", () => {
         nick: "Detected npc",
         icon: "event-icon.gif",
         location: "Ithan",
-        notificationSent: false,
+        notificationSentAt: null,
       }),
     ]);
     expect(useWindowsStore.getState()["npc-detector"].open).toBe(true);
@@ -248,7 +248,7 @@ describe("NpcsDetectionProcessor", () => {
           nick: "Detected npc",
           icon: "event-icon.gif",
           location: "Ithan",
-          notificationSent: false,
+          notificationSentAt: null,
         }),
       ]);
     } finally {
@@ -465,7 +465,7 @@ describe("NpcsDetectionProcessor", () => {
     const firstCycle = detectorState.latestDetectionAnimationCycle;
     useNpcDetectorStore
       .getState()
-      .setNpcStates([{ npcId: 500, npc: { notificationSent: true } }]);
+      .setNpcStates([{ npcId: 500, npc: { notificationSentAt: Date.now() } }]);
     useWindowsStore.getState().setCurrentWindowFocus("chat");
 
     processor.handle({
@@ -481,7 +481,7 @@ describe("NpcsDetectionProcessor", () => {
         icon: "updated-icon.gif",
         x: 13,
         y: 19,
-        notificationSent: true,
+        notificationSentAt: expect.any(Number),
       }),
     ]);
     expect(nextState.latestDetectionAnimationCycle).toBe(firstCycle);
@@ -526,7 +526,7 @@ describe("NpcsDetectionProcessor", () => {
         id: 500,
         nick: "Fallback npc",
         icon: "fallback-icon.gif",
-        notificationSent: false,
+        notificationSentAt: null,
       }),
     ]);
     expect(play).toHaveBeenCalledOnce();
@@ -593,9 +593,9 @@ describe("NpcsDetectionProcessor", () => {
         characterData: { nick: "Tester", id: 101, acc: 202 },
         npc: { id: 500, name: "Detected npc" },
       });
-      expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(
-        true,
-      );
+      expect(
+        useNpcDetectorStore.getState().npcs[0]?.notificationSentAt,
+      ).toEqual(expect.any(Number));
     },
   );
   it("does not send chat when notification HTTP creation fails", async () => {
@@ -615,9 +615,9 @@ describe("NpcsDetectionProcessor", () => {
       ),
     );
     expect(requests).toHaveLength(1);
-    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(
-      false,
-    );
+    expect(
+      useNpcDetectorStore.getState().npcs[0]?.notificationSentAt,
+    ).toBeNull();
   });
   it("retains the accepted notification when subsequent chat HTTP delivery fails", async () => {
     chatStatus = 503;
@@ -629,7 +629,9 @@ describe("NpcsDetectionProcessor", () => {
     });
     processor.handle(createNpcEvent());
     await waitFor(() => expect(requests).toHaveLength(2));
-    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(true);
+    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSentAt).toEqual(
+      expect.any(Number),
+    );
   });
   it("does not auto-send when the routing rule targets another world", () => {
     readyPreferences({
@@ -646,8 +648,8 @@ describe("NpcsDetectionProcessor", () => {
     });
     processor.handle(createNpcEvent());
     expect(requests).toHaveLength(0);
-    expect(useNpcDetectorStore.getState().npcs[0]?.notificationSent).toBe(
-      false,
-    );
+    expect(
+      useNpcDetectorStore.getState().npcs[0]?.notificationSentAt,
+    ).toBeNull();
   });
 });

@@ -22,7 +22,7 @@ const npc: GameNpcWithLocation = {
   wt: 80,
   tpl: 900,
   location: "Ithan",
-  notificationSent: false,
+  notificationSentAt: null,
 };
 
 describe("npc notification helpers", () => {

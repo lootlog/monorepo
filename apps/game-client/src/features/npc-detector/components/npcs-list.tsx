@@ -86,7 +86,7 @@ export const NpcsList: FC<NpcsListProps> = ({
   const setOpen = useWindowsStore((state) => state.setOpen);
   const orchestration = usePartyGatheringOrchestration();
 
-  const { currentTimeMs, notificationDeadlineByNpcId } = useNpcListLifecycle({
+  useNpcListLifecycle({
     activeDetectionAnimations,
     clearDetectionAnimation,
     npcs: npcs ?? [],
@@ -237,10 +237,6 @@ export const NpcsList: FC<NpcsListProps> = ({
                 detectionAnimationCycle={
                   activeDetectionAnimations[npc.id] ?? null
                 }
-                notificationCooldownCurrentTimeMs={currentTimeMs}
-                notificationCooldownEndsAt={
-                  notificationDeadlineByNpcId.get(npc.id) ?? null
-                }
                 detectorSettings={detectorSettings}
                 hasActivePartyGathering={hasActivePartyGathering}
                 hasMultipleNpcs={hasMultipleNpcs}
@@ -275,10 +271,6 @@ export const NpcsList: FC<NpcsListProps> = ({
               animationEffectsEnabled={animationEffectsEnabled}
               npc={npc}
               detectionAnimationCycle={null}
-              notificationCooldownCurrentTimeMs={currentTimeMs}
-              notificationCooldownEndsAt={
-                notificationDeadlineByNpcId.get(npc.id) ?? null
-              }
               detectorSettings={detectorSettings}
               hasActivePartyGathering={hasActivePartyGathering}
               hasMultipleNpcs={hasMultipleNpcs}

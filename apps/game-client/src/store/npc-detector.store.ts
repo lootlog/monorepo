@@ -3,7 +3,8 @@ import { create } from "zustand";
 
 export type GameNpcWithLocation = GameNpc & {
   location: string;
-  notificationSent: boolean;
+  /** Epoch ms of the last sent notification; drives the resend cooldown. */
+  notificationSentAt: number | null;
 };
 
 type AddNpcOptions = {
@@ -30,6 +31,21 @@ export interface NpcDetectorState {
   ) => void;
   clearDetectionAnimation: (npcId: number, cycle: number) => void;
 }
+
+// Margonem re-sends known NPCs on rescans and map re-entry with unchanged
+// fields; keeping the array identity then spares the detector window a render.
+const hasNpcFieldChange = (
+  npc: GameNpcWithLocation,
+  update: Partial<GameNpcWithLocation>,
+) => {
+  // SAFETY: update is a Partial<GameNpcWithLocation> literal built by the
+  // callers, so its own keys are a subset of the npc's keys.
+  for (const key of Object.keys(update) as (keyof GameNpcWithLocation)[]) {
+    if (update[key] !== npc[key]) return true;
+  }
+
+  return false;
+};
 
 export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
   npcs: [],
@@ -161,7 +177,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
       const npcs = state.npcs.map((npc) => {
         const update = updatesByNpcId.get(npc.id);
 
-        if (!update) return npc;
+        if (!update || !hasNpcFieldChange(npc, update)) return npc;
 
         changed = true;
 
