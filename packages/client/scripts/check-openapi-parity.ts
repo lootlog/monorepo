@@ -1183,7 +1183,12 @@ export const assertVerifiedPersonalAddition = (
   }
 
   const keyNormalized =
-    service === "auth" ? operation : normalizeApiKeyErrors(operation, expected);
+    service === "auth"
+      ? operation
+      : normalizeApiKeyErrors(
+          service === "api" ? normalizeValidationErrors(operation) : operation,
+          expected,
+        );
 
   if (!isJsonObject(keyNormalized)) throw new Error("Invalid operation");
   const { tags: _tags, summary: _summary, ...contract } = keyNormalized;
@@ -1281,6 +1286,54 @@ export const normalizeApiKeyErrors = (
   return { ...operation, responses };
 };
 
+// Verified by the real endpoint validation cases in the API schema-error-response tests.
+// Remove only the new validation alternative; retain every existing 400 contract.
+export const normalizeValidationErrors = (operation: JsonValue): JsonValue => {
+  if (!isJsonObject(operation) || !isJsonObject(operation.responses))
+    return operation;
+  const response = operation.responses["400"];
+
+  if (!isJsonObject(response) || !isJsonObject(response.content))
+    return operation;
+  const media = response.content["application/json"];
+
+  if (!isJsonObject(media) || !isJsonObject(media.schema)) return operation;
+
+  const alternatives = isJsonArray(media.schema.anyOf)
+    ? media.schema.anyOf
+    : [media.schema];
+
+  const remaining = alternatives.filter(
+    (alternative) =>
+      !isJsonObject(alternative) ||
+      Object.keys(alternative).length !== 1 ||
+      alternative.$ref !== "#/components/schemas/RequestValidationError",
+  );
+
+  if (remaining.length === alternatives.length) return operation;
+  const responses = { ...operation.responses };
+
+  if (remaining.length === 0) {
+    delete responses["400"];
+  } else {
+    responses["400"] = {
+      ...response,
+      content: {
+        ...response.content,
+        "application/json": {
+          ...media,
+          schema:
+            remaining.length === 1 && remaining[0] !== undefined
+              ? remaining[0]
+              : { anyOf: remaining },
+        },
+      },
+    };
+  }
+
+  return { ...operation, responses };
+};
+
 if (import.meta.main) {
   const changedOperations: string[] = [];
 
@@ -1298,7 +1351,15 @@ if (import.meta.main) {
       );
 
       for (const [key, operation] of current) {
-        current.set(key, normalizeApiKeyErrors(operation, beforeKeys.get(key)));
+        current.set(
+          key,
+          normalizeApiKeyErrors(
+            service.current === "api"
+              ? normalizeValidationErrors(operation)
+              : operation,
+            beforeKeys.get(key),
+          ),
+        );
       }
     }
 

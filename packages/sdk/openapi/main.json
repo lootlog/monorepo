@@ -32,6 +32,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -110,6 +120,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -183,6 +203,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserPreferencesResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -279,6 +309,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -357,6 +397,16 @@
                   "items": {
                     "$ref": "#/components/schemas/UserCurrentGuildResponseDto_Output"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -450,6 +500,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -533,6 +593,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -636,6 +706,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -730,6 +810,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MemberLootlogConfigSummaryResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -834,6 +924,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -934,6 +1034,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -1026,6 +1136,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -1111,6 +1231,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NullableMemberRefreshJobResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -1212,6 +1342,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -1306,6 +1446,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -1389,6 +1539,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -1468,6 +1628,16 @@
                   "items": {
                     "$ref": "#/components/schemas/ManageableOrganizationResponse"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -1556,6 +1726,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuildResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -1665,6 +1845,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -1767,11 +1957,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -1898,6 +2095,16 @@
                   "items": {
                     "type": "string"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -2045,6 +2252,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -2151,6 +2368,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -2242,6 +2469,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RoleResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -2346,6 +2583,16 @@
                   "items": {
                     "$ref": "#/components/schemas/TimerResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -2455,6 +2702,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -2548,6 +2805,16 @@
                   "items": {
                     "$ref": "#/components/schemas/TimerResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -2680,6 +2947,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -2767,11 +3044,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -2902,11 +3186,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -3038,11 +3329,18 @@
             "description": "<No Content>"
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -3180,11 +3478,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -3304,11 +3609,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -3430,11 +3742,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -3555,6 +3874,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -3645,6 +3974,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -3730,6 +4069,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserLootlogPlayersCatchingGuildsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -4023,6 +4372,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -4156,6 +4515,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LootStatsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -4453,6 +4822,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -4573,6 +4952,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -4684,6 +5073,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -4786,6 +5185,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -4883,11 +5292,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -5016,6 +5432,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -5121,6 +5547,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LootCommentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -5241,11 +5677,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -5383,6 +5826,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "HttpErrorResponse",
             "content": {
@@ -5498,6 +5951,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LootlogConfigNpcResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -5625,6 +6088,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -5708,6 +6181,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChatMessageResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -5805,6 +6288,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChatMessageActionResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -5907,6 +6400,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -5994,6 +6497,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReservationSpotsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -6138,11 +6651,18 @@
             }
           },
           "400": {
-            "description": "OrganizationWorkspaceErrorResponse",
+            "description": "OrganizationWorkspaceErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -6260,6 +6780,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReservationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -6406,6 +6936,16 @@
           "204": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
             "content": {
@@ -6518,6 +7058,16 @@
           "204": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
             "content": {
@@ -6627,6 +7177,16 @@
         "responses": {
           "204": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
@@ -6741,6 +7301,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
             "content": {
@@ -6827,6 +7397,16 @@
         "responses": {
           "204": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
@@ -6926,6 +7506,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReservationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -7064,6 +7654,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
             "content": {
@@ -7171,6 +7771,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateReservationShareInvitationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -7287,6 +7897,16 @@
           "204": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
             "content": {
@@ -7399,6 +8019,16 @@
           "204": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "OrganizationWorkspaceErrorResponse",
             "content": {
@@ -7506,6 +8136,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReservationShareInvitationPreviewResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -7628,6 +8268,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AcceptReservationShareInvitationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -7767,6 +8417,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -7852,11 +8512,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -7957,6 +8624,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -8047,6 +8724,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -8149,6 +8836,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationTargetResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -8259,6 +8956,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -8344,11 +9051,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -8477,6 +9191,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -8580,11 +9304,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -8703,6 +9434,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -8808,11 +9549,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -8923,6 +9671,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -9019,11 +9777,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -9120,6 +9885,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -9198,11 +9973,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -9305,6 +10087,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -9397,6 +10189,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationTargetResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -9510,11 +10312,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -9621,6 +10430,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -9699,11 +10518,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -9816,6 +10642,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -9913,11 +10749,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -10021,6 +10864,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -10103,6 +10956,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -10181,11 +11044,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -10290,11 +11160,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -10407,6 +11284,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -10497,11 +11384,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -10639,11 +11533,18 @@
             "description": "<No Content>"
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -10754,6 +11655,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "HttpErrorResponse",
             "content": {
@@ -10832,6 +11743,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -10957,6 +11878,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "HttpErrorResponse",
             "content": {
@@ -11073,6 +12004,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -11217,6 +12158,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "HttpErrorResponse",
             "content": {
@@ -11353,6 +12304,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -11497,6 +12458,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "HttpErrorResponse",
             "content": {
@@ -11623,6 +12594,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -11767,6 +12748,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "HttpErrorResponse",
             "content": {
@@ -11898,6 +12889,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -11976,11 +12977,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -12102,6 +13110,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -12189,11 +13207,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -12311,6 +13336,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -12411,6 +13446,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -12520,11 +13565,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -12645,6 +13697,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -12747,6 +13809,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventWrappedApiResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -12857,6 +13929,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -12959,6 +14041,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -13069,6 +14161,16 @@
         "responses": {
           "200": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -13193,6 +14295,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -13300,6 +14412,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -13405,6 +14527,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -13503,6 +14635,16 @@
         "responses": {
           "201": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -13611,6 +14753,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -13705,6 +14857,16 @@
         "responses": {
           "200": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -13816,6 +14978,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventMapResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -13935,6 +15107,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -14032,6 +15214,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -14128,11 +15320,18 @@
             "description": "<No Content>"
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -14252,6 +15451,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -14364,6 +15573,16 @@
         "responses": {
           "200": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -14482,6 +15701,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -14596,6 +15825,16 @@
         "responses": {
           "200": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -14713,6 +15952,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -14805,6 +16054,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AcknowledgeExpiredParticipationConfirmationsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -14922,6 +16181,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -15017,6 +16286,16 @@
                   "items": {
                     "$ref": "#/components/schemas/EventRankingEntryResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -15127,6 +16406,16 @@
         "responses": {
           "200": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -15255,6 +16544,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -15360,6 +16659,16 @@
                   "items": {
                     "$ref": "#/components/schemas/EventHeroStatsResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -15490,6 +16799,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventKillHistoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -15632,6 +16951,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -15762,6 +17091,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -15884,6 +17223,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -15998,6 +17347,16 @@
         "responses": {
           "200": {
             "description": "<No Content>"
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Error",
@@ -16115,6 +17474,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -16226,6 +17595,16 @@
                   "items": {
                     "$ref": "#/components/schemas/KillTimelineMapResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -16347,6 +17726,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -16454,6 +17843,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -16554,6 +17953,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NullableCoverageGapResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -16665,6 +18074,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -16765,6 +18184,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HeroPresenceStatsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -16873,6 +18302,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -16971,11 +18410,18 @@
             "description": "<No Content>"
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -17108,11 +18554,18 @@
             "description": "<No Content>"
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -17238,6 +18691,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -17329,6 +18792,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PinnedEventResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -17439,6 +18912,16 @@
           "204": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -17516,6 +18999,16 @@
                   "items": {
                     "$ref": "#/components/schemas/GameMapResponseDto_Output"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -17611,6 +19104,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -17693,6 +19196,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MapTemplateResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -17803,6 +19316,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -17907,6 +19430,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -17987,11 +19520,18 @@
             }
           },
           "400": {
-            "description": "HttpErrorResponse",
+            "description": "HttpErrorResponse | RequestValidationError",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RequestValidationError"
+                    }
+                  ]
                 }
               }
             }
@@ -18147,6 +19687,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuildKillStatsResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -18316,6 +19866,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -18415,6 +19975,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -18501,6 +20071,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserKillActivityResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -18689,6 +20269,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -18831,6 +20421,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -18946,6 +20546,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuildTopKillersByTypeResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -19085,6 +20695,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NpcKillersResponseDto_Output"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -19288,6 +20908,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -19382,6 +21012,16 @@
           "200": {
             "description": "<No Content>"
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -19473,6 +21113,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -19555,6 +21205,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuildDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -19660,6 +21320,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -19752,6 +21422,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuildDocumentHistoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -19860,6 +21540,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -19956,6 +21646,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -20046,6 +21746,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuildDocumentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -20154,6 +21864,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -20250,6 +21970,16 @@
               }
             }
           },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Error",
             "content": {
@@ -20342,6 +22072,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocsMutationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "RequestValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationError"
                 }
               }
             }
@@ -20871,6 +22611,46 @@
           }
         },
         "required": ["generatedAt", "windowStart", "items"],
+        "additionalProperties": false
+      },
+      "RequestValidationError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["VALIDATION_ERROR"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": ["path", "message"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["code", "message", "issues"],
         "additionalProperties": false
       },
       "UserPreferencesResponseDto_Output": {

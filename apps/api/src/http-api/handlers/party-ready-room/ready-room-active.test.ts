@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
 import { BunHttpServer } from "@effect/platform-bun";
@@ -210,6 +211,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       HttpRouter.provideRequest(services),
       Layer.provide(BunHttpServer.layerHttpServices),
       Layer.provide(apiKeyEndpointPolicyLayer("main")),
+      Layer.provide(SchemaErrorResponseLive),
     ),
     { disableLogger: true },
   );

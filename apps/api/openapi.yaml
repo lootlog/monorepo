@@ -19,6 +19,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserFeedResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -71,6 +77,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusOkResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -130,6 +142,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserPreferencesResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -182,6 +200,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserPreferencesResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -243,6 +267,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -298,6 +328,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -357,6 +393,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -415,6 +457,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserGameAccountPreferencesResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -480,6 +528,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableMemberResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -541,6 +595,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableMemberResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -604,6 +664,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableMemberResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -669,6 +735,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MemberResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -734,6 +806,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MemberLootlogConfigSummaryResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -800,6 +878,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -866,6 +950,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberReferenceResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -927,6 +1017,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MemberSummaryResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -986,6 +1082,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MemberRefreshJobResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1045,6 +1147,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableMemberRefreshJobResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1109,6 +1217,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MemberRefreshJobResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1171,6 +1285,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserGuildListResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1227,6 +1347,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserGuildPermissionsDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1283,6 +1409,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ManageableOrganizationResponse"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1341,6 +1473,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1407,6 +1545,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1471,11 +1615,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1554,6 +1700,12 @@ paths:
                 type: array
                 items:
                   type: string
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1656,6 +1808,12 @@ paths:
                     - LOOTLOG_EVENTS_WRITE
                     - LOOTLOG_DOCS_READ
                     - LOOTLOG_DOCS_WRITE
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1722,6 +1880,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1788,6 +1952,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DiscordGuildSyncStateResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1862,6 +2032,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserGuildPermissionsDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1919,6 +2095,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -1978,6 +2160,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RoleResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2041,6 +2229,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RoleResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2109,6 +2303,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TimerResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2178,6 +2378,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TimerHistoryResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2242,6 +2448,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TimerResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2325,6 +2537,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SearchTimersNpcResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2381,11 +2599,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateAutoTimerResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2466,11 +2686,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/TimerResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2552,11 +2774,13 @@ paths:
         "200":
           description: <No Content>
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2642,11 +2866,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/TimerHistoryResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2720,11 +2946,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/TimerResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2799,11 +3027,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/TimerResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2877,6 +3107,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserLootlogConfigAccountResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2937,6 +3173,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserLootlogConfigResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -2996,6 +3238,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserLootlogPlayersCatchingGuildsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3055,6 +3303,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TimerSettingsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3108,11 +3362,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/TimerSettingsResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3179,11 +3435,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildTimerSettingsResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3245,11 +3503,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildTimerSettingsResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3308,11 +3568,13 @@ paths:
         "200":
           description: <No Content>
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3399,11 +3661,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3458,11 +3722,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SettingsDocumentsResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3536,11 +3802,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuildSettingsDocumentsResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3728,6 +3996,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LootResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -3823,6 +4097,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LootStatsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4015,6 +4295,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CountResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4091,6 +4377,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableLootItemResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4161,6 +4453,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableLootResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4226,6 +4524,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4288,11 +4592,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateLootResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4371,6 +4677,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LootCommentResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4440,6 +4752,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LootCommentResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4513,11 +4831,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/LootShareResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4601,6 +4921,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableLootlogConfigResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -4674,6 +5000,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LootlogConfigNpcResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -4738,6 +5070,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4797,6 +5135,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ChatMessageResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4855,6 +5199,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChatMessageResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4919,6 +5269,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -4984,6 +5340,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChatMessageActionResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -5044,6 +5406,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationSpotsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5131,11 +5499,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReservationWindowResponseDto"
         "400":
-          description: OrganizationWorkspaceErrorResponse
+          description: OrganizationWorkspaceErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/OrganizationWorkspaceErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5207,6 +5577,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5293,6 +5669,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5361,6 +5743,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5428,6 +5816,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5499,6 +5893,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MyReservationsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5554,6 +5954,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5618,6 +6024,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5701,6 +6113,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationSharesResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5768,6 +6186,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CreateReservationShareInvitationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5836,6 +6260,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5904,6 +6334,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -5971,6 +6407,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReservationShareInvitationPreviewResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -6047,6 +6489,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AcceptReservationShareInvitationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: OrganizationWorkspaceErrorResponse
           content:
@@ -6131,6 +6579,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6188,11 +6642,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6256,6 +6712,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildAvailableNotificationTargetsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6318,6 +6780,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6385,6 +6853,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6454,6 +6928,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildNotificationRulesResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6511,11 +6991,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6596,6 +7078,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6664,11 +7152,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6743,6 +7233,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6812,11 +7308,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6886,6 +7384,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationJobsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -6950,11 +7454,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7016,6 +7522,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/NotificationTargetWithTestTriggerResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7069,11 +7581,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7138,6 +7652,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7201,6 +7721,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationTargetResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7272,11 +7798,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7344,6 +7872,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/NotificationRuleResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7397,11 +7931,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7472,6 +8008,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7536,11 +8078,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationRuleResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7606,6 +8150,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationJobsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7661,6 +8211,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/WatchedItemResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7714,11 +8270,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/WatchedItemResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7785,11 +8343,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/WatchedItemResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7860,6 +8420,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -7920,11 +8486,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotificationResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8004,11 +8572,13 @@ paths:
         "201":
           description: <No Content>
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8081,6 +8651,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ActivePartyGatheringSummary"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8136,6 +8712,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8188,6 +8770,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8261,6 +8849,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8333,6 +8927,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8417,6 +9017,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8501,6 +9107,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8585,6 +9197,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomInvitationTargetsDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8663,6 +9281,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomProjectionDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8747,6 +9371,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PartyReadyRoomClientUpdateDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: HttpErrorResponse
           content:
@@ -8826,6 +9456,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SoundSettingsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -8879,11 +9515,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SoundSettingsResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -8960,6 +9598,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventListItemResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9018,11 +9662,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventMutationResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9094,6 +9740,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventOverviewResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9162,6 +9814,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9231,11 +9889,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventMutationResponseDto"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9311,6 +9971,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventOverviewResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9380,6 +10046,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventWrappedApiResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9449,6 +10121,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventMapsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9518,6 +10196,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9588,6 +10272,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9668,6 +10358,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9738,6 +10434,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9807,6 +10509,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9872,6 +10580,12 @@ paths:
       responses:
         "201":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -9942,6 +10656,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10005,6 +10725,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10079,6 +10805,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventMapResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10154,6 +10886,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10218,6 +10956,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10282,11 +11026,13 @@ paths:
         "201":
           description: <No Content>
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10362,6 +11108,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10436,6 +11188,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10512,6 +11270,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10587,6 +11351,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10662,6 +11432,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PendingParticipationConfirmationsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10725,6 +11501,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AcknowledgeExpiredParticipationConfirmationsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10798,6 +11580,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConfirmParticipationForKillResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10863,6 +11651,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventRankingEntryResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -10933,6 +11727,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11015,6 +11815,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventTimerResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11086,6 +11892,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventHeroStatsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11170,6 +11982,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventKillHistoryResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11259,6 +12077,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventMemberKillHistoryResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11343,6 +12167,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventKillHistoryResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11422,6 +12252,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/KillDetailResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11497,6 +12333,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11572,6 +12414,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventCoordinationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11647,6 +12495,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/KillTimelineMapResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11723,6 +12577,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/HeroCoverageGapResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11793,6 +12653,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CoverageGapResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11861,6 +12727,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NullableCoverageGapResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11931,6 +12803,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CoverageGapResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11999,6 +12877,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeroPresenceStatsResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12067,6 +12951,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeroRespawnConfigResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12132,11 +13022,13 @@ paths:
         "200":
           description: <No Content>
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12220,11 +13112,13 @@ paths:
         "200":
           description: <No Content>
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12303,6 +13197,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PinnedEventResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12365,6 +13265,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PinnedEventResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12434,6 +13340,12 @@ paths:
       responses:
         "204":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12487,6 +13399,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/GameMapResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12547,6 +13465,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MapTemplateResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12604,6 +13528,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MapTemplateResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12673,6 +13603,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MapTemplateResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12741,6 +13677,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusOkResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12795,11 +13737,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/CreateKillResponseDto_Output"
         "400":
-          description: HttpErrorResponse
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HttpErrorResponse"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12911,6 +13855,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildKillStatsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13028,6 +13978,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserKillStatsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13098,6 +14054,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserKillAnalyticsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13158,6 +14120,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserKillActivityResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13293,6 +14261,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserNpcKillsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13385,6 +14359,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildTopNpcsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13460,6 +14440,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildTopKillersByTypeResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13555,6 +14541,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NpcKillersResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13693,6 +14685,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MemberKillsResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13759,6 +14757,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RefreshStatsCardResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13814,6 +14818,12 @@ paths:
       responses:
         "200":
           description: <No Content>
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13874,6 +14884,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentListResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13931,6 +14947,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -13997,6 +15019,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentTrashResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14060,6 +15088,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentHistoryResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14128,6 +15162,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentHistorySnapshotResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14191,6 +15231,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14253,6 +15299,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GuildDocumentResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14321,6 +15373,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocsMutationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14384,6 +15442,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocsMutationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14447,6 +15511,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DocsMutationResponseDto"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -14849,6 +15919,37 @@ components:
         - generatedAt
         - windowStart
         - items
+      additionalProperties: false
+    RequestValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+        message:
+          type: string
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: array
+                items:
+                  anyOf:
+                    - type: string
+                    - type: integer
+              message:
+                type: string
+            required:
+              - path
+              - message
+            additionalProperties: false
+      required:
+        - code
+        - message
+        - issues
       additionalProperties: false
     StatusOkResponseDto_Output:
       type: object

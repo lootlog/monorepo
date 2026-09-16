@@ -1,3 +1,4 @@
+import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
 import { apiKeyEndpointPolicyLayer } from "@lootlog/schema/api-key-http";
 import { describe, expect, it } from "bun:test";
 import {
@@ -566,6 +567,7 @@ describe("reservation HTTP error responses", () => {
           ),
           Effect.provide(Layer.succeed(BearerSecurityMiddleware, bearer)),
           Effect.provide(apiKeyEndpointPolicyLayer("main")),
+          Effect.provide(SchemaErrorResponseLive),
         );
 
         const response = yield* client.reservations.createReservation({
