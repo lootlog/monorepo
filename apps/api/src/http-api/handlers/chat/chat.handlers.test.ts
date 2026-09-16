@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Permission } from "@lootlog/schema/permissions";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
 import { ChatMessageResponse } from "#src/contracts/chat/schemas";
@@ -208,4 +209,46 @@ describe("Chat HttpApi handlers", () => {
     ]);
     expect(ownershipError).toBeInstanceOf(ChatOperationError);
   });
+});
+
+it("serializes chat dates and rejects invalid dates and nullable optional data", async () => {
+  const layer = <A>(value: A) =>
+    provideServices(
+      makeAuthorization(),
+      makeData({
+        getMessages: () => Effect.succeed([value]),
+      }),
+    );
+
+  const result = await Effect.runPromise(
+    getChatMessages("guild-visible").pipe(
+      Effect.provide(
+        layer({ ...message, timestamp: new Date(message.timestamp) }),
+      ),
+    ),
+  );
+
+  expect(result).toEqual([message]);
+
+  for (const value of [
+    { ...message, timestamp: new Date(Number.NaN) },
+    { ...message, timestamp: "invalid" },
+    { ...message, npc: null },
+    { ...message, npc: undefined },
+    { ...message, canDelete: "yes" },
+  ]) {
+    const failure = await Effect.runPromise(
+      Effect.flip(
+        getChatMessages("guild-visible").pipe(Effect.provide(layer(value))),
+      ),
+    );
+
+    const legacyFailure = await Effect.runPromise(
+      Effect.flip(decodeDomainJson(ChatMessageResponse, value)),
+    );
+
+    expect(legacyFailure).toBeDefined();
+
+    expect(failure).toBeInstanceOf(ChatOperationError);
+  }
 });
