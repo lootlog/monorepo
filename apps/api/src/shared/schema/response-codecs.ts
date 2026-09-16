@@ -1,3 +1,4 @@
+import { DateTimeString } from "@lootlog/schema/http-scalars";
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema, SchemaTransformation } from "effect";
 
@@ -8,6 +9,12 @@ export type JsonValue =
   | null
   | ReadonlyArray<JsonValue>
   | { readonly [key: string]: JsonValue };
+
+/** Converts domain dates while retaining the concrete HTTP datetime validation. */
+export const DomainDateTime = Schema.Union([
+  Schema.flip(IsoDateTime),
+  DateTimeString,
+]);
 
 export const isoDatetimeCodec = IsoDateTime;
 

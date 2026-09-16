@@ -11,6 +11,8 @@ import {
 } from "#src/contracts/timers/schemas";
 
 import {
+  getAllTimers,
+  getRecentTimerHistory,
   createManualGuildTimer,
   deleteGuildTimer,
   getGuildTimers,
@@ -23,6 +25,9 @@ import {
   TimersData,
   type TimersGuildAccess,
 } from "./timers.handlers.js";
+
+import { decodeDomainJson } from "../../domain-json.schema.js";
+import { TimersInfrastructureError } from "./timer-errors.js";
 
 const now = new Date("2026-09-02T12:00:00.000Z");
 
@@ -164,6 +169,139 @@ describe("Timers HttpApi handlers", () => {
     expect(response[0]?.updatedAt).toBe("2026-09-02T12:00:00.000Z");
     expect(Schema.is(TimersResponse)(response)).toBe(true);
   });
+
+  it("converts nested member and nullable history dates without changing omitted fields", async () => {
+    const member = {
+      id: 1,
+      userId: "user-a",
+      guildId: guild.id,
+      type: "USER" as const,
+      name: "Member",
+      active: true,
+      roles: [restrictedRole],
+      updatedAt: now,
+      lastDiscordSyncAt: now,
+      lastDiscordAttemptAt: null,
+      nextRefreshAt: "2026-09-02T12:10:00.000Z",
+    };
+
+    const actorCharacter = {
+      name: "Actor",
+      prof: "WARRIOR" as const,
+      icon: null,
+      lvl: 100,
+      characterId: 123,
+      accountId: 456,
+    };
+
+    const timer = { ...storedTimer, member, actorCharacter, deletedAt: null };
+    const deletedTimer = { ...timer, deletedAt: now };
+    const sourceTimers = [timer, storedTimer, deletedTimer];
+
+    const history = {
+      id: 42,
+      guildId: guild.id,
+      guildName: guild.name,
+      world: storedTimer.world,
+      timerKey: storedTimer.timerKey,
+      npcId: storedTimer.npcId,
+      npc: storedTimer.npc,
+      action: "DELETE",
+      member,
+      actorCharacter,
+      minSpawnTime: null,
+      maxSpawnTime: now,
+      canRestore: true,
+      createdAt: now,
+    };
+
+    const layer = provideServices(
+      makeData({
+        getAll: () => Effect.succeed(sourceTimers),
+        getRecentHistory: () => Effect.succeed([history]),
+      }),
+    );
+
+    const [timers, entries] = await Effect.runPromise(
+      Effect.all([
+        getAllTimers("Aldous"),
+        getRecentTimerHistory(guild.id, "Aldous"),
+      ]).pipe(Effect.provide(layer)),
+    );
+
+    expect(timers).toEqual(
+      await Effect.runPromise(decodeDomainJson(TimersResponse, sourceTimers)),
+    );
+    expect(timers[0]?.actorCharacter).toEqual(actorCharacter);
+    expect(entries[0]?.actorCharacter).toEqual(actorCharacter);
+    expect(timers[2]?.deletedAt).toBe(now.toISOString());
+    expect(timers[1]).not.toHaveProperty("actorCharacter");
+    expect(timers[0]?.member).toEqual({
+      ...member,
+      roles: [
+        {
+          id: restrictedRole.id,
+          guildId: restrictedRole.guildId,
+          name: restrictedRole.name,
+          color: restrictedRole.color,
+          position: restrictedRole.position,
+          permissions: restrictedRole.permissions,
+          lvlRangeFrom: restrictedRole.lvlRangeFrom,
+          lvlRangeTo: restrictedRole.lvlRangeTo,
+        },
+      ],
+      updatedAt: now.toISOString(),
+      lastDiscordSyncAt: now.toISOString(),
+    });
+    expect(timers[0]?.deletedAt).toBeNull();
+    expect(timers[1]).not.toHaveProperty("member");
+    expect(timers[1]).not.toHaveProperty("deletedAt");
+    expect(entries[0]?.minSpawnTime).toBeNull();
+    expect(entries[0]?.maxSpawnTime).toBe(now.toISOString());
+    expect(entries[0]?.createdAt).toBe(now.toISOString());
+    expect(entries[0]?.member).toEqual(timers[0]?.member);
+  });
+
+  it.each([
+    { ...storedTimer, minSpawnTime: new Date("invalid") },
+    { ...storedTimer, minSpawnTime: new Date("+010000-01-01T00:00:00.000Z") },
+    { ...storedTimer, updatedAt: "invalid" },
+    { ...storedTimer, npc: { ...storedTimer.npc, lvl: "100" } },
+    { ...storedTimer, wasReset: null },
+    { ...storedTimer, member: null },
+    { ...storedTimer, member: undefined },
+    { ...storedTimer, actorCharacter: null },
+    { ...storedTimer, actorCharacter: undefined },
+    {
+      ...storedTimer,
+      member: {
+        id: 1,
+        userId: "user-a",
+        guildId: guild.id,
+        type: "USER",
+        name: "Member",
+        active: true,
+        roles: [],
+        updatedAt: now,
+        nextRefreshAt: new Date("invalid"),
+      },
+    },
+  ])(
+    "retains infrastructure failures for malformed timer responses %#",
+    async (timer) => {
+      const layer = provideServices(
+        makeData({
+          getGuildTimers: () => Effect.succeed([timer]),
+        }),
+      );
+
+      const error = await Effect.runPromise(
+        Effect.flip(getGuildTimers(guild.id).pipe(Effect.provide(layer))),
+      );
+
+      expect(error).toBeInstanceOf(TimersInfrastructureError);
+    },
+  );
 
   it("keeps hidden timer history filtered by forwarding the exact scoped policy", async () => {
     const calls: Array<{

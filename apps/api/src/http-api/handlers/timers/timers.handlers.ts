@@ -7,7 +7,13 @@ import { Context, Effect, Schema } from "effect";
 
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { decodeDomainJson } from "../../domain-json.schema.js";
+import {
+  decodeTimerResponse,
+  decodeTimersResponse,
+  decodeTimerHistoryResponse,
+  decodeTimerNpcSearchResponse,
+  decodeCreateAutoTimerResponse,
+} from "./timer-response.schema.js";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -15,15 +21,10 @@ import {
 } from "@lootlog/schema/permissions";
 import type { Guild, Role } from "#src/timers/timers.types";
 import { LootlogApi } from "../../lootlog-api.js";
-import {
-  CreateAutoTimerResponse,
-  TimerResponse,
-  TimersResponse,
-  TimerHistoryListResponse,
-  TimerNpcSearchResponse,
-  type CreateManualTimerRequest,
-  type CreateAutoTimerRequest,
-  type ResetTimerRequest,
+import type {
+  CreateManualTimerRequest,
+  CreateAutoTimerRequest,
+  ResetTimerRequest,
 } from "#src/contracts/timers/schemas";
 
 import {
@@ -156,8 +157,8 @@ const data = <A>(
   ) => Effect.Effect<A, TimersDataFailure>,
 ) => Effect.flatMap(TimersData, operation);
 
-const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+const mapResponseError = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  effect.pipe(
     Effect.mapError((cause) => new TimersInfrastructureError({ cause })),
   );
 
@@ -183,7 +184,7 @@ export const getAllTimers = Effect.fn("getAllTimers")(function* (
   const current = yield* identity;
   const value = yield* data((service) => service.getAll(current, world));
 
-  return yield* decode(TimersResponse, value);
+  return yield* mapResponseError(decodeTimersResponse(value));
 });
 
 export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
@@ -194,7 +195,7 @@ export const getRecentTimerHistory = Effect.fn("getRecentTimerHistory")(
       service.getRecentHistory(access, world, limit),
     );
 
-    return yield* decode(TimerHistoryListResponse, value);
+    return yield* mapResponseError(decodeTimerHistoryResponse(value));
   },
 );
 
@@ -205,7 +206,7 @@ export const getGuildTimers = Effect.fn("getGuildTimers")(function* (
   const access = yield* requireGuild(guildId, Permission.LOOTLOG_TIMERS_READ);
   const value = yield* data((service) => service.getGuildTimers(access, world));
 
-  return yield* decode(TimersResponse, value);
+  return yield* mapResponseError(decodeTimersResponse(value));
 });
 
 export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
@@ -220,7 +221,7 @@ export const searchTimerNpcs = Effect.fn("searchTimerNpcs")(function* (
     service.searchNpcs(access.guild.id, world, search, limit),
   );
 
-  return yield* decode(TimerNpcSearchResponse, value);
+  return yield* mapResponseError(decodeTimerNpcSearchResponse(value));
 });
 
 export const createAutoTimer = Effect.fn("createAutoTimer")(function* (
@@ -229,7 +230,7 @@ export const createAutoTimer = Effect.fn("createAutoTimer")(function* (
   const current = yield* identity;
   const value = yield* data((service) => service.createAuto(current, payload));
 
-  return yield* decode(CreateAutoTimerResponse, value);
+  return yield* mapResponseError(decodeCreateAutoTimerResponse(value));
 });
 
 export const resetGuildTimer = Effect.fn("resetGuildTimer")(function* (
@@ -243,7 +244,7 @@ export const resetGuildTimer = Effect.fn("resetGuildTimer")(function* (
     service.reset(access, timerIdentifier, payload),
   );
 
-  return yield* decode(TimerResponse, value);
+  return yield* mapResponseError(decodeTimerResponse(value));
 });
 
 export const deleteGuildTimer = Effect.fn("deleteGuildTimer")(function* (
@@ -268,7 +269,7 @@ export const getGuildTimerHistory = Effect.fn("getGuildTimerHistory")(
       service.getHistory(access, world, timerIdentifier, limit),
     );
 
-    return yield* decode(TimerHistoryListResponse, value);
+    return yield* mapResponseError(decodeTimerHistoryResponse(value));
   },
 );
 
@@ -282,7 +283,7 @@ export const restoreGuildTimer = Effect.fn("restoreGuildTimer")(function* (
     service.restore(access, historyEntryId),
   );
 
-  return yield* decode(TimerResponse, value);
+  return yield* mapResponseError(decodeTimerResponse(value));
 });
 
 export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
@@ -296,7 +297,7 @@ export const createManualGuildTimer = Effect.fn("createManualGuildTimer")(
       service.createManual(access, payload),
     );
 
-    return yield* decode(TimerResponse, value);
+    return yield* mapResponseError(decodeTimerResponse(value));
   },
 );
 
