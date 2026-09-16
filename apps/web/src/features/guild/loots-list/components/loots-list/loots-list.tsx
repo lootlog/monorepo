@@ -17,6 +17,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Globe2, PackageOpen, SearchX } from "lucide-react";
 
+import { LootListSyncStatus } from "./loot-list-sync-status";
 import { useLiveLootList } from "./use-live-loot-list";
 
 export const LootsList = () => {
@@ -30,7 +31,10 @@ export const LootsList = () => {
     hasNextPage,
     t,
     themedKey,
-    newLootIds,
+    freshness,
+    retryReconciliation,
+    resumeReconciliation,
+    connected,
     virtualizer,
     virtualItems,
     totalCount,
@@ -68,9 +72,18 @@ export const LootsList = () => {
     );
   }
 
+  const syncStatus = (
+    <LootListSyncStatus
+      freshness={freshness}
+      connected={connected}
+      onRetry={retryReconciliation}
+    />
+  );
+
   if (!isLoading && !hasLoots) {
     return (
-      <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 pb-3">
+        {syncStatus}
         <Empty className="min-h-56 w-full max-w-xl">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -112,10 +125,12 @@ export const LootsList = () => {
 
   return (
     <SharedTooltipProvider>
+      {syncStatus}
       <ScrollArea
         id="loots-list"
         className="h-24 flex-1 relative"
         ref={scrollElementRef}
+        onScroll={resumeReconciliation}
       >
         {isLoading ? (
           <div
@@ -175,10 +190,7 @@ export const LootsList = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-stretch">
                       {rowLoots.map((loot) => (
                         <div key={loot.id} className="h-full">
-                          <LootsListItem
-                            loot={loot}
-                            isNew={newLootIds[loot.id]}
-                          />
+                          <LootsListItem loot={loot} />
                         </div>
                       ))}
                     </div>
@@ -230,7 +242,7 @@ export const LootsList = () => {
                       </div>
                     )
                   ) : loot ? (
-                    <LootsListItem loot={loot} isNew={newLootIds[loot.id]} />
+                    <LootsListItem loot={loot} />
                   ) : null}
                 </div>
               );

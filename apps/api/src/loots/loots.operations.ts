@@ -5,7 +5,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
-import { Clock, Effect, Schema } from "effect";
+import { Cause, Clock, Effect, Schema } from "effect";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
 import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import {
@@ -116,12 +116,26 @@ export interface LootsOperations {
 interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
-  readonly stats: LootStatsService;
-  readonly redis: RedisService;
+  readonly stats: Pick<LootStatsService, "invalidateCache">;
+  readonly redis: Pick<RedisService, "deleteByPattern" | "getOrSetJsonEffect">;
   readonly logger: ApplicationLogger;
 }
 
 const CACHE_TTL_SECONDS = 10;
+
+const MAX_PENDING_DETAIL_READS = 1_024;
+
+const visibilityScope = (permissions: Permission[], roles: Role[]) => ({
+  permissions: [...permissions].sort(),
+  roles: roles
+    .map((role) => ({
+      id: role.id,
+      lvlRangeFrom: role.lvlRangeFrom,
+      lvlRangeTo: role.lvlRangeTo,
+      permissions: [...role.permissions].sort(),
+    }))
+    .sort((left, right) => left.id.localeCompare(right.id)),
+});
 
 const cacheKey = (
   guild: Guild,
@@ -129,18 +143,6 @@ const cacheKey = (
   roles: Role[],
   params: FetchLootsParamsDto,
 ) => {
-  const visibilityScope = {
-    permissions: [...permissions].sort(),
-    roles: roles
-      .map((role) => ({
-        id: role.id,
-        lvlRangeFrom: role.lvlRangeFrom,
-        lvlRangeTo: role.lvlRangeTo,
-        permissions: [...role.permissions].sort(),
-      }))
-      .sort((left, right) => left.id.localeCompare(right.id)),
-  };
-
   return [
     "loots",
     "list",
@@ -148,7 +150,7 @@ const cacheKey = (
     Buffer.from(
       stableJsonStringify({
         params: { ...params, cursor: 0 },
-        visibilityScope,
+        visibilityScope: visibilityScope(permissions, roles),
       }),
     ).toString("base64url"),
   ].join(":");
@@ -189,6 +191,11 @@ export const makeLootsOperations = ({
   redis,
   logger,
 }: LootsDependencies): LootsOperations => {
+  const pendingDetails = new Map<
+    string,
+    ReturnType<LootQueryOperations["fetchLootById"]>
+  >();
+
   const attempt = <A>(operation: string, run: () => Promise<A>) =>
     Effect.tryPromise({
       try: run,
@@ -353,7 +360,40 @@ export const makeLootsOperations = ({
       ),
 
     fetchLootById: (guild, accessPolicy, roles, lootId) =>
-      visibleLoot("loots.query.byId", guild, accessPolicy, roles, lootId),
+      Effect.uninterruptibleMask((restore) =>
+        Effect.gen(function* () {
+          const permissions = getEffectiveCapabilities(accessPolicy);
+
+          const key = stableJsonStringify({
+            guildId: guild.id,
+            lootId,
+            visibilityScope: visibilityScope(permissions, roles),
+          });
+
+          const pending = pendingDetails.get(key);
+
+          const read = query.fetchLootById(guild, permissions, roles, lootId);
+
+          // A disconnected initiating client must not cancel another client's read.
+          if (pending)
+            return yield* restore(
+              pending.pipe(
+                Effect.catchCauseIf(Cause.hasInterruptsOnly, () => read),
+              ),
+            );
+
+          // Bound retained flights; completed results are never cached.
+          if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
+            return yield* restore(read);
+
+          const shared = yield* Effect.cached(read);
+          pendingDetails.set(key, shared);
+
+          return yield* restore(shared).pipe(
+            Effect.ensuring(Effect.sync(() => pendingDetails.delete(key))),
+          );
+        }),
+      ),
 
     resolveLootItemByHid: (guild, accessPolicy, roles, options) =>
       query.resolveLootItemByHid(
