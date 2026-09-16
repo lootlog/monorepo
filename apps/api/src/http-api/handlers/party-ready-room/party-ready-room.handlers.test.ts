@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Effect, Layer, Schema } from "effect";
+import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   PermissionDeniedError,
   ResourceConflictError,
@@ -270,4 +271,75 @@ it("returns active discovery summaries for the requested world without participa
       expiresAt: projection.expiresAt,
     },
   ]);
+});
+
+it("serializes room and participant dates without weakening response validation", async () => {
+  const participant = {
+    participantId: "participant-a",
+    discordId: identity.discordId,
+    character,
+    partyPresence: "IN_PARTY" as const,
+    createdAt: projection.createdAt,
+    updatedAt: projection.updatedAt,
+  };
+
+  const room = {
+    ...projection,
+    participants: { "participant-a": participant },
+  };
+
+  const layer = <A>(value: A) =>
+    provideServices(
+      makeAuthorization(),
+      makeData({
+        get: () => Effect.succeed(value),
+      }),
+    );
+
+  const result = await Effect.runPromise(
+    getReadyRoom("room-a").pipe(
+      Effect.provide(
+        layer({
+          ...room,
+          createdAt: new Date(room.createdAt),
+          updatedAt: new Date(room.updatedAt),
+          expiresAt: new Date(room.expiresAt),
+          participants: {
+            "participant-a": {
+              ...participant,
+              createdAt: new Date(participant.createdAt),
+              updatedAt: new Date(participant.updatedAt),
+            },
+          },
+        }),
+      ),
+    ),
+  );
+
+  expect(result).toEqual(room);
+
+  for (const value of [
+    { ...room, expiresAt: new Date(Number.NaN) },
+    { ...room, description: null },
+    { ...room, description: undefined },
+    { ...room, revision: 0 },
+    {
+      ...room,
+      participants: {
+        "participant-a": { ...participant, updatedAt: "invalid" },
+      },
+    },
+  ]) {
+    const failure = await Effect.runPromise(
+      Effect.flip(getReadyRoom("room-a").pipe(Effect.provide(layer(value)))),
+    );
+
+    const legacyFailure = await Effect.runPromise(
+      Effect.flip(decodeDomainJson(PartyReadyRoomResponse, value)),
+    );
+
+    expect(legacyFailure).toBeDefined();
+
+    expect(failure).toBeInstanceOf(ReadyRoomOperationError);
+  }
 });

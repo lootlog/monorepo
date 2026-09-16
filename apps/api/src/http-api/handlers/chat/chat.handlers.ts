@@ -7,17 +7,17 @@ import { Context, Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { applicationErrorStatusOrUndefined } from "#src/shared/http/http-errors";
-import { decodeDomainJson } from "../../domain-json.schema.js";
 import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
 import {
   ChatMessageActionResponse,
-  ChatMessagesResponse,
   ChatMessageResponse,
   type SendChatMessageRequest,
 } from "#src/contracts/chat/schemas";
+
+import { DomainDateTime } from "#src/shared/schema/response-codecs";
 
 import { LootlogApi } from "../../lootlog-api.js";
 
@@ -90,7 +90,7 @@ const data = <A>(
 ) => Effect.flatMap(ChatData, operation);
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new ChatOperationError({ cause })),
   );
 
@@ -110,6 +110,15 @@ const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
     },
   });
 
+export const ChatMessageDomainResponse = Schema.Struct({
+  ...ChatMessageResponse.fields,
+  timestamp: DomainDateTime,
+});
+
+export const ChatMessagesDomainResponse = Schema.Array(
+  ChatMessageDomainResponse,
+);
+
 const readCapabilities = [Permission.LOOTLOG_CHAT_READ] as const;
 
 const writeCapabilities = [
@@ -126,7 +135,7 @@ export const getChatMessages = Effect.fn("getChatMessages")(function* (
     service.getMessages(access.discordId, access.guildId),
   );
 
-  return yield* decode(ChatMessagesResponse, value);
+  return yield* decode(ChatMessagesDomainResponse, value);
 });
 
 export const sendChatMessage = Effect.fn("sendChatMessage")(function* (
@@ -139,7 +148,7 @@ export const sendChatMessage = Effect.fn("sendChatMessage")(function* (
     service.sendMessage(access.discordId, access.guildId, payload),
   );
 
-  return yield* decode(ChatMessageResponse, value);
+  return yield* decode(ChatMessageDomainResponse, value);
 });
 
 export const clearChatMessages = Effect.fn("clearChatMessages")(function* (
