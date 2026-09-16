@@ -522,6 +522,37 @@ describe("API HTTP boundary", () => {
     ]);
   });
 
+  it("resolves canonical and current alias loot routes while rejecting a stale alias", async () => {
+    const initialAlias = await request(`/guilds/${authorizedGuildId}/config`, {
+      method: "PATCH",
+      body: JSON.stringify({ vanityUrl: "previous-loot-alias" }),
+    });
+
+    expect(initialAlias.status).toBe(200);
+    expect((await request("/guilds/previous-loot-alias/loots")).status).toBe(
+      200,
+    );
+
+    const renamed = await request(`/guilds/${authorizedGuildId}/config`, {
+      method: "PATCH",
+      body: JSON.stringify({ vanityUrl: "current-loot-alias" }),
+    });
+
+    expect(renamed.status).toBe(200);
+
+    for (const guildId of [authorizedGuildId, "current-loot-alias"]) {
+      const list = await request(`/guilds/${guildId}/loots`);
+      expect(list.status).toBe(200);
+      expect(await list.json()).toEqual([]);
+
+      const missingLoot = await request(`/guilds/${guildId}/loots/42`);
+      expect(missingLoot.status).toBe(404);
+    }
+
+    const staleAlias = await request("/guilds/previous-loot-alias/loots");
+    expect(staleAlias.status).toBe(404);
+  });
+
   it("preserves expected 4xx statuses at the HTTP boundary", async () => {
     const missingTemplate = await request(
       `/guilds/${authorizedGuildId}/map-templates/missing-template`,

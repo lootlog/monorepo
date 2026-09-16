@@ -12,7 +12,7 @@ import {
   Permission,
   type Permission as PermissionValue,
 } from "@lootlog/schema/permissions";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Context, Effect, Layer, Metric, Schema } from "effect";
 import { applicationErrorResponse } from "../../application-error-response.js";
 import { HttpServerResponse } from "effect/unstable/http";
 import type { guildTable, roleTable } from "#src/database/drizzle/schema";
@@ -377,12 +377,25 @@ export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (
   return yield* data((service) => service.resolveLootItem(caller, query));
 });
 
+const lootDetailReads = Metric.counter("loot.detail.reads", {
+  description: "Authorized loot detail reads by visibility outcome",
+  incremental: true,
+});
+
 export const fetchLoot = Effect.fn("loots.fetchLoot")(function* (
   guildId: string | undefined,
   lootId: number,
 ) {
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
   const loot = yield* data((service) => service.fetchLoot(caller, lootId));
+  // A filtered result deliberately does not reveal whether a record exists.
+  const outcome = loot === null ? "unavailable" : "visible";
+  yield* Metric.update(Metric.withAttributes(lootDetailReads, { outcome }), 1);
+  yield* Effect.annotateCurrentSpan({
+    "organization.id": caller.guild.id,
+    "loot.id": lootId,
+    "loot.detail.outcome": outcome,
+  });
 
   if (loot === null) {
     return yield* new RecordsNotFound({
