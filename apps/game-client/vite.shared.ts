@@ -60,6 +60,12 @@ export function gameClientViteConfig(mode: string): UserConfig {
         },
       },
       target: "es2020",
+      // Lightning CSS lowers `:is()` to `:-webkit-any()` for browsers implied
+      // by the JS target. That fallback has pseudo-class specificity, so the
+      // preflight `:where(#lootlog-root) :is(button, ...)` reset would beat
+      // Tailwind utilities in production builds only. Margonem runs in
+      // current browsers; keep the CSS untouched.
+      cssTarget: ["chrome111", "edge111", "firefox128", "safari16.4"],
     },
     plugins: [react({ compiler: true }), tailwindcss()],
   };
