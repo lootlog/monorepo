@@ -114,6 +114,8 @@ describe("RedisService", () => {
       expect(client.set).toHaveBeenCalledWith(
         `lootlog:cache-generation:v1:${scope}`,
         expect.any(String),
+        "EX",
+        "3600",
       );
       expect(client.scan).not.toHaveBeenCalled();
       expect(client.keys).not.toHaveBeenCalled();
