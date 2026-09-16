@@ -1,5 +1,4 @@
 import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
-import { getStrokeDrainEasing } from "@/utils/notifications-and-detector/stroke-drain-easing";
 import { useEffect, useRef, useState } from "react";
 
 const RING_RADIUS = 11;
@@ -71,7 +70,7 @@ export const NpcNotificationCooldown = ({
       ],
       {
         duration: currentRemainingMs,
-        easing: getStrokeDrainEasing(currentRemainingMs),
+        easing: "linear",
         fill: "forwards",
       },
     );
