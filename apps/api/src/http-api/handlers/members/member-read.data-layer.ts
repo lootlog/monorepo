@@ -1,6 +1,7 @@
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { and, asc, desc, eq, isNotNull, or } from "drizzle-orm";
 import { Effect, Layer, Schema } from "effect";
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -14,6 +15,8 @@ import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config
 import { getAdminBulkRefreshRateLimit } from "#src/members/member-cache";
 import { ErrorKey } from "#src/members/error-key";
 import {
+  getMemberReadCacheScope,
+  getUserLootlogConfigCacheScope,
   getGuildMemberReferencesCacheKey,
   getGuildMembersSummaryCacheKey,
   getMemberLootlogConfigSummaryCacheKey,
@@ -30,17 +33,7 @@ import {
   MemberLootlogConfigSummaryResponse,
 } from "#src/contracts/members/schemas";
 
-export interface MemberReadCache {
-  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
-    key: string,
-    schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly setJson: <Value>(
-    key: string,
-    value: Value,
-    ttl: number,
-  ) => Effect.Effect<unknown, unknown>;
-}
+export type MemberReadCache = Pick<RedisService, "getOrSetJsonEffect">;
 
 const snapshotKey = (accountId: number, characterId: number) =>
   `${accountId}:${characterId}`;
@@ -91,22 +84,18 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
 
       const cached = <S extends Schema.ConstraintDecoder<unknown>, A>(
         key: string,
+        scopes: readonly string[],
         ttl: number,
         schema: S,
         load: Effect.Effect<A, unknown>,
       ) =>
-        cache.getJson(key, schema).pipe(
-          Effect.catch(() => Effect.succeed(null)),
-          Effect.flatMap((value) =>
-            value === null
-              ? load.pipe(
-                  Effect.tap((loaded) =>
-                    cache.setJson(key, loaded, ttl).pipe(Effect.ignore),
-                  ),
-                )
-              : Effect.succeed(value),
-          ),
-        );
+        cache.getOrSetJsonEffect({
+          key,
+          scopes,
+          ttlSeconds: ttl,
+          codec: makeJsonCodec(schema),
+          factory: load,
+        });
 
       return MemberReadData.of({
         getGuildMembers: (guildId, includeInactive) =>
@@ -115,6 +104,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
           operation(
             cached(
               getGuildMemberReferencesCacheKey(guildId, includeInactive),
+              [getMemberReadCacheScope(guildId)],
               30,
               MemberReferencesResponse,
               membersWithRoles(guildId, includeInactive).pipe(
@@ -137,6 +127,7 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
           operation(
             cached(
               getGuildMembersSummaryCacheKey(guildId),
+              [getMemberReadCacheScope(guildId)],
               30,
               MemberSummariesResponse,
               Effect.gen(function* () {
@@ -180,6 +171,10 @@ export const makeMemberReadDataLayer = (cache: MemberReadCache) =>
           operation(
             cached(
               getMemberLootlogConfigSummaryCacheKey(guildId, discordId),
+              [
+                getMemberReadCacheScope(guildId),
+                getUserLootlogConfigCacheScope(discordId),
+              ],
               60,
               MemberLootlogConfigSummaryResponse,
               Effect.gen(function* () {

@@ -1,3 +1,4 @@
+import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -26,7 +27,7 @@ export class EventCreationError extends TaggedErrorClass<EventCreationError>()(
 export const makeEventCreation =
   (
     database: Pick<typeof ApiDatabase.Service, "transaction">,
-    redis: Pick<RedisService, "deleteByPattern">,
+    redis: Pick<RedisService, "invalidateScopes">,
     logger: Pick<Logger, "warn">,
   ) =>
   (data: CreateEventRequest, guild: { id: string }) => {
@@ -178,7 +179,7 @@ export const makeEventCreation =
         );
 
       yield* Effect.tryPromise({
-        try: () => redis.deleteByPattern(`event-read:v2:${guild.id}:*`),
+        try: () => redis.invalidateScopes(eventReadCacheScope(guild.id)),
         catch: (cause) => cause,
       }).pipe(
         Effect.catch((error) =>

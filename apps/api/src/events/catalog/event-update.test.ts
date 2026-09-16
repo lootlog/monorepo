@@ -83,7 +83,10 @@ describe("event update Effect module", () => {
 
       const updateEvent = makeEventUpdate(
         database,
-        { deleteByPattern: () => Promise.resolve(0) },
+        {
+          invalidateScopes: () => Promise.resolve(),
+          deleteByPattern: () => Promise.resolve(0),
+        },
         catalog,
         logger,
       );

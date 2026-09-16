@@ -35,7 +35,7 @@ describe("EventReadCache", () => {
             ),
       );
     },
-    deleteByPattern: vi.fn<RedisService["deleteByPattern"]>(),
+    invalidateScopes: vi.fn<RedisService["invalidateScopes"]>(),
   };
 
   beforeEach(() => {
@@ -54,14 +54,18 @@ describe("EventReadCache", () => {
     };
 
     await Effect.runPromise(
-      service.getOrSet("event-read:test", NestedDates, () =>
-        Effect.succeed(value),
+      service.getOrSet(
+        service.getEventEntry("guild-1", "event-1", "test"),
+        NestedDates,
+        () => Effect.succeed(value),
       ),
     );
 
     const result = await Effect.runPromise(
-      service.getOrSet("event-read:test", NestedDates, () =>
-        Effect.die("cache miss"),
+      service.getOrSet(
+        service.getEventEntry("guild-1", "event-1", "test"),
+        NestedDates,
+        () => Effect.die("cache miss"),
       ),
     );
 
@@ -98,14 +102,18 @@ describe("EventReadCache", () => {
     };
 
     await Effect.runPromise(
-      service.getOrSet("event-read:test", EventKillHistoryResponse, () =>
-        Effect.succeed(value),
+      service.getOrSet(
+        service.getEventEntry("guild-1", "event-1", "test"),
+        EventKillHistoryResponse,
+        () => Effect.succeed(value),
       ),
     );
 
     const result = await Effect.runPromise(
-      service.getOrSet("event-read:test", EventKillHistoryResponse, () =>
-        Effect.die("cache miss"),
+      service.getOrSet(
+        service.getEventEntry("guild-1", "event-1", "test"),
+        EventKillHistoryResponse,
+        () => Effect.die("cache miss"),
       ),
     );
 

@@ -38,6 +38,7 @@ import {
 export interface TimerListCache {
   readonly getOrSet: (
     key: string,
+    guildId: string,
     load: Effect.Effect<ReadonlyArray<CachedTimerProjection>, unknown>,
   ) => Effect.Effect<ReadonlyArray<CachedTimerProjection>, unknown>;
 }
@@ -155,6 +156,7 @@ export const makeGuildTimerList = (
 
     const timers = yield* cache.getOrSet(
       cacheKey,
+      access.guild.id,
       Effect.gen(function* () {
         const selectedKeys = yield* readSelectedTimerKeys(
           database,

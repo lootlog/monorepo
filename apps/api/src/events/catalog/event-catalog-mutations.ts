@@ -1,6 +1,6 @@
 import { isObjectRecord } from "@lootlog/schema/records";
 import { eventHeroScope } from "#src/events/event-scope-query";
-import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
+import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { makeEventMapHydration } from "./event-map-hydration.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
@@ -65,13 +65,11 @@ export const makeEventCatalogMutations = (
     );
 
   const invalidate = (guildId: string, eventId: string) =>
-    invalidateEventCachePatterns(
+    invalidateEventCache(
       redis,
       logger,
-      [
-        `event-read:v2:${guildId}:guild:*`,
-        `event-read:v2:${guildId}:${eventId}:*`,
-      ],
+      guildId,
+      eventId,
       "Failed to invalidate event read cache",
     );
 

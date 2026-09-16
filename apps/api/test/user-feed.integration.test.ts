@@ -431,7 +431,7 @@ describe("personal Organization activity feed", () => {
     const create = makeKillCreation(
       database,
       {
-        deleteByPattern: () => Effect.void,
+        invalidateScopes: () => Effect.void,
         deleteIfValue: (key, value) =>
           Effect.sync(() => {
             if (seen.get(key) === value) seen.delete(key);

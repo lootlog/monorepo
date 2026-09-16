@@ -8,7 +8,7 @@ describe("event creation Effect module", () => {
     const createEvent = makeEventCreation(
       { transaction: () => Effect.die("Unexpected database access") },
       {
-        deleteByPattern: () =>
+        invalidateScopes: () =>
           Promise.reject(new Error("Unexpected cache invalidation")),
       },
       {
