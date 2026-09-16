@@ -1,3 +1,4 @@
+import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
@@ -104,14 +105,14 @@ export const makeEventRespawnCommands = (
   const invalidate = (guildId: string, eventId: string) =>
     Effect.forEach(
       [
-        `event-read:v2:${guildId}:guild:*`,
-        `event-read:v2:${guildId}:${eventId}:*`,
+        eventReadCacheScope(guildId, "guild"),
+        eventReadCacheScope(guildId, eventId),
       ],
-      (pattern) =>
+      (scope) =>
         bestEffort(
           "events.respawn.cache",
           Effect.tryPromise({
-            try: () => redis.deleteByPattern(pattern),
+            try: () => redis.invalidateScopes(scope),
             catch: (error) => error,
           }),
         ),

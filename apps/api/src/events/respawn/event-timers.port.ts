@@ -98,19 +98,16 @@ export const makeEventTimersPort = ({
 
   const invalidateCache = (guildId: string) =>
     external("eventTimers.cache.invalidate", () =>
-      redis.deleteByPattern(`timer:list:${guildId}:*`),
+      redis.invalidateScopes(`timer:list:${guildId}`),
     ).pipe(
-      Effect.tap((count) =>
-        count > 0
-          ? Effect.sync(() =>
-              logger.log({
-                level: "debug",
-                message: `Invalidated ${count} cache entries for guild ${guildId}`,
-              }),
-            )
-          : Effect.void,
+      Effect.tap(() =>
+        Effect.sync(() =>
+          logger.log({
+            level: "debug",
+            message: `Invalidated timer list cache for guild ${guildId}`,
+          }),
+        ),
       ),
-      Effect.asVoid,
     );
 
   const publishUpdate = (timer: Timer) => {

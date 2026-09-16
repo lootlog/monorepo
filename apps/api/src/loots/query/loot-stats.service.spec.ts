@@ -26,7 +26,7 @@ describe("LootStatsService access-scoped caching", () => {
   it("separates cache entries for different effective loot visibility", () => {
     const service = new LootStatsService(() => Effect.die("Unexpected SQL"), {
       getOrSetJsonEffect: () => Effect.die("Unexpected cache read"),
-      deleteByPattern: () =>
+      invalidateScopes: () =>
         Promise.reject(new Error("Unexpected cache invalidation")),
     });
 
@@ -76,7 +76,7 @@ describe("LootStatsService access-scoped caching", () => {
       {
         getOrSetJsonEffect: (options) =>
           Effect.succeed(options.codec.parse(JSON.stringify(expected))),
-        deleteByPattern: () =>
+        invalidateScopes: () =>
           Promise.reject(new Error("Unexpected cache invalidation")),
       },
     );

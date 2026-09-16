@@ -1,3 +1,4 @@
+import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -67,26 +68,12 @@ export const makeEventPointEdits = (
   const afterEdit = (guildId: string, eventId: string) =>
     Effect.all(
       [
-        Effect.forEach(
-          [
-            `event-read:v2:${guildId}:guild:*`,
-            `event-read:v2:${guildId}:${eventId}:*`,
-          ],
-          (pattern) =>
-            Effect.tryPromise({
-              try: () => redis.deleteByPattern(pattern),
-              catch: (error) => error,
-            }).pipe(
-              Effect.catch((error) =>
-                Effect.sync(() =>
-                  logger.warn("Failed to invalidate event ranking cache", {
-                    error,
-                    pattern,
-                  }),
-                ),
-              ),
-            ),
-          { concurrency: "unbounded", discard: true },
+        invalidateEventCache(
+          redis,
+          logger,
+          guildId,
+          eventId,
+          "Failed to invalidate event ranking cache",
         ),
         publisher
           .publish(RoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })

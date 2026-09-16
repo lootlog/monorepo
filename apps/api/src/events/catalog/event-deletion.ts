@@ -3,7 +3,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
-import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
+import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -36,7 +36,7 @@ export class EventDeletionError extends TaggedErrorClass<EventDeletionError>()(
 export const makeEventDeletion =
   (
     database: typeof ApiDatabase.Service,
-    redis: Pick<RedisService, "deleteByPattern">,
+    redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
     queue: EventDeletionQueue,
     logger: Pick<Logger, "warn">,
   ) =>
@@ -143,15 +143,13 @@ export const makeEventDeletion =
           }),
         );
 
-      yield* invalidateEventCachePatterns(
+      yield* invalidateEventCache(
         redis,
         logger,
-        [
-          getEventWrappedCachePattern(guild.id, eventId),
-          `event-read:v2:${guild.id}:guild:*`,
-          `event-read:v2:${guild.id}:${eventId}:*`,
-        ],
+        guild.id,
+        eventId,
         "Failed to invalidate event cache",
+        getEventWrappedCachePattern(guild.id, eventId),
       );
 
       return { success: true };

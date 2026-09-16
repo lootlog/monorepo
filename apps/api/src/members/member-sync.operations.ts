@@ -111,6 +111,8 @@ export const makeMemberSync = (
       existingRoleIds,
     );
 
+    // Even unchanged roles need fresh permission-cache sync timestamps and must
+    // retry invalidation if the previous attempt committed but cache clearing failed.
     yield* ports.invalidateMember({
       discordId: discordMember.user.id,
       guildId: discordMember.guildId,

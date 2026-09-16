@@ -3,7 +3,7 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
-import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
+import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -71,7 +71,7 @@ const updatedScoring = (
 export const makeEventUpdate =
   (
     database: typeof ApiDatabase.Service,
-    redis: Pick<RedisService, "deleteByPattern">,
+    redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
     catalogRead: Pick<EventsCatalogRead, "hydrateMutation">,
     logger: Pick<Logger, "warn">,
   ) =>
@@ -242,15 +242,13 @@ export const makeEventUpdate =
         );
 
       const updated = yield* catalogRead.hydrateMutation(eventId);
-      yield* invalidateEventCachePatterns(
+      yield* invalidateEventCache(
         redis,
         logger,
-        [
-          getEventWrappedCachePattern(guild.id, eventId),
-          `event-read:v2:${guild.id}:guild:*`,
-          `event-read:v2:${guild.id}:${eventId}:*`,
-        ],
+        guild.id,
+        eventId,
         "Failed to invalidate event cache",
+        getEventWrappedCachePattern(guild.id, eventId),
       );
 
       return attachComputedEventActive(

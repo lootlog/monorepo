@@ -104,7 +104,7 @@ it.each([
       const publications: string[] = [];
 
       const ports = {
-        invalidate: () => Effect.succeed(0),
+        invalidateList: () => Effect.succeed(0),
         publish: (key: string) =>
           Effect.sync(() => {
             publications.push(key);

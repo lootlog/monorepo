@@ -1,3 +1,4 @@
+import { makeJsonCodec, type RedisService } from "#src/redis/redis.service";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { emptyStatusResponse } from "#src/shared/http/handler-response";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
@@ -10,7 +11,7 @@ import { and, arrayOverlaps, desc, eq, or, sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { userCharactersLootlogSettingsTable } from "#src/database/drizzle/schema";
-import { getUserLootlogConfigCachePattern } from "#src/shared/cache";
+import { getUserLootlogConfigCacheScope } from "#src/shared/cache";
 import { LootlogApi } from "../../lootlog-api.js";
 import {
   CharacterLootlogConfigResponse,
@@ -40,16 +41,10 @@ type Operation = Effect.Effect<unknown, UserLootlogConfigOperationError>;
 const CACHE_TTL_SECONDS = 60;
 
 export interface UserLootlogConfigCache {
-  readonly getJson: <S extends Schema.ConstraintDecoder<unknown>>(
-    key: string,
-    schema: S,
-  ) => Effect.Effect<S["Type"] | null, unknown>;
-  readonly setJson: <Value>(
-    key: string,
-    value: Value,
-    ttl: number,
+  readonly getOrSetJsonEffect: RedisService["getOrSetJsonEffect"];
+  readonly invalidateScopes: (
+    ...scopes: string[]
   ) => Effect.Effect<void, unknown>;
-  readonly deleteByPattern: (pattern: string) => Effect.Effect<void, unknown>;
 }
 
 export class UserLootlogConfigData extends Context.Service<
@@ -78,17 +73,6 @@ export class UserLootlogConfigData extends Context.Service<
             ),
           );
 
-        const cacheRead = <S extends Schema.ConstraintDecoder<unknown>>(
-          key: string,
-          schema: S,
-        ) =>
-          cache
-            .getJson(key, schema)
-            .pipe(Effect.catch(() => Effect.succeed(null)));
-
-        const cacheWrite = <Value>(key: string, value: Value) =>
-          cache.setJson(key, value, CACHE_TTL_SECONDS).pipe(Effect.ignore);
-
         const findGuilds = (discordId: string, permission: Permission) =>
           selectAccessibleGuilds(database, discordId, [permission]).pipe(
             Effect.map((rows) =>
@@ -103,54 +87,58 @@ export class UserLootlogConfigData extends Context.Service<
                 const cacheKey = `user-lootlog-config:${discordId}:account:${accountId}`;
                 const keyAccess = yield* requestApiKeyAccess;
 
-                const cached = keyAccess
-                  ? null
-                  : yield* cacheRead(cacheKey, AccountLootlogConfigResponse);
-
-                if (cached !== null) return cached;
-
-                const [configs, guilds] = yield* Effect.all(
-                  [
-                    database
-                      .select()
-                      .from(userCharactersLootlogSettingsTable)
-                      .where(
-                        and(
-                          eq(
-                            userCharactersLootlogSettingsTable.userId,
-                            discordId,
+                const load = Effect.gen(function* () {
+                  const [configs, guilds] = yield* Effect.all(
+                    [
+                      database
+                        .select()
+                        .from(userCharactersLootlogSettingsTable)
+                        .where(
+                          and(
+                            eq(
+                              userCharactersLootlogSettingsTable.userId,
+                              discordId,
+                            ),
+                            eq(
+                              userCharactersLootlogSettingsTable.accountId,
+                              accountId,
+                            ),
                           ),
-                          eq(
-                            userCharactersLootlogSettingsTable.accountId,
-                            accountId,
-                          ),
+                        )
+                        .orderBy(
+                          desc(userCharactersLootlogSettingsTable.createdAt),
                         ),
-                      )
-                      .orderBy(
-                        desc(userCharactersLootlogSettingsTable.createdAt),
-                      ),
-                    findGuilds(discordId, Permission.LOOTLOG_LOOTS_WRITE),
-                  ],
-                  { concurrency: "unbounded" },
-                );
+                      findGuilds(discordId, Permission.LOOTLOG_LOOTS_WRITE),
+                    ],
+                    { concurrency: "unbounded" },
+                  );
 
-                const writableGuildIds = new Set(guilds.map(({ id }) => id));
+                  const writableGuildIds = new Set(guilds.map(({ id }) => id));
 
-                const result = Object.fromEntries(
-                  configs.map((config) => [
-                    config.characterId,
-                    {
-                      ...config,
-                      catchingGuildIds: config.catchingGuildIds.filter((id) =>
-                        writableGuildIds.has(id),
-                      ),
-                    },
-                  ]),
-                );
+                  const result = Object.fromEntries(
+                    configs.map((config) => [
+                      config.characterId,
+                      {
+                        ...config,
+                        catchingGuildIds: config.catchingGuildIds.filter((id) =>
+                          writableGuildIds.has(id),
+                        ),
+                      },
+                    ]),
+                  );
 
-                if (!keyAccess) yield* cacheWrite(cacheKey, result);
+                  return result;
+                });
 
-                return result;
+                return yield* keyAccess
+                  ? load
+                  : cache.getOrSetJsonEffect({
+                      key: cacheKey,
+                      scopes: [getUserLootlogConfigCacheScope(discordId)],
+                      ttlSeconds: CACHE_TTL_SECONDS,
+                      codec: makeJsonCodec(AccountLootlogConfigResponse),
+                      factory: load,
+                    });
               }),
             ),
           upsertCharacter: (discordId, accountId, payload) =>
@@ -221,7 +209,7 @@ export class UserLootlogConfigData extends Context.Service<
                 }
 
                 yield* cache
-                  .deleteByPattern(getUserLootlogConfigCachePattern(discordId))
+                  .invalidateScopes(getUserLootlogConfigCacheScope(discordId))
                   .pipe(Effect.ignore);
 
                 return keyAccess

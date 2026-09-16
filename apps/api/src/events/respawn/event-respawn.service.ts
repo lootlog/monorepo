@@ -72,7 +72,7 @@ export const makeEventRespawn = (
 
   return {
     getHeroRespawnConfig(guildId: string, eventId: string, heroId: string) {
-      const cacheKey = eventReadCache.getEventKey(
+      const cacheKey = eventReadCache.getEventEntry(
         guildId,
         eventId,
         "hero-respawn-config",
