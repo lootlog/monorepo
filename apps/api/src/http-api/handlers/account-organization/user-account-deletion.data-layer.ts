@@ -23,9 +23,9 @@ import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import {
   getAuthTokenCachePattern,
   getLegacyAuthTokenCacheKey,
-  getMemberReadCachePattern,
+  getMemberReadCacheScope,
   getPermissionsCacheKey,
-  getUserLootlogConfigCachePattern,
+  getUserLootlogConfigCacheScope,
 } from "#src/shared/cache";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
 import {
@@ -42,6 +42,9 @@ type RemovedMember = {
 export interface UserAccountDeletionPorts {
   readonly cleanupBattlelog: (userId: string) => Effect.Effect<void, unknown>;
   readonly deleteCacheKey: (key: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateCacheScopes: (
+    ...scopes: string[]
+  ) => Effect.Effect<void, unknown>;
   readonly deleteCachePattern: (
     pattern: string,
   ) => Effect.Effect<unknown, unknown>;
@@ -157,10 +160,10 @@ const invalidateRemovedMember = (
     : null;
 
   const effects: Array<Effect.Effect<unknown, unknown>> = [
-    ports.deleteCachePattern(
-      getUserLootlogConfigCachePattern(member.discordId),
+    ports.invalidateCacheScopes(
+      getUserLootlogConfigCacheScope(member.discordId),
     ),
-    ports.deleteCachePattern(getMemberReadCachePattern(member.guildId)),
+    ports.invalidateCacheScopes(getMemberReadCacheScope(member.guildId)),
   ];
 
   if (member.globalUserId && cacheKeys && legacyCacheKeys) {
@@ -209,8 +212,8 @@ export const makeUserAccountDeletion = (
       [
         ports.deleteCachePattern(getAuthTokenCachePattern(identity.userId)),
         ports.deleteCacheKey(getLegacyAuthTokenCacheKey(identity.userId)),
-        ports.deleteCachePattern(
-          getUserLootlogConfigCachePattern(identity.discordId),
+        ports.invalidateCacheScopes(
+          getUserLootlogConfigCacheScope(identity.discordId),
         ),
         ...removedMembers.map((member) =>
           invalidateRemovedMember(ports, member),

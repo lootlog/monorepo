@@ -31,16 +31,14 @@ import { getKillStatsBucketStart } from "./kill-stats-period.js";
 
 const DEDUP_TTL_SECONDS = 30;
 
-const STATS_CACHE_PREFIX = "kill-stats";
-
 export class KillCreationError extends TaggedErrorClass<KillCreationError>()(
   "KillCreationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
 export interface KillCreationCache {
-  readonly deleteByPattern: (
-    pattern: string,
+  readonly invalidateScopes: (
+    ...scopes: string[]
   ) => Effect.Effect<unknown, unknown>;
   readonly deleteIfValue: (
     key: string,
@@ -81,13 +79,13 @@ export const makeKillCreation = (
       }),
     );
 
-  const invalidate = (pattern: string) =>
-    cache.deleteByPattern(pattern).pipe(
+  const invalidate = (scope: string) =>
+    cache.invalidateScopes(scope).pipe(
       Effect.catch((error) =>
         Effect.sync(() =>
           logger.warn("Failed to invalidate kill stats cache", {
             error,
-            pattern,
+            scope,
           }),
         ),
       ),
@@ -394,7 +392,7 @@ export const makeKillCreation = (
       );
 
       if (personalUpdated) {
-        yield* invalidate(`${STATS_CACHE_PREFIX}:user-*:${discordId}:*`);
+        yield* invalidate(`kill-stats:user:${discordId}`);
       }
     }
 
@@ -523,12 +521,7 @@ export const makeKillCreation = (
 
     yield* Effect.forEach(
       results,
-      ({ guildId }) =>
-        invalidate(`${STATS_CACHE_PREFIX}:guild-*:${guildId}:*`).pipe(
-          Effect.andThen(
-            invalidate(`${STATS_CACHE_PREFIX}:member-kills:${guildId}:*`),
-          ),
-        ),
+      ({ guildId }) => invalidate(`kill-stats:guild:${guildId}`),
       { concurrency: "unbounded", discard: true },
     );
     const updated = results.filter(({ updated }) => updated).length;

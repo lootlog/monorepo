@@ -8,60 +8,67 @@ const EVENT_READ_CACHE_PREFIX = "event-read:v2";
 
 const EVENT_READ_CACHE_TTL_SECONDS = 10;
 
+export const eventReadCacheScope = (guildId: string, eventId?: string) =>
+  eventId === undefined
+    ? `${EVENT_READ_CACHE_PREFIX}:${guildId}`
+    : `${EVENT_READ_CACHE_PREFIX}:${guildId}:${eventId}`;
+
+export const eventReadCacheEntry = <Params extends object>(
+  guildId: string,
+  eventId: string,
+  view: string,
+  params?: Params,
+) => ({
+  key: [
+    EVENT_READ_CACHE_PREFIX,
+    guildId,
+    eventId,
+    view,
+    Buffer.from(stableJsonStringify(params ?? {})).toString("base64url"),
+  ].join(":"),
+  scopes: [eventReadCacheScope(guildId), eventReadCacheScope(guildId, eventId)],
+});
+
 export const makeEventReadCache = (
-  redis: Pick<RedisService, "deleteByPattern" | "getOrSetJsonEffect">,
+  redis: Pick<RedisService, "invalidateScopes" | "getOrSetJsonEffect">,
 ) => {
   const logger = new Logger("EventReadCache");
 
-  const buildKey = <Params extends object>(
-    guildId: string,
-    eventSegment: string,
-    scope: string,
-    params: Params,
-  ) =>
-    [
-      EVENT_READ_CACHE_PREFIX,
-      guildId,
-      eventSegment,
-      scope,
-      Buffer.from(stableJsonStringify(params)).toString("base64url"),
-    ].join(":");
-
-  const deleteByPattern = async (pattern: string) => {
+  const invalidateScopes = async (scope: string) => {
     try {
-      await redis.deleteByPattern(pattern);
+      await redis.invalidateScopes(scope);
     } catch (error) {
       logger.warn("Failed to invalidate event read cache", error);
     }
   };
 
   return {
-    getGuildKey<Params extends object>(
+    getGuildEntry<Params extends object>(
       guildId: string,
       scope: string,
       params?: Params,
     ) {
-      return buildKey(guildId, "guild", scope, params ?? {});
+      return eventReadCacheEntry(guildId, "guild", scope, params ?? {});
     },
 
-    getEventKey<Params extends object>(
+    getEventEntry<Params extends object>(
       guildId: string,
       eventId: string,
       scope: string,
       params?: Params,
     ) {
-      return buildKey(guildId, eventId, scope, params ?? {});
+      return eventReadCacheEntry(guildId, eventId, scope, params ?? {});
     },
 
     getOrSet<S extends Schema.ConstraintDecoder<unknown>, E>(
-      key: string,
+      entry: ReturnType<typeof eventReadCacheEntry>,
       schema: S,
       factory: () => Effect.Effect<S["Type"], E>,
     ): Effect.Effect<S["Type"], E> {
       const codec = makeJsonCodec(Schema.toType(schema), superjson);
 
       return redis.getOrSetJsonEffect({
-        key,
+        ...entry,
         codec,
         ttlSeconds: EVENT_READ_CACHE_TTL_SECONDS,
         factory: Effect.suspend(factory),
@@ -70,13 +77,13 @@ export const makeEventReadCache = (
     },
 
     async invalidateGuild(guildId: string) {
-      await deleteByPattern(`${EVENT_READ_CACHE_PREFIX}:${guildId}:*`);
+      await invalidateScopes(eventReadCacheScope(guildId));
     },
 
     async invalidateEvent(guildId: string, eventId: string) {
       await Promise.all([
-        deleteByPattern(`${EVENT_READ_CACHE_PREFIX}:${guildId}:guild:*`),
-        deleteByPattern(`${EVENT_READ_CACHE_PREFIX}:${guildId}:${eventId}:*`),
+        invalidateScopes(eventReadCacheScope(guildId, "guild")),
+        invalidateScopes(eventReadCacheScope(guildId, eventId)),
       ]);
     },
   };

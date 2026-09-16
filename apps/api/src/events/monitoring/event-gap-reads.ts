@@ -2,7 +2,7 @@ import { eventMapScope } from "#src/events/event-scope-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
+import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -49,19 +49,11 @@ export const makeEventGapReads = (
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
-    const key = [
-      "event-read:v2",
-      guildId,
-      eventId,
-      scope,
-      Buffer.from(stableJsonStringify(params)).toString("base64url"),
-    ].join(":");
-
     const codec = makeJsonCodec(Schema.toType(schema), superjson);
 
     return redis
       .getOrSetJsonEffect({
-        key,
+        ...eventReadCacheEntry(guildId, eventId, scope, params),
         codec,
         ttlSeconds: 10,
         factory: load,

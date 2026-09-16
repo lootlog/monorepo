@@ -1,4 +1,4 @@
-import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
+import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq } from "drizzle-orm";
 import { Effect, Schema } from "effect";
@@ -57,15 +57,13 @@ export const makeEventPointRecalculation =
       }
 
       yield* points.recalculate(event.id, event.basePointsPerKill);
-      yield* invalidateEventCachePatterns(
+      yield* invalidateEventCache(
         redis,
         logger,
-        [
-          getEventWrappedCachePattern(guild.id, eventId),
-          `event-read:v2:${guild.id}:guild:*`,
-          `event-read:v2:${guild.id}:${eventId}:*`,
-        ],
+        guild.id,
+        eventId,
         "Failed to invalidate event cache",
+        getEventWrappedCachePattern(guild.id, eventId),
       );
 
       return { success: true };

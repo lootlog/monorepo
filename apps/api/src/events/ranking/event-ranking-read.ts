@@ -96,7 +96,7 @@ export const makeEventRankingRead = (
 
   return {
     getRanking(guildId: string, eventId: string) {
-      const key = cache.getEventKey(guildId, eventId, "ranking");
+      const key = cache.getEventEntry(guildId, eventId, "ranking");
 
       return cache
         .getOrSet(key, CachedEventRankingResponse, () =>

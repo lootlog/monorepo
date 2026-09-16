@@ -40,7 +40,7 @@ describe("kill creation Effect module", () => {
 
     try {
       const cache: KillCreationCache = {
-        deleteByPattern: () => Effect.succeed(0),
+        invalidateScopes: () => Effect.succeed(0),
         deleteIfValue: () => Effect.succeed(0),
         setNx: () => Effect.succeed(false),
       };
@@ -60,7 +60,7 @@ describe("kill creation Effect module", () => {
 
     try {
       const cache: KillCreationCache = {
-        deleteByPattern: () => Effect.succeed(0),
+        invalidateScopes: () => Effect.succeed(0),
         deleteIfValue: () => Effect.succeed(0),
         setNx: () => Effect.fail(new Error("redis unavailable")),
       };
@@ -81,7 +81,7 @@ it("a scoped key cannot suppress later personal or other-organization kill recor
   const keys = new Set<string>();
 
   const cache: KillCreationCache = {
-    deleteByPattern: () => Effect.succeed(0),
+    invalidateScopes: () => Effect.succeed(0),
     deleteIfValue: () => Effect.succeed(0),
     setNx: (key) =>
       Effect.sync(() => {
@@ -192,7 +192,7 @@ for (const { name, failingTable, failedTotalTable } of [
     const claims = new Map<string, string>();
 
     const cache: KillCreationCache = {
-      deleteByPattern: () => Effect.succeed(0),
+      invalidateScopes: () => Effect.succeed(0),
       setNx: (key, token) =>
         Effect.sync(() => {
           if (claims.has(key)) return false;
@@ -315,7 +315,7 @@ it("does not release a replacement claim when a failed write outlives its claim"
   const replacementToken = "replacement-owner";
 
   const cache: KillCreationCache = {
-    deleteByPattern: () => Effect.succeed(0),
+    invalidateScopes: () => Effect.succeed(0),
     setNx: (key, token) =>
       Effect.sync(() => {
         if (claims.has(key)) return false;

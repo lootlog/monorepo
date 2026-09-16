@@ -69,6 +69,9 @@ export const timersData = Layer.unwrap(
           Effect.tryPromise(() => lock.release()).pipe(Effect.ignore),
       );
 
+    const invalidateList = (guildId: string) =>
+      attempt(() => redis.invalidateScopes(`timer:list:${guildId}`));
+
     const service = TimersData.makeService({
       ...makeTimerHistory(database),
       createAuto: makeAutoTimer(database, {
@@ -98,7 +101,7 @@ export const timersData = Layer.unwrap(
           );
         },
         get: (key) => attempt(() => redis.get(key)),
-        invalidate: (pattern) => attempt(() => redis.deleteByPattern(pattern)),
+        invalidateList,
         publish: (routingKey, payload) =>
           rabbit.publish({
             exchange: "default",
@@ -114,7 +117,7 @@ export const timersData = Layer.unwrap(
         withLock,
       }),
       createManual: makeManualTimer(database, {
-        invalidate: (pattern) => attempt(() => redis.deleteByPattern(pattern)),
+        invalidateList,
         publish: (routingKey, payload) =>
           rabbit.publish({
             exchange: "default",
@@ -123,7 +126,7 @@ export const timersData = Layer.unwrap(
           }),
       }),
       delete: makeDeleteTimer(database, {
-        invalidate: (pattern) => attempt(() => redis.deleteByPattern(pattern)),
+        invalidateList,
         publish: (routingKey, payload) =>
           rabbit.publish({
             exchange: "default",
@@ -132,7 +135,7 @@ export const timersData = Layer.unwrap(
           }),
       }),
       restore: makeRestoreTimer(database, {
-        invalidate: (pattern) => attempt(() => redis.deleteByPattern(pattern)),
+        invalidateList,
         publish: (routingKey, payload) =>
           rabbit.publish({
             exchange: "default",
@@ -141,7 +144,7 @@ export const timersData = Layer.unwrap(
           }),
       }),
       reset: makeResetTimer(database, {
-        invalidate: (pattern) => attempt(() => redis.deleteByPattern(pattern)),
+        invalidateList,
         publish: (routingKey, payload) =>
           rabbit.publish({
             exchange: "default",
@@ -152,9 +155,10 @@ export const timersData = Layer.unwrap(
       }),
       getAll: makeAllTimerList(database),
       getGuildTimers: makeGuildTimerList(database, {
-        getOrSet: (key, factory) =>
+        getOrSet: (key, guildId, factory) =>
           redis.getOrSetJsonEffect({
             key,
+            scopes: [`timer:list:${guildId}`],
             factory,
             ttlSeconds: 2,
             codec: makeJsonCodec(Schema.Array(CachedTimerProjectionSchema)),

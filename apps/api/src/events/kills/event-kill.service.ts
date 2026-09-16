@@ -301,7 +301,7 @@ export const makeEventKills = (
   function getEventHeroStats(guildId: string, eventId: string) {
     return eventReadCache
       .getOrSet(
-        eventReadCache.getEventKey(guildId, eventId, "hero-stats-v2"),
+        eventReadCache.getEventEntry(guildId, eventId, "hero-stats-v2"),
         Schema.Array(EventHeroStatsResponse),
         () => getEventHeroStatsUncached(guildId, eventId),
       )
@@ -978,7 +978,7 @@ export const makeEventKills = (
   ) {
     return eventReadCache
       .getOrSet(
-        eventReadCache.getEventKey(guildId, eventId, "hero-kill-history", {
+        eventReadCache.getEventEntry(guildId, eventId, "hero-kill-history", {
           cursor,
           heroId,
           limit,
@@ -1054,7 +1054,7 @@ export const makeEventKills = (
   ) {
     return eventReadCache
       .getOrSet(
-        eventReadCache.getEventKey(guildId, eventId, "event-kill-history", {
+        eventReadCache.getEventEntry(guildId, eventId, "event-kill-history", {
           cursor,
           heroId,
           limit,
@@ -1094,7 +1094,7 @@ export const makeEventKills = (
   ) {
     return eventReadCache
       .getOrSet(
-        eventReadCache.getEventKey(guildId, eventId, "member-kill-history", {
+        eventReadCache.getEventEntry(guildId, eventId, "member-kill-history", {
           cursor,
           heroId,
           limit,

@@ -37,6 +37,7 @@ export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
 
 export interface RedisGetOrSetJsonOptions<T> {
   key: string;
+  scopes?: readonly string[];
   ttlSeconds: number;
   factory: () => Promise<T>;
   lockTtlSeconds?: number;
@@ -61,48 +62,16 @@ const DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS = 2_000;
 
 const DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS = 50;
 
+// Reads renew active scopes; idle metadata expires. A missing scope gets a new
+// random token, so expiry cannot make an old cache fill reachable again.
+const READ_CACHE_GENERATION_TTL_SECONDS = 3_600;
+
 const RELEASE_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
 end
 return 0
 `;
-
-// Only ephemeral read caches participate. Wrapped and authorization caches retain
-// their existing key and invalidation contracts.
-const readCacheScopes = (key: string): string[] => {
-  const match = /^(timer:list|loots:list|loot-stats):([^:]+):/.exec(key);
-
-  if (match) return [`${match[1]}:${match[2]}`];
-
-  const kills =
-    /^kill-stats:(user-[^:]+|guild-[^:]+|member-kills):([^:]+):/.exec(key);
-
-  if (kills)
-    return [
-      `kill-stats:${kills[1]?.startsWith("user-") ? "user" : "guild"}:${kills[2]}`,
-    ];
-  const event = /^event-read:v2:([^:]+):([^:]+):/.exec(key);
-
-  return event
-    ? [`event-read:v2:${event[1]}`, `event-read:v2:${event[1]}:${event[2]}`]
-    : [];
-};
-
-const readCacheScopePattern = (pattern: string): string | undefined => {
-  const kills = /^kill-stats:(user-\*|guild-\*|member-kills):([^:*]+):\*$/.exec(
-    pattern,
-  );
-
-  if (kills)
-    return `kill-stats:${kills[1] === "user-*" ? "user" : "guild"}:${kills[2]}`;
-
-  return /^(?:(?:timer:list|loots:list|loot-stats):[^:*]+|event-read:v2:[^:*]+(?::[^:*]+)?):\*$/.test(
-    pattern,
-  )
-    ? pattern.slice(0, -2)
-    : undefined;
-};
 
 const READ_CACHE_GENERATIONS_SCRIPT = `
 local versions = {}
@@ -112,6 +81,7 @@ for i, key in ipairs(KEYS) do
     version = ARGV[i]
     redis.call("SET", key, version)
   end
+  redis.call("EXPIRE", key, ARGV[#KEYS + 1])
   versions[i] = version
 end
 return versions
@@ -186,6 +156,7 @@ export class RedisService {
 
   async getOrSetJson<T>({
     key,
+    scopes = [],
     ttlSeconds,
     factory,
     lockTtlSeconds = DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS,
@@ -193,13 +164,11 @@ export class RedisService {
     waitIntervalMs = DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS,
     codec,
   }: RedisGetOrSetJsonOptions<T>): Promise<T> {
-    const scopes = readCacheScopes(key);
-
     if (scopes.length > 0) {
       const generations = await this.eval<string[]>(
         READ_CACHE_GENERATIONS_SCRIPT,
         scopes.map((scope) => `cache-generation:v1:${scope}`),
-        scopes.map(() => randomUUID()),
+        [...scopes.map(() => randomUUID()), READ_CACHE_GENERATION_TTL_SECONDS],
       );
 
       // Capture before loading: an invalidated in-flight fill stays unreachable.
@@ -216,26 +185,15 @@ export class RedisService {
     const lockToken = randomUUID();
     const lockAcquired = await this.setNX(lockKey, lockToken, lockTtlSeconds);
 
-    if (!lockAcquired) {
-      const cachedAfterWait = await this.waitForJsonCache<T>(
-        key,
-        waitTimeoutMs,
-        waitIntervalMs,
-        codec,
-      );
-
-      if (cachedAfterWait !== null) {
-        return cachedAfterWait;
-      }
-
-      const value = await factory();
-      await this.setJson(key, value, ttlSeconds, codec);
-
-      return value;
-    }
-
     try {
-      const cachedAfterLock = await this.getJson<T>(key, codec);
+      const cachedAfterLock = lockAcquired
+        ? await this.getJson<T>(key, codec)
+        : await this.waitForJsonCache<T>(
+            key,
+            waitTimeoutMs,
+            waitIntervalMs,
+            codec,
+          );
 
       if (cachedAfterLock !== null) {
         return cachedAfterLock;
@@ -246,7 +204,7 @@ export class RedisService {
 
       return value;
     } finally {
-      await this.releaseSingleFlightLock(lockKey, lockToken);
+      if (lockAcquired) await this.releaseSingleFlightLock(lockKey, lockToken);
     }
   }
 
@@ -371,19 +329,22 @@ export class RedisService {
     return await this.run(this.redis.send("DEL", this.prefixKey(key)));
   }
 
+  async invalidateScopes(...scopes: string[]): Promise<void> {
+    await Promise.all(
+      scopes.map((scope) =>
+        this.set(
+          `cache-generation:v1:${scope}`,
+          randomUUID(),
+          READ_CACHE_GENERATION_TTL_SECONDS,
+        ),
+      ),
+    );
+  }
+
   async deleteByPattern(
     pattern: string,
     batchSize = DEFAULT_DELETE_BATCH_SIZE,
   ): Promise<number> {
-    const scope = readCacheScopePattern(pattern);
-
-    if (scope !== undefined) {
-      await this.set(`cache-generation:v1:${scope}`, randomUUID());
-
-      // Entries expire by TTL; no keys are physically deleted on this path.
-      return 0;
-    }
-
     const prefixedPattern = this.prefixKey(pattern);
     let cursor = "0";
     let deletedCount = 0;

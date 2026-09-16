@@ -24,6 +24,7 @@ describe("event map assignments Effect module", () => {
       const assignments = makeEventMapAssignments(
         boundary.database,
         {
+          invalidateScopes: () => Promise.resolve(),
           deleteByPattern: () =>
             Promise.reject(new Error("Unexpected cache invalidation")),
         },
@@ -93,7 +94,10 @@ it.each([300, null])(
 
       const assignments = makeEventMapAssignments(
         boundary.database,
-        { deleteByPattern: () => Promise.resolve(0) },
+        {
+          invalidateScopes: () => Promise.resolve(),
+          deleteByPattern: () => Promise.resolve(0),
+        },
         { getEventRespawnTimer: () => Effect.die("Unexpected timer read") },
         { publish },
         { warn: () => {} },

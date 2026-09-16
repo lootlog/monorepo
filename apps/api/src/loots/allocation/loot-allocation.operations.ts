@@ -33,8 +33,8 @@ import type { LootAllocationPersistence } from "#src/loots/allocation/loot-alloc
 const SUBMISSION_WINDOW_MS = 10 * 60 * 1000;
 
 export interface LootAllocationCache {
-  readonly deleteByPattern: (
-    pattern: string,
+  readonly invalidateScopes: (
+    ...scopes: string[]
   ) => Effect.Effect<unknown, unknown>;
 }
 
@@ -281,7 +281,7 @@ export const makeLootAllocationOperations = (options: {
 
         yield* Effect.all(
           organizationIds.map((guildId) =>
-            options.cache.deleteByPattern(`loots:list:${guildId}:*`).pipe(
+            options.cache.invalidateScopes(`loots:list:${guildId}`).pipe(
               Effect.catch((error) =>
                 Effect.sync(() =>
                   options.logger.warn("Failed to invalidate loots list cache", {

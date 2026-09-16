@@ -33,7 +33,7 @@ import {
 } from "#src/timers/timer-projection";
 
 export interface ResetTimerPorts {
-  readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
   readonly publish: <
     Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
@@ -267,7 +267,7 @@ export const makeResetTimer = (
     );
 
     const response = mapTimerResponse(projection);
-    yield* ports.invalidate(`timer:list:${access.guild.id}:*`);
+    yield* ports.invalidateList(access.guild.id);
     yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
     yield* ports.publish(
       RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,

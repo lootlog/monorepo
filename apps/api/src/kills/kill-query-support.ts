@@ -15,6 +15,7 @@ export interface KillQueryCache {
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
     ttlSeconds: number,
+    scopes: readonly string[],
   ) => Effect.Effect<S["Type"], unknown>;
 }
 
@@ -97,7 +98,15 @@ export const cachedKillQuery = <
   readonly cache: KillQueryCache;
   readonly logger: ApplicationLogger;
   readonly key: string;
+  readonly scopes: readonly string[];
   readonly label: string;
   readonly schema: S;
   readonly load: Effect.Effect<S["Type"], unknown>;
-}) => options.cache.getOrSet(options.key, options.schema, options.load, 30);
+}) =>
+  options.cache.getOrSet(
+    options.key,
+    options.schema,
+    options.load,
+    30,
+    options.scopes,
+  );

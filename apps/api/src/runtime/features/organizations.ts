@@ -152,6 +152,8 @@ export const accountOrganizationOperationsLive = Layer.effect(
               : Effect.fail(new Error("Unexpected Battlelog cleanup response")),
           ),
         ),
+      invalidateCacheScopes: (...scopes) =>
+        cacheAttempt(() => redis.invalidateScopes(...scopes)),
       deleteCacheKey: (key) => cacheAttempt(() => redis.del(key)),
       deleteCachePattern: (pattern) =>
         cacheAttempt(() => redis.deleteByPattern(pattern)),
