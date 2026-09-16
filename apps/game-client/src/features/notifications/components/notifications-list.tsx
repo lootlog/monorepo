@@ -27,7 +27,7 @@ import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 type NotificationsListProps = {
@@ -67,8 +67,12 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const manualRemovalTimeoutsRef = useRef(new Map<string, number>());
   const membersByGuildId = useNotificationGuildMembers(visibleNotifications);
   const { isReady: isMutesReady, mutes } = useCurrentUserNotificationMutes();
-  const updateNotificationMutes = useUpdateNotificationMutes();
-  const applyToReadyRoom = usePartyReadyRoomControllerApply();
+
+  const { isPending: isMutePending, mutate: updateMutes } =
+    useUpdateNotificationMutes();
+
+  const { isPending: isJoiningReadyRoom, mutate: applyToReadyRoom } =
+    usePartyReadyRoomControllerApply();
 
   const mergeReadyRoomProjection = usePartyFinderStore(
     (state) => state.mergeProjection,
@@ -155,67 +159,88 @@ export const NotificationsList: FC<NotificationsListProps> = ({
     [removeNotification],
   );
 
-  const handleUpdateMutes = (mutesPatch: NotificationMutesPatch) => {
-    updateNotificationMutes.mutate(mutesPatch);
-  };
+  const updateMutesRef = useRef(updateMutes);
 
-  const handleJoinReadyRoom = (notification: StoredNotification) => {
-    const character = buildCurrentCharacterPayload();
+  useEffect(() => {
+    updateMutesRef.current = updateMutes;
+  }, [updateMutes]);
 
-    if (!character) return;
+  // These callbacks feed memoized rows (see SingleNotification), so they must
+  // keep their identity across unrelated list renders. The mutes mutate
+  // function is read through a ref because its identity is not guaranteed
+  // to be stable; the others depend only on stable store actions.
+  const handleUpdateMutes = useCallback(
+    (mutesPatch: NotificationMutesPatch) => {
+      updateMutesRef.current(mutesPatch);
+    },
+    [],
+  );
 
-    applyToReadyRoom.mutate(
-      {
-        pathParams: {
-          notificationId: notification.notificationId,
+  const handleJoinReadyRoom = useCallback(
+    (notification: StoredNotification) => {
+      const character = buildCurrentCharacterPayload();
+
+      if (!character) return;
+
+      applyToReadyRoom(
+        {
+          pathParams: {
+            notificationId: notification.notificationId,
+          },
+          data: {
+            world: notification.world,
+            character,
+          },
         },
-        data: {
-          world: notification.world,
-          character,
+        {
+          onSuccess: (projection) => {
+            if (projection.schemaVersion !== 3) return;
+            mergeReadyRoomProjection(
+              decodePartyReadyRoomProjection(projection),
+            );
+            setOpen("notifications", false);
+            setOpen("chat", true);
+            clearNotifications();
+          },
         },
-      },
-      {
-        onSuccess: (projection) => {
-          if (projection.schemaVersion !== 3) return;
-          mergeReadyRoomProjection(decodePartyReadyRoomProjection(projection));
-          setOpen("notifications", false);
-          setOpen("chat", true);
-          clearNotifications();
-        },
-      },
-    );
-  };
+      );
+    },
+    [applyToReadyRoom, clearNotifications, mergeReadyRoomProjection, setOpen],
+  );
 
-  const handleRemoveNotification = (notificationId: string) => {
-    if (!animationEffectsEnabled) {
-      removeNotification(notificationId);
+  const handleRemoveNotification = useCallback(
+    (notificationId: string) => {
+      if (!animationEffectsEnabled) {
+        removeNotification(notificationId);
 
-      return;
-    }
+        return;
+      }
 
-    if (manualRemovalTimeoutsRef.current.has(notificationId)) return;
+      if (manualRemovalTimeoutsRef.current.has(notificationId)) return;
 
-    setManuallyLeavingNotificationIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-      nextIds.add(notificationId);
-
-      return nextIds;
-    });
-
-    const timeoutId = window.setTimeout(() => {
-      manualRemovalTimeoutsRef.current.delete(notificationId);
-      removeNotification(notificationId);
       setManuallyLeavingNotificationIds((currentIds) => {
-        if (!currentIds.has(notificationId)) return currentIds;
         const nextIds = new Set(currentIds);
-        nextIds.delete(notificationId);
+        nextIds.add(notificationId);
 
         return nextIds;
       });
-    }, MANUAL_EXIT_ANIMATION_DURATION_MS);
 
-    manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
-  };
+      const timeoutId = window.setTimeout(() => {
+        manualRemovalTimeoutsRef.current.delete(notificationId);
+        removeNotification(notificationId);
+        setManuallyLeavingNotificationIds((currentIds) => {
+          if (!currentIds.has(notificationId)) return currentIds;
+          const nextIds = new Set(currentIds);
+          nextIds.delete(notificationId);
+
+          return nextIds;
+        });
+      }, MANUAL_EXIT_ANIMATION_DURATION_MS);
+
+      manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
+    },
+    [animationEffectsEnabled, removeNotification],
+  );
 
   const getNotificationRow = (notification: StoredNotification) => {
     const settingsKey = getNotificationSettingsKey(notification);
@@ -235,9 +260,9 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         autoHideState={notificationAutoHideByListKey[notification.listKey]}
         categorySettings={categorySettings}
         animationEffectsEnabled={animationEffectsEnabled}
-        isJoiningReadyRoom={applyToReadyRoom.isPending}
+        isJoiningReadyRoom={isJoiningReadyRoom}
         isMutesReady={isMutesReady}
-        isMutePending={updateNotificationMutes.isPending}
+        isMutePending={isMutePending}
         mutes={mutes}
         onJoinReadyRoom={handleJoinReadyRoom}
         onPauseAutoHide={pauseNotificationAutoHide}

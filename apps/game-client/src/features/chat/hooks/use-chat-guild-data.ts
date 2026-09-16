@@ -11,6 +11,8 @@ import {
   rolesControllerGetGuildRoles,
   type ChatMessageResponseDtoOutput as ChatMessageType,
   type MemberSummaryResponseDtoOutput as GuildMember,
+  type NullableMemberResponseDto,
+  type RoleResponseDtoOutput,
 } from "@lootlog/client/main";
 
 import {
@@ -20,6 +22,7 @@ import {
 } from "@/lib/api/generated-helpers";
 
 import {
+  areChatMentionContextsEqual,
   buildChatMentionContext,
   hasChatMentionToken,
   type ChatMentionContext,
@@ -37,6 +40,56 @@ type ChatGuildData = {
   mentionContext: ChatMentionContext;
   messages: ChatMessageType[];
 };
+
+type MentionContextInput = {
+  currentCharacterNick: string;
+  currentMember?: NullableMemberResponseDto | null;
+  members?: GuildMember[];
+  messages?: ChatMessageType[];
+  roles?: RoleResponseDtoOutput[];
+};
+
+type MentionContextCacheEntry = MentionContextInput & {
+  context: ChatMentionContext;
+};
+
+const mentionContextCache = new Map<string, MentionContextCacheEntry>();
+
+/**
+ * Every rendered row of a guild receives this context, so its identity must
+ * only change when its content does. A new message from a known sender keeps
+ * the previous object even though the message array is new.
+ */
+const getStableChatMentionContext = (
+  guildId: string,
+  input: MentionContextInput,
+): ChatMentionContext => {
+  const cached = mentionContextCache.get(guildId);
+
+  if (
+    cached &&
+    cached.currentCharacterNick === input.currentCharacterNick &&
+    cached.currentMember === input.currentMember &&
+    cached.members === input.members &&
+    cached.messages === input.messages &&
+    cached.roles === input.roles
+  ) {
+    return cached.context;
+  }
+
+  const nextContext = buildChatMentionContext(input);
+
+  const context =
+    cached && areChatMentionContextsEqual(cached.context, nextContext)
+      ? cached.context
+      : nextContext;
+
+  mentionContextCache.set(guildId, { ...input, context });
+
+  return context;
+};
+
+const EMPTY_MESSAGES: ChatMessageType[] = [];
 
 const getGuildIdsToLoad = (
   guildIds: string[],
@@ -201,13 +254,13 @@ export const useChatGuildData = ({
 
   const guildDataById = guildIdsToLoad.reduce<Record<string, ChatGuildData>>(
     (result, guildId, index) => {
-      const messages = messageQueries[index]?.data ?? [];
-      const members = memberQueries[index]?.data ?? [];
+      const messages = messageQueries[index]?.data ?? EMPTY_MESSAGES;
+      const members = memberQueries[index]?.data;
 
       result[guildId] = {
         messages,
         memberLookup: mapGuildMembersByUserId(members),
-        mentionContext: buildChatMentionContext({
+        mentionContext: getStableChatMentionContext(guildId, {
           currentCharacterNick,
           currentMember: currentMemberQueries[index]?.data,
           members,

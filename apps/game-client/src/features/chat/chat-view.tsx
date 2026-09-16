@@ -1,5 +1,6 @@
 import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ChatViewHeader } from "./components/chat-view-header";
@@ -9,7 +10,12 @@ import { ChatWindowActions } from "./components/chat-window-actions";
 import { ChatGatheringBar } from "./components/chat-gathering-bar";
 import { useChatGuildData } from "./hooks/use-chat-guild-data";
 import { getGuildNamesById } from "@/lib/api/generated-helpers";
-import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
+import {
+  type ChatMessageResponseDtoOutput as ChatMessageType,
+  type MemberSummaryResponseDtoOutput as GuildMember,
+  useChatControllerDeleteChatMessage,
+} from "@lootlog/client/main";
+import { updateChatMessagesCache } from "./chat-query-cache.helpers";
 import { useChatStore } from "@/store/chat.store";
 import { useGameStore } from "@/store/game.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -20,6 +26,7 @@ import {
   getChatRenderableMessages,
   getCurrentChatMessages,
   getNextSelectedGuildId,
+  removeChatMessage,
 } from "./chat.helpers";
 import { isChatNpcType } from "./hooks/use-hidden-npc-types";
 import {
@@ -37,6 +44,7 @@ import { useSocket } from "@/contexts/socket-context";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {
   getChatUnreadSummary,
+  getChatUnreadSummaryByGuildId,
   markChatMessagesRead,
   reconcileChatReadState,
   type ChatReadState,
@@ -254,12 +262,22 @@ export const ChatView = ({
   const guildNamesById = getGuildNamesById(visibleGuilds);
   const unread = getChatUnreadSummary(readState, effectiveSelectedGuildId);
 
-  const unreadCountByGuildId = Object.fromEntries(
-    (visibleGuilds ?? []).map((guild) => {
-      const summary = getChatUnreadSummary(readState, guild.id);
+  const unreadByGuildId = getChatUnreadSummaryByGuildId(
+    readState,
+    (visibleGuilds ?? []).map((guild) => guild.id),
+  );
 
-      return [guild.id, summary.attention];
-    }),
+  const unreadCountByGuildId = Object.fromEntries(
+    Object.entries(unreadByGuildId).map(([guildId, summary]) => [
+      guildId,
+      summary.attention,
+    ]),
+  );
+
+  const unreadGuildIds = new Set(
+    Object.entries(unreadByGuildId).flatMap(([guildId, summary]) =>
+      summary.ids.size > 0 ? [guildId] : [],
+    ),
   );
 
   const effectiveFilter = !filtersVisible
@@ -317,18 +335,63 @@ export const ChatView = ({
     retryFailed();
   };
 
-  const handleReplyToMessage = (message: ChatMessageType) => {
-    if (!canReplyToChatMessage(message)) return;
-    useChatStore.getState().setReplyDraft({
-      guildId: message.guildId,
-      messageId: message.id,
-      senderNick:
-        membersByGuildId[message.guildId]?.[message.senderId]?.name ??
-        message.characterData.nick,
-      message: message.message,
-      type: message.type,
-    });
-  };
+  // Both callbacks feed memoized transcript rows (see ChatTranscriptRow), so
+  // they must not change identity per render; they read the stores directly.
+  const handleReplyToMessage = useCallback(
+    (message: ChatMessageType, member?: GuildMember) => {
+      if (!canReplyToChatMessage(message)) return;
+      useChatStore.getState().setReplyDraft({
+        guildId: message.guildId,
+        messageId: message.id,
+        senderNick: member?.name ?? message.characterData.nick,
+        message: message.message,
+        type: message.type,
+      });
+    },
+    [],
+  );
+
+  const queryClient = useQueryClient();
+
+  const [deletingMessageIds, setDeletingMessageIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+
+  const { mutate: deleteChatMessage } = useChatControllerDeleteChatMessage({
+    mutation: {
+      onMutate: ({ pathParams }) => {
+        setDeletingMessageIds(
+          (current) => new Set([...current, pathParams.messageId]),
+        );
+      },
+      onSuccess: (_response, { pathParams }) => {
+        updateChatMessagesCache({
+          guildId: pathParams.guildId,
+          queryClient,
+          updater: (old) =>
+            old ? removeChatMessage(old, pathParams.messageId) : old,
+        });
+      },
+      onSettled: (_response, _error, { pathParams }) => {
+        setDeletingMessageIds((current) => {
+          if (!current.has(pathParams.messageId)) return current;
+          const next = new Set(current);
+          next.delete(pathParams.messageId);
+
+          return next;
+        });
+      },
+    },
+  });
+
+  const handleDeleteMessage = useCallback(
+    (message: ChatMessageType) => {
+      deleteChatMessage({
+        pathParams: { guildId: message.guildId, messageId: message.id },
+      });
+    },
+    [deleteChatMessage],
+  );
 
   const actions = (
     <ChatWindowActions
@@ -349,15 +412,7 @@ export const ChatView = ({
             selectedGuildId={selectedGuildId}
             onGuildChange={setSelectedGuildId}
             unreadCountByGuildId={unreadCountByGuildId}
-            unreadGuildIds={
-              new Set(
-                (visibleGuilds ?? []).flatMap((guild) =>
-                  getChatUnreadSummary(readState, guild.id).ids.size > 0
-                    ? [guild.id]
-                    : [],
-                ),
-              )
-            }
+            unreadGuildIds={unreadGuildIds}
             actions={embedded ? actions : null}
           />
           {filtersVisible && (
@@ -403,6 +458,8 @@ export const ChatView = ({
                 membersByGuildId={membersByGuildId}
                 mentionContextsByGuildId={mentionContextsByGuildId}
                 onReplyToMessage={handleReplyToMessage}
+                onDeleteMessage={handleDeleteMessage}
+                deletingMessageIds={deletingMessageIds}
                 renderables={currentRenderableMessages}
                 selectedGuildId={effectiveSelectedGuildId}
                 isActive={isOpen}

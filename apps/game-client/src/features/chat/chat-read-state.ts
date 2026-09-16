@@ -99,6 +99,31 @@ export const getChatUnreadSummary = (state: ChatReadState, guildId: string) => {
   };
 };
 
+export type ChatUnreadSummary = ReturnType<typeof getChatUnreadSummary>;
+
+const EMPTY_UNREAD_SUMMARY: ChatUnreadSummary = Object.freeze({
+  ids: new Set<string>(),
+  attention: 0,
+  conversations: false,
+  reports: false,
+});
+
+/** One pass over the state for every guild the header renders a badge for. */
+export const getChatUnreadSummaryByGuildId = (
+  state: ChatReadState,
+  guildIds: readonly string[],
+) => {
+  const summaries: Record<string, ChatUnreadSummary> = {};
+
+  for (const guildId of guildIds) {
+    summaries[guildId] = state[guildId]
+      ? getChatUnreadSummary(state, guildId)
+      : EMPTY_UNREAD_SUMMARY;
+  }
+
+  return summaries;
+};
+
 type ReconcileChatReadStateInput = {
   allowedGuildIds: ReadonlySet<string>;
   failedGuildIds: ReadonlySet<string>;

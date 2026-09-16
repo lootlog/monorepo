@@ -2,10 +2,9 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "cn";
 import type { FC } from "react";
 import { MessageType } from "@/api/chat.api";
-import {
-  type ChatMessageResponseDtoOutput as ChatMessageType,
-  type MemberSummaryResponseDtoOutput as GuildMember,
-  useChatControllerDeleteChatMessage,
+import type {
+  ChatMessageResponseDtoOutput as ChatMessageType,
+  MemberSummaryResponseDtoOutput as GuildMember,
 } from "@lootlog/client/main";
 
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
@@ -20,11 +19,8 @@ import { ChatNpcMessage } from "@/features/chat/components/chat-npc-message";
 import { canReplyToChatMessage } from "@/features/chat/chat-reply.helpers";
 import type { ChatMentionContext } from "@/features/chat/chat-mentions.helpers";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 
-import { removeChatMessage } from "@/features/chat/chat.helpers";
 import { dispatchChatScrollToMessage } from "@/features/chat/chat-scroll-to-message";
-import { updateChatMessagesCache } from "@/features/chat/chat-query-cache.helpers";
 import { ChatCharacterTooltip } from "@/features/chat/components/chat-character-tooltip";
 import { ChatPlayerMessageView } from "@/features/chat/components/chat-player-message-view";
 import { ChatReplyPreview } from "./chat-reply-preview";
@@ -40,6 +36,8 @@ type ChatMessageProps = {
   member?: GuildMember;
   mentionContext?: ChatMentionContext;
   onReply?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({
@@ -51,28 +49,15 @@ export const ChatMessage: FC<ChatMessageProps> = ({
   member,
   mentionContext,
   onReply,
+  onDelete,
+  isDeleting = false,
 }) => {
   const { t } = useTranslation("chat");
   const heroName = useGameStore((state) => state.game?.hero.name);
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const queryClient = useQueryClient();
   const memberColor = useMemberColor(member);
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
   const messageBody = getChatMessageBody(message);
-
-  const { mutate: deleteChatMessageMutation, isPending: isDeleting } =
-    useChatControllerDeleteChatMessage({
-      mutation: {
-        onSuccess: () => {
-          updateChatMessagesCache({
-            guildId: message.guildId,
-            queryClient,
-            updater: (old: ChatMessageType[] | undefined) =>
-              old ? removeChatMessage(old, message.id) : old,
-          });
-        },
-      },
-    });
 
   const canDeleteMessage = message.canDelete;
   const canReplyMessage = canReplyToChatMessage(message);
@@ -112,10 +97,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
     isDeleting,
     message,
     onReply,
-    onDelete: () =>
-      deleteChatMessageMutation({
-        pathParams: { guildId: message.guildId, messageId: message.id },
-      }),
+    onDelete: () => onDelete?.(),
   };
 
   return (

@@ -101,7 +101,7 @@ export const getChatMentionRoleColorsByName = (
   return getNormalizedMentionColorsByName(roles);
 };
 
-const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
+const buildMentionEntities = (context: ChatMentionContext): MentionEntity[] => {
   const entitiesByName = new Map<string, MentionEntity>();
 
   const upsertEntity = ({
@@ -140,7 +140,7 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
     });
   };
 
-  context?.memberNames?.forEach((name) =>
+  context.memberNames?.forEach((name) =>
     upsertEntity({
       name,
       isCurrentUserTarget: false,
@@ -149,7 +149,7 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
         context.memberColorsByName?.[normalizeChatMentionName(name)] ?? null,
     }),
   );
-  context?.roleNames?.forEach((name) =>
+  context.roleNames?.forEach((name) =>
     upsertEntity({
       name,
       isCurrentUserTarget: false,
@@ -157,7 +157,7 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
       color: context.roleColorsByName?.[normalizeChatMentionName(name)] ?? null,
     }),
   );
-  context?.currentUserNames?.forEach((name) =>
+  context.currentUserNames?.forEach((name) =>
     upsertEntity({
       name,
       isCurrentUserTarget: true,
@@ -166,7 +166,7 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
         context.memberColorsByName?.[normalizeChatMentionName(name)] ?? null,
     }),
   );
-  context?.currentUserRoleNames?.forEach((name) =>
+  context.currentUserRoleNames?.forEach((name) =>
     upsertEntity({
       name,
       isCurrentUserTarget: true,
@@ -178,6 +178,29 @@ const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
   return [...entitiesByName.values()].sort((left, right) => {
     return right.name.length - left.name.length;
   });
+};
+
+const NO_MENTION_ENTITIES: MentionEntity[] = [];
+
+const mentionEntitiesByContext = new WeakMap<
+  ChatMentionContext,
+  MentionEntity[]
+>();
+
+/**
+ * Entity tables are derived once per context object: every rendered message of
+ * a guild shares the same context, so building the table per message would
+ * scale with rows x members on every render.
+ */
+const getMentionEntities = (context?: ChatMentionContext): MentionEntity[] => {
+  if (!context) return NO_MENTION_ENTITIES;
+  const cachedEntities = mentionEntitiesByContext.get(context);
+
+  if (cachedEntities) return cachedEntities;
+  const entities = buildMentionEntities(context);
+  mentionEntitiesByContext.set(context, entities);
+
+  return entities;
 };
 
 const matchMentionAt = ({
@@ -237,9 +260,11 @@ export const getChatMentionSegments = (
   message: string,
   context?: ChatMentionContext,
 ): ChatMentionSegment[] => {
-  const mentionEntities = getMentionEntities(context);
+  const mentionEntities = hasChatMentionToken(message)
+    ? getMentionEntities(context)
+    : NO_MENTION_ENTITIES;
 
-  if (!hasChatMentionToken(message) || mentionEntities.length === 0) {
+  if (mentionEntities.length === 0) {
     return [
       {
         text: message,
@@ -388,6 +413,40 @@ export const buildChatMentionContext = ({
     roleColorsByName,
   };
 };
+
+const areStringListsEqual = (left?: string[], right?: string[]) => {
+  if (left === right) return true;
+
+  if (!left || !right || left.length !== right.length) return false;
+
+  return left.every((value, index) => value === right[index]);
+};
+
+const areColorMapsEqual = (
+  left?: Record<string, string | null>,
+  right?: Record<string, string | null>,
+) => {
+  if (left === right) return true;
+
+  if (!left || !right) return false;
+  const leftKeys = Object.keys(left);
+
+  if (leftKeys.length !== Object.keys(right).length) return false;
+
+  return leftKeys.every((key) => key in right && left[key] === right[key]);
+};
+
+/** Content equality lets callers keep one context object while its inputs are unchanged. */
+export const areChatMentionContextsEqual = (
+  left: ChatMentionContext,
+  right: ChatMentionContext,
+) =>
+  areStringListsEqual(left.memberNames, right.memberNames) &&
+  areStringListsEqual(left.roleNames, right.roleNames) &&
+  areStringListsEqual(left.currentUserNames, right.currentUserNames) &&
+  areStringListsEqual(left.currentUserRoleNames, right.currentUserRoleNames) &&
+  areColorMapsEqual(left.memberColorsByName, right.memberColorsByName) &&
+  areColorMapsEqual(left.roleColorsByName, right.roleColorsByName);
 
 export const getChatMentionNotificationId = ({
   guildId,

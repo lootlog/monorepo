@@ -454,6 +454,41 @@ describe("NpcsDetectionProcessor", () => {
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   });
 
+  it("updates a detected NPC in place instead of alerting again", () => {
+    readyPreferences({ notifySound: true });
+    setInitialNpcs([]);
+
+    processor.handle(createNpcEvent());
+
+    const detectorState = useNpcDetectorStore.getState();
+    const [detected] = detectorState.npcs;
+    const firstCycle = detectorState.latestDetectionAnimationCycle;
+    useNpcDetectorStore
+      .getState()
+      .setNpcStates([{ npcId: 500, npc: { notificationSent: true } }]);
+    useWindowsStore.getState().setCurrentWindowFocus("chat");
+
+    processor.handle({
+      ...createNpcEvent({ icons: [{ id: 45, icon: "updated-icon.gif" }] }),
+      npcs: [{ id: 500, x: 13, y: 19, tpl: 900, icon: { id: 45 } }],
+    });
+
+    const nextState = useNpcDetectorStore.getState();
+    expect(nextState.npcs).toEqual([
+      expect.objectContaining({
+        id: 500,
+        nick: detected?.nick,
+        icon: "updated-icon.gif",
+        x: 13,
+        y: 19,
+        notificationSent: true,
+      }),
+    ]);
+    expect(nextState.latestDetectionAnimationCycle).toBe(firstCycle);
+    expect(play).toHaveBeenCalledOnce();
+    expect(useWindowsStore.getState().currentWindowFocus).toBe("chat");
+  });
+
   it("ignores detections when template is missing or detector type is disabled", () => {
     readyPreferences({
       detect: false,

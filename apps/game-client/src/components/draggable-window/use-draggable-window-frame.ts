@@ -472,9 +472,12 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
       })),
     );
 
-  const windowFocusHistory = useWindowsStore(
-    (state) => state.windowFocusHistory,
-  );
+  // A primitive selector: focus changes elsewhere must not re-render every open window.
+  const zIndex = useWindowsStore((state) => {
+    const focusIndex = state.windowFocusHistory.indexOf(id);
+
+    return focusIndex === -1 ? 0 : state.windowFocusHistory.length - focusIndex;
+  });
 
   const setPositionInStore = useWindowsStore((state) => state.setPosition);
   const setSizeInStore = useWindowsStore((state) => state.setSize);
@@ -1045,11 +1048,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
   const handleLockToggle = () => {
     setLockedInStore(id, !isLocked);
   };
-
-  const windowZIndex = windowFocusHistory.indexOf(id);
-
-  const zIndex =
-    windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
 
   return {
     children,
