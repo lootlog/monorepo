@@ -8,6 +8,8 @@ import type { GatewaySocket } from "#src/realtime/session";
 type Message = string | Buffer;
 
 interface Limits {
+  readonly connections?: number;
+  readonly cleanupActive?: number;
   readonly active: number;
   readonly messages: number;
   readonly bytes: number;
@@ -15,7 +17,9 @@ interface Limits {
   readonly connectionBytes: number;
 }
 
-const defaultLimits: Limits = {
+const defaultLimits = {
+  connections: 16_384,
+  cleanupActive: 8,
   active: 64,
   messages: 16_384,
   bytes: 16 * 1_024 * 1_024,
@@ -23,7 +27,7 @@ const defaultLimits: Limits = {
   connectionMessages: 4_112,
   // Include 4096 maximum-size scopes plus their command envelopes on restore.
   connectionBytes: 8 * 1_024 * 1_024,
-};
+} satisfies Limits;
 
 interface Connection {
   readonly socket: GatewaySocket;
@@ -38,7 +42,10 @@ interface Connection {
 export class CommandIngress {
   private readonly connections = new Map<GatewaySocket, Connection>();
   private readonly ready = new Set<Connection>();
+  private readonly cleanupReady = new Set<Connection>();
   private active = 0;
+  private cleanupActive = 0;
+  private rejectedConnections = 0;
   private pending = 0;
   private bytes = 0;
   private rejected = 0;
@@ -57,7 +64,22 @@ export class CommandIngress {
     private readonly limits: Limits = defaultLimits,
   ) {}
 
-  open(socket: GatewaySocket): void {
+  open(socket: GatewaySocket): boolean {
+    const existing = this.connections.get(socket);
+
+    if (existing) return !existing.closed;
+
+    // Reserve lifecycle capacity until ordered cleanup finishes. Otherwise a
+    // stalled cleanup dependency lets reconnect churn retain unlimited sockets.
+    if (
+      this.connections.size >=
+      (this.limits.connections ?? defaultLimits.connections)
+    ) {
+      this.rejectedConnections++;
+
+      return false;
+    }
+
     this.connections.set(socket, {
       socket,
       messages: [],
@@ -66,6 +88,8 @@ export class CommandIngress {
       running: false,
       closed: false,
     });
+
+    return true;
   }
 
   message(socket: GatewaySocket, input: Message): void {
@@ -102,18 +126,27 @@ export class CommandIngress {
     if (!connection || connection.closed) return;
     connection.closed = true;
 
-    if (!connection.running) this.ready.add(connection);
+    if (!connection.running && connection.pending === 0)
+      this.cleanupReady.add(connection);
     this.drain();
   }
 
   getDiagnostics() {
     let maxConnectionPending = 0;
+    let closingConnections = 0;
 
-    for (const connection of this.connections.values())
+    for (const connection of this.connections.values()) {
       maxConnectionPending = Math.max(maxConnectionPending, connection.pending);
+
+      if (connection.closed) closingConnections++;
+    }
 
     return {
       active: this.active,
+      cleanupActive: this.cleanupActive,
+      retainedConnections: this.connections.size,
+      closingConnections,
+      rejectedConnections: this.rejectedConnections,
       pending: this.pending,
       bytes: this.bytes,
       rejected: this.rejected,
@@ -126,14 +159,23 @@ export class CommandIngress {
     this.draining = true;
 
     try {
-      while (this.active < this.limits.active) {
-        const connection = this.ready.values().next().value;
+      while (true) {
+        const cleanup =
+          this.cleanupActive <
+            (this.limits.cleanupActive ?? defaultLimits.cleanupActive) &&
+          this.cleanupReady.size > 0;
+
+        if (!cleanup && this.active >= this.limits.active) break;
+        const queue = cleanup ? this.cleanupReady : this.ready;
+        const connection = queue.values().next().value;
 
         if (!connection) break;
-        this.ready.delete(connection);
+        queue.delete(connection);
         const message = connection.messages.shift();
         connection.running = true;
-        this.active += 1;
+
+        if (cleanup) this.cleanupActive += 1;
+        else this.active += 1;
         this.runBackground(
           message ? "websocket.message" : "websocket.disconnect",
           // Yield to network/probe callbacks even when commands complete synchronously.
@@ -147,7 +189,8 @@ export class CommandIngress {
             ),
             Effect.ensuring(
               Effect.sync(() => {
-                this.active -= 1;
+                if (cleanup) this.cleanupActive -= 1;
+                else this.active -= 1;
                 connection.running = false;
 
                 if (message) {
@@ -156,8 +199,9 @@ export class CommandIngress {
                   connection.pending -= 1;
                   connection.bytes -= message.bytes;
 
-                  if (connection.messages.length > 0 || connection.closed)
+                  if (connection.messages.length > 0)
                     this.ready.add(connection);
+                  else if (connection.closed) this.cleanupReady.add(connection);
                 } else {
                   this.connections.delete(connection.socket);
                 }

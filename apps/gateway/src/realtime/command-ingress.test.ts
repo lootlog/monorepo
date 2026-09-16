@@ -2,6 +2,9 @@ import { expect, test } from "bun:test";
 import { Effect } from "effect";
 import { encode } from "@msgpack/msgpack";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
+import { createGatewayWebSocket } from "#src/app";
+import { RealtimeHub } from "./realtime-hub.js";
+import { unusedFederationStore } from "../../test/realtime-fixtures.js";
 import { CommandIngress } from "./command-ingress.js";
 import type { GatewaySocket } from "./session.js";
 
@@ -84,7 +87,7 @@ test.each(["json", "msgpack"] as const)(
 );
 
 const setup = (
-  limits = {
+  limits: ConstructorParameters<typeof CommandIngress>[4] = {
     active: 2,
     messages: 4,
     bytes: 40,
@@ -218,7 +221,7 @@ test("drains accepted commands before one disconnect cleanup, including after a 
   });
 });
 
-test("gives another queued connection a turn before a busy socket continues and bounds disconnect workers", async () => {
+test("gives another queued connection a turn while disconnect cleanup proceeds independently", async () => {
   const target = setup({
     active: 1,
     messages: 10,
@@ -237,12 +240,12 @@ test("gives another queued connection a turn before a busy socket continues and 
   target.ingress.message(first, "two");
   target.ingress.message(second, "other");
   target.ingress.close(third);
-  expect(target.tasks).toHaveLength(1);
+  expect(target.tasks).toHaveLength(2);
   await target.runNext();
-  await target.runNext();
-  expect(target.handled).toEqual(["first:one", "second:other"]);
   await target.runNext();
   expect(target.closed).toEqual(["third"]);
+  await target.runNext();
+  expect(target.handled).toEqual(["first:one", "second:other"]);
   await target.runNext();
   expect(target.handled).toEqual(["first:one", "second:other", "first:two"]);
 });
@@ -280,4 +283,168 @@ test("lets a host callback run while a synchronous command burst is draining", a
   expect(handledAtHostCallback).toBeLessThan(100);
   await drained.promise;
   expect(handled).toBe(100);
+});
+
+test("disconnect cleanup progresses while every command slot remains occupied", async () => {
+  const target = setup({
+    active: 1,
+    messages: 10,
+    bytes: 100,
+    connectionMessages: 10,
+    connectionBytes: 100,
+  });
+
+  const busy = socket("busy");
+  const closing = socket("closing");
+  target.ingress.open(busy);
+  target.ingress.open(closing);
+  target.ingress.message(busy, "stalled");
+  target.ingress.close(closing);
+  // Leave the first task suspended, exactly like a stalled dependency.
+  const cleanup = target.tasks[1];
+  expect(cleanup).toBeDefined();
+
+  if (cleanup) await Effect.runPromise(cleanup);
+  expect(target.closed).toEqual(["closing"]);
+  expect(target.handled).toEqual([]);
+  expect(target.ingress.getDiagnostics().active).toBe(1);
+});
+
+test("bounds lifecycle retention when cleanup stalls and admits reconnects after cleanup recovers", async () => {
+  const target = setup({
+    active: 1,
+    cleanupActive: 1,
+    connections: 3,
+    messages: 10,
+    bytes: 100,
+    connectionMessages: 10,
+    connectionBytes: 100,
+  });
+
+  const busy = socket("busy");
+  const first = socket("first");
+  const second = socket("second");
+
+  for (const connection of [busy, first, second])
+    expect(target.ingress.open(connection)).toBe(true);
+  target.ingress.message(busy, "stalled");
+  target.ingress.close(first);
+  target.ingress.close(second);
+
+  for (let index = 0; index < 100; index++)
+    expect(target.ingress.open(socket(`overflow-${index}`))).toBe(false);
+  expect(target.tasks).toHaveLength(2);
+  expect(target.ingress.getDiagnostics()).toMatchObject({
+    active: 1,
+    cleanupActive: 1,
+    closingConnections: 2,
+    retainedConnections: 3,
+  });
+  const cleanup = target.tasks[1];
+
+  if (!cleanup) throw new Error("Missing reserved cleanup task");
+  await Effect.runPromise(cleanup);
+  expect(target.closed).toEqual(["first"]);
+  expect(target.ingress.open(socket("reconnected"))).toBe(true);
+});
+
+test("queued commands on closed sockets cannot consume reserved disconnect capacity", async () => {
+  const target = setup({
+    active: 1,
+    cleanupActive: 1,
+    messages: 10,
+    bytes: 100,
+    connectionMessages: 10,
+    connectionBytes: 100,
+  });
+
+  const busy = socket("busy");
+  const closing = socket("closing");
+  const idle = socket("idle");
+  target.ingress.open(busy);
+  target.ingress.open(closing);
+  target.ingress.open(idle);
+  target.ingress.message(busy, "stalled");
+  target.ingress.message(closing, "first");
+  target.ingress.message(closing, "second");
+  target.ingress.close(closing);
+  target.ingress.close(idle);
+  const cleanup = target.tasks.splice(1, 1)[0];
+
+  if (!cleanup) throw new Error("Missing reserved cleanup task");
+  await Effect.runPromise(cleanup);
+  expect(target.closed).toEqual(["idle"]);
+  expect(target.handled).toEqual([]);
+  // Only resume command work after proving that independent cleanup progressed.
+  await target.runNext();
+  await target.runNext();
+  await target.runNext();
+  expect(target.handled).toEqual([
+    "busy:stalled",
+    "closing:first",
+    "closing:second",
+  ]);
+  expect(target.closed).toEqual(["idle"]);
+  await target.runNext();
+  expect(target.closed).toEqual(["idle", "closing"]);
+  expect(target.ingress.getDiagnostics()).toMatchObject({
+    active: 0,
+    cleanupActive: 0,
+    pending: 0,
+  });
+});
+
+test("WebSocket close removes delivery targets immediately and rejects excess lifecycles before registration", async () => {
+  const writes: string[] = [];
+
+  const hub = new RealtimeHub(
+    { maxBackpressureBytes: 1024, maxBackpressureStrikes: 3 },
+    {
+      ...unusedFederationStore,
+      command: {
+        ...unusedFederationStore.command,
+        set: async (key) => {
+          writes.push(key);
+
+          return "OK";
+        },
+        sadd: async () => 1,
+        expire: async () => 1,
+      },
+    },
+    () => {},
+  );
+
+  const target = setup({
+    active: 1,
+    connections: 1,
+    messages: 10,
+    bytes: 100,
+    connectionMessages: 10,
+    connectionBytes: 100,
+  });
+
+  const transport = createGatewayWebSocket({ hub, ingress: target.ingress });
+  const first = socket("first");
+  const closes: number[] = [];
+
+  const excess: GatewaySocket = {
+    ...socket("excess"),
+    close: (code) => {
+      closes.push(code ?? 1000);
+    },
+  };
+
+  transport.open(first);
+  transport.message(first, "stalled");
+  transport.close(first);
+  expect(hub.getLocalSockets()).toEqual([]);
+  expect(hub.getLocalSocketsForUser(first.data.userId)).toEqual([]);
+  transport.open(excess);
+  expect(closes).toEqual([1013]);
+  expect(writes).toEqual(["realtime:connection:first"]);
+  await target.runNext();
+  await target.runNext();
+  transport.open(excess);
+  expect(hub.getLocalSockets()).toEqual([excess]);
 });

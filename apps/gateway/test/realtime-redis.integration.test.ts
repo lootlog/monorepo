@@ -213,7 +213,8 @@ describe("realtime Dragonfly integration", () => {
         gameSessions: 3,
         uniquePlayers: 2,
       });
-      firstHub.unregister(first);
+      firstHub.detach(first);
+      await firstHub.cleanupRegistry(first.data);
       expect(await Effect.runPromise(replicaA.sample())).toEqual({
         connections: 3,
         gameSessions: 2,

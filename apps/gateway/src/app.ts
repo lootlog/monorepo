@@ -46,7 +46,7 @@ import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { SessionData } from "#src/realtime/session";
+import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {
   readonly config: GatewayConfiguration;
@@ -166,12 +166,19 @@ export class GatewayApplication extends Context.Service<
         (socket, message) => commands.rejectOverloaded(socket, message),
         (socket) =>
           Effect.suspend(() => {
-            hub.unregister(socket);
+            const registryCleanup = Effect.tryPromise(() =>
+              hub.cleanupRegistry(socket.data),
+            ).pipe(
+              Effect.catchCause((error) =>
+                Effect.logError("Gateway registry cleanup failed", error),
+              ),
+            );
 
-            if (socket.data.apiKeyAccess) return Effect.void;
+            if (socket.data.apiKeyAccess) return registryCleanup;
 
             return Effect.all(
               [
+                registryCleanup,
                 activity
                   .publish("DISCONNECT_EVENT", socket.data)
                   .pipe(
@@ -193,7 +200,7 @@ export class GatewayApplication extends Context.Service<
                     ),
                   ),
               ],
-              { concurrency: 2, discard: true },
+              { concurrency: 3, discard: true },
             );
           }),
         runBackground,
@@ -471,6 +478,31 @@ export const createGatewayFetch =
     }
   };
 
+export const createGatewayWebSocket = (
+  application: Pick<GatewayApplicationService, "hub" | "ingress">,
+) =>
+  ({
+    perMessageDeflate: false,
+    maxPayloadLength: 256 * 1_024,
+    idleTimeout: 70,
+    open(socket: GatewaySocket) {
+      if (!application.ingress.open(socket)) {
+        socket.close(1013, "connection capacity exceeded");
+
+        return;
+      }
+
+      application.hub.register(socket);
+    },
+    message(socket: GatewaySocket, message: string | Buffer) {
+      application.ingress.message(socket, message);
+    },
+    close(socket: GatewaySocket) {
+      application.hub.detach(socket);
+      application.ingress.close(socket);
+    },
+  }) satisfies Bun.WebSocketHandler<SessionData>;
+
 export const GatewayServer = Layer.effectDiscard(
   Effect.gen(function* () {
     const application = yield* GatewayApplication;
@@ -488,21 +520,7 @@ export const GatewayServer = Layer.effectDiscard(
           hostname: "0.0.0.0",
           port: application.config.port,
           fetch,
-          websocket: {
-            perMessageDeflate: false,
-            maxPayloadLength: 256 * 1_024,
-            idleTimeout: 70,
-            open(socket) {
-              application.hub.register(socket);
-              application.ingress.open(socket);
-            },
-            message(socket, message) {
-              application.ingress.message(socket, message);
-            },
-            close(socket) {
-              application.ingress.close(socket);
-            },
-          },
+          websocket: createGatewayWebSocket(application),
         }),
       ),
       (activeServer) => Effect.tryPromise(() => activeServer.stop(true)),
