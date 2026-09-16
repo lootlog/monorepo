@@ -825,6 +825,7 @@ export class PresenceStore {
         // Redis reads outlive individual viewers. A disconnect must not cancel
         // another viewer's read; retain the entry only until the producer settles.
         const read = this.readOrganization(organizationId).pipe(
+          Effect.timeout("10 seconds"),
           Effect.ensuring(
             Effect.sync(() => this.pendingSnapshots.delete(organizationId)),
           ),
