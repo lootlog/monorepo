@@ -147,18 +147,19 @@ const authorize = (guildId: string | undefined) => {
   );
 };
 
-const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
-    Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),
-  );
-
 export const getLootlogConfig = Effect.fn("getLootlogConfig")(function* (
   requestedGuildId: string | undefined,
 ) {
   const { guildId } = yield* authorize(requestedGuildId);
   const data = yield* LootlogConfigData;
 
-  return yield* decode(LootlogConfigResponse, yield* data.get(guildId));
+  // The open configuration fields can contain domain dates outside the declared fields.
+  return yield* decodeDomainJson(
+    LootlogConfigResponse,
+    yield* data.get(guildId),
+  ).pipe(
+    Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),
+  );
 });
 
 export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
@@ -170,9 +171,10 @@ export const updateLootlogConfigNpc = Effect.fn("updateLootlogConfigNpc")(
     const { guildId } = yield* authorize(requestedGuildId);
     const data = yield* LootlogConfigData;
 
-    return yield* decode(
-      NpcLootlogConfigResponse,
+    return yield* Schema.decodeUnknownEffect(NpcLootlogConfigResponse)(
       yield* data.updateNpc(guildId, npcId, payload),
+    ).pipe(
+      Effect.mapError((cause) => new LootlogConfigOperationError({ cause })),
     );
   },
 );
