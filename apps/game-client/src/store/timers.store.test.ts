@@ -49,7 +49,7 @@ const resetTimersStore = () => {
       showType: true,
       showLevel: false,
       fontSize: 11,
-      minColumnWidth: 120,
+      minColumnWidth: 121,
       singleTimerDisplayMode: "row",
     },
   });
