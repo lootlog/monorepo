@@ -31,6 +31,12 @@ export class LootQueryError extends TaggedErrorClass<LootQueryError>()(
 type QueryEffect<A> = Effect.Effect<A, LootQueryError>;
 
 export interface LootQueryOperations {
+  readonly isLootVisible: (
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    lootId: number,
+  ) => QueryEffect<boolean>;
   readonly fetchLootsByGuildId: (
     guild: Guild,
     permissions: Permission[],
@@ -110,6 +116,18 @@ export const makeLootQueryOperations = (
   };
 
   return {
+    isLootVisible: (guild, permissions, roles, lootId) =>
+      attempt(
+        "loots.query.visibility",
+        persistence.findIds({
+          guildId: guild.id,
+          permissions,
+          roles,
+          filters: { lootId },
+          limit: 1,
+        }),
+      ).pipe(Effect.map((ids) => ids.length > 0)),
+
     fetchLootsByGuildId: (guild, permissions, roles, params) =>
       Effect.gen(function* () {
         const itemSnapshotIds = yield* resolveItemSnapshotIds(params.itemNames);

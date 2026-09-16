@@ -64,6 +64,10 @@ let writeResponse: (() => Promise<Response>) | undefined;
 let client: QueryClient;
 
 beforeEach(() => {
+  vi.useFakeTimers({
+    shouldAdvanceTime: true,
+    toFake: ["setTimeout", "clearTimeout"],
+  });
   preferences = createUserPreferences();
   requests = [];
   rejectReads = false;
@@ -114,8 +118,8 @@ beforeEach(() => {
   );
 });
 
-// Keep the Toaster mounted until its exit callbacks finish; automatic RTL cleanup
-// would unmount it before this asynchronous teardown can drain those callbacks.
+// Sonner can schedule multiple removal callbacks for one toast. Drain even those
+// left after the toast disappears before unmounting and destroying the DOM.
 afterEach(async () => {
   await waitFor(() => {
     if (client.isMutating() || client.isFetching())
@@ -128,7 +132,10 @@ afterEach(async () => {
     if (document.querySelector("[data-sonner-toast]"))
       throw new Error("Toast exit animation still pending");
   });
+  await act(() => vi.runOnlyPendingTimersAsync());
   cleanup();
+  vi.clearAllTimers();
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 

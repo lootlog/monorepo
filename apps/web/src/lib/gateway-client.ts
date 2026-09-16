@@ -1,5 +1,9 @@
 import { decodePresenceSnapshot } from "@lootlog/protocol/realtime/codec";
 import {
+  diffAccessPolicies,
+  type AccessPolicySnapshot,
+} from "@lootlog/protocol/realtime/access-policy";
+import {
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
 } from "@lootlog/protocol/realtime";
@@ -141,6 +145,7 @@ export class GatewayClient {
   });
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;
+  private accessPolicy: AccessPolicySnapshot | undefined;
 
   constructor() {
     this.realtime.subscribe((event) => this.handleServerEvent(event));
@@ -224,8 +229,23 @@ export class GatewayClient {
     return this;
   }
 
+  private updateAccessPolicy(next: AccessPolicySnapshot | undefined) {
+    const changes =
+      this.accessPolicy && next
+        ? diffAccessPolicies(this.accessPolicy, next)
+        : undefined;
+
+    this.accessPolicy = next;
+
+    return changes;
+  }
+
   private handleServerEvent(event: ServerEvent): void {
     if (event.type === "session.joined") {
+      const accessPolicyChanges = this.updateAccessPolicy(
+        event.data.accessPolicy,
+      );
+
       if (event.data.organizationIds.length > 0) {
         void this.realtime
           .request("presence.publish", {
@@ -239,12 +259,17 @@ export class GatewayClient {
         status: "success",
         guildsCount: event.data.organizationIds.length,
         guildIds: [...event.data.organizationIds],
+        accessPolicyChanges,
       });
 
       return;
     }
 
     if (event.type === "permissions.updated") {
+      const accessPolicyChanges = this.updateAccessPolicy(
+        event.data.accessPolicy,
+      );
+
       if (event.data.organizationIds.length > 0) {
         void this.realtime
           .request("presence.publish", {
@@ -257,6 +282,7 @@ export class GatewayClient {
       this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
         guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
         featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
+        accessPolicyChanges,
       });
 
       return;

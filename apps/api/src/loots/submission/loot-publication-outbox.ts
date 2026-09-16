@@ -1,6 +1,6 @@
 import { readPublishedFeedEntry } from "#src/feed/user-feed";
 import { and, asc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { Clock, Effect, Metric, Schema } from "effect";
 import { GuildLootCreatedEventV2Schema } from "@lootlog/schema/loot-events";
 import { LootCreatedNotificationEventV2Schema } from "@lootlog/schema/notifications";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -42,6 +42,12 @@ export type LootPublication = {
   readonly organizationIds: string[];
   readonly payload: typeof LootPublicationPayload.Type;
 };
+
+const lootPublicationAge = Metric.histogram("loot.publication.age_ms", {
+  description:
+    "Age of a committed loot.created intent at successful publication",
+  boundaries: [100, 1000, 5000, 30_000, 60_000, 300_000, 900_000],
+});
 
 /** One locked intent per transaction; failed deliveries remain durable for the next poll. */
 export const makeLootPublicationDispatcher = (
@@ -118,12 +124,33 @@ export const makeLootPublicationDispatcher = (
                 data = publishedData;
               }
 
-              yield* rabbit.publish({
+              const publication = rabbit.publish({
                 exchange: "default",
                 routingKey: payload.routingKey,
                 messageId: `loot-publication:${row.id}`,
                 content: new TextEncoder().encode(JSON.stringify(data)),
               });
+
+              if (payload.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE) {
+                const ageMs = Math.max(
+                  0,
+                  (yield* Clock.currentTimeMillis) - row.createdAt.getTime(),
+                );
+
+                yield* publication.pipe(
+                  Effect.withSpan("loots.publishCreated", {
+                    attributes: {
+                      "organization.id": payload.data.guildId,
+                      "loot.id": row.lootId,
+                      "messaging.message.id": `loot-publication:${row.id}`,
+                      "loot.publication.age_ms": ageMs,
+                    },
+                  }),
+                );
+                yield* Metric.update(lootPublicationAge, ageMs);
+              } else {
+                yield* publication;
+              }
             }
           }
 
