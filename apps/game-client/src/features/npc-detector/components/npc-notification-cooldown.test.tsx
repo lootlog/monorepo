@@ -52,7 +52,7 @@ it("ticks the label on second boundaries and drains the ring with one animation"
       { strokeDashoffset: expect.stringMatching(/^9\.67/) },
       { strokeDashoffset: expect.stringMatching(/^69\.11/) },
     ],
-    { duration: 4300, easing: "steps(43, end)", fill: "forwards" },
+    { duration: 4300, easing: "linear", fill: "forwards" },
   );
   expect(vi.getTimerCount()).toBe(1);
 
