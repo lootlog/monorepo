@@ -43,6 +43,10 @@ import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import { makeLootPublicationDispatcher } from "#src/loots/submission/loot-publication-outbox";
+import { createAccessPolicy } from "@lootlog/domain/access-policy";
+import { makeLootsOperations } from "#src/loots/loots.operations";
+import { makeLootPersistence } from "#src/loots/loot-persistence";
+import { applicationLogger } from "#src/shared/application-logger";
 
 describe("durable loot publications", () => {
   let runtime = ManagedRuntime.make(ApiDatabaseLive);
@@ -1007,6 +1011,195 @@ describe("durable loot publications", () => {
           .where(eq(notificationJobTable.ruleId, rule.id)),
       ),
     ).toHaveLength(1);
+  });
+
+  it.skipIf(process.env.LOOT_DETAIL_LOAD_SAMPLE !== "1")(
+    "measures real detail and list query work for 200 clients across ten loot events",
+    async () => {
+      const { id, request } = await seed();
+      const guild = await seededGuild(id);
+      const lootIds: number[] = [];
+
+      for (let event = 0; event < 10; event++) {
+        const result = await runtime.runPromise(
+          acceptance().accept({
+            ...request,
+            submission: {
+              ...request.submission,
+              loots: request.submission.loots.map((item) => ({
+                ...item,
+                hid: randomUUID(),
+              })),
+            },
+          }),
+        );
+
+        lootIds.push(result.id);
+        snapshotTestLootIds.push(result.id);
+      }
+
+      expect(new Set(lootIds).size).toBe(10);
+
+      const realQuery = makeLootQueryOperations(
+        makeLootQueryPersistence(database),
+      );
+
+      let detailReads = 0;
+
+      const operations = makeLootsOperations({
+        persistence: makeLootPersistence(database),
+        query: {
+          ...realQuery,
+          fetchLootById: (...args) =>
+            Effect.suspend(() => {
+              detailReads++;
+
+              return realQuery.fetchLootById(...args);
+            }),
+        },
+        stats: { invalidateCache: () => Effect.void },
+        redis: {
+          deleteByPattern: async () => {
+            throw new Error("Unexpected cache invalidation");
+          },
+          getOrSetJsonEffect: () => Effect.die("Unexpected list cache access"),
+        },
+        logger: applicationLogger,
+      });
+
+      const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
+      const clients = Array.from({ length: 200 }, (_, index) => index);
+
+      const measurements: Array<{
+        scenario: string;
+        readOperations: number;
+        cpuMs: number;
+        elapsedMs: number;
+      }> = [];
+
+      const measure = async (scenario: string, run: () => Promise<number>) => {
+        const cpu = process.cpuUsage();
+        const started = performance.now();
+        const readOperations = await run();
+        const elapsedMs = performance.now() - started;
+        const used = process.cpuUsage(cpu);
+        measurements.push({
+          scenario,
+          readOperations,
+          cpuMs: (used.user + used.system) / 1000,
+          elapsedMs,
+        });
+      };
+
+      await measure("baseline-detail", async () => {
+        for (const lootId of lootIds) {
+          const values = await runtime.runPromise(
+            Effect.all(
+              clients.map(() =>
+                realQuery.fetchLootById(guild, [Permission.OWNER], [], lootId),
+              ),
+              { concurrency: "unbounded" },
+            ),
+          );
+
+          expect(values.every((loot) => loot?.id === lootId)).toBe(true);
+        }
+
+        return clients.length * lootIds.length;
+      });
+      await measure("coalesced-legacy-detail", async () => {
+        for (const lootId of lootIds) {
+          const values = await runtime.runPromise(
+            Effect.all(
+              clients.map(() =>
+                operations.fetchLootById(guild, policy, [], lootId),
+              ),
+              { concurrency: "unbounded" },
+            ),
+          );
+
+          expect(values.every((loot) => loot?.id === lootId)).toBe(true);
+        }
+
+        return detailReads;
+      });
+      await measure("batched-first-page-no-cache", async () => {
+        const pages = await runtime.runPromise(
+          Effect.all(
+            clients.map(() =>
+              realQuery.fetchLootsByGuildId(guild, [Permission.OWNER], [], {
+                limit: 20,
+              }),
+            ),
+            { concurrency: "unbounded" },
+          ),
+        );
+
+        expect(
+          pages.every((page) =>
+            lootIds.every((lootId) => page.some((loot) => loot.id === lootId)),
+          ),
+        ).toBe(true);
+
+        return clients.length;
+      });
+      expect(detailReads).toBe(lootIds.length);
+      process.stdout.write(
+        `${JSON.stringify({ clients: clients.length, events: lootIds.length, measurements })}\n`,
+      );
+    },
+    120_000,
+  );
+
+  it("makes a published loot unavailable after archival without deleting the accepted loot", async () => {
+    const { id, request } = await seed();
+    const result = await runtime.runPromise(acceptance().accept(request));
+    const sent: PublishOptions[] = [];
+    await runtime.runPromise(
+      makeLootPublicationDispatcher(
+        database,
+        {
+          publish: (message) =>
+            Effect.sync(() => {
+              sent.push(message);
+            }),
+        },
+        () => Effect.void,
+      )(),
+    );
+
+    expect(
+      sent.some(
+        (message) =>
+          message.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+      ),
+    ).toBe(true);
+    expect(await lootRecord(id, result.id)).not.toBeNull();
+    expect(await pending(result.id)).toEqual([]);
+
+    await runtime.runPromise(
+      database
+        .update(organizationLootRecordTable)
+        .set({ archivedAt: new Date() })
+        .where(
+          and(
+            eq(organizationLootRecordTable.guildId, id),
+            eq(organizationLootRecordTable.lootId, result.id),
+          ),
+        ),
+    );
+
+    // A delayed event or redelivery cannot make the archived detail readable.
+    expect(await lootRecord(id, result.id)).toBeNull();
+    expect(await lootList(id)).toEqual([]);
+    expect(
+      await runtime.runPromise(
+        database
+          .select({ id: lootTable.id })
+          .from(lootTable)
+          .where(eq(lootTable.id, result.id)),
+      ),
+    ).toEqual([{ id: result.id }]);
   });
 
   it("does not deliver pending metadata after the Organization record becomes archived", async () => {

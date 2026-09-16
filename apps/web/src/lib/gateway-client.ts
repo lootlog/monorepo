@@ -1,5 +1,9 @@
 import { decodePresenceSnapshot } from "@lootlog/protocol/realtime/codec";
 import {
+  diffAccessPolicies,
+  type AccessPolicySnapshot,
+} from "@lootlog/protocol/realtime/access-policy";
+import {
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
 } from "@lootlog/protocol/realtime";
@@ -141,6 +145,7 @@ export class GatewayClient {
   });
   private readonly listeners = new RealtimeEventListeners<GatewayEvent>();
   private wasConnected = false;
+  private accessPolicy: AccessPolicySnapshot | undefined;
 
   constructor() {
     this.realtime.subscribe((event) => this.handleServerEvent(event));
@@ -226,6 +231,13 @@ export class GatewayClient {
 
   private handleServerEvent(event: ServerEvent): void {
     if (event.type === "session.joined") {
+      const accessPolicyChanges =
+        this.accessPolicy && event.data.accessPolicy
+          ? diffAccessPolicies(this.accessPolicy, event.data.accessPolicy)
+          : undefined;
+
+      this.accessPolicy = event.data.accessPolicy;
+
       if (event.data.organizationIds.length > 0) {
         void this.realtime
           .request("presence.publish", {
@@ -239,12 +251,15 @@ export class GatewayClient {
         status: "success",
         guildsCount: event.data.organizationIds.length,
         guildIds: [...event.data.organizationIds],
+        accessPolicyChanges,
       });
 
       return;
     }
 
     if (event.type === "permissions.updated") {
+      this.accessPolicy = event.data.accessPolicy;
+
       if (event.data.organizationIds.length > 0) {
         void this.realtime
           .request("presence.publish", {
