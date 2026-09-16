@@ -148,7 +148,9 @@ describe("useNotificationGuildMembers", () => {
     expect(requests.mock.lastCall?.[0].url).toContain(
       "/guilds/guild-1/members/summary",
     );
-    expect(result.current["guild-1"]).not.toBe(firstGuildMembers);
+    // The lookup is cached by member array identity; a refetch that returns
+    // the same members keeps it, so only the request proves the re-check.
+    expect(result.current["guild-1"]).toEqual(firstGuildMembers);
   });
 
   it("bounds checked identities to the unique members in a growing list", async () => {

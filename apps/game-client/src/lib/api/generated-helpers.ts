@@ -87,17 +87,36 @@ export const getGuildNamesById = (guilds?: GuildIdentity[]) => {
   return guildNamesById;
 };
 
-export const mapGuildMembersByUserId = (
-  members: MemberSummaryResponseDtoOutput[] = [],
-): Record<string, MemberSummaryResponseDtoOutput> => {
-  return members.reduce<Record<string, MemberSummaryResponseDtoOutput>>(
-    (result, member) => {
-      result[member.userId] = member;
+const EMPTY_GUILD_MEMBERS_BY_USER_ID: Record<
+  string,
+  MemberSummaryResponseDtoOutput
+> = {};
 
-      return result;
-    },
-    {},
-  );
+const guildMembersByUserIdCache = new WeakMap<
+  MemberSummaryResponseDtoOutput[],
+  Record<string, MemberSummaryResponseDtoOutput>
+>();
+
+/** Keyed by the member array identity so chat rows keep stable member props across renders. */
+export const mapGuildMembersByUserId = (
+  members?: MemberSummaryResponseDtoOutput[],
+) => {
+  if (!members) return EMPTY_GUILD_MEMBERS_BY_USER_ID;
+  const cachedMembersByUserId = guildMembersByUserIdCache.get(members);
+
+  if (cachedMembersByUserId) return cachedMembersByUserId;
+
+  const membersByUserId = members.reduce<
+    Record<string, MemberSummaryResponseDtoOutput>
+  >((result, member) => {
+    result[member.userId] = member;
+
+    return result;
+  }, {});
+
+  guildMembersByUserIdCache.set(members, membersByUserId);
+
+  return membersByUserId;
 };
 
 export const normalizeTimerMemberRole = (role: MemberResponseDtoRolesItem) => {

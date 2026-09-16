@@ -21,7 +21,10 @@ import {
   type ChatAppearanceSettings,
 } from "@lootlog/schema/chat-appearance";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
-import type { ChatMessageResponseDtoOutput } from "@lootlog/client/main";
+import type {
+  ChatMessageResponseDtoOutput,
+  MemberSummaryResponseDtoOutput as GuildMember,
+} from "@lootlog/client/main";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import type { useChatGuildData } from "../hooks/use-chat-guild-data";
@@ -46,7 +49,12 @@ export type ChatTranscriptProps = {
   guildNamesById: Record<string, string>;
   membersByGuildId: ChatGuildData["membersByGuildId"];
   mentionContextsByGuildId: ChatGuildData["mentionContextsByGuildId"];
-  onReplyToMessage: (message: ChatMessageResponseDtoOutput) => void;
+  onReplyToMessage: (
+    message: ChatMessageResponseDtoOutput,
+    member?: GuildMember,
+  ) => void;
+  onDeleteMessage?: (message: ChatMessageResponseDtoOutput) => void;
+  deletingMessageIds?: ReadonlySet<string>;
   renderables: ChatRenderableMessage[];
   selectedGuildId: string;
   isActive?: boolean;
@@ -55,6 +63,8 @@ export type ChatTranscriptProps = {
   position?: ChatScrollPosition;
   onPositionChange?: (position: ChatScrollPosition) => void;
 };
+
+const noopDeleteMessage = () => undefined;
 
 const getViewportPosition = (viewport: HTMLElement): ChatScrollPosition => {
   const box = viewport.getBoundingClientRect();
@@ -80,6 +90,8 @@ export const ChatTranscript = ({
   membersByGuildId,
   mentionContextsByGuildId,
   onReplyToMessage,
+  onDeleteMessage = noopDeleteMessage,
+  deletingMessageIds,
   renderables,
   selectedGuildId,
   isActive = true,
@@ -300,24 +312,44 @@ export const ChatTranscript = ({
           className="ll-chat-message-list ll:flex ll:h-max ll:min-h-full ll:w-full ll:min-w-0 ll:flex-col"
           style={getChatDensityStyle(appearance.fontScalePercent)}
         >
-          {renderables.map((row) => (
-            <ChatTranscriptRow
-              key={row.key}
-              row={row}
-              highlighted={
-                isActive &&
-                row.kind !== "date-divider" &&
-                row.message.id === highlightedMessageId
-              }
-              appearance={appearance}
-              npcTypeColors={npcTypeColors}
-              selectedGuildId={selectedGuildId}
-              guildNamesById={guildNamesById}
-              membersByGuildId={membersByGuildId}
-              mentionContextsByGuildId={mentionContextsByGuildId}
-              onReplyToMessage={onReplyToMessage}
-            />
-          ))}
+          {renderables.map((row) => {
+            const message = row.kind === "date-divider" ? null : row.message;
+
+            return (
+              <ChatTranscriptRow
+                key={row.key}
+                row={row}
+                highlighted={
+                  isActive &&
+                  message !== null &&
+                  message.id === highlightedMessageId
+                }
+                appearance={appearance}
+                npcTypeColors={npcTypeColors}
+                all={selectedGuildId === "all"}
+                guildName={
+                  message ? guildNamesById[message.guildId] : undefined
+                }
+                member={
+                  message
+                    ? membersByGuildId[message.guildId]?.[message.senderId]
+                    : undefined
+                }
+                mentionContext={
+                  message
+                    ? mentionContextsByGuildId[message.guildId]
+                    : undefined
+                }
+                isDeleting={
+                  message
+                    ? (deletingMessageIds?.has(message.id) ?? false)
+                    : false
+                }
+                onReplyToMessage={onReplyToMessage}
+                onDeleteMessage={onDeleteMessage}
+              />
+            );
+          })}
         </BaseScrollArea.Content>
       </BaseScrollArea.Viewport>
       <ScrollBar />

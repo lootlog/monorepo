@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import { useShallow } from "zustand/react/shallow";
 import {
   isMentionNotification,
+  type NotificationAutoHideState,
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -23,14 +24,30 @@ interface UseVisibleNotificationsResult {
   settings: Partial<NotificationsSettings>;
 }
 
-type NotificationAutoHideStates = Record<
-  string,
-  {
-    deadlineMs: number | null;
-    pausedRemainingMs: number | null;
-    durationMs: number;
-  }
->;
+type NotificationAutoHideStates = Record<string, NotificationAutoHideState>;
+
+type ScheduledExpiration = {
+  notificationId: string;
+  expirationTimeMs: number;
+};
+
+type VisibleNotificationsInput = {
+  notifications: StoredNotification[];
+  notificationAutoHideByListKey: NotificationAutoHideStates;
+  settings: Partial<NotificationsSettings>;
+  world: string;
+};
+
+type VisibleNotificationsSelection = {
+  input: VisibleNotificationsInput;
+  visible: StoredNotification[];
+  scheduledExpirations: ScheduledExpiration[];
+  nearestExpirationTimeMs: number | null;
+};
+
+type VisibleNotificationsCacheOwner = {
+  selection?: VisibleNotificationsSelection;
+};
 
 const getExpirationTimeMs = (
   notification: StoredNotification,
@@ -118,6 +135,89 @@ const isNotificationVisible = ({
   return true;
 };
 
+const haveSameMembers = (
+  previous: readonly StoredNotification[],
+  next: readonly StoredNotification[],
+) =>
+  previous.length === next.length &&
+  previous.every((notification, index) => notification === next[index]);
+
+const isSameInput = (
+  previous: VisibleNotificationsInput,
+  next: VisibleNotificationsInput,
+) =>
+  previous.notifications === next.notifications &&
+  previous.notificationAutoHideByListKey ===
+    next.notificationAutoHideByListKey &&
+  previous.settings === next.settings &&
+  previous.world === next.world;
+
+/**
+ * Derives the visible list and the auto-hide schedule from the store
+ * selection. The visible array keeps its identity while its members are the
+ * same references in the same order, so the list and its memoized rows can
+ * skip work when only unrelated store state (a paused deadline, another
+ * world's notification) changed.
+ */
+const selectVisibleNotifications = (
+  cacheOwner: VisibleNotificationsCacheOwner,
+  input: VisibleNotificationsInput,
+): VisibleNotificationsSelection => {
+  const cached = cacheOwner.selection;
+
+  if (cached && isSameInput(cached.input, input)) {
+    return cached;
+  }
+
+  const { notifications, notificationAutoHideByListKey, settings, world } =
+    input;
+
+  const nextVisible = notifications.filter((notification) =>
+    isNotificationVisible({ notification, settings, world }),
+  );
+
+  const visible =
+    cached && haveSameMembers(cached.visible, nextVisible)
+      ? cached.visible
+      : nextVisible;
+
+  const scheduledExpirations: ScheduledExpiration[] = [];
+  let nearestExpirationTimeMs: number | null = null;
+
+  for (const notification of notifications) {
+    const expirationTimeMs = getScheduledExpirationTimeMs({
+      notification,
+      notificationAutoHideByListKey,
+      settings,
+    });
+
+    if (expirationTimeMs === null) continue;
+
+    scheduledExpirations.push({
+      notificationId: notification.notificationId,
+      expirationTimeMs,
+    });
+
+    if (
+      nearestExpirationTimeMs === null ||
+      expirationTimeMs < nearestExpirationTimeMs
+    ) {
+      nearestExpirationTimeMs = expirationTimeMs;
+    }
+  }
+
+  const selection = {
+    input,
+    visible,
+    scheduledExpirations,
+    nearestExpirationTimeMs,
+  };
+
+  cacheOwner.selection = selection;
+
+  return selection;
+};
+
 export const useVisibleNotifications = ({
   autoCleanup = true,
 }: UseVisibleNotificationsOptions = {}): UseVisibleNotificationsResult => {
@@ -132,54 +232,43 @@ export const useVisibleNotifications = ({
 
   const { settings } = useCurrentGameAccountNotificationSettings();
   const world = useGameStore((state) => state.game?.world ?? "unknown");
+  const [cacheOwner] = useState<VisibleNotificationsCacheOwner>(() => ({}));
   const removeRef = useRef(removeNotifications);
+
+  const { visible, scheduledExpirations, nearestExpirationTimeMs } =
+    selectVisibleNotifications(cacheOwner, {
+      notifications,
+      notificationAutoHideByListKey,
+      settings,
+      world,
+    });
+
+  const scheduledExpirationsRef = useRef(scheduledExpirations);
 
   useEffect(() => {
     removeRef.current = removeNotifications;
-  }, [removeNotifications]);
+    scheduledExpirationsRef.current = scheduledExpirations;
+  }, [removeNotifications, scheduledExpirations]);
 
+  // The timer is armed for the nearest deadline only; when it fires it reads
+  // the latest schedule from the ref, so notifications arriving with later
+  // deadlines do not tear down and re-arm the timeout.
   useEffect(() => {
-    if (!autoCleanup) {
+    if (!autoCleanup || nearestExpirationTimeMs === null) {
       return;
     }
-
-    const scheduledExpirations = notifications
-      .map((notification) => ({
-        notification,
-        expirationTimeMs: getScheduledExpirationTimeMs({
-          notification,
-          notificationAutoHideByListKey,
-          settings,
-        }),
-      }))
-      .filter(
-        (
-          entry,
-        ): entry is {
-          notification: StoredNotification;
-          expirationTimeMs: number;
-        } => entry.expirationTimeMs !== null,
-      );
-
-    if (scheduledExpirations.length === 0) {
-      return;
-    }
-
-    const nearestExpirationTimeMs = Math.min(
-      ...scheduledExpirations.map((entry) => entry.expirationTimeMs),
-    );
 
     const timeoutId = window.setTimeout(
       () => {
         const currentTimeMs = Date.now();
 
-        const expiredNotificationIds = scheduledExpirations.flatMap(
-          ({ expirationTimeMs, notification }) => {
+        const expiredNotificationIds = scheduledExpirationsRef.current.flatMap(
+          ({ expirationTimeMs, notificationId }) => {
             if (currentTimeMs < expirationTimeMs) {
               return [];
             }
 
-            return [notification.notificationId];
+            return [notificationId];
           },
         );
 
@@ -191,11 +280,7 @@ export const useVisibleNotifications = ({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [autoCleanup, notificationAutoHideByListKey, notifications, settings]);
-
-  const visible = notifications.filter((notification) =>
-    isNotificationVisible({ notification, settings, world }),
-  );
+  }, [autoCleanup, nearestExpirationTimeMs]);
 
   return { notifications: visible, all: notifications, settings };
 };

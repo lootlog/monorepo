@@ -160,16 +160,19 @@ const createRecencyIndex = () => {
   };
 };
 
+/**
+ * Runs once per stored notification on every presentation, so it must stay
+ * allocation-light. The discriminator and numeric id come first and the world
+ * last, so the key stays unambiguous whatever characters the world contains.
+ */
 const getNpcWorldLookupKey = (
   notification: PresentableNotification | StoredNotification,
 ) => {
   const npcId = "npc" in notification ? notification.npc?.id : undefined;
 
-  return JSON.stringify([
-    notification.world,
-    npcId === undefined ? "undefined" : "number",
-    npcId ?? null,
-  ]);
+  return npcId === undefined
+    ? `u::${notification.world}`
+    : `n:${npcId}:${notification.world}`;
 };
 
 const upsertNotificationBatch = (
