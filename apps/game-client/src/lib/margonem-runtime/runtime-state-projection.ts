@@ -229,12 +229,7 @@ export class RuntimeStateProjection {
 
     if (!event) return envelope;
 
-    const currentGame = useGameStore.getState().game;
-
-    if (currentGame && !currentGame.map.name?.trim()) {
-      const map = this.resolveMap(currentGame.map);
-      useGameStore.getState().replaceGame({ ...currentGame, map });
-    }
+    const facts = this.recoverMapFacts(event, envelope.facts);
 
     const needsGame = envelope.facts.some(
       (fact) =>
@@ -281,7 +276,7 @@ export class RuntimeStateProjection {
           : EMPTY_OTHERS,
     });
 
-    return Object.freeze({ ...envelope, ingress });
+    return Object.freeze({ ...envelope, facts, ingress });
   }
 
   apply(envelope: RuntimeEventEnvelope): void {
@@ -337,6 +332,30 @@ export class RuntimeStateProjection {
     this.icons.clear();
     this.npcTemplates.clear();
     this.clearStores();
+  }
+
+  private recoverMapFacts(
+    event: GameEvent,
+    facts: RuntimeEventEnvelope["facts"],
+  ): RuntimeEventEnvelope["facts"] {
+    const current = useGameStore.getState().game;
+
+    if (!current || current.map.name?.trim()) return facts;
+
+    const map = this.resolveMap(current.map);
+    useGameStore.getState().replaceGame({ ...current, map });
+
+    if (!map.name || event.town) return facts;
+
+    // Complete deferred map-change effects before ordinary packet facts. The
+    // raw packet stays unchanged: recovery must not reset the map's new NPCs.
+    return Object.freeze([
+      Object.freeze({
+        kind: "map" as const,
+        event: Object.freeze({ town: map }),
+      }),
+      ...facts,
+    ]);
   }
 
   private resolveMap(
