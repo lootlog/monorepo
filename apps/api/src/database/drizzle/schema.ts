@@ -470,6 +470,10 @@ export const lootTable = pgTable(
       .notNull(),
   },
   (table) => [
+    check(
+      "Loot_lootShare_object_check",
+      sql`jsonb_typeof(${table["lootShare"]}) = 'object'`,
+    ),
     uniqueIndex("Loot_uniqueId_key").on(table["uniqueId"]),
     index("Loot_createdAt_idx").on(table["createdAt"]),
     index("Loot_world_createdAt_idx").on(table["world"], table["createdAt"]),
