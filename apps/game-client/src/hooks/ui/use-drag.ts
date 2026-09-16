@@ -41,9 +41,12 @@ const DEFAULT_DRAG_INFO: DragInfo = {
   viewport: DEFAULT_DRAG_VIEWPORT,
 };
 
-const measureDragViewport = (): DragViewport => {
-  const scale = getRuntimeUiScale();
-
+// The scale is fixed for the whole session: the pointer offsets captured on
+// pointer down are expressed in it, so a pinch zoom mid-drag only refreshes
+// the bounds.
+const measureDragViewport = (
+  scale: number = getRuntimeUiScale(),
+): DragViewport => {
   return {
     scale,
     width: (window.visualViewport?.width ?? window.innerWidth) * scale,
@@ -390,7 +393,7 @@ export const useDrag = ({
     const handleViewportResize = () => {
       dragInfoRef.current = {
         ...dragInfoRef.current,
-        viewport: measureDragViewport(),
+        viewport: measureDragViewport(dragInfoRef.current.viewport.scale),
       };
     };
 
