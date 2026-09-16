@@ -16,6 +16,7 @@ type TimerColorEditorPopoverProps = {
   idPrefix: string;
   /** Current values: the live draft while editing, the stored colour otherwise. */
   data: ColorEditData;
+  defaultColorId?: string;
   isDefault: boolean;
   isModified: boolean;
   open: boolean;
@@ -33,6 +34,7 @@ type TimerColorEditorPopoverProps = {
  * a live sample and the reset / hide / delete actions.
  */
 export const TimerColorEditorPopover: FC<TimerColorEditorPopoverProps> = ({
+  defaultColorId,
   children,
   idPrefix,
   data,
@@ -72,6 +74,7 @@ export const TimerColorEditorPopover: FC<TimerColorEditorPopoverProps> = ({
           </div>
 
           <TimerColorEditorFields
+            defaultColorId={defaultColorId}
             idPrefix={idPrefix}
             draft={data}
             onDraftChange={onDraftChange}

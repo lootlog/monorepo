@@ -46,6 +46,7 @@ const getTimerColorEditData = (
     string,
     { borderColor: string; backgroundColor: string }
   >,
+  legacyAppearance: boolean,
 ): ColorEditData => {
   if (selection.kind === "custom") {
     const color = customColors[selection.id];
@@ -60,7 +61,7 @@ const getTimerColorEditData = (
     }
   }
 
-  const defaults = getTimerColorHex(selection.id) ?? {
+  const defaults = getTimerColorHex(selection.id, legacyAppearance) ?? {
     border: "#3B82F6",
     background: "#3B82F633",
   };
@@ -72,7 +73,7 @@ const getTimerColorEditData = (
   return {
     name:
       defaultColorNames[selection.id] ??
-      getDefaultColorName(selection.id) ??
+      getDefaultColorName(selection.id, legacyAppearance) ??
       selection.id,
     borderColor: borderColor.toUpperCase(),
     backgroundColor: stripAlphaChannel(backgroundColor).toUpperCase(),
@@ -82,6 +83,7 @@ const getTimerColorEditData = (
 
 export const TimersSettingsColors: FC = () => {
   const {
+    displayConfig: { legacyAppearance },
     customColors,
     addCustomColor,
     updateCustomColor,
@@ -121,7 +123,7 @@ export const TimersSettingsColors: FC = () => {
     return (
       overriddenDefaultColors[colorId] !== undefined ||
       (persistedName !== undefined &&
-        persistedName !== getDefaultColorName(colorId))
+        persistedName !== getDefaultColorName(colorId, legacyAppearance))
     );
   };
 
@@ -137,6 +139,7 @@ export const TimersSettingsColors: FC = () => {
           customColors,
           defaultColorNames,
           overriddenDefaultColors,
+          legacyAppearance,
         );
   };
 
@@ -167,6 +170,7 @@ export const TimersSettingsColors: FC = () => {
       customColors,
       defaultColorNames,
       overriddenDefaultColors,
+      legacyAppearance,
     );
 
     if (data.name !== stored.name) {
@@ -207,6 +211,11 @@ export const TimersSettingsColors: FC = () => {
       <TimerColorListItem
         key={key}
         itemKey={key}
+        defaultColorId={
+          isDefault && !overriddenDefaultColors[selection.id]
+            ? selection.id
+            : undefined
+        }
         className={enteredKey === key ? ENTERED_ROW_CLASS_NAME : undefined}
         data={getData(selection)}
         isDefault={isDefault}

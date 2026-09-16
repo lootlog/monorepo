@@ -56,6 +56,7 @@ export const useTimerDisplay = (timer: Timer) => {
     selectedColor,
     customColor,
     overriddenColor,
+    displayConfig.legacyAppearance,
   );
 
   const isPending = timer.isPending ?? false;

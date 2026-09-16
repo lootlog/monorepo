@@ -24,6 +24,7 @@ export interface TimersGeneralConfig {
 }
 
 export interface TimersDisplayConfig {
+  legacyAppearance: boolean;
   showType: boolean;
   showLevel: boolean;
   fontSize: number;

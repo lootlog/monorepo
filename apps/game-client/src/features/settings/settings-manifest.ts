@@ -304,6 +304,7 @@ const MANIFEST = [
           {
             id: "timer-layout",
             labelKey: "settings.timers.appearance.layoutTitle",
+            aliases: ["legacy", "stary wygląd", "wygląd legacy"],
             settingKeys: ["appearance.timers.displayConfig"],
           },
           {

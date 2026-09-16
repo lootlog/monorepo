@@ -144,6 +144,7 @@ export const useTimersStore = create<TimersState>()(
           setGlobalSettings({ generalConfig: config });
         },
         displayConfig: {
+          legacyAppearance: false,
           showType: true,
           showLevel: false,
           fontSize: 11,
@@ -383,6 +384,8 @@ export const useTimersStore = create<TimersState>()(
           displayConfig: {
             ...currentState.displayConfig,
             ...persisted.displayConfig,
+            legacyAppearance:
+              persisted.displayConfig?.legacyAppearance ?? false,
           },
           hiddenTimers: persisted.hiddenTimers ?? currentState.hiddenTimers,
           pinnedTimers: persisted.pinnedTimers ?? currentState.pinnedTimers,

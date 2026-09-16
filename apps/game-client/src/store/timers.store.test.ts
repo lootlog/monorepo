@@ -45,6 +45,7 @@ const resetTimersStore = () => {
       compactView: false,
     },
     displayConfig: {
+      legacyAppearance: false,
       showType: true,
       showLevel: false,
       fontSize: 11,
@@ -74,6 +75,50 @@ describe("timers.store", () => {
     window.localStorage.removeItem(TIMERS_STORAGE_KEY);
     resetTimersStore();
   });
+
+  it("defaults old stored appearance to modern even after legacy was enabled", async () => {
+    expect(
+      useTimersStore.getInitialState().displayConfig.legacyAppearance,
+    ).toBe(false);
+    useTimersStore.getState().setDisplayConfig({
+      ...useTimersStore.getState().displayConfig,
+      legacyAppearance: true,
+    });
+    localStorage.setItem(
+      TIMERS_STORAGE_KEY,
+      JSON.stringify({
+        version: 6,
+        state: { displayConfig: { fontSize: 14 } },
+      }),
+    );
+    await useTimersStore.persist.rehydrate();
+    expect(useTimersStore.getState().displayConfig).toMatchObject({
+      legacyAppearance: false,
+      fontSize: 14,
+    });
+  });
+
+  it.each([true, false])(
+    "persists and syncs legacy appearance %s without changing colors",
+    async (legacyAppearance) => {
+      const colors = { Tanroth: "red" };
+      useTimersStore.setState({ timersColors: colors });
+
+      const displayConfig = {
+        ...useTimersStore.getState().displayConfig,
+        legacyAppearance,
+      };
+
+      useTimersStore.getState().setDisplayConfig(displayConfig);
+      expect(patchesFor("appearance").at(-1)?.set).toEqual({
+        timers: { displayConfig },
+      });
+      expect(useTimersStore.getState().timersColors).toEqual(colors);
+      await useTimersStore.persist.rehydrate();
+      expect(useTimersStore.getState().displayConfig).toEqual(displayConfig);
+      expect(useTimersStore.getState().timersColors).toEqual(colors);
+    },
+  );
 
   it("deduplicates hidden and pinned timers", () => {
     const store = useTimersStore.getState();
@@ -135,6 +180,7 @@ describe("timers.store", () => {
     };
 
     const nextDisplayConfig = {
+      legacyAppearance: true,
       showType: false,
       showLevel: true,
       fontSize: 13,

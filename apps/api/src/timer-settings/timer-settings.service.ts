@@ -86,6 +86,7 @@ const mapGlobalSettingsResponse = (
   const appearance = response.domains.appearance;
   const timers = response.domains.timers;
   const timerAppearance = asRecord(appearance?.effective.timers);
+  const displayConfig = asJsonObject(timerAppearance.displayConfig);
   const effectiveTimers = timers?.effective ?? {};
 
   const updatedAtValues = [appearance?.updatedAt, timers?.updatedAt]
@@ -101,7 +102,10 @@ const mapGlobalSettingsResponse = (
   return {
     userId,
     generalConfig: asJsonObject(effectiveTimers.generalConfig),
-    displayConfig: asJsonObject(timerAppearance.displayConfig),
+    displayConfig: {
+      ...displayConfig,
+      legacyAppearance: displayConfig.legacyAppearance === true,
+    },
     customColors: asJsonObject(timerAppearance.customColors),
     timersColors: asJsonObject(timerAppearance.timersColors),
     alwaysVisibleExpiredTimers: asJsonObject(

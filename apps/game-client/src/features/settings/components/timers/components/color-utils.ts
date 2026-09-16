@@ -1,7 +1,7 @@
 import { getTimerColor } from "@/features/timers/constants/timer-colors";
 
-export const getTimerColorHex = (color: string) => {
-  const paint = getTimerColor(color);
+export const getTimerColorHex = (color: string, legacyAppearance = false) => {
+  const paint = getTimerColor(color, legacyAppearance);
 
   return paint ? { border: paint.accent, background: paint.fill } : undefined;
 };

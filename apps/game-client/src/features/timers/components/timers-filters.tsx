@@ -10,7 +10,10 @@ import { TimersNpcTypeFilter } from "./timers-npc-type-filter";
 import { cn } from "cn";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import {
+  TIMERS_COLORS,
+  getTimerColor,
+} from "@/features/timers/constants/timer-colors";
 import {
   Tooltip,
   TooltipContent,
@@ -44,6 +47,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     overriddenDefaultColors,
     hiddenDefaultColors,
     colorFiltersEnabled,
+    displayConfig: { legacyAppearance },
   } = useTimersStore();
 
   const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
@@ -132,12 +136,13 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
       </div>
       {colorFiltersEnabled && (
         <div className="ll:flex ll:flex-row ll:flex-wrap ll:gap-1 ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/25 ll:px-1 ll:py-1">
-          {Object.entries(TIMERS_COLORS).flatMap(([colorId, color]) => {
+          {Object.entries(TIMERS_COLORS).flatMap(([colorId]) => {
             if (hiddenColors.has(colorId)) return [];
             const isSelected = selectedColors.has(colorId);
 
             const swatchColor =
-              overriddenDefaultColors[colorId]?.borderColor ?? color.accent;
+              overriddenDefaultColors[colorId]?.borderColor ??
+              getTimerColor(colorId, legacyAppearance)?.accent;
 
             return (
               <Tooltip key={colorId}>
@@ -145,7 +150,8 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                   <button
                     type="button"
                     aria-label={
-                      defaultColorNames[colorId] ?? getDefaultColorName(colorId)
+                      defaultColorNames[colorId] ??
+                      getDefaultColorName(colorId, legacyAppearance)
                     }
                     aria-pressed={isSelected}
                     onClick={() => handleToggleColor(colorId)}
@@ -162,7 +168,8 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                   />
                 </TooltipTrigger>
                 <TooltipContent>
-                  {defaultColorNames[colorId] ?? getDefaultColorName(colorId)}
+                  {defaultColorNames[colorId] ??
+                    getDefaultColorName(colorId, legacyAppearance)}
                 </TooltipContent>
               </Tooltip>
             );
