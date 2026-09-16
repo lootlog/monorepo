@@ -94,10 +94,7 @@ const optionalLootQueryParameters = [
   "playerLevelMax",
 ] as const;
 
-const lootQueryPaths = [
-  "/guilds/{guildId}/loots",
-  "/guilds/{guildId}/loots/count",
-] as const;
+const lootQueryPaths = ["/guilds/{guildId}/loots"] as const;
 
 const assert = (condition: unknown, message: string): void => {
   if (!condition) {

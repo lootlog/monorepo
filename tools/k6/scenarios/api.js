@@ -136,17 +136,6 @@ export function runApi(config) {
   apiRequest(
     config,
     "api",
-    "guild-loot-count",
-    "GET",
-    `/guilds/${guildId}/loots/count`,
-    {
-      optional: true,
-      query: { world },
-    },
-  );
-  apiRequest(
-    config,
-    "api",
     "guild-reservations",
     "GET",
     `/guilds/${guildId}/reservations`,

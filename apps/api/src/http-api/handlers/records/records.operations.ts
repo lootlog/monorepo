@@ -35,7 +35,6 @@ import type {
   UserNpcKillsQuery,
 } from "#src/contracts/kills/schemas";
 import type {
-  LootCountResponse,
   LootsQuery,
   LootCommentResponse,
   CreateLootCommentRequest,
@@ -171,10 +170,6 @@ export class RecordsData extends Context.Service<
       caller: AuthorizedGuildCaller,
       query: LootStatsQuery,
     ) => DataEffect<LootStatsResponse>;
-    readonly countLoots: (
-      caller: AuthorizedGuildCaller,
-      query: LootsQuery,
-    ) => DataEffect<number>;
     readonly resolveLootItem: (
       caller: AuthorizedGuildCaller,
       query: ResolveLootItemQuery,
@@ -356,16 +351,6 @@ export const getLootStats = Effect.fn("loots.getLootStats")(function* (
   const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
 
   return yield* data((service) => service.getLootStats(caller, query));
-});
-
-export const countLoots = Effect.fn("loots.countLoots")(function* (
-  guildId: string | undefined,
-  query: LootsQuery,
-) {
-  const caller = yield* requireGuild(guildId, Permission.LOOTLOG_LOOTS_READ);
-  const count = yield* data((service) => service.countLoots(caller, query));
-
-  return { count } satisfies LootCountResponse;
 });
 
 export const resolveLootItem = Effect.fn("loots.resolveLootItem")(function* (

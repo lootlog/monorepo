@@ -113,12 +113,6 @@ export const LootStatsResponse = Schema.Struct({
   ),
 }).annotate({ identifier: "LootStatsResponseDto_Output" });
 
-export type LootCountResponse = typeof LootCountResponse.Type;
-
-export const LootCountResponse = Schema.Struct({
-  count: FiniteNumber,
-}).annotate({ identifier: "CountResponseDto_Output" });
-
 export type ResolvedLootItemResponse = typeof ResolvedLootItemResponse.Type;
 
 export const ResolvedLootItemResponse = LootItem.annotate({

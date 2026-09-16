@@ -35,10 +35,6 @@ type Guild = typeof guildTable.$inferSelect;
 
 type Role = typeof roleTable.$inferSelect;
 
-type LootCount = Effect.Success<
-  ReturnType<LootQueryOperations["countLootsByGuildId"]>
->;
-
 type ResolvedLootItem = Effect.Success<
   ReturnType<LootQueryOperations["resolveLootItemByHid"]>
 >;
@@ -93,12 +89,6 @@ export interface LootsOperations {
     roles: Role[],
     params: FetchLootsParamsDto,
   ) => LootsEffect<LootQueryResult[]>;
-  readonly countLootsByGuildId: (
-    guild: Guild,
-    accessPolicy: AccessPolicy,
-    roles: Role[],
-    params: FetchLootsParamsDto,
-  ) => LootsEffect<LootCount>;
   readonly fetchLootById: (
     guild: Guild,
     accessPolicy: AccessPolicy,
@@ -351,14 +341,6 @@ export const makeLootsOperations = ({
           logger.warn("Loots list cache unavailable", { error }),
       });
     },
-
-    countLootsByGuildId: (guild, accessPolicy, roles, params) =>
-      query.countLootsByGuildId(
-        guild,
-        getEffectiveCapabilities(accessPolicy),
-        roles,
-        params,
-      ),
 
     fetchLootById: (guild, accessPolicy, roles, lootId) =>
       Effect.uninterruptibleMask((restore) =>

@@ -455,14 +455,6 @@ export const PUBLIC_API_OPERATIONS = [
   {
     service: "main",
     method: "GET",
-    path: "/guilds/{guildId}/loots/count",
-    operationId: "LootsController_countLootsByGuildId",
-    access: "read",
-    data: "organization",
-  },
-  {
-    service: "main",
-    method: "GET",
     path: "/guilds/{guildId}/loots/items/resolve",
     operationId: "LootsController_resolveLootItemByHid",
     access: "read",

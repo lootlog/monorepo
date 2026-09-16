@@ -76,7 +76,6 @@ const makeOperations = (
       fetchLootById,
       isLootVisible,
       fetchLootsByGuildId: () => Effect.die("Unexpected list read"),
-      countLootsByGuildId: () => Effect.die("Unexpected count read"),
       resolveLootItemByHid: () => Effect.die("Unexpected item read"),
     },
     persistence: {
