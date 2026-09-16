@@ -3,7 +3,8 @@ import { create } from "zustand";
 
 export type GameNpcWithLocation = GameNpc & {
   location: string;
-  notificationSent: boolean;
+  /** Epoch ms of the last sent notification; drives the resend cooldown. */
+  notificationSentAt: number | null;
 };
 
 type AddNpcOptions = {

@@ -29,7 +29,7 @@ const trackedNpc = (id = 500) => ({
   lvl: 250,
   type: 3,
   location: "Urwisko",
-  notificationSent: false,
+  notificationSentAt: null,
 });
 
 const notification = (id = 500): StoredNotification => ({

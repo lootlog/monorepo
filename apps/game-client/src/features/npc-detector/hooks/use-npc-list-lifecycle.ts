@@ -2,8 +2,7 @@ import type {
   GameNpcWithLocation,
   NpcDetectorState,
 } from "@/store/npc-detector.store";
-import { useEffect, useRef, useState } from "react";
-import { useNpcDetectorClock } from "./use-npc-detector-clock";
+import { useEffect, useRef } from "react";
 
 export const NPC_NOTIFICATION_COOLDOWN_MS = 5000;
 
@@ -21,6 +20,12 @@ type DetectionAnimationDeadline = {
   endsAt: number;
 };
 
+/**
+ * Expires notification cooldowns and detection animations with one timer
+ * armed for the nearest deadline. Nothing here re-renders the list while a
+ * cooldown runs; the store updates on expiry are the only React-visible
+ * changes.
+ */
 export const useNpcListLifecycle = ({
   activeDetectionAnimations,
   clearDetectionAnimation,
@@ -30,47 +35,6 @@ export const useNpcListLifecycle = ({
   const detectionDeadlineByNpcIdRef = useRef(
     new Map<number, DetectionAnimationDeadline>(),
   );
-
-  const hasNotificationCooldown = npcs.some((npc) => npc.notificationSent);
-
-  const hasDetectionAnimation =
-    Object.keys(activeDetectionAnimations).length > 0;
-
-  const currentTimeMs = useNpcDetectorClock(
-    hasNotificationCooldown || hasDetectionAnimation,
-  );
-
-  const notificationNpcSignature = npcs
-    .flatMap((npc) => (npc.notificationSent ? [npc.id] : []))
-    .join(":");
-
-  const [notificationDeadlineState, setNotificationDeadlineState] = useState(
-    () => ({
-      deadlines: new Map<number, number>(),
-      signature: "",
-    }),
-  );
-
-  let notificationDeadlineByNpcId = notificationDeadlineState.deadlines;
-
-  if (notificationDeadlineState.signature !== notificationNpcSignature) {
-    const nextDeadlines = new Map<number, number>();
-
-    for (const npc of npcs) {
-      if (!npc.notificationSent) continue;
-      nextDeadlines.set(
-        npc.id,
-        notificationDeadlineState.deadlines.get(npc.id) ??
-          currentTimeMs + NPC_NOTIFICATION_COOLDOWN_MS,
-      );
-    }
-
-    notificationDeadlineByNpcId = nextDeadlines;
-    setNotificationDeadlineState({
-      deadlines: nextDeadlines,
-      signature: notificationNpcSignature,
-    });
-  }
 
   useEffect(() => {
     const activeNpcIds = new Set(npcs.map((npc) => npc.id));
@@ -108,41 +72,67 @@ export const useNpcListLifecycle = ({
     }
   }, [activeDetectionAnimations]);
 
-  // The clock subscription expires external detector-store cooldowns; these are not derived parent props.
+  // The timer expires external detector-store cooldowns; these are not derived parent props.
   // oxlint-disable-next-line react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent
   useEffect(() => {
-    const expiredCooldownNpcIds: number[] = [];
+    let timeoutId: number | undefined;
 
-    notificationDeadlineByNpcId.forEach((deadline, npcId) => {
-      if (deadline <= currentTimeMs) {
-        expiredCooldownNpcIds.push(npcId);
+    const scheduleNearestExpiry = (now: number) => {
+      let nearestDeadline = Infinity;
+
+      for (const npc of npcs) {
+        if (npc.notificationSentAt === null) continue;
+        const deadline = npc.notificationSentAt + NPC_NOTIFICATION_COOLDOWN_MS;
+
+        if (deadline > now)
+          nearestDeadline = Math.min(nearestDeadline, deadline);
       }
-    });
 
-    if (expiredCooldownNpcIds.length > 0) {
-      setNpcStates(
-        expiredCooldownNpcIds.map((npcId) => ({
-          npcId,
-          npc: { notificationSent: false },
-        })),
+      detectionDeadlineByNpcIdRef.current.forEach(({ endsAt }) => {
+        if (endsAt > now) nearestDeadline = Math.min(nearestDeadline, endsAt);
+      });
+
+      if (nearestDeadline === Infinity) return;
+
+      timeoutId = window.setTimeout(expireDue, nearestDeadline - now);
+    };
+
+    const expireDue = () => {
+      timeoutId = undefined;
+      const now = Date.now();
+
+      const expiredCooldownNpcIds = npcs.flatMap((npc) =>
+        npc.notificationSentAt !== null &&
+        npc.notificationSentAt + NPC_NOTIFICATION_COOLDOWN_MS <= now
+          ? [npc.id]
+          : [],
       );
-    }
 
-    detectionDeadlineByNpcIdRef.current.forEach(({ cycle, endsAt }, npcId) => {
-      if (endsAt <= currentTimeMs) {
-        clearDetectionAnimation(npcId, cycle);
-        detectionDeadlineByNpcIdRef.current.delete(npcId);
+      if (expiredCooldownNpcIds.length > 0) {
+        setNpcStates(
+          expiredCooldownNpcIds.map((npcId) => ({
+            npcId,
+            npc: { notificationSentAt: null },
+          })),
+        );
       }
-    });
-  }, [
-    clearDetectionAnimation,
-    currentTimeMs,
-    notificationDeadlineByNpcId,
-    setNpcStates,
-  ]);
 
-  return {
-    currentTimeMs,
-    notificationDeadlineByNpcId,
-  };
+      detectionDeadlineByNpcIdRef.current.forEach(
+        ({ cycle, endsAt }, npcId) => {
+          if (endsAt <= now) {
+            clearDetectionAnimation(npcId, cycle);
+            detectionDeadlineByNpcIdRef.current.delete(npcId);
+          }
+        },
+      );
+
+      scheduleNearestExpiry(now);
+    };
+
+    expireDue();
+
+    return () => {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [activeDetectionAnimations, clearDetectionAnimation, npcs, setNpcStates]);
 };

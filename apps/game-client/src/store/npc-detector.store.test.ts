@@ -10,7 +10,7 @@ const createNpc = (id: number, nick = `npc-${id}`): GameNpcWithLocation => ({
   location: "Test map",
   lvl: 300,
   nick,
-  notificationSent: false,
+  notificationSentAt: null,
   prof: "w",
   tpl: id,
   type: 3,
@@ -91,13 +91,15 @@ describe("useNpcDetectorStore", () => {
     const unsubscribe = useNpcDetectorStore.subscribe(publish);
 
     useNpcDetectorStore.getState().setNpcStates([
-      { npcId: 1, npc: { notificationSent: true } },
-      { npcId: 2, npc: { notificationSent: true } },
+      { npcId: 1, npc: { notificationSentAt: 1_000 } },
+      { npcId: 2, npc: { notificationSentAt: 1_000 } },
     ]);
 
     expect(publish).toHaveBeenCalledOnce();
     expect(
-      useNpcDetectorStore.getState().npcs.filter((npc) => npc.notificationSent),
+      useNpcDetectorStore
+        .getState()
+        .npcs.filter((npc) => npc.notificationSentAt !== null),
     ).toHaveLength(2);
     unsubscribe();
   });
