@@ -4,7 +4,10 @@ import { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { Effect, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
-import type { BackgroundTaskRunner } from "./background-tasks.js";
+import {
+  type BackgroundTaskRunner,
+  yieldToEventLoop,
+} from "./background-tasks.js";
 
 type RedisGatewayConfig = Omit<GatewayConfiguration["redis"], "password"> & {
   readonly password: string;
@@ -74,6 +77,36 @@ const decodeFederatedRealtimeMessage = Schema.decodeUnknownSync(
 export class RedisGatewayStore {
   readonly command: RedisGatewayCommands;
   readonly channel: string;
+  private readonly subscriptionQueues = new Set<
+    Queue.Dequeue<Redis.RedisMessage, Redis.RedisError>
+  >();
+  private pendingCommands = 0;
+  private pendingPublications = 0;
+
+  getDiagnostics() {
+    let federationQueued = 0;
+
+    for (const queue of this.subscriptionQueues)
+      federationQueued += Queue.sizeUnsafe(queue);
+
+    return {
+      pendingCommands: this.pendingCommands,
+      pendingPublications: this.pendingPublications,
+      federationQueued,
+    };
+  }
+
+  private async runCommand<A>(
+    effect: Effect.Effect<A, Redis.RedisError>,
+  ): Promise<A> {
+    this.pendingCommands++;
+
+    try {
+      return await this.runEffect(effect);
+    } finally {
+      this.pendingCommands--;
+    }
+  }
 
   constructor(
     private readonly redis: Redis.Redis["Service"],
@@ -84,7 +117,10 @@ export class RedisGatewayStore {
     private readonly runBackground: BackgroundTaskRunner,
   ) {
     const prefix = (key: string) => `${config.keyPrefix}:${key}`;
-    const run = this.runEffect;
+
+    const run = <A>(effect: Effect.Effect<A, Redis.RedisError>) =>
+      this.runCommand(effect);
+
     const scripts = new RedisScriptCache();
     this.command = {
       get: (key) => run(redis.send("GET", prefix(key))),
@@ -127,9 +163,15 @@ export class RedisGatewayStore {
   }
 
   async publish(message: FederatedRealtimeMessage): Promise<void> {
-    await this.runEffect(
-      this.redis.send("PUBLISH", this.channel, JSON.stringify(message)),
-    );
+    this.pendingPublications++;
+
+    try {
+      await this.runCommand(
+        this.redis.send("PUBLISH", this.channel, JSON.stringify(message)),
+      );
+    } finally {
+      this.pendingPublications--;
+    }
   }
 
   async subscribe(
@@ -143,11 +185,20 @@ export class RedisGatewayStore {
 
     const redis = this.redis;
     const channel = this.channel;
+    const subscriptionQueues = this.subscriptionQueues;
 
     const consume = Effect.scoped(
       Effect.gen(function* () {
         const messages = yield* redis.subscribe(channel);
+        subscriptionQueues.add(messages);
+        yield* Effect.addFinalizer(() =>
+          Effect.sync(() => {
+            subscriptionQueues.delete(messages);
+          }),
+        );
         yield* Effect.sync(markReady);
+        let batchStarted = performance.now();
+        let batchSize = 0;
 
         while (true) {
           const { message: raw } = yield* Queue.take(messages);
@@ -163,6 +214,16 @@ export class RedisGatewayStore {
             }
           } catch {
             // Malformed federation frames are isolated to Redis and never reach clients.
+          }
+
+          // Effect's automatic yield can retain this fiber for hundreds of ms.
+          // Release the event loop without dropping/reordering federation frames.
+          batchSize++;
+
+          if (batchSize >= 64 || performance.now() - batchStarted >= 4) {
+            yield* yieldToEventLoop;
+            batchSize = 0;
+            batchStarted = performance.now();
           }
         }
       }),
