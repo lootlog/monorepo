@@ -86,7 +86,7 @@ const makeOperations = (
     },
     stats: { invalidateCache: () => Effect.void },
     redis: {
-      deleteByPattern: async () => 0,
+      invalidateScopes: async () => undefined,
       getOrSetJsonEffect: () => Effect.die("Unexpected Redis cache read"),
     },
     logger: applicationLogger,

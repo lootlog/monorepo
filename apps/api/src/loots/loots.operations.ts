@@ -117,7 +117,7 @@ interface LootsDependencies {
   readonly persistence: LootPersistence;
   readonly query: LootQueryOperations;
   readonly stats: Pick<LootStatsService, "invalidateCache">;
-  readonly redis: Pick<RedisService, "deleteByPattern" | "getOrSetJsonEffect">;
+  readonly redis: Pick<RedisService, "invalidateScopes" | "getOrSetJsonEffect">;
   readonly logger: ApplicationLogger;
 }
 

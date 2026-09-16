@@ -1066,7 +1066,7 @@ describe("durable loot publications", () => {
         },
         stats: { invalidateCache: () => Effect.void },
         redis: {
-          deleteByPattern: async () => {
+          invalidateScopes: async () => {
             throw new Error("Unexpected cache invalidation");
           },
           getOrSetJsonEffect: () => Effect.die("Unexpected list cache access"),
@@ -1206,7 +1206,7 @@ describe("durable loot publications", () => {
       persistence: makeLootPersistence(database),
       stats: { invalidateCache: () => Effect.void },
       redis: {
-        deleteByPattern: async () => 0,
+        invalidateScopes: async () => undefined,
         getOrSetJsonEffect: () => Effect.die("Unexpected list read"),
       },
       logger: applicationLogger,
