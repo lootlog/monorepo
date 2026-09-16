@@ -20,7 +20,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
 
   const uniqueHiddenTimers = Array.from(
     new Set(hiddenTimersForAccount ?? []),
-  ).toSorted((a, b) => a.localeCompare(b));
+  ).sort((a, b) => a.localeCompare(b));
 
   if (!key || uniqueHiddenTimers.length === 0) {
     return (

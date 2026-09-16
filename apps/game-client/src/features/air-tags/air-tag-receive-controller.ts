@@ -93,8 +93,8 @@ export class AirTagReceiveController {
       });
     }
 
-    queuedUpdates
-      .toSorted((first, second) => {
+    [...queuedUpdates]
+      .sort((first, second) => {
         const epochOrder = compareEpoch(first, second);
 
         return epochOrder === 0 ? first.revision - second.revision : epochOrder;
