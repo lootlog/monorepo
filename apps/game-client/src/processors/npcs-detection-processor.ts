@@ -213,8 +213,8 @@ export class NpcsDetectionProcessor {
     const intents = this.createDetectionIntents();
 
     // Margonem sends `npcs` for both spawns and updates of a known NPC (position,
-    // icon). Only NPCs the detector does not show yet are detections; the rest
-    // update in place without a new alert, sound, auto-send or window focus.
+    // icon, template). Only NPCs the detector does not show yet are detections;
+    // the rest update in place without a new alert, sound, auto-send or focus.
     const detectedNpcIds = new Set(
       useNpcDetectorStore.getState().npcs.map((npc) => npc.id),
     );
@@ -224,12 +224,6 @@ export class NpcsDetectionProcessor {
 
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
-        if (detectedNpcIds.has(npc.id)) {
-          updatedNpcs.push({ npcId: npc.id, npc: { x: npc.x, y: npc.y } });
-
-          return acc;
-        }
-
         const runtimeNpc = useNpcsStore.getState().getNpc(npc.id);
 
         const tpl =
@@ -268,6 +262,15 @@ export class NpcsDetectionProcessor {
           processedSettings,
           useGameStore.getState().game?.map.name ?? "",
         );
+
+        if (detectedNpcIds.has(npc.id)) {
+          const { notificationSent: _notificationSent, ...npcUpdate } =
+            composedNpc;
+
+          updatedNpcs.push({ npcId: npc.id, npc: npcUpdate });
+
+          return acc;
+        }
 
         this.collectDetectionIntents(intents, {
           composedNpc,

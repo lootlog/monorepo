@@ -469,8 +469,8 @@ describe("NpcsDetectionProcessor", () => {
     useWindowsStore.getState().setCurrentWindowFocus("chat");
 
     processor.handle({
-      ...createNpcEvent(),
-      npcs: [{ id: 500, x: 13, y: 19, tpl: 900, icon: { id: 44 } }],
+      ...createNpcEvent({ icons: [{ id: 45, icon: "updated-icon.gif" }] }),
+      npcs: [{ id: 500, x: 13, y: 19, tpl: 900, icon: { id: 45 } }],
     });
 
     const nextState = useNpcDetectorStore.getState();
@@ -478,6 +478,7 @@ describe("NpcsDetectionProcessor", () => {
       expect.objectContaining({
         id: 500,
         nick: detected?.nick,
+        icon: "updated-icon.gif",
         x: 13,
         y: 19,
         notificationSent: true,
