@@ -185,6 +185,259 @@ const secondGuild = (permissions: Permission[]) => ({
 });
 
 describe("PresenceStore", () => {
+  test("invalidates snapshots when a Redis write settles after its caller was cancelled", async () => {
+    let now = 10_000;
+    const redis = new MemoryRedis();
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+    );
+
+    const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+    const publisher = socket(viewer);
+    const key = "presence:organization-1:session-1";
+    await Effect.runPromise(
+      store.publish(publisher, { organizationIds: ["organization-1"] }),
+    );
+    redis.values.set(
+      key,
+      JSON.stringify({ ...viewer.presence, discordId: undefined }),
+    );
+    const writeStarted = Promise.withResolvers<string>();
+    const writeGate = Promise.withResolvers<string | null>();
+    const metadataStarted = Promise.withResolvers<void>();
+    const metadataGate = Promise.withResolvers<void>();
+    const originalSet = redis.set.bind(redis);
+    const originalGet = redis.get.bind(redis);
+    spyOn(redis, "set").mockImplementation((target, value, ...options) => {
+      if (target === key) {
+        writeStarted.resolve(value);
+
+        return writeGate.promise;
+      }
+
+      return originalSet(target, value, ...options);
+    });
+    spyOn(redis, "get").mockImplementation(async (target) => {
+      if (target.startsWith("presence:metadata:")) {
+        metadataStarted.resolve();
+        await metadataGate.promise;
+      }
+
+      return originalGet(target);
+    });
+    const controller = new AbortController();
+    now = 11_000;
+
+    const publication = Effect.runPromiseExit(
+      store.publish(publisher, {
+        organizationIds: ["organization-1"],
+        isAfk: true,
+      }),
+      { signal: controller.signal },
+    );
+
+    try {
+      const updated = await writeStarted.promise;
+      controller.abort();
+      expect(Exit.isFailure(await publication)).toBe(true);
+      const first = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      await metadataStarted.promise;
+      redis.values.set(key, updated);
+      writeGate.resolve("OK");
+      await writeGate.promise;
+      const later = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+      metadataGate.resolve();
+      await first;
+      const snapshot = await later;
+      expect(snapshot.presences[0]?.lastSeen).toBe(11_000);
+      expect(snapshot.presences[0]?.isAfk).toBe(true);
+      expect(snapshot.revision).toBe(1);
+    } finally {
+      controller.abort();
+      writeGate.resolve("OK");
+      metadataGate.resolve();
+      await publication;
+    }
+  });
+
+  test.each(["publish", "disconnect", "heartbeat", "expiry without metadata"])(
+    "does not join a pre-mutation snapshot after %s completes",
+    async (mutation) => {
+      let now = 10_000;
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => now,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      const publisher = socket(viewer);
+      await Effect.runPromise(
+        store.publish(publisher, { organizationIds: ["organization-1"] }),
+      );
+      redis.values.set(
+        "presence:organization-1:session-1",
+        JSON.stringify({ ...viewer.presence, discordId: undefined }),
+      );
+      const metadataStarted = Promise.withResolvers<void>();
+      const metadataGate = Promise.withResolvers<void>();
+      const originalGet = redis.get.bind(redis);
+      let blockMetadata = true;
+      spyOn(redis, "get").mockImplementation(async (key) => {
+        if (blockMetadata && key.startsWith("presence:metadata:")) {
+          blockMetadata = false;
+          metadataStarted.resolve();
+          await metadataGate.promise;
+        }
+
+        return originalGet(key);
+      });
+      const first = Effect.runPromise(store.snapshot(viewer, "organization-1"));
+
+      try {
+        await metadataStarted.promise;
+        now = 11_000;
+
+        if (mutation === "publish") {
+          await Effect.runPromise(
+            store.publish(publisher, {
+              organizationIds: ["organization-1"],
+              isAfk: true,
+            }),
+          );
+        } else if (mutation === "heartbeat") {
+          await Effect.runPromise(
+            store.heartbeat(publisher, viewer.connectionId),
+          );
+        } else if (mutation === "expiry without metadata") {
+          now = 10_000 + PRESENCE_EXPIRY_MS;
+          redis.values.delete("presence:metadata:organization-1:session-1");
+          await Effect.runPromise(store.sweepExpired());
+        } else {
+          await Effect.runPromise(store.disconnect(viewer));
+        }
+
+        const later = Effect.runPromise(
+          store.snapshot(viewer, "organization-1"),
+        );
+
+        metadataGate.resolve();
+        await first;
+        const result = await later;
+        expect(result.revision).toBe(
+          mutation === "publish" || mutation === "disconnect" ? 2 : 1,
+        );
+
+        if (
+          mutation === "disconnect" ||
+          mutation === "expiry without metadata"
+        ) {
+          expect(result.presences).toEqual([]);
+        } else {
+          expect(result.presences[0]?.lastSeen).toBe(11_000);
+          expect(result.presences[0]?.isAfk).toBe(mutation === "publish");
+        }
+      } finally {
+        metadataGate.resolve();
+        await first;
+      }
+    },
+  );
+
+  test.each(["success", "failure"])(
+    "an old snapshot's %s cannot evict the replacement shared read",
+    async (outcome) => {
+      const redis = new MemoryRedis();
+
+      const store = new PresenceStore(
+        { command: redis },
+        new RecordingHub(),
+        () => 10_000,
+      );
+
+      const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+      const publisher = socket(viewer);
+      await Effect.runPromise(
+        store.publish(publisher, { organizationIds: ["organization-1"] }),
+      );
+      redis.values.set(
+        "presence:organization-1:session-1",
+        JSON.stringify({ ...viewer.presence, discordId: undefined }),
+      );
+      const metadataStarted = Promise.withResolvers<void>();
+      const metadataGate = Promise.withResolvers<void>();
+      const replacementStarted = Promise.withResolvers<void>();
+      const replacementGate = Promise.withResolvers<void>();
+      const originalGet = redis.get.bind(redis);
+      const originalMget = redis.mget.bind(redis);
+      spyOn(redis, "get").mockImplementation(async (key) => {
+        if (key.startsWith("presence:metadata:")) {
+          metadataStarted.resolve();
+          await metadataGate.promise;
+        }
+
+        return originalGet(key);
+      });
+      let reads = 0;
+      spyOn(redis, "mget").mockImplementation(async (keys) => {
+        reads++;
+
+        if (reads === 2) {
+          replacementStarted.resolve();
+          await replacementGate.promise;
+        }
+
+        return originalMget(keys);
+      });
+
+      const first = Effect.runPromiseExit(
+        store.snapshot(viewer, "organization-1"),
+      );
+
+      try {
+        await metadataStarted.promise;
+        await Effect.runPromise(
+          store.publish(publisher, {
+            organizationIds: ["organization-1"],
+            isAfk: true,
+          }),
+        );
+
+        const replacement = Effect.runPromise(
+          store.snapshot(viewer, "organization-1"),
+        );
+
+        await replacementStarted.promise;
+
+        if (outcome === "success") metadataGate.resolve();
+        else metadataGate.reject(new Error("Legacy metadata read failed"));
+        await first;
+
+        const follower = Effect.runPromise(
+          store.snapshot(viewer, "organization-1"),
+        );
+
+        replacementGate.resolve();
+        const snapshots = await Promise.all([replacement, follower]);
+        expect(reads).toBe(2);
+
+        for (const snapshot of snapshots) {
+          expect(snapshot.presences[0]?.isAfk).toBe(true);
+          expect(snapshot.revision).toBe(2);
+        }
+      } finally {
+        metadataGate.resolve();
+        replacementGate.resolve();
+        await first;
+      }
+    },
+  );
+
   test.each(["smembers", "mget", "metadata"])(
     "bounds a stalled %s read and allows a fresh snapshot without waiting for it to settle",
     async (stage) => {
