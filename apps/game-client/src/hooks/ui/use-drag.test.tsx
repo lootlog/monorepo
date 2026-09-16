@@ -166,6 +166,63 @@ describe("useDrag", () => {
     expect(onDragStop).toHaveBeenCalledWith({ x: 29, y: 39 });
   });
 
+  it("measures the viewport once per drag session instead of on every pointer move", () => {
+    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(1);
+    vi.spyOn(window, "cancelAnimationFrame").mockReturnValue(undefined);
+
+    const visualViewport = vi.fn(() => ({
+      width: 800,
+      height: 600,
+      scale: 1,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      get: visualViewport,
+    });
+
+    const element = document.createElement("div");
+    vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    try {
+      startDrag(result.current.handlePointerDown, 1);
+      const readsAfterPointerDown = visualViewport.mock.calls.length;
+      expect(readsAfterPointerDown).toBeGreaterThan(0);
+
+      act(() => {
+        for (let index = 0; index < 20; index += 1) {
+          document.dispatchEvent(
+            Object.assign(new Event("pointermove"), {
+              buttons: 1,
+              clientX: 20 + index,
+              clientY: 30 + index,
+              pointerId: 1,
+              pointerType: "mouse",
+            }),
+          );
+        }
+      });
+
+      expect(visualViewport.mock.calls.length).toBe(readsAfterPointerDown);
+    } finally {
+      Reflect.deleteProperty(window, "visualViewport");
+    }
+  });
+
   it("cancels the pointerdown default action so a drag does not start a text selection", () => {
     const element = document.createElement("div");
     const ref: RefObject<HTMLDivElement | null> = { current: element };

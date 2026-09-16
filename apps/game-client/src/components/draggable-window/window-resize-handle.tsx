@@ -104,13 +104,15 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const startHeight =
       e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
 
+    // Measured once per session: viewport reads force the game document to
+    // lay out, which is too expensive to repeat on every mouse move.
+    const scale = getRuntimeUiScale();
+
+    const { width: scaledViewportWidth, height: scaledViewportHeight } =
+      getScaledViewportSize(scale);
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
-      const scale = getRuntimeUiScale();
-
-      const { width: scaledViewportWidth, height: scaledViewportHeight } =
-        getScaledViewportSize(scale);
-
       const deltaX = (e.clientX - startX) / scale;
       const deltaY = (e.clientY - startY) / scale;
 
@@ -172,6 +174,11 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     const startHeight =
       e.currentTarget.parentElement?.parentElement?.offsetHeight ?? minHeight;
 
+    const scale = getRuntimeUiScale();
+
+    const { width: scaledViewportWidth, height: scaledViewportHeight } =
+      getScaledViewportSize(scale);
+
     const handleTouchMove = (e: TouchEvent) => {
       if (!isWindowResizeSessionActive(sessionId)) return;
       const activeTouchId = activeTouchIdRef.current;
@@ -183,11 +190,6 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
 
       if (!touch) return;
       e.preventDefault();
-      const scale = getRuntimeUiScale();
-
-      const { width: scaledViewportWidth, height: scaledViewportHeight } =
-        getScaledViewportSize(scale);
-
       const clientX = touch.pageX - window.scrollX;
       const clientY = touch.pageY - window.scrollY;
       const deltaX = (clientX - startX) * scale;
