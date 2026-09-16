@@ -16,16 +16,11 @@ test("key config updates preserve other organizations and never reuse the unrest
   const boundary = await createDatabaseBoundary();
 
   try {
-    const getJson = mock<UserLootlogConfigCache["getJson"]>(() =>
-      Effect.die("unscoped cache read"),
-    );
-
-    const setJson = mock<UserLootlogConfigCache["setJson"]>(() => Effect.void);
+    const getOrSetJsonEffect = mock(() => Effect.die("unscoped cache read"));
 
     const cache: UserLootlogConfigCache = {
-      getJson,
-      setJson,
-      deleteByPattern: () => Effect.void,
+      getOrSetJsonEffect,
+      invalidateScopes: () => Effect.void,
     };
 
     await boundary.run(
@@ -96,8 +91,7 @@ test("key config updates preserve other organizations and never reuse the unrest
         )
       )[0]?.catchingGuildIds,
     ).toEqual(["2"]);
-    expect(getJson).not.toHaveBeenCalled();
-    expect(setJson).not.toHaveBeenCalled();
+    expect(getOrSetJsonEffect).not.toHaveBeenCalled();
   } finally {
     await boundary.dispose();
   }

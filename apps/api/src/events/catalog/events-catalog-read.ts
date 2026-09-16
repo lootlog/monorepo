@@ -6,7 +6,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
+import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
 import superjson from "superjson";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -30,8 +30,6 @@ import {
   EventsListResponse,
 } from "#src/events/catalog/event-response.schema";
 
-const CACHE_PREFIX = "event-read:v2";
-
 const CACHE_TTL_SECONDS = 10;
 
 type Role = typeof roleTable.$inferSelect;
@@ -40,20 +38,6 @@ export class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadErro
   "EventCatalogReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const cacheKey = <Params extends object>(
-  guildId: string,
-  eventSegment: string,
-  scope: string,
-  params?: Params,
-) =>
-  [
-    CACHE_PREFIX,
-    guildId,
-    eventSegment,
-    scope,
-    Buffer.from(stableJsonStringify(params ?? {})).toString("base64url"),
-  ].join(":");
 
 export const makeEventsCatalogRead = (
   database: typeof ApiDatabase.Service,
@@ -71,14 +55,14 @@ export const makeEventsCatalogRead = (
     );
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
-    key: string,
+    entry: ReturnType<typeof eventReadCacheEntry>,
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
     const codec = makeJsonCodec(Schema.toType(schema), superjson);
 
     return redis.getOrSetJsonEffect({
-      key,
+      ...entry,
       codec,
       ttlSeconds: CACHE_TTL_SECONDS,
       factory: load,
@@ -168,7 +152,7 @@ export const makeEventsCatalogRead = (
 
   const getOverview = (guildId: string, eventId: string) =>
     cached(
-      cacheKey(guildId, eventId, "overview"),
+      eventReadCacheEntry(guildId, eventId, "overview"),
       EventOverviewResponse,
       Effect.gen(function* () {
         const event = yield* scopedEvent(guildId, eventId);
@@ -236,7 +220,7 @@ export const makeEventsCatalogRead = (
       const onlyActive = activeOnly !== "false";
 
       return cached(
-        cacheKey(guild.id, "guild", "list", {
+        eventReadCacheEntry(guild.id, "guild", "list", {
           activeOnly: onlyActive,
           world: normalizedWorld,
         }),
@@ -323,7 +307,7 @@ export const makeEventsCatalogRead = (
       accessPolicy: AccessPolicy,
     ) =>
       cached(
-        cacheKey(guild.id, eventId, "maps"),
+        eventReadCacheEntry(guild.id, eventId, "maps"),
         EventMapsResponse,
         Effect.gen(function* () {
           const event = yield* scopedEvent(guild.id, eventId);

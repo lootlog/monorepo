@@ -207,7 +207,7 @@ export const makeLootsOperations = ({
       [...new Set(guildIds)],
       (guildId) =>
         attempt("loots.cache.invalidateList", () =>
-          redis.deleteByPattern(`loots:list:${guildId}:*`),
+          redis.invalidateScopes(`loots:list:${guildId}`),
         ).pipe(
           Effect.catch((error) =>
             Effect.sync(() =>
@@ -333,6 +333,7 @@ export const makeLootsOperations = ({
 
       return redis.getOrSetJsonEffect({
         key,
+        scopes: [`loots:list:${guild.id}`],
         codec: {
           stringify: wireCodec.stringify,
           parse: (text) => normalizeCachedLoots(wireCodec.parse(text)),

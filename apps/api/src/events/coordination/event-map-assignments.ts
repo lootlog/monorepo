@@ -1,7 +1,7 @@
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import { eventMapScope } from "#src/events/event-scope-query";
-import { invalidateEventCachePatterns } from "#src/events/catalog/event-cache-invalidation";
+import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
@@ -46,7 +46,7 @@ export interface EventAssignmentPublisher {
 
 export const makeEventMapAssignments = (
   database: typeof ApiDatabase.Service,
-  redis: Pick<RedisService, "deleteByPattern">,
+  redis: Pick<RedisService, "deleteByPattern" | "invalidateScopes">,
   timers: Pick<EventTimersPort, "getEventRespawnTimer">,
   publisher: EventAssignmentPublisher,
   logger: Pick<Logger, "warn">,
@@ -80,13 +80,11 @@ export const makeEventMapAssignments = (
     );
 
   const invalidate = (guildId: string, eventId: string) =>
-    invalidateEventCachePatterns(
+    invalidateEventCache(
       redis,
       logger,
-      [
-        `event-read:v2:${guildId}:guild:*`,
-        `event-read:v2:${guildId}:${eventId}:*`,
-      ],
+      guildId,
+      eventId,
       "Failed to invalidate event read cache",
     );
 

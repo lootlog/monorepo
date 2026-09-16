@@ -75,7 +75,7 @@ export interface AutoTimerPorts {
     check: EventHeroCheck,
   ) => Effect.Effect<unknown, unknown>;
   readonly get: (key: string) => Effect.Effect<string | null, unknown>;
-  readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
   readonly publish: <
     Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
@@ -510,7 +510,7 @@ export const makeAutoTimer = (
             JSON.stringify(result.projection),
             DEDUP_TTL_SECONDS,
           );
-          yield* ports.invalidate(`timer:list:${guildId}:*`);
+          yield* ports.invalidateList(guildId);
 
           if (result.migratedSyntheticNpcId !== null) {
             const deletion = {
