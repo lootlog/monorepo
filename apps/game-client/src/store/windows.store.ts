@@ -684,69 +684,70 @@ export const useWindowsStore = create<WindowsState>()(
           };
         }),
       setOpen: (key, open, windowState) => {
-        return set((state) => {
-          const currentWindow = state[key];
-          const hasWindowState = "state" in currentWindow;
-          let nextState = hasWindowState ? currentWindow.state : undefined;
+        // Resolved outside `set`: a no-op call (detector or notification bursts
+        // re-open an already focused window) must not run the persist write.
+        const state = get();
+        const currentWindow = state[key];
+        const hasWindowState = "state" in currentWindow;
+        let nextState = hasWindowState ? currentWindow.state : undefined;
 
-          if (windowState !== undefined) {
-            nextState = windowState;
+        if (windowState !== undefined) {
+          nextState = windowState;
+        }
+
+        let nextHistory = state.windowFocusHistory;
+
+        if (open) {
+          const isAlreadyFirst = state.windowFocusHistory[0] === key;
+
+          if (!isAlreadyFirst) {
+            nextHistory = [
+              key,
+              ...state.windowFocusHistory.filter((id) => id !== key),
+            ];
           }
+        } else if (state.windowFocusHistory.includes(key)) {
+          nextHistory = state.windowFocusHistory.filter((id) => id !== key);
+        }
 
-          let nextHistory = state.windowFocusHistory;
+        let nextCurrentWindowFocus = state.currentWindowFocus;
 
-          if (open) {
-            const isAlreadyFirst = state.windowFocusHistory[0] === key;
+        if (open) {
+          nextCurrentWindowFocus = key;
+        } else if (state.currentWindowFocus === key) {
+          nextCurrentWindowFocus = undefined;
+        }
 
-            if (!isAlreadyFirst) {
-              nextHistory = [
-                key,
-                ...state.windowFocusHistory.filter((id) => id !== key),
-              ];
-            }
-          } else if (state.windowFocusHistory.includes(key)) {
-            nextHistory = state.windowFocusHistory.filter((id) => id !== key);
-          }
+        const hasSameWindowState =
+          nextState === undefined ||
+          (hasWindowState && Object.is(currentWindow.state, nextState));
 
-          let nextCurrentWindowFocus = state.currentWindowFocus;
+        if (
+          currentWindow.open === open &&
+          hasSameWindowState &&
+          state.currentWindowFocus === nextCurrentWindowFocus &&
+          state.windowFocusHistory === nextHistory
+        ) {
+          return;
+        }
 
-          if (open) {
-            nextCurrentWindowFocus = key;
-          } else if (state.currentWindowFocus === key) {
-            nextCurrentWindowFocus = undefined;
-          }
+        let nextWindow: WindowsState[WindowId] = {
+          ...currentWindow,
+          open,
+        };
 
-          const hasSameWindowState =
-            nextState === undefined ||
-            (hasWindowState && Object.is(currentWindow.state, nextState));
-
-          if (
-            currentWindow.open === open &&
-            hasSameWindowState &&
-            state.currentWindowFocus === nextCurrentWindowFocus &&
-            state.windowFocusHistory === nextHistory
-          ) {
-            return state;
-          }
-
-          let nextWindow: WindowsState[WindowId] = {
+        if (nextState !== undefined) {
+          nextWindow = {
             ...currentWindow,
             open,
+            state: nextState,
           };
+        }
 
-          if (nextState !== undefined) {
-            nextWindow = {
-              ...currentWindow,
-              open,
-              state: nextState,
-            };
-          }
-
-          return {
-            [key]: nextWindow,
-            currentWindowFocus: nextCurrentWindowFocus,
-            windowFocusHistory: nextHistory,
-          };
+        set({
+          [key]: nextWindow,
+          currentWindowFocus: nextCurrentWindowFocus,
+          windowFocusHistory: nextHistory,
         });
       },
       setPosition: (key: WindowId, pos) =>

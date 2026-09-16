@@ -107,6 +107,90 @@ describe("useChatGuildData", () => {
     });
   });
 
+  it("keeps the mention context identity when a message from a known sender arrives", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    queryClients.push(queryClient);
+    historyRequests.mockResolvedValue(
+      Response.json([createMessage("message-1", "2026-01-01T10:01:00.000Z")]),
+    );
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () =>
+        useChatGuildData({
+          currentCharacterNick: "Hero",
+          guilds: [{ id: "guild-1", name: "Guild" }],
+          selectedGuildId: "guild-1",
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(result.current.messagesByGuildId["guild-1"]).toHaveLength(1);
+    });
+
+    const contextBefore = result.current.mentionContextsByGuildId["guild-1"];
+    const membersBefore = result.current.membersByGuildId["guild-1"];
+
+    act(() => {
+      updateChatMessagesCache({
+        guildId: "guild-1",
+        queryClient,
+        updater: (messages) =>
+          upsertChatMessage(
+            messages,
+            createMessage("message-2", "2026-01-01T10:02:00.000Z"),
+          ),
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.messagesByGuildId["guild-1"]).toHaveLength(2);
+    });
+
+    // Rows are memoized on these props; a new identity would re-render every row.
+    expect(result.current.mentionContextsByGuildId["guild-1"]).toBe(
+      contextBefore,
+    );
+    expect(result.current.membersByGuildId["guild-1"]).toBe(membersBefore);
+
+    act(() => {
+      updateChatMessagesCache({
+        guildId: "guild-1",
+        queryClient,
+        updater: (messages) =>
+          upsertChatMessage(
+            messages,
+            createChatMessage({
+              id: "message-3",
+              timestamp: "2026-01-01T10:03:00.000Z",
+              senderId: "user-2",
+              characterData: {
+                nick: "Newcomer",
+                id: 2,
+                acc: 2,
+                lvl: 100,
+                prof: "w",
+                icon: "hero.png",
+              },
+            }),
+          ),
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        result.current.mentionContextsByGuildId["guild-1"]?.memberNames,
+      ).toContain("Newcomer");
+    });
+  });
+
   it("merges a reconnect response with a socket message received during refetch", async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
