@@ -1,5 +1,17 @@
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { beforeEach, afterEach, describe, expect, it } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { EventDispatcher } from "@/lib/event-dispatcher";
+import {
+  margonemRuntimeBridge,
+  type RuntimeFunction,
+} from "@/lib/margonem-runtime/margonem-runtime-bridge";
+import {
+  NiRuntimeAdapter,
+  SiRuntimeAdapter,
+} from "@/lib/margonem-runtime/runtime-adapter";
+import { RuntimeEventPipeline } from "@/lib/margonem-runtime/runtime-event-pipeline";
+import { RuntimeStateProjection } from "@/lib/margonem-runtime/runtime-state-projection";
+import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
@@ -116,6 +128,131 @@ describe("MapChangeProcessor", () => {
       }),
     );
   });
+
+  it.each(["ni", "si"] as const)(
+    "completes a deferred map transition once native map data recovers (%s)",
+    (gameInterface) => {
+      let nativeMapReady = false;
+
+      const nativeMap = {
+        id: 13,
+        get name() {
+          if (!nativeMapReady) throw new Error("Map is still initializing");
+
+          return "Nithal";
+        },
+        visibility: 30,
+      };
+
+      const hero = {
+        account: 202,
+        id: 101,
+        img: "hero.gif",
+        lvl: 230,
+        nick: "Tester",
+        prof: "w",
+        x: 1,
+        y: 2,
+      };
+
+      const worldConfig = { getWorldName: () => "fobos" };
+      vi.stubGlobal(
+        "Engine",
+        gameInterface === "ni"
+          ? {
+              hero: { d: hero },
+              map: { d: nativeMap },
+              worldConfig,
+            }
+          : undefined,
+      );
+      vi.stubGlobal("hero", hero);
+      vi.stubGlobal("map", nativeMap);
+      vi.stubGlobal("g", { worldConfig });
+      vi.stubGlobal("successData", () => undefined);
+      const runtimeWindow: Window & { successData?: RuntimeFunction } = window;
+
+      const projection = new RuntimeStateProjection({
+        adapter:
+          gameInterface === "ni"
+            ? new NiRuntimeAdapter()
+            : new SiRuntimeAdapter(),
+      });
+
+      const pipeline = new RuntimeEventPipeline({ projection });
+      const dispatcher = new EventDispatcher(pipeline);
+
+      const dispatch = (event: GameEvent) => {
+        runtimeWindow.successData?.(event);
+        pipeline.flush();
+      };
+
+      margonemRuntimeBridge.setupProxies();
+      pipeline.install();
+      pipeline.setReady();
+      dispatcher.register();
+
+      try {
+        useGlobalStore.setState({
+          socketState: {
+            connected: true,
+            joined: true,
+            joinedGuilds: ["guild-1"],
+          },
+        });
+        airTagRuntime.configure({
+          connected: true,
+          enabled: true,
+          joined: true,
+        });
+        dispatch(createMapChangeEvent(12, "Torneg"));
+        useNpcDetectorStore.setState({ npcs: [npc] });
+        useDialogStore.getState().setNpcContext({
+          npcId: 101,
+          npc: null,
+          source: "talk-request",
+        });
+        beginPing();
+        mapPingController.addRemote(ping, "Uwaga");
+        test.wire.frames.length = 0;
+
+        dispatch({ town: { id: 13 } });
+        expect(useGameStore.getState().game?.map).toMatchObject({
+          id: 13,
+          name: "",
+        });
+        expect(test.wire.frames).toEqual([]);
+
+        nativeMapReady = true;
+        dispatch({ h: { x: 3 } });
+        expect(test.wire.frames).toEqual([
+          expect.objectContaining({
+            type: "presence.publish",
+            data: expect.objectContaining({
+              location: expect.objectContaining({ mapId: 13, map: "Nithal" }),
+            }),
+          }),
+          expect.objectContaining({
+            type: "air-tag.subscription",
+            data: expect.objectContaining({ expectedMapId: 13 }),
+          }),
+        ]);
+        expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+        expect(useDialogStore.getState().npcContext).toBeNull();
+        expect(completePing()).toBeNull();
+        expect(mapPingController.addRemote(ping, "Uwaga")).toBe(true);
+
+        dispatch({ h: { x: 4 } });
+        expect(test.wire.frames).toHaveLength(2);
+        expect(mapPingController.addRemote(ping, "Uwaga")).toBe(false);
+      } finally {
+        dispatcher.cleanup();
+        pipeline.cleanup();
+        margonemRuntimeBridge.cleanup();
+        vi.unstubAllGlobals();
+      }
+    },
+  );
 
   it("keeps transport silent when disconnected or no organization is joined", () => {
     processor.handle(createMapChangeEvent(12, "Torneg"));

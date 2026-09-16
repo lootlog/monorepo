@@ -248,6 +248,37 @@ describe("RuntimeStateProjection", () => {
     expect(useGameStore.getState().game?.map.name).toBe("Map");
   });
 
+  it("announces recovered map metadata before the ordinary event without changing the native packet", () => {
+    const adapter = createAdapter();
+    const projection = new RuntimeStateProjection({ adapter });
+    projection.bootstrap();
+    adapter.getGameSnapshot.mockImplementation(() => {
+      throw new Error("Map initializing");
+    });
+    projection.apply(createEnvelope({ town: { id: 11 } }));
+    const epoch = useGameStore.getState().mapEpoch;
+    adapter.getGameSnapshot.mockReturnValue({
+      ...game,
+      map: { id: 11, name: "Recovered map", visibility: 30 },
+    });
+    const event = { h: { stasis: 0 } } satisfies GameEvent;
+    const envelope = projection.captureIngress(createEnvelope(event));
+    projection.apply(envelope);
+    expect(envelope.raw).toBe(event);
+    expect(event).not.toHaveProperty("town");
+    expect(envelope.facts.map((fact) => fact.kind)).toEqual(["map", "afk"]);
+    expect(envelope.facts[0]?.event.town).toMatchObject({
+      id: 11,
+      name: "Recovered map",
+    });
+    expect(useGameStore.getState().mapEpoch).toBe(epoch);
+    expect(
+      projection
+        .captureIngress(createEnvelope(event))
+        .facts.map((fact) => fact.kind),
+    ).toEqual(["afk"]);
+  });
+
   it.each(["ni", "si"] as const)(
     "recovers the location through the real %s adapter",
     (runtimeInterface) => {
