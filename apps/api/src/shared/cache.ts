@@ -48,8 +48,8 @@ export function getGuildCacheKey(idOrVanityUrl: string): string {
   return `${GUILD_CACHE_KEY_PREFIX}:${idOrVanityUrl}`;
 }
 
-export function getUserLootlogConfigCachePattern(discordId: string): string {
-  return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:*`;
+export function getUserLootlogConfigCacheScope(discordId: string): string {
+  return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}`;
 }
 
 export function getGuildMemberReferencesCacheKey(
@@ -72,8 +72,8 @@ export function getMemberLootlogConfigSummaryCacheKey(
   return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:lootlog-config:${discordId}`;
 }
 
-export function getMemberReadCachePattern(guildId: string): string {
-  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}:*`;
+export function getMemberReadCacheScope(guildId: string): string {
+  return `${MEMBER_READ_CACHE_KEY_PREFIX}:${guildId}`;
 }
 
 export function getEventWrappedCacheKey(

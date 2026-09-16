@@ -59,14 +59,15 @@ export const recordsServicesLive = Layer.effect(
       rabbit,
       (organizationIds) =>
         Effect.all(
-          organizationIds.flatMap((guildId) =>
-            [`loots:list:${guildId}:*`, `loot-stats:${guildId}:*`].map(
-              (pattern) =>
-                Effect.tryPromise({
-                  try: () => redis.deleteByPattern(pattern),
-                  catch: (error) => error,
-                }),
-            ),
+          organizationIds.map((guildId) =>
+            Effect.tryPromise({
+              try: () =>
+                redis.invalidateScopes(
+                  `loots:list:${guildId}`,
+                  `loot-stats:${guildId}`,
+                ),
+              catch: (error) => error,
+            }),
           ),
           { concurrency: "unbounded", discard: true },
         ),
@@ -113,9 +114,10 @@ export const recordsServicesLive = Layer.effect(
     const killStatsPersistence = makeKillStatsPersistence(database);
 
     const killQueryCache: KillQueryCache = {
-      getOrSet: (key, schema, factory, ttlSeconds) =>
+      getOrSet: (key, schema, factory, ttlSeconds, scopes) =>
         redis.getOrSetJsonEffect({
           key,
+          scopes,
           codec: makeJsonCodec(schema),
           factory,
           ttlSeconds,
@@ -132,9 +134,9 @@ export const recordsServicesLive = Layer.effect(
         createKill: makeKillCreation(
           database,
           {
-            deleteByPattern: (pattern) =>
+            invalidateScopes: (...scopes) =>
               Effect.tryPromise({
-                try: () => redis.deleteByPattern(pattern),
+                try: () => redis.invalidateScopes(...scopes),
                 catch: (error) => error,
               }),
             deleteIfValue: (key, value) =>
@@ -172,9 +174,9 @@ export const recordsServicesLive = Layer.effect(
         lootAllocation: makeLootAllocationOperations({
           persistence: makeLootAllocationPersistence(database),
           cache: {
-            deleteByPattern: (pattern) =>
+            invalidateScopes: (...scopes) =>
               Effect.tryPromise({
-                try: () => redis.deleteByPattern(pattern),
+                try: () => redis.invalidateScopes(...scopes),
                 catch: (error) => error,
               }),
           },

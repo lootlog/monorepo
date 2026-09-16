@@ -19,7 +19,7 @@ describe("loot allocation Effect module", () => {
           Effect.die("Unexpected allocation state read"),
       },
       cache: {
-        deleteByPattern: () => {
+        invalidateScopes: () => {
           externalCalls += 1;
 
           return Effect.void;

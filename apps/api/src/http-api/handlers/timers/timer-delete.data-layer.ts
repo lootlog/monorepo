@@ -34,7 +34,7 @@ import {
 } from "./timer-errors.js";
 
 export interface DeleteTimerPorts {
-  readonly invalidate: (pattern: string) => Effect.Effect<unknown, unknown>;
+  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
   readonly publish: <
     Key extends
       | typeof RabbitRoutingKey.GUILDS_TIMERS_DELETE
@@ -224,7 +224,7 @@ export const makeDeleteTimer = (
       },
     };
 
-    yield* ports.invalidate(`timer:list:${access.guild.id}:*`);
+    yield* ports.invalidateList(access.guild.id);
     yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, payload);
     yield* ports.publish(RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED, payload);
   });

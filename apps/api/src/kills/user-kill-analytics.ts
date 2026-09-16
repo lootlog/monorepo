@@ -403,6 +403,7 @@ export const makeUserKillAnalytics = (
       UserKillAnalyticsResponse,
       load,
       30,
+      [`kill-stats:user:${userId}`],
     );
   });
 
@@ -441,6 +442,7 @@ export const makeUserKillAnalytics = (
       UserKillActivityResponse,
       load,
       30,
+      [`kill-stats:user:${userId}`],
     );
   });
 

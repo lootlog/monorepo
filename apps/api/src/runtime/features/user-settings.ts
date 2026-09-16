@@ -1,4 +1,3 @@
-import { makeJsonCodec } from "#src/redis/redis.service";
 import { Effect, Layer } from "effect";
 import {
   UserLootlogConfigData,
@@ -16,12 +15,9 @@ export const userLootlogConfigData = Layer.unwrap(
       });
 
     const cache: UserLootlogConfigCache = {
-      getJson: (key, schema) =>
-        attempt(() => redis.getJson(key, makeJsonCodec(schema))),
-      setJson: (key, value, ttl) =>
-        attempt(() => redis.setJson(key, value, ttl)),
-      deleteByPattern: (pattern) =>
-        attempt(() => redis.deleteByPattern(pattern)).pipe(Effect.asVoid),
+      getOrSetJsonEffect: (options) => redis.getOrSetJsonEffect(options),
+      invalidateScopes: (...scopes) =>
+        attempt(() => redis.invalidateScopes(...scopes)).pipe(Effect.asVoid),
     };
 
     return UserLootlogConfigData.layerDatabase(cache);

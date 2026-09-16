@@ -1,5 +1,4 @@
 import { AuthService } from "#src/auth/auth.service";
-import { makeJsonCodec } from "#src/redis/redis.service";
 import {
   ApiDatabase,
   type ApiDatabaseValue,
@@ -38,9 +37,9 @@ import {
 import { makeMemberStore } from "#src/members/member.store";
 import type { MemberBulkRefreshJobData } from "#src/members/member.types";
 import {
-  getMemberReadCachePattern,
+  getMemberReadCacheScope,
   getPermissionsCacheKey,
-  getUserLootlogConfigCachePattern,
+  getUserLootlogConfigCacheScope,
 } from "#src/shared/cache";
 import { applicationLogger } from "#src/shared/application-logger";
 import { RabbitMessaging } from "@lootlog/messaging";
@@ -162,13 +161,13 @@ export const memberServicesLive = Layer.effect(
             Effect.all(
               [
                 adapter(() =>
-                  redis.deleteByPattern(
-                    getUserLootlogConfigCachePattern(member.discordId),
+                  redis.invalidateScopes(
+                    getUserLootlogConfigCacheScope(member.discordId),
                   ),
                 ),
                 adapter(() =>
-                  redis.deleteByPattern(
-                    getMemberReadCachePattern(member.guildId),
+                  redis.invalidateScopes(
+                    getMemberReadCacheScope(member.guildId),
                   ),
                 ),
                 member.globalUserId
@@ -259,12 +258,12 @@ export const memberServicesLive = Layer.effect(
                     redis.del(getPermissionsCacheKey(userId, guildId)),
                   ),
                   adapter(() =>
-                    redis.deleteByPattern(
-                      getUserLootlogConfigCachePattern(discordId),
+                    redis.invalidateScopes(
+                      getUserLootlogConfigCacheScope(discordId),
                     ),
                   ),
                   adapter(() =>
-                    redis.deleteByPattern(getMemberReadCachePattern(guildId)),
+                    redis.invalidateScopes(getMemberReadCacheScope(guildId)),
                   ),
                 ],
                 { concurrency: "unbounded", discard: true },
@@ -374,12 +373,12 @@ export const membersData = Layer.unwrap(
           Effect.all(
             [
               promise(() =>
-                redis.deleteByPattern(
-                  getUserLootlogConfigCachePattern(discordId),
+                redis.invalidateScopes(
+                  getUserLootlogConfigCacheScope(discordId),
                 ),
               ),
               promise(() =>
-                redis.deleteByPattern(getMemberReadCachePattern(guildId)),
+                redis.invalidateScopes(getMemberReadCacheScope(guildId)),
               ),
               discord.clearGuildMemberDataCache({ discordId, guildId, userId }),
               promise(() => redis.del(getPermissionsCacheKey(userId, guildId))),
@@ -410,15 +409,5 @@ export const membersData = Layer.unwrap(
 );
 
 export const memberReadData = Layer.unwrap(
-  Effect.map(ApiRedis, (redis) => {
-    const attempt = <A>(operation: () => PromiseLike<A>) =>
-      Effect.tryPromise({ try: operation, catch: (error) => error });
-
-    return makeMemberReadDataLayer({
-      getJson: (key, schema) =>
-        attempt(() => redis.getJson(key, makeJsonCodec(schema))),
-      setJson: (key, value, ttl) =>
-        attempt(() => redis.setJson(key, value, ttl)),
-    });
-  }),
+  Effect.map(ApiRedis, (redis) => makeMemberReadDataLayer(redis)),
 );

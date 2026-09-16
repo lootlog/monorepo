@@ -1,3 +1,4 @@
+import { eventReadCacheEntry } from "#src/events/catalog/event-read-cache.service";
 import { extractEventTimerNpc } from "#src/events/respawn/event-timer-npc";
 import { isObjectRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -73,12 +74,11 @@ export const makeEventHeroSummary = (
     schema: S,
     load: Effect.Effect<S["Type"], unknown>,
   ) => {
-    const key = `event-read:v2:${guildId}:${eventId}:hero-stats-v2:e30`;
     const codec = makeJsonCodec(Schema.toType(schema), superjson);
 
     return redis
       .getOrSetJsonEffect({
-        key,
+        ...eventReadCacheEntry(guildId, eventId, "hero-stats-v2"),
         codec,
         ttlSeconds: 10,
         factory: load,

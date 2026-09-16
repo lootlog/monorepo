@@ -62,6 +62,7 @@ export const makeMemberKillQuery =
     };
 
     return cachedKillQuery({
+      scopes: [`kill-stats:guild:${guildId}`],
       cache,
       logger,
       key: buildKillQueryCacheKey("member-kills", guildId, {

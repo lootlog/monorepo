@@ -69,7 +69,7 @@ export class LootStatsService {
     private readonly query: LootStatsQuery,
     private readonly redis: Pick<
       RedisService,
-      "getOrSetJsonEffect" | "deleteByPattern"
+      "getOrSetJsonEffect" | "invalidateScopes"
     >,
   ) {}
 
@@ -79,7 +79,7 @@ export class LootStatsService {
     return Effect.all(
       uniqueGuildIds.map((guildId) =>
         Effect.tryPromise({
-          try: () => this.redis.deleteByPattern(`loot-stats:${guildId}:*`),
+          try: () => this.redis.invalidateScopes(`loot-stats:${guildId}`),
           catch: (cause) => cause,
         }).pipe(
           Effect.catch((error) =>
@@ -204,6 +204,7 @@ export class LootStatsService {
     return this.redis
       .getOrSetJsonEffect({
         key: cacheKey,
+        scopes: [`loot-stats:${guildId}`],
         ttlSeconds: CACHE_TTL_SECONDS,
         codec: makeJsonCodec(LootStatsResponseSchema),
         factory: load,

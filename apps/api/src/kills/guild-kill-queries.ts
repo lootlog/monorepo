@@ -80,6 +80,7 @@ export const makeGuildKillQueries = (
     return protect(
       "kills.guild-overview",
       cachedKillQuery({
+        scopes: [`kill-stats:guild:${guildId}`],
         cache,
         logger,
         key: buildKillQueryCacheKey("guild-overview", guildId, {
@@ -197,6 +198,7 @@ export const makeGuildKillQueries = (
     return protect(
       "kills.guild-top-npcs",
       cachedKillQuery({
+        scopes: [`kill-stats:guild:${guildId}`],
         cache,
         logger,
         key: buildKillQueryCacheKey("guild-top-npcs", guildId, {
@@ -246,6 +248,7 @@ export const makeGuildKillQueries = (
     return protect(
       "kills.guild-top-killers",
       cachedKillQuery({
+        scopes: [`kill-stats:guild:${guildId}`],
         cache,
         logger,
         key: buildKillQueryCacheKey("guild-top-killers", guildId, {
@@ -309,6 +312,7 @@ export const makeGuildKillQueries = (
     return protect(
       "kills.guild-npc-killers",
       cachedKillQuery({
+        scopes: [`kill-stats:guild:${guildId}`],
         cache,
         logger,
         key: buildKillQueryCacheKey("guild-npc-killers", guildId, {
