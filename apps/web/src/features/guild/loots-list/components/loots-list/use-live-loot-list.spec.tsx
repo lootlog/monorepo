@@ -39,7 +39,6 @@ function Probe() {
       <output>
         {JSON.stringify({
           ids: list.allLoots.map((loot) => loot.id),
-          freshness: list.freshness,
         })}
       </output>
     </>
@@ -188,7 +187,8 @@ it("retains visible loots through reconnect, background refresh and its failure"
   const listRequests = vi
     .fn<() => Promise<Response>>()
     .mockResolvedValueOnce(Response.json([loot]))
-    .mockReturnValueOnce(pending);
+    .mockReturnValueOnce(pending)
+    .mockResolvedValueOnce(Response.json([{ ...loot, id: 2 }]));
 
   const { gateway } = await mount(listRequests);
 
@@ -217,9 +217,11 @@ it("retains visible loots through reconnect, background refresh and its failure"
     await vi.advanceTimersByTimeAsync(1);
   });
   expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
-  expect(screen.getByRole("status").textContent).toContain(
-    '"freshness":"error"',
-  );
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(65_000);
+  });
+  expect(screen.getByRole("status").textContent).toContain('"ids":[2]');
+  expect(listRequests).toHaveBeenCalledTimes(3);
 });
 
 it.each(["permissions", "reconnect"] as const)(
@@ -426,17 +428,11 @@ it("resumes event reconciliation for new filters after an old filter's refresh f
   await act(async () => {
     await vi.advanceTimersByTimeAsync(35_000);
   });
-  expect(screen.getByRole("status").textContent).toContain(
-    '"freshness":"error"',
-  );
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Change filter" }));
     await vi.advanceTimersByTimeAsync(250);
   });
   expect(screen.getByRole("status").textContent).toContain('"ids":[2]');
-  expect(screen.getByRole("status").textContent).not.toContain(
-    '"freshness":"error"',
-  );
   await act(async () => {
     gateway.deliver({
       v: 1,
