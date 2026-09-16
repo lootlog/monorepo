@@ -9,6 +9,7 @@ import { decode, encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Predicate } from "effect";
 import { CommandHandler } from "./command-handler.js";
+import { CommandIngress } from "./command-ingress.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
   decodeServerEvent,
@@ -185,6 +186,167 @@ const setup = (guildStore?: GuildStore) => {
 };
 
 describe("CommandHandler session lifecycle", () => {
+  test("stalled permission HTTP keeps one join in flight, rejects excess work, and drains accepted joins before disconnect", async () => {
+    const gate = Promise.withResolvers<void>();
+    let requests = 0;
+
+    const store = makeGuildStore(
+      { apiUrl: "http://api.local" },
+      {
+        command: {
+          get: async () => null,
+          set: async () => "OK",
+          del: async () => 0,
+        },
+      },
+      httpClientFromResponses(() =>
+        Effect.promise(async () => {
+          requests++;
+          await gate.promise;
+
+          return Response.json([guild()]);
+        }),
+      ),
+    );
+
+    const { handler, hub, activity } = setup(store);
+    const { socket, closes } = makeSocket();
+    const tasks: Promise<void>[] = [];
+    let disconnected = false;
+
+    const ingress = new CommandIngress(
+      (socket, input) => handler.handle(socket, input),
+      (socket, input) => handler.rejectOverloaded(socket, input),
+      () =>
+        Effect.sync(() => {
+          disconnected = true;
+        }),
+      (_label, task) => {
+        tasks.push(Effect.runPromise(task));
+      },
+      {
+        active: 2,
+        messages: 2,
+        bytes: 4096,
+        connectionMessages: 2,
+        connectionBytes: 4096,
+      },
+    );
+
+    const waitFor = async (predicate: () => boolean) => {
+      const deadline = Date.now() + 2000;
+
+      while (!predicate()) {
+        if (Date.now() >= deadline)
+          throw new Error("Command ingress did not progress");
+        await Bun.sleep(1);
+      }
+    };
+
+    ingress.open(socket);
+
+    try {
+      for (const requestId of ["first", "second", "overload"]) {
+        ingress.message(
+          socket,
+          Buffer.from(
+            encode({ v: 1, type: "session.join", requestId, data: {} }),
+          ),
+        );
+      }
+
+      await waitFor(() => requests > 0);
+      expect(requests).toBe(1);
+      expect(socket.data.joined).toBe(false);
+      expect(hub.responses).toMatchObject([
+        { requestId: "overload", status: "error", error: { retryable: true } },
+      ]);
+      ingress.close(socket);
+      expect(disconnected).toBe(false);
+      gate.resolve();
+      await waitFor(() => disconnected);
+      await Promise.all(tasks);
+      expect(hub.responses).toMatchObject([
+        { requestId: "overload", status: "error" },
+        { requestId: "first", status: "success" },
+        { requestId: "second", status: "success" },
+      ]);
+      expect(activity.calls).toHaveLength(1);
+      expect(socket.data.joined).toBe(true);
+      expect(closes).toEqual([]);
+      expect(ingress.getDiagnostics()).toMatchObject({
+        pending: 0,
+        bytes: 0,
+        active: 0,
+      });
+    } finally {
+      gate.resolve();
+      await Promise.all(tasks);
+    }
+  });
+
+  test.each(["json", "msgpack"] as const)(
+    "rejects overloaded %s commands without joining or publishing activity",
+    (frameEncoding) => {
+      const { handler, hub, activity } = setup();
+      const { socket, closes } = makeSocket();
+      Object.assign(socket.data, {
+        frameEncoding: frameEncoding === "json" ? "json" : undefined,
+      });
+
+      const command = {
+        v: 1,
+        type: "session.join",
+        requestId: "overloaded",
+        data: {},
+      };
+
+      const input =
+        frameEncoding === "json"
+          ? JSON.stringify(command)
+          : Buffer.from(encode(command));
+
+      handler.rejectOverloaded(socket, input);
+
+      expect(hub.responses).toEqual([
+        {
+          v: 1,
+          requestId: "overloaded",
+          status: "error",
+          error: {
+            code: "COMMAND_REJECTED",
+            message: "command temporarily unavailable",
+            retryable: true,
+          },
+        },
+      ]);
+      expect(socket.data.joined).toBe(false);
+      expect(activity.calls).toEqual([]);
+      expect(hub.events).toEqual([]);
+      expect(closes).toEqual([]);
+    },
+  );
+
+  test("overload preserves malformed-frame rejection", () => {
+    const { handler, hub } = setup();
+    const { socket, closes } = makeSocket();
+    Object.assign(socket.data, { frameEncoding: "json" });
+    handler.rejectOverloaded(socket, "{");
+    expect(closes).toEqual([1007]);
+    expect(hub.responses).toEqual([]);
+  });
+
+  test("overload closes legacy commands without request IDs instead of silently dropping them", () => {
+    const { handler, activity } = setup();
+    const { socket, closes } = makeSocket();
+    handler.rejectOverloaded(
+      socket,
+      Buffer.from(encode({ v: 1, type: "session.join", data: {} })),
+    );
+    expect(closes).toEqual([1013]);
+    expect(activity.calls).toEqual([]);
+  });
+
   test.each(["json", "msgpack"] as const)(
     "rejects subscription exhaustion through %s commands while allowing unsubscribe",
     async (frameEncoding) => {
