@@ -117,6 +117,7 @@ type RealtimeFederationStore = Pick<
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
+  private readonly registrations = new WeakMap<SessionData, Promise<void>>();
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
@@ -154,37 +155,46 @@ export class RealtimeHub {
 
     for (const key of this.audienceKeys(socket.data))
       this.addAudience(key, socket);
+    const registration = this.refreshRegistry(socket.data);
+    this.registrations.set(
+      socket.data,
+      registration.then(
+        () => undefined,
+        () => undefined,
+      ),
+    );
     this.runBackground(
       "registry.register",
       Effect.tryPromise({
-        try: () => this.refreshRegistry(socket.data),
+        try: () => registration,
         catch: (cause) => cause,
       }),
     );
   }
 
-  unregister(socket: GatewaySocket): void {
+  detach(socket: GatewaySocket): void {
     if (this.sockets.get(socket.data.connectionId) !== socket) return;
     this.sockets.delete(socket.data.connectionId);
 
     for (const key of this.audienceKeys(socket.data))
       this.removeAudience(key, socket);
-    this.runBackground(
-      "registry.unregister",
-      Effect.tryPromise({
-        try: () =>
-          Promise.all([
-            this.redis.command.del(
-              this.connectionKey(socket.data.connectionId),
-            ),
-            this.redis.command.srem(
-              this.userConnectionsKey(socket.data.userId),
-              socket.data.connectionId,
-            ),
-          ]).then(() => undefined),
-        catch: (cause) => cause,
-      }),
-    );
+  }
+
+  async cleanupRegistry(session: SessionData): Promise<void> {
+    await this.registrations.get(session);
+    this.registrations.delete(session);
+
+    const removals = await Promise.allSettled([
+      this.redis.command.del(this.connectionKey(session.connectionId)),
+      this.redis.command.srem(
+        this.userConnectionsKey(session.userId),
+        session.connectionId,
+      ),
+    ]);
+
+    for (const removal of removals) {
+      if (removal.status === "rejected") throw removal.reason;
+    }
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -250,7 +260,8 @@ export class RealtimeHub {
 
   async refreshRegistry(session: SessionData): Promise<void> {
     const userConnectionsKey = this.userConnectionsKey(session.userId);
-    await Promise.all([
+
+    const writes = await Promise.allSettled([
       this.redis.command.set(
         this.connectionKey(session.connectionId),
         JSON.stringify({
@@ -265,6 +276,10 @@ export class RealtimeHub {
       this.redis.command.sadd(userConnectionsKey, session.connectionId),
       this.redis.command.expire(userConnectionsKey, 120),
     ]);
+
+    for (const write of writes) {
+      if (write.status === "rejected") throw write.reason;
+    }
   }
 
   async lookupUserConnections(userId: string): Promise<

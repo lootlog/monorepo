@@ -60,6 +60,12 @@ const runtimeGauges = {
   pendingCommands: Metric.gauge("lootlog_gateway_redis_pending"),
   pendingPublications: Metric.gauge("lootlog_gateway_publications_pending"),
   active: Metric.gauge("lootlog_gateway_commands_active"),
+  cleanupActive: Metric.gauge("lootlog_gateway_cleanup_active"),
+  retainedConnections: Metric.gauge("lootlog_gateway_connections_retained"),
+  closingConnections: Metric.gauge("lootlog_gateway_connections_closing"),
+  rejectedConnections: Metric.gauge(
+    "lootlog_gateway_connections_rejected_total",
+  ),
   pending: Metric.gauge("lootlog_gateway_commands_pending"),
   bytes: Metric.gauge("lootlog_gateway_commands_retained_bytes"),
   rejected: Metric.gauge("lootlog_gateway_commands_rejected_total"),

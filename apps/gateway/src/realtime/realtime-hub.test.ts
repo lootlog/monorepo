@@ -360,14 +360,17 @@ describe("RealtimeHub federation", () => {
     expect(counts()).toEqual([1, 1]);
     await publish("organization-2");
     expect(counts()).toEqual([2, 2]);
-    hubs.forEach((hub, index) => {
+
+    for (const [index, hub] of hubs.entries()) {
       const target = targets[index];
 
       if (!target) throw new Error("Missing lifecycle target");
-      hub.unregister(target.socket);
+      hub.detach(target.socket);
+      await hub.cleanupRegistry(target.socket.data);
       // An asynchronous subscription request may finish after the socket closes.
       hub.subscribe(target.socket, otherScope);
-    });
+    }
+
     await publish("organization-2");
     expect(counts()).toEqual([2, 2]);
   });
@@ -611,13 +614,16 @@ describe("RealtimeHub federation", () => {
 
     for (const group of targets)
       expect(group.map((target) => target.sent.length)).toEqual([1, 1, 1]);
-    hubs.forEach((hub, index) => {
+
+    for (const [index, hub] of hubs.entries()) {
       const target = targets[index]?.[0];
 
       if (!target) throw new Error("Missing identity target");
-      hub.unregister(target.socket);
+      hub.detach(target.socket);
+      await hub.cleanupRegistry(target.socket.data);
       expect(hub.getLocalSocketsForUser("user-shared")).toHaveLength(1);
-    });
+    }
+
     await hubs[0]?.publishToDiscord("discord-shared", event);
     await hubs[0]?.publishToUser("user-other", event);
 
@@ -1582,4 +1588,118 @@ test("API key user-targeted organization events stay inside selected current org
     },
   });
   expect(target.sent).toHaveLength(1);
+});
+
+test("disconnect detaches local delivery before ordered registry cleanup waits for registration", async () => {
+  const redis = new FakeRedisStore(new FederationBus());
+  const write = Promise.withResolvers<void>();
+  let registered = false;
+  redis.command.set = async () => {
+    await write.promise;
+    registered = true;
+
+    return "OK";
+  };
+
+  redis.command.del = async () => {
+    registered = false;
+
+    return 1;
+  };
+
+  const tasks: Array<Effect.Effect<void, unknown>> = [];
+
+  const hub = new RealtimeHub(config, redis, (_label, task) =>
+    tasks.push(task),
+  );
+
+  const target = makeSocket(makeSession("closing"));
+  hub.register(target.socket);
+
+  const event = {
+    v: 1,
+    type: "reservation.created",
+    data: { organizationId: "123", payload: {} },
+  } as const;
+
+  await hub.publishToUser(target.socket.data.userId, event);
+  expect(target.sent).toHaveLength(1);
+  hub.detach(target.socket);
+  await hub.publishToUser(target.socket.data.userId, event);
+  expect(target.sent).toHaveLength(1);
+  expect(hub.getLocalSocketsForUser(target.socket.data.userId)).toEqual([]);
+  const cleaned = hub.cleanupRegistry(target.socket.data);
+  write.resolve();
+  await cleaned;
+  await Promise.all(tasks.map((task) => Effect.runPromise(task)));
+  expect(registered).toBe(false);
+});
+
+test("registry cleanup waits for remaining registration writes after one fails", async () => {
+  const redis = new FakeRedisStore(new FederationBus());
+  const write = Promise.withResolvers<void>();
+  let registered = false;
+  redis.command.set = async () => {
+    await write.promise;
+    registered = true;
+
+    return "OK";
+  };
+
+  redis.command.sadd = async () => {
+    throw new Error("Redis failure");
+  };
+
+  redis.command.del = async () => {
+    registered = false;
+
+    return 1;
+  };
+
+  const tasks: Array<Effect.Effect<void, unknown>> = [];
+
+  const hub = new RealtimeHub(config, redis, (_label, task) =>
+    tasks.push(task),
+  );
+
+  const target = makeSocket(makeSession("failed-registration"));
+  hub.register(target.socket);
+  hub.detach(target.socket);
+  const cleaned = hub.cleanupRegistry(target.socket.data);
+  write.resolve();
+  await cleaned;
+  await Promise.all(tasks.map((task) => Effect.runPromiseExit(task)));
+  expect(registered).toBe(false);
+});
+
+test("failed registry deletion retains cleanup until remaining Redis work settles", async () => {
+  const redis = new FakeRedisStore(new FederationBus());
+  const removal = Promise.withResolvers<number>();
+  const started = Promise.withResolvers<void>();
+  redis.command.del = async () => {
+    throw new Error("Redis deletion failed");
+  };
+
+  redis.command.srem = () => {
+    started.resolve();
+
+    return removal.promise;
+  };
+
+  const hub = new RealtimeHub(config, redis);
+  let settled = false;
+
+  const cleanup = hub
+    .cleanupRegistry(makeSession("failed-cleanup"))
+    .catch((error) => {
+      settled = true;
+
+      return error;
+    });
+
+  await started.promise;
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  expect(settled).toBe(false);
+  removal.resolve(1);
+  expect(await cleanup).toEqual(new Error("Redis deletion failed"));
 });
