@@ -31,13 +31,8 @@ import {
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
 import type { PartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
-import { NPC_DETECTOR_CLOCK_INTERVAL_MS } from "@/features/npc-detector/hooks/use-npc-detector-clock";
+import { NpcNotificationCooldown } from "@/features/npc-detector/components/npc-notification-cooldown";
 import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
-
-const MESSAGE_BUTTON_COOLDOWN_RING_RADIUS = 11;
-
-const MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE =
-  2 * Math.PI * MESSAGE_BUTTON_COOLDOWN_RING_RADIUS;
 
 const ACTION_BUTTON_CLASS_NAME = "ll:size-7 ll:px-0";
 
@@ -48,8 +43,6 @@ type NpcListItemProps = {
   detectorSettings: DetectorSettings;
   hasActivePartyGathering: boolean;
   hasMultipleNpcs: boolean;
-  notificationCooldownCurrentTimeMs: number;
-  notificationCooldownEndsAt: number | null;
   orchestration: Pick<
     PartyGatheringOrchestration,
     | "isCreatingNpcPartyGathering"
@@ -115,8 +108,6 @@ export const NpcListItem = ({
   detectorSettings,
   hasActivePartyGathering,
   hasMultipleNpcs,
-  notificationCooldownCurrentTimeMs,
-  notificationCooldownEndsAt,
   orchestration,
   removeNpc,
   setNpcState,
@@ -132,23 +123,6 @@ export const NpcListItem = ({
     startNpcPartyGathering,
   } = orchestration;
 
-  const messageButtonCooldownTimeLeftMs = Math.max(
-    0,
-    (notificationCooldownEndsAt ??
-      notificationCooldownCurrentTimeMs + NPC_NOTIFICATION_COOLDOWN_MS) -
-      notificationCooldownCurrentTimeMs,
-  );
-
-  const messageButtonCooldownSecondsLeft = Math.max(
-    1,
-    Math.ceil(messageButtonCooldownTimeLeftMs / 1000),
-  );
-
-  const messageButtonCooldownRingOffset = animationEffectsEnabled
-    ? MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE *
-      (1 - messageButtonCooldownTimeLeftMs / NPC_NOTIFICATION_COOLDOWN_MS)
-    : MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE;
-
   const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
   const settingsByNpcType = getDetectorNpcSettings(detectorSettings, npcType);
 
@@ -159,8 +133,6 @@ export const NpcListItem = ({
 
   const key = npcType;
   const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
-
-  const isMessageButtonInCooldown = npc.notificationSent;
 
   const handleRemoveNpc = (npcId: number) => {
     removeNpc(npcId);
@@ -190,7 +162,7 @@ export const NpcListItem = ({
 
       setNpcState(npc.id, {
         ...npc,
-        notificationSent: true,
+        notificationSentAt: Date.now(),
       });
 
       if (selectOwnedReadyRoom(usePartyFinderStore.getState()))
@@ -219,7 +191,7 @@ export const NpcListItem = ({
 
       setNpcState(npc.id, {
         ...npc,
-        notificationSent: true,
+        notificationSentAt: Date.now(),
       });
     } catch (error) {
       console.warn("Failed to gather party:", error);
@@ -302,54 +274,26 @@ export const NpcListItem = ({
                   size="xs"
                   variant="ghost"
                   className={`ll:relative ${ACTION_BUTTON_CLASS_NAME}`}
-                  disabled={isSendingNpcNotification || npc.notificationSent}
+                  disabled={
+                    isSendingNpcNotification || npc.notificationSentAt !== null
+                  }
                   onClick={() => void handleSendNotification(npc)}
                 >
-                  {isMessageButtonInCooldown ? (
-                    <>
-                      {animationEffectsEnabled ? (
-                        <svg
-                          className="ll:absolute ll:inset-0 ll:size-full ll:-rotate-90"
-                          viewBox="0 0 28 28"
-                          aria-hidden="true"
-                        >
-                          <circle
-                            cx="14"
-                            cy="14"
-                            r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
-                            className="ll:stroke-white/15"
-                            fill="none"
-                            strokeWidth="2"
-                          />
-                          <circle
-                            cx="14"
-                            cy="14"
-                            r={MESSAGE_BUTTON_COOLDOWN_RING_RADIUS}
-                            className="ll:stroke-white ll:transition-[stroke-dashoffset] ll:ease-linear"
-                            fill="none"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeDasharray={
-                              MESSAGE_BUTTON_COOLDOWN_RING_CIRCUMFERENCE
-                            }
-                            strokeDashoffset={messageButtonCooldownRingOffset}
-                            style={{
-                              transitionDuration: `${NPC_DETECTOR_CLOCK_INTERVAL_MS}ms`,
-                            }}
-                          />
-                        </svg>
-                      ) : null}
-                      <span className="ll:relative ll:text-[10px] ll:font-semibold ll:tabular-nums">
-                        {messageButtonCooldownSecondsLeft}
-                      </span>
-                    </>
+                  {npc.notificationSentAt !== null ? (
+                    <NpcNotificationCooldown
+                      key={npc.notificationSentAt}
+                      animationEffectsEnabled={animationEffectsEnabled}
+                      endsAt={
+                        npc.notificationSentAt + NPC_NOTIFICATION_COOLDOWN_MS
+                      }
+                    />
                   ) : (
                     <Megaphone size={12} />
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {npc.notificationSent
+                {npc.notificationSentAt !== null
                   ? t("actions.messageSent")
                   : t("actions.message")}
               </TooltipContent>

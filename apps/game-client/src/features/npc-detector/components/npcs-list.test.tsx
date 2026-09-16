@@ -1,7 +1,11 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { Profiler, type ProfilerOnRenderCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
-import { defaultDetectorSettings } from "@lootlog/schema/account-preferences";
+import {
+  defaultDetectorSettings,
+  type DetectorSettings,
+} from "@lootlog/schema/account-preferences";
 import {
   useNpcDetectorStore,
   type GameNpcWithLocation,
@@ -21,13 +25,17 @@ const createNpc = (id: number): GameNpcWithLocation => ({
   x: 10,
   y: 20,
   location: "Ithan",
-  notificationSent: false,
+  notificationSentAt: null,
 });
 
-const StoredNpcs = () => {
+const StoredNpcs = ({
+  detectorSettings = defaultDetectorSettings,
+}: {
+  detectorSettings?: DetectorSettings;
+}) => {
   const npcs = useNpcDetectorStore((state) => state.npcs);
 
-  return <NpcsList detectorSettings={defaultDetectorSettings} npcs={npcs} />;
+  return <NpcsList detectorSettings={detectorSettings} npcs={npcs} />;
 };
 
 beforeEach(() => {
@@ -41,7 +49,12 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const mountNpcs = (npcs: GameNpcWithLocation[], animate = false) => {
+const mountNpcs = (
+  npcs: GameNpcWithLocation[],
+  animate = false,
+  onRender: ProfilerOnRenderCallback = () => undefined,
+  detectorSettings?: DetectorSettings,
+) => {
   useNpcDetectorStore.setState({ npcs });
   useSettingsStore.setState({ animationEffectsEnabled: animate });
 
@@ -51,7 +64,9 @@ const mountNpcs = (npcs: GameNpcWithLocation[], animate = false) => {
 
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <StoredNpcs />
+      <Profiler id="npc-list" onRender={onRender}>
+        <StoredNpcs detectorSettings={detectorSettings} />
+      </Profiler>
     </QueryClientProvider>,
   );
 
@@ -186,7 +201,7 @@ it("expires cooldowns and detection animations while their row is offscreen", ()
   const { viewport } = mountNpcs(
     Array.from({ length: 500 }, (_, id) => ({
       ...createNpc(id),
-      notificationSent: id === 0,
+      notificationSentAt: id === 0 ? Date.now() : null,
     })),
   );
 
@@ -196,10 +211,88 @@ it("expires cooldowns and detection animations while their row is offscreen", ()
   act(() => vi.advanceTimersByTime(5500));
   expect(
     useNpcDetectorStore.getState().npcs.find((npc) => npc.id === 0)
-      ?.notificationSent,
-  ).toBe(false);
+      ?.notificationSentAt,
+  ).toBeNull();
   expect(useNpcDetectorStore.getState().activeDetectionAnimations).toEqual({});
   viewport.scrollTop = 0;
   fireEvent.scroll(viewport);
   expect(screen.getByText("NPC 0")).toBeVisible();
+});
+
+it("commits a notification cooldown once per second, not on a polling clock", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-07-20T12:00:00.000Z"));
+  let updateCommits = 0;
+
+  mountNpcs(
+    [
+      { ...createNpc(1), notificationSentAt: Date.now() },
+      createNpc(2),
+      createNpc(3),
+    ],
+    false,
+    (_id, phase) => {
+      if (phase === "update") updateCommits += 1;
+    },
+    {
+      ...defaultDetectorSettings,
+      routingRules: [
+        { id: "rule-1", minLevel: 1, maxLevel: 500, guildIds: ["guild-1"] },
+      ],
+    },
+  );
+
+  const cooldownButton = screen.getByRole("button", { name: "5" });
+  updateCommits = 0;
+
+  for (let second = 0; second < 4; second += 1) {
+    act(() => vi.advanceTimersByTime(1000));
+  }
+
+  act(() => vi.advanceTimersByTime(200));
+
+  expect(cooldownButton).toHaveTextContent("1");
+  expect(updateCommits).toBe(4);
+
+  act(() => vi.advanceTimersByTime(800));
+
+  expect(
+    useNpcDetectorStore.getState().npcs.find((npc) => npc.id === 1)
+      ?.notificationSentAt,
+  ).toBeNull();
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it("restarts the countdown when the same NPC is notified again mid-cooldown", () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-07-20T12:00:00.000Z"));
+
+  mountNpcs(
+    [{ ...createNpc(1), notificationSentAt: Date.now() }],
+    false,
+    undefined,
+    {
+      ...defaultDetectorSettings,
+      routingRules: [
+        { id: "rule-1", minLevel: 1, maxLevel: 500, guildIds: ["guild-1"] },
+      ],
+    },
+  );
+
+  act(() => vi.advanceTimersByTime(3000));
+  expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+
+  act(() =>
+    useNpcDetectorStore
+      .getState()
+      .setNpcStates([{ npcId: 1, npc: { notificationSentAt: Date.now() } }]),
+  );
+
+  expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
+
+  act(() => vi.advanceTimersByTime(5000));
+  expect(
+    useNpcDetectorStore.getState().npcs.find((npc) => npc.id === 1)
+      ?.notificationSentAt,
+  ).toBeNull();
 });

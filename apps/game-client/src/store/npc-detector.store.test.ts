@@ -10,7 +10,7 @@ const createNpc = (id: number, nick = `npc-${id}`): GameNpcWithLocation => ({
   location: "Test map",
   lvl: 300,
   nick,
-  notificationSent: false,
+  notificationSentAt: null,
   prof: "w",
   tpl: id,
   type: 3,
@@ -91,14 +91,45 @@ describe("useNpcDetectorStore", () => {
     const unsubscribe = useNpcDetectorStore.subscribe(publish);
 
     useNpcDetectorStore.getState().setNpcStates([
-      { npcId: 1, npc: { notificationSent: true } },
-      { npcId: 2, npc: { notificationSent: true } },
+      { npcId: 1, npc: { notificationSentAt: 1_000 } },
+      { npcId: 2, npc: { notificationSentAt: 1_000 } },
     ]);
 
     expect(publish).toHaveBeenCalledOnce();
     expect(
-      useNpcDetectorStore.getState().npcs.filter((npc) => npc.notificationSent),
+      useNpcDetectorStore
+        .getState()
+        .npcs.filter((npc) => npc.notificationSentAt !== null),
     ).toHaveLength(2);
+    unsubscribe();
+  });
+
+  it("keeps the npc list identity when an update repeats the current values", () => {
+    useNpcDetectorStore.getState().addNpc([createNpc(1), createNpc(2)]);
+
+    const publish =
+      vi.fn<Parameters<typeof useNpcDetectorStore.subscribe>[0]>();
+
+    const [npc] = useNpcDetectorStore.getState().npcs;
+
+    if (!npc) throw new Error("Expected a seeded npc");
+    const npcsBefore = useNpcDetectorStore.getState().npcs;
+    const unsubscribe = useNpcDetectorStore.subscribe(publish);
+
+    useNpcDetectorStore
+      .getState()
+      .setNpcStates([
+        { npcId: npc.id, npc: { x: npc.x, y: npc.y, location: npc.location } },
+      ]);
+
+    expect(publish).not.toHaveBeenCalled();
+    expect(useNpcDetectorStore.getState().npcs).toBe(npcsBefore);
+
+    useNpcDetectorStore
+      .getState()
+      .setNpcStates([{ npcId: npc.id, npc: { x: npc.x + 1 } }]);
+
+    expect(publish).toHaveBeenCalledOnce();
     unsubscribe();
   });
 });

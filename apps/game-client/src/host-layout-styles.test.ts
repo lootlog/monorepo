@@ -14,9 +14,11 @@ const getRequiredElement = (selector: string): HTMLElement => {
 describe("host layout styles", () => {
   afterEach(() => {
     document.body.replaceChildren();
+    document.body.classList.remove("ll-mounted");
   });
 
   it("sizes game columns without overriding the Margonem loader", () => {
+    document.body.classList.add("ll-mounted");
     document.body.innerHTML = `
       <div class="game-window-positioner">
         <div class="interface-layer layer">

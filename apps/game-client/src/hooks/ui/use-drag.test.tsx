@@ -166,6 +166,143 @@ describe("useDrag", () => {
     expect(onDragStop).toHaveBeenCalledWith({ x: 29, y: 39 });
   });
 
+  it("measures the viewport once per drag session instead of on every pointer move", () => {
+    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(1);
+    vi.spyOn(window, "cancelAnimationFrame").mockReturnValue(undefined);
+
+    const visualViewport = vi.fn(() => ({
+      width: 800,
+      height: 600,
+      scale: 1,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      get: visualViewport,
+    });
+
+    const element = document.createElement("div");
+    vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    try {
+      startDrag(result.current.handlePointerDown, 1);
+      const readsAfterPointerDown = visualViewport.mock.calls.length;
+      expect(readsAfterPointerDown).toBeGreaterThan(0);
+
+      act(() => {
+        for (let index = 0; index < 20; index += 1) {
+          document.dispatchEvent(
+            Object.assign(new Event("pointermove"), {
+              buttons: 1,
+              clientX: 20 + index,
+              clientY: 30 + index,
+              pointerId: 1,
+              pointerType: "mouse",
+            }),
+          );
+        }
+      });
+
+      expect(visualViewport.mock.calls.length).toBe(readsAfterPointerDown);
+    } finally {
+      Reflect.deleteProperty(window, "visualViewport");
+    }
+  });
+
+  it("keeps the session scale when the visual viewport resizes mid-drag", () => {
+    let scheduledFrame: FrameRequestCallback | null = null;
+
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      scheduledFrame = callback;
+
+      return 1;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockReturnValue(undefined);
+
+    let viewportScale = 1;
+    let viewportResizeListener: (() => void) | null = null;
+
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      get: () => ({
+        width: 800,
+        height: 600,
+        scale: viewportScale,
+        addEventListener: (_type: string, listener: () => void) => {
+          viewportResizeListener = listener;
+        },
+        removeEventListener: vi.fn(),
+      }),
+    });
+
+    const element = document.createElement("div");
+    vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+      bottom: 100,
+      height: 100,
+      left: 0,
+      right: 100,
+      top: 0,
+      width: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    try {
+      const { getByTestId } = render(
+        <div
+          data-testid="drag-target"
+          onPointerDown={result.current.handlePointerDown}
+        />,
+      );
+
+      fireEvent.pointerDown(getByTestId("drag-target"), {
+        button: 0,
+        clientX: 10,
+        clientY: 10,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+      });
+
+      viewportScale = 2;
+      act(() => viewportResizeListener?.());
+
+      act(() => {
+        document.dispatchEvent(
+          Object.assign(new Event("pointermove"), {
+            buttons: 1,
+            clientX: 30,
+            clientY: 40,
+            pointerId: 1,
+            pointerType: "touch",
+          }),
+        );
+        scheduledFrame?.(16);
+      });
+
+      expect(element.style.transform).toBe("translate3d(20px, 30px, 0)");
+    } finally {
+      Reflect.deleteProperty(window, "visualViewport");
+    }
+  });
+
   it("cancels the pointerdown default action so a drag does not start a text selection", () => {
     const element = document.createElement("div");
     const ref: RefObject<HTMLDivElement | null> = { current: element };
