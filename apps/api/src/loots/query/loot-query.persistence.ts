@@ -35,6 +35,7 @@ import {
   buildLootQueryConditions,
   type LootQueryFilters,
   type LootQueryVisibilityRole,
+  type ResolvedLootQueryFilters,
 } from "#src/loots/query/loot-query-filter";
 
 export class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersistenceError>()(
@@ -66,6 +67,30 @@ export const makeLootQueryPersistence = (
             .where(inArray(itemSnapshotTable.name, [...names])),
         );
 
+  // Resolve names once so the page query can use LootNpc statistics and avoid
+  // repeated NpcSnapshot probes. Keep type/level predicates independent: they
+  // may match a different NPC in the same encounter.
+  const resolveQueryFilters = Effect.fn("loots.query.resolve-filters")(
+    function* (filters: LootQueryFilters) {
+      const { npcs, ...rest } = filters;
+
+      if (!npcs?.length) return rest;
+
+      const snapshots = yield* protect(
+        "loots.query.npc-snapshots",
+        database
+          .select({ id: npcSnapshotTable.id })
+          .from(npcSnapshotTable)
+          .where(inArray(npcSnapshotTable.name, [...npcs])),
+      );
+
+      return {
+        ...rest,
+        npcNameSnapshotIds: snapshots.map(({ id }) => id),
+      } satisfies ResolvedLootQueryFilters;
+    },
+  );
+
   const findIds = (options: {
     readonly guildId: string;
     readonly permissions: ReadonlyArray<string>;
@@ -73,31 +98,35 @@ export const makeLootQueryPersistence = (
     readonly filters: LootQueryFilters;
     readonly limit: number;
   }) =>
-    protect(
-      "loots.query.ids",
-      database
-        .select({ id: lootTable.id })
-        .from(lootTable)
-        .innerJoin(
-          organizationLootRecordTable,
-          and(
-            eq(organizationLootRecordTable.lootId, lootTable.id),
-            eq(organizationLootRecordTable.guildId, options.guildId),
-            isNull(organizationLootRecordTable.archivedAt),
-          ),
-        )
-        .where(
-          and(
-            ...buildLootQueryConditions(
-              options.filters,
-              options.permissions,
-              options.roles,
-            ),
-          ),
-        )
-        .orderBy(desc(lootTable.id))
-        .limit(options.limit)
-        .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
+    resolveQueryFilters(options.filters).pipe(
+      Effect.flatMap((filters) =>
+        protect(
+          "loots.query.ids",
+          database
+            .select({ id: lootTable.id })
+            .from(lootTable)
+            .innerJoin(
+              organizationLootRecordTable,
+              and(
+                eq(organizationLootRecordTable.lootId, lootTable.id),
+                eq(organizationLootRecordTable.guildId, options.guildId),
+                isNull(organizationLootRecordTable.archivedAt),
+              ),
+            )
+            .where(
+              and(
+                ...buildLootQueryConditions(
+                  filters,
+                  options.permissions,
+                  options.roles,
+                ),
+              ),
+            )
+            .orderBy(desc(lootTable.id))
+            .limit(options.limit)
+            .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
+        ),
+      ),
     );
 
   const selectLoots = (ids: ReadonlyArray<number>) =>
@@ -348,29 +377,33 @@ export const makeLootQueryPersistence = (
     readonly roles: ReadonlyArray<LootQueryVisibilityRole>;
     readonly filters: LootQueryFilters;
   }) =>
-    protect(
-      "loots.query.count",
-      database
-        .select({ value: countDistinct(lootTable.id) })
-        .from(lootTable)
-        .innerJoin(
-          organizationLootRecordTable,
-          and(
-            eq(organizationLootRecordTable.lootId, lootTable.id),
-            eq(organizationLootRecordTable.guildId, options.guildId),
-            isNull(organizationLootRecordTable.archivedAt),
-          ),
-        )
-        .where(
-          and(
-            ...buildLootQueryConditions(
-              options.filters,
-              options.permissions,
-              options.roles,
-            ),
-          ),
-        )
-        .pipe(Effect.map((rows) => rows[0]?.value ?? 0)),
+    resolveQueryFilters(options.filters).pipe(
+      Effect.flatMap((filters) =>
+        protect(
+          "loots.query.count",
+          database
+            .select({ value: countDistinct(lootTable.id) })
+            .from(lootTable)
+            .innerJoin(
+              organizationLootRecordTable,
+              and(
+                eq(organizationLootRecordTable.lootId, lootTable.id),
+                eq(organizationLootRecordTable.guildId, options.guildId),
+                isNull(organizationLootRecordTable.archivedAt),
+              ),
+            )
+            .where(
+              and(
+                ...buildLootQueryConditions(
+                  filters,
+                  options.permissions,
+                  options.roles,
+                ),
+              ),
+            )
+            .pipe(Effect.map((rows) => rows[0]?.value ?? 0)),
+        ),
+      ),
     );
 
   const findOne = (options: {

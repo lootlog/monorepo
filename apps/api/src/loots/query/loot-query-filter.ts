@@ -30,6 +30,10 @@ export type LootQueryVisibilityRole = {
   readonly permissions: ReadonlyArray<string>;
 };
 
+export type ResolvedLootQueryFilters = Omit<LootQueryFilters, "npcs"> & {
+  readonly npcNameSnapshotIds?: ReadonlyArray<number>;
+};
+
 const existsPlayer = (condition: SQL) => sql`EXISTS (
   SELECT 1 FROM "LootPlayer" query_lp
   INNER JOIN "PlayerSnapshot" query_ps ON query_ps.id = query_lp."playerSnapshotId"
@@ -92,15 +96,25 @@ const rangeConditions = (filters: LootQueryFilters): Array<SQL | undefined> => {
   ];
 };
 
+const npcNameCondition = (snapshotIds: ReadonlyArray<number> | undefined) => {
+  if (snapshotIds === undefined) return undefined;
+
+  if (snapshotIds.length === 0) return sql`false`;
+
+  return sql`EXISTS (
+    SELECT 1 FROM "LootNpc" query_ln
+    WHERE query_ln."lootId" = ${lootTable.id}
+      AND query_ln."npcSnapshotId" IN (${sqlList(snapshotIds)})
+  )`;
+};
+
 const relationConditions = (
-  filters: LootQueryFilters,
+  filters: ResolvedLootQueryFilters,
 ): Array<SQL | undefined> => [
   filters.players?.length
     ? existsPlayer(sql`query_ps.name IN (${sqlList(filters.players)})`)
     : undefined,
-  filters.npcs?.length
-    ? existsNpc(sql`query_ns.name IN (${sqlList(filters.npcs)})`)
-    : undefined,
+  npcNameCondition(filters.npcNameSnapshotIds),
   filters.npcTypes?.length
     ? existsNpc(sql`query_ns.type IN (${sqlList(filters.npcTypes)})`)
     : undefined,
@@ -199,7 +213,7 @@ const visibilityCondition = (
 };
 
 export const buildLootQueryConditions = (
-  filters: LootQueryFilters,
+  filters: ResolvedLootQueryFilters,
   permissions: ReadonlyArray<string>,
   roles: ReadonlyArray<LootQueryVisibilityRole>,
 ) => [
