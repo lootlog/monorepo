@@ -1,4 +1,7 @@
-import { GatewayMetrics } from "#src/realtime/gateway-metrics";
+import {
+  GatewayMetrics,
+  GatewayRuntimeMetrics,
+} from "#src/realtime/gateway-metrics";
 import { OnlineHistory } from "#src/realtime/online-history";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -38,11 +41,12 @@ import {
 import { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import { CommandHandler } from "#src/realtime/command-handler";
+import { CommandIngress } from "#src/realtime/command-ingress";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { SessionData } from "#src/realtime/session";
+import type { GatewaySocket, SessionData } from "#src/realtime/session";
 
 export interface GatewayApplicationService {
   readonly config: GatewayConfiguration;
@@ -50,6 +54,7 @@ export interface GatewayApplicationService {
   readonly hub: RealtimeHub;
   readonly presence: PresenceStore;
   readonly commands: CommandHandler;
+  readonly ingress: CommandIngress;
   readonly activity: ActivityPublisher;
   readonly runBackground: BackgroundTaskRunner;
   readonly runPromise: <A, E>(effect: Effect.Effect<A, E>) => Promise<A>;
@@ -156,6 +161,55 @@ export class GatewayApplication extends Context.Service<
         airTags,
       );
 
+      const ingress = new CommandIngress(
+        (socket, message) => commands.handle(socket, message),
+        (socket, message) => commands.rejectOverloaded(socket, message),
+        (socket) =>
+          Effect.suspend(() => {
+            const registryCleanup = Effect.tryPromise(() =>
+              hub.cleanupRegistry(socket.data),
+            ).pipe(
+              Effect.catchCause((error) =>
+                Effect.logError("Gateway registry cleanup failed", error),
+              ),
+            );
+
+            if (socket.data.apiKeyAccess) return registryCleanup;
+
+            return Effect.all(
+              [
+                registryCleanup,
+                activity
+                  .publish("DISCONNECT_EVENT", socket.data)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect activity failed",
+                        error,
+                      ),
+                    ),
+                  ),
+                presence
+                  .disconnect(socket.data)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect presence failed",
+                        error,
+                      ),
+                    ),
+                  ),
+              ],
+              { concurrency: 3, discard: true },
+            );
+          }),
+        runBackground,
+      );
+
+      yield* new GatewayRuntimeMetrics(redis, hub, ingress)
+        .run()
+        .pipe(Effect.forkScoped);
+
       yield* new ApiKeyLeases(
         config,
         httpClient,
@@ -193,6 +247,7 @@ export class GatewayApplication extends Context.Service<
         hub,
         presence,
         commands,
+        ingress,
         activity,
         runBackground,
         runPromise,
@@ -423,6 +478,31 @@ export const createGatewayFetch =
     }
   };
 
+export const createGatewayWebSocket = (
+  application: Pick<GatewayApplicationService, "hub" | "ingress">,
+) =>
+  ({
+    perMessageDeflate: false,
+    maxPayloadLength: 256 * 1_024,
+    idleTimeout: 70,
+    open(socket: GatewaySocket) {
+      if (!application.ingress.open(socket)) {
+        socket.close(1013, "connection capacity exceeded");
+
+        return;
+      }
+
+      application.hub.register(socket);
+    },
+    message(socket: GatewaySocket, message: string | Buffer) {
+      application.ingress.message(socket, message);
+    },
+    close(socket: GatewaySocket) {
+      application.hub.detach(socket);
+      application.ingress.close(socket);
+    },
+  }) satisfies Bun.WebSocketHandler<SessionData>;
+
 export const GatewayServer = Layer.effectDiscard(
   Effect.gen(function* () {
     const application = yield* GatewayApplication;
@@ -440,33 +520,7 @@ export const GatewayServer = Layer.effectDiscard(
           hostname: "0.0.0.0",
           port: application.config.port,
           fetch,
-          websocket: {
-            perMessageDeflate: false,
-            maxPayloadLength: 256 * 1_024,
-            idleTimeout: 70,
-            open(socket) {
-              application.hub.register(socket);
-            },
-            message(socket, message) {
-              application.runBackground(
-                "websocket.message",
-                application.commands.handle(socket, message),
-              );
-            },
-            close(socket) {
-              application.hub.unregister(socket);
-
-              if (socket.data.apiKeyAccess) return;
-              application.runBackground(
-                "websocket.disconnect-activity",
-                application.activity.publish("DISCONNECT_EVENT", socket.data),
-              );
-              application.runBackground(
-                "websocket.disconnect-presence",
-                application.presence.disconnect(socket.data),
-              );
-            },
-          },
+          websocket: createGatewayWebSocket(application),
         }),
       ),
       (activeServer) => Effect.tryPromise(() => activeServer.stop(true)),

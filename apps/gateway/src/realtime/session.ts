@@ -53,10 +53,15 @@ export type GatewaySocket = Pick<
 
 export const hasValidApiKeyLease = (
   session: AuthenticatedIdentity,
-  now = Date.now(),
-): boolean =>
-  session.apiKeyAccess === undefined ||
-  (session.apiKeyLeaseExpiresAt !== undefined &&
-    session.apiKeyLeaseExpiresAt > now &&
+  now?: number,
+): boolean => {
+  if (session.apiKeyAccess === undefined) return true;
+  const checkedAt = now ?? Date.now();
+
+  return (
+    session.apiKeyLeaseExpiresAt !== undefined &&
+    session.apiKeyLeaseExpiresAt > checkedAt &&
     (session.apiKeyAccess.expiresAt === null ||
-      Date.parse(session.apiKeyAccess.expiresAt) > now));
+      Date.parse(session.apiKeyAccess.expiresAt) > checkedAt)
+  );
+};
