@@ -7,7 +7,7 @@ import type {
   RabbitMessagingService,
 } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import { decode, encode } from "@msgpack/msgpack";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
@@ -490,10 +490,141 @@ describe("RealtimeHub federation", () => {
     expect(firstTarget.sent).toHaveLength(2);
   });
 
-  test("sends canonical JSON and MessagePack locally and remotely and rejects malformed federation frames", async () => {
+  test.each(["scope", "scopes", "user", "discord", "presence"] as const)(
+    "sends canonical local and remote frames through %s publication and rejects malformed federation",
+    async (publication) => {
+      const bus = new FederationBus();
+      const store = new FakeRedisStore(bus);
+      const local = new RealtimeHub(config, store);
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+      const scope = {
+        topic: "organization.chat",
+        organizationId: "organization-1",
+      } as const;
+
+      const targets = [local, remote].map((hub, index) => {
+        const identity = {
+          userId: "canonical-user",
+          discordId: "canonical-discord",
+        };
+
+        const binary = makeSocket({
+          ...makeSession(`canonical-binary-${index}`),
+          ...identity,
+        });
+
+        const json: string[] = [];
+
+        const jsonSocket = {
+          data: {
+            ...makeSession(`canonical-json-${index}`),
+            ...identity,
+            frameEncoding: "json" as const,
+          },
+          getBufferedAmount: () => 0,
+          send: (frame: string) => json.push(frame),
+          close: () => {},
+        };
+
+        for (const socket of [binary.socket, jsonSocket]) {
+          hub.register(socket);
+          hub.subscribe(socket, scope);
+        }
+
+        return { binary: binary.sent, json };
+      });
+
+      await Effect.runPromise(local.start());
+      await Effect.runPromise(remote.start());
+
+      const canonical = {
+        v: 1,
+        type: "chat.cleared",
+        data: {
+          organizationId: scope.organizationId,
+          payload: { id: "message-1" },
+        },
+      } as const;
+
+      const withUnknownFields = {
+        ...canonical,
+        untrusted: "strip",
+        data: { ...canonical.data, untrusted: "strip" },
+      };
+
+      switch (publication) {
+        case "scope":
+          await local.publishToScope(scope, withUnknownFields);
+          break;
+        case "scopes":
+          await local.publishToScopes([scope, scope], withUnknownFields);
+          break;
+        case "user":
+          await local.publishToUser("canonical-user", withUnknownFields);
+          break;
+        case "discord":
+          await local.publishToDiscord("canonical-discord", withUnknownFields);
+          break;
+        case "presence":
+          await local.publishPresence(
+            scope,
+            withUnknownFields,
+            withUnknownFields,
+          );
+          break;
+      }
+
+      await store.publish({
+        id: "raw-federation",
+        sourceInstanceId: "external-instance",
+        scope,
+        frame: Buffer.from(encode(withUnknownFields)).toString("base64"),
+      });
+
+      for (const target of targets) {
+        // Decode the wire bytes without the protocol schema, which would hide leaked fields.
+        expect(target.binary.map((bytes) => decode(bytes))).toEqual([
+          canonical,
+          canonical,
+        ]);
+        expect(target.json.map((frame) => JSON.parse(frame))).toEqual([
+          canonical,
+          canonical,
+        ]);
+      }
+
+      for (const [index, bytes] of [
+        new Uint8Array([0xc1]),
+        encode({ ...canonical, v: 2 }),
+        encode({ ...canonical, type: "unsupported.event" }),
+        encode({ ...canonical, data: { payload: {} } }),
+        encode({
+          v: 1,
+          type: "session.join",
+          requestId: "valid-command",
+          data: { platform: "web-app" },
+        }),
+        encode({ v: 1, type: "session.join", data: {} }),
+      ].entries()) {
+        await store.publish({
+          id: `malformed-federation-${index}`,
+          sourceInstanceId: "external-instance",
+          scope,
+          frame: Buffer.from(bytes).toString("base64"),
+        });
+      }
+
+      for (const target of targets) {
+        expect(target.binary).toHaveLength(2);
+        expect(target.json).toHaveLength(2);
+      }
+    },
+  );
+
+  test("keeps MessagePack normalization and rejected payload keys aligned locally and remotely", async () => {
     const bus = new FederationBus();
-    const store = new FakeRedisStore(bus);
-    const local = new RealtimeHub(config, store);
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
     const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
     const scope = {
@@ -502,12 +633,12 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const targets = [local, remote].map((hub, index) => {
-      const binary = makeSocket(makeSession(`canonical-binary-${index}`));
+      const binary = makeSocket(makeSession(`normalized-binary-${index}`));
       const json: string[] = [];
 
       const jsonSocket = {
         data: {
-          ...makeSession(`canonical-json-${index}`),
+          ...makeSession(`normalized-json-${index}`),
           frameEncoding: "json" as const,
         },
         getBufferedAmount: () => 0,
@@ -526,57 +657,71 @@ describe("RealtimeHub federation", () => {
     await Effect.runPromise(local.start());
     await Effect.runPromise(remote.start());
 
-    const canonical = {
+    const customPayload = Object.defineProperty({ id: "message" }, "toJSON", {
+      value: () => ({ id: "must-not-leak" }),
+    });
+
+    const sparse: unknown[] = ["value"];
+    sparse.length = 3;
+
+    const customIterable = Object.defineProperty([1], Symbol.iterator, {
+      value: function* () {
+        yield 2;
+      },
+    });
+
+    for (const payload of [
+      { bytes: new Uint16Array([256, 257]) },
+      { bytes: Buffer.from([1, 2, 3]) },
+      { list: customIterable },
+      {
+        optional: undefined,
+        list: [undefined],
+        sparse,
+        date: new Date(1000),
+      },
+      { text: "x".repeat(100) + "\ud800", value: -0 },
+      customPayload,
+      {
+        get value() {
+          return "accessor";
+        },
+      },
+    ]) {
+      const event = {
+        v: 1,
+        type: "chat.cleared",
+        data: { organizationId: scope.organizationId, payload },
+      } as const;
+
+      const bytes = encode(event, { ignoreUndefined: true });
+      await local.publishToScope(scope, event);
+
+      for (const [index, target] of targets.entries()) {
+        // Preserve each existing transport's handling of binary payload views:
+        // remote decoding starts with a Buffer from the base64 envelope.
+        const canonical = decode(index === 0 ? bytes : Buffer.from(bytes));
+        expect(decode(target.binary.at(-1) ?? new Uint8Array())).toStrictEqual(
+          canonical,
+        );
+        expect(target.json.at(-1)).toBe(JSON.stringify(canonical));
+      }
+    }
+
+    // The decoder rejects this key even inside otherwise valid JSON payloads.
+    const rejectedPayload: unknown = JSON.parse(
+      '{"__proto__":{"hidden":true}}',
+    );
+
+    await local.publishToScope(scope, {
       v: 1,
       type: "chat.cleared",
-      data: {
-        organizationId: scope.organizationId,
-        payload: { id: "message-1" },
-      },
-    } as const;
-
-    const withUnknownFields = {
-      ...canonical,
-      untrusted: "strip",
-      data: { ...canonical.data, untrusted: "strip" },
-    };
-
-    await local.publishToScope(scope, withUnknownFields);
-    await store.publish({
-      id: "raw-federation",
-      sourceInstanceId: "external-instance",
-      scope,
-      frame: Buffer.from(encode(withUnknownFields)).toString("base64"),
+      data: { organizationId: scope.organizationId, payload: rejectedPayload },
     });
 
     for (const target of targets) {
-      // Decode the wire bytes without the protocol schema, which would hide leaked fields.
-      expect(target.binary.map((bytes) => decode(bytes))).toEqual([
-        canonical,
-        canonical,
-      ]);
-      expect(target.json.map((frame) => JSON.parse(frame))).toEqual([
-        canonical,
-        canonical,
-      ]);
-    }
-
-    for (const [index, bytes] of [
-      new Uint8Array([0xc1]),
-      encode({ ...canonical, v: 2 }),
-      encode({ v: 1, type: "session.join", data: {} }),
-    ].entries()) {
-      await store.publish({
-        id: `malformed-federation-${index}`,
-        sourceInstanceId: "external-instance",
-        scope,
-        frame: Buffer.from(bytes).toString("base64"),
-      });
-    }
-
-    for (const target of targets) {
-      expect(target.binary).toHaveLength(2);
-      expect(target.json).toHaveLength(2);
+      expect(target.binary).toHaveLength(7);
+      expect(target.json).toHaveLength(7);
     }
   });
 
@@ -1431,94 +1576,119 @@ for (const scenario of [
   }
 }
 
-test("chat capabilities are recipient-specific and cannot be supplied by the sender", async () => {
-  const hub = new RealtimeHub(config, new FakeRedisStore(new FederationBus()));
+test.each(["msgpack", "json"] as const)(
+  "chat capabilities and shared %s frames stay recipient-specific locally and remotely",
+  async (frameEncoding) => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-  const scope = {
-    topic: "organization.chat",
-    organizationId: "organization-1",
-  } as const;
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
-  const viewers = [
-    {
-      id: "author",
-      permissions: [
-        Permission.LOOTLOG_CHAT_READ,
-        Permission.LOOTLOG_CHAT_WRITE,
-      ],
-      canDelete: true,
-    },
-    {
-      id: "reader",
-      permissions: [Permission.LOOTLOG_CHAT_READ],
-      canDelete: false,
-    },
-    {
-      id: "reader-2",
-      permissions: [Permission.LOOTLOG_CHAT_READ],
-      canDelete: false,
-    },
-    {
-      id: "admin",
-      permissions: [Permission.ADMIN],
-      canDelete: true,
-    },
-    { id: "owner", permissions: [], canDelete: true },
-  ];
-
-  const targets = viewers.map((viewer) => {
-    const session = { ...makeSession(viewer.id), discordId: viewer.id };
-    session.guilds = [
-      {
-        guild: { id: "organization-1", ownerId: "owner" },
-        roles: [
-          {
-            id: "role",
-            permissions: viewer.permissions,
-            lvlRangeFrom: 0,
-            lvlRangeTo: 500,
-          },
-        ],
-      },
-    ];
-    const target = makeSocket(session);
-    hub.register(target.socket);
-    hub.subscribe(target.socket, scope);
-
-    return target;
-  });
-
-  await hub.publishToScope(scope, {
-    v: 1,
-    type: "chat.created",
-    data: {
+    const scope = {
+      topic: "organization.chat",
       organizationId: "organization-1",
-      payload: {
-        id: "message",
-        guildId: "organization-1",
-        senderId: "author",
-        type: "NORMAL",
-        message: "Hello",
+    } as const;
+
+    const viewers = [
+      {
+        id: "author",
+        permissions: [
+          Permission.LOOTLOG_CHAT_READ,
+          Permission.LOOTLOG_CHAT_WRITE,
+        ],
         canDelete: true,
       },
-    },
-  });
+      {
+        id: "reader",
+        permissions: [Permission.LOOTLOG_CHAT_READ],
+        canDelete: false,
+      },
+      {
+        id: "reader-2",
+        permissions: [Permission.LOOTLOG_CHAT_READ],
+        canDelete: false,
+      },
+      {
+        id: "admin",
+        permissions: [Permission.ADMIN],
+        canDelete: true,
+      },
+      { id: "owner", permissions: [], canDelete: true },
+    ];
 
-  for (const [index, viewer] of viewers.entries()) {
-    const frame = targets[index]?.sent[0];
-    expect(frame).toBeDefined();
-    expect(decodeRealtimeFrame(frame ?? new Uint8Array())).toMatchObject({
+    const targets = [local, remote].map((hub) =>
+      viewers.map((viewer) => {
+        const session = { ...makeSession(viewer.id), discordId: viewer.id };
+        session.guilds = [
+          {
+            guild: { id: "organization-1", ownerId: "owner" },
+            roles: [
+              {
+                id: "role",
+                permissions: viewer.permissions,
+                lvlRangeFrom: 0,
+                lvlRangeTo: 500,
+              },
+            ],
+          },
+        ];
+        session.frameEncoding = frameEncoding === "json" ? "json" : undefined;
+        const sent: Array<string | Uint8Array> = [];
+
+        const socket = {
+          data: session,
+          getBufferedAmount: () => 0,
+          close: () => {},
+          send: (frame: string | Uint8Array) => sent.push(frame),
+        };
+
+        hub.register(socket);
+        hub.subscribe(socket, scope);
+
+        return { sent };
+      }),
+    );
+
+    await local.publishToScope(scope, {
+      v: 1,
+      type: "chat.created",
       data: {
+        organizationId: "organization-1",
         payload: {
           id: "message",
-          canDelete: viewer.canDelete,
+          guildId: "organization-1",
+          senderId: "author",
+          type: "NORMAL",
+          message: "Hello",
+          canDelete: true,
         },
       },
     });
-  }
 
-  expect(targets[1]?.sent[0]).toBe(targets[2]?.sent[0]);
-});
+    for (const group of targets) {
+      for (const [index, viewer] of viewers.entries()) {
+        expect(group[index]?.sent).toHaveLength(1);
+        const frame = group[index]?.sent[0];
+        expect(frame).toBeDefined();
+        expect(
+          Predicate.isString(frame)
+            ? JSON.parse(frame)
+            : decodeRealtimeFrame(frame ?? new Uint8Array()),
+        ).toMatchObject({
+          data: {
+            payload: {
+              id: "message",
+              canDelete: viewer.canDelete,
+            },
+          },
+        });
+      }
+
+      expect(group[1]?.sent[0]).toBe(group[2]?.sent[0]);
+    }
+  },
+);
 
 test("expired API key sockets cannot receive responses or user-targeted events", async () => {
   const bus = new FederationBus();
