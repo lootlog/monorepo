@@ -163,6 +163,143 @@ describe("realtime Dragonfly integration", () => {
     await dragonfly?.stop();
   });
 
+  test("concurrent presence snapshots share Redis reads without sharing permissions or retaining stale state", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    const gate = Promise.withResolvers<void>();
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const configuration = makeConfiguration();
+
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          ...configuration.redis,
+          password: "",
+          keyPrefix: `presence-snapshots:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      const hub = new RealtimeHub(configuration, store);
+      let holdReads = false;
+      const indexReads: string[] = [];
+      let valueReads = 0;
+
+      const presence = new PresenceStore(
+        {
+          command: {
+            ...store.command,
+            smembers: async (key) => {
+              const keys = await store.command.smembers(key);
+
+              if (holdReads) {
+                indexReads.push(key);
+                await gate.promise;
+              }
+
+              return keys;
+            },
+            mget: (keys) => {
+              valueReads++;
+
+              return store.command.mget(keys);
+            },
+          },
+        },
+        hub,
+      );
+
+      const source = makeSocket("snapshot-source").socket;
+      source.data.guilds = guilds.filter(
+        ({ guild }) => guild.id === "organization-1",
+      );
+      source.data.character = source.data.presence?.character;
+      const location = { mapId: 7, map: "Ithan", x: 1, y: 2 };
+      await Effect.runPromise(
+        presence.publish(source, {
+          organizationIds: ["organization-1"],
+          location,
+        }),
+      );
+      const basic = makeSession("snapshot-basic");
+      const precise = makeSession("snapshot-precise");
+      precise.guilds = guilds.map((entry) => ({
+        ...entry,
+        roles: entry.roles.map((role) => ({
+          ...role,
+          permissions: [
+            ...role.permissions,
+            Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+          ],
+        })),
+      }));
+
+      holdReads = true;
+
+      const snapshots = Promise.all([
+        Effect.runPromise(presence.snapshot(basic, "organization-1")),
+        Effect.runPromise(
+          presence.snapshot(precise, "organization-1", "classic"),
+        ),
+        Effect.runPromise(presence.snapshot(precise, "organization-2")),
+      ]);
+
+      await waitFor(() => indexReads.length >= 2);
+      holdReads = false;
+      gate.resolve();
+
+      const [basicSnapshot, preciseSnapshot, otherOrganization] =
+        await snapshots;
+
+      expect(indexReads.toSorted()).toEqual([
+        "presence:index:organization-1",
+        "presence:index:organization-2",
+      ]);
+      expect(valueReads).toBe(1);
+      expect(basicSnapshot.presences).toHaveLength(1);
+      expect(basicSnapshot.presences[0]).not.toHaveProperty("location");
+      expect(preciseSnapshot.presences).toEqual([
+        expect.objectContaining({
+          sessionId: source.data.connectionId,
+          organizationIds: ["organization-1"],
+          location,
+        }),
+      ]);
+      expect(otherOrganization.presences).toEqual([]);
+
+      const moved = { ...location, x: 3 };
+      await Effect.runPromise(
+        presence.publish(source, {
+          organizationIds: ["organization-1"],
+          location: moved,
+        }),
+      );
+
+      const updated = await Effect.runPromise(
+        presence.snapshot(precise, "organization-1"),
+      );
+
+      expect(updated.presences[0]).toMatchObject({ location: moved });
+      expect(updated.revision).toBeGreaterThan(preciseSnapshot.revision);
+      await Effect.runPromise(presence.disconnect(source.data));
+
+      const disconnected = await Effect.runPromise(
+        presence.snapshot(precise, "organization-1"),
+      );
+
+      expect(disconnected.presences).toEqual([]);
+      expect(disconnected.revision).toBeGreaterThan(updated.revision);
+    } finally {
+      gate.resolve();
+      await runtime.dispose();
+    }
+  });
+
   test("gateway metrics deduplicate Discord accounts across characters and replicas and expire abandoned replicas", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
