@@ -1,15 +1,16 @@
+// Margonem merges town packets into map state; packets may update only one field.
 export interface TownEvent {
-  id: number;
-  name: string;
-  mainid: number;
-  bg: string;
-  file: string;
-  mode: number;
-  pvp: number;
-  visibility: number;
-  water: string;
-  x: number;
-  y: number;
+  id?: number;
+  name?: string;
+  mainid?: number;
+  bg?: string;
+  file?: string;
+  mode?: number;
+  pvp?: number;
+  visibility?: number;
+  water?: string;
+  x?: number;
+  y?: number;
   is_drop_item_tax?: boolean;
   srajId?: number;
   params?: {

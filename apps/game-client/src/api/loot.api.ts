@@ -5,6 +5,7 @@ import {
 } from "@/lib/loot-create-debug";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
+import { requireLocation } from "./require-location";
 import type { CreateLootDtoMapPlayersSnapshotItem } from "@lootlog/client/main";
 import type { Item } from "@lootlog/margonem/game-events";
 import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
@@ -71,6 +72,10 @@ export async function createLoot(
       payload: loggedOptions,
     },
     execute: async () => {
+      requireLocation(options.location);
+
+      for (const npc of options.npcs) requireLocation(npc.location);
+
       attempt += 1;
       logLootCreateDebug("http-request", {
         ...debugContext,
