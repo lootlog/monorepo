@@ -159,7 +159,7 @@ describe("historical loot allocations", () => {
 });
 
 describe("filtered loot reads", () => {
-  it("preserves independent relation matches, visibility and pagination across lists, counts and details", async () => {
+  it("preserves independent relation matches, visibility and pagination across lists and details", async () => {
     const boundary = await createDatabaseBoundary();
 
     try {
@@ -335,18 +335,8 @@ describe("filtered loot reads", () => {
             )
           ).map(({ id }) => id),
         ).toEqual(expectedIds);
-        expect(
-          await run(
-            query.countLootsByGuildId(guild, [Permission.OWNER], [], { npcs }),
-          ),
-        ).toBe(expectedIds.length);
       }
 
-      expect(
-        await run(
-          query.countLootsByGuildId(guild, permissions, roles, filters),
-        ),
-      ).toBe(2);
       expect(
         (
           await run(
@@ -368,15 +358,6 @@ describe("filtered loot reads", () => {
           )
         ).map(({ id }) => id),
       ).toEqual([1]);
-      expect(
-        await run(
-          query.countLootsByGuildId(guild, permissions, roles, {
-            ...filters,
-            cursor: 2,
-            limit: 1,
-          }),
-        ),
-      ).toBe(2);
 
       // A role granting heroes at high levels cannot authorize a low hero;
       // null metadata and empty encounters must also fail closed.
@@ -388,9 +369,6 @@ describe("filtered loot reads", () => {
 
       expect(
         (await run(query.fetchLootById(guild, permissions, roles, 2)))?.id,
-      ).toBe(2);
-      expect(
-        await run(query.countLootsByGuildId(guild, permissions, roles, {})),
       ).toBe(2);
       expect(
         await run(
@@ -414,11 +392,6 @@ describe("filtered loot reads", () => {
           )
         ).map(({ id }) => id),
       ).toEqual([6, 5, 4, 3, 2, 1]);
-      expect(
-        await run(
-          query.countLootsByGuildId(guild, [Permission.OWNER], [], filters),
-        ),
-      ).toBe(5);
 
       for (const lootId of [7, 8]) {
         expect(
@@ -433,13 +406,6 @@ describe("filtered loot reads", () => {
           }),
         ),
       ).toEqual([]);
-      expect(
-        await run(
-          query.countLootsByGuildId(guild, [Permission.OWNER], [], {
-            itemNames: ["Missing item"],
-          }),
-        ),
-      ).toBe(0);
     } finally {
       await boundary.dispose();
     }

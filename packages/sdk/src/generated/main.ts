@@ -2096,10 +2096,6 @@ export interface LootStatsResponseDtoOutput {
   topItems: LootStatsResponseDtoOutputTopItemsItem[];
 }
 
-export interface CountResponseDtoOutput {
-  count: number;
-}
-
 /**
  * @nullable
  */
@@ -9641,81 +9637,6 @@ export type LootsControllerGetLootStats429 = {
   message: string;
 };
 
-export type LootsControllerCountLootsByGuildIdPathParameters = {
- guildId: string,
- }
-export type LootsControllerCountLootsByGuildIdParams = {
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
-/**
- * @minimum -9007199254740991
- * @maximum 9007199254740991
- */
-cursor?: number;
-npcs?: string[];
-players?: string[];
-rarities?: string[];
-professions?: string[];
-npcTypes?: string[];
-world?: string;
-/**
- * @minimum 0
- * @maximum 500
- */
-npcLevelMin?: number;
-/**
- * @minimum 0
- * @maximum 500
- */
-npcLevelMax?: number;
-/**
- * @minimum 0
- * @maximum 500
- */
-itemLevelMin?: number;
-/**
- * @minimum 0
- * @maximum 500
- */
-itemLevelMax?: number;
-/**
- * @minimum 0
- * @maximum 500
- */
-playerLevelMin?: number;
-/**
- * @minimum 0
- * @maximum 500
- */
-playerLevelMax?: number;
-search?: string;
-hid?: string;
-itemNames?: string[];
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
-createdAtMin?: string;
-/**
- * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
- */
-createdAtMax?: string;
-};
-
-export type LootsControllerCountLootsByGuildId401 = {
-  message: string;
-};
-
-export type LootsControllerCountLootsByGuildId403 = HttpErrorResponse | {
-  message: string;
-};
-
-export type LootsControllerCountLootsByGuildId429 = {
-  message: string;
-};
-
 export type LootsControllerResolveLootItemByHidPathParameters = {
  guildId: string,
  }
@@ -13379,48 +13300,6 @@ export const lootsControllerGetLootStats = async ({ guildId }: LootsControllerGe
     params?: LootsControllerGetLootStatsParams, options?: Parameters<typeof mainFetch>[1]): Promise<LootStatsResponseDtoOutput> => {
 
   return mainFetch<LootStatsResponseDtoOutput>(getLootsControllerGetLootStatsUrl({ guildId },params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export const getLootsControllerCountLootsByGuildIdUrl = ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params?: LootsControllerCountLootsByGuildIdParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["npcs","players","rarities","professions","npcTypes","itemNames"];
-
-    if (Array.isArray(value) && explodeParameters.includes(key)) {
-      value.forEach((v) => {
-        normalizedParams.append(key, v === null ? 'null' : String(v));
-      });
-      return;
-    }
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/guilds/${guildId}/loots/count?${stringifiedParams}` : `/guilds/${guildId}/loots/count`
-}
-
-/**
- * Retrieve the total count of loots for a guild with optional filters
- * @summary Get guild loots count
- */
-export const lootsControllerCountLootsByGuildId = async ({ guildId }: LootsControllerCountLootsByGuildIdPathParameters,
-    params?: LootsControllerCountLootsByGuildIdParams, options?: Parameters<typeof mainFetch>[1]): Promise<CountResponseDtoOutput> => {
-
-  return mainFetch<CountResponseDtoOutput>(getLootsControllerCountLootsByGuildIdUrl({ guildId },params),
   {
     ...options,
     method: 'GET'

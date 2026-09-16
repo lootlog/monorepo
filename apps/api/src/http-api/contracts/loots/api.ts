@@ -7,7 +7,6 @@ import {
 } from "effect/unstable/httpapi";
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import {
-  LootCountResponse,
   LootOrganizationPath,
   LootsQuery,
   LootCommentResponse,
@@ -65,25 +64,6 @@ export class LootsGroup extends HttpApiGroup.make("loots").add(
     .annotate(
       OpenApi.Description,
       "Retrieve aggregated loot statistics for a guild with optional time period and filters",
-    ),
-  HttpApiEndpoint.get(
-    "LootsControllerCountLootsByGuildId",
-    "/guilds/:guildId/loots/count",
-    {
-      params: LootOrganizationPath,
-      query: LootsQuery,
-      success: LootCountResponse,
-      error: [403, 404].map((status) =>
-        HttpErrorResponse.pipe(HttpApiSchema.status(status)),
-      ),
-    },
-  )
-    .middleware(BearerSecurityMiddleware)
-    .annotate(OpenApi.Identifier, "LootsController_countLootsByGuildId")
-    .annotate(OpenApi.Summary, "Get guild loots count")
-    .annotate(
-      OpenApi.Description,
-      "Retrieve the total count of loots for a guild with optional filters",
     ),
   HttpApiEndpoint.get(
     "LootsControllerResolveLootItemByHid",

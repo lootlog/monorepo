@@ -43,12 +43,6 @@ export interface LootQueryOperations {
     roles: Role[],
     params: FetchLootsParamsDto,
   ) => QueryEffect<LootQueryResult[]>;
-  readonly countLootsByGuildId: (
-    guild: Guild,
-    permissions: Permission[],
-    roles: Role[],
-    params: FetchLootsParamsDto,
-  ) => QueryEffect<number>;
   readonly fetchLootById: (
     guild: Guild,
     permissions: Permission[],
@@ -165,42 +159,6 @@ export const makeLootQueryOperations = (
         );
 
         return records.map((loot) => mapLoot(guild.id, loot));
-      }),
-
-    countLootsByGuildId: (guild, permissions, roles, params) =>
-      Effect.gen(function* () {
-        const itemSnapshotIds = yield* resolveItemSnapshotIds(params.itemNames);
-
-        if (itemSnapshotIds?.length === 0) return 0;
-
-        return yield* attempt(
-          "loots.query.count",
-          persistence.count({
-            guildId: guild.id,
-            permissions,
-            roles,
-            filters: {
-              npcTypes: params.npcTypes ?? [],
-              npcs: params.npcs ?? [],
-              players: params.players ?? [],
-              rarities: params.rarities ?? [],
-              professions: params.professions ?? [],
-              npcLevelMin: params.npcLevelMin,
-              npcLevelMax: params.npcLevelMax,
-              itemLevelMin: params.itemLevelMin,
-              itemLevelMax: params.itemLevelMax,
-              playerLevelMin: params.playerLevelMin,
-              playerLevelMax: params.playerLevelMax,
-              search: params.search,
-              world: params.world,
-              hid: params.hid,
-              itemSnapshotIds,
-              cursor: null,
-              createdAtMin: params.createdAtMin,
-              createdAtMax: params.createdAtMax,
-            },
-          }),
-        );
       }),
 
     fetchLootById: (guild, permissions, roles, lootId) =>
