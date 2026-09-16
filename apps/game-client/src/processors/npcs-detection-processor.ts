@@ -264,7 +264,7 @@ export class NpcsDetectionProcessor {
         );
 
         if (detectedNpcIds.has(npc.id)) {
-          const { notificationSent: _notificationSent, ...npcUpdate } =
+          const { notificationSentAt: _notificationSentAt, ...npcUpdate } =
             composedNpc;
 
           updatedNpcs.push({ npcId: npc.id, npc: npcUpdate });
@@ -342,7 +342,7 @@ export class NpcsDetectionProcessor {
           location: useGameStore.getState().game?.map.name ?? "",
           lvl: npc.level,
           nick: npc.name,
-          notificationSent: false,
+          notificationSentAt: null,
           prof: npc.profession,
           resp_rand: npc.respawnRandomness,
           tpl: npc.templateId,
@@ -514,10 +514,12 @@ export class NpcsDetectionProcessor {
       return;
     }
 
+    const notificationSentAt = Date.now();
+
     useNpcDetectorStore.getState().setNpcStates(
       successfulNotifications.map(({ npc }) => ({
         npcId: npc.id,
-        npc: { notificationSent: true },
+        npc: { notificationSentAt },
       })),
     );
 

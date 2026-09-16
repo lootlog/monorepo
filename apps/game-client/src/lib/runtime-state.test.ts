@@ -39,7 +39,7 @@ describe("resetTransientRuntimeState", () => {
           x: 1,
           y: 2,
           location: "Ithan",
-          notificationSent: false,
+          notificationSentAt: null,
         },
       ],
     });

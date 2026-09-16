@@ -16,5 +16,5 @@ export const composeNpcFromEvent = (
   lvl: tpl.lvl,
   type: tpl.type,
   location,
-  notificationSent: false,
+  notificationSentAt: null,
 });

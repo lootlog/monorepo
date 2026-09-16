@@ -42,7 +42,7 @@ const npc = {
   id: 101,
   location: "Torneg",
   nick: "Old map NPC",
-  notificationSent: false,
+  notificationSentAt: null,
   icon: "npc.gif",
   lvl: 200,
   prof: "w",
