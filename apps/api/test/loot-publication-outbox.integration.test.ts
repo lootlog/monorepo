@@ -1045,11 +1045,18 @@ describe("durable loot publications", () => {
       );
 
       let detailReads = 0;
+      let visibilityReads = 0;
 
       const operations = makeLootsOperations({
         persistence: makeLootPersistence(database),
         query: {
           ...realQuery,
+          isLootVisible: (...args) =>
+            Effect.suspend(() => {
+              visibilityReads++;
+
+              return realQuery.isLootVisible(...args);
+            }),
           fetchLootById: (...args) =>
             Effect.suspend(() => {
               detailReads++;
@@ -1121,7 +1128,7 @@ describe("durable loot publications", () => {
           expect(values.every((loot) => loot?.id === lootId)).toBe(true);
         }
 
-        return detailReads;
+        return detailReads + visibilityReads;
       });
       await measure("batched-first-page-no-cache", async () => {
         const pages = await runtime.runPromise(
@@ -1144,8 +1151,9 @@ describe("durable loot publications", () => {
         return clients.length;
       });
       expect(detailReads).toBe(lootIds.length);
+      expect(visibilityReads).toBe((clients.length - 1) * lootIds.length);
       process.stdout.write(
-        `${JSON.stringify({ clients: clients.length, events: lootIds.length, measurements })}\n`,
+        `${JSON.stringify({ clients: clients.length, events: lootIds.length, detailHydrations: detailReads, detailVisibilityReads: visibilityReads, measurements })}\n`,
       );
     },
     120_000,
@@ -1177,6 +1185,42 @@ describe("durable loot publications", () => {
     expect(await lootRecord(id, result.id)).not.toBeNull();
     expect(await pending(result.id)).toEqual([]);
 
+    const guild = await seededGuild(id);
+    const query = makeLootQueryOperations(makeLootQueryPersistence(database));
+    const hydrated = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+
+    const operations = makeLootsOperations({
+      query: {
+        ...query,
+        fetchLootById: (...args) =>
+          query.fetchLootById(...args).pipe(
+            Effect.tap(() =>
+              Effect.promise(async () => {
+                hydrated.resolve();
+                await finish.promise;
+              }),
+            ),
+          ),
+      },
+      persistence: makeLootPersistence(database),
+      stats: { invalidateCache: () => Effect.void },
+      redis: {
+        deleteByPattern: async () => 0,
+        getOrSetJsonEffect: () => Effect.die("Unexpected list read"),
+      },
+      logger: applicationLogger,
+    });
+
+    const policy = createAccessPolicy({ capabilities: [Permission.OWNER] });
+
+    const beforeArchive = runtime.runPromise(
+      operations.fetchLootById(guild, policy, [], result.id),
+    );
+
+    await hydrated.promise;
+
+    // Bypass this API instance, as an archive committed by another replica does.
     await runtime.runPromise(
       database
         .update(organizationLootRecordTable)
@@ -1188,6 +1232,14 @@ describe("durable loot publications", () => {
           ),
         ),
     );
+
+    const afterArchive = runtime.runPromise(
+      operations.fetchLootById(guild, policy, [], result.id),
+    );
+
+    finish.resolve();
+    expect((await beforeArchive)?.id).toBe(result.id);
+    expect(await afterArchive).toBeNull();
 
     // A delayed event or redelivery cannot make the archived detail readable.
     expect(await lootRecord(id, result.id)).toBeNull();

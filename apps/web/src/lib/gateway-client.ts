@@ -229,14 +229,22 @@ export class GatewayClient {
     return this;
   }
 
+  private updateAccessPolicy(next: AccessPolicySnapshot | undefined) {
+    const changes =
+      this.accessPolicy && next
+        ? diffAccessPolicies(this.accessPolicy, next)
+        : undefined;
+
+    this.accessPolicy = next;
+
+    return changes;
+  }
+
   private handleServerEvent(event: ServerEvent): void {
     if (event.type === "session.joined") {
-      const accessPolicyChanges =
-        this.accessPolicy && event.data.accessPolicy
-          ? diffAccessPolicies(this.accessPolicy, event.data.accessPolicy)
-          : undefined;
-
-      this.accessPolicy = event.data.accessPolicy;
+      const accessPolicyChanges = this.updateAccessPolicy(
+        event.data.accessPolicy,
+      );
 
       if (event.data.organizationIds.length > 0) {
         void this.realtime
@@ -258,7 +266,9 @@ export class GatewayClient {
     }
 
     if (event.type === "permissions.updated") {
-      this.accessPolicy = event.data.accessPolicy;
+      const accessPolicyChanges = this.updateAccessPolicy(
+        event.data.accessPolicy,
+      );
 
       if (event.data.organizationIds.length > 0) {
         void this.realtime
@@ -272,6 +282,7 @@ export class GatewayClient {
       this.listeners.emit(GatewayEvent.PERMISSIONS_UPDATED, {
         guilds: event.data.organizationIds.map((id) => ({ guild: { id } })),
         featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
+        accessPolicyChanges,
       });
 
       return;

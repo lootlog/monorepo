@@ -460,6 +460,7 @@ export const makeLootQueryPersistence = (
     });
 
   return {
+    findIds,
     readVisibleSummaries,
     findItemSnapshotIds,
     findMany,

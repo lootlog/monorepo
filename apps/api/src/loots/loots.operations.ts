@@ -375,12 +375,22 @@ export const makeLootsOperations = ({
           const read = query.fetchLootById(guild, permissions, roles, lootId);
 
           // A disconnected initiating client must not cancel another client's read.
-          if (pending)
-            return yield* restore(
+          if (pending) {
+            const loot = yield* restore(
               pending.pipe(
                 Effect.catchCauseIf(Cause.hasInterruptsOnly, () => read),
               ),
             );
+
+            // Another replica may have archived the record after this flight began.
+            if (!loot) return null;
+
+            const visible = yield* restore(
+              query.isLootVisible(guild, permissions, roles, lootId),
+            );
+
+            return visible ? loot : null;
+          }
 
           // Bound retained flights; completed results are never cached.
           if (pendingDetails.size >= MAX_PENDING_DETAIL_READS)
