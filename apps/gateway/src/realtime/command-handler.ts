@@ -137,6 +137,19 @@ export class CommandHandler {
   }
 
   handle(socket: GatewaySocket, input: string | Buffer): Effect.Effect<void> {
+    return this.process(socket, input, false);
+  }
+
+  rejectOverloaded(socket: GatewaySocket, input: string | Buffer): void {
+    // Admission rejection must not allocate a background fiber or start I/O.
+    Effect.runSync(this.process(socket, input, true));
+  }
+
+  private process(
+    socket: GatewaySocket,
+    input: string | Buffer,
+    overloaded: boolean,
+  ): Effect.Effect<void> {
     if (!hasValidApiKeyLease(socket.data))
       return Effect.sync(() =>
         socket.close(1008, "API key authorization expired"),
@@ -187,6 +200,25 @@ export class CommandHandler {
       }
 
       return Effect.sync(() => socket.close(1007, "malformed realtime frame"));
+    }
+
+    if (overloaded) {
+      return Effect.sync(() => {
+        if (command.requestId) {
+          this.hub.sendResponse(
+            socket,
+            errorResponse(
+              command.requestId,
+              "COMMAND_REJECTED",
+              "command temporarily unavailable",
+              true,
+            ),
+          );
+        } else {
+          // Legacy fire-and-forget commands cannot receive a correlated error.
+          socket.close(1013, "command capacity exceeded");
+        }
+      });
     }
 
     return this.dispatch(socket, command).pipe(

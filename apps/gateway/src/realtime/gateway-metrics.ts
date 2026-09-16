@@ -1,6 +1,10 @@
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Effect, Metric, Schedule, Schema } from "effect";
-import type { RedisGatewayCommands } from "#src/platform/redis-store";
+import type {
+  RedisGatewayCommands,
+  RedisGatewayStore,
+} from "#src/platform/redis-store";
+import type { CommandIngress } from "#src/realtime/command-ingress";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
@@ -50,6 +54,60 @@ const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
   description: "Unique Discord accounts with active game sessions",
   attributes: { unit: "" },
 });
+
+const runtimeGauges = {
+  federationQueued: Metric.gauge("lootlog_gateway_federation_queued"),
+  pendingCommands: Metric.gauge("lootlog_gateway_redis_pending"),
+  pendingPublications: Metric.gauge("lootlog_gateway_publications_pending"),
+  active: Metric.gauge("lootlog_gateway_commands_active"),
+  pending: Metric.gauge("lootlog_gateway_commands_pending"),
+  bytes: Metric.gauge("lootlog_gateway_commands_retained_bytes"),
+  rejected: Metric.gauge("lootlog_gateway_commands_rejected_total"),
+  maxConnectionPending: Metric.gauge("lootlog_gateway_commands_connection_max"),
+  bufferedBytes: Metric.gauge("lootlog_gateway_sockets_buffered_bytes"),
+  maxBufferedBytes: Metric.gauge("lootlog_gateway_socket_buffered_bytes_max"),
+};
+
+// Fixed metric names, no user/Organization/connection labels or payload retention.
+// Sample independently of Redis health so a stalled dependency remains visible.
+export class GatewayRuntimeMetrics {
+  constructor(
+    private readonly redis: Pick<RedisGatewayStore, "getDiagnostics">,
+    private readonly hub: Pick<RealtimeHub, "getLocalSockets">,
+    private readonly ingress: Pick<CommandIngress, "getDiagnostics">,
+  ) {}
+
+  readonly sample = Effect.fnUntraced(function* (this: GatewayRuntimeMetrics) {
+    let bufferedBytes = 0;
+    let maxBufferedBytes = 0;
+
+    for (const socket of this.hub.getLocalSockets()) {
+      const bytes = socket.getBufferedAmount();
+      bufferedBytes += bytes;
+      maxBufferedBytes = Math.max(maxBufferedBytes, bytes);
+    }
+
+    const values = {
+      ...this.redis.getDiagnostics(),
+      ...this.ingress.getDiagnostics(),
+      bufferedBytes,
+      maxBufferedBytes,
+    };
+
+    for (const [key, value] of Object.entries(values)) {
+      if (!(key in runtimeGauges)) continue;
+      // SAFETY: the own keys above are the fixed diagnostic names in runtimeGauges.
+      yield* Metric.update(
+        runtimeGauges[key as keyof typeof runtimeGauges],
+        value,
+      );
+    }
+  });
+
+  run() {
+    return this.sample().pipe(Effect.repeat(Schedule.spaced("1 second")));
+  }
+}
 
 export class GatewayMetrics {
   constructor(

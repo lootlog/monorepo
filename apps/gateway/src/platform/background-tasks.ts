@@ -1,6 +1,12 @@
 import { runLogEffect } from "@lootlog/instrumentation";
 import { Effect } from "effect";
 
+export const yieldToEventLoop = Effect.callback<void>((resume) => {
+  const timer = setImmediate(() => resume(Effect.void));
+
+  return Effect.sync(() => clearImmediate(timer));
+});
+
 export type BackgroundTaskRunner = (
   label: string,
   task: Effect.Effect<void, unknown>,

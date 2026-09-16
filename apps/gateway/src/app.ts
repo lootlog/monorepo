@@ -1,4 +1,7 @@
-import { GatewayMetrics } from "#src/realtime/gateway-metrics";
+import {
+  GatewayMetrics,
+  GatewayRuntimeMetrics,
+} from "#src/realtime/gateway-metrics";
 import { OnlineHistory } from "#src/realtime/online-history";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -38,6 +41,7 @@ import {
 import { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import { CoveragePublisher } from "#src/rabbit/coverage-publisher";
 import { CommandHandler } from "#src/realtime/command-handler";
+import { CommandIngress } from "#src/realtime/command-ingress";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { PresenceStore } from "#src/realtime/presence-store";
@@ -50,6 +54,7 @@ export interface GatewayApplicationService {
   readonly hub: RealtimeHub;
   readonly presence: PresenceStore;
   readonly commands: CommandHandler;
+  readonly ingress: CommandIngress;
   readonly activity: ActivityPublisher;
   readonly runBackground: BackgroundTaskRunner;
   readonly runPromise: <A, E>(effect: Effect.Effect<A, E>) => Promise<A>;
@@ -156,6 +161,48 @@ export class GatewayApplication extends Context.Service<
         airTags,
       );
 
+      const ingress = new CommandIngress(
+        (socket, message) => commands.handle(socket, message),
+        (socket, message) => commands.rejectOverloaded(socket, message),
+        (socket) =>
+          Effect.suspend(() => {
+            hub.unregister(socket);
+
+            if (socket.data.apiKeyAccess) return Effect.void;
+
+            return Effect.all(
+              [
+                activity
+                  .publish("DISCONNECT_EVENT", socket.data)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect activity failed",
+                        error,
+                      ),
+                    ),
+                  ),
+                presence
+                  .disconnect(socket.data)
+                  .pipe(
+                    Effect.catchCause((error) =>
+                      Effect.logError(
+                        "Gateway disconnect presence failed",
+                        error,
+                      ),
+                    ),
+                  ),
+              ],
+              { concurrency: 2, discard: true },
+            );
+          }),
+        runBackground,
+      );
+
+      yield* new GatewayRuntimeMetrics(redis, hub, ingress)
+        .run()
+        .pipe(Effect.forkScoped);
+
       yield* new ApiKeyLeases(
         config,
         httpClient,
@@ -193,6 +240,7 @@ export class GatewayApplication extends Context.Service<
         hub,
         presence,
         commands,
+        ingress,
         activity,
         runBackground,
         runPromise,
@@ -446,25 +494,13 @@ export const GatewayServer = Layer.effectDiscard(
             idleTimeout: 70,
             open(socket) {
               application.hub.register(socket);
+              application.ingress.open(socket);
             },
             message(socket, message) {
-              application.runBackground(
-                "websocket.message",
-                application.commands.handle(socket, message),
-              );
+              application.ingress.message(socket, message);
             },
             close(socket) {
-              application.hub.unregister(socket);
-
-              if (socket.data.apiKeyAccess) return;
-              application.runBackground(
-                "websocket.disconnect-activity",
-                application.activity.publish("DISCONNECT_EVENT", socket.data),
-              );
-              application.runBackground(
-                "websocket.disconnect-presence",
-                application.presence.disconnect(socket.data),
-              );
+              application.ingress.close(socket);
             },
           },
         }),
