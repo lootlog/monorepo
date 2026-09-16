@@ -1,3 +1,4 @@
+import { useTimersStore } from "@/store/timers.store";
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
 import { SettingsIconButton } from "@/components/settings/settings-icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
@@ -26,6 +27,10 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  const legacyAppearance = useTimersStore(
+    (state) => state.displayConfig.legacyAppearance,
+  );
+
   if (hiddenColors.length === 0) return null;
 
   return (
@@ -42,8 +47,12 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
       <CollapsibleContent>
         <SettingsList>
           {hiddenColors.map((colorId) => {
-            const hex = getTimerColorHex(colorId);
-            const name = colorNames[colorId] ?? getDefaultColorName(colorId);
+            const hex = getTimerColorHex(colorId, legacyAppearance);
+
+            const name =
+              colorNames[colorId] ??
+              getDefaultColorName(colorId, legacyAppearance);
+
             const restoreLabel = `${t("settings.timers.colors.restoreColorTitle")}: ${name}`;
 
             return (

@@ -18516,6 +18516,8 @@ components:
         displayConfig:
           type: object
           properties:
+            legacyAppearance:
+              type: boolean
             showType:
               type: boolean
             showLevel:

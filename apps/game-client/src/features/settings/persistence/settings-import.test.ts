@@ -38,6 +38,36 @@ describe("planSettingsImport", () => {
     localStorage.removeItem(SETTINGS_IMPORT_STORAGE_KEY);
   });
 
+  it.each([true, false, undefined])(
+    "imports appearance with legacy value %s while preserving other preferences",
+    (legacyAppearance) => {
+      const displayConfig =
+        legacyAppearance === undefined
+          ? { fontSize: 14 }
+          : { fontSize: 14, legacyAppearance };
+
+      const plan = planSettingsImport({
+        documents: createSettingsDocuments(),
+        guildDocuments: undefined,
+        local: { ...localSnapshot, timers: { ...localTimers, displayConfig } },
+        done: {},
+        accessibleGuildIds: [],
+        hasCharacterScope: true,
+      });
+
+      expect(
+        plan.patches.find((patch) => patch.domain === "appearance")?.set,
+      ).toMatchObject({
+        timers: {
+          displayConfig: {
+            fontSize: 14,
+            legacyAppearance: legacyAppearance ?? false,
+          },
+        },
+      });
+    },
+  );
+
   it("imports only browser values that differ from defaults where the server holds defaults", () => {
     const plan = planSettingsImport({
       documents: createSettingsDocuments(),

@@ -84,7 +84,11 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
 
   const next: Partial<TimersProjection> = {
     generalConfig: { ...store.generalConfig, ...decoded.generalConfig },
-    displayConfig: { ...store.displayConfig, ...decoded.displayConfig },
+    displayConfig: {
+      ...store.displayConfig,
+      ...decoded.displayConfig,
+      legacyAppearance: decoded.displayConfig?.legacyAppearance ?? false,
+    },
     alwaysVisibleExpiredTimers:
       decoded.alwaysVisibleExpiredTimers ?? store.alwaysVisibleExpiredTimers,
     timerFiltersEnabled:

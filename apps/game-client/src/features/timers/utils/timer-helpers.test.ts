@@ -42,6 +42,7 @@ describe("timer-helpers", () => {
       customColors: {},
       overriddenDefaultColors: {},
       displayConfig: {
+        legacyAppearance: false,
         showType: true,
         showLevel: false,
         fontSize: 11,

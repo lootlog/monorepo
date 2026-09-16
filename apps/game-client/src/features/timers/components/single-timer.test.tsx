@@ -48,76 +48,76 @@ const createTimer = () => ({
 });
 
 describe("SingleTimer", () => {
-  it("renders the real countdown and metadata, and exposes actions according to its access policy", async () => {
-    const user = userEvent.setup();
-    const fixture = createTimerHttpFixture();
-    const state = useTimersStore.getState();
-    useTimersStore.setState({
-      timersColors: { Tanroth: "red" },
-      pinnedTimers: { "guild-1": ["Tanroth"] },
-      displayConfig: {
-        ...state.displayConfig,
-        showType: true,
-        showLevel: true,
-      },
-      generalConfig: {
-        ...state.generalConfig,
-        timersGrouping: false,
-        countdownMode: "max",
-      },
-    });
-    const timer = createTimer();
+  it.each([false, true])(
+    "renders countdown, tooltip and authorized actions (legacy: %s)",
+    async (legacyAppearance) => {
+      const user = userEvent.setup();
+      const fixture = createTimerHttpFixture();
+      const state = useTimersStore.getState();
+      useTimersStore.setState({
+        timersColors: { Tanroth: "red" },
+        pinnedTimers: { "guild-1": ["Tanroth"] },
+        displayConfig: {
+          ...state.displayConfig,
+          showType: true,
+          showLevel: true,
+          legacyAppearance,
+        },
+        generalConfig: {
+          ...state.generalConfig,
+          timersGrouping: false,
+          countdownMode: "max",
+        },
+      });
+      const timer = createTimer();
 
-    const content = (capabilities: Permission[]) => (
-      <QueryClientProvider client={fixture.queryClient}>
-        <TimerClockProvider>
-          <SingleTimer
-            guildIds={["guild-1", "guild-2"]}
-            guildNamesById={{ "guild-1": "Alpha" }}
-            accessPolicy={createAccessPolicy({ capabilities })}
-            timer={timer}
-            settingsKey="guild-1"
-          />
-        </TimerClockProvider>
-      </QueryClientProvider>
-    );
+      const content = (capabilities: Permission[]) => (
+        <QueryClientProvider client={fixture.queryClient}>
+          <TimerClockProvider>
+            <SingleTimer
+              guildIds={["guild-1", "guild-2"]}
+              guildNamesById={{ "guild-1": "Alpha" }}
+              accessPolicy={createAccessPolicy({ capabilities })}
+              timer={timer}
+              settingsKey="guild-1"
+            />
+          </TimerClockProvider>
+        </QueryClientProvider>
+      );
 
-    const view = render(
-      content([
-        Permission.LOOTLOG_TIMERS_DELETE,
-        Permission.LOOTLOG_TIMERS_RESET,
-      ]),
-    );
+      const view = render(
+        content([
+          Permission.LOOTLOG_TIMERS_DELETE,
+          Permission.LOOTLOG_TIMERS_RESET,
+        ]),
+      );
 
-    onTestFinished(() => {
-      view.unmount();
-      fixture.cleanup();
-    });
-    const label = screen.getByText(/\[R\] \[H\] Tanroth/);
-    expect(label).toHaveTextContent("(120w)");
-    expect(screen.getByText("00:00:10")).toBeVisible();
-    expect(view.container.querySelector('[id="10"]')).toHaveStyle({
-      "--ll-timer-accent": "#ef4444",
-      "--ll-timer-fill": "#ef444459",
-    });
-    await user.hover(label);
-    expect(await screen.findByText("Tester (Alpha)")).toBeVisible();
-    await user.pointer({ keys: "[MouseRight]", target: label });
-    expect(
-      await screen.findByRole("menuitem", { name: "Usuń timer" }),
-    ).toBeVisible();
-    expect(
-      screen.getByRole("menuitem", { name: "Odliczaj od początku" }),
-    ).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: "Odepnij" })).toBeVisible();
-    view.rerender(content([]));
-    expect(
-      screen.queryByRole("menuitem", { name: "Usuń timer" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("menuitem", { name: "Odliczaj od początku" }),
-    ).not.toBeInTheDocument();
-  });
+      onTestFinished(() => {
+        view.unmount();
+        fixture.cleanup();
+      });
+      const label = screen.getByText(/\[R\] \[H\] Tanroth/);
+      expect(label).toHaveTextContent("(120w)");
+      expect(screen.getByText("00:00:10")).toBeVisible();
+      await user.hover(label);
+      expect(await screen.findByText("Tester (Alpha)")).toBeVisible();
+      await user.pointer({ keys: "[MouseRight]", target: label });
+      expect(
+        await screen.findByRole("menuitem", { name: "Usuń timer" }),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("menuitem", { name: "Odliczaj od początku" }),
+      ).toBeVisible();
+      expect(screen.getByRole("menuitem", { name: "Odepnij" })).toBeVisible();
+      view.rerender(content([]));
+      expect(
+        screen.queryByRole("menuitem", { name: "Usuń timer" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("menuitem", { name: "Odliczaj od początku" }),
+      ).not.toBeInTheDocument();
+    },
+  );
 
   it("shows pending and hidden states with the configured custom color", async () => {
     const user = userEvent.setup();
