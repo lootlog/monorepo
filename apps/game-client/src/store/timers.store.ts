@@ -148,7 +148,7 @@ export const useTimersStore = create<TimersState>()(
           showType: true,
           showLevel: false,
           fontSize: 11,
-          minColumnWidth: 120,
+          minColumnWidth: 140,
           singleTimerDisplayMode: "row",
         },
         setDisplayConfig: (config: TimersDisplayConfig) => {
