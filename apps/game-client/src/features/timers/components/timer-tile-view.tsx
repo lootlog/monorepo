@@ -10,6 +10,7 @@ export type TimerTileViewProps = {
   displayMode: "column" | "row";
   fontSize: number;
   hasPassedRedThreshold?: boolean;
+  isExpired?: boolean;
   id?: string;
   /**
    * Every other grid row of unpainted tiles (no colour, or expired) gets a
@@ -29,17 +30,14 @@ const ALTERNATE_ROW_FILL = "rgba(255, 255, 255, 0.08)";
 
 const resolveFill = (
   paint: TimerColorPaint,
-  hasPassedRedThreshold: boolean,
+  isExpired: boolean,
   isAlternateRow: boolean,
 ) => {
-  if (
-    isAlternateRow &&
-    (hasPassedRedThreshold || isUnpaintedTimerColor(paint))
-  ) {
+  if (isAlternateRow && (isExpired || isUnpaintedTimerColor(paint))) {
     return ALTERNATE_ROW_FILL;
   }
 
-  return hasPassedRedThreshold ? EXPIRED_FILL : paint.fill;
+  return isExpired ? EXPIRED_FILL : paint.fill;
 };
 
 /** An expired tile keeps a dimmed stripe so its colour group stays readable. */
@@ -51,6 +49,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   displayMode,
   fontSize,
   hasPassedRedThreshold = false,
+  isExpired = false,
   id,
   isAlternateRow = false,
   isMinSpawnTime = false,
@@ -61,14 +60,8 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   // SAFETY: CSSProperties has no index signature for custom properties; the
   // two `--ll-timer-*` entries are consumed by this element's own classes.
   const style = {
-    "--ll-timer-accent": hasPassedRedThreshold
-      ? dimAccent(paint.accent)
-      : paint.accent,
-    "--ll-timer-fill": resolveFill(
-      paint,
-      hasPassedRedThreshold,
-      isAlternateRow,
-    ),
+    "--ll-timer-accent": isExpired ? dimAccent(paint.accent) : paint.accent,
+    "--ll-timer-fill": resolveFill(paint, isExpired, isAlternateRow),
     fontSize: `${fontSize}px`,
   } as CSSProperties;
 
@@ -78,7 +71,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       className={cn(
         "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:transition-colors ll:motion-reduce:transition-none",
         "ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
-        hasPassedRedThreshold ? "ll:text-gray-400" : "ll:text-white",
+        isExpired ? "ll:text-gray-400" : "ll:text-white",
         {
           "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
             displayMode === "column",

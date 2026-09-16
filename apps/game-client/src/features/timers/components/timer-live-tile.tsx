@@ -1,3 +1,4 @@
+import { useTimersStore } from "@/store/timers.store";
 import type { Timer } from "@/api/timers.api";
 import { parseMsToTime } from "@lootlog/datetime";
 import { calculateTimeLeft } from "../utils/timer-helpers";
@@ -7,7 +8,7 @@ import { TimerTileView, type TimerTileViewProps } from "./timer-tile-view";
 
 type TimerLiveTileProps = Omit<
   TimerTileViewProps,
-  "hasPassedRedThreshold" | "isMinSpawnTime" | "timeLabel"
+  "hasPassedRedThreshold" | "isExpired" | "isMinSpawnTime" | "timeLabel"
 > & {
   countdownMode: "min" | "max";
   timer: Timer;
@@ -18,6 +19,10 @@ export const TimerLiveTile = ({
   timer,
   ...tileProps
 }: TimerLiveTileProps) => {
+  const removeTimerAfterMs = useTimersStore(
+    (state) => state.generalConfig.removeTimerAfterMs,
+  );
+
   const epoch = useTimerClockEpoch();
   const { maxTimeLeft, minTimeLeft } = getTimerTimeLeft(timer, epoch);
   const isMinSpawnTime = minTimeLeft < 0;
@@ -34,6 +39,7 @@ export const TimerLiveTile = ({
     <TimerTileView
       {...tileProps}
       hasPassedRedThreshold={hasPassedRedThreshold}
+      isExpired={maxTimeLeft <= -removeTimerAfterMs}
       isMinSpawnTime={isMinSpawnTime}
       timeLabel={parseMsToTime(timeLeft)}
     />
