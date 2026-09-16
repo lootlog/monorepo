@@ -6,7 +6,6 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { decodeDomainJson } from "../../domain-json.schema.js";
 import { and, arrayOverlaps, desc, eq, or, sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -322,7 +321,7 @@ export class UserLootlogConfigData extends Context.Service<
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new UserLootlogConfigOperationError({ cause })),
   );
 

@@ -1,3 +1,13 @@
+import {
+  AcceptedReservationShareBoundary,
+  CreatedReservationShareInvitationBoundary,
+  ReservationSharesBoundary,
+  ReservationShareInvitationPreviewBoundary,
+  ReservationBoundary,
+  MyReservationsBoundary,
+  ReservationSpotsBoundary,
+  ReservationWindowBoundary,
+} from "./organization-workspace-response.schema.js";
 import type { GuildMemberChanged } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
@@ -7,7 +17,6 @@ import {
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Clock, Context, Effect, Layer, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
-import { decodeDomainJson } from "../../domain-json.schema.js";
 import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import {
   Permission,
@@ -33,23 +42,13 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { getPermissionsCachePattern } from "#src/shared/cache";
-import {
-  AcceptedReservationShareResponse,
-  CreatedReservationShareInvitationResponse,
-  ReservationSharesResponse,
-  ReservationShareInvitationPreviewResponse,
-  type AcceptReservationShareInvitationRequest,
-} from "#src/contracts/reservation-sharing/schemas";
+import type { AcceptReservationShareInvitationRequest } from "#src/contracts/reservation-sharing/schemas";
 
-import {
-  ReservationResponse,
-  MyReservationsResponse,
-  ReservationSpotsResponse,
-  ReservationWindowResponse,
-  type CreateReservationRequest,
-  type MyReservationsQuery,
-  type ReservationWindowQuery,
-  type UpdateReservationRequest,
+import type {
+  CreateReservationRequest,
+  MyReservationsQuery,
+  ReservationWindowQuery,
+  UpdateReservationRequest,
 } from "#src/contracts/reservations/schemas";
 
 import {
@@ -496,7 +495,7 @@ const toViewer = (
 });
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError(
       (cause) => new OrganizationWorkspaceOperationError({ cause }),
     ),
@@ -557,7 +556,7 @@ export const listReservationSpots = Effect.fn("listReservationSpots")(
       service.listSpots(toViewer(access)),
     );
 
-    return yield* decode(ReservationSpotsResponse, value);
+    return yield* decode(ReservationSpotsBoundary, value);
   },
 );
 
@@ -571,7 +570,7 @@ export const listSpotReservations = Effect.fn("listSpotReservations")(
       service.listWindow(toViewer(access), spotId, query.from, query.to),
     );
 
-    return yield* decode(ReservationWindowResponse, value);
+    return yield* decode(ReservationWindowBoundary, value);
   },
 );
 
@@ -589,7 +588,7 @@ export const createReservation = Effect.fn("createReservation")(function* (
     service.create(toViewer(access), spotId, payload),
   );
 
-  return yield* decode(ReservationResponse, value);
+  return yield* decode(ReservationBoundary, value);
 });
 
 export const deleteVisibleReservation = Effect.fn("deleteVisibleReservation")(
@@ -636,7 +635,7 @@ export const listMyReservations = Effect.fn("listMyReservations")(function* (
     service.listMine(current, query),
   );
 
-  return yield* decode(MyReservationsResponse, value);
+  return yield* decode(MyReservationsBoundary, value);
 });
 
 export const deleteMyReservation = Effect.fn("deleteMyReservation")(function* (
@@ -656,7 +655,7 @@ export const updateMyReservation = Effect.fn("updateMyReservation")(function* (
     service.updateOwned(current, reservationId, payload),
   );
 
-  return yield* decode(ReservationResponse, value);
+  return yield* decode(ReservationBoundary, value);
 });
 
 export const updateGuildRole = Effect.fn("RolesControllerUpdateGuildRole")(
@@ -703,7 +702,7 @@ export const listReservationShares = Effect.fn("listReservationShares")(
       service.listShares(access.guildId),
     );
 
-    return yield* decode(ReservationSharesResponse, value);
+    return yield* decode(ReservationSharesBoundary, value);
   },
 );
 
@@ -716,7 +715,7 @@ export const previewReservationShareInvitation = Effect.fn(
     service.previewInvitation(token, current.discordId),
   );
 
-  return yield* decode(ReservationShareInvitationPreviewResponse, value);
+  return yield* decode(ReservationShareInvitationPreviewBoundary, value);
 });
 
 export const acceptReservationShareInvitation = Effect.fn(
@@ -728,7 +727,7 @@ export const acceptReservationShareInvitation = Effect.fn(
     service.acceptInvitation(token, payload, current),
   );
 
-  return yield* decode(AcceptedReservationShareResponse, value);
+  return yield* decode(AcceptedReservationShareBoundary, value);
 });
 
 export const createReservationShareInvitation = Effect.fn(
@@ -740,7 +739,7 @@ export const createReservationShareInvitation = Effect.fn(
     service.createInvitation(access.guildId, access.userId),
   );
 
-  return yield* decode(CreatedReservationShareInvitationResponse, value);
+  return yield* decode(CreatedReservationShareInvitationBoundary, value);
 });
 
 export const revokeReservationShareInvitation = Effect.fn(

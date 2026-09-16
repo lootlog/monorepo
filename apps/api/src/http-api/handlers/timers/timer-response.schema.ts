@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { MemberProfile } from "#src/contracts/members/schemas";
+import { MemberBoundary } from "../members/member-response.schema.js";
 import {
   CreateAutoTimerResponse,
   TimerHistoryResponse,
@@ -12,26 +12,18 @@ const optionalNullableDateTime = Schema.optionalKey(
   Schema.NullOr(DomainDateTime),
 );
 
-const TimerMember = Schema.Struct({
-  ...MemberProfile.fields,
-  lastDiscordSyncAt: optionalNullableDateTime,
-  lastDiscordAttemptAt: optionalNullableDateTime,
-  nextRefreshAt: optionalNullableDateTime,
-  updatedAt: DomainDateTime,
-});
-
 const TimerBoundary = Schema.Struct({
   ...TimerResponse.fields,
   minSpawnTime: DomainDateTime,
   maxSpawnTime: DomainDateTime,
-  member: Schema.optionalKey(TimerMember),
+  member: Schema.optionalKey(MemberBoundary),
   deletedAt: optionalNullableDateTime,
   updatedAt: DomainDateTime,
 });
 
 const TimerHistoryBoundary = Schema.Struct({
   ...TimerHistoryResponse.fields,
-  member: TimerMember,
+  member: MemberBoundary,
   minSpawnTime: Schema.NullOr(DomainDateTime),
   maxSpawnTime: Schema.NullOr(DomainDateTime),
   createdAt: DomainDateTime,

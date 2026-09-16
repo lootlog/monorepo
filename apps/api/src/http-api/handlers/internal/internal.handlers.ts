@@ -8,7 +8,6 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { decodeDomainJson } from "../../domain-json.schema.js";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, arrayOverlaps, eq, inArray, or } from "drizzle-orm";
@@ -252,7 +251,7 @@ export class InternalGuildsData extends Context.Service<
 }
 
 const decode = <A, I, R>(schema: Schema.Codec<A, I, R>, value: unknown) =>
-  decodeDomainJson(schema, value).pipe(
+  Schema.decodeUnknownEffect(schema)(value).pipe(
     Effect.mapError((cause) => new InternalGuildsOperationError({ cause })),
   );
 
