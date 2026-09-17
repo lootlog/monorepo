@@ -6,7 +6,7 @@ For installation steps, see [Install the Lootlog extension](./INSTALLATION.md).
 
 ## Build and load
 
-Run commands from `apps/game-client`. Extension service URLs are owned by `extension/build-profile.ts`; userscript `.env*` files and shell `VITE_*` values cannot override them. Local builds use localhost and JSON realtime frames. Production builds use the production Lootlog services and MessagePack. Updating deployment addresses requires changing this profile and rebuilding.
+Run commands from `apps/game-client`. Extension service URLs are owned by `extension/build-profile.ts`; userscript `.env*` files and shell `VITE_*` values cannot override those URLs. Local builds use localhost; production builds use the production Lootlog services. Realtime frame encoding is selected separately by `VITE_GATEWAY_FRAME_ENCODING` in `src/lib/game-client-platform.ts`. Updating deployment addresses requires changing the profile and rebuilding.
 
 | Command                                                                 | Result                                                |
 | ----------------------------------------------------------------------- | ----------------------------------------------------- |

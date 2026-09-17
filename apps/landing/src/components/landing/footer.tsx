@@ -18,6 +18,10 @@ export function LandingFooter() {
               {t("landing.footer.docs")}
               <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </a>
+            <a className="landing-footer-link" href={links.developer}>
+              {t("landing.footer.developer")}
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </a>
             <a
               className="landing-footer-link"
               href={links.github}

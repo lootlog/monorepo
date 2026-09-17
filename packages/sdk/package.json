@@ -1,11 +1,22 @@
 {
   "name": "@lootlog/sdk",
   "version": "0.1.0",
+  "description": "Typed HTTP and realtime clients for the Lootlog public API",
+  "homepage": "https://developer.lootlog.pl/docs/sdk",
+  "bugs": {
+    "url": "https://github.com/lootlog/monorepo/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lootlog/monorepo.git",
+    "directory": "packages/sdk"
+  },
   "files": [
     "dist",
     "openapi",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "type": "module",
   "sideEffects": false,
@@ -35,6 +46,10 @@
       "types": "./dist/realtime.d.ts",
       "import": "./dist/realtime.js"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "scripts": {
     "build": "tsdown",

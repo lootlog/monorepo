@@ -52,12 +52,25 @@ docker compose up -d
 bun run db:api:migrate:dev
 bun run db:activity:migrate:dev
 bun run db:auth:migrate:dev
-bun run db:battlelog:push
+bun run db:battlelog:migrate:deploy
 bun run dev
 ```
 
 The app is normally already running in the maintainer environment. Agents must
 not start another copy unless asked.
+
+## Work on the developer portal
+
+The portal serves API key management, integration guides, and API reference.
+Write portal copy and integration documentation in English; player-facing
+documentation remains Polish. Integration guides live in
+`apps/developer/content/docs`. Keep repository setup and contributor instructions
+in this guide instead of publishing them as integration steps.
+
+In local development, Traefik serves the portal at `http://localhost/developer`,
+with Vite on port 3004. You can also open
+`http://localhost:3004/developer/` directly. After changing Traefik routing, run
+`docker compose restart traefik` if the old routes remain active.
 
 ## Make a change
 
@@ -137,9 +150,16 @@ service tests replace dependencies at their public interfaces.
 
 ## Releases
 
-Pull requests do not carry release metadata. Production releases select an
-immutable commit from `main` in GitHub Actions. Do not edit package versions or
-generated changelogs as part of a pull request.
+Application pull requests do not carry release metadata. Production deployments
+select an immutable commit from `main` in GitHub Actions.
+
+Public SDK releases are separate from application deployments. A release pull
+request updates `packages/sdk/package.json` to the intended version and records
+contract changes and migration instructions in the developer portal changelog.
+After merging, run **Publish SDK** from `main` with that version and the `latest`
+or `next` npm tag. See [SDK publication](packages/sdk/PUBLISHING.md) for the
+one-time npm setup and verification steps. Private workspace versions do not
+need to change for an SDK release.
 
 ## Pull requests
 
