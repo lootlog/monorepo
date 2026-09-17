@@ -1,6 +1,6 @@
 {
   "name": "@lootlog/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed HTTP and realtime clients for the Lootlog public API",
   "homepage": "https://developer.lootlog.pl/docs/sdk",
   "bugs": {
