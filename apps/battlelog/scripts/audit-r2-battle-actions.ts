@@ -4,12 +4,13 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { BattleProcessor, type ParsedMove } from "@lootlog/battle-processor";
-import { Config, Effect, Option, Redacted } from "effect";
+import { Config, Effect, Option, Redacted, Schema } from "effect";
 import { Client } from "pg";
 import { gunzipSync } from "node:zlib";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 
 type R2BattlePayload = {
   battleId: string;
@@ -46,14 +47,14 @@ const auditConfig = await Effect.runPromise(
     r2BucketName: Config.string("R2_BUCKET_NAME"),
   }),
 );
+
 const SAMPLE_SIZE = auditConfig.sampleSize;
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
+
 const appRoot = resolve(scriptDir, "..");
+
 const repoRoot = resolve(appRoot, "../..");
-const mechanicsDocPath = resolve(
-  repoRoot,
-  "apps/docs/content/docs/battle-panel-mechanics.mdx",
-);
 
 const createR2Client = () =>
   new S3Client({
@@ -67,17 +68,21 @@ const createR2Client = () =>
 
 const fetchLatestBattleIdsFromDb = async (): Promise<SampleSource | null> => {
   const configuredDatabaseUrl = Option.getOrUndefined(auditConfig.databaseUrl);
+
   const connectionString =
     configuredDatabaseUrl === undefined
       ? undefined
       : Redacted.value(configuredDatabaseUrl);
+
   if (!connectionString) {
     return null;
   }
 
   const client = new Client({ connectionString });
+
   try {
     await client.connect();
+
     const result = await client.query<{ id: string }>(
       'select id from battles order by "createdAt" desc limit $1',
       [SAMPLE_SIZE],
@@ -99,6 +104,7 @@ const fetchLatestBattleIdsFromDb = async (): Promise<SampleSource | null> => {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown DB error";
+
     return {
       kind: "r2-first-list-page",
       warning: `Could not read latest battle IDs from DB (${message}); falling back to the first R2 list page, which is not guaranteed to be latest.`,
@@ -132,11 +138,13 @@ const resolveSampleSource = async (
   bucketName: string,
 ): Promise<SampleSource> => {
   const dbSource = await fetchLatestBattleIdsFromDb();
+
   if (dbSource?.kind === "db-latest") {
     return dbSource;
   }
 
   const battleIds = await listFirstR2BattlePage(client, bucketName);
+
   return {
     kind: "r2-first-list-page",
     warning:
@@ -164,13 +172,18 @@ const downloadBattle = async (
     }
 
     const bytes = await response.Body.transformToByteArray();
+
     const isGzip =
       response.ContentEncoding === "gzip" ||
       response.Metadata?.compressed === "gzip";
+
     const json = isGzip
       ? gunzipSync(bytes).toString("utf-8")
       : Buffer.from(bytes).toString("utf-8");
 
+    // SAFETY: These first-party R2 objects are written by BattlesService with
+    // processor-parsed events matching ParsedMove. This maintenance audit trusts
+    // that persisted contract; it does not validate arbitrary uploaded JSON.
     return JSON.parse(json) as R2BattlePayload;
   } catch {
     return null;
@@ -208,6 +221,7 @@ const createSyntheticWarriors = (moves: ParsedMove[]) => {
       icon: "",
       team: index % 2 === 0 ? 1 : 2,
     };
+
     return acc;
   }, {});
 };
@@ -217,10 +231,12 @@ const readUiSupportedActions = async () => {
     repoRoot,
     "apps/web/src/components/battle/utils/battle-actions-parser.ts",
   );
+
   const constantsPath = resolve(
     repoRoot,
     "apps/web/src/components/battle/utils/battle-action-constants.ts",
   );
+
   const translationsPath = resolve(
     repoRoot,
     "apps/web/src/i18n/translations/battle.json",
@@ -234,7 +250,9 @@ const readUiSupportedActions = async () => {
 
   const actionLiteralPattern =
     /["']([+-]?[a-zA-Z0-9_-]+(?:_per)?(?:-[a-z]+)?)["']/g;
+
   const supported = new Set<string>();
+
   for (const source of [parser, constants]) {
     for (const match of source.matchAll(actionLiteralPattern)) {
       if (match[1]) {
@@ -243,7 +261,10 @@ const readUiSupportedActions = async () => {
     }
   }
 
-  const translations = JSON.parse(translationsRaw) as Record<string, string>;
+  const translations = Schema.decodeUnknownSync(
+    Schema.fromJsonString(Schema.Record(Schema.String, Schema.Unknown)),
+  )(translationsRaw);
+
   return {
     supported,
     translated: new Set(Object.keys(translations)),
@@ -258,52 +279,45 @@ const buildMarkdownReport = (params: {
   unknownProcessorActions: Array<{ actionType: string; count: number }>;
   missingUiActions: Array<{ actionType: string; count: number }>;
   missingTranslations: Array<{ actionType: string; count: number }>;
-}) => `---
-title: Mechanika walk i audyt battle panelu
-description: Zakres mechanik Margonem obsługiwanych przez battle panel oraz raport pokrycia akcji z R2.
----
+}) => `# Battle action coverage audit
 
-Źródła: dokumentacja Margonem "Mechanika walk", obecne zachowanie \`@lootlog/battle-processor\` oraz próbka R2.
+Generated at: ${new Date().toISOString()}
 
-## Zakres
+This operational report describes the sampled stored battle actions. It is not
+public documentation or proof of coverage across all battles.
 
-Ten panel jest log analytics, nie symulatorem Margonem. W tej iteracji obejmuje PvP, Otchłań i walki grupowe PvP. PvE, exp, loot i szczegółowe NPC pozostają poza zakresem.
+## Sample
 
-## Ostatni audyt R2
+- Source: \`${params.source.kind}\`
+- Warning: ${params.source.warning ?? "none"}
+- Parsed payloads: ${params.parsedCount}
+- Unique action types: ${params.totalActionTypes}
+- Processor coverage: ${params.processorHandledPercentage}%
 
-- Źródło próby: \`${params.source.kind}\`
-- Ostrzeżenie: ${params.source.warning ?? "brak"}
-- Poprawnie pobrane payloady: ${params.parsedCount}
-- Unikalne typy akcji: ${params.totalActionTypes}
-- Pokrycie procesora: ${params.processorHandledPercentage}%
+If the database cannot supply the latest battle IDs ordered by creation time,
+the sample uses the first R2 listing page. That page is not guaranteed to contain
+the latest battles.
 
-## Największe luki procesora
+## Most frequent unhandled processor actions
 
 ${params.unknownProcessorActions
   .slice(0, 20)
   .map((action) => `- \`${action.actionType}\`: ${action.count}`)
   .join("\n")}
 
-## Największe luki UI parsera
+## Most frequent missing UI parser actions
 
 ${params.missingUiActions
   .slice(0, 20)
   .map((action) => `- \`${action.actionType}\`: ${action.count}`)
   .join("\n")}
 
-## Największe braki tłumaczeń
+## Most frequent missing translations
 
 ${params.missingTranslations
   .slice(0, 20)
   .map((action) => `- \`${action.actionType}\`: ${action.count}`)
   .join("\n")}
-
-## Aktualne zasady implementacyjne
-
-- Timeline jest liczony z ruchów walki i snapshotów wojowników.
-- Historyczne obiekty R2 w formacie parsed-only są obsługiwane bez backfillu.
-- Nowe obiekty R2 mogą zawierać opcjonalne \`sourceEvents\`, żeby kolejne audyty miały dostęp do pierwotnych eventów.
-- Jeśli DB nie pozwala ustalić najnowszych walk po \`createdAt\`, skrypt jawnie raportuje fallback do pierwszej strony listowania R2.
 `;
 
 const main = async () => {
@@ -314,6 +328,7 @@ const main = async () => {
 
   for (const battleId of source.battleIds.slice(0, SAMPLE_SIZE)) {
     const payload = await downloadBattle(client, bucketName, battleId);
+
     if (payload?.rawData?.events?.length) {
       payloads.push(payload);
     }
@@ -335,6 +350,7 @@ const main = async () => {
     }
 
     const processor = new BattleProcessor();
+
     const analysis = processor.processParsedBattle({
       accountId: payload.rawData.accountId,
       characterId: payload.rawData.characterId,
@@ -345,6 +361,7 @@ const main = async () => {
 
     processorHandledActions += analysis.actionCoverage.handledActions;
     processorTotalActions += analysis.actionCoverage.totalActions;
+
     for (const action of analysis.actionCoverage.unknown) {
       processorActionCounts.set(
         action.actionType,
@@ -354,18 +371,23 @@ const main = async () => {
   }
 
   const ui = await readUiSupportedActions();
+
   const actionEntries = Array.from(actionCounts.entries()).sort(
     (a, b) => b[1] - a[1],
   );
+
   const missingUiActions = actionEntries
     .filter(([actionType]) => !ui.supported.has(actionType))
     .map(([actionType, count]) => ({ actionType, count }));
+
   const missingTranslations = actionEntries
     .filter(([actionType]) => !ui.translated.has(actionType))
     .map(([actionType, count]) => ({ actionType, count }));
+
   const unknownProcessorActions = Array.from(processorActionCounts.entries())
     .sort((a, b) => b[1] - a[1])
     .map(([actionType, count]) => ({ actionType, count }));
+
   const processorHandledPercentage =
     processorTotalActions > 0
       ? Math.round((processorHandledActions / processorTotalActions) * 10000) /
@@ -382,11 +404,17 @@ const main = async () => {
     missingTranslations: missingTranslations.slice(0, 50),
   };
 
-  console.log(JSON.stringify(report, null, 2));
+  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 
   if (process.argv.includes("--write-doc")) {
-    await writeFile(
-      mechanicsDocPath,
+    // Keep operational evidence outside the repository and public documentation.
+    const reportDirectory = await mkdtemp(
+      resolve(tmpdir(), "lootlog-battle-audit-"),
+    );
+
+    const reportPath = resolve(reportDirectory, "battle-actions.md");
+    await Bun.write(
+      reportPath,
       buildMarkdownReport({
         source,
         parsedCount: payloads.length,
@@ -396,8 +424,8 @@ const main = async () => {
         missingUiActions,
         missingTranslations,
       }),
-      "utf-8",
     );
+    console.error(`Audit report written to ${reportPath}`);
   }
 };
 

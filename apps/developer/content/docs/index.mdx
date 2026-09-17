@@ -47,7 +47,3 @@ Create separate keys for each environment. Test your integration in development 
 | Production  | `developer.lootlog.pl`     | `api.lootlog.pl`     |
 
 The [HTTP guide](/docs/http#2-choose-an-environment) lists the service hosts. Use the [realtime guide](/docs/realtime#authentication) for gateway addresses.
-
-### Local development
-
-The portal is available through Traefik at `http://localhost/developer`, with Vite running on port 3004. You can also open `http://localhost:3004/developer/` directly. If Traefik still uses old rules after a configuration change, run `docker compose restart traefik`.

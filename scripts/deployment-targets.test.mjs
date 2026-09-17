@@ -51,6 +51,7 @@ describe("deployment targets", () => {
       mode: "dev",
       affectedPackages: ["@lootlog/api", "@lootlog/game-client"],
     });
+
     expect(plan.targets.map(({ id }) => id)).toEqual(["api", "game-client"]);
   });
 
@@ -68,6 +69,7 @@ describe("deployment targets", () => {
         affectedPackages: [],
         changedFiles: [changedFile],
       });
+
       expect(plan.targets.map(({ id }) => id)).toEqual(expectedTargetIds);
     }
   });
@@ -83,6 +85,7 @@ describe("deployment targets", () => {
       ],
       changedFiles: ["apps/api/src/main.ts"],
     });
+
     expect(sourcePlan.dockerTargets).toEqual([]);
     expect(sourcePlan.integrationPackages).toEqual([
       "@lootlog/activity",
@@ -95,6 +98,7 @@ describe("deployment targets", () => {
       affectedPackages: ["@lootlog/api"],
       changedFiles: ["apps/api/package.json"],
     });
+
     expect(manifestPlan.dockerTargets.map(({ id }) => id)).toEqual(["api"]);
 
     const rootPlan = await createDeploymentPlan({
@@ -102,6 +106,7 @@ describe("deployment targets", () => {
       affectedPackages: [],
       changedFiles: [".github/deployment-targets.json"],
     });
+
     expect(rootPlan.dockerTargets).toHaveLength(8);
   });
 
@@ -111,6 +116,7 @@ describe("deployment targets", () => {
       affectedPackages: [],
       changedFiles: ["docker/backend.Dockerfile"],
     });
+
     expect(backendPlan.dockerTargets.map(({ id }) => id)).toEqual([
       "activity",
       "api",
@@ -126,6 +132,7 @@ describe("deployment targets", () => {
       affectedPackages: [],
       changedFiles: ["docker/developer.Dockerfile"],
     });
+
     expect(developerPlan.dockerTargets.map(({ id }) => id)).toEqual([
       "developer",
     ]);
@@ -135,6 +142,7 @@ describe("deployment targets", () => {
       affectedPackages: [],
       changedFiles: ["patches/drizzle-orm.patch"],
     });
+
     expect(patchPlan.dockerTargets).toHaveLength(8);
   });
 
@@ -154,6 +162,7 @@ describe("deployment targets", () => {
       affectedPackages: [],
       changedFiles: ["docker/backend.Dockerfile"],
     });
+
     expect(backendPlan.targets.map(({ id }) => id)).toEqual([
       "activity",
       "api",
@@ -169,6 +178,7 @@ describe("deployment targets", () => {
       affectedPackages: [],
       changedFiles: ["docker/developer.Dockerfile"],
     });
+
     expect(developerPlan.targets.map(({ id }) => id)).toEqual(["developer"]);
   });
 
@@ -202,6 +212,7 @@ describe("deployment targets", () => {
       target: "auth",
       authMigrationConfirmed: true,
     });
+
     expect(plan.targets.map(({ id }) => id)).toEqual(["auth"]);
   });
 
@@ -228,6 +239,7 @@ describe("deployment targets", () => {
       reference: "registry/activity:sha-old",
       sourceSha: "old",
     };
+
     const plan = await createDeploymentPlan({
       mode: "rollback",
       currentState: {
@@ -306,13 +318,19 @@ describe("deployment targets", () => {
   });
 });
 
-test("all HTTP contract producers trigger generated-client verification", async () => {
-  for (const producer of ["@lootlog/gateway", "@lootlog/discord-bot"]) {
+test("HTTP contract and public SDK changes trigger generated-client verification", async () => {
+  for (const producer of [
+    "@lootlog/gateway",
+    "@lootlog/discord-bot",
+    "@lootlog/sdk",
+    "@lootlog/game-client-api",
+  ]) {
     const plan = await createDeploymentPlan({
       mode: "ci",
       affectedPackages: [producer],
       changedFiles: [],
     });
+
     expect(plan.runClientCheck).toBe(true);
   }
 });

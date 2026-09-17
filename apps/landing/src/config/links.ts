@@ -1,4 +1,5 @@
 export const links = {
+  developer: "https://developer.lootlog.pl",
   docs: "https://docs.lootlog.pl",
   github: "https://github.com/lootlog/monorepo",
   discord: "https://discord.gg/mPcczaeYMu",
