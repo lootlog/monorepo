@@ -18,8 +18,6 @@ mkdirSync(`${root}/openapi`, { recursive: true });
 
 mkdirSync(`${root}/src/generated`, { recursive: true });
 
-const before = new Map<string, string>();
-
 for (const [service, app] of Object.entries({
   main: "api",
   activity: "activity",
@@ -34,11 +32,6 @@ for (const [service, app] of Object.entries({
   )
     throw new Error("Unknown service");
   const specPath = `${root}/openapi/${service}.json`;
-  const generatedPath = `${root}/src/generated/${service}.ts`;
-
-  if (check)
-    for (const path of [specPath, generatedPath])
-      before.set(path, readFileSync(path, "utf8"));
   writeFileSync(
     specPath,
     `${JSON.stringify(projectOpenApi(decodeDocument(parse(readFileSync(`${root}/../../apps/${app}/openapi.yaml`, "utf8"))), service), null, 2)}\n`,
@@ -80,14 +73,22 @@ if (formatting.status !== 0)
   throw new Error("Public OpenAPI formatting failed");
 
 if (check) {
-  const drift = [...before].filter(
-    ([path, previous]) => readFileSync(path, "utf8") !== previous,
+  const status = Bun.spawnSync(
+    [
+      "git",
+      "status",
+      "--porcelain=v1",
+      "--untracked-files=all",
+      "--",
+      "packages/sdk/openapi",
+      "packages/sdk/src/generated",
+    ],
+    { cwd: resolve(root, "../.."), stdout: "pipe", stderr: "inherit" },
   );
 
-  for (const [path, previous] of before) writeFileSync(path, previous);
+  if (status.exitCode !== 0)
+    throw new Error("Unable to inspect generated public SDK files");
+  const drift = status.stdout.toString().trim();
 
-  if (drift.length)
-    throw new Error(
-      `Public SDK drift: ${drift.map(([path]) => path).join(", ")}`,
-    );
+  if (drift) throw new Error(`Public SDK drift:\n${drift}`);
 }

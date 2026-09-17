@@ -1,9 +1,19 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const sdk = resolve(import.meta.dirname, "..");
+
+const args = process.argv.slice(2);
+
+if (
+  args.length !== 0 &&
+  (args.length !== 2 || args[0] !== "--pack-destination" || !args[1])
+)
+  throw new Error("Usage: check-package.ts [--pack-destination <directory>]");
+
+const packDestination = args[1] ? resolve(args[1]) : undefined;
 
 const consumer = mkdtempSync(resolve(tmpdir(), "lootlog-sdk-consumer-"));
 
@@ -14,10 +24,17 @@ function run(command: string, args: string[], cwd: string) {
     throw new Error(`Packed consumer check failed: ${command}`);
 }
 
+const archives: Record<string, string> = {};
+
 for (const name of ["sdk", "game-client-api"]) {
   const cwd = resolve(sdk, "..", name);
   run(process.execPath, ["run", "build"], cwd);
   run("npm", ["pack", "--ignore-scripts", "--pack-destination", consumer], cwd);
+  const matches = [...new Bun.Glob(`lootlog-${name}-*.tgz`).scanSync(consumer)];
+
+  if (matches.length !== 1 || !matches[0])
+    throw new Error(`Expected one packed archive for @lootlog/${name}`);
+  archives[`@lootlog/${name}`] = `file:${matches[0]}`;
 }
 
 writeFileSync(
@@ -25,8 +42,7 @@ writeFileSync(
   JSON.stringify({
     type: "module",
     dependencies: {
-      "@lootlog/sdk": "file:lootlog-sdk-0.1.0.tgz",
-      "@lootlog/game-client-api": "file:lootlog-game-client-api-0.1.0.tgz",
+      ...archives,
       typescript: "7.0.2",
       "@types/node": "^26.4.0",
     },
@@ -83,5 +99,17 @@ run(
   ],
   consumer,
 );
+
+if (packDestination) {
+  mkdirSync(packDestination, { recursive: true });
+
+  for (const archive of Object.values(archives)) {
+    const filename = archive.slice("file:".length);
+    await Bun.write(
+      resolve(packDestination, filename),
+      Bun.file(resolve(consumer, filename)),
+    );
+  }
+}
 
 process.stdout.write(`Packed consumer verified: ${consumer}\n`);

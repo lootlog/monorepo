@@ -120,6 +120,9 @@ jobs:
         with:
           turbo-cache-scope: ci-generated-client
       - run: bun run client:check
+      - name: Verify public package installation
+        working-directory: packages/sdk
+        run: bun run test:package
 
   docker:
     name: Docker ${{ matrix.id }}

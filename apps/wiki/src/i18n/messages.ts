@@ -18,26 +18,24 @@ const messages = {
   },
   footer: {
     copyright: "Lootlog",
-    builtWith: "Wiki na TanStack Start i Cloudflare Workers",
+    builtWith: "Przedmioty, NPC i gracze z Margonem",
   },
   home: {
     eyebrow: "Wiki i wyszukiwarka",
-    title: "Jedna aplikacja do szukania wszystkiego, co ważne w grze.",
+    title: "Znajdź przedmioty, NPC i graczy z Margonem.",
     description:
-      "Start oparty o TanStack Start z publicznymi route'ami pod SEO i klientowym search flow pod ciężkie filtry oraz facety.",
+      "Wyszukuj po nazwie i zawężaj wyniki filtrami. Udostępniaj linki do wyników innym graczom.",
     itemsTitle: "Przedmioty",
     itemsDescription:
-      "Przeszukuj itemy po nazwie, statystykach i filtrach Meilisearch.",
+      "Szukaj przedmiotów po nazwie, poziomie, rzadkości i profesji.",
     npcsTitle: "NPC i potwory",
-    npcsDescription:
-      "Znajduj NPC-ów po nazwie, typie i świecie bez przeładowywania strony.",
+    npcsDescription: "Szukaj NPC-ów i potworów po nazwie i świecie.",
     playersTitle: "Gracze",
-    playersDescription:
-      "Szukaj postaci po nazwie i świecie w osobnym, lekkim indeksie.",
-    statusEyebrow: "Aktualny setup",
-    statusTitle: "V1 stawia fundament pod publiczną wiki.",
+    playersDescription: "Szukaj postaci po nazwie i świecie.",
+    statusEyebrow: "Udostępnianie wyników",
+    statusTitle: "Podziel się tym, co znajdziesz.",
     statusDescription:
-      "Nowa appka działa na TanStack Start, ma route'y pod publiczne sekcje i jest gotowa do rozwijania stron encji oraz bardziej zaawansowanych kart wiedzy.",
+      "Po wyszukaniu skopiuj adres strony i wyślij go innym graczom. Link zachowuje parametry wyszukiwania.",
     ctaItems: "Otwórz wyszukiwarkę przedmiotów",
     ctaNpcs: "Otwórz wyszukiwarkę NPC",
     ctaPlayers: "Otwórz wyszukiwarkę graczy",
@@ -53,7 +51,7 @@ const messages = {
     reset: "Wyczyść",
     loading: "Ładowanie wyników...",
     idle: "Wpisz frazę i uruchom wyszukiwanie.",
-    error: "Nie udało się pobrać wyników z serwisu search.",
+    error: "Nie udało się pobrać wyników. Spróbuj ponownie.",
     noResults: "Brak wyników dla podanych parametrów.",
     results: "Wyniki: {{count}}",
     limitBadge: "Limit: {{count}}",
@@ -61,7 +59,7 @@ const messages = {
     iconAlt: "Ikona {{name}}",
     missingValue: "brak",
     apiHint:
-      "Wyniki pobierane są klientowo z istniejącego `apps/search`, więc URL możesz bezpośrednio udostępnić innym graczom.",
+      "Skopiuj adres strony, aby udostępnić parametry wyszukiwania innym graczom.",
   },
   common: {
     levelShort: "{{level}} lvl",
@@ -149,7 +147,7 @@ const messages = {
     eyebrow: "Przedmioty",
     title: "Wyszukiwarka przedmiotów",
     description:
-      "Na starcie trzymamy search i filtry po kliencie, ale sama strona i routing są już gotowe pod SSR oraz publiczne linkowanie.",
+      "Znajdź przedmiot po nazwie. Zawęź wyniki według poziomu, rzadkości, typu i profesji.",
     statsLabel: "Statystyki",
     rarityLabel: "Rzadkość",
     typeLabel: "Typ",
@@ -160,7 +158,7 @@ const messages = {
     eyebrow: "NPC i potwory",
     title: "Wyszukiwarka NPC",
     description:
-      "Sekcja korzysta z tego samego publicznego backendu search i jest gotowa pod przyszłe strony encji.",
+      "Znajdź NPC-a lub potwora po nazwie i sprawdź jego typ oraz poziom.",
     typeLabel: "Typ",
     levelLabel: "Poziom",
     worldLabel: "Świat",
@@ -169,7 +167,7 @@ const messages = {
     eyebrow: "Gracze",
     title: "Wyszukiwarka graczy",
     description:
-      "Lekkie wyszukiwanie po nazwie i świecie pod publiczne linki oraz dalszą rozbudowę profilowych podstron.",
+      "Znajdź postać po nazwie i świecie. Sprawdź jej poziom oraz profesję.",
     professionLabel: "Profesja",
     worldLabel: "Świat",
     characterIdLabel: "ID postaci",

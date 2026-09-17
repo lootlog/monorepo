@@ -42,7 +42,7 @@ jobs:
             --slurpfile current "$RUNNER_TEMP/current-production.json" \
             --slurpfile previous "$RUNNER_TEMP/previous-production.json" \
             '{mode: "rollback", currentState: $current[0], previousState: $previous[0]}')"
-          bun scripts/deployment-targets.mjs "$input" | jq '.targets' > "$RUNNER_TEMP/rollback-targets.json"
+          bun "$GITHUB_WORKSPACE/scripts/deployment-targets.mjs" "$input" | jq '.targets' > "$RUNNER_TEMP/rollback-targets.json"
 
       - name: Restore Cloudflare deployments
         env:

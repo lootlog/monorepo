@@ -1,3 +1,4 @@
+/* oxlint-disable anti-slop/no-runtime-typeof -- This dependency-free CI entry point validates raw deployment catalog, planner input and persisted production-state JSON before dependencies are installed. Preserve its input acceptance and validation errors. */
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -12,6 +13,8 @@ const clientProducers = new Set([
   "@lootlog/auth",
   "@lootlog/battlelog",
   "@lootlog/client",
+  "@lootlog/sdk",
+  "@lootlog/game-client-api",
   "@lootlog/gateway",
   "@lootlog/discord-bot",
   "@lootlog/search",
@@ -54,6 +57,7 @@ function validateDockerTarget(target) {
       `Docker target ${target.id} needs dockerfile, image and image metadata`,
     );
   }
+
   if (
     target.installFonts !== undefined &&
     typeof target.installFonts !== "boolean"
@@ -68,11 +72,14 @@ function validateCloudflareTarget(target) {
       `Cloudflare target ${target.id} needs artifactPath and production.project`,
     );
   }
+
   if (target.kind === "worker" && !target.configPath) {
     throw new Error(`Worker target ${target.id} needs configPath`);
   }
+
   const requiredEnvironmentVariables =
     target.production?.requiredEnvironmentVariables ?? [];
+
   if (
     !Array.isArray(requiredEnvironmentVariables) ||
     requiredEnvironmentVariables.some(
@@ -96,14 +103,18 @@ export async function loadDeploymentTargets() {
         "Every deployment target needs id, package, directory and kind",
       );
     }
+
     if (ids.has(target.id))
       throw new Error(`Duplicate target id: ${target.id}`);
+
     if (packages.has(target.package)) {
       throw new Error(`Duplicate target package: ${target.package}`);
     }
+
     if (!new Set(["docker", "pages", "worker"]).has(target.kind)) {
       throw new Error(`Unsupported target kind: ${target.kind}`);
     }
+
     if (target.kind === "docker") validateDockerTarget(target);
     else validateCloudflareTarget(target);
     ids.add(target.id);
@@ -123,9 +134,11 @@ function isDockerPackagingChange(target, changedFiles, affectedPackages) {
       file.startsWith(`${target.directory}/scripts/`) ||
       file.startsWith(`${target.directory}/tools/`),
   );
+
   if (targetInputChanged) return true;
 
   const workspaceManifestChanged = changedFiles.some(isWorkspaceManifest);
+
   return workspaceManifestChanged && affectedPackages.has(target.package);
 }
 
@@ -141,21 +154,26 @@ function validateProductionState(state, label, targetsById) {
 
   for (const [id, deployment] of Object.entries(state.targets)) {
     const target = targetsById.get(id);
+
     if (!target)
       throw new Error(`${label} state contains unknown target: ${id}`);
+
     if (deployment?.kind !== target.kind) {
       throw new Error(`${label} state has an invalid kind for target: ${id}`);
     }
+
     const validDocker =
       deployment.kind === "docker" &&
       typeof deployment.image === "string" &&
       typeof deployment.reference === "string";
+
     const validCloudflare =
       deployment.kind !== "docker" &&
       typeof deployment.project === "string" &&
       typeof deployment.deploymentId === "string" &&
       (deployment.kind !== "worker" ||
         typeof deployment.configPath === "string");
+
     if (!validDocker && !validCloudflare) {
       throw new Error(`${label} state is incomplete for target: ${id}`);
     }
@@ -171,9 +189,11 @@ function createRollbackPlan(input, targets) {
     ...Object.keys(input.currentState.targets),
     ...Object.keys(input.previousState.targets),
   ]);
+
   const rollbackTargets = targets
     .filter(({ id }) => {
       if (!changedTargets.has(id)) return false;
+
       return !isDeepStrictEqual(
         input.currentState.targets[id],
         input.previousState.targets[id],
@@ -188,9 +208,11 @@ function createRollbackPlan(input, targets) {
   if (rollbackTargets.length === 0) {
     throw new Error("The last production state change has nothing to restore");
   }
+
   const unrestorable = rollbackTargets.find(
     ({ previous }) => previous === null,
   );
+
   if (unrestorable) {
     throw new Error(
       `Previous production state does not contain target: ${unrestorable.id}`,
@@ -207,25 +229,32 @@ export async function createDeploymentPlan(input) {
 
   if (input.mode === "release") {
     const target = targets.find(({ id }) => id === input.target);
+
     if (input.target !== "all" && !target) {
       throw new Error(`Unknown deployment target: ${input.target}`);
     }
+
     const selectedTargets = input.target === "all" ? targets : [target];
+
     if (
       selectedTargets.some(({ id }) => id === "auth") &&
       input.authMigrationConfirmed !== true
     ) {
       throw new Error("Auth migration confirmation is required");
     }
+
     return { targets: selectedTargets };
   }
 
   const affectedPackages = new Set(input.affectedPackages ?? []);
+
   if (input.mode === "dev") {
     const changedFiles = input.changedFiles ?? [];
+
     const pipelineChanged = changedFiles.some((file) =>
       developmentPipelineInputs.has(file),
     );
+
     return {
       targets: targets.filter(
         (target) =>
@@ -244,7 +273,9 @@ export async function createDeploymentPlan(input) {
         (name) => typeof name === "string" && name.startsWith("@lootlog/"),
       )
       .sort();
+
     const changedFiles = input.changedFiles ?? [];
+
     return {
       packages,
       integrationPackages: packages.filter((name) =>
