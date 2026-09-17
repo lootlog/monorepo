@@ -26,21 +26,12 @@ secret. npm creates provenance for the public package from this public repositor
 See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) for setup
 and authentication requirements.
 
-If the package does not exist on npm yet, publish its first verified archive
-interactively, then configure the trusted publisher in the package settings:
+## First release
 
-```sh
-# From the repository root, on the release commit
-bun run client:check
-bunx turbo run lint typecheck test --filter=@lootlog/sdk --filter=@lootlog/game-client-api
-publication_dir="$(mktemp -d)"
-bun packages/sdk/scripts/check-package.ts --pack-destination "$publication_dir"
-npm login
-npm publish "$publication_dir"/lootlog-sdk-*.tgz --access public --ignore-scripts
-```
-
-Use `--tag next` for a prerelease. This bootstrap publishes a real version; do
-not rerun the workflow for that same version after configuring OIDC.
+`@lootlog/sdk@0.1.0` was published on 2026-09-17. The initial publication is
+complete; do not repeat it. Configure the trusted publisher above for subsequent
+releases. Once configured, GitHub Actions handles authentication, verification
+and publication; no local `npm login` or `npm publish` is needed.
 
 ## Release a version
 
