@@ -12,6 +12,7 @@ does not automate character movement, combat, or player decisions.
 
 - [Contributor guide](CONTRIBUTING.md)
 - [User documentation](https://docs.lootlog.pl)
+- [Developer portal](https://developer.lootlog.pl)
 
 ## Product surfaces
 
@@ -22,7 +23,7 @@ does not automate character movement, combat, or player decisions.
 - **Wiki:** public item, NPC, and player knowledge.
 - **Discord bot:** organization installation, membership synchronization,
   notifications, and commands.
-- **Developer:** future developer portal; not yet a supported public API product.
+- **Developer:** API key management, integration guides, and API reference.
 
 The core workflows are live awareness and communication, automatic durable
 records, and coordination with review.
@@ -35,7 +36,7 @@ apps/
 ├── api/                 Organization, loot, timer, chat, and coordination API
 ├── auth/                Discord authentication and session service
 ├── battlelog/           Battle ingestion, storage, and statistics
-├── developer/           Future developer portal
+├── developer/           Developer portal and integration documentation
 ├── discord-bot/         Discord integration
 ├── docs/                User documentation
 ├── game-client/         In-game React client and Margonem runtime bridge
@@ -50,13 +51,16 @@ packages/
 ├── battle-processor/    Battle normalization and processing
 ├── cli/                 Environment and maintenance commands
 ├── client/              Generated HTTP clients and realtime client
+├── database/            Shared database utilities
 ├── datetime/            Shared date and time utilities
 ├── domain/              Browser-safe domain logic
+├── game-client-api/     Public types for game-client integrations
 ├── instrumentation/     Observability setup
 ├── margonem/            Margonem domain types and helpers
 ├── messaging/           RabbitMQ transport
 ├── protocol/            Realtime and RabbitMQ wire contracts
 ├── schema/              Shared schemas and browser-safe types
+├── sdk/                 Public TypeScript SDK
 ├── typescript-config/   Shared TypeScript configuration
 └── ui/                  Shared UI components and styles
 ```
@@ -87,7 +91,7 @@ docker compose up -d
 bun run db:api:migrate:dev
 bun run db:activity:migrate:dev
 bun run db:auth:migrate:dev
-bun run db:battlelog:push
+bun run db:battlelog:migrate:deploy
 bun run dev
 ```
 
@@ -121,6 +125,10 @@ Additional workspace-specific commands are declared in each workspace's
 `package.json`.
 
 ## Releases and production
+
+The public SDK has a separate manual [Publish SDK](.github/workflows/publish-sdk.yml)
+workflow. See [SDK publication](packages/sdk/PUBLISHING.md) for npm setup,
+versioning and release steps.
 
 Merging a pull request deploys affected targets to development. Production is
 manual: choose a full commit SHA from `main` and one deployment target (or

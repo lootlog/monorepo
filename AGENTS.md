@@ -143,8 +143,9 @@ Margonem runtime
 The main code areas are:
 
 - `apps/game-client` and `apps/web` provide the primary product surfaces.
-  `apps/landing`, `apps/docs`, and `apps/wiki` provide public surfaces;
-  `apps/developer` is not yet a supported product.
+  `apps/landing`, `apps/docs`, and `apps/wiki` provide public surfaces.
+  `apps/developer` provides API key management, integration guides, and API
+  reference for developers.
 - `apps/api`, `apps/auth`, `apps/gateway`, `apps/battlelog`, `apps/activity`,
   `apps/search`, and `apps/discord-bot` own independently deployed backend
   responsibilities.
@@ -220,7 +221,8 @@ Before calling a change complete, account for every applicable item:
 - React Compiler owns memoization. Add `memo`, `useMemo`, or `useCallback` only
   for a measured integration constraint.
 - Keep one React component per file. Put all user-facing static text behind
-  i18n; Polish remains the only supported product language.
+  i18n; Polish is the supported player-facing product language. The developer
+  portal and integration documentation use English.
 - Treat `apps/web` as client-rendered and meet WCAG 2.2 AA, including keyboard
   use, visible focus, reduced motion, semantic names, and responsive core
   workflows.
@@ -310,8 +312,11 @@ Before calling a change complete, account for every applicable item:
   Do not mention Codex in commits or add `[codex]` to a pull request title.
 - Write code, API contracts, architecture documents, ADRs, agent instructions,
   pull request titles, and pull request descriptions in English. Write product
-  and user documentation in Polish.
+  and player-facing user documentation in Polish. Developer portal copy and
+  integration documentation use English.
 - Do not publish testimonials or unaudited product claims.
-- Pull requests carry no release metadata. Production promotions and rollbacks
-  reuse immutable image references and Cloudflare deployments; never rebuild a
-  revision during rollback.
+- Application pull requests carry no release metadata. Public SDK release pull
+  requests update its package version and developer contract changelog; npm
+  publication uses the separate Publish SDK workflow. Production promotions and
+  rollbacks reuse immutable image references and Cloudflare deployments; never
+  rebuild a revision during rollback.

@@ -34,8 +34,9 @@ For local userscript integrations use the installed `lootlogGameClientApi` and
 
 `bun run client:generate` projects the reviewed operation inventory and generates
 these functions from service OpenAPI documents. `bun run client:check` detects
-drift; `bun run build` builds portable ESM and bundled declarations. Publication
-is a separate explicit release action.
+drift; `bun run build` builds portable ESM and bundled declarations. Maintainers
+publish through the repository's **Publish SDK** workflow; see the
+[publication guide](https://github.com/lootlog/monorepo/blob/main/packages/sdk/PUBLISHING.md).
 
 The Organization loot count endpoint (`GET /guilds/{guildId}/loots/count`) and
 `lootsControllerCountLootsByGuildId` SDK function have been removed. Integrations

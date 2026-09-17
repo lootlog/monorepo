@@ -1,0 +1,72 @@
+name: Publish SDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Expected version already committed in packages/sdk/package.json
+        required: true
+        type: string
+      tag:
+        description: npm distribution tag
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+
+concurrency:
+  group: npm-sdk-publication
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Verify and publish @lootlog/sdk
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Validate package and version
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          DIST_TAG: ${{ inputs.tag }}
+        run: |
+          jq -e --arg version "$EXPECTED_VERSION" '
+            .name == "@lootlog/sdk" and .version == $version and
+            .private != true and .publishConfig.access == "public"
+          ' packages/sdk/package.json
+          if [[ "$DIST_TAG" == latest && "$EXPECTED_VERSION" == *-* ]]; then
+            echo "::error::Publish prerelease versions with the next tag"
+            exit 1
+          fi
+      - run: bun install --frozen-lockfile
+      - name: Verify generated contracts
+        run: bun run client:check
+      - name: Verify public packages
+        run: bunx turbo run lint typecheck test --filter=@lootlog/sdk --filter=@lootlog/game-client-api --force
+      - name: Verify packed consumer and retain archives
+        working-directory: packages/sdk
+        run: bun run test:package --pack-destination "$RUNNER_TEMP/sdk-package"
+      - name: Publish verified SDK archive
+        env:
+          DIST_TAG: ${{ inputs.tag }}
+        run: npm publish "$RUNNER_TEMP/sdk-package"/lootlog-sdk-*.tgz --access public --tag "$DIST_TAG" --ignore-scripts
