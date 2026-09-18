@@ -53,6 +53,7 @@ export function AbyssAnalyticsTab({
       <CombatProfileOverview
         data={combatProfile.data}
         isLoading={combatProfile.isLoading}
+        showRecord={false}
       />
 
       <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">

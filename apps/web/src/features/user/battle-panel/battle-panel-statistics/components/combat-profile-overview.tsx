@@ -3,11 +3,14 @@ import { formatDurationCompact } from "@/features/guild/events/utils/format-dura
 import { BattlePanelKpiCard } from "@/features/user/battle-panel/components/battle-panel-kpi-card";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
 import { Award, Crosshair, Hourglass, Sword, Trophy } from "lucide-react";
+import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 
 type CombatProfileOverviewProps = {
   data: CombatProfileResponseDtoOutput | undefined;
   isLoading: boolean;
+  /** The Abyss page already shows the season record above its tabs. */
+  showRecord?: boolean;
 };
 
 const numberFormatter = new Intl.NumberFormat("pl-PL", {
@@ -43,6 +46,7 @@ const EMPTY_SUMMARY: CombatProfileResponseDtoOutput["summary"] = {
 export function CombatProfileOverview({
   data,
   isLoading,
+  showRecord = true,
 }: CombatProfileOverviewProps) {
   const { t } = useTranslation();
   const summary = data?.summary ?? EMPTY_SUMMARY;
@@ -107,12 +111,25 @@ export function CombatProfileOverview({
     },
   ];
 
+  const visibleKpis = showRecord
+    ? kpis
+    : kpis.filter((kpi) => kpi.key !== "record");
+
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-      {kpis.map((kpi) => (
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-3",
+        showRecord ? "lg:grid-cols-5" : "lg:grid-cols-4",
+      )}
+    >
+      {visibleKpis.map((kpi) => (
         <BattlePanelKpiCard
-          // Five tiles in two columns would leave the last one orphaned.
-          className="last:col-span-2 lg:last:col-span-1"
+          // An odd number of tiles in two columns would leave the last one orphaned.
+          className={
+            visibleKpis.length % 2 === 1
+              ? "last:col-span-2 lg:last:col-span-1"
+              : undefined
+          }
           key={kpi.key}
           icon={kpi.icon}
           label={kpi.label}
