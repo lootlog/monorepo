@@ -1,5 +1,5 @@
 import { ChartArea } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { cn } from "cn";
 
@@ -8,6 +8,8 @@ type BattleStatsTableHeaderProps = {
   actions?: ReactNode;
   compact?: boolean;
   leading?: ReactNode;
+  className?: string;
+  ref?: Ref<HTMLDivElement>;
 };
 
 export const BattleStatsTableHeader = ({
@@ -15,8 +17,10 @@ export const BattleStatsTableHeader = ({
   actions,
   compact,
   leading,
+  className,
+  ref,
 }: BattleStatsTableHeaderProps) => (
-  <div className="min-w-0 shrink-0">
+  <div ref={ref} className={cn("min-w-0 shrink-0", className)}>
     <SectionCardHeader
       title={title}
       icon={ChartArea}

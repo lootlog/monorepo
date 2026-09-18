@@ -142,7 +142,7 @@ export const HeadToHeadFilterToolbar = ({
               </div>
             </div>
             {showPhFilter && (
-              <div className="flex items-center justify-between rounded-md border border-border/70 bg-background p-3">
+              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-background p-3">
                 <div className="flex items-center gap-2">
                   <Award className="size-4" aria-hidden="true" />
                   <Label htmlFor="h2h-toolbar-ph" className="cursor-pointer">
@@ -157,7 +157,7 @@ export const HeadToHeadFilterToolbar = ({
               </div>
             )}
             {showMatchmakingFilter && (
-              <div className="flex items-center justify-between rounded-md border border-border/70 bg-background p-3">
+              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-background p-3">
                 <div className="flex items-center gap-2">
                   <Swords className="size-4" aria-hidden="true" />
                   <Label

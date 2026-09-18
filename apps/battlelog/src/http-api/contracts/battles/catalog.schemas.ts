@@ -29,6 +29,8 @@ export const BattleCharactersResponseDto_Output = Schema.Struct({
       name: Schema.String,
       world: Schema.String,
       icon: Schema.String,
+      lvl: Schema.NullOr(FiniteNumber),
+      prof: Schema.NullOr(Schema.String),
     }),
   ),
 }).annotate({ identifier: "BattleCharactersResponseDto_Output" });

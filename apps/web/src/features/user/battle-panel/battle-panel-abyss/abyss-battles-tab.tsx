@@ -9,6 +9,7 @@ type AbyssBattlesTabProps = {
   battlesResponse?: BattleListResponse;
   cursor?: string;
   isLoading: boolean;
+  isRefreshing: boolean;
   onCursorChange: (cursor: string | undefined) => void;
   pageIndex: number;
   pageSize: number;
@@ -19,6 +20,7 @@ export function AbyssBattlesTab({
   battlesResponse,
   cursor,
   isLoading,
+  isRefreshing,
   onCursorChange,
   pageIndex,
   pageSize,
@@ -27,31 +29,27 @@ export function AbyssBattlesTab({
   const { t } = useTranslation();
 
   return (
-    <section className="flex min-h-[640px] min-w-0 flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-semibold">
-          {t("battlePanel.abyss.battlesTitle")}
-        </h3>
-        <p className="text-xs text-muted-foreground">
-          {t("battlePanel.abyss.battlesSubtitle")}
-        </p>
-      </div>
-      <div className="min-h-0 flex-1">
-        <BattlesList
-          battlesResponse={battlesResponse}
-          clearFiltersLabel={t("battlePanel.filters.clear")}
-          params={{
-            ...params,
-            cursor,
-          }}
-          onCursorChange={onCursorChange}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          showPagination
-          isLoading={isLoading}
-          enableScrollToTop
-        />
-      </div>
+    // From md up the list fills the space left on the page and scrolls inside
+    // its card, so the table header and pagination stay in view.
+    <section
+      aria-label={t("battlePanel.abyss.tabs.battles")}
+      className="flex min-w-0 flex-col md:min-h-0 md:flex-1"
+    >
+      <BattlesList
+        battlesResponse={battlesResponse}
+        clearFiltersLabel={t("battlePanel.filters.clear")}
+        params={{
+          ...params,
+          cursor,
+        }}
+        onCursorChange={onCursorChange}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        showPagination
+        isLoading={isLoading}
+        isRefreshing={isRefreshing}
+        enableScrollToTop
+      />
     </section>
   );
 }

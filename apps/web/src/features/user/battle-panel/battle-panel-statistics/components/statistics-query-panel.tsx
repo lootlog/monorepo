@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -10,16 +11,18 @@ type StatisticsQueryPanelProps = {
     refetch: () => void;
   };
   children?: ReactNode;
+  className?: string;
 };
 
 export function StatisticsQueryPanel({
   query,
   children,
+  className,
 }: StatisticsQueryPanelProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="min-w-0 space-y-2">
+    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
       {query.isError && (
         <div
           role="alert"

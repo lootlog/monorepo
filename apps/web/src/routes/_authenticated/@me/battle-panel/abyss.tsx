@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AbyssHub } from "@/features/user/battle-panel/battle-panel-abyss/abyss-hub";
-import { BattlePanelStatisticsSkeleton } from "@/features/user/battle-panel/battle-panel-statistics/battle-panel-statistics-skeleton";
+import { AbyssHubSkeleton } from "@/features/user/battle-panel/battle-panel-abyss/abyss-hub-skeleton";
 import { ensureBattlePanelCharacterId } from "@/features/user/battle-panel/battle-panel-route-loader";
 import {
   battlePanelAbyssSearchSchema,
@@ -114,5 +114,5 @@ export const Route = createFileRoute("/_authenticated/@me/battle-panel/abyss")({
       return null;
     }),
   component: AbyssHub,
-  pendingComponent: BattlePanelStatisticsSkeleton,
+  pendingComponent: AbyssHubSkeleton,
 });

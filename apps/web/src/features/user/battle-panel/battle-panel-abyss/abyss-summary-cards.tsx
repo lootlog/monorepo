@@ -1,110 +1,95 @@
-import type { TOptions } from "i18next";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { BattlePanelKpiCard } from "@/features/user/battle-panel/components/battle-panel-kpi-card";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { BarChart3, Crown, Sigma, Sparkles, Swords } from "lucide-react";
+import { Crown, Percent, Sparkles, Swords, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  formatAbyssNumber,
-  formatAbyssSignedNumber,
-  getAbyssSeasonRangeLabel,
-} from "./abyss-formatters";
+import { formatAbyssNumber, formatAbyssSignedNumber } from "./abyss-formatters";
 
 type AbyssSummaryCardsProps = {
+  isLoading?: boolean;
   season?: AbyssSeason;
 };
 
-type Translate = (key: string, options?: TOptions) => string;
+const getOptionalAbyssMetric = (value: number | null | undefined) =>
+  value === null || value === undefined ? "–" : formatAbyssNumber(value);
 
-const getSeasonRecord = (season: AbyssSeason | undefined, t: Translate) => {
-  if (!season) {
-    return `0${t("battlePanel.statistics.columns.w")} / 0${t(
-      "battlePanel.statistics.columns.l",
-    )}`;
-  }
-
-  return `${season.wins}${t("battlePanel.statistics.columns.w")} / ${
-    season.losses
-  }${t("battlePanel.statistics.columns.l")}`;
-};
-
-const getOptionalAbyssMetric = (value: number | null | undefined) => {
-  if (value === null || value === undefined) return "-";
-
-  return formatAbyssNumber(value);
-};
-
-const getPointsSubvalue = (points: number | null | undefined, t: Translate) => {
-  if (points === null || points === undefined) {
-    return t("battlePanel.abyss.pointsUnavailable");
-  }
-
-  return t("battlePanel.abyss.stats.points", {
-    value: formatAbyssNumber(points),
-  });
-};
-
-export function AbyssSummaryCards({ season }: AbyssSummaryCardsProps) {
+export function AbyssSummaryCards({
+  isLoading,
+  season,
+}: AbyssSummaryCardsProps) {
   const { t } = useTranslation();
-  const recordValue = getSeasonRecord(season, t);
 
   const cards = [
     {
       key: "record",
       icon: Swords,
       label: t("battlePanel.abyss.cards.record"),
-      value: recordValue,
-      subvalue: t("battlePanel.abyss.stats.totalBattles", {
+      value: (
+        <>
+          <span className={BATTLE_TEXT_COLORS.result.won}>
+            {season?.wins ?? 0}
+          </span>
+          <span className="px-1.5 text-muted-foreground">–</span>
+          <span className={BATTLE_TEXT_COLORS.result.lost}>
+            {season?.losses ?? 0}
+          </span>
+        </>
+      ),
+      detail: t("battlePanel.abyss.stats.totalBattles", {
         count: season?.totalBattles ?? 0,
       }),
     },
     {
       key: "winRate",
-      icon: BarChart3,
+      icon: Percent,
       label: t("battlePanel.abyss.cards.winRate"),
       value: `${formatAbyssNumber(season?.winRate ?? 0)}%`,
-      subvalue: season
-        ? getAbyssSeasonRangeLabel(season)
-        : t("battlePanel.abyss.noSeason"),
+      detail: t("battlePanel.abyss.details.winRate"),
     },
     {
       key: "rating",
-      icon: Sigma,
+      icon: TrendingUp,
       label: t("battlePanel.abyss.cards.rating"),
       value: formatAbyssSignedNumber(season?.totalRatingDelta ?? 0),
-      subvalue: t("battlePanel.abyss.stats.ratingDelta", {
-        value: formatAbyssSignedNumber(season?.totalRatingDelta ?? 0),
-      }),
+      valueClassName:
+        (season?.totalRatingDelta ?? 0) >= 0
+          ? BATTLE_TEXT_COLORS.result.won
+          : BATTLE_TEXT_COLORS.result.lost,
+      detail: t("battlePanel.abyss.details.rating"),
     },
     {
       key: "peakRating",
       icon: Crown,
       label: t("battlePanel.abyss.cards.peakRating"),
       value: getOptionalAbyssMetric(season?.peakRating),
-      subvalue: t("battlePanel.abyss.season"),
+      detail: t("battlePanel.abyss.details.peakRating"),
     },
     {
       key: "points",
       icon: Sparkles,
       label: t("battlePanel.abyss.cards.points"),
       value: getOptionalAbyssMetric(season?.totalPointsGained),
-      subvalue: getPointsSubvalue(season?.totalPointsGained, t),
+      detail:
+        season?.totalPointsGained === null
+          ? t("battlePanel.abyss.pointsUnavailable")
+          : t("battlePanel.abyss.details.points"),
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       {cards.map((card) => (
-        <SectionCard key={card.key}>
-          <SectionCardHeader icon={card.icon} title={card.label} />
-          <SectionCardContent className="space-y-2">
-            <div className="text-lg font-semibold leading-tight">
-              {card.value}
-            </div>
-            <div className="text-xs text-muted-foreground">{card.subvalue}</div>
-          </SectionCardContent>
-        </SectionCard>
+        <BattlePanelKpiCard
+          // Five tiles in two columns would leave the last one orphaned.
+          className="last:col-span-2 lg:last:col-span-1"
+          key={card.key}
+          icon={card.icon}
+          label={card.label}
+          value={card.value}
+          valueClassName={card.valueClassName}
+          detail={card.detail}
+          isLoading={isLoading || !season}
+        />
       ))}
     </div>
   );

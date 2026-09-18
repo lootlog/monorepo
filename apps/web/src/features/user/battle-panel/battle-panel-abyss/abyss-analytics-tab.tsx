@@ -49,13 +49,14 @@ export function AbyssAnalyticsTab({
   search,
 }: AbyssAnalyticsTabProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-3">
       <CombatProfileOverview
         data={combatProfile.data}
         isLoading={combatProfile.isLoading}
+        showRecord={false}
       />
 
-      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
         <CurrentStreakCard
           data={
             streak.data ?? {
@@ -76,13 +77,15 @@ export function AbyssAnalyticsTab({
           }
           isLoading={duration.isLoading}
         />
-        <RatingGrowthChart
-          data={ratingGrowth.data ?? []}
-          isLoading={ratingGrowth.isLoading}
-        />
+        <div className="flex min-w-0 lg:col-span-2">
+          <RatingGrowthChart
+            data={ratingGrowth.data ?? []}
+            isLoading={ratingGrowth.isLoading}
+          />
+        </div>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
         <ProfessionWinRateChart
           data={profession.data ?? []}
           isLoading={profession.isLoading}

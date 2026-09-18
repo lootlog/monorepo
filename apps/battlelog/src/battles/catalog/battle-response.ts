@@ -180,6 +180,8 @@ const BattleCharacterResponseSchema = Schema.Struct({
   name: Schema.String,
   world: Schema.String,
   icon: Schema.String,
+  lvl: Schema.NullOr(Schema.Number),
+  prof: Schema.NullOr(Schema.String),
 });
 
 const BattleCharactersResponseSchema = Schema.Struct({

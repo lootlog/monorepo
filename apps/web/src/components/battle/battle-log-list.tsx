@@ -8,7 +8,6 @@ import {
   type RefObject,
 } from "react";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
-import { useMediaQuery } from "usehooks-ts";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
 import type {
@@ -25,8 +24,9 @@ export type BattleLogListProps = {
   userTeam?: number;
   selectedTurn?: number | null;
   scrollToSelectedTurnRequestId?: number;
+  /** The scroller the log lives in; the log has no scroll container of its own. */
   scrollViewportRef: RefObject<HTMLDivElement | null>;
-  outerScrollViewportRef: RefObject<HTMLDivElement | null>;
+  /** Content pinned to the top of that scroller, which covers the first visible rows. */
   stickyContentRef?: RefObject<HTMLDivElement | null>;
   searchMatchedTurns?: number[];
   activeSearchTurn?: number | null;
@@ -44,7 +44,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   selectedTurn,
   scrollToSelectedTurnRequestId = 0,
   scrollViewportRef,
-  outerScrollViewportRef,
   stickyContentRef,
   searchMatchedTurns = [],
   activeSearchTurn,
@@ -53,33 +52,17 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   onTurnSelect,
   onVisibleTurnsChange,
 }) => {
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const listRef = useRef<HTMLUListElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const [resizedTurn, setResizedTurn] = useState<number | null>(null);
-  const previousDesktop = useRef(isDesktop);
-
-  const rememberSelectedTurn = useEffectEvent(() =>
-    // eslint-disable-next-line react-doctor/no-derived-state -- This is a snapshot of the selected turn when the viewport changes, retained until its imperative scroll request completes.
-    setResizedTurn(selectedTurn ?? null),
-  );
-
-  // eslint-disable-next-line react-doctor/no-derived-state-effect -- A media-query change switches physical scroll containers and requests re-alignment of the previously selected turn.
-  useEffect(() => {
-    if (previousDesktop.current !== isDesktop) rememberSelectedTurn();
-    previousDesktop.current = isDesktop;
-  }, [isDesktop]);
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
   );
 
   useEffect(() => {
-    setScrollElement(
-      isDesktop ? scrollViewportRef.current : outerScrollViewportRef.current,
-    );
-  }, [isDesktop, scrollViewportRef, outerScrollViewportRef]);
+    setScrollElement(scrollViewportRef.current);
+  }, [scrollViewportRef]);
 
   const virtualizer = useVirtualizer({
     count: events?.length ?? 0,
@@ -125,15 +108,15 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     // The wrapping detail content also changes when a timeline or overview loads.
     if (list.parentElement) observer.observe(list.parentElement);
 
-    if (outerScrollViewportRef.current?.firstElementChild)
-      observer.observe(outerScrollViewportRef.current.firstElementChild);
+    if (viewport.firstElementChild)
+      observer.observe(viewport.firstElementChild);
     window.addEventListener("resize", updateMargin);
 
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", updateMargin);
     };
-  }, [scrollElement, outerScrollViewportRef]);
+  }, [scrollElement]);
 
   const warriorsMap = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
@@ -151,23 +134,21 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   useEffect(() => {
     // eslint-disable-next-line react-doctor/no-prop-callback-in-effect -- Reports completed virtualizer layout so the owner can synchronize its DOM scroll overlay.
     notifyVisibleTurns();
-  }, [visibleRangeKey, isDesktop]);
+  }, [visibleRangeKey]);
 
-  let requestedTurn: number | null | undefined = resizedTurn;
+  let requestedTurn: number | null | undefined = null;
 
   if (activeSearchTurn !== null && activeSearchTurn !== undefined)
     requestedTurn = activeSearchTurn;
   else if (scrollToSelectedTurnRequestId > 0) requestedTurn = selectedTurn;
 
-  const notifyScrollComplete = useEffectEvent((turn: number) => {
-    setResizedTurn(null);
-    onSelectedTurnScrollComplete?.(turn);
-  });
+  const notifyScrollComplete = useEffectEvent((turn: number) =>
+    onSelectedTurnScrollComplete?.(turn),
+  );
 
-  const notifyScrollCancel = useEffectEvent((turn: number) => {
-    setResizedTurn(null);
-    onSelectedTurnScrollCancel?.(turn);
-  });
+  const notifyScrollCancel = useEffectEvent((turn: number) =>
+    onSelectedTurnScrollCancel?.(turn),
+  );
 
   useEffect(() => {
     if (requestedTurn === null || requestedTurn === undefined) return;
@@ -201,12 +182,12 @@ export const BattleLogList: FC<BattleLogListProps> = ({
         const viewportRect = viewport.getBoundingClientRect();
         const stickyRect = stickyContentRef?.current?.getBoundingClientRect();
 
-        const stickyBottom =
-          isDesktop &&
+        // Content pinned over the top of the scroller hides rows, so align below it.
+        const visibleTop =
           stickyRect &&
           stickyRect.bottom > viewportRect.top &&
           stickyRect.top < viewportRect.bottom
-            ? stickyRect.bottom
+            ? Math.max(viewportRect.top, stickyRect.bottom)
             : viewportRect.top;
 
         const target = Math.max(
@@ -215,7 +196,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
             viewport.scrollHeight - viewport.clientHeight,
             viewport.scrollTop +
               row.getBoundingClientRect().top -
-              Math.max(viewportRect.top, stickyBottom) -
+              visibleTop -
               BATTLE_LOG_SCROLL_OFFSET_PX,
           ),
         );
@@ -264,7 +245,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   }, [
     requestedTurn,
     scrollToSelectedTurnRequestId,
-    isDesktop,
     scrollElement,
     scrollMargin,
     events?.length,

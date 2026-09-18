@@ -1,9 +1,11 @@
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { getPaginationDisplayRange } from "./battle-panel-filter-state";
 
 type BattlePanelPaginationFooterProps = {
   hasNext: boolean;
   hasPrev: boolean;
+  isLoading?: boolean;
   label: (range: { from: number; to: number; total: number }) => string;
   onNextPage: () => void;
   onPreviousPage: () => void;
@@ -16,6 +18,7 @@ type BattlePanelPaginationFooterProps = {
 export const BattlePanelPaginationFooter = ({
   hasNext,
   hasPrev,
+  isLoading = false,
   label,
   onNextPage,
   onPreviousPage,
@@ -33,7 +36,13 @@ export const BattlePanelPaginationFooter = ({
 
   return (
     <TablePaginationFooter
-      totalLabel={label({ from, to, total: totalCount })}
+      totalLabel={
+        isLoading ? (
+          <Skeleton className="h-4 w-36" />
+        ) : (
+          label({ from, to, total: totalCount })
+        )
+      }
       hasPrev={hasPrev}
       hasNext={hasNext}
       onPreviousPage={onPreviousPage}

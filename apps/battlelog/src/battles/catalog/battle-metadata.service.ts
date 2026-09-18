@@ -13,6 +13,8 @@ const UserCharactersResponseSchema = Schema.Struct({
       name: Schema.String,
       world: Schema.String,
       icon: Schema.String,
+      lvl: Schema.NullOr(Schema.Number),
+      prof: Schema.NullOr(Schema.String),
     }),
   ),
 });
@@ -50,38 +52,80 @@ export const makeBattleMetadata = (
   const getUserWorldsCacheKey = (userId: string) =>
     `battle-worlds:${userId}:list`;
 
-  const getUserCharactersUncached = (userId: string) =>
-    drizzle.query.userCharacters
-      .findMany({
-        where: { userId },
-        orderBy: { lastSeenAt: "desc" },
-        columns: {
-          characterId: true,
-          name: true,
-          world: true,
-          icon: true,
-        },
+  // Level and profession are not stored per character; they come from the
+  // character's own warrior in its most recent battle.
+  const getLatestCharacterWarriors = (userId: string) =>
+    drizzle
+      .selectDistinctOn([battles.characterId, battles.world], {
+        characterId: battles.characterId,
+        world: battles.world,
+        lvl: battleWarriors.lvl,
+        prof: battleWarriors.prof,
       })
-      .pipe(
-        Effect.mapError((error) => {
-          logger.error("Failed to retrieve user characters:", error);
-
-          return new Error(
-            `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
-          );
-        }),
-        Effect.map(
-          (results) =>
-            ({
-              characters: results.map((character) => ({
-                id: character.characterId,
-                name: character.name,
-                world: character.world,
-                icon: character.icon,
-              })),
-            }) satisfies UserCharactersResponse,
+      .from(battles)
+      .innerJoin(
+        battleWarriors,
+        and(
+          eq(battleWarriors.battleId, battles.id),
+          eq(battleWarriors.originalId, battles.characterId),
         ),
-      );
+      )
+      .where(eq(battles.userId, userId))
+      .orderBy(battles.characterId, battles.world, desc(battles.createdAt));
+
+  const getCharacterKey = (characterId: string, world: string) =>
+    `${world}:${characterId}`;
+
+  const getUserCharactersUncached = (userId: string) =>
+    Effect.all(
+      [
+        drizzle.query.userCharacters.findMany({
+          where: { userId },
+          orderBy: { lastSeenAt: "desc" },
+          columns: {
+            characterId: true,
+            name: true,
+            world: true,
+            icon: true,
+          },
+        }),
+        getLatestCharacterWarriors(userId),
+      ],
+      { concurrency: 2 },
+    ).pipe(
+      Effect.mapError((error) => {
+        logger.error("Failed to retrieve user characters:", error);
+
+        return new Error(
+          `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }),
+      Effect.map(([characters, latestWarriors]) => {
+        const warriorsByCharacter = new Map(
+          latestWarriors.map((warrior) => [
+            getCharacterKey(warrior.characterId, warrior.world),
+            warrior,
+          ]),
+        );
+
+        return {
+          characters: characters.map((character) => {
+            const warrior = warriorsByCharacter.get(
+              getCharacterKey(character.characterId, character.world),
+            );
+
+            return {
+              id: character.characterId,
+              name: character.name,
+              world: character.world,
+              icon: character.icon,
+              lvl: warrior?.lvl ?? null,
+              prof: warrior?.prof ?? null,
+            };
+          }),
+        } satisfies UserCharactersResponse;
+      }),
+    );
 
   const getUserWorldsUncached = (userId: string) =>
     drizzle

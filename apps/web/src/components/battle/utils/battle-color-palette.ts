@@ -91,7 +91,6 @@ export const BATTLE_HEX_COLORS = {
     honorPoints: "#60a5fa",
     momentum: "#f59e0b",
     rating: "#e879f9",
-    winRate: "#4ade80",
   },
   timeline: {
     activeHealing: "#4ade80",
@@ -136,6 +135,19 @@ export const BATTLE_BADGE_COLORS = {
   },
 } as const;
 
+/** Solid fills for stacked bars; hues follow the matching `BATTLE_TEXT_COLORS` entries. */
+export const BATTLE_SEGMENT_COLORS = {
+  damage: {
+    meleeDamage: "bg-blue-300",
+    distanceDamage: "bg-green-400",
+    auxiliaryDamage: "bg-orange-300",
+    fireDamage: "bg-red-400",
+    frostDamage: "bg-cyan-400",
+    lightningDamage: "bg-yellow-400",
+    trueDamageDealt: "bg-white",
+  },
+} as const;
+
 export const BATTLE_SURFACE_COLORS = {
   log: {
     neutral: "bg-gray-100/10",
@@ -152,23 +164,21 @@ export const BATTLE_SURFACE_COLORS = {
     teamGradient:
       "bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10",
   },
+  // The result is a stripe on the leading edge; a full-row tint fought with the row content.
   resultRow: {
-    won: "bg-green-500/5 hover:bg-green-500/10",
-    lost: "bg-red-500/5 hover:bg-red-500/10",
-    flee: "bg-yellow-500/5 hover:bg-yellow-500/10",
-    unknown: "bg-background hover:bg-muted/50",
+    won: "shadow-[inset_3px_0_0_0_var(--color-green-500)] hover:bg-muted/40",
+    lost: "shadow-[inset_3px_0_0_0_var(--color-red-400)] hover:bg-muted/40",
+    flee: "shadow-[inset_3px_0_0_0_var(--color-yellow-500)] hover:bg-muted/40",
+    unknown: "hover:bg-muted/40",
   },
   team: {
-    friendlyRow: "bg-green-400/10 hover:bg-green-400/20",
-    enemyRow: "bg-red-400/10 hover:bg-red-400/20",
-    currentCharacterRow: "bg-green-400/20 hover:bg-green-400/30",
     friendlyCell: "bg-green-400/10",
     enemyCell: "bg-red-400/10",
     friendlyHeader: "bg-green-950 text-green-50",
     enemyHeader: "bg-red-950 text-red-50",
     currentCharacterBorder: "border-green-500",
     currentCharacterStrongBorder: "border-green-500/70 bg-green-500/10",
-    friendlyShadow: "",
-    enemyShadow: "",
+    friendlyStripe: "shadow-[inset_3px_0_0_0_var(--color-green-500)]",
+    enemyStripe: "shadow-[inset_3px_0_0_0_var(--color-red-400)]",
   },
 } as const;

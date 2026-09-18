@@ -92,7 +92,6 @@ export const StatsCustomizationModal = ({
 
   const triggerButton = (
     <Button
-      variant="outline"
       size={compactTrigger ? "icon" : "sm"}
       aria-label={triggerLabel}
       className={cn(compactTrigger ? "size-8" : "gap-2")}

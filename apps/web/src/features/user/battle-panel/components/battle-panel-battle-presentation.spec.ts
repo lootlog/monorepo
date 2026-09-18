@@ -1,3 +1,4 @@
+import { BATTLE_SURFACE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import {
   createBattleWarrior as buildBattleWarrior,
   createBattle as buildBattle,
@@ -116,9 +117,9 @@ describe("battle panel battle presentation", () => {
     ).toBe("flee");
   });
 
-  it("falls back to neutral row colors when a result is not available", () => {
+  it("does not mark a row with a result when the result is not available", () => {
     expect(getBattleResultRowClassName(undefined)).toBe(
-      "bg-background hover:bg-muted/50",
+      BATTLE_SURFACE_COLORS.resultRow.unknown,
     );
   });
 });

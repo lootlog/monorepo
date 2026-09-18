@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Check, ChevronsUpDown, User } from "lucide-react";
+import { useId, useState } from "react";
+import { Check, ChevronsUpDown, Users } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -16,30 +16,109 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
-import { PlayerTile } from "@/components/battle";
+import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
+import type { BattleCharacter } from "@/lib/api/battlelog-types";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { useTranslation } from "react-i18next";
 
-interface CharacterSelectorProps {
+type SingleCharacterSelection = {
+  multiple?: false;
   characterId?: string;
   onCharacterChange: (characterId: string | undefined) => void;
   allowAllCharacters?: boolean;
+};
+
+type MultipleCharacterSelection = {
+  multiple: true;
+  characterIds?: string[];
+  onCharacterToggle: (characterId: string) => void;
+};
+
+type CharacterSelectorProps = (
+  | SingleCharacterSelection
+  | MultipleCharacterSelection
+) & {
   size?: "sm" | "default";
   className?: string;
-}
+};
 
-export function CharacterSelector({
-  characterId,
-  onCharacterChange,
-  allowAllCharacters = false,
-  size = "sm",
-  className,
-}: CharacterSelectorProps) {
+const MAX_TRIGGER_AVATARS = 3;
+
+// Crops the 32x48 sprite frame to the character's head and shoulders.
+const renderAvatar = (character: BattleCharacter, className?: string) => (
+  <span
+    key={character.id}
+    className={cn(
+      "relative size-7 shrink-0 overflow-hidden rounded-md bg-muted",
+      className,
+    )}
+  >
+    <PlayerSpriteTile
+      icon={character.icon}
+      wrapperClassName="absolute -left-0.5 top-0"
+      tileClassName="cursor-[inherit] rounded-none hover:bg-transparent"
+    />
+  </span>
+);
+
+const renderPlaceholderAvatar = () => (
+  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
+    <Users className="size-4" aria-hidden="true" />
+  </span>
+);
+
+// The level and profession come from the character's latest battle, so a
+// character without battles only has its world.
+const getCharacterDetails = (character: BattleCharacter) => {
+  const world = capitalizeFirstLetter(character.world);
+
+  // A battlelog deployed before these fields existed omits them entirely.
+  const level = character.lvl ?? null;
+  const profession = character.prof ?? null;
+
+  return level === null || profession === null
+    ? world
+    : `${world} · ${level}${profession}`;
+};
+
+export function CharacterSelector(props: CharacterSelectorProps) {
+  const { size = "sm", className } = props;
   const [open, setOpen] = useState(false);
+  const listId = useId();
   const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
   const { t } = useTranslation();
-  const characters = charactersResponse?.characters;
+  const characters = charactersResponse?.characters ?? [];
 
-  const selectedCharacter = characters?.find((c) => c.id === characterId);
+  const selectedIds = props.multiple
+    ? (props.characterIds ?? [])
+    : props.characterId
+      ? [props.characterId]
+      : [];
+
+  const selectedIdSet = new Set(selectedIds);
+
+  const selectedCharacters = characters.filter((character) =>
+    selectedIdSet.has(character.id),
+  );
+
+  const [selectedCharacter] = selectedCharacters;
+  const allowAllCharacters = !props.multiple && props.allowAllCharacters;
+
+  const placeholder =
+    props.multiple || allowAllCharacters
+      ? t("ui.characterSelector.allCharacters")
+      : t("ui.characterSelector.selectCharacter");
+
+  const handleSelect = (characterId: string | undefined) => {
+    if (props.multiple) {
+      if (characterId) props.onCharacterToggle(characterId);
+
+      return;
+    }
+
+    props.onCharacterChange(characterId);
+    setOpen(false);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,74 +127,99 @@ export function CharacterSelector({
           <Button
             variant="outline"
             size={size}
-            className={cn("gap-2", className)}
+            role="combobox"
+            aria-controls={listId}
+            aria-expanded={open}
+            className={cn("min-w-0 justify-between gap-2 px-2", className)}
           >
-            <User className="h-4 w-4" />
-            {selectedCharacter
-              ? `${selectedCharacter.name} (${selectedCharacter.world})`
-              : allowAllCharacters
-                ? t("ui.characterSelector.allCharacters")
-                : t("ui.characterSelector.selectCharacter")}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            <span className="flex min-w-0 items-center gap-2">
+              {selectedCharacters.length > 1 ? (
+                <span className="flex shrink-0 -space-x-2">
+                  {selectedCharacters
+                    .slice(0, MAX_TRIGGER_AVATARS)
+                    .map((character) =>
+                      renderAvatar(character, "ring-2 ring-background"),
+                    )}
+                </span>
+              ) : selectedCharacter ? (
+                renderAvatar(selectedCharacter)
+              ) : (
+                renderPlaceholderAvatar()
+              )}
+              <span className="flex min-w-0 flex-col items-start leading-tight">
+                <span className="max-w-full truncate">
+                  {selectedCharacters.length > 1
+                    ? t("ui.characterSelector.selectedCount", {
+                        count: selectedCharacters.length,
+                      })
+                    : (selectedCharacter?.name ?? placeholder)}
+                </span>
+                {selectedCharacters.length === 1 && selectedCharacter && (
+                  <span className="text-[11px] font-normal text-muted-foreground">
+                    {getCharacterDetails(selectedCharacter)}
+                  </span>
+                )}
+              </span>
+            </span>
+            <ChevronsUpDown
+              className="size-4 shrink-0 opacity-50"
+              aria-hidden="true"
+            />
           </Button>
         }
       />
-      <PopoverContent className="w-[250px] p-0">
+      <PopoverContent align="start" className="w-[280px] p-0">
         <Command>
           <CommandInput
             placeholder={t("ui.characterSelector.searchPlaceholder")}
           />
-          <CommandList>
+          <CommandList id={listId}>
             <CommandEmpty>{t("ui.characterSelector.empty")}</CommandEmpty>
             <CommandGroup>
               {allowAllCharacters && (
                 <CommandItem
                   value="all-characters"
-                  onSelect={() => {
-                    onCharacterChange(undefined);
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(undefined)}
+                  className="gap-2"
                 >
+                  {renderPlaceholderAvatar()}
+                  <span className="truncate">
+                    {t("ui.characterSelector.allCharacters")}
+                  </span>
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      !characterId ? "opacity-100" : "opacity-0",
+                      "ml-auto size-4",
+                      selectedIds.length === 0 ? "opacity-100" : "opacity-0",
                     )}
+                    aria-hidden="true"
                   />
-                  {t("ui.characterSelector.allCharacters")}
                 </CommandItem>
               )}
-              {characters?.map((character) => (
+              {characters.map((character) => (
                 <CommandItem
                   key={character.id}
-                  value={`${character.name}-${character.world}`}
-                  onSelect={() => {
-                    onCharacterChange(character.id);
-                    setOpen(false);
-                  }}
-                  className="py-0"
+                  value={`${character.name}-${character.world}-${character.id}`}
+                  onSelect={() => handleSelect(character.id)}
+                  className="gap-2"
                 >
+                  {renderAvatar(character)}
+                  <span className="flex min-w-0 flex-col leading-tight">
+                    <span className="truncate text-sm font-medium">
+                      {character.name}
+                    </span>
+                    <span className="text-xs tabular-nums opacity-70">
+                      {getCharacterDetails(character)}
+                    </span>
+                  </span>
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      characterId === character.id
+                      "ml-auto size-4 shrink-0",
+                      selectedIdSet.has(character.id)
                         ? "opacity-100"
                         : "opacity-0",
                     )}
+                    aria-hidden="true"
                   />
-                  <div className="flex items-center gap-2">
-                    <PlayerTile
-                      player={{
-                        name: character.name,
-                        icon: character.icon,
-                      }}
-                      className="scale-75"
-                    />
-                    <span>{character.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ({character.world})
-                    </span>
-                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>

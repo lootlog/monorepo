@@ -23,7 +23,6 @@ import {
 } from "@/features/user/battle-panel/battle-panel-search";
 import {
   useBattlesControllerGetDashboardBattles,
-  useBattlesControllerGetUserCharacters,
   useBattlesControllerGetUserWorlds,
 } from "@lootlog/client/battlelog";
 import { useState } from "react";
@@ -53,26 +52,27 @@ export const BattlePanelBattlesList = () => {
     optionalQueryValue(queryState.search),
   );
 
-  const { data: battlesResponse, isLoading: isBattlesLoading } =
-    useBattlesControllerGetDashboardBattles({
-      cursor: optionalQueryValue(queryState.cursor),
-      size: pageSize,
-      includeTotal: true,
-      world: optionalQueryValue(queryState.world),
-      type: optionalQueryValue(queryState.type),
-      search: optionalQueryValue(queryState.search),
-      result: optionalQueryValue(queryState.result),
-      ph: optionalQueryValue(queryState.ph),
-      characterId: optionalQueryValue(queryState.characterId),
-      startDate: optionalQueryValue(queryState.startDate),
-      endDate: optionalQueryValue(queryState.endDate),
-      minLevel: queryState.minLevel,
-      maxLevel: queryState.maxLevel,
-    });
+  const {
+    data: battlesResponse,
+    isLoading: isBattlesLoading,
+    isPlaceholderData: isBattlesRefreshing,
+  } = useBattlesControllerGetDashboardBattles({
+    cursor: optionalQueryValue(queryState.cursor),
+    size: pageSize,
+    includeTotal: true,
+    world: optionalQueryValue(queryState.world),
+    type: optionalQueryValue(queryState.type),
+    search: optionalQueryValue(queryState.search),
+    result: optionalQueryValue(queryState.result),
+    ph: optionalQueryValue(queryState.ph),
+    characterId: optionalQueryValue(queryState.characterId),
+    startDate: optionalQueryValue(queryState.startDate),
+    endDate: optionalQueryValue(queryState.endDate),
+    minLevel: queryState.minLevel,
+    maxLevel: queryState.maxLevel,
+  });
 
-  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
-  const characters = charactersResponse?.characters;
   const worlds = worldsResponse?.worlds ?? [];
 
   const filters: BattleFilters = {
@@ -151,7 +151,6 @@ export const BattlePanelBattlesList = () => {
 
   const tableToolbar = (
     <BattlesListFilterToolbar
-      characters={characters ?? []}
       filters={filters}
       isMobile={isMobile}
       onCharacterChange={handleCharacterChange}
@@ -183,7 +182,6 @@ export const BattlePanelBattlesList = () => {
           <FiltersSidebar
             filters={filters}
             onFiltersChange={handleFiltersChange}
-            characters={characters}
             className="h-auto w-full border-l-0 p-0"
             showMatchmakingFilter={false}
           />
@@ -197,7 +195,6 @@ export const BattlePanelBattlesList = () => {
               activeFilterChips={activeFilterChips}
               battlesResponse={battlesResponse}
               clearFiltersLabel={t("battlePanel.filters.clear")}
-              characters={characters}
               params={{
                 cursor: optionalQueryValue(queryState.cursor),
                 size: pageSize,
@@ -219,6 +216,7 @@ export const BattlePanelBattlesList = () => {
               pageSize={pageSize}
               showPagination
               isLoading={isBattlesLoading}
+              isRefreshing={isBattlesRefreshing}
               enableScrollToTop
               toolbar={tableToolbar}
             />

@@ -1,17 +1,10 @@
+import { CharacterSelector } from "@/components/filters/character-selector";
 import { PeriodSelector } from "@/components/filters/period-selector";
-import { Filter, TrendingUp, User, Swords, Award } from "lucide-react";
+import { Filter, TrendingUp, Swords, Award } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import { Input } from "@lootlog/ui/components/input";
-import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 import { MobileFiltersDrawer } from "@/components/filters/mobile-filters-drawer";
@@ -48,8 +41,6 @@ export const StatisticsFiltersMobile = ({
   onMatchmakingChange,
 }: StatisticsFiltersMobileProps) => {
   const { t } = useTranslation();
-  const { data: charactersResponse } = useBattlesControllerGetUserCharacters();
-  const characters = charactersResponse?.characters ?? [];
 
   return (
     <MobileFiltersDrawer
@@ -57,7 +48,7 @@ export const StatisticsFiltersMobile = ({
       closeLabel={t("battlePanel.actions.close")}
       childrenClassName="pr-2"
       trigger={
-        <Button className="w-full justify-between">
+        <Button variant="outline" className="h-10 w-full justify-between">
           <span className="flex items-center gap-2">
             <Filter data-icon="inline-start" />
             {t("battlePanel.filters.title")}
@@ -67,44 +58,12 @@ export const StatisticsFiltersMobile = ({
     >
       <div className="space-y-2">
         <Label>{t("battlePanel.filters.character")}</Label>
-        <Select
-          value={characterId}
-          onValueChange={(value) =>
-            onCharacterChange(
-              value === null || value === "all" ? undefined : value,
-            )
-          }
-          items={[
-            {
-              value: null,
-              label: <>{t("battlePanel.filters.selectCharacter")}</>,
-            },
-            ...characters.map((char) => ({
-              value: char.id,
-              label: (
-                <>
-                  {char.name} ({char.world})
-                </>
-              ),
-            })),
-          ]}
-        >
-          <SelectTrigger className="w-full">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <SelectValue
-                placeholder={t("battlePanel.filters.selectCharacter")}
-              />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {characters.map((char) => (
-              <SelectItem key={char.id} value={char.id}>
-                {char.name} ({char.world})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CharacterSelector
+          characterId={characterId}
+          onCharacterChange={onCharacterChange}
+          size="default"
+          className="h-10 w-full"
+        />
       </div>
 
       <div className="space-y-2">
@@ -154,7 +113,7 @@ export const StatisticsFiltersMobile = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-md border p-3">
+      <div className="flex items-center justify-between rounded-xl border p-3">
         <div className="flex items-center gap-2">
           <Award className="h-4 w-4" />
           <Label htmlFor="ph-filter-mobile" className="cursor-pointer">
@@ -169,7 +128,7 @@ export const StatisticsFiltersMobile = ({
       </div>
 
       {showMatchmakingFilter && (
-        <div className="flex items-center justify-between rounded-md border p-3">
+        <div className="flex items-center justify-between rounded-xl border p-3">
           <div className="flex items-center gap-2">
             <Swords className="h-4 w-4" />
             <Label

@@ -389,6 +389,10 @@ export type BattleCharactersResponseDtoOutputCharactersItem = {
   name: string;
   world: string;
   icon: string;
+  /** @nullable */
+  lvl: number | null;
+  /** @nullable */
+  prof: string | null;
 };
 
 export interface BattleCharactersResponseDtoOutput {
