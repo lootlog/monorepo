@@ -7,13 +7,12 @@ import {
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { LEADERBOARD_SIZE } from "../constants";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";
 import { StatsLeaderboardCard } from "./stats-leaderboard-card";
 import { StatsLeaderboardRow } from "./stats-leaderboard-row";
-
-const LEADERBOARD_SIZE = 5;
 
 type TopNpcsCardProps = {
   guildId: string;

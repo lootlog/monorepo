@@ -1,13 +1,12 @@
 import type { LootStatsResponseDtoOutputTopContributorsItem } from "@lootlog/client/main";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useTranslation } from "react-i18next";
+import { LEADERBOARD_SIZE } from "../constants";
 import { useGuildMemberMap } from "../hooks/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
 import { StatsMemberAvatar } from "./stats-member-avatar";
 import { StatsLeaderboardCard } from "./stats-leaderboard-card";
 import { StatsLeaderboardRow } from "./stats-leaderboard-row";
-
-const LEADERBOARD_SIZE = 5;
 
 type LootTopContributorsProps = {
   data?: LootStatsResponseDtoOutputTopContributorsItem[];

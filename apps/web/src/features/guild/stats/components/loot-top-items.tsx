@@ -1,6 +1,7 @@
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { LootStatsResponseDtoOutputTopItemsItem } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
+import { LEADERBOARD_SIZE } from "../constants";
 import { StatsLeaderboardCard } from "./stats-leaderboard-card";
 import { StatsLeaderboardRow } from "./stats-leaderboard-row";
 
@@ -11,7 +12,7 @@ type LootTopItemsProps = {
 
 export const LootTopItems = ({ data, isLoading }: LootTopItemsProps) => {
   const { t } = useTranslation();
-  const items = data ?? [];
+  const items = data?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   return (
     <StatsLeaderboardCard

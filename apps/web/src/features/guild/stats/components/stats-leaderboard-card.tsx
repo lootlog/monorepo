@@ -4,6 +4,7 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import type { ReactNode } from "react";
+import { LEADERBOARD_SIZE } from "../constants";
 
 type StatsLeaderboardCardProps = {
   title: string;
@@ -12,7 +13,6 @@ type StatsLeaderboardCardProps = {
   isLoading?: boolean;
   /** Shown instead of the rows when there is nothing to rank. */
   emptyMessage?: string;
-  rowCount?: number;
   className?: string;
   children: ReactNode;
 };
@@ -23,7 +23,6 @@ export const StatsLeaderboardCard = ({
   actions,
   isLoading = false,
   emptyMessage,
-  rowCount = 5,
   className,
   children,
 }: StatsLeaderboardCardProps) => (
@@ -39,7 +38,7 @@ export const StatsLeaderboardCard = ({
     <SectionCardContent className="flex min-w-0 flex-1 flex-col p-2">
       {isLoading ? (
         <div className="flex flex-col gap-1">
-          {Array.from({ length: rowCount }).map((_, index) => (
+          {Array.from({ length: LEADERBOARD_SIZE }).map((_, index) => (
             <Skeleton key={index} className="h-12 w-full rounded-lg" />
           ))}
         </div>
