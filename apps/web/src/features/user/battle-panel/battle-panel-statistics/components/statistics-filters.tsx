@@ -34,7 +34,7 @@ export function StatisticsFilters({
   onMatchmakingChange,
 }: StatisticsFiltersProps) {
   return (
-    <div className="sticky top-0 z-10">
+    <div className="w-full min-w-0">
       <div className="md:hidden">
         <StatisticsFiltersMobile
           characterId={characterId}

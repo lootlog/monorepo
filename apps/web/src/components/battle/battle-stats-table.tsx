@@ -1,10 +1,13 @@
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ExpandableDataTable } from "./expandable-data-table";
-import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
+import {
+  getBattleStatsTableColumns,
+  type BattleStatsExpansionType,
+} from "./battle-stats-table-columns-full";
 import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useState, type ReactNode } from "react";
-import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { useTranslation } from "react-i18next";
 import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
@@ -22,6 +25,8 @@ interface BattleStatsTableProps {
   headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
+  /** Only the duel table supports it: the group table needs its own horizontal scroller. */
+  pinnedHeader?: boolean;
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
 
@@ -36,99 +41,30 @@ export function BattleStatsTable({
   headerActions,
   hideZeros,
   onHideZerosChange,
+  pinnedHeader,
   statsCustomizationConfig,
 }: BattleStatsTableProps) {
   const { t } = useTranslation();
 
   const [expandedRows, setExpandedRows] = useState<
-    Map<
-      string,
-      "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
-    >
+    Map<string, BattleStatsExpansionType>
   >(new Map());
 
   const userTeam = battle.warriors.find(
     (w) => w.originalId === battle.characterId,
   )?.team;
 
-  const toggleDamageExpansion = (warriorId: string) => {
+  const toggleExpansion = (
+    warriorId: string,
+    expansionType: BattleStatsExpansionType,
+  ) => {
     setExpandedRows((prev) => {
       const newMap = new Map(prev);
 
-      if (newMap.get(warriorId) === "damage") {
+      if (newMap.get(warriorId) === expansionType) {
         newMap.delete(warriorId);
       } else {
-        newMap.set(warriorId, "damage");
-      }
-
-      return newMap;
-    });
-  };
-
-  const toggleLegendaryExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-
-      if (newMap.get(warriorId) === "legendary") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "legendary");
-      }
-
-      return newMap;
-    });
-  };
-
-  const toggleTurnsExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-
-      if (newMap.get(warriorId) === "turns") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "turns");
-      }
-
-      return newMap;
-    });
-  };
-
-  const toggleBlocksExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-
-      if (newMap.get(warriorId) === "blocks") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "blocks");
-      }
-
-      return newMap;
-    });
-  };
-
-  const toggleDetailsExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-
-      if (newMap.get(warriorId) === "details") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "details");
-      }
-
-      return newMap;
-    });
-  };
-
-  const toggleDamageDealtExpansion = (warriorId: string) => {
-    setExpandedRows((prev) => {
-      const newMap = new Map(prev);
-
-      if (newMap.get(warriorId) === "damageDealt") {
-        newMap.delete(warriorId);
-      } else {
-        newMap.set(warriorId, "damageDealt");
+        newMap.set(warriorId, expansionType);
       }
 
       return newMap;
@@ -143,16 +79,17 @@ export function BattleStatsTable({
     return a.team - b.team;
   });
 
-  const currentColumns = getBattleStatsTableColumns(
-    t,
+  const currentColumns = getBattleStatsTableColumns({
+    characterId: battle.characterId,
     expandedRows,
-    toggleDamageExpansion,
-    toggleLegendaryExpansion,
-    toggleTurnsExpansion,
-    toggleBlocksExpansion,
-    toggleDetailsExpansion,
-    toggleDamageDealtExpansion,
-  );
+    onToggleExpansion: toggleExpansion,
+    rankingMaxima: {
+      damageDealt: Math.max(...battle.warriors.map((w) => w.damageDealt)),
+      damageTaken: Math.max(...battle.warriors.map((w) => w.damageTaken)),
+    },
+    t,
+    userTeam,
+  });
 
   if (battle.type === "1v1") {
     return (
@@ -166,6 +103,7 @@ export function BattleStatsTable({
         headerActions={headerActions}
         hideZeros={hideZeros}
         onHideZerosChange={onHideZerosChange}
+        pinnedHeader={pinnedHeader}
         statsCustomizationConfig={statsCustomizationConfig}
       />
     );
@@ -174,7 +112,8 @@ export function BattleStatsTable({
   return (
     <Card
       className={cn(
-        "border-border bg-card  overflow-hidden gap-0 p-0 w-full",
+        // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
+        "isolate border-border bg-card overflow-hidden gap-0 p-0 w-full",
         cardClassName,
       )}
     >
@@ -187,7 +126,7 @@ export function BattleStatsTable({
       )}
       <ScrollArea
         className={cn(
-          "max-w-[100dvw] min-h-0 sm:max-w-[calc(100dvw-20rem)]",
+          "min-h-0 w-full max-w-screen",
           className,
           scrollClassName,
         )}
@@ -196,19 +135,12 @@ export function BattleStatsTable({
           columns={currentColumns}
           data={sortedWarriors}
           expandedRows={expandedRows}
-          getRowClassName={(row) => {
-            const warrior = row.original;
-
-            return cn({
-              [BATTLE_SURFACE_COLORS.team.friendlyRow]:
-                warrior.team === userTeam,
-              [BATTLE_SURFACE_COLORS.team.enemyRow]: warrior.team !== userTeam,
-              [BATTLE_SURFACE_COLORS.team.currentCharacterRow]:
-                warrior.originalId === battle.characterId,
-            });
-          }}
+          getTeamClassName={(warrior) =>
+            warrior.team === userTeam
+              ? BATTLE_SURFACE_COLORS.team.friendlyStripe
+              : BATTLE_SURFACE_COLORS.team.enemyStripe
+          }
         />
-        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </Card>
   );

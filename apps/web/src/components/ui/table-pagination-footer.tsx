@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -7,7 +8,7 @@ import {
 } from "@lootlog/ui/components/pagination";
 
 type TablePaginationFooterProps = {
-  totalLabel: string;
+  totalLabel: ReactNode;
   hasPrev: boolean;
   hasNext: boolean;
   onPreviousPage: () => void;

@@ -14,6 +14,7 @@ import type { Battle } from "@/lib/api/battlelog-types";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
 import { BattleStatsCustomizationActions } from "./battle-stats-customization-actions";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
+import { useBattleStatsPinnedHeader } from "./use-battle-stats-pinned-header";
 import { useTranslation } from "react-i18next";
 import type {
   BattleStatDefinition,
@@ -23,6 +24,7 @@ import type {
 } from "@/types/stats-customization.types";
 import { cn } from "cn";
 import { SearchInput } from "@/components/ui/search-input";
+import { OneVsOneStatValueCell } from "./one-vs-one-stat-value-cell";
 import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
 import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
 
@@ -36,6 +38,8 @@ interface OneVsOneStatsTableProps {
   headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
+  /** Pins the title, search and column header to the scroller the table lives in. */
+  pinnedHeader?: boolean;
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
 
@@ -203,6 +207,11 @@ const resolveStatsTableConfiguration = ({
   showHeader: showHeader ?? true,
 });
 
+const getColumnHeaderTopClassName = (pinnedHeader: boolean) =>
+  pinnedHeader
+    ? "top-[calc(var(--battle-detail-pin-top,0px)+var(--battle-stats-pinned-height,0px))]"
+    : "top-0";
+
 export function OneVsOneStatsTable({
   battle,
   cardClassName,
@@ -213,12 +222,14 @@ export function OneVsOneStatsTable({
   headerActions,
   hideZeros: controlledHideZeros,
   onHideZerosChange,
+  pinnedHeader = false,
   statsCustomizationConfig,
 }: OneVsOneStatsTableProps) {
   const { t } = useTranslation();
   const [internalHideZeros, setInternalHideZeros] = useState(true);
   const [statSearchQuery, setStatSearchQuery] = useState("");
   const statsScrollViewportRef = useRef<HTMLDivElement>(null);
+  const { cardRef, pinnedHeaderRef } = useBattleStatsPinnedHeader(pinnedHeader);
 
   const booleanLabels = {
     yes: t("common.boolean.yes"),
@@ -297,6 +308,10 @@ export function OneVsOneStatsTable({
     categories: visibleStats,
   });
 
+  // A pinned header sticks to the page's scroller, so the table cannot sit in one of its own.
+  const StatsScroller = pinnedHeader ? "div" : ScrollArea;
+  const columnHeaderTopClassName = getColumnHeaderTopClassName(pinnedHeader);
+
   if (!user || !opponent) {
     return (
       <Card className="border-border bg-card  p-8 w-full text-center text-muted-foreground">
@@ -307,13 +322,23 @@ export function OneVsOneStatsTable({
 
   return (
     <Card
+      ref={cardRef}
       className={cn(
-        "border-border bg-card  overflow-hidden gap-0 p-0 w-full",
+        // `isolate` keeps the sticky cells' z-indexes from competing with the pinned chart.
+        "isolate border-border bg-card gap-0 p-0 w-full",
+        // `overflow-clip` rounds the corners without becoming a scroll container, so the
+        // header can stick to the scroller the table lives in.
+        pinnedHeader ? "overflow-clip" : "overflow-hidden",
         cardClassName,
       )}
     >
       {resolvedShowHeader && (
         <BattleStatsTableHeader
+          ref={pinnedHeaderRef}
+          className={cn(
+            pinnedHeader &&
+              "sticky top-(--battle-detail-pin-top,0px) z-30 bg-card",
+          )}
           title={headerTitle ?? t("battlePanel.single.statistics.title")}
           compact={compact}
           leading=<SearchInput
@@ -336,50 +361,54 @@ export function OneVsOneStatsTable({
           }
         />
       )}
-      <ScrollArea
+      <StatsScroller
         ref={statsScrollViewportRef}
         className={cn(
-          "scroll-area-sticky-table min-h-0 w-full max-w-screen",
+          "min-h-0 w-full max-w-screen",
+          !pinnedHeader && "scroll-area-sticky-table",
           scrollClassName,
         )}
       >
         <Table
-          className={cn(compact && "text-[13px] leading-[1.35]")}
+          className={cn(compact && "leading-[1.35]")}
           style={{
             tableLayout: "fixed",
             width: "100%",
-            minWidth: compact ? "360px" : "420px",
+            minWidth: compact ? "316px" : "420px",
           }}
         >
           <colgroup>
-            <col style={{ width: compact ? "150px" : "180px" }} />
-            <col style={{ width: compact ? "105px" : "120px" }} />
-            <col style={{ width: compact ? "105px" : "120px" }} />
+            <col style={{ width: compact ? "128px" : "180px" }} />
+            <col style={{ width: compact ? "94px" : "120px" }} />
+            <col style={{ width: compact ? "94px" : "120px" }} />
           </colgroup>
           <TableHeader className="[&_tr]:border-b [&_tr]:border-border/70">
             <TableRow className="border-b border-border/70">
               <TableHead
                 className={cn(
-                  "sticky left-0 top-0 z-20 border-r border-b border-border/70 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                  compact && "h-7 px-2 text-[13px]",
+                  "sticky left-0 z-20 border-r border-b border-border/70 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                  columnHeaderTopClassName,
+                  compact && "h-8 px-2",
                 )}
               >
                 {t("battleUi.oneVsOne.stat")}
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+                  "sticky z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+                  columnHeaderTopClassName,
                   BATTLE_SURFACE_COLORS.team.friendlyHeader,
-                  compact && "h-7 px-1.5 text-[13px]",
+                  compact && "h-8 px-1.5",
                 )}
               >
                 {user.name}
               </TableHead>
               <TableHead
                 className={cn(
-                  "sticky top-0 z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+                  "sticky z-10 border-b border-border/70 text-center whitespace-wrap px-2",
+                  columnHeaderTopClassName,
                   BATTLE_SURFACE_COLORS.team.enemyHeader,
-                  compact && "h-7 px-1.5 text-[13px]",
+                  compact && "h-8 px-1.5",
                 )}
               >
                 {opponent.name}
@@ -399,17 +428,23 @@ export function OneVsOneStatsTable({
               >
                 <TableCell
                   className={cn(
-                    "sticky left-0 z-10 border-r border-border/70 bg-muted/50 font-semibold shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                    compact ? "px-2 py-1" : "py-1",
+                    "sticky left-0 z-10 border-r border-border/70 bg-[color-mix(in_oklab,var(--muted)_50%,var(--card))] font-semibold shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
+                    compact ? "h-auto px-2 py-1.5" : "py-1",
                   )}
                 >
                   {category.label}
                 </TableCell>
                 <TableCell
-                  className={cn("bg-muted/50", compact && "px-1.5 py-1")}
+                  className={cn(
+                    "bg-muted/50",
+                    compact && "h-auto px-1.5 py-1.5",
+                  )}
                 />
                 <TableCell
-                  className={cn("bg-muted/50", compact && "px-1.5 py-1")}
+                  className={cn(
+                    "bg-muted/50",
+                    compact && "h-auto px-1.5 py-1.5",
+                  )}
                 />
               </TableRow>,
               ...category.stats.map((stat) => {
@@ -430,7 +465,7 @@ export function OneVsOneStatsTable({
                     <TableCell
                       className={cn(
                         "sticky left-0 z-10 border-r border-border/70 bg-background font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] hover:bg-background",
-                        compact ? "px-2 py-1 leading-[1.35]" : "py-2",
+                        compact ? "h-auto px-2 py-1.5 leading-[1.35]" : "py-2",
                         stat.color,
                       )}
                       style={{
@@ -441,31 +476,31 @@ export function OneVsOneStatsTable({
                     >
                       {stat.label}
                     </TableCell>
-                    <TableCell
-                      className={cn(
-                        "text-center tabular-nums whitespace-nowrap",
-                        BATTLE_SURFACE_COLORS.team.friendlyCell,
-                        compact ? "px-1.5 py-1" : "px-2 py-2",
+                    <OneVsOneStatValueCell
+                      compact={compact}
+                      label={formatValue(userValue, stat.format, booleanLabels)}
+                      opposingValue={opponentValue}
+                      side="friendly"
+                      value={userValue}
+                    />
+                    <OneVsOneStatValueCell
+                      compact={compact}
+                      label={formatValue(
+                        opponentValue,
+                        stat.format,
+                        booleanLabels,
                       )}
-                    >
-                      {formatValue(userValue, stat.format, booleanLabels)}
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        "text-center tabular-nums whitespace-nowrap",
-                        BATTLE_SURFACE_COLORS.team.enemyCell,
-                        compact ? "px-1.5 py-1" : "px-2 py-2",
-                      )}
-                    >
-                      {formatValue(opponentValue, stat.format, booleanLabels)}
-                    </TableCell>
+                      opposingValue={userValue}
+                      side="enemy"
+                      value={opponentValue}
+                    />
                   </TableRow>
                 );
               }),
             ])}
           </TableBody>
         </Table>
-      </ScrollArea>
+      </StatsScroller>
     </Card>
   );
 }

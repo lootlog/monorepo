@@ -1,13 +1,10 @@
-import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-actions";
 import { useBattleTableSelection } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-selection";
 import { BattlePanelBattleCard } from "@/features/user/battle-panel/components/battle-panel-battle-card";
-import {
-  getBattleResult,
-  getBattleTeams,
-} from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { BattlePanelBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-battle-card-skeleton";
+import { getBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
@@ -31,8 +28,10 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { BattleTableActionsMenu } from "./battle-table-actions-menu";
+import { getBattleTableColumnClassName } from "./battle-table-column-class-name";
 import { BattleTableDeleteDialogs } from "./battle-table-delete-dialogs";
 import { BattlesBulkActionsBar } from "./battles-bulk-actions-bar";
+import { BattlesTableSkeletonBody } from "./battles-table-skeleton-body";
 import { useBattleTableColumns } from "./use-battle-table-columns";
 
 type BattlesTableProps = {
@@ -40,6 +39,8 @@ type BattlesTableProps = {
   battles: Battle[];
   clearFiltersLabel?: string;
   isLoading?: boolean;
+  /** Previous results stay visible while the next page or filter set loads. */
+  isRefreshing?: boolean;
   onClearFilters?: () => void;
   onMatchmakingClick?: () => void;
   onPhClick?: () => void;
@@ -62,65 +63,30 @@ const getRowClassName = (battle: Battle) => {
   return getBattleResultRowClassName(getBattleResult(battle));
 };
 
-const getColumnResponsiveClassName = (columnId: string) => {
-  if (columnId === "select") {
-    return "relative w-[9%] px-0! md:w-12";
-  }
-
-  if (columnId === "status") {
-    return "w-[10%] px-1 md:w-[64px]";
-  }
-
-  if (columnId === "battleInfo") {
-    return "w-[20%] px-1 md:w-[176px]";
-  }
-
-  if (columnId === "leftTeam" || columnId === "rightTeam") {
-    return "w-[24%] md:w-[240px]";
-  }
-
-  if (columnId === "createdAt") {
-    return "w-[20%] md:w-[112px]";
-  }
-
-  if (columnId === "actions") {
-    return "w-[14%] md:w-[64px]";
-  }
-
-  return "";
-};
-
+// Cells whose whole area opens the battle, so a click anywhere outside the
+// selection and actions cells navigates.
 const BATTLE_TABLE_LINK_COLUMN_IDS = new Set([
   "status",
   "leftTeam",
   "rightTeam",
+  "battleInfo",
   "createdAt",
 ]);
 
 const BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID = "leftTeam";
 
-const getBattleCellLink = (battle: Battle, columnId: string) => {
-  const { leftTeam, rightTeam } = getBattleTeams(battle);
+// The info cell keeps its own filter buttons, so its link sits underneath them
+// instead of wrapping them.
+const BATTLE_TABLE_OVERLAY_LINK_COLUMN_ID = "battleInfo";
 
-  if (
-    !BATTLE_TABLE_LINK_COLUMN_IDS.has(columnId) ||
-    (columnId === "leftTeam" && leftTeam.length > 1) ||
-    (columnId === "rightTeam" && rightTeam.length > 1)
-  ) {
-    return undefined;
-  }
-
-  const primaryColumnId =
-    leftTeam.length > 1 ? "status" : BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID;
-
-  return columnId === primaryColumnId ? "primary" : "secondary";
-};
+const LOADING_ROW_COUNT_WITHOUT_PAGINATION = 4;
 
 export const BattlesTable = ({
   activeFilterChips,
   battles,
   clearFiltersLabel,
   isLoading = false,
+  isRefreshing = false,
   onClearFilters,
   onMatchmakingClick,
   onPhClick,
@@ -180,22 +146,40 @@ export const BattlesTable = ({
     cell: Cell<typeof coreTableFeatures, Battle, unknown>,
     content: ReactNode,
   ) => {
-    const link = getBattleCellLink(cell.row.original, cell.column.id);
+    const columnId = cell.column.id;
 
-    if (!link) {
+    if (!BATTLE_TABLE_LINK_COLUMN_IDS.has(columnId)) {
       return content;
+    }
+
+    const isPrimary = columnId === BATTLE_TABLE_PRIMARY_LINK_COLUMN_ID;
+
+    const linkProps = {
+      to: "/@me/battle-panel/battles/$battleId",
+      params: { battleId: cell.row.original.id },
+      preload: false,
+    } as const;
+
+    if (columnId === BATTLE_TABLE_OVERLAY_LINK_COLUMN_ID) {
+      return (
+        <>
+          <Link
+            {...linkProps}
+            aria-hidden="true"
+            tabIndex={-1}
+            className="absolute inset-0"
+          />
+          {content}
+        </>
+      );
     }
 
     return (
       <Link
-        aria-label={
-          link === "primary" ? t("battlePanel.list.openBattle") : undefined
-        }
-        tabIndex={link === "primary" ? 0 : -1}
-        to="/@me/battle-panel/battles/$battleId"
-        params={{ battleId: cell.row.original.id }}
-        preload={false}
-        className="flex min-h-12 w-full items-center rounded-sm text-inherit outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+        {...linkProps}
+        aria-label={isPrimary ? t("battlePanel.list.openBattle") : undefined}
+        tabIndex={isPrimary ? 0 : -1}
+        className="flex min-h-10 w-full items-center rounded-sm text-inherit outline-none after:absolute after:inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
       >
         {content}
       </Link>
@@ -233,6 +217,9 @@ export const BattlesTable = ({
     columns,
   });
 
+  const loadingRowCount =
+    pagination?.pageSize ?? LOADING_ROW_COUNT_WITHOUT_PAGINATION;
+
   const selectionBar = hasSelectedBattles ? (
     <BattlesBulkActionsBar
       disabled={isBulkBusy || isRowActionBusy}
@@ -259,6 +246,7 @@ export const BattlesTable = ({
       pageSize={pagination.pageSize}
       totalCount={pagination.totalCount}
       visibleCount={battles.length}
+      isLoading={isLoading}
       onPreviousPage={pagination.onPreviousPage ?? (() => undefined)}
       onNextPage={pagination.onNextPage ?? (() => undefined)}
     />
@@ -276,9 +264,7 @@ export const BattlesTable = ({
         toolbarEnd={toolbarEnd}
         withHorizontalScroll={!isMobile}
       >
-        {isLoading ? (
-          <TableRowsSkeleton rows={pagination ? 10 : 4} />
-        ) : battles.length === 0 ? (
+        {!isLoading && battles.length === 0 ? (
           <div
             className={cn(
               "flex items-center justify-center",
@@ -298,19 +284,29 @@ export const BattlesTable = ({
             </Empty>
           </div>
         ) : isMobile ? (
-          <div className="flex flex-col gap-2 p-3">
-            {battles.map((battle) => (
-              <BattlePanelBattleCard
-                key={battle.id}
-                actions={renderBattleActions(battle)}
-                battle={battle}
-                isChecked={selectedBattleIds.has(battle.id)}
-                onSelectionChange={handleSelectionChange}
-              />
-            ))}
+          <div
+            aria-busy={isLoading || isRefreshing}
+            className={cn("flex flex-col", isRefreshing && "opacity-60")}
+          >
+            {isLoading
+              ? Array.from({ length: loadingRowCount }).map((_, index) => (
+                  <BattlePanelBattleCardSkeleton key={index} />
+                ))
+              : battles.map((battle) => (
+                  <BattlePanelBattleCard
+                    key={battle.id}
+                    actions={renderBattleActions(battle)}
+                    battle={battle}
+                    isChecked={selectedBattleIds.has(battle.id)}
+                    onSelectionChange={handleSelectionChange}
+                  />
+                ))}
           </div>
         ) : (
-          <Table className="battle-panel-battles-table min-w-full table-fixed border-b md:min-w-[960px] md:table-auto">
+          <Table
+            aria-busy={isLoading || isRefreshing}
+            className="battle-panel-battles-table min-w-full table-fixed border-b md:min-w-[960px] md:table-auto"
+          >
             <TanStackTableHeader
               table={table}
               className="sticky top-0 z-10 bg-background"
@@ -318,28 +314,40 @@ export const BattlesTable = ({
               getHeadClassName={(header) =>
                 cn(
                   "whitespace-nowrap align-middle",
-                  getColumnResponsiveClassName(header.column.id),
+                  getBattleTableColumnClassName(header.column.id),
                 )
               }
             />
-            <TanStackTableBody
-              table={table}
-              getRowClassName={(row) =>
-                cn(
-                  "h-14 border-b border-border",
-                  getRowClassName(row.original),
-                  selectedBattleIds.has(row.original.id) &&
-                    "ring-2 ring-inset ring-primary/45",
-                )
-              }
-              getCellClassName={(cell) =>
-                cn(
-                  "whitespace-nowrap align-middle",
-                  getColumnResponsiveClassName(cell.column.id),
-                )
-              }
-              renderCellContent={renderBattleLinkCellContent}
-            />
+            {isLoading ? (
+              <BattlesTableSkeletonBody
+                columnIds={table
+                  .getVisibleLeafColumns()
+                  .map((column) => column.id)}
+                rows={loadingRowCount}
+              />
+            ) : (
+              <TanStackTableBody
+                table={table}
+                getRowClassName={(row) =>
+                  cn(
+                    "h-14 border-b border-border",
+                    getRowClassName(row.original),
+                    isRefreshing && "opacity-60",
+                    selectedBattleIds.has(row.original.id) &&
+                      "ring-2 ring-inset ring-primary/45",
+                  )
+                }
+                getCellClassName={(cell) =>
+                  cn(
+                    "whitespace-nowrap align-middle",
+                    BATTLE_TABLE_LINK_COLUMN_IDS.has(cell.column.id) &&
+                      "relative",
+                    getBattleTableColumnClassName(cell.column.id),
+                  )
+                }
+                renderCellContent={renderBattleLinkCellContent}
+              />
+            )}
           </Table>
         )}
       </BattlePanelResultsSurface>

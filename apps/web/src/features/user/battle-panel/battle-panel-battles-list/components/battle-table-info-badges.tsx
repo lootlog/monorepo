@@ -22,10 +22,10 @@ type BattleTableInfoBadgesProps = {
 };
 
 const BATTLE_INFO_TAG_CLASS_NAME =
-  "inline-flex h-[17px] max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-foreground/30 bg-background px-2 py-0 text-[10px] font-semibold leading-none text-muted-foreground";
+  "inline-flex h-5 max-w-[92px] min-w-0 items-center justify-center truncate rounded-md border border-border bg-background/60 px-1.5 py-0 text-[11px] font-medium leading-none text-muted-foreground";
 
 const BATTLE_INFO_TAG_ACTION_CLASS_NAME =
-  "cursor-pointer transition-colors hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+  "pointer-events-auto cursor-pointer transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 const handleFilterBadgeKeyDown = (
   event: KeyboardEvent<HTMLElement>,
@@ -47,10 +47,6 @@ export const BattleTableInfoBadges = ({
   onWorldClick,
 }: BattleTableInfoBadgesProps) => {
   const { t } = useTranslation();
-
-  const visibilityLabel = battle.public
-    ? t("battleUi.metadata.public")
-    : t("battleUi.metadata.private");
 
   const userWarrior = battle.warriors.find(
     (warrior) => warrior.originalId === battle.characterId,
@@ -80,7 +76,8 @@ export const BattleTableInfoBadges = ({
       data-battle-table-action
       onClick={stopBattleTableAction}
       onKeyDown={stopBattleTableKeyboardAction}
-      className="flex max-w-[168px] flex-wrap items-center gap-1"
+      // Only the filter badges take pointer events; the rest of the cell falls through to the battle link underneath.
+      className="pointer-events-none relative flex max-w-[168px] flex-wrap items-center gap-1"
     >
       <button
         type="button"
@@ -94,7 +91,17 @@ export const BattleTableInfoBadges = ({
       >
         {capitalizeFirstLetter(battle.world)}
       </button>
-      <span className={BATTLE_INFO_TAG_CLASS_NAME}>{visibilityLabel}</span>
+      {battle.public && (
+        // Private is the default, so only shared battles are called out.
+        <span
+          className={cn(
+            BATTLE_INFO_TAG_CLASS_NAME,
+            "border-primary/40 bg-primary/10 text-primary",
+          )}
+        >
+          {t("battleUi.metadata.public")}
+        </span>
+      )}
       {userWarrior?.ph !== 0 && userWarrior?.ph !== undefined && (
         <Tooltip>
           <TooltipTrigger

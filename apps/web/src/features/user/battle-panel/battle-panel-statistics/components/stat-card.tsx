@@ -2,63 +2,48 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { Inbox } from "lucide-react";
-import type { KeyboardEventHandler, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 interface StatCardProps {
   title: string;
   description: string;
+  actions?: ReactNode;
   isLoading?: boolean;
   isEmpty?: boolean;
   emptyMessage?: string;
   children: ReactNode;
   className?: string;
-  onClick?: () => void;
-  onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
-  role?: string;
-  tabIndex?: number;
-  ariaLabel?: string;
 }
 
 export function StatCard({
   title,
   description,
+  actions,
   isLoading = false,
   isEmpty = false,
   emptyMessage,
   children,
   className,
-  onClick,
-  onKeyDown,
-  role,
-  tabIndex,
-  ariaLabel,
 }: StatCardProps) {
   const { t } = useTranslation();
 
   return (
     <SectionCard
-      aria-label={ariaLabel}
-      onClick={onClick}
-      onKeyDown={onKeyDown}
-      role={role}
-      tabIndex={tabIndex}
-      variant={onClick ? "interactive" : "default"}
-      className={cn(
-        "flex min-w-0 flex-col border-border bg-card p-0",
-        className,
-      )}
+      aria-busy={isLoading}
+      className={cn("flex min-w-0 flex-1 flex-col", className)}
     >
-      <SectionCardHeader title={title} description={description} />
-      <SectionCardContent className="min-w-0 flex-1">
+      <SectionCardHeader
+        title={title}
+        description={description}
+        actions={actions}
+      />
+      <SectionCardContent className="flex min-w-0 flex-1 flex-col">
         {isLoading ? (
-          <div className="h-72 flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">
-              {t("battlePanel.statistics.loading")}
-            </p>
-          </div>
+          <Skeleton className="h-64 w-full rounded-lg" />
         ) : isEmpty ? (
           <BattlePanelEmptyState
             icon={Inbox}

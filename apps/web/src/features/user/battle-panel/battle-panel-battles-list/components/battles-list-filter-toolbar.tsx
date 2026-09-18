@@ -1,19 +1,10 @@
-import { PlayerTile } from "@/components/battle";
+import { CharacterSelector } from "@/components/filters/character-selector";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@lootlog/ui/components/command";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { Label } from "@lootlog/ui/components/label";
 import {
@@ -21,25 +12,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import { cn } from "cn";
 import {
   Award,
-  Check,
-  ChevronsUpDown,
   Filter,
   Globe,
   Medal,
   SlidersHorizontal,
   Swords,
-  User,
   Users,
 } from "lucide-react";
-import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { BattleFilters } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
 
 type BattlesListFilterToolbarProps = {
-  characters: Array<{ id: string; name: string; world: string }>;
   filters: BattleFilters;
   isMobile: boolean;
   onCharacterChange: (value: string) => void;
@@ -58,7 +43,6 @@ type BattlesListFilterToolbarProps = {
 };
 
 export const BattlesListFilterToolbar = ({
-  characters,
   filters,
   isMobile,
   onCharacterChange,
@@ -76,9 +60,6 @@ export const BattlesListFilterToolbar = ({
   worlds,
 }: BattlesListFilterToolbarProps) => {
   const { t } = useTranslation();
-  const selectedCharacterIds = new Set(filters.characterId);
-  const characterListId = useId();
-  const [characterOpen, setCharacterOpen] = useState(false);
 
   const battleTypes = [
     { value: "solo" as const, label: t("battlePanel.filters.types.solo") },
@@ -103,14 +84,6 @@ export const BattlesListFilterToolbar = ({
   if (extraFiltersCount > 0) {
     moreLabel = t("battlePanel.filters.moreWithCount", {
       count: extraFiltersCount,
-    });
-  }
-
-  let characterLabel = t("battlePanel.filters.character");
-
-  if (filters.characterId && filters.characterId.length > 0) {
-    characterLabel = t("battlePanel.filters.selectedCount", {
-      count: filters.characterId.length,
     });
   }
 
@@ -175,68 +148,13 @@ export const BattlesListFilterToolbar = ({
         }}
       />
 
-      <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
-        <PopoverTrigger
-          render={
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-controls={characterListId}
-              aria-expanded={characterOpen}
-              className="h-10 w-[160px] justify-between"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <User className="size-4 shrink-0" aria-hidden="true" />
-                <span className="truncate text-sm">{characterLabel}</span>
-              </div>
-              <ChevronsUpDown
-                className="ml-2 size-4 shrink-0 opacity-50"
-                aria-hidden="true"
-              />
-            </Button>
-          }
-        />
-        <PopoverContent className="w-[280px] p-0">
-          <Command>
-            <CommandInput
-              placeholder={t("battlePanel.filters.characterSearchPlaceholder")}
-            />
-            <CommandList id={characterListId}>
-              <CommandEmpty>
-                {t("battlePanel.filters.noCharacters")}
-              </CommandEmpty>
-              <CommandGroup>
-                {characters.map((character) => (
-                  <CommandItem
-                    key={character.id}
-                    value={`${character.name} ${character.world}`}
-                    onSelect={() => onCharacterChange(character.id)}
-                    className="gap-0 px-2 py-0"
-                  >
-                    <PlayerTile
-                      player={character}
-                      cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                      className="mr-2 scale-70"
-                    />
-                    <span className="truncate">
-                      {character.name} ({character.world})
-                    </span>
-                    <Check
-                      className={cn(
-                        "ml-auto size-4",
-                        selectedCharacterIds.has(character.id)
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                      aria-hidden="true"
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <CharacterSelector
+        multiple
+        characterIds={filters.characterId}
+        onCharacterToggle={onCharacterChange}
+        size="default"
+        className="h-10 w-[220px]"
+      />
 
       <FilterPopover
         options={battleTypes}
@@ -285,7 +203,7 @@ export const BattlesListFilterToolbar = ({
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between rounded-md border border-border/70 bg-background p-3">
+            <div className="flex items-center justify-between rounded-xl border border-border/70 bg-background p-3">
               <div className="flex items-center gap-2">
                 <Award className="size-4" aria-hidden="true" />
                 <Label htmlFor="battles-toolbar-ph" className="cursor-pointer">
@@ -299,7 +217,7 @@ export const BattlesListFilterToolbar = ({
               />
             </div>
             {showMatchmakingFilter && (
-              <div className="flex items-center justify-between rounded-md border border-border/70 bg-background p-3">
+              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-background p-3">
                 <div className="flex items-center gap-2">
                   <Swords className="size-4" aria-hidden="true" />
                   <Label

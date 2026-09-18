@@ -9,7 +9,10 @@ import {
   getLegendaryBonusLegendItems,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-legendary-markers";
 import { BattleHpTimelinePlot } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-plot";
-import { useBattleHpTimelineSettingsStore } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-settings.store";
+import {
+  BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES,
+  useBattleHpTimelineSettingsStore,
+} from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-settings.store";
 import { useBattleHpTimelineLayers } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-hp-timeline-layers";
 import { Button } from "@lootlog/ui/components/button";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -84,7 +87,9 @@ export function BattleHpTimelineChart({
 
   const VisibilityIcon = isChartHidden ? Eye : EyeOff;
   const HeightIcon = isExpanded ? ChevronsDownUp : ChevronsUpDown;
-  const plotHeightClassName = isExpanded ? "h-72" : "h-36";
+
+  const plotHeightClassName =
+    BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES[heightMode];
 
   return (
     <SectionCard>

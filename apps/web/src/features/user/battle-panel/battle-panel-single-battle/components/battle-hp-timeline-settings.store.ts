@@ -10,6 +10,15 @@ import {
 
 export type BattleHpTimelineHeightMode = "default" | "expanded";
 
+/** Shared by the chart and its skeleton so the loading state has the reader's chosen height. */
+export const BATTLE_HP_TIMELINE_PLOT_HEIGHT_CLASS_NAMES: Record<
+  BattleHpTimelineHeightMode,
+  string
+> = {
+  default: "h-36",
+  expanded: "h-72",
+};
+
 type BattleHpTimelineSettingsData = {
   heightMode: BattleHpTimelineHeightMode;
   isChartHidden: boolean;

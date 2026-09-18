@@ -1,7 +1,28 @@
 {
   "team": {
     "userTeam": "Twoja drużyna",
-    "enemyTeam": "Przeciwnicy"
+    "enemyTeam": "Przeciwnicy",
+    "status": {
+      "dead": "Poległ",
+      "surrendered": "Poddał się",
+      "fled": "Uciekł"
+    }
+  },
+  "summary": {
+    "title": "Bilans walki",
+    "damageComposition": "Skład zadanych obrażeń",
+    "metrics": {
+      "damageDealt": "Zadane obrażenia",
+      "damageTaken": "Otrzymane obrażenia",
+      "healing": "Leczenie",
+      "criticalHits": "Krytyki",
+      "avoidedAttacks": "Uniki i bloki",
+      "turns": "Tury"
+    }
+  },
+  "ranking": {
+    "title": "Ranking graczy",
+    "metricLabel": "Statystyka rankingu"
   },
   "overviewHeader": {
     "title": "Przegląd walki",

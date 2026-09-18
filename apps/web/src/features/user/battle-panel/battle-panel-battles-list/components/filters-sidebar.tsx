@@ -1,9 +1,8 @@
-import { BattleCharacterOption } from "./battle-character-option";
+import { CharacterSelector } from "@/components/filters/character-selector";
 import {
   createBattleFilterHandlers,
   type BattleFilters,
 } from "@/features/user/battle-panel/battle-panel-battles-list/utils/battle-filter-handlers";
-import { useId, useState } from "react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
@@ -16,10 +15,8 @@ import {
   Globe,
   Medal,
   Users,
-  User,
   Award,
   Swords,
-  ChevronsUpDown,
   ArrowRight,
 } from "lucide-react";
 import { cn } from "cn";
@@ -27,25 +24,12 @@ import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { useBattlesControllerGetUserWorlds } from "@lootlog/client/battlelog";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandList,
-} from "@lootlog/ui/components/command";
 
 import { useTranslation } from "react-i18next";
 
 type FiltersSidebarProps = {
   filters: BattleFilters;
   onFiltersChange: (filters: BattleFilters) => void;
-  characters?: Array<{ id: string; name: string; world: string }>;
   className?: string;
   showMatchmakingFilter?: boolean;
 };
@@ -67,7 +51,6 @@ const hasActiveBattleFilters = (
 export const FiltersSidebar = ({
   filters,
   onFiltersChange,
-  characters = [],
   className,
   showMatchmakingFilter = true,
 }: FiltersSidebarProps) => {
@@ -83,9 +66,6 @@ export const FiltersSidebar = ({
   } = createBattleFilterHandlers(filters, onFiltersChange);
 
   const { t } = useTranslation();
-  const selectedCharacterIds = new Set(filters.characterId);
-  const characterListId = useId();
-  const [characterOpen, setCharacterOpen] = useState(false);
 
   const { data: worldsResponse } = useBattlesControllerGetUserWorlds();
   const worlds = worldsResponse?.worlds ?? [];
@@ -171,56 +151,13 @@ export const FiltersSidebar = ({
                 <Label className="text-xs text-muted-foreground">
                   {t("battlePanel.filters.character")}
                 </Label>
-                <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
-                  <PopoverTrigger
-                    render={
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-controls={characterListId}
-                        aria-expanded={characterOpen}
-                        className="w-full justify-between h-10"
-                      >
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span className="text-sm">
-                            {filters.characterId &&
-                            filters.characterId.length > 0
-                              ? t("battlePanel.filters.selectedCount", {
-                                  count: filters.characterId.length,
-                                })
-                              : t("battlePanel.filters.character")}
-                          </span>
-                        </div>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    }
-                  />
-                  <PopoverContent className="w-[280px] p-0">
-                    <Command>
-                      <CommandInput
-                        placeholder={t(
-                          "battlePanel.filters.characterSearchPlaceholder",
-                        )}
-                      />
-                      <CommandList id={characterListId}>
-                        <CommandEmpty>
-                          {t("battlePanel.filters.noCharacters")}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {characters.map((char) => (
-                            <BattleCharacterOption
-                              key={char.id}
-                              character={char}
-                              selected={selectedCharacterIds.has(char.id)}
-                              onSelect={handleCharacterChange}
-                            />
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <CharacterSelector
+                  multiple
+                  characterIds={filters.characterId}
+                  onCharacterToggle={handleCharacterChange}
+                  size="default"
+                  className="h-10 w-full"
+                />
               </div>
 
               <Separator />

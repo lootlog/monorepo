@@ -1,8 +1,10 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { SectionCard } from "@/components/common/section-card/section-card";
+import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
+import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import {
   Table,
   TableBody,
@@ -12,7 +14,8 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { Trophy } from "lucide-react";
+import { cn } from "cn";
+import { Check, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   formatAbyssNumber,
@@ -27,6 +30,9 @@ type AbyssSeasonsTableProps = {
   selectedSeasonId?: string;
 };
 
+const formatOptionalNumber = (value: number | null) =>
+  value === null ? "–" : formatAbyssNumber(value);
+
 export function AbyssSeasonsTable({
   isLoading,
   onSelect,
@@ -36,8 +42,41 @@ export function AbyssSeasonsTable({
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
+  const renderSelectButton = (season: AbyssSeason, className?: string) => {
+    const isSelected = season.id === selectedSeasonId;
+
+    return (
+      <Button
+        type="button"
+        size="sm"
+        variant={isSelected ? "secondary" : "outline"}
+        disabled={isSelected}
+        className={className}
+        onClick={() => onSelect(season)}
+      >
+        {isSelected && <Check className="size-4" aria-hidden="true" />}
+        {isSelected
+          ? t("battlePanel.abyss.currentSeason")
+          : t("battlePanel.abyss.selectSeason")}
+      </Button>
+    );
+  };
+
+  const renderRecord = (season: AbyssSeason) => (
+    <>
+      <span className={BATTLE_TEXT_COLORS.result.won}>{season.wins}</span>
+      <span className="px-1 text-muted-foreground">–</span>
+      <span className={BATTLE_TEXT_COLORS.result.lost}>{season.losses}</span>
+    </>
+  );
+
+  const getRatingClassName = (season: AbyssSeason) =>
+    season.totalRatingDelta >= 0
+      ? BATTLE_TEXT_COLORS.result.won
+      : BATTLE_TEXT_COLORS.result.lost;
+
   return (
-    <SectionCard className="min-w-0">
+    <SectionCard className="min-w-0 overflow-hidden">
       <SectionCardHeader
         icon={Trophy}
         title={t("battlePanel.abyss.seasonsTitle")}
@@ -45,94 +84,66 @@ export function AbyssSeasonsTable({
       />
 
       {seasons.length === 0 && !isLoading ? (
-        <div className="p-4 text-sm text-muted-foreground">
-          {t("battlePanel.abyss.noSeason")}
-        </div>
+        <BattlePanelEmptyState
+          icon={Trophy}
+          title={t("battlePanel.abyss.noSeason")}
+        />
       ) : isMobile ? (
-        <div className="grid gap-2 p-3">
-          {seasons.map((season) => {
-            const isSelected = season.id === selectedSeasonId;
-
-            return (
-              <div
-                key={season.id}
-                className="border-b border-border/70 p-3 last:border-b-0"
-                data-state={isSelected ? "selected" : undefined}
-              >
-                <div className="flex min-w-0 items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">
-                      {getAbyssSeasonRangeLabel(season)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {t("battlePanel.abyss.seasonsTable.totalBattles")}:{" "}
-                      {season.totalBattles}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right text-sm font-semibold">
-                    {formatAbyssNumber(season.winRate)}%
-                  </div>
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2">
-                    <div className="text-muted-foreground">
-                      {t("battlePanel.abyss.seasonsTable.record")}
-                    </div>
-                    <div className="font-semibold">
-                      {season.wins}
-                      {t("battlePanel.statistics.columns.w")} / {season.losses}
-                      {t("battlePanel.statistics.columns.l")}
-                    </div>
-                  </div>
-                  <div className="p-2">
-                    <div className="text-muted-foreground">
-                      {t("battlePanel.abyss.seasonsTable.ratingDelta")}
-                    </div>
-                    <div className="font-semibold">
-                      {formatAbyssSignedNumber(season.totalRatingDelta)}
-                    </div>
-                  </div>
-                  <div className="p-2">
-                    <div className="text-muted-foreground">
-                      {t("battlePanel.abyss.seasonsTable.peakRating")}
-                    </div>
-                    <div className="font-semibold">
-                      {season.peakRating === null
-                        ? "-"
-                        : formatAbyssNumber(season.peakRating)}
-                    </div>
-                  </div>
-                  <div className="p-2">
-                    <div className="text-muted-foreground">
-                      {t("battlePanel.abyss.seasonsTable.points")}
-                    </div>
-                    <div className="font-semibold">
-                      {season.totalPointsGained === null
-                        ? "-"
-                        : formatAbyssNumber(season.totalPointsGained)}
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={isSelected ? "default" : "outline"}
-                  className="mt-3 w-full"
-                  onClick={() => onSelect(season)}
-                >
-                  {isSelected
-                    ? t("battlePanel.abyss.currentSeason")
-                    : t("battlePanel.abyss.selectSeason")}
-                </Button>
+        <ul className="flex flex-col">
+          {seasons.map((season) => (
+            <li
+              key={season.id}
+              className={cn(
+                "flex flex-col gap-3 border-b border-border/70 p-3 last:border-b-0",
+                season.id === selectedSeasonId && "bg-primary/10",
+              )}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-sm font-semibold">
+                  {getAbyssSeasonRangeLabel(season)}
+                </span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  {t("battlePanel.abyss.stats.totalBattles", {
+                    count: season.totalBattles,
+                  })}
+                </span>
               </div>
-            );
-          })}
-        </div>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs tabular-nums">
+                {[
+                  {
+                    label: t("battlePanel.abyss.seasonsTable.record"),
+                    value: renderRecord(season),
+                  },
+                  {
+                    label: t("battlePanel.abyss.seasonsTable.winRate"),
+                    value: `${formatAbyssNumber(season.winRate)}%`,
+                  },
+                  {
+                    label: t("battlePanel.abyss.seasonsTable.ratingDelta"),
+                    value: (
+                      <span className={getRatingClassName(season)}>
+                        {formatAbyssSignedNumber(season.totalRatingDelta)}
+                      </span>
+                    ),
+                  },
+                  {
+                    label: t("battlePanel.abyss.seasonsTable.peakRating"),
+                    value: formatOptionalNumber(season.peakRating),
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="flex flex-col gap-0.5">
+                    <dt className="text-muted-foreground">{item.label}</dt>
+                    <dd className="text-sm font-semibold">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {renderSelectButton(season, "w-full")}
+            </li>
+          ))}
+        </ul>
       ) : (
         <ScrollArea className="w-full">
-          <Table className="min-w-[860px]">
+          <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>
@@ -156,8 +167,10 @@ export function AbyssSeasonsTable({
                 <TableHead className="text-right">
                   {t("battlePanel.abyss.seasonsTable.points")}
                 </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.action")}
+                <TableHead>
+                  <span className="sr-only">
+                    {t("battlePanel.abyss.seasonsTable.action")}
+                  </span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -169,6 +182,7 @@ export function AbyssSeasonsTable({
                   <TableRow
                     key={season.id}
                     data-state={isSelected ? "selected" : undefined}
+                    className="h-12 tabular-nums"
                   >
                     <TableCell className="font-medium">
                       {getAbyssSeasonRangeLabel(season)}
@@ -176,38 +190,28 @@ export function AbyssSeasonsTable({
                     <TableCell className="text-right">
                       {season.totalBattles}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {season.wins}
-                      {t("battlePanel.statistics.columns.w")} / {season.losses}
-                      {t("battlePanel.statistics.columns.l")}
+                    <TableCell className="text-right font-medium">
+                      {renderRecord(season)}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatAbyssNumber(season.winRate)}%
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell
+                      className={cn(
+                        "text-right font-medium",
+                        getRatingClassName(season),
+                      )}
+                    >
                       {formatAbyssSignedNumber(season.totalRatingDelta)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {season.peakRating === null
-                        ? "-"
-                        : formatAbyssNumber(season.peakRating)}
+                      {formatOptionalNumber(season.peakRating)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {season.totalPointsGained === null
-                        ? "-"
-                        : formatAbyssNumber(season.totalPointsGained)}
+                      {formatOptionalNumber(season.totalPointsGained)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={isSelected ? "default" : "outline"}
-                        onClick={() => onSelect(season)}
-                      >
-                        {isSelected
-                          ? t("battlePanel.abyss.currentSeason")
-                          : t("battlePanel.abyss.selectSeason")}
-                      </Button>
+                      {renderSelectButton(season)}
                     </TableCell>
                   </TableRow>
                 );
