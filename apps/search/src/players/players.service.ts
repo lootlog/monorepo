@@ -1,9 +1,9 @@
+import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
-  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -11,6 +11,39 @@ import type { PlayerSearchQuery } from "./player-search-query.js";
 import { PLAYERS_INDEX } from "./search-index.js";
 import type { IndexPlayersCommand } from "./index-players-command.js";
 import type { PlayerHit } from "./player-hit.js";
+
+const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
+  const knownNames = new Set(
+    players.flatMap((player) =>
+      player.accountId > 0 ? [JSON.stringify([player.world, player.name])] : [],
+    ),
+  );
+
+  const unique = new Map<string, PlayerHit>();
+
+  for (const player of players) {
+    // ponytail: name fallback for truncated legacy IDs; remove after an identity migration.
+    if (
+      player.accountId === 0 &&
+      knownNames.has(JSON.stringify([player.world, player.name]))
+    ) {
+      continue;
+    }
+
+    const key = JSON.stringify([
+      player.world,
+      player.characterId > 0 ? player.characterId : [player.id, player.name],
+    ]);
+
+    const existing = unique.get(key);
+
+    if (!existing || (existing.accountId === 0 && player.accountId > 0)) {
+      unique.set(key, player);
+    }
+  }
+
+  return [...unique.values()];
+};
 
 export const makePlayersModule = (
   meilisearch: Meilisearch,
@@ -45,7 +78,7 @@ export const makePlayersModule = (
     return yield* attemptMeilisearch("search.players", () =>
       index.search(searchTerm, query),
     ).pipe(
-      Effect.map((response) => response.hits),
+      Effect.map((response) => uniquePlayers(response.hits)),
       Effect.tapError((error) =>
         Effect.sync(() => logger.error("Players search error", { error })),
       ),
@@ -55,8 +88,6 @@ export const makePlayersModule = (
   const indexPlayers = Effect.fn("SearchPlayers.index")(function* (
     data: IndexPlayersCommand,
   ) {
-    const index = meilisearch.index(PLAYERS_INDEX);
-
     const validPlayers = data.players.filter(
       (player) => player.world && player.id && player.name,
     );
@@ -85,8 +116,9 @@ export const makePlayersModule = (
       uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
-    yield* completeMeilisearchTask("search.players.index", () =>
-      index.addDocuments(playersWithUid, { primaryKey: "uid" }),
+    yield* indexChangedDocuments(
+      meilisearch.index<(typeof playersWithUid)[number]>(PLAYERS_INDEX),
+      playersWithUid,
     );
   });
 
