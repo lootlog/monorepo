@@ -106,4 +106,63 @@ describe("useTimersUpdate", () => {
     rerender({ enabled: false });
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  it("pauses hidden document updates and immediately catches up when visible", () => {
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
+    let renderCount = 0;
+
+    const clock = renderHook(() => {
+      renderCount += 1;
+
+      return useTimersUpdate();
+    });
+
+    for (let second = 0; second < 10; second += 1) {
+      act(() => vi.advanceTimersByTime(1_000));
+    }
+
+    expect(renderCount).toBe(11);
+
+    act(() => {
+      hidden.mockReturnValue(true);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    for (let second = 0; second < 10; second += 1) {
+      act(() => vi.advanceTimersByTime(1_000));
+    }
+
+    expect(renderCount).toBe(11);
+    expect(vi.getTimerCount()).toBe(0);
+
+    act(() => {
+      hidden.mockReturnValue(false);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(clock.result.current).toBe(Date.now());
+    expect(renderCount).toBe(12);
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(clock.result.current).toBe(Date.now());
+    expect(renderCount).toBe(13);
+
+    clock.unmount();
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(vi.getTimerCount()).toBe(0);
+    hidden.mockRestore();
+  });
+
+  it("does not start ticking when mounted in an already hidden document", () => {
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    const clock = renderHook(() => useTimersUpdate());
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+      hidden.mockReturnValue(false);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(clock.result.current).toBe(Date.now());
+    expect(vi.getTimerCount()).toBe(1);
+    clock.unmount();
+    hidden.mockRestore();
+  });
 });

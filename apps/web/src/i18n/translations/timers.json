@@ -1,5 +1,7 @@
 {
   "searchPlaceholder": "Szukaj timerów...",
+  "loadError": "Nie udało się pobrać timerów. Spróbuj ponownie.",
+  "refreshError": "Nie udało się odświeżyć timerów. Widoczne dane mogą być nieaktualne. Spróbuj ponownie.",
   "view": {
     "list": "Widok listy",
     "grid": "Widok siatki"

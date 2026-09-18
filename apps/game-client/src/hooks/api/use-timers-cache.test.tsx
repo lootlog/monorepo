@@ -1,5 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook } from "@testing-library/react";
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryObserver,
+} from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Timer } from "@/api/timers.api";
@@ -148,4 +152,61 @@ describe("useTimersCache", () => {
     expect(queryClient.getQueryData(queryKeys.timers("luvia"))).toEqual([]);
     expect(invalidateQueriesSpy).not.toHaveBeenCalled();
   });
+
+  it("does not update or remove another Organization's timer with the same key", () => {
+    const timer = createTimer();
+    const otherOrganizationTimer = createTimer({ guildId: "guild-2" });
+    const key = queryKeys.timers(timer.world);
+    queryClient.setQueryData(key, [timer, otherOrganizationTimer]);
+
+    const { result } = renderHook(() => useTimersCache(), { wrapper });
+    const updated = { ...timer, updatedAt: "2026-04-22T10:01:00.000Z" };
+    result.current.upsertTimer(updated);
+    expect(queryClient.getQueryData(key)).toEqual([
+      { ...updated, isPending: false },
+      otherOrganizationTimer,
+    ]);
+
+    result.current.removeTimer(timer);
+    expect(queryClient.getQueryData(key)).toEqual([otherOrganizationTimer]);
+  });
+
+  it.each(["upsert", "remove"] as const)(
+    "reconciles an in-flight snapshot without undoing a socket %s",
+    async (operation) => {
+      const timer = createTimer();
+      const oldSnapshot = Promise.withResolvers<Timer[]>();
+
+      const fresh =
+        operation === "upsert" ? [{ ...timer, isPending: false }] : [];
+
+      const queryKey = queryKeys.timers(timer.world);
+      queryClient.setQueryData(queryKey, operation === "upsert" ? [] : [timer]);
+
+      const fetchTimers = vi
+        .fn<() => Promise<Timer[]>>()
+        .mockReturnValueOnce(oldSnapshot.promise)
+        .mockResolvedValue(fresh);
+
+      const observer = new QueryObserver(queryClient, {
+        queryKey,
+        queryFn: fetchTimers,
+      });
+
+      const unsubscribe = observer.subscribe(() => {});
+      const { result } = renderHook(() => useTimersCache(), { wrapper });
+
+      act(() => {
+        if (operation === "upsert") result.current.upsertTimer(timer);
+        else result.current.removeTimer(timer);
+      });
+      await waitFor(() => expect(fetchTimers).toHaveBeenCalledTimes(2));
+      await act(async () => {
+        oldSnapshot.resolve(operation === "upsert" ? [] : [timer]);
+        await oldSnapshot.promise;
+      });
+      expect(queryClient.getQueryData(queryKey)).toEqual(fresh);
+      unsubscribe();
+    },
+  );
 });
