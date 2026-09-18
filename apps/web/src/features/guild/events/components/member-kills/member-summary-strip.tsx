@@ -1,3 +1,4 @@
+import { formatPoints } from "../../utils/format-points";
 import { PageHeader } from "@/components/common/page-header";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,7 +13,6 @@ import {
   type MemberIdentity,
   type MemberStatsSummary,
   formatPercentage,
-  formatPoints,
 } from "./member-kills-view-model";
 
 type MemberSummaryStripProps = {

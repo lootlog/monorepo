@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/postgres.ts",
     "./snapshot-hash": "./src/snapshot-hash.ts",
-    "./redis-script": "./src/redis-script.ts"
+    "./redis-script": "./src/redis-script.ts",
+    "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts"
   },
   "scripts": {
     "lint": "oxlint src test",

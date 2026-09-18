@@ -11,7 +11,6 @@ import {
 import { presentReservation } from "#src/reservations/reservation-presentation";
 import { parseReservationWindow } from "#src/reservations/reservation-policy";
 import { canModerateReservations } from "#src/reservations/reservation-viewer";
-import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import {
   ReservationReadData,
   OrganizationWorkspaceOperationError,
@@ -60,19 +59,6 @@ export const makeReservationReadDataLayer = (
                 })),
               ),
             );
-        });
-
-      const requireSpot = (spotId: string) =>
-        Effect.flatMap(catalog.getSpots, (spots) => {
-          const spot = spots.find((candidate) => candidate.id === spotId);
-
-          return spot
-            ? Effect.succeed(spot)
-            : Effect.fail(
-                new ResourceNotFoundError({
-                  code: "RESERVATION_SPOT_NOT_FOUND",
-                }),
-              );
         });
 
       return ReservationReadData.of({
@@ -166,7 +152,7 @@ export const makeReservationReadDataLayer = (
         listWindow: (context, spotId, fromValue, toValue) =>
           operation(
             Effect.gen(function* () {
-              yield* requireSpot(spotId);
+              yield* catalog.getSpot(spotId);
 
               const { from, to } = yield* Effect.try({
                 try: () => parseReservationWindow(fromValue, toValue),
@@ -217,7 +203,7 @@ export const makeReservationReadDataLayer = (
         pinSpot: (userId, guildId, spotId) =>
           operation(
             Effect.gen(function* () {
-              yield* requireSpot(spotId);
+              yield* catalog.getSpot(spotId);
               yield* database
                 .insert(userPinnedReservationSpotTable)
                 .values({ userId, guildId, spotId })

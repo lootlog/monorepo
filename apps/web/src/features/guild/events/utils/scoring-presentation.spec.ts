@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { getScoringBreakdown, getScoringItems } from "./scoring-presentation";
-import { formatPoints } from "./format-points";
-import { formatPoints as formatMemberPoints } from "../components/member-kills/member-kills-view-model";
 
 describe("scoring presentation", () => {
   it("keeps manual adjustments outside bonus and cap calculations", () => {
@@ -18,22 +16,14 @@ describe("scoring presentation", () => {
     const items = getScoringItems({
       ...scoring,
       t: (key) => key,
-      formatPoints,
     });
 
     expect(items.map((item) => item.value)).toEqual([
       "1",
-      "+1.20",
-      "-0.40",
-      "+0.50",
+      "+1.2",
+      "-0.4",
+      "+0.5",
     ]);
-    expect(
-      getScoringItems({
-        ...scoring,
-        t: (key) => key,
-        formatPoints: formatMemberPoints,
-      }).map((item) => item.value),
-    ).toEqual(["1", "+1.2", "-0.4", "+0.5"]);
   });
   it("uses the legacy bonus fallback when no explicit breakdown is available", () => {
     expect(

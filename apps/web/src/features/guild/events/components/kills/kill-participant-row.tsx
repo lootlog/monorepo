@@ -61,7 +61,7 @@ const buildParticipantScoringView = (
 
   const scoring = getScoringBreakdown(participant);
   const hasManualAdjustment = scoring.manualAdjustmentPoints !== 0;
-  const scoringItems = getScoringItems({ ...scoring, t, formatPoints });
+  const scoringItems = getScoringItems({ ...scoring, t });
 
   return {
     aggregatedMaps,
