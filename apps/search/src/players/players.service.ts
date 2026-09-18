@@ -12,6 +12,39 @@ import { PLAYERS_INDEX } from "./search-index.js";
 import type { IndexPlayersCommand } from "./index-players-command.js";
 import type { PlayerHit } from "./player-hit.js";
 
+const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
+  const knownNames = new Set(
+    players.flatMap((player) =>
+      player.accountId > 0 ? [JSON.stringify([player.world, player.name])] : [],
+    ),
+  );
+
+  const unique = new Map<string, PlayerHit>();
+
+  for (const player of players) {
+    // ponytail: name fallback for truncated legacy IDs; remove after an identity migration.
+    if (
+      player.accountId === 0 &&
+      knownNames.has(JSON.stringify([player.world, player.name]))
+    ) {
+      continue;
+    }
+
+    const key = JSON.stringify([
+      player.world,
+      player.characterId > 0 ? player.characterId : [player.id, player.name],
+    ]);
+
+    const existing = unique.get(key);
+
+    if (!existing || (existing.accountId === 0 && player.accountId > 0)) {
+      unique.set(key, player);
+    }
+  }
+
+  return [...unique.values()];
+};
+
 export const makePlayersModule = (
   meilisearch: Meilisearch,
   logger: AppLogger,
@@ -45,7 +78,7 @@ export const makePlayersModule = (
     return yield* attemptMeilisearch("search.players", () =>
       index.search(searchTerm, query),
     ).pipe(
-      Effect.map((response) => response.hits),
+      Effect.map((response) => uniquePlayers(response.hits)),
       Effect.tapError((error) =>
         Effect.sync(() => logger.error("Players search error", { error })),
       ),

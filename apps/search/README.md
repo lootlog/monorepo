@@ -29,3 +29,18 @@ the batch. Received counts include retry attempts.
 
 This changes no HTTP schemas, RabbitMQ payloads, queue declarations, or document
 primary keys. Deployment and rollback require no data migration.
+
+## Search queries and legacy player records
+
+A single `search` value uses text search on `/players` and `/npcs`, as on `/all`.
+Repeated `search` parameters retain exact-name filtering.
+
+Player results collapse repeated character IDs within the same world and prefer
+records with a known account. An unknown-account record is also omitted when a
+known-account result has the same name and world: older records may contain a
+truncated character ID. Different worlds and different known characters remain
+separate. The limit is an upper bound; deduplication can return fewer results.
+
+The API no longer strips a trailing zero from character IDs when the account is
+unknown. Existing stored records are not rewritten or deleted by this change;
+physical cleanup and a new index identity would require a separate migration.

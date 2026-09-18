@@ -741,7 +741,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const account = String(accountId ?? "");
     const character = String(id ?? "");
 
-    if (account && character.endsWith(account)) {
+    if (Number(account) > 0 && character.endsWith(account)) {
       const characterPart = character.slice(
         0,
         character.length - account.length,
