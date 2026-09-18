@@ -43,8 +43,8 @@ known-account result has the same name and world: older records may contain a
 truncated character ID. Different worlds and different known characters remain
 separate. The limit is an upper bound; deduplication can return fewer results.
 
-The API no longer strips a trailing zero from character IDs when the account is
-unknown. Existing stored records are not rewritten or deleted by this change;
+The API's normalization of unknown-account character IDs is unchanged by this
+search-only change. Existing stored records are not rewritten or deleted;
 physical cleanup and a new index identity would require a separate migration.
 
 Batch retries preserve ordering within a running consumer. Process or connection

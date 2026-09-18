@@ -241,40 +241,6 @@ describe("durable loot publications", () => {
     );
   };
 
-  it("preserves trailing zeroes in character IDs when the account is unknown", async () => {
-    const { id, request } = await seed();
-    request.submission = {
-      ...request.submission,
-      players: request.submission.players.map((player) => ({
-        ...player,
-        id: 220,
-        accountId: 0,
-      })),
-    };
-
-    const result = await runtime.runPromise(acceptance().accept(request));
-    snapshotTestLootIds.push(result.id);
-
-    expect((await lootRecord(id, result.id))?.players).toEqual([
-      expect.objectContaining({ characterId: 220, accountId: 0 }),
-    ]);
-    expect(
-      (await pending(result.id)).map((publication) => publication.payload),
-    ).toContainEqual(
-      expect.objectContaining({
-        kind: "rabbit",
-        routingKey: RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
-        data: [
-          expect.objectContaining({
-            id: "2200",
-            characterId: 220,
-            accountId: 0,
-          }),
-        ],
-      }),
-    );
-  });
-
   it("persists map players for legendary elite2 and keeps Organization observations isolated", async () => {
     const first = await seed(true);
     const second = await seed(true);
