@@ -10,10 +10,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("keeps the last presence snapshot while permissions are rebalanced", async () => {
+it("tracks world changes and keeps the last snapshot while permissions are rebalanced", async () => {
   const gateway = createTestGateway();
 
-  const presence: PresenceWithLocation = {
+  const presence = {
     userId: "user-1",
     organizationIds: ["guild-1"],
     sessionId: "session-1",
@@ -32,7 +32,7 @@ it("keeps the last presence snapshot while permissions are rebalanced", async ()
       prof: "w",
     },
     location: { mapId: 2354, map: "Sala Mroźnych Szeptów", x: 0, y: 0 },
-  };
+  } satisfies PresenceWithLocation;
 
   gateway.request
     .mockResolvedValueOnce({
@@ -57,6 +57,38 @@ it("keeps the last presence snapshot while permissions are rebalanced", async ()
       }),
     ]),
   );
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: "guild-1",
+        revision: 2,
+        changes: [
+          {
+            action: "upsert",
+            presence: {
+              ...presence,
+              character: { ...presence.character, world: "other-world" },
+            },
+          },
+        ],
+      },
+    }),
+  );
+  expect(result.current.presenceData?.has("user-1")).toBe(false);
+  act(() =>
+    gateway.deliver({
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: "guild-1",
+        revision: 3,
+        changes: [{ action: "upsert", presence }],
+      },
+    }),
+  );
+  expect(result.current.presenceData?.get("user-1")).toHaveLength(1);
   const previousPresence = result.current.presenceData;
   expect(result.current.accessState).toBe("allowed");
   act(() =>

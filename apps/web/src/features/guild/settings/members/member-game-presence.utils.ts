@@ -6,15 +6,6 @@ import {
 
 export type MemberGamePresenceByDiscordId = Map<string, PlayerPresence[]>;
 
-export type MemberGamePresenceUpdatePayload = {
-  guildId: string;
-  discordId: string;
-  sessionId?: string;
-  player?: PlayerPresence;
-  disconnected?: boolean;
-  status?: "online" | "offline";
-};
-
 export const mapMemberGamePresenceByDiscordId = (
   players: Record<string, PlayerPresence[]> | undefined,
 ): MemberGamePresenceByDiscordId => {
@@ -27,51 +18,6 @@ export const mapMemberGamePresenceByDiscordId = (
   }
 
   return presenceByDiscordId;
-};
-
-export const applyMemberGamePresenceUpdate = (
-  presenceByDiscordId: MemberGamePresenceByDiscordId | undefined,
-  payload: MemberGamePresenceUpdatePayload,
-): MemberGamePresenceByDiscordId => {
-  const nextPresenceByDiscordId = new Map(presenceByDiscordId ?? []);
-  const { discordId, sessionId, player, disconnected, status } = payload;
-  const disconnectedSessionId = sessionId ?? player?.sessionId;
-
-  if ((disconnected || status === "offline") && disconnectedSessionId) {
-    const existingPresence = nextPresenceByDiscordId.get(discordId) ?? [];
-
-    const filteredPresence = existingPresence.filter(
-      (presence) => presence.sessionId !== disconnectedSessionId,
-    );
-
-    if (filteredPresence.length === 0) {
-      nextPresenceByDiscordId.delete(discordId);
-    } else {
-      nextPresenceByDiscordId.set(discordId, filteredPresence);
-    }
-
-    return nextPresenceByDiscordId;
-  }
-
-  if (!player) {
-    return nextPresenceByDiscordId;
-  }
-
-  const existingPresence = nextPresenceByDiscordId.get(discordId) ?? [];
-
-  const existingIndex = existingPresence.findIndex(
-    (presence) => presence.sessionId === player.sessionId,
-  );
-
-  if (existingIndex >= 0) {
-    const updatedPresence = [...existingPresence];
-    updatedPresence[existingIndex] = player;
-    nextPresenceByDiscordId.set(discordId, updatedPresence);
-  } else {
-    nextPresenceByDiscordId.set(discordId, [...existingPresence, player]);
-  }
-
-  return nextPresenceByDiscordId;
 };
 
 export const isMemberOnlineInGame = (

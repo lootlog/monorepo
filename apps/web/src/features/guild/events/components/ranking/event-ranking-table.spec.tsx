@@ -228,7 +228,7 @@ describe("EventRankingTable", () => {
 
     const rankingRows = screen.getAllByRole("row").slice(1);
     expect(rankingRows[0]?.textContent).toContain("Member 2");
-    expect(rankingRows[0]?.textContent).toContain("103.50");
+    expect(rankingRows[0]?.textContent).toContain("103.5");
     expect(rankingRows[1]?.textContent).toContain("Member 1");
     expect(screen.getByText("3%")).toBeTruthy();
   });

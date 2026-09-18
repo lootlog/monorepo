@@ -13,16 +13,6 @@ export type MemberIdentity = {
   userId: string;
 };
 
-export const formatPoints = (value: number) => {
-  const rounded = Math.round(value * 100) / 100;
-
-  if (Number.isInteger(rounded)) {
-    return String(rounded);
-  }
-
-  return rounded.toFixed(2).replace(/\.?0+$/, "");
-};
-
 export const formatPercentage = (value: number) => `${formatPoints(value)}%`;
 
 export const getMemberKillScoringViewModel = (
@@ -52,12 +42,13 @@ export const getMemberKillScoringViewModel = (
       point.trackingDurationSeconds >= 0
         ? formatDurationHuman(point.trackingDurationSeconds)
         : "-",
-    scoringItems: getScoringItems({ ...scoring, t, formatPoints }),
+    scoringItems: getScoringItems({ ...scoring, t }),
   };
 };
 
 import type { TFunction } from "i18next";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
+import { formatPoints } from "../../utils/format-points";
 import { formatDurationHuman } from "../../utils/format-duration";
 import {
   getScoringBreakdown,

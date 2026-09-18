@@ -1,3 +1,4 @@
+import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import type { PartyGatheringNpc } from "@lootlog/schema/party-ready-room";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
@@ -35,22 +36,10 @@ export const NOTIFICATION_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const buildNotificationRateLimitKey = (userId: string) =>
   `messaging:notification-rate:${userId}`;
 
-const RATE_LIMIT_SCRIPT = `
-local time = redis.call("TIME")
-local now = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
-local window = tonumber(ARGV[1])
-local limit = tonumber(ARGV[2])
-redis.call("ZREMRANGEBYSCORE", KEYS[1], "-inf", now - window)
-local count = redis.call("ZCARD", KEYS[1])
-if count >= limit then
-  local oldest = redis.call("ZRANGE", KEYS[1], 0, 0, "WITHSCORES")
-  local retryAfter = math.max(1, tonumber(oldest[2]) + window - now)
-  return {0, retryAfter}
-end
-redis.call("ZADD", KEYS[1], now, ARGV[3])
-redis.call("PEXPIRE", KEYS[1], window)
-return {1, 0}
-`;
+const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
+  refreshExpiryOnReject: false,
+  includeTimestamp: false,
+});
 
 type NotificationMetadata = {
   readonly discordId: string;

@@ -1,3 +1,4 @@
+import { MemberPresenceBadges } from "./member-presence-badges";
 import type { MemberActivityStatsByDiscordId } from "@/features/guild/settings/members/member-activity-stats.utils";
 import type { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
@@ -18,15 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import { useNavigate } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { BadgeCheck, Gamepad2, Globe2 } from "lucide-react";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { getMemberDisplayData } from "./member-display-data";
@@ -128,59 +122,10 @@ export const MembersTable = ({
                 </span>
                 {onlineSources.length > 0 && (
                   <span className="mt-1 flex shrink-0 items-center gap-1">
-                    {onlineSources.map((source) => {
-                      const Icon = source === "web" ? Globe2 : Gamepad2;
-
-                      const labelKey =
-                        source === "web"
-                          ? "settings.members.webActivity.onlineSources.web"
-                          : "settings.members.webActivity.onlineSources.game";
-
-                      return (
-                        <TooltipProvider key={source} delay={100}>
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <span
-                                  className="inline-flex size-5 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-500"
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  <Icon className="size-3.5" />
-                                </span>
-                              }
-                            />
-                            <TooltipContent side="top">
-                              <p className="text-sm font-semibold">
-                                {t(labelKey)}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    })}
-                    {isGamePresenceVerified && (
-                      <TooltipProvider delay={100}>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <span
-                                className="inline-flex size-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-500"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <BadgeCheck className="size-3.5" />
-                              </span>
-                            }
-                          />
-                          <TooltipContent side="top">
-                            <p className="text-sm font-semibold">
-                              {t(
-                                "settings.members.webActivity.onlineSources.margonemVerified",
-                              )}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                    <MemberPresenceBadges
+                      onlineSources={onlineSources}
+                      isGamePresenceVerified={isGamePresenceVerified}
+                    />
                   </span>
                 )}
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
