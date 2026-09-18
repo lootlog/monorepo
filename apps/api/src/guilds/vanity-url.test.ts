@@ -16,7 +16,7 @@ describe("parseVanityUrl", () => {
     },
   );
 
-  it.each(["battles", "Battles", "battles!", "@me"])(
+  it.each(["battles", "Battles", "battles!", "@me", "Docs", "privacy policy"])(
     "rejects %p because its slug is a reserved route",
     (input) => {
       expect(parseVanityUrl(input)).toEqual({
