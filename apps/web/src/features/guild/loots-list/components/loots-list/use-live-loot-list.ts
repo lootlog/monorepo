@@ -273,7 +273,12 @@ export const useLiveLootList = () => {
         payload.accessPolicyChanges ?? [],
       );
 
-      if (currentGuildId && !payload.guildIds.includes(currentGuildId)) {
+      // Until guilds load, currentGuildId may still be the route's alias.
+      if (
+        guilds &&
+        currentGuildId &&
+        !payload.guildIds.includes(currentGuildId)
+      ) {
         restricted.push(currentGuildId);
       }
 
@@ -301,6 +306,7 @@ export const useLiveLootList = () => {
   }, [
     connected,
     currentGuildId,
+    guilds,
     guildId,
     queryClient,
     socket,
