@@ -1,8 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, spyOn, test } from "bun:test";
 import { Effect } from "effect";
 import { Meilisearch } from "meilisearch";
 import { makePlayersModule } from "../players/players.service.js";
 import { configureMeilisearchIndexes } from "./meilisearch-indexes.service.js";
+
+import { completeMeilisearchTask } from "./search-operation-failure.js";
 
 const logger = { info() {}, warn() {}, error() {} };
 
@@ -23,9 +25,21 @@ const clientWithTask = (
 ) =>
   new Meilisearch({
     host: "http://search.invalid",
-    httpClient: (input) => {
+    httpClient: (input, init) => {
       const path = new URL(String(input)).pathname;
       requests.push(path);
+
+      if (
+        path.endsWith("/documents") &&
+        (init?.method ?? "GET").toUpperCase() === "GET"
+      )
+        return Promise.resolve({ results: [] });
+
+      if (
+        path.endsWith("/settings") &&
+        (init?.method ?? "GET").toUpperCase() === "GET"
+      )
+        return Promise.resolve({});
 
       if (path.startsWith("/tasks/"))
         return Promise.resolve({
@@ -71,5 +85,18 @@ test("indexing observes successful task completion before returning", async () =
       logger,
     ).indexPlayers({ players: [player] }),
   );
-  expect(requests).toEqual(["/indexes/players/documents", "/tasks/1"]);
+  expect(requests).toEqual([
+    "/indexes/players/documents",
+    "/indexes/players/documents",
+    "/tasks/1",
+  ]);
+});
+
+test("task polling uses a bounded timeout and a slower interval", async () => {
+  const client = clientWithTask("succeeded", []);
+  const task = client.index("players").addDocuments([player]);
+  const wait = spyOn(task, "waitTask");
+
+  await Effect.runPromise(completeMeilisearchTask("test.index", () => task));
+  expect(wait).toHaveBeenCalledWith({ interval: 15_000, timeout: 60_000 });
 });

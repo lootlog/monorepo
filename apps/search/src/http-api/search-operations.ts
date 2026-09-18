@@ -87,14 +87,22 @@ export class SearchOperations extends Context.Service<
           players.getPlayers({
             ...query,
             limit: query.limit ?? 10,
-            search: query.search ? [...asArray(query.search)] : undefined,
+            search:
+              query.search &&
+              (Predicate.isString(query.search)
+                ? query.search
+                : [...query.search]),
           }),
         searchNpcs: (query) =>
           npcs.getNpcs({
             ...query,
             ids: query.ids ? [...query.ids] : undefined,
             limit: query.limit ?? 10,
-            search: query.search ? [...asArray(query.search)] : undefined,
+            search:
+              query.search &&
+              (Predicate.isString(query.search)
+                ? query.search
+                : [...query.search]),
           }),
         searchItems: (query) =>
           items.searchItems({
