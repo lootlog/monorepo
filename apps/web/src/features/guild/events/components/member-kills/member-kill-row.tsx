@@ -1,3 +1,4 @@
+import { formatPoints } from "../../utils/format-points";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,10 +15,7 @@ import { cn } from "cn";
 import { NpcTile } from "@/components/tiles";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
 import { formatDateTime } from "../../utils/format-date";
-import {
-  formatPoints,
-  getMemberKillScoringViewModel,
-} from "./member-kills-view-model";
+import { getMemberKillScoringViewModel } from "./member-kills-view-model";
 
 type MemberKillRowProps = {
   kill: EventMemberKill;

@@ -1,3 +1,7 @@
+import {
+  isKillPointCountedInRanking,
+  roundPoints,
+} from "#src/events/kills/event-ranking-policy";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
 import { Clock, Effect } from "effect";
 import type { EventEmitter } from "#src/events/event-emitter";
@@ -126,32 +130,11 @@ export const makeEventPoints = (
     return Math.max(0, Math.round(params.trackingDurationSeconds));
   }
 
-  function isKillPointCountedInRanking(params: {
-    confirmationDeadlineAt: Date | null;
-    confirmedAt: Date | null;
-  }): boolean {
-    if (!params.confirmationDeadlineAt) {
-      return true;
-    }
-
-    if (!params.confirmedAt) {
-      return false;
-    }
-
-    return (
-      params.confirmedAt.getTime() <= params.confirmationDeadlineAt.getTime()
-    );
-  }
-
   function createRankingKey(params: {
     memberId: number;
     heroNpcName: string;
   }): string {
     return `${params.memberId}:${params.heroNpcName}`;
-  }
-
-  function roundPointsValue(value: number): number {
-    return Math.round(value * 10000) / 10000;
   }
 
   function resolveManualAdjustmentPoints(params: {
@@ -165,14 +148,14 @@ export const makeEventPoints = (
     }
 
     if (existingRanking.manualAdjustmentPoints !== 0) {
-      return roundPointsValue(existingRanking.manualAdjustmentPoints);
+      return roundPoints(existingRanking.manualAdjustmentPoints);
     }
 
     if (!existingRanking.pointsModified) {
       return 0;
     }
 
-    return roundPointsValue(existingRanking.totalPoints - computedTotalPoints);
+    return roundPoints(existingRanking.totalPoints - computedTotalPoints);
   }
 
   function calculateTrackingDurationPercentage(params: {
@@ -452,7 +435,7 @@ export const makeEventPoints = (
             wasPresent: killPoint.wasPresent,
           });
 
-        const effectivePoints = roundPointsValue(
+        const effectivePoints = roundPoints(
           totalPoints + killPoint.manualAdjustmentPoints,
         );
 
@@ -519,7 +502,7 @@ export const makeEventPoints = (
         }
 
         if (existing) {
-          existing.totalPoints = roundPointsValue(
+          existing.totalPoints = roundPoints(
             existing.totalPoints + recalculatedKillPoint.points,
           );
           existing.totalKills += 1;
@@ -564,7 +547,7 @@ export const makeEventPoints = (
         });
 
         const persistedRankingData = {
-          totalPoints: roundPointsValue(
+          totalPoints: roundPoints(
             ranking.totalPoints + manualAdjustmentPoints,
           ),
           manualAdjustmentPoints,

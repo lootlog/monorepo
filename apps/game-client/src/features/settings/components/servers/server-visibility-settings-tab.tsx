@@ -8,6 +8,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ServerOrderList } from "@/features/settings/components/servers/server-order-list";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
+import { filterGuildsByVisibility } from "@lootlog/domain/guild-preferences";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,24 +36,15 @@ export const ServerVisibilitySettingsTab = () => {
   const hiddenGuildCount = orderedGuilds.length - visibleGuildIds.length;
   const hasHiddenGuilds = hiddenGuildCount > 0;
 
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-
-  const filteredGuilds = orderedGuilds.filter((guild) => {
-    const isHidden = hiddenGuildIdSet.has(guild.id);
-
-    if (visibilityFilter === "visible" && isHidden) {
-      return false;
-    }
-
-    if (visibilityFilter === "hidden" && !isHidden) {
-      return false;
-    }
-
-    return guild.name.toLocaleLowerCase().includes(normalizedQuery);
-  });
+  const filteredGuilds = filterGuildsByVisibility(
+    orderedGuilds,
+    hiddenGuildIds,
+    visibilityFilter,
+    query,
+  );
 
   const accessibleGuildIdSet = new Set(orderedGuilds.map((guild) => guild.id));
-  const isFiltered = normalizedQuery !== "" || visibilityFilter !== "all";
+  const isFiltered = query.trim() !== "" || visibilityFilter !== "all";
 
   // Derived from the cache at click time: rapid clicks each build on the
   // previous optimistic state instead of the one this render was given.
