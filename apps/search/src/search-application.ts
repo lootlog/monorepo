@@ -9,6 +9,7 @@ import {
   Layer,
   Queue,
   Redacted,
+  Schedule,
   Schema,
   Stream,
 } from "effect";
@@ -47,8 +48,17 @@ export const SearchConsumers = Layer.effectDiscard(
         Stream.groupedWithin(batchMessageLimit, "2 seconds"),
         Stream.runForEach((batch) =>
           Effect.gen(function* () {
+            const items = batch.flatMap(({ items }) => items);
+
             const outcome = yield* Effect.exit(
-              Effect.suspend(() => index(batch.flatMap(({ items }) => items))),
+              Effect.suspend(() => index(items)).pipe(
+                Effect.tapError(() =>
+                  Effect.logWarning(
+                    "Search indexing failed; retrying the ordered batch",
+                  ).pipe(Effect.annotateLogs({ queue: queueName })),
+                ),
+                Effect.retry(Schedule.spaced("5 seconds")),
+              ),
             );
 
             for (const { completed } of batch) {
