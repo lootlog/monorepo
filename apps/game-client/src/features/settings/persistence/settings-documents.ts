@@ -7,7 +7,6 @@ import {
   type SettingsFieldDefinition,
 } from "@lootlog/domain/settings-documents";
 import {
-  cloneValue,
   collectLeafPaths,
   getPath,
   setPath,
@@ -23,7 +22,6 @@ import {
   type SettingsDocumentsControllerGetPreferencesParams,
   type SettingsDocumentsResponseDtoOutput,
 } from "@lootlog/client/main";
-import { isRecord } from "@lootlog/schema/records";
 
 export type SettingsDocuments = SettingsDocumentsResponseDtoOutput;
 
@@ -143,7 +141,7 @@ export const getSettingsDefaultValue = <TKey extends ServerSettingsCatalogKey>(
 
   // SAFETY: the catalog default for `${domain}.${field}` is typed by
   // SettingsCatalogValue; structuredClone keeps callers from mutating it.
-  return cloneValue(
+  return structuredClone(
     getFieldDefinition(domain, field)?.defaultValue,
   ) as SettingsCatalogValue<TKey>;
 };
@@ -213,7 +211,7 @@ export const applySettingsOperation = (
   const resolution = selectSettingsDomain(documents, operation.domain);
 
   if (!documents || !resolution) return documents;
-  const effective = cloneValue(resolution.effective);
+  const effective = structuredClone(resolution.effective);
   const sources = { ...resolution.sources };
 
   for (const { path, value } of collectLeafPaths(operation.set)) {
@@ -279,7 +277,3 @@ export const mergeSettingsDocuments = (
 /** Structural equality for catalog-shaped values (plain JSON). */
 export const areSettingsValuesEqual = (left: unknown, right: unknown) =>
   left === right || JSON.stringify(left) === JSON.stringify(right);
-
-export const isSettingsRecord = (
-  value: unknown,
-): value is Record<string, unknown> => isRecord(value);

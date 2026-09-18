@@ -1,4 +1,4 @@
-import { isRecord } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
@@ -291,7 +291,10 @@ function toClock(value: unknown, fallback: string): string {
 }
 
 function parseAction(value: unknown): EventScoringAction | null {
-  if (!isRecord(value) || !isOneOf(EVENT_SCORING_ACTION_TYPES, value.type)) {
+  if (
+    !Predicate.isObject(value) ||
+    !isOneOf(EVENT_SCORING_ACTION_TYPES, value.type)
+  ) {
     return null;
   }
 
@@ -312,7 +315,10 @@ function parseAction(value: unknown): EventScoringAction | null {
 }
 
 function parseCondition(value: unknown): EventScoringCondition | null {
-  if (!isRecord(value) || !isOneOf(EVENT_SCORING_CONDITION_TYPES, value.type)) {
+  if (
+    !Predicate.isObject(value) ||
+    !isOneOf(EVENT_SCORING_CONDITION_TYPES, value.type)
+  ) {
     return null;
   }
 
@@ -385,7 +391,7 @@ export function normalizeEventScoringMode(value: unknown): EventScoringMode {
 }
 
 function parseRule(rule: unknown, index: number): EventScoringRule | null {
-  if (!isRecord(rule)) {
+  if (!Predicate.isObject(rule)) {
     return null;
   }
 
@@ -421,7 +427,7 @@ function parseRule(rule: unknown, index: number): EventScoringRule | null {
 }
 
 export function normalizeEventScoringRules(value: unknown): EventScoringRules {
-  if (!isRecord(value)) {
+  if (!Predicate.isObject(value)) {
     return cloneDefaultRules();
   }
 

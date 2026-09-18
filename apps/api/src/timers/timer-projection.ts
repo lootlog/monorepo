@@ -1,16 +1,13 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
-import { isRecord } from "@lootlog/schema/records";
 import {
   NpcTypeEnum as NpcType,
   NpcTypeSchema,
 } from "@lootlog/schema/npc-type";
-import { Schema } from "effect";
+import { Schema, Predicate } from "effect";
 import type { Member, PlayerSnapshot, Timer } from "#src/timers/timers.types";
-import {
-  isoDatetimeCodec,
-  nullableIsoDatetimeCodec,
-} from "#src/shared/schema/response-codecs";
+import { nullableIsoDatetimeCodec } from "#src/shared/schema/response-codecs";
 
 const isNpcType = Schema.is(NpcTypeSchema);
 
@@ -30,7 +27,7 @@ const CachedTimerMember = Schema.Struct({
   active: Schema.Boolean,
   globalUserId: Schema.NullOr(Schema.String),
   lastDiscordSyncAt: nullableIsoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  updatedAt: IsoDateTime,
 });
 
 const CachedTimerCharacter = Schema.Struct({
@@ -46,13 +43,13 @@ export const CachedTimerProjectionSchema = Schema.Struct({
   npcId: Schema.Number,
   timerKey: Schema.String,
   world: Schema.String,
-  minSpawnTime: isoDatetimeCodec,
-  maxSpawnTime: isoDatetimeCodec,
+  minSpawnTime: IsoDateTime,
+  maxSpawnTime: IsoDateTime,
   npc: Schema.Unknown,
   wasReset: Schema.Boolean,
   actorCharacterLvl: Schema.NullOr(Schema.Number),
   deletedAt: nullableIsoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  updatedAt: IsoDateTime,
   member: Schema.optionalKey(Schema.NullOr(CachedTimerMember)),
   actorCharacter: Schema.optionalKey(Schema.NullOr(CachedTimerCharacter)),
 });
@@ -60,7 +57,7 @@ export const CachedTimerProjectionSchema = Schema.Struct({
 export type CachedTimerProjection = typeof CachedTimerProjectionSchema.Type;
 
 export const mapTimerNpc = (npc: unknown) => {
-  if (!isRecord(npc)) return null;
+  if (!Predicate.isObject(npc)) return null;
   const value = npc;
 
   const rawType =
@@ -177,7 +174,7 @@ export const mapTimerResponse = (timer: CachedTimerProjection) => {
 };
 
 export const timerNpcField = (npc: unknown, key: string) =>
-  isRecord(npc) ? npc[key] : undefined;
+  Predicate.isObject(npc) ? npc[key] : undefined;
 
 export type TimerPublishedEvent<
   Key extends

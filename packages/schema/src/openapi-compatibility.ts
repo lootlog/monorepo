@@ -1,4 +1,4 @@
-import { isRecord as isJsonObject } from "./records.js";
+import { Predicate } from "effect";
 
 const HTTP_METHODS = [
   "get",
@@ -42,7 +42,7 @@ export const normalizeNullableSchema = (value: JsonObject): void => {
     if (!Array.isArray(variants)) continue;
 
     const nonNullVariants = variants.filter(
-      (variant) => !isJsonObject(variant) || variant.type !== "null",
+      (variant) => !Predicate.isObject(variant) || variant.type !== "null",
     );
 
     if (nonNullVariants.length === variants.length) continue;
@@ -50,7 +50,10 @@ export const normalizeNullableSchema = (value: JsonObject): void => {
     delete value[unionKey];
     value.nullable = true;
 
-    if (nonNullVariants.length === 1 && isJsonObject(nonNullVariants[0])) {
+    if (
+      nonNullVariants.length === 1 &&
+      Predicate.isObject(nonNullVariants[0])
+    ) {
       Object.assign(value, nonNullVariants[0]);
     } else {
       value[unionKey] = nonNullVariants;
@@ -62,9 +65,9 @@ const removeEmptyUnknownIntersection = (value: JsonObject): void => {
   if (
     Array.isArray(value.allOf) &&
     value.allOf.length === 1 &&
-    isJsonObject(value.allOf[0]) &&
+    Predicate.isObject(value.allOf[0]) &&
     value.allOf[0].type === "object" &&
-    isJsonObject(value.allOf[0].additionalProperties) &&
+    Predicate.isObject(value.allOf[0].additionalProperties) &&
     Object.keys(value.allOf[0].additionalProperties).length === 0
   ) {
     delete value.allOf;
@@ -78,7 +81,7 @@ const normalizeSchema = (value: unknown): void => {
     return;
   }
 
-  if (!isJsonObject(value)) return;
+  if (!Predicate.isObject(value)) return;
 
   normalizeSchemaAnnotations(value);
 
@@ -94,7 +97,7 @@ export const setOpenApiCompatibilityValue = (
   path: ReadonlyArray<string>,
   value: unknown,
 ): void => {
-  if (!isJsonObject(input) || path.length === 0) {
+  if (!Predicate.isObject(input) || path.length === 0) {
     throw new Error("OpenAPI compatibility path must resolve inside an object");
   }
 
@@ -103,7 +106,7 @@ export const setOpenApiCompatibilityValue = (
   for (const segment of path.slice(0, -1)) {
     const next = current[segment];
 
-    if (!isJsonObject(next)) {
+    if (!Predicate.isObject(next)) {
       throw new Error(
         `OpenAPI compatibility path does not exist: ${path.join(".")}`,
       );
@@ -123,15 +126,15 @@ const normalizeDocumentMetadata = (document: JsonObject): void => {
   document.security = undefined;
   document.tags = [];
 
-  if (isJsonObject(document.info)) document.info.contact = {};
+  if (Predicate.isObject(document.info)) document.info.contact = {};
 
   const components = document.components;
 
-  if (!isJsonObject(components)) return;
+  if (!Predicate.isObject(components)) return;
   const securitySchemes = components.securitySchemes;
 
   if (
-    isJsonObject(securitySchemes) &&
+    Predicate.isObject(securitySchemes) &&
     Object.keys(securitySchemes).length === 0
   ) {
     delete components.securitySchemes;
@@ -139,10 +142,13 @@ const normalizeDocumentMetadata = (document: JsonObject): void => {
     return;
   }
 
-  if (!isJsonObject(securitySchemes)) return;
+  if (!Predicate.isObject(securitySchemes)) return;
 
   for (const securityScheme of Object.values(securitySchemes)) {
-    if (isJsonObject(securityScheme) && securityScheme.scheme === "Bearer") {
+    if (
+      Predicate.isObject(securityScheme) &&
+      securityScheme.scheme === "Bearer"
+    ) {
       securityScheme.scheme = "bearer";
     }
   }
@@ -159,9 +165,12 @@ const normalizeOperation = (
 
   if (typeof operation.operationId !== "string") return;
 
-  if (responseDescriptions !== undefined && isJsonObject(operation.responses)) {
+  if (
+    responseDescriptions !== undefined &&
+    Predicate.isObject(operation.responses)
+  ) {
     for (const [status, response] of Object.entries(operation.responses)) {
-      if (!isJsonObject(response)) continue;
+      if (!Predicate.isObject(response)) continue;
       response.description =
         responseDescriptions[`${operation.operationId}:${status}`] ?? "";
     }
@@ -170,7 +179,7 @@ const normalizeOperation = (
   if (!Array.isArray(operation.parameters)) return;
 
   for (const parameter of operation.parameters) {
-    if (!isJsonObject(parameter) || typeof parameter.name !== "string")
+    if (!Predicate.isObject(parameter) || typeof parameter.name !== "string")
       continue;
 
     const replacement =
@@ -185,22 +194,22 @@ export const preserveOpenApi30Contract = (
   parameterSchemas: Readonly<Record<string, JsonObject>> = {},
   responseDescriptions?: Readonly<Record<string, string>>,
 ): void => {
-  if (!isJsonObject(input)) {
+  if (!Predicate.isObject(input)) {
     throw new Error("OpenAPI document must be an object");
   }
 
   normalizeSchema(input);
   normalizeDocumentMetadata(input);
 
-  if (!isJsonObject(input.paths)) return;
+  if (!Predicate.isObject(input.paths)) return;
 
   for (const path of Object.values(input.paths)) {
-    if (!isJsonObject(path)) continue;
+    if (!Predicate.isObject(path)) continue;
 
     for (const method of HTTP_METHODS) {
       const operation = path[method];
 
-      if (isJsonObject(operation)) {
+      if (Predicate.isObject(operation)) {
         normalizeOperation(operation, parameterSchemas, responseDescriptions);
       }
     }

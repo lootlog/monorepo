@@ -1,5 +1,4 @@
-import { isRecord } from "@lootlog/schema/records";
-import { Schema } from "effect";
+import { Schema, Predicate } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
@@ -22,7 +21,8 @@ const unique = (values: string[]): string[] => [
 ];
 
 const parseCard = (value: unknown): ReservationCatalogCard => {
-  if (!isRecord(value)) throw new Error("Invalid reservation catalog card");
+  if (!Predicate.isObject(value))
+    throw new Error("Invalid reservation catalog card");
   const coercedLevel = Number(value.lvl);
 
   return {
@@ -69,9 +69,12 @@ export const parseReservationCatalogPayload = (
   }
 
   const record =
-    isRecord(decoded) && isRecord(decoded.data) ? decoded.data : decoded;
+    Predicate.isObject(decoded) && Predicate.isObject(decoded.data)
+      ? decoded.data
+      : decoded;
 
-  if (!isRecord(record)) throw new Error("Invalid reservation catalog payload");
+  if (!Predicate.isObject(record))
+    throw new Error("Invalid reservation catalog payload");
 
   const spots = Object.entries(record).map(([name, entry]) => {
     const cards = (Array.isArray(entry) ? entry : [entry]).map(parseCard);

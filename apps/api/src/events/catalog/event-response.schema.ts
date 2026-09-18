@@ -1,7 +1,7 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 import { Schema } from "effect";
 import {
-  isoDatetimeCodec,
   jsonValueSchema,
   nullableIsoDatetimeCodec,
 } from "#src/shared/schema/response-codecs";
@@ -50,8 +50,8 @@ export const EventListItemResponse = Schema.Struct({
   active: Schema.Boolean,
   startsAt: nullableIsoDatetimeCodec,
   endsAt: nullableIsoDatetimeCodec,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
   heroNpcs: Schema.Array(EventHeroNpcResponse),
 });
 
@@ -107,7 +107,7 @@ const RankingEditHistoryEntryResponse = Schema.Struct({
   editedByUserId: Schema.String,
   editedByName: Schema.NullOr(Schema.String),
   comment: Schema.NullOr(Schema.String),
-  editedAt: isoDatetimeCodec,
+  editedAt: IsoDateTime,
 });
 
 const EventRankingEntryResponse = Schema.Struct({
@@ -120,7 +120,7 @@ const EventRankingEntryResponse = Schema.Struct({
   totalTimeSeconds: Schema.Number,
   avgAfkPercentage: Schema.Number,
   pointsModified: Schema.Boolean,
-  updatedAt: isoDatetimeCodec,
+  updatedAt: IsoDateTime,
   member: EventRankingMemberResponse,
   editHistory: Schema.Array(RankingEditHistoryEntryResponse),
 });
@@ -129,8 +129,8 @@ export const EventRankingResponse = Schema.Array(EventRankingEntryResponse);
 
 const PendingParticipationConfirmationResponse = Schema.Struct({
   killId: Schema.String,
-  killedAt: isoDatetimeCodec,
-  confirmationDeadlineAt: isoDatetimeCodec,
+  killedAt: IsoDateTime,
+  confirmationDeadlineAt: IsoDateTime,
   heroNpc: EventHeroNpcResponse,
 });
 
@@ -142,8 +142,8 @@ export const PendingParticipationConfirmationsResponse = Schema.Struct({
 const EventTimerResponse = Schema.Struct({
   npcId: Schema.Number,
   world: Schema.String,
-  minSpawnTime: isoDatetimeCodec,
-  maxSpawnTime: isoDatetimeCodec,
+  minSpawnTime: IsoDateTime,
+  maxSpawnTime: IsoDateTime,
   npc: Schema.Struct({
     name: Schema.String,
     icon: Schema.NullOr(Schema.String),

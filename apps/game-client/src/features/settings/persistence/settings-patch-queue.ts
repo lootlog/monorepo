@@ -1,6 +1,6 @@
 /* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { Predicate } from "effect";
 import type { QueryKey } from "@tanstack/react-query";
-import { isRecord } from "@lootlog/schema/records";
 import type { SettingsOperation, SettingsScope } from "./settings-documents";
 import type { SettingsSaveStatus } from "./settings-save-status.store";
 
@@ -53,7 +53,9 @@ const mergeSet = (
     const existing = merged[key];
 
     merged[key] =
-      isRecord(existing) && isRecord(value) ? mergeSet(existing, value) : value;
+      Predicate.isObject(existing) && Predicate.isObject(value)
+        ? mergeSet(existing, value)
+        : value;
   }
 
   return merged;
@@ -72,7 +74,7 @@ const removePath = (set: Record<string, unknown>, path: string) => {
 
   const nested = set[head];
 
-  if (isRecord(nested)) removePath(nested, rest.join("."));
+  if (Predicate.isObject(nested)) removePath(nested, rest.join("."));
 };
 
 const mergeOperations = (

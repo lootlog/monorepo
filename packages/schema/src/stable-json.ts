@@ -1,8 +1,8 @@
-import { isRecord } from "./records.js";
+import { Predicate } from "effect";
 
 export const stableJsonStringify = (value: unknown): string =>
   JSON.stringify(value, (_key, entry) =>
-    isRecord(entry)
+    Predicate.isObject(entry)
       ? Object.fromEntries(
           Object.keys(entry)
             .sort()

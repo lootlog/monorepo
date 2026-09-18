@@ -5,16 +5,16 @@ import {
   discordPermissionFields,
   DiscordGuildSyncStatus,
 } from "@lootlog/schema/discord";
-import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
+import { NonNegativeInt } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import { RabbitRoutingKey } from "./topology.js";
 
 export const GameCharacterOffline = Schema.Struct({
-  userId: NonEmptyString,
-  discordId: NonEmptyString,
-  world: NonEmptyString,
-  characterId: NonEmptyString,
-  organizationIds: Schema.Array(NonEmptyString),
+  userId: Schema.NonEmptyString,
+  discordId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  characterId: Schema.NonEmptyString,
+  organizationIds: Schema.Array(Schema.NonEmptyString),
   disconnectedAt: NonNegativeInt,
 });
 
@@ -25,29 +25,29 @@ const NullableString = Schema.NullOr(Schema.String);
 const NullableNumber = Schema.NullOr(Schema.Number);
 
 const GuildRole = Schema.Struct({
-  id: NonEmptyString,
-  name: NonEmptyString,
+  id: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
   color: Schema.Number,
   admin: Schema.Boolean,
   position: Schema.Number,
 });
 
 export const GuildCreated = Schema.Struct({
-  guildId: NonEmptyString,
-  name: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
   icon: NullableString,
-  ownerId: NonEmptyString,
+  ownerId: Schema.NonEmptyString,
   roles: Schema.Array(GuildRole),
 });
 
 export const GuildUpdated = Schema.Struct({
-  guildId: NonEmptyString,
-  name: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
   icon: NullableString,
-  ownerId: NonEmptyString,
+  ownerId: Schema.NonEmptyString,
 });
 
-export const GuildDeleted = Schema.Struct({ guildId: NonEmptyString });
+export const GuildDeleted = Schema.Struct({ guildId: Schema.NonEmptyString });
 
 export type GuildCreated = typeof GuildCreated.Type;
 
@@ -56,13 +56,13 @@ export type GuildUpdated = typeof GuildUpdated.Type;
 export type GuildDeleted = typeof GuildDeleted.Type;
 
 export const GuildRoleChanged = Schema.Struct({
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   ...GuildRole.fields,
 });
 
 export const GuildRoleDeleted = Schema.Struct({
-  guildId: NonEmptyString,
-  id: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  id: Schema.NonEmptyString,
 });
 
 export type GuildRoleChanged = typeof GuildRoleChanged.Type;
@@ -70,40 +70,40 @@ export type GuildRoleChanged = typeof GuildRoleChanged.Type;
 export type GuildRoleDeleted = typeof GuildRoleDeleted.Type;
 
 export const GuildMemberChanged = Schema.Struct({
-  guildId: NonEmptyString,
-  discordId: NonEmptyString,
-  userId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  discordId: Schema.NonEmptyString,
+  userId: Schema.NonEmptyString,
 });
 
 export const PresenceCheckRequested = Schema.Struct({
-  guildId: NonEmptyString,
-  mapName: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  mapName: Schema.NonEmptyString,
 });
 
 export const PresenceCoverageChecked = Schema.Struct({
-  guildId: NonEmptyString,
-  mapName: NonEmptyString,
-  discordId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  mapName: Schema.NonEmptyString,
+  discordId: Schema.NonEmptyString,
   hasPlayer: Schema.Boolean,
   isAfk: Schema.optional(Schema.Boolean),
 });
 
 const DiscordGuildChannel = Schema.Struct({
-  guildId: NonEmptyString,
-  channelId: NonEmptyString,
-  name: NonEmptyString,
-  channelType: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  channelId: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
+  channelType: Schema.NonEmptyString,
   parentId: NullableString,
   position: Schema.Number,
   active: Schema.Boolean,
   canView: Schema.Boolean,
   canSend: Schema.Boolean,
   ...discordPermissionFields,
-  lastSyncedAt: NonEmptyString,
+  lastSyncedAt: Schema.NonEmptyString,
 });
 
 const DiscordGuildSyncState = Schema.Struct({
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   status: DiscordGuildSyncStatus,
   ...discordPermissionFields,
   channelCount: NonNegativeInt,
@@ -111,49 +111,49 @@ const DiscordGuildSyncState = Schema.Struct({
   lastAttemptAt: NullableString,
   lastSuccessAt: NullableString,
   lastError: NullableString,
-  updatedAt: NonEmptyString,
+  updatedAt: Schema.NonEmptyString,
 });
 
 export const DiscordGuildChannelsSynced = Schema.Struct({
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   channels: Schema.Array(DiscordGuildChannel),
   syncState: DiscordGuildSyncState,
 });
 
 export const DiscordGuildChannelUpserted = Schema.Struct({
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   channel: DiscordGuildChannel,
   syncState: DiscordGuildSyncState,
 });
 
 export const DiscordGuildChannelsSyncFailed = Schema.Struct({
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   status: DiscordGuildSyncStatus,
-  lastAttemptAt: NonEmptyString,
-  lastError: NonEmptyString,
+  lastAttemptAt: Schema.NonEmptyString,
+  lastError: Schema.NonEmptyString,
 });
 
 export const DiscordGuildSyncStateUpdated = Schema.Struct({
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   syncState: DiscordGuildSyncState,
 });
 
 export const OrganizationScopedEvent = Schema.Union([
-  Schema.Struct({ guildId: NonEmptyString }),
-  Schema.Struct({ organizationId: NonEmptyString }),
+  Schema.Struct({ guildId: Schema.NonEmptyString }),
+  Schema.Struct({ organizationId: Schema.NonEmptyString }),
 ]);
 
 export const PartyReadyRoomUpdated = Schema.Struct({
-  recipientDiscordId: NonEmptyString,
-  eligibleGuildIds: Schema.Array(NonEmptyString),
+  recipientDiscordId: Schema.NonEmptyString,
+  eligibleGuildIds: Schema.Array(Schema.NonEmptyString),
   update: Schema.Unknown,
 });
 
 export const NotificationVolunteer = Schema.Struct({
-  notificationId: NonEmptyString,
-  targetDiscordId: NonEmptyString,
-  volunteerDiscordId: NonEmptyString,
-  world: NonEmptyString,
+  notificationId: Schema.NonEmptyString,
+  targetDiscordId: Schema.NonEmptyString,
+  volunteerDiscordId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
   character: Schema.Unknown,
 });
 
@@ -174,8 +174,8 @@ export const GuildKillsAcceptedV1 = Schema.Struct({
   ),
   feedEntry: Schema.optional(UserFeedItem),
   version: Schema.Literal(1),
-  guildId: NonEmptyString,
-  world: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
   npc: Schema.Struct({ type: NpcTypeSchema, lvl: NonNegativeInt }),
 });
 
@@ -184,7 +184,7 @@ export type GuildKillsAcceptedV1 = typeof GuildKillsAcceptedV1.Type;
 export const GuildLootCreatedEventV2 = Schema.Struct({
   feedEntry: Schema.optional(UserFeedItem),
   version: Schema.Literal(2),
-  guildId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
   lootId: NonNegativeInt,
   npcs: Schema.Array(GuildLootEventNpc),
 });
@@ -202,8 +202,8 @@ export type GuildLootShareUpdatedEventV2 =
 export const ReservationChangedEventV2 = Schema.Struct({
   version: Schema.Literal(2),
   action: Schema.Literals(["created", "updated", "deleted", "sharing-changed"]),
-  sourceGuildId: NonEmptyString,
-  audienceGuildIds: Schema.Array(NonEmptyString),
+  sourceGuildId: Schema.NonEmptyString,
+  audienceGuildIds: Schema.Array(Schema.NonEmptyString),
   reservationId: Schema.NullOr(NonNegativeInt),
   spotId: Schema.NullOr(Schema.String),
 });
@@ -211,62 +211,62 @@ export const ReservationChangedEventV2 = Schema.Struct({
 export type ReservationChangedEventV2 = typeof ReservationChangedEventV2.Type;
 
 export const EventScope = Schema.Struct({
-  guildId: NonEmptyString,
-  eventId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  eventId: Schema.NonEmptyString,
 });
 
 export const EventMapStatusUpdated = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
-  mapId: NonEmptyString,
+  mapId: Schema.NonEmptyString,
   reason: Schema.optional(Schema.String),
 });
 
 export const EventHeroKilled = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
-  heroId: Schema.optional(NonEmptyString),
+  heroId: Schema.optional(Schema.NonEmptyString),
 });
 
 export const EventRespawnWindowChanged = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
-  heroId: NonEmptyString,
+  heroId: Schema.NonEmptyString,
 });
 
 export const ActivityLogCreated = Schema.Struct({
-  userId: NonEmptyString,
-  guildId: Schema.optional(NonEmptyString),
-  action: NonEmptyString,
-  entityType: Schema.optional(NonEmptyString),
+  userId: Schema.NonEmptyString,
+  guildId: Schema.optional(Schema.NonEmptyString),
+  action: Schema.NonEmptyString,
+  entityType: Schema.optional(Schema.NonEmptyString),
   entityId: Schema.optional(Schema.Union([Schema.String, Schema.Number])),
   metadata: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
 
 export const NotificationTimerUpdated = Schema.Struct({
-  guildId: NonEmptyString,
-  world: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
   npcId: NonNegativeInt,
-  timerKey: NonEmptyString,
-  minSpawnTime: NonEmptyString,
-  maxSpawnTime: NonEmptyString,
+  timerKey: Schema.NonEmptyString,
+  minSpawnTime: Schema.NonEmptyString,
+  maxSpawnTime: Schema.NonEmptyString,
   npc: Schema.optional(
     Schema.NullOr(Schema.Struct({ name: Schema.optional(Schema.String) })),
   ),
 });
 
 export const NotificationTimerDeleted = Schema.Struct({
-  guildId: NonEmptyString,
-  world: NonEmptyString,
-  timerKey: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  world: Schema.NonEmptyString,
+  timerKey: Schema.NonEmptyString,
   npcId: Schema.optional(NonNegativeInt),
 });
 
 export const LootCreatedNotificationEventV2 = Schema.Struct({
   version: Schema.Literal(2),
   lootId: NonNegativeInt,
-  world: NonEmptyString,
-  guildIds: Schema.Array(NonEmptyString),
+  world: Schema.NonEmptyString,
+  guildIds: Schema.Array(Schema.NonEmptyString),
   itemIds: Schema.Array(NonNegativeInt),
   itemNames: Schema.Array(Schema.String),
   npcs: Schema.Array(
@@ -278,18 +278,18 @@ export const LootCreatedNotificationEventV2 = Schema.Struct({
 });
 
 export const DiscordNotificationDeliveryResult = Schema.Struct({
-  notificationJobId: NonEmptyString,
+  notificationJobId: Schema.NonEmptyString,
   success: Schema.Boolean,
   retryable: Schema.Boolean,
   providerMessageId: Schema.optional(NullableString),
   errorCode: Schema.optional(NullableString),
   errorMessage: Schema.optional(NullableString),
-  deliveredAt: NonEmptyString,
+  deliveredAt: Schema.NonEmptyString,
 });
 
 export const DiscordGuildChannelDeleted = Schema.Struct({
-  guildId: NonEmptyString,
-  channelId: NonEmptyString,
+  guildId: Schema.NonEmptyString,
+  channelId: Schema.NonEmptyString,
   syncState: DiscordGuildSyncState,
 });
 
@@ -297,10 +297,10 @@ export const DiscordGuildChannelDeleted = Schema.Struct({
 export const UserOnlineCheckpointV1 = Schema.Struct({
   version: Schema.Literal(1),
   type: Schema.Literal("checkpoint"),
-  userId: NonEmptyString,
-  sessionId: NonEmptyString,
-  segmentId: NonEmptyString,
-  world: Schema.optional(NonEmptyString),
+  userId: Schema.NonEmptyString,
+  sessionId: Schema.NonEmptyString,
+  segmentId: Schema.NonEmptyString,
+  world: Schema.optional(Schema.NonEmptyString),
   startedAt: DateTimeWithOffsetString,
   endedAt: DateTimeWithOffsetString,
   observedAt: DateTimeWithOffsetString,
