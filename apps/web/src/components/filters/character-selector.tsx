@@ -72,9 +72,13 @@ const renderPlaceholderAvatar = () => (
 const getCharacterDetails = (character: BattleCharacter) => {
   const world = capitalizeFirstLetter(character.world);
 
-  return character.lvl === null || character.prof === null
+  // A battlelog deployed before these fields existed omits them entirely.
+  const level = character.lvl ?? null;
+  const profession = character.prof ?? null;
+
+  return level === null || profession === null
     ? world
-    : `${world} · ${character.lvl}${character.prof}`;
+    : `${world} · ${level}${profession}`;
 };
 
 export function CharacterSelector(props: CharacterSelectorProps) {
