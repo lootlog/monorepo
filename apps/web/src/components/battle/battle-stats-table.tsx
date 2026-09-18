@@ -25,6 +25,8 @@ interface BattleStatsTableProps {
   headerActions?: ReactNode;
   hideZeros?: boolean;
   onHideZerosChange?: (value: boolean) => void;
+  /** Only the duel table supports it: the group table needs its own horizontal scroller. */
+  pinnedHeader?: boolean;
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
 
@@ -39,6 +41,7 @@ export function BattleStatsTable({
   headerActions,
   hideZeros,
   onHideZerosChange,
+  pinnedHeader,
   statsCustomizationConfig,
 }: BattleStatsTableProps) {
   const { t } = useTranslation();
@@ -100,6 +103,7 @@ export function BattleStatsTable({
         headerActions={headerActions}
         hideZeros={hideZeros}
         onHideZerosChange={onHideZerosChange}
+        pinnedHeader={pinnedHeader}
         statsCustomizationConfig={statsCustomizationConfig}
       />
     );

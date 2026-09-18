@@ -9,6 +9,7 @@ import {
   BATTLE_DETAIL_LOG_CAP_EDGE_CLASS_NAME,
   BATTLE_DETAIL_PANELS_COLUMN_CLASS_NAME,
   BATTLE_DETAIL_PANELS_CONTENT_CLASS_NAME,
+  BATTLE_DETAIL_PANELS_PIN_TOP_CLASS_NAME,
   BATTLE_DETAIL_TABS_SLOT_CLASS_NAME,
   getBattleDetailContentClassName,
 } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-layout";
@@ -17,6 +18,7 @@ import { BattleDetailPanelTabs } from "@/features/user/battle-panel/battle-panel
 import { BattleOverview } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-overview";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { cn } from "cn";
 import {
   useBattleDetailView,
   type BattleDetailViewProps,
@@ -49,6 +51,7 @@ export function BattleDetailView({
     scrollViewportRef,
     battleColumnViewportRef,
     battleColumnContentRef,
+    panelsColumnViewportRef,
     chartSlotRef,
     logScrollViewportRef,
     handleBattleScroll,
@@ -149,8 +152,16 @@ export function BattleDetailView({
           </div>
         </ScrollArea>
 
-        <ScrollArea className={BATTLE_DETAIL_PANELS_COLUMN_CLASS_NAME}>
-          <div className={BATTLE_DETAIL_PANELS_CONTENT_CLASS_NAME}>
+        <ScrollArea
+          ref={panelsColumnViewportRef}
+          className={BATTLE_DETAIL_PANELS_COLUMN_CLASS_NAME}
+        >
+          <div
+            className={cn(
+              BATTLE_DETAIL_PANELS_CONTENT_CLASS_NAME,
+              panels.length > 1 && BATTLE_DETAIL_PANELS_PIN_TOP_CLASS_NAME,
+            )}
+          >
             {panels.length > 1 ? (
               <div className={BATTLE_DETAIL_TABS_SLOT_CLASS_NAME}>
                 <BattleDetailPanelTabs
