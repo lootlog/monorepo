@@ -1,11 +1,8 @@
 /* oxlint-disable anti-slop/no-unknown-returns, anti-slop/no-unknown-parameters, anti-slop/no-unsafe-dictionary-type -- generic JSON path utilities operate on unparsed document overrides by design; callers validate values against the settings catalog. */
-import { isRecord } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 
 // Dotted-path helpers shared by the API resolver and the Game client cache.
 export type SettingsJsonRecord = Record<string, unknown>;
-
-export const cloneValue = <TValue>(value: TValue): TValue =>
-  structuredClone(value);
 
 const FORBIDDEN_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
 
@@ -30,7 +27,7 @@ export const getPath = (value: SettingsJsonRecord, path: string): unknown => {
   let currentValue: unknown = value;
 
   for (const segment of path.split(".")) {
-    if (!isRecord(currentValue) || !(segment in currentValue)) {
+    if (!Predicate.isObject(currentValue) || !(segment in currentValue)) {
       return undefined;
     }
 
@@ -45,7 +42,7 @@ export const hasPath = (value: SettingsJsonRecord, path: string) => {
   let currentValue: unknown = value;
 
   for (const segment of segments) {
-    if (!isRecord(currentValue) || !(segment in currentValue)) {
+    if (!Predicate.isObject(currentValue) || !(segment in currentValue)) {
       return false;
     }
 
@@ -71,12 +68,12 @@ export const setPath = (
 
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
-    const child = isRecord(nestedValue) ? nestedValue : {};
+    const child = Predicate.isObject(nestedValue) ? nestedValue : {};
     currentTarget[segment] = child;
     currentTarget = child;
   }
 
-  currentTarget[finalSegment] = cloneValue(value);
+  currentTarget[finalSegment] = structuredClone(value);
 };
 
 export const unsetPath = (target: SettingsJsonRecord, path: string) => {
@@ -93,7 +90,7 @@ export const unsetPath = (target: SettingsJsonRecord, path: string) => {
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
 
-    if (!isRecord(nestedValue)) {
+    if (!Predicate.isObject(nestedValue)) {
       return;
     }
 
@@ -106,7 +103,10 @@ export const unsetPath = (target: SettingsJsonRecord, path: string) => {
   for (const { parent, segment } of parents.reverse()) {
     const nestedValue = parent[segment];
 
-    if (isRecord(nestedValue) && Object.keys(nestedValue).length === 0) {
+    if (
+      Predicate.isObject(nestedValue) &&
+      Object.keys(nestedValue).length === 0
+    ) {
       delete parent[segment];
     }
   }
@@ -121,7 +121,7 @@ export const collectLeafPaths = (
   for (const [key, nestedValue] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
 
-    if (isRecord(nestedValue)) {
+    if (Predicate.isObject(nestedValue)) {
       const nestedPaths = collectLeafPaths(nestedValue, path);
 
       if (nestedPaths.length > 0) {

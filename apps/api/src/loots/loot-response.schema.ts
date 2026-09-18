@@ -1,3 +1,4 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import {
   LootItemResponse,
@@ -7,7 +8,6 @@ import {
 } from "@lootlog/protocol/loot-summary";
 import { LootSourceSchema } from "@lootlog/schema/loot";
 import { Schema } from "effect";
-import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 
 const LootSubmissionMemberResponse = Schema.Struct({
   name: Schema.String,
@@ -35,8 +35,8 @@ export const LootResponse = Schema.Struct({
   mapPlayersSnapshot: Schema.NullOr(MapPlayersSnapshot),
   npcs: Schema.Array(LootNpcResponse),
   lootShare: LootShareResponse,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
   submissions: Schema.optionalKey(Schema.Array(LootSubmissionResponse)),
   commentsCount: Schema.Number,
 });

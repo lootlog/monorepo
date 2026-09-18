@@ -1,5 +1,5 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
-import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 import { GuildDocumentContentSchema } from "./guild-document-content.schema.js";
 
 const GuildDocumentEditor = Schema.Struct({
@@ -16,13 +16,13 @@ const GuildDocumentListItem = Schema.Struct({
   createdBy: GuildDocumentEditor,
   updatedByMemberId: Schema.String,
   updatedBy: GuildDocumentEditor,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
 });
 
 const GuildDocumentTrashItem = Schema.Struct({
   ...GuildDocumentListItem.fields,
-  deletedAt: isoDatetimeCodec,
+  deletedAt: IsoDateTime,
   deletedByMemberId: Schema.String,
   deletedBy: GuildDocumentEditor,
 });
@@ -55,7 +55,7 @@ const GuildDocumentHistoryItem = Schema.Struct({
   action: Schema.Literals(["SAVE", "DELETE", "RESTORE"]),
   actorMemberId: Schema.String,
   actor: GuildDocumentEditor,
-  editedAt: isoDatetimeCodec,
+  editedAt: IsoDateTime,
 });
 
 export const GuildDocumentHistoryResponse = Schema.Struct({

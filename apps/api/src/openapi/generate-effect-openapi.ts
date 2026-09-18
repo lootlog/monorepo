@@ -1,8 +1,8 @@
+import { Predicate } from "effect";
 import {
   normalizeSchemaAnnotations,
   normalizeNullableSchema,
 } from "@lootlog/schema/openapi-compatibility";
-import { isRecord as isJsonObject } from "@lootlog/schema/records";
 import { rename, unlink } from "node:fs/promises";
 import { OpenApi } from "effect/unstable/httpapi";
 import { stringify } from "yaml";
@@ -103,7 +103,7 @@ const replaceReferences = (
     return;
   }
 
-  if (!isJsonObject(value)) return;
+  if (!Predicate.isObject(value)) return;
 
   if (typeof value["$ref"] === "string") {
     value["$ref"] = replacements.get(value["$ref"]) ?? value["$ref"];
@@ -120,7 +120,7 @@ const normalizeNullableSchemas = (value: unknown): void => {
     return;
   }
 
-  if (!isJsonObject(value)) return;
+  if (!Predicate.isObject(value)) return;
 
   normalizeSchemaAnnotations(value);
   normalizeNullableSchema(value);

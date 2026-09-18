@@ -3,9 +3,8 @@ import {
   type AccessPolicy,
 } from "@lootlog/domain/access-policy";
 import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
-import { isRecord } from "@lootlog/schema/records";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Predicate } from "effect";
 import type {
   eventMapCoverageGapTable,
   roleTable,
@@ -289,7 +288,7 @@ function findHeroTimer(
 }
 
 function extractNpcName(npc: unknown): string {
-  if (!isRecord(npc)) {
+  if (!Predicate.isObject(npc)) {
     return "";
   }
 

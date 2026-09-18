@@ -1,7 +1,7 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import {
   flexibleIsoDatetimeCodec,
-  isoDatetimeCodec,
   nullableFlexibleIsoDatetimeCodec,
   nullableIsoDatetimeCodec,
 } from "#src/shared/schema/response-codecs";
@@ -11,7 +11,7 @@ export const CoverageGapResponse = Schema.Struct({
   mapId: Schema.String,
   heroNpcId: Schema.String,
   gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-  startedAt: isoDatetimeCodec,
+  startedAt: IsoDateTime,
   endedAt: nullableIsoDatetimeCodec,
   durationSeconds: Schema.NullOr(Schema.Number),
 });

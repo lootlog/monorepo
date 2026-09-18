@@ -1,5 +1,4 @@
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
-import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   getCharacterSettingsScopeId,
@@ -14,7 +13,7 @@ import {
   SettingsScope,
   SettingsScopeType,
 } from "@lootlog/schema/settings-documents";
-import { Effect, Schema } from "effect";
+import { Effect, Schema, Predicate } from "effect";
 import {
   InvalidSettingsPatchError,
   type SettingsDocumentsRepositoryService,
@@ -227,7 +226,9 @@ const resolveDomains = (
         ? [
             {
               scope,
-              overrides: isRecord(document.overrides) ? document.overrides : {},
+              overrides: Predicate.isObject(document.overrides)
+                ? document.overrides
+                : {},
               schemaVersion: document.schemaVersion,
               updatedAt: document.updatedAt,
             },

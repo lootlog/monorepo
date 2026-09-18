@@ -16,8 +16,6 @@ export const DomainDateTime = Schema.Union([
   DateTimeString,
 ]);
 
-export const isoDatetimeCodec = IsoDateTime;
-
 export const nullableIsoDatetimeCodec = Schema.NullOr(IsoDateTime);
 
 const DateOrIsoString = Schema.Union([Schema.Date, Schema.String]);

@@ -1,11 +1,10 @@
-import { isRecord } from "@lootlog/schema/records";
 import type { NpcTypeSoundConfig } from "@lootlog/schema/sound-settings";
 import type { SettingsDomainResolution } from "@lootlog/schema/settings-documents";
 import type {
   SettingsDocuments,
   SettingsDocumentsFailure,
 } from "#src/settings-documents/settings-documents.service";
-import { Effect, Schema } from "effect";
+import { Effect, Schema, Predicate } from "effect";
 import type { UpdateSoundSettingsRequest } from "#src/contracts/sound-settings/schemas";
 
 type SoundConfigMap = Record<string, NpcTypeSoundConfig>;
@@ -57,9 +56,9 @@ const mergeSoundConfigMap = (
 ): SoundConfigMap => {
   const merged: SoundConfigMap = structuredClone(defaults);
 
-  if (isRecord(storedValue)) {
+  if (Predicate.isObject(storedValue)) {
     for (const [key, storedConfig] of Object.entries(storedValue)) {
-      if (!isRecord(storedConfig)) continue;
+      if (!Predicate.isObject(storedConfig)) continue;
       const fallback = merged[key] ?? { volume: 0.5, soundUrl: "" };
       merged[key] = {
         volume:

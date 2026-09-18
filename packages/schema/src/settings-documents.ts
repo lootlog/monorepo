@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect";
-import { IsoDateTime, NonEmptyString } from "./primitives.js";
+import { IsoDateTime } from "./primitives.js";
 
 export const SETTINGS_DOMAINS = [
   "general",
@@ -29,7 +29,7 @@ export type SettingsScopeType = typeof SettingsScopeTypeSchema.Type;
 
 export const SettingsScopeSchema = Schema.Struct({
   type: SettingsScopeTypeSchema,
-  id: NonEmptyString,
+  id: Schema.NonEmptyString,
 });
 
 export type SettingsScope = typeof SettingsScopeSchema.Type;
@@ -74,10 +74,10 @@ export type SettingsDomainResolution =
   typeof SettingsDomainResolutionSchema.Type;
 
 export const SettingsDocumentsQuerySchema = Schema.Struct({
-  domains: NonEmptyString,
-  gameAccountId: Schema.optionalKey(NonEmptyString),
-  characterId: Schema.optionalKey(NonEmptyString),
-  guildId: Schema.optionalKey(NonEmptyString),
+  domains: Schema.NonEmptyString,
+  gameAccountId: Schema.optionalKey(Schema.NonEmptyString),
+  characterId: Schema.optionalKey(Schema.NonEmptyString),
+  guildId: Schema.optionalKey(Schema.NonEmptyString),
 });
 
 export type SettingsDocumentsQuery = typeof SettingsDocumentsQuerySchema.Type;
@@ -88,7 +88,7 @@ export const SettingsPatchOperationSchema = Schema.Struct({
   set: Schema.Record(Schema.String, Schema.Json)
     .annotate({ default: {} })
     .pipe(Schema.withDecodingDefaultTypeKey(Effect.succeed({}))),
-  unset: Schema.Array(NonEmptyString)
+  unset: Schema.Array(Schema.NonEmptyString)
     .annotate({ default: [] })
     .pipe(Schema.withDecodingDefaultTypeKey(Effect.succeed([]))),
 });
@@ -99,9 +99,9 @@ export const SettingsPatchOperationSchema = Schema.Struct({
  * replace its cache entry with the response instead of refetching.
  */
 export const SettingsDocumentsContextSchema = Schema.Struct({
-  gameAccountId: Schema.optionalKey(NonEmptyString),
-  characterId: Schema.optionalKey(NonEmptyString),
-  guildId: Schema.optionalKey(NonEmptyString),
+  gameAccountId: Schema.optionalKey(Schema.NonEmptyString),
+  characterId: Schema.optionalKey(Schema.NonEmptyString),
+  guildId: Schema.optionalKey(Schema.NonEmptyString),
 }).annotate({ identifier: "SettingsDocumentsContextDto" });
 
 export type SettingsDocumentsContext =
@@ -116,9 +116,9 @@ export const PatchSettingsDocumentsSchema = Schema.Struct({
 
 /** Guild-scoped documents for several guilds in one request. */
 export const GuildSettingsDocumentsQuerySchema = Schema.Struct({
-  domains: NonEmptyString,
+  domains: Schema.NonEmptyString,
   /** Comma-separated guild ids. */
-  guildIds: NonEmptyString,
+  guildIds: Schema.NonEmptyString,
 });
 
 export type GuildSettingsDocumentsQuery =

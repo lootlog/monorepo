@@ -1,4 +1,4 @@
-import { isRecord } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 import { z } from "zod";
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 
@@ -180,7 +180,7 @@ export async function executeExtensionHttp(
   if (isSession && response.ok && body) {
     const data: unknown = JSON.parse(body);
 
-    if (isRecord(data) && isRecord(data.session)) {
+    if (Predicate.isObject(data) && Predicate.isObject(data.session)) {
       delete data.session.token;
     }
 

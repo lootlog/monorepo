@@ -1,5 +1,5 @@
 /* oxlint-disable eslint/complexity -- preference migrations intentionally normalize every optional legacy field at one boundary. */
-import { isRecord, isObjectRecord } from "@lootlog/schema/records";
+import { isObjectRecord } from "@lootlog/schema/records";
 import {
   cloneDetector,
   cloneMutes,
@@ -16,7 +16,7 @@ import {
   normalizeRoutingRules,
 } from "@lootlog/domain/account-preferences";
 import { eq } from "drizzle-orm";
-import { Clock, Effect, type Schema } from "effect";
+import { Clock, Effect, type Schema, Predicate } from "effect";
 import {
   mergeChatAppearanceSettings,
   normalizeChatAppearanceSettings,
@@ -81,7 +81,7 @@ const chatAppearance = (
   overrides: unknown,
   fallback: unknown = CHAT_APPEARANCE_READABLE_PRESET,
 ) => {
-  if (!isRecord(overrides)) {
+  if (!Predicate.isObject(overrides)) {
     return normalizeChatAppearanceSettings(fallback);
   }
 

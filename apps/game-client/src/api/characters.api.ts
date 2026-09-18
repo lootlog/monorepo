@@ -1,5 +1,5 @@
+import { Predicate } from "effect";
 import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
-import { isRecord } from "@lootlog/schema/records";
 import { LanguageVersion } from "@/store/global.store";
 import { createApiClient } from "@lootlog/client/transport";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
@@ -83,7 +83,7 @@ const unwrapCharacterData = (characterData: RawCharacterData) => {
   ];
 
   for (const nestedCharacterCandidate of nestedCharacterCandidates) {
-    if (isRecord(nestedCharacterCandidate)) {
+    if (Predicate.isObject(nestedCharacterCandidate)) {
       return nestedCharacterCandidate;
     }
   }
@@ -110,7 +110,7 @@ const normalizeCharacter = (character: unknown): MargonemCharacter | null => {
     });
   }
 
-  if (!isRecord(character)) {
+  if (!Predicate.isObject(character)) {
     return null;
   }
 
@@ -295,7 +295,7 @@ const isCharacterListCacheEntry = (
   value: unknown,
 ): value is CharacterListCacheEntry => {
   return (
-    isRecord(value) &&
+    Predicate.isObject(value) &&
     typeof value.cachedAt === "number" &&
     Number.isFinite(value.cachedAt) &&
     Array.isArray(value.characters)
@@ -404,7 +404,9 @@ const readMargonemCharacterListCache = ({
   const accountIdKey = String(accountId);
 
   const charlist =
-    isRecord(parsed) && isRecord(parsed.charlist) ? parsed.charlist : null;
+    Predicate.isObject(parsed) && Predicate.isObject(parsed.charlist)
+      ? parsed.charlist
+      : null;
 
   const rawCachedCharacters = accountId
     ? (charlist?.[accountIdKey] ?? null)
