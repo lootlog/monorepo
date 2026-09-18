@@ -6,6 +6,13 @@ const timerClockListeners = new Set<TimerClockListener>();
 
 let timerClockInterval: ReturnType<typeof setInterval> | null = null;
 
+function stopTimerClock(): void {
+  if (timerClockInterval === null) return;
+
+  clearInterval(timerClockInterval);
+  timerClockInterval = null;
+}
+
 function publishTimerClock(): void {
   const epoch = Date.now();
 
@@ -14,21 +21,36 @@ function publishTimerClock(): void {
   }
 }
 
+function syncTimerClockVisibility(): void {
+  if (document.hidden) {
+    stopTimerClock();
+
+    return;
+  }
+
+  publishTimerClock();
+
+  if (timerClockInterval === null) {
+    timerClockInterval = setInterval(publishTimerClock, 1000);
+  }
+}
+
 function subscribeTimerClock(listener: TimerClockListener): () => void {
   timerClockListeners.add(listener);
   listener(Date.now());
 
-  if (timerClockInterval === null) {
-    timerClockInterval = setInterval(publishTimerClock, 1000);
+  if (timerClockListeners.size === 1) {
+    document.addEventListener("visibilitychange", syncTimerClockVisibility);
+    syncTimerClockVisibility();
   }
 
   return () => {
     timerClockListeners.delete(listener);
 
-    if (timerClockListeners.size > 0 || timerClockInterval === null) return;
+    if (timerClockListeners.size > 0) return;
 
-    clearInterval(timerClockInterval);
-    timerClockInterval = null;
+    document.removeEventListener("visibilitychange", syncTimerClockVisibility);
+    stopTimerClock();
   };
 }
 

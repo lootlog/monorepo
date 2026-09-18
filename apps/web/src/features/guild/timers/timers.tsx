@@ -19,13 +19,12 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import groupBy from "lodash/groupBy";
-import { Clock3, Globe2, SearchX } from "lucide-react";
+import { Clock3, Globe2, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 
 import { SearchInput } from "@/components/ui/search-input";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useTranslation } from "react-i18next";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
@@ -76,7 +75,13 @@ export const Timers = () => {
   const { world } = useGuildContext();
   const queryGuildId = guildId ?? "";
 
-  const { data: timers, isPending } = useTimersControllerGetTimers(
+  const {
+    data: timers,
+    isPending,
+    isError,
+    isFetching,
+    refetch,
+  } = useTimersControllerGetTimers(
     { guildId: queryGuildId },
     { world },
     {
@@ -87,13 +92,13 @@ export const Timers = () => {
           { world },
         ),
         staleTime: 15_000,
+        placeholderData: undefined,
       },
     },
   );
 
   useTimerExpiry(timers, guildId, world);
   const [search, setSearch] = useState("");
-  const isMobile = useIsMobile();
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
   const { t } = useTranslation();
 
@@ -124,22 +129,18 @@ export const Timers = () => {
       <div className="px-3 pt-3">
         <SectionCard className="rounded-xl">
           <SectionCardContent className="p-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
               <SearchInput
                 placeholder={t("timers.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9"
-                wrapperClassName="min-w-0 flex-1"
+                wrapperClassName="min-w-0 basis-full sm:flex-1"
                 aria-label={t("timers.searchPlaceholder")}
               />
-              {isMobile ? (
+              <div className="flex flex-1 items-center sm:flex-none sm:border-l sm:border-border sm:pl-2">
                 <WorldSwitcher />
-              ) : (
-                <div className="flex shrink-0 items-center border-l border-border pl-2">
-                  <WorldSwitcher />
-                </div>
-              )}
+              </div>
               <ViewModeToggle
                 value={viewMode}
                 onChange={setViewMode}
@@ -152,6 +153,29 @@ export const Timers = () => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
+        {world && isError && (
+          <div
+            role="alert"
+            className="mx-3 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3"
+          >
+            <p className="text-sm">
+              {t(
+                timers === undefined
+                  ? "timers.loadError"
+                  : "timers.refreshError",
+              )}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              loading={isFetching}
+              icon=<RotateCcw className="size-3.5" />
+              onClick={() => void refetch()}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          </div>
+        )}
         {!world ? (
           <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8">
             <section className="flex w-full max-w-sm flex-col items-center rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
@@ -215,7 +239,7 @@ export const Timers = () => {
                   ))}
                 </div>
               )}
-              {!isPending && timers && hasFilteredTimers && (
+              {hasFilteredTimers && (
                 <div className="flex flex-col gap-4">
                   {Object.keys(groups).map((key) => {
                     const npcType = findNpcType(key);

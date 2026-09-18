@@ -39,7 +39,6 @@ export const Route = createFileRoute("/_authenticated/$guildId")({
                   queryKey: getGuildsControllerGetGuildByIdQueryKey({
                     guildId: params.guildId,
                   }),
-                  retry: true,
                 },
               },
             ),

@@ -9,12 +9,14 @@ import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
 import { ThemeInteractiveFrame } from "@/themes";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
+import { useTranslation } from "react-i18next";
 
 type UserShellProps = {
   children: ReactNode;
 };
 
 export const UserShell: FC<UserShellProps> = ({ children }) => {
+  const { t } = useTranslation();
   const matches = useMatches();
   const navigate = useNavigate();
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
                       isActive={false}
                     >
                       <Button
+                        aria-label={t("common.actions.back")}
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate({ to: parentPath })}

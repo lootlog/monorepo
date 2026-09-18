@@ -4,6 +4,7 @@ import { vi } from "vitest";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket, getSocket } from "@/lib/socket";
 import { RealtimeWire } from "@/test/realtime-wire";
+import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 
 export const createTimerRealtimeFixture = () => {
   disposeSocket();
@@ -19,7 +20,10 @@ export const createTimerRealtimeFixture = () => {
     createRealtime: () => realtime,
   });
 
-  const join = async (organizationIds: string[]) => {
+  const join = async (
+    organizationIds: string[],
+    accessPolicy?: AccessPolicySnapshot,
+  ) => {
     const pending = getSocket().join(
       {
         world: "luvia",
@@ -50,7 +54,7 @@ export const createTimerRealtimeFixture = () => {
         v: 1,
         requestId,
         status: "success",
-        data: { connectionId: "connection-1", organizationIds },
+        data: { connectionId: "connection-1", organizationIds, accessPolicy },
       });
       await pending;
     });
