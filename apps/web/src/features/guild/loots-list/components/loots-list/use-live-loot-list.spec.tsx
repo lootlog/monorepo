@@ -74,7 +74,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function mount(fetchLoots: () => Promise<Response>) {
+async function mount(
+  fetchLoots: () => Promise<Response>,
+  fetchGuilds?: () => Promise<Response>,
+) {
   const gateway = createTestGateway();
   gateway.request.mockResolvedValue(undefined);
 
@@ -84,6 +87,8 @@ async function mount(fetchLoots: () => Promise<Response>) {
 
   const fetch = vi.fn(async (input: RequestInfo | URL) => {
     if (String(input).includes("/loots?")) return fetchLoots();
+
+    if (fetchGuilds) return fetchGuilds();
 
     return Response.json([
       { id: "one", vanityUrl: "alias" },
@@ -447,4 +452,36 @@ it("resumes event reconciliation for new filters after an old filter's refresh f
       String(input).includes("search=shield"),
     ),
   ).toHaveLength(2);
+});
+
+it("keeps fetched loots when joining before the route alias is resolved", async () => {
+  let resolveGuilds: (response: Response) => void = () => undefined;
+
+  const pendingGuilds = new Promise<Response>((resolve) => {
+    resolveGuilds = resolve;
+  });
+
+  const listRequests = vi.fn(async () => Response.json([loot]));
+  const { gateway } = await mount(listRequests, () => pendingGuilds);
+
+  expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
+  await act(async () => {
+    gateway.deliver({
+      v: 1,
+      type: "session.joined",
+      data: {
+        connectionId: "connection",
+        organizationIds: ["one"],
+        subscriptionScopes: [],
+      },
+    });
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
+  await act(async () => {
+    resolveGuilds(Response.json([{ id: "one", vanityUrl: "alias" }]));
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
+  expect(listRequests).toHaveBeenCalledTimes(1);
 });
