@@ -18,7 +18,8 @@ const item = (id: number, world = "new") => ({
 
 test("batches existing-world reads and preserves worlds across duplicate and missing documents", async () => {
   const batches: string[][] = [];
-  let written: unknown;
+  const written: unknown[] = [];
+  const writeSizes: number[] = [];
 
   const client = new Meilisearch({
     host: "http://search.invalid",
@@ -32,18 +33,20 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
         const ids = (url.searchParams.get("ids") ?? "").split(",");
         batches.push(ids);
         expect(url.searchParams.get("limit")).toBe(String(ids.length));
-        expect(url.searchParams.get("fields")).toBe("uid,worlds");
+        expect(url.searchParams.has("fields")).toBe(false);
 
         return Promise.resolve({
           results: ids.includes("1")
-            ? [{ uid: "1", worlds: ["old", "new"] }]
+            ? [{ uid: "1", world: "legacy", worlds: ["old", "new"] }]
             : [],
         });
       }
 
       if (url.pathname.startsWith("/tasks/"))
         return Promise.resolve({ uid: 1, status: "succeeded" });
-      written = JSON.parse(String(init?.body));
+      const documents: unknown[] = JSON.parse(String(init?.body));
+      written.push(...documents);
+      writeSizes.push(documents.length);
 
       return Promise.resolve({ taskUid: 1, status: "enqueued" });
     },
@@ -60,11 +63,15 @@ test("batches existing-world reads and preserves worlds across duplicate and mis
   expect(batches.map((batch) => batch.length)).toEqual([100, 1]);
   expect(written).toEqual(
     expect.arrayContaining([
-      expect.objectContaining({ uid: "1", worlds: ["new", "old", "other"] }),
+      expect.objectContaining({
+        uid: "1",
+        worlds: ["legacy", "new", "old", "other"],
+      }),
       expect.objectContaining({ uid: "101", worlds: ["new"] }),
     ]),
   );
   expect(written).toHaveLength(101);
+  expect(writeSizes).toEqual([101]);
 });
 
 test("failed existing-world reads prevent overwriting indexed worlds", async () => {
