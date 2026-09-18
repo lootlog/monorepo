@@ -62,7 +62,10 @@ const setup = async () => {
     waitForConfirms: async () => {},
   };
 
-  const writes: { index: string; documents: unknown[] }[] = [];
+  type Document = { uid: string };
+
+  const writes: { index: string; documents: Document[] }[] = [];
+  const stored = new Map<string, Map<string, Document>>();
 
   const tasks = new Map<
     number,
@@ -72,7 +75,9 @@ const setup = async () => {
   const client = new Meilisearch({
     host: "http://search.invalid",
     httpClient: (input, init) => {
-      const path = new URL(String(input)).pathname;
+      const url = new URL(String(input));
+      const path = url.pathname;
+      const index = path.split("/")[2] ?? "unknown";
 
       if (path.startsWith("/tasks/")) {
         const task = tasks.get(Number(path.split("/").at(-1)));
@@ -82,11 +87,21 @@ const setup = async () => {
         return task.promise;
       }
 
-      if ((init?.method ?? "GET").toUpperCase() === "GET")
-        return Promise.resolve({ results: [] });
+      if ((init?.method ?? "GET").toUpperCase() === "GET") {
+        const ids = (url.searchParams.get("ids") ?? "").split(",");
+
+        return Promise.resolve({
+          results: ids.flatMap((id) => {
+            const document = stored.get(index)?.get(id);
+
+            return document ? [document] : [];
+          }),
+        });
+      }
+
       const uid = writes.length + 1;
       writes.push({
-        index: path.split("/")[2] ?? "unknown",
+        index,
         documents: JSON.parse(String(init?.body)),
       });
       tasks.set(uid, Promise.withResolvers());
@@ -156,10 +171,21 @@ const setup = async () => {
     return message;
   };
 
-  const complete = (uid: number, status = "succeeded") =>
-    tasks.get(uid)?.resolve({ uid, status });
+  const complete = (uid: number, status = "succeeded") => {
+    const write = writes[uid - 1];
 
-  return { runtime, ack, nack, dispatch, writes, complete };
+    if (status === "succeeded" && write) {
+      const documents = stored.get(write.index) ?? new Map<string, Document>();
+
+      for (const document of write.documents)
+        documents.set(document.uid, document);
+      stored.set(write.index, documents);
+    }
+
+    tasks.get(uid)?.resolve({ uid, status });
+  };
+
+  return { runtime, ack, nack, dispatch, writes, complete, stored };
 };
 
 test("coalesces each index independently and acknowledges only completed Meilisearch tasks", async () => {
@@ -215,28 +241,48 @@ test("coalesces each index independently and acknowledges only completed Meilise
   }
 }, 10000);
 
-test("requeues every delivery in a failed batch and indexes redelivery successfully", async () => {
+test("retries the ordered batch without requeueing or letting newer batches overtake it", async () => {
   const fixture = await setup();
 
   try {
-    const first = fixture.dispatch("search-players-index", [player(1)]);
-    const second = fixture.dispatch("search-players-index", [player(2)]);
+    const first = fixture.dispatch("search-players-index", [
+      { ...player(1), lvl: 300 },
+    ]);
+
+    const second = fixture.dispatch("search-players-index", [
+      { ...player(1), lvl: 302 },
+    ]);
+
     await until(() => fixture.writes.length === 1);
+    expect(fixture.writes[0]?.documents).toEqual([
+      expect.objectContaining({ lvl: 302 }),
+    ]);
     fixture.complete(1, "failed");
-    await until(() => fixture.nack.mock.calls.length === 2);
-    expect(fixture.nack).toHaveBeenCalledWith(first, false, true);
-    expect(fixture.nack).toHaveBeenCalledWith(second, false, true);
-    expect(fixture.ack).not.toHaveBeenCalled();
-    fixture.dispatch("search-players-index", [player(1)]);
-    fixture.dispatch("search-players-index", [player(2)]);
+
+    const newest = fixture.dispatch("search-players-index", [
+      { ...player(1), lvl: 303 },
+    ]);
+
     await until(() => fixture.writes.length === 2);
-    fixture.complete(2);
-    await until(() => fixture.ack.mock.calls.length === 2);
+    expect(fixture.nack).not.toHaveBeenCalled();
+    expect(fixture.ack).not.toHaveBeenCalled();
     expect(fixture.writes[1]).toEqual(fixture.writes[0]);
+    fixture.complete(2);
+
+    await until(() => fixture.writes.length === 3);
+    expect(fixture.ack).toHaveBeenCalledWith(first);
+    expect(fixture.ack).toHaveBeenCalledWith(second);
+    expect(fixture.ack).not.toHaveBeenCalledWith(newest);
+    fixture.complete(3);
+    await until(() => fixture.ack.mock.calls.length === 3);
+    expect([...(fixture.stored.get("players")?.values() ?? [])]).toEqual([
+      expect.objectContaining({ lvl: 303 }),
+    ]);
+    expect(fixture.nack).not.toHaveBeenCalled();
   } finally {
     await fixture.runtime.dispose();
   }
-}, 10000);
+}, 15000);
 
 test("shutdown requeues buffered deliveries before the flush deadline", async () => {
   const fixture = await setup();
@@ -282,6 +328,26 @@ test("shutdown requeues an in-flight batch while Meilisearch is still running", 
     expect(fixture.ack).not.toHaveBeenCalled();
     expect(fixture.nack).toHaveBeenCalledWith(first, false, true);
     expect(fixture.nack).toHaveBeenCalledWith(second, false, true);
+  } finally {
+    await fixture.runtime.dispose();
+  }
+}, 10000);
+
+test("shutdown during retry backoff requeues every unacknowledged delivery", async () => {
+  const fixture = await setup();
+
+  try {
+    const first = fixture.dispatch("search-players-index", [player(1)]);
+    const second = fixture.dispatch("search-players-index", [player(2)]);
+    await until(() => fixture.writes.length === 1);
+    fixture.complete(1, "failed");
+    await Bun.sleep(20);
+    expect(fixture.nack).not.toHaveBeenCalled();
+    await fixture.runtime.dispose();
+    expect(fixture.ack).not.toHaveBeenCalled();
+    expect(fixture.nack).toHaveBeenCalledWith(first, false, true);
+    expect(fixture.nack).toHaveBeenCalledWith(second, false, true);
+    expect(fixture.writes).toHaveLength(1);
   } finally {
     await fixture.runtime.dispose();
   }

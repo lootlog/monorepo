@@ -2,8 +2,10 @@
 
 The three RabbitMQ consumers collect up to 50 messages per index over a
 two-second window. Each consumer processes one batch at a time and keeps all
-deliveries unacknowledged until indexing succeeds. Failed batches are requeued;
-shutdown requeues outstanding deliveries through `@lootlog/messaging`.
+deliveries unacknowledged until indexing succeeds. Indexing failures retry the
+same ordered batch every five seconds, holding later batches for that index.
+Other indexes continue independently. Shutdown requeues outstanding deliveries
+through `@lootlog/messaging`.
 
 Indexing collapses repeated document IDs, reads stored documents in chunks of
 100, and submits only changed documents in batches of up to 500. Item updates preserve the union of
@@ -12,7 +14,7 @@ derived search fields, rather than a process-local cache. Replayed successful
 updates therefore do not require another indexing task.
 
 Task completion is checked every 15 seconds, with a 60-second timeout. A timeout or
-failed task leaves the RabbitMQ messages eligible for redelivery. Startup only
+failed task retries the batch without individually requeueing its messages. Startup only
 updates index settings when the settings owned by this service differ.
 
 After deploying, compare equivalent traffic windows: Meilisearch CPU, indexing
@@ -44,3 +46,8 @@ separate. The limit is an upper bound; deduplication can return fewer results.
 The API no longer strips a trailing zero from character IDs when the account is
 unknown. Existing stored records are not rewritten or deleted by this change;
 physical cleanup and a new index identity would require a separate migration.
+
+Batch retries preserve ordering within a running consumer. Process or connection
+loss still returns individual unacknowledged messages to RabbitMQ; this does not
+provide version-based ordering across restarts or multiple consumers. A persistent
+indexing error holds that index's queue until it recovers, so monitor queue age.
