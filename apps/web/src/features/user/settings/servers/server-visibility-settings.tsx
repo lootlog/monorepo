@@ -1,6 +1,8 @@
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
-import { orderGuilds } from "@lootlog/domain/guild-preferences";
-import { filterGuildsByVisibility } from "@/features/user/settings/servers/server-visibility";
+import {
+  filterGuildsByVisibility,
+  orderGuilds,
+} from "@lootlog/domain/guild-preferences";
 import {
   useUpdateUserPreferences,
   useUserPreferences,

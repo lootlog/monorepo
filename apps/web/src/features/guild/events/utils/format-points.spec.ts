@@ -7,20 +7,21 @@ describe("formatPoints", () => {
     expect(formatPoints(-2)).toBe("-2");
   });
 
-  it("formats decimal values with two fractional digits", () => {
-    expect(formatPoints(1.5)).toBe("1.50");
+  it("formats decimal values without trailing zeros", () => {
+    expect(formatPoints(1.5)).toBe("1.5");
     expect(formatPoints(0.25)).toBe("0.25");
   });
 
   it("rounds longer decimal values consistently", () => {
     expect(formatPoints(1.234)).toBe("1.23");
     expect(formatPoints(1.235)).toBe("1.24");
+    expect(formatPoints(1.999)).toBe("2");
   });
 });
 
 describe("formatSignedPoints", () => {
   it("prefixes only positive values with a plus sign", () => {
-    expect(formatSignedPoints(1.5)).toBe("+1.50");
+    expect(formatSignedPoints(1.5)).toBe("+1.5");
     expect(formatSignedPoints(0)).toBe("0");
     expect(formatSignedPoints(-0.25)).toBe("-0.25");
   });

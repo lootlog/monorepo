@@ -1,3 +1,4 @@
+import { formatPoints } from "../../utils/format-points";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Trophy } from "lucide-react";
@@ -28,7 +29,7 @@ export function ScoringSimulatorResults({
             {t("events.scoring.simulator.base")}
           </p>
           <p className="text-lg font-mono font-bold">
-            {result.basePoints.toFixed(2)}
+            {formatPoints(result.basePoints)}
           </p>
         </div>
         <span className="text-muted-foreground/40 text-lg">+</span>
@@ -37,7 +38,7 @@ export function ScoringSimulatorResults({
             {t("events.scoring.simulator.bonus")}
           </p>
           <p className="text-lg font-mono font-bold text-green-400">
-            {result.bonusPoints.toFixed(2)}
+            {formatPoints(result.bonusPoints)}
           </p>
         </div>
         <span className="text-muted-foreground/40 text-lg">=</span>
@@ -51,7 +52,7 @@ export function ScoringSimulatorResults({
               isCapped && "text-amber-400",
             )}
           >
-            {result.totalPoints.toFixed(2)}
+            {formatPoints(result.totalPoints)}
             {isCapped && (
               <span className="text-[10px] font-normal text-amber-400/70 ml-1">
                 {t("events.scoring.simulator.capped")}

@@ -1,6 +1,6 @@
+import { applyGamePresenceUpdate } from "@/lib/game-presence";
 import { describe, expect, it } from "vitest";
 import {
-  applyMemberGamePresenceUpdate,
   getMemberGameSessionCount,
   isMemberGamePresenceVerified,
   getMemberOnlineSources,
@@ -36,13 +36,13 @@ describe("member game presence utils", () => {
   });
 
   it("adds and updates a game presence session", () => {
-    const added = applyMemberGamePresenceUpdate(undefined, {
+    const added = applyGamePresenceUpdate(undefined, {
       guildId: "guild-1",
       discordId: "discord-1",
       player: buildPresence({ sessionId: "session-1", mapName: "Ithan" }),
     });
 
-    const updated = applyMemberGamePresenceUpdate(added, {
+    const updated = applyGamePresenceUpdate(added, {
       guildId: "guild-1",
       discordId: "discord-1",
       player: buildPresence({ sessionId: "session-1", mapName: "Karka-han" }),
@@ -60,7 +60,7 @@ describe("member game presence utils", () => {
       ],
     });
 
-    const updated = applyMemberGamePresenceUpdate(mapped, {
+    const updated = applyGamePresenceUpdate(mapped, {
       guildId: "guild-1",
       discordId: "discord-1",
       sessionId: "session-1",

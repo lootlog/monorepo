@@ -1,3 +1,4 @@
+import { formatPoints } from "../../utils/format-points";
 import type { TFunction } from "i18next";
 
 interface ScoringConfigurationStripProps {
@@ -20,7 +21,7 @@ export const ScoringConfigurationStrip = ({
       </dt>
       <dd className="mt-1 break-words font-medium text-foreground">
         {t("events.killDetail.multipliers.pointsValue", {
-          points: hardCapPoints.toFixed(2),
+          points: formatPoints(hardCapPoints),
         })}
       </dd>
     </div>

@@ -1,3 +1,7 @@
+import {
+  isKillPointCountedInRanking,
+  roundPoints,
+} from "#src/events/kills/event-ranking-policy";
 import { invalidateEventCache } from "#src/events/catalog/event-cache-invalidation";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { selectEventKillPoints } from "#src/events/kills/event-point-query";
@@ -35,21 +39,11 @@ export interface EventRankingPublisher {
   ) => Effect.Effect<void, unknown>;
 }
 
-const roundPoints = (value: number) => Math.round(value * 10_000) / 10_000;
-
 const normalizeComment = (comment?: string | null) => {
   const trimmed = comment?.trim();
 
   return trimmed ? trimmed : null;
 };
-
-const countedInRanking = (point: {
-  confirmationDeadlineAt: Date | null;
-  confirmedAt: Date | null;
-}) =>
-  point.confirmationDeadlineAt === null ||
-  (point.confirmedAt !== null &&
-    point.confirmedAt.getTime() <= point.confirmationDeadlineAt.getTime());
 
 export const makeEventPointEdits = (
   database: typeof ApiDatabase.Service,
@@ -181,7 +175,7 @@ export const makeEventPointEdits = (
                   manualAdjustmentPoints,
                   pointsModified:
                     manualAdjustmentPoints !== 0 ||
-                    manualPoints.some(countedInRanking),
+                    manualPoints.some(isKillPointCountedInRanking),
                   updatedAt: new Date(yield* Clock.currentTimeMillis),
                 })
                 .where(eq(eventRankingTable.id, rankingId))
@@ -237,7 +231,7 @@ export const makeEventPointEdits = (
           row.point.manualAdjustmentPoints + delta,
         );
 
-        const rankingRows = countedInRanking(row.point)
+        const rankingRows = isKillPointCountedInRanking(row.point)
           ? yield* query(
               "events.points.updateKillPoint.ranking",
               database
@@ -292,7 +286,8 @@ export const makeEventPointEdits = (
           ),
         );
 
-        if (countedInRanking(row.point)) yield* afterEdit(guild.id, eventId);
+        if (isKillPointCountedInRanking(row.point))
+          yield* afterEdit(guild.id, eventId);
 
         return updated;
       }).pipe(Effect.withSpan("EventsRankingController_updateKillPoint")),

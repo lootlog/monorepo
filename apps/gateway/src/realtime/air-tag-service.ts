@@ -1,3 +1,4 @@
+import { slidingWindowRateLimitScript } from "@lootlog/database/sliding-window-rate-limit";
 import {
   AIR_TAG_CLAN_ENEMY_RELATION,
   AIR_TAG_ENEMY_RELATION,
@@ -35,23 +36,10 @@ const BATCH_RATE_WINDOW_MS = 3_000;
 
 const WORLD_PATTERN = /^[a-z0-9-]{1,64}$/i;
 
-const RATE_LIMIT_SCRIPT = `
-local time = redis.call("TIME")
-local now = (tonumber(time[1]) * 1000) + math.floor(tonumber(time[2]) / 1000)
-local window = tonumber(ARGV[1])
-local limit = tonumber(ARGV[2])
-redis.call("ZREMRANGEBYSCORE", KEYS[1], "-inf", now - window)
-local count = redis.call("ZCARD", KEYS[1])
-if count >= limit then
-  local oldest = redis.call("ZRANGE", KEYS[1], 0, 0, "WITHSCORES")
-  local retryAfter = math.max(1, tonumber(oldest[2]) + window - now)
-  redis.call("PEXPIRE", KEYS[1], window)
-  return {0, retryAfter}
-end
-redis.call("ZADD", KEYS[1], now, ARGV[3])
-redis.call("PEXPIRE", KEYS[1], window)
-return {1, 0}
-`;
+const RATE_LIMIT_SCRIPT = slidingWindowRateLimitScript({
+  refreshExpiryOnReject: true,
+  includeTimestamp: false,
+});
 
 const MERGE_SCRIPT = `
 local function nowMs()

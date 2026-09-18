@@ -1,3 +1,7 @@
+import {
+  applyGamePresenceUpdate,
+  type GamePresenceUpdatePayload,
+} from "@/lib/game-presence";
 import type {
   PlayerPresence,
   PlayerPresenceResponse,
@@ -5,15 +9,6 @@ import type {
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
-
-interface PresenceUpdatePayload {
-  guildId: string;
-  discordId: string;
-  sessionId?: string;
-  player?: PlayerPresence;
-  disconnected?: boolean;
-  status?: "online" | "offline";
-}
 
 interface UseEventPresenceOptions {
   guildId?: string;
@@ -82,62 +77,27 @@ export const useEventPresence = ({
   });
 
   const handleEventPresenceUpdate = useEffectEvent(
-    (payload: PresenceUpdatePayload) => {
+    (payload: GamePresenceUpdatePayload) => {
       if (payload.guildId !== guildId) return;
 
       if (accessState === "forbidden") return;
 
-      setPresenceData((prev) => {
-        const newMap = new Map(prev ?? []);
-        const { discordId, sessionId, player, disconnected, status } = payload;
+      setPresenceData((previous) => {
+        const { player, disconnected, status } = payload;
 
-        const disconnectedSessionId = sessionId ?? player?.sessionId;
+        const isWorldChange =
+          !disconnected &&
+          status !== "offline" &&
+          player &&
+          world &&
+          player.world !== world;
 
-        if ((disconnected || status === "offline") && disconnectedSessionId) {
-          const existing = newMap.get(discordId) ?? [];
-
-          const filtered = existing.filter(
-            (presence) => presence.sessionId !== disconnectedSessionId,
-          );
-
-          if (filtered.length === 0) {
-            newMap.delete(discordId);
-          } else {
-            newMap.set(discordId, filtered);
-          }
-        } else if (player) {
-          if (world && player.world !== world) {
-            const existing = newMap.get(discordId) ?? [];
-
-            const filtered = existing.filter(
-              (p) => p.sessionId !== player.sessionId,
-            );
-
-            if (filtered.length === 0) {
-              newMap.delete(discordId);
-            } else {
-              newMap.set(discordId, filtered);
-            }
-
-            return newMap;
-          }
-
-          const existing = newMap.get(discordId) ?? [];
-
-          const idx = existing.findIndex(
-            (p) => p.sessionId === player.sessionId,
-          );
-
-          if (idx >= 0) {
-            const updated = [...existing];
-            updated[idx] = player;
-            newMap.set(discordId, updated);
-          } else {
-            newMap.set(discordId, [...existing, player]);
-          }
-        }
-
-        return newMap;
+        return applyGamePresenceUpdate(
+          previous,
+          isWorldChange
+            ? { ...payload, sessionId: player.sessionId, disconnected: true }
+            : payload,
+        );
       });
     },
   );

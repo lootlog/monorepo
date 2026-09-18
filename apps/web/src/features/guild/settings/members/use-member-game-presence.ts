@@ -1,14 +1,12 @@
+import { applyGamePresenceUpdate } from "@/lib/game-presence";
 import type { PlayerPresenceResponse } from "@/lib/gateway-client";
 import { GatewayEvent } from "@/config/gateway";
-import {
-  applyMemberGamePresenceUpdate,
-  mapMemberGamePresenceByDiscordId,
-} from "./member-game-presence.utils";
+import { mapMemberGamePresenceByDiscordId } from "./member-game-presence.utils";
 import { useMemberPresence } from "./use-member-presence";
 
 export const useMemberGamePresence = (guildId: string | undefined) =>
   useMemberPresence({
-    applyUpdate: applyMemberGamePresenceUpdate,
+    applyUpdate: applyGamePresenceUpdate,
     fetchPresence: (socket, organizationId, acknowledgement) =>
       socket.emit(
         GatewayEvent.EVENT_PRESENCE_FETCH,
