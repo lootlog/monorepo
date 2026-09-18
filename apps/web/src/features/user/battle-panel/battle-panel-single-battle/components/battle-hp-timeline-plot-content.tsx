@@ -219,6 +219,7 @@ export function BattleHpTimelinePlot({
           type="monotone"
           stroke="var(--color-team1)"
           strokeWidth={2}
+          isAnimationActive={false}
           dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
           activeDot=<BattleHpTimelinePoint
             visible
@@ -230,6 +231,7 @@ export function BattleHpTimelinePlot({
           type="monotone"
           stroke="var(--color-team2)"
           strokeWidth={2}
+          isAnimationActive={false}
           dot=<BattleHpTimelinePoint onTurnSelect={onTurnSelect} />
           activeDot=<BattleHpTimelinePoint
             visible

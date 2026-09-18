@@ -217,14 +217,17 @@ export function useAbyssHub() {
       },
     });
 
-  const { data: battlesResponse, isLoading: isBattlesLoading } =
-    useBattlesControllerGetDashboardBattles(dashboardParams, {
-      query: {
-        enabled: enableBattlesQuery,
-        queryKey:
-          getBattlesControllerGetDashboardBattlesQueryKey(dashboardParams),
-      },
-    });
+  const {
+    data: battlesResponse,
+    isLoading: isBattlesLoading,
+    isPlaceholderData: isBattlesRefreshing,
+  } = useBattlesControllerGetDashboardBattles(dashboardParams, {
+    query: {
+      enabled: enableBattlesQuery,
+      queryKey:
+        getBattlesControllerGetDashboardBattlesQueryKey(dashboardParams),
+    },
+  });
 
   const handleCharacterChange = (characterId: string | undefined) => {
     startTransition(() => {
@@ -330,6 +333,7 @@ export function useAbyssHub() {
     battlesResponse,
     cursor,
     isBattlesLoading,
+    isBattlesRefreshing,
     handleCursorChange,
     pageIndex,
     dashboardParams,

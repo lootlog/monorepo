@@ -1,7 +1,5 @@
 import { useEffect, type RefObject } from "react";
 
-const STAT_SEARCH_SCROLL_OFFSET_PX = 40;
-
 export function useBattleStatsSearchScroll({
   viewportRef,
   searchKey,
@@ -29,13 +27,13 @@ export function useBattleStatsSearchScroll({
 
       if (!row) return;
 
-      const top =
-        viewport.scrollTop +
-        row.getBoundingClientRect().top -
-        viewport.getBoundingClientRect().top -
-        STAT_SEARCH_SCROLL_OFFSET_PX;
-
-      viewport.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      // The table may scroll on its own or with an ancestor column, so let the browser pick.
+      row.scrollIntoView({
+        block: "center",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
     });
 
     return () => cancelAnimationFrame(frame);

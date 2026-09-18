@@ -1,15 +1,8 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
+import { formatDurationCompact } from "@/features/guild/events/utils/format-duration";
+import { BattlePanelKpiCard } from "@/features/user/battle-panel/components/battle-panel-kpi-card";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import {
-  Clock,
-  Crosshair,
-  Shield,
-  Sparkles,
-  Sword,
-  Trophy,
-} from "lucide-react";
+import { Award, Crosshair, Hourglass, Sword, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type CombatProfileOverviewProps = {
@@ -26,88 +19,108 @@ const compactFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 1,
 });
 
+const signedFormatter = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
 const formatNumber = (value: number): string => numberFormatter.format(value);
+
+const EMPTY_SUMMARY: CombatProfileResponseDtoOutput["summary"] = {
+  totalBattles: 0,
+  wins: 0,
+  losses: 0,
+  winRate: 0,
+  totalPH: 0,
+  totalRatingDelta: 0,
+  avgTurns: 0,
+  avgDuration: 0,
+  damagePerTurn: 0,
+  mitigationRate: 0,
+  controlRate: 0,
+};
 
 export function CombatProfileOverview({
   data,
   isLoading,
 }: CombatProfileOverviewProps) {
   const { t } = useTranslation();
+  const summary = data?.summary ?? EMPTY_SUMMARY;
 
-  if (isLoading || !data) {
-    return (
-      <SectionCard>
-        <SectionCardContent>
-          <p className="text-sm text-muted-foreground">
-            {t("battlePanel.statistics.loading")}
-          </p>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
+  const honorPointsPerBattle =
+    summary.totalBattles > 0 ? summary.totalPH / summary.totalBattles : 0;
 
   const kpis = [
     {
       key: "record",
       icon: Trophy,
       label: t("battlePanel.statistics.combatProfile.cards.record"),
-      value: `${data.summary.wins}W / ${data.summary.losses}L`,
-      subvalue: `${formatNumber(data.summary.winRate)}%`,
+      value: (
+        <>
+          <span className={BATTLE_TEXT_COLORS.result.won}>{summary.wins}</span>
+          <span className="px-1.5 text-muted-foreground">–</span>
+          <span className={BATTLE_TEXT_COLORS.result.lost}>
+            {summary.losses}
+          </span>
+        </>
+      ),
+      detail: t("battlePanel.statistics.combatProfile.details.winRate", {
+        value: formatNumber(summary.winRate),
+      }),
     },
     {
-      key: "phRating",
-      icon: Sparkles,
-      label: t("battlePanel.statistics.combatProfile.cards.phRating"),
-      value: `${formatNumber(data.summary.totalPH)} PH`,
-      subvalue: `${formatNumber(data.summary.totalRatingDelta)} rating`,
+      key: "honorPoints",
+      icon: Award,
+      label: t("battlePanel.statistics.combatProfile.cards.honorPoints"),
+      value: formatNumber(summary.totalPH),
+      // Rating only changes in Abyss battles, so outside of them the average says more.
+      detail: summary.totalRatingDelta
+        ? t("battlePanel.statistics.combatProfile.details.rating", {
+            value: signedFormatter.format(summary.totalRatingDelta),
+          })
+        : t("battlePanel.statistics.combatProfile.details.perBattle", {
+            value: formatNumber(honorPointsPerBattle),
+          }),
     },
     {
       key: "turns",
-      icon: Clock,
+      icon: Hourglass,
       label: t("battlePanel.statistics.combatProfile.cards.turns"),
-      value: formatNumber(data.summary.avgTurns),
-      subvalue: `${formatNumber(data.summary.avgDuration / 1000)}s`,
+      value: formatNumber(summary.avgTurns),
+      detail: t("battlePanel.statistics.combatProfile.details.duration", {
+        value: formatDurationCompact(Math.round(summary.avgDuration)),
+      }),
     },
     {
       key: "damage",
       icon: Sword,
       label: t("battlePanel.statistics.combatProfile.cards.damage"),
-      value: compactFormatter.format(data.summary.damagePerTurn),
-      subvalue: t("battlePanel.statistics.combatProfile.perTurn"),
-    },
-    {
-      key: "mitigation",
-      icon: Shield,
-      label: t("battlePanel.statistics.combatProfile.cards.mitigation"),
-      value: `${formatNumber(data.summary.mitigationRate)}%`,
-      subvalue: t("battlePanel.statistics.combatProfile.rate"),
+      value: compactFormatter.format(summary.damagePerTurn),
+      detail: t("battlePanel.statistics.combatProfile.details.damage"),
     },
     {
       key: "control",
       icon: Crosshair,
       label: t("battlePanel.statistics.combatProfile.cards.control"),
-      value: `${formatNumber(data.summary.controlRate)}%`,
-      subvalue: t("battlePanel.statistics.combatProfile.rate"),
+      value: `${formatNumber(summary.controlRate)}%`,
+      detail: t("battlePanel.statistics.combatProfile.details.control"),
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        {kpis.map((kpi) => (
-          <SectionCard key={kpi.key}>
-            <SectionCardHeader icon={kpi.icon} title={kpi.label} />
-            <SectionCardContent className="space-y-2">
-              <div className="text-lg font-semibold leading-tight">
-                {kpi.value}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {kpi.subvalue}
-              </div>
-            </SectionCardContent>
-          </SectionCard>
-        ))}
-      </div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      {kpis.map((kpi) => (
+        <BattlePanelKpiCard
+          // Five tiles in two columns would leave the last one orphaned.
+          className="last:col-span-2 lg:last:col-span-1"
+          key={kpi.key}
+          icon={kpi.icon}
+          label={kpi.label}
+          value={kpi.value}
+          detail={kpi.detail}
+          isLoading={isLoading || !data}
+        />
+      ))}
     </div>
   );
 }

@@ -1,12 +1,9 @@
 import { getOpponentSummaryColumns } from "./opponent-summary-columns";
 import { type ColumnDef, useTable } from "@tanstack/react-table";
-import { Table } from "@lootlog/ui/components/table";
-import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
-import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
+import { OpponentSummaryTable } from "./opponent-summary-table";
 import { StatCard } from "./stat-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
@@ -14,7 +11,6 @@ import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
-import type { KeyboardEvent } from "react";
 import { cn } from "cn";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
@@ -54,24 +50,14 @@ export function HeadToHeadTable({
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const handleNavigateToHeadToHead = () => {
+  const handleOpponentOpen = (opponentId: string) => {
+    if (!search.characterId) return;
+
     void navigate({
-      to: ROUTES.user.battlePanel.h2h,
+      to: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId",
+      params: { myId: search.characterId, opponentId },
       search,
     });
-  };
-
-  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-
-    if (event.key !== "Enter" && event.key !== "") {
-      return;
-    }
-
-    event.preventDefault();
-    handleNavigateToHeadToHead();
   };
 
   const columns: ColumnDef<typeof coreTableFeatures, HeadToHeadRecord>[] = [
@@ -79,22 +65,20 @@ export function HeadToHeadTable({
     {
       accessorKey: "winRate",
       header: () => (
-        <div className="text-center">
+        <div className="text-right">
           {t("battlePanel.statistics.columns.winRate")}
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-center">
-          <span
-            className={cn(
-              "font-medium",
-              row.original.winRate >= 50
-                ? BATTLE_TEXT_COLORS.result.won
-                : BATTLE_TEXT_COLORS.result.lost,
-            )}
-          >
-            {row.original.winRate.toFixed(1)}%
-          </span>
+        <div
+          className={cn(
+            "text-right font-medium tabular-nums",
+            row.original.winRate >= 50
+              ? BATTLE_TEXT_COLORS.result.won
+              : BATTLE_TEXT_COLORS.result.lost,
+          )}
+        >
+          {row.original.winRate.toFixed(1)}%
         </div>
       ),
     },
@@ -106,7 +90,7 @@ export function HeadToHeadTable({
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-right text-sm text-muted-foreground">
+        <div className="text-right text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(row.original.lastBattleDate), {
             addSuffix: true,
             locale: pl,
@@ -129,48 +113,21 @@ export function HeadToHeadTable({
       isLoading={isLoading}
       isEmpty={data.length === 0}
       emptyMessage={t("battlePanel.statistics.directMatchups.emptyTitle")}
-      className="flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      onClick={handleNavigateToHeadToHead}
-      onKeyDown={handleCardKeyDown}
-      role="link"
-      tabIndex={0}
-      ariaLabel={t("battlePanel.statistics.directMatchups.link")}
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          render={
+            <Link to={ROUTES.user.battlePanel.h2h} search={search}>
+              {t("battlePanel.statistics.directMatchups.link")}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          }
+          nativeButton={false}
+        />
+      }
     >
-      <div className="flex min-h-72 min-w-0 flex-1 flex-col">
-        <ScrollArea className="min-w-0">
-          <Table className="border-b">
-            <TanStackTableHeader
-              table={table}
-              className="bg-background/80"
-              rowClassName="border-b-1! border-border"
-              headClassName="whitespace-nowrap"
-            />
-            <TanStackTableBody
-              table={table}
-              rowClassName="border-b border-border bg-background transition-colors hover:bg-muted/50"
-              cellClassName="whitespace-nowrap"
-            />
-          </Table>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-        <div className="mt-auto flex justify-end pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            render={
-              <Link
-                to={ROUTES.user.battlePanel.h2h}
-                search={search}
-                onClick={(event) => event.stopPropagation()}
-              >
-                {t("battlePanel.statistics.directMatchups.link")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            }
-            nativeButton={false}
-          />
-        </div>
-      </div>
+      <OpponentSummaryTable table={table} onOpponentOpen={handleOpponentOpen} />
     </StatCard>
   );
 }

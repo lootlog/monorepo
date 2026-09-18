@@ -1,11 +1,9 @@
 import type { BattleFilters } from "../utils/battle-filter-handlers";
 import type {
-  BattleCharacter,
   BattleListParams as UseBattlesParams,
   BattleListResponse as GetBattlesResponse,
 } from "@/lib/api/battlelog-types";
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
-import { BattlesListFilters } from "./battles-list-filters";
 import { cn } from "cn";
 import { useEffect, useRef, type ReactNode } from "react";
 import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";
@@ -14,7 +12,6 @@ type BattlesListProps = {
   activeFilterChips?: BattlePanelFilterChip[];
   battlesResponse?: GetBattlesResponse;
   clearFiltersLabel?: string;
-  characters?: BattleCharacter[];
   params?: UseBattlesParams;
   onCursorChange?: (cursor: string | undefined) => void;
   onClearFilters?: () => void;
@@ -22,8 +19,8 @@ type BattlesListProps = {
   pageIndex?: number;
   pageSize?: number;
   showPagination?: boolean;
-  showFilters?: boolean;
   isLoading?: boolean;
+  isRefreshing?: boolean;
   enableScrollToTop?: boolean;
   toolbar?: ReactNode;
   toolbarEnd?: ReactNode;
@@ -56,14 +53,10 @@ const getBattlesTableState = (
   totalCount: battlesResponse?.pagination?.total ?? 0,
 });
 
-const getBattlesListClassName = (
-  showPagination: boolean,
-  showFilters: boolean,
-) =>
+const getBattlesListClassName = (showPagination: boolean) =>
   cn(
     "flex min-h-0 min-w-0 flex-col overflow-hidden",
     showPagination ? "h-full flex-1" : "w-full",
-    showFilters && "gap-3",
   );
 
 const EMPTY_ACTIVEFILTERCHIPS: NonNullable<
@@ -74,7 +67,6 @@ export const BattlesList = ({
   activeFilterChips = EMPTY_ACTIVEFILTERCHIPS,
   battlesResponse,
   clearFiltersLabel,
-  characters,
   params,
   onCursorChange,
   onClearFilters,
@@ -82,8 +74,8 @@ export const BattlesList = ({
   pageIndex = 0,
   pageSize,
   showPagination = false,
-  showFilters = false,
   isLoading = false,
+  isRefreshing = false,
   enableScrollToTop = false,
   toolbar,
   toolbarEnd,
@@ -148,18 +140,7 @@ export const BattlesList = ({
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={getBattlesListClassName(showPagination, showFilters)}
-    >
-      {showFilters && onFiltersChange && (
-        <BattlesListFilters
-          filters={currentFilters}
-          onFiltersChange={onFiltersChange}
-          characters={characters}
-        />
-      )}
-
+    <div ref={containerRef} className={getBattlesListClassName(showPagination)}>
       <BattlesTable
         activeFilterChips={activeFilterChips}
         battles={tableState.battles}
@@ -178,6 +159,7 @@ export const BattlesList = ({
         }
         clearFiltersLabel={clearFiltersLabel}
         isLoading={isLoading}
+        isRefreshing={isRefreshing}
         onClearFilters={onClearFilters}
         onMatchmakingClick={handleMatchmakingClick}
         onPhClick={handlePhClick}

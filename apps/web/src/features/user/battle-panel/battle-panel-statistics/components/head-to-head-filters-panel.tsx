@@ -112,7 +112,7 @@ export const HeadToHeadFiltersPanel = ({
       {showPhFilter && (
         <>
           <Separator />
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-xl border p-3">
             <div className="flex items-center gap-2">
               <Award className="h-4 w-4" />
               <Label htmlFor="ph-filter-h2h" className="cursor-pointer">
@@ -131,7 +131,7 @@ export const HeadToHeadFiltersPanel = ({
       {showMatchmakingFilter && (
         <>
           <Separator />
-          <div className="flex items-center justify-between rounded-md border p-3">
+          <div className="flex items-center justify-between rounded-xl border p-3">
             <div className="flex items-center gap-2">
               <Swords className="h-4 w-4" />
               <Label

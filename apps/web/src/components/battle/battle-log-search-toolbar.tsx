@@ -1,10 +1,11 @@
 import { Button } from "@lootlog/ui/components/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import type { ChangeEvent, FC } from "react";
+import type { ChangeEvent, FC, Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { SearchInput } from "@/components/ui/search-input";
 
 export type BattleLogSearchToolbarProps = {
+  ref?: Ref<HTMLDivElement>;
   query: string;
   currentIndex: number;
   totalMatches: number;
@@ -14,6 +15,7 @@ export type BattleLogSearchToolbarProps = {
 };
 
 export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
+  ref,
   query,
   currentIndex,
   totalMatches,
@@ -30,7 +32,11 @@ export const BattleLogSearchToolbar: FC<BattleLogSearchToolbarProps> = ({
   };
 
   return (
-    <div className="min-h-[49px] border-b bg-background px-3 py-2">
+    <div
+      ref={ref}
+      data-battle-log-toolbar=""
+      className="sticky top-(--battle-log-sticky-top,0px) z-10 min-h-[49px] shrink-0 border-b border-border/70 bg-card px-3 py-2"
+    >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <SearchInput
           value={query}

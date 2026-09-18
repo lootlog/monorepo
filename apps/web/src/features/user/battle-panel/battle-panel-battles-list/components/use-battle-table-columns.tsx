@@ -3,16 +3,12 @@ import {
   getBattleResult,
   getBattleTeams,
 } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
+import { BattlePanelTeamSummary } from "@/features/user/battle-panel/components/battle-panel-team-summary";
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
 import type { Battle } from "@/lib/api/battlelog-types";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "cn";
 import { format } from "date-fns";
@@ -20,7 +16,6 @@ import { useId, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { stopBattleTableAction } from "./battle-table-events";
 import { BattleTableInfoBadges } from "./battle-table-info-badges";
-import { BattleTableTeamCell } from "./battle-table-team-cell";
 
 type ColumnsProps = Pick<
   ReturnType<typeof useBattleTableSelection>,
@@ -77,7 +72,7 @@ export function useBattleTableColumns({
             checked={headerCheckboxState === true}
             indeterminate={headerCheckboxState === "indeterminate"}
             aria-label={t("battlePanel.bulk.selectRows")}
-            className="relative size-5"
+            className="relative size-5 border-muted-foreground/70 transition-colors data-checked:border-primary data-indeterminate:border-primary"
             onClick={stopBattleTableAction}
             onCheckedChange={(checked) =>
               handleHeaderSelectionChange(checked === true)
@@ -104,7 +99,7 @@ export function useBattleTableColumns({
             id={`${selectionId}-${row.original.id}`}
             checked={selectedBattleIds.has(row.original.id)}
             aria-label={t("battlePanel.bulk.selectRow")}
-            className="relative size-5"
+            className="relative size-5 border-muted-foreground/70 transition-colors data-checked:border-primary data-indeterminate:border-primary"
             onClick={stopBattleTableAction}
             onCheckedChange={(checked) =>
               handleSelectionChange(row.original.id, checked === true)
@@ -131,7 +126,7 @@ export function useBattleTableColumns({
         const { leftTeam, userWarrior } = getBattleTeams(row.original);
 
         return (
-          <BattleTableTeamCell team={leftTeam} userWarrior={userWarrior} />
+          <BattlePanelTeamSummary team={leftTeam} userWarrior={userWarrior} />
         );
       },
       enableSorting: false,
@@ -142,7 +137,7 @@ export function useBattleTableColumns({
       cell: ({ row }) => {
         const { rightTeam } = getBattleTeams(row.original);
 
-        return <BattleTableTeamCell team={rightTeam} />;
+        return <BattlePanelTeamSummary team={rightTeam} />;
       },
       enableSorting: false,
     },
@@ -173,17 +168,16 @@ export function useBattleTableColumns({
         );
 
         return (
-          <div className="flex min-w-0 items-center md:min-w-[104px]">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span className="max-w-full truncate text-xs font-medium text-muted-foreground">
-                    {getRelativeTime(battle.createdAt)}
-                  </span>
-                }
-              />
-              <TooltipContent>{exactTime}</TooltipContent>
-            </Tooltip>
+          <div className="flex min-w-0 flex-col gap-0.5 leading-tight md:min-w-[104px]">
+            <span className="truncate text-xs font-medium">
+              {getRelativeTime(battle.createdAt)}
+            </span>
+            <time
+              dateTime={battle.createdAt}
+              className="truncate text-[11px] tabular-nums text-muted-foreground"
+            >
+              {exactTime}
+            </time>
           </div>
         );
       },
@@ -192,9 +186,7 @@ export function useBattleTableColumns({
     {
       id: "actions",
       header: () => (
-        <div className="text-right">
-          {t("battlePanel.list.columns.actions")}
-        </div>
+        <span className="sr-only">{t("battlePanel.list.columns.actions")}</span>
       ),
       cell: ({ row }) => renderBattleActions(row.original),
       enableSorting: false,

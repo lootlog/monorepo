@@ -1,6 +1,6 @@
 import { Label } from "@lootlog/ui/components/label";
 import { CharacterSelector } from "@/components/filters/character-selector";
-import { LevelRangeFilter } from "@/components/filters/level-range-filter";
+import { BattlePanelLevelRange } from "@/features/user/battle-panel/components/battle-panel-level-range";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Swords, Award } from "lucide-react";
@@ -41,14 +41,14 @@ export const StatisticsFiltersDesktop = ({
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col flex-wrap gap-2 sm:flex-row sm:items-end">
+    <div className="flex flex-col flex-wrap gap-2 sm:flex-row sm:items-center">
       <div>
         <CharacterSelector
           characterId={characterId}
           onCharacterChange={onCharacterChange}
           allowAllCharacters={false}
           size="default"
-          className="h-10"
+          className="h-10 w-[240px]"
         />
       </div>
 
@@ -60,15 +60,15 @@ export const StatisticsFiltersDesktop = ({
         />
       </div>
 
-      <LevelRangeFilter
+      <BattlePanelLevelRange
         minLevel={minLevel}
         maxLevel={maxLevel}
         onMinLevelChange={onMinLevelChange}
         onMaxLevelChange={onMaxLevelChange}
       />
 
-      <div className="flex items-center gap-2 border rounded-md px-3 h-10">
-        <Award className="h-4 w-4" />
+      <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
+        <Award className="size-4" aria-hidden="true" />
         <Label htmlFor="ph-filter" className="cursor-pointer text-sm">
           {t("battlePanel.filters.honorPoints")}
         </Label>
@@ -80,8 +80,8 @@ export const StatisticsFiltersDesktop = ({
       </div>
 
       {showMatchmakingFilter && (
-        <div className="flex items-center gap-2 border rounded-md px-3 h-10">
-          <Swords className="h-4 w-4" />
+        <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
+          <Swords className="size-4" aria-hidden="true" />
           <Label
             htmlFor="matchmaking-filter"
             className="cursor-pointer text-sm"

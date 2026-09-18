@@ -59,7 +59,6 @@ export function BattleStatsCustomizationActions({
           <TooltipTrigger
             render={
               <Button
-                variant="outline"
                 size="icon"
                 onClick={() => setHideZeros(!hideZeros)}
                 aria-label={
@@ -85,7 +84,6 @@ export function BattleStatsCustomizationActions({
         </Tooltip>
       ) : (
         <Button
-          variant="outline"
           size="sm"
           onClick={() => setHideZeros(!hideZeros)}
           className="gap-2"
