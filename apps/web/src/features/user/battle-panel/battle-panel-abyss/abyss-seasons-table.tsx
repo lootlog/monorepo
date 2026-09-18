@@ -1,6 +1,6 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { EmptyState } from "@/components/common/empty-state";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
@@ -84,10 +84,7 @@ export function AbyssSeasonsTable({
       />
 
       {seasons.length === 0 && !isLoading ? (
-        <BattlePanelEmptyState
-          icon={Trophy}
-          title={t("battlePanel.abyss.noSeason")}
-        />
+        <EmptyState icon={Trophy} title={t("battlePanel.abyss.noSeason")} />
       ) : isMobile ? (
         <ul className="flex flex-col">
           {seasons.map((season) => (

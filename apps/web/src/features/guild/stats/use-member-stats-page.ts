@@ -3,13 +3,11 @@ import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import {
-  useKillsControllerGetMemberKills,
-  useMembersControllerGetGuildMemberReferences,
-} from "@lootlog/client/main";
+import { useKillsControllerGetMemberKills } from "@lootlog/client/main";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
 import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { useGuildMemberMap } from "./hooks/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
@@ -85,12 +83,7 @@ export function useMemberStatsPage() {
     }),
   );
 
-  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
-    { guildId },
-    {
-      includeInactive: true,
-    },
-  );
+  const membersMap = useGuildMemberMap(guildId);
 
   const handleWorldChange = (value: string | null) => {
     setWorld(value);
@@ -138,9 +131,7 @@ export function useMemberStatsPage() {
     }
   };
 
-  const guildMember = guildMembers?.find(
-    (m) => m.userId === data?.member?.memberUserId,
-  );
+  const guildMember = membersMap.get(data?.member?.memberUserId ?? "");
 
   const adaptedMember = guildMember
     ? {

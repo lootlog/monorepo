@@ -1,7 +1,7 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { EmptyState } from "@/components/common/empty-state";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { cn } from "cn";
 import { Inbox } from "lucide-react";
@@ -45,7 +45,7 @@ export function StatCard({
         {isLoading ? (
           <Skeleton className="h-64 w-full rounded-lg" />
         ) : isEmpty ? (
-          <BattlePanelEmptyState
+          <EmptyState
             icon={Inbox}
             title={emptyMessage ?? t("battlePanel.statistics.empty.title")}
           />

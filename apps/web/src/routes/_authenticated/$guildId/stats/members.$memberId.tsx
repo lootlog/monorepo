@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { MemberStatsPage } from "@/features/guild/stats/member-stats-page";
-import { MemberDetailPageSkeleton } from "@/features/guild/stats/member-detail-page-skeleton";
+import { StatsDetailPageSkeleton } from "@/features/guild/stats/stats-detail-page-skeleton";
 import {
   buildMemberKillsParams,
   DEFAULT_MEMBER_KILLS_LIMIT,
@@ -59,5 +59,5 @@ export const Route = createFileRoute(
       }
     }),
   component: MemberStatsPage,
-  pendingComponent: MemberDetailPageSkeleton,
+  pendingComponent: StatsDetailPageSkeleton,
 });

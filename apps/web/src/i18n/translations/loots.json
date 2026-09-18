@@ -1,40 +1,43 @@
 {
   "stats": {
-    "title": "Statystyki lootów",
-    "selectWorldRequired": "Wybierz świat, aby zobaczyć statystyki",
-    "excludeColossus": "Wyklucz Kolosy",
+    "selectWorld": {
+      "title": "Wybierz świat",
+      "description": "Łupy liczymy osobno dla każdego świata."
+    },
+    "excludeColossus": "Bez kolosów",
     "overview": {
-      "totalLoots": "Łącznie lootów",
-      "totalItems": "Łącznie przedmiotów",
-      "legendaryItems": "Legendarnych",
-      "heroicItems": "Heroicznych"
-    },
-    "filters": {
-      "period": "Okres",
-      "world": "Świat"
-    },
-    "timeline": {
-      "title": "Historia lootów",
-      "noData": "Brak danych w wybranym okresie"
+      "totalLoots": "Łupy",
+      "totalLootsDetail": "zapisane w tym okresie",
+      "totalItems": "Przedmioty",
+      "itemsPerLoot": "średnio {{value}} na łup",
+      "legendaryItems": "Legendarne",
+      "heroicItems": "Heroiczne",
+      "itemShare": "{{value}} przedmiotów"
     },
     "rarity": {
-      "title": "Rzadkość przedmiotów",
-      "noData": "Brak danych o rzadkości"
+      "legendary": "Legendarne",
+      "heroic": "Heroiczne"
+    },
+    "timeline": {
+      "title": "Łupy w czasie",
+      "description": "Legendarne i heroiczne przedmioty w kolejnych dniach",
+      "noData": "W tym okresie nic nie wypadło"
     },
     "topNpcs": {
-      "title": "Top źródła lootów",
-      "noData": "Brak danych o źródłach"
+      "title": "Skąd wypada najwięcej",
+      "description": "Potwory z największą liczbą przedmiotów",
+      "noData": "W tym okresie nic nie wypadło"
     },
     "topContributors": {
-      "title": "Top gracze",
-      "noData": "Brak danych o lootach",
-      "submissions": "lootów"
+      "title": "Kto zapisuje najwięcej",
+      "description": "Liczba łupów dodanych przez członka",
+      "noData": "Nikt jeszcze nie dodał łupu"
     },
     "topItems": {
-      "title": "Najczęściej wypadające legendy",
-      "noData": "Brak danych o przedmiotach"
-    },
-    "noData": "Brak danych o lootach w wybranym okresie"
+      "title": "Najczęstsze legendy",
+      "description": "Legendarne przedmioty, które wypadały najczęściej",
+      "noData": "Żadna legenda jeszcze nie wypadła"
+    }
   },
   "filtersPanel": {
     "playersLabel": "Gracze",
