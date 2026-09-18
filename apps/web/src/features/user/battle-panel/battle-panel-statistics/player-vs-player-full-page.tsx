@@ -7,7 +7,7 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
-import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
@@ -121,7 +121,7 @@ export function PlayerVsPlayerFullPage() {
 
     if (isError) {
       return (
-        <BattlePanelEmptyState
+        <EmptyState
           icon={AlertCircle}
           title={t("battlePanel.statistics.empty.errorTitle")}
           description={
@@ -134,7 +134,7 @@ export function PlayerVsPlayerFullPage() {
 
     if (!data || data.battles.length === 0) {
       return (
-        <BattlePanelEmptyState
+        <EmptyState
           icon={SearchX}
           title={t("battlePanel.statistics.playerVsPlayer.emptyTitle")}
           description={t(

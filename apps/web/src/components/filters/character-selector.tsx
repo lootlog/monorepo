@@ -16,7 +16,7 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "cn";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
-import { PlayerSpriteTile } from "@/components/tiles/player-sprite-tile";
+import { CharacterAvatar } from "@/components/filters/character-avatar";
 import type { BattleCharacter } from "@/lib/api/battlelog-types";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import { useTranslation } from "react-i18next";
@@ -43,23 +43,6 @@ type CharacterSelectorProps = (
 };
 
 const MAX_TRIGGER_AVATARS = 3;
-
-// Crops the 32x48 sprite frame to the character's head and shoulders.
-const renderAvatar = (character: BattleCharacter, className?: string) => (
-  <span
-    key={character.id}
-    className={cn(
-      "relative size-7 shrink-0 overflow-hidden rounded-md bg-muted",
-      className,
-    )}
-  >
-    <PlayerSpriteTile
-      icon={character.icon}
-      wrapperClassName="absolute -left-0.5 top-0"
-      tileClassName="cursor-[inherit] rounded-none hover:bg-transparent"
-    />
-  </span>
-);
 
 const renderPlaceholderAvatar = () => (
   <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
@@ -137,12 +120,16 @@ export function CharacterSelector(props: CharacterSelectorProps) {
                 <span className="flex shrink-0 -space-x-2">
                   {selectedCharacters
                     .slice(0, MAX_TRIGGER_AVATARS)
-                    .map((character) =>
-                      renderAvatar(character, "ring-2 ring-background"),
-                    )}
+                    .map((character) => (
+                      <CharacterAvatar
+                        key={character.id}
+                        icon={character.icon}
+                        className="ring-2 ring-background"
+                      />
+                    ))}
                 </span>
               ) : selectedCharacter ? (
-                renderAvatar(selectedCharacter)
+                <CharacterAvatar icon={selectedCharacter.icon} />
               ) : (
                 renderPlaceholderAvatar()
               )}
@@ -202,7 +189,7 @@ export function CharacterSelector(props: CharacterSelectorProps) {
                   onSelect={() => handleSelect(character.id)}
                   className="gap-2"
                 >
-                  {renderAvatar(character)}
+                  <CharacterAvatar icon={character.icon} />
                   <span className="flex min-w-0 flex-col leading-tight">
                     <span className="truncate text-sm font-medium">
                       {character.name}

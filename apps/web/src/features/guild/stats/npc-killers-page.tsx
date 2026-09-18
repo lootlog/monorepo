@@ -1,38 +1,28 @@
-import { PageHeader } from "@/components/common/page-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import { SearchInput } from "@/components/ui/search-input";
+import { EmptyState } from "@/components/common/empty-state";
+import { NpcTile } from "@/components/tiles/npc-tile";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
-  TableRow,
 } from "@lootlog/ui/components/table";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
-import { Users } from "lucide-react";
+import { Ghost } from "lucide-react";
+import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
 import { MemberNameWithColor } from "./components/member-name-with-color";
-import { StatsDetailLoading } from "./components/stats-detail-loading";
+import { StatsCountCell } from "./components/stats-count-cell";
+import { StatsDetailHeader } from "./components/stats-detail-header";
+import { StatsMemberAvatar } from "./components/stats-member-avatar";
+import { StatsRank } from "./components/stats-rank";
+import { StatsTableCard } from "./components/stats-table-card";
+import { StatsTableHeader } from "./components/stats-table-header";
+import { StatsTableRow } from "./components/stats-table-row";
+import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useNpcKillersPage } from "./use-npc-killers-page";
 
-import { WorldSwitcher } from "@/components/common/world-switcher";
-import { NpcTile } from "@/components/tiles/npc-tile";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { cn } from "cn";
-import { NpcKillersFiltersMobile } from "./components/npc-killers-filters-mobile";
-
-import { KillStatsPeriodSelect } from "@/features/kills/components/kill-stats-period-select";
-
-export const NpcKillersPage: React.FC = () => {
+export const NpcKillersPage = () => {
   const {
     isLoading,
     data,
@@ -43,7 +33,6 @@ export const NpcKillersPage: React.FC = () => {
     settings,
     handleWorldChange,
     handlePeriodChange,
-    filteredKillers,
     hasActiveFilters,
     paginatedKillers,
     cursor,
@@ -57,256 +46,139 @@ export const NpcKillersPage: React.FC = () => {
   } = useNpcKillersPage();
 
   if (isLoading) {
-    return <StatsDetailLoading entity="npc" />;
+    return <StatsDetailPageSkeleton />;
   }
 
   const npc = data?.npc;
 
   if (!npc) {
     return (
-      <div className="h-full flex flex-col items-center justify-center">
-        <p className="text-muted-foreground">
-          {t("kills.npcKillers.notFound")}
-        </p>
-      </div>
+      <EmptyState
+        icon={Ghost}
+        title={t("kills.npcKillers.notFound")}
+        className="h-full"
+      />
     );
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background">
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
-          <PageHeader
-            title={npc.npcName}
-            icon={Users}
-            description={
-              <>
-                {npc.npcLvl}
-                {npc.npcProf} • {t(`npcType.${npc.npcType}`)}
-              </>
-            }
-            actions={
-              <div className="flex flex-col gap-3 min-[2200px]:flex-row min-[2200px]:items-center min-[2200px]:justify-between">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {npc.npcIcon && (
-                    <NpcTile
-                      npc={{
-                        id: npc.npcId,
-                        name: npc.npcName,
-                        lvl: npc.npcLvl,
-                        icon: npc.npcIcon,
-                      }}
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>
-                        {t("kills.npcKillers.uniqueGuildKills", {
-                          count: npc.uniqueGuildKills,
-                        })}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        {t("kills.npcKillers.totalMembers", {
-                          count: killers.length,
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 md:hidden">
-                  <SearchInput
-                    placeholder={t("kills.npcKillers.searchPlaceholder")}
-                    value={search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    wrapperClassName="flex-1"
-                  />
-                  <NpcKillersFiltersMobile
-                    world={settings.world}
-                    period={settings.period}
-                    onWorldChange={handleWorldChange}
-                    onPeriodChange={handlePeriodChange}
-                  />
-                </div>
-                <div className="hidden md:flex w-full flex-wrap items-center gap-2 min-[2200px]:w-auto min-[2200px]:justify-end">
-                  <KillStatsPeriodSelect
-                    value={settings.period}
-                    onValueChange={handlePeriodChange}
-                  />
-                  <WorldSwitcher
-                    value={settings.world}
-                    onValueChange={handleWorldChange}
-                    showAllOption
-                    width="w-[160px]"
-                  />
-                  <SearchInput
-                    placeholder={t("kills.npcKillers.searchPlaceholder")}
-                    value={search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    wrapperClassName="w-[200px]"
-                  />
-                </div>
-              </div>
-            }
+    <div className="flex h-full min-h-0 flex-col gap-3 bg-background p-3">
+      <StatsDetailHeader
+        media={
+          npc.npcIcon && (
+            <span className="w-12 shrink-0">
+              <NpcTile
+                npc={{
+                  id: npc.npcId,
+                  name: npc.npcName,
+                  lvl: npc.npcLvl,
+                  icon: npc.npcIcon,
+                }}
+              />
+            </span>
+          )
+        }
+        title={npc.npcName}
+        subtitle={`${t(`npcType.${npc.npcType}`)} · ${npc.npcLvl}${npc.npcProf ?? ""}`}
+        metrics={[
+          {
+            key: "kills",
+            label: t("kills.npcKillers.uniqueGuildKills"),
+            value: npc.uniqueGuildKills,
+          },
+          {
+            key: "members",
+            label: t("kills.npcKillers.totalMembers"),
+            value: killers.length,
+          },
+        ]}
+      />
+
+      <KillStatsFilterBar
+        world={settings.world}
+        period={settings.period}
+        onWorldChange={handleWorldChange}
+        onPeriodChange={handlePeriodChange}
+        search={{
+          value: search,
+          placeholder: t("kills.npcKillers.searchPlaceholder"),
+          onChange: handleSearchChange,
+        }}
+      />
+
+      <StatsTableCard
+        isLoading={false}
+        emptyMessage={
+          paginatedKillers.length === 0
+            ? t(
+                hasActiveFilters
+                  ? "kills.npcKillers.filteredNoData"
+                  : "kills.npcKillers.noKillers",
+              )
+            : undefined
+        }
+        footer={
+          <TablePaginationFooter
+            totalLabel={t("kills.fullRanking.total", { count: total })}
+            hasPrev={hasPrev}
+            hasNext={hasNext}
+            onPreviousPage={handlePreviousPage}
+            onNextPage={handleNextPage}
           />
-
-          <SectionCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <div className="relative min-w-0 w-full overflow-x-auto">
-              {filteredKillers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-                  <p className="text-muted-foreground">
-                    {t(
-                      hasActiveFilters
-                        ? "kills.npcKillers.filteredNoData"
-                        : "kills.npcKillers.noKillers",
-                    )}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid gap-2 p-3 md:hidden">
-                    {paginatedKillers.map((killer, index) => {
-                      const globalIndex = cursor + index;
-
-                      return (
-                        <Link
-                          key={killer.memberId}
-                          to="/$guildId/stats/members/$memberId"
-                          params={{
-                            guildId,
-                            memberId: killer.memberId.toString(),
-                          }}
-                          className={cn(
-                            "min-w-0 border-b border-border p-3 last:border-b-0 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            globalIndex === 0 &&
-                              "border-yellow-500/30 bg-yellow-500/5",
-                          )}
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium text-muted-foreground">
-                              <PodiumRankIcon
-                                rank={globalIndex + 1}
-                                className="size-5"
-                                fallback={<span>{globalIndex + 1}</span>}
-                              />
-                            </div>
-                            <Avatar className="size-8 shrink-0">
-                              <AvatarImage
-                                src={getDiscordAvatarUrl(
-                                  killer.memberUserId,
-                                  killer.memberAvatar,
-                                  32,
-                                )}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {killer.memberName[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-semibold">
-                                <MemberNameWithColor
-                                  name={killer.memberName}
-                                  member={membersMap.get(killer.memberUserId)}
-                                />
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {t("kills.npcKillers.killCount")}
-                              </div>
-                            </div>
-                            <span className="shrink-0 rounded-md bg-muted/50 px-2 py-1 text-sm font-semibold tabular-nums">
-                              {killer.participationCount.toLocaleString()}
-                            </span>
-                          </div>
-                        </Link>
-                      );
-                    })}
+        }
+      >
+        <Table className="border-b">
+          <StatsTableHeader>
+            <TableHead className="w-14 text-center">
+              {t("kills.memberRanking.position")}
+            </TableHead>
+            <TableHead>{t("kills.npcKillers.member")}</TableHead>
+            <TableHead className="text-right">
+              {t("kills.npcKillers.killCount")}
+            </TableHead>
+          </StatsTableHeader>
+          <TableBody>
+            {paginatedKillers.map((killer, index) => (
+              <StatsTableRow key={killer.memberId}>
+                <TableCell className="text-center">
+                  <StatsRank rank={cursor + index + 1} />
+                </TableCell>
+                <TableCell>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <StatsMemberAvatar
+                      userId={killer.memberUserId}
+                      avatar={killer.memberAvatar}
+                      name={killer.memberName}
+                      className="size-7"
+                    />
+                    <TextLink
+                      className="min-w-0 truncate text-sm"
+                      render=<Link
+                        to="/$guildId/stats/members/$memberId"
+                        params={{
+                          guildId,
+                          memberId: String(killer.memberId),
+                        }}
+                      />
+                    >
+                      <MemberNameWithColor
+                        name={killer.memberName}
+                        member={membersMap.get(killer.memberUserId)}
+                      />
+                    </TextLink>
                   </div>
-                  <Table className="hidden border-b md:table">
-                    <TableHeader className="bg-background sticky top-0 z-10">
-                      <TableRow className="border-b-1! border-border">
-                        <TableHead className="w-16 text-center">
-                          {t("kills.memberRanking.position")}
-                        </TableHead>
-                        <TableHead>{t("kills.npcKillers.member")}</TableHead>
-                        <TableHead className="text-right">
-                          {t("kills.npcKillers.killCount")}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedKillers.map((killer, index) => {
-                        const globalIndex = cursor + index;
-
-                        return (
-                          <TableRow
-                            key={killer.memberId}
-                            className={cn(
-                              "bg-background border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors",
-                              globalIndex === 0 && "bg-yellow-500/5",
-                            )}
-                          >
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center">
-                                <PodiumRankIcon
-                                  rank={globalIndex + 1}
-                                  className="size-5"
-                                  fallback={
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                      {globalIndex + 1}
-                                    </span>
-                                  }
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <TextLink
-                                className="flex items-center gap-3 text-sm"
-                                render=<Link
-                                  to="/$guildId/stats/members/$memberId"
-                                  params={{
-                                    guildId,
-                                    memberId: killer.memberId.toString(),
-                                  }}
-                                />
-                              >
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage
-                                    src={getDiscordAvatarUrl(
-                                      killer.memberUserId,
-                                      killer.memberAvatar,
-                                      32,
-                                    )}
-                                  />
-                                  <AvatarFallback className="text-xs">
-                                    {killer.memberName[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                {killer.memberName}
-                              </TextLink>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className="font-semibold tabular-nums">
-                                {killer.participationCount.toLocaleString()}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </>
-              )}
-            </div>
-
-            <TablePaginationFooter
-              totalLabel={t("kills.ranking.total", { count: total })}
-              hasPrev={hasPrev}
-              hasNext={hasNext}
-              onPreviousPage={handlePreviousPage}
-              onNextPage={handleNextPage}
-            />
-          </SectionCard>
-        </div>
-      </ScrollArea>
+                </TableCell>
+                <TableCell>
+                  <StatsCountCell
+                    value={killer.participationCount}
+                    emphasized
+                  />
+                </TableCell>
+              </StatsTableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </StatsTableCard>
     </div>
   );
 };

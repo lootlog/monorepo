@@ -1,61 +1,41 @@
-import { findNpcType } from "@/constants/npc";
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { useTranslation } from "react-i18next";
-import { Link } from "@tanstack/react-router";
-import { useLocalStorage } from "usehooks-ts";
-import { ChevronRight, Skull } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import { PodiumRankIcon } from "@/components/ui/podium-rank-icon";
-import { cn } from "cn";
 import {
   getKillsControllerGetGuildTopNpcsQueryKey,
   useKillsControllerGetGuildTopNpcs,
   type NpcType,
 } from "@lootlog/client/main";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
+import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import { LEADERBOARD_SIZE } from "../constants";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
-import { TRACKABLE_NPC_TYPES } from "../constants";
 import { buildGuildTopNpcsParams } from "../utils/build-stats-query-params";
-
-const STORAGE_KEY = "stats-top-npcs-type";
+import { StatsLeaderboardCard } from "./stats-leaderboard-card";
+import { StatsLeaderboardRow } from "./stats-leaderboard-row";
 
 type TopNpcsCardProps = {
+  guildId: string;
+  npcType: NpcType;
   world?: string;
   minLvl?: number;
   maxLvl?: number;
   period?: KillStatsPeriod;
 };
 
-export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
+export const TopNpcsCard = ({
+  guildId,
+  npcType,
   world,
   minLvl,
   maxLvl,
   period,
-}) => {
+}: TopNpcsCardProps) => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
-
-  const [selectedNpcType, setSelectedNpcType] = useLocalStorage<NpcType>(
-    STORAGE_KEY,
-    "ELITE2",
-  );
 
   const topNpcsParams = buildGuildTopNpcsParams({
-    limit: 5,
-    npcType: selectedNpcType,
+    limit: LEADERBOARD_SIZE,
+    npcType,
     world,
     minLvl,
     maxLvl,
@@ -63,51 +43,20 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
   });
 
   const { data, isLoading } = useKillsControllerGetGuildTopNpcs(
-    { guildId: guildId ?? "" },
+    { guildId },
     topNpcsParams,
     {
       query: {
         enabled: Boolean(guildId),
         queryKey: getKillsControllerGetGuildTopNpcsQueryKey(
-          { guildId: guildId ?? "" },
+          { guildId },
           topNpcsParams,
         ),
       },
     },
   );
 
-  if (isLoading) {
-    return (
-      <SectionCard className="flex flex-col h-full">
-        <SectionCardHeader
-          title=<Skeleton className="h-5 w-40" />
-          icon={Skull}
-          actions={
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-8 w-[120px]" />
-            </div>
-          }
-        />
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-2">
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-                <Skeleton className="h-5 w-12" />
-              </div>
-            ))}
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
-
-  const topNpcs = data?.topNpcs?.slice(0, 5) ?? [];
+  const topNpcs = data?.topNpcs?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   const hasActiveFilters =
     Boolean(world) ||
@@ -115,121 +64,59 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
     Boolean(maxLvl) ||
     (period !== undefined && period !== "all");
 
-  if (!guildId) {
-    return null;
-  }
-
   return (
-    <SectionCard className="flex flex-col h-full">
-      <SectionCardHeader
-        title={t("kills.topNpcs.title")}
-        icon={Skull}
-        actions={
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Select
-              value={selectedNpcType}
-              onValueChange={(value) => {
-                const npcType = findNpcType(value);
-
-                if (npcType) setSelectedNpcType(npcType);
-              }}
-              items={TRACKABLE_NPC_TYPES.map((type) => ({
-                value: type,
-                label: <>{t(`npcType.${type}`)}</>,
-              }))}
-            >
-              <SelectTrigger className="w-[120px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TRACKABLE_NPC_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {t(`npcType.${type}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        }
-      />
-      <SectionCardContent className="flex flex-col gap-3">
-        <div className="flex flex-col flex-1">
-          {topNpcs.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground text-center">
-                {t(
-                  hasActiveFilters
-                    ? "kills.topNpcs.filteredNoData"
-                    : "kills.topNpcs.noData",
-                )}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {topNpcs.map((npc, index) => (
-                <Link
-                  key={npc.npcId}
-                  to="/$guildId/stats/npcs/$npcId"
-                  params={{ guildId, npcId: String(npc.npcId) }}
-                  className={cn(
-                    "flex items-center justify-between py-2 px-2 rounded-md transition-colors hover:bg-muted/30",
-                    index === 0 && "bg-yellow-500/5",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-6 h-6">
-                      <PodiumRankIcon
-                        rank={index + 1}
-                        fallback={
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {index + 1}
-                          </span>
-                        }
-                      />
-                    </div>
-                    {npc.npcIcon && (
-                      <div className="w-8 flex-shrink-0">
-                        <NpcTile
-                          npc={{
-                            id: npc.npcId,
-                            name: npc.npcName,
-                            lvl: npc.npcLvl,
-                            icon: npc.npcIcon,
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium leading-tight">
-                        {npc.npcName}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {npc.npcLvl}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50">
-                    <span className="text-xs text-muted-foreground">x</span>
-                    <span className="text-sm font-semibold tabular-nums">
-                      {npc.uniqueKills.toLocaleString()}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-          <Link
-            to="/$guildId/stats/npcs"
-            params={{ guildId }}
-            className="block mt-3"
-          >
-            <Button variant="outline" className="w-full" size="sm">
-              {t("kills.topNpcs.viewAll")}
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-        </div>
-      </SectionCardContent>
-    </SectionCard>
+    <StatsLeaderboardCard
+      title={t("kills.topNpcs.title")}
+      description={t("kills.topNpcs.description", {
+        type: t(`npcType.${npcType}`),
+      })}
+      isLoading={isLoading}
+      emptyMessage={
+        topNpcs.length === 0
+          ? t(
+              hasActiveFilters
+                ? "kills.topNpcs.filteredNoData"
+                : "kills.topNpcs.noData",
+            )
+          : undefined
+      }
+      actions={
+        <ChevronLink
+          className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+          render=<Link to="/$guildId/stats/npcs" params={{ guildId }} />
+        >
+          {t("kills.topNpcs.viewAll")}
+        </ChevronLink>
+      }
+    >
+      {topNpcs.map((npc, index) => (
+        <StatsLeaderboardRow
+          key={npc.npcId}
+          rank={index + 1}
+          media={
+            npc.npcIcon && (
+              <span className="w-8 shrink-0">
+                <NpcTile
+                  npc={{
+                    id: npc.npcId,
+                    name: npc.npcName,
+                    lvl: npc.npcLvl,
+                    icon: npc.npcIcon,
+                  }}
+                />
+              </span>
+            )
+          }
+          title={npc.npcName}
+          subtitle={t("kills.level", { level: npc.npcLvl })}
+          value={npc.uniqueKills}
+          maxValue={topNpcs[0]?.uniqueKills ?? 0}
+          link={{
+            to: "/$guildId/stats/npcs/$npcId",
+            params: { guildId, npcId: String(npc.npcId) },
+          }}
+        />
+      ))}
+    </StatsLeaderboardCard>
   );
 };

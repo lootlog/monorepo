@@ -1,15 +1,10 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { ROUTES } from "@/config/routes";
-import { Button } from "@lootlog/ui/components/button";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import { ArrowUpRight, History } from "lucide-react";
+import { History } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { getRecentOpponentBattleContext } from "./recent-opponent-battle-context";
@@ -50,38 +45,21 @@ export function RecentOpponentBattlesCard({
           userProf: context.userProf,
         })}
         actions={
-          <Tooltip>
-            <TooltipTrigger
-              render=<Button
-                variant="ghost"
-                size="icon"
-                className="size-8 shrink-0"
-                render={
-                  <Link
-                    aria-label={t(
-                      "battlePanel.single.recentOpponent.viewAllAria",
-                      {
-                        opponent: context.opponentName,
-                      },
-                    )}
-                    to={ROUTES.user.battlePanel.playerVsPlayer(
-                      context.characterId,
-                      context.opponentId,
-                    )}
-                    search={{ period: "all" }}
-                  >
-                    <ArrowUpRight className="size-3.5" />
-                  </Link>
-                }
-                nativeButton={false}
-              />
+          <ChevronLink
+            className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+            aria-label={t("battlePanel.single.recentOpponent.viewAllAria", {
+              opponent: context.opponentName,
+            })}
+            render=<Link
+              to={ROUTES.user.battlePanel.playerVsPlayer(
+                context.characterId,
+                context.opponentId,
+              )}
+              search={{ period: "all" }}
             />
-            <TooltipContent>
-              {t("battlePanel.single.recentOpponent.viewAllAria", {
-                opponent: context.opponentName,
-              })}
-            </TooltipContent>
-          </Tooltip>
+          >
+            {t("battlePanel.single.recentOpponent.viewAll")}
+          </ChevronLink>
         }
         className="shrink-0"
       />

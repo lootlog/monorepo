@@ -2,7 +2,7 @@ import { CharacterSelector } from "@/components/filters/character-selector";
 import { BattlePanelLevelRange } from "@/features/user/battle-panel/components/battle-panel-level-range";
 import { ROUTES } from "@/config/routes";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
-import { Button } from "@lootlog/ui/components/button";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Select,
@@ -18,8 +18,8 @@ import {
   TabsTrigger,
 } from "@lootlog/ui/components/tabs";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, BarChart3, Swords, Trophy } from "lucide-react";
-import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { BarChart3, Swords, Trophy } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { AbyssAnalyticsTab } from "./abyss-analytics-tab";
@@ -133,20 +133,15 @@ export function AbyssHub() {
                   ))}
                 </TabsList>
 
-                <Button
-                  variant="ghost"
-                  className="h-10 w-full sm:ml-auto sm:w-auto"
-                  render={
-                    <Link
-                      to={ROUTES.user.battlePanel.matchmakingH2h}
-                      search={h2hSearch}
-                    >
-                      {t("battlePanel.abyss.openH2h")}
-                      <ArrowRight className="size-4" aria-hidden="true" />
-                    </Link>
-                  }
-                  nativeButton={false}
-                />
+                <ChevronLink
+                  className="inline-flex h-8 shrink-0 items-center gap-1 px-1 text-xs sm:ml-auto"
+                  render=<Link
+                    to={ROUTES.user.battlePanel.matchmakingH2h}
+                    search={h2hSearch}
+                  />
+                >
+                  {t("battlePanel.abyss.openH2h")}
+                </ChevronLink>
               </div>
             )}
 
@@ -292,7 +287,7 @@ export function AbyssHub() {
               </TabsContent>
             </>
           ) : (
-            <BattlePanelEmptyState
+            <EmptyState
               framed
               icon={Swords}
               title={t("battlePanel.abyss.emptyTitle")}

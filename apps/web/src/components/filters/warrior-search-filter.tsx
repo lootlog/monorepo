@@ -15,8 +15,7 @@ import {
   CommandList,
 } from "@lootlog/ui/components/command";
 import { cn } from "cn";
-import { PlayerTile } from "@/components/battle";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { CharacterAvatar } from "@/components/filters/character-avatar";
 import {
   getBattlesControllerSearchWarriorsQueryKey,
   useBattlesControllerSearchWarriors,
@@ -67,6 +66,7 @@ export const WarriorSearchFilter = ({
     );
 
   const searchResults = searchResponse?.warriors ?? [];
+  const [selectedWarrior] = selectedWarriors;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -78,25 +78,34 @@ export const WarriorSearchFilter = ({
             aria-controls={resultsListId}
             aria-expanded={open}
             className={cn(
-              "flex-1 min-w-[200px] justify-between h-10",
+              "h-10 min-w-[200px] flex-1 justify-between gap-2 px-2",
               className,
             )}
           >
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              <span className="text-sm">
-                {selectedWarriors.length > 0
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
+                <Search className="size-4" aria-hidden="true" />
+              </span>
+              {/* Selected warriors are restored from the URL by name only, so
+                  the trigger has no sprite, level or profession to show. */}
+              <span className="truncate">
+                {selectedWarriors.length > 1
                   ? t("ui.warriorSearch.selectedCount", {
                       count: selectedWarriors.length,
                     })
-                  : (placeholder ?? t("ui.warriorSearch.defaultPlaceholder"))}
+                  : (selectedWarrior?.name ??
+                    placeholder ??
+                    t("ui.warriorSearch.defaultPlaceholder"))}
               </span>
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </span>
+            <ChevronsUpDown
+              className="size-4 shrink-0 opacity-50"
+              aria-hidden="true"
+            />
           </Button>
         }
       />
-      <PopoverContent className="w-[300px] p-0" align="start">
+      <PopoverContent align="start" className="w-[280px] p-0">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={t("ui.warriorSearch.inputPlaceholder")}
@@ -122,22 +131,24 @@ export const WarriorSearchFilter = ({
                     key={warrior.name}
                     value={warrior.name}
                     onSelect={() => onWarriorToggle(warrior)}
-                    className="p-0 px-2 gap-0"
+                    className="gap-2"
                   >
-                    <PlayerTile
-                      player={warrior}
-                      cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                      className="scale-70 mr-2"
-                    />
-                    <span>
-                      {warrior.name} (
-                      {t("ui.warriorSearch.level", { level: warrior.lvl })})
+                    <CharacterAvatar icon={warrior.icon} />
+                    <span className="flex min-w-0 flex-col leading-tight">
+                      <span className="truncate text-sm font-medium">
+                        {warrior.name}
+                      </span>
+                      <span className="text-xs tabular-nums opacity-70">
+                        {warrior.lvl}
+                        {warrior.prof}
+                      </span>
                     </span>
                     <Check
                       className={cn(
-                        "ml-auto h-4 w-4",
+                        "ml-auto size-4 shrink-0",
                         isSelected ? "opacity-100" : "opacity-0",
                       )}
+                      aria-hidden="true"
                     />
                   </CommandItem>
                 );

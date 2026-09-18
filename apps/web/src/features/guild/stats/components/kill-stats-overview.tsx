@@ -1,93 +1,66 @@
-import { StatsOverviewCard } from "./stats-overview-card";
-import { useTranslation } from "react-i18next";
-import { Flame, Mountain, Shield, Sword } from "lucide-react";
-import { cn } from "cn";
+import { KpiCard } from "@/components/common/kpi-card";
 import type {
   GuildKillStatsResponseDtoOutputOverview,
   NpcType,
 } from "@lootlog/client/main";
+import {
+  Flame,
+  Mountain,
+  Shield,
+  Swords,
+  Sword,
+  type LucideIcon,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { TRACKABLE_NPC_TYPES } from "../constants";
 
-const NPC_TYPE_CONFIG = new Map([
-  [
-    "TITAN",
-    {
-      icon: <Mountain className="h-5 w-5" />,
-      gradient: "bg-red-500/8",
-      iconBg: "bg-red-500/10",
-      iconColor: "text-red-500",
-    },
-  ],
-  [
-    "COLOSSUS",
-    {
-      icon: <Flame className="h-5 w-5" />,
-      gradient: "bg-cyan-500/8",
-      iconBg: "bg-cyan-500/10",
-      iconColor: "text-cyan-400",
-    },
-  ],
-  [
-    "HERO",
-    {
-      icon: <Shield className="h-5 w-5" />,
-      gradient: "bg-amber-500/8",
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-500",
-    },
-  ],
-  [
-    "ELITE2",
-    {
-      icon: <Sword className="h-5 w-5" />,
-      gradient: "bg-blue-500/8",
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-500",
-    },
-  ],
-]);
+const NPC_TYPE_ICONS: Partial<Record<NpcType, LucideIcon>> = {
+  TITAN: Mountain,
+  COLOSSUS: Flame,
+  HERO: Shield,
+  ELITE2: Sword,
+};
 
-const NPC_TYPES_TO_DISPLAY: NpcType[] = ["TITAN", "COLOSSUS", "HERO", "ELITE2"];
+const numberFormatter = new Intl.NumberFormat("pl-PL");
 
-type NpcTypeStatsCardsProps = {
+type KillStatsOverviewProps = {
   data?: GuildKillStatsResponseDtoOutputOverview;
   isLoading?: boolean;
 };
 
-export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
+export const KillStatsOverview = ({
   data,
-  isLoading,
-}) => {
+  isLoading = false,
+}: KillStatsOverviewProps) => {
   const { t } = useTranslation();
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
-        {NPC_TYPES_TO_DISPLAY.map((type) => (
-          <StatsOverviewCard key={type} loading className="gap-0 py-0" />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-2 gap-3 min-[1280px]:grid-cols-4">
-      {NPC_TYPES_TO_DISPLAY.map((type) => {
-        const config = NPC_TYPE_CONFIG.get(type);
-
-        if (!config) return null;
-
-        return (
-          <StatsOverviewCard
-            key={type}
-            icon={config.icon}
-            iconBg={config.iconBg}
-            iconColor={config.iconColor}
-            className={cn("gap-0 py-0", config.gradient)}
-            label={t(`npcType.${type}`)}
-            value={data?.killsByType[type] ?? 0}
-          />
-        );
-      })}
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <KpiCard
+        icon={Swords}
+        label={t("kills.overview.totalKills")}
+        value={numberFormatter.format(data?.guildUniqueKills ?? 0)}
+        detail={t("kills.overview.participations", {
+          value: numberFormatter.format(data?.totalMemberParticipations ?? 0),
+        })}
+        isLoading={isLoading}
+        // Five tiles in two columns would leave the last one orphaned.
+        className="col-span-2 lg:col-span-1"
+      />
+      {TRACKABLE_NPC_TYPES.map((type) => (
+        <KpiCard
+          key={type}
+          icon={NPC_TYPE_ICONS[type] ?? Sword}
+          label={t(`npcType.${type}`)}
+          value={numberFormatter.format(data?.killsByType[type] ?? 0)}
+          detail={t("kills.overview.participations", {
+            value: numberFormatter.format(
+              data?.participationsByType[type] ?? 0,
+            ),
+          })}
+          isLoading={isLoading}
+        />
+      ))}
     </div>
   );
 };

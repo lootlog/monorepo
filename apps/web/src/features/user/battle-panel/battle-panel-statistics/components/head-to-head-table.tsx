@@ -5,8 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { OpponentSummaryTable } from "./opponent-summary-table";
 import { StatCard } from "./stat-card";
-import { Button } from "@lootlog/ui/components/button";
-import { ArrowRight } from "lucide-react";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -114,17 +113,12 @@ export function HeadToHeadTable({
       isEmpty={data.length === 0}
       emptyMessage={t("battlePanel.statistics.directMatchups.emptyTitle")}
       actions={
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <Link to={ROUTES.user.battlePanel.h2h} search={search}>
-              {t("battlePanel.statistics.directMatchups.link")}
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          }
-          nativeButton={false}
-        />
+        <ChevronLink
+          className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+          render=<Link to={ROUTES.user.battlePanel.h2h} search={search} />
+        >
+          {t("battlePanel.statistics.directMatchups.link")}
+        </ChevronLink>
       }
     >
       <OpponentSummaryTable table={table} onOpponentOpen={handleOpponentOpen} />

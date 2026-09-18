@@ -1,5 +1,5 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
-import { BattlePanelKpiCard } from "@/features/user/battle-panel/components/battle-panel-kpi-card";
+import { KpiCard } from "@/components/common/kpi-card";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Crown, Percent, Sparkles, Swords, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -79,7 +79,7 @@ export function AbyssSummaryCards({
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       {cards.map((card) => (
-        <BattlePanelKpiCard
+        <KpiCard
           // Five tiles in two columns would leave the last one orphaned.
           className="last:col-span-2 lg:last:col-span-1"
           key={card.key}

@@ -4,7 +4,7 @@ import { cn } from "cn";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-type BattlePanelKpiCardProps = {
+type KpiCardProps = {
   icon: LucideIcon;
   isLoading?: boolean;
   label: string;
@@ -15,7 +15,7 @@ type BattlePanelKpiCardProps = {
   className?: string;
 };
 
-export const BattlePanelKpiCard = ({
+export const KpiCard = ({
   detail,
   icon: Icon,
   isLoading = false,
@@ -23,7 +23,7 @@ export const BattlePanelKpiCard = ({
   value,
   valueClassName,
   className,
-}: BattlePanelKpiCardProps) => {
+}: KpiCardProps) => {
   return (
     <SectionCard className={cn("flex min-w-0 flex-col gap-2 p-3", className)}>
       <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">

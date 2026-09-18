@@ -15,7 +15,7 @@ import { CurrentStreakCard } from "./components/current-streak-card";
 import { BattleDurationStatsCard } from "./components/battle-duration-stats";
 import { PhGrowthChart } from "./components/ph-growth-chart";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { BattlePanelFilterBar } from "@/features/user/battle-panel/components/battle-panel-filter-bar";
+import { FilterBar } from "@/components/common/filter-bar";
 import { useQueryStates } from "nuqs";
 import {
   battlePanelStatisticsSearchParsers,
@@ -151,7 +151,7 @@ export function BattlePanelStatistics() {
             <StatisticsQueryPanel query={charactersQuery} />
           )}
           <h1 className="sr-only">{t("battlePanel.statistics.title")}</h1>
-          <BattlePanelFilterBar ariaLabel={t("battlePanel.filters.title")}>
+          <FilterBar ariaLabel={t("battlePanel.filters.title")}>
             <StatisticsFilters
               characterId={currentCharacterId}
               period={period}
@@ -203,7 +203,7 @@ export function BattlePanelStatistics() {
                 });
               }}
             />
-          </BattlePanelFilterBar>
+          </FilterBar>
 
           <StatisticsQueryPanel query={combatProfileQuery}>
             <CombatProfileOverview
