@@ -5,13 +5,12 @@ import type {
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { LEADERBOARD_SIZE } from "../constants";
 import { useGuildMemberMap } from "../hooks/use-guild-member-map";
 import { MemberNameWithColor } from "./member-name-with-color";
 import { StatsMemberAvatar } from "./stats-member-avatar";
 import { StatsLeaderboardCard } from "./stats-leaderboard-card";
 import { StatsLeaderboardRow } from "./stats-leaderboard-row";
-
-const LEADERBOARD_SIZE = 5;
 
 type MemberLeaderboardCardProps = {
   data?: GuildKillStatsResponseDtoOutputMemberRankingItem[];
