@@ -1,5 +1,5 @@
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
-import type { BattleDetailPanel } from "@/features/user/battle-panel/battle-panel-single-battle/components/use-battle-detail-view";
+import type { BattleDetailPanel } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-panel.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 

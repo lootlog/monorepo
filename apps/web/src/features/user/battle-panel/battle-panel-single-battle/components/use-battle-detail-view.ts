@@ -1,5 +1,9 @@
 import { STAT_CATEGORIES } from "@/components/battle/one-vs-one-stats-definitions";
 import { battlePanelSingleBattleSearchParsers } from "@/features/user/battle-panel/battle-panel-search";
+import {
+  useBattleDetailPanelStore,
+  type BattleDetailPanel,
+} from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-panel.store";
 import { BATTLE_DETAIL_WIDE_MEDIA_QUERY } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-detail-layout";
 import {
   getBattleLogScrollActiveTurn,
@@ -22,9 +26,6 @@ import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 const HIDE_ZERO_STATS_STORAGE_KEY = "lootlog-battle-hide-zero-stats-v1";
 
 const SCROLL_AREA_VIEWPORT_SELECTOR = '[data-slot="scroll-area-viewport"]';
-
-/** Below the wide layout only one of these panels is visible at a time. */
-export type BattleDetailPanel = "log" | "stats" | "recent";
 
 export type BattleDetailViewProps = {
   battle: Battle | undefined;
@@ -54,13 +55,19 @@ export function useBattleDetailView({
   const [selectedTurn, setSelectedTurn] = useState<number | null>(null);
   const [scrollTargetTurn, setScrollTargetTurn] = useState<number | null>(null);
   const [scrollTargetRequestId, setScrollTargetRequestId] = useState(0);
-  const [activePanel, setActivePanel] = useState<BattleDetailPanel>("stats");
+  const activePanel = useBattleDetailPanelStore((state) => state.activePanel);
+
+  const setActivePanel = useBattleDetailPanelStore(
+    (state) => state.setActivePanel,
+  );
+
   const isWide = useMediaQuery(BATTLE_DETAIL_WIDE_MEDIA_QUERY);
   const is1v1 = battle?.type === "1v1";
   const isGroup = battle !== undefined && !is1v1;
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const battleColumnViewportRef = useRef<HTMLDivElement>(null);
   const battleColumnContentRef = useRef<HTMLDivElement>(null);
+  const panelsColumnViewportRef = useRef<HTMLDivElement>(null);
   const chartSlotRef = useRef<HTMLDivElement>(null);
 
   // The wide layout scrolls the log with its column; below it, with the whole page.
@@ -129,7 +136,12 @@ export function useBattleDetailView({
     setSelectedTurn(null);
     setScrollTargetTurn(null);
     setScrollTargetRequestId(0);
-    setActivePanel("stats");
+
+    // Walking through the recent battles keeps the reader's place in that list.
+    const keptViewport =
+      useBattleDetailPanelStore.getState().activePanel === "recent"
+        ? panelsColumnViewportRef.current
+        : null;
 
     scrollViewportRef.current?.scrollTo({
       top: 0,
@@ -138,6 +150,8 @@ export function useBattleDetailView({
     scrollViewportRef.current
       ?.querySelectorAll<HTMLElement>(SCROLL_AREA_VIEWPORT_SELECTOR)
       .forEach((scrollViewport) => {
+        if (scrollViewport === keptViewport) return;
+
         scrollViewport.scrollTo({
           top: 0,
           left: 0,
@@ -305,6 +319,7 @@ export function useBattleDetailView({
     scrollViewportRef,
     battleColumnViewportRef,
     battleColumnContentRef,
+    panelsColumnViewportRef,
     chartSlotRef,
     logScrollViewportRef,
     handleBattleScroll,

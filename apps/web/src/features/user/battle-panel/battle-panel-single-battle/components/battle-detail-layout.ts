@@ -57,3 +57,17 @@ export const BATTLE_DETAIL_PANELS_CONTENT_CLASS_NAME = "flex flex-col gap-3";
 // Panel cards isolate their own sticky cells, so this only has to beat plain content.
 export const BATTLE_DETAIL_TABS_SLOT_CLASS_NAME =
   "bg-background xl:sticky xl:top-0 xl:z-30 xl:-mb-3 xl:pb-3";
+
+// The pinned tabs are a fixed-height toggle group plus the gap they cover. Panels that pin
+// their own header, such as the statistics table, stick right below this line.
+export const BATTLE_DETAIL_PANELS_PIN_TOP_CLASS_NAME =
+  "xl:[--battle-detail-pin-top:48px]";
+
+// Sticks once the statistics card reaches the pinned tabs and redraws the card's rounded top
+// edge there, because the card's pinned header is square. It sits outside the card, so it
+// can paint the page background outside the corners.
+export const BATTLE_DETAIL_STATS_CAP_SLOT_CLASS_NAME =
+  "pointer-events-none z-20 -mb-3 hidden h-0 xl:sticky xl:top-(--battle-detail-pin-top,0px) xl:block";
+
+export const BATTLE_DETAIL_STATS_CAP_CLASS_NAME =
+  "absolute inset-x-0 top-0 h-4 overflow-hidden";
