@@ -1,4 +1,4 @@
-import { isRecord as isOpenApiDictionary } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 
 type OpenApiDictionary = Record<string, unknown>;
 
@@ -55,7 +55,7 @@ function isLegacyLimitQueryParameter(
   value: unknown,
 ): value is OpenApiDictionary {
   return (
-    isOpenApiDictionary(value) &&
+    Predicate.isObject(value) &&
     value.in === "query" &&
     value.name === "limit" &&
     value.description === "Result limit"
@@ -110,7 +110,7 @@ function visitOpenApiDictionaries(
     return;
   }
 
-  if (!isOpenApiDictionary(value)) return;
+  if (!Predicate.isObject(value)) return;
 
   Object.values(value).forEach((entry) =>
     visitOpenApiDictionaries(entry, visitor),
@@ -129,7 +129,7 @@ function stripTypedObjectAdditionalProperties(value: unknown) {
     return;
   }
 
-  if (!isOpenApiDictionary(value)) return;
+  if (!Predicate.isObject(value)) return;
 
   if (
     hasOpenApiProperty(value, "properties") &&
@@ -148,7 +148,7 @@ function stripUnsupportedOpenApiKeywords(value: unknown) {
     return;
   }
 
-  if (!isOpenApiDictionary(value)) return;
+  if (!Predicate.isObject(value)) return;
 
   if (hasOpenApiProperty(value, "propertyNames")) {
     delete value.propertyNames;
@@ -163,12 +163,12 @@ function stripUnsupportedOpenApiKeywords(value: unknown) {
 }
 
 function ensurePathParameters(document: unknown) {
-  if (!isOpenApiDictionary(document) || !isOpenApiDictionary(document.paths)) {
+  if (!Predicate.isObject(document) || !Predicate.isObject(document.paths)) {
     return;
   }
 
   for (const [pathName, pathItem] of Object.entries(document.paths)) {
-    if (!isOpenApiDictionary(pathItem)) continue;
+    if (!Predicate.isObject(pathItem)) continue;
 
     const pathParameterNames = Array.from(
       pathName.matchAll(/\{([^}]+)\}/g),
@@ -178,7 +178,7 @@ function ensurePathParameters(document: unknown) {
     if (pathParameterNames.length === 0) continue;
 
     for (const [methodName, operation] of Object.entries(pathItem)) {
-      if (!httpMethods.has(methodName) || !isOpenApiDictionary(operation)) {
+      if (!httpMethods.has(methodName) || !Predicate.isObject(operation)) {
         continue;
       }
 
@@ -193,7 +193,7 @@ function ensurePathParameters(document: unknown) {
       for (const parameterName of pathParameterNames) {
         const existingParameter = [...pathLevelParameters, ...parameters].find(
           (parameter): parameter is OpenApiDictionary =>
-            isOpenApiDictionary(parameter) &&
+            Predicate.isObject(parameter) &&
             parameter.in === "path" &&
             parameter.name === parameterName,
         );
@@ -209,7 +209,7 @@ function ensurePathParameters(document: unknown) {
         }
 
         if (
-          !isOpenApiDictionary(existingParameter.schema) ||
+          !Predicate.isObject(existingParameter.schema) ||
           Object.keys(existingParameter.schema).length === 0
         ) {
           existingParameter.schema = { type: "string" };

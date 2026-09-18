@@ -7,7 +7,6 @@ import {
   type CreateTimerFromGameClientDto,
   type TimerResponseDto,
 } from "@lootlog/client/main";
-
 import {
   buildCurrentTimerActorCharacterPayload,
   normalizeTimerMember,
@@ -214,7 +213,7 @@ export type Timer = Omit<TimerResponseDto, "npc" | "member"> & {
   isPending?: boolean;
 };
 
-const normalizeTimer = (timer: TimerResponseDto): Timer => {
+export const normalizeTimerResponse = (timer: TimerResponseDto): Timer => {
   const member = normalizeTimerMember(timer.member);
 
   return {
@@ -228,13 +227,11 @@ const normalizeTimer = (timer: TimerResponseDto): Timer => {
   };
 };
 
-export const normalizeTimerResponse = normalizeTimer;
-
 export async function fetchTimers(
   world: string | undefined,
   signal?: AbortSignal,
 ): Promise<Timer[]> {
   const timers = await timersControllerGetAllTimers({ world }, { signal });
 
-  return timers.map(normalizeTimer);
+  return timers.map(normalizeTimerResponse);
 }

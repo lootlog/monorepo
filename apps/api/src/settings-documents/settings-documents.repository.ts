@@ -1,4 +1,3 @@
-import { isRecord } from "@lootlog/schema/records";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   migrateSettingsDocument,
@@ -10,7 +9,7 @@ import type {
   SettingsScope,
 } from "@lootlog/schema/settings-documents";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
-import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer, Schema, Predicate } from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
 import {
   memberTable,
@@ -23,7 +22,7 @@ type SettingsOperation = PatchSettingsDocuments["operations"][number];
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
 
 const getPostgresErrorCode = (error: unknown): string | undefined => {
-  if (!isRecord(error)) return undefined;
+  if (!Predicate.isObject(error)) return undefined;
 
   if (typeof error.code === "string") return error.code;
 
@@ -124,7 +123,9 @@ export class SettingsDocumentsRepository extends Context.Service<
                   // Bring the stored document to the catalog version before
                   // patching, so the row written below matches the version
                   // it is stamped with.
-                  const currentOverrides = isRecord(current?.overrides)
+                  const currentOverrides = Predicate.isObject(
+                    current?.overrides,
+                  )
                     ? migrateSettingsDocument(
                         operation.domain,
                         current.overrides,

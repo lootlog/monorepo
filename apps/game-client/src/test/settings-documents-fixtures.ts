@@ -1,7 +1,7 @@
 /* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters -- test fixtures assemble raw document JSON. */
 import type { QueryClient } from "@tanstack/react-query";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
-import { cloneValue, setPath } from "@lootlog/domain/settings-paths";
+import { setPath } from "@lootlog/domain/settings-paths";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import type {
@@ -43,7 +43,7 @@ export const createSettingsDocuments = (
     for (const [field, definition] of Object.entries(
       SETTINGS_CATALOG[domain].fields,
     )) {
-      setPath(effective, field, cloneValue(definition.defaultValue));
+      setPath(effective, field, structuredClone(definition.defaultValue));
       sources[field] = "DEFAULT";
     }
 
@@ -63,7 +63,7 @@ export const createSettingsDocuments = (
     const resolution = domains[domain];
 
     if (!resolution) throw new Error(`Unknown settings domain in ${key}`);
-    setPath(resolution.effective, field, cloneValue(value));
+    setPath(resolution.effective, field, structuredClone(value));
 
     const catalogField = Object.keys(resolution.sources).find(
       (candidate) => field === candidate || field.startsWith(`${candidate}.`),
@@ -143,9 +143,9 @@ export const applySettingsDocumentValues = (
     const incoming = patch.domains[domain];
 
     if (!current || !incoming) continue;
-    const effective = cloneValue(current.effective);
+    const effective = structuredClone(current.effective);
     const field = key.slice(key.indexOf(".") + 1);
-    setPath(effective, field, cloneValue(value));
+    setPath(effective, field, structuredClone(value));
 
     const storedField = Object.keys(incoming.sources).find(
       (candidate) =>

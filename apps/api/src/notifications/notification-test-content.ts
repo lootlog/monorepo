@@ -1,6 +1,5 @@
-import { isRecord } from "@lootlog/schema/records";
 import { randomUUID } from "node:crypto";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import {
   FALLBACK_NPC_NAME,
   FALLBACK_WORLD_NAME,
@@ -38,7 +37,7 @@ export interface NotificationTestContentInput {
 }
 
 const npcName = (npc: unknown) => {
-  if (!isRecord(npc)) return null;
+  if (!Predicate.isObject(npc)) return null;
   const name = npc.name;
 
   return typeof name === "string" ? name : null;

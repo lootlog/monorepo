@@ -1,6 +1,6 @@
 import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
-import { NonEmptyString, NonNegativeInt } from "@lootlog/schema/primitives";
+import { NonNegativeInt } from "@lootlog/schema/primitives";
 import {
   AirTagObservationBatchSchema,
   AirTagScopeSnapshotSchema,
@@ -34,7 +34,7 @@ export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
 
 export const PRESENCE_EXPIRY_MS = 60_000;
 
-const RequestId = NonEmptyString;
+const RequestId = Schema.NonEmptyString;
 
 const Revision = NonNegativeInt;
 
@@ -59,9 +59,9 @@ export type RealtimeLogicalTopic = typeof RealtimeLogicalTopic.Type;
 
 export const SubscriptionScope = Schema.Struct({
   topic: RealtimeLogicalTopic,
-  organizationId: Schema.optional(NonEmptyString),
-  eventId: Schema.optional(NonEmptyString),
-  world: Schema.optional(NonEmptyString),
+  organizationId: Schema.optional(Schema.NonEmptyString),
+  eventId: Schema.optional(Schema.NonEmptyString),
+  world: Schema.optional(Schema.NonEmptyString),
   mapId: Schema.optional(NonNegativeInt),
 });
 
@@ -80,28 +80,28 @@ export const PresenceClan = Schema.Struct({
 });
 
 export const PresenceCharacter = Schema.Struct({
-  world: NonEmptyString,
-  name: NonEmptyString,
+  world: Schema.NonEmptyString,
+  name: Schema.NonEmptyString,
   lvl: NonNegativeInt,
   icon: Schema.String,
-  characterId: NonEmptyString,
-  accountId: NonEmptyString,
+  characterId: Schema.NonEmptyString,
+  accountId: Schema.NonEmptyString,
   prof: Schema.String,
   clan: Schema.optional(PresenceClan),
 });
 
 export const PrecisePresenceLocation = Schema.Struct({
   mapId: Schema.optional(NonNegativeInt),
-  map: NonEmptyString,
+  map: Schema.NonEmptyString,
   x: Schema.optional(NonNegativeInt),
   y: Schema.optional(NonNegativeInt),
 });
 
 export const BasicPresence = Schema.Struct({
-  userId: NonEmptyString,
-  discordId: Schema.optional(NonEmptyString),
-  sessionId: NonEmptyString,
-  organizationIds: Schema.Array(NonEmptyString),
+  userId: Schema.NonEmptyString,
+  discordId: Schema.optional(Schema.NonEmptyString),
+  sessionId: Schema.NonEmptyString,
+  organizationIds: Schema.Array(Schema.NonEmptyString),
   platform: PresencePlatform,
   status: PresenceStatus,
   confidence: PresenceConfidence,
@@ -120,7 +120,7 @@ export const PresenceWithLocation = Schema.Struct({
 export type PresenceWithLocation = typeof PresenceWithLocation.Type;
 
 export const PublishedPresence = Schema.Struct({
-  organizationIds: Schema.Array(NonEmptyString),
+  organizationIds: Schema.Array(Schema.NonEmptyString),
   isAfk: Schema.optional(Schema.Boolean),
   character: Schema.optional(PresenceCharacter),
   location: Schema.optional(PrecisePresenceLocation),
@@ -128,15 +128,15 @@ export const PublishedPresence = Schema.Struct({
 });
 
 export const PresenceSnapshot = Schema.Struct({
-  organizationId: NonEmptyString,
-  world: Schema.optional(NonEmptyString),
+  organizationId: Schema.NonEmptyString,
+  world: Schema.optional(Schema.NonEmptyString),
   revision: Revision,
   // Match the richer shape first so the basic schema does not strip location.
   presences: Schema.Array(Schema.Union([PresenceWithLocation, BasicPresence])),
 });
 
 export const PresenceDelta = Schema.Struct({
-  organizationId: NonEmptyString,
+  organizationId: Schema.NonEmptyString,
   revision: Revision,
   changes: Schema.Array(
     Schema.Union([
@@ -146,9 +146,9 @@ export const PresenceDelta = Schema.Struct({
       }),
       Schema.Struct({
         action: Schema.Literal("remove"),
-        userId: NonEmptyString,
-        discordId: Schema.optional(NonEmptyString),
-        sessionId: NonEmptyString,
+        userId: Schema.NonEmptyString,
+        discordId: Schema.optional(Schema.NonEmptyString),
+        sessionId: Schema.NonEmptyString,
       }),
     ]),
   ),
@@ -171,7 +171,7 @@ const command = <
 export const SessionJoinCommand = command(
   "session.join",
   Schema.Struct({
-    world: Schema.optional(NonEmptyString),
+    world: Schema.optional(Schema.NonEmptyString),
     character: Schema.optional(PresenceCharacter),
     margonemAccountProof: Schema.optional(Schema.Unknown),
   }),
@@ -179,7 +179,7 @@ export const SessionJoinCommand = command(
 
 export const HeartbeatCommand = command(
   "presence.heartbeat",
-  Schema.Struct({ sessionId: NonEmptyString }),
+  Schema.Struct({ sessionId: Schema.NonEmptyString }),
 );
 
 export const PresencePublishCommand = command(
@@ -190,8 +190,8 @@ export const PresencePublishCommand = command(
 export const PresenceFetchCommand = command(
   "presence.fetch",
   Schema.Struct({
-    organizationId: NonEmptyString,
-    world: Schema.optional(NonEmptyString),
+    organizationId: Schema.NonEmptyString,
+    world: Schema.optional(Schema.NonEmptyString),
   }),
 );
 
@@ -275,8 +275,8 @@ export const ClientCommand = Schema.Union([
 export type ClientCommand = typeof ClientCommand.Type;
 
 export const RealtimeError = Schema.Struct({
-  code: NonEmptyString,
-  message: NonEmptyString,
+  code: Schema.NonEmptyString,
+  message: Schema.NonEmptyString,
   retryable: Schema.Boolean,
   retryAfterMs: Schema.optional(NonNegativeInt),
   details: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
@@ -316,7 +316,7 @@ const serverEvent = <
   });
 
 const OrganizationEvent = Schema.Struct({
-  organizationId: NonEmptyString,
+  organizationId: Schema.NonEmptyString,
   payload: Schema.Unknown,
 });
 
@@ -324,8 +324,8 @@ export const ServerEvent = Schema.Union([
   serverEvent(
     "session.joined",
     Schema.Struct({
-      connectionId: NonEmptyString,
-      organizationIds: Schema.Array(NonEmptyString),
+      connectionId: Schema.NonEmptyString,
+      organizationIds: Schema.Array(Schema.NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
       accessPolicy: Schema.optional(AccessPolicySnapshot),
     }),
@@ -334,7 +334,7 @@ export const ServerEvent = Schema.Union([
     "permissions.updated",
     Schema.Struct({
       changes: Schema.optional(Schema.Array(AccessPolicyChange)),
-      organizationIds: Schema.Array(NonEmptyString),
+      organizationIds: Schema.Array(Schema.NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
       accessPolicy: Schema.optional(AccessPolicySnapshot),
     }),
@@ -346,7 +346,10 @@ export const ServerEvent = Schema.Union([
   serverEvent("chat.deleted", OrganizationEvent),
   serverEvent("chat.cleared", OrganizationEvent),
   serverEvent("feed.entry", UserFeedItem),
-  serverEvent("kills.changed", Schema.Struct({ guildId: NonEmptyString })),
+  serverEvent(
+    "kills.changed",
+    Schema.Struct({ guildId: Schema.NonEmptyString }),
+  ),
   serverEvent("loot.created", GuildLootCreatedEventV2),
   serverEvent("loot.share-updated", GuildLootShareUpdatedEventV2),
   serverEvent("timer.created", OrganizationEvent),
@@ -369,9 +372,12 @@ export const ServerEvent = Schema.Union([
   serverEvent(
     "notification.volunteer",
     Schema.Struct({
-      notificationId: NonEmptyString,
+      notificationId: Schema.NonEmptyString,
       volunteer: Schema.StructWithRest(
-        Schema.Struct({ discordId: NonEmptyString, world: NonEmptyString }),
+        Schema.Struct({
+          discordId: Schema.NonEmptyString,
+          world: Schema.NonEmptyString,
+        }),
         [Schema.Record(Schema.String, Schema.Unknown)],
       ),
     }),

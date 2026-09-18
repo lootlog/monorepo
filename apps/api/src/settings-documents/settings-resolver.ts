@@ -9,9 +9,7 @@ import type {
   SettingsScope,
   SettingsValueSource,
 } from "@lootlog/schema/settings-documents";
-
 import {
-  cloneValue,
   collectLeafPaths,
   getPath,
   hasPath,
@@ -132,7 +130,7 @@ export const applySettingsPatch = ({
     }
   }
 
-  const nextOverrides = cloneValue(currentOverrides);
+  const nextOverrides = structuredClone(currentOverrides);
 
   for (const { path, value } of setEntries) {
     const fieldMatch = getFieldDefinition(domain, path);

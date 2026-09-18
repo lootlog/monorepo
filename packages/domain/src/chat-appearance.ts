@@ -1,4 +1,4 @@
-import { isRecord } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 import {
   CHAT_APPEARANCE_COMPACT_PRESET,
   CHAT_APPEARANCE_READABLE_PRESET,
@@ -30,7 +30,7 @@ export const normalizeChatAppearanceSettings = (
   value: unknown,
   fallback: ChatAppearanceSettings = CHAT_APPEARANCE_READABLE_PRESET,
 ): ChatAppearanceSettings => {
-  const settings = isRecord(value) ? value : {};
+  const settings = Predicate.isObject(value) ? value : {};
 
   return {
     npcLayout:

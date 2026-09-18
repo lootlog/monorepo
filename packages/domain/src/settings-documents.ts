@@ -1,5 +1,4 @@
-import { Schema } from "effect";
-import { isRecord } from "@lootlog/schema/records";
+import { Schema, Predicate } from "effect";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   CHAT_FONT_SCALE_MAX_PERCENT,
@@ -286,12 +285,16 @@ export const SETTINGS_CATALOG = {
           singleTimerDisplayMode: "row",
         },
         guildScopes,
-        isRecord,
+        Predicate.isObject,
       ),
-      "timers.customColors": field({}, guildScopes, isRecord),
-      "timers.timersColors": field({}, guildScopes, isRecord),
-      "timers.defaultColorNames": field({}, guildScopes, isRecord),
-      "timers.overriddenDefaultColors": field({}, guildScopes, isRecord),
+      "timers.customColors": field({}, guildScopes, Predicate.isObject),
+      "timers.timersColors": field({}, guildScopes, Predicate.isObject),
+      "timers.defaultColorNames": field({}, guildScopes, Predicate.isObject),
+      "timers.overriddenDefaultColors": field(
+        {},
+        guildScopes,
+        Predicate.isObject,
+      ),
       "timers.hiddenDefaultColors": field<string[]>(
         [],
         guildScopes,
@@ -318,9 +321,9 @@ export const SETTINGS_CATALOG = {
           countdownMode: "max",
         },
         guildScopes,
-        isRecord,
+        Predicate.isObject,
       ),
-      alwaysVisibleExpiredTimers: field({}, guildScopes, isRecord),
+      alwaysVisibleExpiredTimers: field({}, guildScopes, Predicate.isObject),
       timerFiltersEnabled: field(true, guildScopes, isBoolean),
       colorFiltersEnabled: field(false, guildScopes, isBoolean),
       timersSortOrder: field("asc", guildScopes, isOneOf(["asc", "desc"])),
@@ -348,13 +351,21 @@ export const SETTINGS_CATALOG = {
         accountScopes,
         isEnabledFlagRecord,
       ),
-      catching: field<OpaqueSettingsRecord>({}, characterScopes, isRecord),
+      catching: field<OpaqueSettingsRecord>(
+        {},
+        characterScopes,
+        Predicate.isObject,
+      ),
       battlePanel: field<{ isBattleCollectionEnabled?: boolean }>(
         {},
         characterScopes,
         isBattlePanelRecord,
       ),
-      lootlog: field<OpaqueSettingsRecord>({}, characterScopes, isRecord),
+      lootlog: field<OpaqueSettingsRecord>(
+        {},
+        characterScopes,
+        Predicate.isObject,
+      ),
     },
   },
   notifications: {
@@ -366,12 +377,12 @@ export const SETTINGS_CATALOG = {
         // of the old lists keeps every notification the player received.
         fromVersion: 1,
         migrate: ({ presentation, ...overrides }) => {
-          if (!isRecord(presentation)) return overrides;
+          if (!Predicate.isObject(presentation)) return overrides;
           const guildIds = new Set<string>();
           const migratedPresentation: RawSettingsValues = {};
 
           for (const [type, rule] of Object.entries(presentation)) {
-            if (!isRecord(rule)) continue;
+            if (!Predicate.isObject(rule)) continue;
             const { guildIds: legacyGuildIds, ...rest } = rule;
 
             if (isStringArray(legacyGuildIds)) {
@@ -412,9 +423,9 @@ export const SETTINGS_CATALOG = {
       detectorVolume: field(0.5, userScopes, isNumberInRange(0, 1)),
       timersVolume: field(0.5, userScopes, isNumberInRange(0, 1)),
       pingsVolume: field(0, userScopes, isNumberInRange(0, 1)),
-      notificationsConfig: field({}, userScopes, isRecord),
-      detectorConfig: field({}, userScopes, isRecord),
-      timersConfig: field({}, userScopes, isRecord),
+      notificationsConfig: field({}, userScopes, Predicate.isObject),
+      detectorConfig: field({}, userScopes, Predicate.isObject),
+      timersConfig: field({}, userScopes, Predicate.isObject),
     },
   },
   controls: {
@@ -454,12 +465,12 @@ export const DEVICE_SETTINGS_CATALOG = {
   windowGeometry: {
     defaultValue: {},
     persistence: "DEVICE",
-    isValid: isRecord,
+    isValid: Predicate.isObject,
   },
   windowOpenState: {
     defaultValue: {},
     persistence: "DEVICE",
-    isValid: isRecord,
+    isValid: Predicate.isObject,
   },
 } as const;
 

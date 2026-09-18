@@ -1,14 +1,12 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
-import {
-  isoDatetimeCodec,
-  nullableIsoDatetimeCodec,
-} from "#src/shared/schema/response-codecs";
+import { nullableIsoDatetimeCodec } from "#src/shared/schema/response-codecs";
 
 const EventCoordinationTimer = Schema.Struct({
   npcId: Schema.Number,
   world: Schema.String,
-  minSpawnTime: isoDatetimeCodec,
-  maxSpawnTime: isoDatetimeCodec,
+  minSpawnTime: IsoDateTime,
+  maxSpawnTime: IsoDateTime,
   status: Schema.Literals(["OPEN", "WAITING", "OVERDUE", "NONE"]),
   overdueMs: Schema.NullOr(Schema.Number),
 });
@@ -35,7 +33,7 @@ const EventCoordinationHero = Schema.Struct({
       numericMapId: Schema.Number,
       mapName: Schema.String,
       gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-      startedAt: isoDatetimeCodec,
+      startedAt: IsoDateTime,
       durationSeconds: Schema.Number,
     }),
   ),
@@ -51,7 +49,7 @@ const EventCoordinationHero = Schema.Struct({
 
 export const EventCoordinationResponse = Schema.Struct({
   assignmentTimeoutMinutes: Schema.Number,
-  generatedAt: isoDatetimeCodec,
+  generatedAt: IsoDateTime,
   eventId: Schema.String,
   world: Schema.String,
   summary: Schema.Struct({
