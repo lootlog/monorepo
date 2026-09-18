@@ -1,4 +1,4 @@
-import { isRecord } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 import { useGameStore } from "@/store/game.store";
 import type {
   CreatePartyGatheringDtoCharacter,
@@ -9,7 +9,6 @@ import type {
   SoundSettingsResponseDto,
   TimerResponseDto,
 } from "@lootlog/client/main";
-
 import type { Npc } from "@/api/npcs.api";
 import type { GuildMember } from "@/types/guild-member";
 import type {
@@ -145,7 +144,7 @@ export const normalizeTimerMember = (
 };
 
 export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
-  const data = isRecord(npc) ? npc : undefined;
+  const data = Predicate.isObject(npc) ? npc : undefined;
 
   return {
     id: getNumber(data?.id),
@@ -163,13 +162,13 @@ export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
 const normalizeSoundCategoryConfig = (
   value: unknown,
 ): Record<string, NpcTypeSoundConfig> => {
-  if (!isRecord(value)) {
+  if (!Predicate.isObject(value)) {
     return {};
   }
 
   return Object.entries(value).reduce<Record<string, NpcTypeSoundConfig>>(
     (result, [key, config]) => {
-      if (!isRecord(config)) {
+      if (!Predicate.isObject(config)) {
         return result;
       }
 

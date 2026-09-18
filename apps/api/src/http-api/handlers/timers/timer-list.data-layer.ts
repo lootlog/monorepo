@@ -1,4 +1,4 @@
-import { isRecord, isObjectRecord } from "@lootlog/schema/records";
+import { isObjectRecord } from "@lootlog/schema/records";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   and,
@@ -12,7 +12,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 import { canViewTimer } from "./timer-selection.js";
 import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -50,7 +50,7 @@ const visibleExpiredKeys = (
   if (!world || !isObjectRecord(overrides)) return [];
   const alwaysVisible = overrides.alwaysVisibleExpiredTimers;
 
-  if (!isRecord(alwaysVisible)) {
+  if (!Predicate.isObject(alwaysVisible)) {
     return [];
   }
 

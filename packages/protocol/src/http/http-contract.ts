@@ -1,5 +1,4 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { NonEmptyString } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import {
   HttpApi,
@@ -10,8 +9,8 @@ import {
 export class BadRequest extends TaggedErrorClass<BadRequest>()(
   "BadRequest",
   {
-    code: NonEmptyString,
-    message: NonEmptyString,
+    code: Schema.NonEmptyString,
+    message: Schema.NonEmptyString,
     details: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
   },
   { httpApiStatus: 400 },
@@ -20,8 +19,8 @@ export class BadRequest extends TaggedErrorClass<BadRequest>()(
 export class Unauthorized extends TaggedErrorClass<Unauthorized>()(
   "Unauthorized",
   {
-    code: NonEmptyString,
-    message: NonEmptyString,
+    code: Schema.NonEmptyString,
+    message: Schema.NonEmptyString,
   },
   { httpApiStatus: 401 },
 ) {}
@@ -29,8 +28,8 @@ export class Unauthorized extends TaggedErrorClass<Unauthorized>()(
 export class Forbidden extends TaggedErrorClass<Forbidden>()(
   "Forbidden",
   {
-    code: NonEmptyString,
-    message: NonEmptyString,
+    code: Schema.NonEmptyString,
+    message: Schema.NonEmptyString,
   },
   { httpApiStatus: 403 },
 ) {}
@@ -38,8 +37,8 @@ export class Forbidden extends TaggedErrorClass<Forbidden>()(
 export class NotFound extends TaggedErrorClass<NotFound>()(
   "NotFound",
   {
-    code: NonEmptyString,
-    message: NonEmptyString,
+    code: Schema.NonEmptyString,
+    message: Schema.NonEmptyString,
   },
   { httpApiStatus: 404 },
 ) {}
@@ -47,8 +46,8 @@ export class NotFound extends TaggedErrorClass<NotFound>()(
 export class Conflict extends TaggedErrorClass<Conflict>()(
   "Conflict",
   {
-    code: NonEmptyString,
-    message: NonEmptyString,
+    code: Schema.NonEmptyString,
+    message: Schema.NonEmptyString,
   },
   { httpApiStatus: 409 },
 ) {}
@@ -56,8 +55,8 @@ export class Conflict extends TaggedErrorClass<Conflict>()(
 export class ServiceUnavailable extends TaggedErrorClass<ServiceUnavailable>()(
   "ServiceUnavailable",
   {
-    code: NonEmptyString,
-    message: NonEmptyString,
+    code: Schema.NonEmptyString,
+    message: Schema.NonEmptyString,
     retryAfterSeconds: Schema.optional(Schema.Int),
   },
   { httpApiStatus: 503 },

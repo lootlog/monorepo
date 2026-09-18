@@ -1,3 +1,4 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
 import {
   NotificationJobKind,
@@ -11,7 +12,6 @@ import {
   NotificationTriggerType,
 } from "#src/notifications/notification-enums";
 import {
-  isoDatetimeCodec,
   jsonValueSchema,
   nullableIsoDatetimeCodec,
 } from "#src/shared/schema/response-codecs";
@@ -58,8 +58,8 @@ export const NotificationTargetResponse = Schema.Struct({
   lastSyncedAt: nullableIsoDatetimeCodec,
   lastDeliveryAt: nullableIsoDatetimeCodec,
   lastDeliveryError: Schema.NullOr(Schema.String),
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
 });
 
 export const NotificationTargetWithTestTriggerResponse = Schema.Struct({
@@ -70,7 +70,7 @@ export const NotificationTargetWithTestTriggerResponse = Schema.Struct({
 const NotificationRuleTargetResponse = Schema.Struct({
   ruleId: Schema.Int,
   targetId: Schema.Int,
-  createdAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
   target: NotificationTargetResponse,
 });
 
@@ -102,8 +102,8 @@ export const NotificationRuleSummaryResponse = Schema.Struct({
   scheduleTimezone: Schema.NullOr(Schema.String),
   enabled: Schema.Boolean,
   dedupeWindowSeconds: Schema.Int,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
 });
 
 export const NotificationRuleResponse = Schema.Struct({
@@ -175,7 +175,7 @@ const NotificationJobResponse = Schema.Struct({
   ownerType: literals(Object.values(NotificationOwnerType)),
   ownerId: Schema.String,
   jobKind: literals(Object.values(NotificationJobKind)),
-  scheduledFor: isoDatetimeCodec,
+  scheduledFor: IsoDateTime,
   status: literals(Object.values(NotificationJobStatus)),
   idempotencyKey: Schema.String,
   sourceEntityType: Schema.NullOr(Schema.String),
@@ -187,8 +187,8 @@ const NotificationJobResponse = Schema.Struct({
   blockedReason: Schema.NullOr(Schema.String),
   providerMessageId: Schema.NullOr(Schema.String),
   processedAt: nullableIsoDatetimeCodec,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
   rule: NotificationRuleSummaryResponse,
   target: NotificationTargetResponse,
 });
@@ -220,8 +220,8 @@ export const WatchedItemResponse = Schema.Struct({
   world: Schema.String,
   enabled: Schema.Boolean,
   notificationRuleId: Schema.NullOr(Schema.Int),
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
   itemSnapshot: Schema.NullOr(WatchedItemSnapshotResponse),
   notificationRule: Schema.NullOr(NotificationRuleResponse),
 });

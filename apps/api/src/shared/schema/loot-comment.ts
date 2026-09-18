@@ -1,5 +1,5 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { Schema } from "effect";
-import { isoDatetimeCodec } from "./response-codecs.js";
 
 const LootCommentMemberRoleResponse = Schema.Struct({
   color: Schema.optionalKey(Schema.NullOr(Schema.Number)),
@@ -18,8 +18,8 @@ export const LootCommentResponse = Schema.Struct({
   guildId: Schema.String,
   content: Schema.String,
   member: LootCommentMemberResponse,
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
 });
 
 export type LootCommentResponse = typeof LootCommentResponse.Type;

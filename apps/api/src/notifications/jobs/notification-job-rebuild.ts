@@ -1,6 +1,5 @@
-import { isRecord } from "@lootlog/schema/records";
 import { scheduleNotificationOccurrence } from "./notification-scheduled-occurrence.js";
-import { Clock, Effect } from "effect";
+import { Clock, Effect, Predicate } from "effect";
 import type {
   NotificationJobStore,
   NotificationRuleWithTargets,
@@ -218,7 +217,7 @@ export const makeNotificationJobRebuild = (
       timers,
       (timer) => {
         if (!matchesTimerRule(rule.filters, timer.npcId)) return Effect.void;
-        const npc = isRecord(timer.npc) ? timer.npc : null;
+        const npc = Predicate.isObject(timer.npc) ? timer.npc : null;
 
         return rebuildTimer(rule.id, { ...timer, npc });
       },

@@ -1,8 +1,8 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { EVENT_SCORING_MODES } from "@lootlog/domain/scoring";
 import { Schema } from "effect";
 import {
   flexibleIsoDatetimeCodec,
-  isoDatetimeCodec,
   jsonValueSchema,
   nullableFlexibleIsoDatetimeCodec,
 } from "#src/shared/schema/response-codecs";
@@ -58,9 +58,9 @@ export const EventKillParticipantResponse = Schema.Struct({
 const EventKillHistoryEntryResponse = Schema.Struct({
   id: Schema.String,
   heroNpcId: Schema.String,
-  killedAt: isoDatetimeCodec,
-  minSpawnTimeAtKill: isoDatetimeCodec,
-  maxSpawnTimeAtKill: isoDatetimeCodec,
+  killedAt: IsoDateTime,
+  minSpawnTimeAtKill: IsoDateTime,
+  maxSpawnTimeAtKill: IsoDateTime,
   isManualClose: Schema.Boolean,
   heroNpc: EventKillHeroNpcResponse,
   points: Schema.Array(EventKillParticipantResponse),
@@ -74,9 +74,9 @@ export const EventKillHistoryResponse = Schema.Struct({
 const EventMemberKillHistoryEntryResponse = Schema.Struct({
   id: Schema.String,
   heroNpcId: Schema.String,
-  killedAt: isoDatetimeCodec,
-  minSpawnTimeAtKill: isoDatetimeCodec,
-  maxSpawnTimeAtKill: isoDatetimeCodec,
+  killedAt: IsoDateTime,
+  minSpawnTimeAtKill: IsoDateTime,
+  maxSpawnTimeAtKill: IsoDateTime,
   isManualClose: Schema.Boolean,
   heroNpc: EventKillHeroNpcResponse,
   memberPoint: Schema.NullOr(EventKillParticipantResponse),
@@ -111,9 +111,9 @@ export const KillDetailResponse = Schema.Struct({
   kill: Schema.Struct({
     id: Schema.String,
     heroNpcId: Schema.String,
-    killedAt: isoDatetimeCodec,
-    minSpawnTimeAtKill: isoDatetimeCodec,
-    maxSpawnTimeAtKill: isoDatetimeCodec,
+    killedAt: IsoDateTime,
+    minSpawnTimeAtKill: IsoDateTime,
+    maxSpawnTimeAtKill: IsoDateTime,
     timerCreatedById: Schema.NullOr(Schema.Number),
     isManualClose: Schema.Boolean,
     respawnDurationSeconds: Schema.NullOr(Schema.Number),

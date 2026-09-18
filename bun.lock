@@ -240,6 +240,7 @@
         "better-auth": "1.7.2",
         "class-variance-authority": "^0.7.1",
         "cn": "catalog:",
+        "effect": "catalog:",
         "i18next": "^26.4.0",
         "lexical": "catalog:",
         "lucide-react": "^1.35.0",

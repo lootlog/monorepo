@@ -1,3 +1,4 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { topMemberDisplayRoles } from "#src/members/member-display-role";
 import { roundEventDisplayValue } from "#src/events/round-event-display-value";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -12,7 +13,6 @@ import {
   roleTable,
 } from "#src/database/drizzle/schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
-import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 
 const CachedEventRankingResponse = Schema.Array(
@@ -27,7 +27,7 @@ const CachedEventRankingResponse = Schema.Array(
     totalTimeSeconds: Schema.Number,
     avgAfkPercentage: Schema.Number,
     pointsModified: Schema.Boolean,
-    updatedAt: isoDatetimeCodec,
+    updatedAt: IsoDateTime,
     member: Schema.Struct({
       id: Schema.Number,
       name: Schema.String,

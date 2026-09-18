@@ -1,4 +1,5 @@
 /* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { Predicate } from "effect";
 import { queryClient } from "@/lib/query-client";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useGameStore } from "@/store/game.store";
@@ -13,7 +14,6 @@ import {
   type UserPreferencesResponseDtoOutput,
 } from "@lootlog/client/main";
 import type { QueryKey } from "@tanstack/react-query";
-import { isRecord } from "@lootlog/schema/records";
 import { toast } from "sonner";
 import {
   applyGuildSettingsOperation,
@@ -222,7 +222,7 @@ const collectLeafPaths = (
   Object.entries(value).flatMap(([key, nested]) => {
     const path = prefix ? `${prefix}.${key}` : key;
 
-    return isRecord(nested) && Object.keys(nested).length > 0
+    return Predicate.isObject(nested) && Object.keys(nested).length > 0
       ? collectLeafPaths(nested, path)
       : [path];
   });

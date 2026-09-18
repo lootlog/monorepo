@@ -1,5 +1,5 @@
+import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
-import { isoDatetimeCodec } from "#src/shared/schema/response-codecs";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, or } from "drizzle-orm";
 import { Context, Effect, Layer, Option, Schema } from "effect";
@@ -21,8 +21,8 @@ import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
 const CachedGuild = createSelectSchema(guildTable, {
-  createdAt: isoDatetimeCodec,
-  updatedAt: isoDatetimeCodec,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
 });
 
 const decodeCachedGuild = Schema.decodeUnknownSync(

@@ -1,10 +1,9 @@
-import { isRecord } from "@lootlog/schema/records";
 import type {
   SettingsDocuments,
   SettingsDocumentsFailure,
   SettingsDocumentsResponse,
 } from "#src/settings-documents/settings-documents.service";
-import { Effect, Schema } from "effect";
+import { Effect, Schema, Predicate } from "effect";
 import type {
   MigrateTimerSettingsRequest,
   UpdateOrganizationTimerSettingsRequest,
@@ -44,7 +43,7 @@ export interface TimerSettings {
   ) => TimerEffect;
 }
 
-const asRecord = (value: unknown) => (isRecord(value) ? value : {});
+const asRecord = (value: unknown) => (Predicate.isObject(value) ? value : {});
 
 const asJsonValue = (value: unknown): JsonValue => {
   if (value === null) return null;
@@ -59,7 +58,7 @@ const asJsonValue = (value: unknown): JsonValue => {
 
   if (Array.isArray(value)) return value.map(asJsonValue);
 
-  if (!isRecord(value)) return null;
+  if (!Predicate.isObject(value)) return null;
 
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
@@ -67,7 +66,7 @@ const asJsonValue = (value: unknown): JsonValue => {
 };
 
 const asJsonObject = (value: unknown): JsonObject => {
-  if (!isRecord(value)) return {};
+  if (!Predicate.isObject(value)) return {};
 
   return Object.fromEntries(
     Object.entries(value).map(([key, entry]) => [key, asJsonValue(entry)]),
