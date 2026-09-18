@@ -242,6 +242,30 @@ Before calling a change complete, account for every applicable item:
   only re-export symbols.
 - When importing node built-in modules, first, look for Bun built-ins and only then Node built-ins.
 
+### Keep UI and UX consistent
+
+One interface pattern has one implementation, one look, and one behavior across
+a surface. A player who learned a filter bar, table, or card on one page must
+find it unchanged on the next.
+
+- Before building or restyling a page, find the shipped page that solves the
+  same problem and match it: components, control sizes, spacing, copy tone,
+  empty and loading states, mobile behavior, and interactions. In `apps/web`
+  the battle panel is the reference for navigation tabs, filter bars, KPI
+  tiles, tables, and empty states.
+- Reuse the shared component. When a second feature needs a feature-local
+  component, move it to `components/common` or `packages/ui` and migrate its
+  callers; a restyled copy is a defect.
+- The defaults of `@lootlog/ui` primitives are the design. Change a primitive's
+  look through its variants and props, and only to match an existing pattern; a
+  utility class can silently lose to the primitive's own selector.
+- A card that navigates from its header uses `ChevronLink`.
+- When a pattern changes, migrate every page in the affected family in the same
+  change.
+- Verify against the reference by measurement: compare computed size, color,
+  borders, and alignment in the browser at desktop and mobile widths. A
+  difference of a few pixels is a defect.
+
 ### Prevent duplicated logic
 
 - Before adding or copying logic, search by behavior as well as symbol name

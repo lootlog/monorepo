@@ -1,52 +1,26 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
-
-import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { useTranslation } from "react-i18next";
+import { LootOverviewCards } from "./components/loot-overview-cards";
+import { StatsChartCard } from "./components/stats-chart-card";
+import { StatsFilterBarSkeleton } from "./components/stats-filter-bar-skeleton";
 
 export const LootStatsPageSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex flex-col gap-4 px-3 py-3">
-      <SectionCard>
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-48" />
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-8 w-24" />
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <SectionCard key={i}>
-            <SectionCardHeader title=<Skeleton className="mb-2 h-3 w-16" /> />
-            <SectionCardContent className="flex flex-col gap-3">
-              <Skeleton className="h-7 w-20" />
-            </SectionCardContent>
-          </SectionCard>
-        ))}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <SectionCard>
-          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
-          <SectionCardContent className="flex flex-col gap-3">
-            <Skeleton className="h-48 w-full rounded-lg" />
-          </SectionCardContent>
-        </SectionCard>
-        <SectionCard>
-          <SectionCardHeader title=<Skeleton className="mb-3 h-5 w-32" /> />
-          <SectionCardContent className="flex flex-col gap-3">
-            <Skeleton className="h-48 w-full rounded-lg" />
-          </SectionCardContent>
-        </SectionCard>
+    <div className="flex flex-col gap-3 px-3 pb-3">
+      <StatsFilterBarSkeleton />
+      <LootOverviewCards isLoading />
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+        <StatsChartCard
+          title={t("loots.stats.timeline.title")}
+          className="xl:col-span-2"
+          isLoading
+        >
+          {null}
+        </StatsChartCard>
+        <StatsChartCard title={t("loots.stats.topNpcs.title")} isLoading>
+          {null}
+        </StatsChartCard>
       </div>
     </div>
   );

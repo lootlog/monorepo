@@ -33,8 +33,14 @@
   "levelShort": "Lvl {{level}}",
   "avatarAlt": "Avatar",
   "stats": {
-    "kills": "Statystyki killi",
-    "loots": "Statystyki lootów"
+    "kills": "Statystyki bić",
+    "loots": "Statystyki łupów",
+    "navigation": {
+      "kills": "Bicia",
+      "loots": "Łupy",
+      "ranking": "Ranking",
+      "npcs": "Potwory"
+    }
   },
   "save": "Zapisz",
   "saving": "Zapisywanie...",

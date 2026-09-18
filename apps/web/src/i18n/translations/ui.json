@@ -32,7 +32,6 @@
     "searching": "Wyszukiwanie...",
     "typeAtLeastTwoCharacters": "Wpisz przynajmniej 2 znaki",
     "empty": "Nie znaleziono",
-    "selectedCount": "{{count}} wybranych",
-    "level": "{{level}} lvl"
+    "selectedCount": "{{count}} wybranych"
   }
 }

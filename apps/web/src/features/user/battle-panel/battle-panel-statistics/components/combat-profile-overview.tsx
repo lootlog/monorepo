@@ -1,6 +1,6 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { formatDurationCompact } from "@/features/guild/events/utils/format-duration";
-import { BattlePanelKpiCard } from "@/features/user/battle-panel/components/battle-panel-kpi-card";
+import { KpiCard } from "@/components/common/kpi-card";
 import type { CombatProfileResponseDtoOutput } from "@lootlog/client/battlelog";
 import { Award, Crosshair, Hourglass, Sword, Trophy } from "lucide-react";
 import { cn } from "cn";
@@ -123,7 +123,7 @@ export function CombatProfileOverview({
       )}
     >
       {visibleKpis.map((kpi) => (
-        <BattlePanelKpiCard
+        <KpiCard
           // An odd number of tiles in two columns would leave the last one orphaned.
           className={
             visibleKpis.length % 2 === 1

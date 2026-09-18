@@ -117,8 +117,8 @@ export const useStatsNpcsListModel = () => {
     setCursor(0);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setCursor(0);
   };
 
@@ -133,7 +133,6 @@ export const useStatsNpcsListModel = () => {
     handleMaxLvlChange,
     handlePeriodChange,
     isLoading,
-    data,
     paginatedData,
     hasActiveFilters,
     handleRowClick,

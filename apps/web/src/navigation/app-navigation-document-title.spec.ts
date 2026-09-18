@@ -183,7 +183,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/stats/kills",
         }),
       ]),
-    ).toBe("Statystyki killi - Nocna Straż - Lootlog.pl");
+    ).toBe("Statystyki bić - Nocna Straż - Lootlog.pl");
 
     expect(
       resolveDocumentTitle([
@@ -199,7 +199,7 @@ describe("resolveDocumentTitle", () => {
           routeId: "/_authenticated/$guildId/stats/loots",
         }),
       ]),
-    ).toBe("Statystyki lootów - Nocna Straż - Lootlog.pl");
+    ).toBe("Statystyki łupów - Nocna Straż - Lootlog.pl");
   });
 
   it("treats trailing slashes as the same guild page", () => {

@@ -10,7 +10,7 @@ import {
 import { cn } from "cn";
 import type { LucideIcon } from "lucide-react";
 
-type BattlePanelEmptyStateProps = {
+type EmptyStateProps = {
   icon: LucideIcon;
   title: string;
   description?: string;
@@ -18,13 +18,13 @@ type BattlePanelEmptyStateProps = {
   framed?: boolean;
 };
 
-export const BattlePanelEmptyState = ({
+export const EmptyState = ({
   icon: Icon,
   title,
   description,
   className,
   framed = false,
-}: BattlePanelEmptyStateProps) => {
+}: EmptyStateProps) => {
   const content = (
     <Empty
       className={cn("min-h-64 border-0 bg-transparent px-6 py-12", className)}

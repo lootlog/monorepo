@@ -3,8 +3,7 @@ import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { OpponentSummaryTable } from "./opponent-summary-table";
 import { StatCard } from "./stat-card";
-import { Button } from "@lootlog/ui/components/button";
-import { ArrowRight } from "lucide-react";
+import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { ROUTES } from "@/config/routes";
 import type { RatingDeltaByOpponentRecord } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
@@ -110,17 +109,15 @@ export function RatingDeltaByOpponentCard({
       isEmpty={data.length === 0}
       emptyMessage={t("battlePanel.statistics.matchmaking.empty")}
       actions={
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <Link to={ROUTES.user.battlePanel.matchmakingH2h} search={search}>
-              {t("battlePanel.statistics.matchmaking.link")}
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          }
-          nativeButton={false}
-        />
+        <ChevronLink
+          className="inline-flex h-8 shrink-0 items-center gap-1 text-xs"
+          render=<Link
+            to={ROUTES.user.battlePanel.matchmakingH2h}
+            search={search}
+          />
+        >
+          {t("battlePanel.statistics.matchmaking.link")}
+        </ChevronLink>
       }
     >
       <OpponentSummaryTable table={table} onOpponentOpen={handleOpponentOpen} />

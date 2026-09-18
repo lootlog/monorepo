@@ -1,5 +1,5 @@
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
-import { BattlePanelFilterBar } from "@/features/user/battle-panel/components/battle-panel-filter-bar";
+import { FilterBar } from "@/components/common/filter-bar";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
@@ -24,14 +24,14 @@ export const AbyssHubSkeleton = () => {
         aria-busy="true"
         className="flex min-h-full flex-col gap-3 bg-background px-3 pb-3"
       >
-        <BattlePanelFilterBar ariaLabel={t("battlePanel.filters.title")}>
+        <FilterBar ariaLabel={t("battlePanel.filters.title")}>
           {FILTER_WIDTHS.map((width) => (
             <Skeleton
               key={width}
               className={`h-10 w-full rounded-md ${width}`}
             />
           ))}
-        </BattlePanelFilterBar>
+        </FilterBar>
         <AbyssSummaryCards isLoading />
         <Skeleton className="h-11 w-full rounded-lg sm:w-80" />
         <div className="flex min-h-[640px] min-w-0 flex-col">

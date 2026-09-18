@@ -1,71 +1,38 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-
 import { ItemImage } from "@lootlog/ui/components/item-image";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopItemsItem } from "@lootlog/client/main";
+import { useTranslation } from "react-i18next";
+import { LEADERBOARD_SIZE } from "../constants";
+import { StatsLeaderboardCard } from "./stats-leaderboard-card";
+import { StatsLeaderboardRow } from "./stats-leaderboard-row";
 
 type LootTopItemsProps = {
   data?: LootStatsResponseDtoOutputTopItemsItem[];
   isLoading?: boolean;
 };
 
-export const LootTopItems: React.FC<LootTopItemsProps> = ({
-  data,
-  isLoading,
-}) => {
+export const LootTopItems = ({ data, isLoading }: LootTopItemsProps) => {
   const { t } = useTranslation();
-
-  if (isLoading) {
-    return (
-      <SectionCard>
-        <SectionCardHeader title={t("loots.stats.topItems.title")} />
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-9 w-9 rounded-md" />
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-4 w-8" />
-              </div>
-            ))}
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
-
-  if (!data?.length) {
-    return (
-      <SectionCard>
-        <SectionCardHeader title={t("loots.stats.topItems.title")} />
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex h-[250px] items-center justify-center text-muted-foreground">
-            {t("loots.stats.topItems.noData")}
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
+  const items = data?.slice(0, LEADERBOARD_SIZE) ?? [];
 
   return (
-    <SectionCard>
-      <SectionCardHeader title={t("loots.stats.topItems.title")} />
-      <SectionCardContent className="flex flex-col gap-3">
-        <div className="space-y-2">
-          {data.map((item) => (
-            <div key={item.itemId} className="flex items-center gap-3">
-              <ItemImage rarity={item.rarity} icon={item.icon} />
-              <span className="flex-1 truncate text-sm">{item.name}</span>
-              <span className="text-muted-foreground tabular-nums text-sm">
-                {item.count}x
-              </span>
-            </div>
-          ))}
-        </div>
-      </SectionCardContent>
-    </SectionCard>
+    <StatsLeaderboardCard
+      title={t("loots.stats.topItems.title")}
+      description={t("loots.stats.topItems.description")}
+      isLoading={isLoading}
+      emptyMessage={
+        items.length === 0 ? t("loots.stats.topItems.noData") : undefined
+      }
+    >
+      {items.map((item, index) => (
+        <StatsLeaderboardRow
+          key={item.itemId}
+          rank={index + 1}
+          media={<ItemImage rarity={item.rarity} icon={item.icon} />}
+          title={item.name}
+          value={item.count}
+          maxValue={items[0]?.count ?? 0}
+        />
+      ))}
+    </StatsLeaderboardCard>
   );
 };
