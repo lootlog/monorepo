@@ -172,12 +172,12 @@ beforeAll(async () => {
   services = await createServices();
 }, 60_000);
 
+// Stopping two containers can take longer than the default hook timeout on CI runners.
 afterAll(async () => {
   await runtime?.dispose();
   await pool?.end();
-  await redisContainer?.stop();
-  await postgres?.stop();
-});
+  await Promise.all([redisContainer?.stop(), postgres?.stop()]);
+}, 60_000);
 
 beforeEach(async () => {
   await pool.query(
