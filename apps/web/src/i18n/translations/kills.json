@@ -1,26 +1,20 @@
 {
-  "title": "Statystyki killi",
-  "guildStats": {
-    "title": "Statystyki klanu",
-    "noData": "Brak danych o biciach w klanie"
-  },
   "overview": {
-    "title": "Podsumowanie",
-    "totalKills": "Łączne bicia",
-    "killsByType": "Bicia według typu"
+    "totalKills": "Wszystkie bicia",
+    "participations": "{{value}} udziałów"
   },
   "filters": {
     "title": "Filtry",
     "world": "Świat",
-    "npcType": "Typ NPC",
+    "npcType": "Typ potwora",
     "levelRange": "Zakres poziomów",
     "minLevel": "Min. poziom",
     "maxLevel": "Max. poziom",
     "period": "Okres",
     "allTypes": "Wszystkie typy",
-    "apply": "Zastosuj",
-    "reset": "Resetuj",
-    "close": "Zamknij"
+    "close": "Zamknij",
+    "minLevelShort": "Od",
+    "maxLevelShort": "Do"
   },
   "period": {
     "all": "Wszystko",
@@ -31,22 +25,14 @@
     "30d": "30 dni"
   },
   "memberRanking": {
-    "title": "Ranking członków",
+    "title": "Najaktywniejsi członkowie",
+    "description": "{{type}} · udziały w biciach",
     "position": "#",
     "member": "Członek",
     "totalKills": "Łącznie",
-    "noData": "Brak danych o biciach",
-    "filteredNoData": "Brak członków pasujących do wybranych filtrów",
-    "viewAll": "Zobacz pełny ranking"
-  },
-  "recentKills": {
-    "title": "Ostatnie bicia",
-    "npc": "NPC",
-    "level": "Poziom",
-    "type": "Typ",
-    "killedAt": "Data",
-    "participants": "Uczestnicy",
-    "noData": "Brak ostatnich bić"
+    "noData": "Nikt jeszcze niczego nie ubił",
+    "filteredNoData": "Żaden członek nie pasuje do filtrów",
+    "viewAll": "Cały ranking"
   },
   "playerStats": {
     "title": "Twoje statystyki bić",
@@ -90,14 +76,17 @@
   },
   "topNpcs": {
     "title": "Najczęściej bite potwory",
-    "noData": "Brak danych o potworach",
-    "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
-    "viewAll": "Zobacz pełny ranking"
+    "description": "{{type}} · liczba bić",
+    "noData": "Brak ubitych potworów",
+    "filteredNoData": "Żaden potwór nie pasuje do filtrów",
+    "viewAll": "Wszystkie potwory"
   },
   "npcsList": {
     "title": "Ranking potworów",
-    "description": "Pełna lista najczęściej bitych potworów",
-    "searchPlaceholder": "Szukaj potwora..."
+    "searchPlaceholder": "Szukaj potwora",
+    "npc": "Potwór",
+    "type": "Typ",
+    "total": "Potworów: {{count}}"
   },
   "columns": {
     "name": "Nazwa",
@@ -105,38 +94,32 @@
     "type": "Typ",
     "kills": "Bicia"
   },
-  "topBossKillers": {
-    "title": "Najlepsi zabójcy według typu NPC",
-    "titans": "Tytani",
-    "heroes": "Herosi",
-    "noData": "Brak danych"
-  },
   "fullRanking": {
-    "title": "Ranking członków klanu",
-    "description": "Pełna lista statystyk bić członków klanu",
-    "searchPlaceholder": "Szukaj członka..."
+    "title": "Ranking członków",
+    "searchPlaceholder": "Szukaj członka",
+    "total": "Członków: {{count}}"
   },
   "npcKillers": {
     "member": "Członek",
     "killCount": "Bicia",
-    "totalGuildKills": "Łącznie w klanie: {{count}} bić",
-    "totalMembers": "Członków: {{count}}",
-    "uniqueGuildKills": "Unikalnych bić: {{count}}",
-    "notFound": "Nie znaleziono danych o tym potworze",
-    "noKillers": "Brak graczy, którzy zabili tego potwora",
-    "filteredNoData": "Brak graczy pasujących do wybranych filtrów",
-    "searchPlaceholder": "Szukaj gracza..."
+    "totalMembers": "Członkowie",
+    "uniqueGuildKills": "Bicia",
+    "notFound": "Nie ma takiego potwora w statystykach",
+    "noKillers": "Nikt jeszcze nie ubił tego potwora",
+    "filteredNoData": "Żaden członek nie pasuje do filtrów",
+    "searchPlaceholder": "Szukaj członka"
   },
   "memberStats": {
-    "title": "Statystyki członka",
-    "totalParticipations": "Łącznie bić: {{count}}",
-    "byType": "Bicia według typu",
-    "npcsKilled": "Zabite potwory",
+    "subtitle": "Udziały w biciach",
     "npc": "Potwór",
     "killCount": "Bicia",
-    "searchPlaceholder": "Szukaj potwora...",
+    "searchPlaceholder": "Szukaj potwora",
     "noData": "Ten członek nie ma jeszcze żadnych bić",
-    "filteredNoData": "Brak bić tego członka pasujących do wybranych filtrów",
-    "notFound": "Nie znaleziono członka w klanie"
+    "filteredNoData": "Żadne bicie nie pasuje do filtrów",
+    "notFound": "Nie ma takiego członka w tej organizacji"
+  },
+  "level": "{{level}} lvl",
+  "leaders": {
+    "title": "Czołówka"
   }
 }

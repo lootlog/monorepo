@@ -10,6 +10,7 @@ import {
 } from "@lootlog/client/main";
 
 import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-period-select";
+import { useGuildMemberMap } from "./hooks/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildGuildKillStatsParams } from "./utils/build-stats-query-params";
 
@@ -46,6 +47,7 @@ export const useStatsRankingModel = () => {
   } = useStatsSettings("ranking");
 
   const [searchQuery, setSearchQuery] = useState("");
+  const membersMap = useGuildMemberMap(guildId);
 
   const killStatsParams = buildGuildKillStatsParams({
     world: settings.world ?? undefined,
@@ -90,9 +92,7 @@ export const useStatsRankingModel = () => {
     setCursor(0);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-
+  const handleSearchChange = (value: string) => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
@@ -149,13 +149,13 @@ export const useStatsRankingModel = () => {
     handleMaxLvlChange,
     handlePeriodChange,
     isLoading,
-    data,
     paginatedData,
     hasActiveFilters,
     cursor,
     handleRowClick,
     activeNpcTypes,
     guildId,
+    membersMap,
     total,
     hasPrev,
     hasNext,

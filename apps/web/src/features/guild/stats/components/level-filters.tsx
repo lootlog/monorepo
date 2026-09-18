@@ -9,6 +9,8 @@ type LevelFiltersProps = {
   onMaxLvlChange: (value: string) => void;
   inputClassName?: string;
   separator?: ReactNode;
+  minPlaceholder?: string;
+  maxPlaceholder?: string;
 };
 
 export const LevelFilters: React.FC<LevelFiltersProps> = ({
@@ -18,6 +20,8 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
   onMaxLvlChange,
   inputClassName = "w-[100px]",
   separator,
+  minPlaceholder,
+  maxPlaceholder,
 }) => {
   const { t } = useTranslation();
   const minInputRef = useRef<HTMLInputElement>(null);
@@ -83,7 +87,8 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
         ref={minInputRef}
         type="text"
         inputMode="numeric"
-        placeholder={t("kills.filters.minLevel")}
+        placeholder={minPlaceholder ?? t("kills.filters.minLevel")}
+        aria-label={t("kills.filters.minLevel")}
         defaultValue={minLvl}
         onInput={handleMinLvlInput}
         className={inputClassName}
@@ -93,7 +98,8 @@ export const LevelFilters: React.FC<LevelFiltersProps> = ({
         ref={maxInputRef}
         type="text"
         inputMode="numeric"
-        placeholder={t("kills.filters.maxLevel")}
+        placeholder={maxPlaceholder ?? t("kills.filters.maxLevel")}
+        aria-label={t("kills.filters.maxLevel")}
         defaultValue={maxLvl}
         onInput={handleMaxLvlInput}
         className={inputClassName}

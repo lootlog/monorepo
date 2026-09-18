@@ -1,5 +1,5 @@
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { BattlePanelFilterBar } from "@/features/user/battle-panel/components/battle-panel-filter-bar";
+import { FilterBar } from "@/components/common/filter-bar";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
@@ -28,14 +28,14 @@ export const BattlePanelStatisticsSkeleton = () => {
         aria-busy="true"
         className="flex min-h-full flex-col gap-3 bg-background px-3 pb-3"
       >
-        <BattlePanelFilterBar ariaLabel={t("battlePanel.filters.title")}>
+        <FilterBar ariaLabel={t("battlePanel.filters.title")}>
           {FILTER_WIDTHS.map((width, index) => (
             <Skeleton
               key={width}
               className={`h-10 w-full rounded-md ${width} ${index > 0 ? "hidden md:block" : ""}`}
             />
           ))}
-        </BattlePanelFilterBar>
+        </FilterBar>
 
         <CombatProfileOverview data={undefined} isLoading />
 

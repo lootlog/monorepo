@@ -1,37 +1,20 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-  type ChartConfig,
 } from "@lootlog/ui/components/chart";
 // Loaded on demand by LootStats; Recharts primitives must share this chart boundary.
 // eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTranslation } from "react-i18next";
 import type { LootStatsResponseDtoOutputTopNpcsItem } from "@lootlog/client/main";
-
-const RARITY_COLORS = {
-  LEGENDARY: "#ef4444",
-  HEROIC: "#3b82f6",
-};
-
-const chartConfig: ChartConfig = {
-  LEGENDARY: {
-    label: "Legendarne",
-    color: RARITY_COLORS.LEGENDARY,
-  },
-  HEROIC: {
-    label: "Heroiczne",
-    color: RARITY_COLORS.HEROIC,
-  },
-};
+import {
+  getLootRarityChartConfig,
+  LOOT_RARITY_COLORS,
+} from "./loot-rarity-chart-config";
+import { StatsChartCard } from "./stats-chart-card";
 
 type LootTopNpcsChartProps = {
   data?: LootStatsResponseDtoOutputTopNpcsItem[];
@@ -47,7 +30,8 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
   const chartData =
     data?.map((npc) => ({
       name: npc.name.length > 20 ? `${npc.name.slice(0, 18)}...` : npc.name,
-      fullName: npc.name,
+      // Several monsters share a name across level brackets.
+      fullName: `${npc.name} · ${t("kills.level", { level: npc.lvl })}`,
       type: npc.type,
       lvl: npc.lvl,
       LEGENDARY: npc.byRarity?.LEGENDARY ?? 0,
@@ -55,87 +39,61 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
       total: npc.count,
     })) ?? [];
 
-  if (isLoading) {
-    return (
-      <SectionCard className="flex flex-col">
-        <SectionCardHeader title={t("loots.stats.topNpcs.title")} />
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex-1">
-            <Skeleton className="h-full min-h-[250px] w-full" />
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
-
-  if (!data?.length) {
-    return (
-      <SectionCard className="flex flex-col">
-        <SectionCardHeader title={t("loots.stats.topNpcs.title")} />
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex-1">
-            <div className="flex h-full min-h-[250px] items-center justify-center text-muted-foreground">
-              {t("loots.stats.topNpcs.noData")}
-            </div>
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
-
   return (
-    <SectionCard className="flex flex-col">
-      <SectionCardHeader title={t("loots.stats.topNpcs.title")} />
-      <SectionCardContent className="flex flex-col gap-3">
-        <div className="flex-1">
-          <ChartContainer
-            config={chartConfig}
-            className="h-full min-h-[280px] w-full"
-          >
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={{ left: 10, right: 10 }}
-            >
-              <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-              <YAxis
-                dataKey="name"
-                type="category"
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                width={120}
-                tick={{ fill: "var(--muted-foreground)" }}
-              />
-              <XAxis type="number" hide />
-              <ChartTooltip
-                content=<ChartTooltipContent
-                  labelFormatter={(_, payload) => {
-                    const item = chartData.find(
-                      (point) => point === payload[0]?.payload,
-                    );
+    <StatsChartCard
+      title={t("loots.stats.topNpcs.title")}
+      description={t("loots.stats.topNpcs.description")}
+      isLoading={isLoading}
+      emptyMessage={
+        chartData.length === 0 ? t("loots.stats.topNpcs.noData") : undefined
+      }
+    >
+      <ChartContainer
+        config={getLootRarityChartConfig(t)}
+        className="h-full min-h-[250px] w-full flex-1"
+      >
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ left: 10, right: 10 }}
+        >
+          <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+          <YAxis
+            dataKey="name"
+            type="category"
+            tickLine={false}
+            axisLine={false}
+            fontSize={11}
+            width={120}
+            tick={{ fill: "var(--muted-foreground)" }}
+          />
+          <XAxis type="number" hide />
+          <ChartTooltip
+            content=<ChartTooltipContent
+              labelFormatter={(_, payload) => {
+                const item = chartData.find(
+                  (point) => point === payload[0]?.payload,
+                );
 
-                    return String(item?.fullName ?? "");
-                  }}
-                />
-              />
-              <ChartLegend content=<ChartLegendContent /> />
-              <Bar
-                dataKey="LEGENDARY"
-                stackId="a"
-                fill={RARITY_COLORS.LEGENDARY}
-                radius={[0, 0, 0, 0]}
-              />
-              <Bar
-                dataKey="HEROIC"
-                stackId="a"
-                fill={RARITY_COLORS.HEROIC}
-                radius={[0, 4, 4, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
-        </div>
-      </SectionCardContent>
-    </SectionCard>
+                return String(item?.fullName ?? "");
+              }}
+            />
+          />
+          <ChartLegend content=<ChartLegendContent /> />
+          <Bar
+            dataKey="LEGENDARY"
+            stackId="a"
+            fill={LOOT_RARITY_COLORS.LEGENDARY}
+            radius={[0, 0, 0, 0]}
+          />
+          <Bar
+            dataKey="HEROIC"
+            stackId="a"
+            fill={LOOT_RARITY_COLORS.HEROIC}
+            radius={[0, 4, 4, 0]}
+          />
+        </BarChart>
+      </ChartContainer>
+    </StatsChartCard>
   );
 };

@@ -1,45 +1,38 @@
+import { FilterPopover } from "@lootlog/ui/components/filter-popover";
+import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 
-export function StatsNpcTypeSelect({
-  value,
-  onValueChange,
-}: {
+type StatsNpcTypeSelectProps = {
   value: string | null | undefined;
   onValueChange: (value: string | null) => void;
-}) {
+  width?: string;
+};
+
+export const StatsNpcTypeSelect = ({
+  value,
+  onValueChange,
+  width = "w-[200px]",
+}: StatsNpcTypeSelectProps) => {
   const { t } = useTranslation();
 
   return (
-    <Select
-      value={value ?? "ALL"}
-      onValueChange={onValueChange}
-      items={[
-        { value: "ALL", label: <>{t("kills.filters.allTypes")}</> },
+    <FilterPopover
+      icon={Skull}
+      options={[
+        { value: "ALL", label: t("kills.filters.allTypes") },
         ...TRACKABLE_NPC_TYPES.map((type) => ({
           value: type,
-          label: <>{t(`npcType.${type}`)}</>,
+          label: t(`npcType.${type}`),
         })),
       ]}
-    >
-      <SelectTrigger className="w-[140px]">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="ALL">{t("kills.filters.allTypes")}</SelectItem>
-        {TRACKABLE_NPC_TYPES.map((type) => (
-          <SelectItem key={type} value={type}>
-            {t(`npcType.${type}`)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      value={value ?? "ALL"}
+      onValueChange={onValueChange}
+      placeholder={t("kills.filters.npcType")}
+      emptyMessage={t("common.noResults")}
+      width={width}
+      triggerClassName="h-10"
+      showSearch={false}
+    />
   );
-}
+};

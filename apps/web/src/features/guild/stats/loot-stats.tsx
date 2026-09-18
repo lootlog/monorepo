@@ -1,36 +1,25 @@
-import { lazy, Suspense } from "react";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { PageHeader } from "@/components/common/page-header";
-import { Globe, Gift } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { WorldSwitcher } from "@/components/common/world-switcher";
-import { PeriodSelector } from "@/components/filters/period-selector";
-import { Checkbox } from "@lootlog/ui/components/checkbox";
-
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { EmptyState } from "@/components/common/empty-state";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   getLootsControllerGetLootStatsQueryKey,
   useLootsControllerGetLootStats,
 } from "@lootlog/client/main";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Globe } from "lucide-react";
+import { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 
-import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { LootOverviewCards } from "./components/loot-overview-cards";
+import { LootStatsFilterBar } from "./components/loot-stats-filter-bar";
 import { LootTopContributors } from "./components/loot-top-contributors";
 import { LootTopItems } from "./components/loot-top-items";
-import { LootStatsFiltersMobile } from "./components/loot-stats-filters-mobile";
+import { StatsChartCard } from "./components/stats-chart-card";
+import { useLootStatsSettings } from "./hooks/use-loot-stats-settings";
 import { buildLootStatsParams } from "./utils/build-stats-query-params";
 
 const LootTimelineChart = lazy(() =>
   import("./components/loot-timeline-chart").then((module) => ({
     default: module.LootTimelineChart,
-  })),
-);
-
-const LootRarityChart = lazy(() =>
-  import("./components/loot-rarity-chart").then((module) => ({
-    default: module.LootRarityChart,
   })),
 );
 
@@ -40,14 +29,12 @@ const LootTopNpcsChart = lazy(() =>
   })),
 );
 
-export const LootStats: React.FC = () => {
+export const LootStats = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
 
   const { settings, setPeriod, setWorld, setExcludeColossus } =
     useLootStatsSettings();
-
-  const isMobile = useIsMobile();
 
   const lootStatsParams = buildLootStatsParams({
     period: settings.period,
@@ -69,101 +56,11 @@ export const LootStats: React.FC = () => {
     },
   );
 
-  if (!settings.world) {
-    return (
-      <>
-        <div className="flex flex-col items-center justify-center h-[400px] max-h-full overflow-y-auto [justify-content:safe_center] gap-4 bg-background">
-          <Globe className="h-12 w-12 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            {t("loots.stats.selectWorldRequired")}
-          </p>
-          <WorldSwitcher value={settings.world} onValueChange={setWorld} />
-        </div>
-        {isMobile && (
-          <LootStatsFiltersMobile
-            world={settings.world}
-            period={settings.period}
-            excludeColossus={settings.excludeColossus}
-            onWorldChange={setWorld}
-            onPeriodChange={setPeriod}
-            onExcludeColossusChange={setExcludeColossus}
-          />
-        )}
-      </>
-    );
-  }
-
   return (
-    <>
-      <ScrollArea className="h-full bg-background px-3 pb-3">
-        <div className="flex flex-col gap-4">
-          <PageHeader
-            title={t("common.stats.loots")}
-            icon={Gift}
-            actions={
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="hidden md:flex items-center gap-2 flex-wrap gap-y-4">
-                  <PeriodSelector
-                    value={settings.period}
-                    onValueChange={(value) => setPeriod(value)}
-                    width="w-[180px]"
-                    className="h-9"
-                  />
-                  <WorldSwitcher
-                    value={settings.world}
-                    onValueChange={setWorld}
-                    width="w-[140px]"
-                  />
-                  <label
-                    htmlFor="exclude-colossus"
-                    className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-                  >
-                    <Checkbox
-                      id="exclude-colossus"
-                      checked={settings.excludeColossus}
-                      onCheckedChange={(checked) =>
-                        setExcludeColossus(!!checked)
-                      }
-                    />
-                    <span className="select-none text-sm">
-                      {t("loots.stats.excludeColossus")}
-                    </span>
-                  </label>
-                </div>
-              </div>
-            }
-          />
-
-          <LootOverviewCards data={data?.overview} isLoading={isLoading} />
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <LootTopContributors
-              data={data?.topContributors}
-              isLoading={isLoading}
-            />
-            <Suspense fallback={<Skeleton className="h-72 w-full" />}>
-              <LootRarityChart data={data?.byRarity} isLoading={isLoading} />
-            </Suspense>
-          </div>
-
-          <Suspense fallback={<Skeleton className="h-72 w-full" />}>
-            <LootTimelineChart
-              data={data?.timeline}
-              period={settings.period}
-              isLoading={isLoading}
-            />
-          </Suspense>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Suspense fallback={<Skeleton className="h-72 w-full" />}>
-              <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
-            </Suspense>
-            <LootTopItems data={data?.topItems} isLoading={isLoading} />
-          </div>
-        </div>
-      </ScrollArea>
-      {isMobile && (
-        <LootStatsFiltersMobile
+    <ScrollArea className="h-full bg-background">
+      <div className="flex min-h-full flex-col gap-3 px-3 pb-3">
+        <h1 className="sr-only">{t("common.stats.loots")}</h1>
+        <LootStatsFilterBar
           world={settings.world}
           period={settings.period}
           excludeColossus={settings.excludeColossus}
@@ -171,7 +68,61 @@ export const LootStats: React.FC = () => {
           onPeriodChange={setPeriod}
           onExcludeColossusChange={setExcludeColossus}
         />
-      )}
-    </>
+
+        {settings.world ? (
+          <>
+            <LootOverviewCards data={data?.overview} isLoading={isLoading} />
+
+            <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-3">
+              <Suspense
+                fallback={
+                  <StatsChartCard
+                    title={t("loots.stats.timeline.title")}
+                    className="xl:col-span-2"
+                    isLoading
+                  >
+                    {null}
+                  </StatsChartCard>
+                }
+              >
+                <LootTimelineChart
+                  data={data?.timeline}
+                  period={settings.period}
+                  isLoading={isLoading}
+                  className="xl:col-span-2"
+                />
+              </Suspense>
+              <Suspense
+                fallback={
+                  <StatsChartCard
+                    title={t("loots.stats.topNpcs.title")}
+                    isLoading
+                  >
+                    {null}
+                  </StatsChartCard>
+                }
+              >
+                <LootTopNpcsChart data={data?.topNpcs} isLoading={isLoading} />
+              </Suspense>
+            </div>
+
+            <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2">
+              <LootTopContributors
+                data={data?.topContributors}
+                isLoading={isLoading}
+              />
+              <LootTopItems data={data?.topItems} isLoading={isLoading} />
+            </div>
+          </>
+        ) : (
+          <EmptyState
+            framed
+            icon={Globe}
+            title={t("loots.stats.selectWorld.title")}
+            description={t("loots.stats.selectWorld.description")}
+          />
+        )}
+      </div>
+    </ScrollArea>
   );
 };

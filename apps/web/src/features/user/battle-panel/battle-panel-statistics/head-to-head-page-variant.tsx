@@ -4,7 +4,7 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { getResetHeadToHeadFilters } from "@/features/user/battle-panel/components/battle-panel-active-filter-helpers";
-import { BattlePanelEmptyState } from "@/features/user/battle-panel/components/battle-panel-empty-state";
+import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelH2hCard } from "@/features/user/battle-panel/components/battle-panel-h2h-card";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
@@ -128,7 +128,7 @@ export function HeadToHeadPageVariant({
 
     if (isError) {
       return (
-        <BattlePanelEmptyState
+        <EmptyState
           icon={AlertCircle}
           title={t("battlePanel.statistics.empty.errorTitle")}
           description={
@@ -141,7 +141,7 @@ export function HeadToHeadPageVariant({
 
     if (!data || data.records.length === 0) {
       return (
-        <BattlePanelEmptyState
+        <EmptyState
           icon={SearchX}
           title={t(emptyTitleKey)}
           description={t(emptyDescriptionKey)}

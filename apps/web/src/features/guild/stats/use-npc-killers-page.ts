@@ -5,10 +5,9 @@ import { getOffsetPagination } from "./utils/offset-pagination";
 
 import {
   getKillsControllerGetNpcKillersQueryKey,
-  getMembersControllerGetGuildMemberReferencesQueryKey,
   useKillsControllerGetNpcKillers,
-  useMembersControllerGetGuildMemberReferences,
 } from "@lootlog/client/main";
+import { useGuildMemberMap } from "./hooks/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { buildNpcKillersParams } from "./utils/build-stats-query-params";
 
@@ -52,21 +51,7 @@ export function useNpcKillersPage() {
     },
   );
 
-  const { data: guildMembers } = useMembersControllerGetGuildMemberReferences(
-    { guildId },
-    {
-      includeInactive: true,
-    },
-    {
-      query: {
-        enabled: Boolean(guildId),
-        queryKey: getMembersControllerGetGuildMemberReferencesQueryKey(
-          { guildId },
-          { includeInactive: true },
-        ),
-      },
-    },
-  );
+  const membersMap = useGuildMemberMap(guildId);
 
   const handleWorldChange = (value: string | null) => {
     setWorld(value);
@@ -77,8 +62,6 @@ export function useNpcKillersPage() {
     setPeriod(value);
     setCursor(0);
   };
-
-  const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 
   const killers = data?.killers ?? [];
 
@@ -117,7 +100,6 @@ export function useNpcKillersPage() {
     settings,
     handleWorldChange,
     handlePeriodChange,
-    filteredKillers,
     hasActiveFilters,
     paginatedKillers,
     cursor,

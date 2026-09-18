@@ -1,13 +1,7 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@lootlog/ui/components/chart";
 // Loaded on demand by LootStats; Recharts primitives must share this chart boundary.
 // eslint-disable-next-line react-doctor/prefer-dynamic-import
@@ -17,33 +11,24 @@ import type {
   LootStatsResponseDtoOutputTimelineItem,
   LootsControllerGetLootStatsPeriod,
 } from "@lootlog/client/main";
-
-const RARITY_COLORS: Record<"LEGENDARY" | "HEROIC", string> = {
-  LEGENDARY: "#ef4444",
-  HEROIC: "#3b82f6",
-};
-
-const chartConfig: ChartConfig = {
-  LEGENDARY: {
-    label: "Legendarne",
-    color: RARITY_COLORS.LEGENDARY,
-  },
-  HEROIC: {
-    label: "Heroiczne",
-    color: RARITY_COLORS.HEROIC,
-  },
-};
+import {
+  getLootRarityChartConfig,
+  LOOT_RARITY_COLORS,
+} from "./loot-rarity-chart-config";
+import { StatsChartCard } from "./stats-chart-card";
 
 type LootTimelineChartProps = {
   data?: LootStatsResponseDtoOutputTimelineItem[];
   period?: LootsControllerGetLootStatsPeriod;
   isLoading?: boolean;
+  className?: string;
 };
 
 export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
   data,
   period = "7d",
   isLoading,
+  className,
 }) => {
   const { t } = useTranslation();
 
@@ -79,93 +64,75 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
       total: point.total,
     })) ?? [];
 
-  if (isLoading) {
-    return (
-      <SectionCard>
-        <SectionCardHeader title={t("loots.stats.timeline.title")} />
-        <SectionCardContent className="flex flex-col gap-3">
-          <Skeleton className="h-[250px] w-full" />
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
-
-  if (!data?.length) {
-    return (
-      <SectionCard>
-        <SectionCardHeader title={t("loots.stats.timeline.title")} />
-        <SectionCardContent className="flex flex-col gap-3">
-          <div className="flex h-[250px] items-center justify-center text-muted-foreground">
-            {t("loots.stats.timeline.noData")}
-          </div>
-        </SectionCardContent>
-      </SectionCard>
-    );
-  }
-
   return (
-    <SectionCard>
-      <SectionCardHeader title={t("loots.stats.timeline.title")} />
-      <SectionCardContent className="flex flex-col gap-3">
-        <div>
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <AreaChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                fontSize={11}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                fontSize={11}
-                width={35}
-              />
-              <ChartTooltip
-                content=<ChartTooltipContent
-                  labelFormatter={(_, payload) => {
-                    const item = chartData.find(
-                      (point) => point === payload[0]?.payload,
-                    );
+    <StatsChartCard
+      title={t("loots.stats.timeline.title")}
+      description={t("loots.stats.timeline.description")}
+      className={className}
+      isLoading={isLoading}
+      emptyMessage={
+        chartData.length === 0 ? t("loots.stats.timeline.noData") : undefined
+      }
+    >
+      <ChartContainer
+        config={getLootRarityChartConfig(t)}
+        className="h-[250px] w-full flex-1"
+      >
+        <AreaChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            fontSize={11}
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            fontSize={11}
+            width={35}
+          />
+          <ChartTooltip
+            content=<ChartTooltipContent
+              labelFormatter={(_, payload) => {
+                const item = chartData.find(
+                  (point) => point === payload[0]?.payload,
+                );
 
-                    if (!item) return "";
-                    const fullDate = item.fullDate;
-                    const date = new Date(fullDate);
+                if (!item) return "";
+                const fullDate = item.fullDate;
+                const date = new Date(fullDate);
 
-                    return date.toLocaleDateString("pl-PL", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-                  }}
-                />
-              />
-              <Area
-                type="monotone"
-                dataKey="LEGENDARY"
-                stackId="1"
-                stroke={RARITY_COLORS.LEGENDARY}
-                fill={RARITY_COLORS.LEGENDARY}
-                fillOpacity={0.6}
-              />
-              <Area
-                type="monotone"
-                dataKey="HEROIC"
-                stackId="1"
-                stroke={RARITY_COLORS.HEROIC}
-                fill={RARITY_COLORS.HEROIC}
-                fillOpacity={0.6}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </div>
-      </SectionCardContent>
-    </SectionCard>
+                return date.toLocaleDateString("pl-PL", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+              }}
+            />
+          />
+          <Area
+            type="monotone"
+            dataKey="LEGENDARY"
+            stackId="1"
+            stroke={LOOT_RARITY_COLORS.LEGENDARY}
+            fill={LOOT_RARITY_COLORS.LEGENDARY}
+            fillOpacity={0.6}
+          />
+          <Area
+            type="monotone"
+            dataKey="HEROIC"
+            stackId="1"
+            stroke={LOOT_RARITY_COLORS.HEROIC}
+            fill={LOOT_RARITY_COLORS.HEROIC}
+            fillOpacity={0.6}
+          />
+        </AreaChart>
+      </ChartContainer>
+    </StatsChartCard>
   );
 };

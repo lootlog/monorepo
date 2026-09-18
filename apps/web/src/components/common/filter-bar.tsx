@@ -2,15 +2,12 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import type { ReactNode } from "react";
 
-type BattlePanelFilterBarProps = {
+type FilterBarProps = {
   ariaLabel: string;
   children: ReactNode;
 };
 
-export const BattlePanelFilterBar = ({
-  ariaLabel,
-  children,
-}: BattlePanelFilterBarProps) => {
+export const FilterBar = ({ ariaLabel, children }: FilterBarProps) => {
   return (
     <SectionCard className="shrink-0 overflow-hidden">
       <TableFilterToolbar
