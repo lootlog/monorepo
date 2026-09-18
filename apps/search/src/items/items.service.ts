@@ -1,9 +1,9 @@
+import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { getMeilisearchErrorCode } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
-  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -200,40 +200,20 @@ export const makeItemsModule = (
     }
 
     const itemsById = mergeItemsById(validItems);
-    const worldsById = new Map<string, string[]>();
-
-    for (let offset = 0; offset < itemsById.length; offset += 100) {
-      const batch = itemsById.slice(offset, offset + 100);
-
-      const stored = yield* attemptMeilisearch(
-        "search.items.existing-worlds",
-        () =>
-          index.getDocuments<Pick<IndexedItem, "uid" | "worlds">>({
-            ids: batch.map((item) => item.uid),
-            fields: ["uid", "worlds"],
-            limit: batch.length,
-          }),
-      );
-
-      for (const item of stored.results) {
-        worldsById.set(item.uid, item.worlds ?? []);
-      }
-    }
 
     const itemsWithSearchFields = itemsById.map(
       ({ world: _world, ...item }) => ({
         ...item,
-        worlds: uniqueWorlds([
-          ...item.worlds,
-          ...(worldsById.get(item.uid) ?? []),
-        ]),
         ...createItemSearchFields(item.stat),
       }),
     );
 
-    yield* completeMeilisearchTask("search.items.index", () =>
-      index.addDocuments(itemsWithSearchFields, {
-        primaryKey: "uid",
+    yield* indexChangedDocuments(
+      index,
+      itemsWithSearchFields,
+      (item, stored) => ({
+        ...item,
+        worlds: uniqueWorlds([...item.worlds, ...itemWorlds(stored ?? item)]),
       }),
     );
   });

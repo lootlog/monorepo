@@ -1,10 +1,10 @@
+import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Effect, Predicate, Schema } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
-  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -99,8 +99,6 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   const indexNpcs = Effect.fn("SearchNpcs.index")(function* (
     data: IndexNpcsCommand,
   ) {
-    const index = meilisearch.index(NPCS_INDEX);
-
     const validNpcs = data.npcs.filter(
       (npc) => npc.world && npc.id && npc.name,
     );
@@ -135,8 +133,9 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       };
     });
 
-    yield* completeMeilisearchTask("search.npcs.index", () =>
-      index.addDocuments(npcsWithUid, { primaryKey: "uid" }),
+    yield* indexChangedDocuments(
+      meilisearch.index<(typeof npcsWithUid)[number]>(NPCS_INDEX),
+      npcsWithUid,
     );
   });
 

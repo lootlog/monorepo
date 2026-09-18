@@ -67,7 +67,9 @@ describe("Search Effect modules", () => {
   test("generates stable player and NPC document ids", async () => {
     const indexed: unknown[] = [];
 
-    const client = makeClient(() => ({
+    const client = makeClient((name) => ({
+      uid: name,
+      getDocuments: () => Promise.resolve({ results: [] }),
       addDocuments: (
         documents: ReadonlyArray<{
           id: string | number;
@@ -141,7 +143,9 @@ describe("Search Effect modules", () => {
   });
 
   test("returns a typed failure so Rabbit can requeue failed indexing", async () => {
-    const client = makeClient(() => ({
+    const client = makeClient((name) => ({
+      uid: name,
+      getDocuments: () => Promise.resolve({ results: [] }),
       addDocuments: () => ({
         waitTask: () => Promise.reject(new Error("index unavailable")),
       }),
@@ -278,14 +282,13 @@ describe("Search Effect modules", () => {
       },
       index: {
         value: () => ({
-          updateDistinctAttribute: () => task,
-          updateFilterableAttributes: () => task,
-          updateSearchableAttributes: (fields: string[]) => {
-            searchable.push(fields);
+          getSettings: () => Promise.resolve({}),
+          updateSettings: (settings: { searchableAttributes?: string[] }) => {
+            if (settings.searchableAttributes)
+              searchable.push(settings.searchableAttributes);
 
             return task;
           },
-          updateSortableAttributes: () => task,
         }),
       },
     });

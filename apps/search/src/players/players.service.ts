@@ -1,9 +1,9 @@
+import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { Effect } from "effect";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
   attemptMeilisearch,
-  completeMeilisearchTask,
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
@@ -55,8 +55,6 @@ export const makePlayersModule = (
   const indexPlayers = Effect.fn("SearchPlayers.index")(function* (
     data: IndexPlayersCommand,
   ) {
-    const index = meilisearch.index(PLAYERS_INDEX);
-
     const validPlayers = data.players.filter(
       (player) => player.world && player.id && player.name,
     );
@@ -85,8 +83,9 @@ export const makePlayersModule = (
       uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
-    yield* completeMeilisearchTask("search.players.index", () =>
-      index.addDocuments(playersWithUid, { primaryKey: "uid" }),
+    yield* indexChangedDocuments(
+      meilisearch.index<(typeof playersWithUid)[number]>(PLAYERS_INDEX),
+      playersWithUid,
     );
   });
 

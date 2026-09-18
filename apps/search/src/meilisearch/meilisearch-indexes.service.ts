@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { Meilisearch } from "meilisearch";
+import type { Meilisearch, Settings } from "meilisearch";
 import { ITEMS_INDEX } from "#src/items/search-index";
 import { NPCS_INDEX } from "#src/npcs/search-index";
 import { PLAYERS_INDEX } from "#src/players/search-index";
@@ -10,23 +10,37 @@ import {
   completeMeilisearchTask,
 } from "./search-operation-failure.js";
 
-const itemFilterableAttributes = [
-  "world",
-  "worlds",
-  "type",
-  "rarity",
-  "lvl",
-  "stats",
-  "numericStats",
-  "requiredProfessions",
-  "statsKeys",
-];
+type IndexSettings = Record<
+  typeof NPCS_INDEX | typeof PLAYERS_INDEX | typeof ITEMS_INDEX,
+  Pick<
+    Settings,
+    | "filterableAttributes"
+    | "searchableAttributes"
+    | "sortableAttributes"
+    | "distinctAttribute"
+  >
+>;
 
-const indexPrimaryKeys = {
-  [NPCS_INDEX]: "uid",
-  [PLAYERS_INDEX]: "uid",
-  [ITEMS_INDEX]: "uid",
-} as const;
+const indexSettings: IndexSettings = {
+  [NPCS_INDEX]: { filterableAttributes: ["name", "type", "world"] },
+  [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
+  [ITEMS_INDEX]: {
+    filterableAttributes: [
+      "world",
+      "worlds",
+      "type",
+      "rarity",
+      "lvl",
+      "stats",
+      "numericStats",
+      "requiredProfessions",
+      "statsKeys",
+    ],
+    searchableAttributes: ["name", "stat"],
+    sortableAttributes: ["name", "lvl", "rarity", "type"],
+    distinctAttribute: "id",
+  },
+};
 
 const ensureIndex = (
   meilisearch: Meilisearch,
@@ -54,41 +68,50 @@ export const configureMeilisearchIndexes = (
 ) =>
   Effect.gen(function* () {
     yield* Effect.all(
-      Object.entries(indexPrimaryKeys).map(([indexName, primaryKey]) =>
-        ensureIndex(meilisearch, indexName, primaryKey),
-      ),
-      { concurrency: "unbounded", discard: true },
-    );
+      Object.entries(indexSettings).map(([indexName, desired]) =>
+        Effect.gen(function* () {
+          yield* ensureIndex(meilisearch, indexName, "uid");
+          const index = meilisearch.index(indexName);
 
-    const configure = [
-      () =>
-        meilisearch
-          .index(NPCS_INDEX)
-          .updateFilterableAttributes(["name", "type", "world"]),
-      () =>
-        meilisearch
-          .index(PLAYERS_INDEX)
-          .updateFilterableAttributes(["name", "world"]),
-      () =>
-        meilisearch
-          .index(ITEMS_INDEX)
-          .updateFilterableAttributes(itemFilterableAttributes),
-      () =>
-        meilisearch
-          .index(ITEMS_INDEX)
-          .updateSearchableAttributes(["name", "stat"]),
-      () =>
-        meilisearch
-          .index(ITEMS_INDEX)
-          .updateSortableAttributes(["name", "lvl", "rarity", "type"]),
-      () => meilisearch.index(ITEMS_INDEX).updateDistinctAttribute("id"),
-    ];
+          const current = yield* attemptMeilisearch(
+            "meilisearch.index.settings.get",
+            () => index.getSettings(),
+          );
 
-    yield* Effect.all(
-      configure.map((configureIndex, index) =>
-        completeMeilisearchTask(`meilisearch.index.configure.${index}`, () =>
-          configureIndex(),
-        ),
+          const changed = (
+            [
+              "filterableAttributes",
+              "searchableAttributes",
+              "sortableAttributes",
+              "distinctAttribute",
+            ] as const
+          ).some((field) => {
+            // Searchable attribute order affects ranking; filter/sort sets do not.
+            if (!(field in desired)) return false;
+            const actual = current[field];
+            const expected = desired[field];
+
+            if (
+              field !== "searchableAttributes" &&
+              Array.isArray(actual) &&
+              Array.isArray(expected)
+            ) {
+              return (
+                JSON.stringify([...actual].sort()) !==
+                JSON.stringify([...expected].sort())
+              );
+            }
+
+            return JSON.stringify(actual) !== JSON.stringify(expected);
+          });
+
+          if (changed) {
+            yield* completeMeilisearchTask(
+              `meilisearch.index.configure.${indexName}`,
+              () => index.updateSettings(desired),
+            );
+          }
+        }),
       ),
       { concurrency: "unbounded", discard: true },
     );
