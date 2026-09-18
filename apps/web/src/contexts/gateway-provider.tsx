@@ -1,6 +1,7 @@
 /* eslint-disable react-doctor/context-provider-value-from-unmemoized-local-literal -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { GatewayContext, type GatewayProviderValue } from "./gateway-context";
 import React, { useEffect, useEffectEvent, useState } from "react";
+import { useTimersSocket } from "@/features/guild/timers/use-timers-socket";
 import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
@@ -21,6 +22,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   useKillStatsUpdates(socket);
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+  useTimersSocket({ socket, guilds });
   const routeGuildId = useGuildId();
   const [connected, setConnected] = useState(socket.connected);
   const [joined, setJoined] = useState(false);

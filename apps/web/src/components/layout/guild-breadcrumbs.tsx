@@ -223,6 +223,7 @@ export const GuildBreadcrumbs: FC = () => {
           <SidebarTrigger className="size-8!" />
           {parentPath && (
             <Button
+              aria-label={t("common.actions.back")}
               variant="ghost"
               size="sm"
               onClick={() => navigate({ to: parentPath })}

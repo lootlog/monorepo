@@ -1,42 +1,45 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
-
-type TimerIdentity = Pick<Timer, "world" | "timerKey" | "guildId">;
-
-const isSameTimer = (a: TimerIdentity, b: TimerIdentity): boolean =>
-  a.timerKey === b.timerKey && a.guildId === b.guildId && a.world === b.world;
+import {
+  upsertTimerInCollection,
+  removeTimerFromCollection,
+  type TimerIdentity,
+} from "@lootlog/domain/timers";
 
 export const useTimersCache = () => {
   const queryClient = useQueryClient();
 
+  const updateTimerCache = (
+    world: string,
+    update: (timers: Timer[] | undefined) => Timer[] | undefined,
+  ) => {
+    if (!world) return;
+
+    const queryKey = queryKeys.timers(world);
+    const state = queryClient.getQueryState(queryKey);
+    const wasFetching = state?.fetchStatus === "fetching";
+
+    if (wasFetching) {
+      void queryClient.cancelQueries({ queryKey, exact: true });
+    }
+
+    queryClient.setQueryData<Timer[]>(queryKey, update);
+
+    if (wasFetching || (state && state.data === undefined)) {
+      void queryClient.invalidateQueries({ queryKey, exact: true });
+    }
+  };
+
   const upsertTimer = (timer: Timer) => {
-    if (!timer.world) return;
-
-    queryClient.setQueryData<Timer[]>(queryKeys.timers(timer.world), (old) => {
-      if (old === undefined) return undefined;
-
-      const updated = [...old];
-
-      const index = updated.findIndex((t) => isSameTimer(t, timer));
-
-      const next = { ...timer, isPending: false };
-
-      if (index !== -1) {
-        updated[index] = next;
-      } else {
-        updated.push(next);
-      }
-
-      return updated;
-    });
+    updateTimerCache(timer.world, (old) =>
+      upsertTimerInCollection(old, { ...timer, isPending: false }),
+    );
   };
 
   const removeTimer = (timer: TimerIdentity) => {
-    if (!timer.world) return;
-
-    queryClient.setQueryData<Timer[]>(queryKeys.timers(timer.world), (old) =>
-      old?.filter((t) => !isSameTimer(t, timer)),
+    updateTimerCache(timer.world, (old) =>
+      removeTimerFromCollection(old, timer),
     );
   };
 
