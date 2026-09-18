@@ -36,26 +36,23 @@ export const readGuildConfigurationCache = Effect.fnUntraced(function* (
   }
 });
 
+/**
+ * Caches the guild under the looked-up key only. Deriving a second key from
+ * `vanityUrl` would let one Organization's row occupy another's id key.
+ */
 export const writeGuildConfigurationCache = (
-  cache: GuildConfigurationCache,
-  guild: { id: string; vanityUrl: string | null },
-  concurrency?: "unbounded",
-) => {
-  const encoded = JSON.stringify(guild);
-
-  return Effect.all(
-    [
-      cache.set(getGuildCacheKey(guild.id), encoded, GUILD_CACHE_TTL_SECONDS),
-      ...(guild.vanityUrl
-        ? [
-            cache.set(
-              getGuildCacheKey(guild.vanityUrl),
-              encoded,
-              GUILD_CACHE_TTL_SECONDS,
-            ),
-          ]
-        : []),
-    ],
-    { concurrency },
+  cache: {
+    set: (
+      key: string,
+      value: string,
+      ttl: number,
+    ) => Effect.Effect<unknown, unknown>;
+  },
+  idOrVanityUrl: string,
+  guild: { id: string },
+) =>
+  cache.set(
+    getGuildCacheKey(idOrVanityUrl),
+    JSON.stringify(guild),
+    GUILD_CACHE_TTL_SECONDS,
   );
-};

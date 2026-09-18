@@ -40,27 +40,27 @@ describe("guild configuration cache", () => {
     );
   });
 
-  it("writes the same guild snapshot under ID and vanity while preserving all fields", async () => {
+  it("caches a vanity lookup under the looked-up key only, so it cannot occupy another Organization's id key", async () => {
     const cache = memoryCache();
 
     const guild = {
       id: "guild",
-      vanityUrl: "vanity",
+      vanityUrl: "other-guild-id",
       name: "Group",
       active: true,
     };
 
     await Effect.runPromise(
-      writeGuildConfigurationCache(cache, guild, "unbounded"),
+      writeGuildConfigurationCache(cache, "guild", guild),
     );
-    expect(cache.values.get(getGuildCacheKey("guild"))).toBe(
-      JSON.stringify(guild),
-    );
-    expect(cache.values.get(getGuildCacheKey("vanity"))).toBe(
-      JSON.stringify(guild),
-    );
+    expect([...cache.values.keys()]).toEqual([getGuildCacheKey("guild")]);
     expect(
-      await Effect.runPromise(readGuildConfigurationCache(cache, "vanity")),
+      await Effect.runPromise(readGuildConfigurationCache(cache, "guild")),
     ).toMatchObject(guild);
+    expect(
+      await Effect.runPromise(
+        readGuildConfigurationCache(cache, "other-guild-id"),
+      ),
+    ).toBeNull();
   });
 });

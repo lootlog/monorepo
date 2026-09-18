@@ -275,6 +275,12 @@ export const guildTable = pgTable(
     active: boolean("active").default(true).notNull(),
   },
   (table) => [
+    // Organization ids are Discord snowflakes; an all-digit vanity URL could
+    // shadow another Organization's id in id-or-vanity lookups.
+    check(
+      "Guild_vanityUrl_not_id_like_check",
+      sql`${table["vanityUrl"]} <> '' AND ${table["vanityUrl"]} !~ '^[0-9]+$'`,
+    ),
     uniqueIndex("Guild_vanityUrl_key").on(table["vanityUrl"]),
     index("Guild_vanityUrl_idx").on(table["vanityUrl"]),
   ],

@@ -58,6 +58,7 @@
       "example": "Przykład:",
       "exampleSlug": "nazwa-klanu",
       "restricted": "Ta nazwa jest zarezerwowana i nie może być użyta.",
+      "invalid": "Skrócony link nie może być pusty ani składać się z samych cyfr.",
       "taken": "Ten skrócony link jest już zajęty. Wybierz inną nazwę."
     },
     "statsCard": {

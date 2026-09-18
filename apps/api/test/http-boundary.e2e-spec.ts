@@ -22,7 +22,7 @@ import { RedisService } from "#src/redis/redis.service";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
-import { count, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -552,6 +552,47 @@ describe("API HTTP boundary", () => {
     const staleAlias = await request("/guilds/previous-loot-alias/loots");
     expect(staleAlias.status).toBe(404);
   });
+
+  it("resolves an Organization id to that Organization even when another Organization's vanity URL equals it", async () => {
+    // Rows written before vanity validation may still collide with an id.
+    await databaseRuntime.runPromise(
+      database
+        .update(guildTable)
+        .set({ vanityUrl: authorizedGuildId })
+        .where(eq(guildTable.id, forbiddenGuildId)),
+    );
+
+    const forbidden = await request(`/guilds/${forbiddenGuildId}`);
+    expect(forbidden.status).toBe(403);
+
+    const authorized = await request(`/guilds/${authorizedGuildId}`);
+    expect(authorized.status).toBe(200);
+    expect(await authorized.json()).toMatchObject({ id: authorizedGuildId });
+    expect((await request(`/guilds/${authorizedGuildId}/loots`)).status).toBe(
+      200,
+    );
+  });
+
+  it.each(["123456789012345678", "---", "Battles!"])(
+    "rejects the vanity URL %p without storing it",
+    async (vanityUrl) => {
+      const response = await request(`/guilds/${authorizedGuildId}/config`, {
+        method: "PATCH",
+        body: JSON.stringify({ vanityUrl }),
+      });
+
+      expect(response.status).toBe(400);
+
+      const [guild] = await databaseRuntime.runPromise(
+        database
+          .select({ vanityUrl: guildTable.vanityUrl })
+          .from(guildTable)
+          .where(eq(guildTable.id, authorizedGuildId)),
+      );
+
+      expect(guild?.vanityUrl).toBeNull();
+    },
+  );
 
   it("preserves expected 4xx statuses at the HTTP boundary", async () => {
     const missingTemplate = await request(

@@ -1,9 +1,9 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, desc, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import { Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
-  guildTable,
   memberTable,
   memberToRoleTable,
   roleTable,
@@ -76,20 +76,9 @@ export const makeMemberStore = (database: ApiDatabaseValue) => {
   const resolveActiveGuildId = (idOrVanityUrl: string) =>
     operation(
       "memberStore.resolveGuild",
-      database
-        .select({ id: guildTable.id })
-        .from(guildTable)
-        .where(
-          and(
-            eq(guildTable.active, true),
-            or(
-              eq(guildTable.id, idOrVanityUrl),
-              eq(guildTable.vanityUrl, idOrVanityUrl),
-            ),
-          ),
-        )
-        .limit(1)
-        .pipe(Effect.map((rows) => rows[0]?.id ?? null)),
+      findActiveGuild(database, idOrVanityUrl).pipe(
+        Effect.map((guild) => guild?.id ?? null),
+      ),
     );
 
   const findExistingRoleIds = (

@@ -10,7 +10,9 @@ const PERMISSIONS_CACHE_KEY_PREFIX = "perms";
 
 const AUTH_TOKEN_CACHE_KEY_PREFIX = "auth:idp-token";
 
-const GUILD_CACHE_KEY_PREFIX = "guild";
+// v2: entries are keyed by the looked-up id or vanity URL only, so v1 entries
+// written under a derived vanity key are never read again.
+const GUILD_CACHE_KEY_PREFIX = "guild-lookup:v2";
 
 const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
 
