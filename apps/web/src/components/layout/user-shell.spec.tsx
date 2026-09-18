@@ -117,7 +117,7 @@ describe("user shell navigation", () => {
 
       const parentControl =
         navigation === "back"
-          ? screen.getByRole("button", { name: "" })
+          ? screen.getByRole("button", { name: "Wróć" })
           : within(screen.getByRole("navigation")).getByRole("link", {
               name: "Ustawienia",
             });

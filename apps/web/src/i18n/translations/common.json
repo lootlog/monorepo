@@ -19,6 +19,7 @@
   "loading": "Ładowanie...",
   "removeOption": "Usuń {{label}}",
   "actions": {
+    "back": "Wróć",
     "retry": "Spróbuj ponownie",
     "undo": "Cofnij"
   },

@@ -19,6 +19,7 @@
     "./profession": "./src/profession.ts",
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
+    "./timers": "./src/timers.ts",
     "./settings-documents": "./src/settings-documents.ts",
     "./settings-paths": "./src/settings-paths.ts",
     "./guild-preferences": "./src/guild-preferences.ts",
