@@ -455,7 +455,56 @@ it("reloads corrupted metadata cache and shares invalidation with analytics", as
   expect(
     await runtime.runPromise(services.metadata.getUserCharacters("owner")),
   ).toEqual({
-    characters: [{ id: "hero", name: "Hero", world: "world", icon: "" }],
+    characters: [
+      {
+        id: "hero",
+        name: "Hero",
+        world: "world",
+        icon: "",
+        lvl: null,
+        prof: null,
+      },
+    ],
+  });
+});
+
+it("reports a character's level and profession from its own warrior in the user's latest battle", async () => {
+  await pool.query(
+    `INSERT INTO user_characters (id, "userId", "characterId", name, world) VALUES ('uc-level', 'owner', 'hero', 'Hero', 'world')`,
+  );
+
+  const fixtures = [
+    { id: "older", owner: "owner", createdAt: "2026-01-01", lvl: 90 },
+    { id: "latest", owner: "owner", createdAt: "2026-02-01", lvl: 101 },
+    { id: "foreign", owner: "someone-else", createdAt: "2026-03-01", lvl: 200 },
+  ];
+
+  for (const fixture of fixtures) {
+    await pool.query(
+      `INSERT INTO battles (id, "userId", "accountId", "characterId", world, duration, type, winner, loser, "winningTeam", "losingTeam", "hasFlee", statistics, "createdAt")
+      VALUES ($1,$2,'account','hero','world',10,'1v1','Hero','Enemy',1,2,false,'{}',$3)`,
+      [fixture.id, fixture.owner, fixture.createdAt],
+    );
+    await pool.query(
+      `INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
+      VALUES ($1,$2,'hero','Hero',$3,'w','hero.gif',1,1,0), ($4,$2,'enemy','Enemy',300,'m','enemy.gif',2,1,0)`,
+      [`${fixture.id}-hero`, fixture.id, fixture.lvl, `${fixture.id}-enemy`],
+    );
+  }
+
+  expect(
+    await runtime.runPromise(services.metadata.getUserCharacters("owner")),
+  ).toEqual({
+    characters: [
+      {
+        id: "hero",
+        name: "Hero",
+        world: "world",
+        icon: "",
+        lvl: 101,
+        prof: "w",
+      },
+    ],
   });
 });
 

@@ -4754,9 +4754,17 @@
                 },
                 "icon": {
                   "type": "string"
+                },
+                "lvl": {
+                  "nullable": true,
+                  "type": "number"
+                },
+                "prof": {
+                  "nullable": true,
+                  "type": "string"
                 }
               },
-              "required": ["id", "name", "world", "icon"]
+              "required": ["id", "name", "world", "icon", "lvl", "prof"]
             }
           }
         },
