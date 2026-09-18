@@ -5,7 +5,6 @@ import type {
   RawBattle,
 } from "@/lib/api/battlelog-types";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "cn";
 import { BattleLogList } from "./battle-log-list";
 import { BattleLogSearchToolbar } from "./battle-log-search-toolbar";
@@ -27,13 +26,12 @@ import {
 import { getDisplayBattleEvents } from "./utils/raw-battle-events";
 
 export type BattleLogProps = {
-  outerScrollViewportRef: RefObject<HTMLDivElement | null>;
-  stickyContentRef?: RefObject<HTMLDivElement | null>;
+  /** The scroller the log lives in; the log has no scroll container of its own. */
+  scrollViewportRef: RefObject<HTMLDivElement | null>;
   rawBattle: RawBattle;
   warriors: Warrior[];
   showHeader?: boolean;
   className?: string;
-  listScrollClassName?: string;
   selectedTurn?: number | null;
   scrollToSelectedTurnRequestId?: number;
   onListScroll?: () => void;
@@ -45,12 +43,10 @@ export type BattleLogProps = {
 
 export const BattleLog: FC<BattleLogProps> = ({
   rawBattle,
-  outerScrollViewportRef,
-  stickyContentRef,
+  scrollViewportRef,
   warriors,
   showHeader = true,
   className,
-  listScrollClassName,
   selectedTurn,
   scrollToSelectedTurnRequestId = 0,
   onListScroll,
@@ -63,7 +59,8 @@ export const BattleLog: FC<BattleLogProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const deferredQuery = useDeferredValue(searchQuery);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(-1);
-  const listViewportRef = useRef<HTMLDivElement>(null);
+  // The search bar pins itself over the top of the log, so rows are aligned below it.
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const turnFocusHandlerRef = useRef(onTurnFocus ?? onTurnSelect);
 
   const userTeam = warriors.find(
@@ -174,9 +171,8 @@ export const BattleLog: FC<BattleLogProps> = ({
       warriors={warriors}
       selectedTurn={selectedTurn}
       scrollToSelectedTurnRequestId={scrollToSelectedTurnRequestId}
-      scrollViewportRef={listViewportRef}
-      outerScrollViewportRef={outerScrollViewportRef}
-      stickyContentRef={stickyContentRef}
+      scrollViewportRef={scrollViewportRef}
+      stickyContentRef={toolbarRef}
       onVisibleTurnsChange={onListScroll}
       searchMatchedTurns={searchMatchTurns}
       activeSearchTurn={activeSearchTurn}
@@ -189,18 +185,31 @@ export const BattleLog: FC<BattleLogProps> = ({
   return (
     <Card
       className={cn(
-        "border-border bg-card overflow-hidden gap-0 p-0",
+        // `overflow-clip` rounds the corners without becoming a scroll container, so the search
+        // bar can stick to the scroller the log lives in.
+        "isolate border-border bg-card overflow-clip gap-0 p-0",
         className,
       )}
     >
       {showHeader && (
         <SectionCardHeader
-          className="sticky top-0 z-8 bg-card"
+          className="shrink-0"
           title={t("battlePanel.single.log.title")}
           icon={Sword}
+          actions={
+            selectedTurn === null || selectedTurn === undefined ? undefined : (
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {t("battlePanel.single.log.turnPosition", {
+                  current: selectedTurn,
+                  total: events.length,
+                })}
+              </span>
+            )
+          }
         />
       )}
       <BattleLogSearchToolbar
+        ref={toolbarRef}
         query={searchQuery}
         currentIndex={currentMatchIndex}
         totalMatches={searchMatchTurns.length}
@@ -208,17 +217,7 @@ export const BattleLog: FC<BattleLogProps> = ({
         onPrevious={handlePreviousSearchMatch}
         onNext={handleNextSearchMatch}
       />
-      {listScrollClassName || onListScroll ? (
-        <ScrollArea
-          ref={listViewportRef}
-          className={cn("min-h-0", listScrollClassName)}
-          onScroll={onListScroll}
-        >
-          {battleLogList}
-        </ScrollArea>
-      ) : (
-        battleLogList
-      )}
+      {battleLogList}
     </Card>
   );
 };

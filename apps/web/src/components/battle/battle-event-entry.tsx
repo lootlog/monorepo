@@ -54,6 +54,23 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
     if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
       keyboardEvent.preventDefault();
       onSelect();
+
+      return;
+    }
+
+    if (keyboardEvent.key !== "ArrowDown" && keyboardEvent.key !== "ArrowUp") {
+      return;
+    }
+
+    // Rows are siblings in turn order, so the arrows walk the log without tabbing through it.
+    const adjacentRow =
+      keyboardEvent.key === "ArrowDown"
+        ? keyboardEvent.currentTarget.nextElementSibling
+        : keyboardEvent.currentTarget.previousElementSibling;
+
+    if (adjacentRow instanceof HTMLElement) {
+      keyboardEvent.preventDefault();
+      adjacentRow.focus();
     }
   };
 
@@ -65,12 +82,12 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
       onFocus={onFocus}
       onBlur={onBlur}
       className={cn(
-        "relative border-b border-transparent pr-11 outline-none transition-colors",
+        "flex border-b border-background outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
         onSelect && "cursor-pointer hover:bg-muted/40",
         searchMatched && "bg-amber-400/5",
-        selected && "border-primary bg-primary/5 ring-1 ring-primary/30",
+        selected && "bg-primary/10 shadow-[inset_2px_0_0_0_var(--primary)]",
         activeSearchMatch &&
-          "border-amber-400 bg-amber-400/10 ring-1 ring-amber-400/30",
+          "bg-amber-400/15 shadow-[inset_2px_0_0_0_var(--color-amber-400)]",
       )}
       role={onSelect ? "button" : undefined}
       data-battle-turn={turn}
@@ -82,57 +99,59 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = ({
     >
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-2 top-1.5 rounded-sm border border-border/40 bg-background/45 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground/60 tabular-nums"
+        className="w-10 shrink-0 select-none px-1.5 pt-1 text-right font-mono text-[10px] leading-none text-muted-foreground/70 tabular-nums"
       >
         #{turn}
       </span>
 
-      <BattleActionList
-        valueClassName={cn("font-bold", BATTLE_TEXT_COLORS.damage.auxiliary)}
-        actions={parsedActions.buffActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
+      <div className="min-w-0 flex-1">
+        <BattleActionList
+          valueClassName={cn("font-bold", BATTLE_TEXT_COLORS.damage.auxiliary)}
+          actions={parsedActions.buffActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+        />
 
-      <BattleActionList
-        actions={parsedActions.systemActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
+        <BattleActionList
+          actions={parsedActions.systemActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+        />
 
-      <BattleSpellActions
-        actions={parsedActions.spellActions}
-        attacker={attacker}
-        defender={defender}
-        event={event}
-        eventIndex={eventIndex}
-        userTeam={userTeam}
-      />
+        <BattleSpellActions
+          actions={parsedActions.spellActions}
+          attacker={attacker}
+          defender={defender}
+          event={event}
+          eventIndex={eventIndex}
+          userTeam={userTeam}
+        />
 
-      <BattleLogAttackActions
-        attacker={attacker}
-        defender={defender}
-        actions={parsedActions.attackActions}
-        event={event}
-        userTeam={userTeam}
-      />
+        <BattleLogAttackActions
+          attacker={attacker}
+          defender={defender}
+          actions={parsedActions.attackActions}
+          event={event}
+          userTeam={userTeam}
+        />
 
-      <BattlePassiveActions
-        actions={parsedActions.passiveActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-        userTeam={userTeam}
-      />
+        <BattlePassiveActions
+          actions={parsedActions.passiveActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+          userTeam={userTeam}
+        />
 
-      <BattleActionList
-        actions={parsedActions.outcomeActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
+        <BattleActionList
+          actions={parsedActions.outcomeActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+        />
+      </div>
     </li>
   );
 };

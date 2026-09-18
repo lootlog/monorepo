@@ -22,6 +22,7 @@
   "characterSelector": {
     "allCharacters": "Wszystkie postacie",
     "selectCharacter": "Wybierz postać",
+    "selectedCount": "Postacie: {{count}}",
     "searchPlaceholder": "Szukaj postaci...",
     "empty": "Nie znaleziono postaci."
   },

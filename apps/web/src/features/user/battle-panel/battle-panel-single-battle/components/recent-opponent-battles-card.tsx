@@ -34,7 +34,7 @@ export function RecentOpponentBattlesCard({
   return (
     <SectionCard
       className={cn(
-        "flex max-h-[420px] min-h-0 w-full flex-col gap-0 overflow-hidden border-border bg-card p-0 xl:h-[var(--battle-side-card-height)] xl:max-h-none",
+        "isolate flex min-h-0 w-full flex-col gap-0 overflow-hidden border-border bg-card p-0",
         className,
       )}
     >

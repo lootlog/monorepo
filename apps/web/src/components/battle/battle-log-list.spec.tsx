@@ -41,8 +41,6 @@ const events: RawBattleParsedEvent[] = Array.from(
   }),
 );
 
-let desktop = true;
-
 function isScrollToOptions(
   value: ScrollToOptions | number | undefined,
 ): value is ScrollToOptions {
@@ -51,20 +49,16 @@ function isScrollToOptions(
 
 function Fixture(props: Partial<BattleLogListProps>) {
   const outer = useRef<HTMLDivElement>(null);
-  const inner = useRef<HTMLDivElement>(null);
 
   return (
     <I18nextProvider i18n={i18n}>
       <div ref={outer} data-testid="outer">
-        <div ref={inner} data-testid="inner">
-          <BattleLogList
-            events={events}
-            warriors={[]}
-            scrollViewportRef={inner}
-            outerScrollViewportRef={outer}
-            {...props}
-          />
-        </div>
+        <BattleLogList
+          events={events}
+          warriors={[]}
+          scrollViewportRef={outer}
+          {...props}
+        />
       </div>
     </I18nextProvider>
   );
@@ -88,8 +82,7 @@ function SearchFixture({
             events,
           }}
           warriors={[]}
-          outerScrollViewportRef={outer}
-          listScrollClassName="h-96"
+          scrollViewportRef={outer}
           onTurnFocus={onTurnFocus}
         />
       </div>
@@ -98,17 +91,6 @@ function SearchFixture({
 }
 
 beforeEach(() => {
-  desktop = true;
-  vi.spyOn(window, "matchMedia").mockImplementation((media) => ({
-    matches: desktop,
-    media,
-    onchange: null,
-    addListener() {},
-    removeListener() {},
-    addEventListener() {},
-    removeEventListener() {},
-    dispatchEvent: () => true,
-  }));
   vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(
     function (this: HTMLElement) {
       return this.tagName === "LI" ? 72 : 480;
@@ -122,7 +104,7 @@ beforeEach(() => {
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
     function (this: HTMLElement) {
       const viewport = document.querySelector<HTMLElement>(
-        desktop ? '[data-testid="inner"]' : '[data-testid="outer"]',
+        '[data-testid="outer"]',
       );
 
       const translation = Number.parseFloat(
@@ -151,35 +133,31 @@ afterEach(() => {
 });
 
 describe("virtual battle log", () => {
-  it.each([true, false])(
-    "keeps mounted rows bounded using the actual viewport (desktop=%s)",
-    async (isDesktop) => {
-      desktop = isDesktop;
-      const view = render(<Fixture />);
-      await waitFor(() =>
-        expect(
-          view.container.querySelectorAll("[data-battle-turn]").length,
-        ).toBeGreaterThan(0),
-      );
+  it("keeps mounted rows bounded using the actual viewport", async () => {
+    const view = render(<Fixture />);
+    await waitFor(() =>
       expect(
         view.container.querySelectorAll("[data-battle-turn]").length,
-      ).toBeLessThan(40);
-      const viewport = view.getByTestId(isDesktop ? "inner" : "outer");
-      act(() => {
-        viewport.scrollTop = 36_000;
-        fireEvent.scroll(viewport);
-      });
-      await waitFor(() =>
-        expect(
-          view.container.querySelector('[data-battle-turn="501"]'),
-        ).not.toBeNull(),
-      );
-      expect(view.container.querySelector('[data-battle-turn="1"]')).toBeNull();
+      ).toBeGreaterThan(0),
+    );
+    expect(
+      view.container.querySelectorAll("[data-battle-turn]").length,
+    ).toBeLessThan(40);
+    const viewport = view.getByTestId("outer");
+    act(() => {
+      viewport.scrollTop = 36_000;
+      fireEvent.scroll(viewport);
+    });
+    await waitFor(() =>
       expect(
-        view.container.querySelectorAll("[data-battle-turn]").length,
-      ).toBeLessThan(40);
-    },
-  );
+        view.container.querySelector('[data-battle-turn="501"]'),
+      ).not.toBeNull(),
+    );
+    expect(view.container.querySelector('[data-battle-turn="1"]')).toBeNull();
+    expect(
+      view.container.querySelectorAll("[data-battle-turn]").length,
+    ).toBeLessThan(40);
+  });
 
   it("positions and highlights a distant search result", async () => {
     const onComplete = vi.fn();
@@ -221,8 +199,8 @@ describe("virtual battle log", () => {
     fireEvent.keyDown(first, { key: "Enter" });
     expect(onSelect).toHaveBeenCalledWith(1);
     act(() => {
-      view.getByTestId("inner").scrollTop = 36_000;
-      fireEvent.scroll(view.getByTestId("inner"));
+      view.getByTestId("outer").scrollTop = 36_000;
+      fireEvent.scroll(view.getByTestId("outer"));
     });
     await waitFor(() =>
       expect(
@@ -268,7 +246,7 @@ describe("virtual battle log", () => {
       />,
     );
 
-    fireEvent.wheel(view.getByTestId("inner"), { deltaY: 20 });
+    fireEvent.wheel(view.getByTestId("outer"), { deltaY: 20 });
     await waitFor(() => expect(onCancel).toHaveBeenCalledWith(900));
     expect(onComplete).not.toHaveBeenCalled();
   });

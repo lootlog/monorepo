@@ -15,8 +15,7 @@ import { CurrentStreakCard } from "./components/current-streak-card";
 import { BattleDurationStatsCard } from "./components/battle-duration-stats";
 import { PhGrowthChart } from "./components/ph-growth-chart";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { SectionHeader } from "@/components/layout/section-header";
-import { BarChart3 } from "lucide-react";
+import { BattlePanelFilterBar } from "@/features/user/battle-panel/components/battle-panel-filter-bar";
 import { useQueryStates } from "nuqs";
 import {
   battlePanelStatisticsSearchParsers,
@@ -122,7 +121,7 @@ export function BattlePanelStatistics() {
     combatProfileQuery;
 
   const statisticsSearch = {
-    characterId: currentCharacterId,
+    characterId: selectedCharacterId,
     period,
     minLevel,
     maxLevel,
@@ -145,17 +144,14 @@ export function BattlePanelStatistics() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background pt-3">
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex min-h-full flex-col gap-4 px-3 py-3">
+        <div className="flex min-h-full flex-col gap-3 px-3 pb-3">
           {charactersQuery.isError && (
             <StatisticsQueryPanel query={charactersQuery} />
           )}
-          <SectionHeader
-            icon={BarChart3}
-            title={t("battlePanel.statistics.title")}
-            subtitle={t("battlePanel.statistics.subtitle")}
-          >
+          <h1 className="sr-only">{t("battlePanel.statistics.title")}</h1>
+          <BattlePanelFilterBar ariaLabel={t("battlePanel.filters.title")}>
             <StatisticsFilters
               characterId={currentCharacterId}
               period={period}
@@ -207,7 +203,7 @@ export function BattlePanelStatistics() {
                 });
               }}
             />
-          </SectionHeader>
+          </BattlePanelFilterBar>
 
           <StatisticsQueryPanel query={combatProfileQuery}>
             <CombatProfileOverview
@@ -216,7 +212,7 @@ export function BattlePanelStatistics() {
             />
           </StatisticsQueryPanel>
 
-          <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
             <StatisticsQueryPanel query={streakQuery}>
               <CurrentStreakCard
                 data={
@@ -241,7 +237,10 @@ export function BattlePanelStatistics() {
                 isLoading={isDurationLoading}
               />
             </StatisticsQueryPanel>
-            <StatisticsQueryPanel query={phGrowthQuery}>
+            <StatisticsQueryPanel
+              query={phGrowthQuery}
+              className="lg:col-span-2"
+            >
               <PhGrowthChart
                 data={phGrowthData ?? []}
                 isLoading={isPhGrowthLoading}
@@ -249,7 +248,7 @@ export function BattlePanelStatistics() {
             </StatisticsQueryPanel>
           </div>
 
-          <div className="grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
             <StatisticsQueryPanel query={professionQuery}>
               <ProfessionWinRateChart
                 data={professionData ?? []}

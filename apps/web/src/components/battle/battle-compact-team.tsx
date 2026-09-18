@@ -1,13 +1,9 @@
-import { PlayerTile } from "@/components/battle/player-tile";
-import {
-  BATTLE_SURFACE_COLORS,
-  BATTLE_TEXT_COLORS,
-} from "@/components/battle/utils/battle-color-palette";
-import { BattleDamageTags } from "@/features/user/battle-panel/components/battle-damage-tags";
+import { BattleCompactTeamMember } from "@/components/battle/battle-compact-team-member";
+import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import type { BattleWarrior as Warrior } from "@/lib/api/battlelog-types";
 import { cn } from "cn";
-import { Sword } from "lucide-react";
-import type { FC } from "react";
+import { Shield, Sword } from "lucide-react";
+import type { FC, ReactNode } from "react";
 
 export type BattleCompactTeamProps = {
   align?: "start" | "end";
@@ -16,6 +12,7 @@ export type BattleCompactTeamProps = {
   isUserTeam: boolean;
   label: string;
   opposingTeam: Warrior[];
+  result?: ReactNode;
   team: Warrior[];
 };
 
@@ -26,83 +23,59 @@ export const BattleCompactTeam: FC<BattleCompactTeamProps> = ({
   isUserTeam,
   label,
   opposingTeam,
+  result,
   team,
 }) => {
+  const isDuel = team.length === 1 && opposingTeam.length === 1;
+  const isGroup = team.length > 1;
+  const TeamIcon = isUserTeam ? Shield : Sword;
+
   return (
-    <section className="min-w-0 bg-muted/20 px-3 py-2">
+    <section className="flex min-w-0 flex-col gap-2">
       <div
         className={cn(
-          "mb-1.5 flex items-center gap-2",
-          align === "end" && "lg:justify-end",
+          "flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1",
+          align === "end" && "@md:flex-row-reverse",
         )}
       >
-        <div
+        <h2
           className={cn(
-            "flex min-w-0 items-center gap-1.5 text-[11px] font-semibold leading-none",
+            "flex min-w-0 items-center gap-1.5 text-xs font-semibold uppercase leading-none tracking-wide",
             isUserTeam
               ? BATTLE_TEXT_COLORS.team.friendly
               : BATTLE_TEXT_COLORS.team.enemy,
           )}
         >
-          <Sword className="size-3.5 shrink-0" />
+          <TeamIcon className="size-3.5 shrink-0" aria-hidden />
           <span className="truncate">{label}</span>
-        </div>
+          {isGroup && (
+            <span className="rounded-sm bg-background/60 px-1 py-0.5 text-[10px] tabular-nums text-muted-foreground">
+              {team.length}
+            </span>
+          )}
+        </h2>
+        {result}
       </div>
 
-      <div
+      <ul
         className={cn(
-          "flex flex-wrap items-center gap-1.5",
-          align === "end" && "lg:justify-end",
+          isGroup
+            ? "flex flex-wrap gap-1 @2xl:grid @2xl:gap-1.5 @2xl:grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]"
+            : "flex",
+          !isGroup && align === "end" && "@md:justify-end",
         )}
       >
-        {team.map((member) => {
-          const isCurrentCharacter = member.originalId === characterId;
-
-          const attributableOpposingTeam =
-            team.length === 1 && opposingTeam.length === 1 ? opposingTeam : [];
-
-          return (
-            <div
-              key={member.id}
-              className={cn(
-                "flex min-w-0 max-w-full items-center gap-1.5 rounded-sm border bg-muted/35 py-1 pl-1 pr-2",
-                isCurrentCharacter
-                  ? BATTLE_SURFACE_COLORS.team.currentCharacterStrongBorder
-                  : "border-border/70",
-              )}
-            >
-              <div className="relative h-9 w-6 shrink-0 overflow-visible">
-                <PlayerTile
-                  player={member}
-                  className="absolute left-0 top-0 origin-top-left scale-75"
-                  cdnBaseUrl={cdnBaseUrl}
-                />
-              </div>
-              <div className="min-w-0 text-[11px] leading-tight">
-                <div
-                  className={cn(
-                    "truncate font-semibold",
-                    isCurrentCharacter && BATTLE_TEXT_COLORS.team.friendly,
-                  )}
-                >
-                  {member.name}
-                </div>
-                <div className="flex min-w-0 items-center gap-1 text-muted-foreground">
-                  <span>
-                    {member.lvl}
-                    {member.prof}
-                  </span>
-                  <BattleDamageTags
-                    team={[member]}
-                    opposingTeam={attributableOpposingTeam}
-                    className="flex-wrap"
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+        {team.map((member) => (
+          <BattleCompactTeamMember
+            key={member.id}
+            cdnBaseUrl={cdnBaseUrl}
+            compact={isGroup}
+            isCurrentCharacter={member.originalId === characterId}
+            member={member}
+            opposingTeam={isDuel ? opposingTeam : []}
+          />
+        ))}
+      </ul>
     </section>
   );
 };
