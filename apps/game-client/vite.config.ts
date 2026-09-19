@@ -1,4 +1,4 @@
-import { gameClientViteConfig } from "./vite.shared";
+import { gameClientViteConfig } from "./vite.shared.ts";
 import { defineConfig, loadEnv } from "vite";
 import path from "node:path";
 import monkey from "vite-plugin-monkey";
@@ -8,8 +8,10 @@ import { visualizer } from "rollup-plugin-visualizer";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
   const shared = gameClientViteConfig(mode);
+
   const shouldAnalyzeBundle =
     env.ANALYZE === "1" || process.env.ANALYZE === "1";
+
   return {
     ...shared,
     server: {

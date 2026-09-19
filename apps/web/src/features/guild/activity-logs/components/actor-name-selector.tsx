@@ -23,7 +23,7 @@ interface ActorNameSelectorProps {
   onValueChange: (value: string) => void;
   searchValue: string;
   onSearchChange: (value: string) => void;
-  placeholder?: string;
+  placeholder: string;
   className?: string;
 }
 
@@ -33,7 +33,7 @@ export function ActorNameSelector({
   onValueChange,
   searchValue,
   onSearchChange,
-  placeholder = "Nazwa gracza...",
+  placeholder,
   className,
 }: ActorNameSelectorProps) {
   const { t } = useTranslation();
@@ -82,7 +82,11 @@ export function ActorNameSelector({
               role="combobox"
               aria-controls={suggestionsListId}
               aria-expanded={open}
-              className={cn("w-full justify-between gap-2", value && "pr-10")}
+              aria-label={placeholder}
+              className={cn(
+                "h-10 w-full justify-between gap-2",
+                value && "pr-10",
+              )}
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -112,14 +116,16 @@ export function ActorNameSelector({
       <PopoverContent className="w-[250px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInputRaw
-            placeholder="Wpisz nazwę..."
+            placeholder={t("activityLogs.filters.suggestions.inputPlaceholder")}
             value={searchValue}
             onChange={handleInputChange}
             className="h-9"
           />
           <CommandList id={suggestionsListId}>
             <CommandEmpty>
-              {searchValue.trim() ? "Brak sugestii" : "Wpisz aby wyszukać..."}
+              {searchValue.trim()
+                ? t("activityLogs.filters.suggestions.empty")
+                : t("activityLogs.filters.suggestions.hint")}
             </CommandEmpty>
             <CommandGroup>
               {suggestions.map((suggestion) => (
@@ -144,7 +150,9 @@ export function ActorNameSelector({
                   className="text-primary"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
-                  Użyj: {searchValue.trim()}
+                  {t("activityLogs.filters.suggestions.useCustom", {
+                    value: searchValue.trim(),
+                  })}
                 </CommandItem>
               )}
             </CommandGroup>

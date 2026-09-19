@@ -158,7 +158,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
           </span>
         }
       />
-      <ContextMenuContent className="min-w-56 rounded-xl border-border bg-popover p-1.5 shadow-xl">
+      <ContextMenuContent className="min-w-56 border-border bg-popover p-1.5 shadow-xl">
         <ContextMenuItem
           className="h-9 cursor-pointer gap-2 rounded-lg px-2.5"
           onClick={onShowLoots}

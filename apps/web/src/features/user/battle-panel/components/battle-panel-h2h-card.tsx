@@ -1,7 +1,6 @@
 import { BattlePanelH2hOpponentSummary } from "@/features/user/battle-panel/components/battle-panel-h2h-opponent-summary";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
-import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import type { HeadToHeadRecord } from "@/lib/api/battlelog-types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import {
@@ -32,10 +31,7 @@ export const BattlePanelH2hCard = ({
   return (
     <button
       type="button"
-      className={cn(
-        "w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        getBattleResultRowClassName(record.lastBattleResult),
-      )}
+      className="w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={() => onOpen(record.opponentId)}
     >
       <div className="flex items-start justify-between gap-3">

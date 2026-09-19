@@ -1,4 +1,3 @@
-import { BATTLE_SURFACE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import {
   createBattleWarrior as buildBattleWarrior,
   createBattle as buildBattle,
@@ -15,8 +14,6 @@ import {
   getBattleTeams,
   getPlayerVsPlayerBattleResult,
 } from "./battle-panel-battle-presentation";
-
-import { getBattleResultRowClassName } from "./battle-result-row-class-name";
 
 const createWarrior = ({
   name,
@@ -115,11 +112,5 @@ describe("battle panel battle presentation", () => {
         createPlayerVsPlayerBattle({ hasFlee: true }),
       ),
     ).toBe("flee");
-  });
-
-  it("does not mark a row with a result when the result is not available", () => {
-    expect(getBattleResultRowClassName(undefined)).toBe(
-      BATTLE_SURFACE_COLORS.resultRow.unknown,
-    );
   });
 });
