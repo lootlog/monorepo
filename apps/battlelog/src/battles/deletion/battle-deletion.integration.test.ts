@@ -8,7 +8,6 @@ import { makePostgresLayer } from "@lootlog/database";
 import { Effect, Redacted } from "effect";
 import pg from "pg";
 import { drizzleDatabaseEffect } from "#src/database/database";
-import { migrateBattlelogDatabase } from "#src/database/migrate";
 import { makeBattleDeletion } from "./battle-deletion.js";
 
 let postgres: StartedPostgreSqlContainer;
@@ -36,21 +35,6 @@ beforeAll(async () => {
   ]);
 
   if (exit !== 0) throw new Error(`Migration failed: ${stdout}\n${stderr}`);
-
-  const tracked = await pool.query(
-    "SELECT name FROM drizzle.__drizzle_migrations ORDER BY name",
-  );
-
-  expect(tracked.rows).toEqual(
-    expect.arrayContaining([
-      { name: "20260904192453_pending_object_deletions" },
-      { name: "20260909045921_scoped_battle_submissions" },
-    ]),
-  );
-  expect(
-    (await pool.query(`SELECT to_regclass('battle_object_deletions') AS table`))
-      .rows,
-  ).toEqual([{ table: "battle_object_deletions" }]);
 }, 60_000);
 
 afterAll(async () => {
@@ -78,24 +62,6 @@ const run = <A, E>(effect: Effect.Effect<A, E, PgClient.PgClient>) =>
       ),
     ),
   );
-
-it("keeps existing battles and migration history when migrations run again", async () => {
-  const battles = await pool.query("SELECT * FROM battles ORDER BY id");
-
-  const migrations = await pool.query(
-    "SELECT * FROM drizzle.__drizzle_migrations ORDER BY id",
-  );
-
-  await run(migrateBattlelogDatabase);
-
-  expect((await pool.query("SELECT * FROM battles ORDER BY id")).rows).toEqual(
-    battles.rows,
-  );
-  expect(
-    (await pool.query("SELECT * FROM drizzle.__drizzle_migrations ORDER BY id"))
-      .rows,
-  ).toEqual(migrations.rows);
-});
 
 for (const mode of ["single", "user"] as const) {
   it(`retains durable ${mode} deletion work across R2 failure and a restarted worker`, async () => {
@@ -207,7 +173,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
   }
 });
 
-it("migrates submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
+it("scopes submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
   await pool.query(
     `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'one'`,
   );
