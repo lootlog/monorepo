@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { getPlayerVsPlayerBattleResult } from "./battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "./battle-panel-pvp-warrior-summary";
 import { BattleResultStatus } from "./battle-result-status";
-import { getBattleResultRowClassName } from "./battle-result-row-class-name";
 
 type BattlePanelPvpBattleCardProps = {
   battle: PlayerVsPlayerBattle;
@@ -32,10 +31,7 @@ export const BattlePanelPvpBattleCard = ({
   return (
     <button
       type="button"
-      className={cn(
-        "w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        getBattleResultRowClassName(result),
-      )}
+      className="w-full border-b border-border/70 p-3 last:border-b-0 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={() => onBattleClick(battle.battleId)}
     >
       <div className="flex items-start justify-between gap-3">
