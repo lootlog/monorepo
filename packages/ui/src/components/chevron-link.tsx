@@ -20,7 +20,7 @@ export function ChevronLink({
       {children}
       <ChevronRight
         aria-hidden
-        className="size-3.5 shrink-0 transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] group-hover/chevron-link:translate-x-0.5 group-focus-visible/chevron-link:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none"
+        className="size-3.5 shrink-0 transition-transform duration-150 ease-emphasized group-hover/chevron-link:translate-x-0.5 group-focus-visible/chevron-link:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none"
       />
     </TextLink>
   );
