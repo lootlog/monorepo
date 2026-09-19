@@ -1,6 +1,31 @@
 import { getShortnameByProf } from "@lootlog/domain/profession";
-import { and, eq, gte, ilike, lt, lte, or, sql, type SQL } from "drizzle-orm";
-import { lootTable } from "#src/database/drizzle/schema";
+import {
+  and,
+  eq,
+  exists,
+  gte,
+  ilike,
+  inArray,
+  like,
+  lt,
+  lte,
+  notLike,
+  or,
+  sql,
+  type SQL,
+  type SQLWrapper,
+} from "drizzle-orm";
+import { alias, QueryBuilder } from "drizzle-orm/pg-core";
+import {
+  itemSnapshotTable,
+  lootItemTable,
+  lootNpcTable,
+  lootPlayerTable,
+  lootTable,
+  npcSnapshotTable,
+  playerSnapshotTable,
+} from "#src/database/drizzle/schema";
+import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 
 export type LootQueryFilters = {
   readonly npcTypes?: ReadonlyArray<string>;
@@ -34,57 +59,83 @@ export type ResolvedLootQueryFilters = Omit<LootQueryFilters, "npcs"> & {
   readonly npcNameSnapshotIds?: ReadonlyArray<number>;
 };
 
-const existsPlayer = (condition: SQL) => sql`EXISTS (
-  SELECT 1 FROM "LootPlayer" query_lp
-  INNER JOIN "PlayerSnapshot" query_ps ON query_ps.id = query_lp."playerSnapshotId"
-  WHERE query_lp."lootId" = ${lootTable.id} AND ${condition}
-)`;
+const query = new QueryBuilder();
 
-const existsNpc = (condition: SQL) => sql`EXISTS (
-  SELECT 1 FROM "LootNpc" query_ln
-  INNER JOIN "NpcSnapshot" query_ns ON query_ns.id = query_ln."npcSnapshotId"
-  WHERE query_ln."lootId" = ${lootTable.id} AND ${condition}
-)`;
+const queryPlayer = alias(lootPlayerTable, "query_lp");
 
-const existsItem = (condition: SQL) => sql`EXISTS (
-  SELECT 1 FROM "LootItem" query_li
-  INNER JOIN "ItemSnapshot" query_is ON query_is.id = query_li."itemSnapshotId"
-  WHERE query_li."lootId" = ${lootTable.id} AND ${condition}
-)`;
+const queryPlayerSnapshot = alias(playerSnapshotTable, "query_ps");
 
-const sqlList = (values: ReadonlyArray<unknown>) =>
-  sql.join(
-    values.map((value) => sql`${value}`),
-    sql`, `,
+const queryNpc = alias(lootNpcTable, "query_ln");
+
+const queryNpcSnapshot = alias(npcSnapshotTable, "query_ns");
+
+const queryItem = alias(lootItemTable, "query_li");
+
+const queryItemSnapshot = alias(itemSnapshotTable, "query_is");
+
+const existsPlayer = (condition: SQL) =>
+  exists(
+    query
+      .select({ id: queryPlayer.id })
+      .from(queryPlayer)
+      .innerJoin(
+        queryPlayerSnapshot,
+        eq(queryPlayerSnapshot.id, queryPlayer.playerSnapshotId),
+      )
+      .where(and(eq(queryPlayer.lootId, lootTable.id), condition)),
+  );
+
+const existsNpc = (condition: SQL) =>
+  exists(
+    query
+      .select({ id: queryNpc.id })
+      .from(queryNpc)
+      .innerJoin(
+        queryNpcSnapshot,
+        eq(queryNpcSnapshot.id, queryNpc.npcSnapshotId),
+      )
+      .where(and(eq(queryNpc.lootId, lootTable.id), condition)),
+  );
+
+const existsItem = (condition: SQL) =>
+  exists(
+    query
+      .select({ id: queryItem.id })
+      .from(queryItem)
+      .innerJoin(
+        queryItemSnapshot,
+        eq(queryItemSnapshot.id, queryItem.itemSnapshotId),
+      )
+      .where(and(eq(queryItem.lootId, lootTable.id), condition)),
   );
 
 const levelRange = (
-  column: SQL,
+  column: SQLWrapper,
   minimum: number | undefined,
   maximum: number | undefined,
 ) =>
   minimum === undefined && maximum === undefined
     ? undefined
     : and(
-        minimum === undefined ? undefined : sql`${column} >= ${minimum}`,
-        maximum === undefined ? undefined : sql`${column} <= ${maximum}`,
+        minimum === undefined ? undefined : gte(column, minimum),
+        maximum === undefined ? undefined : lte(column, maximum),
       );
 
 const rangeConditions = (filters: LootQueryFilters): Array<SQL | undefined> => {
   const npc = levelRange(
-    sql`query_ns.lvl`,
+    queryNpcSnapshot.lvl,
     filters.npcLevelMin,
     filters.npcLevelMax,
   );
 
   const item = levelRange(
-    sql`query_is.lvl`,
+    queryItemSnapshot.lvl,
     filters.itemLevelMin,
     filters.itemLevelMax,
   );
 
   const player = levelRange(
-    sql`query_lp.lvl`,
+    queryPlayer.lvl,
     filters.playerLevelMin,
     filters.playerLevelMax,
   );
@@ -101,30 +152,38 @@ const npcNameCondition = (snapshotIds: ReadonlyArray<number> | undefined) => {
 
   if (snapshotIds.length === 0) return sql`false`;
 
-  return sql`EXISTS (
-    SELECT 1 FROM "LootNpc" query_ln
-    WHERE query_ln."lootId" = ${lootTable.id}
-      AND query_ln."npcSnapshotId" IN (${sqlList(snapshotIds)})
-  )`;
+  return exists(
+    query
+      .select({ id: queryNpc.id })
+      .from(queryNpc)
+      .where(
+        and(
+          eq(queryNpc.lootId, lootTable.id),
+          inArray(queryNpc.npcSnapshotId, [...snapshotIds]),
+        ),
+      ),
+  );
 };
 
 const relationConditions = (
   filters: ResolvedLootQueryFilters,
 ): Array<SQL | undefined> => [
   filters.players?.length
-    ? existsPlayer(sql`query_ps.name IN (${sqlList(filters.players)})`)
+    ? existsPlayer(inArray(queryPlayerSnapshot.name, [...filters.players]))
     : undefined,
   npcNameCondition(filters.npcNameSnapshotIds),
   filters.npcTypes?.length
-    ? existsNpc(sql`query_ns.type IN (${sqlList(filters.npcTypes)})`)
+    ? existsNpc(inArray(sql`${queryNpcSnapshot.type}`, [...filters.npcTypes]))
     : undefined,
   filters.rarities?.length
-    ? existsItem(sql`query_is.rarity IN (${sqlList(filters.rarities)})`)
+    ? existsItem(
+        inArray(sql`${queryItemSnapshot.rarity}`, [...filters.rarities]),
+      )
     : undefined,
-  filters.hid ? existsItem(sql`query_li.hid = ${filters.hid}`) : undefined,
+  filters.hid ? existsItem(eq(queryItem.hid, filters.hid)) : undefined,
   filters.itemSnapshotIds
     ? existsItem(
-        sql`query_li."itemSnapshotId" IN (${sqlList(filters.itemSnapshotIds)})`,
+        inArray(queryItem.itemSnapshotId, [...filters.itemSnapshotIds]),
       )
     : undefined,
 ];
@@ -143,10 +202,9 @@ const professionCondition = (
   if (shortnames.length === 0) return undefined;
 
   const condition = or(
-    sql`query_is."statRaw" NOT LIKE '%reqp=%'`,
-    ...shortnames.map(
-      (shortname) =>
-        sql`query_is."statsSnapshot"->>'reqp' LIKE ${`%${shortname}%`}`,
+    notLike(queryItemSnapshot.statRaw, "%reqp=%"),
+    ...shortnames.map((shortname) =>
+      like(sql`${queryItemSnapshot.statsSnapshot}->>'reqp'`, `%${shortname}%`),
     ),
   );
 
@@ -161,55 +219,10 @@ const searchCondition = (search: string | undefined) => {
 
   return or(
     ilike(lootTable.location, pattern),
-    existsItem(sql`query_is.name ILIKE ${pattern}`),
-    existsNpc(sql`query_ns.name ILIKE ${pattern}`),
-    existsPlayer(sql`query_ps.name ILIKE ${pattern}`),
+    existsItem(ilike(queryItemSnapshot.name, pattern)),
+    existsNpc(ilike(queryNpcSnapshot.name, pattern)),
+    existsPlayer(ilike(queryPlayerSnapshot.name, pattern)),
   );
-};
-
-const visibilityCondition = (
-  permissions: ReadonlyArray<string>,
-  roles: ReadonlyArray<LootQueryVisibilityRole>,
-) => {
-  if (permissions.includes("OWNER")) return undefined;
-
-  const readableRoles = roles.filter((role) =>
-    role.permissions.includes("LOOTLOG_LOOTS_READ"),
-  );
-
-  if (readableRoles.length === 0) return sql`false`;
-
-  const roleConditions = readableRoles.map((role) => {
-    const excluded: string[] = [];
-
-    if (!role.permissions.includes("LOOTLOG_LOOTS_TITANS_READ")) {
-      excluded.push("TITAN");
-    }
-
-    if (!role.permissions.includes("LOOTLOG_LOOTS_HEROES_READ")) {
-      excluded.push("HERO", "EVENT_HERO");
-    }
-
-    const typeCondition =
-      excluded.length === 0
-        ? sql`visibility_npc.type IS NOT NULL`
-        : sql`visibility_npc.type IS NOT NULL AND visibility_npc.type NOT IN (${sqlList(excluded)})`;
-
-    return sql`(
-      visibility_npc.lvl IS NOT NULL
-      AND visibility_npc.lvl BETWEEN ${role.lvlRangeFrom ?? 0} AND ${role.lvlRangeTo ?? 500}
-      AND ${typeCondition}
-    )`;
-  });
-
-  return sql`
-    EXISTS (SELECT 1 FROM "LootNpc" visibility_ln WHERE visibility_ln."lootId" = ${lootTable.id})
-    AND NOT EXISTS (
-      SELECT 1 FROM "LootNpc" visibility_ln
-      INNER JOIN "NpcSnapshot" visibility_npc ON visibility_npc.id = visibility_ln."npcSnapshotId"
-      WHERE visibility_ln."lootId" = ${lootTable.id}
-        AND NOT (${sql.join(roleConditions, sql` OR `)})
-    )`;
 };
 
 export const buildLootQueryConditions = (
@@ -230,5 +243,5 @@ export const buildLootQueryConditions = (
   ...relationConditions(filters),
   professionCondition(filters.professions),
   searchCondition(filters.search),
-  visibilityCondition(permissions, roles),
+  buildLootNpcVisibilityCondition(lootTable.id, permissions, roles),
 ];

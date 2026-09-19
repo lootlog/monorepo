@@ -3,7 +3,25 @@ import {
   type LootVisibilityRole,
 } from "@lootlog/domain/loot-visibility";
 import { Permission } from "@lootlog/schema/permissions";
-import type { roleTable } from "#src/database/drizzle/schema";
+import {
+  and,
+  between,
+  eq,
+  exists,
+  isNotNull,
+  not,
+  notExists,
+  notInArray,
+  or,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
+import { alias, QueryBuilder } from "drizzle-orm/pg-core";
+import {
+  lootNpcTable,
+  npcSnapshotTable,
+  type roleTable,
+} from "#src/database/drizzle/schema";
 
 type Role = typeof roleTable.$inferSelect;
 
@@ -21,68 +39,75 @@ export function toLootVisibilityRoles(
   }));
 }
 
-export function buildLootNpcVisibilitySql(
-  permissions: readonly Permission[],
-  roles: readonly Pick<
-    Role,
-    "id" | "lvlRangeFrom" | "lvlRangeTo" | "permissions"
-  >[],
-): string {
-  if (permissions.includes(Permission.OWNER)) {
-    return "";
-  }
+const query = new QueryBuilder();
 
-  const completeRoles = toLootVisibilityRoles(roles).filter((role) =>
+const visibilityLootNpc = alias(lootNpcTable, "visibility_loot_npc");
+
+const visibilityNpc = alias(npcSnapshotTable, "visibility_npc");
+
+export function buildLootNpcVisibilityCondition(
+  lootId: SQLWrapper,
+  permissions: readonly string[],
+  roles: readonly {
+    readonly lvlRangeFrom: number | null;
+    readonly lvlRangeTo: number | null;
+    readonly permissions: readonly string[];
+  }[],
+) {
+  if (permissions.includes(Permission.OWNER)) return undefined;
+
+  const readableRoles = roles.filter((role) =>
     role.permissions.includes(LOOT_PERMISSION.read),
   );
 
-  if (completeRoles.length === 0) {
-    return "AND FALSE";
-  }
+  if (readableRoles.length === 0) return sql`false`;
 
-  const roleConditions = completeRoles
-    .map(buildCompleteRoleNpcSqlCondition)
-    .join(" OR ");
+  const roleConditions = readableRoles.map((role) => {
+    const excludedTypes: NonNullable<
+      typeof npcSnapshotTable.$inferSelect.type
+    >[] = [];
 
-  return `
-    AND EXISTS (
-      SELECT 1 FROM "LootNpc" visibility_loot_npc
-      WHERE visibility_loot_npc."lootId" = l.id
-    )
-    AND NOT EXISTS (
-      SELECT 1
-      FROM "LootNpc" visibility_loot_npc
-      INNER JOIN "NpcSnapshot" visibility_npc
-        ON visibility_npc.id = visibility_loot_npc."npcSnapshotId"
-      WHERE visibility_loot_npc."lootId" = l.id
-        AND NOT (${roleConditions})
-    )
-  `;
-}
+    if (!role.permissions.includes(LOOT_PERMISSION.readTitans))
+      excludedTypes.push("TITAN");
 
-function buildCompleteRoleNpcSqlCondition(role: LootVisibilityRole): string {
-  const levelFrom = normalizeSqlLevel(role.levelFrom, 0);
-  const levelTo = normalizeSqlLevel(role.levelTo, 500);
-  const excludedTypes: string[] = [];
+    if (!role.permissions.includes(LOOT_PERMISSION.readHeroes))
+      excludedTypes.push("HERO", "EVENT_HERO");
 
-  if (!role.permissions.includes(LOOT_PERMISSION.readTitans)) {
-    excludedTypes.push("'TITAN'");
-  }
+    return and(
+      isNotNull(visibilityNpc.lvl),
+      between(
+        visibilityNpc.lvl,
+        normalizeSqlLevel(role.lvlRangeFrom ?? 0, 0),
+        normalizeSqlLevel(role.lvlRangeTo ?? 500, 500),
+      ),
+      isNotNull(visibilityNpc.type),
+      notInArray(visibilityNpc.type, excludedTypes),
+    );
+  });
 
-  if (!role.permissions.includes(LOOT_PERMISSION.readHeroes)) {
-    excludedTypes.push("'HERO'", "'EVENT_HERO'");
-  }
-
-  const typeCondition =
-    excludedTypes.length === 0
-      ? "visibility_npc.type IS NOT NULL"
-      : `visibility_npc.type IS NOT NULL AND visibility_npc.type NOT IN (${excludedTypes.join(", ")})`;
-
-  return `(
-    visibility_npc.lvl IS NOT NULL
-    AND visibility_npc.lvl BETWEEN ${levelFrom} AND ${levelTo}
-    AND ${typeCondition}
-  )`;
+  return and(
+    exists(
+      query
+        .select({ id: visibilityLootNpc.id })
+        .from(visibilityLootNpc)
+        .where(eq(visibilityLootNpc.lootId, lootId)),
+    ),
+    notExists(
+      query
+        .select({ id: visibilityLootNpc.id })
+        .from(visibilityLootNpc)
+        .innerJoin(
+          visibilityNpc,
+          eq(visibilityNpc.id, visibilityLootNpc.npcSnapshotId),
+        )
+        .where(
+          and(
+            eq(visibilityLootNpc.lootId, lootId),
+            not(or(...roleConditions) ?? sql`false`),
+          ),
+        ),
+    ),
+  );
 }
 
 function normalizeSqlLevel(value: number, fallback: number): number {
