@@ -80,11 +80,13 @@ export function ActorNameSelector({
               : value || placeholder}
           </span>
         </ComboboxTrigger>
-        <ComboboxClear
-          tabIndex={0}
-          aria-label={t("common.clear")}
-          className="absolute right-8 top-1/2 -translate-y-1/2"
-        />
+        {Boolean(value) && (
+          <ComboboxClear
+            tabIndex={0}
+            aria-label={t("common.clear")}
+            className="absolute right-8 top-1/2 -translate-y-1/2"
+          />
+        )}
       </div>
       <ComboboxContent className="w-[250px]" align="start">
         <ComboboxInput

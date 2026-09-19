@@ -26,6 +26,7 @@ it("preserves server suggestions and selects a trimmed custom actor through the 
   };
 
   const { rerender } = render(<ActorNameSelector {...props} />);
+  expect(screen.queryByRole("button", { name: "common.clear" })).toBeNull();
   fireEvent.click(screen.getByRole("combobox", { name: "Gracz" }));
 
   const input = await screen.findByPlaceholderText(
