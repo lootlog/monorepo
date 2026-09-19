@@ -2,6 +2,7 @@ import { Separator } from "@lootlog/ui/components/separator";
 import type { MouseEvent, ReactNode } from "react";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
+import { useWarmRouteChunks } from "@/lib/router/use-warm-route-chunks";
 import {
   ThemeSidebarBackground,
   ThemeSidebarFooterDecoration,
@@ -26,6 +27,12 @@ export const SidebarNav = ({
   onItemClick,
 }: SidebarNavProps) => {
   const { isRukiaTheme, isCatTheme } = useThemeMeta();
+
+  useWarmRouteChunks(
+    items
+      .filter((item) => item.enabled && item.available)
+      .map((item) => `${basePath}${item.path}`),
+  );
 
   return (
     <div className="relative flex flex-col w-full gap-1.5 flex-1 overflow-hidden">

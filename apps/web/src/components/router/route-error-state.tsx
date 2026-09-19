@@ -1,54 +1,64 @@
-import { PageHeader } from "@/components/common/page-header";
-import { SectionCardFooter } from "@/components/common/section-card/section-card-footer";
+import { NoticeCard } from "@/components/common/notice-card";
+import {
+  Ghost,
+  KeyRound,
+  ShieldAlert,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
+type RouteErrorStatus = 401 | 403 | 404 | 500;
+
 type RouteErrorStateProps = {
-  status: 401 | 403 | 404 | 500;
+  status: RouteErrorStatus;
+  title?: string;
   description?: string;
   primaryAction?: ReactNode;
   secondaryAction?: ReactNode;
 };
 
-const statusConfig = {
-  401: { emoji: "🔑", color: "text-blue-500" },
-  403: { emoji: "🚧", color: "text-amber-500" },
-  404: { emoji: "👻", color: "text-slate-500" },
-  500: { emoji: "🔥", color: "text-red-500" },
-} as const;
+const statusConfig: Record<
+  RouteErrorStatus,
+  { icon: LucideIcon; color: string }
+> = {
+  401: { icon: KeyRound, color: "text-blue-500" },
+  403: { icon: ShieldAlert, color: "text-amber-500" },
+  404: { icon: Ghost, color: "text-slate-500" },
+  500: { icon: TriangleAlert, color: "text-red-500" },
+};
 
 export const RouteErrorState = ({
   status,
+  title,
   description,
   primaryAction,
   secondaryAction,
 }: RouteErrorStateProps) => {
   const { t } = useTranslation();
-  const { emoji, color } = statusConfig[status];
-  const title = t(`common.routeErrors.status.${status}.title`);
-
-  const stateDescription =
-    description ?? t(`common.routeErrors.status.${status}.description`);
+  const { icon: Icon, color } = statusConfig[status];
 
   return (
-    <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-3 py-3 [align-items:safe_center]">
-      <PageHeader
-        className="w-full max-w-md"
-        title={title}
-        description={stateDescription}
-        status={
-          <span className={`text-sm font-semibold tabular-nums ${color}`}>
-            {emoji} {status}
-          </span>
-        }
-      >
-        {(primaryAction ?? secondaryAction) && (
-          <SectionCardFooter>
-            {primaryAction}
-            {secondaryAction}
-          </SectionCardFooter>
-        )}
-      </PageHeader>
-    </div>
+    <NoticeCard
+      headingLevel="h1"
+      icon=<Icon className={`size-8 ${color}`} aria-hidden="true" />
+      title={title ?? t(`common.routeErrors.status.${status}.title`)}
+      description={
+        description ?? t(`common.routeErrors.status.${status}.description`)
+      }
+      meta={
+        <p className="mt-3 text-xs font-medium tabular-nums text-muted-foreground">
+          {t("common.routeErrors.code", { status })}
+        </p>
+      }
+    >
+      {(primaryAction ?? secondaryAction) && (
+        <div className="flex flex-col gap-2 [&>*]:w-full">
+          {primaryAction}
+          {secondaryAction}
+        </div>
+      )}
+    </NoticeCard>
   );
 };

@@ -1,3 +1,4 @@
+import { SectionLoading } from "@/components/common/section-loading";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
@@ -7,7 +8,6 @@ import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { EventRankingFilter } from "./components/ranking/event-ranking-filter";
 import { EventRankingSummary } from "./components/ranking/event-ranking-summary";
 import { AlertCircle } from "lucide-react";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -120,11 +120,7 @@ export const EventRankingPage = () => {
   );
 
   if (isEventLoading || isRankingLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
+    return <SectionLoading />;
   }
 
   if (eventError || !event) {

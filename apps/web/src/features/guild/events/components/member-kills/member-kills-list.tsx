@@ -1,7 +1,8 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useTable } from "@tanstack/react-table";
 import { AlertCircle, Skull } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -9,12 +10,14 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
-import { MemberKillRow } from "./member-kill-row";
+import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
+import { createMemberKillsTableColumns } from "./member-kills-table-columns";
 
 type MemberKillsListProps = {
   guildId: string;
@@ -28,6 +31,41 @@ type MemberKillsListProps = {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
 };
+
+const HEAD_TEXT_CLASS_NAME = "text-[10px] uppercase tracking-[0.08em]";
+
+const HEAD_CLASS_NAMES = new Map([
+  ["monster", `h-9 min-w-0 px-2 ${HEAD_TEXT_CLASS_NAME}`],
+  [
+    "date",
+    `hidden h-9 w-0 px-2 ${HEAD_TEXT_CLASS_NAME} sm:table-cell sm:w-28 lg:w-36`,
+  ],
+  [
+    "timeCoverage",
+    `hidden h-9 w-0 px-2 text-right ${HEAD_TEXT_CLASS_NAME} xl:table-cell xl:w-28`,
+  ],
+  [
+    "trackingTime",
+    `hidden h-9 w-0 px-2 text-right ${HEAD_TEXT_CLASS_NAME} xl:table-cell xl:w-40`,
+  ],
+  ["points", `h-9 w-20 px-2 text-right ${HEAD_TEXT_CLASS_NAME} sm:w-24`],
+  ["actions", "h-9 w-11 px-2"],
+]);
+
+const CELL_CLASS_NAMES = new Map([
+  ["monster", "min-w-0 overflow-hidden py-1.5"],
+  ["date", "hidden w-0 py-0 sm:table-cell sm:w-28 lg:w-36"],
+  [
+    "timeCoverage",
+    "hidden w-0 py-0 text-right font-medium tabular-nums xl:table-cell xl:w-28",
+  ],
+  [
+    "trackingTime",
+    "hidden w-0 py-0 text-right tabular-nums xl:table-cell xl:w-40",
+  ],
+  ["points", "w-20 py-0 text-right sm:w-24"],
+  ["actions", "w-11 py-0 text-right"],
+]);
 
 // Initial query loading/error and next-page availability/fetching are independent query states, not mutually exclusive presentation variants.
 // eslint-disable-next-line react-doctor/no-many-boolean-props
@@ -45,6 +83,38 @@ export const MemberKillsList = ({
 }: MemberKillsListProps) => {
   const { t } = useTranslation();
   const loaderRowRef = useRef<HTMLTableRowElement>(null);
+
+  // Expanded breakdowns belong to one filtered list, so a new reset key starts collapsed.
+  const [expanded, setExpanded] = useState<{
+    resetKey: string;
+    killIds: readonly string[];
+  }>({ resetKey, killIds: [] });
+
+  const expandedKillIds =
+    expanded.resetKey === resetKey ? expanded.killIds : [];
+
+  const columns = createMemberKillsTableColumns({
+    eventId,
+    expandedKillIds,
+    guildId,
+    onExpandedToggle: (killId) =>
+      setExpanded({
+        resetKey,
+        killIds: expandedKillIds.includes(killId)
+          ? expandedKillIds.filter(
+              (expandedKillId) => expandedKillId !== killId,
+            )
+          : [...expandedKillIds, killId],
+      }),
+    t,
+  });
+
+  const table = useTable({
+    features: coreTableFeatures,
+    columns,
+    data: allKills,
+    getRowId: (kill) => kill.id,
+  });
 
   useEffect(() => {
     scrollElement.scrollTo(0, 0);
@@ -118,41 +188,39 @@ export const MemberKillsList = ({
     <SectionCard className="w-full overflow-hidden">
       <SectionCardHeader icon={Skull} title={t("events.kills.title")} />
       <Table className="w-full table-auto xl:table-fixed">
-        <TableHeader className="bg-secondary/25">
-          <TableRow className="border-border/80 hover:bg-transparent">
-            <TableHead className="h-9 min-w-0 px-2 text-[10px] uppercase tracking-[0.08em]">
-              {t("events.kills.monster")}
-            </TableHead>
-            <TableHead className="hidden h-9 w-0 px-2 text-[10px] uppercase tracking-[0.08em] sm:table-cell sm:w-28 lg:w-36">
-              {t("events.kills.date")}
-            </TableHead>
-            <TableHead className="hidden h-9 w-0 px-2 text-right text-[10px] uppercase tracking-[0.08em] xl:table-cell xl:w-28">
-              {t("events.kills.timeCoverage")}
-            </TableHead>
-            <TableHead className="hidden h-9 w-0 px-2 text-right text-[10px] uppercase tracking-[0.08em] xl:table-cell xl:w-40">
-              {t("events.kills.trackingDurationTime")}
-            </TableHead>
-            <TableHead className="h-9 w-20 px-2 text-right text-[10px] uppercase tracking-[0.08em] sm:w-24">
-              {t("events.kills.points")}
-            </TableHead>
-            <TableHead className="h-9 w-11 px-2">
-              <span className="sr-only">{t("events.kills.actions")}</span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
+        <TanStackTableHeader
+          table={table}
+          className="bg-secondary/25"
+          rowClassName="border-border/80 hover:bg-transparent"
+          getHeadClassName={(header) =>
+            HEAD_CLASS_NAMES.get(header.column.id) ?? ""
+          }
+        />
+        <TanStackTableBody
+          table={table}
+          rowClassName="group h-14 hover:bg-muted/20"
+          getCellClassName={(cell) =>
+            CELL_CLASS_NAMES.get(cell.column.id) ?? ""
+          }
+          getRowProps={(row) => ({
+            "data-state": expandedKillIds.includes(row.id)
+              ? "selected"
+              : undefined,
+          })}
+          renderRowDetail={(row) =>
+            expandedKillIds.includes(row.id) && (
+              <MemberKillBreakdownRow
+                columnCount={columns.length}
+                kill={row.original}
+              />
+            )
+          }
+        />
         <TableBody>
-          {allKills.map((kill) => (
-            <MemberKillRow
-              key={kill.id}
-              kill={kill}
-              guildId={guildId}
-              eventId={eventId}
-            />
-          ))}
           <TableRow ref={loaderRowRef} className="hover:bg-transparent">
             <TableCell
-              colSpan={6}
-              className="h-12 text-center text-xs text-muted-foreground"
+              colSpan={columns.length}
+              className="h-12 border-t border-border/70 text-center text-xs text-muted-foreground"
             >
               {hasNextPage ? (
                 <span className="inline-flex items-center gap-2">

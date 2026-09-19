@@ -1,20 +1,19 @@
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-} from "@lootlog/ui/components/table";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
 import { MemberNameWithColor } from "./components/member-name-with-color";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
 import { StatsRank } from "./components/stats-rank";
+import {
+  STATS_TABLE_COUNT_COLUMN_ID,
+  STATS_TABLE_POSITION_COLUMN_ID,
+  StatsTable,
+} from "./components/stats-table";
 import { StatsTableCard } from "./components/stats-table-card";
-import { StatsTableHeader } from "./components/stats-table-header";
-import { StatsTableRow } from "./components/stats-table-row";
 import { useStatsRankingModel } from "./use-stats-ranking-model";
 
 export const StatsRanking = () => {
@@ -40,6 +39,70 @@ export const StatsRanking = () => {
     handlePreviousPage,
     handleNextPage,
   } = useStatsRankingModel();
+
+  type RankingColumn = ColumnDef<
+    typeof coreTableFeatures,
+    (typeof paginatedData)[number]
+  >;
+
+  const columns: RankingColumn[] = [
+    {
+      id: STATS_TABLE_POSITION_COLUMN_ID,
+      header: () => t("kills.memberRanking.position"),
+      cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+    },
+    {
+      id: "member",
+      header: () => t("kills.memberRanking.member"),
+      cell: ({ row: { original: member } }) => (
+        <div className="flex items-center gap-2.5">
+          <StatsMemberAvatar
+            userId={member.memberUserId}
+            avatar={member.memberAvatar}
+            name={member.memberName}
+            className="size-7"
+          />
+          <TextLink
+            className="text-sm"
+            onClick={(event) => event.stopPropagation()}
+            render=<Link
+              to="/$guildId/stats/members/$memberId"
+              params={{
+                guildId,
+                memberId: String(member.memberId),
+              }}
+            />
+          >
+            <MemberNameWithColor
+              name={member.memberName}
+              member={membersMap.get(member.memberUserId)}
+            />
+          </TextLink>
+        </div>
+      ),
+    },
+    {
+      id: STATS_TABLE_COUNT_COLUMN_ID,
+      header: () => t("kills.memberRanking.totalKills"),
+      cell: ({ row: { original: member } }) => (
+        <StatsCountCell value={member.totalParticipations} emphasized />
+      ),
+    },
+    ...activeNpcTypes.map((type): RankingColumn => ({
+      id: `${STATS_TABLE_COUNT_COLUMN_ID}:${type}`,
+      header: () => t(`npcType.${type}`),
+      cell: ({ row: { original: member } }) => (
+        <StatsCountCell value={member.participationsByType[type] ?? 0} />
+      ),
+    })),
+  ];
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: paginatedData,
+    columns,
+    getRowId: (member) => String(member.memberId),
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3 pb-3">
@@ -128,73 +191,11 @@ export const StatsRanking = () => {
             </li>
           ))}
         </ul>
-        <Table className="hidden border-b md:table">
-          <StatsTableHeader>
-            <TableHead className="w-14 text-center">
-              {t("kills.memberRanking.position")}
-            </TableHead>
-            <TableHead>{t("kills.memberRanking.member")}</TableHead>
-            <TableHead className="text-right">
-              {t("kills.memberRanking.totalKills")}
-            </TableHead>
-            {activeNpcTypes.map((type) => (
-              <TableHead key={type} className="text-right">
-                {t(`npcType.${type}`)}
-              </TableHead>
-            ))}
-          </StatsTableHeader>
-          <TableBody>
-            {paginatedData.map((member, index) => (
-              <StatsTableRow
-                key={member.memberId}
-                onClick={() => handleRowClick(member.memberId)}
-              >
-                <TableCell className="text-center">
-                  <StatsRank rank={cursor + index + 1} />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2.5">
-                    <StatsMemberAvatar
-                      userId={member.memberUserId}
-                      avatar={member.memberAvatar}
-                      name={member.memberName}
-                      className="size-7"
-                    />
-                    <TextLink
-                      className="text-sm"
-                      onClick={(event) => event.stopPropagation()}
-                      render=<Link
-                        to="/$guildId/stats/members/$memberId"
-                        params={{
-                          guildId,
-                          memberId: String(member.memberId),
-                        }}
-                      />
-                    >
-                      <MemberNameWithColor
-                        name={member.memberName}
-                        member={membersMap.get(member.memberUserId)}
-                      />
-                    </TextLink>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <StatsCountCell
-                    value={member.totalParticipations}
-                    emphasized
-                  />
-                </TableCell>
-                {activeNpcTypes.map((type) => (
-                  <TableCell key={type}>
-                    <StatsCountCell
-                      value={member.participationsByType[type] ?? 0}
-                    />
-                  </TableCell>
-                ))}
-              </StatsTableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StatsTable
+          table={table}
+          className="hidden border-b md:table"
+          onRowClick={(member) => handleRowClick(member.memberId)}
+        />
       </StatsTableCard>
     </div>
   );

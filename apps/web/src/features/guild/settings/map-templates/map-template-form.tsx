@@ -141,7 +141,7 @@ export const MapTemplateForm = (
                   className="h-9 text-sm"
                 />
 
-                <div className="border rounded-lg max-h-[200px] overflow-y-auto">
+                <div className="border rounded-lg max-h-[200px] overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
                   {filteredGameMaps.length > 0 ? (
                     <div className="divide-y">
                       {filteredGameMaps.map((gameMap) => (
