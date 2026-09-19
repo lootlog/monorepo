@@ -154,6 +154,10 @@ function isPrototypePatched(character: MargonemTooltipCharacter): boolean {
   return Boolean(prototype && patchedCreateStrTip.has(prototype));
 }
 
+function isTooltipPatched(character: MargonemTooltipCharacter): boolean {
+  return patchedCreateStrTip.has(character) || isPrototypePatched(character);
+}
+
 function isOtherCanvasObject(object: unknown): object is Other {
   return (
     typeof object === "object" &&
@@ -229,28 +233,38 @@ export function patchOtherCharacterTooltip(other: OtherHandle): void {
   refreshCharacterTooltip(other);
 }
 
-export function refreshActiveOtherCanvasTooltip(): void {
-  const state = useCharacterTooltipCatchingGuildsStore.getState();
-
-  if (!state.isShiftPressed) {
-    state.clearActiveOther();
-
-    return;
-  }
-
-  const activeOther = state.activeOther ?? lastOtherCanvasTipObject;
-
-  if (!activeOther) return;
-
-  state.setActiveOther(activeOther);
-
-  patchOtherCharacterTooltip(activeOther);
-
+function redrawOtherCanvasTooltip(other: MargonemTooltipCharacter): void {
   const canvasTip = getRuntimeCanvasTip();
 
   if (!canvasTip?.show || !lastOtherCanvasTipEvent) return;
 
-  canvasTip.show(lastOtherCanvasTipEvent, activeOther);
+  canvasTip.show(lastOtherCanvasTipEvent, other);
+}
+
+export function refreshActiveOtherCanvasTooltip(): void {
+  const state = useCharacterTooltipCatchingGuildsStore.getState();
+  const hoveredOther = state.activeOther ?? lastOtherCanvasTipObject;
+
+  if (!state.isShiftPressed) {
+    state.clearActiveOther();
+
+    if (!hoveredOther || !isTooltipPatched(hoveredOther)) return;
+
+    // Releasing Shift must drop the appended section from the tooltip that is
+    // still on screen, so rebuild its html and redraw the visible tip.
+    refreshCharacterTooltip(hoveredOther);
+    redrawOtherCanvasTooltip(hoveredOther);
+
+    return;
+  }
+
+  if (!hoveredOther) return;
+
+  state.setActiveOther(hoveredOther);
+
+  patchOtherCharacterTooltip(hoveredOther);
+
+  redrawOtherCanvasTooltip(hoveredOther);
 }
 
 export function patchOtherCharacterTooltips(others: OtherHandle[]): void {
