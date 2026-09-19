@@ -1,7 +1,7 @@
 {
   "name": "effect",
   "type": "module",
-  "version": "4.0.0-rc.112",
+  "version": "4.0.0-rc.116",
   "license": "MIT",
   "description": "The missing standard library for TypeScript, for writing production-grade software.",
   "homepage": "https://effect.website",
@@ -25,7 +25,10 @@
     "concurrency",
     "observability"
   ],
-  "sideEffects": [],
+  "sideEffects": [
+    "./src/unstable/schema/SchemaJITCompiler/enable.ts",
+    "./dist/unstable/schema/SchemaJITCompiler/enable.js"
+  ],
   "exports": {
     "./package.json": "./package.json",
     ".": "./src/index.ts",
@@ -39,6 +42,7 @@
     "./unstable/eventlog": "./src/unstable/eventlog/index.ts",
     "./unstable/http": "./src/unstable/http/index.ts",
     "./unstable/httpapi": "./src/unstable/httpapi/index.ts",
+    "./unstable/net": "./src/unstable/net/index.ts",
     "./unstable/observability": "./src/unstable/observability/index.ts",
     "./unstable/persistence": "./src/unstable/persistence/index.ts",
     "./unstable/process": "./src/unstable/process/index.ts",
@@ -82,6 +86,7 @@
       "./unstable/eventlog": "./dist/unstable/eventlog/index.js",
       "./unstable/http": "./dist/unstable/http/index.js",
       "./unstable/httpapi": "./dist/unstable/httpapi/index.js",
+      "./unstable/net": "./dist/unstable/net/index.js",
       "./unstable/observability": "./dist/unstable/observability/index.js",
       "./unstable/persistence": "./dist/unstable/persistence/index.js",
       "./unstable/process": "./dist/unstable/process/index.js",
@@ -107,13 +112,13 @@
     "check": "tsc -b tsconfig.json"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.5.1",
     "ajv": "^8.20.0",
     "ajv-draft-04": "^1.0.0",
-    "ast-types": "^0.16.1",
+    "ast-types": "^0.16.3",
     "immer": "^11.1.18",
     "protobufjs": "^8.8.0",
-    "tinybench": "^6.1.4",
-    "valibot": "^1.4.2"
+    "tinybench": "^6.2.0",
+    "valibot": "^1.5.0"
   }
 }
