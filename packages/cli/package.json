@@ -32,7 +32,6 @@
     "node-html-parser": "^9.0.4",
     "pg": "^8.23.0",
     "random-words": "^2.0.1",
-    "uuid": "^14.0.2",
     "zx": "^8.8.5"
   },
   "devDependencies": {

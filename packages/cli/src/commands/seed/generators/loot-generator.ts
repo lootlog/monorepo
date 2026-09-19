@@ -1,4 +1,3 @@
-import { v7 as uuidv7 } from "uuid";
 import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -124,7 +123,7 @@ export class LootGenerator {
       if (item) {
         result.push({
           ...item,
-          hid: uuidv7(),
+          hid: Bun.randomUUIDv7(),
         });
       }
     }

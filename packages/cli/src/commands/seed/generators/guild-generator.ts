@@ -1,6 +1,5 @@
 import { generate } from "random-words";
 import crypto from "node:crypto";
-import { v7 as uuidv7 } from "uuid";
 import { SEED_CONFIG } from "../config.js";
 import {
   Permission,
@@ -59,7 +58,7 @@ const ROLE_COLORS = [
 
 export class GuildGenerator {
   generateRole(position: number): GeneratedRole {
-    const id = uuidv7();
+    const id = Bun.randomUUIDv7();
     const name = generate({ exactly: 2, join: " " });
     const color = ROLE_COLORS[crypto.randomInt(0, ROLE_COLORS.length)];
 
@@ -92,7 +91,7 @@ export class GuildGenerator {
   }
 
   generateMember(availableRoleIds: string[]): GeneratedMember {
-    const userId = uuidv7();
+    const userId = Bun.randomUUIDv7();
     const name = generate({ exactly: crypto.randomInt(1, 4), join: " " });
 
     const roleCount = crypto.randomInt(
@@ -126,9 +125,9 @@ export class GuildGenerator {
   generate(): GeneratedGuild {
     const { rolesPerGuild, membersPerGuild } = SEED_CONFIG.guilds;
 
-    const id = uuidv7();
+    const id = Bun.randomUUIDv7();
     const name = generate({ exactly: crypto.randomInt(2, 4), join: " " });
-    const ownerId = uuidv7();
+    const ownerId = Bun.randomUUIDv7();
 
     const vanityUrl =
       crypto.randomInt(0, 10) > 5 ? generate({ exactly: 1 })[0] : undefined;

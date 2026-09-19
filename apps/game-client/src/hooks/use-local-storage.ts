@@ -1,107 +1,23 @@
 import type { JsonValue } from "@lootlog/schema/http-scalars";
 import type { ZodType } from "zod";
-import {
-  useEffect,
-  useReducer,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useLocalStorage as useStoredValue } from "usehooks-ts";
 
-type UseLocalStorageReturn<T extends typeof JsonValue.Type> = [
-  T | undefined,
-  Dispatch<SetStateAction<T | undefined>>,
-  () => void,
-];
-
-const readStoredValue = <T extends typeof JsonValue.Type>(
+/**
+ * Local storage state that trusts a persisted value only after it passes
+ * `schema`. Malformed or outdated data reads as `initialValue` and stays in
+ * storage until the next write.
+ */
+export const useLocalStorage = <T extends typeof JsonValue.Type>(
   key: string,
-  initialValue: T | undefined,
+  initialValue: T,
   schema: ZodType<T>,
-): T | undefined => {
-  try {
-    const item = window.localStorage.getItem(key);
-
-    if (item === null) {
-      return initialValue;
-    }
-
-    return schema.parse(JSON.parse(item));
-  } catch {
-    return initialValue;
-  }
-};
-
-type StorageState<T extends typeof JsonValue.Type> = {
-  key: string;
-  shouldPersist: boolean;
-  value: T | undefined;
-};
-
-type StorageAction<T extends typeof JsonValue.Type> =
-  | { key: string; type: "hydrate"; value: T | undefined }
-  | { type: "remove" }
-  | { type: "set"; value: SetStateAction<T | undefined> };
-
-const reduceStorageState = <T extends typeof JsonValue.Type>(
-  state: StorageState<T>,
-  action: StorageAction<T>,
-): StorageState<T> => {
-  if (action.type === "hydrate") {
-    return {
-      key: action.key,
-      shouldPersist: false,
-      value: action.value,
-    };
-  }
-
-  if (action.type === "remove") {
-    return { ...state, shouldPersist: true, value: undefined };
-  }
-
-  const nextValue =
-    typeof action.value === "function"
-      ? action.value(state.value)
-      : action.value;
-
-  return { ...state, shouldPersist: true, value: nextValue };
-};
-
-export function useLocalStorage<T extends typeof JsonValue.Type>(
-  key: string,
-  initialValue: T | undefined,
-  schema: ZodType<T>,
-): UseLocalStorageReturn<T> {
-  const [storageState, dispatch] = useReducer(reduceStorageState<T>, {
-    key,
-    shouldPersist: false,
-    value: readStoredValue(key, initialValue, schema),
+) =>
+  useStoredValue<T>(key, initialValue, {
+    deserializer: (item) => {
+      try {
+        return schema.parse(JSON.parse(item));
+      } catch {
+        return initialValue;
+      }
+    },
   });
-
-  useEffect(() => {
-    dispatch({
-      key,
-      type: "hydrate",
-      value: readStoredValue(key, initialValue, schema),
-    });
-  }, [initialValue, key, schema]);
-
-  useEffect(() => {
-    if (!storageState.shouldPersist || storageState.key !== key) return;
-
-    if (storageState.value === undefined) {
-      window.localStorage.removeItem(key);
-
-      return;
-    }
-
-    window.localStorage.setItem(key, JSON.stringify(storageState.value));
-  }, [key, storageState]);
-
-  const setValue: Dispatch<SetStateAction<T | undefined>> = (value) => {
-    dispatch({ type: "set", value });
-  };
-
-  const remove = () => dispatch({ type: "remove" });
-
-  return [storageState.value, setValue, remove];
-}

@@ -1,5 +1,4 @@
 import { parse } from "node-html-parser";
-import { v7 as uuidv7 } from "uuid";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
@@ -42,7 +41,7 @@ async function scrapePage(page: number): Promise<ScrapedItem[]> {
 
       try {
         const json = JSON.parse(itemData);
-        const hid = uuidv7();
+        const hid = Bun.randomUUIDv7();
 
         acc.push({
           hid,
