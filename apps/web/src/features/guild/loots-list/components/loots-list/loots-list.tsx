@@ -1,3 +1,4 @@
+import { NoticeCard } from "@/components/common/notice-card";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-item-skeleton";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
@@ -43,28 +44,23 @@ export const LootsList = () => {
 
   if (!world) {
     return (
-      <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8">
-        <section className="flex w-full max-w-sm flex-col items-center rounded-2xl border border-border bg-card px-4 py-5 text-center shadow-sm sm:px-7 sm:py-8">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-xl border border-border bg-background">
-            <ThemeEmptyStateIcon
-              className="size-8 text-muted-foreground"
-              fallback=<Globe2 className="size-8 text-primary" />
-            />
-          </div>
-          <h2 className="text-base font-semibold text-foreground">
-            {t("loots.list.selectWorldTitle")}
-          </h2>
-          <p className="mt-1 max-w-xs text-sm leading-5 text-muted-foreground">
-            {t(themedKey("loots.list.noWorldSelected"))}
-          </p>
-          <div className="mt-5 w-full text-left">
-            <WorldSwitcher
-              width="w-full"
-              triggerClassName="h-11 w-full justify-between px-3"
-            />
-          </div>
-        </section>
-      </div>
+      <NoticeCard
+        icon={
+          <ThemeEmptyStateIcon
+            className="size-8 text-muted-foreground"
+            fallback=<Globe2 className="size-8 text-primary" />
+          />
+        }
+        title={t("loots.list.selectWorldTitle")}
+        description={t(themedKey("loots.list.noWorldSelected"))}
+      >
+        <div className="text-left">
+          <WorldSwitcher
+            width="w-full"
+            triggerClassName="h-11 w-full justify-between px-3"
+          />
+        </div>
+      </NoticeCard>
     );
   }
 
