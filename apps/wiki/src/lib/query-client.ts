@@ -17,7 +17,7 @@ function createQueryClient() {
         networkMode: "online",
       },
       mutations: {
-        retry: 1,
+        retry: 0,
         networkMode: "online",
       },
     },
