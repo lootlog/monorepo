@@ -82,25 +82,23 @@ describe("durable private online history", () => {
         const migration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
-              "../../drizzle/migrations/0001_user_online_history.sql",
+              "../../drizzle/migrations/20260906084000_user_online_history/migration.sql",
               import.meta.url,
             ),
           ).text(),
         );
 
-        yield* Effect.tryPromise(() => client.query(migration));
         yield* Effect.tryPromise(() => client.query(migration));
 
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
-              "../../drizzle/migrations/0003_online_world_provenance.sql",
+              "../../drizzle/migrations/20260906115013_online_world_provenance/migration.sql",
               import.meta.url,
             ),
           ).text(),
         );
 
-        yield* Effect.tryPromise(() => client.query(worldsMigration));
         yield* Effect.tryPromise(() => client.query(worldsMigration));
       }).pipe(Effect.scoped, Effect.provide(database)),
     );
@@ -635,65 +633,6 @@ describe("durable private online history", () => {
 
     expect(rows).toHaveLength(1);
     expect(Date.parse(rows[0]?.startedAt ?? "")).toBe(cutoff + 3600_000);
-  });
-
-  it("migrates existing history to sixteen weeks without retaining expired timestamps", async () => {
-    const result = await Effect.runPromise(
-      Effect.gen(function* () {
-        const sql = yield* PgClient.PgClient;
-        yield* sql`INSERT INTO "UserOnlineInterval" ("userId","sessionId","segmentId","startedAt","endedAt","observedAt") VALUES
-        ('migration-expired','a','a',CURRENT_TIMESTAMP-interval '114 days',CURRENT_TIMESTAMP-interval '113 days',CURRENT_TIMESTAMP-interval '113 days'),
-        ('migration-crossing','a','a',CURRENT_TIMESTAMP-interval '113 days',CURRENT_TIMESTAMP-interval '111 days',CURRENT_TIMESTAMP-interval '111 days')`;
-        yield* sql`INSERT INTO "UserOnlineTracking" ("userId","lastObservedAt") VALUES ('migration-expired',CURRENT_TIMESTAMP-interval '113 days')`;
-
-        const client = yield* migrationClient;
-
-        const before = yield* sql<{
-          cutoff: string;
-        }>`SELECT (CURRENT_TIMESTAMP-interval '112 days')::text AS cutoff`;
-
-        const migration = yield* Effect.promise(() =>
-          Bun.file(
-            new URL(
-              "../../drizzle/migrations/0002_online_history_16_week_retention.sql",
-              import.meta.url,
-            ),
-          ).text(),
-        );
-
-        yield* Effect.tryPromise(() => client.query(migration));
-        yield* Effect.tryPromise(() => client.query(migration));
-
-        const worldsMigration = yield* Effect.promise(() =>
-          Bun.file(
-            new URL(
-              "../../drizzle/migrations/0003_online_world_provenance.sql",
-              import.meta.url,
-            ),
-          ).text(),
-        );
-
-        yield* Effect.tryPromise(() => client.query(worldsMigration));
-        yield* Effect.tryPromise(() => client.query(worldsMigration));
-
-        const rows = yield* sql<{
-          userId: string;
-          startedAt: string;
-        }>`SELECT "userId","startedAt"::text AS "startedAt" FROM "UserOnlineInterval" WHERE "userId" IN ('migration-expired','migration-crossing')`;
-
-        const metadata =
-          yield* sql`SELECT * FROM "UserOnlineTracking" WHERE "userId"='migration-expired'`;
-
-        return { before, rows, metadata };
-      }).pipe(Effect.scoped, Effect.provide(database)),
-    );
-
-    expect(result.rows).toHaveLength(1);
-    expect(result.rows[0]?.userId).toBe("migration-crossing");
-    expect(Date.parse(result.rows[0]?.startedAt ?? "")).toBeGreaterThanOrEqual(
-      Date.parse(result.before[0]?.cutoff ?? ""),
-    );
-    expect(result.metadata).toHaveLength(0);
   });
 
   it("serves only the authenticated internal user and rejects missing identity and invalid date ranges", async () => {

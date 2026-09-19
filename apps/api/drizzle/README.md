@@ -6,16 +6,12 @@ subsequent Drizzle migrations. Preserve deployed migration names and SQL hashes.
 The baseline includes database constraints originally introduced by handwritten
 migrations, including reservation checks.
 
-The previous ORM schema, migration archive, and comparison DDL have been removed.
-The frozen catalog and adoption fingerprints remain in `expected-catalog.ts`;
-the migration evidence hash is part of persisted adoption markers and must remain
-unchanged even though the source archive is no longer kept in the working tree.
-
-An existing database is never marked as adopted merely because tables exist.
-The adoption routine compares tables, columns, physical types, nullability,
-database defaults, enum labels, index names, and constraint names with the
-generated expected catalog. Any missing, additional, or changed catalog object
-aborts the transaction before the baseline migration is recorded.
+Run `bun run db:migrate:deploy` to apply pending migrations. Drizzle records
+completed migrations in `drizzle.__drizzle_migrations`; existing databases must
+retain this journal. The legacy ORM adoption path has been retired. Historical
+adoption markers may remain in existing databases but are no longer read or
+written. An existing database without a Drizzle journal must be restored with
+its migration history before using this runner.
 
 ## Durable loot publications
 
