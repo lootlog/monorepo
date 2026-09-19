@@ -1,7 +1,6 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Capability, createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
@@ -47,12 +46,39 @@ export interface GuildLifecyclePorts {
   ) => Effect.Effect<unknown, unknown>;
 }
 
+// Seeds a role Lootlog has not stored before. An existing role never takes
+// this set: its permissions are Organization policy, and Discord only moves
+// ADMIN on it (see `permissionsAfterDiscordAdminChange`).
 const adminPermissions = (admin: boolean): Permission[] =>
   admin
     ? Object.values(Permission).filter(
         (permission) => permission !== Permission.OWNER,
       )
     : [];
+
+// The Discord Administrator flag carried by the row an upsert tried to insert.
+const incomingDiscordAdmin = sql`excluded."discordAdmin"`;
+
+// Discord owns only the Administrator flag, so a role update may move ADMIN and
+// nothing else, and only when that flag differs from the last one seen. A role
+// with no recorded flag falls back to the flag the event reports as previous;
+// without either, the incoming flag is recorded and permissions stay as stored.
+// Evaluated inside the upsert so a burst of role updates cannot interleave a
+// read with another event's write.
+const permissionsAfterDiscordAdminChange = (previousAdmin: boolean | null) => {
+  const lastSeenDiscordAdmin = sql`COALESCE(${roleTable.discordAdmin}, ${previousAdmin}::boolean)`;
+
+  const adminPermission = sql`${Permission.ADMIN}::"Permission"`;
+
+  const withoutAdmin = sql`array_remove(${roleTable.permissions}, ${adminPermission})`;
+
+  return sql`CASE
+    WHEN ${lastSeenDiscordAdmin} IS NULL OR ${lastSeenDiscordAdmin} = ${incomingDiscordAdmin}
+      THEN ${roleTable.permissions}
+    WHEN ${incomingDiscordAdmin} THEN array_append(${withoutAdmin}, ${adminPermission})
+    ELSE ${withoutAdmin}
+  END`;
+};
 
 export const makeGuildLifecycle = (
   database: ApiDatabaseValue,
@@ -115,11 +141,21 @@ export const makeGuildLifecycle = (
                   color: role.color,
                   position: role.position,
                   permissions: adminPermissions(role.admin),
+                  discordAdmin: role.admin,
                   createdAt: now,
                   updatedAt: now,
                 })),
               )
-              .onConflictDoNothing();
+              // A stored role keeps its policy. Only a missing last seen flag
+              // is recorded, so a later role update can detect a real change.
+              .onConflictDoUpdate({
+                target: roleTable.id,
+                set: { discordAdmin: incomingDiscordAdmin },
+                setWhere: and(
+                  eq(roleTable.guildId, data.guildId),
+                  isNull(roleTable.discordAdmin),
+                ),
+              });
           }
 
           yield* transaction
@@ -290,33 +326,8 @@ export const makeGuildLifecycle = (
   const upsertRole = Effect.fn("guildLifecycle.role.upsert")(function* (
     data: GuildRoleChanged,
   ) {
-    const existing = yield* database
-      .select({ permissions: roleTable.permissions })
-      .from(roleTable)
-      .where(
-        and(eq(roleTable.id, data.id), eq(roleTable.guildId, data.guildId)),
-      )
-      .limit(1)
-      .pipe(Effect.map((rows) => rows[0] ?? null));
-
-    const permissions = adminPermissions(data.admin);
-
-    const existingAdmin = existing
-      ? createAccessPolicy({ capabilities: existing.permissions }).allows(
-          Capability.ADMIN,
-        )
-      : false;
-
     const now = new Date(yield* Clock.currentTimeMillis);
 
-    const roleUpdate: Partial<typeof roleTable.$inferInsert> = {
-      name: data.name,
-      color: data.color,
-      position: data.position,
-      updatedAt: now,
-    };
-
-    if (existingAdmin !== data.admin) roleUpdate.permissions = permissions;
     yield* operation(
       "guildLifecycle.role.upsert.write",
       database
@@ -327,13 +338,24 @@ export const makeGuildLifecycle = (
           name: data.name,
           color: data.color,
           position: data.position,
-          permissions,
+          permissions: adminPermissions(data.admin),
+          discordAdmin: data.admin,
           createdAt: now,
           updatedAt: now,
         })
         .onConflictDoUpdate({
           target: roleTable.id,
-          set: roleUpdate,
+          set: {
+            name: data.name,
+            color: data.color,
+            position: data.position,
+            permissions: permissionsAfterDiscordAdminChange(
+              data.previousAdmin ?? null,
+            ),
+            discordAdmin: data.admin,
+            updatedAt: now,
+          },
+          setWhere: eq(roleTable.guildId, data.guildId),
         }),
     );
     yield* ports.clearCachePattern(getPermissionsCachePattern(data.guildId));

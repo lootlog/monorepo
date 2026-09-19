@@ -27,6 +27,7 @@ function role(id: string, permissions: Permission[]): Role {
     permissions,
     lvlRangeFrom: 1,
     lvlRangeTo: 500,
+    discordAdmin: null,
     guildId: "guild-1",
     createdAt: new Date(),
     updatedAt: new Date(),

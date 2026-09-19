@@ -9,6 +9,7 @@ import {
   type APIChannel,
   type APIRole,
   type GuildBasedChannel,
+  type Role,
 } from "discord.js";
 import { Effect, Fiber } from "effect";
 import { decodeRabbitEventJson } from "@lootlog/protocol/rabbit/events";
@@ -228,6 +229,20 @@ const gatewayUpdate = (
   return patchable._update(data);
 };
 
+/**
+ * Applies a gateway GUILD_ROLE_UPDATE the way discord.js does: handlers receive
+ * a clone of the cached role as `oldRole` and the patched role as `newRole`.
+ */
+const gatewayRoleUpdate = (role: Role, data: Partial<APIRole>) => {
+  // SAFETY: `_update` is discord.js's internal Base method used by the
+  // GuildRoleUpdate action; it exists on every cached structure.
+  const patchable = role as Role & {
+    _update: (data: Partial<APIRole>) => Role;
+  };
+
+  return patchable._update(data);
+};
+
 const missingAccessError = () =>
   new DiscordAPIError(
     { message: "Missing Access", code: 50001 },
@@ -295,10 +310,10 @@ describe("Discord SDK to RabbitMQ contracts", () => {
 
   test("publishes role creation, edits, administrator removal and deletion", async () => {
     const f = await fixture();
-    let previous = await f.sdkGuild.roles.fetch(roleId);
+    const role = await f.sdkGuild.roles.fetch(roleId);
 
-    if (!previous) throw new Error("Missing role");
-    await Effect.runPromise(f.sync.handleGuildRoleCreate(previous));
+    if (!role) throw new Error("Missing role");
+    await Effect.runPromise(f.sync.handleGuildRoleCreate(role));
     expect(f.events[0]?.payload).toEqual({
       guildId,
       id: roleId,
@@ -309,13 +324,14 @@ describe("Discord SDK to RabbitMQ contracts", () => {
     });
 
     for (const permissions of ["8", "0"]) {
-      f.role.permissions = permissions;
-      f.role.name = "Updated";
-      f.role.color = 0xffffff;
-      const updated = await f.sdkGuild.roles.fetch(roleId, { force: true });
+      const previous = gatewayRoleUpdate(role, {
+        ...f.role,
+        name: "Updated",
+        color: 0xffffff,
+        permissions,
+      });
 
-      if (!updated) throw new Error("Missing role");
-      await Effect.runPromise(f.sync.handleGuildRoleUpdate(previous, updated));
+      await Effect.runPromise(f.sync.handleGuildRoleUpdate(previous, role));
       expect(f.events.at(-2)?.payload).toEqual({
         guildId,
         id: roleId,
@@ -323,11 +339,11 @@ describe("Discord SDK to RabbitMQ contracts", () => {
         color: 0xffffff,
         position: 1,
         admin: permissions === "8",
+        previousAdmin: permissions !== "8",
       });
-      previous = updated;
     }
 
-    await Effect.runPromise(f.sync.handleGuildRoleDelete(previous));
+    await Effect.runPromise(f.sync.handleGuildRoleDelete(role));
     expect(f.events.at(-2)).toEqual({
       routingKey: RabbitRoutingKey.GUILDS_DELETE_ROLE,
       payload: { guildId, id: roleId },

@@ -138,6 +138,7 @@ it("filters hero timers by NPC level before exposing their public projection", a
             permissions: [Permission.LOOTLOG_EVENTS_READ],
             lvlRangeFrom: 1,
             lvlRangeTo: 100,
+            discordAdmin: null,
             createdAt: now,
             updatedAt: now,
           },

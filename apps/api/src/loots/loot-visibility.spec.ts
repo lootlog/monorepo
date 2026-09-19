@@ -29,6 +29,7 @@ function role(
     permissions,
     lvlRangeFrom,
     lvlRangeTo,
+    discordAdmin: null,
     guildId: "guild-1",
     createdAt: new Date(),
     updatedAt: new Date(),

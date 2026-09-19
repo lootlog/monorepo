@@ -75,6 +75,7 @@ const setup = async (permissions: Permission[], levelFrom = 200) => {
       permissions,
       lvlRangeFrom: levelFrom,
       lvlRangeTo: 500,
+      discordAdmin: null,
       createdAt: new Date(0),
       updatedAt: new Date(0),
     },

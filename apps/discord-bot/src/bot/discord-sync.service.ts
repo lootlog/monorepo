@@ -252,6 +252,10 @@ const isGuildNotFoundError = (cause: unknown) =>
   cause instanceof DiscordAPIError &&
   [10_004, 50_001].includes(Number(cause.code));
 
+const isDiscordAdmin = (role: Role) =>
+  (role.permissions.bitfield & PermissionsBitField.Flags.Administrator) ===
+  PermissionsBitField.Flags.Administrator;
+
 export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const logger = new AppLogger("DiscordSync");
   const guildLocks = new Map<string, Semaphore.Semaphore>();
@@ -514,7 +518,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
           id: role.id,
           name: role.name,
           color: role.color,
-          admin: (role.permissions.bitfield & 0x8n) === 0x8n,
+          admin: isDiscordAdmin(role),
           position: role.position,
         })),
       } satisfies GuildCreated);
@@ -583,7 +587,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     name: role.name,
     color: role.color,
     position: role.position,
-    admin: (role.permissions.bitfield & 0x8n) === 0x8n,
+    admin: isDiscordAdmin(role),
   });
 
   const handleGuildRoleCreate = (role: Role) =>
@@ -596,7 +600,10 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
   const handleGuildRoleUpdate = (oldRole: Role, newRole: Role) =>
     Effect.gen(function* () {
       logger.log(`Role ${oldRole.name} has been updated to ${newRole.name}`);
-      yield* publish(RoutingKey.GUILDS_UPDATE_ROLE, rolePayload(newRole));
+      yield* publish(RoutingKey.GUILDS_UPDATE_ROLE, {
+        ...rolePayload(newRole),
+        previousAdmin: isDiscordAdmin(oldRole),
+      } satisfies GuildRoleChanged);
       yield* publishStaleGuildSyncState(newRole.guild);
     });
 

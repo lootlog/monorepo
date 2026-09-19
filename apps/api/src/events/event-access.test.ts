@@ -15,6 +15,7 @@ const role = (from: number, to: number): Role => ({
   permissions: [Permission.LOOTLOG_EVENTS_READ],
   lvlRangeFrom: from,
   lvlRangeTo: to,
+  discordAdmin: null,
   guildId: "guild-1",
   createdAt: new Date(),
   updatedAt: new Date(),

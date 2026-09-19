@@ -58,6 +58,9 @@ export type GuildDeleted = typeof GuildDeleted.Type;
 export const GuildRoleChanged = Schema.Struct({
   guildId: Schema.NonEmptyString,
   ...GuildRole.fields,
+  // Discord Administrator flag before this update. Lets the API derive a
+  // transition for a role whose last seen flag it has not recorded yet.
+  previousAdmin: Schema.optional(Schema.Boolean),
 });
 
 export const GuildRoleDeleted = Schema.Struct({
