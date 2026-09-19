@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Effect } from "effect";
-import { getGuildCacheKey } from "#src/shared/cache";
 import {
+  getGuildCacheKey,
   readGuildConfigurationCache,
   writeGuildConfigurationCache,
 } from "./guild-configuration-cache.js";
@@ -40,27 +40,52 @@ describe("guild configuration cache", () => {
     );
   });
 
-  it("writes the same guild snapshot under ID and vanity while preserving all fields", async () => {
+  it("never lets an Organization whose vanity URL equals another Organization's id occupy or answer for that id", async () => {
+    const cache = memoryCache();
+    const victimId = "123456789012345678";
+
+    const hijacker = {
+      id: "987654321098765432",
+      vanityUrl: victimId,
+      name: "Hijacker",
+      active: true,
+    };
+
+    await Effect.runPromise(
+      writeGuildConfigurationCache(cache, hijacker.id, hijacker),
+    );
+    expect([...cache.values.keys()]).toEqual([getGuildCacheKey(hijacker.id)]);
+    expect(
+      await Effect.runPromise(readGuildConfigurationCache(cache, victimId)),
+    ).toBeNull();
+
+    // A poisoned entry, however it got there, is evicted instead of served.
+    cache.values.set(getGuildCacheKey(victimId), JSON.stringify(hijacker));
+    expect(
+      await Effect.runPromise(readGuildConfigurationCache(cache, victimId)),
+    ).toBeNull();
+    expect(cache.deleted).toEqual([getGuildCacheKey(victimId)]);
+  });
+
+  it("serves a vanity lookup from its own namespace while preserving all fields", async () => {
     const cache = memoryCache();
 
     const guild = {
-      id: "guild",
+      id: "123456789012345678",
       vanityUrl: "vanity",
       name: "Group",
       active: true,
     };
 
     await Effect.runPromise(
-      writeGuildConfigurationCache(cache, guild, "unbounded"),
+      writeGuildConfigurationCache(cache, "vanity", guild),
     );
-    expect(cache.values.get(getGuildCacheKey("guild"))).toBe(
-      JSON.stringify(guild),
-    );
-    expect(cache.values.get(getGuildCacheKey("vanity"))).toBe(
-      JSON.stringify(guild),
-    );
+    expect(getGuildCacheKey("vanity")).not.toBe(getGuildCacheKey(guild.id));
     expect(
       await Effect.runPromise(readGuildConfigurationCache(cache, "vanity")),
     ).toMatchObject(guild);
+    expect(
+      await Effect.runPromise(readGuildConfigurationCache(cache, guild.id)),
+    ).toBeNull();
   });
 });

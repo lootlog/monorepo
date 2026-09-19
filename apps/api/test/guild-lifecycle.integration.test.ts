@@ -13,10 +13,8 @@ import {
 } from "../src/database/drizzle/database.js";
 import { guildTable, roleTable } from "../src/database/drizzle/schema.js";
 import { makeGuildLifecycle } from "../src/guilds/guild-lifecycle.operations.js";
-import {
-  getGuildCacheKey,
-  getPermissionsCachePattern,
-} from "../src/shared/cache.js";
+import { getGuildCacheKey } from "../src/guilds/guild-configuration-cache.js";
+import { getPermissionsCachePattern } from "../src/shared/cache.js";
 
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 

@@ -22,7 +22,7 @@ import { RedisService } from "#src/redis/redis.service";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
 import { ApiRuntimeConfig } from "../src/runtime/infrastructure/api-runtime-config.js";
-import { count, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import {
   ApiDatabase,
   ApiDatabaseLive,
@@ -552,6 +552,74 @@ describe("API HTTP boundary", () => {
     const staleAlias = await request("/guilds/previous-loot-alias/loots");
     expect(staleAlias.status).toBe(404);
   });
+
+  it("resolves an Organization id to that Organization even when another Organization's vanity URL equals it", async () => {
+    // Bypasses validation: rows stored before it existed could collide.
+    await databaseRuntime.runPromise(
+      database
+        .update(guildTable)
+        .set({ vanityUrl: authorizedGuildId })
+        .where(eq(guildTable.id, forbiddenGuildId)),
+    );
+
+    // Resolving the colliding Organization first used to cache its row under
+    // the other Organization's id.
+    const forbidden = await request(`/guilds/${forbiddenGuildId}`);
+    expect(forbidden.status).toBe(403);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const authorized = await request(`/guilds/${authorizedGuildId}`);
+      expect(authorized.status).toBe(200);
+      expect(await authorized.json()).toMatchObject({
+        id: authorizedGuildId,
+        name: "Authorized Organization",
+      });
+      expect((await request(`/guilds/${authorizedGuildId}/loots`)).status).toBe(
+        200,
+      );
+    }
+  });
+
+  it("refuses to store a vanity URL that could be an Organization id", async () => {
+    const stored = await databaseRuntime.runPromise(
+      database
+        .update(guildTable)
+        .set({ vanityUrl: "123456789012345678" })
+        .where(eq(guildTable.id, forbiddenGuildId))
+        .pipe(
+          Effect.as("stored"),
+          Effect.catch(() => Effect.succeed("rejected")),
+        ),
+    );
+
+    expect(stored).toBe("rejected");
+  });
+
+  it.each([
+    ["123456789012345678", "errors.guilds.vanityUrlInvalid"],
+    ["---", "errors.guilds.vanityUrlInvalid"],
+    ["Battles!", "errors.guilds.vanityUrlRestricted"],
+  ])(
+    "rejects the vanity URL %p with %p without storing it",
+    async (vanityUrl, message) => {
+      const response = await request(`/guilds/${authorizedGuildId}/config`, {
+        method: "PATCH",
+        body: JSON.stringify({ vanityUrl }),
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ message });
+
+      const [guild] = await databaseRuntime.runPromise(
+        database
+          .select({ vanityUrl: guildTable.vanityUrl })
+          .from(guildTable)
+          .where(eq(guildTable.id, authorizedGuildId)),
+      );
+
+      expect(guild?.vanityUrl).toBeNull();
+    },
+  );
 
   it("preserves expected 4xx statuses at the HTTP boundary", async () => {
     const missingTemplate = await request(

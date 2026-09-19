@@ -17,6 +17,7 @@ it.each([
     "Ten skrócony link jest już zajęty. Wybierz inną nazwę.",
   ],
   ["errors.guilds.vanityUrlRestricted", settings.general.vanityUrl.restricted],
+  ["errors.guilds.vanityUrlInvalid", settings.general.vanityUrl.invalid],
   [
     "errors.guilds.reservations.durationRangeInvalid",
     "Minimalny czas rezerwacji nie może przekraczać maksymalnego.",
