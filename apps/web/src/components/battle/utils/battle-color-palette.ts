@@ -164,13 +164,6 @@ export const BATTLE_SURFACE_COLORS = {
     teamGradient:
       "bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10",
   },
-  // The result is a stripe on the leading edge; a full-row tint fought with the row content.
-  resultRow: {
-    won: "shadow-[inset_3px_0_0_0_var(--color-green-500)] hover:bg-muted/40",
-    lost: "shadow-[inset_3px_0_0_0_var(--color-red-400)] hover:bg-muted/40",
-    flee: "shadow-[inset_3px_0_0_0_var(--color-yellow-500)] hover:bg-muted/40",
-    unknown: "hover:bg-muted/40",
-  },
   team: {
     friendlyCell: "bg-green-400/10",
     enemyCell: "bg-red-400/10",

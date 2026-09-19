@@ -133,7 +133,7 @@ export function FilterPopover<T extends string = string>({
       </PopoverTrigger>
       <PopoverContent
         className={cn(
-          "overflow-hidden rounded-xl border-border bg-popover p-1 shadow-lg",
+          "overflow-hidden border-border bg-popover p-1 shadow-lg",
           width,
           contentClassName,
         )}

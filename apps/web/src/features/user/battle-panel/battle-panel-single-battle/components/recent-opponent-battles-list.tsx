@@ -1,5 +1,4 @@
 import { BattleResultStatus } from "@/features/user/battle-panel/components/battle-result-status";
-import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { BattlePanelPvpWarriorSummary } from "@/features/user/battle-panel/components/battle-panel-pvp-warrior-summary";
 import type { Battle } from "@/lib/api/battlelog-types";
@@ -96,8 +95,7 @@ export function RecentOpponentBattlesList({
                 preload={false}
                 aria-current={isCurrentBattle ? "page" : undefined}
                 className={cn(
-                  "grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-1 px-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-                  getBattleResultRowClassName(result),
+                  "grid h-14 grid-cols-[32px_minmax(0,1fr)_76px] items-center gap-1 px-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
                   isCurrentBattle &&
                     "relative z-10 bg-primary/10 ring-1 ring-inset ring-primary/45",
                 )}
