@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@lootlog/ui/components/table";
 import type { UserKillAnalyticsResponseDtoOutput } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
@@ -31,9 +39,9 @@ export function StatisticsWorlds({
         />
         <SectionCardContent>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[450px] text-left text-sm">
-              <thead>
-                <tr>
+            <Table className="min-w-[450px]">
+              <TableHeader>
+                <TableRow>
                   {[
                     "world",
                     "kills",
@@ -42,37 +50,47 @@ export function StatisticsWorlds({
                     "change",
                     "share",
                   ].map((key) => (
-                    <th key={key} className="pb-2">
+                    <TableHead key={key} scope="col">
                       {t(`statistics.${key}`)}
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data.worlds.map((world) => (
-                  <tr key={world.world} className="border-t border-border/50">
-                    <th scope="row" className="py-3 font-medium">
+                  <TableRow key={world.world}>
+                    <TableCell
+                      as="th"
+                      scope="row"
+                      className="text-left font-medium"
+                    >
                       {world.world}
-                    </th>
-                    <td>{world.totalKills.toLocaleString("pl-PL")}</td>
-                    <td>{world.comparisonKills.toLocaleString("pl-PL")}</td>
-                    <td>{world.previousKills.toLocaleString("pl-PL")}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
+                      {world.totalKills.toLocaleString("pl-PL")}
+                    </TableCell>
+                    <TableCell>
+                      {world.comparisonKills.toLocaleString("pl-PL")}
+                    </TableCell>
+                    <TableCell>
+                      {world.previousKills.toLocaleString("pl-PL")}
+                    </TableCell>
+                    <TableCell>
                       {world.deltaKills.toLocaleString("pl-PL")} ·{" "}
                       {world.deltaPercent === null
                         ? "—"
                         : `${world.deltaPercent.toLocaleString("pl-PL", { maximumFractionDigits: 1 })}%`}
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       {world.share.toLocaleString("pl-PL", {
                         maximumFractionDigits: 1,
                       })}
                       %
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </SectionCardContent>
       </SectionCard>
