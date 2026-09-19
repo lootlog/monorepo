@@ -1,5 +1,5 @@
 import type { Battle } from "@/lib/api/battlelog-types";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Tooltip,
@@ -89,7 +89,7 @@ export const BattleTableInfoBadges = ({
           BATTLE_INFO_TAG_ACTION_CLASS_NAME,
         )}
       >
-        {capitalizeFirstLetter(battle.world)}
+        {upperFirst(battle.world)}
       </button>
       {battle.public && (
         // Private is the default, so only shared battles are called out.

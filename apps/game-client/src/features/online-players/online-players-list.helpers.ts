@@ -37,13 +37,6 @@ export const DEFAULT_ONLINE_PLAYERS_FILTERS: OnlinePlayersFiltersValue = {
   selectedProfession: ALL_PROFESSIONS_VALUE,
 };
 
-export const clampOnlinePlayerLevel = (level: number) => {
-  return Math.max(
-    MIN_ONLINE_PLAYER_LEVEL,
-    Math.min(MAX_ONLINE_PLAYER_LEVEL, level),
-  );
-};
-
 export const getPresenceCharacter = (
   presence: PlayerPresence,
 ): MargonemCharacter => {

@@ -1,3 +1,4 @@
+import { isNotNil } from "es-toolkit";
 import { create } from "zustand";
 import type {
   PlayerPresence,
@@ -157,7 +158,7 @@ export const useOnlineCharacterOwnersStore =
           Object.values(response)
             .flat()
             .map((presence) => toOwner(presence, guildMembersByUserId))
-            .filter((owner): owner is OnlineCharacterOwner => Boolean(owner))
+            .filter(isNotNil)
             .map((owner) => [
               getOnlineCharacterOwnerKey(owner.accountId, owner.characterId),
               owner,

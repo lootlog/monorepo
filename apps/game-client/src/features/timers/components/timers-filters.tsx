@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import {
@@ -25,10 +26,6 @@ import { getDefaultColorName } from "@/features/timers/utils/get-default-color-n
 const MAX_LVL = 500;
 
 const MIN_LVL = 0;
-
-const clampValue = (value: number, min: number, max: number): number => {
-  return Math.max(min, Math.min(max, value));
-};
 
 type TimersFiltersProps = {
   filtersKey: string;
@@ -67,7 +64,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     if (Number.isNaN(numericValue)) return;
     setTimersFilters(filtersKey, {
       ...filters,
-      [field]: clampValue(numericValue, MIN_LVL, MAX_LVL),
+      [field]: clamp(numericValue, MIN_LVL, MAX_LVL),
     });
   };
 

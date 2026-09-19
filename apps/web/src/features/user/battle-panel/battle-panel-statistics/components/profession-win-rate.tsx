@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { getProfessionColor, getProfessionName } from "@/lib/utils/professions";
 import { useTranslation } from "react-i18next";
@@ -72,7 +73,7 @@ export function ProfessionWinRateChart({
               <div
                 className="h-full rounded-full"
                 style={{
-                  width: `${Math.min(100, Math.max(0, row.winRate))}%`,
+                  width: `${clamp(row.winRate, 0, 100)}%`,
                   backgroundColor: getProfessionColor(row.prof),
                 }}
               />

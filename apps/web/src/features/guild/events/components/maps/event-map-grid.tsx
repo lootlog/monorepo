@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 import { MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -194,7 +195,7 @@ export const EventMapGrid = ({
     accessPolicy?.allows(Permission.OWNER);
 
   const totalMaps =
-    locations.reduce((sum, loc) => sum + loc.maps.length, 0) + maps.length;
+    sumBy(locations, (location) => location.maps.length) + maps.length;
 
   if (totalMaps === 0) {
     return (

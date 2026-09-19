@@ -18,7 +18,7 @@ import { cn } from "cn";
 import { useBattlesControllerGetUserCharacters } from "@lootlog/client/battlelog";
 import { CharacterAvatar } from "@/components/filters/character-avatar";
 import type { BattleCharacter } from "@/lib/api/battlelog-types";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { useTranslation } from "react-i18next";
 
 type SingleCharacterSelection = {
@@ -53,7 +53,7 @@ const renderPlaceholderAvatar = () => (
 // The level and profession come from the character's latest battle, so a
 // character without battles only has its world.
 const getCharacterDetails = (character: BattleCharacter) => {
-  const world = capitalizeFirstLetter(character.world);
+  const world = upperFirst(character.world);
 
   // A battlelog deployed before these fields existed omits them entirely.
   const level = character.lvl ?? null;

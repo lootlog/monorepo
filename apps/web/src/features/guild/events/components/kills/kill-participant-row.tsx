@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import type { TOptions } from "i18next";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Fragment, useState } from "react";
@@ -54,10 +55,7 @@ const buildParticipantScoringView = (
     ? aggregateMapData(participant.mapData)
     : [];
 
-  const totalAfkSeconds = aggregatedMaps.reduce(
-    (sum, map) => sum + map.afkTimeSeconds,
-    0,
-  );
+  const totalAfkSeconds = sumBy(aggregatedMaps, (map) => map.afkTimeSeconds);
 
   const scoring = getScoringBreakdown(participant);
   const hasManualAdjustment = scoring.manualAdjustmentPoints !== 0;

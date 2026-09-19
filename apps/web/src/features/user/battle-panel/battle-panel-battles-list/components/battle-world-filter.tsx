@@ -1,4 +1,4 @@
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Command,
@@ -52,7 +52,7 @@ export function BattleWorldFilter({
                 <Globe className="h-4 w-4" />
                 <span className="text-sm">
                   {selectedWorld
-                    ? capitalizeFirstLetter(selectedWorld)
+                    ? upperFirst(selectedWorld)
                     : t("battlePanel.filters.allWorlds")}
                 </span>
               </div>
@@ -77,7 +77,7 @@ export function BattleWorldFilter({
                     value={world}
                     onSelect={() => onChange(world)}
                   >
-                    {capitalizeFirstLetter(world)}
+                    {upperFirst(world)}
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",

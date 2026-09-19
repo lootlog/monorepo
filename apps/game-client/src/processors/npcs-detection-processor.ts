@@ -1,3 +1,4 @@
+import { isNotNil } from "es-toolkit";
 import { composeNpcFromEvent } from "@/hooks/game-events/helpers/npc.helpers";
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
 import {
@@ -505,10 +506,7 @@ export class NpcsDetectionProcessor {
           }
         }),
       )
-    ).filter(
-      (result): result is { guildIds: string[]; npc: GameNpcWithLocation } =>
-        result !== null,
-    );
+    ).filter(isNotNil);
 
     if (successfulNotifications.length === 0) {
       return;

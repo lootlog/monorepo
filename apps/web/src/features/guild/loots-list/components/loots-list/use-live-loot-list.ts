@@ -1,3 +1,4 @@
+import { chunk } from "es-toolkit";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -104,11 +105,7 @@ const useStableLootCollections = (pages: Loot[][] | undefined) => {
     return { allLoots, gridRows: EMPTY_GRID_ROWS };
   }
 
-  const gridRows: Loot[][] = [];
-
-  for (let index = 0; index < allLoots.length; index += GRID_COLUMNS) {
-    gridRows.push(allLoots.slice(index, index + GRID_COLUMNS));
-  }
+  const gridRows = chunk(allLoots, GRID_COLUMNS);
 
   return { allLoots, gridRows };
 };
