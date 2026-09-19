@@ -12,6 +12,7 @@ import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { Permission } from "@lootlog/schema/permissions";
 import { and, arrayOverlaps, eq, inArray, or } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   guildTable,
   memberTable,
@@ -88,7 +89,7 @@ export const makeInternalGuildsData = (
 
       if (!guild) return yield* Effect.fail(new Error("Guild not found"));
 
-      yield* writeGuildConfigurationCache(cache, guild, "unbounded");
+      yield* writeGuildConfigurationCache(cache, idOrVanityUrl, guild);
 
       return { ...guild, ...resolveReservationSettings(guild) };
     });
@@ -192,20 +193,7 @@ export class InternalGuildsData extends Context.Service<
       Effect.map(ApiDatabase, (database) => {
         const persistence: InternalGuildsPersistence = {
           findActiveGuild: (idOrVanityUrl) =>
-            database
-              .select()
-              .from(guildTable)
-              .where(
-                and(
-                  eq(guildTable.active, true),
-                  or(
-                    eq(guildTable.id, idOrVanityUrl),
-                    eq(guildTable.vanityUrl, idOrVanityUrl),
-                  ),
-                ),
-              )
-              .limit(1)
-              .pipe(Effect.map((rows) => rows[0] ?? null)),
+            findActiveGuild(database, idOrVanityUrl),
           findGuildsForPermissions: (discordId) =>
             database
               .selectDistinct({ guild: guildTable })

@@ -38,8 +38,6 @@ import {
 } from "./general-form.schema";
 import { StatsCardSettingsCard } from "./stats-card-settings-card";
 
-const RESTRICTED_NAMES = ["@me"];
-
 export const GeneralForm = () => {
   const { t } = useTranslation();
   const guildId = useGuildId();
@@ -74,12 +72,6 @@ export const GeneralForm = () => {
 
   function onSubmit(values: GeneralFormValues) {
     if (isPending) return;
-
-    if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
-      toast.error(t("settings.general.vanityUrl.restricted"));
-
-      return;
-    }
 
     updateGuildConfig(
       {

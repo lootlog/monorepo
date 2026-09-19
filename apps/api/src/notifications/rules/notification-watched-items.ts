@@ -7,6 +7,7 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray, or } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
+import { pickGuildByIdOrVanityUrl } from "#src/guilds/active-guild-lookup";
 import {
   itemSnapshotTable,
   notificationRuleTable,
@@ -275,10 +276,7 @@ export const makeNotificationWatchedItems = (
         scopedOrganizations ?? (yield* guilds.list(discordId, userId));
 
       const resolved = uniqueIds.map(
-        (input) =>
-          available.find(
-            (guild) => guild.id === input || guild.vanityUrl === input,
-          )?.id ?? null,
+        (input) => pickGuildByIdOrVanityUrl(available, input)?.id ?? null,
       );
 
       if (resolved.some((id) => id === null)) {

@@ -1,8 +1,8 @@
-import { and, desc, eq, gte, isNotNull, or } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
-  guildTable,
   memberRefreshJobTable,
   memberTable,
   memberToRoleTable,
@@ -149,21 +149,10 @@ export const makeMembersDataLayer = (
         readonly throwOnMemberUnauthorized: boolean;
       }): Effect.Effect<MemberWithRoles | null, unknown> =>
         Effect.gen(function* () {
-          const guildRows = yield* database
-            .select({ id: guildTable.id })
-            .from(guildTable)
-            .where(
-              and(
-                eq(guildTable.active, true),
-                or(
-                  eq(guildTable.id, options.guildId),
-                  eq(guildTable.vanityUrl, options.guildId),
-                ),
-              ),
-            )
-            .limit(1);
-
-          const desiredGuildId = guildRows[0]?.id;
+          const desiredGuildId = (yield* findActiveGuild(
+            database,
+            options.guildId,
+          ))?.id;
 
           if (!desiredGuildId) {
             return yield* Effect.fail(
