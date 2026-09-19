@@ -123,3 +123,27 @@ It covers current access and revocation, NPC filtering before grouping, archived
 loots, bounded previews, grouping and tie order, duplicate submissions,
 transaction rollback, best-effort publication failure, shared HTTP/live entries,
 retention, and the populated query.
+
+## Discord Administrator flag on roles
+
+`Role.discordAdmin` stores the last Discord Administrator flag the API saw for a
+role. Role permissions are Organization policy: a Discord role event changes
+them only when its flag differs from the stored one, and then it adds or removes
+`ADMIN` and nothing else. A role the API stores for the first time is still
+seeded from the flag.
+
+`20260919162450_role_discord_admin_flag` adds the column as nullable and does
+not backfill it. Stored permissions cannot tell an `ADMIN` granted in Lootlog
+from one derived from Discord, so any backfill from them would either strip a
+Lootlog-granted `ADMIN` on the next role update or treat it as Discord-derived.
+`NULL` means the flag is unknown. The next role event, or a repeated guild
+creation event, records the flag and leaves permissions unchanged, unless the
+event carries `previousAdmin`: then that value stands in for the missing flag
+and a real transition still moves `ADMIN`.
+
+Apply the migration before deploying the API that uses it; earlier API versions
+ignore the column. Deploy the Discord bot that publishes `previousAdmin` in any
+order: the field is optional, and an API without this change ignores it. Until
+that bot is deployed, a role with an unknown flag that gains or loses Discord
+Administrator on its first event keeps its stored permissions, and an owner has
+to adjust `ADMIN` in the role settings. Keep the column when rolling back.

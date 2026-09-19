@@ -25,6 +25,7 @@ const role = (
   permissions,
   lvlRangeFrom,
   lvlRangeTo,
+  discordAdmin: null,
   createdAt: new Date(0),
   updatedAt: new Date(0),
 });
