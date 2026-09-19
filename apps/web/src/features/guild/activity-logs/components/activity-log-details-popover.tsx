@@ -34,7 +34,10 @@ export const ActivityLogDetailsPopover = ({
           </Button>
         }
       />
-      <PopoverContent align="end" className="w-[340px] p-4">
+      <PopoverContent
+        align="end"
+        className="w-[340px] max-w-[calc(100vw-2rem)] p-4"
+      >
         <p className="mb-3 text-sm font-semibold">
           {t("activityLogs.list.additionalData")}
         </p>
