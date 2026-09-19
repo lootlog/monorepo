@@ -435,4 +435,94 @@ describe("installCharacterTooltipTransforms", () => {
 
     cleanup();
   });
+
+  it("removes the appended section from the hovered tooltip when shift is released", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+
+    const canvasTip = {
+      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
+    };
+
+    const originalCanvasTipShow = canvasTip.show;
+    other.canvasObjectType = "OTHER";
+    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
+    setRuntime(hero, { 1: other }, canvasTip);
+    seedRuntimeOthers({ 1: other });
+
+    characterTooltipTransforms.register(({ currentHtml }) => {
+      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+        return currentHtml;
+      }
+
+      return `${currentHtml}<span>shift</span>`;
+    });
+
+    const cleanup = installCharacterTooltipTransforms();
+    const runtimeCanvasTip = canvasTip;
+    const hoverEvent = { clientX: 10, clientY: 20 };
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    runtimeCanvasTip.show(hoverEvent, other);
+    expect(other.tip?.[0]).toBe("<div>Other</div><span>shift</span>");
+
+    originalCanvasTipShow.mockClear();
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    refreshActiveOtherCanvasTooltip();
+
+    expect(other.tip?.[0]).toBe("<div>Other</div>");
+    expect(originalCanvasTipShow).toHaveBeenCalledWith(hoverEvent, other);
+    expect(
+      useCharacterTooltipCatchingGuildsStore.getState().activeTarget,
+    ).toBeNull();
+
+    cleanup();
+  });
+
+  it("leaves a hovered tooltip untouched when shift was never pressed", () => {
+    const hero = createCharacter("Hero");
+    const other = createCharacter("Other");
+
+    const canvasTip = {
+      hide: vi.fn<NonNullable<RuntimeCanvasTip["hide"]>>(),
+      show: vi.fn<NonNullable<RuntimeCanvasTip["show"]>>(),
+    };
+
+    const originalCanvasTipShow = canvasTip.show;
+    other.canvasObjectType = "OTHER";
+    other.d = { ...other.d, account: 9822301, id: "617", nick: "Other" };
+    setRuntime(hero, { 1: other }, canvasTip);
+    seedRuntimeOthers({ 1: other });
+
+    let builtTooltips = 0;
+
+    characterTooltipTransforms.register(({ currentHtml }) => {
+      builtTooltips += 1;
+
+      return currentHtml;
+    });
+
+    const cleanup = installCharacterTooltipTransforms();
+    const runtimeCanvasTip = canvasTip;
+
+    // Patch the tooltip through an earlier Shift hover, then leave the character.
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    runtimeCanvasTip.show({ clientX: 1, clientY: 2 }, other);
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    refreshActiveOtherCanvasTooltip();
+    runtimeCanvasTip.hide({});
+
+    // Hover again without Shift; a window blur still reports Shift as released.
+    runtimeCanvasTip.show({ clientX: 3, clientY: 4 }, other);
+    originalCanvasTipShow.mockClear();
+    const builtBeforeBlur = builtTooltips;
+
+    refreshActiveOtherCanvasTooltip();
+
+    expect(originalCanvasTipShow).not.toHaveBeenCalled();
+    expect(builtTooltips).toBe(builtBeforeBlur);
+
+    cleanup();
+  });
 });
