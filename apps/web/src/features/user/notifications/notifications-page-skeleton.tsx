@@ -10,8 +10,8 @@ export const UserNotificationsPageSkeleton = () => {
     <ScrollArea className="h-full min-h-0">
       <div className="flex flex-col gap-3 px-3 py-3">
         <PageHeader
-          title=<Skeleton className="h-5 w-40" />
-          description=<Skeleton className="h-3 w-48" />
+          title=<Skeleton render={<span />} className="block h-5 w-40" />
+          description=<Skeleton render={<span />} className="block h-3 w-48" />
         />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
