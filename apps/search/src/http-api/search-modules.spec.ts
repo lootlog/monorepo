@@ -3,6 +3,7 @@ import { Effect, Predicate } from "effect";
 import { Meilisearch, type SearchParams } from "meilisearch";
 import { makeItemsModule } from "#src/items/items.service";
 import { configureMeilisearchIndexes } from "#src/meilisearch/meilisearch-indexes.service";
+import type { NpcHit } from "#src/npcs/npc-hit";
 import { makeNpcsModule } from "#src/npcs/npcs.service";
 import { makePlayersModule } from "#src/players/players.service";
 import type { AppLogger } from "#src/shared/logger";
@@ -64,7 +65,36 @@ describe("Search Effect modules", () => {
     ]);
   });
 
-  test("generates stable player and NPC document ids", async () => {
+  test("keeps the first NPC per name and type unless ids are requested", async () => {
+    const first = {
+      id: 7,
+      name: "Hero",
+      icon: "npc.gif",
+      lvl: 100,
+      wt: 80,
+      type: "HERO",
+      margonemType: 2,
+      prof: "w",
+      world: "berufs",
+    } satisfies NpcHit;
+
+    const hits = [first, { ...first, id: 8, lvl: 150 }];
+
+    const client = makeClient(() => ({
+      search: () => Promise.resolve({ hits }),
+    }));
+
+    const npcs = makeNpcsModule(client, silentLogger);
+
+    expect(await Effect.runPromise(npcs.getNpcs({ limit: 10 }))).toEqual([
+      first,
+    ]);
+    expect(
+      await Effect.runPromise(npcs.getNpcs({ limit: 10, ids: [7, 8] })),
+    ).toEqual(hits);
+  });
+
+  test("generates stable player and NPC document ids and excludes invalid records", async () => {
     const indexed: unknown[] = [];
 
     const client = makeClient((name) => ({
@@ -98,6 +128,16 @@ describe("Search Effect modules", () => {
             accountId: 2,
             world: "berufs",
           },
+          {
+            id: "2",
+            name: "",
+            lvl: 100,
+            prof: "w",
+            icon: "warrior.gif",
+            characterId: 2,
+            accountId: 2,
+            world: "berufs",
+          },
         ],
       }),
     );
@@ -107,6 +147,17 @@ describe("Search Effect modules", () => {
           {
             id: 7,
             name: "Hero",
+            icon: "npc.gif",
+            lvl: 100,
+            wt: 80,
+            type: "hero",
+            margonemType: 2,
+            prof: null,
+            world: "berufs",
+          },
+          {
+            id: 0,
+            name: "Invalid Hero",
             icon: "npc.gif",
             lvl: 100,
             wt: 80,

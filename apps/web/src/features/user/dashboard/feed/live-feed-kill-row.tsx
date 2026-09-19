@@ -4,7 +4,7 @@ import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { LiveFeedTime } from "./live-feed-time";
-import upperFirst from "lodash/upperFirst";
+import { upperFirst } from "es-toolkit";
 import { Calendar, Dot, Globe, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LiveFeedOrganizations } from "./live-feed-organizations";

@@ -1,5 +1,6 @@
 import { API_KEY_LEASE_MS, ApiKeyStatus } from "@lootlog/schema/api-key-access";
 import { Effect, Redacted, Schedule, Schema } from "effect";
+import { chunk } from "es-toolkit";
 import { HttpClientRequest, type HttpClient } from "effect/unstable/http";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { hasValidApiKeyLease, type GatewaySocket } from "#src/realtime/session";
@@ -67,7 +68,7 @@ export class ApiKeyLeases {
       const checkedAt = now();
       const valid = new Map<string, Extract<ApiKeyStatus, { valid: true }>>();
 
-      for (let offset = 0; offset < keyIds.length; offset += 100) {
+      for (const batch of chunk(keyIds, 100)) {
         const request = HttpClientRequest.post(
           `${config.authUrl.replace(/\/$/, "")}/auth/internal/api-keys/status`,
           {
@@ -77,7 +78,7 @@ export class ApiKeyLeases {
           },
         ).pipe(
           HttpClientRequest.bodyJsonUnsafe({
-            keyIds: keyIds.slice(offset, offset + 100),
+            keyIds: batch,
           }),
         );
 

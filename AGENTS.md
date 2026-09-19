@@ -271,6 +271,9 @@ find it unchanged on the next.
 - Before adding or copying logic, search by behavior as well as symbol name
   across the relevant apps and packages. Reuse the existing owner, standard
   library, or installed dependency before writing another implementation.
+- Use `es-toolkit` functions when they cover the required behavior instead of
+  writing custom collection or utility helpers. Keep simple native operations
+  when equally clear, and preserve ordering, mutation, and edge-case semantics.
 - When equivalent logic has multiple callers, keep one implementation in the
   narrowest suitable owning module. Migrate every equivalent occurrence in
   the affected family, including inline copies and differently named helpers;
@@ -299,7 +302,9 @@ find it unchanged on the next.
   Each test must answer: “What real regression would this catch?”
 - Add tests only for a concrete logic regression: name the incorrect outcome
   they prevent. Prefer extending an existing behavioral test over creating a
-  new suite or fixture.
+  new suite or fixture. For mechanical replacements with standard-library or
+  dependency utilities, rely on existing coverage; add tests only for Lootlog
+  behavior that the replacement could change, not the utility itself.
 - For styling, layout, or copy-only changes, use existing visual inspection and
   lint/typecheck. Do not add tests for literal text rendering, CSS classes or
   values, DOM nesting, decorative animations, or the absence of deleted UI.

@@ -1,3 +1,4 @@
+import { uniqBy } from "es-toolkit";
 import type { UserTimerSettings } from "@lootlog/schema/timer-settings";
 import type { Timer } from "@/api/timers.api";
 import type { GuildMember } from "@/types/guild-member";
@@ -25,37 +26,20 @@ export const getMembersWithGuilds = (
   memberLabel: string;
   characterLabel?: string;
 }[] => {
-  const memberMap = new Map<
-    GuildMember["id"],
-    {
-      id: GuildMember["id"];
-      memberLabel: string;
-      characterLabel?: string;
-    }
-  >();
+  return uniqBy(members, (member) => member.id).map((member) => {
+    const guildName = guildNamesById[member.guildId];
+    const actorCharacter = actorCharactersByMemberId[String(member.id)];
 
-  for (const member of members) {
-    if (!memberMap.has(member.id)) {
-      const guildName = guildNamesById[member.guildId];
-      const actorCharacter = actorCharactersByMemberId[String(member.id)];
+    const characterLabel = actorCharacter
+      ? `${actorCharacter.name} (${actorCharacter.lvl ?? ""}${actorCharacter.prof?.charAt(0).toLowerCase() ?? ""})`
+      : undefined;
 
-      const characterLabel = actorCharacter
-        ? `${actorCharacter.name} (${actorCharacter.lvl ?? ""}${actorCharacter.prof?.charAt(0).toLowerCase() ?? ""})`
-        : undefined;
+    const memberLabel = guildName
+      ? `${member.name} (${guildName})`
+      : member.name;
 
-      const memberLabel = guildName
-        ? `${member.name} (${guildName})`
-        : member.name;
-
-      memberMap.set(member.id, {
-        id: member.id,
-        memberLabel,
-        characterLabel,
-      });
-    }
-  }
-
-  return Array.from(memberMap.values());
+    return { id: member.id, memberLabel, characterLabel };
+  });
 };
 
 export const calculateTimeLeft = (

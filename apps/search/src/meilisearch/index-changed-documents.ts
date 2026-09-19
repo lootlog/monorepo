@@ -1,4 +1,5 @@
 import { Effect, Metric } from "effect";
+import { chunk } from "es-toolkit";
 import type { Index } from "meilisearch";
 import {
   attemptMeilisearch,
@@ -37,9 +38,7 @@ export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
 
     const changedDocuments: Document[] = [];
 
-    for (let offset = 0; offset < uniqueDocuments.length; offset += 100) {
-      const batch = uniqueDocuments.slice(offset, offset + 100);
-
+    for (const batch of chunk(uniqueDocuments, 100)) {
       const stored = yield* attemptMeilisearch(
         `search.${index.uid}.existing`,
         () =>
@@ -67,9 +66,7 @@ export const indexChangedDocuments = Effect.fn("Search.indexChangedDocuments")(
       changedDocuments.push(...changed);
     }
 
-    for (let offset = 0; offset < changedDocuments.length; offset += 500) {
-      const batch = changedDocuments.slice(offset, offset + 500);
-
+    for (const batch of chunk(changedDocuments, 500)) {
       yield* completeMeilisearchTask(`search.${index.uid}.index`, () =>
         index.addDocuments(batch, { primaryKey: "uid" }),
       );

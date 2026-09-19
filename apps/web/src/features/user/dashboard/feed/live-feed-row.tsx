@@ -1,6 +1,6 @@
 import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 import { LiveFeedKillRow } from "./live-feed-kill-row";
-import upperFirst from "lodash/upperFirst";
+import { upperFirst } from "es-toolkit";
 import { LiveFeedCompactRow } from "./live-feed-compact-row";
 import { LiveFeedLootRow } from "./live-feed-loot-row";
 
