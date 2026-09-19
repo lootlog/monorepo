@@ -107,11 +107,13 @@ export const WatchedItemSelector = ({
             {disabled ? disabledMessage : displayLabel}
           </span>
         </ComboboxTrigger>
-        <ComboboxClear
-          tabIndex={0}
-          aria-label={t("common.clear")}
-          className="absolute right-7 top-1/2 -translate-y-1/2"
-        />
+        {Boolean(selectedItem) && (
+          <ComboboxClear
+            tabIndex={0}
+            aria-label={t("common.clear")}
+            className="absolute right-7 top-1/2 -translate-y-1/2"
+          />
+        )}
       </div>
       <ComboboxContent className="w-[360px]" align="start">
         <ComboboxInput

@@ -47,7 +47,8 @@ export const BattlePanelSingleBattleActions: FC<
 
   const { mutateAsync: deleteBattle } = useBattlesControllerDeleteBattle();
   const [isDeletePending, setIsDeletePending] = useState(false);
-  const isBusy = isPending || isDeletePending;
+  const [deletedBattleId, setDeletedBattleId] = useState<string | null>(null);
+  const isBusy = isPending || isDeletePending || deletedBattleId === battle.id;
 
   const handleShareClick = () => {
     handleShare(battle.id);
@@ -68,7 +69,20 @@ export const BattlePanelSingleBattleActions: FC<
     await (async () => {
       try {
         await deleteBattle({ pathParams: { battleId: battle.id } });
-        await Promise.all([
+      } catch (error) {
+        toast.error(t("battlePanel.toasts.battleDeleteError"), {
+          duration: 3000,
+        });
+        throw error;
+      }
+
+      setDeletedBattleId(battle.id);
+      toast.success(t("battlePanel.toasts.battleDeleted"), {
+        duration: 3000,
+      });
+
+      try {
+        await Promise.allSettled([
           invalidateBattlesControllerGetDashboardBattles(queryClient),
           invalidateBattlesControllerGetBattle(queryClient, {
             battleId: battle.id,
@@ -89,15 +103,9 @@ export const BattlePanelSingleBattleActions: FC<
             },
           ),
         ]);
-        toast.success(t("battlePanel.toasts.battleDeleted"), {
-          duration: 3000,
-        });
         await navigate({ to: ROUTES.user.battlePanel.base });
-      } catch (error) {
-        toast.error(t("battlePanel.toasts.battleDeleteError"), {
-          duration: 3000,
-        });
-        throw error;
+      } catch {
+        // The battle is already deleted; navigation failure must not offer a retry.
       }
     })().finally(() => {
       setIsDeletePending(false);

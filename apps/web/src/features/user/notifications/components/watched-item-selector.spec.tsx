@@ -34,6 +34,7 @@ it("distinguishes an item-search outage from a successful empty search and recov
     <WatchedItemSelector {...props} errorMessage="Wyszukiwarka niedostępna" />,
   );
 
+  expect(screen.queryByRole("button", { name: "common.clear" })).toBeNull();
   fireEvent.click(screen.getByRole("combobox"));
   await waitFor(() =>
     expect(screen.getByRole("alert").textContent).toBe(
