@@ -1,6 +1,7 @@
-import { animate, useMotionValue, useReducedMotion } from "framer-motion";
+import { animate, useMotionValue } from "framer-motion";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
 import {
   getDaySwipeDirection,
@@ -48,7 +49,7 @@ export function useMobileDaySchedule({
   onRangeSelect,
 }: MobileDayScheduleProps) {
   const swipeX = useMotionValue(0);
-  const shouldReduceMotion = useReducedMotion();
+  const shouldReduceMotion = usePrefersReducedMotion();
   const isDaySwipeEnabled = useMobileDaySwipe();
   const gridRef = useRef<HTMLDivElement>(null);
   const nowRef = useRef<HTMLDivElement>(null);

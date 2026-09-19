@@ -30,7 +30,8 @@ const subscribe = (listener: () => void) => {
   };
 };
 
-const getSnapshot = () => {
+/** Reads the preference outside React, e.g. when an effect starts an imperative scroll. */
+export const getPrefersReducedMotion = () => {
   if (mediaQuery) return mediaQuery.matches;
 
   return (
@@ -40,5 +41,5 @@ const getSnapshot = () => {
 };
 
 export function usePrefersReducedMotion() {
-  return useSyncExternalStore(subscribe, getSnapshot, () => false);
+  return useSyncExternalStore(subscribe, getPrefersReducedMotion, () => false);
 }

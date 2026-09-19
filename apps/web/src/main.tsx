@@ -1,5 +1,5 @@
 import React from "react";
-import { LazyMotion } from "framer-motion";
+import { LazyMotion, MotionConfig } from "framer-motion";
 import ReactDOM from "react-dom/client";
 import { configureWebApiClients } from "@/lib/configure-api-clients";
 import App from "./App.tsx";
@@ -15,9 +15,11 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <LazyMotion features={loadMotionFeatures}>
-        <App />
-      </LazyMotion>
+      <MotionConfig reducedMotion="user">
+        <LazyMotion features={loadMotionFeatures}>
+          <App />
+        </LazyMotion>
+      </MotionConfig>
     </React.StrictMode>,
   );
 }

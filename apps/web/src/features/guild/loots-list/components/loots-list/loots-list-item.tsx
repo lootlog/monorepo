@@ -2,7 +2,6 @@ import { ItemRarity, type Loot } from "@/lib/loots/loot-types";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { cn } from "cn";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
-import { useReducedMotion } from "framer-motion";
 import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
@@ -20,21 +19,10 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const { filters, setFilters } = useLootsFilters();
   const { isRukiaTheme } = useThemeMeta();
-  const shouldReduceMotion = useReducedMotion();
 
   const hasLegendaryItem = loot.items.some(
     (item) => item.rarity === ItemRarity.LEGENDARY,
   );
-
-  let initialAnimation: false | { opacity: number; scale?: number } = false;
-
-  if (isNew) {
-    if (shouldReduceMotion) {
-      initialAnimation = { opacity: 0 };
-    } else {
-      initialAnimation = { opacity: 0, scale: 0.98 };
-    }
-  }
 
   const lootContent = (
     <LootPresentation
@@ -53,7 +41,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
     <m.div
       data-testid="loot-list-item"
       data-presentation={variant}
-      initial={initialAnimation}
+      initial={isNew ? { opacity: 0, scale: 0.98 } : false}
       animate={animate}
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
