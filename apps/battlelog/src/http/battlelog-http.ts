@@ -210,7 +210,7 @@ const BearerSecurityLive = Layer.succeed(
   BearerSecurityMiddleware.of({ bearer: (httpEffect) => httpEffect }),
 );
 
-export const BattlelogHandlers = Layer.mergeAll(
+const BattlelogHandlers = Layer.mergeAll(
   HttpApiBuilder.group(BattlelogApi, "health", (handlers) =>
     handlers.handle("HealthzControllerHealthCheck", () => Effect.void),
   ),
@@ -494,7 +494,7 @@ const DocumentationRoutes = HttpRouter.use((router) =>
   }),
 );
 
-export const BattlelogRoutes = Layer.merge(
+const BattlelogRoutes = Layer.merge(
   HttpApiBuilder.layer(BattlelogApi, { openapiPath: "/docs-json" }).pipe(
     Layer.provide(BattlelogHandlers),
   ),

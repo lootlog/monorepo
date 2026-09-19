@@ -1,3 +1,5 @@
+import { upperFirst } from "es-toolkit";
+
 const isPinActionDisabled = (
   eventId: string | undefined,
   isEventActive: boolean,
@@ -75,7 +77,7 @@ export const EventDetailHeader = ({
         <>
           <span className="inline-flex items-center gap-1.5">
             <Globe2 className="size-3.5" />
-            {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
+            {upperFirst(event.world)}
           </span>
 
           <Tooltip>

@@ -1,4 +1,4 @@
-import { Schema, Predicate } from "effect";
+import { Array as Arr, Schema, Predicate } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { normalizeReservationSpotId } from "./reservation-spot-id.js";
 
@@ -15,10 +15,6 @@ export type ReservationSpot = {
   images: string[];
   maps: string[];
 };
-
-const unique = (values: string[]): string[] => [
-  ...new Set(values.filter(Boolean)),
-];
 
 const parseCard = (value: unknown): ReservationCatalogCard => {
   if (!Predicate.isObject(value))
@@ -83,8 +79,8 @@ export const parseReservationCatalogPayload = (
       id: normalizeReservationSpotId(name),
       name,
       level: Math.max(0, ...cards.map((card) => card.lvl)),
-      images: unique(cards.flatMap((card) => card.images)),
-      maps: unique(cards.flatMap((card) => card.maps)),
+      images: Arr.dedupe(cards.flatMap((card) => card.images).filter(Boolean)),
+      maps: Arr.dedupe(cards.flatMap((card) => card.maps).filter(Boolean)),
     } satisfies ReservationSpot;
   });
 
@@ -98,8 +94,10 @@ export const parseReservationCatalogPayload = (
         ? {
             ...existing,
             level: Math.max(existing.level, spot.level),
-            images: unique([...existing.images, ...spot.images]),
-            maps: unique([...existing.maps, ...spot.maps]),
+            images: Arr.dedupe(
+              [...existing.images, ...spot.images].filter(Boolean),
+            ),
+            maps: Arr.dedupe([...existing.maps, ...spot.maps].filter(Boolean)),
           }
         : spot,
     );

@@ -29,7 +29,12 @@
       ]
     },
     "apps/game-client": {
-      "entry": ["src/main.tsx", "sandbox/main.ts", "scripts/**/*.{ts,mjs}"],
+      "entry": [
+        "src/main.tsx",
+        "sandbox/main.ts",
+        "scripts/**/*.{ts,mjs}",
+        "extension/entrypoints/**/*.ts"
+      ],
       "project": [
         "src/**/*.{ts,tsx}",
         "test/**/*.{ts,tsx}",
@@ -37,12 +42,23 @@
         "scripts/**/*.{ts,mjs}",
         "*.{ts,mts,js,mjs}",
         "*.config.{ts,mts,js,mjs}",
-        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}"
+        "**/*.{spec,test,e2e-spec}.{ts,tsx,js}",
+        "extension/**/*.{ts,tsx}"
       ],
       "vite": false,
       "ignoreDependencies": ["shadcn"]
     },
     "packages/*": {
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.{ts,mjs}",
+        "*.{ts,mts,js,mjs}",
+        "*.config.{ts,mts,js,mjs}",
+        "**/*.{spec,test}.{ts,tsx,js}"
+      ],
+      "includeEntryExports": true
+    },
+    "packages/client": {
       "entry": [
         "src/index.ts",
         "index.ts",

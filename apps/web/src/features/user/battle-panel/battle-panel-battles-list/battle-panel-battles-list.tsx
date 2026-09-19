@@ -34,8 +34,6 @@ import { upperFirst } from "es-toolkit";
 const optionalQueryValue = <Value,>(value: Value | null | undefined) =>
   value ?? undefined;
 
-const handleMatchmakingToggle = () => {};
-
 export const BattlePanelBattlesList = () => {
   const { t } = useTranslation();
 
@@ -154,7 +152,6 @@ export const BattlePanelBattlesList = () => {
       filters={filters}
       isMobile={isMobile}
       onCharacterChange={handleCharacterChange}
-      onMatchmakingToggle={handleMatchmakingToggle}
       onMinLevelChange={handleMinLevelChange}
       onMaxLevelChange={handleMaxLevelChange}
       onMobileFiltersOpen={() => setIsMobileFiltersOpen(true)}
@@ -164,7 +161,6 @@ export const BattlePanelBattlesList = () => {
       onWarriorToggle={handleWarriorToggle}
       onWorldChange={handleWorldChange}
       selectedWarriors={selectedWarriors}
-      showMatchmakingFilter={false}
       worlds={worlds}
     />
   );
@@ -183,7 +179,6 @@ export const BattlePanelBattlesList = () => {
             filters={filters}
             onFiltersChange={handleFiltersChange}
             className="h-auto w-full border-l-0 p-0"
-            showMatchmakingFilter={false}
           />
         </MobileFiltersDrawer>
       )}

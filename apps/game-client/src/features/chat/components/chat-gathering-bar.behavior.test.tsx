@@ -26,7 +26,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useChatStore } from "@/store/chat.store";
 import { useHiddenPartyGatheringsStore } from "@/store/hidden-party-gatherings.store";
 import { useHotkeysStore } from "@/store/hotkeys.store";
-import { resetReadyRoomInvitationCoordinatorForTests } from "@/features/party-finder/ready-room-invitation-coordinator";
+import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
 import { ACTIVE_GATHERINGS_QUERY_KEY } from "../hooks/use-active-party-gatherings";
 import { createChatMember, createChatReadyRoom } from "../chat-test-fixtures";
 import { ChatGatheringBar } from "./chat-gathering-bar";
@@ -319,11 +319,11 @@ it("shows actual party size independently of applications and opens management",
 
 it("invites applicants only when available, blocks double clicks and recovers after a request failure", async () => {
   const harness = await setup();
-  resetReadyRoomInvitationCoordinatorForTests();
+  disposeReadyRoomInvitationCoordinator();
   const gameInvite = vi.fn();
   vi.stubGlobal("_g", gameInvite);
   onTestFinished(() => {
-    resetReadyRoomInvitationCoordinatorForTests();
+    disposeReadyRoomInvitationCoordinator();
     vi.unstubAllGlobals();
   });
   act(() =>

@@ -1,3 +1,4 @@
+import { uniqBy } from "es-toolkit";
 import type { BadgeProps } from "@lootlog/ui/components/badge";
 import {
   CreateNotificationRuleDtoScheduleAnchor as NotificationScheduleAnchor,
@@ -105,13 +106,9 @@ export const getGuildNotificationTargetUsageCount = (
   targetId: number,
   rules: GuildNotificationRule[],
 ) =>
-  rules.reduce((usageCount, rule) => {
-    if (rule.targets.some(({ target }) => target.id === targetId)) {
-      return usageCount + 1;
-    }
-
-    return usageCount;
-  }, 0);
+  rules.filter((rule) =>
+    rule.targets.some(({ target }) => target.id === targetId),
+  ).length;
 
 export const getGuildNotificationOrphanedRuleCount = (
   targetId: number,
@@ -126,21 +123,13 @@ export const mergeGuildNotificationTargets = (
   baseTargets: GuildNotificationTarget[],
   extraTargets: GuildNotificationTarget[],
 ) => {
-  const mergedTargets = new Map<number, GuildNotificationTarget>();
-
-  for (const target of baseTargets) {
-    mergedTargets.set(target.id, target);
-  }
-
-  for (const target of extraTargets) {
-    mergedTargets.set(target.id, target);
-  }
-
-  return Array.from(mergedTargets.values()).sort((leftTarget, rightTarget) =>
-    getGuildNotificationTargetLabel(leftTarget).localeCompare(
-      getGuildNotificationTargetLabel(rightTarget),
-      "pl",
-    ),
+  // `extraTargets` wins on id collisions, matching the previous map-merge.
+  return uniqBy([...extraTargets, ...baseTargets], (target) => target.id).sort(
+    (leftTarget, rightTarget) =>
+      getGuildNotificationTargetLabel(leftTarget).localeCompare(
+        getGuildNotificationTargetLabel(rightTarget),
+        "pl",
+      ),
   );
 };
 

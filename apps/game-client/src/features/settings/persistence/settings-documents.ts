@@ -1,3 +1,4 @@
+import { isEqual } from "es-toolkit";
 import { z } from "zod";
 import {
   SETTINGS_CATALOG,
@@ -323,4 +324,4 @@ export const mergeSettingsDocuments = (
 export const areSettingsValuesEqual = (
   left: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,
   right: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,
-) => left === right || JSON.stringify(left) === JSON.stringify(right);
+) => left === right || isEqual(left, right);

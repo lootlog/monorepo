@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColor } from "@/utils/get-member-color";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { Member } from "../../types/api";
 
@@ -10,7 +10,7 @@ interface MemberBadgeProps {
 }
 
 export const MemberBadge = ({ eventId, guildId, member }: MemberBadgeProps) => {
-  const color = useMemberColor(member);
+  const color = getMemberColor(member);
   const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar, 32);
 
   return (

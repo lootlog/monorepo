@@ -41,7 +41,6 @@
     "mapTemplates": "Szablony map",
     "reservations": "Rezerwacje",
     "members": "Członkowie",
-    "notifications": "Powiadomienia",
     "info": "Informacje"
   },
   "general": {
@@ -213,7 +212,6 @@
     "title": "Członkowie",
     "description": "Zarządzaj dostępem członków lootloga",
     "searchPlaceholder": "Szukaj członka, nick lub Discord ID...",
-    "showInactive": "Nieaktywni",
     "details": "Szczegóły członka",
     "owner": "Właściciel serwera",
     "summary": {
@@ -235,8 +233,6 @@
       "status": "Status",
       "discord": "Sync",
       "activity": "Aktywność",
-      "web": "Web",
-      "game": "Gra",
       "visits": "Wejścia",
       "roles": "Role",
       "actions": "Akcje"
@@ -266,19 +262,10 @@
     "refreshedAt": "Odświeżono {{time}}",
     "discordSync": {
       "title": "Synchronizacja Discorda",
-      "notConfirmed": "Brak synchronizacji z Discordem",
       "lastConfirmedRelative": "Ostatnia synchronizacja: {{time}}",
       "lastConfirmedCompact": "{{time}}",
       "neverSyncedCompact": "nigdy",
       "staleAccessHint": "Dostęp opiera się na ostatnich poprawnych danych z Discorda. Jeśli kolejne odświeżenie zwróci brak członkostwa, dostęp zostanie zablokowany.",
-      "badges": {
-        "confirmed": "Potwierdzony",
-        "queued": "W kolejce",
-        "cached": "Cache",
-        "blocked": "Zablokowany",
-        "issue": "Problem",
-        "unknown": "Brak danych"
-      },
       "fields": {
         "technicalStatus": "Status techniczny",
         "lastAttemptAt": "Ostatnia próba",
@@ -359,7 +346,6 @@
     },
     "webActivity": {
       "title": "Aktywność",
-      "description": "Status online obejmuje aplikację webową i obecność w grze. Wejścia i sesje są rozdzielone według źródła.",
       "online": "Online na stronie",
       "offline": "Offline",
       "onlineSources": {
@@ -370,8 +356,6 @@
       },
       "noVisits": "Ostatnio online: brak danych",
       "lastSeenRelative": "Ostatnio online: {{time}}",
-      "visitCount": "{{count}}",
-      "visitCountCompact": "Wejścia na stronę: {{count}}",
       "webVisitCountCompact": "Strona: {{count}}",
       "gameVisitCountCompact": "Gra: {{count}}",
       "webVisitCountShort": "Web {{count}}",
@@ -380,16 +364,11 @@
       "lastSeenCompact": "Online {{time}}",
       "noVisitsCompact": "Online: brak danych",
       "noData": "Brak danych",
-      "activeSessions": "{{count}}",
       "fields": {
         "lastSeenAt": "Ostatnio online",
         "lastSeenInGameAt": "Ostatnio w grze",
-        "visitCount": "Wejścia na stronę",
         "webVisitCount": "Wejścia na stronę",
         "gameVisitCount": "Wejścia do gry",
-        "activeSessions": "Aktywne sesje strony",
-        "activeWebSessions": "Aktywne sesje strony",
-        "activeGameSessions": "Aktywne sesje w grze",
         "webStatus": "Status strony",
         "gameStatus": "Status gry"
       }
@@ -399,8 +378,6 @@
     "emptyFilteredDescription": "Nie znaleziono członków pasujących do filtrów.",
     "emptyGuildTitle": "Brak członków w tej gildii",
     "resetFilters": "Wyczyść filtry",
-    "noSelectionTitle": "Wybierz członka",
-    "noSelectionDescription": "Wybierz członka z listy, aby zobaczyć szczegóły.",
     "backToMembers": "Wróć do członków",
     "memberNotFound": "Nie znaleziono członka",
     "memberNotFoundDescription": "Ten członek nie istnieje w tej gildii albo nie ma go już w pobranej liście.",
@@ -437,18 +414,7 @@
     "deactivateConfirmTitle": "Dezaktywować członka?",
     "deactivateConfirmDescription": "Członek zostanie lokalnie oznaczony jako nieaktywny, a jego role zostaną wyczyszczone do czasu kolejnego odświeżenia z Discorda.",
     "reactivateHint": "Ponowna aktywacja nastąpi po odświeżeniu członka.",
-    "syncProblemHint": "Sprawdź synchronizację Discorda albo odśwież uprawnienia członka.",
-    "lootlogTitle": "Konfiguracja lootloga",
-    "lootlogLoading": "Ładowanie postaci...",
-    "lootlogError": "Nie udało się pobrać konfiguracji postaci.",
-    "lootlogEmpty": "Ten członek nie ma zapisanej konfiguracji lootloga.",
-    "lootlogCounts": "{{enabled}}/{{configured}} postaci aktywnych w tej gildii",
-    "lootlogEnabled": "Aktywna",
-    "lootlogDisabled": "Wyłączona",
-    "lootlogUnknownCharacter": "Nieznana postać",
-    "lootlogMissingSnapshot": "Nie znaleziono jeszcze danych tej postaci.",
-    "lootlogInvalidCharacterRef": "Ta postać ma nieprawidłową konfigurację.",
-    "lootlogWorldUnavailable": "Brak informacji o świecie."
+    "syncProblemHint": "Sprawdź synchronizację Discorda albo odśwież uprawnienia członka."
   },
   "notifications": {
     "title": "Powiadomienia",
@@ -492,7 +458,6 @@
       "save": "Zapisz",
       "create": "Utwórz",
       "createTarget": "Utwórz kanał docelowy",
-      "viewHistory": "Zobacz historię",
       "showAllHistory": "Pokaż ostatnie {{count}}"
     },
     "sections": {
@@ -631,7 +596,6 @@
     },
     "validation": {
       "channelRequired": "Wybierz kanał Discorda",
-      "displayNameRequired": "Nazwa wyświetlana jest wymagana",
       "maxNpcCount": "Możesz wybrać maksymalnie {{count}} NPC",
       "templateRequired": "Szablon wiadomości nie może być pusty",
       "scheduleOffsetRequired": "Podaj liczbę minut",
@@ -687,35 +651,20 @@
       "targets": "Wybierz kanały docelowe",
       "searchTargets": "Szukaj kanałów"
     },
-    "templates": {
-      "default": {
-        "world": "Świat: **{{world}}**",
-        "spawnWindow": "Okno spawnu: **{{minSpawnTime}} - {{maxSpawnTime}}**",
-        "scheduledFor": "Zaplanowana wysyłka: **{{scheduledFor}}**"
-      },
-      "scheduledMessage": {
-        "scheduledFor": "Zaplanowana wysyłka: **{{scheduledFor}}**"
-      }
-    },
     "templateEditor": {
       "label": "Edytor wiadomości",
       "description": "Treść wiadomości wysyłanej na Discorda. Obsługiwany jest Markdown oraz wzmianki ról.",
       "placeholder": "Napisz treść powiadomienia...",
-      "insertRole": "Wstaw rolę",
-      "insertVariable": "Wstaw zmienną",
       "showPreview": "Podgląd",
-      "hidePreview": "Ukryj podgląd",
       "emptyRoles": "Brak ról do wstawienia.",
       "emptyVariables": "Brak zmiennych do wstawienia.",
       "emptySuggestions": "Brak pasujących sugestii.",
       "availableVariables": "Dostępne zmienne",
       "variablesSummary": "{{ruleName}}, {{npcName}}, {{npcId}}, {{world}}, {{minSpawnTime}}, {{maxSpawnTime}}, {{scheduledFor}}",
-      "mentionSuggestions": "Sugestie wzmianek",
       "variableSuggestions": "Sugestie zmiennych",
       "previewLabel": "Podgląd wiadomości",
       "previewDescription": "Podgląd wiadomości z przykładowymi danymi podstawionymi za zmienne.",
       "previewNotice": "Zmienne zostały zastąpione przykładowymi danymi. Wygląd może się nieznacznie różnić od wiadomości na Discordzie.",
-      "customTemplateEnabled": "Własny szablon",
       "previewValues": {
         "ruleName": "Timer herosów",
         "npcName": "Tanroth",
@@ -755,10 +704,6 @@
       "checkbox": "Mój potwór nie pojawia się w wyszukiwarce lub ma błędne ID",
       "hint": "Przełącz na ręczne wpisanie ID NPC jako alternatywę dla wyszukiwarki.",
       "fieldHint": "Wpisz jedno lub wiele ID NPC. Możesz rozdzielać je przecinkami, spacjami albo nowymi liniami."
-    },
-    "quickTargetDialog": {
-      "title": "Szybkie dodanie kanału",
-      "description": "Dodaj nowy kanał Discorda i od razu przypisz go do tej reguły."
     },
     "deleteTargetDialog": {
       "title": "Usunąć kanał docelowy?",
@@ -801,7 +746,6 @@
     "description": "Obserwuj itemy dla wybranego świata i swoich lootlogów, a dropy dostaniesz jako prywatną wiadomość na Discordzie.",
     "dm": {
       "title": "Prywatna wiadomość",
-      "description": "Powiadomienia o obserwowanych itemach wysyłamy bezpośrednio na Twojego Discorda.",
       "active": "Aktywne",
       "actionRequired": "Wymaga konfiguracji",
       "configure": "Włącz powiadomienia",
@@ -817,7 +761,6 @@
     },
     "watchForm": {
       "title": "Dodaj obserwowany item",
-      "description": "Wybierz lootlogi, świat i item. Powiadomienie przyjdzie tylko dla dopasowanych lootów.",
       "footer": "Jedna obserwacja działa dla jednego świata i wielu lootlogów.",
       "limitStatus": "Masz {{count}} z {{limit}} obserwowanych itemów."
     },
@@ -851,7 +794,6 @@
     "quickAdd": {
       "add": "Dodaj do obserwowanych",
       "remove": "Przestań obserwować",
-      "watched": "Ten item jest już obserwowany dla tego lootloga i świata.",
       "dmRequired": "Najpierw włącz powiadomienia w ustawieniach.",
       "limitReached": "Osiągnięto limit {{limit}} obserwowanych itemów.",
       "loading": "Ładowanie obserwacji...",
@@ -876,7 +818,6 @@
     "placeholders": {
       "guilds": "Wybierz lootlogi",
       "searchGuilds": "Szukaj lootlogów",
-      "world": "Wybierz świat",
       "item": "Wybierz item",
       "searchItems": "Szukaj itemu po nazwie lub ID"
     },
@@ -886,7 +827,6 @@
       "watchedItems": "Nie masz jeszcze żadnych obserwowanych itemów."
     },
     "loading": {
-      "worlds": "Pobieranie światów...",
       "items": "Pobieranie itemów..."
     },
     "manualEntry": {
@@ -926,9 +866,6 @@
     "watchCount_few": "{{count}} obserwacje",
     "watchCount_many": "{{count}} obserwacji",
     "watchLimitStatus": "{{count}} / {{limit}}",
-    "guildCount_one": "{{count}} lootlog",
-    "guildCount_few": "{{count}} lootlogi",
-    "guildCount_many": "{{count}} lootlogów",
     "missingGuild": "Brak dostępu: {{guildId}}",
     "staleGuildWarning": "Ta obserwacja zawiera lootlogi, do których nie masz już dostępu w aktualnej sesji.",
     "itemSelector": {
@@ -943,7 +880,6 @@
   },
   "guildInfo": {
     "title": "Informacje",
-    "description": "Sprawdź status synchronizacji Discorda, kanałów i uprawnień bota.",
     "refresh": "Odśwież status",
     "refreshing": "Odświeżanie...",
     "syncStatus": "Status synchronizacji Discorda",

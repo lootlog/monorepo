@@ -1,13 +1,15 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Cause, Clock, Duration, Effect, Result, Schema } from "effect";
-import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
+import {
+  RabbitExchange,
+  RabbitRoutingKey as RoutingKey,
+} from "@lootlog/protocol/rabbit/topology";
 import {
   NotificationTargetType,
   type DiscordNotificationDeliveryResultEvent,
   type DiscordNotificationSendCommand,
 } from "@lootlog/schema/notifications";
 import { ChannelType } from "discord.js";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import {
   discordErrorCode,
   isRetryableDiscordError,
@@ -28,7 +30,7 @@ const DeliveryOperation = Schema.Literals([
 
 type DeliveryOperation = typeof DeliveryOperation.Type;
 
-export class DiscordDeliveryFailure extends TaggedErrorClass<DiscordDeliveryFailure>()(
+class DiscordDeliveryFailure extends TaggedErrorClass<DiscordDeliveryFailure>()(
   "DiscordDeliveryFailure",
   {
     operation: DeliveryOperation,
@@ -170,7 +172,7 @@ export const makeDiscordDelivery = (
   ) =>
     publisher
       .publish(
-        DEFAULT_EXCHANGE_NAME,
+        RabbitExchange.DEFAULT,
         RoutingKey.NOTIFICATIONS_DELIVERY_RESULT,
         payload,
       )

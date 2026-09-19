@@ -16,7 +16,7 @@ export interface EventPointRecalculator {
   ) => Effect.Effect<void, unknown>;
 }
 
-export class EventPointRecalculationError extends TaggedErrorClass<EventPointRecalculationError>()(
+class EventPointRecalculationError extends TaggedErrorClass<EventPointRecalculationError>()(
   "EventPointRecalculationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

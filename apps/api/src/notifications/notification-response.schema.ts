@@ -26,7 +26,7 @@ const literals = <A extends string>(values: ReadonlyArray<A>) =>
 const optionalNullable = <S extends Schema.Top>(schema: S) =>
   Schema.optionalKey(Schema.NullOr(schema));
 
-export const NotificationTestTriggerUsageResponse = Schema.Struct({
+const NotificationTestTriggerUsageResponse = Schema.Struct({
   limit: Schema.Int,
   used: Schema.Int,
   remaining: Schema.Int,
@@ -74,7 +74,7 @@ const NotificationRuleTargetResponse = Schema.Struct({
   target: NotificationTargetResponse,
 });
 
-export const NotificationRuleSummaryResponse = Schema.Struct({
+const NotificationRuleSummaryResponse = Schema.Struct({
   id: Schema.Int,
   ownerType: literals(Object.values(NotificationOwnerType)),
   ownerId: Schema.String,

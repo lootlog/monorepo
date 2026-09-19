@@ -14,7 +14,7 @@ const activeEventCondition = (referenceTime: Date) =>
     or(isNull(eventTable.endsAt), gt(eventTable.endsAt, referenceTime)),
   );
 
-export class PinnedEventsPersistenceError extends TaggedErrorClass<PinnedEventsPersistenceError>()(
+class PinnedEventsPersistenceError extends TaggedErrorClass<PinnedEventsPersistenceError>()(
   "PinnedEventsPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

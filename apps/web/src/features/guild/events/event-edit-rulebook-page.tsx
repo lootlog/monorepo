@@ -1,24 +1,22 @@
 import { EventEditSkeleton } from "./event-edit-skeleton";
+import { EventLoadError } from "./components/event-load-error";
+import { useEventEditRoute } from "./hooks/queries/use-event-edit-route";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { useEffect } from "react";
-import { Link, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { AlertCircle, BookOpenText } from "lucide-react";
+import { BookOpenText } from "lucide-react";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import {
   type EventOverviewResponseDto,
-  getShowEventOverviewQueryKey,
-  useShowEventOverview,
   useUpdateEvent,
 } from "@lootlog/client/main";
 
@@ -36,25 +34,7 @@ const toRulebookDefaults = (
 
 export const EventEditRulebookPage = () => {
   const { t } = useTranslation();
-  const { guildId, eventId } = useParams({ strict: false });
-
-  const routeParams = {
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-  };
-
-  const hasEventRouteParams = Boolean(guildId && eventId);
-
-  const {
-    data: event,
-    isLoading,
-    error,
-  } = useShowEventOverview(routeParams, {
-    query: {
-      enabled: hasEventRouteParams,
-      queryKey: getShowEventOverviewQueryKey(routeParams),
-    },
-  });
+  const { event, error, isLoading, routeParams } = useEventEditRoute();
 
   const queryClient = useQueryClient();
 
@@ -109,15 +89,7 @@ export const EventEditRulebookPage = () => {
   }
 
   if (error || !event) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
-        <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">{t("events.error")}</p>
-        <Link to="/$guildId/events/$eventId" params={routeParams}>
-          <Button variant="outline">{t("events.backToList")}</Button>
-        </Link>
-      </div>
-    );
+    return <EventLoadError {...routeParams} />;
   }
 
   return (

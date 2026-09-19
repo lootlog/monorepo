@@ -56,7 +56,7 @@
     {
       "files": [
         // Synchronize clocks, socket/cache state, URL scrolling and DOM state.
-        "src/hooks/utils/use-countdown.tsx",
+        "src/hooks/utils/use-countdown.ts",
         "src/features/guild/events/hooks/utils/use-assignment-countdown.ts",
         "src/features/guild/events/hooks/utils/use-local-coverage-timer.ts",
         "src/features/guild/events/hooks/use-window-status.ts",

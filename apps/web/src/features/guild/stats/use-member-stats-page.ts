@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useKillsControllerGetMemberKills } from "@lootlog/client/main";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColor } from "@/utils/get-member-color";
 import { useGuildMemberMap } from "./hooks/use-guild-member-map";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 
@@ -139,7 +139,7 @@ export function useMemberStatsPage() {
       }
     : undefined;
 
-  const memberColor = useMemberColor(adaptedMember);
+  const memberColor = getMemberColor(adaptedMember);
 
   const member = data?.member;
 

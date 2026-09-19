@@ -208,7 +208,7 @@ export const AUTH_SCHEMA_FINGERPRINT_IMPORTED_V1_6: ReadonlyArray<SchemaColumn> 
     };
   });
 
-export const AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA: ReadonlyArray<SchemaColumn> =
+const AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA: ReadonlyArray<SchemaColumn> =
   AUTH_SCHEMA_FINGERPRINT_V1_6.flatMap((schemaColumn) =>
     schemaColumn.tableName === "account" &&
     schemaColumn.columnName === "password"

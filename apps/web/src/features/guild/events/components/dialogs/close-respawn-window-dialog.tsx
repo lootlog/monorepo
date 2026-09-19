@@ -1,3 +1,4 @@
+import { DialogActionFooter } from "./dialog-action-footer";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@lootlog/ui/components/dialog";
-import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Input } from "@lootlog/ui/components/input";
 import {
@@ -206,28 +206,13 @@ export const CloseRespawnWindowDialog = ({
               )}
             </div>
 
-            <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleOpenChange(false)}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                {t("common.cancel")}
-              </Button>
-              <Button
-                type="submit"
-                loading={isLoading}
-                variant="destructive"
-                size="sm"
-                disabled={isLoading}
-                className="flex-1"
-              >
-                {t("events.respawn.closeWindowButton")}
-              </Button>
-            </div>
+            <DialogActionFooter
+              cancelLabel={t("common.cancel")}
+              confirmLabel={t("events.respawn.closeWindowButton")}
+              confirmVariant="destructive"
+              isPending={isLoading}
+              onCancel={() => handleOpenChange(false)}
+            />
           </form>
         </Form>
       </DialogContent>

@@ -51,7 +51,7 @@ const getOffsetFormatter = createCachedFormatter("en-US", {
   hour12: false,
 });
 
-export function getPartValue(
+function getPartValue(
   parts: Intl.DateTimeFormatPart[],
   type: Intl.DateTimeFormatPartTypes,
 ): string {

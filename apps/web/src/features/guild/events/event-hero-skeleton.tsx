@@ -1,8 +1,6 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCard } from "@/components/common/section-card/section-card";
 import { PageHeader } from "@/components/common/page-header";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
+import { SkeletonSectionCard } from "./components/skeleton-section-card";
 
 export const EventHeroSkeleton = () => {
   return (
@@ -14,41 +12,29 @@ export const EventHeroSkeleton = () => {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <SectionCard className="border-border bg-card ">
-            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
-            <SectionCardContent>
-              <Skeleton className="mb-3 h-5 w-32" />
-              <div className="flex flex-wrap gap-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-20 rounded-full" />
-                ))}
-              </div>
-            </SectionCardContent>
-          </SectionCard>
-          <SectionCard className="border-border bg-card ">
-            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
-            <SectionCardContent>
-              <Skeleton className="mb-3 h-5 w-24" />
-              <div className="grid grid-cols-2 gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 rounded-lg" />
-                ))}
-              </div>
-            </SectionCardContent>
-          </SectionCard>
+          <SkeletonSectionCard subtitleClassName="h-5 w-32">
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-20 rounded-full" />
+              ))}
+            </div>
+          </SkeletonSectionCard>
+          <SkeletonSectionCard>
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 rounded-lg" />
+              ))}
+            </div>
+          </SkeletonSectionCard>
         </div>
         <div className="space-y-4">
-          <SectionCard className="border-border bg-card ">
-            <SectionCardHeader title=<Skeleton className="h-4 w-32" /> />
-            <SectionCardContent>
-              <Skeleton className="mb-3 h-5 w-24" />
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-8 rounded-md" />
-                ))}
-              </div>
-            </SectionCardContent>
-          </SectionCard>
+          <SkeletonSectionCard>
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 rounded-md" />
+              ))}
+            </div>
+          </SkeletonSectionCard>
         </div>
       </div>
     </div>

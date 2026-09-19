@@ -18,6 +18,11 @@ export type CursorTooltipPlacement = {
   align: "start" | "end";
 };
 
+/**
+ * Not `es-toolkit`'s `clamp`: a tooltip wider or taller than the viewport
+ * makes `max` fall below `min`, and this collapses that inverted range onto
+ * `min` (the padded top-left) instead of letting the upper bound win.
+ */
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), Math.max(min, max));
 

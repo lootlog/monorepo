@@ -21,7 +21,7 @@ export const calculateTimelineSegments = (
 
   if (totalMs <= 0) return [];
 
-  const sortedGaps = [...gaps]
+  const sortedGaps = gaps
     .filter((g) => {
       const gapStart = new Date(g.startedAt);
       const gapEnd = g.endedAt ? new Date(g.endedAt) : endTime;

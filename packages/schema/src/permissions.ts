@@ -42,14 +42,14 @@ export const Permission = Capability;
 
 export type Permission = Capability;
 
-export interface UserGuildPermissionsRole {
+interface UserGuildPermissionsRole {
   id: string;
   lvlRangeFrom: number;
   lvlRangeTo: number;
   permissions: Permission[];
 }
 
-export interface UserGuildPermissionsGuild {
+interface UserGuildPermissionsGuild {
   id: string;
   ownerId: string;
 }
@@ -63,14 +63,14 @@ export const CapabilitySchema = Schema.Literals(Object.values(Capability));
 
 export const PermissionSchema = CapabilitySchema;
 
-export const UserGuildPermissionsRoleSchema = Schema.Struct({
+const UserGuildPermissionsRoleSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   lvlRangeFrom: Schema.Int,
   lvlRangeTo: Schema.Int,
   permissions: Schema.Array(PermissionSchema),
 });
 
-export const UserGuildPermissionsGuildSchema = Schema.Struct({
+const UserGuildPermissionsGuildSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   ownerId: Schema.NonEmptyString,
 });

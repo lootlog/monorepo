@@ -19,7 +19,7 @@ type DiscordApplicationError = {
   status: number;
 };
 
-export function extractHttpStatus(error: unknown): number | null {
+function extractHttpStatus(error: unknown): number | null {
   if (error instanceof ApplicationError) {
     return applicationErrorStatus(error);
   }
@@ -43,9 +43,7 @@ export function isDiscordNotFoundError(error: unknown): boolean {
   return extractHttpStatus(error) === HttpStatus.NOT_FOUND;
 }
 
-export function createDiscordRateLimitError(
-  retryAfterMs?: number,
-): ApplicationError {
+function createDiscordRateLimitError(retryAfterMs?: number): ApplicationError {
   const retryAfterSeconds =
     retryAfterMs === undefined ? undefined : Math.ceil(retryAfterMs / 1000);
 
@@ -144,7 +142,7 @@ export function toDiscordRequestError(error: unknown): Error {
   });
 }
 
-export function getInvalidDiscordRequestStatus(
+function getInvalidDiscordRequestStatus(
   error: unknown,
 ): DiscordInvalidRequestStatus | null {
   if (error instanceof RateLimitError) {

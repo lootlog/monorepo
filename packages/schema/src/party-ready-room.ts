@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { NonNegativeSafeInteger } from "./http-scalars.js";
 
-export const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
+const PARTY_READY_ROOM_STATUSES = ["ACTIVE", "CANCELLED"] as const;
 
 export const PARTY_READY_ROOM_PARTY_PRESENCE_STATES = [
   "OUTSIDE",
@@ -10,10 +10,10 @@ export const PARTY_READY_ROOM_PARTY_PRESENCE_STATES = [
 
 export type PartyReadyRoomStatus = (typeof PARTY_READY_ROOM_STATUSES)[number];
 
-export type PartyReadyRoomPartyPresenceState =
+type PartyReadyRoomPartyPresenceState =
   (typeof PARTY_READY_ROOM_PARTY_PRESENCE_STATES)[number];
 
-export interface PartyReadyRoomClan {
+interface PartyReadyRoomClan {
   id?: number;
   name?: string;
 }
@@ -65,12 +65,6 @@ export type PartyReadyRoomParticipantProjection =
 export type PartyReadyRoomProjection =
   typeof PartyReadyRoomProjectionSchema.Type;
 
-export type PartyReadyRoomUpsertUpdate =
-  typeof PartyReadyRoomUpsertUpdateSchema.Type;
-
-export type PartyReadyRoomRemoveUpdate =
-  typeof PartyReadyRoomRemoveUpdateSchema.Type;
-
 export type PartyReadyRoomClientUpdate =
   typeof PartyReadyRoomClientUpdateSchema.Type;
 
@@ -85,22 +79,12 @@ export interface PartyReadyRoomInvitationTarget {
   characterId: string;
 }
 
-export type PartyReadyRoomErrorCode =
-  | "ACTIVE_GATHERING_EXISTS"
-  | "ALREADY_JOINED_ELSEWHERE"
-  | "CHARACTER_ALREADY_JOINED"
-  | "FORBIDDEN"
-  | "INELIGIBLE_CHARACTER"
-  | "INVALID_STATE_TRANSITION"
-  | "REVISION_CONFLICT"
-  | "ROOM_EXPIRED";
-
 const PartyReadyRoomClanSchema = Schema.Struct({
   id: Schema.optionalKey(Schema.Number),
   name: Schema.optionalKey(Schema.String),
 });
 
-export const PartyReadyRoomCharacterSchema = Schema.Struct({
+const PartyReadyRoomCharacterSchema = Schema.Struct({
   accountId: Schema.String,
   characterId: Schema.String,
   icon: Schema.String,
@@ -110,7 +94,7 @@ export const PartyReadyRoomCharacterSchema = Schema.Struct({
   clan: Schema.optionalKey(PartyReadyRoomClanSchema),
 });
 
-export const PartyReadyRoomParticipantSchema = Schema.Struct({
+const PartyReadyRoomParticipantSchema = Schema.Struct({
   participantId: Schema.String,
   discordId: Schema.String,
   character: PartyReadyRoomCharacterSchema,
@@ -161,18 +145,18 @@ const activeProjectionFields = {
   status: Schema.Literal("ACTIVE"),
 };
 
-export const PartyReadyRoomOrganizerProjectionSchema = Schema.Struct({
+const PartyReadyRoomOrganizerProjectionSchema = Schema.Struct({
   ...activeProjectionFields,
   viewer: Schema.Literal("ORGANIZER"),
   ownedParticipantIds: Schema.mutable(Schema.Array(Schema.String)),
 });
 
-export const PartyReadyRoomParticipantProjectionSchema = Schema.Struct({
+const PartyReadyRoomParticipantProjectionSchema = Schema.Struct({
   ...activeProjectionFields,
   viewer: Schema.Literal("PARTICIPANT"),
 });
 
-export const PartyReadyRoomProjectionSchema = Schema.Union([
+const PartyReadyRoomProjectionSchema = Schema.Union([
   PartyReadyRoomOrganizerProjectionSchema,
   PartyReadyRoomParticipantProjectionSchema,
 ]);
@@ -181,20 +165,20 @@ export const decodePartyReadyRoomProjection = Schema.decodeUnknownSync(
   PartyReadyRoomProjectionSchema,
 );
 
-export const PartyReadyRoomUpsertUpdateSchema = Schema.Struct({
+const PartyReadyRoomUpsertUpdateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
   type: Schema.Literal("UPSERT"),
   projection: PartyReadyRoomProjectionSchema,
 });
 
-export const PartyReadyRoomRemoveUpdateSchema = Schema.Struct({
+const PartyReadyRoomRemoveUpdateSchema = Schema.Struct({
   schemaVersion: Schema.Literal(3),
   type: Schema.Literal("REMOVE"),
   notificationId: Schema.String,
   revision: Schema.Number,
 });
 
-export const PartyReadyRoomClientUpdateSchema = Schema.Union([
+const PartyReadyRoomClientUpdateSchema = Schema.Union([
   PartyReadyRoomUpsertUpdateSchema,
   PartyReadyRoomRemoveUpdateSchema,
 ]);

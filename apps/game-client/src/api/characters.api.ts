@@ -3,6 +3,7 @@ import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
 import { LanguageVersion } from "@/store/global.store";
 import { createApiClient } from "@lootlog/client/transport";
 import { getRuntimeCookie } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
+import { pruneByRecency } from "@/lib/prune-by-recency";
 
 const MARGONEM_CHARACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
@@ -319,9 +320,8 @@ const sweepPersistentCharacterListCache = (now = Date.now()): void => {
       continue;
     }
 
-    const ageMs = now - parsed.cachedAt;
-
-    if (ageMs < 0 || ageMs > CHARACTER_LIST_CACHE_STALE_TTL_MS) {
+    if (now - parsed.cachedAt < 0) {
+      // A cache written by a clock ahead of this one can never age out.
       removeLocalStorageItem(key);
       continue;
     }
@@ -329,15 +329,16 @@ const sweepPersistentCharacterListCache = (now = Date.now()): void => {
     retainedEntries.push({ cachedAt: parsed.cachedAt, key, storageIndex });
   }
 
-  retainedEntries.sort((firstEntry, secondEntry) => {
-    const timeDifference = secondEntry.cachedAt - firstEntry.cachedAt;
-
-    if (timeDifference !== 0) return timeDifference;
-
-    return secondEntry.storageIndex - firstEntry.storageIndex;
+  const { evicted } = pruneByRecency({
+    entries: retainedEntries,
+    now,
+    ttlMs: CHARACTER_LIST_CACHE_STALE_TTL_MS,
+    cap: CHARACTER_LIST_CACHE_ENTRY_CAP,
+    timestampOf: (entry) => entry.cachedAt,
+    tiebreakOf: (entry) => entry.storageIndex,
   });
 
-  for (const entry of retainedEntries.slice(CHARACTER_LIST_CACHE_ENTRY_CAP)) {
+  for (const entry of evicted) {
     removeLocalStorageItem(entry.key);
   }
 };

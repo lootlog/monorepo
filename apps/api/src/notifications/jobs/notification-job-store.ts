@@ -54,7 +54,7 @@ export type NotificationDeliveryUpdate = {
   readonly targetFirst?: boolean;
 };
 
-export class NotificationJobStoreFailure extends TaggedErrorClass<NotificationJobStoreFailure>()(
+class NotificationJobStoreFailure extends TaggedErrorClass<NotificationJobStoreFailure>()(
   "NotificationJobStoreFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

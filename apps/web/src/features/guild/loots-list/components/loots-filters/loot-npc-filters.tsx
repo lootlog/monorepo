@@ -65,7 +65,7 @@ export const LootNpcFilters = ({
                   id={`npcType-${npcType.value}`}
                   checked={selectedNpcTypes.has(npcType.value)}
                   onCheckedChange={(checked) => {
-                    const currentTypes = filters.npcTypes ?? [];
+                    const currentTypes = filters.npcTypes;
 
                     const newTypes = checked
                       ? [...currentTypes, npcType.value]

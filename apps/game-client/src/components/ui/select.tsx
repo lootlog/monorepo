@@ -197,32 +197,6 @@ const SelectItem = React.forwardRef<HTMLElement, BaseSelect.Item.Props>(
 
 SelectItem.displayName = "SelectItem";
 
-const SelectGroup = (props: BaseSelect.Group.Props) => (
-  <BaseSelect.Group data-slot="select-group" {...props} />
-);
-
-const SelectLabel = ({ className, ...props }: BaseSelect.GroupLabel.Props) => (
-  <BaseSelect.GroupLabel
-    data-slot="select-label"
-    className={cn(selectGroupLabelClassName, className)}
-    {...props}
-  />
-);
-
-const SelectSeparator = ({
-  className,
-  ...props
-}: BaseSelect.Separator.Props) => (
-  <BaseSelect.Separator
-    data-slot="select-separator"
-    className={cn(
-      "ll:pointer-events-none ll:-mx-1 ll:my-1 ll:h-px ll:bg-border",
-      className,
-    )}
-    {...props}
-  />
-);
-
 function getSelectItems<Value extends string>(children: React.ReactNode) {
   const items: Array<{ label: React.ReactNode; value: Value }> = [];
 
@@ -251,13 +225,4 @@ function getSelectItems<Value extends string>(children: React.ReactNode) {
   return items;
 }
 
-export {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-};
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue };

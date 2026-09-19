@@ -26,7 +26,6 @@ describe("traffic splitter", () => {
     ["/brand/lootlog-mark.svg", environment.LANDING_ORIGIN],
     ["/screenshots/dashboard-current.png", environment.LANDING_ORIGIN],
     ["/favicon.ico", environment.LANDING_ORIGIN],
-    ["/_next/static/legacy.css", environment.LANDING_ORIGIN],
     ["/docs", environment.DOCS_ORIGIN],
     ["/docs/getting-started/", environment.DOCS_ORIGIN],
     ["/docs-assets/docs.js", environment.DOCS_ORIGIN],

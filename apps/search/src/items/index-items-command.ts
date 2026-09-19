@@ -17,6 +17,3 @@ export const IndexItemsPayload = Schema.Array(IndexItem);
 export type IndexItemsCommand = {
   readonly items: typeof IndexItemsPayload.Type;
 };
-
-export const decodeIndexItemsPayload =
-  Schema.decodeUnknownSync(IndexItemsPayload);

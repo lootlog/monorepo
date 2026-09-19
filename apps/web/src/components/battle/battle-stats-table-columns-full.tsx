@@ -7,6 +7,7 @@ import type { TFunction } from "i18next";
 import type { sortedTableFeatures } from "@/lib/tanstack-table-features";
 import { BattleStatsExpandButton } from "./battle-stats-expand-button";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { formatNumber } from "@/components/battle/utils/value-utils";
 
 export type BattleStatsExpansionType =
   | "damage"
@@ -24,8 +25,6 @@ type BattleStatsExpandableKey =
   | "legbons";
 
 type BattleStatsColumn = ColumnDef<typeof sortedTableFeatures, Warrior>;
-
-const formatNumber = (value: number) => value.toLocaleString("pl-PL");
 
 export const getBattleStatsTableColumns = ({
   characterId,

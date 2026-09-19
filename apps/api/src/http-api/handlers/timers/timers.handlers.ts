@@ -168,10 +168,7 @@ const toHttpResponse = <A, R>(effect: Effect.Effect<A, TimersHttpFailure, R>) =>
   Effect.catchTags(effect, {
     ApplicationError: applicationErrorResponse,
     TimersAccessDenied: statusCodeResponse,
-    TimersConflict: statusCodeResponse,
-    TimersForbidden: statusCodeResponse,
     TimersInfrastructureError: (error) => Effect.die(error.cause),
-    TimersInvalidRequest: statusCodeResponse,
     TimersNotFound: statusCodeResponse,
   });
 

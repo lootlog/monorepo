@@ -53,7 +53,7 @@ type GuildChannels = {
   readonly syncState: DiscordGuildSyncState;
 };
 
-export class DiscordBotClientFailure extends TaggedErrorClass<DiscordBotClientFailure>()(
+class DiscordBotClientFailure extends TaggedErrorClass<DiscordBotClientFailure>()(
   "DiscordBotClientFailure",
   {
     reason: Schema.Literals(["invalid-response", "status"]),

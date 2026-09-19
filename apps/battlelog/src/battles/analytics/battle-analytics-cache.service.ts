@@ -8,7 +8,7 @@ import type {
   PlayerVsPlayerQuery,
 } from "#src/battles/analytics/query-battle-statistics";
 import { type Cause, Effect, Exit } from "effect";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
+import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 
 const ANALYTICS_CACHE_PREFIX = "analytics";
 
@@ -179,13 +179,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       | AbyssSeasonsQuery
       | PlayerVsPlayerQuery
       | { characterId?: string; world?: string },
-  ): string =>
-    [
-      prefix,
-      metric,
-      userId,
-      Buffer.from(stableJsonStringify(query)).toString("base64url"),
-    ].join(":");
+  ): string => [prefix, metric, userId, stableJsonCacheKey(query)].join(":");
 
   return {
     buildAnalyticsCacheKey,

@@ -8,11 +8,9 @@ export const CHAT_MESSAGE_GAP_MIN_PX = 0;
 
 export const CHAT_MESSAGE_GAP_MAX_PX = 16;
 
-export const ChatNpcLayoutSchema = Schema.Literals(["tile", "inline"]);
+const ChatNpcLayoutSchema = Schema.Literals(["tile", "inline"]);
 
-export type ChatNpcLayout = typeof ChatNpcLayoutSchema.Type;
-
-export const ChatAppearancePresetSchema = Schema.Literals([
+const ChatAppearancePresetSchema = Schema.Literals([
   "readable",
   "compact",
   "custom",
@@ -20,7 +18,7 @@ export const ChatAppearancePresetSchema = Schema.Literals([
 
 export type ChatAppearancePreset = typeof ChatAppearancePresetSchema.Type;
 
-export const ChatAppearanceSettingsSchema = Schema.Struct({
+const ChatAppearanceSettingsSchema = Schema.Struct({
   npcLayout: ChatNpcLayoutSchema,
   fontScalePercent: Schema.Finite.check(
     Schema.isBetween({

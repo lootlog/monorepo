@@ -86,6 +86,10 @@ const getNextSearchParams = (
   return omitBy(newParams, (value) => value === undefined || value === "");
 };
 
+const DEBOUNCED_SEARCH_KEYS = ["search", "minLvl", "maxLvl"] as const;
+
+type DebouncedSearchKey = (typeof DEBOUNCED_SEARCH_KEYS)[number];
+
 export const KillsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -94,14 +98,19 @@ export const KillsPage: React.FC = () => {
 
   const [searchInput, setSearchInput] = useState(searchParams.search ?? "");
   const debouncedSearch = useDebounce(searchInput, 500);
-  const prevDebouncedSearch = useRef(debouncedSearch);
 
   const [minLvlInput, setMinLvlInput] = useState(searchParams.minLvl ?? "");
   const [maxLvlInput, setMaxLvlInput] = useState(searchParams.maxLvl ?? "");
   const debouncedMinLvl = useDebounce(minLvlInput, 500);
   const debouncedMaxLvl = useDebounce(maxLvlInput, 500);
-  const prevDebouncedMinLvl = useRef(debouncedMinLvl);
-  const prevDebouncedMaxLvl = useRef(debouncedMaxLvl);
+
+  const debouncedSearchParams: Record<DebouncedSearchKey, string> = {
+    search: debouncedSearch,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
+  };
+
+  const prevDebouncedSearchParams = useRef(debouncedSearchParams);
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalKills", desc: true },
@@ -151,48 +160,35 @@ export const KillsPage: React.FC = () => {
 
   // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
   useEffect(() => {
-    if (debouncedSearch !== prevDebouncedSearch.current) {
-      prevDebouncedSearch.current = debouncedSearch;
-      navigate({
-        to: ".",
-        search: getNextSearchParams(searchParams, {
-          search: debouncedSearch || undefined,
-          cursor: undefined,
-        }),
-        replace: true,
-      });
-    }
-  }, [debouncedSearch, navigate, searchParams]);
+    const changedKeys = DEBOUNCED_SEARCH_KEYS.filter(
+      (key) =>
+        debouncedSearchParams[key] !== prevDebouncedSearchParams.current[key],
+    );
 
-  // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
-  useEffect(() => {
-    if (debouncedMinLvl !== prevDebouncedMinLvl.current) {
-      prevDebouncedMinLvl.current = debouncedMinLvl;
-      navigate({
-        to: ".",
-        search: getNextSearchParams(searchParams, {
-          minLvl: debouncedMinLvl || undefined,
-          cursor: undefined,
-        }),
-        replace: true,
-      });
-    }
-  }, [debouncedMinLvl, navigate, searchParams]);
+    if (changedKeys.length === 0) return;
 
-  // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
-  useEffect(() => {
-    if (debouncedMaxLvl !== prevDebouncedMaxLvl.current) {
-      prevDebouncedMaxLvl.current = debouncedMaxLvl;
-      navigate({
-        to: ".",
-        search: getNextSearchParams(searchParams, {
-          maxLvl: debouncedMaxLvl || undefined,
-          cursor: undefined,
-        }),
-        replace: true,
-      });
-    }
-  }, [debouncedMaxLvl, navigate, searchParams]);
+    prevDebouncedSearchParams.current = debouncedSearchParams;
+    navigate({
+      to: ".",
+      search: getNextSearchParams(searchParams, {
+        ...Object.fromEntries(
+          changedKeys.map((key) => [
+            key,
+            debouncedSearchParams[key] || undefined,
+          ]),
+        ),
+        cursor: undefined,
+      }),
+      replace: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `debouncedSearchParams` is rebuilt every render; the debounced values it holds are the real dependencies.
+  }, [
+    debouncedSearch,
+    debouncedMinLvl,
+    debouncedMaxLvl,
+    navigate,
+    searchParams,
+  ]);
 
   const handleWorldChange = (world: string | undefined) => {
     updateSearchParams({ world, cursor: undefined });

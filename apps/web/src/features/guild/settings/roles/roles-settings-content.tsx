@@ -27,7 +27,7 @@ export const RolesSettingsContent = () => {
   const isMobile = useIsMobile();
   const normalizedSearchValue = searchValue.trim().toLowerCase();
 
-  const filteredRoles = [...(roles ?? [])]
+  const filteredRoles = (roles ?? [])
     .filter((role) => role.name.toLowerCase().includes(normalizedSearchValue))
     .sort((firstRole, secondRole) => {
       const firstRoleIsAdmin = firstRole.permissions.includes(Permission.ADMIN);

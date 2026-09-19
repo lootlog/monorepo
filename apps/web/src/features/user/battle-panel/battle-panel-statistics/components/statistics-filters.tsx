@@ -8,14 +8,11 @@ interface StatisticsFiltersProps {
   minLevel?: number;
   maxLevel?: number;
   ph?: boolean;
-  matchmaking?: boolean;
-  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
   onPhChange: (ph: boolean) => void;
-  onMatchmakingChange: (matchmaking: boolean) => void;
 }
 
 export function StatisticsFilters({
@@ -24,14 +21,11 @@ export function StatisticsFilters({
   minLevel,
   maxLevel,
   ph,
-  matchmaking,
-  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
   onMaxLevelChange,
   onPhChange,
-  onMatchmakingChange,
 }: StatisticsFiltersProps) {
   return (
     <div className="w-full min-w-0">
@@ -42,14 +36,11 @@ export function StatisticsFilters({
           minLevel={minLevel}
           maxLevel={maxLevel}
           ph={ph}
-          matchmaking={matchmaking}
-          showMatchmakingFilter={showMatchmakingFilter}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}
           onMaxLevelChange={onMaxLevelChange}
           onPhChange={onPhChange}
-          onMatchmakingChange={onMatchmakingChange}
         />
       </div>
 
@@ -60,14 +51,11 @@ export function StatisticsFilters({
           minLevel={minLevel}
           maxLevel={maxLevel}
           ph={ph}
-          matchmaking={matchmaking}
-          showMatchmakingFilter={showMatchmakingFilter}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}
           onMaxLevelChange={onMaxLevelChange}
           onPhChange={onPhChange}
-          onMatchmakingChange={onMatchmakingChange}
         />
       </div>
     </div>

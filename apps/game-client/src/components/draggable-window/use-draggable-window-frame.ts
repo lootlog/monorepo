@@ -6,13 +6,7 @@ import {
   type WindowId,
   type WindowOpacity,
 } from "@/store/windows.store";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { cancelWindowResizeSession } from "./window-resize-session";
 
@@ -593,7 +587,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     };
   }, [animationPhase, onWindowAnimationEnd]);
 
-  const getResolvedMaxContentHeight = useCallback(() => {
+  const getResolvedMaxContentHeight = () => {
     const windowBody = windowBodyRef.current;
     const contentElement = contentRef.current;
 
@@ -612,21 +606,17 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
       sanitizeMaxContentHeight(localSize.height - chromeHeight) ??
       1
     );
-  }, [localSize.height, resolvedMaxContentHeight]);
+  };
 
-  const getClampedPosition = useCallback(
-    (pos: { x: number; y: number }) => {
-      if (typeof window === "undefined") return pos;
-      const maxX = window.innerWidth - effectiveWidth;
-      const maxY = window.innerHeight - effectiveHeight;
+  const getClampedPosition = (pos: { x: number; y: number }) => {
+    const maxX = window.innerWidth - effectiveWidth;
+    const maxY = window.innerHeight - effectiveHeight;
 
-      return {
-        x: Math.max(0, Math.min(pos.x, maxX)),
-        y: Math.max(0, Math.min(pos.y, maxY)),
-      };
-    },
-    [effectiveHeight, effectiveWidth],
-  );
+    return {
+      x: Math.max(0, Math.min(pos.x, maxX)),
+      y: Math.max(0, Math.min(pos.y, maxY)),
+    };
+  };
 
   const defaultPosition = isLocked
     ? rawDefaultPosition
@@ -766,9 +756,9 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     setOpacityInStore(id, newOpacity);
   };
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-  }, []);
+  };
 
   const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
     cancelWindowResizeSession();

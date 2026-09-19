@@ -19,7 +19,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import type { CreateEventRequest } from "#src/contracts/events/schemas";
 import { attachComputedEventActive } from "#src/events/monitoring/event-activity";
 
-export class EventCreationError extends TaggedErrorClass<EventCreationError>()(
+class EventCreationError extends TaggedErrorClass<EventCreationError>()(
   "EventCreationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

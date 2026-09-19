@@ -1,4 +1,4 @@
-import { Predicate } from "effect";
+import { Encoding, Predicate } from "effect";
 
 export const stableJsonStringify = (value: unknown): string =>
   JSON.stringify(value, (_key, entry) =>
@@ -10,3 +10,7 @@ export const stableJsonStringify = (value: unknown): string =>
         )
       : entry,
   ) ?? "undefined";
+
+/** Stable, URL-safe cache-key fragment for an arbitrary JSON value. */
+export const stableJsonCacheKey = (value: unknown): string =>
+  Encoding.encodeBase64Url(stableJsonStringify(value));

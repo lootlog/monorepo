@@ -76,7 +76,7 @@ export type AirTagPreferences = {
 
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
 
-export type DetectorSettingsPatch = {
+type DetectorSettingsPatch = {
   routingRules?: DetectorRoutingRule[];
   ELITE2?: DetectorTypeSettingsPatch;
   HERO?: DetectorTypeSettingsPatch;
@@ -97,7 +97,7 @@ export interface UserGameAccountPreferences {
   hasStoredPreferences: boolean;
 }
 
-export type NotificationsSettingsPatch = Partial<
+type NotificationsSettingsPatch = Partial<
   Record<NotificationType, Partial<NotificationSettings>>
 > & {
   guildIds?: string[];

@@ -147,12 +147,6 @@ export interface DiscordGuildSyncStateUpdatedEvent {
   syncState: DiscordGuildSyncState;
 }
 
-export interface DiscordNotificationSendTarget {
-  targetId: string;
-  externalId: string;
-  targetType: NotificationTargetType;
-}
-
 export type DiscordNotificationAllowedMentions = {
   parse?: Array<"roles" | "users" | "everyone">;
   roles?: string[];

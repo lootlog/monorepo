@@ -8,7 +8,7 @@ import type {
   MemberRemovalNotificationTarget,
 } from "./member.types.js";
 
-export class MemberRemovalFailure extends TaggedErrorClass<MemberRemovalFailure>()(
+class MemberRemovalFailure extends TaggedErrorClass<MemberRemovalFailure>()(
   "MemberRemovalFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -6,7 +6,7 @@ import {
   nullableIsoDatetimeCodec,
 } from "#src/shared/schema/response-codecs";
 
-export const EventHeroNpcResponse = Schema.Struct({
+const EventHeroNpcResponse = Schema.Struct({
   id: Schema.String,
   npcId: Schema.NullOr(Schema.Number),
   npcName: Schema.String,

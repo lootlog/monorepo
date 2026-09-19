@@ -8,7 +8,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, UserRoundX } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Permission } from "@lootlog/schema/permissions";
@@ -58,15 +58,11 @@ const MemberSettingsDetailPageContent = () => {
   const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
   const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
 
-  const memberActivityStatsByDiscordIdAndSource = useMemo(
-    () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
-    [memberActivityStats],
-  );
+  const memberActivityStatsByDiscordIdAndSource =
+    mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats);
 
-  const queryMember = useMemo(
-    () => members?.find((member) => String(member.id) === memberId) ?? null,
-    [memberId, members],
-  );
+  const queryMember =
+    members?.find((member) => String(member.id) === memberId) ?? null;
 
   const [updatedMember, setUpdatedMember] = useState<GuildMember | null>(null);
   const member = updatedMember ?? queryMember;

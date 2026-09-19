@@ -1,13 +1,12 @@
+import { EventLoadError } from "./components/event-load-error";
 import { SectionLoading } from "@/components/common/section-loading";
 import { useTranslation } from "react-i18next";
-import { useParams, Link } from "@tanstack/react-router";
-import { Button } from "@lootlog/ui/components/button";
+import { useParams } from "@tanstack/react-router";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/schema/permissions";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { EventRankingFilter } from "./components/ranking/event-ranking-filter";
 import { EventRankingSummary } from "./components/ranking/event-ranking-summary";
-import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -124,17 +123,7 @@ export const EventRankingPage = () => {
   }
 
   if (eventError || !event) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
-        <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">
-          {t("events.error", "Nie znaleziono eventu")}
-        </p>
-        <Link to="/$guildId/events" params={{ guildId: queryGuildId }}>
-          <Button variant="outline">{t("events.backToList")}</Button>
-        </Link>
-      </div>
-    );
+    return <EventLoadError guildId={queryGuildId} />;
   }
 
   const heroes = event.heroNpcs ?? [];

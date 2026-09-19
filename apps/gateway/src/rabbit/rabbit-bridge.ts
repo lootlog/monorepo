@@ -250,7 +250,7 @@ export const gatewayQueueDefinitions: ReadonlyArray<RabbitQueueDefinition> =
       : [main, retryQueue, deadLetterQueue];
   });
 
-export const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
+const gatewayDeadLetterSpecs = gatewayConsumerSpecs.flatMap((spec) =>
   spec.deadLetterRoutingKey
     ? [
         {

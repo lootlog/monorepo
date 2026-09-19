@@ -15,9 +15,7 @@
   "header": {
     "brand": "Lootlog",
     "docs": "Dokumentacja",
-    "github": "GitHub",
     "support": "Wesprzyj",
-    "install": "Zainstaluj",
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
     "navigationLabel": "Główna nawigacja",
@@ -32,114 +30,10 @@
     "loginError": "Nie udało się rozpocząć logowania przez Discord. Spróbuj ponownie."
   },
   "hero": {
-    "eyebrow": "Dodatek do Margonem",
-    "recordLabel": "Rejestr operacyjny gildii",
     "title": "Mniej pilnowania. Więcej grania.",
     "description": "Wspólne timery, historia łupów i statystyki walk. Wszystko pod ręką — w grze i w panelu klanu.",
     "installAddon": "Zainstaluj dodatek",
-    "openDashboard": "Otwórz Lootloga",
-    "trustLine": "Darmowy · open source · tworzony przez społeczność",
-    "evidenceLabel": "Bieżący widok produktu",
-    "evidenceIndex": "Zapis 01 / Panel walk",
-    "screenshotAlt": "Aktualny dashboard Lootloga ze statystykami gracza i najczęściej bitymi potworami",
-    "screenshotCaption": "Panel gracza w Lootlogu",
-    "capabilities": {
-      "battles": {
-        "title": "Historia walk",
-        "description": "Pełny zapis drużyn, wyników i przeciwników."
-      },
-      "timers": {
-        "title": "Wspólne timery",
-        "description": "Jedno odliczanie widoczne dla całej gildii."
-      },
-      "statistics": {
-        "title": "Statystyki gildii",
-        "description": "Rankingi i aktywność zamiast zgadywania."
-      },
-      "reservations": {
-        "title": "Rezerwacje",
-        "description": "Ustalenia, które nie giną na czacie."
-      }
-    }
-  },
-  "heroAlt": {
-    "subtitle": "Otwartoźródłowy, zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów, oraz ułatwia organizację w klanie.",
-    "installAddon": "Zainstaluj dodatek",
-    "docs": "Dokumentacja",
-    "goToLootlog": "Przejdź do lootloga",
-    "login": "Zaloguj się"
-  },
-  "features": {
-    "timers": {
-      "title": "Timery respawnu",
-      "description": "Śledzenie czasów respawnu potworów w czasie rzeczywistym."
-    },
-    "npcDetector": {
-      "title": "Wykrywacz NPC",
-      "description": "Automatyczne wykrywanie potworów na mapie z informacjami o typie i poziomie."
-    },
-    "panel": {
-      "title": "Panel Lootloga",
-      "description": "Wyświetlanie, wyszukiwanie i filtrowanie zebranych łupów."
-    },
-    "roles": {
-      "title": "Zarządzanie rolami",
-      "description": "Rozbudowane zarządzanie rolami i uprawnieniami w klanie."
-    },
-    "chat": {
-      "title": "Chat",
-      "description": "Szybka komunikacja z członkami klanu dzięki wbudowanemu chatowi."
-    },
-    "notifications": {
-      "title": "Powiadomienia",
-      "description": "Natychmiastowe powiadomienia o ważnych wydarzeniach w grze."
-    }
-  },
-  "bento": {
-    "title": "Narzędzia dla",
-    "titleHighlight": "Profesjonalistów",
-    "subtitle": "Zbudowane przez graczy, dla graczy. Każdy piksel ma znaczenie.",
-    "timers": {
-      "title": "Synchronizacja Timerów",
-      "description": "Wspólne odliczanie dla całego klanu."
-    },
-    "loot": {
-      "title": "Lootlog z Filtrami",
-      "description": "Zaawansowane filtrowanie łupów."
-    },
-    "notifications": {
-      "title": "Powiadomienia",
-      "description": "Bądź zawsze na bieżąco."
-    },
-    "battles": {
-      "title": "Analiza Walk",
-      "description": "Wykresy, statystyki, wnioski."
-    },
-    "chat": {
-      "title": "Czat Zintegrowany",
-      "description": "Komunikacja bez wychodzenia z gry."
-    },
-    "reservations": {
-      "title": "System Rezerwacji",
-      "description": "Koniec z kłótniami o respy."
-    },
-    "visual": {
-      "titan": "Tytan",
-      "hero": "Heros",
-      "e2": "E2",
-      "npc1": "Piekielny Kościej (85w)",
-      "npc2": "Święty Braciszek (123b)",
-      "legendary": "Legendarny",
-      "respawn": "Respawn",
-      "respawnMessage": "odrodził się na mapie!",
-      "auction": "Aukcja",
-      "auctionMessage": "Twoja oferta została przebita.",
-      "chatMessage1": "Ktoś na E2? Zaraz respi.",
-      "chatMessage2": "Już biegnę, trzymajcie!",
-      "occupied": "Zajęte",
-      "you": "Ty",
-      "free": "Wolne"
-    }
+    "openDashboard": "Otwórz Lootloga"
   },
   "faq": {
     "q1": "Gdzie znajdę analizę walk?",
@@ -154,68 +48,6 @@
     "a5": "Tak. Dane z różnych postaci i światów są dostępne z jednego konta połączonego z Discordem.",
     "q6": "Gdzie zgłosić błąd lub pomysł?",
     "a6": "Napisz na Discordzie Lootloga albo utwórz zgłoszenie na GitHubie. Przyjmujemy też pull requesty."
-  },
-  "featuresPanel": {
-    "title": "Aktywne Moduły",
-    "activeCount": "5 aktywnych",
-    "battleAnalyzer": {
-      "title": "Analizator Walk",
-      "description": "Szczegółowe statystyki z każdej tury."
-    },
-    "autoLoot": {
-      "title": "Auto-Loot",
-      "description": "Baza dropów legendarnych i heroicznych."
-    },
-    "respawnTimer": {
-      "title": "Zegar Respów",
-      "description": "Synchronizowane timery E2 i Tytanów."
-    },
-    "clanVault": {
-      "title": "Skarbiec Klanowy",
-      "description": "Transparentny podział łupów w grupie."
-    },
-    "openSource": {
-      "title": "Open Source",
-      "description": "Kod dostępny na GitHub. Zero wirusów."
-    }
-  },
-  "valueProposition": {
-    "registry": {
-      "title": "Inteligentny Rejestr",
-      "description": "Skończ z notatnikiem. Lootlog skrupulatnie notuje każdego herosa, tytana i E2. Wszystkie dane o dropach i czasach respawnu trafiają prosto do bazy.",
-      "item1": "Wspólny rejestr klanowy",
-      "item2": "Timery bez Excela",
-      "item3": "Historia \"zająca\""
-    },
-    "battles": {
-      "title": "Analiza Walk",
-      "description": "Dlaczego padłeś na Tytanie? Nasz analizator rozbiera walkę na czynniki pierwsze. Zobaczysz buffy, uniki i błędy w rotacji.",
-      "healingEfficiency": "Efektywność leczenia",
-      "damageAbsorption": "Absorpcja obrażeń"
-    }
-  },
-  "quickStart": {
-    "label": "Jak to działa",
-    "title": "Szybki Start",
-    "subtitle": "Instalujesz dodatek raz. Potem grasz normalnie, a Lootlog synchronizuje dane z panelem Twojej gildii.",
-    "fullGuide": "Pełna instrukcja",
-    "step1": {
-      "title": "Pobierz",
-      "description": "Wtyczka do przeglądarki",
-      "note": "(Wymaga Tampermonkey)"
-    },
-    "step2": {
-      "title": "Zaloguj się",
-      "description": "Autoryzacja Discordem"
-    },
-    "step3": {
-      "title": "Graj",
-      "description": "Logi zbierają się w tle"
-    },
-    "step4": {
-      "title": "Analizuj",
-      "description": "Dostęp do panelu lootloga"
-    }
   },
   "proof": {
     "label": "Dowody zamiast obietnic",
@@ -238,7 +70,6 @@
     }
   },
   "workflow": {
-    "label": "Przepływ danych",
     "title": "Od zdarzenia w grze do decyzji klanu.",
     "description": "Instalujesz dodatek raz i grasz jak zwykle. Lootlog rozpoznaje obsługiwane zdarzenia, synchronizuje dane i pokazuje je w panelu.",
     "guide": "Zobacz instrukcję instalacji",
@@ -266,11 +97,8 @@
     }
   },
   "trust": {
-    "label": "Rejestr zaufania",
     "title": "Sprawdź Lootloga przed instalacją.",
     "description": "Lootlog jest darmowym projektem open source rozwijanym przez społeczność. Kod i dokumentacja są publiczne, więc możesz dokładnie sprawdzić narzędzie przed instalacją.",
-    "verified": "Potwierdzone",
-    "auditPrompt": "Sprawdź kod albo przejdź przez dokumentację instalacji.",
     "github": "Sprawdź kod na GitHubie",
     "docs": "Przeczytaj dokumentację",
     "items": {
@@ -293,7 +121,6 @@
     }
   },
   "closingCta": {
-    "label": "Następny ruch",
     "title": "Zacznij zbierać dane, których potrzebuje Twój klan.",
     "description": "Zainstaluj dodatek, połącz konto Discord i przejdź przez krótką konfigurację. Potem graj jak zwykle - Lootlog zacznie porządkować obsługiwane zdarzenia w panelu.",
     "install": "Zainstaluj dodatek",
@@ -302,11 +129,6 @@
   "footer": {
     "developer": "Dla programistów",
     "navigationLabel": "Linki w stopce",
-    "project": "Projekt",
-    "community": "Społeczność",
-    "information": "Informacje",
-    "communityTitle": "Tworzymy go razem.",
-    "communityDescription": "Masz pomysł albo coś nie działa? Porozmawiajmy na Discordzie.",
     "docs": "Dokumentacja",
     "discord": "Discord",
     "github": "GitHub",
@@ -327,7 +149,6 @@
     "lastUpdated": "Data ostatniej aktualizacji: {{date}}"
   },
   "page": {
-    "faqLabel": "FAQ",
     "faqTitle": "Najważniejsze pytania przed instalacją.",
     "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu - bez ogólników."
   },
@@ -337,7 +158,6 @@
     "opponent": "Piekielny Kościej",
     "shared": "Ten sam resp. Cały klan.",
     "loot": "Nowy łup w zapisie",
-    "saved": "Łupy zapisane dla klanu",
     "ranking": "Aktywność klanu",
     "kills": "{{count}} bić",
     "items": {
@@ -349,22 +169,6 @@
       "first": "Gracz 01",
       "second": "Gracz 02",
       "third": "Gracz 03"
-    },
-    "timers": "Timery klanu",
-    "pause": "Wstrzymaj animację timerów",
-    "resume": "Wznów animację timerów",
-    "spawned": "Resp!",
-    "opponents": {
-      "kostej": "Piekielny Kościej",
-      "braciszek": "Święty Braciszek",
-      "wladca": "Władca rzek",
-      "lowczyni": "Mroczna łowczyni",
-      "mamlambo": "Mamlambo",
-      "tanroth": "Tanroth"
-    },
-    "world": "Luvia · wspólne timery",
-    "active": "3 aktywne",
-    "untilSpawn": "do respu",
-    "available": "możliwy resp"
+    }
   }
 }

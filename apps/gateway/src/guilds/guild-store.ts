@@ -19,7 +19,7 @@ const CachedGuildDataJson = Schema.fromJsonString(
   }),
 );
 
-export class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
+class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
   "GuildStoreFailure",
   {
     reason: Schema.Literals([
