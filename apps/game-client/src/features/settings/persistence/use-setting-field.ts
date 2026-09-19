@@ -1,4 +1,3 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
 import type {
   ServerSettingsCatalogKey,
   SettingsCatalogValue,
@@ -11,6 +10,7 @@ import {
   selectSettingsValue,
   splitSettingsKey,
   type SettingsScopeType,
+  type SettingsOperation,
 } from "./settings-documents";
 import { enqueueSettingsPatch } from "./settings-patch-client";
 import { useSettingsDocuments } from "./use-settings-documents";
@@ -35,7 +35,7 @@ export const useSettingField = <TKey extends ServerSettingsCatalogKey>(
   const scopeType = options.scopeType ?? getDefaultSettingsScopeType(key);
 
   const setValue = (next: SettingsCatalogValue<TKey>) => {
-    const set: Record<string, unknown> = {};
+    const set: SettingsOperation["set"] = {};
     setPath(set, field, next);
 
     return enqueueSettingsPatch({

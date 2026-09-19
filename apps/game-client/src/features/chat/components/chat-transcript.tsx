@@ -216,7 +216,6 @@ export const ChatTranscript = ({
 
   const savePositionFromEffect = useEffectEvent(savePosition);
   // Persist actual DOM scroll geometry after virtualized rows change; the parent does not own this viewport.
-  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     savePositionFromEffect();
   }, [end, visibleMessageIds, isActive]);

@@ -64,7 +64,6 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
       {cells.map((cell, index) => (
         <td
           // Cells are positional and never reordered.
-          // oxlint-disable-next-line react/no-array-index-key
           key={index}
           data-matrix-column={index}
           onClick={forwardCellClick}

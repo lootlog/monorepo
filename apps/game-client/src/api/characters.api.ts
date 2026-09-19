@@ -1,4 +1,4 @@
-import { Predicate } from "effect";
+import { isPlainObject } from "es-toolkit";
 import { parseFiniteNumber as toNumberOrNull } from "@lootlog/schema/numbers";
 import { LanguageVersion } from "@/store/global.store";
 import { createApiClient } from "@lootlog/client/transport";
@@ -83,7 +83,7 @@ const unwrapCharacterData = (characterData: RawCharacterData) => {
   ];
 
   for (const nestedCharacterCandidate of nestedCharacterCandidates) {
-    if (Predicate.isObject(nestedCharacterCandidate)) {
+    if (isPlainObject(nestedCharacterCandidate)) {
       return nestedCharacterCandidate;
     }
   }
@@ -110,7 +110,7 @@ const normalizeCharacter = (character: unknown): MargonemCharacter | null => {
     });
   }
 
-  if (!Predicate.isObject(character)) {
+  if (!isPlainObject(character)) {
     return null;
   }
 
@@ -295,7 +295,7 @@ const isCharacterListCacheEntry = (
   value: unknown,
 ): value is CharacterListCacheEntry => {
   return (
-    Predicate.isObject(value) &&
+    isPlainObject(value) &&
     typeof value.cachedAt === "number" &&
     Number.isFinite(value.cachedAt) &&
     Array.isArray(value.characters)
@@ -404,7 +404,7 @@ const readMargonemCharacterListCache = ({
   const accountIdKey = String(accountId);
 
   const charlist =
-    Predicate.isObject(parsed) && Predicate.isObject(parsed.charlist)
+    isPlainObject(parsed) && isPlainObject(parsed.charlist)
       ? parsed.charlist
       : null;
 

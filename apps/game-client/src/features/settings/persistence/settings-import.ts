@@ -1,6 +1,7 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { z } from "zod";
 import { storageKey } from "@/lib/storage-key";
 import { isObjectRecord } from "@lootlog/schema/records";
+import type { SettingsCatalogValue } from "@lootlog/domain/settings-documents";
 import type { SettingsDomain } from "@lootlog/schema/settings-documents";
 import { decodeTimerSettings } from "@/store/timer-settings-codec";
 import {
@@ -9,6 +10,7 @@ import {
   hasStoredSettingsValue,
   type GuildSettingsDocuments,
   type SettingsDocuments,
+  type SettingsOperation,
 } from "./settings-documents";
 import type { EnqueueSettingsPatchInput } from "./settings-patch-client";
 import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
@@ -16,6 +18,10 @@ import { GLOBAL_TIMER_SETTINGS_KEY } from "@/store/timer-settings-sync";
 export const SETTINGS_IMPORT_STORAGE_KEY = storageKey("ll:settings:import");
 
 const IMPORT_VERSION = 1;
+
+// Preserve the wire serializer's treatment of undefined legacy properties.
+const decodeLegacyTimerJson = (value: string) =>
+  z.json().parse(JSON.parse(value));
 
 export type SettingsImportState = {
   version: number;
@@ -59,12 +65,16 @@ export const markSettingsImportDone = (domain: SettingsDomain) => {
 export type LocalSettingsSnapshot = {
   /** Raw persisted timers store state (decoded through the codec). */
   timers: unknown;
-  hotkeys: Record<string, unknown>;
+  hotkeys: SettingsCatalogValue<"controls.hotkeys">;
   allowWorldSelection: boolean | undefined;
   battlePanel: { isBattleCollectionEnabled: boolean } | undefined;
 };
 
-const hasContent = (value: unknown) =>
+const hasContent = (
+  value: ReturnType<
+    typeof decodeTimerSettings
+  >[(typeof TIMER_APPEARANCE_FIELDS)[number]],
+) =>
   isObjectRecord(value)
     ? Object.keys(value).length > 0
     : Array.isArray(value)
@@ -110,14 +120,14 @@ const isImportable = (
 
 const differsFromDefault = (
   key: Parameters<typeof getSettingsDefaultValue>[0],
-  value: unknown,
+  value: SettingsCatalogValue<Parameters<typeof getSettingsDefaultValue>[0]>,
 ) => !areSettingsValuesEqual(value, getSettingsDefaultValue(key));
 
 const collectTimerBehaviorImport = (
   documents: SettingsDocuments,
   timers: ReturnType<typeof decodeTimerSettings>,
 ) => {
-  const behavior: Record<string, unknown> = {};
+  const behavior: SettingsOperation["set"] = {};
 
   for (const field of TIMER_BEHAVIOR_FIELDS) {
     const value = timers[field];
@@ -128,7 +138,7 @@ const collectTimerBehaviorImport = (
       isImportable(documents, key) &&
       differsFromDefault(key, value)
     ) {
-      behavior[field] = value;
+      behavior[field] = decodeLegacyTimerJson(JSON.stringify(value));
     }
   }
 
@@ -147,7 +157,7 @@ const collectTimerAppearanceImport = (
   documents: SettingsDocuments,
   timers: ReturnType<typeof decodeTimerSettings>,
 ) => {
-  const appearance: Record<string, unknown> = {};
+  const appearance: SettingsOperation["set"] = {};
 
   for (const field of TIMER_APPEARANCE_FIELDS) {
     const value = timers[field];
@@ -169,7 +179,7 @@ const collectTimerAppearanceImport = (
               (entry): entry is [string, string] => entry[1] !== undefined,
             ),
           )
-        : value;
+        : decodeLegacyTimerJson(JSON.stringify(value));
   }
 
   return appearance;

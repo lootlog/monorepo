@@ -401,16 +401,11 @@ export function useAddTimerForm({ guildId, onClose }: AddTimerFormProps) {
     }
   };
 
-  // Cleanup intentionally reads the latest timer handle, not a DOM node or the initial null value.
-  // oxlint-disable-next-line react-doctor/exhaustive-deps
   useEffect(() => {
+    const blurTimeout = blurTimeoutRef;
+
     return () => {
-      // This mutable timer handle must cancel the latest scheduled blur, not the mount-time value.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      if (blurTimeoutRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        clearTimeout(blurTimeoutRef.current);
-      }
+      if (blurTimeout.current) clearTimeout(blurTimeout.current);
     };
   }, []);
 

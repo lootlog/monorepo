@@ -21,13 +21,13 @@ export const DETECTOR_NPC_TYPES = [
 export const isDetectorNpcType = (value: string): value is DetectorNpcType =>
   DETECTOR_NPC_TYPES.some((type) => type === value);
 
-export interface NotificationSettings {
+export type NotificationSettings = {
   show: boolean;
   highlight: boolean;
   ignoreOtherWorlds: boolean;
   autoHideTimeout?: number;
   sound: boolean;
-}
+};
 
 /**
  * One notification rule per type plus the single list of Organizations the
@@ -41,48 +41,48 @@ export type NotificationsSettings = Record<
   guildIds: string[];
 };
 
-export interface DetectorRoutingRule {
+export type DetectorRoutingRule = {
   id: string;
   name?: string;
   minLevel: number;
   maxLevel: number;
   world?: string;
   guildIds: string[];
-}
+};
 
-export interface DetectorTypeSettings {
+export type DetectorTypeSettings = {
   detect: boolean;
   autoSend: boolean;
   notifyWindow: boolean;
   highlight: boolean;
   notifySound: boolean;
-}
+};
 
-export interface DetectorSettings {
+export type DetectorSettings = {
   routingRules: DetectorRoutingRule[];
   ELITE2: DetectorTypeSettings;
   HERO: DetectorTypeSettings;
   COLOSSUS: DetectorTypeSettings;
   TITAN: DetectorTypeSettings;
-}
+};
 
-export interface MapPingPreferences {
+export type MapPingPreferences = {
   enabled: boolean;
-}
+};
 
-export interface AirTagPreferences {
+export type AirTagPreferences = {
   enabled: boolean;
-}
+};
 
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
 
-export interface DetectorSettingsPatch {
+export type DetectorSettingsPatch = {
   routingRules?: DetectorRoutingRule[];
   ELITE2?: DetectorTypeSettingsPatch;
   HERO?: DetectorTypeSettingsPatch;
   COLOSSUS?: DetectorTypeSettingsPatch;
   TITAN?: DetectorTypeSettingsPatch;
-}
+};
 
 export interface UserGameAccountPreferences {
   accountId: string;

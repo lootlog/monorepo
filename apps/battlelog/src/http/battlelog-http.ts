@@ -465,7 +465,6 @@ const openApiFile = async (): Promise<Blob> => {
   return Bun.file(new URL("../../../openapi.yaml", import.meta.url));
 };
 
-// oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.
 const DocumentationRoutes = HttpRouter.use((router) =>
   Effect.gen(function* () {
     const yaml = yield* Effect.tryPromise(openApiFile);

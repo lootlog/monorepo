@@ -1,0 +1,147 @@
+{
+  "extends": ["../../.oxlintrc.react.json"],
+  "overrides": [
+    {
+      "files": ["**"],
+      "rules": {
+        "anti-slop-effect/no-manual-effect-error-tag": "error",
+        "anti-slop-effect/no-manual-tag-comparison": "error",
+        "anti-slop-effect/no-manual-tagged-construction": "error",
+        "anti-slop-effect/prefer-effect-match": "error"
+      }
+    },
+    {
+      "files": ["src/realtime/event-listeners.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["emit"]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": ["unwrapOrganizationEvent"]
+          }
+        ],
+        "anti-slop/no-reflect-apply": [
+          "error",
+          {
+            "boundaryFunctions": ["emit"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/realtime/realtime-client.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "resolve",
+              "toBytes",
+              "getPresenceSessionId",
+              "handleMessage",
+              "decodeFrame"
+            ]
+          }
+        ],
+        "anti-slop/no-unknown-returns": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "join",
+              "subscribeScope",
+              "unsubscribeScope",
+              "request",
+              "performJoin"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["getPresenceSessionId", "decodeFrame"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/realtime/realtime-client.test.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["respondToLastRequest"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/transport.ts"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["RawQueryParameters"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "getApiMessageFromData",
+              "appendQueryValue",
+              "requestWithBody",
+              "createRequestBody",
+              "post",
+              "put",
+              "patch",
+              "getApiErrorStatus",
+              "getApiErrorMessage"
+            ]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "getApiMessageFromData",
+              "getApiErrorStatus",
+              "getApiErrorStringField"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["scripts/openapi-transformer.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": [
+              "replaceSchemaRef",
+              "transformOpenApiDocument"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["scripts/check-openapi.ts"],
+      "rules": {
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["assert"]
+          }
+        ]
+      }
+    }
+  ]
+}

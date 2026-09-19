@@ -138,8 +138,7 @@ function SidebarProvider({
   };
 
   return (
-    // React Compiler in the consuming web build caches this value by its fields.
-    // oxlint-disable-next-line react-doctor/context-provider-value-from-unmemoized-local-literal
+    // oxlint-disable-next-line react-doctor/context-provider-value-from-unmemoized-local-literal -- The consuming web build runs React Compiler over this source and memoizes the context fields.
     <SidebarContext.Provider value={contextValue}>
       <TooltipProvider delay={0}>
         <div

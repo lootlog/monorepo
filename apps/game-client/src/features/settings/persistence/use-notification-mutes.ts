@@ -1,4 +1,3 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
 import { normalizeNotificationMutes } from "@lootlog/domain/account-preferences";
 import type {
   NotificationMutes,
@@ -50,7 +49,7 @@ export const useUpdateNotificationMutes = () => {
   const status = useSettingsSaveStatus();
 
   const mutate = (patch: NotificationMutesPatch) => {
-    const mutes: Record<string, unknown> = {};
+    const mutes: NotificationMutesPatch = {};
 
     if (patch.players) mutes.players = patch.players;
 

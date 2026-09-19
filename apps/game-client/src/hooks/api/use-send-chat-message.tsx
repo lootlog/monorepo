@@ -7,8 +7,7 @@ export const useSendChatMessage = () => {
   const t = getFixedT("chat");
   const { mutationKey } = getChatControllerSendChatMessageMutationOptions();
 
-  // useChatMessages applies authoritative CHAT_MESSAGE socket events to the shared query cache.
-  // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation
+  // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation -- useChatMessages applies authoritative CHAT_MESSAGE socket events to the shared query cache.
   const mutation = useMutation({
     mutationKey,
     mutationFn: (options: SendChatMessageOptions) => sendChatMessage(options),

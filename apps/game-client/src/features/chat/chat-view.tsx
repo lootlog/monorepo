@@ -213,7 +213,6 @@ export const ChatView = ({
   });
 
   // Reconcile persisted selection when this view's server access subscription changes.
-  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     const next = getNextSelectedGuildId(selectedGuildId, visibleGuilds);
 
@@ -223,7 +222,6 @@ export const ChatView = ({
   const hiddenNpcTypeSet = new Set(hiddenNpcTypes);
   const hiddenNpcTypesKey = [...hiddenNpcTypes].sort().join(",");
   // Server message/access subscriptions and rank filters invalidate persisted read entries.
-  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent
   useEffect(() => {
     if (!visibleGuilds) return;
     const hidden = new Set(hiddenNpcTypesKey.split(",").filter(isChatNpcType));
