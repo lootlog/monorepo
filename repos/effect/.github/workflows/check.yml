@@ -50,6 +50,9 @@ jobs:
         with:
           deno-version: v2.9.4
       - run: pnpm check
+        env:
+          # Leave memory headroom for the runner by collecting the Go heap earlier.
+          GOMEMLIMIT: 4GiB
       - run: deno check .
       - run: pnpm test-types --target '>=5.9'
 
@@ -68,11 +71,12 @@ jobs:
         run: |
           sed -i 's/"stripInternal": false/"stripInternal": true/' tsconfig.base.json
       - run: pnpm build
+      - run: pnpm check-dist-types
 
   bundle:
     name: Bundle
     if: github.event_name == 'pull_request'
-    runs-on: namespace-profile-linux-small
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     timeout-minutes: 10
