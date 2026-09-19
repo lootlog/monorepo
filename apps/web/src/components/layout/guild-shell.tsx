@@ -7,7 +7,8 @@ import { useTranslation } from "react-i18next";
 
 type GuildShellProps = {
   children: ReactNode;
-  variant: "ready" | "fallback";
+  /** `failed` drops the placeholder title: the error card names the problem. */
+  variant: "ready" | "fallback" | "failed";
 };
 
 export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
@@ -22,9 +23,11 @@ export const GuildShell: FC<GuildShellProps> = ({ children, variant }) => {
           <AppTopBar>
             <div className="flex items-center gap-2">
               <SidebarTrigger className="size-8!" />
-              <span className="text-sm font-bold text-primary">
-                {t("common.routeErrors.guildShellTitle")}
-              </span>
+              {variant === "fallback" ? (
+                <span className="text-sm font-bold text-primary">
+                  {t("common.routeErrors.guildShellTitle")}
+                </span>
+              ) : null}
             </div>
           </AppTopBar>
         )

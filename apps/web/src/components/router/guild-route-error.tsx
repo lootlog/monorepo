@@ -2,7 +2,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { useNavigate, type ErrorComponentProps } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-  getRouteErrorMessage,
   getRouteErrorStatus,
   normalizeRouteErrorStatus,
 } from "@/lib/router/route-errors";
@@ -14,22 +13,44 @@ export const GuildRouteError = ({ error, reset }: ErrorComponentProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const normalizedStatus = normalizeRouteErrorStatus(
-    getRouteErrorStatus(error),
+  const status = normalizeRouteErrorStatus(getRouteErrorStatus(error));
+  const handleRetry = useRouteErrorRetry(reset);
+
+  const goToDashboard = (
+    <Button
+      variant={status === 500 ? "outline" : "default"}
+      onClick={() => void navigate({ to: "/@me" })}
+    >
+      {t("common.routeErrors.actions.goToDashboard")}
+    </Button>
   );
 
-  const handleRetry = useRouteErrorRetry(reset);
+  // Only an unexpected failure can change on retry; the server will repeat
+  // a missing permission or a missing Organization.
+  if (status !== 500) {
+    return (
+      <RouteErrorState
+        status={status}
+        title={
+          status === 403
+            ? t("common.routeErrors.guildForbidden.title")
+            : undefined
+        }
+        description={
+          status === 403
+            ? t("common.routeErrors.guildForbidden.description")
+            : undefined
+        }
+        primaryAction={goToDashboard}
+      />
+    );
+  }
 
   return (
     <RouteErrorState
-      status={normalizedStatus}
-      description={getRouteErrorMessage(error)}
+      status={status}
       primaryAction=<RouteRetryButton onRetry={handleRetry} />
-      secondaryAction={
-        <Button variant="outline" onClick={() => void navigate({ to: "/@me" })}>
-          {t("common.routeErrors.actions.goToDashboard")}
-        </Button>
-      }
+      secondaryAction={goToDashboard}
     />
   );
 };

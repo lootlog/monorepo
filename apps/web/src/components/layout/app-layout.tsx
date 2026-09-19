@@ -41,13 +41,20 @@ export const AppLayout = () => {
   const showGuildNav =
     !isUserRoute && guildRouteMatch?.loaderData !== undefined;
 
-  const sidebarNavigation = isStandaloneRoute ? null : isUserRoute ? (
-    <UserSidebarNav />
-  ) : showGuildNav ? (
-    <GuildsSidebarNav />
-  ) : (
-    <GuildSidebarNavPlaceholder />
-  );
+  // A failed Organization route has no navigation to wait for, so the
+  // sidebar stays empty instead of pulsing a skeleton forever.
+  const hasFailedGuildRoute =
+    guildRouteMatch?.status === "error" ||
+    guildRouteMatch?.status === "notFound";
+
+  const sidebarNavigation =
+    isStandaloneRoute || hasFailedGuildRoute ? null : isUserRoute ? (
+      <UserSidebarNav />
+    ) : showGuildNav ? (
+      <GuildsSidebarNav />
+    ) : (
+      <GuildSidebarNavPlaceholder />
+    );
 
   const sidebarStyle:
     | (CSSProperties & { "--sidebar-width": string })
@@ -84,7 +91,15 @@ export const AppLayout = () => {
             <Outlet />
           </UserShell>
         ) : (
-          <GuildShell variant={hasResolvedGuildRoute ? "ready" : "fallback"}>
+          <GuildShell
+            variant={
+              hasResolvedGuildRoute
+                ? "ready"
+                : hasFailedGuildRoute
+                  ? "failed"
+                  : "fallback"
+            }
+          >
             <Outlet />
           </GuildShell>
         )}
