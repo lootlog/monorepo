@@ -1,3 +1,4 @@
+import { isNotNil } from "es-toolkit";
 import type { GameNpc } from "@lootlog/margonem/npcs";
 import { create } from "zustand";
 
@@ -122,9 +123,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()((set) => ({
       }
 
       return {
-        npcs: orderedNpcIds
-          .map((npcId) => npcById.get(npcId))
-          .filter((npc): npc is GameNpcWithLocation => npc !== undefined),
+        npcs: orderedNpcIds.map((npcId) => npcById.get(npcId)).filter(isNotNil),
         activeDetectionAnimations,
         latestDetectionAnimationCycle: detectionAnimationCycle,
       };

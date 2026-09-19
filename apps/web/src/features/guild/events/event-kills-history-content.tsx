@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import { SectionLoading } from "@/components/common/section-loading";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -38,10 +39,7 @@ const getKillCount = (
     );
   }
 
-  return heroStats.reduce(
-    (totalKillCount, heroStatistic) => totalKillCount + heroStatistic.killCount,
-    0,
-  );
+  return sumBy(heroStats, (heroStatistic) => heroStatistic.killCount);
 };
 
 const getEventRouteIds = (guildId?: string, eventId?: string) => ({

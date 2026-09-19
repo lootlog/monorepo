@@ -29,7 +29,7 @@ import { useState } from "react";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import type { SearchWarrior } from "@/lib/api/battlelog-types";
 import { useTranslation } from "react-i18next";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 
 const optionalQueryValue = <Value,>(value: Value | null | undefined) =>
   value ?? undefined;
@@ -140,7 +140,7 @@ export const BattlePanelBattlesList = () => {
 
   const activeFilterChips = buildBattleListFilterLabels({
     filters,
-    formatWorld: capitalizeFirstLetter,
+    formatWorld: upperFirst,
     selectedWarriorsCount: selectedWarriors.length,
     translate: t,
   }).map((chip) => ({
