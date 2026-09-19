@@ -87,7 +87,7 @@ describe("timer-helpers", () => {
           userId: "user-1",
           guildId: "guild-1",
           type: "member",
-          name: "Alice",
+          name: "Later duplicate",
         },
         {
           id: 2,

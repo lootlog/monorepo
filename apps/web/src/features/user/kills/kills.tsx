@@ -1,3 +1,4 @@
+import { omitBy } from "es-toolkit";
 import { z } from "zod";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { PageHeader } from "@/components/common/page-header";
@@ -85,11 +86,7 @@ const getNextSearchParams = (
 ) => {
   const newParams = { ...searchParams, ...updates };
 
-  return Object.fromEntries(
-    Object.entries(newParams).filter(
-      ([, value]) => value !== undefined && value !== "",
-    ),
-  );
+  return omitBy(newParams, (value) => value === undefined || value === "");
 };
 
 export const KillsPage: React.FC = () => {

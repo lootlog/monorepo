@@ -1,5 +1,5 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import upperFirst from "lodash/upperFirst";
+import { upperFirst } from "es-toolkit";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

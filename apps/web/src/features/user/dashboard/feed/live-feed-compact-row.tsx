@@ -1,6 +1,6 @@
 import type { UserFeedResponseDtoOutput } from "@lootlog/client/main";
 import { LiveFeedOrganizations } from "./live-feed-organizations";
-import upperFirst from "lodash/upperFirst";
+import { upperFirst } from "es-toolkit";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";

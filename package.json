@@ -58,6 +58,7 @@
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
       "effect": "4.0.0-rc.116",
+      "es-toolkit": "^1.52.0",
       "lexical": "0.51.0",
       "nanostores": "1.5.3",
       "postcss-load-config": "^6.0.1",

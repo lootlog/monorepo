@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import { SectionLoading } from "@/components/common/section-loading";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,24 +28,18 @@ type RankingSummaryInput = Pick<
 const buildStatsSummary = (
   rankings: RankingSummaryInput[],
 ): MemberStatsSummary => {
-  const totalKills = rankings.reduce(
-    (sum, ranking) => sum + ranking.totalKills,
-    0,
+  const totalKills = sumBy(rankings, (ranking) => ranking.totalKills);
+
+  const totalPoints = sumBy(rankings, (ranking) => ranking.totalPoints);
+
+  const totalTimeSeconds = sumBy(
+    rankings,
+    (ranking) => ranking.totalTimeSeconds,
   );
 
-  const totalPoints = rankings.reduce(
-    (sum, ranking) => sum + ranking.totalPoints,
-    0,
-  );
-
-  const totalTimeSeconds = rankings.reduce(
-    (sum, ranking) => sum + ranking.totalTimeSeconds,
-    0,
-  );
-
-  const weightedAfkSum = rankings.reduce(
-    (sum, ranking) => sum + ranking.avgAfkPercentage * ranking.totalKills,
-    0,
+  const weightedAfkSum = sumBy(
+    rankings,
+    (ranking) => ranking.avgAfkPercentage * ranking.totalKills,
   );
 
   return {
