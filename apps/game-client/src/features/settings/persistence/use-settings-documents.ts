@@ -58,9 +58,11 @@ export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
 
   return useQuery({
     queryKey: getGuildTimersDocumentsQueryKey(guildIds),
-    queryFn: async (): Promise<GuildSettingsDocuments> =>
+    queryFn: async ({ signal }): Promise<GuildSettingsDocuments> =>
       guildSettingsDocumentsSchema.parse(
-        await settingsDocumentsControllerGetGuildPreferences(params),
+        await settingsDocumentsControllerGetGuildPreferences(params, {
+          signal,
+        }),
       ),
     enabled: gameInitialized && guildIds.length > 0,
     ...QUERY_OPTIONS,
