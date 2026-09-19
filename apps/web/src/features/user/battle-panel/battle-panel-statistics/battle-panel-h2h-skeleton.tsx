@@ -10,8 +10,8 @@ export const BattlePanelH2hSkeleton = () => {
     <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       <div className="px-3 pt-3 pb-0">
         <PageHeader
-          title=<Skeleton className="h-5 w-40" />
-          description=<Skeleton className="h-3 w-48" />
+          title=<Skeleton render={<span />} className="block h-5 w-40" />
+          description=<Skeleton render={<span />} className="block h-3 w-48" />
         />
       </div>
 
