@@ -51,19 +51,6 @@ type EventTimerForCoordination = {
   npc: unknown;
 };
 
-type ActiveGapForCoordination = {
-  id: string;
-  mapId: string;
-  heroNpcId: string;
-  gapType: CoverageGapType;
-  startedAt: Date;
-  durationSeconds: number | null;
-  map: {
-    mapId: number;
-    mapName: string;
-  };
-};
-
 const PRIORITY_RANK: Record<CoordinationPriority, number> = {
   CRITICAL: 0,
   WARNING: 1,
@@ -123,7 +110,10 @@ export const makeEventCoordination = (
         timers.map((timer) => [extractNpcName(timer.npc), timer]),
       );
 
-      const activeGapsByHeroId = groupActiveGapsByHeroId(activeGaps);
+      const activeGapsByHeroId = Map.groupBy(
+        activeGaps,
+        (gap) => gap.heroNpcId,
+      );
 
       const heroes = visibleHeroes
         .map((hero) => {
@@ -262,18 +252,6 @@ export const makeEventCoordination = (
 });
 
 export type EventCoordination = ReturnType<typeof makeEventCoordination>;
-
-function groupActiveGapsByHeroId(activeGaps: ActiveGapForCoordination[]) {
-  const grouped = new Map<string, ActiveGapForCoordination[]>();
-
-  for (const gap of activeGaps) {
-    const existing = grouped.get(gap.heroNpcId) ?? [];
-    existing.push(gap);
-    grouped.set(gap.heroNpcId, existing);
-  }
-
-  return grouped;
-}
 
 function findHeroTimer(
   hero: EventHeroForCoordination,

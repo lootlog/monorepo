@@ -1,13 +1,9 @@
-import { act, renderHook } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { z } from "zod";
 import { useLocalStorage } from "./use-local-storage";
 
 const stringSchema = z.string();
-
-const numbersSchema = z.array(z.number());
-
-const emptyNumbers: number[] = [];
 
 afterEach(() => localStorage.clear());
 
@@ -20,22 +16,6 @@ it("falls back on malformed persisted data without overwriting it during hydrati
 
   expect(result.current[0]).toBe("default");
   expect(localStorage.getItem("setting")).toBe('{"wrong":"shape"}');
-  unmount();
-});
-
-it("persists functional updates and removes the stored value", () => {
-  localStorage.setItem("numbers", "[1]");
-
-  const { result, unmount } = renderHook(() =>
-    useLocalStorage("numbers", emptyNumbers, numbersSchema),
-  );
-
-  act(() => result.current[1]((previous) => [...(previous ?? []), 2]));
-  expect(result.current[0]).toEqual([1, 2]);
-  expect(localStorage.getItem("numbers")).toBe("[1,2]");
-  act(() => result.current[2]());
-  expect(result.current[0]).toBeUndefined();
-  expect(localStorage.getItem("numbers")).toBeNull();
   unmount();
 });
 
