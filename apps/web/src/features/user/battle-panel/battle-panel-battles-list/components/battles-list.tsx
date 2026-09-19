@@ -6,10 +6,10 @@ import type {
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 import { cn } from "cn";
 import { useEffect, useRef, type ReactNode } from "react";
-import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";
+import type { FilterChip } from "@/components/common/filter-chip-list";
 
 type BattlesListProps = {
-  activeFilterChips?: BattlePanelFilterChip[];
+  activeFilterChips?: FilterChip[];
   battlesResponse?: GetBattlesResponse;
   clearFiltersLabel?: string;
   params?: UseBattlesParams;

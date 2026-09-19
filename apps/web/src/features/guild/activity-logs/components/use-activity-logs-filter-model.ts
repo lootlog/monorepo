@@ -5,6 +5,8 @@ import {
   getActivitiesControllerSuggestActorNamesQueryOptions,
   getActivitiesControllerSuggestClanNamesQueryKey,
   getActivitiesControllerSuggestClanNamesQueryOptions,
+  getActivitiesControllerSuggestWorldsQueryKey,
+  getActivitiesControllerSuggestWorldsQueryOptions,
 } from "@lootlog/client/activity";
 
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -18,20 +20,15 @@ import {
 } from "../activity-logs.queries";
 
 import { useTranslation } from "react-i18next";
+import { buildActivityLogsFilterChips } from "./activity-logs-filter-chips";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
-
-type ActivityLogsFiltersSidebarProps = {
-  className?: string;
-};
 
 const optionalText = (value: string) => (value.length > 0 ? value : undefined);
 
 const getDateValue = (value: string | null | undefined) =>
   value ? new Date(value) : undefined;
 
-export const useActivityLogsFilterModel = ({
-  className,
-}: ActivityLogsFiltersSidebarProps) => {
+export const useActivityLogsFilterModel = () => {
   const { t } = useTranslation();
 
   const { filters, setFilters, clearFilters, hasActiveFilters } =
@@ -85,6 +82,24 @@ export const useActivityLogsFilterModel = ({
     ),
   );
 
+  const { data: worldSuggestionsResponse } = useQuery(
+    getActivitiesControllerSuggestWorldsQueryOptions(
+      { guildId: guildId ?? "" },
+      { limit: 20 },
+      {
+        query: {
+          enabled: Boolean(guildId),
+          queryKey: getActivitiesControllerSuggestWorldsQueryKey(
+            { guildId: guildId ?? "" },
+            { limit: 20 },
+          ),
+          staleTime: 5 * 60 * 1000,
+        },
+      },
+    ),
+  );
+
+  const worlds = worldSuggestionsResponse?.worlds ?? [];
   const nameSuggestions = nameSuggestionsResponse?.suggestions ?? [];
   const clanNameSuggestions = clanNameSuggestionsResponse?.suggestions ?? [];
 
@@ -176,10 +191,23 @@ export const useActivityLogsFilterModel = ({
     },
   ];
 
-  return {
-    className,
-    t,
+  const selectedTypes = getActivityLogTypes(filters.types);
+  const selectedSources = getActivityLogSources(filters.sources);
+
+  const activeFilterChips = buildActivityLogsFilterChips({
     filters,
+    selectedTypes,
+    selectedSources,
+    updateFilters,
+    translate: t,
+  });
+
+  return {
+    filters,
+    worlds,
+    selectedTypes,
+    selectedSources,
+    activeFilterChips,
     nameSuggestions,
     updateFilters,
     clanNameSuggestions,
