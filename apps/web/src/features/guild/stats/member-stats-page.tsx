@@ -1,17 +1,13 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import type {
   MemberKillsResponseDtoOutput,
   NpcType,
 } from "@lootlog/client/main";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-} from "@lootlog/ui/components/table";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { UserX } from "lucide-react";
 import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
 import { StatsCountCell } from "./components/stats-count-cell";
@@ -19,9 +15,12 @@ import { StatsDetailHeader } from "./components/stats-detail-header";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
 import { StatsNpcCell } from "./components/stats-npc-cell";
 import { StatsRank } from "./components/stats-rank";
+import {
+  STATS_TABLE_COUNT_COLUMN_ID,
+  STATS_TABLE_POSITION_COLUMN_ID,
+  StatsTable,
+} from "./components/stats-table";
 import { StatsTableCard } from "./components/stats-table-card";
-import { StatsTableHeader } from "./components/stats-table-header";
-import { StatsTableRow } from "./components/stats-table-row";
 import type { useStatsSettings } from "./hooks/use-stats-settings";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useMemberStatsPage } from "./use-member-stats-page";
@@ -81,6 +80,57 @@ export const MemberStatsPage = () => {
     handleNextPage,
   } = useMemberStatsPage();
 
+  const { npcs, total, hasNext, totalParticipations } =
+    getMemberStatsResponseView(data);
+
+  const columns: ColumnDef<typeof coreTableFeatures, (typeof npcs)[number]>[] =
+    [
+      {
+        id: STATS_TABLE_POSITION_COLUMN_ID,
+        header: () => t("kills.memberRanking.position"),
+        cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+      },
+      {
+        id: "npc",
+        header: () => t("kills.memberStats.npc"),
+        cell: ({ row: { original: npc } }) => (
+          <StatsNpcCell
+            npc={{
+              id: npc.npcId,
+              name: npc.npcName,
+              lvl: npc.npcLvl,
+              icon: npc.npcIcon,
+            }}
+            name={
+              <TextLink
+                render=<Link
+                  to="/$guildId/stats/npcs/$npcId"
+                  params={{ guildId, npcId: String(npc.npcId) }}
+                />
+              >
+                {npc.npcName}
+              </TextLink>
+            }
+            subtitle={`${t(`npcType.${npc.npcType}`)} · ${npc.npcLvl}${npc.npcProf ?? ""}`}
+          />
+        ),
+      },
+      {
+        id: STATS_TABLE_COUNT_COLUMN_ID,
+        header: () => t("kills.memberStats.killCount"),
+        cell: ({ row: { original: npc } }) => (
+          <StatsCountCell value={npc.totalKills} emphasized />
+        ),
+      },
+    ];
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: npcs,
+    columns,
+    getRowId: (npc) => String(npc.npcId),
+  });
+
   if (!member) {
     if (isLoading) {
       return <StatsDetailPageSkeleton />;
@@ -97,9 +147,6 @@ export const MemberStatsPage = () => {
 
   const overview = data?.overview;
   const hasActiveFilters = hasMemberStatsFilters(settings, debouncedSearch);
-
-  const { npcs, total, hasNext, totalParticipations } =
-    getMemberStatsResponseView(data);
 
   const hasPrev = cursor > 0;
 
@@ -178,50 +225,7 @@ export const MemberStatsPage = () => {
           )
         }
       >
-        <Table className="border-b">
-          <StatsTableHeader>
-            <TableHead className="w-14 text-center">
-              {t("kills.memberRanking.position")}
-            </TableHead>
-            <TableHead>{t("kills.memberStats.npc")}</TableHead>
-            <TableHead className="text-right">
-              {t("kills.memberStats.killCount")}
-            </TableHead>
-          </StatsTableHeader>
-          <TableBody>
-            {npcs.map((npc, index) => (
-              <StatsTableRow key={npc.npcId}>
-                <TableCell className="text-center">
-                  <StatsRank rank={cursor + index + 1} />
-                </TableCell>
-                <TableCell>
-                  <StatsNpcCell
-                    npc={{
-                      id: npc.npcId,
-                      name: npc.npcName,
-                      lvl: npc.npcLvl,
-                      icon: npc.npcIcon,
-                    }}
-                    name={
-                      <TextLink
-                        render=<Link
-                          to="/$guildId/stats/npcs/$npcId"
-                          params={{ guildId, npcId: String(npc.npcId) }}
-                        />
-                      >
-                        {npc.npcName}
-                      </TextLink>
-                    }
-                    subtitle={`${t(`npcType.${npc.npcType}`)} · ${npc.npcLvl}${npc.npcProf ?? ""}`}
-                  />
-                </TableCell>
-                <TableCell>
-                  <StatsCountCell value={npc.totalKills} emphasized />
-                </TableCell>
-              </StatsTableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StatsTable table={table} className="border-b" />
       </StatsTableCard>
     </div>
   );

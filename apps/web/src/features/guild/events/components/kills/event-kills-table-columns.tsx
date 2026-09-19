@@ -1,12 +1,9 @@
-import { TextLink } from "@lootlog/ui/components/text-link";
 import type { TFunction } from "i18next";
-import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { differenceInSeconds } from "date-fns";
-import { Skull } from "lucide-react";
-import { NpcTile } from "@/components/tiles";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { formatDateTime } from "../../utils/format-date";
+import { KillMonsterCell } from "./kill-monster-cell";
 import { formatDurationHuman } from "../../utils/format-duration";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
@@ -16,18 +13,6 @@ type CreateEventKillsTableColumnsOptions = {
   isPreview: boolean;
   t: TFunction;
 };
-
-const getKillDetailParams = (
-  kill: HeroKill,
-  guildId: string,
-  eventId: string,
-) =>
-  ({
-    eventId,
-    guildId,
-    heroId: kill.heroNpcId,
-    killId: kill.id,
-  }) as const;
 
 export const createEventKillsTableColumns = ({
   eventId,
@@ -41,52 +26,14 @@ export const createEventKillsTableColumns = ({
   {
     id: "monster",
     header: t("events.kills.monster"),
-    cell: ({ row }) => {
-      const kill = row.original;
-
-      const detailLabel = t("events.kills.openKillDetails", {
-        monsterName: kill.heroNpc.npcName,
-      });
-
-      return (
-        <div className="flex min-w-0 items-center gap-2">
-          {kill.heroNpc.npcIcon ? (
-            <NpcTile
-              className="hidden shrink-0 lg:block"
-              npc={{
-                id: kill.heroNpc.npcId ?? undefined,
-                name: kill.heroNpc.npcName,
-                icon: kill.heroNpc.npcIcon,
-              }}
-            />
-          ) : (
-            <Skull className="hidden size-4 shrink-0 text-muted-foreground lg:block" />
-          )}
-          <div className="min-w-0 flex-1">
-            <TextLink
-              aria-label={detailLabel}
-              title={detailLabel}
-              className="inline-flex max-w-full min-w-0 items-center text-sm"
-              render=<Link
-                to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
-                params={getKillDetailParams(kill, guildId, eventId)}
-              />
-            >
-              <span className="truncate font-semibold">
-                {kill.heroNpc.npcName}
-              </span>
-            </TextLink>
-            <div
-              className={`mt-0.5 truncate text-[10px] text-muted-foreground tabular-nums ${
-                isPreview ? "" : "sm:hidden"
-              }`}
-            >
-              {formatDateTime(new Date(kill.killedAt))}
-            </div>
-          </div>
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <KillMonsterCell
+        eventId={eventId}
+        guildId={guildId}
+        isDateAlwaysVisible={isPreview}
+        kill={row.original}
+      />
+    ),
     enableSorting: false,
   },
   {
