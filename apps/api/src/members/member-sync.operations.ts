@@ -16,7 +16,7 @@ import type { MemberRemoval } from "./member-removal.operations.js";
 import type { MemberStore } from "./member.store.js";
 import type { MemberSyncResult } from "./member.types.js";
 
-export class MemberSyncFailure extends TaggedErrorClass<MemberSyncFailure>()(
+class MemberSyncFailure extends TaggedErrorClass<MemberSyncFailure>()(
   "MemberSyncFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

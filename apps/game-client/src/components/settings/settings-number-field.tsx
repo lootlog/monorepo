@@ -22,7 +22,7 @@ type SettingsNumberFieldProps = {
   onCommit: (value: number) => void;
 };
 
-export const clampSettingsNumber = (
+const clampSettingsNumber = (
   value: number,
   min: number,
   max: number,

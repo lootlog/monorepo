@@ -4,7 +4,7 @@ import {
   eventMapTable,
   guildTable,
 } from "#src/database/drizzle/schema";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import { describe, expect, it, mock } from "bun:test";
 import { Effect } from "effect";
@@ -108,12 +108,15 @@ it.each([300, null])(
       );
 
       expect(result?.assignedMembers).toEqual([]);
-      expect(publish).toHaveBeenCalledWith(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
-        guildId: "guild-1",
-        eventId: "event-1",
-        mapId: "map-1",
-        heroNpcLvl: npcLvl,
-      });
+      expect(publish).toHaveBeenCalledWith(
+        RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE,
+        {
+          guildId: "guild-1",
+          eventId: "event-1",
+          mapId: "map-1",
+          heroNpcLvl: npcLvl,
+        },
+      );
     } finally {
       await boundary.dispose();
     }

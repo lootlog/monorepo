@@ -16,14 +16,6 @@
     "minLevelShort": "Od",
     "maxLevelShort": "Do"
   },
-  "period": {
-    "all": "Wszystko",
-    "24h": "24h",
-    "3d": "3 dni",
-    "7d": "7 dni",
-    "14d": "14 dni",
-    "30d": "30 dni"
-  },
   "memberRanking": {
     "title": "Najaktywniejsi członkowie",
     "description": "{{type}} · udziały w biciach",
@@ -34,35 +26,11 @@
     "filteredNoData": "Żaden członek nie pasuje do filtrów",
     "viewAll": "Cały ranking"
   },
-  "playerStats": {
-    "title": "Twoje statystyki bić",
-    "description": "Podsumowanie według typu przeciwnika i świata",
-    "dashboardDescription": "Podsumowanie bić według okresu, świata i przeciwników",
-    "filtersLabel": "Filtry statystyk bić",
-    "sectionsLabel": "Widok statystyk bić",
-    "summarySection": "Podsumowanie",
-    "monstersSection": "Potwory",
-    "allPeriod": "Cały okres",
-    "loadError": "Nie udało się wczytać podsumowania bić.",
-    "killsByWorld": "Bicia według świata",
-    "characters": "Postaci",
-    "noData": "Brak danych o biciach dla Twoich postaci",
-    "filteredNoData": "Brak bić pasujących do wybranych filtrów"
-  },
   "home": {
     "filters": {
       "world": "Świat",
       "allWorlds": "Wszystkie światy",
-      "character": "Postać",
       "allCharacters": "Wszystkie postacie"
-    },
-    "topKilledNpcs": {
-      "title": "Najczęściej bite potwory",
-      "loadError": "Nie udało się wczytać rankingu potworów.",
-      "noData": "Brak danych o zabitych potworach",
-      "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
-      "killCount": "x{{count}}",
-      "viewAll": "Zobacz pełny ranking"
     }
   },
   "ranking": {
@@ -71,7 +39,6 @@
     "search": "Szukaj potwora...",
     "noData": "Nie znaleziono potworów",
     "filteredNoData": "Brak potworów pasujących do wybranych filtrów",
-    "loading": "Ładowanie danych...",
     "total": "Łącznie: {{count}}"
   },
   "topNpcs": {

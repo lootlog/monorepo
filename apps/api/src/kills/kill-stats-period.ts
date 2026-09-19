@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-export const KillStatsPeriodSchema = Schema.Literals([
+const KillStatsPeriodSchema = Schema.Literals([
   "all",
   "24h",
   "3d",

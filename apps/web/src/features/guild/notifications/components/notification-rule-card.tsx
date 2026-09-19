@@ -1,7 +1,7 @@
 import { ROUTES } from "@/config/routes";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { NotificationDeleteAction } from "./notification-delete-action";
 import {
   Tooltip,
   TooltipContent,
@@ -9,13 +9,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
-import {
-  FlaskConical,
-  Pencil,
-  RefreshCw,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
+import { FlaskConical, Pencil, RefreshCw, TriangleAlert } from "lucide-react";
 
 import { getGuildNotificationTargetLabel } from "../utils/notification-settings.utils";
 
@@ -194,44 +188,17 @@ export const NotificationRuleCard = (
               {t("settings.notifications.actions.edit")}
             </TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="inline-flex">
-                  <ConfirmDeleteDialog
-                    disabled={isActionDisabled}
-                    onConfirm={handleDelete}
-                    title={t("settings.notifications.deleteRuleDialog.title")}
-                    description={t(
-                      "settings.notifications.deleteRuleDialog.description",
-                      {
-                        name: viewModel.displayName,
-                      },
-                    )}
-                    confirmButtonLabel={t(
-                      "settings.notifications.actions.delete",
-                    )}
-                    cancelButtonLabel={t(
-                      "settings.notifications.actions.cancel",
-                    )}
-                    trigger={
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        aria-label={t("settings.notifications.actions.delete")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                </span>
-              }
-            />
-            <TooltipContent>
-              {t("settings.notifications.actions.delete")}
-            </TooltipContent>
-          </Tooltip>
+          <NotificationDeleteAction
+            disabled={isActionDisabled}
+            onConfirm={handleDelete}
+            title={t("settings.notifications.deleteRuleDialog.title")}
+            description={t(
+              "settings.notifications.deleteRuleDialog.description",
+              {
+                name: viewModel.displayName,
+              },
+            )}
+          />
         </div>
       </div>
     </div>

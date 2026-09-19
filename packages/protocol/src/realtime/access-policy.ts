@@ -15,9 +15,9 @@ const AREAS = [
   "organization",
 ] as const;
 
-export const AccessPolicyArea = Schema.Literals(AREAS);
+const AccessPolicyArea = Schema.Literals(AREAS);
 
-export type AccessPolicyArea = typeof AccessPolicyArea.Type;
+type AccessPolicyArea = typeof AccessPolicyArea.Type;
 
 export const OrganizationAccessPolicy = Schema.Struct({
   organizationId: Schema.NonEmptyString,

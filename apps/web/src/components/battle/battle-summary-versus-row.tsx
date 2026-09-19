@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import type { FC } from "react";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
+import { formatNumber } from "@/components/battle/utils/value-utils";
 
 export type BattleSummaryVersusRowProps = {
   enemyValue: number;
@@ -9,8 +10,6 @@ export type BattleSummaryVersusRowProps = {
   /** Marks the smaller value as the leading one, e.g. for damage taken. */
   lowerIsBetter?: boolean;
 };
-
-const formatNumber = (value: number) => value.toLocaleString("pl-PL");
 
 export const BattleSummaryVersusRow: FC<BattleSummaryVersusRowProps> = ({
   enemyValue,

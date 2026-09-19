@@ -34,7 +34,7 @@ const CACHE_TTL_SECONDS = 10;
 
 type Role = typeof roleTable.$inferSelect;
 
-export class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadError>()(
+class EventCatalogReadError extends TaggedErrorClass<EventCatalogReadError>()(
   "EventCatalogReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

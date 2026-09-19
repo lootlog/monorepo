@@ -3,7 +3,7 @@ import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 
 type BattleEvent = CreateBattleInput["events"][number];
 
-export const normalizeBattleEvents = (
+const normalizeBattleEvents = (
   events: CreateBattleInput["events"],
 ): CreateBattleInput["events"] => {
   const seenEventPayloads = new Set<string>();

@@ -1,10 +1,10 @@
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
+import { NotificationDeleteAction } from "./notification-delete-action";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { toast } from "sonner";
@@ -147,54 +147,24 @@ export const NotificationTargetCard = ({
               {t("settings.notifications.actions.edit")}
             </TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="inline-flex">
-                  <ConfirmDeleteDialog
-                    disabled={isActionDisabled}
-                    onConfirm={handleDelete}
-                    title={t("settings.notifications.deleteTargetDialog.title")}
-                    description={
-                      orphanedRuleCount > 0
-                        ? t(
-                            "settings.notifications.deleteTargetDialog.descriptionWithOrphanedRules",
-                            {
-                              name: getGuildNotificationTargetLabel(target),
-                              count: orphanedRuleCount,
-                            },
-                          )
-                        : t(
-                            "settings.notifications.deleteTargetDialog.description",
-                            {
-                              name: getGuildNotificationTargetLabel(target),
-                            },
-                          )
-                    }
-                    confirmButtonLabel={t(
-                      "settings.notifications.actions.delete",
-                    )}
-                    cancelButtonLabel={t(
-                      "settings.notifications.actions.cancel",
-                    )}
-                    trigger={
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        aria-label={t("settings.notifications.actions.delete")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                </span>
-              }
-            />
-            <TooltipContent>
-              {t("settings.notifications.actions.delete")}
-            </TooltipContent>
-          </Tooltip>
+          <NotificationDeleteAction
+            disabled={isActionDisabled}
+            onConfirm={handleDelete}
+            title={t("settings.notifications.deleteTargetDialog.title")}
+            description={
+              orphanedRuleCount > 0
+                ? t(
+                    "settings.notifications.deleteTargetDialog.descriptionWithOrphanedRules",
+                    {
+                      name: getGuildNotificationTargetLabel(target),
+                      count: orphanedRuleCount,
+                    },
+                  )
+                : t("settings.notifications.deleteTargetDialog.description", {
+                    name: getGuildNotificationTargetLabel(target),
+                  })
+            }
+          />
         </div>
       </div>
     </div>

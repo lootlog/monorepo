@@ -1,12 +1,8 @@
 import { Effect } from "effect";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
-import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
-import {
-  canManageOwnPartyGathering,
-  hasRolePermissionInLevelRange,
-  NPC_FEATURE_PERMISSIONS,
-} from "@lootlog/domain/npc-permissions";
+import { canManageOwnPartyGathering } from "@lootlog/domain/npc-permissions";
+import { canReadChatNpcSource } from "#src/chat/chat-npc-visibility";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -54,19 +50,8 @@ export const readyRoomSourceVisibility = Effect.fn("readyRoomSourceVisibility")(
           canManageOwnPartyGathering(roles, room.organizerDiscordId, discordId)
         )
           return true;
-        const base = NPC_FEATURE_PERMISSIONS.chat.base;
 
-        if (!roles.some((role) => role.permissions.includes(base)))
-          return false;
-
-        return (
-          !room.npc ||
-          hasRolePermissionInLevelRange(
-            roles,
-            NPC_FEATURE_PERMISSIONS.chat[getNpcRoutingTier(room.npc)],
-            room.npc.lvl,
-          )
-        );
+        return canReadChatNpcSource(roles, room.npc);
       });
   },
 );

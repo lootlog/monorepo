@@ -14,7 +14,7 @@ import {
 } from "@lootlog/client/main";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -168,26 +168,17 @@ export function useMapManageDialog({
       ? localLocations
       : heroLocations;
 
-  const allMapsFromLocations = useMemo(
-    () => heroLocations.flatMap((location) => location.maps),
-    [heroLocations],
+  const allMapsFromLocations = heroLocations.flatMap(
+    (location) => location.maps,
   );
 
-  const allMaps = useMemo(
-    () => [...allMapsFromLocations, ...hero.maps],
-    [allMapsFromLocations, hero.maps],
-  );
+  const allMaps = [...allMapsFromLocations, ...hero.maps];
 
-  const addedMapIds = useMemo(
-    () => new Set(allMaps.map((map) => map.mapId)),
-    [allMaps],
-  );
+  const addedMapIds = new Set(allMaps.map((map) => map.mapId));
 
-  const filteredGameMaps = useMemo(() => {
-    if (!gameMaps) return [];
-
-    return filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery);
-  }, [gameMaps, addedMapIds, searchQuery]);
+  const filteredGameMaps = gameMaps
+    ? filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery)
+    : [];
 
   const handleAddMapFromGame = async (gameMap: GameMapResponseDtoOutput) => {
     if (isAdding) return;

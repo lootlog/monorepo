@@ -68,16 +68,13 @@ export function HeadToHeadPageVariant({
       minLevel={minLevel}
       maxLevel={maxLevel}
       ph={ph ?? false}
-      matchmaking={matchmaking}
       selectedWarriors={selectedWarriors}
       showPhFilter={showPhFilter}
-      showMatchmakingFilter={false}
       onCharacterChange={handleCharacterChange}
       onPeriodChange={handlePeriodChange}
       onMinLevelChange={handleMinLevelChange}
       onMaxLevelChange={handleMaxLevelChange}
       onPhChange={showPhFilter ? handlePhChange : () => undefined}
-      onMatchmakingChange={() => undefined}
       onWarriorToggle={handleWarriorToggle}
     />
   );
@@ -86,11 +83,9 @@ export function HeadToHeadPageVariant({
     <HeadToHeadFilterToolbar
       characterId={currentCharacterId}
       isMobile={isMobile}
-      matchmaking={matchmaking}
       maxLevel={maxLevel}
       minLevel={minLevel}
       onCharacterChange={handleCharacterChange}
-      onMatchmakingChange={() => undefined}
       onMaxLevelChange={handleMaxLevelChange}
       onMinLevelChange={handleMinLevelChange}
       onMobileFiltersOpen={() => setIsMobileFiltersOpen(true)}
@@ -100,7 +95,6 @@ export function HeadToHeadPageVariant({
       period={period}
       ph={ph}
       selectedWarriors={selectedWarriors}
-      showMatchmakingFilter={false}
       showPhFilter={showPhFilter}
     />
   );

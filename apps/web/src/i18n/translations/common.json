@@ -6,7 +6,6 @@
     "signin": "Logowanie",
     "init": "Start",
     "publicBattle": "Walka #{{id}}",
-    "battle": "Walka #{{id}}",
     "fallback": "Lootlog"
   },
   "search": "Szukaj...",

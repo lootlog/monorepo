@@ -10,15 +10,7 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Separator } from "@lootlog/ui/components/separator";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
-import {
-  X,
-  Globe,
-  Medal,
-  Users,
-  Award,
-  Swords,
-  ArrowRight,
-} from "lucide-react";
+import { X, Globe, Medal, Users, Award, ArrowRight } from "lucide-react";
 import { cn } from "cn";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
@@ -31,18 +23,13 @@ type FiltersSidebarProps = {
   filters: BattleFilters;
   onFiltersChange: (filters: BattleFilters) => void;
   className?: string;
-  showMatchmakingFilter?: boolean;
 };
 
-const hasActiveBattleFilters = (
-  filters: BattleFilters,
-  showMatchmakingFilter: boolean,
-) =>
+const hasActiveBattleFilters = (filters: BattleFilters) =>
   Boolean(filters.world) ||
   (filters.type?.length ?? 0) > 0 ||
   (filters.result?.length ?? 0) > 0 ||
   Boolean(filters.ph) ||
-  (showMatchmakingFilter && Boolean(filters.matchmaking)) ||
   (filters.characterId?.length ?? 0) > 0 ||
   Boolean(filters.search) ||
   (filters.minLevel !== undefined && filters.minLevel !== 1) ||
@@ -52,7 +39,6 @@ export const FiltersSidebar = ({
   filters,
   onFiltersChange,
   className,
-  showMatchmakingFilter = true,
 }: FiltersSidebarProps) => {
   const {
     handleCharacterChange,
@@ -61,7 +47,6 @@ export const FiltersSidebar = ({
     handlePhToggle,
     handleMinLevelChange,
     handleMaxLevelChange,
-    handleMatchmakingToggle,
     handleWorldChange,
   } = createBattleFilterHandlers(filters, onFiltersChange);
 
@@ -85,10 +70,7 @@ export const FiltersSidebar = ({
     onFiltersChange({});
   };
 
-  const hasActiveFilters = hasActiveBattleFilters(
-    filters,
-    showMatchmakingFilter,
-  );
+  const hasActiveFilters = hasActiveBattleFilters(filters);
 
   return (
     <div
@@ -199,23 +181,6 @@ export const FiltersSidebar = ({
                   {t("battlePanel.filters.honorPoints")}
                 </Label>
               </div>
-
-              {showMatchmakingFilter && (
-                <div className="flex items-center gap-2">
-                  <Swords className="h-4 w-4" />
-                  <Checkbox
-                    id="sidebar-matchmaking-checkbox"
-                    checked={filters.matchmaking === true}
-                    onCheckedChange={handleMatchmakingToggle}
-                  />
-                  <Label
-                    htmlFor="sidebar-matchmaking-checkbox"
-                    className="cursor-pointer text-sm"
-                  >
-                    {t("battlePanel.filters.matchmaking")}
-                  </Label>
-                </div>
-              )}
 
               <Separator />
 

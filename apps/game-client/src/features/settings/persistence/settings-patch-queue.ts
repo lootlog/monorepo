@@ -1,7 +1,7 @@
 import { isSettingsRecord } from "@lootlog/domain/settings-paths";
-import { groupBy } from "es-toolkit";
+import { groupBy, isEqual } from "es-toolkit";
 import type { QueryKey } from "@tanstack/react-query";
-import type { SettingsOperation, SettingsScope } from "./settings-documents";
+import type { SettingsOperation } from "./settings-documents";
 import type { SettingsSaveStatus } from "./settings-save-status.store";
 
 export type QueuedSettingsPatch = {
@@ -99,8 +99,7 @@ const mergeOperations = (
   return { domain: current.domain, scope: current.scope, set, unset };
 };
 
-const sameQueryKey = (left: QueryKey, right: QueryKey) =>
-  JSON.stringify(left) === JSON.stringify(right);
+const sameQueryKey = (left: QueryKey, right: QueryKey) => isEqual(left, right);
 
 /**
  * One request batch cannot hold two different ids for the same scope type,
@@ -294,8 +293,3 @@ export const createSettingsPatchQueue = <TResponse>(
     },
   };
 };
-
-export const createSettingsScope = (
-  type: SettingsScope["type"],
-  id: string,
-): SettingsScope => ({ type, id });

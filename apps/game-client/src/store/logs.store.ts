@@ -74,10 +74,6 @@ type LogsState = {
 };
 
 const clearPersistedLogsStorage = () => {
-  if (typeof window === "undefined") {
-    return;
-  }
-
   window.localStorage.removeItem(LOGS_STORAGE_KEY);
 };
 

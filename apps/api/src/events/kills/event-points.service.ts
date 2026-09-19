@@ -3,9 +3,9 @@ import {
   roundPoints,
 } from "#src/events/kills/event-ranking-policy";
 import type { eventKillPointTable } from "#src/database/drizzle/schema";
-import { Clock, Effect } from "effect";
+import { Array as Arr, Clock, Effect } from "effect";
 import type { EventEmitter } from "#src/events/event-emitter";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
@@ -310,14 +310,14 @@ export const makeEventPoints = (
         return;
       }
 
-      const killPointsByKillId = groupBy(
+      const killPointsByKillId = Arr.groupBy(
         killPoints,
         (killPoint) => killPoint.killId,
       );
 
       const heroMapIdsByKillId = new Map<string, Set<string>>();
 
-      for (const [killId, points] of killPointsByKillId) {
+      for (const [killId, points] of Object.entries(killPointsByKillId)) {
         const first = points[0];
         heroMapIdsByKillId.set(
           killId,
@@ -327,7 +327,7 @@ export const makeEventPoints = (
 
       const assignedMembersCountByKillId = new Map<string, number>();
 
-      for (const [killId, points] of killPointsByKillId) {
+      for (const [killId, points] of Object.entries(killPointsByKillId)) {
         const uniqueMembers = new Set(points.map((p) => p.memberId));
         assignedMembersCountByKillId.set(killId, uniqueMembers.size);
       }
@@ -382,9 +382,8 @@ export const makeEventPoints = (
             )
           : [];
 
-      const assignmentsByMember = groupBy(
-        assignmentHistory,
-        (assignment) => assignment.memberId,
+      const assignmentsByMember = Arr.groupBy(assignmentHistory, (assignment) =>
+        String(assignment.memberId),
       );
 
       const recalculatedKillPoints = killPoints.map((killPoint) => {
@@ -397,7 +396,7 @@ export const makeEventPoints = (
         });
 
         const trackingMetrics = calculateTrackingMetricsForKill({
-          assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
+          assignments: assignmentsByMember[String(killPoint.memberId)] ?? [],
           heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
           killTime: killPoint.kill.killedAt,
           respawnStartTime: trackingWindowStartTime,
@@ -409,7 +408,7 @@ export const makeEventPoints = (
           trackingMetrics.trackingDurationPercentage;
 
         const memberState = getMemberKillState({
-          assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
+          assignments: assignmentsByMember[String(killPoint.memberId)] ?? [],
           heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
           killTime: killPoint.kill.killedAt,
           respawnStartTime: trackingWindowStartTime,
@@ -620,26 +619,6 @@ export const makeEventPoints = (
 
       yield* emitRankingUpdateByEventId(eventId);
     }).pipe(Effect.withSpan("events.points.recalculate"));
-  }
-
-  function groupBy<Key, Value>(
-    values: Value[],
-    getKey: (value: Value) => Key,
-  ): Map<Key, Value[]> {
-    const grouped = new Map<Key, Value[]>();
-
-    for (const value of values) {
-      const key = getKey(value);
-      const group = grouped.get(key);
-
-      if (group) {
-        group.push(value);
-      } else {
-        grouped.set(key, [value]);
-      }
-    }
-
-    return grouped;
   }
 
   function getMemberKillState(params: {
@@ -1012,7 +991,7 @@ export const makeEventPoints = (
             try: () => eventReadCache.invalidateEvent(event.guildId, event.id),
             catch: (cause) => cause,
           }),
-          eventEmitter.emit(RoutingKey.EVENT_RANKING_UPDATE, {
+          eventEmitter.emit(RabbitRoutingKey.EVENT_RANKING_UPDATE, {
             guildId: event.guildId,
             eventId: event.id,
           }),

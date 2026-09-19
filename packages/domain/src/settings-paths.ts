@@ -1,10 +1,7 @@
 import { Predicate, Schema } from "effect";
 
 // Dotted-path helpers shared by the API resolver and the Game client cache.
-export const SettingsJsonRecordSchema = Schema.Record(
-  Schema.String,
-  Schema.Json,
-);
+const SettingsJsonRecordSchema = Schema.Record(Schema.String, Schema.Json);
 
 export type SettingsJsonRecord = Record<string, typeof Schema.Json.Type>;
 
@@ -36,15 +33,17 @@ const splitWritablePath = (path: string) => {
   return segments;
 };
 
-export const getPath = (
+const MISSING_PATH = Symbol("missing-settings-path");
+
+const readPath = (
   value: SettingsJsonRecord,
   path: string,
-): typeof Schema.Json.Type | undefined => {
+): typeof Schema.Json.Type | undefined | typeof MISSING_PATH => {
   let currentValue: typeof Schema.Json.Type | undefined = value;
 
   for (const segment of path.split(".")) {
     if (!isSettingsRecord(currentValue) || !(segment in currentValue)) {
-      return undefined;
+      return MISSING_PATH;
     }
 
     currentValue = currentValue[segment];
@@ -53,20 +52,17 @@ export const getPath = (
   return currentValue;
 };
 
-export const hasPath = (value: SettingsJsonRecord, path: string) => {
-  const segments = path.split(".");
-  let currentValue: typeof Schema.Json.Type | undefined = value;
+export const getPath = (
+  value: SettingsJsonRecord,
+  path: string,
+): typeof Schema.Json.Type | undefined => {
+  const result = readPath(value, path);
 
-  for (const segment of segments) {
-    if (!isSettingsRecord(currentValue) || !(segment in currentValue)) {
-      return false;
-    }
-
-    currentValue = currentValue[segment];
-  }
-
-  return true;
+  return result === MISSING_PATH ? undefined : result;
 };
+
+export const hasPath = (value: SettingsJsonRecord, path: string) =>
+  readPath(value, path) !== MISSING_PATH;
 
 export const setPath = (
   target: SettingsJsonRecord,

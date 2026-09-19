@@ -12,17 +12,10 @@
     "cancelPartyGathering": "Anuluj zbiórkę",
     "remove": "Usuń z Ready Room",
     "invite": "Zaproś do grupy",
-    "addFriend": "Dodaj do znajomych",
-    "withdraw": "Wycofaj zgłoszenie"
+    "addFriend": "Dodaj do znajomych"
   },
   "list": {
     "waiting": "Oczekiwanie na graczy..."
-  },
-  "states": {
-    "partyPresence": {
-      "OUTSIDE": "poza grupą",
-      "IN_PARTY": "w grupie"
-    }
   },
   "form": {
     "validation": {

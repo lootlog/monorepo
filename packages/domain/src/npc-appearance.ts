@@ -1,4 +1,4 @@
-import { isObjectRecord } from "@lootlog/schema/records";
+import { Predicate } from "effect";
 import {
   COMBAT_NPC_TYPES,
   DEFAULT_NPC_TYPE_COLORS,
@@ -17,12 +17,13 @@ export const normalizeAppearanceColor = (
   isHexAppearanceColor(value) ? value.toUpperCase() : fallback.toUpperCase();
 
 export const normalizeNpcTypeColors = (value: unknown): NpcTypeColors => {
-  const candidate = isObjectRecord(value) && !Array.isArray(value) ? value : {};
+  const candidate = Predicate.isObject(value) ? value : undefined;
+
   const colors: NpcTypeColors = { ...DEFAULT_NPC_TYPE_COLORS };
 
   for (const npcType of COMBAT_NPC_TYPES) {
     colors[npcType] = normalizeAppearanceColor(
-      candidate[npcType],
+      candidate?.[npcType],
       colors[npcType],
     );
   }

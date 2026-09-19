@@ -10,7 +10,7 @@ import type {
 } from "./member-refresh-scheduler.js";
 import type { MemberRefreshAttempt, MemberSyncResult } from "./member.types.js";
 
-export class MemberRefreshFailure extends TaggedErrorClass<MemberRefreshFailure>()(
+class MemberRefreshFailure extends TaggedErrorClass<MemberRefreshFailure>()(
   "MemberRefreshFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

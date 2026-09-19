@@ -1,4 +1,8 @@
-import type { Guild, Npc, Timer, User } from "@/api";
+import { groupByToMap } from "@/lib/group-by-to-map";
+import type { Guild } from "@/api/guilds.api";
+import type { Npc } from "@/api/npcs.api";
+import type { Timer } from "@/api/timers.api";
+import type { User } from "@/api/users.api";
 import type { GuildMember } from "@/types/guild-member";
 import type {
   PlayerPresence,
@@ -137,18 +141,4 @@ export const mapTimers = (
 
 export const groupTimersByGuild = (
   timers: PublicTimer[],
-): Map<string, PublicTimer[]> => {
-  const grouped = new Map<string, PublicTimer[]>();
-
-  for (const timer of timers) {
-    const existing = grouped.get(timer.guildId);
-
-    if (existing) {
-      existing.push(timer);
-    } else {
-      grouped.set(timer.guildId, [timer]);
-    }
-  }
-
-  return grouped;
-};
+): Map<string, PublicTimer[]> => groupByToMap(timers, (timer) => timer.guildId);

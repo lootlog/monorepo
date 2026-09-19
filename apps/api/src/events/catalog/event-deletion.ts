@@ -28,7 +28,7 @@ export interface EventDeletionQueue {
   readonly delayed: () => Promise<ReadonlyArray<EventDeletionJob>>;
 }
 
-export class EventDeletionError extends TaggedErrorClass<EventDeletionError>()(
+class EventDeletionError extends TaggedErrorClass<EventDeletionError>()(
   "EventDeletionError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

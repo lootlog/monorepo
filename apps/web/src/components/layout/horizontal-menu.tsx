@@ -1,3 +1,4 @@
+import { maxBy } from "es-toolkit";
 import { Link, useLocation, type LinkProps } from "@tanstack/react-router";
 import { HorizontalMenu as HorizontalMenuRoot } from "@lootlog/ui/components/horizontal-menu";
 import { cn } from "cn";
@@ -26,15 +27,11 @@ export const HorizontalMenu = ({
 }: HorizontalMenuProps) => {
   const pathname = useLocation({ select: (location) => location.pathname });
 
-  const activeUrl = items.reduce<string | null>((best, item) => {
-    const url = `${basePath}${item.href}`;
+  const matchingUrls = items
+    .map((item) => `${basePath}${item.href}`)
+    .filter((url) => pathname === url || pathname.startsWith(`${url}/`));
 
-    if (pathname === url || pathname.startsWith(`${url}/`)) {
-      if (!best || url.length > best.length) return url;
-    }
-
-    return best;
-  }, null);
+  const activeUrl = maxBy(matchingUrls, (url) => url.length) ?? null;
 
   return (
     <HorizontalMenuRoot

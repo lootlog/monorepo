@@ -1,4 +1,5 @@
 import { startTransition, useEffect, useState, type FC } from "react";
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { Link } from "@tanstack/react-router";
 import { Clock, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
@@ -45,12 +46,7 @@ const TimerItem: FC<TimerItemProps> = ({
   eventId,
   onNavigate,
 }) => {
-  const timeLeftMilliseconds = Math.max(
-    0,
-    timer.maxSpawnTimestamp - currentTimestamp,
-  );
-
-  if (timeLeftMilliseconds <= 0) return null;
+  const timeLeftMilliseconds = timer.maxSpawnTimestamp - currentTimestamp;
 
   const isCloseToRespawn = timeLeftMilliseconds < 60000;
 
@@ -149,21 +145,21 @@ export const EventTimersList: FC<EventTimersListProps> = ({
     },
   );
 
+  const hasTimers = Boolean(timers?.length);
+
   useEffect(() => {
-    if (!timers || timers.length === 0) {
+    if (!hasTimers) {
       return undefined;
     }
 
-    const intervalId = window.setInterval(() => {
+    return subscribeToSecondClock(() => {
       startTransition(() => {
         setCurrentTimestamp(Date.now());
       });
-    }, 1000);
+    });
+  }, [hasTimers]);
 
-    return () => window.clearInterval(intervalId);
-  }, [timers]);
-
-  if (!timers || timers.length === 0) return null;
+  if (!timers || !hasTimers) return null;
 
   const heroIdByNpcId = new Map(
     event.heroNpcs?.map((heroNpc) => [heroNpc.npcId, heroNpc.id]) ?? [],

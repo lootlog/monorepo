@@ -35,9 +35,7 @@ export type MemberRefreshStatus =
   | MemberSyncStatus
   | typeof MEMBER_DISCORD_SYNC_STATUS.QUEUED;
 
-export function toDiscordHttpSyncStatus(
-  statusCode: number,
-): DiscordHttpSyncStatus {
+function toDiscordHttpSyncStatus(statusCode: number): DiscordHttpSyncStatus {
   return `${DISCORD_HTTP_SYNC_STATUS_PREFIX}${statusCode}`;
 }
 

@@ -8,7 +8,7 @@ import {
 
 export type SortOrder = "asc" | "desc";
 
-export const QueryBattlesSchema = Schema.Struct({
+const QueryBattlesSchema = Schema.Struct({
   cursor: Schema.optional(Schema.String),
   size: intFromString({ min: 1, max: 100 }).pipe(
     Schema.withDecodingDefaultTypeKey(Effect.succeed(20)),

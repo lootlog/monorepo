@@ -1,7 +1,7 @@
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
+import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 import { Effect, Schema } from "effect";
 import type { roleTable } from "#src/database/drizzle/schema";
 import type { ApplicationLogger } from "#src/shared/application-logger";
@@ -23,8 +23,7 @@ export const buildKillQueryCacheKey = <Params extends object>(
   scope: string,
   ownerId: string,
   params: Params,
-) =>
-  `kill-stats:${scope}:${ownerId}:${Buffer.from(stableJsonStringify(params)).toString("base64url")}`;
+) => `kill-stats:${scope}:${ownerId}:${stableJsonCacheKey(params)}`;
 
 export const buildNpcLevelFilter = (minLvl?: number, maxLvl?: number) => {
   const normalizedMin = minLvl && minLvl > 0 ? minLvl : undefined;

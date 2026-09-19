@@ -1,7 +1,3 @@
-import type {
-  RabbitExchangeName,
-  RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
 import { Clock, Effect, Schema } from "effect";
@@ -13,8 +9,12 @@ import type {
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import {
+  RabbitExchange,
+  RabbitRoutingKey,
+  type RabbitExchangeName,
+  type RabbitRoutingKeyName,
+} from "@lootlog/protocol/rabbit/topology";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
@@ -297,8 +297,8 @@ export const makeLootAllocationOperations = (options: {
         yield* Effect.all(
           organizationIds.map((guildId) =>
             options.publisher.publish(
-              DEFAULT_EXCHANGE_NAME,
-              RoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
+              RabbitExchange.DEFAULT,
+              RabbitRoutingKey.GUILDS_LOOTS_SHARE_UPDATE,
               {
                 version: 2,
                 guildId,

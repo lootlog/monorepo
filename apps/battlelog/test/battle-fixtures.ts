@@ -8,7 +8,7 @@ import {
   type InflatedBattleWarrior,
 } from "#src/battles/statistics/battle-warrior-stats";
 
-export const createWarriorFixture = (
+const createWarriorFixture = (
   overrides: Partial<InflatedBattleWarrior> = {},
 ): InflatedBattleWarrior => ({
   ...buildBattleWarriorStats({}),

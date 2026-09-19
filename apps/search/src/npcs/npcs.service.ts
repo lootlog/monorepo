@@ -1,5 +1,5 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
-import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import { NpcTypeEnum, NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Effect, Predicate, Schema } from "effect";
 import { partition, uniqBy } from "es-toolkit";
 import type { Meilisearch, SearchParams } from "meilisearch";
@@ -9,7 +9,7 @@ import {
   type SearchOperationFailure,
 } from "#src/meilisearch/search-operation-failure";
 import type { AppLogger } from "#src/shared/logger";
-import { getNpcTypeByWt } from "./npc-type.js";
+import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type { NpcSearchQuery } from "./npc-search-query.js";
 import { NPCS_INDEX } from "./search-index.js";
 import type { IndexNpcsCommand } from "./index-npcs-command.js";
@@ -33,7 +33,7 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
 
   const type = Schema.is(NpcTypeSchema)(npc.type)
     ? npc.type
-    : getNpcTypeByWt(npc.wt, prof, margonemType);
+    : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, margonemType);
 
   return { ...npc, prof, margonemType, type };
 };
@@ -114,7 +114,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       return {
         ...npc,
         prof,
-        type: getNpcTypeByWt(npc.wt, prof, npc.margonemType),
+        type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
         uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
       };
     });

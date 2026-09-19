@@ -5,7 +5,7 @@ import {
   useGuildsControllerGetGuildById,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { RefreshStatusContext } from "./refresh-status-context";
 
@@ -25,7 +25,7 @@ export const RefreshStatusProvider = ({
     guildId: routeGuildId ?? "",
   });
 
-  const markAsRefreshed = useCallback((ids: string[]) => {
+  const markAsRefreshed = (ids: string[]) => {
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
@@ -38,9 +38,9 @@ export const RefreshStatusProvider = ({
 
       return newSet;
     });
-  }, []);
+  };
 
-  const markAsFailed = useCallback((ids: string[]) => {
+  const markAsFailed = (ids: string[]) => {
     setFailedIds((prev) => {
       const newSet = new Set(prev);
       ids.forEach((id) => newSet.add(id));
@@ -53,21 +53,21 @@ export const RefreshStatusProvider = ({
 
       return newSet;
     });
-  }, []);
+  };
 
-  const clearRefreshedId = useCallback((id: string) => {
+  const clearRefreshedId = (id: string) => {
     setRefreshedIds((prev) => {
       const newSet = new Set(prev);
       newSet.delete(id);
 
       return newSet;
     });
-  }, []);
+  };
 
-  const clearAll = useCallback(() => {
+  const clearAll = () => {
     setRefreshedIds(new Set());
     setFailedIds(new Set());
-  }, []);
+  };
 
   useRefreshJobUpdates(guild?.id, (data) => {
     if (

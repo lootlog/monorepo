@@ -8,7 +8,10 @@ import type {
   GuildRoleDeleted,
   GuildUpdated,
 } from "@lootlog/protocol/rabbit/events";
-import { RabbitRoutingKey as RoutingKey } from "@lootlog/protocol/rabbit/topology";
+import {
+  RabbitExchange,
+  RabbitRoutingKey as RoutingKey,
+} from "@lootlog/protocol/rabbit/topology";
 import {
   DiscordGuildSyncStatus,
   type DiscordGuildChannelDeletedEvent,
@@ -30,7 +33,6 @@ import {
   type GuildMember,
   type Role,
 } from "discord.js";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
 import { AppLogger } from "#src/logger";
 import { REQUIRED_NOTIFICATION_PERMISSIONS } from "./required-notification-permissions.js";
 import { DiscordSdkReadFailure, discordSdkRead } from "./discord-sdk-read.js";
@@ -281,7 +283,7 @@ export const makeDiscordSync = (publisher: RabbitPublisher, client: Client) => {
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
   ) =>
-    publisher.publish(DEFAULT_EXCHANGE_NAME, routingKey, payload).pipe(
+    publisher.publish(RabbitExchange.DEFAULT, routingKey, payload).pipe(
       Effect.mapError((cause) => failure(`publish:${routingKey}`, cause)),
       Effect.withSpan("DiscordSync_publish", {
         attributes: { adapter: "rabbitmq", retryCount: 0, routingKey },

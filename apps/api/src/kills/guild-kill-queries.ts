@@ -27,7 +27,7 @@ import {
   type KillStatsPeriod,
 } from "./kill-stats-period.js";
 
-export class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
+class GuildKillQueriesError extends TaggedErrorClass<GuildKillQueriesError>()(
   "GuildKillQueriesError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -13,7 +13,7 @@ import {
   eventTable,
   memberTable,
 } from "#src/database/drizzle/schema";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
@@ -27,7 +27,7 @@ import type {
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
 
-export class EventRespawnCommandError extends TaggedErrorClass<EventRespawnCommandError>()(
+class EventRespawnCommandError extends TaggedErrorClass<EventRespawnCommandError>()(
   "EventRespawnCommandError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
@@ -45,9 +45,9 @@ export interface EventRespawnQueue {
 export interface EventRespawnPublisher {
   readonly publish: <
     Key extends
-      | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
-      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
-      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+      | typeof RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE
+      | typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
+      | typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
   >(
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
@@ -121,9 +121,9 @@ export const makeEventRespawnCommands = (
 
   const publish = <
     Key extends
-      | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
-      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
-      | typeof RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+      | typeof RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE
+      | typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED
+      | typeof RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
   >(
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
@@ -280,7 +280,7 @@ export const makeEventRespawnCommands = (
         yield* Effect.all(
           [
             invalidate(guild.id, eventId),
-            publish(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
+            publish(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
               guildId: guild.id,
               eventId,
               heroId,
@@ -289,7 +289,7 @@ export const makeEventRespawnCommands = (
             Effect.forEach(
               maps,
               (map) =>
-                publish(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+                publish(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
                   guildId: guild.id,
                   eventId,
                   mapId: map.id,
@@ -358,7 +358,7 @@ export const makeEventRespawnCommands = (
         yield* Effect.all(
           [
             invalidate(guild.id, eventId),
-            publish(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
+            publish(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
               guildId: guild.id,
               eventId,
               heroId,

@@ -62,7 +62,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-bun
-      - run: bun test scripts/deployment-targets.test.mjs
+      - run: bun test scripts/deployment-targets.test.mjs scripts/static-assets.test.mjs
       - run: bun run format:check
       - run: bun run deps:check
       - name: Check workflow syntax
@@ -104,7 +104,12 @@ jobs:
           PACKAGES: ${{ needs.plan.outputs.integration-packages }}
         run: |
           mapfile -t filters < <(jq -r '.[] | "--filter=" + .' <<< "$PACKAGES")
-          bunx turbo run test:integration "${filters[@]}"
+          # Each suite starts its own Postgres/Redis/RabbitMQ containers through
+          # testcontainers. Running packages in parallel puts a dozen containers
+          # on one runner, and the 5s test timeouts start expiring in whichever
+          # suite loses the race. Keep the packages serial; each one already
+          # parallelises internally where it is safe to.
+          bunx turbo run test:integration --concurrency=1 "${filters[@]}"
 
   generated-client:
     name: Generated API client

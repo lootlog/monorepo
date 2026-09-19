@@ -60,7 +60,7 @@ export interface GatewayApplicationService {
   readonly runPromise: <A, E>(effect: Effect.Effect<A, E>) => Promise<A>;
 }
 
-export class GatewayApplication extends Context.Service<
+class GatewayApplication extends Context.Service<
   GatewayApplication,
   GatewayApplicationService
 >()("@lootlog/gateway/Application") {
@@ -268,20 +268,19 @@ const RabbitLive = Layer.unwrap(
   }),
 ).pipe(Layer.provide(GatewayConfig.layer));
 
-export const GatewayApplicationLive =
-  GatewayApplication.layerWithoutDependencies.pipe(
-    Layer.provide(RabbitLive),
-    Layer.provide(
-      Layer.unwrap(
-        Effect.map(GatewayConfig, (config) =>
-          BunRedis.layer({
-            url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
-          }),
-        ),
-      ).pipe(Layer.provide(GatewayConfig.layer)),
-    ),
-    Layer.provide(GatewayConfig.layer),
-  );
+const GatewayApplicationLive = GatewayApplication.layerWithoutDependencies.pipe(
+  Layer.provide(RabbitLive),
+  Layer.provide(
+    Layer.unwrap(
+      Effect.map(GatewayConfig, (config) =>
+        BunRedis.layer({
+          url: `redis://${encodeURIComponent(config.redis.username)}:${encodeURIComponent(Redacted.value(config.redis.password))}@${config.redis.host}:${config.redis.port}`,
+        }),
+      ),
+    ).pipe(Layer.provide(GatewayConfig.layer)),
+  ),
+  Layer.provide(GatewayConfig.layer),
+);
 
 const hasCredentialQuery = (url: URL): boolean =>
   [

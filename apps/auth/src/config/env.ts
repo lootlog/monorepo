@@ -42,7 +42,7 @@ export interface AuthConfig {
   readonly commitSha: string | undefined;
 }
 
-export const authConfig = Config.all({
+const authConfig = Config.all({
   idpTokenSecret: Config.option(Config.Redacted("AUTH_IDP_TOKEN_SECRET")).pipe(
     Config.map(Option.getOrUndefined),
   ),

@@ -5,9 +5,6 @@
     "analytics": "Analityka",
     "abyss": "Otchłań",
     "statistics": "Statystyki",
-    "headToHead": "Bilans H2H",
-    "matchmakingHeadToHead": "Matchmaking H2H",
-    "playerVsPlayer": "Gracz vs Gracz",
     "battleDuel": "{{first}} vs {{second}}",
     "battleFallback": "Walka #{{id}}"
   },
@@ -37,7 +34,6 @@
     "selectedCount": "{{count}} wybranych",
     "worldSearchPlaceholder": "Szukaj świata...",
     "noWorlds": "Brak światów",
-    "noOptions": "Brak opcji",
     "minPlaceholder": "Min",
     "maxPlaceholder": "Max",
     "chips": {
@@ -100,8 +96,6 @@
   "list": {
     "empty": "Brak walk",
     "emptyDescription": "Nie znaleziono żadnych walk spełniających kryteria wyszukiwania",
-    "savedEmpty": "Brak zapisanych walk",
-    "totalBattles": "Łącznie walk: {{count}}",
     "showingBattles": "Pokazano {{from}}-{{to}} z {{total}}",
     "openBattle": "Otwórz walkę",
     "columns": {
@@ -110,10 +104,8 @@
       "opponents": "Przeciwnicy",
       "result": "Wynik",
       "time": "Czas",
-      "duration": "Długość",
       "actions": "Akcje"
     },
-    "noTags": "-",
     "damageTags": {
       "fire": "Ogień",
       "frost": "Zimno",
@@ -139,20 +131,6 @@
       "title": "Usunąć zaznaczone walki?",
       "description": "Usuniesz zaznaczone walki: {{count}}. Tej operacji nie można cofnąć.",
       "confirm": "Usuń zaznaczone"
-    }
-  },
-  "dashboard": {
-    "chartTitle": "Walki",
-    "chartDescription": "Pokazuje statystyki walk dla danej postaci z ostatnich 6 miesięcy",
-    "emptyDescription": "Nie masz jeszcze żadnej zapisanej walki. Aby rozpocząć zbieranie danych o walkach, włącz panel walk w dodatku w grze w ustawieniach w zakładce „Panel walk”.",
-    "recentBattles": {
-      "title": "Ostatnie walki",
-      "subtitle": "Twoje ostatnie walki dla wszystkich postaci",
-      "viewAll": "Zobacz wszystkie"
-    },
-    "chartLabels": {
-      "battles": "Walki",
-      "winrate": "Winrate"
     }
   },
   "abyss": {
@@ -191,9 +169,7 @@
       "action": "Akcja"
     },
     "stats": {
-      "totalBattles": "{{count}} walk",
-      "ratingDelta": "{{value}} rating",
-      "points": "{{value}} pkt"
+      "totalBattles": "{{count}} walk"
     },
     "details": {
       "winRate": "wygranych walk",
@@ -227,7 +203,6 @@
     },
     "chart": {
       "title": "HP i momentum",
-      "description": "Kliknij punkt, żeby przejść do tej tury w logu",
       "openDialog": "Otwórz duży wykres",
       "hideChart": "Ukryj wykres",
       "showChart": "Pokaż wykres",
@@ -238,12 +213,10 @@
       "momentum": "Momentum",
       "turnTooltip": "Tura {{turn}}",
       "tooltip": {
-        "momentum": "Momentum",
         "deltas": "Zmiany tury",
         "damage": "Obrażenia",
         "healing": "Leczenie",
-        "mitigation": "Mitigacja",
-        "resourcePressure": "Presja zasobów"
+        "mitigation": "Mitigacja"
       },
       "layers": {
         "title": "Warstwy",
@@ -273,7 +246,6 @@
         "glare": "Oślepienie",
         "holyTouch": "Dotyk anioła",
         "lastHeal": "Ostatni ratunek",
-        "legendary": "Bonus legendarny",
         "puncture": "Przeszywająca skuteczność",
         "retaliation": "Aura odwetu",
         "unknown": "Bonus legendarny",
@@ -292,19 +264,6 @@
       "viewAll": "Wszystkie",
       "viewAllAria": "Zobacz wszystkie walki z {{opponent}}",
       "noRating": "Brak ratingu"
-    },
-    "reasons": {
-      "kill": "Ta tura zakończyła wojownika",
-      "flee": "Ucieczka zmieniła wynik walki",
-      "freeze": "Kontrola zamroziła tempo",
-      "control": "Kontrola zabrała inicjatywę",
-      "bigHealing": "Duże leczenie odwróciło presję",
-      "mitigation": "Defensywa mocno ograniczyła obrażenia",
-      "bigDamage": "Duży burst przesunął walkę",
-      "resourcePressure": "Presja na zasoby ograniczyła opcje",
-      "combo": "Combo zbudowało przewagę",
-      "ph": "Tura rozstrzygnęła PH",
-      "tempo": "Tura przesunęła tempo walki"
     },
     "flags": {
       "kill": "Zgon",

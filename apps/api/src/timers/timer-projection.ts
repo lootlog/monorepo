@@ -99,7 +99,7 @@ export const parseTimerNpc = (
   return mapped === null ? null : { lvl: mapped.lvl, type: mapped.type };
 };
 
-export const toTimerDate = (value: Date | string | null | undefined) => {
+const toTimerDate = (value: Date | string | null | undefined) => {
   if (!value) return null;
 
   return value instanceof Date ? value : new Date(value);

@@ -15,7 +15,7 @@ type TimerWrite = Omit<
 
 type TimerPatch = Partial<Omit<TimerWrite, "guildId" | "world" | "timerKey">>;
 
-export class EventTimerStoreFailure extends TaggedErrorClass<EventTimerStoreFailure>()(
+class EventTimerStoreFailure extends TaggedErrorClass<EventTimerStoreFailure>()(
   "EventTimerStoreFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

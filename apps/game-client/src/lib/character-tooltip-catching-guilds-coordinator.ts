@@ -5,6 +5,7 @@ import {
   type UserLootlogPlayersCatchingGuildsResponseDtoOutput,
 } from "@lootlog/client/main";
 
+import { pruneByRecency } from "@/lib/prune-by-recency";
 import {
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
@@ -398,27 +399,16 @@ export class CharacterTooltipCatchingGuildsCoordinator {
   }
 
   private pruneFailedActivations(now: number): void {
-    for (const [requestKey, failure] of this.failedActivationByRequestKey) {
-      if (now - failure.failedAt > CATCHING_GUILDS_FAILURE_TTL_MS) {
-        this.failedActivationByRequestKey.delete(requestKey);
-      }
-    }
+    const { evicted } = pruneByRecency({
+      entries: [...this.failedActivationByRequestKey.entries()],
+      now,
+      ttlMs: CATCHING_GUILDS_FAILURE_TTL_MS,
+      cap: CATCHING_GUILDS_FAILURE_CAP,
+      timestampOf: ([, failure]) => failure.failedAt,
+    });
 
-    if (this.failedActivationByRequestKey.size <= CATCHING_GUILDS_FAILURE_CAP) {
-      return;
-    }
-
-    const retainedRequestKeys = new Set(
-      [...this.failedActivationByRequestKey.entries()]
-        .sort(([, first], [, second]) => second.failedAt - first.failedAt)
-        .slice(0, CATCHING_GUILDS_FAILURE_CAP)
-        .map(([requestKey]) => requestKey),
-    );
-
-    for (const requestKey of this.failedActivationByRequestKey.keys()) {
-      if (!retainedRequestKeys.has(requestKey)) {
-        this.failedActivationByRequestKey.delete(requestKey);
-      }
+    for (const [requestKey] of evicted) {
+      this.failedActivationByRequestKey.delete(requestKey);
     }
   }
 }

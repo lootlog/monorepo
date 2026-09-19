@@ -1,3 +1,4 @@
+import { keysetNextCursor, takeKeysetPage } from "#src/shared/keyset-page";
 import { Logger } from "#src/shared/application-logger";
 import { Effect } from "effect";
 import type { eventMapCoverageGapTable } from "#src/database/drizzle/schema";
@@ -280,9 +281,8 @@ export const makeEventSummary = (repository: EventSummaryStore) => {
           cursor,
         );
 
-        const hasMore = summaries.length > limit;
-        const data = hasMore ? summaries.slice(0, limit) : summaries;
-        const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+        const { rows: data, hasMore } = takeKeysetPage(summaries, limit);
+        const nextCursor = keysetNextCursor(data, hasMore);
 
         return { data, nextCursor };
       }).pipe(Effect.withSpan("events.summary.getHeroWindows"));

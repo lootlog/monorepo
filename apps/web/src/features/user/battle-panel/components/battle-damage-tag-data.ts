@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import { BATTLE_BADGE_COLORS } from "@/components/battle/utils/battle-color-palette";
 import {
   Biohazard,
@@ -55,16 +56,13 @@ const sumWarriorValues = (
   warriors: BattleDamageTagWarrior[],
   getValue: (warrior: BattleDamageTagWarrior) => number | null | undefined,
 ) =>
-  warriors.reduce((total, warrior) => {
+  sumBy(warriors, (warrior) => {
     const value = getValue(warrior);
 
-    const safeValue =
-      value !== null && value !== undefined && Number.isFinite(value)
-        ? value
-        : 0;
-
-    return total + safeValue;
-  }, 0);
+    return value !== null && value !== undefined && Number.isFinite(value)
+      ? value
+      : 0;
+  });
 
 export const getBattleDamageTags = (
   team: BattleDamageTagWarrior[],

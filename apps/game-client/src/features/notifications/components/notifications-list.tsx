@@ -27,7 +27,7 @@ import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 type NotificationsListProps = {
@@ -166,81 +166,70 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   }, [updateMutes]);
 
   // These callbacks feed memoized rows (see SingleNotification), so they must
-  // keep their identity across unrelated list renders. The mutes mutate
-  // function is read through a ref because its identity is not guaranteed
-  // to be stable; the others depend only on stable store actions.
-  const handleUpdateMutes = useCallback(
-    (mutesPatch: NotificationMutesPatch) => {
-      updateMutesRef.current(mutesPatch);
-    },
-    [],
-  );
+  // keep their identity across unrelated list renders; the React Compiler
+  // memoizes them. The mutes mutate function is still read through a ref
+  // because its own identity is not guaranteed to be stable.
+  const handleUpdateMutes = (mutesPatch: NotificationMutesPatch) => {
+    updateMutesRef.current(mutesPatch);
+  };
 
-  const handleJoinReadyRoom = useCallback(
-    (notification: StoredNotification) => {
-      const character = buildCurrentCharacterPayload();
+  const handleJoinReadyRoom = (notification: StoredNotification) => {
+    const character = buildCurrentCharacterPayload();
 
-      if (!character) return;
+    if (!character) return;
 
-      applyToReadyRoom(
-        {
-          pathParams: {
-            notificationId: notification.notificationId,
-          },
-          data: {
-            world: notification.world,
-            character,
-          },
+    applyToReadyRoom(
+      {
+        pathParams: {
+          notificationId: notification.notificationId,
         },
-        {
-          onSuccess: (projection) => {
-            if (projection.schemaVersion !== 3) return;
-            mergeReadyRoomProjection(
-              decodePartyReadyRoomProjection(projection),
-            );
-            setOpen("notifications", false);
-            setOpen("chat", true);
-            clearNotifications();
-          },
+        data: {
+          world: notification.world,
+          character,
         },
-      );
-    },
-    [applyToReadyRoom, clearNotifications, mergeReadyRoomProjection, setOpen],
-  );
+      },
+      {
+        onSuccess: (projection) => {
+          if (projection.schemaVersion !== 3) return;
+          mergeReadyRoomProjection(decodePartyReadyRoomProjection(projection));
+          setOpen("notifications", false);
+          setOpen("chat", true);
+          clearNotifications();
+        },
+      },
+    );
+  };
 
-  const handleRemoveNotification = useCallback(
-    (notificationId: string) => {
-      if (!animationEffectsEnabled) {
-        removeNotification(notificationId);
+  const handleRemoveNotification = (notificationId: string) => {
+    if (!animationEffectsEnabled) {
+      removeNotification(notificationId);
 
-        return;
-      }
+      return;
+    }
 
-      if (manualRemovalTimeoutsRef.current.has(notificationId)) return;
+    if (manualRemovalTimeoutsRef.current.has(notificationId)) return;
 
+    setManuallyLeavingNotificationIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      nextIds.add(notificationId);
+
+      return nextIds;
+    });
+
+    const timeoutId = window.setTimeout(() => {
+      manualRemovalTimeoutsRef.current.delete(notificationId);
+      removeNotification(notificationId);
       setManuallyLeavingNotificationIds((currentIds) => {
+        if (!currentIds.has(notificationId)) return currentIds;
         const nextIds = new Set(currentIds);
-        nextIds.add(notificationId);
+        nextIds.delete(notificationId);
 
         return nextIds;
       });
+    }, MANUAL_EXIT_ANIMATION_DURATION_MS);
 
-      const timeoutId = window.setTimeout(() => {
-        manualRemovalTimeoutsRef.current.delete(notificationId);
-        removeNotification(notificationId);
-        setManuallyLeavingNotificationIds((currentIds) => {
-          if (!currentIds.has(notificationId)) return currentIds;
-          const nextIds = new Set(currentIds);
-          nextIds.delete(notificationId);
-
-          return nextIds;
-        });
-      }, MANUAL_EXIT_ANIMATION_DURATION_MS);
-
-      manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
-    },
-    [animationEffectsEnabled, removeNotification],
-  );
+    manualRemovalTimeoutsRef.current.set(notificationId, timeoutId);
+  };
 
   const getNotificationRow = (notification: StoredNotification) => {
     const settingsKey = getNotificationSettingsKey(notification);

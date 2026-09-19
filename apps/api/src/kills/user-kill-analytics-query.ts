@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { DateTime } from "effect";
 
-export const KILL_ANALYTICS_TIMEZONE = "Europe/Warsaw";
+const KILL_ANALYTICS_TIMEZONE = "Europe/Warsaw";
 
 export const getKillAnalyticsRange = (now: DateTime.Utc, days: number) => {
   const zoned = DateTime.setZoneNamedUnsafe(now, KILL_ANALYTICS_TIMEZONE);

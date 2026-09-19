@@ -1,4 +1,4 @@
-import { useMemberColor } from "@/hooks/discord/use-member-color";
+import { getMemberColor } from "@/utils/get-member-color";
 import type { MemberReferenceResponseDtoOutput as GuildMember } from "@lootlog/client/main";
 
 type MemberNameWithColorProps = {
@@ -16,7 +16,7 @@ export const MemberNameWithColor: React.FC<MemberNameWithColorProps> = ({
       }
     : undefined;
 
-  const color = useMemberColor(adaptedMember);
+  const color = getMemberColor(adaptedMember);
 
   return (
     <span className="font-medium" style={{ color }}>

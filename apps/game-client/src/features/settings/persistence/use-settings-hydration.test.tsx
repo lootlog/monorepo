@@ -127,6 +127,27 @@ describe("useSettingsHydration", () => {
     });
   });
 
+  it("keeps store identity when a refetched value only reorders its keys", () => {
+    applyTimerDocuments(
+      createSettingsDocuments({
+        "appearance.timers.timersColors": { Tanroth: "red", Heros: "blue" },
+      }),
+    );
+
+    const { timersColors } = useTimersStore.getState();
+
+    // The server resolves `effective` documents as JSON, so the same stored
+    // value can come back with its keys in another order. Replacing the store
+    // value for that would re-render the timers feature on every refetch.
+    applyTimerDocuments(
+      createSettingsDocuments({
+        "appearance.timers.timersColors": { Heros: "blue", Tanroth: "red" },
+      }),
+    );
+
+    expect(useTimersStore.getState().timersColors).toBe(timersColors);
+  });
+
   it.each([true, false])(
     "hydrates legacy appearance %s from server documents",
     (legacyAppearance) => {

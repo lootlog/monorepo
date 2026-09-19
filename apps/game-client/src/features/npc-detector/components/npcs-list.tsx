@@ -122,21 +122,13 @@ export const NpcsList: FC<NpcsListProps> = ({
       passive: true,
     });
 
-    const resizeObserver =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(updateViewport);
+    const resizeObserver = new ResizeObserver(updateViewport);
 
-    resizeObserver?.observe(scrollViewport);
-
-    if (!resizeObserver) {
-      window.addEventListener("resize", updateViewport);
-    }
+    resizeObserver.observe(scrollViewport);
 
     return () => {
       scrollViewport.removeEventListener("scroll", updateViewport);
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", updateViewport);
+      resizeObserver.disconnect();
     };
   }, []);
 

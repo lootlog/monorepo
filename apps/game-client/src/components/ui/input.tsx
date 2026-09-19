@@ -13,7 +13,7 @@ export const inputVariantClasses = {
  * The 1px top padding is an optical correction: Chrome rounds the Arimo
  * baseline up, so glyphs centered by line-height alone sit a pixel high.
  */
-export const inputSizeClasses = {
+const inputSizeClasses = {
   sm: "ll:h-7 ll:px-1.5 ll:pt-px ll:leading-5",
   md: "ll:h-8 ll:px-2 ll:pt-px ll:leading-6",
 };

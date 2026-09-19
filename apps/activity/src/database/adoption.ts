@@ -63,48 +63,48 @@ export const isAcceptedActivitySchema = (
   stableJsonStringify(metadata) ===
   stableJsonStringify(acceptedActivitySchemaMetadata);
 
-export class DatabaseAdoptionError extends TaggedErrorClass<DatabaseAdoptionError>()(
+class DatabaseAdoptionError extends TaggedErrorClass<DatabaseAdoptionError>()(
   "DatabaseAdoptionError",
   { message: Schema.String, cause: Schema.optional(Schema.Defect()) },
 ) {}
 
-export const loadActivitySchemaMetadata = Effect.fn(
-  "ActivityDatabase.loadMetadata",
-)(function* () {
-  const sql = yield* PgClient.PgClient;
+const loadActivitySchemaMetadata = Effect.fn("ActivityDatabase.loadMetadata")(
+  function* () {
+    const sql = yield* PgClient.PgClient;
 
-  const columns = yield* sql.unsafe<{ signature: string }>(
-    `SELECT table_name || ':' || string_agg(column_name || '=' || udt_name || ',' || is_nullable || ',' || coalesce(column_default,''), ';' ORDER BY ordinal_position) AS signature FROM information_schema.columns WHERE table_schema=current_schema() AND table_name IN ('Activity','ActivityActorSnapshot','MemberActivitySession','MemberActivityStats') GROUP BY table_name ORDER BY table_name`,
-  );
+    const columns = yield* sql.unsafe<{ signature: string }>(
+      `SELECT table_name || ':' || string_agg(column_name || '=' || udt_name || ',' || is_nullable || ',' || coalesce(column_default,''), ';' ORDER BY ordinal_position) AS signature FROM information_schema.columns WHERE table_schema=current_schema() AND table_name IN ('Activity','ActivityActorSnapshot','MemberActivitySession','MemberActivityStats') GROUP BY table_name ORDER BY table_name`,
+    );
 
-  const constraints = yield* sql.unsafe<{ signature: string }>(
-    `SELECT conname || ':' || pg_get_constraintdef(oid, true) AS signature FROM pg_constraint WHERE connamespace=current_schema()::regnamespace AND conrelid::regclass::text IN ('"Activity"','"ActivityActorSnapshot"','"MemberActivitySession"','"MemberActivityStats"') ORDER BY conname`,
-  );
+    const constraints = yield* sql.unsafe<{ signature: string }>(
+      `SELECT conname || ':' || pg_get_constraintdef(oid, true) AS signature FROM pg_constraint WHERE connamespace=current_schema()::regnamespace AND conrelid::regclass::text IN ('"Activity"','"ActivityActorSnapshot"','"MemberActivitySession"','"MemberActivityStats"') ORDER BY conname`,
+    );
 
-  const enums = yield* sql.unsafe<{ signature: string }>(
-    `SELECT t.typname || ':' || string_agg(e.enumlabel, ',' ORDER BY e.enumsortorder) AS signature FROM pg_type t JOIN pg_enum e ON e.enumtypid=t.oid WHERE t.typname IN ('ActivitySource','ActivityType') GROUP BY t.typname ORDER BY t.typname`,
-  );
+    const enums = yield* sql.unsafe<{ signature: string }>(
+      `SELECT t.typname || ':' || string_agg(e.enumlabel, ',' ORDER BY e.enumsortorder) AS signature FROM pg_type t JOIN pg_enum e ON e.enumtypid=t.oid WHERE t.typname IN ('ActivitySource','ActivityType') GROUP BY t.typname ORDER BY t.typname`,
+    );
 
-  const indexes = yield* sql.unsafe<{ signature: string }>(
-    `SELECT indexname || ':' || replace(indexdef, ' ON '||quote_ident(current_schema())||'.', ' ON ') AS signature FROM pg_indexes WHERE schemaname=current_schema() AND tablename IN ('Activity','ActivityActorSnapshot','MemberActivitySession','MemberActivityStats') ORDER BY indexname`,
-  );
+    const indexes = yield* sql.unsafe<{ signature: string }>(
+      `SELECT indexname || ':' || replace(indexdef, ' ON '||quote_ident(current_schema())||'.', ' ON ') AS signature FROM pg_indexes WHERE schemaname=current_schema() AND tablename IN ('Activity','ActivityActorSnapshot','MemberActivitySession','MemberActivityStats') ORDER BY indexname`,
+    );
 
-  const timescale = yield* sql.unsafe<{
-    hypertable: boolean;
-    chunkInterval: string | null;
-    retention: string | null;
-  }>(
-    `SELECT EXISTS(SELECT 1 FROM timescaledb_information.hypertables WHERE hypertable_schema=current_schema() AND hypertable_name='Activity') AS hypertable, (SELECT time_interval::text FROM timescaledb_information.dimensions WHERE hypertable_schema=current_schema() AND hypertable_name='Activity' LIMIT 1) AS "chunkInterval", (SELECT config->>'drop_after' FROM timescaledb_information.jobs WHERE hypertable_schema=current_schema() AND hypertable_name='Activity' AND proc_name='policy_retention' LIMIT 1) AS retention`,
-  );
+    const timescale = yield* sql.unsafe<{
+      hypertable: boolean;
+      chunkInterval: string | null;
+      retention: string | null;
+    }>(
+      `SELECT EXISTS(SELECT 1 FROM timescaledb_information.hypertables WHERE hypertable_schema=current_schema() AND hypertable_name='Activity') AS hypertable, (SELECT time_interval::text FROM timescaledb_information.dimensions WHERE hypertable_schema=current_schema() AND hypertable_name='Activity' LIMIT 1) AS "chunkInterval", (SELECT config->>'drop_after' FROM timescaledb_information.jobs WHERE hypertable_schema=current_schema() AND hypertable_name='Activity' AND proc_name='policy_retention' LIMIT 1) AS retention`,
+    );
 
-  return {
-    columns: columns.map((row) => row.signature),
-    constraints: constraints.map((row) => row.signature),
-    enums: enums.map((row) => row.signature),
-    indexes: indexes.map((row) => row.signature),
-    timescale: timescale[0],
-  };
-});
+    return {
+      columns: columns.map((row) => row.signature),
+      constraints: constraints.map((row) => row.signature),
+      enums: enums.map((row) => row.signature),
+      indexes: indexes.map((row) => row.signature),
+      timescale: timescale[0],
+    };
+  },
+);
 
 export const verifyAndAdoptDatabase = Effect.fn(
   "ActivityDatabase.verifyAndAdopt",

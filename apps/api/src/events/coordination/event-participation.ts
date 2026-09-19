@@ -12,7 +12,7 @@ import {
   eventRankingTable,
   eventTable,
 } from "#src/database/drizzle/schema";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
@@ -22,7 +22,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import type { AcknowledgeExpiredParticipationConfirmationsRequest } from "#src/contracts/events/schemas";
 import type { EventRankingPublisher } from "#src/events/kills/event-point-edits";
 
-export class EventParticipationError extends TaggedErrorClass<EventParticipationError>()(
+class EventParticipationError extends TaggedErrorClass<EventParticipationError>()(
   "EventParticipationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
@@ -114,7 +114,7 @@ export const makeEventParticipation = (
           "Failed to invalidate participation cache",
         ),
         publisher
-          .publish(RoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })
+          .publish(RabbitRoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })
           .pipe(
             Effect.catch((error) =>
               Effect.sync(() =>

@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-export const IndexPlayer = Schema.Struct({
+const IndexPlayer = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   lvl: Schema.Number,
@@ -16,6 +16,3 @@ export const IndexPlayersPayload = Schema.Array(IndexPlayer);
 export type IndexPlayersCommand = {
   readonly players: typeof IndexPlayersPayload.Type;
 };
-
-export const decodeIndexPlayersPayload =
-  Schema.decodeUnknownSync(IndexPlayersPayload);
