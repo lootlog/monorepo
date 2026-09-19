@@ -4,6 +4,8 @@ import * as React from "react";
 import { Menu as DropdownMenuPrimitive } from "@base-ui/react/menu";
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
 
+import { nativeButtonForRender } from "@lootlog/ui/lib/native-button";
+
 import { cn } from "cn";
 
 function DropdownMenu({ ...props }: DropdownMenuPrimitive.Root.Props) {
@@ -68,6 +70,8 @@ function DropdownMenuGroup({ ...props }: DropdownMenuPrimitive.Group.Props) {
 }
 
 function DropdownMenuItem({
+  nativeButton,
+  render,
   className,
   inset,
   variant = "default",
@@ -79,6 +83,8 @@ function DropdownMenuItem({
   return (
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       data-inset={inset}
       data-variant={variant}
       className={cn(
@@ -91,6 +97,8 @@ function DropdownMenuItem({
 }
 
 function DropdownMenuCheckboxItem({
+  nativeButton,
+  render,
   className,
   children,
   checked,
@@ -99,6 +107,8 @@ function DropdownMenuCheckboxItem({
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       className={cn(
         "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
@@ -128,6 +138,8 @@ function DropdownMenuRadioGroup({
 }
 
 function DropdownMenuRadioItem({
+  nativeButton,
+  render,
   className,
   children,
   ...props
@@ -135,6 +147,8 @@ function DropdownMenuRadioItem({
   return (
     <DropdownMenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       className={cn(
         "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
@@ -212,6 +226,8 @@ function DropdownMenuSub({
 }
 
 function DropdownMenuSubTrigger({
+  nativeButton,
+  render,
   className,
   inset,
   children,
@@ -222,6 +238,8 @@ function DropdownMenuSubTrigger({
   return (
     <DropdownMenuPrimitive.SubmenuTrigger
       data-slot="dropdown-menu-sub-trigger"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       data-inset={inset}
       className={cn(
         "focus:bg-accent focus:text-accent-foreground data-popup-open:bg-accent data-popup-open:text-accent-foreground flex cursor-default items-center rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-inset:pl-8",
