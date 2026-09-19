@@ -12,6 +12,6 @@ description: Distinguish access denials, rate limits, and service outages.
 | `429`  | Wait for the duration specified by `Retry-After` before retrying                                |
 | `5xx`  | The service is unavailable; show an error state and retry reads cautiously                      |
 
-The initial limit is 120 requests per minute per key. Operation-specific limits still apply. Do not bypass them by creating additional keys.
+The initial limit is 120 requests per key in each fixed UTC minute (for example, 12:00:00–12:00:59). The budget resets at the next minute boundary, even with continuous traffic. All auth replicas share the same budget. Operation-specific limits still apply. Do not bypass them by creating additional keys.
 
 Do not turn a failed data fetch into an empty list. Keep the last result marked as stale, or show that data is unavailable. For writes, losing the response does not prove that the operation failed.

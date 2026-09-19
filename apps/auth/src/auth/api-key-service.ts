@@ -1,3 +1,4 @@
+import { defaultKeyHasher } from "@better-auth/api-key";
 import { HttpClient, HttpClientResponse } from "effect/unstable/http";
 import { hasServiceAuthorization } from "@lootlog/protocol/http/service-auth";
 import { and, eq, inArray } from "drizzle-orm";
@@ -404,11 +405,44 @@ export class ApiKeyService extends Context.Service<
             catch: () => failure(503, "API key verification unavailable"),
           });
 
-          if (!result.valid || !result.key)
-            return yield* failure(
-              result.error?.code === "RATE_LIMITED" ? 429 : 401,
-              "API key rejected",
-            );
+          if (!result.valid || !result.key) {
+            const rateLimited = result.error?.code === "RATE_LIMITED";
+
+            if (rateLimited) {
+              // Attribute only a verified rate-limit rejection; never trust caller IDs.
+              const owner = yield* Effect.tryPromise(() =>
+                defaultKeyHasher(key),
+              ).pipe(
+                Effect.flatMap((hash) =>
+                  database
+                    .select({
+                      keyId: authApiKeys.id,
+                      userId: authUsers.id,
+                      discordId: authUsers.discordId,
+                    })
+                    .from(authApiKeys)
+                    .innerJoin(
+                      authUsers,
+                      eq(authUsers.id, authApiKeys.referenceId),
+                    )
+                    .where(eq(authApiKeys.key, hash))
+                    .limit(1),
+                ),
+                Effect.map((rows) => rows[0]),
+                // Logging must not turn a rate-limit rejection into a service failure.
+                Effect.catch(() => Effect.succeed(undefined)),
+              );
+
+              yield* Effect.logWarning("API key rate limit exceeded", {
+                context: "ApiKeyService",
+                code: "RATE_LIMITED",
+                ...(owner ?? { attribution: "unavailable" }),
+              });
+            }
+
+            return yield* failure(rateLimited ? 429 : 401, "API key rejected");
+          }
+
           const status = (yield* readStatuses([result.key.id]))[0];
 
           if (!status?.valid) return yield* failure(401, "API key rejected");

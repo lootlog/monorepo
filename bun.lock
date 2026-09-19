@@ -715,6 +715,7 @@
   "patchedDependencies": {
     "@effect/platform-bun@4.0.0-rc.112": "patches/@effect%2Fplatform-bun@4.0.0-rc.112.patch",
     "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
+    "@better-auth/api-key@1.7.2": "patches/@better-auth%2Fapi-key@1.7.2.patch",
   },
   "overrides": {
     "deepmerge-ts@<=7.1.5": {

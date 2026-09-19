@@ -1,0 +1,51 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index bdb7e36568fd6a68a95c6f62642807bab94e4083..436698749c5a36318e357810d8c837219694bd73 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -1599,22 +1599,23 @@ function evaluateRateLimit(apiKey, opts) {
+ 		type: "start",
+ 		now
+ 	};
+-	const timeSinceLastRequest = now.getTime() - new Date(lastRequest).getTime();
+-	if (timeSinceLastRequest > rateLimitTimeWindow) return {
++	// Keep windows fixed while preserving lastRequest as the actual usage time.
++	const windowStart = new Date(Math.floor(now.getTime() / rateLimitTimeWindow) * rateLimitTimeWindow);
++	if (new Date(lastRequest).getTime() < windowStart.getTime()) return {
+ 		type: "reset",
+ 		now,
+-		windowStart: new Date(now.getTime() - rateLimitTimeWindow)
++		windowStart
+ 	};
+ 	if (apiKey.requestCount >= rateLimitMax) return {
+ 		type: "deny",
+ 		message: API_KEY_ERROR_CODES.RATE_LIMIT_EXCEEDED.message,
+-		tryAgainIn: Math.ceil(rateLimitTimeWindow - timeSinceLastRequest)
++		tryAgainIn: windowStart.getTime() + rateLimitTimeWindow - now.getTime()
+ 	};
+ 	return {
+ 		type: "increment",
+ 		now,
+ 		max: rateLimitMax,
+-		windowStart: new Date(now.getTime() - rateLimitTimeWindow)
++		windowStart
+ 	};
+ }
+ //#endregion
+@@ -1812,7 +1813,7 @@ async function consumeRateLimit(ctx, apiKey, opts) {
+ 				},
+ 				{
+ 					field: "lastRequest",
+-					operator: "gt",
++					operator: "gte",
+ 					value: decision.windowStart
+ 				},
+ 				{
+@@ -1837,7 +1838,7 @@ async function consumeRateLimit(ctx, apiKey, opts) {
+ 	}
+ 	const windowGuard = decision.type === "reset" ? {
+ 		field: "lastRequest",
+-		operator: "lte",
++		operator: "lt",
+ 		value: decision.windowStart
+ 	} : {
+ 		field: "lastRequest",
