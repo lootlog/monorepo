@@ -4,11 +4,9 @@ import { useBattleTableActions } from "@/features/user/battle-panel/battle-panel
 import { useBattleTableSelection } from "@/features/user/battle-panel/battle-panel-battles-list/hooks/use-battle-table-selection";
 import { BattlePanelBattleCard } from "@/features/user/battle-panel/components/battle-panel-battle-card";
 import { BattlePanelBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-battle-card-skeleton";
-import { getBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { ResultsSurface } from "@/components/common/results-surface";
-import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import {
@@ -57,10 +55,6 @@ type BattlesTableProps = {
   };
   toolbar?: ReactNode;
   toolbarEnd?: ReactNode;
-};
-
-const getRowClassName = (battle: Battle) => {
-  return getBattleResultRowClassName(getBattleResult(battle));
 };
 
 // Cells whose whole area opens the battle, so a click anywhere outside the
@@ -331,8 +325,7 @@ export const BattlesTable = ({
                 table={table}
                 getRowClassName={(row) =>
                   cn(
-                    "h-14 border-b border-border",
-                    getRowClassName(row.original),
+                    "h-14 border-b border-border hover:bg-muted/40",
                     isRefreshing && "opacity-60",
                     selectedBattleIds.has(row.original.id) &&
                       "ring-2 ring-inset ring-primary/45",

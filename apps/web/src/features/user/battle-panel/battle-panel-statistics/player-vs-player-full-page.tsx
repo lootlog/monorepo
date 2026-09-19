@@ -6,17 +6,14 @@ import { PeriodSelector } from "@/components/filters/period-selector";
 import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
 import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card";
 import { ResultsSurface } from "@/components/common/results-surface";
-import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
 import { Separator } from "@lootlog/ui/components/separator";
 import { Table } from "@lootlog/ui/components/table";
-import { cn } from "cn";
 import { AlertCircle, ArrowRight, SearchX, Swords } from "lucide-react";
 import { usePlayerVsPlayerPage } from "./use-player-vs-player-page";
 
@@ -170,12 +167,8 @@ export function PlayerVsPlayerFullPage() {
           table={table}
           cellClassName="whitespace-nowrap align-middle"
           getRowProps={(row) => ({
-            className: cn(
-              "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-              getBattleResultRowClassName(
-                getPlayerVsPlayerBattleResult(row.original),
-              ),
-            ),
+            className:
+              "h-14 cursor-pointer border-b border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
             onClick: () => handleBattleOpen(row.original.battleId),
             onKeyDown: (event) =>
               handleBattleRowKeyDown(event, row.original.battleId),

@@ -8,10 +8,8 @@ import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelH2hCard } from "@/features/user/battle-panel/components/battle-panel-h2h-card";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { ResultsSurface } from "@/components/common/results-surface";
-import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
-import { cn } from "cn";
 import { AlertCircle, SearchX, Swords } from "lucide-react";
 import { HeadToHeadFilterToolbar } from "./components/head-to-head-filter-toolbar";
 import { HeadToHeadFiltersPanel } from "./components/head-to-head-filters-panel";
@@ -176,10 +174,8 @@ export function HeadToHeadPageVariant({
           table={table}
           cellClassName="whitespace-nowrap"
           getRowProps={(row) => ({
-            className: cn(
-              "h-14 cursor-pointer border-b border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              getBattleResultRowClassName(row.original.lastBattleResult),
-            ),
+            className:
+              "h-14 cursor-pointer border-b border-border hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             onClick: () => handleRowClick(row.original.opponentId),
             onKeyDown: (event) =>
               handleRowKeyDown(event, row.original.opponentId),
