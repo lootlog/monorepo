@@ -191,3 +191,38 @@ it("recovers from initial and background failures without losing the last loaded
   expect(screen.queryByRole("alert")).toBeNull();
   expect(screen.queryByText("Original NPC")).toBeNull();
 });
+
+it("orders timer groups by NPC type, then spawn time, preserving tied timers", async () => {
+  const timers: TimerResponseDto[] = [
+    {
+      ...timer,
+      timerKey: "late",
+      npc: { ...timer.npc, id: 10, name: "Late NPC" },
+      maxSpawnTime: "2099-01-01T03:00:00.000Z",
+    },
+    {
+      ...timer,
+      timerKey: "first",
+      npc: { ...timer.npc, id: 11, name: "First tied NPC" },
+    },
+    {
+      ...timer,
+      timerKey: "titan",
+      npc: { ...timer.npc, id: 12, name: "Titan NPC", type: "TITAN" },
+      maxSpawnTime: "2099-01-01T04:00:00.000Z",
+    },
+    {
+      ...timer,
+      timerKey: "second",
+      npc: { ...timer.npc, id: 13, name: "Second tied NPC" },
+    },
+  ];
+
+  await mount(async () => Response.json(timers));
+  await screen.findByText("Titan NPC");
+  expect(
+    screen
+      .getAllByText(/^(Late|First tied|Titan|Second tied) NPC$/)
+      .map((element) => element.textContent),
+  ).toEqual(["Titan NPC", "First tied NPC", "Second tied NPC", "Late NPC"]);
+});

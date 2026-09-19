@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { Effect } from "effect";
+import { uniqBy } from "es-toolkit";
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -14,16 +15,10 @@ export function mapPlayersToSnapshotInputs(
   world: string,
   players: MapPlayersSnapshot,
 ) {
-  const seen = new Set<string>();
-
-  const uniquePlayers = players.filter(({ accountId, characterId }) => {
-    const identity = `${accountId}:${characterId}`;
-
-    if (seen.has(identity)) return false;
-    seen.add(identity);
-
-    return true;
-  });
+  const uniquePlayers = uniqBy(
+    players,
+    ({ accountId, characterId }) => `${accountId}:${characterId}`,
+  );
 
   return uniquePlayers.map((player) => ({
     ...player,

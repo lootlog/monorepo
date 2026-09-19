@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 import { getBattleTeamPresentation } from "./battle-team-presentation";
 
@@ -52,11 +53,6 @@ const METRIC_VALUE: Record<
   turns: (warrior) => warrior.turns,
 };
 
-const sumBy = (
-  team: BattleWarrior[],
-  getValue: (warrior: BattleWarrior) => number,
-) => team.reduce((total, warrior) => total + getValue(warrior), 0);
-
 const getSegments = <TKey extends keyof BattleWarrior & string>(
   team: BattleWarrior[],
   keys: readonly TKey[],
@@ -67,7 +63,7 @@ const getSegments = <TKey extends keyof BattleWarrior & string>(
     value: sumBy(team, (warrior) => getValue(warrior, key)),
   }));
 
-  const total = values.reduce((sum, segment) => sum + segment.value, 0);
+  const total = sumBy(values, (segment) => segment.value);
 
   return values.flatMap((segment) =>
     segment.value > 0 ? [{ ...segment, share: segment.value / total }] : [],

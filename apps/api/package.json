@@ -53,6 +53,7 @@
     "discord-api-types": "0.38.55",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
+    "es-toolkit": "catalog:",
     "sharp": "^0.35.4",
     "superjson": "catalog:",
     "uuid": "^14.0.2"

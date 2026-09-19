@@ -50,6 +50,7 @@
     "bullmq": "^6.3.8",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
+    "es-toolkit": "catalog:",
     "pg": "^8.23.0"
   },
   "devDependencies": {

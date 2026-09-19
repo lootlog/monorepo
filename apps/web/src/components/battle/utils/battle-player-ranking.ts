@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import type { Battle, BattleWarrior } from "@/lib/api/battlelog-types";
 
 export const BATTLE_RANKING_METRICS = ["damageDealt", "damageTaken"] as const;
@@ -36,7 +37,7 @@ export const getBattlePlayerRanking = (
     value: METRIC_VALUE[metric](warrior),
   }));
 
-  const total = values.reduce((sum, entry) => sum + entry.value, 0);
+  const total = sumBy(values, (entry) => entry.value);
   const highest = Math.max(0, ...values.map((entry) => entry.value));
 
   return [...values]

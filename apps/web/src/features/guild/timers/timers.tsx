@@ -20,7 +20,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
-import groupBy from "lodash/groupBy";
+import { groupBy, sortBy } from "es-toolkit";
 import { Clock3, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
@@ -110,18 +110,11 @@ export const Timers = () => {
   const emptyTranslationKeys =
     getEmptyTimerTranslationKeys(showsNoSearchResults);
 
-  const sortedByTime = filtered?.sort((a, b) => {
-    return (
-      new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
-    );
-  });
-
-  const sorted = sortedByTime?.sort((a, b) => {
-    return (
-      NPC_TYPE_SORT_ORDER.findIndex((type) => type === a.npc?.type) -
-      NPC_TYPE_SORT_ORDER.findIndex((type) => type === b.npc?.type)
-    );
-  });
+  const sorted = sortBy(filtered ?? [], [
+    (timer) =>
+      NPC_TYPE_SORT_ORDER.findIndex((type) => type === timer.npc?.type),
+    (timer) => new Date(timer.maxSpawnTime).getTime(),
+  ]);
 
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
@@ -225,7 +218,7 @@ export const Timers = () => {
               )}
               {hasFilteredTimers && (
                 <div className="flex flex-col gap-4">
-                  {Object.keys(groups).map((key) => {
+                  {Object.entries(groups).map(([key, timers]) => {
                     const npcType = findNpcType(key);
 
                     return (
@@ -234,10 +227,10 @@ export const Timers = () => {
                           {npcType
                             ? NPC_TYPE_NAMES[npcType]
                             : t("timers.npcType.manual")}{" "}
-                          ({groups[key]?.length})
+                          ({timers.length})
                         </p>
                         <div className={getTimerGroupClassName(viewMode)}>
-                          {groups[key]?.map((timer) => {
+                          {timers.map((timer) => {
                             return (
                               <SingleTimer
                                 key={timer.npc?.id ?? timer.timerKey}
