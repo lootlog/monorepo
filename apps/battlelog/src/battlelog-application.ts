@@ -136,7 +136,7 @@ const acquireDeleteQueue = (config: BattlelogConfiguration) =>
           prefix: "{bull}",
         }),
     ),
-    (queue) => Effect.tryPromise(() => queue.close()),
+    (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
   );
 
 const acquireDeleteWorker = (
@@ -156,6 +156,6 @@ const acquireDeleteWorker = (
           { connection: { url: redisUrl(config) }, prefix: "{bull}" },
         );
       }),
-      (worker) => Effect.tryPromise(() => worker.close()),
+      (worker) => Effect.tryPromise(() => worker.close()).pipe(Effect.orDie),
     );
   });

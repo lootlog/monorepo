@@ -406,7 +406,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Health check
+ * @summary Invalidates the {@link useHealthzControllerHealthCheck} query
  */
 export const invalidateHealthzControllerHealthCheck = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -422,8 +422,8 @@ export const invalidateHealthzControllerHealthCheck = async (
  */
 export const useSetHealthzControllerHealthCheckQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ exact: $exactMatch, queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
   };
 }
 
@@ -564,7 +564,7 @@ export const prefetchPlayersControllerGetPlayersQuery = async <TData = Awaited<R
 }
 
 /**
- * @summary Search players by name
+ * @summary Invalidates the {@link usePlayersControllerGetPlayers} query
  */
 export const invalidatePlayersControllerGetPlayers = async (
  queryClient: QueryClient, params?: PlayersControllerGetPlayersParams, options?: InvalidateOptions
@@ -580,8 +580,8 @@ export const invalidatePlayersControllerGetPlayers = async (
  */
 export const useSetPlayersControllerGetPlayersQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: PlayersControllerGetPlayersParams | undefined,updater: Awaited<ReturnType<typeof playersControllerGetPlayers>> | undefined | ((old: Awaited<ReturnType<typeof playersControllerGetPlayers>> | undefined) => Awaited<ReturnType<typeof playersControllerGetPlayers>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof playersControllerGetPlayers>>>({ queryKey: getPlayersControllerGetPlayersQueryKey(params) }, updater);
+  return (params: PlayersControllerGetPlayersParams | undefined,updater: Awaited<ReturnType<typeof playersControllerGetPlayers>> | undefined | ((old: Awaited<ReturnType<typeof playersControllerGetPlayers>> | undefined) => Awaited<ReturnType<typeof playersControllerGetPlayers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof playersControllerGetPlayers>>>({ exact: $exactMatch, queryKey: getPlayersControllerGetPlayersQueryKey(params) }, updater);
   };
 }
 
@@ -722,7 +722,7 @@ export const prefetchNpcsControllerGetNpcsQuery = async <TData = Awaited<ReturnT
 }
 
 /**
- * @summary Search NPCs by name
+ * @summary Invalidates the {@link useNpcsControllerGetNpcs} query
  */
 export const invalidateNpcsControllerGetNpcs = async (
  queryClient: QueryClient, params?: NpcsControllerGetNpcsParams, options?: InvalidateOptions
@@ -738,8 +738,8 @@ export const invalidateNpcsControllerGetNpcs = async (
  */
 export const useSetNpcsControllerGetNpcsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: NpcsControllerGetNpcsParams | undefined,updater: Awaited<ReturnType<typeof npcsControllerGetNpcs>> | undefined | ((old: Awaited<ReturnType<typeof npcsControllerGetNpcs>> | undefined) => Awaited<ReturnType<typeof npcsControllerGetNpcs>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof npcsControllerGetNpcs>>>({ queryKey: getNpcsControllerGetNpcsQueryKey(params) }, updater);
+  return (params: NpcsControllerGetNpcsParams | undefined,updater: Awaited<ReturnType<typeof npcsControllerGetNpcs>> | undefined | ((old: Awaited<ReturnType<typeof npcsControllerGetNpcs>> | undefined) => Awaited<ReturnType<typeof npcsControllerGetNpcs>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof npcsControllerGetNpcs>>>({ exact: $exactMatch, queryKey: getNpcsControllerGetNpcsQueryKey(params) }, updater);
   };
 }
 
@@ -880,7 +880,7 @@ export const prefetchItemsControllerGetItemsQuery = async <TData = Awaited<Retur
 }
 
 /**
- * @summary Search items with filters, sorting, and facets
+ * @summary Invalidates the {@link useItemsControllerGetItems} query
  */
 export const invalidateItemsControllerGetItems = async (
  queryClient: QueryClient, params?: ItemsControllerGetItemsParams, options?: InvalidateOptions
@@ -896,8 +896,8 @@ export const invalidateItemsControllerGetItems = async (
  */
 export const useSetItemsControllerGetItemsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: ItemsControllerGetItemsParams | undefined,updater: Awaited<ReturnType<typeof itemsControllerGetItems>> | undefined | ((old: Awaited<ReturnType<typeof itemsControllerGetItems>> | undefined) => Awaited<ReturnType<typeof itemsControllerGetItems>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof itemsControllerGetItems>>>({ queryKey: getItemsControllerGetItemsQueryKey(params) }, updater);
+  return (params: ItemsControllerGetItemsParams | undefined,updater: Awaited<ReturnType<typeof itemsControllerGetItems>> | undefined | ((old: Awaited<ReturnType<typeof itemsControllerGetItems>> | undefined) => Awaited<ReturnType<typeof itemsControllerGetItems>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof itemsControllerGetItems>>>({ exact: $exactMatch, queryKey: getItemsControllerGetItemsQueryKey(params) }, updater);
   };
 }
 
@@ -1030,7 +1030,7 @@ export const prefetchAllControllerSearchAllQuery = async <TData = Awaited<Return
 }
 
 /**
- * @summary Search across all categories
+ * @summary Invalidates the {@link useAllControllerSearchAll} query
  */
 export const invalidateAllControllerSearchAll = async (
  queryClient: QueryClient, params?: AllControllerSearchAllParams, options?: InvalidateOptions
@@ -1046,8 +1046,8 @@ export const invalidateAllControllerSearchAll = async (
  */
 export const useSetAllControllerSearchAllQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: AllControllerSearchAllParams | undefined,updater: Awaited<ReturnType<typeof allControllerSearchAll>> | undefined | ((old: Awaited<ReturnType<typeof allControllerSearchAll>> | undefined) => Awaited<ReturnType<typeof allControllerSearchAll>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof allControllerSearchAll>>>({ queryKey: getAllControllerSearchAllQueryKey(params) }, updater);
+  return (params: AllControllerSearchAllParams | undefined,updater: Awaited<ReturnType<typeof allControllerSearchAll>> | undefined | ((old: Awaited<ReturnType<typeof allControllerSearchAll>> | undefined) => Awaited<ReturnType<typeof allControllerSearchAll>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof allControllerSearchAll>>>({ exact: $exactMatch, queryKey: getAllControllerSearchAllQueryKey(params) }, updater);
   };
 }
 

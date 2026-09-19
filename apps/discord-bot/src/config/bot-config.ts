@@ -16,16 +16,16 @@ export class BotConfig extends Context.Service<BotConfig, BotConfigValue>()(
     BotConfig,
     Effect.gen(function* () {
       const value = yield* Config.all({
-        environment: Config.string("ENV").pipe(Config.withDefault("local")),
-        port: Config.int("PORT"),
-        serviceName: Config.string("SERVICE_NAME").pipe(
+        environment: Config.String("ENV").pipe(Config.withDefault("local")),
+        port: Config.Int("PORT"),
+        serviceName: Config.String("SERVICE_NAME").pipe(
           Config.withDefault("discord-bot"),
         ),
-        serviceNamespace: Config.string("SERVICE_NAMESPACE").pipe(
+        serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
           Config.withDefault("local"),
         ),
-        discordBotToken: Config.redacted("DISCORD_BOT_TOKEN"),
-        rabbitmqUri: Config.redacted("RABBITMQ_URI"),
+        discordBotToken: Config.Redacted("DISCORD_BOT_TOKEN"),
+        rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
       });
 
       return BotConfig.of(value);

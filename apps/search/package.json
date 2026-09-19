@@ -25,7 +25,7 @@
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "effect": "catalog:",
-    "meilisearch": "^0.60.0"
+    "meilisearch": "^0.62.0"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",

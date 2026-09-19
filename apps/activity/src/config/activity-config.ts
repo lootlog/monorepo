@@ -29,7 +29,7 @@ export class ActivityConfig extends Context.Service<
       ).pipe(Config.withDefault(RuntimeEnvironment.LOCAL));
 
       const configuredSecret = yield* Config.option(
-        Config.redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
+        Config.Redacted("ACTIVITY_EVENT_SIGNATURE_SECRET"),
       );
 
       const signatureSecret = Option.isSome(configuredSecret)
@@ -49,31 +49,31 @@ export class ActivityConfig extends Context.Service<
             "ACTIVITY_EVENT_SIGNATURE_SECRET must contain at least 32 characters",
           ),
         );
-      const redisHost = yield* Config.option(Config.string("REDIS_HOST"));
+      const redisHost = yield* Config.option(Config.String("REDIS_HOST"));
 
-      const redisPort = yield* Config.int("REDIS_PORT").pipe(
+      const redisPort = yield* Config.Int("REDIS_PORT").pipe(
         Config.withDefault(6379),
       );
 
-      const redisUsername = yield* Config.string("REDIS_USERNAME").pipe(
+      const redisUsername = yield* Config.String("REDIS_USERNAME").pipe(
         Config.withDefault("default"),
       );
 
-      const redisPassword = yield* Config.string("REDIS_PASSWORD").pipe(
+      const redisPassword = yield* Config.String("REDIS_PASSWORD").pipe(
         Config.withDefault(""),
       );
 
       return ActivityConfig.of({
         environment,
-        port: yield* Config.int("PORT"),
-        serviceName: yield* Config.string("SERVICE_NAME").pipe(
+        port: yield* Config.Int("PORT"),
+        serviceName: yield* Config.String("SERVICE_NAME").pipe(
           Config.withDefault("activity"),
         ),
-        serviceNamespace: yield* Config.string("SERVICE_NAMESPACE").pipe(
+        serviceNamespace: yield* Config.String("SERVICE_NAMESPACE").pipe(
           Config.withDefault("local"),
         ),
-        databaseUrl: yield* Config.redacted("POSTGRESQL_CONNECTION_URI"),
-        rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
+        databaseUrl: yield* Config.Redacted("POSTGRESQL_CONNECTION_URI"),
+        rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
         redisUrl: Option.isSome(redisHost)
           ? Redacted.make(
               `redis://${encodeURIComponent(redisUsername)}:${encodeURIComponent(redisPassword)}@${redisHost.value}:${redisPort}`,
@@ -83,7 +83,7 @@ export class ActivityConfig extends Context.Service<
             : yield* Effect.fail(
                 new Error(`REDIS_HOST is required when ENV=${environment}`),
               ),
-        apiServiceUrl: yield* Config.string("API_SERVICE_URL"),
+        apiServiceUrl: yield* Config.String("API_SERVICE_URL"),
         signatureSecret,
       });
     }),

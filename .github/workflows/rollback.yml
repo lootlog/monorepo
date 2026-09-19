@@ -72,7 +72,7 @@ jobs:
             tag="$(jq -r '.previous.reference | capture(":(?<tag>[^:]+)$").tag' <<< "$target")"
             docker manifest inspect "$reference" >/dev/null || { echo "::error::Rollback image does not exist: $reference"; exit 1; }
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="$tag" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.3 \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
               "apps/prod/$id/kustomization.yml"
           done < <(jq -c '.[] | select(.previous.kind == "docker")' "$RUNNER_TEMP/rollback-targets.json")

@@ -1,3 +1,4 @@
+import { migrationClient } from "@lootlog/database/migration";
 import { TestClock } from "effect/testing";
 import { RabbitMessaging, type RabbitDelivery } from "@lootlog/messaging";
 import {
@@ -76,7 +77,7 @@ describe("durable private online history", () => {
     });
     await Effect.runPromise(
       Effect.gen(function* () {
-        const sql = yield* PgClient.PgClient;
+        const client = yield* migrationClient;
 
         const migration = yield* Effect.promise(() =>
           Bun.file(
@@ -87,8 +88,8 @@ describe("durable private online history", () => {
           ).text(),
         );
 
-        yield* sql.unsafe(migration).unprepared;
-        yield* sql.unsafe(migration).unprepared;
+        yield* Effect.tryPromise(() => client.query(migration));
+        yield* Effect.tryPromise(() => client.query(migration));
 
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
@@ -99,9 +100,9 @@ describe("durable private online history", () => {
           ).text(),
         );
 
-        yield* sql.unsafe(worldsMigration).unprepared;
-        yield* sql.unsafe(worldsMigration).unprepared;
-      }).pipe(Effect.provide(database)),
+        yield* Effect.tryPromise(() => client.query(worldsMigration));
+        yield* Effect.tryPromise(() => client.query(worldsMigration));
+      }).pipe(Effect.scoped, Effect.provide(database)),
     );
   }, 60_000);
   afterAll(async () => {
@@ -645,6 +646,8 @@ describe("durable private online history", () => {
         ('migration-crossing','a','a',CURRENT_TIMESTAMP-interval '113 days',CURRENT_TIMESTAMP-interval '111 days',CURRENT_TIMESTAMP-interval '111 days')`;
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId","lastObservedAt") VALUES ('migration-expired',CURRENT_TIMESTAMP-interval '113 days')`;
 
+        const client = yield* migrationClient;
+
         const before = yield* sql<{
           cutoff: string;
         }>`SELECT (CURRENT_TIMESTAMP-interval '112 days')::text AS cutoff`;
@@ -658,8 +661,8 @@ describe("durable private online history", () => {
           ).text(),
         );
 
-        yield* sql.unsafe(migration).unprepared;
-        yield* sql.unsafe(migration).unprepared;
+        yield* Effect.tryPromise(() => client.query(migration));
+        yield* Effect.tryPromise(() => client.query(migration));
 
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
@@ -670,8 +673,8 @@ describe("durable private online history", () => {
           ).text(),
         );
 
-        yield* sql.unsafe(worldsMigration).unprepared;
-        yield* sql.unsafe(worldsMigration).unprepared;
+        yield* Effect.tryPromise(() => client.query(worldsMigration));
+        yield* Effect.tryPromise(() => client.query(worldsMigration));
 
         const rows = yield* sql<{
           userId: string;
@@ -682,7 +685,7 @@ describe("durable private online history", () => {
           yield* sql`SELECT * FROM "UserOnlineTracking" WHERE "userId"='migration-expired'`;
 
         return { before, rows, metadata };
-      }).pipe(Effect.provide(database)),
+      }).pipe(Effect.scoped, Effect.provide(database)),
     );
 
     expect(result.rows).toHaveLength(1);

@@ -4,18 +4,21 @@ import { BATTLE_WARRIOR_STATS_KEYS } from "../src/battles/statistics/battle-warr
 
 const scriptConfig = await Effect.runPromise(
   Config.all({
-    databaseUrl: Config.redacted("POSTGRESQL_CONNECTION_URI"),
-    batchSize: Config.string("BATTLE_WARRIOR_STATS_BACKFILL_BATCH_SIZE").pipe(
+    databaseUrl: Config.Redacted("POSTGRESQL_CONNECTION_URI"),
+    batchSize: Config.String("BATTLE_WARRIOR_STATS_BACKFILL_BATCH_SIZE").pipe(
       Config.withDefault("1000"),
     ),
   }),
 );
+
 const databaseUrl = Redacted.value(scriptConfig.databaseUrl);
 
 function getBatchSize(): number {
   const batchSizeArgIndex = process.argv.indexOf("--batch-size");
+
   const batchSizeArg =
     batchSizeArgIndex >= 0 ? process.argv[batchSizeArgIndex + 1] : undefined;
+
   const rawBatchSize = batchSizeArg ?? scriptConfig.batchSize;
   const parsedBatchSize = Number.parseInt(rawBatchSize, 10);
 
@@ -33,17 +36,21 @@ function quoteLiteral(value: string): string {
 }
 
 const requiredKeysSql = `ARRAY[${BATTLE_WARRIOR_STATS_KEYS.map(quoteLiteral).join(", ")}]`;
+
 const jsonbBuildObjectPairLimit = 40;
+
 const statsJsonSql = BATTLE_WARRIOR_STATS_KEYS.reduce<string[][]>(
   (chunks, key) => {
     const lastChunk = chunks.at(-1);
 
     if (!lastChunk || lastChunk.length >= jsonbBuildObjectPairLimit) {
       chunks.push([key]);
+
       return chunks;
     }
 
     lastChunk.push(key);
+
     return chunks;
   },
   [],
@@ -55,6 +62,7 @@ const statsJsonSql = BATTLE_WARRIOR_STATS_KEYS.reduce<string[][]>(
         .join(", ")})`,
   )
   .join(" || ");
+
 const sampleKeys = [
   "turns",
   "damageDealt",
@@ -63,9 +71,11 @@ const sampleKeys = [
   "spellsUsedMap",
   "isDead",
 ];
+
 const sampleLegacyChecksumSql = `md5(concat_ws('|', ${sampleKeys
   .map((key) => `${quoteIdentifier(key)}::text`)
   .join(", ")}))`;
+
 const sampleStatsChecksumSql = `md5(concat_ws('|', ${sampleKeys
   .map((key) => `(stats->${quoteLiteral(key)})::text`)
   .join(", ")}))`;
@@ -78,6 +88,7 @@ async function assertColumnsExist(pool: pg.Pool): Promise<void> {
       AND table_name = 'battle_warriors'
       AND column_name IN ('stats', 'statsVersion')
   `);
+
   const columns = new Set(result.rows.map((row) => row.column_name));
 
   if (!columns.has("stats") || !columns.has("statsVersion")) {
@@ -101,6 +112,7 @@ async function countRows(pool: pg.Pool): Promise<{
         AS remaining_incomplete_rows
     FROM battle_warriors
   `);
+
   const [row] = result.rows;
 
   return {

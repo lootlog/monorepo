@@ -73,7 +73,7 @@ export const reservationMutationsData = Layer.unwrap(
             prefix: "{bull}",
           }),
       ),
-      (queue) => Effect.tryPromise(() => queue.close()),
+      (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
     );
 
     const attempt = <A>(operation: () => PromiseLike<A>) =>

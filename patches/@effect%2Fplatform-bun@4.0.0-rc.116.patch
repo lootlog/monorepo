@@ -1,0 +1,80 @@
+diff --git a/dist/BunRedis.js b/dist/BunRedis.js
+index e2478d4..f1a091b 100644
+--- a/dist/BunRedis.js
++++ b/dist/BunRedis.js
+@@ -35,6 +35,8 @@ const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+     }),
+     subscribe: (channel, onMessage) => Effect.gen(function* () {
+       const terminal = yield* Deferred.make();
++      // Bun 1.4.1 requires a callable onclose during subscriber.close().
++      let closing = false;
+       yield* Effect.acquireRelease(Effect.tryPromise({
+         try: async () => {
+           const subscriber = new RedisClient(options?.url, {
+@@ -42,7 +44,7 @@ const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+             autoReconnect: false
+           });
+           subscriber.onclose = cause => {
+-            Deferred.doneUnsafe(terminal, new Redis.RedisError({
++            if (!closing) Deferred.doneUnsafe(terminal, new Redis.RedisError({
+               cause
+             }));
+           };
+@@ -55,7 +57,7 @@ const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+             });
+             return subscriber;
+           } catch (cause) {
+-            subscriber.onclose = null;
++            closing = true;
+             subscriber.close();
+             throw cause;
+           }
+@@ -64,7 +66,7 @@ const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+           cause
+         })
+       }), subscriber => Effect.sync(() => {
+-        subscriber.onclose = null;
++        closing = true;
+         subscriber.close();
+       }));
+       return Deferred.await(terminal);
+diff --git a/src/BunRedis.ts b/src/BunRedis.ts
+index 1dab99f..a780250 100644
+--- a/src/BunRedis.ts
++++ b/src/BunRedis.ts
+@@ -55,6 +55,8 @@ const make = Effect.fnUntraced(function*(
+     subscribe: (channel, onMessage) =>
+       Effect.gen(function*() {
+         const terminal = yield* Deferred.make<void, Redis.RedisError>()
++        // Bun 1.4.1 requires a callable onclose during subscriber.close().
++        let closing = false
+         yield* Effect.acquireRelease(
+           Effect.tryPromise({
+             try: async () => {
+@@ -63,7 +65,7 @@ const make = Effect.fnUntraced(function*(
+                 autoReconnect: false
+               })
+               subscriber.onclose = (cause) => {
+-                Deferred.doneUnsafe(terminal, new Redis.RedisError({ cause }))
++                if (!closing) Deferred.doneUnsafe(terminal, new Redis.RedisError({ cause }))
+               }
+               try {
+                 await subscriber.subscribe(channel, (message, channel) => {
+@@ -71,7 +73,7 @@ const make = Effect.fnUntraced(function*(
+                 })
+                 return subscriber
+               } catch (cause) {
+-                subscriber.onclose = null
++                closing = true
+                 subscriber.close()
+                 throw cause
+               }
+@@ -80,7 +82,7 @@ const make = Effect.fnUntraced(function*(
+           }),
+           (subscriber) =>
+             Effect.sync(() => {
+-              subscriber.onclose = null
++              closing = true
+               subscriber.close()
+             })
+         )

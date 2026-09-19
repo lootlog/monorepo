@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { loadNotificationHistory } from "./load-notification-history";
 import { loadNotificationRuleForm } from "./load-notification-rule-form";
 import { QueryClient } from "@tanstack/react-query";

@@ -39,8 +39,9 @@ export type NotificationMemberRoleInfo = {
 };
 
 const decodeNotificationFilters = Schema.decodeUnknownSync(
-  NotificationFiltersSchema,
-  { onExcessProperty: "preserve" },
+  Schema.StructWithRest(NotificationFiltersSchema, [
+    Schema.Record(Schema.String, Schema.Unknown),
+  ]),
 );
 
 export const parseNotificationFilters = (

@@ -35,7 +35,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
         run: |
-          affected="$(bunx turbo@2.10.12 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+          affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
           affected_packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
           plan="$(
             git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
@@ -66,7 +66,7 @@ jobs:
       - run: bun run format:check
       - run: bun run deps:check
       - name: Check workflow syntax
-        uses: docker://rhysd/actionlint:1.7.7
+        uses: docker://rhysd/actionlint:1.7.12
 
   workspaces:
     name: Affected workspace checks

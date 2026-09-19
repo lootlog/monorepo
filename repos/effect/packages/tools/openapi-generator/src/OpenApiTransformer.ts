@@ -85,6 +85,20 @@ const normalizeSuccessStatus = (
   return successCount === 1 && status.startsWith("2") ? "2xx" : status
 }
 
+const requestToImpl = (operation: ParsedOperation, pipeline: Array<string>, streaming = false): string => {
+  const request = `HttpClientRequest.${operation.method}`
+  const pipe = `.pipe(\n      ${pipeline.join(",\n      ")}\n    )`
+  if (operation.pathIds.length === 0) {
+    return `${request}(${operation.pathTemplate})${pipe}`
+  }
+  const effect = `__makePathRequest(${request}, [${
+    operation.pathIds.join(", ")
+  }], () => ${operation.pathTemplate}).pipe(
+    Effect.${streaming ? "map" : "flatMap"}((request) => request${pipe})
+  )`
+  return streaming ? `Stream.unwrap(${effect})` : effect
+}
+
 /**
  * Create the transformer used for schema-backed HttpClient output.
  *
@@ -261,6 +275,12 @@ ${clientErrorSource(name)}`
     }
 
     const helpers: Array<string> = [commonSource]
+    if (operations.some((operation) => operation.pathIds.length > 0)) {
+      helpers.push(pathRequestSource)
+    }
+    if (requiresStreaming(requirements)) {
+      helpers.push(executeStreamRequestSource)
+    }
     if (requirements.eventStreamData) {
       helpers.push(sseRequestSource(importName))
     }
@@ -379,8 +399,7 @@ export const make = (
 
     return (
       `"${operation.id}": (${params}) => ` +
-      `HttpClientRequest.${operation.method}(${operation.pathTemplate})` +
-      `.pipe(\n    ${pipeline.join(",\n    ")}\n  )`
+      requestToImpl(operation, pipeline)
     )
   }
 
@@ -423,8 +442,7 @@ export const make = (
 
     return (
       `"${operation.id}Sse": (${params}) => ` +
-      `HttpClientRequest.${operation.method}(${operation.pathTemplate})` +
-      `.pipe(\n      ${pipeline.join(",\n      ")}\n    )`
+      requestToImpl(operation, pipeline, true)
     )
   }
 
@@ -466,8 +484,7 @@ export const make = (
 
     return (
       `"${operation.id}Stream": (${params}) => ` +
-      `HttpClientRequest.${operation.method}(${operation.pathTemplate})` +
-      `.pipe(\n      ${pipeline.join(",\n      ")}\n    )`
+      requestToImpl(operation, pipeline, true)
     )
   }
 
@@ -690,6 +707,12 @@ ${clientErrorSource(name)}`
     }
 
     const helpers: Array<string> = [commonSource]
+    if (operations.some((operation) => operation.pathIds.length > 0)) {
+      helpers.push(pathRequestSource)
+    }
+    if (requiresStreaming(requirements)) {
+      helpers.push(executeStreamRequestSource)
+    }
     if (requirements.eventStream) {
       helpers.push(sseRequestSourceTs)
     }
@@ -813,8 +836,7 @@ export const make = (
 
     return (
       `"${operation.id}": (${params}) => ` +
-      `HttpClientRequest.${operation.method}(${operation.pathTemplate})` +
-      `.pipe(\n    ${pipeline.join(",\n    ")}\n  )`
+      requestToImpl(operation, pipeline)
     )
   }
 
@@ -856,8 +878,7 @@ export const make = (
 
     return (
       `"${operation.id}Sse": (${params}) => ` +
-      `HttpClientRequest.${operation.method}(${operation.pathTemplate})` +
-      `.pipe(\n      ${pipeline.join(",\n      ")}\n    )`
+      requestToImpl(operation, pipeline, true)
     )
   }
 
@@ -899,8 +920,7 @@ export const make = (
 
     return (
       `"${operation.id}Stream": (${params}) => ` +
-      `HttpClientRequest.${operation.method}(${operation.pathTemplate})` +
-      `.pipe(\n      ${pipeline.join(",\n      ")}\n    )`
+      requestToImpl(operation, pipeline, true)
     )
   }
 
@@ -948,6 +968,36 @@ export const layerTransformerTs = Layer.sync(
   OpenApiTransformer,
   makeTransformerTs
 )
+
+const pathRequestSource = `const __encodePathParam = encodeURIComponent
+  const __makePathRequest = (
+    method: (url: string) => HttpClientRequest.HttpClientRequest,
+    parameters: ReadonlyArray<string>,
+    getPath: () => string,
+  ) => Effect.suspend(() => {
+    const fail = (description: string, cause?: unknown) => Effect.fail(
+      new HttpClientError.HttpClientError({
+        reason: new HttpClientError.InvalidUrlError({
+          request: method(""),
+          cause,
+          description,
+        }),
+      }),
+    )
+    if (parameters.some((value) => value === "" || /^(?:\\.|%2e){1,2}$/i.test(value))) {
+      return fail("Path parameters must be non-empty and cannot be dot segments")
+    }
+    let path: string
+    try {
+      path = getPath()
+    } catch (cause) {
+      return fail("Failed to encode path parameter", cause)
+    }
+    if (path.split("/").some((segment) => /^(?:\\.|%2e){1,2}$/i.test(segment))) {
+      return fail("Request paths cannot contain dot segments")
+    }
+    return Effect.succeed(method(path))
+  })`
 
 const commonSource = `const unexpectedStatus = (response: HttpClientResponse.HttpClientResponse) =>
     Effect.flatMap(
@@ -1032,6 +1082,13 @@ const onRequestSource = (withResponseVariants: boolean) => {
   }`
 }
 
+const executeStreamRequestSource = `const executeStreamRequest = (request: HttpClientRequest.HttpClientRequest) =>
+    Effect.suspend(() =>
+      options.transformClient
+        ? Effect.flatMap(options.transformClient(httpClient), (client) => HttpClient.filterStatusOk(client).execute(request))
+        : HttpClient.filterStatusOk(httpClient).execute(request)
+    )`
+
 const sseRequestSource = (_importName: string) =>
   `const sseRequest = <
      Type,
@@ -1046,7 +1103,7 @@ const sseRequestSource = (_importName: string) =>
       HttpClientError.HttpClientError | SchemaError | Sse.Retry | Sse.SseError,
       DecodingServices
     > =>
-      HttpClient.filterStatusOk(httpClient).execute(request).pipe(
+      executeStreamRequest(request).pipe(
         Effect.map((response) => response.stream),
         Stream.unwrap,
         Stream.decodeText(),
@@ -1061,7 +1118,7 @@ const sseEventRequestSource = `const sseEventRequest = <S extends Sse.EventCodec
       HttpClientError.HttpClientError | SchemaError | Sse.Retry | Sse.SseError,
       S["DecodingServices"]
     > =>
-      HttpClient.filterStatusOk(httpClient).execute(request).pipe(
+      executeStreamRequest(request).pipe(
         Effect.map((response) => response.stream),
         Stream.unwrap,
         Stream.decodeText(),
@@ -1070,7 +1127,7 @@ const sseEventRequestSource = `const sseEventRequest = <S extends Sse.EventCodec
 
 const binaryRequestSource =
   `const binaryRequest = (request: HttpClientRequest.HttpClientRequest): Stream.Stream<Uint8Array, HttpClientError.HttpClientError> =>
-    HttpClient.filterStatusOk(httpClient).execute(request).pipe(
+    executeStreamRequest(request).pipe(
       Effect.map((response) => response.stream),
       Stream.unwrap
     )`
@@ -1078,7 +1135,7 @@ const binaryRequestSource =
 // Type-only mode helpers (no schema decoding)
 const sseRequestSourceTs =
   `const sseRequest = (request: HttpClientRequest.HttpClientRequest): Stream.Stream<unknown, HttpClientError.HttpClientError> =>
-    HttpClient.filterStatusOk(httpClient).execute(request).pipe(
+    executeStreamRequest(request).pipe(
       Effect.map((response) => response.stream),
       Stream.unwrap,
       Stream.decodeText(),
@@ -1089,7 +1146,7 @@ const sseRequestSourceTs =
 
 const binaryRequestSourceTs =
   `const binaryRequest = (request: HttpClientRequest.HttpClientRequest): Stream.Stream<Uint8Array, HttpClientError.HttpClientError> =>
-    HttpClient.filterStatusOk(httpClient).execute(request).pipe(
+    executeStreamRequest(request).pipe(
       Effect.map((response) => response.stream),
       Stream.unwrap
     )`
