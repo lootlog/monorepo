@@ -3,7 +3,9 @@
 Maintain `src/database/schema.ts` directly. Run `bun run db:generate` to derive
 SQL migrations and Drizzle snapshots from it, review the artifacts, then apply
 them with `bun run db:migrate:deploy`. Keep historical SQL and snapshots;
-database introspection must not overwrite the source schema.
+database introspection must not overwrite the source schema. The deploy command
+initializes empty databases and applies only pending migrations to databases
+already tracked by Drizzle.
 
 ## Object cleanup
 
@@ -29,8 +31,6 @@ After restoring Redis/R2 connectivity, retain these rows for the worker to
 drain. Do not drop the table during rollback; older versions do not process
 it, so retain a compatible worker until the backlog is empty. The migration
 cannot recover object identifiers lost by deletions before it was installed.
-`db:migrate:init` adopts only the historical schema; it never marks this new
-migration as applied without executing its SQL.
 
 ## User-scoped battle submissions
 

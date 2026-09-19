@@ -36,8 +36,9 @@ timestamps, and application fields unless a reviewed migration changes them.
 
 Run `bun run db:generate` to produce SQL and Drizzle snapshot metadata from the
 maintained source. Review both artifacts before applying migrations through
-`bun run db:migrate:dev` or `bun run db:migrate:deploy`. Existing adoption and
-upgrade decisions remain part of that workflow. Run `bun run test:integration`
+`bun run db:migrate:dev` or `bun run db:migrate:deploy`. Existing databases must have an intact Drizzle migration journal; legacy schema
+adoption is no longer supported. Empty databases are created from the committed SQL
+migrations. Run `bun run test:integration`
 to verify migrations against disposable PostgreSQL.
 
 TypeScript source is edited directly. Better Auth CLI generation and database
@@ -46,14 +47,14 @@ introspection must not overwrite the application's schema.
 ## Better Auth 1.7.5 rollout
 
 Before deploying Auth 1.7.5, run `bun run auth:migrate:plan` and
-`bun run auth:migrate:apply` with the reviewed migration decision. Migration
+`bun run db:migrate:deploy`. Migration
 `20260919081743_restore-provider-account-identity` makes `account.issuer`
 nullable and replaces its compound index with a unique index on
 `providerId, accountId`. Existing issuer values and account identities remain
 intact. Better Auth 1.7.3 and later no longer write issuer; deploying the new
 application before this migration would reject new Discord accounts.
 
-The preflight accepts the previous 1.7 schema and checks Discord-only identities
+The preflight verifies the committed migration journal and checks Discord-only identities
 and duplicate provider/account keys before writing. After applying, verify that
 the plan is `up-to-date`, then deploy and check Discord sign-in, existing
 sessions, and account linking. Do not restore the issuer `NOT NULL` constraint

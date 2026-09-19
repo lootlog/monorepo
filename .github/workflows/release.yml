@@ -28,7 +28,7 @@ on:
           - wiki
           - all
       auth_migration_confirmed:
-        description: Confirm the Better Auth 1.7 maintenance and migration runbook is complete
+        description: Confirm pending Auth database migrations and the current upgrade runbook are complete
         required: true
         default: false
         type: boolean

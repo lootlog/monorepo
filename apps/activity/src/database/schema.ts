@@ -2,6 +2,7 @@ import { desc, sql } from "drizzle-orm";
 // Hand-maintained Activity database schema; Drizzle generates SQL migrations from it.
 import {
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -70,14 +71,18 @@ export const activities = pgTable(
       .notNull(),
     source: activitySource().notNull(),
     details: jsonb(),
-    actorSnapshotId: text().references(() => activityActorSnapshots.id, {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    }),
+    actorSnapshotId: text(),
     world: text(),
     idempotencyKey: text().notNull(),
   },
   (table) => [
+    foreignKey({
+      name: "Activity_actorSnapshotId_fkey",
+      columns: [table.actorSnapshotId],
+      foreignColumns: [activityActorSnapshots.id],
+    })
+      .onDelete("set null")
+      .onUpdate("cascade"),
     primaryKey({ name: "Activity_pkey", columns: [table.id, table.createdAt] }),
     uniqueIndex("Activity_idempotencyKey_createdAt_key").on(
       table.idempotencyKey,
