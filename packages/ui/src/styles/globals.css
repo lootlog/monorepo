@@ -461,6 +461,46 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  /* Motion: one curve for state changes, one overshoot for confirmations. */
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /*
+   * Loading placeholders stay invisible for the first moments so a response
+   * that arrives quickly never flashes a skeleton or spinner. The keyframe has
+   * no end state: it resolves to whatever the element's own animation shows.
+   */
+  --animate-placeholder-in: placeholder-in 200ms var(--ease-emphasized) 150ms
+    backwards;
+  --animate-skeleton:
+    pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+    placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
+  /* Loaded content settles into place instead of snapping over a skeleton. */
+  --animate-content-in: content-in 240ms var(--ease-emphasized) backwards;
+
+  /* Small confirmations (check marks, radio dots, status dots) pop into place. */
+  --animate-pop-in: pop-in 200ms var(--ease-overshoot) backwards;
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      scale: 0.5;
+    }
+  }
+
+  @keyframes placeholder-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes content-in {
+    from {
+      opacity: 0;
+      translate: 0 4px;
+    }
+  }
 }
 
 body {

@@ -96,7 +96,7 @@ export function HorizontalMenu({
             ref={highlightRef}
             aria-hidden
             role="presentation"
-            className="pointer-events-none absolute left-0 top-0 z-0 rounded-[calc(var(--radius-2xl)-5px)] bg-primary transition-[transform,width,height] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+            className="pointer-events-none absolute left-0 top-0 z-0 rounded-[calc(var(--radius-2xl)-5px)] bg-primary transition-[transform,width,height] duration-150 ease-emphasized motion-reduce:transition-none"
           />
           {children}
         </ul>
