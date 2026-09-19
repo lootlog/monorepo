@@ -60,10 +60,9 @@ export const WatchableItemTile = ({
     <ContextMenu>
       <ContextMenuTrigger
         render={
-          <button
-            type="button"
+          <span
             className={cn(
-              "relative inline-flex rounded-lg transition-[opacity,filter] duration-200",
+              "relative inline-flex cursor-context-menu rounded-lg transition-[opacity,filter] duration-200",
               hasItemFilter && !isItemSelected && "opacity-35 grayscale-[0.45]",
             )}
           >
@@ -90,7 +89,7 @@ export const WatchableItemTile = ({
                 <Bell className="size-2.5" />
               </span>
             ) : null}
-          </button>
+          </span>
         }
       />
       <ContextMenuContent className="min-w-[15rem]">
