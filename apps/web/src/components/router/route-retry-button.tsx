@@ -28,7 +28,8 @@ export const RouteRetryButton = ({ onRetry }: RouteRetryButtonProps) => {
     <Button
       onClick={retry}
       loading={isPending}
-      icon=<RotateCw className="size-4" />
+      className="group/retry"
+      icon=<RotateCw className="size-4 transition-[rotate] duration-300 ease-emphasized group-hover/retry:rotate-90 motion-reduce:transition-none" />
     >
       {t("common.routeErrors.actions.retry")}
     </Button>

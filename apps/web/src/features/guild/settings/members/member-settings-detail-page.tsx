@@ -131,7 +131,7 @@ const MemberSettingsDetailPageContent = () => {
   const memberColor = getColorFromRole(member.roles);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3 custom-scrollbar [scrollbar-gutter:stable]">
       <PageHeader
         title={<span style={{ color: memberColor }}>{member.name}</span>}
         description={t("settings.members.details")}
