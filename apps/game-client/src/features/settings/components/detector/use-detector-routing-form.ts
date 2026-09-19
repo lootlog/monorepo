@@ -1,3 +1,4 @@
+import { clamp, intersection, uniq } from "es-toolkit";
 import { toggleAvailableGuild } from "@/features/settings/components/shared/settings-guild-picker";
 import { readCurrentSettingsDocuments } from "@/features/settings/persistence/settings-patch-client";
 import {
@@ -12,10 +13,6 @@ import type { DetectorRoutingRule } from "@lootlog/schema/account-preferences";
 export const LEVEL_MIN = 0;
 
 export const LEVEL_MAX = 500;
-
-export const clampLevel = (value: number) => {
-  return Math.min(LEVEL_MAX, Math.max(LEVEL_MIN, value));
-};
 
 const createRoutingRuleId = () => {
   if (window.crypto?.randomUUID) {
@@ -48,18 +45,25 @@ const normalizeRoutingRules = (
 ) => {
   return routingRules.map((rule) => {
     const name = normalizeRoutingRuleText(rule.name);
-    const normalizedMinLevel = clampLevel(Math.trunc(rule.minLevel));
-    const normalizedMaxLevel = clampLevel(Math.trunc(rule.maxLevel));
+
+    const normalizedMinLevel = clamp(
+      Math.trunc(rule.minLevel),
+      LEVEL_MIN,
+      LEVEL_MAX,
+    );
+
+    const normalizedMaxLevel = clamp(
+      Math.trunc(rule.maxLevel),
+      LEVEL_MIN,
+      LEVEL_MAX,
+    );
+
     const minLevel = Math.min(normalizedMinLevel, normalizedMaxLevel);
     const maxLevel = Math.max(normalizedMinLevel, normalizedMaxLevel);
     const world = normalizeRoutingRuleText(rule.world);
 
-    const normalizedGuildIds = availableGuildIds.filter(
-      (guildId, index, ids) => {
-        return (
-          rule.guildIds.includes(guildId) && ids.indexOf(guildId) === index
-        );
-      },
+    const normalizedGuildIds = uniq(
+      intersection(availableGuildIds, rule.guildIds),
     );
 
     return {

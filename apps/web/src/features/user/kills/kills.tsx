@@ -1,4 +1,4 @@
-import { omitBy } from "es-toolkit";
+import { isNotNil, omitBy } from "es-toolkit";
 import { z } from "zod";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { PageHeader } from "@/components/common/page-header";
@@ -61,10 +61,7 @@ const getKillsFilters = (
 ): KillsFiltersState => ({
   world: searchParams.world,
   npcTypes: searchParams.npcType
-    ? searchParams.npcType
-        .split(",")
-        .map(findTrackableNpcType)
-        .filter((type) => type !== undefined)
+    ? searchParams.npcType.split(",").map(findTrackableNpcType).filter(isNotNil)
     : undefined,
   search: debouncedSearch || undefined,
   minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,

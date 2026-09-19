@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import { Label } from "@lootlog/ui/components/label";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useTranslation } from "react-i18next";
@@ -27,8 +28,7 @@ export function AssignedEventMaps({
   const { t } = useTranslation();
 
   const totalMapsCount =
-    maps.length +
-    locations.reduce((count, location) => count + location.maps.length, 0);
+    maps.length + sumBy(locations, (location) => location.maps.length);
 
   const groups = [
     ...locations.map((location) => ({

@@ -1,3 +1,4 @@
+import { isNotNil } from "es-toolkit";
 import {
   getAuthControllerGetScopesQueryKey,
   getAuthControllerGetScopesQueryOptions,
@@ -10,7 +11,7 @@ const normalizeAuthScopes = z
   .union([
     z
       .array(z.string().nullable().catch(null))
-      .transform((scopes) => scopes.filter((scope) => scope !== null)),
+      .transform((scopes) => scopes.filter(isNotNil)),
     z.string().transform((scopes) => scopes.split(/\s+/).filter(Boolean)),
   ])
   .catch([]).parse;

@@ -23,7 +23,7 @@ import { cn } from "cn";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { useBattlesControllerGetUserWorlds } from "@lootlog/client/battlelog";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 
 import { useTranslation } from "react-i18next";
 
@@ -108,7 +108,7 @@ export const FiltersSidebar = ({
                 <FilterPopover
                   options={worlds.map((world) => ({
                     value: world,
-                    label: capitalizeFirstLetter(world),
+                    label: upperFirst(world),
                   }))}
                   value={filters.world}
                   onValueChange={handleWorldChange}

@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import type { PinnedEventResponseDto } from "@lootlog/client/main";
 
 export const addPinnedEvent = (
@@ -34,7 +35,7 @@ export const restorePinnedEvent = (
 
   const restoredPinnedEvents = [...pinnedEvents];
   restoredPinnedEvents.splice(
-    Math.min(Math.max(index, 0), restoredPinnedEvents.length),
+    clamp(index, 0, restoredPinnedEvents.length),
     0,
     pinnedEvent,
   );

@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import { useState, type FormEvent } from "react";
 import type { InsertTableCommandPayload } from "@lexical/table";
 import { Table2 } from "lucide-react";
@@ -34,7 +35,7 @@ const normalizeTableSize = (value: string) => {
     return DEFAULT_TABLE_SIZE;
   }
 
-  return Math.min(Math.max(parsedValue, MIN_TABLE_SIZE), MAX_TABLE_SIZE);
+  return clamp(parsedValue, MIN_TABLE_SIZE, MAX_TABLE_SIZE);
 };
 
 export const GuildDocTableDialog = ({

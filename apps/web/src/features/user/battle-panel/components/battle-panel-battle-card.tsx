@@ -1,5 +1,5 @@
 import type { Battle } from "@/lib/api/battlelog-types";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -52,7 +52,7 @@ export const BattlePanelBattleCard = ({
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <BattleResultStatus result={result} showLabel />
           <Badge variant="outline" className="max-w-[96px] truncate">
-            {capitalizeFirstLetter(battle.world)}
+            {upperFirst(battle.world)}
           </Badge>
           <div className="ml-auto flex shrink-0 flex-col items-end gap-0.5 leading-tight">
             <span className="text-xs font-medium">

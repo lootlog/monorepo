@@ -1,3 +1,4 @@
+import { isString } from "es-toolkit";
 import {
   isMapPingAcknowledgement,
   isAirTagSubscriptionAcknowledgement,
@@ -77,9 +78,7 @@ const isJoinResult = (value: unknown): value is JoinResult =>
     typeof value.connectionId === "string" &&
     "organizationIds" in value &&
     Array.isArray(value.organizationIds) &&
-    value.organizationIds.every(
-      (id: unknown): id is string => typeof id === "string",
-    ) &&
+    value.organizationIds.every(isString) &&
     (!("accessPolicy" in value) ||
       value.accessPolicy === undefined ||
       isAccessPolicySnapshot(value.accessPolicy)),
