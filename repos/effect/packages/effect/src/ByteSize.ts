@@ -32,10 +32,45 @@ export type ByteSize = Brand.Branded<bigint, typeof TypeId>
 /**
  * Values accepted by byte-size decoding operations.
  *
+ * **Details**
+ *
+ * String inputs require a non-negative decimal integer without leading zeros,
+ * followed by a canonical unit symbol or lowercase unit name, optionally
+ * separated by one space. Numeric inputs are validated at runtime.
+ *
+ * @see {@link fromString} for external strings and fractional quantities
+ * @see {@link fromStringUnsafe} for throwing string validation
  * @category models
  * @since 4.0.0
  */
-export type Input = ByteSize | bigint | number | string
+export type Input = ByteSize | bigint | number | `${IntegerQuantity}${"" | " "}${InputUnit}`
+
+// Combining these constraints excludes signs, radix prefixes, leading zeros,
+// fractions, and exponent notation without limiting the number of digits.
+type IntegerQuantity = "0" | (`${bigint}` & `${"1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"}${string}`)
+
+type InputUnit =
+  | Unit
+  | `${
+    | ""
+    | "kilo"
+    | "mega"
+    | "giga"
+    | "tera"
+    | "peta"
+    | "exa"
+    | "zetta"
+    | "yotta"
+    | "ronna"
+    | "quetta"
+    | "kibi"
+    | "mebi"
+    | "gibi"
+    | "tebi"
+    | "pebi"
+    | "exbi"
+    | "zebi"
+    | "yobi"}byte${"" | "s"}`
 
 /**
  * Canonical decimal byte unit symbols.
@@ -172,7 +207,21 @@ const fromQuantity = (quantity: number | bigint, unit: UnitInfo): ByteSize => {
   return make(BigInt(value))
 }
 
-const parse = (input: string): ByteSize => {
+/**
+ * Parses a byte-size string and throws for invalid syntax, unsupported units,
+ * or quantities that do not represent non-negative integral bytes.
+ *
+ * **Details**
+ *
+ * Accepts decimal fractions, canonical SI and IEC symbols, lowercase unit
+ * names, and whitespace around the quantity and unit. Parsing uses exact
+ * bigint arithmetic, including above the safe integer range.
+ *
+ * @see {@link fromString} for non-throwing validation
+ * @category constructors
+ * @since 4.0.0
+ */
+export const fromStringUnsafe = (input: string): ByteSize => {
   const match = /^\s*(\d+)(?:\.(\d+))?\s*([A-Za-z]+)\s*$/.exec(input)
   if (match === null) return invalid(`unsupported syntax ${JSON.stringify(input)}`)
   const unit = unitsByName.get(match[3])
@@ -185,6 +234,21 @@ const parse = (input: string): ByteSize => {
   }
   return make(numerator / scale)
 }
+
+/**
+ * Parses a byte-size string, returning `None` for invalid syntax, unsupported
+ * units, or quantities that do not represent non-negative integral bytes.
+ *
+ * **Details**
+ *
+ * Accepts external strings and fractional quantities using the same syntax
+ * as `fromStringUnsafe`.
+ *
+ * @see {@link fromStringUnsafe} for throwing validation
+ * @category constructors
+ * @since 4.0.0
+ */
+export const fromString: (input: string) => Option.Option<ByteSize> = Option.liftThrowable(fromStringUnsafe)
 
 /**
  * Decodes a trusted input into a byte size and throws for invalid input.
@@ -200,7 +264,7 @@ export const fromInputUnsafe = (input: Input): ByteSize => {
     case "number":
       return fromNumber(input)
     case "string":
-      return parse(input)
+      return fromStringUnsafe(input)
   }
   return invalid(`unsupported input ${input}`)
 }
@@ -231,126 +295,126 @@ const unitConstructor = (symbol: Unit) => (value: number | bigint): ByteSize =>
  * @category constructors
  * @since 4.0.0
  */
-export const kilobytes = unitConstructor("kB")
+export const kilobytes: (value: number | bigint) => ByteSize = unitConstructor("kB")
 /**
  * Creates a decimal megabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const megabytes = unitConstructor("MB")
+export const megabytes: (value: number | bigint) => ByteSize = unitConstructor("MB")
 /**
  * Creates a decimal gigabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const gigabytes = unitConstructor("GB")
+export const gigabytes: (value: number | bigint) => ByteSize = unitConstructor("GB")
 /**
  * Creates a decimal terabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const terabytes = unitConstructor("TB")
+export const terabytes: (value: number | bigint) => ByteSize = unitConstructor("TB")
 /**
  * Creates a decimal petabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const petabytes = unitConstructor("PB")
+export const petabytes: (value: number | bigint) => ByteSize = unitConstructor("PB")
 /**
  * Creates a decimal exabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const exabytes = unitConstructor("EB")
+export const exabytes: (value: number | bigint) => ByteSize = unitConstructor("EB")
 /**
  * Creates a decimal zettabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const zettabytes = unitConstructor("ZB")
+export const zettabytes: (value: number | bigint) => ByteSize = unitConstructor("ZB")
 /**
  * Creates a decimal yottabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const yottabytes = unitConstructor("YB")
+export const yottabytes: (value: number | bigint) => ByteSize = unitConstructor("YB")
 /**
  * Creates a decimal ronnabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const ronnabytes = unitConstructor("RB")
+export const ronnabytes: (value: number | bigint) => ByteSize = unitConstructor("RB")
 /**
  * Creates a decimal quettabyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const quettabytes = unitConstructor("QB")
+export const quettabytes: (value: number | bigint) => ByteSize = unitConstructor("QB")
 /**
  * Creates a binary kibibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const kibibytes = unitConstructor("KiB")
+export const kibibytes: (value: number | bigint) => ByteSize = unitConstructor("KiB")
 /**
  * Creates a binary mebibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const mebibytes = unitConstructor("MiB")
+export const mebibytes: (value: number | bigint) => ByteSize = unitConstructor("MiB")
 /**
  * Creates a binary gibibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const gibibytes = unitConstructor("GiB")
+export const gibibytes: (value: number | bigint) => ByteSize = unitConstructor("GiB")
 /**
  * Creates a binary tebibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const tebibytes = unitConstructor("TiB")
+export const tebibytes: (value: number | bigint) => ByteSize = unitConstructor("TiB")
 /**
  * Creates a binary pebibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const pebibytes = unitConstructor("PiB")
+export const pebibytes: (value: number | bigint) => ByteSize = unitConstructor("PiB")
 /**
  * Creates a binary exbibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const exbibytes = unitConstructor("EiB")
+export const exbibytes: (value: number | bigint) => ByteSize = unitConstructor("EiB")
 /**
  * Creates a binary zebibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const zebibytes = unitConstructor("ZiB")
+export const zebibytes: (value: number | bigint) => ByteSize = unitConstructor("ZiB")
 /**
  * Creates a binary yobibyte value.
  *
  * @category constructors
  * @since 4.0.0
  */
-export const yobibytes = unitConstructor("YiB")
+export const yobibytes: (value: number | bigint) => ByteSize = unitConstructor("YiB")
 
 /**
  * Checks whether a value is a byte size.
@@ -437,10 +501,10 @@ export const between: {
  * @category ordering
  * @since 4.0.0
  */
-export const min = BI.min as unknown as {
+export const min: {
   (that: ByteSize): (self: ByteSize) => ByteSize
   (self: ByteSize, that: ByteSize): ByteSize
-}
+} = BI.min as any
 
 /**
  * Returns the larger byte size.
@@ -448,10 +512,10 @@ export const min = BI.min as unknown as {
  * @category ordering
  * @since 4.0.0
  */
-export const max = BI.max as unknown as {
+export const max: {
   (that: ByteSize): (self: ByteSize) => ByteSize
   (self: ByteSize, that: ByteSize): ByteSize
-}
+} = BI.max as any
 
 /**
  * Constrains a byte size to an inclusive range.
@@ -459,10 +523,10 @@ export const max = BI.max as unknown as {
  * @category ordering
  * @since 4.0.0
  */
-export const clamp = BI.clamp as unknown as {
+export const clamp: {
   (options: { minimum: ByteSize; maximum: ByteSize }): (self: ByteSize) => ByteSize
   (self: ByteSize, options: { minimum: ByteSize; maximum: ByteSize }): ByteSize
-}
+} = BI.clamp as any
 
 /**
  * Checks whether the first byte size is less than the second.
@@ -525,10 +589,10 @@ export const equals: {
  * @category math
  * @since 4.0.0
  */
-export const sum = BI.sum as unknown as {
+export const sum: {
   (that: ByteSize): (self: ByteSize) => ByteSize
   (self: ByteSize, that: ByteSize): ByteSize
-}
+} = BI.sum as any
 
 /**
  * Subtracts byte sizes, returning `None` on underflow.
@@ -639,7 +703,7 @@ export const format = (self: ByteSize, options: FormatOptions = {}): string => {
  * @category math
  * @since 4.0.0
  */
-export const ReducerSum = BI.ReducerSum as unknown as Reducer.Reducer<ByteSize>
+export const ReducerSum: Reducer.Reducer<ByteSize> = BI.ReducerSum as any
 
 /**
  * Combiner that keeps the largest byte size.
@@ -647,7 +711,7 @@ export const ReducerSum = BI.ReducerSum as unknown as Reducer.Reducer<ByteSize>
  * @category math
  * @since 4.0.0
  */
-export const CombinerMax = BI.CombinerMax as unknown as Combiner.Combiner<ByteSize>
+export const CombinerMax: Combiner.Combiner<ByteSize> = BI.CombinerMax as any
 
 /**
  * Combiner that keeps the smallest byte size.
@@ -655,4 +719,4 @@ export const CombinerMax = BI.CombinerMax as unknown as Combiner.Combiner<ByteSi
  * @category math
  * @since 4.0.0
  */
-export const CombinerMin = BI.CombinerMin as unknown as Combiner.Combiner<ByteSize>
+export const CombinerMin: Combiner.Combiner<ByteSize> = BI.CombinerMin as any

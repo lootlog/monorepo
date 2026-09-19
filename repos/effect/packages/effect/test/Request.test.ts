@@ -133,7 +133,7 @@ const provideEnv = flow(
   Effect.provideServiceEffect(Requests, Effect.sync(() => ({ count: 0 })))
 )
 
-describe.sequential("Request", () => {
+describe("Request", { concurrent: false }, () => {
   it("preserves __proto__ as an own constructor property", () => {
     interface ProtoRequest extends Request.Request<void> {
       readonly "__proto__": { readonly polluted: boolean }
@@ -200,6 +200,69 @@ describe.sequential("Request", () => {
       expect(names).toEqual(userIds.map((id) => userNames.get(id)))
     }, provideEnv)
   )
+
+  it.effect("fromEffectTagged preserves typed errors", () =>
+    Effect.gen(function*() {
+      const resolver = Resolver.fromEffectTagged<GetNameById>()({
+        GetNameById: () => Effect.fail("missing")
+      })
+      const error = yield* Effect.flip(Effect.request(new GetNameById({ id: 1 }), resolver))
+
+      assert.strictEqual(error, "missing")
+    }))
+
+  it.effect("fromEffectTagged preserves defects", () =>
+    Effect.gen(function*() {
+      const defect = new Error("boom")
+      const resolver = Resolver.fromEffectTagged<GetNameById>()({
+        GetNameById: () => Effect.die(defect)
+      })
+      const exit = yield* Effect.exit(Effect.request(new GetNameById({ id: 1 }), resolver))
+
+      assert.isTrue(Exit.isFailure(exit))
+      if (Exit.isFailure(exit)) {
+        assert.strictEqual(exit.cause.reasons.length, 1)
+        const reason = exit.cause.reasons[0]
+        assert.isTrue(Cause.isDieReason(reason))
+        if (Cause.isDieReason(reason)) {
+          assert.strictEqual(reason.defect, defect)
+        }
+      }
+    }))
+
+  it.effect("fromEffectTagged preserves interrupts", () =>
+    Effect.gen(function*() {
+      const resolver = Resolver.fromEffectTagged<GetNameById>()({
+        GetNameById: () => Effect.interrupt
+      })
+      const exit = yield* Effect.exit(Effect.request(new GetNameById({ id: 1 }), resolver))
+
+      assert.isTrue(Exit.hasInterrupts(exit))
+    }))
+
+  it.effect.each([
+    { name: "array", make: (values: Array<string>) => values },
+    { name: "array iterator", make: (values: Array<string>) => values.values() },
+    {
+      name: "generator",
+      make: (values: Array<string>) =>
+        (function*() {
+          yield* values
+        })()
+    }
+  ])("fromEffectTagged resolves requests from $name results", ({ make }) =>
+    Effect.gen(function*() {
+      const resolver = Resolver.fromEffectTagged<GetNameById>()({
+        GetNameById: (requests) => Effect.succeed(make(requests.map(({ request }) => String(request.id))))
+      })
+      const names = yield* Effect.forEach(
+        [1, 2, 3],
+        (id) => Effect.request(new GetNameById({ id }), resolver),
+        { concurrency: "unbounded" }
+      )
+
+      assert.deepStrictEqual(names, ["1", "2", "3"])
+    }))
 
   it.effect(
     "requests don't break interruption",

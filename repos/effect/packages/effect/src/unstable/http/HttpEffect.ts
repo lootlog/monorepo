@@ -13,7 +13,7 @@ import * as Context from "../../Context.ts"
 import * as Effect from "../../Effect.ts"
 import * as Exit from "../../Exit.ts"
 import * as Fiber from "../../Fiber.ts"
-import { dual } from "../../Function.ts"
+import { constVoid, dual } from "../../Function.ts"
 import { contA, contE } from "../../internal/core.ts"
 import { effectIsExit, fiberEnterUninterruptibleUnsafe, reportCauseUnsafe } from "../../internal/effect.ts"
 import * as Layer from "../../Layer.ts"
@@ -211,7 +211,7 @@ export const scopeTransferToStream = (
   const fiber = Fiber.getCurrent()!
   const scope = Context.getUnsafe(fiber.context, Scope.Scope) as Scope.Closeable
   scopeDisableClose(scope)
-  return Response.setBody(
+  return Response.setBodyKeepHeaders(
     response,
     HttpBody.stream(
       Stream.onExit(response.body.stream, (exit) => Scope.close(scope, exit)),
@@ -295,9 +295,12 @@ export const toWebHandlerWith = <Provided, R = never, ReqR = Exclude<R, Provided
 {
   const resolveSymbol = Symbol.for("@effect/platform/HttpApp/resolve")
   const httpApp = toHandled(self, (request, response) => {
-    if (request.method !== "HEAD") response = scopeTransferToStream(response)
+    const withoutBody = request.method === "HEAD"
+    if (!Response.omitsBody(response, withoutBody)) {
+      response = scopeTransferToStream(response)
+    }
     ;(request as any)[resolveSymbol](
-      Response.toWeb(response, { withoutBody: request.method === "HEAD", context })
+      Response.toWeb(response, { withoutBody, context })
     )
     return Effect.void
   }, middleware)
@@ -336,6 +339,14 @@ export const toWebHandler: <E>(
 /**
  * Builds a Web `Request` handler from a layer and handler factory, returning the handler with a `dispose` function for the layer scope.
  *
+ * **Details**
+ *
+ * The layer is built immediately, so the cost is paid when the handler is
+ * created rather than on the first request. A layer that performs asynchronous
+ * work while building may still be in progress when the first request arrives,
+ * in which case that request waits for the build to finish. If the build fails,
+ * every request rejects with the build error.
+ *
  * @category converting
  * @since 4.0.0
  */
@@ -371,9 +382,18 @@ export const toWebHandlerLayerWith = <
   let handlerCache:
     | ((request: Request, context?: Context.Context<ReqR> | undefined) => Promise<globalThis.Response>)
     | undefined
-  let handlerPromise:
-    | Promise<(request: Request, context?: Context.Context<ReqR> | undefined) => Promise<globalThis.Response>>
-    | undefined
+  const handlerPromise = Effect.runPromise(Effect.gen(function*() {
+    const context = yield* (options.memoMap
+      ? Layer.buildWithMemoMap(layer, options.memoMap, scope)
+      : Layer.buildWithScope(layer, scope))
+    return handlerCache = toWebHandlerWith<Provided, R>(context)(
+      yield* options.toHandler(context),
+      options.middleware
+    ) as any
+  }))
+  // A failed build must not become an unhandled rejection at startup. Every
+  // request still rejects with the build error below.
+  handlerPromise.catch(constVoid)
   function handler(
     request: Request,
     context?: Context.Context<ReqR> | undefined
@@ -381,15 +401,6 @@ export const toWebHandlerLayerWith = <
     if (handlerCache) {
       return handlerCache(request, context)
     }
-    handlerPromise ??= Effect.runPromise(Effect.gen(function*() {
-      const context = yield* (options.memoMap
-        ? Layer.buildWithMemoMap(layer, options.memoMap, scope)
-        : Layer.buildWithScope(layer, scope))
-      return handlerCache = toWebHandlerWith<Provided, R>(context)(
-        yield* options.toHandler(context),
-        options.middleware
-      ) as any
-    }))
     return handlerPromise.then((f) => f(request, context))
   }
   return { dispose, handler: handler as any } as const
@@ -397,6 +408,14 @@ export const toWebHandlerLayerWith = <
 
 /**
  * Builds a Web `Request` handler for an HTTP server effect using a layer to provide its services, returning the handler with a `dispose` function.
+ *
+ * **Details**
+ *
+ * The layer is built immediately, so the cost is paid when the handler is
+ * created rather than on the first request. A layer that performs asynchronous
+ * work while building may still be in progress when the first request arrives,
+ * in which case that request waits for the build to finish. If the build fails,
+ * every request rejects with the build error.
  *
  * @category converting
  * @since 4.0.0
