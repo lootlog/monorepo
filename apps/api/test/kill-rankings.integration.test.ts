@@ -358,6 +358,7 @@ test("role visibility restricts totals and metadata before every SQL ranking", a
           permissions: [Permission.LOOTLOG_LOOTS_READ],
           lvlRangeFrom: 0,
           lvlRangeTo: 150,
+          discordAdmin: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },

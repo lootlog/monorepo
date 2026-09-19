@@ -42,6 +42,7 @@ const role: Role = {
   permissions: [Permission.LOOTLOG_LOOTS_READ],
   lvlRangeFrom: 0,
   lvlRangeTo: 500,
+  discordAdmin: null,
   createdAt: new Date(0),
   updatedAt: new Date(0),
 };

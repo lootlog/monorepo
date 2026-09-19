@@ -294,6 +294,10 @@ export const roleTable = pgTable(
       .notNull(),
     lvlRangeFrom: integer("lvlRangeFrom").default(0),
     lvlRangeTo: integer("lvlRangeTo").default(500),
+    // Last Discord Administrator flag seen for this role. NULL means no flag
+    // has been recorded yet, so the next event records it without deriving a
+    // permission change from it.
+    discordAdmin: boolean("discordAdmin"),
     createdAt: timestamp("createdAt", { mode: "date", precision: 3 })
       .defaultNow()
       .notNull(),

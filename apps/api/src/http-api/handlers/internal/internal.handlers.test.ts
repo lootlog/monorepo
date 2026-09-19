@@ -129,6 +129,7 @@ describe("internal guild HttpApi handlers", () => {
                 updatedAt: new Date(0),
                 lvlRangeFrom: 1,
                 lvlRangeTo: 300,
+                discordAdmin: null,
                 permissions: [Permission.LOOTLOG_ACCESS],
               },
             ],

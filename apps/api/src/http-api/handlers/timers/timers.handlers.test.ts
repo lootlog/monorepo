@@ -59,6 +59,7 @@ const restrictedRole = {
   permissions: [Permission.LOOTLOG_TIMERS_READ],
   lvlRangeFrom: 1,
   lvlRangeTo: 100,
+  discordAdmin: null,
   createdAt: now,
   updatedAt: now,
 } satisfies Role;
