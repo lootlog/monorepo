@@ -8,8 +8,11 @@ export const EventCoordinationSkeleton = () => {
   return (
     <div className="flex flex-col gap-4 px-3 py-3">
       <PageHeader
-        title=<Skeleton className="h-5 w-40" />
-        description=<Skeleton className="h-3 w-56 max-w-full" />
+        title=<Skeleton render={<span />} className="block h-5 w-40" />
+        description=<Skeleton
+          render={<span />}
+          className="block h-3 w-56 max-w-full"
+        />
       />
 
       <div className="flex flex-col gap-3">
