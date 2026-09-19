@@ -1,6 +1,7 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { NpcTypeSchema } from "@lootlog/schema/npc-type";
 import { Effect, Predicate, Schema } from "effect";
+import { partition, uniqBy } from "es-toolkit";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
@@ -35,19 +36,6 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
     : getNpcTypeByWt(npc.wt, prof, margonemType);
 
   return { ...npc, prof, margonemType, type };
-};
-
-const uniqueNpcsByNameAndType = (npcs: ReadonlyArray<NpcHit>) => {
-  const seenNpcKeys = new Set<string>();
-
-  return npcs.filter((npc) => {
-    const npcKey = `${npc.name}_${npc.type}`;
-
-    if (seenNpcKeys.has(npcKey)) return false;
-    seenNpcKeys.add(npcKey);
-
-    return true;
-  });
 };
 
 export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
@@ -88,7 +76,9 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       Effect.map((response) => {
         const hits = response.hits.map(normalizeNpcHit);
 
-        return ids && ids.length > 0 ? hits : uniqueNpcsByNameAndType(hits);
+        return ids && ids.length > 0
+          ? hits
+          : uniqBy(hits, (npc) => `${npc.name}_${npc.type}`);
       }),
       Effect.tapError((error) =>
         Effect.sync(() => logger.error("NPC search error", { error })),
@@ -99,8 +89,8 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   const indexNpcs = Effect.fn("SearchNpcs.index")(function* (
     data: IndexNpcsCommand,
   ) {
-    const validNpcs = data.npcs.filter(
-      (npc) => npc.world && npc.id && npc.name,
+    const [validNpcs, invalidNpcs] = partition(data.npcs, (npc) =>
+      Boolean(npc.world && npc.id && npc.name),
     );
 
     if (validNpcs.length === 0) {
@@ -112,10 +102,6 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
     }
 
     if (validNpcs.length !== data.npcs.length) {
-      const invalidNpcs = data.npcs.filter(
-        (npc) => !npc.world || !npc.id || !npc.name,
-      );
-
       logger.warn(
         `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
         { invalidNpcs },

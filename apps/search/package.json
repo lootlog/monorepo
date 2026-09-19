@@ -25,6 +25,7 @@
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
     "effect": "catalog:",
+    "es-toolkit": "catalog:",
     "meilisearch": "^0.62.0"
   },
   "devDependencies": {

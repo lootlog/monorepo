@@ -1,5 +1,6 @@
 /* eslint-disable react-doctor/context-provider-value-from-unmemoized-local-literal -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { GatewayContext, type GatewayProviderValue } from "./gateway-context";
+import { mapValues } from "es-toolkit";
 import React, { useEffect, useEffectEvent, useState } from "react";
 import { useTimersSocket } from "@/features/guild/timers/use-timers-socket";
 import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
@@ -122,11 +123,9 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     });
   }, [currentGuildId]);
 
-  const lootUnreadCounts = Object.fromEntries(
-    Object.entries(unreadLootIdsByGuild).map(([guildId, lootIds]) => [
-      guildId,
-      lootIds.length,
-    ]),
+  const lootUnreadCounts = mapValues(
+    unreadLootIdsByGuild,
+    (lootIds) => lootIds.length,
   );
 
   const value: GatewayProviderValue = {

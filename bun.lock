@@ -63,6 +63,7 @@
         "discord-api-types": "0.38.55",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
+        "es-toolkit": "catalog:",
         "sharp": "^0.35.4",
         "superjson": "catalog:",
         "uuid": "^14.0.2",
@@ -125,6 +126,7 @@
         "bullmq": "^6.3.8",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
+        "es-toolkit": "catalog:",
         "pg": "^8.23.0",
       },
       "devDependencies": {
@@ -241,6 +243,7 @@
         "class-variance-authority": "^0.7.1",
         "cn": "catalog:",
         "effect": "catalog:",
+        "es-toolkit": "catalog:",
         "i18next": "^26.4.2",
         "lexical": "catalog:",
         "lucide-react": "^1.47.0",
@@ -295,6 +298,7 @@
         "@lootlog/schema": "workspace:*",
         "@msgpack/msgpack": "^3.1.3",
         "effect": "catalog:",
+        "es-toolkit": "catalog:",
       },
       "devDependencies": {
         "@lootlog/typescript-config": "workspace:*",
@@ -345,6 +349,7 @@
         "@lootlog/protocol": "workspace:*",
         "@lootlog/schema": "workspace:*",
         "effect": "catalog:",
+        "es-toolkit": "catalog:",
         "meilisearch": "^0.62.0",
       },
       "devDependencies": {
@@ -395,10 +400,10 @@
         "class-variance-authority": "^0.7.1",
         "cn": "catalog:",
         "date-fns": "^4.4.0",
+        "es-toolkit": "catalog:",
         "framer-motion": "^13.4.0",
         "i18next": "^26.4.2",
         "lexical": "catalog:",
-        "lodash": "^4.18.1",
         "lottie-react": "^3.1.2",
         "lucide-react": "^1.47.0",
         "nuqs": "^2.10.1",
@@ -419,7 +424,6 @@
         "@tailwindcss/postcss": "catalog:",
         "@tanstack/router-plugin": "^1.168.40",
         "@testing-library/react": "^16.3.3",
-        "@types/lodash": "^4.17.25",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
@@ -774,6 +778,7 @@
     "drizzle-kit": "1.0.0-rc.4",
     "drizzle-orm": "1.0.0-rc.4",
     "effect": "4.0.0-rc.116",
+    "es-toolkit": "^1.52.0",
     "lexical": "0.51.0",
     "nanostores": "1.5.3",
     "postcss-load-config": "^6.0.1",
@@ -2151,8 +2156,6 @@
     "@types/hast": ["@types/hast@3.0.5", "", { "dependencies": { "@types/unist": "3.0.3" } }, "sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g=="],
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
-
-    "@types/lodash": ["@types/lodash@4.17.25", "", {}, "sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ=="],
 
     "@types/mdast": ["@types/mdast@4.0.4", "", { "dependencies": { "@types/unist": "3.0.3" } }, "sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA=="],
 

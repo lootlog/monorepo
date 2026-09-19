@@ -1,3 +1,4 @@
+import { maxBy } from "es-toolkit";
 import { z } from "zod";
 import type { TOptions } from "i18next";
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
@@ -193,9 +194,7 @@ function resolveSidebarItems(
     isPathActive(pathname, item.path),
   );
 
-  const activeItem = matchingItems.sort(
-    (left, right) => right.path.length - left.path.length,
-  )[0];
+  const activeItem = maxBy(matchingItems, (item) => item.path.length);
 
   return registry.map((item) => ({
     id: item.id,
@@ -1357,15 +1356,19 @@ function fallback(
   guildBreadcrumb: Breadcrumb,
   t: GetNavigationInfoArgs["t"],
 ): NavigationInfo {
-  const nearestParent = [
-    { label: t("common.breadcrumbs.stats"), path: routes.stats },
-    { label: t("common.breadcrumbs.events"), path: routes.events },
-    { label: t("common.breadcrumbs.docs"), path: routes.docs },
-    { label: t("common.breadcrumbs.reservations"), path: routes.reservations },
-    { label: t("common.breadcrumbs.settings"), path: routes.settings },
-  ]
-    .filter((candidate) => path.startsWith(`${candidate.path}/`))
-    .sort((left, right) => right.path.length - left.path.length)[0];
+  const nearestParent = maxBy(
+    [
+      { label: t("common.breadcrumbs.stats"), path: routes.stats },
+      { label: t("common.breadcrumbs.events"), path: routes.events },
+      { label: t("common.breadcrumbs.docs"), path: routes.docs },
+      {
+        label: t("common.breadcrumbs.reservations"),
+        path: routes.reservations,
+      },
+      { label: t("common.breadcrumbs.settings"), path: routes.settings },
+    ].filter((candidate) => path.startsWith(`${candidate.path}/`)),
+    (candidate) => candidate.path.length,
+  );
 
   if (nearestParent) {
     return {

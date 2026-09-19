@@ -1,5 +1,6 @@
 import { asc, eq, lte } from "drizzle-orm";
 import { Clock, Effect } from "effect";
+import { chunk } from "es-toolkit";
 import type { DrizzleDatabase } from "#src/database/database";
 import {
   battles,
@@ -102,10 +103,8 @@ export const makeBattleDeletion = (
             .where(eq(battles.userId, userId))
             .returning({ battleId: battles.id, userId: battles.userId });
 
-          for (let offset = 0; offset < removed.length; offset += 1_000) {
-            yield* transaction
-              .insert(battleObjectDeletions)
-              .values(removed.slice(offset, offset + 1_000));
+          for (const batch of chunk(removed, 1_000)) {
+            yield* transaction.insert(battleObjectDeletions).values(batch);
           }
 
           yield* transaction

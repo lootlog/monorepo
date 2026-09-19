@@ -1,4 +1,5 @@
 /* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { groupBy } from "es-toolkit";
 import { Predicate } from "effect";
 import type { QueryKey } from "@tanstack/react-query";
 import type { SettingsOperation, SettingsScope } from "./settings-documents";
@@ -107,20 +108,13 @@ const sameQueryKey = (left: QueryKey, right: QueryKey) =>
  * so pending operations are grouped by their non-user scope ids.
  */
 const groupIntoBatches = (operations: SettingsOperation[]) => {
-  const batches = new Map<string, SettingsOperation[]>();
+  const { "": userOnly = [], ...batches } = groupBy(operations, (operation) =>
+    operation.scope.type === "USER"
+      ? ""
+      : `${operation.scope.type}:${operation.scope.id}`,
+  );
 
-  for (const operation of operations) {
-    const key =
-      operation.scope.type === "USER"
-        ? ""
-        : `${operation.scope.type}:${operation.scope.id}`;
-
-    batches.set(key, [...(batches.get(key) ?? []), operation]);
-  }
-
-  const userOnly = batches.get("") ?? [];
-  batches.delete("");
-  const grouped = [...batches.values()];
+  const grouped = Object.values(batches);
 
   if (userOnly.length === 0) return grouped;
 

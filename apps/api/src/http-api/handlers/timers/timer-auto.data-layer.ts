@@ -3,6 +3,7 @@ import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { Clock, Effect, Result, Schema } from "effect";
+import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
@@ -615,19 +616,20 @@ export const makeAutoTimer = (
       .limit(1);
 
     const catching = new Set(configs[0]?.catchingGuildIds ?? []);
-    const targets = guildRows.filter(({ guild }) => catching.has(guild.id));
+
+    const [targets, excluded] = partition(guildRows, ({ guild }) =>
+      catching.has(guild.id),
+    );
 
     const rejectedGuilds: Array<{
       guildId: string;
       guildName: string;
       reason: "NOT_ON_CATCHING_WHITELIST" | "TIMER_CREATE_FAILED";
-    }> = guildRows
-      .filter(({ guild }) => !catching.has(guild.id))
-      .map(({ guild }) => ({
-        guildId: guild.id,
-        guildName: guild.name,
-        reason: "NOT_ON_CATCHING_WHITELIST" as const,
-      }));
+    }> = excluded.map(({ guild }) => ({
+      guildId: guild.id,
+      guildName: guild.name,
+      reason: "NOT_ON_CATCHING_WHITELIST" as const,
+    }));
 
     if (targets.length === 0) {
       return yield* Effect.fail(

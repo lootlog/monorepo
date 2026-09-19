@@ -1,5 +1,6 @@
 import { indexChangedDocuments } from "#src/meilisearch/index-changed-documents";
 import { Effect } from "effect";
+import { partition } from "es-toolkit";
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { buildMeilisearchSearchTermFilter } from "#src/meilisearch/query-builder";
 import {
@@ -88,8 +89,8 @@ export const makePlayersModule = (
   const indexPlayers = Effect.fn("SearchPlayers.index")(function* (
     data: IndexPlayersCommand,
   ) {
-    const validPlayers = data.players.filter(
-      (player) => player.world && player.id && player.name,
+    const [validPlayers, invalidPlayers] = partition(data.players, (player) =>
+      Boolean(player.world && player.id && player.name),
     );
 
     if (validPlayers.length === 0) {
@@ -101,10 +102,6 @@ export const makePlayersModule = (
     }
 
     if (validPlayers.length !== data.players.length) {
-      const invalidPlayers = data.players.filter(
-        (player) => !player.world || !player.id || !player.name,
-      );
-
       logger.warn(
         `Skipped ${invalidPlayers.length} players due to missing required fields`,
         { invalidPlayers },
