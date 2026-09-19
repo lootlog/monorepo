@@ -1,4 +1,5 @@
 import { useEffect, type RefObject } from "react";
+import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 export function useBattleStatsSearchScroll({
   viewportRef,
@@ -30,9 +31,7 @@ export function useBattleStatsSearchScroll({
       // The table may scroll on its own or with an ancestor column, so let the browser pick.
       row.scrollIntoView({
         block: "center",
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
+        behavior: getPrefersReducedMotion() ? "auto" : "smooth",
       });
     });
 
