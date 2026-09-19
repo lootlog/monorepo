@@ -27,6 +27,10 @@ let lastOtherCanvasTipEvent: unknown = null;
 
 let lastOtherCanvasTipObject: Other | null = null;
 
+// True while the tooltip currently drawn on the canvas carries the Shift-only
+// section, so releasing Shift redraws only the tooltips that still show it.
+let shiftSectionDrawn = false;
+
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
 
 const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
@@ -181,10 +185,12 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
           .getState()
           .setActiveOther(object);
         patchOtherCharacterTooltip(object);
+        shiftSectionDrawn = true;
       }
     } else {
       lastOtherCanvasTipEvent = null;
       lastOtherCanvasTipObject = null;
+      shiftSectionDrawn = false;
       useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
     }
 
@@ -194,6 +200,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
   canvasTip.hide = (event) => {
     lastOtherCanvasTipEvent = null;
     lastOtherCanvasTipObject = null;
+    shiftSectionDrawn = false;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
 
     return originalCanvasTipHide?.call(canvasTip, event);
@@ -214,6 +221,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
     originalCanvasTipHide = null;
     lastOtherCanvasTipEvent = null;
     lastOtherCanvasTipObject = null;
+    shiftSectionDrawn = false;
   };
 }
 
@@ -229,28 +237,40 @@ export function patchOtherCharacterTooltip(other: OtherHandle): void {
   refreshCharacterTooltip(other);
 }
 
-export function refreshActiveOtherCanvasTooltip(): void {
-  const state = useCharacterTooltipCatchingGuildsStore.getState();
-
-  if (!state.isShiftPressed) {
-    state.clearActiveOther();
-
-    return;
-  }
-
-  const activeOther = state.activeOther ?? lastOtherCanvasTipObject;
-
-  if (!activeOther) return;
-
-  state.setActiveOther(activeOther);
-
-  patchOtherCharacterTooltip(activeOther);
-
+function redrawOtherCanvasTooltip(other: MargonemTooltipCharacter): void {
   const canvasTip = getRuntimeCanvasTip();
 
   if (!canvasTip?.show || !lastOtherCanvasTipEvent) return;
 
-  canvasTip.show(lastOtherCanvasTipEvent, activeOther);
+  canvasTip.show(lastOtherCanvasTipEvent, other);
+}
+
+export function refreshActiveOtherCanvasTooltip(): void {
+  const state = useCharacterTooltipCatchingGuildsStore.getState();
+  const hoveredOther = state.activeOther ?? lastOtherCanvasTipObject;
+
+  if (!state.isShiftPressed) {
+    state.clearActiveOther();
+
+    if (!shiftSectionDrawn || !hoveredOther) return;
+
+    // Releasing Shift must drop the appended section from the tooltip that is
+    // still on screen, so rebuild its html and redraw the visible tip.
+    shiftSectionDrawn = false;
+    refreshCharacterTooltip(hoveredOther);
+    redrawOtherCanvasTooltip(hoveredOther);
+
+    return;
+  }
+
+  if (!hoveredOther) return;
+
+  state.setActiveOther(hoveredOther);
+
+  patchOtherCharacterTooltip(hoveredOther);
+
+  shiftSectionDrawn = true;
+  redrawOtherCanvasTooltip(hoveredOther);
 }
 
 export function patchOtherCharacterTooltips(others: OtherHandle[]): void {
