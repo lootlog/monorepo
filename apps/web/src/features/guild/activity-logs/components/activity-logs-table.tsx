@@ -85,9 +85,22 @@ export const ActivityLogsTable = ({
                 <ActivityLogDetailsPopover activity={activity} />
               </div>
               <div className="flex min-w-0 items-center gap-2 pl-11 text-xs text-muted-foreground">
-                <span className="truncate font-medium text-foreground">
-                  {activity.actorSnapshot?.name ??
-                    memberNameByDiscordId.get(activity.discordId) ??
+                {activity.actorSnapshot && (
+                  <>
+                    <span className="truncate font-medium text-foreground">
+                      {activity.actorSnapshot.name}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                  </>
+                )}
+                {/* The member stays visible next to the character: an audit entry must name who acted. */}
+                <span
+                  className={cn(
+                    "truncate",
+                    !activity.actorSnapshot && "font-medium text-foreground",
+                  )}
+                >
+                  {memberNameByDiscordId.get(activity.discordId) ??
                     activity.discordId}
                 </span>
                 <span aria-hidden="true">·</span>
