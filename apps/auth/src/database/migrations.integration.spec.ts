@@ -6,7 +6,7 @@ import {
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
 import { PgClient } from "@effect/sql-pg";
-import { makePostgresLayer, PostgresPool } from "@lootlog/database";
+import { makeAuthPostgresLayer, PostgresPool } from "./postgres.js";
 import { AuthDatabase } from "./drizzle.js";
 import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import pg from "pg";
@@ -70,7 +70,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
         "SELECT count(*)::int AS count, count(DISTINCT hash)::int AS unique_count FROM drizzle.__drizzle_migrations",
       );
 
-      expect(result.rows).toEqual([{ count: 4, unique_count: 4 }]);
+      expect(result.rows).toEqual([{ count: 5, unique_count: 5 }]);
 
       const table = await connection.pool.query(
         "SELECT to_regclass('public.apikey') AS name",
@@ -79,6 +79,35 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       expect(table.rows).toEqual([{ name: "apikey" }]);
     } finally {
       await Promise.all(connections.map(({ close }) => close()));
+    }
+  });
+
+  it("upgrades the deployed required-issuer schema before new account writes", async () => {
+    const connection = await makeConnection(
+      await createDatabase(postgres, "required_issuer_upgrade"),
+    );
+
+    try {
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      await connection.pool.query(`
+        DROP INDEX "account_providerId_accountId_uidx";
+        ALTER TABLE "account" ALTER COLUMN "issuer" SET NOT NULL;
+        CREATE UNIQUE INDEX "account_issuer_accountId_uidx" ON "account" ("issuer", "accountId");
+        DELETE FROM drizzle.__drizzle_migrations WHERE id = (SELECT max(id) FROM drizzle.__drizzle_migrations);
+      `);
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({ status: "ready", pendingMigrations: 1 });
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      expect(
+        await Effect.runPromise(planAuthMigration(connection.client)),
+      ).toMatchObject({ status: "up-to-date", pendingMigrations: 0 });
+    } finally {
+      await connection.close();
     }
   });
 
@@ -127,7 +156,7 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       ).toMatchObject({
         status: "ready",
         source: "better-auth-1.7-pre-jwks-metadata",
-        pendingMigrations: 2,
+        pendingMigrations: 3,
       });
 
       await Effect.runPromise(
@@ -370,7 +399,7 @@ async function makeConnection(connectionString: string) {
   const runtime = ManagedRuntime.make(
     AuthDatabase.layer.pipe(
       Layer.provideMerge(
-        makePostgresLayer({
+        makeAuthPostgresLayer({
           url: Redacted.make(connectionString),
           applicationName: "auth-migrations-test",
         }),

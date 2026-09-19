@@ -38,13 +38,13 @@ type SampleSource =
 
 const auditConfig = await Effect.runPromise(
   Config.all({
-    sampleSize: Config.int("AUDIT_SAMPLE_SIZE").pipe(Config.withDefault(1000)),
-    databaseUrl: Config.option(Config.redacted("POSTGRESQL_CONNECTION_URI")),
-    r2Region: Config.string("R2_REGION").pipe(Config.withDefault("auto")),
-    r2Endpoint: Config.string("R2_ENDPOINT"),
-    r2AccessKeyId: Config.redacted("R2_ACCESS_KEY_ID"),
-    r2SecretAccessKey: Config.redacted("R2_SECRET_ACCESS_KEY"),
-    r2BucketName: Config.string("R2_BUCKET_NAME"),
+    sampleSize: Config.Int("AUDIT_SAMPLE_SIZE").pipe(Config.withDefault(1000)),
+    databaseUrl: Config.option(Config.Redacted("POSTGRESQL_CONNECTION_URI")),
+    r2Region: Config.String("R2_REGION").pipe(Config.withDefault("auto")),
+    r2Endpoint: Config.String("R2_ENDPOINT"),
+    r2AccessKeyId: Config.Redacted("R2_ACCESS_KEY_ID"),
+    r2SecretAccessKey: Config.Redacted("R2_SECRET_ACCESS_KEY"),
+    r2BucketName: Config.String("R2_BUCKET_NAME"),
   }),
 );
 

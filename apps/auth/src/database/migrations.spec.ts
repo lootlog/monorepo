@@ -113,7 +113,10 @@ describe("Better Auth migration preflight", () => {
       sessionCount: 20,
       issuerBackfillCount: 12,
       timestampNormalizationColumns: 0,
-      missingIndexes: ["account_issuer_accountId_uidx", "user_discordId_key"],
+      missingIndexes: [
+        "account_providerId_accountId_uidx",
+        "user_discordId_key",
+      ],
       integrityViolations: [],
     });
   });
@@ -129,7 +132,7 @@ describe("Better Auth migration preflight", () => {
       source: "better-auth-1.6-imported",
       timestampNormalizationColumns: 14,
       missingIndexes: [
-        "account_issuer_accountId_uidx",
+        "account_providerId_accountId_uidx",
         "account_userId_idx",
         "session_userId_idx",
         "user_discordId_key",

@@ -13416,7 +13416,7 @@ export const prefetchUsersControllerGetUserFeedQuery = async <TData = Awaited<Re
 }
 
 /**
- * @summary Get recent activity across accessible Organizations
+ * @summary Invalidates the {@link useUsersControllerGetUserFeed} query
  */
 export const invalidateUsersControllerGetUserFeed = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -13432,8 +13432,8 @@ export const invalidateUsersControllerGetUserFeed = async (
  */
 export const useSetUsersControllerGetUserFeedQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>({ queryKey: getUsersControllerGetUserFeedQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserFeed>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserFeed>>>({ exact: $exactMatch, queryKey: getUsersControllerGetUserFeedQueryKey() }, updater);
   };
 }
 
@@ -13475,11 +13475,13 @@ export const usersControllerDeleteAccount = async ( options?: Parameters<typeof 
 
 
 
+export const getUsersControllerDeleteAccountMutationKey = () => ['usersControllerDeleteAccount'] as const;
+
 export const getUsersControllerDeleteAccountMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerDeleteAccount401 | UsersControllerDeleteAccount403 | UsersControllerDeleteAccount429 | HttpErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerDeleteAccount>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof usersControllerDeleteAccount>>, TError,void, TContext> => {
 
-const mutationKey = ['usersControllerDeleteAccount'];
+const mutationKey = getUsersControllerDeleteAccountMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -13633,7 +13635,7 @@ export const prefetchUsersControllerGetUserPreferencesQuery = async <TData = Awa
 }
 
 /**
- * @summary Get user preferences
+ * @summary Invalidates the {@link useUsersControllerGetUserPreferences} query
  */
 export const invalidateUsersControllerGetUserPreferences = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -13649,8 +13651,8 @@ export const invalidateUsersControllerGetUserPreferences = async (
  */
 export const useSetUsersControllerGetUserPreferencesQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof usersControllerGetUserPreferences>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserPreferences>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserPreferences>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserPreferences>>>({ queryKey: getUsersControllerGetUserPreferencesQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof usersControllerGetUserPreferences>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserPreferences>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserPreferences>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserPreferences>>>({ exact: $exactMatch, queryKey: getUsersControllerGetUserPreferencesQueryKey() }, updater);
   };
 }
 
@@ -13682,8 +13684,16 @@ export const usersControllerUpdateUserPreferences = async (updateUserPreferences
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<UserPreferencesResponseDtoOutput>(getUsersControllerUpdateUserPreferencesUrl(),
   {
@@ -13698,11 +13708,13 @@ return mainFetch<UserPreferencesResponseDtoOutput>(getUsersControllerUpdateUserP
 
 
 
+export const getUsersControllerUpdateUserPreferencesMutationKey = () => ['usersControllerUpdateUserPreferences'] as const;
+
 export const getUsersControllerUpdateUserPreferencesMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerUpdateUserPreferences401 | UsersControllerUpdateUserPreferences403 | UsersControllerUpdateUserPreferences429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>, TError,UsersControllerUpdateUserPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserPreferences>>, TError,UsersControllerUpdateUserPreferencesMutationVariables, TContext> => {
 
-const mutationKey = ['usersControllerUpdateUserPreferences'];
+const mutationKey = getUsersControllerUpdateUserPreferencesMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -13856,7 +13868,7 @@ export const prefetchUsersControllerGetCurrentUserGuildsQuery = async <TData = A
 }
 
 /**
- * @summary Get current user guilds
+ * @summary Invalidates the {@link useUsersControllerGetCurrentUserGuilds} query
  */
 export const invalidateUsersControllerGetCurrentUserGuilds = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -13872,8 +13884,8 @@ export const invalidateUsersControllerGetCurrentUserGuilds = async (
  */
 export const useSetUsersControllerGetCurrentUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>({ queryKey: getUsersControllerGetCurrentUserGuildsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>({ exact: $exactMatch, queryKey: getUsersControllerGetCurrentUserGuildsQueryKey() }, updater);
   };
 }
 
@@ -14000,7 +14012,7 @@ export const prefetchUsersControllerGetCurrentUserAccessibleGuildsQuery = async 
 }
 
 /**
- * @summary Get accessible current user guilds
+ * @summary Invalidates the {@link useUsersControllerGetCurrentUserAccessibleGuilds} query
  */
 export const invalidateUsersControllerGetCurrentUserAccessibleGuilds = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -14016,8 +14028,8 @@ export const invalidateUsersControllerGetCurrentUserAccessibleGuilds = async (
  */
 export const useSetUsersControllerGetCurrentUserAccessibleGuildsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>>({ queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetCurrentUserAccessibleGuilds>>>({ exact: $exactMatch, queryKey: getUsersControllerGetCurrentUserAccessibleGuildsQueryKey() }, updater);
   };
 }
 
@@ -14144,7 +14156,7 @@ export const prefetchUsersControllerGetUserGameAccountPreferencesQuery = async <
 }
 
 /**
- * @summary Get user game account preferences
+ * @summary Invalidates the {@link useUsersControllerGetUserGameAccountPreferences} query
  */
 export const invalidateUsersControllerGetUserGameAccountPreferences = async (
  queryClient: QueryClient, { accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters, options?: InvalidateOptions
@@ -14160,8 +14172,8 @@ export const invalidateUsersControllerGetUserGameAccountPreferences = async (
  */
 export const useSetUsersControllerGetUserGameAccountPreferencesQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters,updater: Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>>({ queryKey: getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }) }, updater);
+  return ({ accountId }: UsersControllerGetUserGameAccountPreferencesPathParameters,updater: Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined) => Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetUserGameAccountPreferences>>>({ exact: $exactMatch, queryKey: getUsersControllerGetUserGameAccountPreferencesQueryKey({ accountId }) }, updater);
   };
 }
 
@@ -14194,8 +14206,16 @@ export const usersControllerUpdateUserGameAccountPreferences = async ({ accountI
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<UserGameAccountPreferencesResponseDtoOutput>(getUsersControllerUpdateUserGameAccountPreferencesUrl({ accountId }),
   {
@@ -14210,11 +14230,13 @@ return mainFetch<UserGameAccountPreferencesResponseDtoOutput>(getUsersController
 
 
 
+export const getUsersControllerUpdateUserGameAccountPreferencesMutationKey = () => ['usersControllerUpdateUserGameAccountPreferences'] as const;
+
 export const getUsersControllerUpdateUserGameAccountPreferencesMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerUpdateUserGameAccountPreferences401 | UsersControllerUpdateUserGameAccountPreferences403 | UsersControllerUpdateUserGameAccountPreferences429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>, TError,UsersControllerUpdateUserGameAccountPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof usersControllerUpdateUserGameAccountPreferences>>, TError,UsersControllerUpdateUserGameAccountPreferencesMutationVariables, TContext> => {
 
-const mutationKey = ['usersControllerUpdateUserGameAccountPreferences'];
+const mutationKey = getUsersControllerUpdateUserGameAccountPreferencesMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -14368,7 +14390,7 @@ export const prefetchMembersControllerGetMeQuery = async <TData = Awaited<Return
 }
 
 /**
- * @summary Get current member
+ * @summary Invalidates the {@link useMembersControllerGetMe} query
  */
 export const invalidateMembersControllerGetMe = async (
  queryClient: QueryClient, { guildId }: MembersControllerGetMePathParameters, options?: InvalidateOptions
@@ -14384,8 +14406,8 @@ export const invalidateMembersControllerGetMe = async (
  */
 export const useSetMembersControllerGetMeQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: MembersControllerGetMePathParameters,updater: Awaited<ReturnType<typeof membersControllerGetMe>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetMe>> | undefined) => Awaited<ReturnType<typeof membersControllerGetMe>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetMe>>>({ queryKey: getMembersControllerGetMeQueryKey({ guildId }) }, updater);
+  return ({ guildId }: MembersControllerGetMePathParameters,updater: Awaited<ReturnType<typeof membersControllerGetMe>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetMe>> | undefined) => Awaited<ReturnType<typeof membersControllerGetMe>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetMe>>>({ exact: $exactMatch, queryKey: getMembersControllerGetMeQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -14427,11 +14449,13 @@ export const membersControllerRefreshMe = async ({ guildId }: MembersControllerR
 
 
 
+export const getMembersControllerRefreshMeMutationKey = () => ['membersControllerRefreshMe'] as const;
+
 export const getMembersControllerRefreshMeMutationOptions = <TError = ErrorType<RequestValidationError | MembersControllerRefreshMe401 | MembersControllerRefreshMe403 | MembersControllerRefreshMe429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersControllerRefreshMe>>, TError,MembersControllerRefreshMeMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof membersControllerRefreshMe>>, TError,MembersControllerRefreshMeMutationVariables, TContext> => {
 
-const mutationKey = ['membersControllerRefreshMe'];
+const mutationKey = getMembersControllerRefreshMeMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -14500,11 +14524,13 @@ export const membersControllerRefreshMember = async ({ guildId, discordId }: Mem
 
 
 
+export const getMembersControllerRefreshMemberMutationKey = () => ['membersControllerRefreshMember'] as const;
+
 export const getMembersControllerRefreshMemberMutationOptions = <TError = ErrorType<RequestValidationError | MembersControllerRefreshMember401 | MembersControllerRefreshMember403 | void | MembersControllerRefreshMember429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersControllerRefreshMember>>, TError,MembersControllerRefreshMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof membersControllerRefreshMember>>, TError,MembersControllerRefreshMemberMutationVariables, TContext> => {
 
-const mutationKey = ['membersControllerRefreshMember'];
+const mutationKey = getMembersControllerRefreshMemberMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -14573,11 +14599,13 @@ export const membersControllerDeactivateMember = async ({ guildId, discordId }: 
 
 
 
+export const getMembersControllerDeactivateMemberMutationKey = () => ['membersControllerDeactivateMember'] as const;
+
 export const getMembersControllerDeactivateMemberMutationOptions = <TError = ErrorType<RequestValidationError | MembersControllerDeactivateMember401 | MembersControllerDeactivateMember403 | void | MembersControllerDeactivateMember429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersControllerDeactivateMember>>, TError,MembersControllerDeactivateMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof membersControllerDeactivateMember>>, TError,MembersControllerDeactivateMemberMutationVariables, TContext> => {
 
-const mutationKey = ['membersControllerDeactivateMember'];
+const mutationKey = getMembersControllerDeactivateMemberMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -14731,7 +14759,7 @@ export const prefetchMembersControllerGetMemberLootlogConfigSummaryQuery = async
 }
 
 /**
- * @summary Get member lootlog config summary
+ * @summary Invalidates the {@link useMembersControllerGetMemberLootlogConfigSummary} query
  */
 export const invalidateMembersControllerGetMemberLootlogConfigSummary = async (
  queryClient: QueryClient, { guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters, options?: InvalidateOptions
@@ -14747,8 +14775,8 @@ export const invalidateMembersControllerGetMemberLootlogConfigSummary = async (
  */
 export const useSetMembersControllerGetMemberLootlogConfigSummaryQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined) => Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>>({ queryKey: getMembersControllerGetMemberLootlogConfigSummaryQueryKey({ guildId, discordId }) }, updater);
+  return ({ guildId, discordId }: MembersControllerGetMemberLootlogConfigSummaryPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined) => Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetMemberLootlogConfigSummary>>>({ exact: $exactMatch, queryKey: getMembersControllerGetMemberLootlogConfigSummaryQueryKey({ guildId, discordId }) }, updater);
   };
 }
 
@@ -14891,7 +14919,7 @@ export const prefetchMembersControllerGetGuildMembersQuery = async <TData = Awai
 }
 
 /**
- * @summary Get guild members
+ * @summary Invalidates the {@link useMembersControllerGetGuildMembers} query
  */
 export const invalidateMembersControllerGetGuildMembers = async (
  queryClient: QueryClient, { guildId }: MembersControllerGetGuildMembersPathParameters,
@@ -14909,8 +14937,8 @@ export const invalidateMembersControllerGetGuildMembers = async (
 export const useSetMembersControllerGetGuildMembersQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: MembersControllerGetGuildMembersPathParameters,
-    params: MembersControllerGetGuildMembersParams | undefined,updater: Awaited<ReturnType<typeof membersControllerGetGuildMembers>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMembers>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMembers>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetGuildMembers>>>({ queryKey: getMembersControllerGetGuildMembersQueryKey({ guildId },params) }, updater);
+    params: MembersControllerGetGuildMembersParams | undefined,updater: Awaited<ReturnType<typeof membersControllerGetGuildMembers>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMembers>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMembers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetGuildMembers>>>({ exact: $exactMatch, queryKey: getMembersControllerGetGuildMembersQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -15054,7 +15082,7 @@ export const prefetchMembersControllerGetGuildMemberReferencesQuery = async <TDa
 }
 
 /**
- * @summary Get guild member references
+ * @summary Invalidates the {@link useMembersControllerGetGuildMemberReferences} query
  */
 export const invalidateMembersControllerGetGuildMemberReferences = async (
  queryClient: QueryClient, { guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
@@ -15072,8 +15100,8 @@ export const invalidateMembersControllerGetGuildMemberReferences = async (
 export const useSetMembersControllerGetGuildMemberReferencesQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: MembersControllerGetGuildMemberReferencesPathParameters,
-    params: MembersControllerGetGuildMemberReferencesParams | undefined,updater: Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>>({ queryKey: getMembersControllerGetGuildMemberReferencesQueryKey({ guildId },params) }, updater);
+    params: MembersControllerGetGuildMemberReferencesParams | undefined,updater: Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetGuildMemberReferences>>>({ exact: $exactMatch, queryKey: getMembersControllerGetGuildMemberReferencesQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -15201,7 +15229,7 @@ export const prefetchMembersControllerGetGuildMembersSummaryQuery = async <TData
 }
 
 /**
- * @summary Get guild members summary
+ * @summary Invalidates the {@link useMembersControllerGetGuildMembersSummary} query
  */
 export const invalidateMembersControllerGetGuildMembersSummary = async (
  queryClient: QueryClient, { guildId }: MembersControllerGetGuildMembersSummaryPathParameters, options?: InvalidateOptions
@@ -15217,8 +15245,8 @@ export const invalidateMembersControllerGetGuildMembersSummary = async (
  */
 export const useSetMembersControllerGetGuildMembersSummaryQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>>({ queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }) }, updater);
+  return ({ guildId }: MembersControllerGetGuildMembersSummaryPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined) => Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetGuildMembersSummary>>>({ exact: $exactMatch, queryKey: getMembersControllerGetGuildMembersSummaryQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -15260,11 +15288,13 @@ export const membersControllerRefreshAllMembers = async ({ guildId }: MembersCon
 
 
 
+export const getMembersControllerRefreshAllMembersMutationKey = () => ['membersControllerRefreshAllMembers'] as const;
+
 export const getMembersControllerRefreshAllMembersMutationOptions = <TError = ErrorType<RequestValidationError | MembersControllerRefreshAllMembers401 | MembersControllerRefreshAllMembers403 | void | MembersControllerRefreshAllMembers429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof membersControllerRefreshAllMembers>>, TError,MembersControllerRefreshAllMembersMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof membersControllerRefreshAllMembers>>, TError,MembersControllerRefreshAllMembersMutationVariables, TContext> => {
 
-const mutationKey = ['membersControllerRefreshAllMembers'];
+const mutationKey = getMembersControllerRefreshAllMembersMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -15418,7 +15448,7 @@ export const prefetchMembersControllerGetLatestRefreshJobQuery = async <TData = 
 }
 
 /**
- * @summary Get latest refresh job
+ * @summary Invalidates the {@link useMembersControllerGetLatestRefreshJob} query
  */
 export const invalidateMembersControllerGetLatestRefreshJob = async (
  queryClient: QueryClient, { guildId }: MembersControllerGetLatestRefreshJobPathParameters, options?: InvalidateOptions
@@ -15434,8 +15464,8 @@ export const invalidateMembersControllerGetLatestRefreshJob = async (
  */
 export const useSetMembersControllerGetLatestRefreshJobQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: MembersControllerGetLatestRefreshJobPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>> | undefined) => Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>>>({ queryKey: getMembersControllerGetLatestRefreshJobQueryKey({ guildId }) }, updater);
+  return ({ guildId }: MembersControllerGetLatestRefreshJobPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>> | undefined) => Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetLatestRefreshJob>>>({ exact: $exactMatch, queryKey: getMembersControllerGetLatestRefreshJobQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -15562,7 +15592,7 @@ export const prefetchMembersControllerGetRefreshJobStatusQuery = async <TData = 
 }
 
 /**
- * @summary Get refresh job status
+ * @summary Invalidates the {@link useMembersControllerGetRefreshJobStatus} query
  */
 export const invalidateMembersControllerGetRefreshJobStatus = async (
  queryClient: QueryClient, { guildId, jobId }: MembersControllerGetRefreshJobStatusPathParameters, options?: InvalidateOptions
@@ -15578,8 +15608,8 @@ export const invalidateMembersControllerGetRefreshJobStatus = async (
  */
 export const useSetMembersControllerGetRefreshJobStatusQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, jobId }: MembersControllerGetRefreshJobStatusPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>> | undefined) => Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>>>({ queryKey: getMembersControllerGetRefreshJobStatusQueryKey({ guildId, jobId }) }, updater);
+  return ({ guildId, jobId }: MembersControllerGetRefreshJobStatusPathParameters,updater: Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>> | undefined | ((old: Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>> | undefined) => Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof membersControllerGetRefreshJobStatus>>>({ exact: $exactMatch, queryKey: getMembersControllerGetRefreshJobStatusQueryKey({ guildId, jobId }) }, updater);
   };
 }
 
@@ -15717,7 +15747,7 @@ export const prefetchGuildsControllerGetUserGuildsQuery = async <TData = Awaited
 
 /**
  * @deprecated
- * @summary Get user guilds (deprecated)
+ * @summary Invalidates the {@link useGuildsControllerGetUserGuilds} query
  */
 export const invalidateGuildsControllerGetUserGuilds = async (
  queryClient: QueryClient, params?: GuildsControllerGetUserGuildsParams, options?: InvalidateOptions
@@ -15734,8 +15764,8 @@ export const invalidateGuildsControllerGetUserGuilds = async (
  */
 export const useSetGuildsControllerGetUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: GuildsControllerGetUserGuildsParams | undefined,updater: Awaited<ReturnType<typeof guildsControllerGetUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetUserGuilds>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetUserGuilds>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetUserGuilds>>>({ queryKey: getGuildsControllerGetUserGuildsQueryKey(params) }, updater);
+  return (params: GuildsControllerGetUserGuildsParams | undefined,updater: Awaited<ReturnType<typeof guildsControllerGetUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetUserGuilds>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetUserGuilds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetUserGuilds>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetUserGuildsQueryKey(params) }, updater);
   };
 }
 
@@ -15867,7 +15897,7 @@ export const prefetchGuildsControllerGetUserGuildsWithPermissionsQuery = async <
 
 /**
  * @deprecated
- * @summary Get user guilds with permissions (deprecated)
+ * @summary Invalidates the {@link useGuildsControllerGetUserGuildsWithPermissions} query
  */
 export const invalidateGuildsControllerGetUserGuildsWithPermissions = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -15884,8 +15914,8 @@ export const invalidateGuildsControllerGetUserGuildsWithPermissions = async (
  */
 export const useSetGuildsControllerGetUserGuildsWithPermissionsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>>>({ queryKey: getGuildsControllerGetUserGuildsWithPermissionsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetUserGuildsWithPermissions>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetUserGuildsWithPermissionsQueryKey() }, updater);
   };
 }
 
@@ -16013,7 +16043,7 @@ export const prefetchGuildsControllerGetManageableUserGuildsQuery = async <TData
 }
 
 /**
- * @summary Get manageable user guilds
+ * @summary Invalidates the {@link useGuildsControllerGetManageableUserGuilds} query
  */
 export const invalidateGuildsControllerGetManageableUserGuilds = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -16029,8 +16059,8 @@ export const invalidateGuildsControllerGetManageableUserGuilds = async (
  */
 export const useSetGuildsControllerGetManageableUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>>>({ queryKey: getGuildsControllerGetManageableUserGuildsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetManageableUserGuilds>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetManageableUserGuildsQueryKey() }, updater);
   };
 }
 
@@ -16157,7 +16187,7 @@ export const prefetchGuildsControllerGetGuildByIdQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Get guild by ID
+ * @summary Invalidates the {@link useGuildsControllerGetGuildById} query
  */
 export const invalidateGuildsControllerGetGuildById = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildByIdPathParameters, options?: InvalidateOptions
@@ -16173,8 +16203,8 @@ export const invalidateGuildsControllerGetGuildById = async (
  */
 export const useSetGuildsControllerGetGuildByIdQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: GuildsControllerGetGuildByIdPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildById>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildById>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildById>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildById>>>({ queryKey: getGuildsControllerGetGuildByIdQueryKey({ guildId }) }, updater);
+  return ({ guildId }: GuildsControllerGetGuildByIdPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildById>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildById>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildById>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildById>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetGuildByIdQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -16290,6 +16320,9 @@ export const prefetchGuildsControllerGetGuildConfigQuery = async <TData = Awaite
   return queryClient;
 }
 
+/**
+ * @summary Invalidates the {@link useGuildsControllerGetGuildConfig} query
+ */
 export const invalidateGuildsControllerGetGuildConfig = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildConfigPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -16301,8 +16334,8 @@ export const invalidateGuildsControllerGetGuildConfig = async (
 
 export const useSetGuildsControllerGetGuildConfigQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: GuildsControllerGetGuildConfigPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildConfig>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildConfig>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildConfig>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>>({ queryKey: getGuildsControllerGetGuildConfigQueryKey({ guildId }) }, updater);
+  return ({ guildId }: GuildsControllerGetGuildConfigPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildConfig>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildConfig>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildConfig>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildConfig>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetGuildConfigQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -16328,8 +16361,16 @@ export const guildsControllerUpdateGuildConfig = async ({ guildId }: GuildsContr
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<GuildResponseDtoOutput>(getGuildsControllerUpdateGuildConfigUrl({ guildId }),
   {
@@ -16344,11 +16385,13 @@ return mainFetch<GuildResponseDtoOutput>(getGuildsControllerUpdateGuildConfigUrl
 
 
 
+export const getGuildsControllerUpdateGuildConfigMutationKey = () => ['guildsControllerUpdateGuildConfig'] as const;
+
 export const getGuildsControllerUpdateGuildConfigMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | GuildsControllerUpdateGuildConfig401 | GuildsControllerUpdateGuildConfig403 | GuildsControllerUpdateGuildConfig429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>, TError,GuildsControllerUpdateGuildConfigMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof guildsControllerUpdateGuildConfig>>, TError,GuildsControllerUpdateGuildConfigMutationVariables, TContext> => {
 
-const mutationKey = ['guildsControllerUpdateGuildConfig'];
+const mutationKey = getGuildsControllerUpdateGuildConfigMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -16499,7 +16542,7 @@ export const prefetchGuildsControllerGetWorldsByGuildIdQuery = async <TData = Aw
 }
 
 /**
- * @summary Get guild worlds
+ * @summary Invalidates the {@link useGuildsControllerGetWorldsByGuildId} query
  */
 export const invalidateGuildsControllerGetWorldsByGuildId = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetWorldsByGuildIdPathParameters, options?: InvalidateOptions
@@ -16515,8 +16558,8 @@ export const invalidateGuildsControllerGetWorldsByGuildId = async (
  */
 export const useSetGuildsControllerGetWorldsByGuildIdQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>>({ queryKey: getGuildsControllerGetWorldsByGuildIdQueryKey({ guildId }) }, updater);
+  return ({ guildId }: GuildsControllerGetWorldsByGuildIdPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetWorldsByGuildId>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetWorldsByGuildIdQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -16643,7 +16686,7 @@ export const prefetchGuildsControllerGetGuildPermissionsQuery = async <TData = A
 }
 
 /**
- * @summary Get guild permissions
+ * @summary Invalidates the {@link useGuildsControllerGetGuildPermissions} query
  */
 export const invalidateGuildsControllerGetGuildPermissions = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildPermissionsPathParameters, options?: InvalidateOptions
@@ -16659,8 +16702,8 @@ export const invalidateGuildsControllerGetGuildPermissions = async (
  */
 export const useSetGuildsControllerGetGuildPermissionsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>>({ queryKey: getGuildsControllerGetGuildPermissionsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: GuildsControllerGetGuildPermissionsPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildPermissions>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetGuildPermissionsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -16787,7 +16830,7 @@ export const prefetchGuildsControllerGetGuildDiscordSyncStatusQuery = async <TDa
 }
 
 /**
- * @summary Get guild Discord sync status
+ * @summary Invalidates the {@link useGuildsControllerGetGuildDiscordSyncStatus} query
  */
 export const invalidateGuildsControllerGetGuildDiscordSyncStatus = async (
  queryClient: QueryClient, { guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters, options?: InvalidateOptions
@@ -16803,8 +16846,8 @@ export const invalidateGuildsControllerGetGuildDiscordSyncStatus = async (
  */
 export const useSetGuildsControllerGetGuildDiscordSyncStatusQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>>({ queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({ guildId }) }, updater);
+  return ({ guildId }: GuildsControllerGetGuildDiscordSyncStatusPathParameters,updater: Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined | ((old: Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined) => Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsControllerGetGuildDiscordSyncStatus>>>({ exact: $exactMatch, queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -16846,11 +16889,13 @@ export const guildsControllerRefreshGuildDiscordSync = async ({ guildId }: Guild
 
 
 
+export const getGuildsControllerRefreshGuildDiscordSyncMutationKey = () => ['guildsControllerRefreshGuildDiscordSync'] as const;
+
 export const getGuildsControllerRefreshGuildDiscordSyncMutationOptions = <TError = ErrorType<RequestValidationError | GuildsControllerRefreshGuildDiscordSync401 | GuildsControllerRefreshGuildDiscordSync403 | HttpErrorResponse | GuildsControllerRefreshGuildDiscordSync429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>, TError,GuildsControllerRefreshGuildDiscordSyncMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof guildsControllerRefreshGuildDiscordSync>>, TError,GuildsControllerRefreshGuildDiscordSyncMutationVariables, TContext> => {
 
-const mutationKey = ['guildsControllerRefreshGuildDiscordSync'];
+const mutationKey = getGuildsControllerRefreshGuildDiscordSyncMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -17011,7 +17056,7 @@ export const prefetchGuildsInternalControllerGetUserPermissionsQuery = async <TD
 }
 
 /**
- * @summary [Internal] Get user guilds with permissions
+ * @summary Invalidates the {@link useGuildsInternalControllerGetUserPermissions} query
  */
 export const invalidateGuildsInternalControllerGetUserPermissions = async (
  queryClient: QueryClient, params: GuildsInternalControllerGetUserPermissionsParams, options?: InvalidateOptions
@@ -17027,8 +17072,8 @@ export const invalidateGuildsInternalControllerGetUserPermissions = async (
  */
 export const useSetGuildsInternalControllerGetUserPermissionsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: GuildsInternalControllerGetUserPermissionsParams | undefined,updater: Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>> | undefined) => Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>>>({ queryKey: getGuildsInternalControllerGetUserPermissionsQueryKey(params) }, updater);
+  return (params: GuildsInternalControllerGetUserPermissionsParams | undefined,updater: Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>> | undefined | ((old: Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>> | undefined) => Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsInternalControllerGetUserPermissions>>>({ exact: $exactMatch, queryKey: getGuildsInternalControllerGetUserPermissionsQueryKey(params) }, updater);
   };
 }
 
@@ -17155,7 +17200,7 @@ export const prefetchGuildsInternalControllerGetGuildByIdOrVanityUrlQuery = asyn
 }
 
 /**
- * @summary [Internal] Get guild by ID or vanity URL
+ * @summary Invalidates the {@link useGuildsInternalControllerGetGuildByIdOrVanityUrl} query
  */
 export const invalidateGuildsInternalControllerGetGuildByIdOrVanityUrl = async (
  queryClient: QueryClient, { idOrVanityUrl }: GuildsInternalControllerGetGuildByIdOrVanityUrlPathParameters, options?: InvalidateOptions
@@ -17171,8 +17216,8 @@ export const invalidateGuildsInternalControllerGetGuildByIdOrVanityUrl = async (
  */
 export const useSetGuildsInternalControllerGetGuildByIdOrVanityUrlQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ idOrVanityUrl }: GuildsInternalControllerGetGuildByIdOrVanityUrlPathParameters,updater: Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>> | undefined | ((old: Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>> | undefined) => Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>>>({ queryKey: getGuildsInternalControllerGetGuildByIdOrVanityUrlQueryKey({ idOrVanityUrl }) }, updater);
+  return ({ idOrVanityUrl }: GuildsInternalControllerGetGuildByIdOrVanityUrlPathParameters,updater: Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>> | undefined | ((old: Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>> | undefined) => Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof guildsInternalControllerGetGuildByIdOrVanityUrl>>>({ exact: $exactMatch, queryKey: getGuildsInternalControllerGetGuildByIdOrVanityUrlQueryKey({ idOrVanityUrl }) }, updater);
   };
 }
 
@@ -17299,7 +17344,7 @@ export const prefetchRolesControllerGetGuildRolesQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Get guild roles
+ * @summary Invalidates the {@link useRolesControllerGetGuildRoles} query
  */
 export const invalidateRolesControllerGetGuildRoles = async (
  queryClient: QueryClient, { guildId }: RolesControllerGetGuildRolesPathParameters, options?: InvalidateOptions
@@ -17315,8 +17360,8 @@ export const invalidateRolesControllerGetGuildRoles = async (
  */
 export const useSetRolesControllerGetGuildRolesQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: RolesControllerGetGuildRolesPathParameters,updater: Awaited<ReturnType<typeof rolesControllerGetGuildRoles>> | undefined | ((old: Awaited<ReturnType<typeof rolesControllerGetGuildRoles>> | undefined) => Awaited<ReturnType<typeof rolesControllerGetGuildRoles>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof rolesControllerGetGuildRoles>>>({ queryKey: getRolesControllerGetGuildRolesQueryKey({ guildId }) }, updater);
+  return ({ guildId }: RolesControllerGetGuildRolesPathParameters,updater: Awaited<ReturnType<typeof rolesControllerGetGuildRoles>> | undefined | ((old: Awaited<ReturnType<typeof rolesControllerGetGuildRoles>> | undefined) => Awaited<ReturnType<typeof rolesControllerGetGuildRoles>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof rolesControllerGetGuildRoles>>>({ exact: $exactMatch, queryKey: getRolesControllerGetGuildRolesQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -17349,8 +17394,16 @@ export const rolesControllerUpdateGuildRole = async ({ guildId, roleId }: RolesC
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<RoleResponseDtoOutput>(getRolesControllerUpdateGuildRoleUrl({ guildId, roleId }),
   {
@@ -17365,11 +17418,13 @@ return mainFetch<RoleResponseDtoOutput>(getRolesControllerUpdateGuildRoleUrl({ g
 
 
 
+export const getRolesControllerUpdateGuildRoleMutationKey = () => ['rolesControllerUpdateGuildRole'] as const;
+
 export const getRolesControllerUpdateGuildRoleMutationOptions = <TError = ErrorType<RequestValidationError | RolesControllerUpdateGuildRole401 | RolesControllerUpdateGuildRole403 | void | RolesControllerUpdateGuildRole429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rolesControllerUpdateGuildRole>>, TError,RolesControllerUpdateGuildRoleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof rolesControllerUpdateGuildRole>>, TError,RolesControllerUpdateGuildRoleMutationVariables, TContext> => {
 
-const mutationKey = ['rolesControllerUpdateGuildRole'];
+const mutationKey = getRolesControllerUpdateGuildRoleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -17530,7 +17585,7 @@ export const prefetchTimersControllerGetAllTimersQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Get all user timers
+ * @summary Invalidates the {@link useTimersControllerGetAllTimers} query
  */
 export const invalidateTimersControllerGetAllTimers = async (
  queryClient: QueryClient, params?: TimersControllerGetAllTimersParams, options?: InvalidateOptions
@@ -17546,8 +17601,8 @@ export const invalidateTimersControllerGetAllTimers = async (
  */
 export const useSetTimersControllerGetAllTimersQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: TimersControllerGetAllTimersParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetAllTimers>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetAllTimers>> | undefined) => Awaited<ReturnType<typeof timersControllerGetAllTimers>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetAllTimers>>>({ queryKey: getTimersControllerGetAllTimersQueryKey(params) }, updater);
+  return (params: TimersControllerGetAllTimersParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetAllTimers>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetAllTimers>> | undefined) => Awaited<ReturnType<typeof timersControllerGetAllTimers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetAllTimers>>>({ exact: $exactMatch, queryKey: getTimersControllerGetAllTimersQueryKey(params) }, updater);
   };
 }
 
@@ -17681,7 +17736,7 @@ export const prefetchTimersControllerGetRecentTimerHistoryQuery = async <TData =
 }
 
 /**
- * @summary Get recent timer action history
+ * @summary Invalidates the {@link useTimersControllerGetRecentTimerHistory} query
  */
 export const invalidateTimersControllerGetRecentTimerHistory = async (
  queryClient: QueryClient, params: TimersControllerGetRecentTimerHistoryParams, options?: InvalidateOptions
@@ -17697,8 +17752,8 @@ export const invalidateTimersControllerGetRecentTimerHistory = async (
  */
 export const useSetTimersControllerGetRecentTimerHistoryQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: TimersControllerGetRecentTimerHistoryParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined) => Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>>({ queryKey: getTimersControllerGetRecentTimerHistoryQueryKey(params) }, updater);
+  return (params: TimersControllerGetRecentTimerHistoryParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined) => Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetRecentTimerHistory>>>({ exact: $exactMatch, queryKey: getTimersControllerGetRecentTimerHistoryQueryKey(params) }, updater);
   };
 }
 
@@ -17841,7 +17896,7 @@ export const prefetchTimersControllerGetTimersQuery = async <TData = Awaited<Ret
 }
 
 /**
- * @summary Get guild timers
+ * @summary Invalidates the {@link useTimersControllerGetTimers} query
  */
 export const invalidateTimersControllerGetTimers = async (
  queryClient: QueryClient, { guildId }: TimersControllerGetTimersPathParameters,
@@ -17859,8 +17914,8 @@ export const invalidateTimersControllerGetTimers = async (
 export const useSetTimersControllerGetTimersQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: TimersControllerGetTimersPathParameters,
-    params: TimersControllerGetTimersParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetTimers>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetTimers>> | undefined) => Awaited<ReturnType<typeof timersControllerGetTimers>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetTimers>>>({ queryKey: getTimersControllerGetTimersQueryKey({ guildId },params) }, updater);
+    params: TimersControllerGetTimersParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetTimers>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetTimers>> | undefined) => Awaited<ReturnType<typeof timersControllerGetTimers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetTimers>>>({ exact: $exactMatch, queryKey: getTimersControllerGetTimersQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -18004,7 +18059,7 @@ export const prefetchTimersControllerSearchNpcsWithTimerDataQuery = async <TData
 }
 
 /**
- * @summary Search NPCs with timer data
+ * @summary Invalidates the {@link useTimersControllerSearchNpcsWithTimerData} query
  */
 export const invalidateTimersControllerSearchNpcsWithTimerData = async (
  queryClient: QueryClient, { guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
@@ -18022,8 +18077,8 @@ export const invalidateTimersControllerSearchNpcsWithTimerData = async (
 export const useSetTimersControllerSearchNpcsWithTimerDataQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: TimersControllerSearchNpcsWithTimerDataPathParameters,
-    params: TimersControllerSearchNpcsWithTimerDataParams | undefined,updater: Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>> | undefined) => Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>>({ queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey({ guildId },params) }, updater);
+    params: TimersControllerSearchNpcsWithTimerDataParams | undefined,updater: Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>> | undefined) => Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerSearchNpcsWithTimerData>>>({ exact: $exactMatch, queryKey: getTimersControllerSearchNpcsWithTimerDataQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -18056,8 +18111,16 @@ export const timersControllerCreateAutoTimer = async (createTimerFromGameClientD
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<CreateAutoTimerResponseDtoOutput>(getTimersControllerCreateAutoTimerUrl(),
   {
@@ -18072,11 +18135,13 @@ return mainFetch<CreateAutoTimerResponseDtoOutput>(getTimersControllerCreateAuto
 
 
 
+export const getTimersControllerCreateAutoTimerMutationKey = () => ['timersControllerCreateAutoTimer'] as const;
+
 export const getTimersControllerCreateAutoTimerMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimersControllerCreateAutoTimer401 | TimersControllerCreateAutoTimer403 | TimersControllerCreateAutoTimer429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,TimersControllerCreateAutoTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateAutoTimer>>, TError,TimersControllerCreateAutoTimerMutationVariables, TContext> => {
 
-const mutationKey = ['timersControllerCreateAutoTimer'];
+const mutationKey = getTimersControllerCreateAutoTimerMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -18136,8 +18201,16 @@ export const timersControllerResetTimer = async ({ guildId, timerIdentifier }: T
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<TimerResponseDto>(getTimersControllerResetTimerUrl({ guildId, timerIdentifier }),
   {
@@ -18152,11 +18225,13 @@ return mainFetch<TimerResponseDto>(getTimersControllerResetTimerUrl({ guildId, t
 
 
 
+export const getTimersControllerResetTimerMutationKey = () => ['timersControllerResetTimer'] as const;
+
 export const getTimersControllerResetTimerMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimersControllerResetTimer401 | TimersControllerResetTimer403 | TimersControllerResetTimer429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerResetTimer>>, TError,TimersControllerResetTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerResetTimer>>, TError,TimersControllerResetTimerMutationVariables, TContext> => {
 
-const mutationKey = ['timersControllerResetTimer'];
+const mutationKey = getTimersControllerResetTimerMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -18234,11 +18309,13 @@ export const timersControllerDeleteTimer = async ({ guildId, timerIdentifier }: 
 
 
 
+export const getTimersControllerDeleteTimerMutationKey = () => ['timersControllerDeleteTimer'] as const;
+
 export const getTimersControllerDeleteTimerMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimersControllerDeleteTimer401 | TimersControllerDeleteTimer403 | TimersControllerDeleteTimer429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,TimersControllerDeleteTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerDeleteTimer>>, TError,TimersControllerDeleteTimerMutationVariables, TContext> => {
 
-const mutationKey = ['timersControllerDeleteTimer'];
+const mutationKey = getTimersControllerDeleteTimerMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -18408,7 +18485,7 @@ export const prefetchTimersControllerGetTimerHistoryQuery = async <TData = Await
 }
 
 /**
- * @summary Get timer action history
+ * @summary Invalidates the {@link useTimersControllerGetTimerHistory} query
  */
 export const invalidateTimersControllerGetTimerHistory = async (
  queryClient: QueryClient, { guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
@@ -18426,8 +18503,8 @@ export const invalidateTimersControllerGetTimerHistory = async (
 export const useSetTimersControllerGetTimerHistoryQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, timerIdentifier }: TimersControllerGetTimerHistoryPathParameters,
-    params: TimersControllerGetTimerHistoryParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined) => Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>>({ queryKey: getTimersControllerGetTimerHistoryQueryKey({ guildId, timerIdentifier },params) }, updater);
+    params: TimersControllerGetTimerHistoryParams | undefined,updater: Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined | ((old: Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined) => Awaited<ReturnType<typeof timersControllerGetTimerHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timersControllerGetTimerHistory>>>({ exact: $exactMatch, queryKey: getTimersControllerGetTimerHistoryQueryKey({ guildId, timerIdentifier },params) }, updater);
   };
 }
 
@@ -18470,11 +18547,13 @@ export const timersControllerRestoreTimerFromHistory = async ({ guildId, history
 
 
 
+export const getTimersControllerRestoreTimerFromHistoryMutationKey = () => ['timersControllerRestoreTimerFromHistory'] as const;
+
 export const getTimersControllerRestoreTimerFromHistoryMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimersControllerRestoreTimerFromHistory401 | TimersControllerRestoreTimerFromHistory403 | TimersControllerRestoreTimerFromHistory429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,TimersControllerRestoreTimerFromHistoryMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerRestoreTimerFromHistory>>, TError,TimersControllerRestoreTimerFromHistoryMutationVariables, TContext> => {
 
-const mutationKey = ['timersControllerRestoreTimerFromHistory'];
+const mutationKey = getTimersControllerRestoreTimerFromHistoryMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -18534,8 +18613,16 @@ export const timersControllerCreateManualTimer = async ({ guildId }: TimersContr
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<TimerResponseDto>(getTimersControllerCreateManualTimerUrl({ guildId }),
   {
@@ -18550,11 +18637,13 @@ return mainFetch<TimerResponseDto>(getTimersControllerCreateManualTimerUrl({ gui
 
 
 
+export const getTimersControllerCreateManualTimerMutationKey = () => ['timersControllerCreateManualTimer'] as const;
+
 export const getTimersControllerCreateManualTimerMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimersControllerCreateManualTimer401 | TimersControllerCreateManualTimer403 | TimersControllerCreateManualTimer429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateManualTimer>>, TError,TimersControllerCreateManualTimerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timersControllerCreateManualTimer>>, TError,TimersControllerCreateManualTimerMutationVariables, TContext> => {
 
-const mutationKey = ['timersControllerCreateManualTimer'];
+const mutationKey = getTimersControllerCreateManualTimerMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -18708,7 +18797,7 @@ export const prefetchUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQ
 }
 
 /**
- * @summary Get user lootlog configuration
+ * @summary Invalidates the {@link useUserLootlogConfigControllerGetUserLootlogConfigByAccountId} query
  */
 export const invalidateUserLootlogConfigControllerGetUserLootlogConfigByAccountId = async (
  queryClient: QueryClient, { accountId }: UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParameters, options?: InvalidateOptions
@@ -18724,8 +18813,8 @@ export const invalidateUserLootlogConfigControllerGetUserLootlogConfigByAccountI
  */
 export const useSetUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ accountId }: UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParameters,updater: Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>> | undefined | ((old: Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>> | undefined) => Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>>>({ queryKey: getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({ accountId }) }, updater);
+  return ({ accountId }: UserLootlogConfigControllerGetUserLootlogConfigByAccountIdPathParameters,updater: Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>> | undefined | ((old: Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>> | undefined) => Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof userLootlogConfigControllerGetUserLootlogConfigByAccountId>>>({ exact: $exactMatch, queryKey: getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({ accountId }) }, updater);
   };
 }
 
@@ -18758,8 +18847,16 @@ export const userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig = a
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<UserLootlogConfigResponseDtoOutput>(getUserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigUrl({ accountId }),
   {
@@ -18774,11 +18871,13 @@ return mainFetch<UserLootlogConfigResponseDtoOutput>(getUserLootlogConfigControl
 
 
 
+export const getUserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigMutationKey = () => ['userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig'] as const;
+
 export const getUserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigMutationOptions = <TError = ErrorType<RequestValidationError | UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig401 | UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig403 | UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig>>, TError,UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig>>, TError,UserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigMutationVariables, TContext> => {
 
-const mutationKey = ['userLootlogConfigControllerCreateOrUpdateLootlogCharacterConfig'];
+const mutationKey = getUserLootlogConfigControllerCreateOrUpdateLootlogCharacterConfigMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -18837,8 +18936,16 @@ export const userLootlogConfigControllerGetPlayersCatchingGuilds = async (userLo
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<UserLootlogPlayersCatchingGuildsResponseDtoOutput>(getUserLootlogConfigControllerGetPlayersCatchingGuildsUrl(),
   {
@@ -18853,11 +18960,13 @@ return mainFetch<UserLootlogPlayersCatchingGuildsResponseDtoOutput>(getUserLootl
 
 
 
+export const getUserLootlogConfigControllerGetPlayersCatchingGuildsMutationKey = () => ['userLootlogConfigControllerGetPlayersCatchingGuilds'] as const;
+
 export const getUserLootlogConfigControllerGetPlayersCatchingGuildsMutationOptions = <TError = ErrorType<RequestValidationError | UserLootlogConfigControllerGetPlayersCatchingGuilds401 | UserLootlogConfigControllerGetPlayersCatchingGuilds403 | UserLootlogConfigControllerGetPlayersCatchingGuilds429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>, TError,UserLootlogConfigControllerGetPlayersCatchingGuildsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof userLootlogConfigControllerGetPlayersCatchingGuilds>>, TError,UserLootlogConfigControllerGetPlayersCatchingGuildsMutationVariables, TContext> => {
 
-const mutationKey = ['userLootlogConfigControllerGetPlayersCatchingGuilds'];
+const mutationKey = getUserLootlogConfigControllerGetPlayersCatchingGuildsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -19011,7 +19120,7 @@ export const prefetchTimerSettingsControllerGetGlobalSettingsQuery = async <TDat
 }
 
 /**
- * @summary Get global timer settings
+ * @summary Invalidates the {@link useTimerSettingsControllerGetGlobalSettings} query
  */
 export const invalidateTimerSettingsControllerGetGlobalSettings = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -19027,8 +19136,8 @@ export const invalidateTimerSettingsControllerGetGlobalSettings = async (
  */
 export const useSetTimerSettingsControllerGetGlobalSettingsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>> | undefined | ((old: Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>> | undefined) => Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>>>({ queryKey: getTimerSettingsControllerGetGlobalSettingsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>> | undefined | ((old: Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>> | undefined) => Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timerSettingsControllerGetGlobalSettings>>>({ exact: $exactMatch, queryKey: getTimerSettingsControllerGetGlobalSettingsQueryKey() }, updater);
   };
 }
 
@@ -19060,8 +19169,16 @@ export const timerSettingsControllerUpdateGlobalSettings = async (updateTimerSet
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<TimerSettingsResponseDto>(getTimerSettingsControllerUpdateGlobalSettingsUrl(),
   {
@@ -19076,11 +19193,13 @@ return mainFetch<TimerSettingsResponseDto>(getTimerSettingsControllerUpdateGloba
 
 
 
+export const getTimerSettingsControllerUpdateGlobalSettingsMutationKey = () => ['timerSettingsControllerUpdateGlobalSettings'] as const;
+
 export const getTimerSettingsControllerUpdateGlobalSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimerSettingsControllerUpdateGlobalSettings401 | TimerSettingsControllerUpdateGlobalSettings403 | TimerSettingsControllerUpdateGlobalSettings429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>, TError,TimerSettingsControllerUpdateGlobalSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGlobalSettings>>, TError,TimerSettingsControllerUpdateGlobalSettingsMutationVariables, TContext> => {
 
-const mutationKey = ['timerSettingsControllerUpdateGlobalSettings'];
+const mutationKey = getTimerSettingsControllerUpdateGlobalSettingsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -19234,7 +19353,7 @@ export const prefetchTimerSettingsControllerGetGuildSettingsQuery = async <TData
 }
 
 /**
- * @summary Get guild-specific timer settings
+ * @summary Invalidates the {@link useTimerSettingsControllerGetGuildSettings} query
  */
 export const invalidateTimerSettingsControllerGetGuildSettings = async (
  queryClient: QueryClient, { guildId }: TimerSettingsControllerGetGuildSettingsPathParameters, options?: InvalidateOptions
@@ -19250,8 +19369,8 @@ export const invalidateTimerSettingsControllerGetGuildSettings = async (
  */
 export const useSetTimerSettingsControllerGetGuildSettingsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: TimerSettingsControllerGetGuildSettingsPathParameters,updater: Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>> | undefined | ((old: Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>> | undefined) => Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>>({ queryKey: getTimerSettingsControllerGetGuildSettingsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: TimerSettingsControllerGetGuildSettingsPathParameters,updater: Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>> | undefined | ((old: Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>> | undefined) => Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof timerSettingsControllerGetGuildSettings>>>({ exact: $exactMatch, queryKey: getTimerSettingsControllerGetGuildSettingsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -19284,8 +19403,16 @@ export const timerSettingsControllerUpdateGuildSettings = async ({ guildId }: Ti
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<GuildTimerSettingsResponseDto>(getTimerSettingsControllerUpdateGuildSettingsUrl({ guildId }),
   {
@@ -19300,11 +19427,13 @@ return mainFetch<GuildTimerSettingsResponseDto>(getTimerSettingsControllerUpdate
 
 
 
+export const getTimerSettingsControllerUpdateGuildSettingsMutationKey = () => ['timerSettingsControllerUpdateGuildSettings'] as const;
+
 export const getTimerSettingsControllerUpdateGuildSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimerSettingsControllerUpdateGuildSettings401 | TimerSettingsControllerUpdateGuildSettings403 | TimerSettingsControllerUpdateGuildSettings429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>, TError,TimerSettingsControllerUpdateGuildSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerUpdateGuildSettings>>, TError,TimerSettingsControllerUpdateGuildSettingsMutationVariables, TContext> => {
 
-const mutationKey = ['timerSettingsControllerUpdateGuildSettings'];
+const mutationKey = getTimerSettingsControllerUpdateGuildSettingsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -19363,8 +19492,16 @@ export const timerSettingsControllerMigrateSettings = async (migrateTimerSetting
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getTimerSettingsControllerMigrateSettingsUrl(),
   {
@@ -19379,11 +19516,13 @@ return mainFetch<void>(getTimerSettingsControllerMigrateSettingsUrl(),
 
 
 
+export const getTimerSettingsControllerMigrateSettingsMutationKey = () => ['timerSettingsControllerMigrateSettings'] as const;
+
 export const getTimerSettingsControllerMigrateSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | TimerSettingsControllerMigrateSettings401 | TimerSettingsControllerMigrateSettings403 | TimerSettingsControllerMigrateSettings429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>, TError,TimerSettingsControllerMigrateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof timerSettingsControllerMigrateSettings>>, TError,TimerSettingsControllerMigrateSettingsMutationVariables, TContext> => {
 
-const mutationKey = ['timerSettingsControllerMigrateSettings'];
+const mutationKey = getTimerSettingsControllerMigrateSettingsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -19543,7 +19682,7 @@ export const prefetchSettingsDocumentsControllerGetPreferencesQuery = async <TDa
 }
 
 /**
- * @summary Get effective settings for multiple domains
+ * @summary Invalidates the {@link useSettingsDocumentsControllerGetPreferences} query
  */
 export const invalidateSettingsDocumentsControllerGetPreferences = async (
  queryClient: QueryClient, params: SettingsDocumentsControllerGetPreferencesParams, options?: InvalidateOptions
@@ -19559,8 +19698,8 @@ export const invalidateSettingsDocumentsControllerGetPreferences = async (
  */
 export const useSetSettingsDocumentsControllerGetPreferencesQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: SettingsDocumentsControllerGetPreferencesParams | undefined,updater: Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>> | undefined | ((old: Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>> | undefined) => Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>>({ queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params) }, updater);
+  return (params: SettingsDocumentsControllerGetPreferencesParams | undefined,updater: Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>> | undefined | ((old: Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>> | undefined) => Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof settingsDocumentsControllerGetPreferences>>>({ exact: $exactMatch, queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params) }, updater);
   };
 }
 
@@ -19591,8 +19730,16 @@ export const settingsDocumentsControllerPatchPreferences = async (patchSettingsD
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<SettingsDocumentsResponseDtoOutput>(getSettingsDocumentsControllerPatchPreferencesUrl(),
   {
@@ -19607,11 +19754,13 @@ return mainFetch<SettingsDocumentsResponseDtoOutput>(getSettingsDocumentsControl
 
 
 
+export const getSettingsDocumentsControllerPatchPreferencesMutationKey = () => ['settingsDocumentsControllerPatchPreferences'] as const;
+
 export const getSettingsDocumentsControllerPatchPreferencesMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | SettingsDocumentsControllerPatchPreferences401 | SettingsDocumentsControllerPatchPreferences403 | SettingsDocumentsControllerPatchPreferences429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>, TError,SettingsDocumentsControllerPatchPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof settingsDocumentsControllerPatchPreferences>>, TError,SettingsDocumentsControllerPatchPreferencesMutationVariables, TContext> => {
 
-const mutationKey = ['settingsDocumentsControllerPatchPreferences'];
+const mutationKey = getSettingsDocumentsControllerPatchPreferencesMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -19771,7 +19920,7 @@ export const prefetchSettingsDocumentsControllerGetGuildPreferencesQuery = async
 }
 
 /**
- * @summary Get guild-scoped settings for several guilds in one request
+ * @summary Invalidates the {@link useSettingsDocumentsControllerGetGuildPreferences} query
  */
 export const invalidateSettingsDocumentsControllerGetGuildPreferences = async (
  queryClient: QueryClient, params: SettingsDocumentsControllerGetGuildPreferencesParams, options?: InvalidateOptions
@@ -19787,8 +19936,8 @@ export const invalidateSettingsDocumentsControllerGetGuildPreferences = async (
  */
 export const useSetSettingsDocumentsControllerGetGuildPreferencesQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: SettingsDocumentsControllerGetGuildPreferencesParams | undefined,updater: Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined | ((old: Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined) => Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>>({ queryKey: getSettingsDocumentsControllerGetGuildPreferencesQueryKey(params) }, updater);
+  return (params: SettingsDocumentsControllerGetGuildPreferencesParams | undefined,updater: Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined | ((old: Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined) => Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof settingsDocumentsControllerGetGuildPreferences>>>({ exact: $exactMatch, queryKey: getSettingsDocumentsControllerGetGuildPreferencesQueryKey(params) }, updater);
   };
 }
 
@@ -19939,7 +20088,7 @@ export const prefetchLootsControllerFetchLootsByGuildIdQuery = async <TData = Aw
 }
 
 /**
- * @summary Get guild loots
+ * @summary Invalidates the {@link useLootsControllerFetchLootsByGuildId} query
  */
 export const invalidateLootsControllerFetchLootsByGuildId = async (
  queryClient: QueryClient, { guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
@@ -19957,8 +20106,8 @@ export const invalidateLootsControllerFetchLootsByGuildId = async (
 export const useSetLootsControllerFetchLootsByGuildIdQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: LootsControllerFetchLootsByGuildIdPathParameters,
-    params: LootsControllerFetchLootsByGuildIdParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>> | undefined) => Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>>({ queryKey: getLootsControllerFetchLootsByGuildIdQueryKey({ guildId },params) }, updater);
+    params: LootsControllerFetchLootsByGuildIdParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>> | undefined) => Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerFetchLootsByGuildId>>>({ exact: $exactMatch, queryKey: getLootsControllerFetchLootsByGuildIdQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -20102,7 +20251,7 @@ export const prefetchLootsControllerGetLootStatsQuery = async <TData = Awaited<R
 }
 
 /**
- * @summary Get guild loot statistics
+ * @summary Invalidates the {@link useLootsControllerGetLootStats} query
  */
 export const invalidateLootsControllerGetLootStats = async (
  queryClient: QueryClient, { guildId }: LootsControllerGetLootStatsPathParameters,
@@ -20120,8 +20269,8 @@ export const invalidateLootsControllerGetLootStats = async (
 export const useSetLootsControllerGetLootStatsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: LootsControllerGetLootStatsPathParameters,
-    params: LootsControllerGetLootStatsParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerGetLootStats>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerGetLootStats>> | undefined) => Awaited<ReturnType<typeof lootsControllerGetLootStats>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerGetLootStats>>>({ queryKey: getLootsControllerGetLootStatsQueryKey({ guildId },params) }, updater);
+    params: LootsControllerGetLootStatsParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerGetLootStats>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerGetLootStats>> | undefined) => Awaited<ReturnType<typeof lootsControllerGetLootStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerGetLootStats>>>({ exact: $exactMatch, queryKey: getLootsControllerGetLootStatsQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -20265,7 +20414,7 @@ export const prefetchLootsControllerResolveLootItemByHidQuery = async <TData = A
 }
 
 /**
- * @summary Resolve loot item by HID
+ * @summary Invalidates the {@link useLootsControllerResolveLootItemByHid} query
  */
 export const invalidateLootsControllerResolveLootItemByHid = async (
  queryClient: QueryClient, { guildId }: LootsControllerResolveLootItemByHidPathParameters,
@@ -20283,8 +20432,8 @@ export const invalidateLootsControllerResolveLootItemByHid = async (
 export const useSetLootsControllerResolveLootItemByHidQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: LootsControllerResolveLootItemByHidPathParameters,
-    params: LootsControllerResolveLootItemByHidParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined) => Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>>({ queryKey: getLootsControllerResolveLootItemByHidQueryKey({ guildId },params) }, updater);
+    params: LootsControllerResolveLootItemByHidParams | undefined,updater: Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined) => Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerResolveLootItemByHid>>>({ exact: $exactMatch, queryKey: getLootsControllerResolveLootItemByHidQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -20412,7 +20561,7 @@ export const prefetchLootsControllerFetchLootByIdQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Get single loot
+ * @summary Invalidates the {@link useLootsControllerFetchLootById} query
  */
 export const invalidateLootsControllerFetchLootById = async (
  queryClient: QueryClient, { guildId, lootId }: LootsControllerFetchLootByIdPathParameters, options?: InvalidateOptions
@@ -20428,8 +20577,8 @@ export const invalidateLootsControllerFetchLootById = async (
  */
 export const useSetLootsControllerFetchLootByIdQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, lootId }: LootsControllerFetchLootByIdPathParameters,updater: Awaited<ReturnType<typeof lootsControllerFetchLootById>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerFetchLootById>> | undefined) => Awaited<ReturnType<typeof lootsControllerFetchLootById>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerFetchLootById>>>({ queryKey: getLootsControllerFetchLootByIdQueryKey({ guildId, lootId }) }, updater);
+  return ({ guildId, lootId }: LootsControllerFetchLootByIdPathParameters,updater: Awaited<ReturnType<typeof lootsControllerFetchLootById>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerFetchLootById>> | undefined) => Awaited<ReturnType<typeof lootsControllerFetchLootById>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerFetchLootById>>>({ exact: $exactMatch, queryKey: getLootsControllerFetchLootByIdQueryKey({ guildId, lootId }) }, updater);
   };
 }
 
@@ -20471,11 +20620,13 @@ export const lootsControllerDeleteLoot = async ({ guildId, lootId }: LootsContro
 
 
 
+export const getLootsControllerDeleteLootMutationKey = () => ['lootsControllerDeleteLoot'] as const;
+
 export const getLootsControllerDeleteLootMutationOptions = <TError = ErrorType<RequestValidationError | LootsControllerDeleteLoot401 | LootsControllerDeleteLoot403 | HttpErrorResponse | LootsControllerDeleteLoot429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>, TError,LootsControllerDeleteLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerDeleteLoot>>, TError,LootsControllerDeleteLootMutationVariables, TContext> => {
 
-const mutationKey = ['lootsControllerDeleteLoot'];
+const mutationKey = getLootsControllerDeleteLootMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -20534,8 +20685,16 @@ export const lootsControllerCreateLoot = async (createLootDto: CreateLootDto, op
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<CreateLootResponseDtoOutput>(getLootsControllerCreateLootUrl(),
   {
@@ -20550,11 +20709,13 @@ return mainFetch<CreateLootResponseDtoOutput>(getLootsControllerCreateLootUrl(),
 
 
 
+export const getLootsControllerCreateLootMutationKey = () => ['lootsControllerCreateLoot'] as const;
+
 export const getLootsControllerCreateLootMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | LootsControllerCreateLoot401 | LootsControllerCreateLoot403 | LootsControllerCreateLoot429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateLoot>>, TError,LootsControllerCreateLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateLoot>>, TError,LootsControllerCreateLootMutationVariables, TContext> => {
 
-const mutationKey = ['lootsControllerCreateLoot'];
+const mutationKey = getLootsControllerCreateLootMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -20708,7 +20869,7 @@ export const prefetchLootsControllerGetCommentsQuery = async <TData = Awaited<Re
 }
 
 /**
- * @summary Get loot comments
+ * @summary Invalidates the {@link useLootsControllerGetComments} query
  */
 export const invalidateLootsControllerGetComments = async (
  queryClient: QueryClient, { guildId, lootId }: LootsControllerGetCommentsPathParameters, options?: InvalidateOptions
@@ -20724,8 +20885,8 @@ export const invalidateLootsControllerGetComments = async (
  */
 export const useSetLootsControllerGetCommentsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, lootId }: LootsControllerGetCommentsPathParameters,updater: Awaited<ReturnType<typeof lootsControllerGetComments>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerGetComments>> | undefined) => Awaited<ReturnType<typeof lootsControllerGetComments>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerGetComments>>>({ queryKey: getLootsControllerGetCommentsQueryKey({ guildId, lootId }) }, updater);
+  return ({ guildId, lootId }: LootsControllerGetCommentsPathParameters,updater: Awaited<ReturnType<typeof lootsControllerGetComments>> | undefined | ((old: Awaited<ReturnType<typeof lootsControllerGetComments>> | undefined) => Awaited<ReturnType<typeof lootsControllerGetComments>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootsControllerGetComments>>>({ exact: $exactMatch, queryKey: getLootsControllerGetCommentsQueryKey({ guildId, lootId }) }, updater);
   };
 }
 
@@ -20758,8 +20919,16 @@ export const lootsControllerCreateComment = async ({ guildId, lootId }: LootsCon
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<LootCommentResponseDto>(getLootsControllerCreateCommentUrl({ guildId, lootId }),
   {
@@ -20774,11 +20943,13 @@ return mainFetch<LootCommentResponseDto>(getLootsControllerCreateCommentUrl({ gu
 
 
 
+export const getLootsControllerCreateCommentMutationKey = () => ['lootsControllerCreateComment'] as const;
+
 export const getLootsControllerCreateCommentMutationOptions = <TError = ErrorType<RequestValidationError | LootsControllerCreateComment401 | LootsControllerCreateComment403 | HttpErrorResponse | LootsControllerCreateComment429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateComment>>, TError,LootsControllerCreateCommentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerCreateComment>>, TError,LootsControllerCreateCommentMutationVariables, TContext> => {
 
-const mutationKey = ['lootsControllerCreateComment'];
+const mutationKey = getLootsControllerCreateCommentMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -20838,8 +21009,16 @@ export const lootsControllerUpdateLoot = async ({ id }: LootsControllerUpdateLoo
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<LootShareResponseDto>(getLootsControllerUpdateLootUrl({ id }),
   {
@@ -20854,11 +21033,13 @@ return mainFetch<LootShareResponseDto>(getLootsControllerUpdateLootUrl({ id }),
 
 
 
+export const getLootsControllerUpdateLootMutationKey = () => ['lootsControllerUpdateLoot'] as const;
+
 export const getLootsControllerUpdateLootMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | LootsControllerUpdateLoot401 | LootsControllerUpdateLoot403 | LootsControllerUpdateLoot429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUpdateLoot>>, TError,LootsControllerUpdateLootMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootsControllerUpdateLoot>>, TError,LootsControllerUpdateLootMutationVariables, TContext> => {
 
-const mutationKey = ['lootsControllerUpdateLoot'];
+const mutationKey = getLootsControllerUpdateLootMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -21012,7 +21193,7 @@ export const prefetchLootlogConfigControllerGetLootlogConfigQuery = async <TData
 }
 
 /**
- * @summary Get lootlog configuration
+ * @summary Invalidates the {@link useLootlogConfigControllerGetLootlogConfig} query
  */
 export const invalidateLootlogConfigControllerGetLootlogConfig = async (
  queryClient: QueryClient, { guildId }: LootlogConfigControllerGetLootlogConfigPathParameters, options?: InvalidateOptions
@@ -21028,8 +21209,8 @@ export const invalidateLootlogConfigControllerGetLootlogConfig = async (
  */
 export const useSetLootlogConfigControllerGetLootlogConfigQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: LootlogConfigControllerGetLootlogConfigPathParameters,updater: Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>> | undefined | ((old: Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>> | undefined) => Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>>({ queryKey: getLootlogConfigControllerGetLootlogConfigQueryKey({ guildId }) }, updater);
+  return ({ guildId }: LootlogConfigControllerGetLootlogConfigPathParameters,updater: Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>> | undefined | ((old: Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>> | undefined) => Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof lootlogConfigControllerGetLootlogConfig>>>({ exact: $exactMatch, queryKey: getLootlogConfigControllerGetLootlogConfigQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -21062,8 +21243,16 @@ export const lootlogConfigControllerUpdateNpc = async ({ guildId, npcId }: Lootl
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<LootlogConfigNpcResponseDtoOutput>(getLootlogConfigControllerUpdateNpcUrl({ guildId, npcId }),
   {
@@ -21078,11 +21267,13 @@ return mainFetch<LootlogConfigNpcResponseDtoOutput>(getLootlogConfigControllerUp
 
 
 
+export const getLootlogConfigControllerUpdateNpcMutationKey = () => ['lootlogConfigControllerUpdateNpc'] as const;
+
 export const getLootlogConfigControllerUpdateNpcMutationOptions = <TError = ErrorType<RequestValidationError | LootlogConfigControllerUpdateNpc401 | LootlogConfigControllerUpdateNpc403 | HttpErrorResponse | LootlogConfigControllerUpdateNpc429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>, TError,LootlogConfigControllerUpdateNpcMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof lootlogConfigControllerUpdateNpc>>, TError,LootlogConfigControllerUpdateNpcMutationVariables, TContext> => {
 
-const mutationKey = ['lootlogConfigControllerUpdateNpc'];
+const mutationKey = getLootlogConfigControllerUpdateNpcMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -21236,7 +21427,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Health check
+ * @summary Invalidates the {@link useHealthzControllerHealthCheck} query
  */
 export const invalidateHealthzControllerHealthCheck = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -21252,8 +21443,8 @@ export const invalidateHealthzControllerHealthCheck = async (
  */
 export const useSetHealthzControllerHealthCheckQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ exact: $exactMatch, queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
   };
 }
 
@@ -21380,7 +21571,7 @@ export const prefetchChatControllerGetChatMessagesQuery = async <TData = Awaited
 }
 
 /**
- * @summary Get chat messages
+ * @summary Invalidates the {@link useChatControllerGetChatMessages} query
  */
 export const invalidateChatControllerGetChatMessages = async (
  queryClient: QueryClient, { guildId }: ChatControllerGetChatMessagesPathParameters, options?: InvalidateOptions
@@ -21396,8 +21587,8 @@ export const invalidateChatControllerGetChatMessages = async (
  */
 export const useSetChatControllerGetChatMessagesQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ChatControllerGetChatMessagesPathParameters,updater: Awaited<ReturnType<typeof chatControllerGetChatMessages>> | undefined | ((old: Awaited<ReturnType<typeof chatControllerGetChatMessages>> | undefined) => Awaited<ReturnType<typeof chatControllerGetChatMessages>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof chatControllerGetChatMessages>>>({ queryKey: getChatControllerGetChatMessagesQueryKey({ guildId }) }, updater);
+  return ({ guildId }: ChatControllerGetChatMessagesPathParameters,updater: Awaited<ReturnType<typeof chatControllerGetChatMessages>> | undefined | ((old: Awaited<ReturnType<typeof chatControllerGetChatMessages>> | undefined) => Awaited<ReturnType<typeof chatControllerGetChatMessages>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof chatControllerGetChatMessages>>>({ exact: $exactMatch, queryKey: getChatControllerGetChatMessagesQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -21430,8 +21621,16 @@ export const chatControllerSendChatMessage = async ({ guildId }: ChatControllerS
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<ChatMessageResponseDtoOutput>(getChatControllerSendChatMessageUrl({ guildId }),
   {
@@ -21446,11 +21645,13 @@ return mainFetch<ChatMessageResponseDtoOutput>(getChatControllerSendChatMessageU
 
 
 
+export const getChatControllerSendChatMessageMutationKey = () => ['chatControllerSendChatMessage'] as const;
+
 export const getChatControllerSendChatMessageMutationOptions = <TError = ErrorType<RequestValidationError | ChatControllerSendChatMessage401 | ChatControllerSendChatMessage403 | void | ChatControllerSendChatMessage429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerSendChatMessage>>, TError,ChatControllerSendChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof chatControllerSendChatMessage>>, TError,ChatControllerSendChatMessageMutationVariables, TContext> => {
 
-const mutationKey = ['chatControllerSendChatMessage'];
+const mutationKey = getChatControllerSendChatMessageMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -21519,11 +21720,13 @@ export const chatControllerClearChatMessages = async ({ guildId }: ChatControlle
 
 
 
+export const getChatControllerClearChatMessagesMutationKey = () => ['chatControllerClearChatMessages'] as const;
+
 export const getChatControllerClearChatMessagesMutationOptions = <TError = ErrorType<RequestValidationError | ChatControllerClearChatMessages401 | ChatControllerClearChatMessages403 | void | ChatControllerClearChatMessages429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerClearChatMessages>>, TError,ChatControllerClearChatMessagesMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof chatControllerClearChatMessages>>, TError,ChatControllerClearChatMessagesMutationVariables, TContext> => {
 
-const mutationKey = ['chatControllerClearChatMessages'];
+const mutationKey = getChatControllerClearChatMessagesMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -21592,11 +21795,13 @@ export const chatControllerDeleteChatMessage = async ({ guildId, messageId }: Ch
 
 
 
+export const getChatControllerDeleteChatMessageMutationKey = () => ['chatControllerDeleteChatMessage'] as const;
+
 export const getChatControllerDeleteChatMessageMutationOptions = <TError = ErrorType<RequestValidationError | ChatControllerDeleteChatMessage401 | ChatControllerDeleteChatMessage403 | void | ChatControllerDeleteChatMessage429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatControllerDeleteChatMessage>>, TError,ChatControllerDeleteChatMessageMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof chatControllerDeleteChatMessage>>, TError,ChatControllerDeleteChatMessageMutationVariables, TContext> => {
 
-const mutationKey = ['chatControllerDeleteChatMessage'];
+const mutationKey = getChatControllerDeleteChatMessageMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -21749,7 +21954,7 @@ export const prefetchListReservationSpotsQuery = async <TData = Awaited<ReturnTy
 }
 
 /**
- * @summary List reservation spots with current availability
+ * @summary Invalidates the {@link useListReservationSpots} query
  */
 export const invalidateListReservationSpots = async (
  queryClient: QueryClient, { guildId }: ListReservationSpotsPathParameters, options?: InvalidateOptions
@@ -21765,8 +21970,8 @@ export const invalidateListReservationSpots = async (
  */
 export const useSetListReservationSpotsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ListReservationSpotsPathParameters,updater: Awaited<ReturnType<typeof listReservationSpots>> | undefined | ((old: Awaited<ReturnType<typeof listReservationSpots>> | undefined) => Awaited<ReturnType<typeof listReservationSpots>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listReservationSpots>>>({ queryKey: getListReservationSpotsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: ListReservationSpotsPathParameters,updater: Awaited<ReturnType<typeof listReservationSpots>> | undefined | ((old: Awaited<ReturnType<typeof listReservationSpots>> | undefined) => Awaited<ReturnType<typeof listReservationSpots>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listReservationSpots>>>({ exact: $exactMatch, queryKey: getListReservationSpotsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -21908,7 +22113,7 @@ export const prefetchListSpotReservationsQuery = async <TData = Awaited<ReturnTy
 }
 
 /**
- * @summary List reservations for one spot and time window
+ * @summary Invalidates the {@link useListSpotReservations} query
  */
 export const invalidateListSpotReservations = async (
  queryClient: QueryClient, { guildId, spotId }: ListSpotReservationsPathParameters,
@@ -21926,8 +22131,8 @@ export const invalidateListSpotReservations = async (
 export const useSetListSpotReservationsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, spotId }: ListSpotReservationsPathParameters,
-    params: ListSpotReservationsParams | undefined,updater: Awaited<ReturnType<typeof listSpotReservations>> | undefined | ((old: Awaited<ReturnType<typeof listSpotReservations>> | undefined) => Awaited<ReturnType<typeof listSpotReservations>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listSpotReservations>>>({ queryKey: getListSpotReservationsQueryKey({ guildId, spotId },params) }, updater);
+    params: ListSpotReservationsParams | undefined,updater: Awaited<ReturnType<typeof listSpotReservations>> | undefined | ((old: Awaited<ReturnType<typeof listSpotReservations>> | undefined) => Awaited<ReturnType<typeof listSpotReservations>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listSpotReservations>>>({ exact: $exactMatch, queryKey: getListSpotReservationsQueryKey({ guildId, spotId },params) }, updater);
   };
 }
 
@@ -21960,8 +22165,16 @@ export const createReservation = async ({ guildId, spotId }: CreateReservationPa
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<ReservationResponseDto>(getCreateReservationUrl({ guildId, spotId }),
   {
@@ -21976,11 +22189,13 @@ return mainFetch<ReservationResponseDto>(getCreateReservationUrl({ guildId, spot
 
 
 
+export const getCreateReservationMutationKey = () => ['createReservation'] as const;
+
 export const getCreateReservationMutationOptions = <TError = ErrorType<RequestValidationError | CreateReservation401 | CreateReservation403 | OrganizationWorkspaceErrorResponse | CreateReservation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,CreateReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createReservation>>, TError,CreateReservationMutationVariables, TContext> => {
 
-const mutationKey = ['createReservation'];
+const mutationKey = getCreateReservationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22048,11 +22263,13 @@ export const deleteReservation = async ({ guildId, reservationId }: DeleteReserv
 
 
 
+export const getDeleteReservationMutationKey = () => ['deleteReservation'] as const;
+
 export const getDeleteReservationMutationOptions = <TError = ErrorType<RequestValidationError | DeleteReservation401 | DeleteReservation403 | OrganizationWorkspaceErrorResponse | DeleteReservation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,DeleteReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteReservation>>, TError,DeleteReservationMutationVariables, TContext> => {
 
-const mutationKey = ['deleteReservation'];
+const mutationKey = getDeleteReservationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22120,11 +22337,13 @@ export const pinReservationSpot = async ({ guildId, spotId }: PinReservationSpot
 
 
 
+export const getPinReservationSpotMutationKey = () => ['pinReservationSpot'] as const;
+
 export const getPinReservationSpotMutationOptions = <TError = ErrorType<RequestValidationError | PinReservationSpot401 | PinReservationSpot403 | OrganizationWorkspaceErrorResponse | PinReservationSpot429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,PinReservationSpotMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof pinReservationSpot>>, TError,PinReservationSpotMutationVariables, TContext> => {
 
-const mutationKey = ['pinReservationSpot'];
+const mutationKey = getPinReservationSpotMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22192,11 +22411,13 @@ export const unpinReservationSpot = async ({ guildId, spotId }: UnpinReservation
 
 
 
+export const getUnpinReservationSpotMutationKey = () => ['unpinReservationSpot'] as const;
+
 export const getUnpinReservationSpotMutationOptions = <TError = ErrorType<RequestValidationError | UnpinReservationSpot401 | UnpinReservationSpot403 | OrganizationWorkspaceErrorResponse | UnpinReservationSpot429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,UnpinReservationSpotMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof unpinReservationSpot>>, TError,UnpinReservationSpotMutationVariables, TContext> => {
 
-const mutationKey = ['unpinReservationSpot'];
+const mutationKey = getUnpinReservationSpotMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22356,7 +22577,7 @@ export const prefetchListMyReservationsQuery = async <TData = Awaited<ReturnType
 }
 
 /**
- * @summary List the current user's reservations
+ * @summary Invalidates the {@link useListMyReservations} query
  */
 export const invalidateListMyReservations = async (
  queryClient: QueryClient, params?: ListMyReservationsParams, options?: InvalidateOptions
@@ -22372,8 +22593,8 @@ export const invalidateListMyReservations = async (
  */
 export const useSetListMyReservationsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: ListMyReservationsParams | undefined,updater: Awaited<ReturnType<typeof listMyReservations>> | undefined | ((old: Awaited<ReturnType<typeof listMyReservations>> | undefined) => Awaited<ReturnType<typeof listMyReservations>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listMyReservations>>>({ queryKey: getListMyReservationsQueryKey(params) }, updater);
+  return (params: ListMyReservationsParams | undefined,updater: Awaited<ReturnType<typeof listMyReservations>> | undefined | ((old: Awaited<ReturnType<typeof listMyReservations>> | undefined) => Awaited<ReturnType<typeof listMyReservations>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listMyReservations>>>({ exact: $exactMatch, queryKey: getListMyReservationsQueryKey(params) }, updater);
   };
 }
 
@@ -22414,11 +22635,13 @@ export const deleteMyReservation = async ({ reservationId }: DeleteMyReservation
 
 
 
+export const getDeleteMyReservationMutationKey = () => ['deleteMyReservation'] as const;
+
 export const getDeleteMyReservationMutationOptions = <TError = ErrorType<RequestValidationError | DeleteMyReservation401 | DeleteMyReservation403 | OrganizationWorkspaceErrorResponse | DeleteMyReservation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,DeleteMyReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteMyReservation>>, TError,DeleteMyReservationMutationVariables, TContext> => {
 
-const mutationKey = ['deleteMyReservation'];
+const mutationKey = getDeleteMyReservationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22477,8 +22700,16 @@ export const updateMyReservation = async ({ reservationId }: UpdateMyReservation
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<ReservationResponseDto>(getUpdateMyReservationUrl({ reservationId }),
   {
@@ -22493,11 +22724,13 @@ return mainFetch<ReservationResponseDto>(getUpdateMyReservationUrl({ reservation
 
 
 
+export const getUpdateMyReservationMutationKey = () => ['updateMyReservation'] as const;
+
 export const getUpdateMyReservationMutationOptions = <TError = ErrorType<RequestValidationError | UpdateMyReservation401 | UpdateMyReservation403 | OrganizationWorkspaceErrorResponse | UpdateMyReservation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,UpdateMyReservationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateMyReservation>>, TError,UpdateMyReservationMutationVariables, TContext> => {
 
-const mutationKey = ['updateMyReservation'];
+const mutationKey = getUpdateMyReservationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22650,7 +22883,7 @@ export const prefetchListReservationSharesQuery = async <TData = Awaited<ReturnT
 }
 
 /**
- * @summary List reservation calendar partners and pending invitations
+ * @summary Invalidates the {@link useListReservationShares} query
  */
 export const invalidateListReservationShares = async (
  queryClient: QueryClient, { guildId }: ListReservationSharesPathParameters, options?: InvalidateOptions
@@ -22666,8 +22899,8 @@ export const invalidateListReservationShares = async (
  */
 export const useSetListReservationSharesQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ListReservationSharesPathParameters,updater: Awaited<ReturnType<typeof listReservationShares>> | undefined | ((old: Awaited<ReturnType<typeof listReservationShares>> | undefined) => Awaited<ReturnType<typeof listReservationShares>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listReservationShares>>>({ queryKey: getListReservationSharesQueryKey({ guildId }) }, updater);
+  return ({ guildId }: ListReservationSharesPathParameters,updater: Awaited<ReturnType<typeof listReservationShares>> | undefined | ((old: Awaited<ReturnType<typeof listReservationShares>> | undefined) => Awaited<ReturnType<typeof listReservationShares>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listReservationShares>>>({ exact: $exactMatch, queryKey: getListReservationSharesQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -22708,11 +22941,13 @@ export const createReservationShareInvitation = async ({ guildId }: CreateReserv
 
 
 
+export const getCreateReservationShareInvitationMutationKey = () => ['createReservationShareInvitation'] as const;
+
 export const getCreateReservationShareInvitationMutationOptions = <TError = ErrorType<RequestValidationError | CreateReservationShareInvitation401 | CreateReservationShareInvitation403 | OrganizationWorkspaceErrorResponse | CreateReservationShareInvitation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReservationShareInvitation>>, TError,CreateReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createReservationShareInvitation>>, TError,CreateReservationShareInvitationMutationVariables, TContext> => {
 
-const mutationKey = ['createReservationShareInvitation'];
+const mutationKey = getCreateReservationShareInvitationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22780,11 +23015,13 @@ export const revokeReservationShareInvitation = async ({ guildId, invitationId }
 
 
 
+export const getRevokeReservationShareInvitationMutationKey = () => ['revokeReservationShareInvitation'] as const;
+
 export const getRevokeReservationShareInvitationMutationOptions = <TError = ErrorType<RequestValidationError | RevokeReservationShareInvitation401 | RevokeReservationShareInvitation403 | OrganizationWorkspaceErrorResponse | RevokeReservationShareInvitation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShareInvitation>>, TError,RevokeReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShareInvitation>>, TError,RevokeReservationShareInvitationMutationVariables, TContext> => {
 
-const mutationKey = ['revokeReservationShareInvitation'];
+const mutationKey = getRevokeReservationShareInvitationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -22852,11 +23089,13 @@ export const revokeReservationShare = async ({ guildId, shareId }: RevokeReserva
 
 
 
+export const getRevokeReservationShareMutationKey = () => ['revokeReservationShare'] as const;
+
 export const getRevokeReservationShareMutationOptions = <TError = ErrorType<RequestValidationError | RevokeReservationShare401 | RevokeReservationShare403 | OrganizationWorkspaceErrorResponse | RevokeReservationShare429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShare>>, TError,RevokeReservationShareMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof revokeReservationShare>>, TError,RevokeReservationShareMutationVariables, TContext> => {
 
-const mutationKey = ['revokeReservationShare'];
+const mutationKey = getRevokeReservationShareMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23009,7 +23248,7 @@ export const prefetchPreviewReservationShareInvitationQuery = async <TData = Awa
 }
 
 /**
- * @summary Preview a reservation sharing invitation
+ * @summary Invalidates the {@link usePreviewReservationShareInvitation} query
  */
 export const invalidatePreviewReservationShareInvitation = async (
  queryClient: QueryClient, { token }: PreviewReservationShareInvitationPathParameters, options?: InvalidateOptions
@@ -23025,8 +23264,8 @@ export const invalidatePreviewReservationShareInvitation = async (
  */
 export const useSetPreviewReservationShareInvitationQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ token }: PreviewReservationShareInvitationPathParameters,updater: Awaited<ReturnType<typeof previewReservationShareInvitation>> | undefined | ((old: Awaited<ReturnType<typeof previewReservationShareInvitation>> | undefined) => Awaited<ReturnType<typeof previewReservationShareInvitation>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof previewReservationShareInvitation>>>({ queryKey: getPreviewReservationShareInvitationQueryKey({ token }) }, updater);
+  return ({ token }: PreviewReservationShareInvitationPathParameters,updater: Awaited<ReturnType<typeof previewReservationShareInvitation>> | undefined | ((old: Awaited<ReturnType<typeof previewReservationShareInvitation>> | undefined) => Awaited<ReturnType<typeof previewReservationShareInvitation>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof previewReservationShareInvitation>>>({ exact: $exactMatch, queryKey: getPreviewReservationShareInvitationQueryKey({ token }) }, updater);
   };
 }
 
@@ -23058,8 +23297,16 @@ export const acceptReservationShareInvitation = async ({ token }: AcceptReservat
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<AcceptReservationShareInvitationResponseDto>(getAcceptReservationShareInvitationUrl({ token }),
   {
@@ -23074,11 +23321,13 @@ return mainFetch<AcceptReservationShareInvitationResponseDto>(getAcceptReservati
 
 
 
+export const getAcceptReservationShareInvitationMutationKey = () => ['acceptReservationShareInvitation'] as const;
+
 export const getAcceptReservationShareInvitationMutationOptions = <TError = ErrorType<RequestValidationError | AcceptReservationShareInvitation401 | AcceptReservationShareInvitation403 | OrganizationWorkspaceErrorResponse | AcceptReservationShareInvitation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptReservationShareInvitation>>, TError,AcceptReservationShareInvitationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof acceptReservationShareInvitation>>, TError,AcceptReservationShareInvitationMutationVariables, TContext> => {
 
-const mutationKey = ['acceptReservationShareInvitation'];
+const mutationKey = getAcceptReservationShareInvitationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23232,7 +23481,7 @@ export const prefetchNotificationsGuildControllerGetGuildTargetsQuery = async <T
 }
 
 /**
- * @summary Get guild notification targets
+ * @summary Invalidates the {@link useNotificationsGuildControllerGetGuildTargets} query
  */
 export const invalidateNotificationsGuildControllerGetGuildTargets = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters, options?: InvalidateOptions
@@ -23248,8 +23497,8 @@ export const invalidateNotificationsGuildControllerGetGuildTargets = async (
  */
 export const useSetNotificationsGuildControllerGetGuildTargetsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>>>({ queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: NotificationsGuildControllerGetGuildTargetsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildTargets>>>({ exact: $exactMatch, queryKey: getNotificationsGuildControllerGetGuildTargetsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -23282,8 +23531,16 @@ export const notificationsGuildControllerCreateGuildTarget = async ({ guildId }:
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerCreateGuildTargetUrl({ guildId }),
   {
@@ -23298,11 +23555,13 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerC
 
 
 
+export const getNotificationsGuildControllerCreateGuildTargetMutationKey = () => ['notificationsGuildControllerCreateGuildTarget'] as const;
+
 export const getNotificationsGuildControllerCreateGuildTargetMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsGuildControllerCreateGuildTarget401 | NotificationsGuildControllerCreateGuildTarget403 | NotificationsGuildControllerCreateGuildTarget429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>, TError,NotificationsGuildControllerCreateGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildTarget>>, TError,NotificationsGuildControllerCreateGuildTargetMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerCreateGuildTarget'];
+const mutationKey = getNotificationsGuildControllerCreateGuildTargetMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23456,7 +23715,7 @@ export const prefetchNotificationsGuildControllerGetAvailableGuildTargetsQuery =
 }
 
 /**
- * @summary Get available guild notification targets
+ * @summary Invalidates the {@link useNotificationsGuildControllerGetAvailableGuildTargets} query
  */
 export const invalidateNotificationsGuildControllerGetAvailableGuildTargets = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters, options?: InvalidateOptions
@@ -23472,8 +23731,8 @@ export const invalidateNotificationsGuildControllerGetAvailableGuildTargets = as
  */
 export const useSetNotificationsGuildControllerGetAvailableGuildTargetsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>>>({ queryKey: getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: NotificationsGuildControllerGetAvailableGuildTargetsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetAvailableGuildTargets>>>({ exact: $exactMatch, queryKey: getNotificationsGuildControllerGetAvailableGuildTargetsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -23515,11 +23774,13 @@ export const notificationsGuildControllerDeleteGuildTarget = async ({ guildId, t
 
 
 
+export const getNotificationsGuildControllerDeleteGuildTargetMutationKey = () => ['notificationsGuildControllerDeleteGuildTarget'] as const;
+
 export const getNotificationsGuildControllerDeleteGuildTargetMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsGuildControllerDeleteGuildTarget401 | NotificationsGuildControllerDeleteGuildTarget403 | HttpErrorResponse | NotificationsGuildControllerDeleteGuildTarget429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>, TError,NotificationsGuildControllerDeleteGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildTarget>>, TError,NotificationsGuildControllerDeleteGuildTargetMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerDeleteGuildTarget'];
+const mutationKey = getNotificationsGuildControllerDeleteGuildTargetMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23579,8 +23840,16 @@ export const notificationsGuildControllerUpdateGuildTarget = async ({ guildId, t
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerUpdateGuildTargetUrl({ guildId, targetId }),
   {
@@ -23595,11 +23864,13 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsGuildControllerU
 
 
 
+export const getNotificationsGuildControllerUpdateGuildTargetMutationKey = () => ['notificationsGuildControllerUpdateGuildTarget'] as const;
+
 export const getNotificationsGuildControllerUpdateGuildTargetMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsGuildControllerUpdateGuildTarget401 | NotificationsGuildControllerUpdateGuildTarget403 | HttpErrorResponse | NotificationsGuildControllerUpdateGuildTarget429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>, TError,NotificationsGuildControllerUpdateGuildTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildTarget>>, TError,NotificationsGuildControllerUpdateGuildTargetMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerUpdateGuildTarget'];
+const mutationKey = getNotificationsGuildControllerUpdateGuildTargetMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23753,7 +24024,7 @@ export const prefetchNotificationsGuildControllerGetGuildRulesQuery = async <TDa
 }
 
 /**
- * @summary Get guild notification rules
+ * @summary Invalidates the {@link useNotificationsGuildControllerGetGuildRules} query
  */
 export const invalidateNotificationsGuildControllerGetGuildRules = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildRulesPathParameters, options?: InvalidateOptions
@@ -23769,8 +24040,8 @@ export const invalidateNotificationsGuildControllerGetGuildRules = async (
  */
 export const useSetNotificationsGuildControllerGetGuildRulesQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>>>({ queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({ guildId }) }, updater);
+  return ({ guildId }: NotificationsGuildControllerGetGuildRulesPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildRules>>>({ exact: $exactMatch, queryKey: getNotificationsGuildControllerGetGuildRulesQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -23803,8 +24074,16 @@ export const notificationsGuildControllerCreateGuildRule = async ({ guildId }: N
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerCreateGuildRuleUrl({ guildId }),
   {
@@ -23819,11 +24098,13 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerCre
 
 
 
+export const getNotificationsGuildControllerCreateGuildRuleMutationKey = () => ['notificationsGuildControllerCreateGuildRule'] as const;
+
 export const getNotificationsGuildControllerCreateGuildRuleMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsGuildControllerCreateGuildRule401 | NotificationsGuildControllerCreateGuildRule403 | NotificationsGuildControllerCreateGuildRule429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>, TError,NotificationsGuildControllerCreateGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCreateGuildRule>>, TError,NotificationsGuildControllerCreateGuildRuleMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerCreateGuildRule'];
+const mutationKey = getNotificationsGuildControllerCreateGuildRuleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23892,11 +24173,13 @@ export const notificationsGuildControllerDeleteGuildRule = async ({ guildId, rul
 
 
 
+export const getNotificationsGuildControllerDeleteGuildRuleMutationKey = () => ['notificationsGuildControllerDeleteGuildRule'] as const;
+
 export const getNotificationsGuildControllerDeleteGuildRuleMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsGuildControllerDeleteGuildRule401 | NotificationsGuildControllerDeleteGuildRule403 | HttpErrorResponse | NotificationsGuildControllerDeleteGuildRule429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>, TError,NotificationsGuildControllerDeleteGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerDeleteGuildRule>>, TError,NotificationsGuildControllerDeleteGuildRuleMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerDeleteGuildRule'];
+const mutationKey = getNotificationsGuildControllerDeleteGuildRuleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -23956,8 +24239,16 @@ export const notificationsGuildControllerUpdateGuildRule = async ({ guildId, rul
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerUpdateGuildRuleUrl({ guildId, ruleId }),
   {
@@ -23972,11 +24263,13 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsGuildControllerUpd
 
 
 
+export const getNotificationsGuildControllerUpdateGuildRuleMutationKey = () => ['notificationsGuildControllerUpdateGuildRule'] as const;
+
 export const getNotificationsGuildControllerUpdateGuildRuleMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsGuildControllerUpdateGuildRule401 | NotificationsGuildControllerUpdateGuildRule403 | NotificationsGuildControllerUpdateGuildRule429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>, TError,NotificationsGuildControllerUpdateGuildRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerUpdateGuildRule>>, TError,NotificationsGuildControllerUpdateGuildRuleMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerUpdateGuildRule'];
+const mutationKey = getNotificationsGuildControllerUpdateGuildRuleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24045,11 +24338,13 @@ export const notificationsGuildControllerRebuildGuildRuleJobs = async ({ guildId
 
 
 
+export const getNotificationsGuildControllerRebuildGuildRuleJobsMutationKey = () => ['notificationsGuildControllerRebuildGuildRuleJobs'] as const;
+
 export const getNotificationsGuildControllerRebuildGuildRuleJobsMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsGuildControllerRebuildGuildRuleJobs401 | NotificationsGuildControllerRebuildGuildRuleJobs403 | HttpErrorResponse | NotificationsGuildControllerRebuildGuildRuleJobs429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>, TError,NotificationsGuildControllerRebuildGuildRuleJobsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerRebuildGuildRuleJobs>>, TError,NotificationsGuildControllerRebuildGuildRuleJobsMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerRebuildGuildRuleJobs'];
+const mutationKey = getNotificationsGuildControllerRebuildGuildRuleJobsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24118,11 +24413,13 @@ export const notificationsGuildControllerTriggerGuildRuleTest = async ({ guildId
 
 
 
+export const getNotificationsGuildControllerTriggerGuildRuleTestMutationKey = () => ['notificationsGuildControllerTriggerGuildRuleTest'] as const;
+
 export const getNotificationsGuildControllerTriggerGuildRuleTestMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsGuildControllerTriggerGuildRuleTest401 | NotificationsGuildControllerTriggerGuildRuleTest403 | NotificationsGuildControllerTriggerGuildRuleTest429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>, TError,NotificationsGuildControllerTriggerGuildRuleTestMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerTriggerGuildRuleTest>>, TError,NotificationsGuildControllerTriggerGuildRuleTestMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerTriggerGuildRuleTest'];
+const mutationKey = getNotificationsGuildControllerTriggerGuildRuleTestMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24276,7 +24573,7 @@ export const prefetchNotificationsGuildControllerGetGuildJobsQuery = async <TDat
 }
 
 /**
- * @summary Get guild notification jobs
+ * @summary Invalidates the {@link useNotificationsGuildControllerGetGuildJobs} query
  */
 export const invalidateNotificationsGuildControllerGetGuildJobs = async (
  queryClient: QueryClient, { guildId }: NotificationsGuildControllerGetGuildJobsPathParameters, options?: InvalidateOptions
@@ -24292,8 +24589,8 @@ export const invalidateNotificationsGuildControllerGetGuildJobs = async (
  */
 export const useSetNotificationsGuildControllerGetGuildJobsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>>>({ queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: NotificationsGuildControllerGetGuildJobsPathParameters,updater: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined | ((old: Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined) => Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsGuildControllerGetGuildJobs>>>({ exact: $exactMatch, queryKey: getNotificationsGuildControllerGetGuildJobsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -24335,11 +24632,13 @@ export const notificationsGuildControllerCancelGuildJob = async ({ guildId, jobI
 
 
 
+export const getNotificationsGuildControllerCancelGuildJobMutationKey = () => ['notificationsGuildControllerCancelGuildJob'] as const;
+
 export const getNotificationsGuildControllerCancelGuildJobMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsGuildControllerCancelGuildJob401 | NotificationsGuildControllerCancelGuildJob403 | NotificationsGuildControllerCancelGuildJob429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,NotificationsGuildControllerCancelGuildJobMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsGuildControllerCancelGuildJob>>, TError,NotificationsGuildControllerCancelGuildJobMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsGuildControllerCancelGuildJob'];
+const mutationKey = getNotificationsGuildControllerCancelGuildJobMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24493,7 +24792,7 @@ export const prefetchNotificationsUserControllerGetUserTargetsQuery = async <TDa
 }
 
 /**
- * @summary Get user notification targets
+ * @summary Invalidates the {@link useNotificationsUserControllerGetUserTargets} query
  */
 export const invalidateNotificationsUserControllerGetUserTargets = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -24509,8 +24808,8 @@ export const invalidateNotificationsUserControllerGetUserTargets = async (
  */
 export const useSetNotificationsUserControllerGetUserTargetsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>>>({ queryKey: getNotificationsUserControllerGetUserTargetsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetUserTargets>>>({ exact: $exactMatch, queryKey: getNotificationsUserControllerGetUserTargetsQueryKey() }, updater);
   };
 }
 
@@ -24542,8 +24841,16 @@ export const notificationsUserControllerCreateUserTarget = async (createNotifica
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationTargetResponseDto>(getNotificationsUserControllerCreateUserTargetUrl(),
   {
@@ -24558,11 +24865,13 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsUserControllerCr
 
 
 
+export const getNotificationsUserControllerCreateUserTargetMutationKey = () => ['notificationsUserControllerCreateUserTarget'] as const;
+
 export const getNotificationsUserControllerCreateUserTargetMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsUserControllerCreateUserTarget401 | NotificationsUserControllerCreateUserTarget403 | NotificationsUserControllerCreateUserTarget429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>, TError,NotificationsUserControllerCreateUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserTarget>>, TError,NotificationsUserControllerCreateUserTargetMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerCreateUserTarget'];
+const mutationKey = getNotificationsUserControllerCreateUserTargetMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24631,11 +24940,13 @@ export const notificationsUserControllerDeleteUserTarget = async ({ targetId }: 
 
 
 
+export const getNotificationsUserControllerDeleteUserTargetMutationKey = () => ['notificationsUserControllerDeleteUserTarget'] as const;
+
 export const getNotificationsUserControllerDeleteUserTargetMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsUserControllerDeleteUserTarget401 | NotificationsUserControllerDeleteUserTarget403 | HttpErrorResponse | NotificationsUserControllerDeleteUserTarget429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>, TError,NotificationsUserControllerDeleteUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserTarget>>, TError,NotificationsUserControllerDeleteUserTargetMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerDeleteUserTarget'];
+const mutationKey = getNotificationsUserControllerDeleteUserTargetMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24695,8 +25006,16 @@ export const notificationsUserControllerUpdateUserTarget = async ({ targetId }: 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationTargetResponseDto>(getNotificationsUserControllerUpdateUserTargetUrl({ targetId }),
   {
@@ -24711,11 +25030,13 @@ return mainFetch<NotificationTargetResponseDto>(getNotificationsUserControllerUp
 
 
 
+export const getNotificationsUserControllerUpdateUserTargetMutationKey = () => ['notificationsUserControllerUpdateUserTarget'] as const;
+
 export const getNotificationsUserControllerUpdateUserTargetMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsUserControllerUpdateUserTarget401 | NotificationsUserControllerUpdateUserTarget403 | HttpErrorResponse | NotificationsUserControllerUpdateUserTarget429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>, TError,NotificationsUserControllerUpdateUserTargetMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserTarget>>, TError,NotificationsUserControllerUpdateUserTargetMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerUpdateUserTarget'];
+const mutationKey = getNotificationsUserControllerUpdateUserTargetMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24784,11 +25105,13 @@ export const notificationsUserControllerTriggerUserTargetTest = async ({ targetI
 
 
 
+export const getNotificationsUserControllerTriggerUserTargetTestMutationKey = () => ['notificationsUserControllerTriggerUserTargetTest'] as const;
+
 export const getNotificationsUserControllerTriggerUserTargetTestMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsUserControllerTriggerUserTargetTest401 | NotificationsUserControllerTriggerUserTargetTest403 | NotificationsUserControllerTriggerUserTargetTest429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,NotificationsUserControllerTriggerUserTargetTestMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerTriggerUserTargetTest>>, TError,NotificationsUserControllerTriggerUserTargetTestMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerTriggerUserTargetTest'];
+const mutationKey = getNotificationsUserControllerTriggerUserTargetTestMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -24942,7 +25265,7 @@ export const prefetchNotificationsUserControllerGetUserRulesQuery = async <TData
 }
 
 /**
- * @summary Get user notification rules
+ * @summary Invalidates the {@link useNotificationsUserControllerGetUserRules} query
  */
 export const invalidateNotificationsUserControllerGetUserRules = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -24958,8 +25281,8 @@ export const invalidateNotificationsUserControllerGetUserRules = async (
  */
 export const useSetNotificationsUserControllerGetUserRulesQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>>>({ queryKey: getNotificationsUserControllerGetUserRulesQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetUserRules>>>({ exact: $exactMatch, queryKey: getNotificationsUserControllerGetUserRulesQueryKey() }, updater);
   };
 }
 
@@ -24991,8 +25314,16 @@ export const notificationsUserControllerCreateUserRule = async (createNotificati
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationRuleResponseDto>(getNotificationsUserControllerCreateUserRuleUrl(),
   {
@@ -25007,11 +25338,13 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsUserControllerCrea
 
 
 
+export const getNotificationsUserControllerCreateUserRuleMutationKey = () => ['notificationsUserControllerCreateUserRule'] as const;
+
 export const getNotificationsUserControllerCreateUserRuleMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsUserControllerCreateUserRule401 | NotificationsUserControllerCreateUserRule403 | NotificationsUserControllerCreateUserRule429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>, TError,NotificationsUserControllerCreateUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateUserRule>>, TError,NotificationsUserControllerCreateUserRuleMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerCreateUserRule'];
+const mutationKey = getNotificationsUserControllerCreateUserRuleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25080,11 +25413,13 @@ export const notificationsUserControllerDeleteUserRule = async ({ ruleId }: Noti
 
 
 
+export const getNotificationsUserControllerDeleteUserRuleMutationKey = () => ['notificationsUserControllerDeleteUserRule'] as const;
+
 export const getNotificationsUserControllerDeleteUserRuleMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsUserControllerDeleteUserRule401 | NotificationsUserControllerDeleteUserRule403 | HttpErrorResponse | NotificationsUserControllerDeleteUserRule429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>, TError,NotificationsUserControllerDeleteUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteUserRule>>, TError,NotificationsUserControllerDeleteUserRuleMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerDeleteUserRule'];
+const mutationKey = getNotificationsUserControllerDeleteUserRuleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25144,8 +25479,16 @@ export const notificationsUserControllerUpdateUserRule = async ({ ruleId }: Noti
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationRuleResponseDto>(getNotificationsUserControllerUpdateUserRuleUrl({ ruleId }),
   {
@@ -25160,11 +25503,13 @@ return mainFetch<NotificationRuleResponseDto>(getNotificationsUserControllerUpda
 
 
 
+export const getNotificationsUserControllerUpdateUserRuleMutationKey = () => ['notificationsUserControllerUpdateUserRule'] as const;
+
 export const getNotificationsUserControllerUpdateUserRuleMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsUserControllerUpdateUserRule401 | NotificationsUserControllerUpdateUserRule403 | NotificationsUserControllerUpdateUserRule429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>, TError,NotificationsUserControllerUpdateUserRuleMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerUpdateUserRule>>, TError,NotificationsUserControllerUpdateUserRuleMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerUpdateUserRule'];
+const mutationKey = getNotificationsUserControllerUpdateUserRuleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25318,7 +25663,7 @@ export const prefetchNotificationsUserControllerGetUserJobsQuery = async <TData 
 }
 
 /**
- * @summary Get user notification jobs
+ * @summary Invalidates the {@link useNotificationsUserControllerGetUserJobs} query
  */
 export const invalidateNotificationsUserControllerGetUserJobs = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -25334,8 +25679,8 @@ export const invalidateNotificationsUserControllerGetUserJobs = async (
  */
 export const useSetNotificationsUserControllerGetUserJobsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>>>({ queryKey: getNotificationsUserControllerGetUserJobsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetUserJobs>>>({ exact: $exactMatch, queryKey: getNotificationsUserControllerGetUserJobsQueryKey() }, updater);
   };
 }
 
@@ -25462,7 +25807,7 @@ export const prefetchNotificationsUserControllerGetWatchedItemsQuery = async <TD
 }
 
 /**
- * @summary Get watched items
+ * @summary Invalidates the {@link useNotificationsUserControllerGetWatchedItems} query
  */
 export const invalidateNotificationsUserControllerGetWatchedItems = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -25478,8 +25823,8 @@ export const invalidateNotificationsUserControllerGetWatchedItems = async (
  */
 export const useSetNotificationsUserControllerGetWatchedItemsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>>>({ queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined | ((old: Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined) => Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof notificationsUserControllerGetWatchedItems>>>({ exact: $exactMatch, queryKey: getNotificationsUserControllerGetWatchedItemsQueryKey() }, updater);
   };
 }
 
@@ -25511,8 +25856,16 @@ export const notificationsUserControllerCreateWatchedItem = async (createWatched
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<WatchedItemResponseDto>(getNotificationsUserControllerCreateWatchedItemUrl(),
   {
@@ -25527,11 +25880,13 @@ return mainFetch<WatchedItemResponseDto>(getNotificationsUserControllerCreateWat
 
 
 
+export const getNotificationsUserControllerCreateWatchedItemMutationKey = () => ['notificationsUserControllerCreateWatchedItem'] as const;
+
 export const getNotificationsUserControllerCreateWatchedItemMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsUserControllerCreateWatchedItem401 | NotificationsUserControllerCreateWatchedItem403 | NotificationsUserControllerCreateWatchedItem429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>, TError,NotificationsUserControllerCreateWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerCreateWatchedItem>>, TError,NotificationsUserControllerCreateWatchedItemMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerCreateWatchedItem'];
+const mutationKey = getNotificationsUserControllerCreateWatchedItemMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25590,8 +25945,16 @@ export const notificationsUserControllerQuickAddWatchedItem = async (createWatch
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<WatchedItemResponseDto>(getNotificationsUserControllerQuickAddWatchedItemUrl(),
   {
@@ -25606,11 +25969,13 @@ return mainFetch<WatchedItemResponseDto>(getNotificationsUserControllerQuickAddW
 
 
 
+export const getNotificationsUserControllerQuickAddWatchedItemMutationKey = () => ['notificationsUserControllerQuickAddWatchedItem'] as const;
+
 export const getNotificationsUserControllerQuickAddWatchedItemMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | NotificationsUserControllerQuickAddWatchedItem401 | NotificationsUserControllerQuickAddWatchedItem403 | NotificationsUserControllerQuickAddWatchedItem429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>, TError,NotificationsUserControllerQuickAddWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerQuickAddWatchedItem>>, TError,NotificationsUserControllerQuickAddWatchedItemMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerQuickAddWatchedItem'];
+const mutationKey = getNotificationsUserControllerQuickAddWatchedItemMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25679,11 +26044,13 @@ export const notificationsUserControllerDeleteWatchedItem = async ({ watchedItem
 
 
 
+export const getNotificationsUserControllerDeleteWatchedItemMutationKey = () => ['notificationsUserControllerDeleteWatchedItem'] as const;
+
 export const getNotificationsUserControllerDeleteWatchedItemMutationOptions = <TError = ErrorType<RequestValidationError | NotificationsUserControllerDeleteWatchedItem401 | NotificationsUserControllerDeleteWatchedItem403 | HttpErrorResponse | NotificationsUserControllerDeleteWatchedItem429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>, TError,NotificationsUserControllerDeleteWatchedItemMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof notificationsUserControllerDeleteWatchedItem>>, TError,NotificationsUserControllerDeleteWatchedItemMutationVariables, TContext> => {
 
-const mutationKey = ['notificationsUserControllerDeleteWatchedItem'];
+const mutationKey = getNotificationsUserControllerDeleteWatchedItemMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25742,8 +26109,16 @@ export const messagingControllerSendNotification = async (createNotificationDto:
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<NotificationResponseDtoOutput>(getMessagingControllerSendNotificationUrl(),
   {
@@ -25758,11 +26133,13 @@ return mainFetch<NotificationResponseDtoOutput>(getMessagingControllerSendNotifi
 
 
 
+export const getMessagingControllerSendNotificationMutationKey = () => ['messagingControllerSendNotification'] as const;
+
 export const getMessagingControllerSendNotificationMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | MessagingControllerSendNotification401 | MessagingControllerSendNotification403 | MessagingControllerSendNotification429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof messagingControllerSendNotification>>, TError,MessagingControllerSendNotificationMutationVariables, TContext> => {
 
-const mutationKey = ['messagingControllerSendNotification'];
+const mutationKey = getMessagingControllerSendNotificationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25822,8 +26199,16 @@ export const messagingControllerVolunteer = async ({ notificationId }: Messaging
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getMessagingControllerVolunteerUrl({ notificationId }),
   {
@@ -25838,11 +26223,13 @@ return mainFetch<void>(getMessagingControllerVolunteerUrl({ notificationId }),
 
 
 
+export const getMessagingControllerVolunteerMutationKey = () => ['messagingControllerVolunteer'] as const;
+
 export const getMessagingControllerVolunteerMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | MessagingControllerVolunteer401 | MessagingControllerVolunteer403 | MessagingControllerVolunteer429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof messagingControllerVolunteer>>, TError,MessagingControllerVolunteerMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof messagingControllerVolunteer>>, TError,MessagingControllerVolunteerMutationVariables, TContext> => {
 
-const mutationKey = ['messagingControllerVolunteer'];
+const mutationKey = getMessagingControllerVolunteerMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -25992,6 +26379,9 @@ export const prefetchPartyReadyRoomControllerActiveQuery = async <TData = Awaite
   return queryClient;
 }
 
+/**
+ * @summary Invalidates the {@link usePartyReadyRoomControllerActive} query
+ */
 export const invalidatePartyReadyRoomControllerActive = async (
  queryClient: QueryClient, params: PartyReadyRoomControllerActiveParams, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -26003,8 +26393,8 @@ export const invalidatePartyReadyRoomControllerActive = async (
 
 export const useSetPartyReadyRoomControllerActiveQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: PartyReadyRoomControllerActiveParams | undefined,updater: Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>>({ queryKey: getPartyReadyRoomControllerActiveQueryKey(params) }, updater);
+  return (params: PartyReadyRoomControllerActiveParams | undefined,updater: Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerActive>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerActive>>>({ exact: $exactMatch, queryKey: getPartyReadyRoomControllerActiveQueryKey(params) }, updater);
   };
 }
 
@@ -26117,6 +26507,9 @@ export const prefetchPartyReadyRoomControllerListQuery = async <TData = Awaited<
   return queryClient;
 }
 
+/**
+ * @summary Invalidates the {@link usePartyReadyRoomControllerList} query
+ */
 export const invalidatePartyReadyRoomControllerList = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -26128,8 +26521,8 @@ export const invalidatePartyReadyRoomControllerList = async (
 
 export const useSetPartyReadyRoomControllerListQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof partyReadyRoomControllerList>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerList>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerList>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerList>>>({ queryKey: getPartyReadyRoomControllerListQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof partyReadyRoomControllerList>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerList>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerList>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerList>>>({ exact: $exactMatch, queryKey: getPartyReadyRoomControllerListQueryKey() }, updater);
   };
 }
 
@@ -26157,8 +26550,16 @@ export const partyReadyRoomControllerCreate = async (createPartyGatheringDto: Cr
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerCreateUrl(),
   {
@@ -26173,11 +26574,13 @@ return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerC
 
 
 
+export const getPartyReadyRoomControllerCreateMutationKey = () => ['partyReadyRoomControllerCreate'] as const;
+
 export const getPartyReadyRoomControllerCreateMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerCreate401 | PartyReadyRoomControllerCreate403 | HttpErrorResponse | PartyReadyRoomControllerCreate429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>, TError,PartyReadyRoomControllerCreateMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCreate>>, TError,PartyReadyRoomControllerCreateMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerCreate'];
+const mutationKey = getPartyReadyRoomControllerCreateMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26320,6 +26723,9 @@ export const prefetchPartyReadyRoomControllerGetQuery = async <TData = Awaited<R
   return queryClient;
 }
 
+/**
+ * @summary Invalidates the {@link usePartyReadyRoomControllerGet} query
+ */
 export const invalidatePartyReadyRoomControllerGet = async (
  queryClient: QueryClient, { notificationId }: PartyReadyRoomControllerGetPathParameters, options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -26331,8 +26737,8 @@ export const invalidatePartyReadyRoomControllerGet = async (
 
 export const useSetPartyReadyRoomControllerGetQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ notificationId }: PartyReadyRoomControllerGetPathParameters,updater: Awaited<ReturnType<typeof partyReadyRoomControllerGet>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerGet>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerGet>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>>({ queryKey: getPartyReadyRoomControllerGetQueryKey({ notificationId }) }, updater);
+  return ({ notificationId }: PartyReadyRoomControllerGetPathParameters,updater: Awaited<ReturnType<typeof partyReadyRoomControllerGet>> | undefined | ((old: Awaited<ReturnType<typeof partyReadyRoomControllerGet>> | undefined) => Awaited<ReturnType<typeof partyReadyRoomControllerGet>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof partyReadyRoomControllerGet>>>({ exact: $exactMatch, queryKey: getPartyReadyRoomControllerGetQueryKey({ notificationId }) }, updater);
   };
 }
 
@@ -26358,8 +26764,16 @@ export const partyReadyRoomControllerApply = async ({ notificationId }: PartyRea
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerApplyUrl({ notificationId }),
   {
@@ -26374,11 +26788,13 @@ return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerA
 
 
 
+export const getPartyReadyRoomControllerApplyMutationKey = () => ['partyReadyRoomControllerApply'] as const;
+
 export const getPartyReadyRoomControllerApplyMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerApply401 | PartyReadyRoomControllerApply403 | HttpErrorResponse | PartyReadyRoomControllerApply429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerApply>>, TError,PartyReadyRoomControllerApplyMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerApply>>, TError,PartyReadyRoomControllerApplyMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerApply'];
+const mutationKey = getPartyReadyRoomControllerApplyMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26431,8 +26847,16 @@ export const partyReadyRoomControllerWithdraw = async ({ notificationId }: Party
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControllerWithdrawUrl({ notificationId }),
   {
@@ -26447,11 +26871,13 @@ return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControlle
 
 
 
+export const getPartyReadyRoomControllerWithdrawMutationKey = () => ['partyReadyRoomControllerWithdraw'] as const;
+
 export const getPartyReadyRoomControllerWithdrawMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerWithdraw401 | PartyReadyRoomControllerWithdraw403 | HttpErrorResponse | PartyReadyRoomControllerWithdraw429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,PartyReadyRoomControllerWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerWithdraw>>, TError,PartyReadyRoomControllerWithdrawMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerWithdraw'];
+const mutationKey = getPartyReadyRoomControllerWithdrawMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26504,8 +26930,16 @@ export const partyReadyRoomControllerRemove = async ({ notificationId }: PartyRe
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControllerRemoveUrl({ notificationId }),
   {
@@ -26520,11 +26954,13 @@ return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControlle
 
 
 
+export const getPartyReadyRoomControllerRemoveMutationKey = () => ['partyReadyRoomControllerRemove'] as const;
+
 export const getPartyReadyRoomControllerRemoveMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerRemove401 | PartyReadyRoomControllerRemove403 | HttpErrorResponse | PartyReadyRoomControllerRemove429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>, TError,PartyReadyRoomControllerRemoveMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerRemove>>, TError,PartyReadyRoomControllerRemoveMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerRemove'];
+const mutationKey = getPartyReadyRoomControllerRemoveMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26577,8 +27013,16 @@ export const partyReadyRoomControllerResolveInvitationTargets = async ({ notific
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomInvitationTargetsDtoOutput>(getPartyReadyRoomControllerResolveInvitationTargetsUrl({ notificationId }),
   {
@@ -26593,11 +27037,13 @@ return mainFetch<PartyReadyRoomInvitationTargetsDtoOutput>(getPartyReadyRoomCont
 
 
 
+export const getPartyReadyRoomControllerResolveInvitationTargetsMutationKey = () => ['partyReadyRoomControllerResolveInvitationTargets'] as const;
+
 export const getPartyReadyRoomControllerResolveInvitationTargetsMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerResolveInvitationTargets401 | PartyReadyRoomControllerResolveInvitationTargets403 | HttpErrorResponse | PartyReadyRoomControllerResolveInvitationTargets429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>, TError,PartyReadyRoomControllerResolveInvitationTargetsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerResolveInvitationTargets>>, TError,PartyReadyRoomControllerResolveInvitationTargetsMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerResolveInvitationTargets'];
+const mutationKey = getPartyReadyRoomControllerResolveInvitationTargetsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26650,8 +27096,16 @@ export const partyReadyRoomControllerObserveParty = async ({ notificationId }: P
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerObservePartyUrl({ notificationId }),
   {
@@ -26666,11 +27120,13 @@ return mainFetch<PartyReadyRoomProjectionDtoOutput>(getPartyReadyRoomControllerO
 
 
 
+export const getPartyReadyRoomControllerObservePartyMutationKey = () => ['partyReadyRoomControllerObserveParty'] as const;
+
 export const getPartyReadyRoomControllerObservePartyMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerObserveParty401 | PartyReadyRoomControllerObserveParty403 | HttpErrorResponse | PartyReadyRoomControllerObserveParty429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>, TError,PartyReadyRoomControllerObservePartyMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerObserveParty>>, TError,PartyReadyRoomControllerObservePartyMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerObserveParty'];
+const mutationKey = getPartyReadyRoomControllerObservePartyMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26723,8 +27179,16 @@ export const partyReadyRoomControllerCancel = async ({ notificationId }: PartyRe
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControllerCancelUrl({ notificationId }),
   {
@@ -26739,11 +27203,13 @@ return mainFetch<PartyReadyRoomClientUpdateDtoOutput>(getPartyReadyRoomControlle
 
 
 
+export const getPartyReadyRoomControllerCancelMutationKey = () => ['partyReadyRoomControllerCancel'] as const;
+
 export const getPartyReadyRoomControllerCancelMutationOptions = <TError = ErrorType<RequestValidationError | PartyReadyRoomControllerCancel401 | PartyReadyRoomControllerCancel403 | HttpErrorResponse | PartyReadyRoomControllerCancel429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>, TError,PartyReadyRoomControllerCancelMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof partyReadyRoomControllerCancel>>, TError,PartyReadyRoomControllerCancelMutationVariables, TContext> => {
 
-const mutationKey = ['partyReadyRoomControllerCancel'];
+const mutationKey = getPartyReadyRoomControllerCancelMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -26894,7 +27360,7 @@ export const prefetchSoundSettingsControllerGetSettingsQuery = async <TData = Aw
 }
 
 /**
- * @summary Get sound settings
+ * @summary Invalidates the {@link useSoundSettingsControllerGetSettings} query
  */
 export const invalidateSoundSettingsControllerGetSettings = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -26910,8 +27376,8 @@ export const invalidateSoundSettingsControllerGetSettings = async (
  */
 export const useSetSoundSettingsControllerGetSettingsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof soundSettingsControllerGetSettings>> | undefined | ((old: Awaited<ReturnType<typeof soundSettingsControllerGetSettings>> | undefined) => Awaited<ReturnType<typeof soundSettingsControllerGetSettings>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof soundSettingsControllerGetSettings>>>({ queryKey: getSoundSettingsControllerGetSettingsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof soundSettingsControllerGetSettings>> | undefined | ((old: Awaited<ReturnType<typeof soundSettingsControllerGetSettings>> | undefined) => Awaited<ReturnType<typeof soundSettingsControllerGetSettings>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof soundSettingsControllerGetSettings>>>({ exact: $exactMatch, queryKey: getSoundSettingsControllerGetSettingsQueryKey() }, updater);
   };
 }
 
@@ -26943,8 +27409,16 @@ export const soundSettingsControllerUpdateSettings = async (updateSoundSettingsD
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<SoundSettingsResponseDto>(getSoundSettingsControllerUpdateSettingsUrl(),
   {
@@ -26959,11 +27433,13 @@ return mainFetch<SoundSettingsResponseDto>(getSoundSettingsControllerUpdateSetti
 
 
 
+export const getSoundSettingsControllerUpdateSettingsMutationKey = () => ['soundSettingsControllerUpdateSettings'] as const;
+
 export const getSoundSettingsControllerUpdateSettingsMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | SoundSettingsControllerUpdateSettings401 | SoundSettingsControllerUpdateSettings403 | SoundSettingsControllerUpdateSettings429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>, TError,SoundSettingsControllerUpdateSettingsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof soundSettingsControllerUpdateSettings>>, TError,SoundSettingsControllerUpdateSettingsMutationVariables, TContext> => {
 
-const mutationKey = ['soundSettingsControllerUpdateSettings'];
+const mutationKey = getSoundSettingsControllerUpdateSettingsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -27133,7 +27609,7 @@ export const prefetchListEventsQuery = async <TData = Awaited<ReturnType<typeof 
 }
 
 /**
- * @summary List guild events
+ * @summary Invalidates the {@link useListEvents} query
  */
 export const invalidateListEvents = async (
  queryClient: QueryClient, { guildId }: ListEventsPathParameters,
@@ -27151,8 +27627,8 @@ export const invalidateListEvents = async (
 export const useSetListEventsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: ListEventsPathParameters,
-    params: ListEventsParams | undefined,updater: Awaited<ReturnType<typeof listEvents>> | undefined | ((old: Awaited<ReturnType<typeof listEvents>> | undefined) => Awaited<ReturnType<typeof listEvents>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listEvents>>>({ queryKey: getListEventsQueryKey({ guildId },params) }, updater);
+    params: ListEventsParams | undefined,updater: Awaited<ReturnType<typeof listEvents>> | undefined | ((old: Awaited<ReturnType<typeof listEvents>> | undefined) => Awaited<ReturnType<typeof listEvents>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listEvents>>>({ exact: $exactMatch, queryKey: getListEventsQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -27186,8 +27662,16 @@ export const createEvent = async ({ guildId }: CreateEventPathParameters,
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<EventMutationResponseDto>(getCreateEventUrl({ guildId }),
   {
@@ -27202,11 +27686,13 @@ return mainFetch<EventMutationResponseDto>(getCreateEventUrl({ guildId }),
 
 
 
+export const getCreateEventMutationKey = () => ['createEvent'] as const;
+
 export const getCreateEventMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | CreateEvent401 | CreateEvent403 | CreateEvent429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,CreateEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,CreateEventMutationVariables, TContext> => {
 
-const mutationKey = ['createEvent'];
+const mutationKey = getCreateEventMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -27360,7 +27846,7 @@ export const prefetchShowEventQuery = async <TData = Awaited<ReturnType<typeof s
 }
 
 /**
- * @summary Get event details
+ * @summary Invalidates the {@link useShowEvent} query
  */
 export const invalidateShowEvent = async (
  queryClient: QueryClient, { guildId, eventId }: ShowEventPathParameters, options?: InvalidateOptions
@@ -27376,8 +27862,8 @@ export const invalidateShowEvent = async (
  */
 export const useSetShowEventQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: ShowEventPathParameters,updater: Awaited<ReturnType<typeof showEvent>> | undefined | ((old: Awaited<ReturnType<typeof showEvent>> | undefined) => Awaited<ReturnType<typeof showEvent>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof showEvent>>>({ queryKey: getShowEventQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: ShowEventPathParameters,updater: Awaited<ReturnType<typeof showEvent>> | undefined | ((old: Awaited<ReturnType<typeof showEvent>> | undefined) => Awaited<ReturnType<typeof showEvent>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof showEvent>>>({ exact: $exactMatch, queryKey: getShowEventQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -27419,11 +27905,13 @@ export const deleteEvent = async ({ guildId, eventId }: DeleteEventPathParameter
 
 
 
+export const getDeleteEventMutationKey = () => ['deleteEvent'] as const;
+
 export const getDeleteEventMutationOptions = <TError = ErrorType<RequestValidationError | DeleteEvent401 | DeleteEvent403 | HttpErrorResponse | DeleteEvent429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEvent>>, TError,DeleteEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteEvent>>, TError,DeleteEventMutationVariables, TContext> => {
 
-const mutationKey = ['deleteEvent'];
+const mutationKey = getDeleteEventMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -27483,8 +27971,16 @@ export const updateEvent = async ({ guildId, eventId }: UpdateEventPathParameter
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<EventMutationResponseDto>(getUpdateEventUrl({ guildId, eventId }),
   {
@@ -27499,11 +27995,13 @@ return mainFetch<EventMutationResponseDto>(getUpdateEventUrl({ guildId, eventId 
 
 
 
+export const getUpdateEventMutationKey = () => ['updateEvent'] as const;
+
 export const getUpdateEventMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | UpdateEvent401 | UpdateEvent403 | UpdateEvent429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext> => {
 
-const mutationKey = ['updateEvent'];
+const mutationKey = getUpdateEventMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -27657,7 +28155,7 @@ export const prefetchShowEventOverviewQuery = async <TData = Awaited<ReturnType<
 }
 
 /**
- * @summary Get event overview
+ * @summary Invalidates the {@link useShowEventOverview} query
  */
 export const invalidateShowEventOverview = async (
  queryClient: QueryClient, { guildId, eventId }: ShowEventOverviewPathParameters, options?: InvalidateOptions
@@ -27673,8 +28171,8 @@ export const invalidateShowEventOverview = async (
  */
 export const useSetShowEventOverviewQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: ShowEventOverviewPathParameters,updater: Awaited<ReturnType<typeof showEventOverview>> | undefined | ((old: Awaited<ReturnType<typeof showEventOverview>> | undefined) => Awaited<ReturnType<typeof showEventOverview>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof showEventOverview>>>({ queryKey: getShowEventOverviewQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: ShowEventOverviewPathParameters,updater: Awaited<ReturnType<typeof showEventOverview>> | undefined | ((old: Awaited<ReturnType<typeof showEventOverview>> | undefined) => Awaited<ReturnType<typeof showEventOverview>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof showEventOverview>>>({ exact: $exactMatch, queryKey: getShowEventOverviewQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -27801,7 +28299,7 @@ export const prefetchShowEventWrappedQuery = async <TData = Awaited<ReturnType<t
 }
 
 /**
- * @summary Get event wrapped summary
+ * @summary Invalidates the {@link useShowEventWrapped} query
  */
 export const invalidateShowEventWrapped = async (
  queryClient: QueryClient, { guildId, eventId }: ShowEventWrappedPathParameters, options?: InvalidateOptions
@@ -27817,8 +28315,8 @@ export const invalidateShowEventWrapped = async (
  */
 export const useSetShowEventWrappedQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: ShowEventWrappedPathParameters,updater: Awaited<ReturnType<typeof showEventWrapped>> | undefined | ((old: Awaited<ReturnType<typeof showEventWrapped>> | undefined) => Awaited<ReturnType<typeof showEventWrapped>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof showEventWrapped>>>({ queryKey: getShowEventWrappedQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: ShowEventWrappedPathParameters,updater: Awaited<ReturnType<typeof showEventWrapped>> | undefined | ((old: Awaited<ReturnType<typeof showEventWrapped>> | undefined) => Awaited<ReturnType<typeof showEventWrapped>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof showEventWrapped>>>({ exact: $exactMatch, queryKey: getShowEventWrappedQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -27945,7 +28443,7 @@ export const prefetchListEventMapsQuery = async <TData = Awaited<ReturnType<type
 }
 
 /**
- * @summary Get event maps
+ * @summary Invalidates the {@link useListEventMaps} query
  */
 export const invalidateListEventMaps = async (
  queryClient: QueryClient, { guildId, eventId }: ListEventMapsPathParameters, options?: InvalidateOptions
@@ -27961,8 +28459,8 @@ export const invalidateListEventMaps = async (
  */
 export const useSetListEventMapsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: ListEventMapsPathParameters,updater: Awaited<ReturnType<typeof listEventMaps>> | undefined | ((old: Awaited<ReturnType<typeof listEventMaps>> | undefined) => Awaited<ReturnType<typeof listEventMaps>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventMaps>>>({ queryKey: getListEventMapsQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: ListEventMapsPathParameters,updater: Awaited<ReturnType<typeof listEventMaps>> | undefined | ((old: Awaited<ReturnType<typeof listEventMaps>> | undefined) => Awaited<ReturnType<typeof listEventMaps>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventMaps>>>({ exact: $exactMatch, queryKey: getListEventMapsQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -28004,11 +28502,13 @@ export const recalculateEventPoints = async ({ guildId, eventId }: RecalculateEv
 
 
 
+export const getRecalculateEventPointsMutationKey = () => ['recalculateEventPoints'] as const;
+
 export const getRecalculateEventPointsMutationOptions = <TError = ErrorType<RequestValidationError | RecalculateEventPoints401 | RecalculateEventPoints403 | HttpErrorResponse | RecalculateEventPoints429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recalculateEventPoints>>, TError,RecalculateEventPointsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof recalculateEventPoints>>, TError,RecalculateEventPointsMutationVariables, TContext> => {
 
-const mutationKey = ['recalculateEventPoints'];
+const mutationKey = getRecalculateEventPointsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28068,8 +28568,16 @@ export const eventsAssignmentControllerAssignMember = async ({ guildId, eventId,
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerAssignMemberUrl({ guildId, eventId, mapId }),
   {
@@ -28084,11 +28592,13 @@ return mainFetch<void>(getEventsAssignmentControllerAssignMemberUrl({ guildId, e
 
 
 
+export const getEventsAssignmentControllerAssignMemberMutationKey = () => ['eventsAssignmentControllerAssignMember'] as const;
+
 export const getEventsAssignmentControllerAssignMemberMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAssignMember401 | EventsAssignmentControllerAssignMember403 | HttpErrorResponse | EventsAssignmentControllerAssignMember429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>, TError,EventsAssignmentControllerAssignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMember>>, TError,EventsAssignmentControllerAssignMemberMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerAssignMember'];
+const mutationKey = getEventsAssignmentControllerAssignMemberMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28166,11 +28676,13 @@ export const eventsAssignmentControllerUnassignMember = async ({ guildId, eventI
 
 
 
+export const getEventsAssignmentControllerUnassignMemberMutationKey = () => ['eventsAssignmentControllerUnassignMember'] as const;
+
 export const getEventsAssignmentControllerUnassignMemberMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerUnassignMember401 | EventsAssignmentControllerUnassignMember403 | HttpErrorResponse | EventsAssignmentControllerUnassignMember429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>, TError,EventsAssignmentControllerUnassignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUnassignMember>>, TError,EventsAssignmentControllerUnassignMemberMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerUnassignMember'];
+const mutationKey = getEventsAssignmentControllerUnassignMemberMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28239,11 +28751,13 @@ export const eventsAssignmentControllerSelfAssignMember = async ({ guildId, even
 
 
 
+export const getEventsAssignmentControllerSelfAssignMemberMutationKey = () => ['eventsAssignmentControllerSelfAssignMember'] as const;
+
 export const getEventsAssignmentControllerSelfAssignMemberMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerSelfAssignMember401 | EventsAssignmentControllerSelfAssignMember403 | HttpErrorResponse | EventsAssignmentControllerSelfAssignMember429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>, TError,EventsAssignmentControllerSelfAssignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfAssignMember>>, TError,EventsAssignmentControllerSelfAssignMemberMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerSelfAssignMember'];
+const mutationKey = getEventsAssignmentControllerSelfAssignMemberMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28312,11 +28826,13 @@ export const eventsAssignmentControllerSelfUnassignMember = async ({ guildId, ev
 
 
 
+export const getEventsAssignmentControllerSelfUnassignMemberMutationKey = () => ['eventsAssignmentControllerSelfUnassignMember'] as const;
+
 export const getEventsAssignmentControllerSelfUnassignMemberMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerSelfUnassignMember401 | EventsAssignmentControllerSelfUnassignMember403 | HttpErrorResponse | EventsAssignmentControllerSelfUnassignMember429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>, TError,EventsAssignmentControllerSelfUnassignMemberMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerSelfUnassignMember>>, TError,EventsAssignmentControllerSelfUnassignMemberMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerSelfUnassignMember'];
+const mutationKey = getEventsAssignmentControllerSelfUnassignMemberMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28376,8 +28892,16 @@ export const eventsAssignmentControllerAddHero = async ({ guildId, eventId }: Ev
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerAddHeroUrl({ guildId, eventId }),
   {
@@ -28392,11 +28916,13 @@ return mainFetch<void>(getEventsAssignmentControllerAddHeroUrl({ guildId, eventI
 
 
 
+export const getEventsAssignmentControllerAddHeroMutationKey = () => ['eventsAssignmentControllerAddHero'] as const;
+
 export const getEventsAssignmentControllerAddHeroMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAddHero401 | EventsAssignmentControllerAddHero403 | EventsAssignmentControllerAddHero429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>, TError,EventsAssignmentControllerAddHeroMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddHero>>, TError,EventsAssignmentControllerAddHeroMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerAddHero'];
+const mutationKey = getEventsAssignmentControllerAddHeroMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28465,11 +28991,13 @@ export const eventsAssignmentControllerDeleteHero = async ({ guildId, eventId, h
 
 
 
+export const getEventsAssignmentControllerDeleteHeroMutationKey = () => ['eventsAssignmentControllerDeleteHero'] as const;
+
 export const getEventsAssignmentControllerDeleteHeroMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerDeleteHero401 | EventsAssignmentControllerDeleteHero403 | EventsAssignmentControllerDeleteHero429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteHero>>, TError,EventsAssignmentControllerDeleteHeroMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteHero>>, TError,EventsAssignmentControllerDeleteHeroMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerDeleteHero'];
+const mutationKey = getEventsAssignmentControllerDeleteHeroMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28529,8 +29057,16 @@ export const eventsAssignmentControllerUpdateHero = async ({ guildId, eventId, h
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerUpdateHeroUrl({ guildId, eventId, heroId }),
   {
@@ -28545,11 +29081,13 @@ return mainFetch<void>(getEventsAssignmentControllerUpdateHeroUrl({ guildId, eve
 
 
 
+export const getEventsAssignmentControllerUpdateHeroMutationKey = () => ['eventsAssignmentControllerUpdateHero'] as const;
+
 export const getEventsAssignmentControllerUpdateHeroMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerUpdateHero401 | EventsAssignmentControllerUpdateHero403 | EventsAssignmentControllerUpdateHero429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateHero>>, TError,EventsAssignmentControllerUpdateHeroMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateHero>>, TError,EventsAssignmentControllerUpdateHeroMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerUpdateHero'];
+const mutationKey = getEventsAssignmentControllerUpdateHeroMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28609,8 +29147,16 @@ export const eventsAssignmentControllerAddMap = async ({ guildId, eventId, heroI
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<EventMapResponseDtoOutput>(getEventsAssignmentControllerAddMapUrl({ guildId, eventId, heroId }),
   {
@@ -28625,11 +29171,13 @@ return mainFetch<EventMapResponseDtoOutput>(getEventsAssignmentControllerAddMapU
 
 
 
+export const getEventsAssignmentControllerAddMapMutationKey = () => ['eventsAssignmentControllerAddMap'] as const;
+
 export const getEventsAssignmentControllerAddMapMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAddMap401 | EventsAssignmentControllerAddMap403 | EventsAssignmentControllerAddMap429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddMap>>, TError,EventsAssignmentControllerAddMapMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAddMap>>, TError,EventsAssignmentControllerAddMapMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerAddMap'];
+const mutationKey = getEventsAssignmentControllerAddMapMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28698,11 +29246,13 @@ export const eventsAssignmentControllerDeleteMap = async ({ guildId, eventId, he
 
 
 
+export const getEventsAssignmentControllerDeleteMapMutationKey = () => ['eventsAssignmentControllerDeleteMap'] as const;
+
 export const getEventsAssignmentControllerDeleteMapMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerDeleteMap401 | EventsAssignmentControllerDeleteMap403 | EventsAssignmentControllerDeleteMap429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteMap>>, TError,EventsAssignmentControllerDeleteMapMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteMap>>, TError,EventsAssignmentControllerDeleteMapMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerDeleteMap'];
+const mutationKey = getEventsAssignmentControllerDeleteMapMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28856,7 +29406,7 @@ export const prefetchEventsAssignmentControllerGetLocationsQuery = async <TData 
 }
 
 /**
- * @summary Get hero locations
+ * @summary Invalidates the {@link useEventsAssignmentControllerGetLocations} query
  */
 export const invalidateEventsAssignmentControllerGetLocations = async (
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsAssignmentControllerGetLocationsPathParameters, options?: InvalidateOptions
@@ -28872,8 +29422,8 @@ export const invalidateEventsAssignmentControllerGetLocations = async (
  */
 export const useSetEventsAssignmentControllerGetLocationsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId }: EventsAssignmentControllerGetLocationsPathParameters,updater: Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>> | undefined | ((old: Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>> | undefined) => Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>>>({ queryKey: getEventsAssignmentControllerGetLocationsQueryKey({ guildId, eventId, heroId }) }, updater);
+  return ({ guildId, eventId, heroId }: EventsAssignmentControllerGetLocationsPathParameters,updater: Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>> | undefined | ((old: Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>> | undefined) => Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsAssignmentControllerGetLocations>>>({ exact: $exactMatch, queryKey: getEventsAssignmentControllerGetLocationsQueryKey({ guildId, eventId, heroId }) }, updater);
   };
 }
 
@@ -28906,8 +29456,16 @@ export const eventsAssignmentControllerCreateLocation = async ({ guildId, eventI
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerCreateLocationUrl({ guildId, eventId, heroId }),
   {
@@ -28922,11 +29480,13 @@ return mainFetch<void>(getEventsAssignmentControllerCreateLocationUrl({ guildId,
 
 
 
+export const getEventsAssignmentControllerCreateLocationMutationKey = () => ['eventsAssignmentControllerCreateLocation'] as const;
+
 export const getEventsAssignmentControllerCreateLocationMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsAssignmentControllerCreateLocation401 | EventsAssignmentControllerCreateLocation403 | EventsAssignmentControllerCreateLocation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>, TError,EventsAssignmentControllerCreateLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerCreateLocation>>, TError,EventsAssignmentControllerCreateLocationMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerCreateLocation'];
+const mutationKey = getEventsAssignmentControllerCreateLocationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -28995,11 +29555,13 @@ export const eventsAssignmentControllerDeleteLocation = async ({ guildId, eventI
 
 
 
+export const getEventsAssignmentControllerDeleteLocationMutationKey = () => ['eventsAssignmentControllerDeleteLocation'] as const;
+
 export const getEventsAssignmentControllerDeleteLocationMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerDeleteLocation401 | EventsAssignmentControllerDeleteLocation403 | HttpErrorResponse | EventsAssignmentControllerDeleteLocation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>, TError,EventsAssignmentControllerDeleteLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerDeleteLocation>>, TError,EventsAssignmentControllerDeleteLocationMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerDeleteLocation'];
+const mutationKey = getEventsAssignmentControllerDeleteLocationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29059,8 +29621,16 @@ export const eventsAssignmentControllerUpdateLocation = async ({ guildId, eventI
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerUpdateLocationUrl({ guildId, eventId, heroId, locationId }),
   {
@@ -29075,11 +29645,13 @@ return mainFetch<void>(getEventsAssignmentControllerUpdateLocationUrl({ guildId,
 
 
 
+export const getEventsAssignmentControllerUpdateLocationMutationKey = () => ['eventsAssignmentControllerUpdateLocation'] as const;
+
 export const getEventsAssignmentControllerUpdateLocationMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerUpdateLocation401 | EventsAssignmentControllerUpdateLocation403 | HttpErrorResponse | EventsAssignmentControllerUpdateLocation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>, TError,EventsAssignmentControllerUpdateLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerUpdateLocation>>, TError,EventsAssignmentControllerUpdateLocationMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerUpdateLocation'];
+const mutationKey = getEventsAssignmentControllerUpdateLocationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29139,8 +29711,16 @@ export const eventsAssignmentControllerReorderLocations = async ({ guildId, even
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerReorderLocationsUrl({ guildId, eventId, heroId }),
   {
@@ -29155,11 +29735,13 @@ return mainFetch<void>(getEventsAssignmentControllerReorderLocationsUrl({ guildI
 
 
 
+export const getEventsAssignmentControllerReorderLocationsMutationKey = () => ['eventsAssignmentControllerReorderLocations'] as const;
+
 export const getEventsAssignmentControllerReorderLocationsMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerReorderLocations401 | EventsAssignmentControllerReorderLocations403 | EventsAssignmentControllerReorderLocations429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerReorderLocations>>, TError,EventsAssignmentControllerReorderLocationsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerReorderLocations>>, TError,EventsAssignmentControllerReorderLocationsMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerReorderLocations'];
+const mutationKey = getEventsAssignmentControllerReorderLocationsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29219,8 +29801,16 @@ export const eventsAssignmentControllerAssignMapToLocation = async ({ guildId, e
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsAssignmentControllerAssignMapToLocationUrl({ guildId, eventId, heroId, mapId }),
   {
@@ -29235,11 +29825,13 @@ return mainFetch<void>(getEventsAssignmentControllerAssignMapToLocationUrl({ gui
 
 
 
+export const getEventsAssignmentControllerAssignMapToLocationMutationKey = () => ['eventsAssignmentControllerAssignMapToLocation'] as const;
+
 export const getEventsAssignmentControllerAssignMapToLocationMutationOptions = <TError = ErrorType<RequestValidationError | EventsAssignmentControllerAssignMapToLocation401 | EventsAssignmentControllerAssignMapToLocation403 | HttpErrorResponse | EventsAssignmentControllerAssignMapToLocation429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>, TError,EventsAssignmentControllerAssignMapToLocationMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsAssignmentControllerAssignMapToLocation>>, TError,EventsAssignmentControllerAssignMapToLocationMutationVariables, TContext> => {
 
-const mutationKey = ['eventsAssignmentControllerAssignMapToLocation'];
+const mutationKey = getEventsAssignmentControllerAssignMapToLocationMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29393,7 +29985,7 @@ export const prefetchListPendingParticipationConfirmationsQuery = async <TData =
 }
 
 /**
- * @summary Get participation confirmations
+ * @summary Invalidates the {@link useListPendingParticipationConfirmations} query
  */
 export const invalidateListPendingParticipationConfirmations = async (
  queryClient: QueryClient, { guildId, eventId }: ListPendingParticipationConfirmationsPathParameters, options?: InvalidateOptions
@@ -29409,8 +30001,8 @@ export const invalidateListPendingParticipationConfirmations = async (
  */
 export const useSetListPendingParticipationConfirmationsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: ListPendingParticipationConfirmationsPathParameters,updater: Awaited<ReturnType<typeof listPendingParticipationConfirmations>> | undefined | ((old: Awaited<ReturnType<typeof listPendingParticipationConfirmations>> | undefined) => Awaited<ReturnType<typeof listPendingParticipationConfirmations>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listPendingParticipationConfirmations>>>({ queryKey: getListPendingParticipationConfirmationsQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: ListPendingParticipationConfirmationsPathParameters,updater: Awaited<ReturnType<typeof listPendingParticipationConfirmations>> | undefined | ((old: Awaited<ReturnType<typeof listPendingParticipationConfirmations>> | undefined) => Awaited<ReturnType<typeof listPendingParticipationConfirmations>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listPendingParticipationConfirmations>>>({ exact: $exactMatch, queryKey: getListPendingParticipationConfirmationsQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -29442,8 +30034,16 @@ export const acknowledgeExpiredParticipationConfirmations = async ({ guildId, ev
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput>(getAcknowledgeExpiredParticipationConfirmationsUrl({ guildId, eventId }),
   {
@@ -29458,11 +30058,13 @@ return mainFetch<AcknowledgeExpiredParticipationConfirmationsResponseDtoOutput>(
 
 
 
+export const getAcknowledgeExpiredParticipationConfirmationsMutationKey = () => ['acknowledgeExpiredParticipationConfirmations'] as const;
+
 export const getAcknowledgeExpiredParticipationConfirmationsMutationOptions = <TError = ErrorType<RequestValidationError | AcknowledgeExpiredParticipationConfirmations401 | AcknowledgeExpiredParticipationConfirmations403 | AcknowledgeExpiredParticipationConfirmations429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>, TError,AcknowledgeExpiredParticipationConfirmationsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof acknowledgeExpiredParticipationConfirmations>>, TError,AcknowledgeExpiredParticipationConfirmationsMutationVariables, TContext> => {
 
-const mutationKey = ['acknowledgeExpiredParticipationConfirmations'];
+const mutationKey = getAcknowledgeExpiredParticipationConfirmationsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29531,11 +30133,13 @@ export const confirmParticipationForKill = async ({ guildId, eventId, killId }: 
 
 
 
+export const getConfirmParticipationForKillMutationKey = () => ['confirmParticipationForKill'] as const;
+
 export const getConfirmParticipationForKillMutationOptions = <TError = ErrorType<RequestValidationError | ConfirmParticipationForKill401 | ConfirmParticipationForKill403 | ConfirmParticipationForKill429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmParticipationForKill>>, TError,ConfirmParticipationForKillMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof confirmParticipationForKill>>, TError,ConfirmParticipationForKillMutationVariables, TContext> => {
 
-const mutationKey = ['confirmParticipationForKill'];
+const mutationKey = getConfirmParticipationForKillMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29689,7 +30293,7 @@ export const prefetchListEventRankingQuery = async <TData = Awaited<ReturnType<t
 }
 
 /**
- * @summary Get event ranking
+ * @summary Invalidates the {@link useListEventRanking} query
  */
 export const invalidateListEventRanking = async (
  queryClient: QueryClient, { guildId, eventId }: ListEventRankingPathParameters, options?: InvalidateOptions
@@ -29705,8 +30309,8 @@ export const invalidateListEventRanking = async (
  */
 export const useSetListEventRankingQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: ListEventRankingPathParameters,updater: Awaited<ReturnType<typeof listEventRanking>> | undefined | ((old: Awaited<ReturnType<typeof listEventRanking>> | undefined) => Awaited<ReturnType<typeof listEventRanking>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventRanking>>>({ queryKey: getListEventRankingQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: ListEventRankingPathParameters,updater: Awaited<ReturnType<typeof listEventRanking>> | undefined | ((old: Awaited<ReturnType<typeof listEventRanking>> | undefined) => Awaited<ReturnType<typeof listEventRanking>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventRanking>>>({ exact: $exactMatch, queryKey: getListEventRankingQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -29739,8 +30343,16 @@ export const updateRankingPoints = async ({ guildId, eventId, rankingId }: Updat
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getUpdateRankingPointsUrl({ guildId, eventId, rankingId }),
   {
@@ -29755,11 +30367,13 @@ return mainFetch<void>(getUpdateRankingPointsUrl({ guildId, eventId, rankingId }
 
 
 
+export const getUpdateRankingPointsMutationKey = () => ['updateRankingPoints'] as const;
+
 export const getUpdateRankingPointsMutationOptions = <TError = ErrorType<RequestValidationError | UpdateRankingPoints401 | UpdateRankingPoints403 | HttpErrorResponse | UpdateRankingPoints429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,UpdateRankingPointsMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateRankingPoints>>, TError,UpdateRankingPointsMutationVariables, TContext> => {
 
-const mutationKey = ['updateRankingPoints'];
+const mutationKey = getUpdateRankingPointsMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -29929,7 +30543,7 @@ export const prefetchListEventHeroTimersQuery = async <TData = Awaited<ReturnTyp
 }
 
 /**
- * @summary Get event hero timers
+ * @summary Invalidates the {@link useListEventHeroTimers} query
  */
 export const invalidateListEventHeroTimers = async (
  queryClient: QueryClient, { guildId, eventId }: ListEventHeroTimersPathParameters,
@@ -29947,8 +30561,8 @@ export const invalidateListEventHeroTimers = async (
 export const useSetListEventHeroTimersQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, eventId }: ListEventHeroTimersPathParameters,
-    params: ListEventHeroTimersParams | undefined,updater: Awaited<ReturnType<typeof listEventHeroTimers>> | undefined | ((old: Awaited<ReturnType<typeof listEventHeroTimers>> | undefined) => Awaited<ReturnType<typeof listEventHeroTimers>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventHeroTimers>>>({ queryKey: getListEventHeroTimersQueryKey({ guildId, eventId },params) }, updater);
+    params: ListEventHeroTimersParams | undefined,updater: Awaited<ReturnType<typeof listEventHeroTimers>> | undefined | ((old: Awaited<ReturnType<typeof listEventHeroTimers>> | undefined) => Awaited<ReturnType<typeof listEventHeroTimers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventHeroTimers>>>({ exact: $exactMatch, queryKey: getListEventHeroTimersQueryKey({ guildId, eventId },params) }, updater);
   };
 }
 
@@ -30076,7 +30690,7 @@ export const prefetchEventsRankingControllerGetEventHeroStatsQuery = async <TDat
 }
 
 /**
- * @summary Get event hero stats
+ * @summary Invalidates the {@link useEventsRankingControllerGetEventHeroStats} query
  */
 export const invalidateEventsRankingControllerGetEventHeroStats = async (
  queryClient: QueryClient, { guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters, options?: InvalidateOptions
@@ -30092,8 +30706,8 @@ export const invalidateEventsRankingControllerGetEventHeroStats = async (
  */
 export const useSetEventsRankingControllerGetEventHeroStatsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters,updater: Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>>({ queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: EventsRankingControllerGetEventHeroStatsPathParameters,updater: Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetEventHeroStats>>>({ exact: $exactMatch, queryKey: getEventsRankingControllerGetEventHeroStatsQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -30236,7 +30850,7 @@ export const prefetchEventsRankingControllerGetEventKillHistoryQuery = async <TD
 }
 
 /**
- * @summary Get event kill history
+ * @summary Invalidates the {@link useEventsRankingControllerGetEventKillHistory} query
  */
 export const invalidateEventsRankingControllerGetEventKillHistory = async (
  queryClient: QueryClient, { guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
@@ -30254,8 +30868,8 @@ export const invalidateEventsRankingControllerGetEventKillHistory = async (
 export const useSetEventsRankingControllerGetEventKillHistoryQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
-    params: EventsRankingControllerGetEventKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>>({ queryKey: getEventsRankingControllerGetEventKillHistoryQueryKey({ guildId, eventId },params) }, updater);
+    params: EventsRankingControllerGetEventKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>>({ exact: $exactMatch, queryKey: getEventsRankingControllerGetEventKillHistoryQueryKey({ guildId, eventId },params) }, updater);
   };
 }
 
@@ -30399,7 +31013,7 @@ export const prefetchEventsRankingControllerGetMemberKillHistoryQuery = async <T
 }
 
 /**
- * @summary Get member kill history
+ * @summary Invalidates the {@link useEventsRankingControllerGetMemberKillHistory} query
  */
 export const invalidateEventsRankingControllerGetMemberKillHistory = async (
  queryClient: QueryClient, { guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
@@ -30417,8 +31031,8 @@ export const invalidateEventsRankingControllerGetMemberKillHistory = async (
 export const useSetEventsRankingControllerGetMemberKillHistoryQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
-    params: EventsRankingControllerGetMemberKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>>({ queryKey: getEventsRankingControllerGetMemberKillHistoryQueryKey({ guildId, eventId, memberId },params) }, updater);
+    params: EventsRankingControllerGetMemberKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>>({ exact: $exactMatch, queryKey: getEventsRankingControllerGetMemberKillHistoryQueryKey({ guildId, eventId, memberId },params) }, updater);
   };
 }
 
@@ -30562,7 +31176,7 @@ export const prefetchEventsRankingControllerGetHeroKillHistoryQuery = async <TDa
 }
 
 /**
- * @summary Get hero kill history
+ * @summary Invalidates the {@link useEventsRankingControllerGetHeroKillHistory} query
  */
 export const invalidateEventsRankingControllerGetHeroKillHistory = async (
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
@@ -30580,8 +31194,8 @@ export const invalidateEventsRankingControllerGetHeroKillHistory = async (
 export const useSetEventsRankingControllerGetHeroKillHistoryQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
-    params: EventsRankingControllerGetHeroKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>>({ queryKey: getEventsRankingControllerGetHeroKillHistoryQueryKey({ guildId, eventId, heroId },params) }, updater);
+    params: EventsRankingControllerGetHeroKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>>({ exact: $exactMatch, queryKey: getEventsRankingControllerGetHeroKillHistoryQueryKey({ guildId, eventId, heroId },params) }, updater);
   };
 }
 
@@ -30709,7 +31323,7 @@ export const prefetchEventsRankingControllerGetKillDetailQuery = async <TData = 
 }
 
 /**
- * @summary Get kill details
+ * @summary Invalidates the {@link useEventsRankingControllerGetKillDetail} query
  */
 export const invalidateEventsRankingControllerGetKillDetail = async (
  queryClient: QueryClient, { guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters, options?: InvalidateOptions
@@ -30725,8 +31339,8 @@ export const invalidateEventsRankingControllerGetKillDetail = async (
  */
 export const useSetEventsRankingControllerGetKillDetailQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters,updater: Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>>({ queryKey: getEventsRankingControllerGetKillDetailQueryKey({ guildId, eventId, heroId, killId }) }, updater);
+  return ({ guildId, eventId, heroId, killId }: EventsRankingControllerGetKillDetailPathParameters,updater: Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>> | undefined | ((old: Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>> | undefined) => Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsRankingControllerGetKillDetail>>>({ exact: $exactMatch, queryKey: getEventsRankingControllerGetKillDetailQueryKey({ guildId, eventId, heroId, killId }) }, updater);
   };
 }
 
@@ -30759,8 +31373,16 @@ export const eventsRankingControllerUpdateKillPoint = async ({ guildId, eventId,
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsRankingControllerUpdateKillPointUrl({ guildId, eventId, killId, killPointId }),
   {
@@ -30775,11 +31397,13 @@ return mainFetch<void>(getEventsRankingControllerUpdateKillPointUrl({ guildId, e
 
 
 
+export const getEventsRankingControllerUpdateKillPointMutationKey = () => ['eventsRankingControllerUpdateKillPoint'] as const;
+
 export const getEventsRankingControllerUpdateKillPointMutationOptions = <TError = ErrorType<RequestValidationError | EventsRankingControllerUpdateKillPoint401 | EventsRankingControllerUpdateKillPoint403 | HttpErrorResponse | EventsRankingControllerUpdateKillPoint429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,EventsRankingControllerUpdateKillPointMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsRankingControllerUpdateKillPoint>>, TError,EventsRankingControllerUpdateKillPointMutationVariables, TContext> => {
 
-const mutationKey = ['eventsRankingControllerUpdateKillPoint'];
+const mutationKey = getEventsRankingControllerUpdateKillPointMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -30933,7 +31557,7 @@ export const prefetchEventsMonitoringControllerGetCoordinationQuery = async <TDa
 }
 
 /**
- * @summary Get event coordination overview
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetCoordination} query
  */
 export const invalidateEventsMonitoringControllerGetCoordination = async (
  queryClient: QueryClient, { guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters, options?: InvalidateOptions
@@ -30949,8 +31573,8 @@ export const invalidateEventsMonitoringControllerGetCoordination = async (
  */
 export const useSetEventsMonitoringControllerGetCoordinationQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>>({ queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({ guildId, eventId }) }, updater);
+  return ({ guildId, eventId }: EventsMonitoringControllerGetCoordinationPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetCoordination>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetCoordinationQueryKey({ guildId, eventId }) }, updater);
   };
 }
 
@@ -31077,7 +31701,7 @@ export const prefetchEventsMonitoringControllerGetKillTimelineDataQuery = async 
 }
 
 /**
- * @summary Get kill timeline data
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetKillTimelineData} query
  */
 export const invalidateEventsMonitoringControllerGetKillTimelineData = async (
  queryClient: QueryClient, { guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters, options?: InvalidateOptions
@@ -31093,8 +31717,8 @@ export const invalidateEventsMonitoringControllerGetKillTimelineData = async (
  */
 export const useSetEventsMonitoringControllerGetKillTimelineDataQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>>({ queryKey: getEventsMonitoringControllerGetKillTimelineDataQueryKey({ guildId, eventId, heroId, killId }) }, updater);
+  return ({ guildId, eventId, heroId, killId }: EventsMonitoringControllerGetKillTimelineDataPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetKillTimelineData>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetKillTimelineDataQueryKey({ guildId, eventId, heroId, killId }) }, updater);
   };
 }
 
@@ -31221,7 +31845,7 @@ export const prefetchEventsMonitoringControllerGetHeroCoverageGapsQuery = async 
 }
 
 /**
- * @summary Get hero coverage gaps
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetHeroCoverageGaps} query
  */
 export const invalidateEventsMonitoringControllerGetHeroCoverageGaps = async (
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsMonitoringControllerGetHeroCoverageGapsPathParameters, options?: InvalidateOptions
@@ -31237,8 +31861,8 @@ export const invalidateEventsMonitoringControllerGetHeroCoverageGaps = async (
  */
 export const useSetEventsMonitoringControllerGetHeroCoverageGapsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetHeroCoverageGapsPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>>>({ queryKey: getEventsMonitoringControllerGetHeroCoverageGapsQueryKey({ guildId, eventId, heroId }) }, updater);
+  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetHeroCoverageGapsPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroCoverageGaps>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetHeroCoverageGapsQueryKey({ guildId, eventId, heroId }) }, updater);
   };
 }
 
@@ -31365,7 +31989,7 @@ export const prefetchEventsMonitoringControllerGetMapCoverageGapsQuery = async <
 }
 
 /**
- * @summary Get map coverage gaps
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetMapCoverageGaps} query
  */
 export const invalidateEventsMonitoringControllerGetMapCoverageGaps = async (
  queryClient: QueryClient, { guildId, eventId, mapId }: EventsMonitoringControllerGetMapCoverageGapsPathParameters, options?: InvalidateOptions
@@ -31381,8 +32005,8 @@ export const invalidateEventsMonitoringControllerGetMapCoverageGaps = async (
  */
 export const useSetEventsMonitoringControllerGetMapCoverageGapsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, mapId }: EventsMonitoringControllerGetMapCoverageGapsPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>>>({ queryKey: getEventsMonitoringControllerGetMapCoverageGapsQueryKey({ guildId, eventId, mapId }) }, updater);
+  return ({ guildId, eventId, mapId }: EventsMonitoringControllerGetMapCoverageGapsPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetMapCoverageGaps>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetMapCoverageGapsQueryKey({ guildId, eventId, mapId }) }, updater);
   };
 }
 
@@ -31509,7 +32133,7 @@ export const prefetchEventsMonitoringControllerGetActiveGapForMapQuery = async <
 }
 
 /**
- * @summary Get active coverage gap for map
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetActiveGapForMap} query
  */
 export const invalidateEventsMonitoringControllerGetActiveGapForMap = async (
  queryClient: QueryClient, { guildId, eventId, mapId }: EventsMonitoringControllerGetActiveGapForMapPathParameters, options?: InvalidateOptions
@@ -31525,8 +32149,8 @@ export const invalidateEventsMonitoringControllerGetActiveGapForMap = async (
  */
 export const useSetEventsMonitoringControllerGetActiveGapForMapQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, mapId }: EventsMonitoringControllerGetActiveGapForMapPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>>>({ queryKey: getEventsMonitoringControllerGetActiveGapForMapQueryKey({ guildId, eventId, mapId }) }, updater);
+  return ({ guildId, eventId, mapId }: EventsMonitoringControllerGetActiveGapForMapPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapForMap>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetActiveGapForMapQueryKey({ guildId, eventId, mapId }) }, updater);
   };
 }
 
@@ -31653,7 +32277,7 @@ export const prefetchEventsMonitoringControllerGetActiveGapsForHeroQuery = async
 }
 
 /**
- * @summary Get all active coverage gaps for hero
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetActiveGapsForHero} query
  */
 export const invalidateEventsMonitoringControllerGetActiveGapsForHero = async (
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsMonitoringControllerGetActiveGapsForHeroPathParameters, options?: InvalidateOptions
@@ -31669,8 +32293,8 @@ export const invalidateEventsMonitoringControllerGetActiveGapsForHero = async (
  */
 export const useSetEventsMonitoringControllerGetActiveGapsForHeroQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetActiveGapsForHeroPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>>>({ queryKey: getEventsMonitoringControllerGetActiveGapsForHeroQueryKey({ guildId, eventId, heroId }) }, updater);
+  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetActiveGapsForHeroPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetActiveGapsForHero>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetActiveGapsForHeroQueryKey({ guildId, eventId, heroId }) }, updater);
   };
 }
 
@@ -31797,7 +32421,7 @@ export const prefetchEventsMonitoringControllerGetHeroPresenceStatsQuery = async
 }
 
 /**
- * @summary Get presence statistics for hero
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetHeroPresenceStats} query
  */
 export const invalidateEventsMonitoringControllerGetHeroPresenceStats = async (
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsMonitoringControllerGetHeroPresenceStatsPathParameters, options?: InvalidateOptions
@@ -31813,8 +32437,8 @@ export const invalidateEventsMonitoringControllerGetHeroPresenceStats = async (
  */
 export const useSetEventsMonitoringControllerGetHeroPresenceStatsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetHeroPresenceStatsPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>>>({ queryKey: getEventsMonitoringControllerGetHeroPresenceStatsQueryKey({ guildId, eventId, heroId }) }, updater);
+  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetHeroPresenceStatsPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroPresenceStats>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetHeroPresenceStatsQueryKey({ guildId, eventId, heroId }) }, updater);
   };
 }
 
@@ -31941,7 +32565,7 @@ export const prefetchEventsMonitoringControllerGetHeroRespawnConfigQuery = async
 }
 
 /**
- * @summary Get hero respawn configuration
+ * @summary Invalidates the {@link useEventsMonitoringControllerGetHeroRespawnConfig} query
  */
 export const invalidateEventsMonitoringControllerGetHeroRespawnConfig = async (
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsMonitoringControllerGetHeroRespawnConfigPathParameters, options?: InvalidateOptions
@@ -31957,8 +32581,8 @@ export const invalidateEventsMonitoringControllerGetHeroRespawnConfig = async (
  */
 export const useSetEventsMonitoringControllerGetHeroRespawnConfigQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetHeroRespawnConfigPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>>>({ queryKey: getEventsMonitoringControllerGetHeroRespawnConfigQueryKey({ guildId, eventId, heroId }) }, updater);
+  return ({ guildId, eventId, heroId }: EventsMonitoringControllerGetHeroRespawnConfigPathParameters,updater: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>> | undefined | ((old: Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>> | undefined) => Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof eventsMonitoringControllerGetHeroRespawnConfig>>>({ exact: $exactMatch, queryKey: getEventsMonitoringControllerGetHeroRespawnConfigQueryKey({ guildId, eventId, heroId }) }, updater);
   };
 }
 
@@ -31991,8 +32615,16 @@ export const eventsMonitoringControllerCloseRespawnWindow = async ({ guildId, ev
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsMonitoringControllerCloseRespawnWindowUrl({ guildId, eventId, heroId }),
   {
@@ -32007,11 +32639,13 @@ return mainFetch<void>(getEventsMonitoringControllerCloseRespawnWindowUrl({ guil
 
 
 
+export const getEventsMonitoringControllerCloseRespawnWindowMutationKey = () => ['eventsMonitoringControllerCloseRespawnWindow'] as const;
+
 export const getEventsMonitoringControllerCloseRespawnWindowMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsMonitoringControllerCloseRespawnWindow401 | EventsMonitoringControllerCloseRespawnWindow403 | EventsMonitoringControllerCloseRespawnWindow429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>, TError,EventsMonitoringControllerCloseRespawnWindowMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerCloseRespawnWindow>>, TError,EventsMonitoringControllerCloseRespawnWindowMutationVariables, TContext> => {
 
-const mutationKey = ['eventsMonitoringControllerCloseRespawnWindow'];
+const mutationKey = getEventsMonitoringControllerCloseRespawnWindowMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32071,8 +32705,16 @@ export const eventsMonitoringControllerOpenRespawnWindow = async ({ guildId, eve
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<void>(getEventsMonitoringControllerOpenRespawnWindowUrl({ guildId, eventId, heroId }),
   {
@@ -32087,11 +32729,13 @@ return mainFetch<void>(getEventsMonitoringControllerOpenRespawnWindowUrl({ guild
 
 
 
+export const getEventsMonitoringControllerOpenRespawnWindowMutationKey = () => ['eventsMonitoringControllerOpenRespawnWindow'] as const;
+
 export const getEventsMonitoringControllerOpenRespawnWindowMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsMonitoringControllerOpenRespawnWindow401 | EventsMonitoringControllerOpenRespawnWindow403 | EventsMonitoringControllerOpenRespawnWindow429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>, TError,EventsMonitoringControllerOpenRespawnWindowMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof eventsMonitoringControllerOpenRespawnWindow>>, TError,EventsMonitoringControllerOpenRespawnWindowMutationVariables, TContext> => {
 
-const mutationKey = ['eventsMonitoringControllerOpenRespawnWindow'];
+const mutationKey = getEventsMonitoringControllerOpenRespawnWindowMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32244,7 +32888,7 @@ export const prefetchListPinnedEventsQuery = async <TData = Awaited<ReturnType<t
 }
 
 /**
- * @summary List active pinned events
+ * @summary Invalidates the {@link useListPinnedEvents} query
  */
 export const invalidateListPinnedEvents = async (
  queryClient: QueryClient, { guildId }: ListPinnedEventsPathParameters, options?: InvalidateOptions
@@ -32260,8 +32904,8 @@ export const invalidateListPinnedEvents = async (
  */
 export const useSetListPinnedEventsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ListPinnedEventsPathParameters,updater: Awaited<ReturnType<typeof listPinnedEvents>> | undefined | ((old: Awaited<ReturnType<typeof listPinnedEvents>> | undefined) => Awaited<ReturnType<typeof listPinnedEvents>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof listPinnedEvents>>>({ queryKey: getListPinnedEventsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: ListPinnedEventsPathParameters,updater: Awaited<ReturnType<typeof listPinnedEvents>> | undefined | ((old: Awaited<ReturnType<typeof listPinnedEvents>> | undefined) => Awaited<ReturnType<typeof listPinnedEvents>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listPinnedEvents>>>({ exact: $exactMatch, queryKey: getListPinnedEventsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -32302,11 +32946,13 @@ export const pinEvent = async ({ guildId, eventId }: PinEventPathParameters, opt
 
 
 
+export const getPinEventMutationKey = () => ['pinEvent'] as const;
+
 export const getPinEventMutationOptions = <TError = ErrorType<RequestValidationError | PinEvent401 | PinEvent403 | HttpErrorResponse | PinEvent429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,PinEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof pinEvent>>, TError,PinEventMutationVariables, TContext> => {
 
-const mutationKey = ['pinEvent'];
+const mutationKey = getPinEventMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32374,11 +33020,13 @@ export const unpinEvent = async ({ guildId, eventId }: UnpinEventPathParameters,
 
 
 
+export const getUnpinEventMutationKey = () => ['unpinEvent'] as const;
+
 export const getUnpinEventMutationOptions = <TError = ErrorType<RequestValidationError | UnpinEvent401 | UnpinEvent403 | UnpinEvent429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unpinEvent>>, TError,UnpinEventMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof unpinEvent>>, TError,UnpinEventMutationVariables, TContext> => {
 
-const mutationKey = ['unpinEvent'];
+const mutationKey = getUnpinEventMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32532,7 +33180,7 @@ export const prefetchMapsControllerGetMapsQuery = async <TData = Awaited<ReturnT
 }
 
 /**
- * @summary Get all game maps
+ * @summary Invalidates the {@link useMapsControllerGetMaps} query
  */
 export const invalidateMapsControllerGetMaps = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -32548,8 +33196,8 @@ export const invalidateMapsControllerGetMaps = async (
  */
 export const useSetMapsControllerGetMapsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof mapsControllerGetMaps>> | undefined | ((old: Awaited<ReturnType<typeof mapsControllerGetMaps>> | undefined) => Awaited<ReturnType<typeof mapsControllerGetMaps>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof mapsControllerGetMaps>>>({ queryKey: getMapsControllerGetMapsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof mapsControllerGetMaps>> | undefined | ((old: Awaited<ReturnType<typeof mapsControllerGetMaps>> | undefined) => Awaited<ReturnType<typeof mapsControllerGetMaps>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof mapsControllerGetMaps>>>({ exact: $exactMatch, queryKey: getMapsControllerGetMapsQueryKey() }, updater);
   };
 }
 
@@ -32676,7 +33324,7 @@ export const prefetchMapTemplatesControllerGetTemplatesQuery = async <TData = Aw
 }
 
 /**
- * @summary Get map templates
+ * @summary Invalidates the {@link useMapTemplatesControllerGetTemplates} query
  */
 export const invalidateMapTemplatesControllerGetTemplates = async (
  queryClient: QueryClient, { guildId }: MapTemplatesControllerGetTemplatesPathParameters, options?: InvalidateOptions
@@ -32692,8 +33340,8 @@ export const invalidateMapTemplatesControllerGetTemplates = async (
  */
 export const useSetMapTemplatesControllerGetTemplatesQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: MapTemplatesControllerGetTemplatesPathParameters,updater: Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>> | undefined | ((old: Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>> | undefined) => Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>>>({ queryKey: getMapTemplatesControllerGetTemplatesQueryKey({ guildId }) }, updater);
+  return ({ guildId }: MapTemplatesControllerGetTemplatesPathParameters,updater: Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>> | undefined | ((old: Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>> | undefined) => Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof mapTemplatesControllerGetTemplates>>>({ exact: $exactMatch, queryKey: getMapTemplatesControllerGetTemplatesQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -32726,8 +33374,16 @@ export const mapTemplatesControllerCreateTemplate = async ({ guildId }: MapTempl
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<MapTemplateResponseDto>(getMapTemplatesControllerCreateTemplateUrl({ guildId }),
   {
@@ -32742,11 +33398,13 @@ return mainFetch<MapTemplateResponseDto>(getMapTemplatesControllerCreateTemplate
 
 
 
+export const getMapTemplatesControllerCreateTemplateMutationKey = () => ['mapTemplatesControllerCreateTemplate'] as const;
+
 export const getMapTemplatesControllerCreateTemplateMutationOptions = <TError = ErrorType<RequestValidationError | MapTemplatesControllerCreateTemplate401 | MapTemplatesControllerCreateTemplate403 | MapTemplatesControllerCreateTemplate429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerCreateTemplate>>, TError,MapTemplatesControllerCreateTemplateMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerCreateTemplate>>, TError,MapTemplatesControllerCreateTemplateMutationVariables, TContext> => {
 
-const mutationKey = ['mapTemplatesControllerCreateTemplate'];
+const mutationKey = getMapTemplatesControllerCreateTemplateMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32806,8 +33464,16 @@ export const mapTemplatesControllerUpdateTemplate = async ({ guildId, templateId
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<MapTemplateResponseDto>(getMapTemplatesControllerUpdateTemplateUrl({ guildId, templateId }),
   {
@@ -32822,11 +33488,13 @@ return mainFetch<MapTemplateResponseDto>(getMapTemplatesControllerUpdateTemplate
 
 
 
+export const getMapTemplatesControllerUpdateTemplateMutationKey = () => ['mapTemplatesControllerUpdateTemplate'] as const;
+
 export const getMapTemplatesControllerUpdateTemplateMutationOptions = <TError = ErrorType<RequestValidationError | MapTemplatesControllerUpdateTemplate401 | MapTemplatesControllerUpdateTemplate403 | MapTemplatesControllerUpdateTemplate429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>, TError,MapTemplatesControllerUpdateTemplateMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerUpdateTemplate>>, TError,MapTemplatesControllerUpdateTemplateMutationVariables, TContext> => {
 
-const mutationKey = ['mapTemplatesControllerUpdateTemplate'];
+const mutationKey = getMapTemplatesControllerUpdateTemplateMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32895,11 +33563,13 @@ export const mapTemplatesControllerDeleteTemplate = async ({ guildId, templateId
 
 
 
+export const getMapTemplatesControllerDeleteTemplateMutationKey = () => ['mapTemplatesControllerDeleteTemplate'] as const;
+
 export const getMapTemplatesControllerDeleteTemplateMutationOptions = <TError = ErrorType<RequestValidationError | MapTemplatesControllerDeleteTemplate401 | MapTemplatesControllerDeleteTemplate403 | MapTemplatesControllerDeleteTemplate429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerDeleteTemplate>>, TError,MapTemplatesControllerDeleteTemplateMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof mapTemplatesControllerDeleteTemplate>>, TError,MapTemplatesControllerDeleteTemplateMutationVariables, TContext> => {
 
-const mutationKey = ['mapTemplatesControllerDeleteTemplate'];
+const mutationKey = getMapTemplatesControllerDeleteTemplateMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -32958,8 +33628,16 @@ export const killsControllerCreateKill = async (createKillDto: CreateKillDto, op
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<CreateKillResponseDtoOutput>(getKillsControllerCreateKillUrl(),
   {
@@ -32974,11 +33652,13 @@ return mainFetch<CreateKillResponseDtoOutput>(getKillsControllerCreateKillUrl(),
 
 
 
+export const getKillsControllerCreateKillMutationKey = () => ['killsControllerCreateKill'] as const;
+
 export const getKillsControllerCreateKillMutationOptions = <TError = ErrorType<HttpErrorResponse | RequestValidationError | KillsControllerCreateKill401 | KillsControllerCreateKill403 | KillsControllerCreateKill429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof killsControllerCreateKill>>, TError,KillsControllerCreateKillMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof killsControllerCreateKill>>, TError,KillsControllerCreateKillMutationVariables, TContext> => {
 
-const mutationKey = ['killsControllerCreateKill'];
+const mutationKey = getKillsControllerCreateKillMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -33156,7 +33836,7 @@ export const prefetchKillsControllerGetGuildKillStatsQuery = async <TData = Awai
 }
 
 /**
- * @summary Get guild kill statistics
+ * @summary Invalidates the {@link useKillsControllerGetGuildKillStats} query
  */
 export const invalidateKillsControllerGetGuildKillStats = async (
  queryClient: QueryClient, { guildId }: KillsControllerGetGuildKillStatsPathParameters,
@@ -33174,8 +33854,8 @@ export const invalidateKillsControllerGetGuildKillStats = async (
 export const useSetKillsControllerGetGuildKillStatsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: KillsControllerGetGuildKillStatsPathParameters,
-    params: KillsControllerGetGuildKillStatsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetGuildKillStats>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetGuildKillStats>> | undefined) => Awaited<ReturnType<typeof killsControllerGetGuildKillStats>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>>({ queryKey: getKillsControllerGetGuildKillStatsQueryKey({ guildId },params) }, updater);
+    params: KillsControllerGetGuildKillStatsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetGuildKillStats>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetGuildKillStats>> | undefined) => Awaited<ReturnType<typeof killsControllerGetGuildKillStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetGuildKillStats>>>({ exact: $exactMatch, queryKey: getKillsControllerGetGuildKillStatsQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -33318,7 +33998,7 @@ export const prefetchKillsControllerGetUserKillStatsQuery = async <TData = Await
 }
 
 /**
- * @summary Get personal kill statistics
+ * @summary Invalidates the {@link useKillsControllerGetUserKillStats} query
  */
 export const invalidateKillsControllerGetUserKillStats = async (
  queryClient: QueryClient, params?: KillsControllerGetUserKillStatsParams, options?: InvalidateOptions
@@ -33334,8 +34014,8 @@ export const invalidateKillsControllerGetUserKillStats = async (
  */
 export const useSetKillsControllerGetUserKillStatsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: KillsControllerGetUserKillStatsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillStats>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillStats>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillStats>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillStats>>>({ queryKey: getKillsControllerGetUserKillStatsQueryKey(params) }, updater);
+  return (params: KillsControllerGetUserKillStatsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillStats>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillStats>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillStats>>>({ exact: $exactMatch, queryKey: getKillsControllerGetUserKillStatsQueryKey(params) }, updater);
   };
 }
 
@@ -33469,7 +34149,7 @@ export const prefetchKillsControllerGetUserKillAnalyticsQuery = async <TData = A
 }
 
 /**
- * @summary Get personal kill analytics
+ * @summary Invalidates the {@link useKillsControllerGetUserKillAnalytics} query
  */
 export const invalidateKillsControllerGetUserKillAnalytics = async (
  queryClient: QueryClient, params?: KillsControllerGetUserKillAnalyticsParams, options?: InvalidateOptions
@@ -33485,8 +34165,8 @@ export const invalidateKillsControllerGetUserKillAnalytics = async (
  */
 export const useSetKillsControllerGetUserKillAnalyticsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: KillsControllerGetUserKillAnalyticsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>>({ queryKey: getKillsControllerGetUserKillAnalyticsQueryKey(params) }, updater);
+  return (params: KillsControllerGetUserKillAnalyticsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillAnalytics>>>({ exact: $exactMatch, queryKey: getKillsControllerGetUserKillAnalyticsQueryKey(params) }, updater);
   };
 }
 
@@ -33619,7 +34299,7 @@ export const prefetchKillsControllerGetUserKillActivityQuery = async <TData = Aw
 }
 
 /**
- * @summary Get 16 weeks of personal kill activity
+ * @summary Invalidates the {@link useKillsControllerGetUserKillActivity} query
  */
 export const invalidateKillsControllerGetUserKillActivity = async (
  queryClient: QueryClient, params?: KillsControllerGetUserKillActivityParams, options?: InvalidateOptions
@@ -33635,8 +34315,8 @@ export const invalidateKillsControllerGetUserKillActivity = async (
  */
 export const useSetKillsControllerGetUserKillActivityQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: KillsControllerGetUserKillActivityParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>>({ queryKey: getKillsControllerGetUserKillActivityQueryKey(params) }, updater);
+  return (params: KillsControllerGetUserKillActivityParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserKillActivity>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserKillActivity>>>({ exact: $exactMatch, queryKey: getKillsControllerGetUserKillActivityQueryKey(params) }, updater);
   };
 }
 
@@ -33778,7 +34458,7 @@ export const prefetchKillsControllerGetUserNpcKillsQuery = async <TData = Awaite
 }
 
 /**
- * @summary Get paginated list of killed NPCs
+ * @summary Invalidates the {@link useKillsControllerGetUserNpcKills} query
  */
 export const invalidateKillsControllerGetUserNpcKills = async (
  queryClient: QueryClient, params?: KillsControllerGetUserNpcKillsParams, options?: InvalidateOptions
@@ -33794,8 +34474,8 @@ export const invalidateKillsControllerGetUserNpcKills = async (
  */
 export const useSetKillsControllerGetUserNpcKillsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: KillsControllerGetUserNpcKillsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserNpcKills>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserNpcKills>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserNpcKills>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserNpcKills>>>({ queryKey: getKillsControllerGetUserNpcKillsQueryKey(params) }, updater);
+  return (params: KillsControllerGetUserNpcKillsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetUserNpcKills>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetUserNpcKills>> | undefined) => Awaited<ReturnType<typeof killsControllerGetUserNpcKills>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetUserNpcKills>>>({ exact: $exactMatch, queryKey: getKillsControllerGetUserNpcKillsQueryKey(params) }, updater);
   };
 }
 
@@ -33938,7 +34618,7 @@ export const prefetchKillsControllerGetGuildTopNpcsQuery = async <TData = Awaite
 }
 
 /**
- * @summary Get top killed NPCs in guild
+ * @summary Invalidates the {@link useKillsControllerGetGuildTopNpcs} query
  */
 export const invalidateKillsControllerGetGuildTopNpcs = async (
  queryClient: QueryClient, { guildId }: KillsControllerGetGuildTopNpcsPathParameters,
@@ -33956,8 +34636,8 @@ export const invalidateKillsControllerGetGuildTopNpcs = async (
 export const useSetKillsControllerGetGuildTopNpcsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: KillsControllerGetGuildTopNpcsPathParameters,
-    params: KillsControllerGetGuildTopNpcsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>> | undefined) => Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>>({ queryKey: getKillsControllerGetGuildTopNpcsQueryKey({ guildId },params) }, updater);
+    params: KillsControllerGetGuildTopNpcsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>> | undefined) => Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetGuildTopNpcs>>>({ exact: $exactMatch, queryKey: getKillsControllerGetGuildTopNpcsQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -34101,7 +34781,7 @@ export const prefetchKillsControllerGetGuildTopKillersByTypeQuery = async <TData
 }
 
 /**
- * @summary Get top killers by NPC type in guild
+ * @summary Invalidates the {@link useKillsControllerGetGuildTopKillersByType} query
  */
 export const invalidateKillsControllerGetGuildTopKillersByType = async (
  queryClient: QueryClient, { guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
@@ -34119,8 +34799,8 @@ export const invalidateKillsControllerGetGuildTopKillersByType = async (
 export const useSetKillsControllerGetGuildTopKillersByTypeQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: KillsControllerGetGuildTopKillersByTypePathParameters,
-    params: KillsControllerGetGuildTopKillersByTypeParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>> | undefined) => Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>>({ queryKey: getKillsControllerGetGuildTopKillersByTypeQueryKey({ guildId },params) }, updater);
+    params: KillsControllerGetGuildTopKillersByTypeParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>> | undefined) => Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetGuildTopKillersByType>>>({ exact: $exactMatch, queryKey: getKillsControllerGetGuildTopKillersByTypeQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -34264,7 +34944,7 @@ export const prefetchKillsControllerGetNpcKillersQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Get killers ranking for a specific NPC
+ * @summary Invalidates the {@link useKillsControllerGetNpcKillers} query
  */
 export const invalidateKillsControllerGetNpcKillers = async (
  queryClient: QueryClient, { guildId, npcId }: KillsControllerGetNpcKillersPathParameters,
@@ -34282,8 +34962,8 @@ export const invalidateKillsControllerGetNpcKillers = async (
 export const useSetKillsControllerGetNpcKillersQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, npcId }: KillsControllerGetNpcKillersPathParameters,
-    params: KillsControllerGetNpcKillersParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetNpcKillers>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetNpcKillers>> | undefined) => Awaited<ReturnType<typeof killsControllerGetNpcKillers>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>>({ queryKey: getKillsControllerGetNpcKillersQueryKey({ guildId, npcId },params) }, updater);
+    params: KillsControllerGetNpcKillersParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetNpcKillers>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetNpcKillers>> | undefined) => Awaited<ReturnType<typeof killsControllerGetNpcKillers>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetNpcKillers>>>({ exact: $exactMatch, queryKey: getKillsControllerGetNpcKillersQueryKey({ guildId, npcId },params) }, updater);
   };
 }
 
@@ -34435,7 +35115,7 @@ export const prefetchKillsControllerGetMemberKillsQuery = async <TData = Awaited
 }
 
 /**
- * @summary Get kill statistics for a specific guild member
+ * @summary Invalidates the {@link useKillsControllerGetMemberKills} query
  */
 export const invalidateKillsControllerGetMemberKills = async (
  queryClient: QueryClient, { guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
@@ -34453,8 +35133,8 @@ export const invalidateKillsControllerGetMemberKills = async (
 export const useSetKillsControllerGetMemberKillsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, memberId }: KillsControllerGetMemberKillsPathParameters,
-    params: KillsControllerGetMemberKillsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetMemberKills>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetMemberKills>> | undefined) => Awaited<ReturnType<typeof killsControllerGetMemberKills>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetMemberKills>>>({ queryKey: getKillsControllerGetMemberKillsQueryKey({ guildId, memberId },params) }, updater);
+    params: KillsControllerGetMemberKillsParams | undefined,updater: Awaited<ReturnType<typeof killsControllerGetMemberKills>> | undefined | ((old: Awaited<ReturnType<typeof killsControllerGetMemberKills>> | undefined) => Awaited<ReturnType<typeof killsControllerGetMemberKills>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof killsControllerGetMemberKills>>>({ exact: $exactMatch, queryKey: getKillsControllerGetMemberKillsQueryKey({ guildId, memberId },params) }, updater);
   };
 }
 
@@ -34497,11 +35177,13 @@ export const authenticatedGuildStatsCardControllerRefreshStatsCard = async ({ gu
 
 
 
+export const getAuthenticatedGuildStatsCardControllerRefreshStatsCardMutationKey = () => ['authenticatedGuildStatsCardControllerRefreshStatsCard'] as const;
+
 export const getAuthenticatedGuildStatsCardControllerRefreshStatsCardMutationOptions = <TError = ErrorType<RequestValidationError | AuthenticatedGuildStatsCardControllerRefreshStatsCard401 | AuthenticatedGuildStatsCardControllerRefreshStatsCard403 | void | AuthenticatedGuildStatsCardControllerRefreshStatsCard429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authenticatedGuildStatsCardControllerRefreshStatsCard>>, TError,AuthenticatedGuildStatsCardControllerRefreshStatsCardMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authenticatedGuildStatsCardControllerRefreshStatsCard>>, TError,AuthenticatedGuildStatsCardControllerRefreshStatsCardMutationVariables, TContext> => {
 
-const mutationKey = ['authenticatedGuildStatsCardControllerRefreshStatsCard'];
+const mutationKey = getAuthenticatedGuildStatsCardControllerRefreshStatsCardMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -34655,7 +35337,7 @@ export const prefetchPublicGuildStatsCardControllerGetStatsCardQuery = async <TD
 }
 
 /**
- * @summary Get public guild loot stats card
+ * @summary Invalidates the {@link usePublicGuildStatsCardControllerGetStatsCard} query
  */
 export const invalidatePublicGuildStatsCardControllerGetStatsCard = async (
  queryClient: QueryClient, { guildId }: PublicGuildStatsCardControllerGetStatsCardPathParameters, options?: InvalidateOptions
@@ -34671,8 +35353,8 @@ export const invalidatePublicGuildStatsCardControllerGetStatsCard = async (
  */
 export const useSetPublicGuildStatsCardControllerGetStatsCardQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: PublicGuildStatsCardControllerGetStatsCardPathParameters,updater: Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>> | undefined | ((old: Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>> | undefined) => Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>>>({ queryKey: getPublicGuildStatsCardControllerGetStatsCardQueryKey({ guildId }) }, updater);
+  return ({ guildId }: PublicGuildStatsCardControllerGetStatsCardPathParameters,updater: Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>> | undefined | ((old: Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>> | undefined) => Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof publicGuildStatsCardControllerGetStatsCard>>>({ exact: $exactMatch, queryKey: getPublicGuildStatsCardControllerGetStatsCardQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -34799,7 +35481,7 @@ export const prefetchDocsControllerGetDocumentsQuery = async <TData = Awaited<Re
 }
 
 /**
- * @summary Get guild documents
+ * @summary Invalidates the {@link useDocsControllerGetDocuments} query
  */
 export const invalidateDocsControllerGetDocuments = async (
  queryClient: QueryClient, { guildId }: DocsControllerGetDocumentsPathParameters, options?: InvalidateOptions
@@ -34815,8 +35497,8 @@ export const invalidateDocsControllerGetDocuments = async (
  */
 export const useSetDocsControllerGetDocumentsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: DocsControllerGetDocumentsPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetDocuments>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetDocuments>> | undefined) => Awaited<ReturnType<typeof docsControllerGetDocuments>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetDocuments>>>({ queryKey: getDocsControllerGetDocumentsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: DocsControllerGetDocumentsPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetDocuments>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetDocuments>> | undefined) => Awaited<ReturnType<typeof docsControllerGetDocuments>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetDocuments>>>({ exact: $exactMatch, queryKey: getDocsControllerGetDocumentsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -34849,8 +35531,16 @@ export const docsControllerCreateDocument = async ({ guildId }: DocsControllerCr
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<GuildDocumentResponseDto>(getDocsControllerCreateDocumentUrl({ guildId }),
   {
@@ -34865,11 +35555,13 @@ return mainFetch<GuildDocumentResponseDto>(getDocsControllerCreateDocumentUrl({ 
 
 
 
+export const getDocsControllerCreateDocumentMutationKey = () => ['docsControllerCreateDocument'] as const;
+
 export const getDocsControllerCreateDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerCreateDocument401 | DocsControllerCreateDocument403 | void | DocsControllerCreateDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerCreateDocument>>, TError,DocsControllerCreateDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerCreateDocument>>, TError,DocsControllerCreateDocumentMutationVariables, TContext> => {
 
-const mutationKey = ['docsControllerCreateDocument'];
+const mutationKey = getDocsControllerCreateDocumentMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -35023,7 +35715,7 @@ export const prefetchDocsControllerGetTrashQuery = async <TData = Awaited<Return
 }
 
 /**
- * @summary Get deleted guild documents
+ * @summary Invalidates the {@link useDocsControllerGetTrash} query
  */
 export const invalidateDocsControllerGetTrash = async (
  queryClient: QueryClient, { guildId }: DocsControllerGetTrashPathParameters, options?: InvalidateOptions
@@ -35039,8 +35731,8 @@ export const invalidateDocsControllerGetTrash = async (
  */
 export const useSetDocsControllerGetTrashQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: DocsControllerGetTrashPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetTrash>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetTrash>> | undefined) => Awaited<ReturnType<typeof docsControllerGetTrash>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetTrash>>>({ queryKey: getDocsControllerGetTrashQueryKey({ guildId }) }, updater);
+  return ({ guildId }: DocsControllerGetTrashPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetTrash>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetTrash>> | undefined) => Awaited<ReturnType<typeof docsControllerGetTrash>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetTrash>>>({ exact: $exactMatch, queryKey: getDocsControllerGetTrashQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -35167,7 +35859,7 @@ export const prefetchDocsControllerGetHistoryQuery = async <TData = Awaited<Retu
 }
 
 /**
- * @summary Get guild document history
+ * @summary Invalidates the {@link useDocsControllerGetHistory} query
  */
 export const invalidateDocsControllerGetHistory = async (
  queryClient: QueryClient, { guildId, docId }: DocsControllerGetHistoryPathParameters, options?: InvalidateOptions
@@ -35183,8 +35875,8 @@ export const invalidateDocsControllerGetHistory = async (
  */
 export const useSetDocsControllerGetHistoryQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, docId }: DocsControllerGetHistoryPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetHistory>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetHistory>> | undefined) => Awaited<ReturnType<typeof docsControllerGetHistory>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetHistory>>>({ queryKey: getDocsControllerGetHistoryQueryKey({ guildId, docId }) }, updater);
+  return ({ guildId, docId }: DocsControllerGetHistoryPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetHistory>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetHistory>> | undefined) => Awaited<ReturnType<typeof docsControllerGetHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetHistory>>>({ exact: $exactMatch, queryKey: getDocsControllerGetHistoryQueryKey({ guildId, docId }) }, updater);
   };
 }
 
@@ -35311,7 +36003,7 @@ export const prefetchDocsControllerGetHistorySnapshotQuery = async <TData = Awai
 }
 
 /**
- * @summary Get guild document history snapshot
+ * @summary Invalidates the {@link useDocsControllerGetHistorySnapshot} query
  */
 export const invalidateDocsControllerGetHistorySnapshot = async (
  queryClient: QueryClient, { guildId, docId, historyId }: DocsControllerGetHistorySnapshotPathParameters, options?: InvalidateOptions
@@ -35327,8 +36019,8 @@ export const invalidateDocsControllerGetHistorySnapshot = async (
  */
 export const useSetDocsControllerGetHistorySnapshotQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, docId, historyId }: DocsControllerGetHistorySnapshotPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>> | undefined) => Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>>>({ queryKey: getDocsControllerGetHistorySnapshotQueryKey({ guildId, docId, historyId }) }, updater);
+  return ({ guildId, docId, historyId }: DocsControllerGetHistorySnapshotPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>> | undefined) => Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetHistorySnapshot>>>({ exact: $exactMatch, queryKey: getDocsControllerGetHistorySnapshotQueryKey({ guildId, docId, historyId }) }, updater);
   };
 }
 
@@ -35455,7 +36147,7 @@ export const prefetchDocsControllerGetDocumentQuery = async <TData = Awaited<Ret
 }
 
 /**
- * @summary Get guild document
+ * @summary Invalidates the {@link useDocsControllerGetDocument} query
  */
 export const invalidateDocsControllerGetDocument = async (
  queryClient: QueryClient, { guildId, docId }: DocsControllerGetDocumentPathParameters, options?: InvalidateOptions
@@ -35471,8 +36163,8 @@ export const invalidateDocsControllerGetDocument = async (
  */
 export const useSetDocsControllerGetDocumentQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, docId }: DocsControllerGetDocumentPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetDocument>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetDocument>> | undefined) => Awaited<ReturnType<typeof docsControllerGetDocument>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetDocument>>>({ queryKey: getDocsControllerGetDocumentQueryKey({ guildId, docId }) }, updater);
+  return ({ guildId, docId }: DocsControllerGetDocumentPathParameters,updater: Awaited<ReturnType<typeof docsControllerGetDocument>> | undefined | ((old: Awaited<ReturnType<typeof docsControllerGetDocument>> | undefined) => Awaited<ReturnType<typeof docsControllerGetDocument>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof docsControllerGetDocument>>>({ exact: $exactMatch, queryKey: getDocsControllerGetDocumentQueryKey({ guildId, docId }) }, updater);
   };
 }
 
@@ -35505,8 +36197,16 @@ export const docsControllerUpdateDocument = async ({ guildId, docId }: DocsContr
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return mainFetch<GuildDocumentResponseDto>(getDocsControllerUpdateDocumentUrl({ guildId, docId }),
   {
@@ -35521,11 +36221,13 @@ return mainFetch<GuildDocumentResponseDto>(getDocsControllerUpdateDocumentUrl({ 
 
 
 
+export const getDocsControllerUpdateDocumentMutationKey = () => ['docsControllerUpdateDocument'] as const;
+
 export const getDocsControllerUpdateDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerUpdateDocument401 | DocsControllerUpdateDocument403 | DocsControllerUpdateDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerUpdateDocument>>, TError,DocsControllerUpdateDocumentMutationVariables, TContext> => {
 
-const mutationKey = ['docsControllerUpdateDocument'];
+const mutationKey = getDocsControllerUpdateDocumentMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -35594,11 +36296,13 @@ export const docsControllerDeleteDocument = async ({ guildId, docId }: DocsContr
 
 
 
+export const getDocsControllerDeleteDocumentMutationKey = () => ['docsControllerDeleteDocument'] as const;
+
 export const getDocsControllerDeleteDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerDeleteDocument401 | DocsControllerDeleteDocument403 | DocsControllerDeleteDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerDeleteDocument>>, TError,DocsControllerDeleteDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerDeleteDocument>>, TError,DocsControllerDeleteDocumentMutationVariables, TContext> => {
 
-const mutationKey = ['docsControllerDeleteDocument'];
+const mutationKey = getDocsControllerDeleteDocumentMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -35667,11 +36371,13 @@ export const docsControllerRestoreDocument = async ({ guildId, docId }: DocsCont
 
 
 
+export const getDocsControllerRestoreDocumentMutationKey = () => ['docsControllerRestoreDocument'] as const;
+
 export const getDocsControllerRestoreDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerRestoreDocument401 | DocsControllerRestoreDocument403 | DocsControllerRestoreDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerRestoreDocument>>, TError,DocsControllerRestoreDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerRestoreDocument>>, TError,DocsControllerRestoreDocumentMutationVariables, TContext> => {
 
-const mutationKey = ['docsControllerRestoreDocument'];
+const mutationKey = getDocsControllerRestoreDocumentMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -35740,11 +36446,13 @@ export const docsControllerPurgeDocument = async ({ guildId, docId }: DocsContro
 
 
 
+export const getDocsControllerPurgeDocumentMutationKey = () => ['docsControllerPurgeDocument'] as const;
+
 export const getDocsControllerPurgeDocumentMutationOptions = <TError = ErrorType<RequestValidationError | DocsControllerPurgeDocument401 | DocsControllerPurgeDocument403 | DocsControllerPurgeDocument429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof docsControllerPurgeDocument>>, TError,DocsControllerPurgeDocumentMutationVariables, TContext>, request?: SecondParameter<typeof mainFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof docsControllerPurgeDocument>>, TError,DocsControllerPurgeDocumentMutationVariables, TContext> => {
 
-const mutationKey = ['docsControllerPurgeDocument'];
+const mutationKey = getDocsControllerPurgeDocumentMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options

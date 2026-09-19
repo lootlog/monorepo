@@ -6,7 +6,6 @@ import {
 } from "@testcontainers/postgresql";
 import { eq } from "drizzle-orm";
 import { makeWithDefaults } from "drizzle-orm/effect-postgres";
-import { drizzle } from "drizzle-orm/node-postgres";
 import {
   bigint,
   integer,
@@ -17,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { Effect, ManagedRuntime, Predicate, Redacted } from "effect";
 import { SqlClient } from "effect/unstable/sql";
-import { makePostgresLayer, PostgresPool } from "../src/postgres.js";
+import { makePostgresLayer } from "../src/postgres.js";
 
 const records = pgTable("database_contract", {
   id: integer().primaryKey(),
@@ -46,23 +45,21 @@ test("preserves required TLS without falling back to an unencrypted connection",
   );
 
   try {
-    const error: unknown = await runtime.runPromise(PostgresPool).then(
+    const error: unknown = await runtime.runPromise(PgClient.PgClient).then(
       () => undefined,
       (cause: unknown) => cause,
     );
 
     expect(Predicate.isTagged("SqlError")(error)).toBe(true);
     expect(error).toMatchObject({
-      reason: {
-        cause: { message: "The server does not support SSL connections" },
-      },
+      message: "PgConnection: Server refused TLS",
     });
   } finally {
     await runtime.dispose();
   }
 });
 
-test("shares one pool, preserves Drizzle codecs and transactions, and closes the pool", async () => {
+test("preserves native Drizzle codecs and rolls back failed transactions", async () => {
   const runtime = ManagedRuntime.make(
     makePostgresLayer({
       url: Redacted.make(postgres.getConnectionUri()),
@@ -71,25 +68,17 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
     }),
   );
 
-  const pool = await runtime.runPromise(PostgresPool);
-
   try {
     const db = await runtime.runPromise(makeWithDefaults());
-    const promiseDb = drizzle({ client: pool });
     const client = await runtime.runPromise(PgClient.PgClient);
     expect(await runtime.runPromise(SqlClient.SqlClient)).toBe(client);
 
-    const rawIdentity = await pool.query(
-      "SELECT pg_backend_pid() AS pid, current_setting('application_name') AS application",
+    const identity = await runtime.runPromise(
+      client`SELECT current_setting('application_name') AS application`,
     );
 
-    expect(
-      await runtime.runPromise(
-        client`SELECT pg_backend_pid() AS pid, current_setting('application_name') AS application`,
-      ),
-    ).toEqual(rawIdentity.rows);
-    expect(rawIdentity.rows[0].application).toBe("lootlog-database-test");
-    await pool.query(`CREATE TABLE database_contract (
+    expect(identity[0]?.application).toBe("lootlog-database-test");
+    await runtime.runPromise(client`CREATE TABLE database_contract (
       id integer PRIMARY KEY, "createdAt" timestamptz NOT NULL,
       payload jsonb NOT NULL, amount numeric NOT NULL, large bigint NOT NULL
     )`);
@@ -102,7 +91,9 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
       large: 9007199254740993n,
     };
 
-    await promiseDb.transaction((tx) => tx.insert(records).values(record));
+    await runtime.runPromise(
+      db.transaction((tx) => tx.insert(records).values(record)),
+    );
     expect(await runtime.runPromise(db.select().from(records))).toEqual([
       record,
     ]);
@@ -110,7 +101,9 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
       db.transaction((tx) => tx.insert(records).values({ ...record, id: 2 })),
     );
     expect(
-      await promiseDb.select().from(records).where(eq(records.id, 2)),
+      await runtime.runPromise(
+        db.select().from(records).where(eq(records.id, 2)),
+      ),
     ).toEqual([{ ...record, id: 2 }]);
     await expect(
       runtime.runPromise(
@@ -123,22 +116,12 @@ test("shares one pool, preserves Drizzle codecs and transactions, and closes the
         ),
       ),
     ).rejects.toThrow("rollback-effect");
-    await expect(
-      promiseDb.transaction(async (tx) => {
-        await tx.insert(records).values({ ...record, id: 4 });
-        throw new Error("rollback-promise");
-      }),
-    ).rejects.toThrow("rollback-promise");
     expect(
       await runtime.runPromise(
         db.select({ id: records.id }).from(records).orderBy(records.id),
       ),
     ).toEqual([{ id: 1 }, { id: 2 }]);
-    expect(pool.totalCount).toBe(1);
   } finally {
     await runtime.dispose();
   }
-
-  expect(pool.ended).toBe(true);
-  expect(pool.totalCount).toBe(0);
 }, 30_000);

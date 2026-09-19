@@ -6,7 +6,7 @@ const splitCommaSeparated = (value: string): string[] =>
     .map((entry) => entry.trim())
     .filter(Boolean);
 
-const optionalString = (name: string) => Config.option(Config.string(name));
+const optionalString = (name: string) => Config.option(Config.String(name));
 
 export interface AuthConfig {
   readonly idpTokenSecret?: Redacted.Redacted<string>;
@@ -43,52 +43,52 @@ export interface AuthConfig {
 }
 
 export const authConfig = Config.all({
-  idpTokenSecret: Config.option(Config.redacted("AUTH_IDP_TOKEN_SECRET")).pipe(
+  idpTokenSecret: Config.option(Config.Redacted("AUTH_IDP_TOKEN_SECRET")).pipe(
     Config.map(Option.getOrUndefined),
   ),
-  apiUrl: Config.option(Config.string("API_URL")).pipe(
+  apiUrl: Config.option(Config.String("API_URL")).pipe(
     Config.map(Option.getOrUndefined),
   ),
-  apiKeysEnabled: Config.boolean("API_KEYS_ENABLED").pipe(
+  apiKeysEnabled: Config.Boolean("API_KEYS_ENABLED").pipe(
     Config.withDefault(false),
   ),
   apiKeyStatusSecret: Config.option(
-    Config.redacted("API_KEY_STATUS_SECRET"),
+    Config.Redacted("API_KEY_STATUS_SECRET"),
   ).pipe(Config.map(Option.getOrUndefined)),
-  environment: Config.literals(["local", "dev", "staging", "prod"], "ENV").pipe(
+  environment: Config.Literals(["local", "dev", "staging", "prod"], "ENV").pipe(
     Config.withDefault("local"),
   ),
-  port: Config.int("PORT"),
-  serviceName: Config.string("SERVICE_NAME").pipe(Config.withDefault("auth")),
-  trustedOrigins: Config.string("TRUSTED_ORIGINS").pipe(
+  port: Config.Int("PORT"),
+  serviceName: Config.String("SERVICE_NAME").pipe(Config.withDefault("auth")),
+  trustedOrigins: Config.String("TRUSTED_ORIGINS").pipe(
     Config.map(splitCommaSeparated),
   ),
-  cookieDomain: Config.string("COOKIE_DOMAIN"),
-  cookiePrefix: Config.string("COOKIE_PREFIX"),
-  adminAccountIds: Config.string("ADMIN_ACCOUNT_IDS").pipe(
+  cookieDomain: Config.String("COOKIE_DOMAIN"),
+  cookiePrefix: Config.String("COOKIE_PREFIX"),
+  adminAccountIds: Config.String("ADMIN_ACCOUNT_IDS").pipe(
     Config.map(splitCommaSeparated),
   ),
-  authSecret: Config.redacted("AUTH_SECRET"),
-  appUrl: Config.string("APP_URL"),
+  authSecret: Config.Redacted("AUTH_SECRET"),
+  appUrl: Config.String("APP_URL"),
   postgresql: Config.all({
-    host: Config.string("POSTGRESQL_HOST"),
-    port: Config.int("POSTGRESQL_PORT"),
-    user: Config.string("POSTGRESQL_USER"),
-    password: Config.redacted("POSTGRESQL_PASSWORD"),
-    database: Config.string("POSTGRESQL_DATABASE"),
+    host: Config.String("POSTGRESQL_HOST"),
+    port: Config.Int("POSTGRESQL_PORT"),
+    user: Config.String("POSTGRESQL_USER"),
+    password: Config.Redacted("POSTGRESQL_PASSWORD"),
+    database: Config.String("POSTGRESQL_DATABASE"),
     sslCa: optionalString("POSTGRESQL_SSL_CA").pipe(
       Config.map(Option.getOrUndefined),
     ),
   }),
-  discordClientId: Config.string("DISCORD_CLIENT_ID"),
-  discordClientSecret: Config.redacted("DISCORD_CLIENT_SECRET"),
+  discordClientId: Config.String("DISCORD_CLIENT_ID"),
+  discordClientSecret: Config.Redacted("DISCORD_CLIENT_SECRET"),
   redis: Config.all({
-    host: Config.string("REDIS_HOST"),
-    port: Config.int("REDIS_PORT"),
-    username: Config.string("REDIS_USERNAME"),
-    password: Config.redacted("REDIS_PASSWORD"),
+    host: Config.String("REDIS_HOST"),
+    port: Config.Int("REDIS_PORT"),
+    username: Config.String("REDIS_USERNAME"),
+    password: Config.Redacted("REDIS_PASSWORD"),
   }),
-  serviceNamespace: Config.string("SERVICE_NAMESPACE").pipe(
+  serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
   ),
   commitSha: optionalString("COMMIT_SHA").pipe(

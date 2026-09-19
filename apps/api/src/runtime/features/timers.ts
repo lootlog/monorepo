@@ -44,7 +44,7 @@ export const timersData = Layer.unwrap(
             prefix: "{bull}",
           }),
       ),
-      (queue) => Effect.tryPromise(() => queue.close()),
+      (queue) => Effect.tryPromise(() => queue.close()).pipe(Effect.orDie),
     );
 
     const redlock = new RedlockService(redis).createInstance({

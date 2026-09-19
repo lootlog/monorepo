@@ -36,14 +36,14 @@
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "effect": "catalog:",
-    "orval": "^8.26.0",
+    "orval": "^8.34.0",
     "react": "catalog:",
     "typescript": "catalog:",
     "yaml": "catalog:"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.102.8",
-    "react": "^19.0.0"
+    "@tanstack/react-query": "^5.103.1",
+    "react": "^19.3.0"
   },
   "peerDependenciesMeta": {
     "@tanstack/react-query": {

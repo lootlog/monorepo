@@ -5,49 +5,67 @@ import { parse } from "yaml";
 
 const OpenApiSchema = Schema.Record(Schema.String, Schema.Json);
 
-const OpenApiParameter = Schema.Struct({
-  in: Schema.optionalKey(Schema.String),
-  name: Schema.optionalKey(Schema.String),
-  required: Schema.optionalKey(Schema.Boolean),
-});
+const OpenApiParameter = Schema.StructWithRest(
+  Schema.Struct({
+    in: Schema.optionalKey(Schema.String),
+    name: Schema.optionalKey(Schema.String),
+    required: Schema.optionalKey(Schema.Boolean),
+  }),
+  [Schema.Record(Schema.String, Schema.Unknown)],
+);
 
-const OpenApiDocument = Schema.Struct({
-  components: Schema.optionalKey(
-    Schema.Struct({
-      schemas: Schema.optionalKey(Schema.Record(Schema.String, OpenApiSchema)),
-    }),
-  ),
-  paths: Schema.optionalKey(
-    Schema.Record(
-      Schema.String,
-      Schema.Record(
-        Schema.String,
+const OpenApiDocument = Schema.StructWithRest(
+  Schema.Struct({
+    components: Schema.optionalKey(
+      Schema.StructWithRest(
         Schema.Struct({
-          parameters: Schema.optionalKey(Schema.Array(OpenApiParameter)),
-          responses: Schema.optionalKey(
-            Schema.Record(
-              Schema.String,
-              Schema.Struct({
-                content: Schema.optionalKey(
-                  Schema.Record(
-                    Schema.String,
-                    Schema.Struct({
-                      schema: Schema.optionalKey(OpenApiSchema),
-                    }),
-                  ),
-                ),
-              }),
-            ),
+          schemas: Schema.optionalKey(
+            Schema.Record(Schema.String, OpenApiSchema),
           ),
         }),
+        [Schema.Record(Schema.String, Schema.Unknown)],
       ),
     ),
-  ),
-});
+    paths: Schema.optionalKey(
+      Schema.Record(
+        Schema.String,
+        Schema.Record(
+          Schema.String,
+          Schema.StructWithRest(
+            Schema.Struct({
+              parameters: Schema.optionalKey(Schema.Array(OpenApiParameter)),
+              responses: Schema.optionalKey(
+                Schema.Record(
+                  Schema.String,
+                  Schema.StructWithRest(
+                    Schema.Struct({
+                      content: Schema.optionalKey(
+                        Schema.Record(
+                          Schema.String,
+                          Schema.StructWithRest(
+                            Schema.Struct({
+                              schema: Schema.optionalKey(OpenApiSchema),
+                            }),
+                            [Schema.Record(Schema.String, Schema.Unknown)],
+                          ),
+                        ),
+                      ),
+                    }),
+                    [Schema.Record(Schema.String, Schema.Unknown)],
+                  ),
+                ),
+              ),
+            }),
+            [Schema.Record(Schema.String, Schema.Unknown)],
+          ),
+        ),
+      ),
+    ),
+  }),
+  [Schema.Record(Schema.String, Schema.Unknown)],
+);
 
-const decodeDocument = Schema.decodeUnknownSync(OpenApiDocument, {
-  onExcessProperty: "preserve",
-});
+const decodeDocument = Schema.decodeUnknownSync(OpenApiDocument);
 
 const responseChecks = [
   ["/maps", "get", "200"],

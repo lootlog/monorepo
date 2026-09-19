@@ -43,10 +43,10 @@ const sampledTracer = Layer.effect(
       context(primitive, fiber) {
         // Promise continuations already inherit this span; only switch on a
         // mismatch, including clearing a span when an untraced fiber resumes.
-        if (logSpanContext.getStore() === fiber.currentSpan)
+        if (logSpanContext.getStore() === fiber.cache.span)
           return primitive["~effect/Effect/evaluate"](fiber);
 
-        return logSpanContext.run(fiber.currentSpan, () =>
+        return logSpanContext.run(fiber.cache.span, () =>
           primitive["~effect/Effect/evaluate"](fiber),
         );
       },
@@ -72,12 +72,12 @@ export const makeObservabilityLayer = <E, R>(
 
       const commitSha =
         config.commitSha ??
-        (yield* Config.string("COMMIT_SHA").pipe(
+        (yield* Config.String("COMMIT_SHA").pipe(
           Config.withDefault(undefined),
         ));
 
-      const instanceId = yield* Config.string("OTEL_SERVICE_INSTANCE_ID").pipe(
-        Config.orElse(() => Config.string("HOSTNAME")),
+      const instanceId = yield* Config.String("OTEL_SERVICE_INSTANCE_ID").pipe(
+        Config.orElse(() => Config.String("HOSTNAME")),
         Config.withDefault(`local-${process.pid}`),
       );
 

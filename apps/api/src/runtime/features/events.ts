@@ -111,7 +111,8 @@ export const eventsServicesLive = Layer.effect(
       Effect.sync(() => ({
         respawn: new Queue(RESPAWN_WINDOW_QUEUE, queueOptions),
       })),
-      ({ respawn }) => Effect.tryPromise(() => respawn.close()),
+      ({ respawn }) =>
+        Effect.tryPromise(() => respawn.close()).pipe(Effect.orDie),
     );
 
     const amqp = makeAmqpAdapter(rabbit);

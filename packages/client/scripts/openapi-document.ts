@@ -1,15 +1,23 @@
 import { Schema } from "effect";
 
-export const OpenApiDocumentSchema = Schema.Struct({
-  components: Schema.optionalKey(
-    Schema.Struct({
-      schemas: Schema.optionalKey(Schema.Record(Schema.String, Schema.Json)),
-    }),
-  ),
-  paths: Schema.optionalKey(
-    Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Json)),
-  ),
-});
+export const OpenApiDocumentSchema = Schema.StructWithRest(
+  Schema.Struct({
+    components: Schema.optionalKey(
+      Schema.StructWithRest(
+        Schema.Struct({
+          schemas: Schema.optionalKey(
+            Schema.Record(Schema.String, Schema.Json),
+          ),
+        }),
+        [Schema.Record(Schema.String, Schema.Unknown)],
+      ),
+    ),
+    paths: Schema.optionalKey(
+      Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Json)),
+    ),
+  }),
+  [Schema.Record(Schema.String, Schema.Unknown)],
+);
 
 export type OpenApiDocument = typeof OpenApiDocumentSchema.Type;
 
@@ -17,7 +25,6 @@ export type JsonValue = typeof Schema.Json.Type;
 
 export const decodeOpenApiDocument = Schema.decodeUnknownSync(
   OpenApiDocumentSchema,
-  { onExcessProperty: "preserve" },
 );
 
 export const isJsonObject = (

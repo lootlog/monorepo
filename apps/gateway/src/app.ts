@@ -101,7 +101,7 @@ export class GatewayApplication extends Context.Service<
           catch: (cause) =>
             new Error("Failed to connect Gateway Redis", { cause }),
         }),
-        (store) => Effect.tryPromise(() => store.close()),
+        (store) => Effect.tryPromise(() => store.close()).pipe(Effect.orDie),
       );
 
       const auth = makeGatewayAuth(config);
@@ -509,7 +509,7 @@ export const GatewayServer = Layer.effectDiscard(
 
     const httpBoundary = yield* Effect.acquireRelease(
       Effect.sync(makeGatewayHttpBoundary),
-      (boundary) => Effect.tryPromise(boundary.dispose),
+      (boundary) => Effect.tryPromise(boundary.dispose).pipe(Effect.orDie),
     );
 
     const fetch = createGatewayFetch(application, httpBoundary.handler);
@@ -523,7 +523,8 @@ export const GatewayServer = Layer.effectDiscard(
           websocket: createGatewayWebSocket(application),
         }),
       ),
-      (activeServer) => Effect.tryPromise(() => activeServer.stop(true)),
+      (activeServer) =>
+        Effect.tryPromise(() => activeServer.stop(true)).pipe(Effect.orDie),
     );
 
     yield* Effect.logInfo("Gateway WebSocket server listening").pipe(

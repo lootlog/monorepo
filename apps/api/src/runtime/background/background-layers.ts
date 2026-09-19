@@ -349,7 +349,7 @@ export const BullWorkers = Layer.effectDiscard(
       (workers) =>
         Effect.tryPromise(() =>
           Promise.all(workers.map((worker) => worker.close())),
-        ),
+        ).pipe(Effect.orDie),
     );
   }),
 );

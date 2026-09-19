@@ -513,7 +513,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Health check
+ * @summary Invalidates the {@link useHealthzControllerHealthCheck} query
  */
 export const invalidateHealthzControllerHealthCheck = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -529,8 +529,8 @@ export const invalidateHealthzControllerHealthCheck = async (
  */
 export const useSetHealthzControllerHealthCheckQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ exact: $exactMatch, queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
   };
 }
 
@@ -656,7 +656,7 @@ export const prefetchAuthControllerVerifyQuery = async <TData = Awaited<ReturnTy
 }
 
 /**
- * @summary Verify request identity
+ * @summary Invalidates the {@link useAuthControllerVerify} query
  */
 export const invalidateAuthControllerVerify = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -672,8 +672,8 @@ export const invalidateAuthControllerVerify = async (
  */
 export const useSetAuthControllerVerifyQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof authControllerVerify>> | undefined | ((old: Awaited<ReturnType<typeof authControllerVerify>> | undefined) => Awaited<ReturnType<typeof authControllerVerify>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof authControllerVerify>>>({ queryKey: getAuthControllerVerifyQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof authControllerVerify>> | undefined | ((old: Awaited<ReturnType<typeof authControllerVerify>> | undefined) => Awaited<ReturnType<typeof authControllerVerify>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof authControllerVerify>>>({ exact: $exactMatch, queryKey: getAuthControllerVerifyQueryKey() }, updater);
   };
 }
 
@@ -799,7 +799,7 @@ export const prefetchAuthControllerGetScopesQuery = async <TData = Awaited<Retur
 }
 
 /**
- * @summary Get scopes for the current user
+ * @summary Invalidates the {@link useAuthControllerGetScopes} query
  */
 export const invalidateAuthControllerGetScopes = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -815,8 +815,8 @@ export const invalidateAuthControllerGetScopes = async (
  */
 export const useSetAuthControllerGetScopesQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof authControllerGetScopes>> | undefined | ((old: Awaited<ReturnType<typeof authControllerGetScopes>> | undefined) => Awaited<ReturnType<typeof authControllerGetScopes>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof authControllerGetScopes>>>({ queryKey: getAuthControllerGetScopesQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof authControllerGetScopes>> | undefined | ((old: Awaited<ReturnType<typeof authControllerGetScopes>> | undefined) => Awaited<ReturnType<typeof authControllerGetScopes>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof authControllerGetScopes>>>({ exact: $exactMatch, queryKey: getAuthControllerGetScopesQueryKey() }, updater);
   };
 }
 
@@ -848,8 +848,16 @@ export const authControllerGetIdpToken = async (authControllerGetIdpTokenBody: A
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return authFetch<AuthControllerGetIdpToken200>(getAuthControllerGetIdpTokenUrl(),
   {
@@ -864,11 +872,13 @@ return authFetch<AuthControllerGetIdpToken200>(getAuthControllerGetIdpTokenUrl()
 
 
 
+export const getAuthControllerGetIdpTokenMutationKey = () => ['authControllerGetIdpToken'] as const;
+
 export const getAuthControllerGetIdpTokenMutationOptions = <TError = ErrorType<AuthControllerGetIdpToken400 | AuthControllerGetIdpToken401>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerGetIdpToken>>, TError,AuthControllerGetIdpTokenMutationVariables, TContext> => {
 
-const mutationKey = ['authControllerGetIdpToken'];
+const mutationKey = getAuthControllerGetIdpTokenMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1011,6 +1021,9 @@ export const prefetchApiKeysListApiKeysQuery = async <TData = Awaited<ReturnType
   return queryClient;
 }
 
+/**
+ * @summary Invalidates the {@link useApiKeysListApiKeys} query
+ */
 export const invalidateApiKeysListApiKeys = async (
  queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
@@ -1022,8 +1035,8 @@ export const invalidateApiKeysListApiKeys = async (
 
 export const useSetApiKeysListApiKeysQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined | ((old: Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined) => Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof apiKeysListApiKeys>>>({ queryKey: getApiKeysListApiKeysQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined | ((old: Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined) => Awaited<ReturnType<typeof apiKeysListApiKeys>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof apiKeysListApiKeys>>>({ exact: $exactMatch, queryKey: getApiKeysListApiKeysQueryKey() }, updater);
   };
 }
 
@@ -1048,8 +1061,16 @@ export const apiKeysCreateApiKey = async (apiKeysCreateApiKeyBody: ApiKeysCreate
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return authFetch<ApiKeysCreateApiKey200>(getApiKeysCreateApiKeyUrl(),
   {
@@ -1064,11 +1085,13 @@ return authFetch<ApiKeysCreateApiKey200>(getApiKeysCreateApiKeyUrl(),
 
 
 
+export const getApiKeysCreateApiKeyMutationKey = () => ['apiKeysCreateApiKey'] as const;
+
 export const getApiKeysCreateApiKeyMutationOptions = <TError = ErrorType<ApiKeysCreateApiKey400 | ApiKeysCreateApiKey401 | ApiKeysCreateApiKey403 | ApiKeysCreateApiKey404 | ApiKeysCreateApiKey409 | ApiKeysCreateApiKey429 | ApiKeysCreateApiKey503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysCreateApiKey>>, TError,ApiKeysCreateApiKeyMutationVariables, TContext> => {
 
-const mutationKey = ['apiKeysCreateApiKey'];
+const mutationKey = getApiKeysCreateApiKeyMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1121,8 +1144,16 @@ export const apiKeysRenameApiKey = async ({ id }: ApiKeysRenameApiKeyPathParamet
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return authFetch<ApiKeysRenameApiKey200>(getApiKeysRenameApiKeyUrl({ id }),
   {
@@ -1137,11 +1168,13 @@ return authFetch<ApiKeysRenameApiKey200>(getApiKeysRenameApiKeyUrl({ id }),
 
 
 
+export const getApiKeysRenameApiKeyMutationKey = () => ['apiKeysRenameApiKey'] as const;
+
 export const getApiKeysRenameApiKeyMutationOptions = <TError = ErrorType<ApiKeysRenameApiKey400 | ApiKeysRenameApiKey401 | ApiKeysRenameApiKey403 | ApiKeysRenameApiKey404 | ApiKeysRenameApiKey409 | ApiKeysRenameApiKey429 | ApiKeysRenameApiKey503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysRenameApiKey>>, TError,ApiKeysRenameApiKeyMutationVariables, TContext> => {
 
-const mutationKey = ['apiKeysRenameApiKey'];
+const mutationKey = getApiKeysRenameApiKeyMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1203,11 +1236,13 @@ export const apiKeysDeleteApiKey = async ({ id }: ApiKeysDeleteApiKeyPathParamet
 
 
 
+export const getApiKeysDeleteApiKeyMutationKey = () => ['apiKeysDeleteApiKey'] as const;
+
 export const getApiKeysDeleteApiKeyMutationOptions = <TError = ErrorType<ApiKeysDeleteApiKey400 | ApiKeysDeleteApiKey401 | ApiKeysDeleteApiKey403 | ApiKeysDeleteApiKey404 | ApiKeysDeleteApiKey409 | ApiKeysDeleteApiKey429 | ApiKeysDeleteApiKey503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysDeleteApiKey>>, TError,ApiKeysDeleteApiKeyMutationVariables, TContext> => {
 
-const mutationKey = ['apiKeysDeleteApiKey'];
+const mutationKey = getApiKeysDeleteApiKeyMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1259,8 +1294,16 @@ export const apiKeysApiKeyStatuses = async (apiKeysApiKeyStatusesBody: ApiKeysAp
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return authFetch<ApiKeysApiKeyStatuses200>(getApiKeysApiKeyStatusesUrl(),
   {
@@ -1275,11 +1318,13 @@ return authFetch<ApiKeysApiKeyStatuses200>(getApiKeysApiKeyStatusesUrl(),
 
 
 
+export const getApiKeysApiKeyStatusesMutationKey = () => ['apiKeysApiKeyStatuses'] as const;
+
 export const getApiKeysApiKeyStatusesMutationOptions = <TError = ErrorType<ApiKeysApiKeyStatuses400 | ApiKeysApiKeyStatuses401 | ApiKeysApiKeyStatuses403 | ApiKeysApiKeyStatuses404 | ApiKeysApiKeyStatuses409 | ApiKeysApiKeyStatuses429 | ApiKeysApiKeyStatuses503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext>, request?: SecondParameter<typeof authFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof apiKeysApiKeyStatuses>>, TError,ApiKeysApiKeyStatusesMutationVariables, TContext> => {
 
-const mutationKey = ['apiKeysApiKeyStatuses'];
+const mutationKey = getApiKeysApiKeyStatusesMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options

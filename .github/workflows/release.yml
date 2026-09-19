@@ -187,7 +187,7 @@ jobs:
             fi
             [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::Registry did not return an image digest"; exit 1; }
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="sha-$SOURCE_SHA" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.3 \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
               "apps/prod/$id/kustomization.yml"
             next="$(mktemp)"
@@ -279,7 +279,7 @@ jobs:
           if jq -e '.[] | select(.id == "developer")' <<< "$TARGETS" >/dev/null && \
              ! grep -qE '^[[:space:]]*-[[:space:]]+developer$' "$INFRA_REPO_PATH/apps/prod/kustomization.yml"; then
             docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/$INFRA_REPO_PATH:/workdir" \
-              mikefarah/yq:4.53.3 -i '.resources += ["developer"]' apps/prod/kustomization.yml
+              mikefarah/yq:4.53.6 -i '.resources += ["developer"]' apps/prod/kustomization.yml
           fi
 
       - name: Commit production state
