@@ -1,6 +1,6 @@
 import { guildKillActivityTable } from "#src/database/drizzle/schema";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
-import { Clock, Effect, Schema } from "effect";
+import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { Clock, Effect } from "effect";
 import type { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { ApiDatabase } from "#src/database/drizzle/database";
@@ -82,21 +82,33 @@ export const makeGuildKillActivityCleanup = (
     let removed = 0;
 
     for (let batch = 0; batch < 100; batch++) {
-      const result =
-        yield* database.execute(sql`DELETE FROM "GuildKillActivity" WHERE id IN (
-      SELECT id FROM "GuildKillActivity" WHERE "occurredAt" < ${cutoff}::timestamptz AT TIME ZONE 'UTC'
-      ORDER BY "occurredAt",id LIMIT 5000 FOR UPDATE SKIP LOCKED
-    ) RETURNING id`);
+      const rows = yield* database
+        .delete(guildKillActivityTable)
+        .where(
+          inArray(
+            guildKillActivityTable.id,
+            database
+              .select({ id: guildKillActivityTable.id })
+              .from(guildKillActivityTable)
+              .where(
+                lt(
+                  guildKillActivityTable.occurredAt,
+                  sql`${cutoff}::timestamptz AT TIME ZONE 'UTC'`,
+                ),
+              )
+              .orderBy(
+                guildKillActivityTable.occurredAt,
+                guildKillActivityTable.id,
+              )
+              .limit(5000)
+              .for("update", { skipLocked: true }),
+          ),
+        )
+        .returning({ id: guildKillActivityTable.id });
 
-      const decoded = yield* Schema.decodeUnknownEffect(
-        Schema.Struct({
-          rows: Schema.Array(Schema.Struct({ id: Schema.String })),
-        }),
-      )(result);
+      removed += rows.length;
 
-      removed += decoded.rows.length;
-
-      if (decoded.rows.length < 5000) break;
+      if (rows.length < 5000) break;
     }
 
     yield* Effect.logInfo("Expired guild kill activity deleted", { removed });

@@ -1,5 +1,17 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, eq, gte, isNull, ne, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  exists,
+  gte,
+  isNull,
+  ne,
+  notInArray,
+  notExists,
+  sql,
+} from "drizzle-orm";
+import { alias, QueryBuilder } from "drizzle-orm/pg-core";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import {
   requestApiKeyAccess,
@@ -32,18 +44,44 @@ type AuthorizedLootOptions = {
 const databaseSubmissionCutoff = (cutoff: Date) =>
   sql`CURRENT_TIMESTAMP - ${Date.now() - cutoff.getTime()} * INTERVAL '1 millisecond'`;
 
+const query = new QueryBuilder();
+
+const allocationRecord = alias(
+  organizationLootRecordTable,
+  "allocation_record",
+);
+
+const allocationSubmission = alias(
+  lootSubmissionTable,
+  "allocation_submission",
+);
+
+const allocationMember = alias(memberTable, "allocation_member");
+
 const authorizedSubmissionExists = (options: AuthorizedLootOptions) =>
-  sql`EXISTS (
-    SELECT 1
-    FROM "OrganizationLootRecord" allocation_record
-    INNER JOIN "LootSubmission" allocation_submission
-      ON allocation_submission."organizationLootRecordId" = allocation_record.id
-    INNER JOIN "Member" allocation_member
-      ON allocation_member.id = allocation_submission."memberId"
-    WHERE allocation_record."lootId" = ${lootTable.id}
-      AND allocation_member."globalUserId" = ${options.actorUserId}
-      AND allocation_submission."createdAt" >= ${databaseSubmissionCutoff(options.submissionCutoff)}
-  )`;
+  exists(
+    query
+      .select({ id: allocationRecord.id })
+      .from(allocationRecord)
+      .innerJoin(
+        allocationSubmission,
+        eq(allocationSubmission.organizationLootRecordId, allocationRecord.id),
+      )
+      .innerJoin(
+        allocationMember,
+        eq(allocationMember.id, allocationSubmission.memberId),
+      )
+      .where(
+        and(
+          eq(allocationRecord.lootId, lootTable.id),
+          eq(allocationMember.globalUserId, options.actorUserId),
+          gte(
+            allocationSubmission.createdAt,
+            databaseSubmissionCutoff(options.submissionCutoff),
+          ),
+        ),
+      ),
+  );
 
 export class LootAllocationPersistenceError extends TaggedErrorClass<LootAllocationPersistenceError>()(
   "LootAllocationPersistenceError",
@@ -66,11 +104,17 @@ export const makeLootAllocationPersistence = (
     if (ids.length === 0) return sql`false`;
 
     // Allocation is shared by every organization record; never partially authorize a global update.
-    return sql`NOT EXISTS (
-      SELECT 1 FROM ${organizationLootRecordTable}
-      WHERE ${organizationLootRecordTable.lootId} = ${lootTable.id}
-        AND NOT (${inArray(organizationLootRecordTable.guildId, ids)})
-    )`;
+    return notExists(
+      query
+        .select({ id: organizationLootRecordTable.id })
+        .from(organizationLootRecordTable)
+        .where(
+          and(
+            eq(organizationLootRecordTable.lootId, lootTable.id),
+            notInArray(organizationLootRecordTable.guildId, ids),
+          ),
+        ),
+    );
   });
 
   const protect = <A, E>(operation: string, effect: Effect.Effect<A, E>) =>

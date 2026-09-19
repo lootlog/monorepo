@@ -18,7 +18,7 @@ import {
 } from "#src/database/drizzle/schema";
 import {
   makeUserFeed,
-  userFeedSql,
+  buildUserFeedQuery,
   readPublishedFeedEntry,
 } from "#src/feed/user-feed";
 import {
@@ -27,7 +27,6 @@ import {
 } from "#src/kills/guild-kill-activity";
 import { makeKillCreation } from "#src/kills/kill-creation";
 import { applicationLogger } from "#src/shared/application-logger";
-import { PgDialect } from "drizzle-orm/pg-core";
 
 const client = new Client({ connectionString: requireIsolatedTestDatabase() });
 
@@ -394,15 +393,43 @@ describe("personal Organization activity feed", () => {
         .set({ occurredAt: new Date(Date.now() - 25 * 3600000) })
         .where(eq(guildKillActivityTable.id, id)),
     );
-    await run(makeGuildKillActivityCleanup(database)());
-    expect(
-      await run(
+
+    const locked = new Client({
+      connectionString: requireIsolatedTestDatabase(),
+    });
+
+    await locked.connect();
+
+    try {
+      await locked.query("BEGIN");
+      await locked.query(
+        'SELECT id FROM "GuildKillActivity" WHERE id = $1 FOR UPDATE',
+        [old],
+      );
+      await run(makeGuildKillActivityCleanup(database)());
+
+      const remaining = await run(
         database
           .select()
           .from(guildKillActivityTable)
           .where(eq(guildKillActivityTable.guildId, guild.id)),
-      ),
-    ).toEqual([]);
+      );
+
+      expect(remaining.map((row) => row.id)).toEqual([old]);
+      await locked.query("ROLLBACK");
+      await run(makeGuildKillActivityCleanup(database)());
+      expect(
+        await run(
+          database
+            .select()
+            .from(guildKillActivityTable)
+            .where(eq(guildKillActivityTable.guildId, guild.id)),
+        ),
+      ).toEqual([]);
+    } finally {
+      await locked.query("ROLLBACK");
+      await locked.end();
+    }
   });
   it("records one journal event per accepted guild kill and rolls aggregate updates back if journaling fails", async () => {
     const { guild, owner } = await seed();
@@ -551,13 +578,11 @@ describe("personal Organization activity feed", () => {
     );
     await client.query(`ANALYZE "GuildKillActivity"`);
 
-    const query = new PgDialect().sqlToQuery(
-      userFeedSql(
-        [{ guild, roles: [role] }],
-        reader,
-        new Date(Date.now() - 86400000).toISOString(),
-      ),
-    );
+    const query = buildUserFeedQuery(
+      [{ guild, roles: [role] }],
+      reader,
+      new Date(Date.now() - 86400000).toISOString(),
+    ).toSQL();
 
     const result = await client.query(
       `EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ${query.sql}`,
