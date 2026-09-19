@@ -15,8 +15,10 @@ import {
   decodeServerEvent,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
+import { isAirTagSubscriptionAcknowledgement } from "@lootlog/protocol/realtime/codec";
 import { makeGuildStore, type GuildStore } from "#src/guilds/guild-store";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
+import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import { unusedFederationStore } from "../../test/realtime-fixtures.js";
@@ -159,7 +161,11 @@ const makeSocket = () => {
   };
 };
 
-const setup = (guildStore?: GuildStore) => {
+const setup = (
+  guildStore?: GuildStore,
+  updateSubscription: AirTagService["updateSubscription"] = () =>
+    Promise.reject(new Error("Unexpected air tag subscribe")),
+) => {
   const guilds = new FakeGuildStore();
   const hub = new FakeHub();
   const activity = new FakeActivity();
@@ -175,8 +181,7 @@ const setup = (guildStore?: GuildStore) => {
     activity,
     { send: () => Promise.reject(new Error("Unexpected map ping")) },
     {
-      updateSubscription: () =>
-        Promise.reject(new Error("Unexpected air tag subscribe")),
+      updateSubscription,
       publishObservations: () =>
         Promise.reject(new Error("Unexpected air tag observation")),
     },
@@ -1004,6 +1009,103 @@ describe("CommandHandler session lifecycle", () => {
         retryable: false,
       },
     });
+  });
+
+  test("answers air-tag.subscription with the settled acknowledgement", async () => {
+    const settled =
+      Promise.withResolvers<
+        Awaited<ReturnType<AirTagService["updateSubscription"]>>
+      >();
+
+    const { handler, hub } = setup(undefined, () => settled.promise);
+    const target = makeSocket();
+    target.socket.data.joined = true;
+
+    const completed = Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "air-tag.subscription",
+            requestId: "request-air-tag",
+            data: { requestId: "air-tag-1", enabled: true, expectedMapId: 12 },
+          }),
+        ),
+      ),
+    );
+
+    await Bun.sleep(1);
+    expect(hub.responses).toEqual([]);
+
+    const acknowledgement = {
+      status: "accepted" as const,
+      requestId: "air-tag-1",
+      scopes: [
+        {
+          guildId: "organization-1",
+          world: "tempest",
+          mapId: 12,
+          epochId: "epoch-1",
+          epochStartedAt: 1_700_000_000_000,
+          revision: 3,
+          targets: [],
+        },
+      ],
+    };
+
+    settled.resolve(acknowledgement);
+    await completed;
+
+    expect(hub.responses).toEqual([
+      {
+        v: 1,
+        requestId: "request-air-tag",
+        status: "success",
+        data: acknowledgement,
+      },
+    ]);
+    // The Game client discards any reply that fails this guard.
+    expect(
+      hub.responses.every(
+        (response) =>
+          Predicate.hasProperty(response, "data") &&
+          isAirTagSubscriptionAcknowledgement(response.data),
+      ),
+    ).toBe(true);
+  });
+
+  test("reports a failed air-tag.subscription update as a retryable command error", async () => {
+    const { handler, hub } = setup();
+    const target = makeSocket();
+    target.socket.data.joined = true;
+
+    await Effect.runPromise(
+      handler.handle(
+        target.socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "air-tag.subscription",
+            requestId: "request-air-tag",
+            data: { requestId: "air-tag-1", enabled: true },
+          }),
+        ),
+      ),
+    );
+
+    expect(hub.responses).toEqual([
+      {
+        v: 1,
+        requestId: "request-air-tag",
+        status: "error",
+        error: {
+          code: "COMMAND_REJECTED",
+          message: "command temporarily unavailable",
+          retryable: true,
+        },
+      },
+    ]);
   });
 
   test("does not expose dependency failures through command responses", async () => {
