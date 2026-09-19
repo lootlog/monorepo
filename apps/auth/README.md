@@ -39,7 +39,7 @@ maintained source. Review both artifacts before applying migrations through
 `bun run db:migrate:dev` or `bun run db:migrate:deploy`. Existing databases must have an intact Drizzle migration journal; legacy schema
 adoption is no longer supported. Empty databases are created from the committed SQL
 migrations. Run `bun run test:integration`
-to verify migrations against disposable PostgreSQL.
+to verify database adapters and authentication storage against disposable services.
 
 TypeScript source is edited directly. Better Auth CLI generation and database
 introspection must not overwrite the application's schema.

@@ -36,7 +36,7 @@ Keep migration SQL and names immutable after this release. The snapshot in the l
 
 The online repository excludes intervals older than a rolling 112-day (16-week) window. An hourly cleanup removes expired interval rows, clips crossing intervals at the cutoff, and deletes expired per-user observation metadata, independently of the Organization log's seven-day Timescale policy. The global tracking start remains to distinguish covered days from dates before instrumentation. Per-user metadata retains the last confirmed observation only inside the same 112-day window. Gateway rotates cumulative segments at most every 24 hours, so retained interval records are bounded. Query-time clipping enforces the window even between cleanup runs.
 
-No production or existing local application database is migrated by the tests. `bun run --cwd apps/activity test:integration` provisions isolated PostgreSQL/Timescale containers and verifies migrations, persistence, union, DST, redelivery, retention and private HTTP identity binding. Rabbit consumer integration fakes only broker delivery; the online repository and database are real.
+No production or existing local application database is migrated by the tests. `bun run --cwd apps/activity test:integration` provisions isolated PostgreSQL/Timescale containers and verifies persistence, union, DST, redelivery, retention and private HTTP identity binding. Rabbit consumer integration fakes only broker delivery; the online repository and database are real.
 
 ### Online world provenance
 
