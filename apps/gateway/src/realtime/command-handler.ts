@@ -476,7 +476,7 @@ export class CommandHandler {
       case "air-tag.subscription":
         return requireJoined.pipe(
           Effect.andThen(
-            Effect.sync(() =>
+            fromPromise(() =>
               this.airTags.updateSubscription(socket, command.data),
             ),
           ),
