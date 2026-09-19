@@ -1,10 +1,10 @@
+import { SectionLoading } from "@/components/common/section-loading";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   getListEventRankingQueryKey,
   getShowEventOverviewQueryKey,
@@ -155,11 +155,7 @@ export const EventMemberKillsPageContent = ({
   );
 
   if (eventLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <SectionLoading />;
   }
 
   if (eventError || !event) {

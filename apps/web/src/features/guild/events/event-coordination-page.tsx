@@ -1,3 +1,4 @@
+import { SectionLoading } from "@/components/common/section-loading";
 import type { AccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,6 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getEventsMonitoringControllerGetCoordinationQueryKey,
@@ -195,11 +195,7 @@ export const EventCoordinationPage = () => {
   };
 
   if (isPending) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
+    return <SectionLoading />;
   }
 
   if (error || !coordination) {

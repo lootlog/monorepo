@@ -70,7 +70,7 @@ export const NpcSettingsDetailPage = () => {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3 custom-scrollbar [scrollbar-gutter:stable]">
       <PageHeader
         title={t(`npcType.${npc.npcType}`)}
         icon={Settings2}

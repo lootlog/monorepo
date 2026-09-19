@@ -16,7 +16,9 @@ export const RouteSectionLoading = () => {
   }
 
   return (
-    <div className="flex h-screen min-h-0 items-center justify-center bg-background backdrop-blur-xs">
+    // Fills the shell's content area; outside a shell nothing bounds it, so it
+    // falls back to the viewport height.
+    <div className="flex h-dvh max-h-full min-h-0 w-full animate-placeholder-in items-center justify-center">
       <Spinner className="size-16" />
     </div>
   );
