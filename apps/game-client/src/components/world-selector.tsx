@@ -93,12 +93,11 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     },
   );
 
-  const [recentWorlds = DEFAULT_RECENT_WORLDS, setRecentWorlds] =
-    useLocalStorage<string[]>(
-      recentWorldsKey(accountId, characterId),
-      DEFAULT_RECENT_WORLDS,
-      recentWorldsSchema,
-    );
+  const [recentWorlds, setRecentWorlds] = useLocalStorage<string[]>(
+    recentWorldsKey(accountId, characterId),
+    DEFAULT_RECENT_WORLDS,
+    recentWorldsSchema,
+  );
 
   const showLoading = useDelayedVisibility(isLoading);
 
@@ -129,17 +128,16 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
 
     const availableWorlds = new Set(worlds);
 
-    const recent =
-      recentWorlds?.flatMap((w) =>
-        availableWorlds.has(w)
-          ? [
-              {
-                value: w,
-                label: w.charAt(0).toUpperCase() + w.slice(1),
-              },
-            ]
-          : [],
-      ) ?? [];
+    const recent = recentWorlds.flatMap((w) =>
+      availableWorlds.has(w)
+        ? [
+            {
+              value: w,
+              label: w.charAt(0).toUpperCase() + w.slice(1),
+            },
+          ]
+        : [],
+    );
 
     const recentValues = new Set(recent.map((w) => w.value));
 
@@ -187,7 +185,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
 
     const updatedRecent = [
       newWorld,
-      ...(recentWorlds?.filter((w) => w !== newWorld) ?? []),
+      ...recentWorlds.filter((w) => w !== newWorld),
     ].slice(0, MAX_RECENT_WORLDS);
 
     setRecentWorlds(updatedRecent);

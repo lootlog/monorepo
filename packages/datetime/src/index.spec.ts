@@ -25,6 +25,27 @@ describe("@lootlog/datetime", () => {
     ).toBe("2026-07-15T06:30:00.000Z");
   });
 
+  it("resolves Warsaw clocks skipped or repeated by a DST transition", () => {
+    // 02:30 does not exist on the spring-forward day: it moves past the gap.
+    expect(
+      toUtcDateFromLocal(
+        { year: 2026, month: 3, day: 29 },
+        2,
+        30,
+        "Europe/Warsaw",
+      ).toISOString(),
+    ).toBe("2026-03-29T01:30:00.000Z");
+    // 02:30 happens twice on the fall-back day: the second occurrence wins.
+    expect(
+      toUtcDateFromLocal(
+        { year: 2026, month: 10, day: 25 },
+        2,
+        30,
+        "Europe/Warsaw",
+      ).toISOString(),
+    ).toBe("2026-10-25T01:30:00.000Z");
+  });
+
   it("evaluates a local range that crosses midnight", () => {
     expect(
       isLocalTimeInRange({

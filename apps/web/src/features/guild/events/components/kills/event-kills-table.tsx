@@ -1,6 +1,6 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { AlertCircle, Skull } from "lucide-react";
@@ -18,6 +18,7 @@ import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { createEventKillsTableColumns } from "./event-kills-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
 
 type EventKillsTableBaseProps = {
   eventId: string;
@@ -77,7 +78,6 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
 
 export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
-  const loaderRowRef = useRef<HTMLTableRowElement>(null);
   const { eventId, guildId, hasError, isLoading, kills } = props;
   const variant = getEventKillsTableVariant(props);
   const isPreview = variant === "preview";
@@ -107,45 +107,13 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     }
   }, [isPreview, resetKey, scrollElement]);
 
-  useEffect(() => {
-    const loaderRow = loaderRowRef.current;
-
-    if (
-      !loaderRow ||
-      isPreview ||
-      !scrollElement ||
-      !hasNextPage ||
-      hasError ||
-      isFetchingNextPage ||
-      !fetchNextPage ||
-      typeof IntersectionObserver === "undefined"
-    ) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          void fetchNextPage();
-        }
-      },
-      {
-        root: scrollElement,
-        rootMargin: "240px 0px",
-      },
-    );
-
-    observer.observe(loaderRow);
-
-    return () => observer.disconnect();
-  }, [
+  const loaderRowRef = useInfiniteScrollSentinel<HTMLTableRowElement>({
+    enabled: !hasError,
     fetchNextPage,
-    hasError,
     hasNextPage,
     isFetchingNextPage,
-    isPreview,
     scrollElement,
-  ]);
+  });
 
   if (isLoading) {
     return (

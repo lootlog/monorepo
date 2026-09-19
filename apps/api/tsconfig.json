@@ -11,7 +11,7 @@
     "noImplicitAny": false,
     "noUncheckedIndexedAccess": false,
     "target": "ES2023",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": ["ES2023", "ES2024.Collection", "DOM", "DOM.Iterable"],
     "rewriteRelativeImportExtensions": true,
     "sourceMap": true,
     "types": ["node", "bun"]

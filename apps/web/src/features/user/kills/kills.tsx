@@ -1,10 +1,16 @@
-import { isNotNil, omitBy } from "es-toolkit";
-import { z } from "zod";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { PageHeader } from "@/components/common/page-header";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearch, useNavigate } from "@tanstack/react-router";
+import {
+  type inferParserType,
+  parseAsArrayOf,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from "nuqs";
+import { useDebounceCallback } from "usehooks-ts";
 import { type SortingState, useTable } from "@tanstack/react-table";
 import { Table } from "@lootlog/ui/components/table";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
@@ -14,17 +20,13 @@ import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Skull } from "lucide-react";
-import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   KillsFilters,
   type KillsFiltersState,
 } from "./components/kills-filters";
 import { createKillsColumns } from "./components/kills-columns";
 import { KillsMobileList } from "./components/kills-mobile-list";
-import {
-  findTrackableNpcType,
-  type NpcType,
-} from "@/features/user/kills/npc-types";
+import { NPC_TYPES, type NpcType } from "@/features/user/kills/npc-types";
 import {
   type KillsControllerGetUserNpcKillsParams,
   getKillsControllerGetUserNpcKillsQueryKey,
@@ -35,38 +37,44 @@ import type { KillStatsPeriod } from "@/features/kills/components/kill-stats-per
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { sortingTableFeatures } from "@/lib/tanstack-table-features";
 
-const killsSearchSchema = z.object({
-  world: z.string().optional().catch(undefined),
-  npcType: z.string().optional().catch(undefined),
-  search: z.string().optional().catch(undefined),
-  cursor: z.string().optional().catch(undefined),
-  minLvl: z.string().optional().catch(undefined),
-  maxLvl: z.string().optional().catch(undefined),
-  sortBy: z.string().optional().catch(undefined),
-  period: z
-    .enum(["all", "24h", "3d", "7d", "14d", "30d"])
-    .optional()
-    .catch(undefined),
-});
+const KILL_STATS_PERIODS = [
+  "all",
+  "24h",
+  "3d",
+  "7d",
+  "14d",
+  "30d",
+] as const satisfies KillStatsPeriod[];
 
-type KillsSearchParams = z.infer<typeof killsSearchSchema>;
+const killsSearchParsers = {
+  world: parseAsString,
+  npcType: parseAsArrayOf(parseAsStringLiteral(NPC_TYPES)),
+  search: parseAsString.withDefault(""),
+  cursor: parseAsInteger.withDefault(0),
+  minLvl: parseAsString.withDefault(""),
+  maxLvl: parseAsString.withDefault(""),
+  period: parseAsStringLiteral(KILL_STATS_PERIODS).withDefault("all"),
+};
 
 const ITEMS_PER_PAGE = 20;
 
+const DRAFT_PUBLISH_DELAY_MS = 500;
+
+type KillsDrafts = {
+  search: string;
+  minLvl: string;
+  maxLvl: string;
+};
+
 const getKillsFilters = (
-  searchParams: KillsSearchParams,
-  debouncedSearch: string,
-  debouncedMinLvl: string,
-  debouncedMaxLvl: string,
+  query: inferParserType<typeof killsSearchParsers>,
 ): KillsFiltersState => ({
-  world: searchParams.world,
-  npcTypes: searchParams.npcType
-    ? searchParams.npcType.split(",").map(findTrackableNpcType).filter(isNotNil)
-    : undefined,
-  search: debouncedSearch || undefined,
-  minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
-  maxLvl: debouncedMaxLvl ? Number(debouncedMaxLvl) : undefined,
-  period: searchParams.period ?? "all",
+  world: query.world ?? undefined,
+  npcTypes: query.npcType?.length ? query.npcType : undefined,
+  search: query.search || undefined,
+  minLvl: query.minLvl ? Number(query.minLvl) : undefined,
+  maxLvl: query.maxLvl ? Number(query.maxLvl) : undefined,
+  period: query.period,
 });
 
 const hasKillsFilters = (filters: KillsFiltersState) =>
@@ -77,53 +85,28 @@ const hasKillsFilters = (filters: KillsFiltersState) =>
   Boolean(filters.maxLvl) ||
   filters.period !== "all";
 
-const getNextSearchParams = (
-  searchParams: KillsSearchParams,
-  updates: Partial<KillsSearchParams>,
-) => {
-  const newParams = { ...searchParams, ...updates };
-
-  return omitBy(newParams, (value) => value === undefined || value === "");
-};
-
-const DEBOUNCED_SEARCH_KEYS = ["search", "minLvl", "maxLvl"] as const;
-
-type DebouncedSearchKey = (typeof DEBOUNCED_SEARCH_KEYS)[number];
-
 export const KillsPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const searchParams = killsSearchSchema.parse(useSearch({ strict: false }));
+  const [query, setQuery] = useQueryStates(killsSearchParsers);
   const isMobile = useIsMobile();
 
-  const [searchInput, setSearchInput] = useState(searchParams.search ?? "");
-  const debouncedSearch = useDebounce(searchInput, 500);
+  // Text inputs keep a local draft; the URL (and with it the request) only
+  // follows once typing pauses.
+  const [drafts, setDrafts] = useState<KillsDrafts>({
+    search: query.search,
+    minLvl: query.minLvl,
+    maxLvl: query.maxLvl,
+  });
 
-  const [minLvlInput, setMinLvlInput] = useState(searchParams.minLvl ?? "");
-  const [maxLvlInput, setMaxLvlInput] = useState(searchParams.maxLvl ?? "");
-  const debouncedMinLvl = useDebounce(minLvlInput, 500);
-  const debouncedMaxLvl = useDebounce(maxLvlInput, 500);
-
-  const debouncedSearchParams: Record<DebouncedSearchKey, string> = {
-    search: debouncedSearch,
-    minLvl: debouncedMinLvl,
-    maxLvl: debouncedMaxLvl,
-  };
-
-  const prevDebouncedSearchParams = useRef(debouncedSearchParams);
+  const publishQuery = useDebounceCallback(setQuery, DRAFT_PUBLISH_DELAY_MS);
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalKills", desc: true },
   ]);
 
-  const filters = getKillsFilters(
-    searchParams,
-    debouncedSearch,
-    debouncedMinLvl,
-    debouncedMaxLvl,
-  );
+  const filters = getKillsFilters(query);
 
-  const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
+  const { cursor } = query;
 
   const sortOrder: KillsControllerGetUserNpcKillsParams["sortOrder"] =
     sorting[0]?.desc === false ? "asc" : "desc";
@@ -150,90 +133,34 @@ export const KillsPage: React.FC = () => {
     },
   );
 
-  const updateSearchParams = (updates: Partial<KillsSearchParams>) => {
-    navigate({
-      to: ".",
-      search: getNextSearchParams(searchParams, updates),
-      replace: true,
-    });
-  };
-
-  // eslint-disable-next-line react-doctor/no-event-handler -- This publishes a completed debounce to the URL; the input event owns the draft and must not navigate on every keystroke.
-  useEffect(() => {
-    const changedKeys = DEBOUNCED_SEARCH_KEYS.filter(
-      (key) =>
-        debouncedSearchParams[key] !== prevDebouncedSearchParams.current[key],
-    );
-
-    if (changedKeys.length === 0) return;
-
-    prevDebouncedSearchParams.current = debouncedSearchParams;
-    navigate({
-      to: ".",
-      search: getNextSearchParams(searchParams, {
-        ...Object.fromEntries(
-          changedKeys.map((key) => [
-            key,
-            debouncedSearchParams[key] || undefined,
-          ]),
-        ),
-        cursor: undefined,
-      }),
-      replace: true,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `debouncedSearchParams` is rebuilt every render; the debounced values it holds are the real dependencies.
-  }, [
-    debouncedSearch,
-    debouncedMinLvl,
-    debouncedMaxLvl,
-    navigate,
-    searchParams,
-  ]);
-
   const handleWorldChange = (world: string | undefined) => {
-    updateSearchParams({ world, cursor: undefined });
+    setQuery({ world: world ?? null, cursor: null });
   };
 
   const handleNpcTypeChange = (npcTypes: NpcType[] | undefined) => {
-    updateSearchParams({
-      npcType: npcTypes?.join(","),
-      cursor: undefined,
-    });
+    setQuery({ npcType: npcTypes ?? null, cursor: null });
   };
 
-  const handleSearchChange = (search: string) => {
-    setSearchInput(search);
-  };
+  const handleDraftChange = (key: keyof KillsDrafts, value: string) => {
+    const nextDrafts = { ...drafts, [key]: value };
 
-  const handleMinLvlChange = (minLvl: string) => {
-    setMinLvlInput(minLvl);
-  };
-
-  const handleMaxLvlChange = (maxLvl: string) => {
-    setMaxLvlInput(maxLvl);
+    setDrafts(nextDrafts);
+    publishQuery({ ...nextDrafts, cursor: null });
   };
 
   const handlePeriodChange = (period: KillStatsPeriod) => {
-    updateSearchParams({
-      period: period === "all" ? undefined : period,
-      cursor: undefined,
-    });
+    setQuery({ period, cursor: null });
   };
 
   const handleNextPage = () => {
     if (data?.pagination.hasNext) {
-      updateSearchParams({
-        cursor: (cursor + ITEMS_PER_PAGE).toString(),
-      });
+      setQuery({ cursor: cursor + ITEMS_PER_PAGE });
     }
   };
 
   const handlePreviousPage = () => {
     if (cursor > 0) {
-      const newCursor = Math.max(0, cursor - ITEMS_PER_PAGE);
-      updateSearchParams({
-        cursor: newCursor > 0 ? newCursor.toString() : undefined,
-      });
+      setQuery({ cursor: Math.max(0, cursor - ITEMS_PER_PAGE) });
     }
   };
 
@@ -307,15 +234,15 @@ export const KillsPage: React.FC = () => {
             <KillsFilters
               filters={{
                 ...filters,
-                search: searchInput,
-                minLvl: minLvlInput ? Number(minLvlInput) : undefined,
-                maxLvl: maxLvlInput ? Number(maxLvlInput) : undefined,
+                search: drafts.search,
+                minLvl: drafts.minLvl ? Number(drafts.minLvl) : undefined,
+                maxLvl: drafts.maxLvl ? Number(drafts.maxLvl) : undefined,
               }}
               onWorldChange={handleWorldChange}
               onNpcTypeChange={handleNpcTypeChange}
-              onSearchChange={handleSearchChange}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
+              onSearchChange={(search) => handleDraftChange("search", search)}
+              onMinLvlChange={(minLvl) => handleDraftChange("minLvl", minLvl)}
+              onMaxLvlChange={(maxLvl) => handleDraftChange("maxLvl", maxLvl)}
               onPeriodChange={handlePeriodChange}
             />
           </PageHeader>
