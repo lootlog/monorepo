@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { useTranslation } from "react-i18next";
 import type { Event } from "@/features/guild/events/types/api";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { EventTimersList } from "./event-timers-list";
 
 interface PinnedEventsBannerProps {
@@ -20,6 +21,8 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
 }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+  // MotionConfig stops the transforms; the endless loops themselves are dropped here.
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   if (events.length === 0) return null;
 
@@ -32,19 +35,21 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
   return (
     <div className="px-2 mb-3 pb-3 border-b border-border">
       <div className="rounded-lg overflow-hidden bg-gradient-to-r from-yellow-500/20 via-amber-500/15 to-orange-500/20 border border-yellow-500/30 relative">
-        <m.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent"
-          animate={{
-            x: ["-100%", "100%"],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 3,
-            ease: "easeInOut",
-          }}
-          style={{ width: "100%" }}
-        />
+        {prefersReducedMotion ? null : (
+          <m.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent"
+            animate={{
+              x: ["-100%", "100%"],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatDelay: 3,
+              ease: "easeInOut",
+            }}
+            style={{ width: "100%" }}
+          />
+        )}
 
         <div className="relative">
           <Link
@@ -57,10 +62,15 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
               <div className="relative">
                 <Trophy className="h-4 w-4 text-yellow-500" />
                 <m.div
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.7, 1, 0.7],
-                  }}
+                  key={String(prefersReducedMotion)}
+                  animate={
+                    prefersReducedMotion
+                      ? undefined
+                      : {
+                          scale: [1, 1.2, 1],
+                          opacity: [0.7, 1, 0.7],
+                        }
+                  }
                   transition={{
                     duration: 2,
                     repeat: Infinity,

@@ -2,8 +2,8 @@ import {
   getShowEventWrappedQueryKey,
   useShowEventWrapped,
 } from "@lootlog/client/main";
-import { useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { useTranslation } from "react-i18next";
 import { buildWrappedDeck } from "./event-summary/build-wrapped-slides";
 import { useWrappedAutoplay } from "./event-summary/use-wrapped-autoplay";
@@ -23,7 +23,7 @@ export function useEventSummaryDialog({
   eventId,
 }: EventSummaryDialogProps) {
   const { t } = useTranslation();
-  const prefersReducedMotion = Boolean(useReducedMotion());
+  const prefersReducedMotion = usePrefersReducedMotion();
   const stageRef = useRef<HTMLElement>(null);
   const [selection, setSelection] = useState({ id: "opening", index: 0 });
   const currentSlideId = selection.id;
