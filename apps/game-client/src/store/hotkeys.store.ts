@@ -1,4 +1,5 @@
 import { isObjectRecord } from "@lootlog/schema/records";
+import { isEqual } from "es-toolkit";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
@@ -335,7 +336,7 @@ export const useHotkeysStore = create<HotkeysState>()(
         syncBindings(get().bindings);
       },
       applyBindings: (bindings) => {
-        if (JSON.stringify(get().bindings) === JSON.stringify(bindings)) {
+        if (isEqual(get().bindings, bindings)) {
           return;
         }
 
@@ -432,6 +433,3 @@ export const formatBindingParts = (binding: HotkeyBinding): string[] => {
 
   return parts;
 };
-
-export const formatBinding = (binding: HotkeyBinding): string =>
-  formatBindingParts(binding).join(" + ");

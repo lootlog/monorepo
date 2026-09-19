@@ -18,7 +18,7 @@ export type GuildLootShareUpdatedEventV2 = GuildLootCreatedEventV2 & {
   lootShare: Record<string, string[]>;
 };
 
-export const GuildLootEventNpcSchema = Schema.Struct({
+const GuildLootEventNpcSchema = Schema.Struct({
   lvl: Schema.optionalKey(Schema.NullOr(Schema.Number)),
   prof: Schema.optionalKey(Schema.NullOr(Schema.String)),
   type: Schema.optionalKey(
@@ -34,12 +34,4 @@ export const GuildLootCreatedEventV2Schema = Schema.Struct({
   guildId: Schema.NonEmptyString,
   lootId: Schema.Int,
   npcs: Schema.Array(GuildLootEventNpcSchema),
-});
-
-export const GuildLootShareUpdatedEventV2Schema = Schema.Struct({
-  version: Schema.Literal(2),
-  guildId: Schema.NonEmptyString,
-  lootId: Schema.Int,
-  npcs: Schema.Array(GuildLootEventNpcSchema),
-  lootShare: Schema.Record(Schema.String, Schema.Array(Schema.String)),
 });

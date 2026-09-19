@@ -12,7 +12,7 @@ import {
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Pencil } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -97,12 +97,13 @@ export const useMapTemplateForm = ({
 
   const maps = form.watch("maps");
 
-  const filteredGameMaps = useMemo(() => {
-    if (!gameMaps) return [];
-    const addedMapIds = new Set(maps.map((m) => m.id));
-
-    return filterAvailableGameMaps(gameMaps, addedMapIds, searchQuery);
-  }, [gameMaps, maps, searchQuery]);
+  const filteredGameMaps = gameMaps
+    ? filterAvailableGameMaps(
+        gameMaps,
+        new Set(maps.map((m) => m.id)),
+        searchQuery,
+      )
+    : [];
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {

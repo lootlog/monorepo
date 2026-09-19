@@ -21,10 +21,6 @@
     "description": "Sprawdź połączenie i spróbuj ponownie."
   },
   "card": {
-    "activeCount_one": "{{count}} zapis",
-    "activeCount_few": "{{count}} zapisy",
-    "activeCount_many": "{{count}} zapisów",
-    "activeCount_other": "{{count}} zapisów",
     "occupied": "Zajęte teraz",
     "next": "Najbliższa rezerwacja",
     "none": "Brak rezerwacji",
@@ -45,18 +41,8 @@
     "clearFilters": "Wyczyść filtry"
   },
   "datePicker": {
-    "placeholder": "Wybierz datę i godzinę",
     "clear": "Wyczyść datę",
-    "time": "Godzina",
-    "weekdays": {
-      "monday": "Pn",
-      "tuesday": "Wt",
-      "wednesday": "Śr",
-      "thursday": "Cz",
-      "friday": "Pt",
-      "saturday": "So",
-      "sunday": "Nd"
-    }
+    "time": "Godzina"
   },
   "schedule": {
     "header": {
@@ -70,8 +56,7 @@
       "nextWeek": "Następny tydzień",
       "previousDay": "Poprzedni dzień",
       "nextDay": "Następny dzień",
-      "today": "Dzisiaj",
-      "weekLabel": "Tydzień {{week}} ({{year}}, {{month}})"
+      "today": "Dzisiaj"
     },
     "infoDialog": {
       "title": "Zasady rezerwacji",
@@ -114,10 +99,6 @@
         }
       }
     },
-    "quickAdd": {
-      "title": "Nowa rezerwacja",
-      "commentPlaceholder": "Komentarz (opcjonalnie)"
-    },
     "dialog": {
       "title": "Dodaj rezerwację",
       "startDate": "Data rozpoczęcia",
@@ -149,8 +130,6 @@
       "timeRangeRequired": "Wybierz zakres czasowy rezerwacji.",
       "endAfterStart": "Data zakończenia musi być późniejsza niż rozpoczęcia.",
       "invalidTimeGrid": "Początek i koniec muszą wypadać co {{minutes}} minut.",
-      "reservationTypeMissing": "Nie udało się ustalić rodzaju rezerwacji.",
-      "userMissing": "Brak informacji o użytkowniku.",
       "startTooOld": "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
       "minimumDuration": "Rezerwacja musi trwać co najmniej {{minutes}} minut.",
       "maximumDuration": "Rezerwacja może trwać maksymalnie {{minutes}} minut.",
@@ -182,7 +161,6 @@
   "my": {
     "title": "Moje zapisy",
     "description": "Nadchodzące rezerwacje oraz historia z ostatnich 30 dni.",
-    "cardDescription": "Pięć najbliższych terminów",
     "showAll": "Pokaż wszystkie",
     "tabsLabel": "Zakres rezerwacji",
     "upcoming": "Nadchodzące",
@@ -205,7 +183,6 @@
     "selectOrganization": "Wybierz organizację docelową",
     "noEligibleOrganizations": "Nie administrujesz żadną inną organizacją, którą można połączyć.",
     "accept": "Połącz kalendarze",
-    "connecting": "Łączenie kalendarzy...",
     "acceptedTitle": "Kalendarze zostały połączone",
     "acceptedDescription": "Obie organizacje widzą teraz wzajemnie swoje rezerwacje. Terminy sojusznika nie blokują zapisów.",
     "openSettings": "Otwórz ustawienia rezerwacji",

@@ -7,11 +7,11 @@ import {
   LOOTLOG_OTHER_GLOW_UNKNOWN,
   lootlogOtherGlowManager,
 } from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
+import { getCharacterIdentityKey } from "@/lib/character-identity-key";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import {
   getOtherCatchingGuildsTarget,
-  getCharacterTooltipCatchingGuildsCharacterKey,
   type CharacterTooltipCatchingGuildsEntry,
   type CharacterTooltipCatchingGuildsTarget,
   useCharacterTooltipCatchingGuildsStore,
@@ -148,9 +148,7 @@ export function useOtherCatchingGuildGlow(): void {
 
       useCharacterTooltipCatchingGuildsStore
         .getState()
-        .setUnavailable(
-          getCharacterTooltipCatchingGuildsCharacterKey(accountId, characterId),
-        );
+        .setUnavailable(getCharacterIdentityKey(accountId, characterId));
     }
 
     characterTooltipCatchingGuildsCoordinator.sync(

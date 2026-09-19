@@ -20,7 +20,7 @@ type MemberWrite = {
   readonly lastDiscordStatus: string;
 };
 
-export class MemberStoreFailure extends TaggedErrorClass<MemberStoreFailure>()(
+class MemberStoreFailure extends TaggedErrorClass<MemberStoreFailure>()(
   "MemberStoreFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { Button } from "@/components/ui/button";
+import { WarningWindowActions } from "@/components/warning-window/warning-window-actions";
 import { storageKey } from "@/lib/storage-key";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useGlobalStore } from "@/store/global.store";
@@ -89,24 +89,10 @@ export const BackendPreferencesWarning: FC = () => {
           <p className="ll:mb-3">{t("content.title")}</p>
           <p>{t("content.description")}</p>
         </div>
-        <div className="ll:flex ll:justify-end ll:gap-2">
-          <Button
-            variant="secondary"
-            size="xs"
-            onClick={handleClose}
-            className="ll:px-3 ll:py-1"
-          >
-            {t("common:actions.close")}
-          </Button>
-          <Button
-            variant="secondary"
-            size="xs"
-            onClick={handleOpenSettings}
-            className="ll:px-3 ll:py-1"
-          >
-            {t("common:actions.openSettings")}
-          </Button>
-        </div>
+        <WarningWindowActions
+          onClose={handleClose}
+          onOpenSettings={handleOpenSettings}
+        />
       </div>
     </DraggableWindow>
   );

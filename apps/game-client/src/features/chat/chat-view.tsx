@@ -1,5 +1,5 @@
 import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
@@ -334,20 +334,21 @@ export const ChatView = ({
   };
 
   // Both callbacks feed memoized transcript rows (see ChatTranscriptRow), so
-  // they must not change identity per render; they read the stores directly.
-  const handleReplyToMessage = useCallback(
-    (message: ChatMessageType, member?: GuildMember) => {
-      if (!canReplyToChatMessage(message)) return;
-      useChatStore.getState().setReplyDraft({
-        guildId: message.guildId,
-        messageId: message.id,
-        senderNick: member?.name ?? message.characterData.nick,
-        message: message.message,
-        type: message.type,
-      });
-    },
-    [],
-  );
+  // they must not change identity per render; the React Compiler memoizes
+  // them and they read the stores directly.
+  const handleReplyToMessage = (
+    message: ChatMessageType,
+    member?: GuildMember,
+  ) => {
+    if (!canReplyToChatMessage(message)) return;
+    useChatStore.getState().setReplyDraft({
+      guildId: message.guildId,
+      messageId: message.id,
+      senderNick: member?.name ?? message.characterData.nick,
+      message: message.message,
+      type: message.type,
+    });
+  };
 
   const queryClient = useQueryClient();
 
@@ -382,14 +383,11 @@ export const ChatView = ({
     },
   });
 
-  const handleDeleteMessage = useCallback(
-    (message: ChatMessageType) => {
-      deleteChatMessage({
-        pathParams: { guildId: message.guildId, messageId: message.id },
-      });
-    },
-    [deleteChatMessage],
-  );
+  const handleDeleteMessage = (message: ChatMessageType) => {
+    deleteChatMessage({
+      pathParams: { guildId: message.guildId, messageId: message.id },
+    });
+  };
 
   const actions = (
     <ChatWindowActions

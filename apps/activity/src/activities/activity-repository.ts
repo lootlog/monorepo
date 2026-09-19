@@ -22,6 +22,7 @@ import {
   Effect,
   Function,
   Layer,
+  Number as Num,
   Option,
   Schema,
 } from "effect";
@@ -513,7 +514,8 @@ export class ActivityRepository extends Context.Service<
             asc(memberActivityStats.source),
           );
 
-      const normalize = (limit = 10) => Math.min(Math.max(limit, 1), 50);
+      const normalize = (limit = 10) =>
+        Num.clamp(limit, { minimum: 1, maximum: 50 });
 
       const dedupe = (rows: Array<string | null>, limit: number) => {
         const byKey = new Map<string, string>();

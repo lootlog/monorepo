@@ -91,3 +91,48 @@ export const canViewNpcTimer = (
     npc.lvl,
   );
 };
+
+export type NpcFeature = keyof typeof NPC_FEATURE_PERMISSIONS;
+
+export type NpcFeatureTier = keyof (typeof NPC_FEATURE_PERMISSIONS)[NpcFeature];
+
+/** An NPC-scoped source, reduced to what the visibility rule needs. */
+export type NpcFeatureSource = {
+  readonly tier: NpcFeatureTier;
+  readonly npcLevel?: number;
+};
+
+/**
+ * The single NPC feature visibility rule, shared by every surface that reads
+ * NPC-scoped sources: a role must grant the feature's base permission, and an
+ * NPC-scoped source additionally needs the permission for that NPC's routing
+ * tier within the role's level range.
+ *
+ * Owner/ADMIN bypass and the party-gathering organizer bypass are NOT part of
+ * this rule; each caller resolves them from its own source first.
+ *
+ * A source of `null` means "not NPC-scoped" and only needs the base permission.
+ * A source without `npcLevel` skips the level-range check, because there is no
+ * level to place inside a range.
+ */
+export const canReadNpcFeatureSource = (
+  roles: readonly RolePermissionData[],
+  feature: NpcFeature,
+  source: NpcFeatureSource | null,
+): boolean => {
+  if (
+    !roles.some((role) =>
+      role.permissions.includes(NPC_FEATURE_PERMISSIONS[feature].base),
+    )
+  )
+    return false;
+
+  if (!source) return true;
+
+  const permission = NPC_FEATURE_PERMISSIONS[feature][source.tier];
+
+  if (source.npcLevel === undefined)
+    return roles.some((role) => role.permissions.includes(permission));
+
+  return hasRolePermissionInLevelRange(roles, permission, source.npcLevel);
+};

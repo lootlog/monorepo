@@ -38,7 +38,6 @@ function selectPageUpstream(pathname: string): Upstream {
   if (
     landingDocuments.has(documentPath) ||
     landingFiles.has(pathname) ||
-    isPathWithin(pathname, "/_next") ||
     isPathWithin(pathname, "/brand") ||
     isPathWithin(pathname, legacyLandingAssetRoot) ||
     isPathWithin(pathname, "/landing-assets") ||

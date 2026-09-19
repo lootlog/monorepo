@@ -21,7 +21,7 @@ import {
 } from "./kill-query-support.js";
 import { getKillStatsPeriodStart } from "./kill-stats-period.js";
 
-export class MemberKillQueryError extends TaggedErrorClass<MemberKillQueryError>()(
+class MemberKillQueryError extends TaggedErrorClass<MemberKillQueryError>()(
   "MemberKillQueryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

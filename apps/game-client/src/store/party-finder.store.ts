@@ -5,6 +5,7 @@ import type {
   PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
 import { create } from "zustand";
+import { pruneByRecency } from "@/lib/prune-by-recency";
 
 export type ReadyRoomCharacterIdentity = {
   accountId: string;
@@ -126,21 +127,16 @@ function pruneExpiredRoomTombstones(
     ([, version]) => version.presence === "PRESENT",
   );
 
-  const retainedTombstones = roomVersionEntries
-    .filter(
-      ([, version]) =>
-        version.presence === "REMOVED" &&
-        now - version.observedAtMs <= READY_ROOM_TOMBSTONE_TTL_MS,
-    )
-    .sort(([, firstVersion], [, secondVersion]) => {
-      const timeDifference =
-        secondVersion.observedAtMs - firstVersion.observedAtMs;
-
-      if (timeDifference !== 0) return timeDifference;
-
-      return secondVersion.observedSequence - firstVersion.observedSequence;
-    })
-    .slice(0, READY_ROOM_TOMBSTONE_CAP);
+  const { retained: retainedTombstones } = pruneByRecency({
+    entries: roomVersionEntries.filter(
+      ([, version]) => version.presence === "REMOVED",
+    ),
+    now,
+    ttlMs: READY_ROOM_TOMBSTONE_TTL_MS,
+    cap: READY_ROOM_TOMBSTONE_CAP,
+    timestampOf: ([, version]) => version.observedAtMs,
+    tiebreakOf: ([, version]) => version.observedSequence,
+  });
 
   const retainedVersions = [...presentVersions, ...retainedTombstones];
 

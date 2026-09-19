@@ -1,3 +1,4 @@
+import { parseMsToTime } from "@lootlog/datetime";
 import {
   getClockSecond,
   subscribeToSecondClock,
@@ -12,7 +13,6 @@ import {
   type WindowStatus,
 } from "../../hooks/use-window-status";
 import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
-import { formatDurationPadded } from "../../utils/format-duration";
 import type { MapStatus } from "./map-status";
 
 interface MapCoverageTimerProps {
@@ -57,7 +57,7 @@ export const MapCoverageTimer = ({
         currentSecond - Math.floor(startTime / 1000),
       );
 
-      const nextDuration = formatDurationPadded(elapsedSeconds);
+      const nextDuration = parseMsToTime(elapsedSeconds * 1000);
 
       if (timerValueRef.current) {
         timerValueRef.current.textContent = nextDuration;

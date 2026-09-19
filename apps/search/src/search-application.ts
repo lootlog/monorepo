@@ -23,7 +23,7 @@ import { effectLogger } from "#src/shared/logger";
 
 const batchMessageLimit = 50;
 
-export const searchQueues = [
+const searchQueues = [
   queue("search.items.index", RabbitRoutingKey.SEARCH_ITEMS_INDEX),
   queue("search-npcs-index", RabbitRoutingKey.SEARCH_NPCS_INDEX),
   queue("search-players-index", RabbitRoutingKey.SEARCH_PLAYERS_INDEX),

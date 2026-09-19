@@ -1,7 +1,5 @@
-import { Button } from "@lootlog/ui/components/button";
+import { EventLoadError } from "./components/event-load-error";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Link } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
 import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
@@ -79,15 +77,7 @@ export const EventDetail = () => {
   }
 
   if (error || !event) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 max-h-full overflow-y-auto [justify-content:safe_center]">
-        <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">{t("events.error")}</p>
-        <Link to="/$guildId/events" params={{ guildId: queryGuildId }}>
-          <Button variant="outline">{t("events.backToList")}</Button>
-        </Link>
-      </div>
-    );
+    return <EventLoadError guildId={queryGuildId} />;
   }
 
   return (

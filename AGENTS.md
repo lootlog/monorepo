@@ -305,6 +305,12 @@ find it unchanged on the next.
   new suite or fixture. For mechanical replacements with standard-library or
   dependency utilities, rely on existing coverage; add tests only for Lootlog
   behavior that the replacement could change, not the utility itself.
+- Never test the language, the runtime, or a framework primitive. A test whose
+  assertions transcribe the implementation — an operator, a comparison, a
+  nullish check, a default value, a type guard, a pass-through argument — proves
+  only that JavaScript works. Delete it instead of writing it. Coverage is not a
+  goal: a test earns its place by naming a realistic incorrect outcome a future
+  change could produce, and by failing when that outcome occurs.
 - For styling, layout, or copy-only changes, use existing visual inspection and
   lint/typecheck. Do not add tests for literal text rendering, CSS classes or
   values, DOM nesting, decorative animations, or the absence of deleted UI.

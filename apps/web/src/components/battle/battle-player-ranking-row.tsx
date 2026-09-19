@@ -2,14 +2,13 @@ import { cn } from "cn";
 import type { FC } from "react";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 import type { BattlePlayerRankingEntry } from "./utils/battle-player-ranking";
+import { formatNumber } from "@/components/battle/utils/value-utils";
 
 export type BattlePlayerRankingRowProps = {
   entry: BattlePlayerRankingEntry;
   isCurrentCharacter: boolean;
   position: number;
 };
-
-const formatNumber = (value: number) => value.toLocaleString("pl-PL");
 
 export const BattlePlayerRankingRow: FC<BattlePlayerRankingRowProps> = ({
   entry,

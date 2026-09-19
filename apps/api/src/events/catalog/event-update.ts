@@ -36,7 +36,7 @@ import {
   isEventActiveAt,
 } from "#src/events/monitoring/event-activity";
 
-export class EventUpdateError extends TaggedErrorClass<EventUpdateError>()(
+class EventUpdateError extends TaggedErrorClass<EventUpdateError>()(
   "EventUpdateError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

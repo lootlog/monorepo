@@ -3,7 +3,7 @@ import { type FC, useEffect, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
-import { Button } from "@/components/ui/button";
+import { WarningWindowActions } from "@/components/warning-window/warning-window-actions";
 import { useGameStore } from "@/store/game.store";
 import { storageKey } from "@/lib/storage-key";
 import { useTranslation } from "react-i18next";
@@ -127,24 +127,10 @@ export const CatchingWhitelistWarning: FC = () => {
           <p className="ll:mb-3">{t("content.title")}</p>
           <p className="ll:mb-3">{t("content.description")}</p>
         </div>
-        <div className="ll:flex ll:gap-2 ll:justify-end">
-          <Button
-            variant="secondary"
-            size="xs"
-            onClick={handleClose}
-            className="ll:px-3 ll:py-1"
-          >
-            {t("common:actions.close")}
-          </Button>
-          <Button
-            variant="secondary"
-            size="xs"
-            onClick={handleOpenSettings}
-            className="ll:px-3 ll:py-1"
-          >
-            {t("common:actions.openSettings")}
-          </Button>
-        </div>
+        <WarningWindowActions
+          onClose={handleClose}
+          onOpenSettings={handleOpenSettings}
+        />
       </div>
     </DraggableWindow>
   );

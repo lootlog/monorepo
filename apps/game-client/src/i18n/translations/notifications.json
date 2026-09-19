@@ -4,7 +4,6 @@
   },
   "content": {
     "gatheringParty": "Zbiera grupę",
-    "lookingForParty": "Szuka grupy",
     "levelRange": "Poziom: {{min}} - {{max}}"
   },
   "actions": {

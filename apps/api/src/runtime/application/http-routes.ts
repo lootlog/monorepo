@@ -38,7 +38,7 @@ const ProcessHandlerInfrastructure = Layer.mergeAll(
  * ports owned by the 26 handler groups. Keeping them visible prevents the Bun
  * host from starting with a partially wired API.
  */
-export const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
+const LootlogApiRoutes = HttpApiBuilder.layer(LootlogApi, {
   openapiPath: "/openapi.json",
 }).pipe(
   Layer.provide(LootlogApiHandlers),
@@ -52,7 +52,7 @@ export const LootlogApiRouter = LootlogApiRoutes.pipe(
   Layer.provideMerge(HandlerInfrastructure),
 );
 
-export const LootlogApiHttp = HttpRouter.serve(
+const LootlogApiHttp = HttpRouter.serve(
   LootlogApiRoutes.pipe(Layer.provide(httpServerRouteMetrics)),
   {
     middleware: httpServerMetrics,

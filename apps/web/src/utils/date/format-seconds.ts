@@ -12,7 +12,7 @@ export function formatSeconds(totalSeconds: number): string {
     end: secs * 1000,
   });
 
-  const totalMinutes = (hours ?? 0) * 60 + (minutes ?? 0);
+  const totalMinutes = hours * 60 + minutes;
 
-  return `${totalMinutes}m ${seconds ?? 0}s`;
+  return `${totalMinutes}m ${seconds}s`;
 }

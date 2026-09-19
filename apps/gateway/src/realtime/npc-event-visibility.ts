@@ -1,9 +1,12 @@
 import {
   canManageOwnPartyGathering,
-  hasRolePermissionInLevelRange,
-  NPC_FEATURE_PERMISSIONS,
+  canReadNpcFeatureSource,
+  type NpcFeature,
 } from "@lootlog/domain/npc-permissions";
-import { getNpcRoutingTier, resolveNpcType } from "@lootlog/domain/npc-routing";
+import {
+  getNpcRoutingTier,
+  isRoutableNpcSource,
+} from "@lootlog/domain/npc-routing";
 import {
   NpcRoutingDataSchema,
   NpcRoutingTierSchema,
@@ -65,7 +68,7 @@ const decodeRouting = Schema.decodeUnknownOption(RoutingSchema);
 
 type Routing = typeof RoutingSchema.Type;
 
-export const isOrganizationAdministrator = (
+const isOrganizationAdministrator = (
   session: SessionData,
   organizationId: string,
 ): boolean => {
@@ -81,12 +84,7 @@ export const isOrganizationAdministrator = (
 };
 
 const npcRouting = Function.compose(decodeNpc, (decoded): Routing | null => {
-  if (
-    Option.isNone(decoded) ||
-    !Number.isFinite(decoded.value.lvl) ||
-    decoded.value.lvl < 0 ||
-    resolveNpcType(decoded.value) === null
-  )
+  if (Option.isNone(decoded) || !isRoutableNpcSource(decoded.value))
     return null;
 
   return {
@@ -173,12 +171,22 @@ const eventRouting = (event: NpcEvent): Routing | null => {
   }
 };
 
+/**
+ * NPC feature visibility for the realtime socket. The rule itself lives in
+ * `@lootlog/domain`, shared with the REST reads' `canReadChatNpcSource`; this
+ * only maps the event type onto a feature.
+ *
+ * Owner/ADMIN bypass and the party-gathering organizer bypass are applied by
+ * `canReadNpcSourceEvent` before this is asked. An undecodable routing
+ * envelope never reaches here: `npcRouting` returns null and the push is
+ * denied.
+ */
 const canReadFeatureEvent = (
   guild: UserGuildData,
   event: NpcEvent,
   routing: Routing,
 ): boolean => {
-  let feature: keyof typeof NPC_FEATURE_PERMISSIONS;
+  let feature: NpcFeature;
 
   switch (event.type) {
     case "timer.created":
@@ -192,22 +200,7 @@ const canReadFeatureEvent = (
       feature = "chat";
   }
 
-  if (
-    !guild.roles.some((role) =>
-      role.permissions.includes(NPC_FEATURE_PERMISSIONS[feature].base),
-    )
-  )
-    return false;
-  const permission = NPC_FEATURE_PERMISSIONS[feature][routing.tier];
-
-  if (routing.npcLevel === undefined)
-    return guild.roles.some((role) => role.permissions.includes(permission));
-
-  return hasRolePermissionInLevelRange(
-    guild.roles,
-    permission,
-    routing.npcLevel,
-  );
+  return canReadNpcFeatureSource(guild.roles, feature, routing);
 };
 
 const canReadEventHeroSource = (

@@ -1,6 +1,6 @@
 import { CharacterSelector } from "@/components/filters/character-selector";
 import { PeriodSelector } from "@/components/filters/period-selector";
-import { Filter, TrendingUp, Swords, Award } from "lucide-react";
+import { Filter, TrendingUp, Award } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -15,14 +15,11 @@ type StatisticsFiltersMobileProps = {
   minLevel?: number;
   maxLevel?: number;
   ph?: boolean;
-  matchmaking?: boolean;
-  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
   onPhChange: (ph: boolean) => void;
-  onMatchmakingChange: (matchmaking: boolean) => void;
 };
 
 export const StatisticsFiltersMobile = ({
@@ -31,14 +28,11 @@ export const StatisticsFiltersMobile = ({
   minLevel,
   maxLevel,
   ph,
-  matchmaking,
-  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
   onMaxLevelChange,
   onPhChange,
-  onMatchmakingChange,
 }: StatisticsFiltersMobileProps) => {
   const { t } = useTranslation();
 
@@ -126,25 +120,6 @@ export const StatisticsFiltersMobile = ({
           onCheckedChange={(checked) => onPhChange(checked === true)}
         />
       </div>
-
-      {showMatchmakingFilter && (
-        <div className="flex items-center justify-between rounded-xl border p-3">
-          <div className="flex items-center gap-2">
-            <Swords className="h-4 w-4" />
-            <Label
-              htmlFor="matchmaking-filter-mobile"
-              className="cursor-pointer"
-            >
-              {t("battlePanel.filters.matchmaking")}
-            </Label>
-          </div>
-          <Checkbox
-            id="matchmaking-filter-mobile"
-            checked={matchmaking === true}
-            onCheckedChange={(checked) => onMatchmakingChange(checked === true)}
-          />
-        </div>
-      )}
     </MobileFiltersDrawer>
   );
 };

@@ -47,7 +47,9 @@ export const PlayerTile: FC<PlayerTileProps> = ({
         <TooltipContent>
           <p>
             {name}
-            {lvl && `(${lvl}${prof?.charAt(0).toLowerCase()})`}
+            {lvl === undefined
+              ? null
+              : `(${lvl}${prof?.charAt(0).toLowerCase()})`}
           </p>
         </TooltipContent>
       </Tooltip>

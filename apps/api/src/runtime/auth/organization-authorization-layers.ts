@@ -141,47 +141,113 @@ const mapAccessError = <NotFound, Forbidden>(
     ? errors.notFound()
     : errors.forbidden();
 
+type GuildNotFoundError<E> = new (props: {
+  readonly status: 404;
+  readonly code: "GUILD_NOT_FOUND";
+}) => E;
+
+type GuildForbiddenError<E> = new (props: {
+  readonly status: 403;
+  readonly code: "FORBIDDEN";
+}) => E;
+
+/**
+ * Every handler port resolves organization access the same way: look the
+ * caller up, project the resolved access into the shape that port declares,
+ * and translate the two access failures into that port's own tagged errors.
+ * The tagged errors stay distinct per port because `Effect.catchTags` and the
+ * HTTP status mapping dispatch on them; a port that reports both failures with
+ * one class simply passes that class twice.
+ */
+const guildAccess =
+  <A, NotFound, Forbidden>(
+    project: (access: ResolvedAccess) => A,
+    NotFoundError: GuildNotFoundError<NotFound>,
+    ForbiddenError: GuildForbiddenError<Forbidden>,
+  ) =>
+  (
+    lookup: OrganizationContextLookup["Service"],
+    guildId: string,
+    requirements: PermissionRequirements,
+  ) =>
+    resolveAccess(lookup, guildId, requirements).pipe(
+      Effect.map(project),
+      Effect.mapError((error) =>
+        mapAccessError(error, {
+          notFound: () =>
+            new NotFoundError({ status: 404, code: "GUILD_NOT_FOUND" }),
+          forbidden: () =>
+            new ForbiddenError({ status: 403, code: "FORBIDDEN" }),
+        }),
+      ),
+    );
+
+const toGuildScope = (access: ResolvedAccess) => ({
+  guildId: access.context.guildId,
+});
+
+const toGuildPermissionScope = (access: ResolvedAccess) => ({
+  guildId: access.context.guildId,
+  permissions: access.context.permissions,
+});
+
+const toGuildScopedCaller = (access: ResolvedAccess) => ({
+  ...access.identity,
+  ...toGuildPermissionScope(access),
+});
+
+const toRoleScopedCaller = (access: ResolvedAccess) => ({
+  ...access.identity,
+  guild: access.context.guild,
+  roles: access.context.roles,
+  accessPolicy: createAccessPolicy({
+    capabilities: access.context.permissions,
+  }),
+});
+
+/** `mode` selects between "every capability" and "any capability". */
+const capabilityRequirements = (
+  capabilities: ReadonlyArray<PermissionValue>,
+  mode: "all" | "any",
+): PermissionRequirements =>
+  mode === "all" ? { allOf: capabilities } : { anyOf: capabilities };
+
+const chatAccess = guildAccess(
+  toGuildScopedCaller,
+  ChatNotFound,
+  ChatAccessDenied,
+);
+
 const chatAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   ChatAuthorization.of({
     requireGuild: ({ guildId, allOf }) =>
-      resolveAccess(lookup, guildId, { allOf }).pipe(
-        Effect.map(({ identity, context }) => ({
-          ...identity,
-          guildId: context.guildId,
-          permissions: context.permissions,
-        })),
-        Effect.mapError((error) =>
-          mapAccessError(error, {
-            notFound: () =>
-              new ChatNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
-            forbidden: () =>
-              new ChatAccessDenied({ status: 403, code: "FORBIDDEN" }),
-          }),
-        ),
-      ),
+      chatAccess(lookup, guildId, { allOf }),
   }),
+);
+
+const membersAccess = guildAccess(
+  toGuildScopedCaller,
+  MembersNotFound,
+  MembersAccessDenied,
 );
 
 const membersAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   MembersAuthorization.of({
     identity: requestScopedIdentity,
     requireGuild: ({ guildId, anyOf }) =>
-      resolveAccess(lookup, guildId, { anyOf }).pipe(
-        Effect.map(({ identity, context }) => ({
-          ...identity,
-          guildId: context.guildId,
-          permissions: context.permissions,
-        })),
-        Effect.mapError((error) =>
-          mapAccessError(error, {
-            notFound: () =>
-              new MembersNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
-            forbidden: () =>
-              new MembersAccessDenied({ status: 403, code: "FORBIDDEN" }),
-          }),
-        ),
-      ),
+      membersAccess(lookup, guildId, { anyOf }),
   }),
+);
+
+const organizationWorkspaceAccess = guildAccess(
+  (access) => ({
+    ...access.identity,
+    guildId: access.context.guildId,
+    ownerId: access.context.ownerId,
+    permissions: access.context.permissions,
+  }),
+  OrganizationWorkspaceNotFound,
+  OrganizationWorkspaceAccessDenied,
 );
 
 const organizationWorkspaceAuthorization = Effect.map(
@@ -190,29 +256,14 @@ const organizationWorkspaceAuthorization = Effect.map(
     OrganizationWorkspaceAuthorization.of({
       identity: requestScopedIdentity,
       requireGuild: ({ guildId, allOf, anyOf }) =>
-        resolveAccess(lookup, guildId, { allOf, anyOf }).pipe(
-          Effect.map(({ identity, context }) => ({
-            ...identity,
-            guildId: context.guildId,
-            ownerId: context.ownerId,
-            permissions: context.permissions,
-          })),
-          Effect.mapError((error) =>
-            mapAccessError(error, {
-              notFound: () =>
-                new OrganizationWorkspaceNotFound({
-                  status: 404,
-                  code: "GUILD_NOT_FOUND",
-                }),
-              forbidden: () =>
-                new OrganizationWorkspaceAccessDenied({
-                  status: 403,
-                  code: "FORBIDDEN",
-                }),
-            }),
-          ),
-        ),
+        organizationWorkspaceAccess(lookup, guildId, { allOf, anyOf }),
     }),
+);
+
+const accountOrganizationAccess = guildAccess(
+  toGuildPermissionScope,
+  AccountOrganizationNotFound,
+  AccountOrganizationAccessDenied,
 );
 
 const accountOrganizationAuthorization = Effect.map(
@@ -221,27 +272,14 @@ const accountOrganizationAuthorization = Effect.map(
     AccountOrganizationAuthorization.of({
       identity: requestScopedIdentity,
       requireGuild: ({ guildId, anyOf }) =>
-        resolveAccess(lookup, guildId, { anyOf }).pipe(
-          Effect.map(({ context }) => ({
-            guildId: context.guildId,
-            permissions: context.permissions,
-          })),
-          Effect.mapError((error) =>
-            mapAccessError(error, {
-              notFound: () =>
-                new AccountOrganizationNotFound({
-                  status: 404,
-                  code: "GUILD_NOT_FOUND",
-                }),
-              forbidden: () =>
-                new AccountOrganizationAccessDenied({
-                  status: 403,
-                  code: "FORBIDDEN",
-                }),
-            }),
-          ),
-        ),
+        accountOrganizationAccess(lookup, guildId, { anyOf }),
     }),
+);
+
+const lootlogConfigAccess = guildAccess(
+  toGuildScope,
+  LootlogConfigAccessDenied,
+  LootlogConfigAccessDenied,
 );
 
 const lootlogConfigAuthorization = Effect.map(
@@ -249,96 +287,54 @@ const lootlogConfigAuthorization = Effect.map(
   (lookup) =>
     LootlogConfigAuthorization.of({
       requireCapability: ({ guildId, capability }) =>
-        resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
-          Effect.map(({ context }) => ({
-            guildId: context.guildId,
-          })),
-          Effect.mapError((error) =>
-            error instanceof OrganizationNotFound
-              ? new LootlogConfigAccessDenied({
-                  status: 404,
-                  code: "GUILD_NOT_FOUND",
-                })
-              : new LootlogConfigAccessDenied({
-                  status: 403,
-                  code: "FORBIDDEN",
-                }),
-          ),
-        ),
+        lootlogConfigAccess(lookup, guildId, { allOf: [capability] }),
     }),
+);
+
+const docsAccess = guildAccess(
+  toAuthorizedCaller,
+  DocsNotFound,
+  DocsAccessDenied,
 );
 
 const docsAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   DocsAuthorization.of({
     requireGuild: ({ guildId, capabilities, mode }) =>
-      resolveAccess(
-        lookup,
-        guildId,
-        mode === "all" ? { allOf: capabilities } : { anyOf: capabilities },
-      ).pipe(
-        Effect.map(toAuthorizedCaller),
-        Effect.mapError((error) =>
-          mapAccessError(error, {
-            notFound: () =>
-              new DocsNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
-            forbidden: () =>
-              new DocsAccessDenied({ status: 403, code: "FORBIDDEN" }),
-          }),
-        ),
-      ),
+      docsAccess(lookup, guildId, capabilityRequirements(capabilities, mode)),
   }),
+);
+
+const eventsAccess = guildAccess(
+  toAuthorizedCaller,
+  EventsNotFound,
+  EventsAccessDenied,
 );
 
 const eventsAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   EventsAuthorization.of({
     requireGuild: ({ guildId, capabilities, mode }) =>
-      resolveAccess(
-        lookup,
-        guildId,
-        mode === "all" ? { allOf: capabilities } : { anyOf: capabilities },
-      ).pipe(
-        Effect.map(toAuthorizedCaller),
-        Effect.mapError((error) =>
-          mapAccessError(error, {
-            notFound: () =>
-              new EventsNotFound({ status: 404, code: "GUILD_NOT_FOUND" }),
-            forbidden: () =>
-              new EventsAccessDenied({ status: 403, code: "FORBIDDEN" }),
-          }),
-        ),
-      ),
+      eventsAccess(lookup, guildId, capabilityRequirements(capabilities, mode)),
   }),
+);
+
+const recordsAccess = guildAccess(
+  toRoleScopedCaller,
+  RecordsNotFound,
+  RecordsAccessDenied,
 );
 
 const recordsAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   RecordsAuthorization.of({
     requireCaller: requestScopedIdentity,
     requireGuild: ({ guildId, capability }) =>
-      resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
-        Effect.map(({ identity, context }) => ({
-          ...identity,
-          guild: context.guild,
-          roles: context.roles,
-          accessPolicy: createAccessPolicy({
-            capabilities: context.permissions,
-          }),
-        })),
-        Effect.mapError((error) =>
-          mapAccessError(error, {
-            notFound: () =>
-              new RecordsNotFound({
-                status: 404,
-                code: "GUILD_NOT_FOUND",
-              }),
-            forbidden: () =>
-              new RecordsAccessDenied({
-                status: 403,
-                code: "FORBIDDEN",
-              }),
-          }),
-        ),
-      ),
+      recordsAccess(lookup, guildId, { allOf: [capability] }),
   }),
+);
+
+const notificationsAccess = guildAccess(
+  toRoleScopedCaller,
+  NotificationsNotFound,
+  NotificationsAccessDenied,
 );
 
 const notificationsAuthorization = Effect.map(
@@ -347,31 +343,14 @@ const notificationsAuthorization = Effect.map(
     NotificationsAuthorization.of({
       requireCaller: requestScopedIdentity,
       requireGuild: ({ guildId, capabilities }) =>
-        resolveAccess(lookup, guildId, { anyOf: capabilities }).pipe(
-          Effect.map(({ identity, context }) => ({
-            ...identity,
-            guild: context.guild,
-            roles: context.roles,
-            accessPolicy: createAccessPolicy({
-              capabilities: context.permissions,
-            }),
-          })),
-          Effect.mapError((error) =>
-            mapAccessError(error, {
-              notFound: () =>
-                new NotificationsNotFound({
-                  status: 404,
-                  code: "GUILD_NOT_FOUND",
-                }),
-              forbidden: () =>
-                new NotificationsAccessDenied({
-                  status: 403,
-                  code: "FORBIDDEN",
-                }),
-            }),
-          ),
-        ),
+        notificationsAccess(lookup, guildId, { anyOf: capabilities }),
     }),
+);
+
+const mapTemplatesAccess = guildAccess(
+  toGuildScope,
+  MapTemplatesAccessDenied,
+  MapTemplatesAccessDenied,
 );
 
 const mapTemplatesAuthorization = Effect.map(
@@ -379,21 +358,14 @@ const mapTemplatesAuthorization = Effect.map(
   (lookup) =>
     MapTemplatesAuthorization.of({
       requireCapability: ({ guildId, capability }) =>
-        resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
-          Effect.map(({ context }) => ({ guildId: context.guildId })),
-          Effect.mapError((error) =>
-            error instanceof OrganizationNotFound
-              ? new MapTemplatesAccessDenied({
-                  status: 404,
-                  code: "GUILD_NOT_FOUND",
-                })
-              : new MapTemplatesAccessDenied({
-                  status: 403,
-                  code: "FORBIDDEN",
-                }),
-          ),
-        ),
+        mapTemplatesAccess(lookup, guildId, { allOf: [capability] }),
     }),
+);
+
+const publicSystemAccess = guildAccess(
+  toGuildScope,
+  PublicSystemAccessDenied,
+  PublicSystemAccessDenied,
 );
 
 const publicSystemAuthorization = Effect.map(
@@ -401,48 +373,26 @@ const publicSystemAuthorization = Effect.map(
   (lookup) =>
     PublicSystemAuthorization.of({
       requireCapability: ({ guildId, anyOf }) =>
-        resolveAccess(lookup, guildId, { anyOf }).pipe(
-          Effect.map(({ context }) => ({ guildId: context.guildId })),
-          Effect.mapError((error) =>
-            error instanceof OrganizationNotFound
-              ? new PublicSystemAccessDenied({
-                  status: 404,
-                  code: "GUILD_NOT_FOUND",
-                })
-              : new PublicSystemAccessDenied({
-                  status: 403,
-                  code: "FORBIDDEN",
-                }),
-          ),
-        ),
+        publicSystemAccess(lookup, guildId, { anyOf }),
     }),
+);
+
+// `TimersAuthorization` declares a mutable `roles` array, so the shared
+// role-scoped projection is copied rather than passed through.
+const timersAccess = guildAccess(
+  (access) => ({
+    ...toRoleScopedCaller(access),
+    roles: [...access.context.roles],
+  }),
+  TimersNotFound,
+  TimersAccessDenied,
 );
 
 const timersAuthorization = Effect.map(OrganizationContextLookup, (lookup) =>
   TimersAuthorization.of({
     identity: requestScopedIdentity,
     requireGuild: ({ guildId, capability }) =>
-      resolveAccess(lookup, guildId, { allOf: [capability] }).pipe(
-        Effect.map(({ identity, context }) => ({
-          ...identity,
-          guild: context.guild,
-          roles: [...context.roles],
-          accessPolicy: createAccessPolicy({
-            capabilities: context.permissions,
-          }),
-        })),
-        Effect.mapError((error) =>
-          mapAccessError(error, {
-            notFound: () =>
-              new TimersNotFound({
-                status: 404,
-                code: "GUILD_NOT_FOUND",
-              }),
-            forbidden: () =>
-              new TimersAccessDenied({ status: 403, code: "FORBIDDEN" }),
-          }),
-        ),
-      ),
+      timersAccess(lookup, guildId, { allOf: [capability] }),
   }),
 );
 

@@ -337,6 +337,3 @@ export function disposeReadyRoomInvitationCoordinator(): void {
   pendingInvitation?.resolve({ targets: [] });
   pendingInvitation = null;
 }
-
-export const resetReadyRoomInvitationCoordinatorForTests =
-  disposeReadyRoomInvitationCoordinator;

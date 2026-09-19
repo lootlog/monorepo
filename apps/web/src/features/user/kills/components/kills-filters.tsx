@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { findTrackableNpcType } from "../npc-types";
 import { useTranslation } from "react-i18next";
 import { Globe } from "lucide-react";
@@ -104,7 +105,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             { value: "all", label: <>{t("kills.home.filters.allWorlds")}</> },
             ...worlds.map((world) => ({
               value: world,
-              label: <>{world.charAt(0).toUpperCase() + world.slice(1)}</>,
+              label: <>{upperFirst(world)}</>,
             })),
           ]}
         >
@@ -120,7 +121,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             </SelectItem>
             {worlds.map((world) => (
               <SelectItem key={world} value={world}>
-                {world.charAt(0).toUpperCase() + world.slice(1)}
+                {upperFirst(world)}
               </SelectItem>
             ))}
           </SelectContent>

@@ -35,8 +35,6 @@ export const nullableFlexibleIsoDatetimeCodec = Schema.NullOr(
   flexibleIsoDatetimeCodec,
 );
 
-export const unknownRecordSchema = Schema.Record(Schema.String, Schema.Unknown);
-
 export const jsonValueSchema: Schema.Codec<JsonValue> = Schema.suspend(
   (): Schema.Codec<JsonValue> =>
     Schema.Union([

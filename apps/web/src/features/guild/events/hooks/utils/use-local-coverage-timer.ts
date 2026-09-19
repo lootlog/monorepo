@@ -1,6 +1,6 @@
+import { parseMsToTime } from "@lootlog/datetime";
 import { getClockSecond } from "@/hooks/utils/second-clock";
 import { useEffect, useRef, useState } from "react";
-import { formatDurationPadded } from "../../utils/format-duration";
 import type { CoverageGap } from "../queries/use-map-coverage-timer";
 
 export type CoverageGapType = "UNASSIGNED" | "UNCOVERED";
@@ -88,7 +88,7 @@ export const useLocalCoverageTimer = (
   return {
     gapType,
     elapsedSeconds,
-    formattedDuration: gapType ? formatDurationPadded(elapsedSeconds) : null,
+    formattedDuration: gapType ? parseMsToTime(elapsedSeconds * 1000) : null,
     startTime,
   };
 };

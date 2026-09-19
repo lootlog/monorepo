@@ -1,8 +1,8 @@
+import { DialogActionFooter } from "./dialog-action-footer";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -65,9 +65,6 @@ export const HeroManageDialog = ({
   });
 
   const isEditing = !!hero;
-  // @TODO - temprorarily enable hero name editing
-  // const isHeroNameLocked = isEditing && hero?.npcId !== null;
-  const isHeroNameLocked = false;
   const isPending = addHero.isPending || updateHero.isPending;
 
   const { register, handleSubmit, reset } = useForm<FormData>({
@@ -186,20 +183,10 @@ export const HeroManageDialog = ({
               <Input
                 placeholder={t("events.createDialog.heroNamePlaceholder")}
                 {...register("npcName", { required: true })}
-                disabled={isHeroNameLocked}
                 className="h-9 text-sm"
               />
             </div>
           </div>
-
-          {isHeroNameLocked && (
-            <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">
-              <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>{t("events.heroes.nameLockedHint")}</p>
-              </div>
-            </div>
-          )}
 
           {!isEditing && (
             <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">
@@ -223,34 +210,22 @@ export const HeroManageDialog = ({
           )}
         </form>
 
-        <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isPending}
-            onClick={() => onOpenChange(false)}
-            className="flex-1"
-          >
-            {t("events.createDialog.cancel")}
-          </Button>
-          <Button
-            type="submit"
-            form="hero-manage-form"
-            size="sm"
-            loading={isPending}
-            icon={
-              isEditing ? (
-                <Pencil className="size-3.5" />
-              ) : (
-                <Plus className="size-3.5" />
-              )
-            }
-            className="flex-1"
-          >
-            {isEditing ? t("common.save") : t("events.createDialog.addHero")}
-          </Button>
-        </div>
+        <DialogActionFooter
+          cancelLabel={t("events.createDialog.cancel")}
+          confirmForm="hero-manage-form"
+          confirmIcon={
+            isEditing ? (
+              <Pencil className="size-3.5" />
+            ) : (
+              <Plus className="size-3.5" />
+            )
+          }
+          confirmLabel={
+            isEditing ? t("common.save") : t("events.createDialog.addHero")
+          }
+          isPending={isPending}
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );

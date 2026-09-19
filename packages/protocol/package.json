@@ -7,7 +7,6 @@
   "exports": {
     "./feed": "./src/feed.ts",
     "./loot-summary": "./src/loot-summary.ts",
-    "./http": "./src/http/http-contract.ts",
     "./http/service-auth": "./src/http/service-auth.ts",
     "./openapi": "./src/openapi/sanitize.ts",
     "./rabbit/events": "./src/rabbit/events.ts",

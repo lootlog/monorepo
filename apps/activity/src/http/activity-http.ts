@@ -142,7 +142,7 @@ export class ActivityHealth extends Context.Service<
   );
 }
 
-export class ActivityHttpFailure extends TaggedErrorClass<ActivityHttpFailure>()(
+class ActivityHttpFailure extends TaggedErrorClass<ActivityHttpFailure>()(
   "ActivityHttpFailure",
   {
     status: Schema.Literals([401, 403, 404, 500, 503]),
@@ -244,7 +244,7 @@ const BearerSecurityLive = Layer.succeed(
   BearerSecurityMiddleware.of({ bearer: (httpEffect) => httpEffect }),
 );
 
-export const ActivityHandlers = Layer.mergeAll(
+const ActivityHandlers = Layer.mergeAll(
   HttpApiBuilder.group(ActivityApi, "users", (handlers) =>
     handlers.handleRaw("UsersActivityControllerGetOnline", ({ query }) =>
       jsonOperation(

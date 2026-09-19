@@ -18,7 +18,7 @@ import {
   eventRankingTable,
   eventTable,
 } from "#src/database/drizzle/schema";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
@@ -27,13 +27,13 @@ import type {
   UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
 
-export class EventPointEditError extends TaggedErrorClass<EventPointEditError>()(
+class EventPointEditError extends TaggedErrorClass<EventPointEditError>()(
   "EventPointEditError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
 export interface EventRankingPublisher {
-  readonly publish: <Key extends typeof RoutingKey.EVENT_RANKING_UPDATE>(
+  readonly publish: <Key extends typeof RabbitRoutingKey.EVENT_RANKING_UPDATE>(
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
   ) => Effect.Effect<void, unknown>;
@@ -70,7 +70,7 @@ export const makeEventPointEdits = (
           "Failed to invalidate event ranking cache",
         ),
         publisher
-          .publish(RoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })
+          .publish(RabbitRoutingKey.EVENT_RANKING_UPDATE, { guildId, eventId })
           .pipe(
             Effect.catch((error) =>
               Effect.sync(() =>

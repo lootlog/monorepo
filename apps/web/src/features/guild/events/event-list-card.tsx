@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
@@ -57,8 +58,7 @@ export const EventListCard = ({
         ? "outline"
         : "secondary";
 
-  const formattedWorld =
-    event.world.charAt(0).toUpperCase() + event.world.slice(1);
+  const formattedWorld = upperFirst(event.world);
 
   let pinActionLabel = t("events.pinEvent");
 

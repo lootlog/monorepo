@@ -1,11 +1,9 @@
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { SectionCard } from "@/components/common/section-card/section-card";
+import { NotificationHistoryRowsSkeleton } from "./notification-history-rows-skeleton";
 import { NotificationHistoryRow } from "./components/notification-history-row";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NotificationJobDetailDialog } from "./components/notification-job-detail-dialog";
 import { History } from "lucide-react";
 import { PageHeader } from "@/components/common/page-header";
@@ -58,24 +56,7 @@ export const NotificationsHistoryPage = () => {
           />
 
           {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SectionCard key={i}>
-                  <SectionCardContent className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <Skeleton className="h-4 w-40" />
-                        <div className="flex gap-2">
-                          <Skeleton className="h-4 w-16 rounded-full" />
-                          <Skeleton className="h-4 w-24" />
-                        </div>
-                      </div>
-                    </div>
-                  </SectionCardContent>
-                </SectionCard>
-              ))}
-            </div>
+            <NotificationHistoryRowsSkeleton />
           ) : historyJobs.length > 0 ? (
             <div className="flex flex-col gap-3">
               {historyJobs.map((job) => (

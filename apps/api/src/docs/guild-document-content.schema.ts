@@ -8,7 +8,7 @@ export type JsonValue =
   | ReadonlyArray<JsonValue>
   | { readonly [key: string]: JsonValue };
 
-export const JsonValueSchema: Schema.Codec<JsonValue> = Schema.suspend(
+const JsonValueSchema: Schema.Codec<JsonValue> = Schema.suspend(
   (): Schema.Codec<JsonValue> =>
     Schema.Union([
       Schema.String,

@@ -48,7 +48,7 @@ const ParsedMoveSchema = Schema.Struct({
   ),
 });
 
-export const RawBattleDataSchema = Schema.Struct({
+const RawBattleDataSchema = Schema.Struct({
   battleId: Schema.String,
   timestamp: Schema.String,
   rawData: Schema.Struct({

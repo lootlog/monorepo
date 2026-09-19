@@ -37,7 +37,7 @@ const EventKillParticipantMapDataResponse = Schema.Struct({
   afkTimeSeconds: Schema.Number,
 });
 
-export const EventKillParticipantResponse = Schema.Struct({
+const EventKillParticipantResponse = Schema.Struct({
   id: Schema.String,
   memberId: Schema.Number,
   points: Schema.Number,

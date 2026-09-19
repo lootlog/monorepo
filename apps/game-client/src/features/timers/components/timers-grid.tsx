@@ -35,7 +35,7 @@ const useGridWidth = () => {
   useEffect(() => {
     const grid = gridRef.current;
 
-    if (!grid || typeof ResizeObserver === "undefined") return;
+    if (!grid) return;
 
     const resizeObserver = new ResizeObserver(([entry]) => {
       if (entry) setGridWidth(entry.contentRect.width);

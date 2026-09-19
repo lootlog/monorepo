@@ -3,7 +3,7 @@ import { CharacterSelector } from "@/components/filters/character-selector";
 import { BattlePanelLevelRange } from "@/features/user/battle-panel/components/battle-panel-level-range";
 import { PeriodSelector } from "@/components/filters/period-selector";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Swords, Award } from "lucide-react";
+import { Award } from "lucide-react";
 import type { Period } from "@/features/user/battle-panel/battle-panel-search";
 import { useTranslation } from "react-i18next";
 
@@ -13,14 +13,11 @@ type StatisticsFiltersDesktopProps = {
   minLevel?: number;
   maxLevel?: number;
   ph?: boolean;
-  matchmaking?: boolean;
-  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
   onPhChange: (ph: boolean) => void;
-  onMatchmakingChange: (matchmaking: boolean) => void;
 };
 
 export const StatisticsFiltersDesktop = ({
@@ -29,14 +26,11 @@ export const StatisticsFiltersDesktop = ({
   minLevel,
   maxLevel,
   ph,
-  matchmaking,
-  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
   onMaxLevelChange,
   onPhChange,
-  onMatchmakingChange,
 }: StatisticsFiltersDesktopProps) => {
   const { t } = useTranslation();
 
@@ -78,23 +72,6 @@ export const StatisticsFiltersDesktop = ({
           onCheckedChange={(checked) => onPhChange(checked === true)}
         />
       </div>
-
-      {showMatchmakingFilter && (
-        <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-3 transition-colors hover:border-foreground/20 hover:bg-foreground/[0.04]">
-          <Swords className="size-4" aria-hidden="true" />
-          <Label
-            htmlFor="matchmaking-filter"
-            className="cursor-pointer text-sm"
-          >
-            {t("battlePanel.filters.matchmaking")}
-          </Label>
-          <Checkbox
-            id="matchmaking-filter"
-            checked={matchmaking === true}
-            onCheckedChange={(checked) => onMatchmakingChange(checked === true)}
-          />
-        </div>
-      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import type { User } from "@/api";
+import type { User } from "@/api/users.api";
 
 type GuildMemberRole = {
   position: number | null;
