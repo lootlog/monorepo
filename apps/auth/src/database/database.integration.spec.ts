@@ -1,7 +1,14 @@
 import { HttpClient, HttpClientResponse } from "effect/unstable/http";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { AppConfig } from "#src/config/env";
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  setSystemTime,
+} from "bun:test";
 import { PgClient } from "@effect/sql-pg";
 import { makePostgresLayer, PostgresPool } from "@lootlog/database";
 import {
@@ -10,7 +17,7 @@ import {
 } from "@testcontainers/postgresql";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
+import { Effect, Layer, Logger, ManagedRuntime, Redacted } from "effect";
 import {
   createLootlogAuth,
   BetterAuthRuntime,
@@ -271,11 +278,79 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           }),
         ).toBeNull();
 
-        for (let index = 1; index < 120; index++)
+        const start = Math.ceil(Date.now() / 60_000) * 60_000;
+        const otherAuth = createLootlogAuth(options);
+
+        try {
+          // Polling below the limit must keep working without an idle minute.
+          for (let index = 0; index < 130; index++) {
+            setSystemTime(new Date(start + index * 5_000));
+            await keysRuntime.runPromise(keys.verify(key.key));
+          }
+
+          // Separate auth instances share one atomic per-key budget.
+          setSystemTime(new Date(start + 720_000));
+
+          const results = await Promise.all(
+            Array.from({ length: 130 }, (_, index) =>
+              (index % 2 === 0 ? auth : otherAuth).api.verifyApiKey({
+                body: { key: key.key },
+              }),
+            ),
+          );
+
+          expect(results.filter((result) => result.valid)).toHaveLength(120);
+          expect(
+            results.filter((result) => result.error?.code === "RATE_LIMITED"),
+          ).toHaveLength(10);
+          const rejections: Array<{ level: string; message: unknown }> = [];
+          await expect(
+            keysRuntime.runPromise(
+              keys.verify(key.key).pipe(
+                Effect.provide(
+                  Logger.layer([
+                    Logger.make(({ logLevel, message }) => {
+                      rejections.push({ level: logLevel, message });
+                    }),
+                  ]),
+                ),
+              ),
+            ),
+          ).rejects.toMatchObject({ status: 429 });
+          expect(rejections).toContainEqual({
+            level: "Warn",
+            message: [
+              "API key rate limit exceeded",
+              {
+                context: "ApiKeyService",
+                code: "RATE_LIMITED",
+                keyId: key.id,
+                userId: user.id,
+                discordId: user.discordId,
+              },
+            ],
+          });
+          expect(JSON.stringify(rejections)).not.toContain(key.key);
+
+          setSystemTime(new Date(start + 779_999));
+          await expect(
+            keysRuntime.runPromise(keys.verify(key.key)),
+          ).rejects.toMatchObject({ status: 429 });
+          // The exact next boundary replenishes the budget despite recent traffic.
+          setSystemTime(new Date(start + 780_000));
           await keysRuntime.runPromise(keys.verify(key.key));
-        await expect(
-          keysRuntime.runPromise(keys.verify(key.key)),
-        ).rejects.toMatchObject({ status: 429 });
+          setSystemTime(new Date(start + 785_000));
+          await keysRuntime.runPromise(keys.verify(key.key));
+
+          const [usage] = await runtime.runPromise(
+            db.select().from(authApiKeys).where(eq(authApiKeys.id, key.id)),
+          );
+
+          expect(usage?.requestCount).toBe(2);
+          expect(usage?.lastRequest).toEqual(new Date(start + 785_000));
+        } finally {
+          setSystemTime();
+        }
 
         const stored = await runtime.runPromise(
           db.select().from(authApiKeys).where(eq(authApiKeys.id, key.id)),
