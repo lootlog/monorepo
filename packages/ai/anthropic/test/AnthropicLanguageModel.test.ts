@@ -437,6 +437,57 @@ describe("AnthropicLanguageModel", () => {
   })
 
   describe("generateText", () => {
+    it.effect("omits strictJsonSchema from the request while preserving tool strictness", () =>
+      Effect.gen(function*() {
+        let capturedRequest: HttpClientRequest.HttpClientRequest | undefined = undefined
+        const model = "claude-sonnet-4-5"
+        const layer = AnthropicClient.layer({ apiKey: Redacted.make("sk-test-key") }).pipe(
+          Layer.provide(Layer.succeed(
+            HttpClient.HttpClient,
+            makeHttpClient((request) => {
+              capturedRequest = request
+              return Effect.succeed(jsonResponse(request, {
+                id: "msg_test_1",
+                type: "message",
+                role: "assistant",
+                model,
+                content: [{ type: "text", text: "Hello" }],
+                stop_reason: "end_turn",
+                stop_sequence: null,
+                usage: {
+                  cache_creation: null,
+                  cache_creation_input_tokens: null,
+                  cache_read_input_tokens: null,
+                  inference_geo: null,
+                  input_tokens: 1,
+                  output_tokens: 1,
+                  service_tier: null
+                }
+              }))
+            })
+          ))
+        )
+
+        yield* LanguageModel.generateText({
+          prompt: "Hello",
+          toolkit: Toolkit.make(Tool.make("Search", {
+            parameters: Schema.Struct({ query: Schema.String }),
+            success: Schema.String
+          })),
+          disableToolCallResolution: true
+        }).pipe(
+          Effect.provide(AnthropicLanguageModel.model(model, { strictJsonSchema: false })),
+          Effect.provide(layer)
+        )
+
+        assert.isDefined(capturedRequest)
+        const body = yield* getRequestBody(capturedRequest)
+        assert.strictEqual(body.model, model)
+        assert.strictEqual(body.tools[0].name, "Search")
+        assert.strictEqual(body.tools[0].strict, false)
+        assert.notProperty(body, "strictJsonSchema")
+      }))
+
     it.effect("preserves string tool results", () =>
       Effect.gen(function*() {
         let capturedRequest: HttpClientRequest.HttpClientRequest | undefined = undefined
@@ -869,6 +920,94 @@ describe("AnthropicLanguageModel", () => {
         assert.strictEqual(body.max_tokens, 64000)
         assert.strictEqual(body.output_config?.format?.type, "json_schema")
         assert.notProperty(body, "structuredOutputs")
+      }))
+
+    const summaryResponse = (request: HttpClientRequest.HttpClientRequest, content: ReadonlyArray<unknown>) =>
+      jsonResponse(request, {
+        id: "msg_summary",
+        type: "message",
+        role: "assistant",
+        model: "claude-sonnet-4-6",
+        content,
+        stop_reason: "tool_use",
+        stop_sequence: null,
+        usage: {
+          cache_creation: null,
+          cache_creation_input_tokens: null,
+          cache_read_input_tokens: null,
+          inference_geo: null,
+          input_tokens: 1,
+          output_tokens: 1,
+          service_tier: null
+        }
+      })
+
+    it.effect("forces the fallback response tool and decodes its input alongside prose", () =>
+      Effect.gen(function*() {
+        const layer = AnthropicClient.layer({ apiKey: Redacted.make("sk-test-key") }).pipe(
+          Layer.provide(Layer.succeed(
+            HttpClient.HttpClient,
+            makeHttpClient((request) =>
+              Effect.gen(function*() {
+                const body = yield* getRequestBody(request)
+                assert.deepStrictEqual(body.tools?.map((tool: { name: string }) => tool.name), ["summary"])
+                assert.deepStrictEqual(body.tool_choice, {
+                  type: "tool",
+                  name: "summary",
+                  disable_parallel_tool_use: true
+                })
+                return summaryResponse(request, [
+                  { type: "text", text: "Here is the summary." },
+                  { type: "tool_use", id: "toolu_summary", name: "summary", input: { title: "Rain" } }
+                ])
+              })
+            )
+          ))
+        )
+
+        const response = yield* LanguageModel.generateObject({
+          prompt: "Give a title for a story about rain.",
+          objectName: "summary",
+          schema: Schema.Struct({ title: Schema.String })
+        }).pipe(
+          Effect.provide(AnthropicLanguageModel.model("claude-sonnet-4-6", { structuredOutputs: false })),
+          Effect.provide(layer)
+        )
+
+        assert.deepStrictEqual(response.value, { title: "Rain" })
+      }))
+
+    it.effect("decodes native JSON alongside an ordinary tool call", () =>
+      Effect.gen(function*() {
+        const layer = AnthropicClient.layer({ apiKey: Redacted.make("sk-test-key") }).pipe(
+          Layer.provide(Layer.succeed(
+            HttpClient.HttpClient,
+            makeHttpClient((request) =>
+              Effect.succeed(summaryResponse(request, [
+                { type: "text", text: JSON.stringify({ title: "Rain" }) },
+                { type: "tool_use", id: "toolu_weather", name: "Weather", input: { city: "SF" } }
+              ]))
+            )
+          ))
+        )
+        const toolkit = Toolkit.make(Tool.make("Weather", {
+          parameters: Schema.Struct({ city: Schema.String }),
+          success: Schema.String
+        }))
+
+        const response = yield* LanguageModel.generateObject({
+          prompt: "Give a title for a story about rain.",
+          objectName: "summary",
+          schema: Schema.Struct({ title: Schema.String }),
+          toolkit
+        }).pipe(
+          Effect.provide(AnthropicLanguageModel.model("claude-sonnet-4-6")),
+          Effect.provide(toolkit.toLayer({ Weather: () => Effect.succeed("Rain") })),
+          Effect.provide(layer)
+        )
+
+        assert.deepStrictEqual(response.value, { title: "Rain" })
+        assert.strictEqual(response.toolCalls[0]?.name, "Weather")
       }))
   })
 
