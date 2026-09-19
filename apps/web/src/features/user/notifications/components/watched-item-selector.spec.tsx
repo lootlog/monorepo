@@ -34,6 +34,7 @@ it("distinguishes an item-search outage from a successful empty search and recov
     <WatchedItemSelector {...props} errorMessage="Wyszukiwarka niedostępna" />,
   );
 
+  expect(screen.queryByRole("button", { name: "common.clear" })).toBeNull();
   fireEvent.click(screen.getByRole("combobox"));
   await waitFor(() =>
     expect(screen.getByRole("alert").textContent).toBe(
@@ -73,5 +74,50 @@ it("clears a selected item through its keyboard-accessible action", () => {
   expect(onSearchChange).toHaveBeenCalledWith("");
   expect(screen.getByRole("combobox").getAttribute("aria-expanded")).toBe(
     "false",
+  );
+});
+
+it("keeps externally filtered results and selects the complete item after asynchronous search", async () => {
+  const item = {
+    id: 17,
+    name: "Ostrze",
+    icon: "",
+    rarity: null,
+    stat: "",
+    lvl: 20,
+    type: null,
+    worlds: ["test"],
+  };
+
+  const props = {
+    loading: false,
+    items: [],
+    searchValue: "",
+    selectedItem: null,
+    placeholder: "Wybierz przedmiot",
+    searchPlaceholder: "Wyszukaj przedmiot",
+    emptyMessage: "Brak przedmiotów",
+    loadingMessage: "Wczytywanie",
+    disabledMessage: "Wybierz świat",
+    onSearchChange: vi.fn(),
+    onSelect: vi.fn(),
+  };
+
+  const { rerender } = render(<WatchedItemSelector {...props} />);
+  fireEvent.click(screen.getByRole("combobox"));
+  const input = await screen.findByPlaceholderText(props.searchPlaceholder);
+  fireEvent.change(input, { target: { value: "miecz" } });
+  expect(props.onSearchChange).toHaveBeenCalledWith("miecz");
+  rerender(
+    <WatchedItemSelector {...props} searchValue="miecz" items={[item]} />,
+  );
+  const option = await screen.findByRole("option", { name: /Ostrze/ });
+  fireEvent.click(option);
+  expect(props.onSelect).toHaveBeenCalledWith(item);
+  expect(props.onSearchChange).toHaveBeenLastCalledWith(item.name);
+  await waitFor(() =>
+    expect(screen.getByRole("combobox").getAttribute("aria-expanded")).toBe(
+      "false",
+    ),
   );
 });

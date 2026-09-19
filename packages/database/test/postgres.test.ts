@@ -10,7 +10,8 @@ test("fails startup with the original driver error when PostgreSQL is unavailabl
     makePostgresLayer({
       host: "127.0.0.1",
       port: 1,
-      connectTimeout: "100 millis",
+      // Allow the driver to report refusal before the startup deadline on busy CI runners.
+      connectTimeout: "2 seconds",
     }),
   );
 

@@ -1,20 +1,17 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInputRaw,
-  CommandItem,
-  CommandList,
-} from "@lootlog/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
+  Combobox,
+  ComboboxClear,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from "@lootlog/ui/components/combobox";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
@@ -56,29 +53,8 @@ export const WatchedItemSelector = ({
 }: WatchedItemSelectorProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const resultsListId = useId();
-
-  const handleSelect = (item: GameItem) => {
-    onSelect(item);
-    onSearchChange(item.name);
-    setOpen(false);
-  };
-
-  const handleClear = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onSearchChange("");
-    onSelect(null);
-    setOpen(false);
-  };
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (disabled) {
-      return;
-    }
-
-    setOpen(isOpen);
-  };
+  const visibleItems = errorMessage ? [] : items;
+  const itemIds = visibleItems.map((item) => item.id);
 
   const displayLabel = selectedItem
     ? t("settings.userNotifications.itemSelector.selectedLabel", {
@@ -88,119 +64,101 @@ export const WatchedItemSelector = ({
     : placeholder;
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Combobox
+      value={selectedItem?.id ?? null}
+      items={itemIds}
+      filteredItems={itemIds}
+      disabled={disabled}
+      open={open}
+      onOpenChange={setOpen}
+      inputValue={searchValue}
+      onInputValueChange={(nextValue, details) => {
+        if (details.reason === "input-change") onSearchChange(nextValue);
+      }}
+      onValueChange={(nextId) => {
+        const item = items.find((item) => item.id === nextId) ?? null;
+        onSelect(item);
+        onSearchChange(item?.name ?? "");
+        setOpen(false);
+      }}
+    >
       <div className="relative">
-        <PopoverTrigger
-          render={
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-controls={resultsListId}
-              aria-expanded={open}
-              disabled={disabled}
-              className={cn(
-                "w-full justify-between gap-2",
-                selectedItem && "pr-12",
-              )}
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                {selectedItem ? (
-                  <ItemImage
-                    icon={selectedItem.icon}
-                    rarity={resolveItemRarity(selectedItem.rarity)}
-                  />
-                ) : (
-                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-                <span
-                  className={cn(
-                    "truncate",
-                    !selectedItem && "text-muted-foreground",
-                  )}
-                >
-                  {disabled ? disabledMessage : displayLabel}
-                </span>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <ChevronsUpDown className="h-4 w-4 opacity-50" />
-              </div>
-            </Button>
-          }
-        />
-        {selectedItem && (
-          <button
-            type="button"
-            disabled={disabled}
-            aria-label={t("common.clear")}
-            onClick={handleClear}
-            className="absolute right-7 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <ComboboxTrigger
+          render={<Button variant="outline" />}
+          className={cn(
+            "w-full justify-between gap-2",
+            selectedItem && "pr-12",
+          )}
+        >
+          {selectedItem ? (
+            <ItemImage
+              icon={selectedItem.icon}
+              rarity={resolveItemRarity(selectedItem.rarity)}
+            />
+          ) : (
+            <Search className="size-4 shrink-0 text-muted-foreground" />
+          )}
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate text-left",
+              !selectedItem && "text-muted-foreground",
+            )}
           >
-            <X className="size-4" aria-hidden="true" />
-          </button>
+            {disabled ? disabledMessage : displayLabel}
+          </span>
+        </ComboboxTrigger>
+        {Boolean(selectedItem) && (
+          <ComboboxClear
+            tabIndex={0}
+            aria-label={t("common.clear")}
+            className="absolute right-7 top-1/2 -translate-y-1/2"
+          />
         )}
       </div>
-      <PopoverContent className="w-[360px] p-0" align="start">
-        <Command shouldFilter={false}>
-          <CommandInputRaw
-            placeholder={searchPlaceholder}
-            value={searchValue}
-            onChange={(event) => onSearchChange(event.target.value)}
-            className="h-9"
-          />
-          <CommandList id={resultsListId}>
-            {errorMessage ? (
-              <div role="alert" className="px-3 py-3 text-sm text-destructive">
-                {errorMessage}
+      <ComboboxContent className="w-[360px]" align="start">
+        <ComboboxInput
+          showTrigger={false}
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
+        />
+        {errorMessage ? (
+          <div role="alert" className="px-3 py-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        ) : null}
+        {loading && !errorMessage ? (
+          <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
+            <Spinner className="size-4" />
+            {loadingMessage}
+          </div>
+        ) : null}
+        {!loading && !errorMessage ? (
+          <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
+        ) : null}
+        <ComboboxList>
+          {visibleItems.map((item) => (
+            <ComboboxItem key={item.id} value={item.id} className="gap-3">
+              <ItemImage
+                icon={item.icon}
+                rarity={resolveItemRarity(item.rarity)}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{item.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.userNotifications.itemSelector.itemId", {
+                    id: item.id,
+                  })}
+                </p>
               </div>
-            ) : null}
-            {loading && !errorMessage ? (
-              <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
-                <Spinner className="h-4 w-4" />
-                {loadingMessage}
-              </div>
-            ) : null}
-            {!loading && !errorMessage ? (
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
-            ) : null}
-            <CommandGroup>
-              {(errorMessage ? [] : items).map((item) => (
-                <CommandItem
-                  key={item.id}
-                  value={`${item.id}`}
-                  onSelect={() => handleSelect(item)}
-                  className="gap-3"
-                >
-                  <Check
-                    className={cn(
-                      "h-4 w-4",
-                      selectedItem?.id === item.id
-                        ? "opacity-100"
-                        : "opacity-0",
-                    )}
-                  />
-                  <ItemImage
-                    icon={item.icon}
-                    rarity={resolveItemRarity(item.rarity)}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("settings.userNotifications.itemSelector.itemId", {
-                        id: item.id,
-                      })}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {t("settings.userNotifications.itemSelector.itemLevel", {
-                      level: item.lvl,
-                    })}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+              <span className="text-xs text-muted-foreground">
+                {t("settings.userNotifications.itemSelector.itemLevel", {
+                  level: item.lvl,
+                })}
+              </span>
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 };
