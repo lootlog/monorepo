@@ -123,3 +123,28 @@ It covers current access and revocation, NPC filtering before grouping, archived
 loots, bounded previews, grouping and tie order, duplicate submissions,
 transaction rollback, best-effort publication failure, shared HTTP/live entries,
 retention, and the populated query.
+
+## Vanity URLs that look like Organization ids
+
+`20260919162954_guild_vanity_url_not_id_like` clears every stored vanity URL
+whose slug is empty, all digits, or the reserved `battles` route, then adds
+`Guild_vanityUrl_not_id_like_check`. Affected Organizations stay reachable by
+id and can choose a new vanity URL. Count them first:
+
+```sql
+SELECT count(*) FROM "Guild"
+WHERE "vanityUrl" IS NOT NULL
+  AND trim(BOTH '-' FROM regexp_replace(lower("vanityUrl"), '[^a-z0-9]+', '-', 'g'))
+      ~ '^([0-9]*|battles)$';
+```
+
+Apply the migration before deploying the API revision that validates vanity
+URLs. Only that revision writes `guild-lookup:v2:*` cache entries, so applying
+the migration first guarantees no entry can hold a vanity URL the migration
+cleared; in the reverse order such an entry would outlive the migration by up
+to one hour, keep a cleared `battles` alias resolving, and make the settings
+form resubmit the stale value into a 400. The constraint also closes the write
+path at once: until the new revision ships, the older one answers an all-digit
+or empty-slug vanity URL with a 500 instead of a 400, and every other save is
+unaffected. Legacy `guild:<id or vanity URL>` cache entries are never read
+again and expire within one hour.

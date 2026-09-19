@@ -23,10 +23,8 @@ import type {
 } from "@lootlog/protocol/rabbit/events";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { DiscordGuildSyncStatus } from "@lootlog/schema/notifications";
-import {
-  getGuildCacheKey,
-  getPermissionsCachePattern,
-} from "#src/shared/cache";
+import { getPermissionsCachePattern } from "#src/shared/cache";
+import { getGuildCacheKey } from "#src/guilds/guild-configuration-cache";
 
 class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
   "GuildLifecycleFailure",

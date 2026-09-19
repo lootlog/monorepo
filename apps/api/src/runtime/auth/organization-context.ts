@@ -1,19 +1,21 @@
 import { IsoDateTime } from "@lootlog/schema/primitives";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, eq, or } from "drizzle-orm";
-import { Context, Effect, Layer, Option, Schema } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
 import { resolveCapabilities } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/schema";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
+import {
+  readCachedGuild,
+  writeGuildConfigurationCache,
+} from "#src/guilds/guild-configuration-cache";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import type { MemberWithRoles, Role } from "#src/members/member.types";
 import {
-  getGuildCacheKey,
   getPermissionsCacheKey,
-  GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "#src/shared/cache";
 import { MembersData } from "#src/http-api/handlers/members/members.handlers";
@@ -122,37 +124,17 @@ export class OrganizationContextLookup extends Context.Service<
 
         const readGuild = (idOrVanityUrl: string) =>
           Effect.gen(function* () {
-            const key = getGuildCacheKey(idOrVanityUrl);
+            const cached = yield* readCachedGuild(
+              cache,
+              idOrVanityUrl,
+              decodeCachedGuild,
+            ).pipe(Effect.catch(() => Effect.succeed(null)));
 
-            const cached = yield* cache
-              .get(key)
-              .pipe(Effect.catch(() => Effect.succeed(null)));
+            if (cached) return cached;
 
-            if (cached) {
-              const parsed = yield* Effect.try(() => {
-                return decodeCachedGuild(cached);
-              }).pipe(Effect.option);
-
-              if (Option.isSome(parsed)) return parsed.value;
-              yield* cache.del(key).pipe(Effect.ignore);
-            }
-
-            const rows = yield* database
-              .select()
-              .from(guildTable)
-              .where(
-                and(
-                  eq(guildTable.active, true),
-                  or(
-                    eq(guildTable.id, idOrVanityUrl),
-                    eq(guildTable.vanityUrl, idOrVanityUrl),
-                  ),
-                ),
-              )
-              .limit(1)
-              .pipe(Effect.orDie);
-
-            const guild = rows[0];
+            const guild = yield* findActiveGuild(database, idOrVanityUrl).pipe(
+              Effect.orDie,
+            );
 
             if (!guild) {
               return yield* Effect.fail(
@@ -160,25 +142,10 @@ export class OrganizationContextLookup extends Context.Service<
               );
             }
 
-            const encoded = JSON.stringify(guild);
-            yield* Effect.all(
-              [
-                cache.set(
-                  getGuildCacheKey(guild.id),
-                  encoded,
-                  GUILD_CACHE_TTL_SECONDS,
-                ),
-                ...(guild.vanityUrl
-                  ? [
-                      cache.set(
-                        getGuildCacheKey(guild.vanityUrl),
-                        encoded,
-                        GUILD_CACHE_TTL_SECONDS,
-                      ),
-                    ]
-                  : []),
-              ],
-              { concurrency: "unbounded", discard: true },
+            yield* writeGuildConfigurationCache(
+              cache,
+              idOrVanityUrl,
+              guild,
             ).pipe(Effect.ignore);
 
             return guild;
