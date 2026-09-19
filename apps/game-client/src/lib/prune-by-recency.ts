@@ -52,7 +52,10 @@ export function pruneByRecency<Entry>({
     fresh.push(entry);
   }
 
-  const ordered = fresh.toSorted((first, second) => {
+  // `fresh` is built here and never escapes, so sorting it in place cannot be
+  // observed. `toSorted` would read better but is ES2023, and the userscript
+  // bundle targets es2020 with no polyfill.
+  fresh.sort((first, second) => {
     const timeDifference = timestampOf(second) - timestampOf(first);
 
     if (timeDifference !== 0 || !tiebreakOf) return timeDifference;
@@ -61,7 +64,7 @@ export function pruneByRecency<Entry>({
   });
 
   return {
-    retained: ordered.slice(0, cap),
-    evicted: [...evicted, ...ordered.slice(cap)],
+    retained: fresh.slice(0, cap),
+    evicted: [...evicted, ...fresh.slice(cap)],
   };
 }
