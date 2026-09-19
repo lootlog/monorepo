@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { installScopedLogRunner } from "@lootlog/instrumentation";
 import { getTestInstance } from "better-auth/test";
+import { APIError } from "better-auth/api";
 import { Effect, Logger } from "effect";
 import { betterAuthLogger } from "./better-auth.js";
 
@@ -35,6 +36,28 @@ describe("Better Auth logging", () => {
             params: ["private-refresh-token"],
             cause: new Error("private-access-token"),
           });
+
+          for (const code of [
+            "FAILED_TO_UPDATE_API_KEY",
+            "private-unknown-code",
+          ]) {
+            context.logger.error(
+              "Failed to validate API key:",
+              new APIError("TOO_MANY_REQUESTS", {
+                code,
+                message: "private-api-key",
+                details: { key: "private-api-key" },
+              }),
+            );
+          }
+
+          context.logger.error(
+            "Database operation failed",
+            new APIError("TOO_MANY_REQUESTS", {
+              code: "RATE_LIMITED",
+              message: "private-api-key",
+            }),
+          );
           betterAuthLogger.log("error", new Error("private-error-message"));
           betterAuthLogger.log("warn", "");
         });
@@ -45,6 +68,21 @@ describe("Better Auth logging", () => {
       {
         level: "Error",
         message: ["State not found", { context: "BetterAuth" }],
+      },
+      {
+        level: "Error",
+        message: ["Database operation failed", { context: "BetterAuth" }],
+      },
+      {
+        level: "Error",
+        message: [
+          "Failed to validate API key:",
+          { context: "BetterAuth", code: "FAILED_TO_UPDATE_API_KEY" },
+        ],
+      },
+      {
+        level: "Error",
+        message: ["Failed to validate API key:", { context: "BetterAuth" }],
       },
       {
         level: "Error",

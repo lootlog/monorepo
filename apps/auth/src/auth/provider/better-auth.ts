@@ -1,7 +1,8 @@
-import { apiKey } from "@better-auth/api-key";
+import { apiKey, API_KEY_ERROR_CODES } from "@better-auth/api-key";
 import type { AuthProvider } from "#src/auth/auth-service";
 import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { bearer } from "better-auth/plugins/bearer";
@@ -27,6 +28,7 @@ const logBetterAuthEvent = (
     NonNullable<NonNullable<BetterAuthOptions["logger"]>["log"]>
   >[0],
   message: unknown,
+  error?: unknown,
 ) => {
   const severity = {
     debug: "Debug",
@@ -35,13 +37,26 @@ const logBetterAuthEvent = (
     error: "Error",
   } as const;
 
+  const errorCode =
+    message === "Failed to validate API key:" && error instanceof APIError
+      ? error.body?.code
+      : undefined;
+
+  const code =
+    Schema.is(Schema.String)(errorCode) &&
+    Object.hasOwn(API_KEY_ERROR_CODES, errorCode)
+      ? errorCode
+      : undefined;
+
   // Better Auth details may contain OAuth input or database query parameters.
   runLogEffect(
     Effect.logWithLevel(severity[level])(
       Schema.is(Schema.String)(message) && message.trim() !== ""
         ? message
         : "Authentication event",
-      { context: "BetterAuth" },
+      code === undefined
+        ? { context: "BetterAuth" }
+        : { context: "BetterAuth", code },
     ),
   );
 };
@@ -129,7 +144,8 @@ export const createLootlogAuth = ({
         requireName: true,
         maximumNameLength: 80,
         enableMetadata: true,
-        rateLimit: { enabled: true, maxRequests: 120, timeWindow: 60_000 },
+        // ApiKeyService owns the shared, fixed-window Redis limit.
+        rateLimit: { enabled: false },
         keyExpiration: { defaultExpiresIn: null },
       }),
       jwt({

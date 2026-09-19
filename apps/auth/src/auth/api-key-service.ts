@@ -11,6 +11,7 @@ import { AuthDatabase } from "#src/database/drizzle";
 import { authApiKeys, authUsers } from "#src/database/drizzle.schema";
 import { BetterAuthRuntime } from "#src/auth/provider/better-auth";
 import { AppConfig } from "#src/config/env";
+import { AuthRedisStorage } from "./storage/auth-redis-storage.js";
 import { HttpResponseError } from "#src/auth/auth-service";
 
 const Name = Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(80));
@@ -119,6 +120,7 @@ export class ApiKeyService extends Context.Service<
     Effect.gen(function* () {
       const database = yield* AuthDatabase;
       const auth = yield* BetterAuthRuntime;
+      const rateLimits = yield* AuthRedisStorage;
       const config = yield* AppConfig;
       const client = HttpClient.filterStatusOk(yield* HttpClient.HttpClient);
 
@@ -405,13 +407,31 @@ export class ApiKeyService extends Context.Service<
           });
 
           if (!result.valid || !result.key)
-            return yield* failure(
-              result.error?.code === "RATE_LIMITED" ? 429 : 401,
-              "API key rejected",
-            );
+            return yield* failure(401, "API key rejected");
+
           const status = (yield* readStatuses([result.key.id]))[0];
 
           if (!status?.valid) return yield* failure(401, "API key rejected");
+
+          const allowed = yield* rateLimits
+            .consumeApiKeyRateLimit(result.key.id)
+            .pipe(
+              Effect.mapError(() =>
+                failure(503, "API key verification unavailable"),
+              ),
+            );
+
+          if (!allowed) {
+            yield* Effect.logWarning("API key rate limit exceeded", {
+              context: "ApiKeyService",
+              code: "RATE_LIMITED",
+              keyId: result.key.id,
+              userId: status.userId,
+              discordId: status.discordId,
+            });
+
+            return yield* failure(429, "API key rejected");
+          }
 
           return {
             userId: status.userId,

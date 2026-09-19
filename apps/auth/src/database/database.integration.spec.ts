@@ -1,4 +1,5 @@
 import { HttpClient, HttpClientResponse } from "effect/unstable/http";
+import { Redis } from "effect/unstable/persistence";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { AppConfig } from "#src/config/env";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
@@ -9,8 +10,17 @@ import {
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
 import { eq } from "drizzle-orm";
+import {
+  GenericContainer,
+  Wait,
+  type StartedTestContainer,
+} from "testcontainers";
+import {
+  AuthRedisStorage,
+  createAuthRedisConnection,
+} from "#src/auth/storage/auth-redis-storage";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
+import { Effect, Layer, Logger, ManagedRuntime, Redacted } from "effect";
 import {
   createLootlogAuth,
   BetterAuthRuntime,
@@ -21,13 +31,19 @@ import { runAuthMigrations } from "./migrations.js";
 
 describe("Better Auth and Effect PostgreSQL interoperability", () => {
   let postgres: StartedPostgreSqlContainer;
+  let redis: StartedTestContainer;
 
   beforeAll(async () => {
     postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
+    redis = await new GenericContainer("redis:7-alpine")
+      .withExposedPorts(6379)
+      .withWaitStrategy(Wait.forListeningPorts())
+      .start();
   }, 60_000);
 
   afterAll(async () => {
     await postgres?.stop();
+    await redis?.stop();
   });
 
   it("shares committed users and sessions and rolls back failed adapter transactions", async () => {
@@ -167,9 +183,21 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
       ];
 
+      const rateLimits = AuthRedisStorage.layer.pipe(
+        Layer.provideMerge(
+          createAuthRedisConnection({
+            host: redis.getHost(),
+            port: redis.getMappedPort(6379),
+            username: "",
+            password: Redacted.make(""),
+          }),
+        ),
+      );
+
       const makeKeysRuntime = (apiKeysEnabled: boolean) =>
         ManagedRuntime.make(
           ApiKeyService.layer.pipe(
+            Layer.provideMerge(rateLimits),
             Layer.provide(
               Layer.succeed(
                 HttpClient.HttpClient,
@@ -271,11 +299,76 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
           }),
         ).toBeNull();
 
-        for (let index = 1; index < 120; index++)
-          await keysRuntime.runPromise(keys.verify(key.key));
+        // Two auth service runtimes must share one Redis budget for this key.
+        const otherRuntime = makeKeysRuntime(true);
+
+        try {
+          const otherKeys = await otherRuntime.runPromise(ApiKeyService);
+
+          const results = await Promise.allSettled(
+            Array.from({ length: 129 }, (_, index) =>
+              index % 2 === 0
+                ? keysRuntime.runPromise(keys.verify(key.key))
+                : otherRuntime.runPromise(otherKeys.verify(key.key)),
+            ),
+          );
+
+          expect(
+            results.filter((result) => result.status === "fulfilled"),
+          ).toHaveLength(119);
+
+          for (const result of results) {
+            if (result.status === "rejected")
+              expect(result.reason).toMatchObject({ status: 429 });
+          }
+        } finally {
+          await otherRuntime.dispose();
+        }
+
+        const rejections: Array<{ level: string; message: unknown }> = [];
+        await expect(
+          keysRuntime.runPromise(
+            keys.verify(key.key).pipe(
+              Effect.provide(
+                Logger.layer([
+                  Logger.make(({ logLevel, message }) => {
+                    rejections.push({ level: logLevel, message });
+                  }),
+                ]),
+              ),
+            ),
+          ),
+        ).rejects.toMatchObject({ status: 429 });
+        expect(rejections).toContainEqual({
+          level: "Warn",
+          message: [
+            "API key rate limit exceeded",
+            {
+              context: "ApiKeyService",
+              code: "RATE_LIMITED",
+              keyId: key.id,
+              userId: user.id,
+              discordId: user.discordId,
+            },
+          ],
+        });
+        expect(JSON.stringify(rejections)).not.toContain(key.key);
+
+        // A failed shared counter must not bypass enforcement or masquerade as 429.
+        const redisClient = await keysRuntime.runPromise(Redis.Redis);
+        await keysRuntime.runPromise(
+          redisClient.send(
+            "SET",
+            `auth:api-key-rate-limit:${key.id}`,
+            "invalid-counter",
+          ),
+        );
         await expect(
           keysRuntime.runPromise(keys.verify(key.key)),
-        ).rejects.toMatchObject({ status: 429 });
+        ).rejects.toMatchObject({ status: 503 });
+        await keysRuntime.runPromise(
+          redisClient.send("DEL", `auth:api-key-rate-limit:${key.id}`),
+        );
 
         const stored = await runtime.runPromise(
           db.select().from(authApiKeys).where(eq(authApiKeys.id, key.id)),
