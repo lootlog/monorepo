@@ -42,9 +42,6 @@ const logBetterAuthEvent = (
       ? error.body?.code
       : undefined;
 
-  // ApiKeyService records rate-limit denials once, with the key owner's identity.
-  if (errorCode === "RATE_LIMITED") return;
-
   const code =
     Schema.is(Schema.String)(errorCode) &&
     Object.hasOwn(API_KEY_ERROR_CODES, errorCode)
@@ -147,7 +144,8 @@ export const createLootlogAuth = ({
         requireName: true,
         maximumNameLength: 80,
         enableMetadata: true,
-        rateLimit: { enabled: true, maxRequests: 120, timeWindow: 60_000 },
+        // ApiKeyService owns the shared, fixed-window Redis limit.
+        rateLimit: { enabled: false },
         keyExpiration: { defaultExpiresIn: null },
       }),
       jwt({

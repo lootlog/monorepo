@@ -38,7 +38,6 @@ describe("Better Auth logging", () => {
           });
 
           for (const code of [
-            "RATE_LIMITED",
             "FAILED_TO_UPDATE_API_KEY",
             "private-unknown-code",
           ]) {

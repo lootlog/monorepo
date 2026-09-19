@@ -167,8 +167,7 @@
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
     "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
-    "@effect/platform-bun@4.0.0-rc.112": "patches/@effect%2Fplatform-bun@4.0.0-rc.112.patch",
-    "@better-auth/api-key@1.7.2": "patches/@better-auth%2Fapi-key@1.7.2.patch"
+    "@effect/platform-bun@4.0.0-rc.112": "patches/@effect%2Fplatform-bun@4.0.0-rc.112.patch"
   },
   "trustedDependencies": [
     "@scarf/scarf",
