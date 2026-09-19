@@ -38,7 +38,7 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           if [[ "$BASE_SHA" =~ ^0+$ ]]; then BASE_SHA="$(git rev-parse "$HEAD_SHA^")"; fi
-          affected="$(bunx turbo@2.10.12 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
+          affected="$(bunx turbo@2.11.2 query affected --base "$BASE_SHA" --head "$HEAD_SHA" --packages)"
           packages="$(jq -c '[.data.affectedPackages.items[].name]' <<< "$affected")"
           plan="$(
             git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" |
@@ -210,7 +210,7 @@ jobs:
             image="$(jq -r '.image' <<< "$target")"
             tag="dev-$GITHUB_SHA"
             docker run --rm --user "$(id -u):$(id -g)" -e IMAGE="$image" -e TAG="$tag" \
-              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.3 \
+              -v "$PWD/$INFRA_REPO_PATH:/workdir" mikefarah/yq:4.53.6 \
               -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' \
               "apps/dev/$id/kustomization.yml"
           done < <(jq -c '.[]' <<< "$TARGETS")

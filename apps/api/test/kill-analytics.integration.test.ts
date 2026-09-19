@@ -43,8 +43,8 @@ const readAnalytics = (world?: string) =>
       world: world || undefined,
     });
   }).pipe(
-    Effect.provide(ApiDatabaseLive),
     Effect.provide(TestClock.layer()),
+    Effect.provide(ApiDatabaseLive),
     Effect.runPromise,
   );
 
@@ -57,8 +57,8 @@ const readActivity = (world?: string) =>
       cache,
     ).getUserKillActivity("analytics-owner", world ? { world } : {});
   }).pipe(
-    Effect.provide(ApiDatabaseLive),
     Effect.provide(TestClock.layer()),
+    Effect.provide(ApiDatabaseLive),
     Effect.runPromise,
   );
 
@@ -158,8 +158,8 @@ describe("personal kill analytics PostgreSQL boundary", () => {
         cache,
       ).getUserKillActivity("analytics-owner", {});
     }).pipe(
-      Effect.provide(ApiDatabaseLive),
       Effect.provide(TestClock.layer()),
+      Effect.provide(ApiDatabaseLive),
       Effect.runPromise,
     );
 

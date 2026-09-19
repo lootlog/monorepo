@@ -36,33 +36,36 @@ type Database = ApiDatabaseValue;
 type KillPointInsert = Omit<typeof eventKillPointTable.$inferInsert, "id">;
 
 const MapPresenceSnapshot = Schema.Array(
-  Schema.Struct({
-    mapId: Schema.String,
-    mapName: Schema.String,
-    presenceTimeSeconds: Schema.Number,
-    afkTimeSeconds: Schema.Number,
-  }),
+  Schema.StructWithRest(
+    Schema.Struct({
+      mapId: Schema.String,
+      mapName: Schema.String,
+      presenceTimeSeconds: Schema.Number,
+      afkTimeSeconds: Schema.Number,
+    }),
+    [Schema.Record(Schema.String, Schema.Unknown)],
+  ),
 );
 
 const decodeMapPresence = Schema.decodeUnknownSync(
   Schema.NullOr(MapPresenceSnapshot),
-  { onExcessProperty: "preserve" },
 );
 
 const GapTimelineSnapshot = Schema.Array(
-  Schema.Struct({
-    mapId: Schema.String,
-    mapName: Schema.String,
-    gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
-    startedAt: Schema.Union([Schema.String, Schema.Date]),
-    endedAt: Schema.NullOr(Schema.Union([Schema.String, Schema.Date])),
-    durationSeconds: Schema.Number,
-  }),
+  Schema.StructWithRest(
+    Schema.Struct({
+      mapId: Schema.String,
+      mapName: Schema.String,
+      gapType: Schema.Literals(["UNASSIGNED", "UNCOVERED"]),
+      startedAt: Schema.Union([Schema.String, Schema.Date]),
+      endedAt: Schema.NullOr(Schema.Union([Schema.String, Schema.Date])),
+      durationSeconds: Schema.Number,
+    }),
+    [Schema.Record(Schema.String, Schema.Unknown)],
+  ),
 );
 
-const decodeGapTimeline = Schema.decodeUnknownSync(GapTimelineSnapshot, {
-  onExcessProperty: "preserve",
-});
+const decodeGapTimeline = Schema.decodeUnknownSync(GapTimelineSnapshot);
 
 const normalizePointJson = <T extends typeof eventKillPointTable.$inferSelect>(
   point: T,

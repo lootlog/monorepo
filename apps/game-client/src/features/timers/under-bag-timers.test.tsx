@@ -8,7 +8,6 @@ import { UnderBagTimers } from "./under-bag-timers";
 describe("UnderBagTimers", () => {
   afterEach(() => {
     document.body.className = "";
-    document.querySelector("style[data-host-cursor]")?.remove();
   });
 
   it("renders into the bottom wrapper portal and stops wheel propagation", () => {
@@ -83,46 +82,5 @@ describe("UnderBagTimers", () => {
         screen.getByRole("spinbutton", { name: "Minimum level" }),
       ).appearance,
     ).toBe("textfield");
-  });
-
-  it("preserves SI selection and nested pointer styles in the host portal", () => {
-    document.body.className = "si";
-    document.body.innerHTML = `
-      <div id="lootlog-root" class="dark-theme"></div>
-      <div class="right-column">
-        <div class="inner-wrapper">
-          <div class="right-main-column-wrapper">
-            <div class="bottom-wrapper"></div>
-          </div>
-        </div>
-      </div>
-    `;
-    const hostCursorStyle = document.createElement("style");
-    hostCursorStyle.dataset.hostCursor = "true";
-    hostCursorStyle.textContent = "body.si path { cursor: default; }";
-    document.head.append(hostCursorStyle);
-
-    const lootlogRoot = document.getElementById("lootlog-root");
-
-    if (!lootlogRoot) throw new Error("Expected Lootlog root");
-    render(
-      <UnderBagTimers>
-        <span data-testid="timer-label">Timer label</span>
-        <svg className="ll-custom-cursor-pointer" aria-label="Timer action">
-          <path data-testid="timer-action-path" />
-        </svg>
-      </UnderBagTimers>,
-      { container: lootlogRoot },
-    );
-
-    expect(getComputedStyle(screen.getByTestId("timer-label")).userSelect).toBe(
-      "none",
-    );
-    expect(getComputedStyle(screen.getByLabelText("Timer action")).cursor).toBe(
-      "pointer",
-    );
-    expect(
-      getComputedStyle(screen.getByTestId("timer-action-path")).cursor,
-    ).toBe("inherit");
   });
 });

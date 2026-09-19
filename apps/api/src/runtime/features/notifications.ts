@@ -77,7 +77,7 @@ export const notificationsServicesLive = Layer.effect(
           }),
       ),
       (notificationsQueue) =>
-        Effect.tryPromise(() => notificationsQueue.close()),
+        Effect.tryPromise(() => notificationsQueue.close()).pipe(Effect.orDie),
     );
 
     const store = makeNotificationEventStore(database);

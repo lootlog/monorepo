@@ -82,7 +82,7 @@ export const authAccounts = pgTable(
   {
     id: text("id").primaryKey(),
     accountId: text("accountId").notNull(),
-    issuer: text("issuer").notNull(),
+    issuer: text("issuer"),
     providerId: text("providerId").notNull(),
     userId: text("userId")
       .notNull()
@@ -113,8 +113,8 @@ export const authAccounts = pgTable(
   },
   (table) => [
     index("account_userId_idx").on(table.userId),
-    uniqueIndex("account_issuer_accountId_uidx").on(
-      table.issuer,
+    uniqueIndex("account_providerId_accountId_uidx").on(
+      table.providerId,
       table.accountId,
     ),
   ],

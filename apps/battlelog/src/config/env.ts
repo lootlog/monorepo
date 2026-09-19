@@ -16,41 +16,41 @@ export interface BattlelogConfiguration {
 }
 
 const loadConfiguration = Effect.gen(function* () {
-  const environment = yield* Config.string("ENV").pipe(
+  const environment = yield* Config.String("ENV").pipe(
     Config.withDefault("local"),
   );
 
-  const port = yield* Config.port("PORT");
+  const port = yield* Config.Port("PORT");
 
-  const serviceName = yield* Config.string("SERVICE_NAME").pipe(
+  const serviceName = yield* Config.String("SERVICE_NAME").pipe(
     Config.withDefault("battlelog-service"),
   );
 
-  const serviceNamespace = yield* Config.string("SERVICE_NAMESPACE").pipe(
+  const serviceNamespace = yield* Config.String("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
   );
 
-  const postgresqlConnectionUri = yield* Config.redacted(
+  const postgresqlConnectionUri = yield* Config.Redacted(
     "POSTGRESQL_CONNECTION_URI",
   );
 
-  const redisHost = yield* Config.string("REDIS_HOST");
-  const redisPort = yield* Config.port("REDIS_PORT");
-  const redisPassword = yield* Config.redacted("REDIS_PASSWORD");
-  const redisUsername = yield* Config.string("REDIS_USERNAME");
-  const r2AccessKeyId = yield* Config.redacted("R2_ACCESS_KEY_ID");
-  const r2SecretAccessKey = yield* Config.redacted("R2_SECRET_ACCESS_KEY");
-  const r2Endpoint = yield* Config.string("R2_ENDPOINT");
+  const redisHost = yield* Config.String("REDIS_HOST");
+  const redisPort = yield* Config.Port("REDIS_PORT");
+  const redisPassword = yield* Config.Redacted("REDIS_PASSWORD");
+  const redisUsername = yield* Config.String("REDIS_USERNAME");
+  const r2AccessKeyId = yield* Config.Redacted("R2_ACCESS_KEY_ID");
+  const r2SecretAccessKey = yield* Config.Redacted("R2_SECRET_ACCESS_KEY");
+  const r2Endpoint = yield* Config.String("R2_ENDPOINT");
 
-  const r2Region = yield* Config.string("R2_REGION").pipe(
+  const r2Region = yield* Config.String("R2_REGION").pipe(
     Config.withDefault("auto"),
   );
 
-  const r2BucketName = yield* Config.string("R2_BUCKET_NAME");
+  const r2BucketName = yield* Config.String("R2_BUCKET_NAME");
 
   return {
     cleanupSecret: yield* Config.option(
-      Config.redacted("BATTLELOG_CLEANUP_SECRET"),
+      Config.Redacted("BATTLELOG_CLEANUP_SECRET"),
     ).pipe(Config.map(Option.getOrUndefined)),
     environment,
     port,

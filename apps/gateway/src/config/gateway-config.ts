@@ -39,49 +39,49 @@ const splitOrigins = (value: string): ReadonlySet<string> =>
   );
 
 export const loadGatewayConfiguration = Effect.gen(function* () {
-  const environment = yield* Config.string("ENV").pipe(
+  const environment = yield* Config.String("ENV").pipe(
     Config.withDefault("local"),
   );
 
-  const serviceName = yield* Config.string("SERVICE_NAME").pipe(
+  const serviceName = yield* Config.String("SERVICE_NAME").pipe(
     Config.withDefault("gateway"),
   );
 
-  const redisPassword = yield* Config.redacted("REDIS_PASSWORD");
+  const redisPassword = yield* Config.Redacted("REDIS_PASSWORD");
 
   return {
     environment,
-    port: yield* Config.port("PORT"),
+    port: yield* Config.Port("PORT"),
     serviceName,
-    serviceNamespace: yield* Config.string("SERVICE_NAMESPACE").pipe(
+    serviceNamespace: yield* Config.String("SERVICE_NAMESPACE").pipe(
       Config.withDefault("local"),
     ),
-    authUrl: yield* Config.string("AUTH_URL").pipe(Config.withDefault("")),
-    apiKeyStatusSecret: yield* Config.redacted("API_KEY_STATUS_SECRET").pipe(
+    authUrl: yield* Config.String("AUTH_URL").pipe(Config.withDefault("")),
+    apiKeyStatusSecret: yield* Config.Redacted("API_KEY_STATUS_SECRET").pipe(
       Config.withDefault(Redacted.make("")),
     ),
-    apiUrl: (yield* Config.url("API_URL")).toString().replace(/\/$/, ""),
-    margonemSigningKeyUrl: (yield* Config.url("MARGONEM_SIGNING_KEY_URL").pipe(
+    apiUrl: (yield* Config.URL("API_URL")).toString().replace(/\/$/, ""),
+    margonemSigningKeyUrl: (yield* Config.URL("MARGONEM_SIGNING_KEY_URL").pipe(
       Config.withDefault(
         new URL("https://staticinfo.margonem.pl/.well-known/signing-key.pem"),
       ),
     )).toString(),
-    rabbitmqUri: yield* Config.redacted("RABBITMQ_URI"),
-    activityEventSignatureSecret: yield* Config.redacted(
+    rabbitmqUri: yield* Config.Redacted("RABBITMQ_URI"),
+    activityEventSignatureSecret: yield* Config.Redacted(
       "ACTIVITY_EVENT_SIGNATURE_SECRET",
     ),
     redis: {
-      host: yield* Config.string("REDIS_HOST"),
-      port: yield* Config.port("REDIS_PORT"),
-      username: yield* Config.string("REDIS_USERNAME"),
+      host: yield* Config.String("REDIS_HOST"),
+      port: yield* Config.Port("REDIS_PORT"),
+      username: yield* Config.String("REDIS_USERNAME"),
       password: redisPassword,
       keyPrefix: `${serviceName}:${environment}`,
     },
-    websocketPath: yield* Config.string("WEBSOCKET_PATH").pipe(
+    websocketPath: yield* Config.String("WEBSOCKET_PATH").pipe(
       Config.withDefault("/ws"),
     ),
     allowedWebOrigins: splitOrigins(
-      yield* Config.string("ALLOWED_WEB_ORIGINS").pipe(
+      yield* Config.String("ALLOWED_WEB_ORIGINS").pipe(
         Config.withDefault("http://localhost,http://localhost:3000"),
       ),
     ),
@@ -104,10 +104,10 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
         "ALLOWED_EXTENSION_ORIGINS",
       ).pipe(Config.withDefault("")),
     ),
-    maxBackpressureBytes: yield* Config.number(
+    maxBackpressureBytes: yield* Config.Number(
       "WEBSOCKET_MAX_BACKPRESSURE_BYTES",
     ).pipe(Config.withDefault(1_048_576)),
-    maxBackpressureStrikes: yield* Config.number(
+    maxBackpressureStrikes: yield* Config.Number(
       "WEBSOCKET_MAX_BACKPRESSURE_STRIKES",
     ).pipe(Config.withDefault(3)),
   } satisfies GatewayConfiguration;

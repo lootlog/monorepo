@@ -3,7 +3,7 @@ import { appendFileSync, writeFileSync } from "node:fs";
 import { createElement, Profiler, type ProfilerOnRenderCallback } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
-import { afterAll, bench, describe, type BenchFunction } from "vitest";
+import { afterAll, describe, expect, test } from "vitest";
 import { EventDispatcher } from "@/lib/event-dispatcher";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
@@ -184,21 +184,17 @@ describe("runtime bridge mixed replay (50 players, 120 NPCs)", () => {
     runtimeWindow.successData = originalSuccessData;
   });
 
-  bench(
-    "object payload",
-    () => {
-      dispatch(replayEvent);
-    },
-    { iterations: 2_000, warmupIterations: 200 },
-  );
+  test.for([
+    { name: "object payload", payload: replayEvent },
+    { name: "string payload", payload: stringReplayEvent },
+  ])("$name", async ({ name, payload }, { bench }) => {
+    const result = await bench(name, () => dispatch(payload)).run({
+      iterations: 2_000,
+      warmupIterations: 200,
+    });
 
-  bench(
-    "string payload",
-    () => {
-      dispatch(stringReplayEvent);
-    },
-    { iterations: 2_000, warmupIterations: 200 },
-  );
+    expect(result.latency.samplesCount).toBeGreaterThan(0);
+  });
 });
 
 function createReplayState() {
@@ -301,12 +297,6 @@ type FullReplayHarness = {
     othersStoreUpdates: number;
   };
   resetMetrics: () => void;
-};
-
-type BenchmarkController = ThisParameterType<BenchFunction>;
-
-type BenchmarkCycleEvent = Event & {
-  task: BenchmarkController["tasks"][number];
 };
 
 const heroMovementEvent = {
@@ -599,48 +589,71 @@ function getLatencyPercentiles(samples: readonly number[]) {
 
 for (const runtimeInterface of ["ni", "si"] as const) {
   describe(`${runtimeInterface.toUpperCase()} full projected pipeline`, () => {
-    let harness: FullReplayHarness | null = null;
+    test.for([
+      {
+        name: "hero movement through adapters, processors, Zustand and React",
+        payload: heroMovementEvent,
+        iterations: 1_000,
+        warmupIterations: 100,
+      },
+      {
+        name: "50-player movement through adapters, processors, Zustand and React",
+        payload: { other } satisfies GameEvent,
+        iterations: 1_000,
+        warmupIterations: 100,
+      },
+      {
+        name: "crowded battle, NPC, loot and movement replay",
+        payload: fullReplayEvent,
+        iterations: 500,
+        warmupIterations: 50,
+      },
+    ])(
+      "$name",
+      async (
+        { name, payload, iterations, warmupIterations },
+        { bench, onTestFinished },
+      ) => {
+        const harness = createFullReplayHarness(runtimeInterface);
+        onTestFinished(() => harness.cleanup());
 
-    const getHarness = (benchmark: BenchmarkController) => {
-      if (harness) return harness;
+        const result = await bench(name, () => {
+          flushSync(() => harness.dispatch(payload));
+        }).run({ iterations, warmupIterations, retainSamples: true });
 
-      harness = createFullReplayHarness(runtimeInterface);
+        expect(result.latency.samplesCount).toBeGreaterThan(0);
 
-      const handleCycle = (event: BenchmarkCycleEvent) => {
-        if (!harness) return;
-        const task = event.task;
         const metrics = harness.getMetrics();
 
-        if (task.result) {
-          const latency = getLatencyPercentiles(task.result.samples);
-
-          if (runtimeReplayMetricsFile) {
-            appendFileSync(
-              runtimeReplayMetricsFile,
-              `${JSON.stringify({
-                commits: metrics.commits,
-                dispatches: metrics.dispatches,
-                gameSnapshotReads: metrics.gameSnapshotReads,
-                npcReads: metrics.npcReads,
-                npcsStoreUpdates: metrics.npcsStoreUpdates,
-                otherReads: metrics.otherReads,
-                p50Ms: latency.p50,
-                p95Ms: latency.p95,
-                runtimeInterface,
-                samples: task.result.samples.length,
-                scenario: task.name,
-                storeUpdates:
-                  metrics.gameStoreUpdates +
-                  metrics.npcsStoreUpdates +
-                  metrics.othersStoreUpdates,
-              })}\n`,
-              "utf8",
-            );
-          }
+        if (runtimeReplayMetricsFile) {
+          if (!result.latency.samples)
+            throw new Error("Runtime benchmark samples are unavailable");
+          const latency = getLatencyPercentiles(result.latency.samples);
+          appendFileSync(
+            runtimeReplayMetricsFile,
+            `${JSON.stringify({
+              commits: metrics.commits,
+              dispatches: metrics.dispatches,
+              gameSnapshotReads: metrics.gameSnapshotReads,
+              npcReads: metrics.npcReads,
+              npcsStoreUpdates: metrics.npcsStoreUpdates,
+              otherReads: metrics.otherReads,
+              p50Ms: latency.p50,
+              p95Ms: latency.p95,
+              runtimeInterface,
+              samples: result.latency.samplesCount,
+              scenario: name,
+              storeUpdates:
+                metrics.gameStoreUpdates +
+                metrics.npcsStoreUpdates +
+                metrics.othersStoreUpdates,
+            })}\n`,
+            "utf8",
+          );
         }
 
         if (
-          task.name.startsWith("50-player movement") &&
+          name.startsWith("50-player movement") &&
           (metrics.gameSnapshotReads !== 0 ||
             metrics.npcReads !== 0 ||
             metrics.otherReads !== 0 ||
@@ -655,7 +668,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
         }
 
         if (
-          task.name.startsWith("crowded battle") &&
+          name.startsWith("crowded battle") &&
           (metrics.gameSnapshotReads !== 0 ||
             metrics.npcReads !== 0 ||
             metrics.otherReads !== 0 ||
@@ -668,42 +681,7 @@ for (const runtimeInterface of ["ni", "si"] as const) {
             `${runtimeInterface.toUpperCase()} crowded replay violated its runtime work budget`,
           );
         }
-
-        harness.cleanup();
-        harness = null;
-        benchmark.removeEventListener("cycle", handleCycle);
-      };
-
-      benchmark.addEventListener("cycle", handleCycle);
-
-      return harness;
-    };
-
-    bench(
-      "hero movement through adapters, processors, Zustand and React",
-      function () {
-        const activeHarness = getHarness(this);
-        flushSync(() => activeHarness.dispatch(heroMovementEvent));
       },
-      { iterations: 1_000, warmupIterations: 100 },
-    );
-
-    bench(
-      "50-player movement through adapters, processors, Zustand and React",
-      function () {
-        const activeHarness = getHarness(this);
-        flushSync(() => activeHarness.dispatch({ other } satisfies GameEvent));
-      },
-      { iterations: 1_000, warmupIterations: 100 },
-    );
-
-    bench(
-      "crowded battle, NPC, loot and movement replay",
-      function () {
-        const activeHarness = getHarness(this);
-        flushSync(() => activeHarness.dispatch(fullReplayEvent));
-      },
-      { iterations: 500, warmupIterations: 50 },
     );
   });
 }

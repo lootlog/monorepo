@@ -1,13 +1,11 @@
 import { BunRuntime } from "@effect/platform-bun";
-import { PgClient } from "@effect/sql-pg";
-import { migrate } from "drizzle-orm/effect-postgres/migrator";
+import { migrationClient } from "@lootlog/database/migration";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Effect } from "effect";
 import { fileURLToPath } from "node:url";
-import {
-  adoptExistingApiDatabase,
-  type SqlTransactionClient,
-} from "./adoption.js";
-import { ApiDatabase, ApiDatabaseLive } from "./database.js";
+import { adoptExistingApiDatabase } from "./adoption.js";
+import { ApiDatabaseLive } from "./database.js";
 
 const migrationsFolder = fileURLToPath(
   new URL("../../../drizzle/migrations", import.meta.url),
@@ -16,34 +14,21 @@ const migrationsFolder = fileURLToPath(
 const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error(String(cause));
 
-const adoptDatabase = Effect.gen(function* () {
-  const sql = yield* PgClient.PgClient;
-  const connection = yield* sql.reserve;
+export const migrateApiDatabase = Effect.gen(function* () {
+  const client = yield* migrationClient;
 
-  const client: SqlTransactionClient = {
-    query: async (statement: string, values: ReadonlyArray<unknown> = []) => {
-      const rows = await Effect.runPromise(
-        connection.execute(statement, values, undefined),
-      );
-
-      return { rows };
-    },
-  };
-
-  return yield* Effect.tryPromise({
+  const adoption = yield* Effect.tryPromise({
     try: () => adoptExistingApiDatabase(client),
     catch: toError,
   });
-});
 
-export const migrateApiDatabase = Effect.gen(function* () {
-  const adoption = yield* adoptDatabase;
-  const database = yield* ApiDatabase;
-  yield* migrate(database, { migrationsFolder });
+  yield* Effect.tryPromise(() =>
+    migrate(drizzle({ client }), { migrationsFolder }),
+  );
   yield* Effect.logInfo("API database migrations complete", {
     adoptionStatus: adoption.status,
   });
-});
+}).pipe(Effect.scoped);
 
 if (import.meta.main) {
   BunRuntime.runMain(

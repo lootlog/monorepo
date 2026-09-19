@@ -4,7 +4,7 @@ import { ApiKeyService } from "#src/auth/api-key-service";
 import { AppConfig } from "#src/config/env";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { PgClient } from "@effect/sql-pg";
-import { makePostgresLayer, PostgresPool } from "@lootlog/database";
+import { makeAuthPostgresLayer, PostgresPool } from "./postgres.js";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
@@ -50,17 +50,18 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
     const runtime = ManagedRuntime.make(
       AuthDatabase.layer.pipe(
         Layer.provideMerge(
-          makePostgresLayer({
+          makeAuthPostgresLayer({
             url: Redacted.make(postgres.getConnectionUri()),
             applicationName: "auth-adapter-test",
-            maxConnections: 1,
+            maxConnections: 2,
           }),
         ),
       ),
     );
 
+    const pool = await runtime.runPromise(PostgresPool);
+
     try {
-      const pool = await runtime.runPromise(PostgresPool);
       const client = await runtime.runPromise(PgClient.PgClient);
       const db = await runtime.runPromise(AuthDatabase);
       await runtime.runPromise(runAuthMigrations(db, client));
@@ -149,6 +150,26 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         }),
       ).toMatchObject({ name: "Effect update", createdAt });
 
+      await adapter.create({
+        model: "account",
+        data: {
+          id: "new-discord-account",
+          userId: user.id,
+          providerId: "discord",
+          accountId: "discord-test",
+          createdAt,
+          updatedAt: createdAt,
+        },
+      });
+      expect(
+        (
+          await pool.query(
+            'SELECT "issuer" FROM "account" WHERE "accountId" = $1',
+            ["discord-test"],
+          )
+        ).rows,
+      ).toEqual([{ issuer: null }]);
+
       const session = await internalAdapter.createSession(user.id);
       expect(
         await auth.api.getSession({
@@ -178,6 +199,40 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         ),
       ).toEqual([{ name: "Effect update" }]);
       expect(pool.totalCount).toBe(1);
+      expect(
+        await runtime.runPromise(
+          client`SELECT count(*)::int AS count FROM pg_stat_activity WHERE application_name = 'auth-adapter-test'`,
+        ),
+      ).toEqual([{ count: 2 }]);
+      await expect(
+        runtime.runPromise(
+          db.transaction((tx) =>
+            Effect.gen(function* () {
+              yield* tx
+                .update(authUsers)
+                .set({ name: "Uncommitted Effect update" })
+                .where(eq(authUsers.id, user.id));
+
+              const visible = yield* Effect.promise(() =>
+                adapter.findOne({
+                  model: "user",
+                  where: [{ field: "id", value: user.id }],
+                }),
+              );
+
+              expect(visible).toMatchObject({ name: "Effect update" });
+
+              return yield* Effect.fail(new Error("abort Effect transaction"));
+            }),
+          ),
+        ),
+      ).rejects.toThrow("abort Effect transaction");
+      expect(
+        await adapter.findOne({
+          model: "user",
+          where: [{ field: "id", value: user.id }],
+        }),
+      ).toMatchObject({ name: "Effect update" });
 
       let grantOrganizations = [
         { id: "123", hasLootlogAccess: true, isAccessDataStale: false },
@@ -491,6 +546,8 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
       }
     } finally {
       await runtime.dispose();
+      expect(pool.ended).toBe(true);
+      expect(pool.totalCount).toBe(0);
     }
   }, 30_000);
 });

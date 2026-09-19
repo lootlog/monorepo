@@ -81,8 +81,7 @@ export function useNpcListRowLayoutAnimation({
           }
         };
 
-        animation.oncancel = clearAnimation;
-        animation.onfinish = clearAnimation;
+        void animation.finished.then(clearAnimation, clearAnimation);
       });
     }
 

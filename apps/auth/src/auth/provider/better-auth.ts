@@ -9,7 +9,7 @@ import { bearer } from "better-auth/plugins/bearer";
 import { jwt } from "better-auth/plugins/jwt";
 import { Context, Effect, Layer, Schema } from "effect";
 import { AppConfig, reveal, type AuthConfig } from "#src/config/env";
-import { PostgresPool } from "@lootlog/database";
+import { PostgresPool } from "#src/database/postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { betterAuthSchema } from "#src/database/drizzle.schema";
 import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
@@ -189,7 +189,7 @@ export class BetterAuthRuntime extends Context.Service<
 
       const auth = createLootlogAuth({
         config,
-        // Better Auth requires Promise-based Drizzle; reuse the Effect-owned pool.
+        // Better Auth requires Promise-based Drizzle with its scoped adapter pool.
         database: drizzle({ client: pool }),
         secondaryStorage: redis.secondaryStorage,
       });

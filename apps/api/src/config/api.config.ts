@@ -2,13 +2,13 @@ import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { Config, Option, type Redacted, Schema } from "effect";
 
 const optionalRedacted = (name: string) =>
-  Config.option(Config.redacted(name)).pipe(Config.map(Option.getOrUndefined));
+  Config.option(Config.Redacted(name)).pipe(Config.map(Option.getOrUndefined));
 
 const enabledValue = (value: string): boolean =>
   ["1", "true", "yes", "on"].includes(value.toLowerCase());
 
 const compatibilityBoolean = (name: string) =>
-  Config.string(name).pipe(
+  Config.String(name).pipe(
     Config.withDefault("false"),
     Config.map(enabledValue),
   );
@@ -55,7 +55,7 @@ export interface ApiConfiguration {
 export const apiConfiguration = Config.all({
   authIdpTokenSecret: optionalRedacted("AUTH_IDP_TOKEN_SECRET"),
   battlelogCleanupSecret: optionalRedacted("BATTLELOG_CLEANUP_SECRET"),
-  environment: Config.literals(
+  environment: Config.Literals(
     [
       RuntimeEnvironment.LOCAL,
       RuntimeEnvironment.DEV,
@@ -64,18 +64,18 @@ export const apiConfiguration = Config.all({
     ],
     "ENV",
   ).pipe(Config.withDefault(RuntimeEnvironment.LOCAL)),
-  port: Config.number("PORT"),
-  serviceName: Config.string("SERVICE_NAME").pipe(Config.withDefault("api")),
-  serviceNamespace: Config.string("SERVICE_NAMESPACE").pipe(
+  port: Config.Number("PORT"),
+  serviceName: Config.String("SERVICE_NAME").pipe(Config.withDefault("api")),
+  serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
     Config.withDefault("local"),
   ),
   postgresqlConnectionUri: optionalRedacted("POSTGRESQL_CONNECTION_URI"),
-  rabbitmqUri: Config.redacted("RABBITMQ_URI"),
+  rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
   redis: Config.all({
-    host: Config.string("REDIS_HOST"),
-    port: Config.number("REDIS_PORT"),
-    username: Config.string("REDIS_USERNAME"),
-    password: Config.redacted("REDIS_PASSWORD"),
+    host: Config.String("REDIS_HOST"),
+    port: Config.Number("REDIS_PORT"),
+    username: Config.String("REDIS_USERNAME"),
+    password: Config.Redacted("REDIS_PASSWORD"),
   }),
   authServiceUrl: Config.schema(Schema.URLFromString, "AUTH_SERVICE_URL"),
   battlelogServiceUrl: Config.schema(
@@ -94,33 +94,33 @@ export const apiConfiguration = Config.all({
   telemetry: Config.all({
     endpoint: optionalRedacted("OTEL_EXPORTER_OTLP_ENDPOINT"),
     headers: optionalRedacted("OTEL_EXPORTER_OTLP_HEADERS"),
-    nodeResourceDetectors: Config.string("OTEL_NODE_RESOURCE_DETECTORS").pipe(
+    nodeResourceDetectors: Config.String("OTEL_NODE_RESOURCE_DETECTORS").pipe(
       Config.withDefault("env,host,os,process"),
     ),
-    tracesExporter: Config.string("OTEL_TRACES_EXPORTER").pipe(
+    tracesExporter: Config.String("OTEL_TRACES_EXPORTER").pipe(
       Config.withDefault("otlp"),
     ),
   }),
   timerCleanup: Config.all({
-    enabled: Config.string("TIMER_CLEANUP_ENABLED").pipe(
+    enabled: Config.String("TIMER_CLEANUP_ENABLED").pipe(
       Config.withDefault("true"),
     ),
-    retentionDays: Config.finite("TIMER_RETENTION_DAYS").pipe(
+    retentionDays: Config.Finite("TIMER_RETENTION_DAYS").pipe(
       Config.withDefault(7),
     ),
   }),
   reservationsCleanup: Config.all({
-    enabled: Config.string("RESERVATIONS_CLEANUP_ENABLED").pipe(
+    enabled: Config.String("RESERVATIONS_CLEANUP_ENABLED").pipe(
       Config.withDefault("true"),
     ),
-    retentionDays: Config.finite("RESERVATIONS_RETENTION_DAYS").pipe(
+    retentionDays: Config.Finite("RESERVATIONS_RETENTION_DAYS").pipe(
       Config.withDefault(30),
     ),
   }),
   nodeWarningDiagnosticsEnabled: compatibilityBoolean(
     "NODE_WARNING_DIAGNOSTICS_ENABLED",
   ),
-  hostName: Config.option(Config.string("HOSTNAME")).pipe(
+  hostName: Config.option(Config.String("HOSTNAME")).pipe(
     Config.map(Option.getOrUndefined),
   ),
 }) satisfies Config.Config<ApiConfiguration>;

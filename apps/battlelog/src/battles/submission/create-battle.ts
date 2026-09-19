@@ -59,7 +59,7 @@ const decodeOptionalWarriorsRecord = Schema.decodeUnknownEffect(
 
 const OptionalWarriorsRecordSchema = Schema.Unknown.pipe(
   Schema.decodeTo(optionalWarriorsRecord, {
-    decode: SchemaGetter.transformOrFail((value) => {
+    decode: SchemaGetter.transformEffect((value) => {
       const warriors = Predicate.isObject(value)
         ? Object.fromEntries(
             Object.entries(value).filter(([, warrior]) =>

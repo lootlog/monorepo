@@ -780,7 +780,7 @@ export const prefetchHealthzControllerCheckQuery = async <TData = Awaited<Return
 }
 
 /**
- * @summary Health check
+ * @summary Invalidates the {@link useHealthzControllerCheck} query
  */
 export const invalidateHealthzControllerCheck = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -796,8 +796,8 @@ export const invalidateHealthzControllerCheck = async (
  */
 export const useSetHealthzControllerCheckQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof healthzControllerCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerCheck>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerCheck>>>({ queryKey: getHealthzControllerCheckQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof healthzControllerCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerCheck>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerCheck>>>({ exact: $exactMatch, queryKey: getHealthzControllerCheckQueryKey() }, updater);
   };
 }
 
@@ -947,7 +947,7 @@ export const prefetchActivitiesControllerFindByGuildQuery = async <TData = Await
 }
 
 /**
- * @summary Get activities for a specific guild
+ * @summary Invalidates the {@link useActivitiesControllerFindByGuild} query
  */
 export const invalidateActivitiesControllerFindByGuild = async (
  queryClient: QueryClient, { guildId }: ActivitiesControllerFindByGuildPathParameters,
@@ -965,8 +965,8 @@ export const invalidateActivitiesControllerFindByGuild = async (
 export const useSetActivitiesControllerFindByGuildQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: ActivitiesControllerFindByGuildPathParameters,
-    params: ActivitiesControllerFindByGuildParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerFindByGuild>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindByGuild>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindByGuild>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>>({ queryKey: getActivitiesControllerFindByGuildQueryKey({ guildId },params) }, updater);
+    params: ActivitiesControllerFindByGuildParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerFindByGuild>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindByGuild>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindByGuild>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindByGuild>>>({ exact: $exactMatch, queryKey: getActivitiesControllerFindByGuildQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -1109,7 +1109,7 @@ export const prefetchActivitiesControllerSuggestActorNamesQuery = async <TData =
 }
 
 /**
- * @summary Get actor name suggestions for a guild
+ * @summary Invalidates the {@link useActivitiesControllerSuggestActorNames} query
  */
 export const invalidateActivitiesControllerSuggestActorNames = async (
  queryClient: QueryClient, { guildId }: ActivitiesControllerSuggestActorNamesPathParameters,
@@ -1127,8 +1127,8 @@ export const invalidateActivitiesControllerSuggestActorNames = async (
 export const useSetActivitiesControllerSuggestActorNamesQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: ActivitiesControllerSuggestActorNamesPathParameters,
-    params: ActivitiesControllerSuggestActorNamesParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>> | undefined) => Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>>({ queryKey: getActivitiesControllerSuggestActorNamesQueryKey({ guildId },params) }, updater);
+    params: ActivitiesControllerSuggestActorNamesParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>> | undefined) => Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerSuggestActorNames>>>({ exact: $exactMatch, queryKey: getActivitiesControllerSuggestActorNamesQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -1271,7 +1271,7 @@ export const prefetchActivitiesControllerSuggestWorldsQuery = async <TData = Awa
 }
 
 /**
- * @summary Get world suggestions for a guild
+ * @summary Invalidates the {@link useActivitiesControllerSuggestWorlds} query
  */
 export const invalidateActivitiesControllerSuggestWorlds = async (
  queryClient: QueryClient, { guildId }: ActivitiesControllerSuggestWorldsPathParameters,
@@ -1289,8 +1289,8 @@ export const invalidateActivitiesControllerSuggestWorlds = async (
 export const useSetActivitiesControllerSuggestWorldsQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: ActivitiesControllerSuggestWorldsPathParameters,
-    params: ActivitiesControllerSuggestWorldsParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>> | undefined) => Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>>({ queryKey: getActivitiesControllerSuggestWorldsQueryKey({ guildId },params) }, updater);
+    params: ActivitiesControllerSuggestWorldsParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>> | undefined) => Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerSuggestWorlds>>>({ exact: $exactMatch, queryKey: getActivitiesControllerSuggestWorldsQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -1433,7 +1433,7 @@ export const prefetchActivitiesControllerSuggestClanNamesQuery = async <TData = 
 }
 
 /**
- * @summary Get clan name suggestions for a guild
+ * @summary Invalidates the {@link useActivitiesControllerSuggestClanNames} query
  */
 export const invalidateActivitiesControllerSuggestClanNames = async (
  queryClient: QueryClient, { guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
@@ -1451,8 +1451,8 @@ export const invalidateActivitiesControllerSuggestClanNames = async (
 export const useSetActivitiesControllerSuggestClanNamesQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId }: ActivitiesControllerSuggestClanNamesPathParameters,
-    params: ActivitiesControllerSuggestClanNamesParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>> | undefined) => Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>>({ queryKey: getActivitiesControllerSuggestClanNamesQueryKey({ guildId },params) }, updater);
+    params: ActivitiesControllerSuggestClanNamesParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>> | undefined) => Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerSuggestClanNames>>>({ exact: $exactMatch, queryKey: getActivitiesControllerSuggestClanNamesQueryKey({ guildId },params) }, updater);
   };
 }
 
@@ -1603,7 +1603,7 @@ export const prefetchActivitiesControllerFindByUserQuery = async <TData = Awaite
 }
 
 /**
- * @summary Get activities for a specific user in a guild
+ * @summary Invalidates the {@link useActivitiesControllerFindByUser} query
  */
 export const invalidateActivitiesControllerFindByUser = async (
  queryClient: QueryClient, { guildId, userId }: ActivitiesControllerFindByUserPathParameters,
@@ -1621,8 +1621,8 @@ export const invalidateActivitiesControllerFindByUser = async (
 export const useSetActivitiesControllerFindByUserQueryData = () => {
   const queryClient = useQueryClient();
   return ({ guildId, userId }: ActivitiesControllerFindByUserPathParameters,
-    params: ActivitiesControllerFindByUserParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindByUser>>>({ queryKey: getActivitiesControllerFindByUserQueryKey({ guildId, userId },params) }, updater);
+    params: ActivitiesControllerFindByUserParams | undefined,updater: Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindByUser>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindByUser>>>({ exact: $exactMatch, queryKey: getActivitiesControllerFindByUserQueryKey({ guildId, userId },params) }, updater);
   };
 }
 
@@ -1749,7 +1749,7 @@ export const prefetchActivitiesControllerGetMemberActivityStatsQuery = async <TD
 }
 
 /**
- * @summary Get activity stats for guild members by source
+ * @summary Invalidates the {@link useActivitiesControllerGetMemberActivityStats} query
  */
 export const invalidateActivitiesControllerGetMemberActivityStats = async (
  queryClient: QueryClient, { guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters, options?: InvalidateOptions
@@ -1765,8 +1765,8 @@ export const invalidateActivitiesControllerGetMemberActivityStats = async (
  */
 export const useSetActivitiesControllerGetMemberActivityStatsQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters,updater: Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>> | undefined) => Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>>({ queryKey: getActivitiesControllerGetMemberActivityStatsQueryKey({ guildId }) }, updater);
+  return ({ guildId }: ActivitiesControllerGetMemberActivityStatsPathParameters,updater: Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>> | undefined) => Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerGetMemberActivityStats>>>({ exact: $exactMatch, queryKey: getActivitiesControllerGetMemberActivityStatsQueryKey({ guildId }) }, updater);
   };
 }
 
@@ -1892,7 +1892,7 @@ export const prefetchActivitiesControllerFindOneQuery = async <TData = Awaited<R
 }
 
 /**
- * @summary Get a single activity by ID
+ * @summary Invalidates the {@link useActivitiesControllerFindOne} query
  */
 export const invalidateActivitiesControllerFindOne = async (
  queryClient: QueryClient, { guildId, id }: ActivitiesControllerFindOnePathParameters, options?: InvalidateOptions
@@ -1908,8 +1908,8 @@ export const invalidateActivitiesControllerFindOne = async (
  */
 export const useSetActivitiesControllerFindOneQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ guildId, id }: ActivitiesControllerFindOnePathParameters,updater: Awaited<ReturnType<typeof activitiesControllerFindOne>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindOne>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindOne>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindOne>>>({ queryKey: getActivitiesControllerFindOneQueryKey({ guildId, id }) }, updater);
+  return ({ guildId, id }: ActivitiesControllerFindOnePathParameters,updater: Awaited<ReturnType<typeof activitiesControllerFindOne>> | undefined | ((old: Awaited<ReturnType<typeof activitiesControllerFindOne>> | undefined) => Awaited<ReturnType<typeof activitiesControllerFindOne>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof activitiesControllerFindOne>>>({ exact: $exactMatch, queryKey: getActivitiesControllerFindOneQueryKey({ guildId, id }) }, updater);
   };
 }
 
@@ -1950,11 +1950,13 @@ export const activitiesControllerDeleteActivity = async ({ guildId, id }: Activi
 
 
 
+export const getActivitiesControllerDeleteActivityMutationKey = () => ['activitiesControllerDeleteActivity'] as const;
+
 export const getActivitiesControllerDeleteActivityMutationOptions = <TError = ErrorType<ActivitiesControllerDeleteActivity401 | ActivitiesControllerDeleteActivity403 | void | ActivitiesControllerDeleteActivity429 | ActivitiesControllerDeleteActivity503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>, TError,ActivitiesControllerDeleteActivityMutationVariables, TContext>, request?: SecondParameter<typeof activityFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof activitiesControllerDeleteActivity>>, TError,ActivitiesControllerDeleteActivityMutationVariables, TContext> => {
 
-const mutationKey = ['activitiesControllerDeleteActivity'];
+const mutationKey = getActivitiesControllerDeleteActivityMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -2115,7 +2117,7 @@ export const prefetchUsersActivityControllerGetOnlineQuery = async <TData = Awai
 }
 
 /**
- * @summary Get the signed-in user's confirmed game online time by Warsaw calendar day
+ * @summary Invalidates the {@link useUsersActivityControllerGetOnline} query
  */
 export const invalidateUsersActivityControllerGetOnline = async (
  queryClient: QueryClient, params: UsersActivityControllerGetOnlineParams, options?: InvalidateOptions
@@ -2131,8 +2133,8 @@ export const invalidateUsersActivityControllerGetOnline = async (
  */
 export const useSetUsersActivityControllerGetOnlineQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: UsersActivityControllerGetOnlineParams | undefined,updater: Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined | ((old: Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined) => Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>>({ queryKey: getUsersActivityControllerGetOnlineQueryKey(params) }, updater);
+  return (params: UsersActivityControllerGetOnlineParams | undefined,updater: Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined | ((old: Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined) => Awaited<ReturnType<typeof usersActivityControllerGetOnline>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersActivityControllerGetOnline>>>({ exact: $exactMatch, queryKey: getUsersActivityControllerGetOnlineQueryKey(params) }, updater);
   };
 }
 

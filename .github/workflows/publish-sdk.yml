@@ -38,11 +38,13 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+      - name: Update npm
+        run: npm install --global npm@12.0.2
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2

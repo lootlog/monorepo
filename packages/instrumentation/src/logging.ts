@@ -23,7 +23,7 @@ export const logSpanContext = new AsyncLocalStorage<
 >();
 
 export const currentLogSpan = () =>
-  Fiber.getCurrent()?.currentSpan ?? logSpanContext.getStore();
+  Fiber.getCurrent()?.cache.span ?? logSpanContext.getStore();
 
 export const makeLocalLogger = () => {
   const pretty = Logger.consolePretty();
@@ -57,7 +57,7 @@ export const makeJsonLogger = (config: {
       ).filter((part) => part !== undefined);
 
       const context = parts.find(isLogContext);
-      const span = options.fiber.currentSpan;
+      const span = options.fiber.cache.span;
 
       return Formatter.formatJson({
         ...entry,
