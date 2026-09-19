@@ -27,6 +27,10 @@ let lastOtherCanvasTipEvent: unknown = null;
 
 let lastOtherCanvasTipObject: Other | null = null;
 
+// True while the tooltip currently drawn on the canvas carries the Shift-only
+// section, so releasing Shift redraws only the tooltips that still show it.
+let shiftSectionDrawn = false;
+
 const patchedCharacters = new Set<MargonemTooltipCharacter>();
 
 const patchedOtherPrototypes = new Set<MargonemTooltipCharacter>();
@@ -154,10 +158,6 @@ function isPrototypePatched(character: MargonemTooltipCharacter): boolean {
   return Boolean(prototype && patchedCreateStrTip.has(prototype));
 }
 
-function isTooltipPatched(character: MargonemTooltipCharacter): boolean {
-  return patchedCreateStrTip.has(character) || isPrototypePatched(character);
-}
-
 function isOtherCanvasObject(object: unknown): object is Other {
   return (
     typeof object === "object" &&
@@ -185,10 +185,12 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
           .getState()
           .setActiveOther(object);
         patchOtherCharacterTooltip(object);
+        shiftSectionDrawn = true;
       }
     } else {
       lastOtherCanvasTipEvent = null;
       lastOtherCanvasTipObject = null;
+      shiftSectionDrawn = false;
       useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
     }
 
@@ -198,6 +200,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
   canvasTip.hide = (event) => {
     lastOtherCanvasTipEvent = null;
     lastOtherCanvasTipObject = null;
+    shiftSectionDrawn = false;
     useCharacterTooltipCatchingGuildsStore.getState().clearActiveOther();
 
     return originalCanvasTipHide?.call(canvasTip, event);
@@ -218,6 +221,7 @@ function patchCanvasTip(canvasTip: RuntimeCanvasTip): (() => void) | null {
     originalCanvasTipHide = null;
     lastOtherCanvasTipEvent = null;
     lastOtherCanvasTipObject = null;
+    shiftSectionDrawn = false;
   };
 }
 
@@ -248,10 +252,11 @@ export function refreshActiveOtherCanvasTooltip(): void {
   if (!state.isShiftPressed) {
     state.clearActiveOther();
 
-    if (!hoveredOther || !isTooltipPatched(hoveredOther)) return;
+    if (!shiftSectionDrawn || !hoveredOther) return;
 
     // Releasing Shift must drop the appended section from the tooltip that is
     // still on screen, so rebuild its html and redraw the visible tip.
+    shiftSectionDrawn = false;
     refreshCharacterTooltip(hoveredOther);
     redrawOtherCanvasTooltip(hoveredOther);
 
@@ -264,6 +269,7 @@ export function refreshActiveOtherCanvasTooltip(): void {
 
   patchOtherCharacterTooltip(hoveredOther);
 
+  shiftSectionDrawn = true;
   redrawOtherCanvasTooltip(hoveredOther);
 }
 
