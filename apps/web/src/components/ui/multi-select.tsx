@@ -394,7 +394,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
           />
         </ComboboxChips>
         <ComboboxContent
-          className="min-w-64 max-w-[min(24rem,calc(100vw-2rem))] rounded-xl border-border"
+          className="min-w-64 max-w-[min(24rem,calc(100vw-2rem))] border-border"
           onWheel={(event) => event.stopPropagation()}
         >
           {errorMessage ? (
