@@ -204,14 +204,16 @@ const ConditionRow = ({
           />
           <div className="flex-1" />
           {canRemove && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               aria-label={t("events.delete")}
               onClick={onRemove}
-              className="size-5 rounded flex items-center justify-center text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              className="size-8"
             >
               <X className="size-3" />
-            </button>
+            </Button>
           )}
         </div>
 

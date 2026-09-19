@@ -2,12 +2,14 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import { cn } from "cn";
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 type EmptyStateProps = {
@@ -16,6 +18,7 @@ type EmptyStateProps = {
   description?: string;
   className?: string;
   framed?: boolean;
+  action?: ReactNode;
 };
 
 export const EmptyState = ({
@@ -24,6 +27,7 @@ export const EmptyState = ({
   description,
   className,
   framed = false,
+  action,
 }: EmptyStateProps) => {
   const content = (
     <Empty
@@ -38,6 +42,7 @@ export const EmptyState = ({
           <EmptyDescription>{description}</EmptyDescription>
         ) : null}
       </EmptyHeader>
+      {action ? <EmptyContent>{action}</EmptyContent> : null}
     </Empty>
   );
 

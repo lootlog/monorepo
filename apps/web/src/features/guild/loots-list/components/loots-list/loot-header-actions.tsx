@@ -1,3 +1,4 @@
+import { Button } from "@lootlog/ui/components/button";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -12,29 +13,30 @@ export const LootHeaderActions = ({
 
   return (
     <div className="flex items-center gap-1.5">
-      {" "}
-      <button
+      <Button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onOpenDetails();
         }}
-        className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border/50 bg-secondary/50 px-2 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
+        variant="secondary"
+        size="sm"
       >
-        <MessageSquare className="h-3 w-3" />
+        <MessageSquare />
         <span className="font-medium">{commentsCount}</span>
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onOpenDetails();
         }}
-        className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border/50 bg-secondary/50 px-2 py-1 text-xs text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
+        variant="secondary"
+        size="sm"
       >
-        <ExternalLink className="h-3 w-3" />
+        <ExternalLink />
         <span className="font-medium">{t("loots.list.details")}</span>
-      </button>
+      </Button>
     </div>
   );
 };

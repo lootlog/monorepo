@@ -1,3 +1,4 @@
+import { Button } from "@lootlog/ui/components/button";
 import { useState } from "react";
 import {
   Controller,
@@ -215,14 +216,15 @@ export const ScoringRuleCard = ({
 
             {canRemove && (
               <div className="flex justify-end px-3 py-4">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={onRemove}
-                  className="flex items-center gap-1 text-[11px] text-destructive/70 hover:text-destructive cursor-pointer transition-colors"
                 >
                   <Trash2 className="size-4" />
                   {t("events.scoring.deleteRule")}
-                </button>
+                </Button>
               </div>
             )}
           </div>

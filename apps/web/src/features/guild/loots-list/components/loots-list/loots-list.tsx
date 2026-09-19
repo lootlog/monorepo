@@ -1,9 +1,8 @@
-import { NoticeCard } from "@/components/common/notice-card";
+import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-item-skeleton";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 
-import { WorldSwitcher } from "@/components/common/world-switcher";
 import { ThemeEmptyStateIcon } from "@/themes";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -16,7 +15,7 @@ import {
 } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { Globe2, PackageOpen, SearchX } from "lucide-react";
+import { PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
 
@@ -44,23 +43,10 @@ export const LootsList = () => {
 
   if (!world) {
     return (
-      <NoticeCard
-        icon={
-          <ThemeEmptyStateIcon
-            className="size-8 text-muted-foreground"
-            fallback=<Globe2 className="size-8 text-primary" />
-          />
-        }
+      <WorldSelectionEmptyState
         title={t("loots.list.selectWorldTitle")}
         description={t(themedKey("loots.list.noWorldSelected"))}
-      >
-        <div className="text-left">
-          <WorldSwitcher
-            width="w-full"
-            triggerClassName="h-11 w-full justify-between px-3"
-          />
-        </div>
-      </NoticeCard>
+      />
     );
   }
 
