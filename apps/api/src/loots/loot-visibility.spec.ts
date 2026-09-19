@@ -1,10 +1,17 @@
 import { describe, expect, it } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
-import type { roleTable } from "#src/database/drizzle/schema";
 import {
-  buildLootNpcVisibilitySql,
+  lootTable,
+  lootNpcTable,
+  npcSnapshotTable,
+  type roleTable,
+} from "#src/database/drizzle/schema";
+import {
+  buildLootNpcVisibilityCondition,
   toLootVisibilityRoles,
 } from "#src/loots/loot-visibility";
+
+import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 
 type Role = typeof roleTable.$inferSelect;
 
@@ -44,29 +51,94 @@ describe("loot visibility", () => {
     ]);
   });
 
-  it("requires every NPC to match one complete role grant", () => {
-    const sql = buildLootNpcVisibilitySql(
-      [],
-      [
-        role(
-          "complete",
-          [Permission.LOOTLOG_LOOTS_READ, Permission.LOOTLOG_LOOTS_HEROES_READ],
-          50,
-          250,
+  it("checks complete grants, empty encounters, owner bypass and normalized level bounds in the database", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      const { database, run } = boundary;
+      await run(
+        database.insert(lootTable).values(
+          [1, 2, 3].map((id) => ({
+            id,
+            uniqueId: `visibility-${id}`,
+            world: "world",
+            location: "map",
+            source: "FIGHT" as const,
+            updatedAt: new Date(),
+          })),
         ),
-      ],
-    );
+      );
+      await run(
+        database.insert(npcSnapshotTable).values([
+          { id: 1, npcId: 1, name: "Hero", type: "HERO", lvl: 50 },
+          { id: 2, npcId: 2, name: "Unknown", type: null, lvl: 50 },
+        ]),
+      );
+      await run(
+        database.insert(lootNpcTable).values([
+          { lootId: 1, npcSnapshotId: 1 },
+          { lootId: 2, npcSnapshotId: 2 },
+        ]),
+      );
 
-    expect(sql).toContain("AND EXISTS");
-    expect(sql).toContain("AND NOT EXISTS");
-    expect(sql).toContain("visibility_npc.lvl BETWEEN 50 AND 250");
-    expect(sql).toContain("visibility_npc.type NOT IN ('TITAN')");
-  });
+      const visible = async (permissions: Permission[], roles: Role[]) =>
+        (
+          await run(
+            database
+              .select({ id: lootTable.id })
+              .from(lootTable)
+              .where(
+                buildLootNpcVisibilityCondition(
+                  lootTable.id,
+                  permissions,
+                  roles,
+                ),
+              )
+              .orderBy(lootTable.id),
+          )
+        ).map(({ id }) => id);
 
-  it("fails closed without a complete role and grants only OWNER a bypass", () => {
-    const adminRole = role("admin", [Permission.ADMIN]);
-
-    expect(buildLootNpcVisibilitySql([], [adminRole])).toBe("AND FALSE");
-    expect(buildLootNpcVisibilitySql([Permission.OWNER], [])).toBe("");
+      expect(await visible([], [role("admin", [Permission.ADMIN])])).toEqual(
+        [],
+      );
+      expect(await visible([Permission.OWNER], [])).toEqual([1, 2, 3]);
+      expect(
+        await visible([], [role("reader", [Permission.LOOTLOG_LOOTS_READ])]),
+      ).toEqual([]);
+      expect(
+        await visible(
+          [],
+          [
+            role(
+              "hero",
+              [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+              50.9,
+              250,
+            ),
+          ],
+        ),
+      ).toEqual([1]);
+      expect(
+        await visible(
+          [],
+          [
+            role(
+              "hero",
+              [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+              Number.NaN,
+              Number.POSITIVE_INFINITY,
+            ),
+          ],
+        ),
+      ).toEqual([1]);
+    } finally {
+      await boundary.dispose();
+    }
   });
 });

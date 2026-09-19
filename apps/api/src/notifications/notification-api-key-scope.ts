@@ -1,8 +1,20 @@
 import { RESERVATION_REMINDER_RULE_NAME } from "./rules/reservation-reminder.js";
-import { and, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  inArray,
+  isNull,
+  not,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
+  lootTable,
+  organizationLootRecordTable,
   notificationJobTable,
   notificationRuleTable,
 } from "#src/database/drizzle/schema";
@@ -12,7 +24,7 @@ import {
   requestScopedIdentity,
 } from "#src/runtime/auth/forward-auth-identity";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import { buildLootNpcVisibilitySql } from "#src/loots/loot-visibility";
+import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { Permission } from "@lootlog/schema/permissions";
 import {
   selectNotificationMemberships,
@@ -138,14 +150,35 @@ export const notificationApiKeyJobFilter = (database: ApiDatabaseValue) =>
           ? [Permission.OWNER]
           : roles.flatMap((role) => role.permissions);
 
-      const npcVisibility = buildLootNpcVisibilitySql(permissions, roles);
-
-      return sql`(NOT (${sourceGuildIds} ? ${guild.id}) OR EXISTS (
-        SELECT 1 FROM "Loot" l INNER JOIN "OrganizationLootRecord" source_record ON source_record."lootId" = l.id
-        WHERE l.id::text = ${notificationJobTable.sourceEntityId}
-          AND source_record."guildId" = ${guild.id} AND source_record."archivedAt" IS NULL
-          ${sql.raw(npcVisibility)}
-      ))`;
+      return (
+        or(
+          not(sql`${sourceGuildIds} ? ${guild.id}`),
+          exists(
+            database
+              .select({ id: lootTable.id })
+              .from(lootTable)
+              .innerJoin(
+                organizationLootRecordTable,
+                eq(organizationLootRecordTable.lootId, lootTable.id),
+              )
+              .where(
+                and(
+                  eq(
+                    sql`${lootTable.id}::text`,
+                    notificationJobTable.sourceEntityId,
+                  ),
+                  eq(organizationLootRecordTable.guildId, guild.id),
+                  isNull(organizationLootRecordTable.archivedAt),
+                  buildLootNpcVisibilityCondition(
+                    lootTable.id,
+                    permissions,
+                    roles,
+                  ),
+                ),
+              ),
+          ),
+        ) ?? sql`false`
+      );
     });
 
     const visibleLoot = and(

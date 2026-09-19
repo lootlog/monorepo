@@ -9,8 +9,16 @@ import type {
   SettingsDomain,
   SettingsScope,
 } from "@lootlog/schema/settings-documents";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
-import { Clock, Context, Effect, Layer, Schema, Predicate } from "effect";
+import { and, eq, inArray, or } from "drizzle-orm";
+import {
+  Cause,
+  Clock,
+  Context,
+  Effect,
+  Layer,
+  Schema,
+  Predicate,
+} from "effect";
 import { ApiDatabase } from "../database/drizzle/database.js";
 import {
   memberTable,
@@ -23,6 +31,8 @@ type SettingsOperation = PatchSettingsDocuments["operations"][number];
 type StoredSettingsDocument = typeof userSettingDocumentTable.$inferSelect;
 
 const getPostgresErrorCode = (error: unknown): string | undefined => {
+  if (Cause.isCause(error)) return getPostgresErrorCode(Cause.squash(error));
+
   if (!Predicate.isObject(error)) return undefined;
 
   if (typeof error.code === "string") return error.code;
@@ -84,20 +94,26 @@ export class SettingsDocumentsRepository extends Context.Service<
         database
           .transaction((transaction) =>
             Effect.gen(function* () {
-              yield* transaction.execute(
-                sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`,
-              );
+              yield* transaction.setTransaction({
+                isolationLevel: "serializable",
+              });
 
               for (const operation of operations) {
-                yield* transaction.execute(sql`
-                  SELECT "id"
-                  FROM "UserSettingDocument"
-                  WHERE "userId" = ${userId}
-                    AND "domain" = ${operation.domain}
-                    AND "scopeType" = ${operation.scope.type}::"SettingsScopeType"
-                    AND "scopeId" = ${operation.scope.id}
-                  FOR UPDATE
-                `);
+                yield* transaction
+                  .select({ id: userSettingDocumentTable.id })
+                  .from(userSettingDocumentTable)
+                  .where(
+                    and(
+                      eq(userSettingDocumentTable.userId, userId),
+                      eq(userSettingDocumentTable.domain, operation.domain),
+                      eq(
+                        userSettingDocumentTable.scopeType,
+                        operation.scope.type,
+                      ),
+                      eq(userSettingDocumentTable.scopeId, operation.scope.id),
+                    ),
+                  )
+                  .for("update");
               }
 
               for (const operation of operations) {

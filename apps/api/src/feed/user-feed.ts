@@ -2,11 +2,29 @@ import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistenc
 import { UserFeedItem } from "@lootlog/protocol/feed";
 import { createAccessPolicy, Capability } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
+import { QueryBuilder } from "drizzle-orm/pg-core";
 import { Clock, Effect, Schema } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildKillActivityTable,
+  lootTable,
+  organizationLootRecordTable,
+  lootNpcTable,
+  npcSnapshotTable,
+  lootItemTable,
+  itemSnapshotTable,
   memberTable,
   guildTable,
   type roleTable,
@@ -15,7 +33,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { readableRoles, visibilityFilter } from "#src/kills/kill-query-support";
 import { buildKillStatsCondition } from "#src/kills/kill-stats-persistence";
-import { buildLootNpcVisibilitySql } from "#src/loots/loot-visibility";
+import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
 import { UserFeedResponse } from "#src/contracts/users/feed-schemas";
 
 export type FeedScope = {
@@ -24,8 +42,8 @@ export type FeedScope = {
 };
 
 const predicates = (scopes: ReadonlyArray<FeedScope>, discordId: string) => {
-  const kills: SQL[] = [],
-    loots: SQL[] = [];
+  const kills: Array<SQL | undefined> = [],
+    loots: Array<SQL | undefined> = [];
 
   for (const { guild, roles } of scopes) {
     const permissions =
@@ -42,21 +60,22 @@ const predicates = (scopes: ReadonlyArray<FeedScope>, discordId: string) => {
       visibilityFilter(policy, readableRoles(roles)),
     );
 
-    kills.push(
-      sql`(${guildKillActivityTable.guildId}=${guild.id} and ${visibility ?? sql`true`})`,
-    );
+    kills.push(and(eq(guildKillActivityTable.guildId, guild.id), visibility));
     loots.push(
-      sql`(r."guildId"=${guild.id} ${sql.raw(buildLootNpcVisibilitySql(permissions, roles))})`,
+      and(
+        eq(organizationLootRecordTable.guildId, guild.id),
+        buildLootNpcVisibilityCondition(lootTable.id, permissions, roles),
+      ),
     );
   }
 
   return {
-    kills: kills.length ? sql.join(kills, sql` OR `) : sql`false`,
-    loots: loots.length ? sql.join(loots, sql` OR `) : sql`false`,
+    kills: or(...kills) ?? sql`false`,
+    loots: or(...loots) ?? sql`false`,
   };
 };
 
-export const userFeedSql = (
+export const buildUserFeedQuery = (
   scopes: ReadonlyArray<FeedScope>,
   discordId: string,
   cutoff: string,
@@ -65,53 +84,213 @@ export const userFeedSql = (
     lootId?: number;
   },
 ) => {
+  const query = new QueryBuilder();
   const visible = predicates(scopes, discordId);
+  const activity = guildKillActivityTable;
+  const record = organizationLootRecordTable;
+  const minute = sql`date_trunc('minute', ${activity.occurredAt})`;
+  const cutoffTimestamp = sql`${cutoff}::timestamptz at time zone 'UTC'`;
+  let killSelection: SQL | undefined;
+  let lootSelection: SQL | undefined;
+
+  if (selection?.kill) {
+    killSelection = and(
+      eq(activity.world, selection.kill.world),
+      eq(activity.npcId, selection.kill.npcId),
+      gte(
+        activity.occurredAt,
+        sql`${selection.kill.minute.toISOString()}::timestamptz at time zone 'UTC'`,
+      ),
+      lt(
+        activity.occurredAt,
+        sql`${new Date(selection.kill.minute.getTime() + 60000).toISOString()}::timestamptz at time zone 'UTC'`,
+      ),
+    );
+    lootSelection = sql`false`;
+  }
+
+  if (selection?.lootId !== undefined) {
+    killSelection = sql`false`;
+
+    if (!selection.kill) lootSelection = eq(lootTable.id, selection.lootId);
+  }
 
   // Kill creation assigns occurredAt once before Organization fanout. Hash the
   // complete timestamp multiset so distinct kills in one minute stay separate.
-  return sql`
-    with kill_groups as (
-      select "guildId",world,"npcId",date_trunc('minute',"occurredAt") as minute,
-        'kill:'||"guildId"||':'||world||':'||"npcId"||':'||to_char(date_trunc('minute',"occurredAt"),'YYYYMMDDHH24MI') as entry_id,
-        max("occurredAt") as occurred_at,count(*)::int as count,
-        'kill:'||world||':'||"npcId"||':'||md5(string_agg(to_char("occurredAt",'YYYY-MM-DD"T"HH24:MI:SS.MS'),',' order by "occurredAt")) as group_key,
-        (array_agg("npcName" order by "occurredAt" desc,id desc))[1] as name,
-        (array_agg("npcType" order by "occurredAt" desc,id desc))[1]::text as type,
-        (array_agg("npcLvl" order by "occurredAt" desc,id desc))[1] as lvl,
-        (array_agg("npcIcon" order by "occurredAt" desc,id desc))[1] as icon,
-        (array_agg("npcProf" order by "occurredAt" desc,id desc))[1] as prof
-      from "GuildKillActivity" where "occurredAt">=${cutoff}::timestamptz at time zone 'UTC' and (${visible.kills}) and ${selection?.lootId !== undefined ? sql`false` : selection?.kill ? sql`world=${selection.kill.world} and "npcId"=${selection.kill.npcId} and "occurredAt">=${selection.kill.minute.toISOString()}::timestamptz at time zone 'UTC' and "occurredAt"<${new Date(selection.kill.minute.getTime() + 60000).toISOString()}::timestamptz at time zone 'UTC'` : sql`true`}
-      group by "guildId",world,"npcId",date_trunc('minute',"occurredAt")
-      order by occurred_at desc,entry_id desc
-    ), visible_loots as (
-      select r.id as record_id,'loot:'||r.id as entry_id,r."guildId",l.id as loot_id,l.world,r."createdAt" as occurred_at
-      from "OrganizationLootRecord" r join "Loot" l on l.id=r."lootId"
-      where r."archivedAt" is null and r."createdAt">=${cutoff}::timestamptz at time zone 'UTC' and (${visible.loots}) and ${selection?.kill ? sql`false` : selection?.lootId !== undefined ? sql`l.id=${selection.lootId}` : sql`true`}
-      order by r."createdAt" desc,entry_id desc
-    ), group_candidates as (
-      select group_key,occurred_at from kill_groups
-      union all
-      select 'loot:'||loot_id as group_key,occurred_at from visible_loots
-    ), selected_groups as (
-      select group_key,max(occurred_at) as occurred_at from group_candidates
-      group by group_key order by occurred_at desc,group_key desc limit 20
-    ), entries as (
-      select k.occurred_at,
-        json_build_object('id',k.entry_id,'groupKey',k.group_key,'version',k.count,'type','kill',
-          'occurredAt',to_char(k.occurred_at,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'world',k.world,
-          'guild',json_build_object('id',g.id,'name',g.name,'vanityUrl',g."vanityUrl"),
-          'npc',json_build_object('id',k."npcId",'name',k.name,'type',k.type,'lvl',k.lvl,'icon',k.icon,'prof',k.prof),'count',k.count) as item
-      from kill_groups k join selected_groups s on s.group_key=k.group_key join "Guild" g on g.id=k."guildId"
-      union all
-      select l.occurred_at,
-        json_build_object('id',l.entry_id,'groupKey','loot:'||l.loot_id,'version',1,'type','loot','lootId',l.loot_id,
-          'occurredAt',to_char(l.occurred_at,'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'world',l.world,
-          'guild',json_build_object('id',g.id,'name',g.name,'vanityUrl',g."vanityUrl"),
-          'npc',(select json_build_object('id',n."npcId",'name',n.name,'type',n.type,'lvl',n.lvl,'icon',n.icon,'prof',n.prof) from "LootNpc" ln join "NpcSnapshot" n on n.id=ln."npcSnapshotId" where ln."lootId"=l.loot_id order by n.lvl desc nulls last,n.id limit 1),
-          'items',coalesce((select json_agg(i) from (select i."itemId" as id,i.name,i.icon,i.rarity,i."statRaw" as stat,i."itemType" as type,i.lvl from "LootItem" li join "ItemSnapshot" i on i.id=li."itemSnapshotId" where li."lootId"=l.loot_id order by li.id limit 3) i),'[]'::json),
-          'additionalItemsCount',greatest(0,(select count(*) from "LootItem" li where li."lootId"=l.loot_id)-3)) as item
-      from visible_loots l join selected_groups s on s.group_key='loot:'||l.loot_id join "Guild" g on g.id=l."guildId"
-    ) select item from entries order by occurred_at desc,item->>'id' desc`;
+  const kills = query.$with("kill_groups").as(
+    query
+      .select({
+        guildId: activity.guildId,
+        world: activity.world,
+        npcId: activity.npcId,
+        minute: minute.as("minute"),
+        entryId:
+          sql`'kill:' || ${activity.guildId} || ':' || ${activity.world} || ':' || ${activity.npcId} || ':' || to_char(${minute}, 'YYYYMMDDHH24MI')`.as(
+            "entry_id",
+          ),
+        occurredAt: sql`max(${activity.occurredAt})`.as("occurred_at"),
+        count: sql`count(*)::int`.as("count"),
+        groupKey:
+          sql`'kill:' || ${activity.world} || ':' || ${activity.npcId} || ':' || md5(string_agg(to_char(${activity.occurredAt}, 'YYYY-MM-DD"T"HH24:MI:SS.MS'), ',' order by ${activity.occurredAt}))`.as(
+            "group_key",
+          ),
+        name: sql`(array_agg(${activity.npcName} order by ${activity.occurredAt} desc, ${activity.id} desc))[1]`.as(
+          "name",
+        ),
+        type: sql`(array_agg(${activity.npcType} order by ${activity.occurredAt} desc, ${activity.id} desc))[1]::text`.as(
+          "type",
+        ),
+        lvl: sql`(array_agg(${activity.npcLvl} order by ${activity.occurredAt} desc, ${activity.id} desc))[1]`.as(
+          "lvl",
+        ),
+        icon: sql`(array_agg(${activity.npcIcon} order by ${activity.occurredAt} desc, ${activity.id} desc))[1]`.as(
+          "icon",
+        ),
+        prof: sql`(array_agg(${activity.npcProf} order by ${activity.occurredAt} desc, ${activity.id} desc))[1]`.as(
+          "prof",
+        ),
+      })
+      .from(activity)
+      .where(
+        and(
+          gte(activity.occurredAt, cutoffTimestamp),
+          visible.kills,
+          killSelection,
+        ),
+      )
+      .groupBy(activity.guildId, activity.world, activity.npcId, minute)
+      .orderBy(({ occurredAt, entryId }) => [desc(occurredAt), desc(entryId)]),
+  );
+
+  const loots = query.$with("visible_loots").as(
+    query
+      .select({
+        recordId: record.id,
+        entryId: sql`'loot:' || ${record.id}`.as("entry_id"),
+        guildId: record.guildId,
+        lootId: sql`${lootTable.id}`.as("loot_id"),
+        world: lootTable.world,
+        occurredAt: sql`${record.createdAt}`.as("occurred_at"),
+      })
+      .from(record)
+      .innerJoin(lootTable, eq(lootTable.id, record.lootId))
+      .where(
+        and(
+          isNull(record.archivedAt),
+          gte(record.createdAt, cutoffTimestamp),
+          visible.loots,
+          lootSelection,
+        ),
+      )
+      .orderBy(({ occurredAt, entryId }) => [desc(occurredAt), desc(entryId)]),
+  );
+
+  const candidates = query.$with("group_candidates").as(
+    query
+      .select({ groupKey: kills.groupKey, occurredAt: kills.occurredAt })
+      .from(kills)
+      .unionAll(
+        query
+          .select({
+            groupKey: sql`'loot:' || ${loots.lootId}`.as("group_key"),
+            occurredAt: loots.occurredAt,
+          })
+          .from(loots),
+      ),
+  );
+
+  const selected = query.$with("selected_groups").as(
+    query
+      .select({
+        groupKey: candidates.groupKey,
+        occurredAt: sql`max(${candidates.occurredAt})`.as("occurred_at"),
+      })
+      .from(candidates)
+      .groupBy(candidates.groupKey)
+      .orderBy(({ occurredAt, groupKey }) => [desc(occurredAt), desc(groupKey)])
+      .limit(20),
+  );
+
+  const npc = query
+    .select({
+      value: sql`json_build_object('id', ${npcSnapshotTable.npcId}, 'name', ${npcSnapshotTable.name}, 'type', ${npcSnapshotTable.type}, 'lvl', ${npcSnapshotTable.lvl}, 'icon', ${npcSnapshotTable.icon}, 'prof', ${npcSnapshotTable.prof})`,
+    })
+    .from(lootNpcTable)
+    .innerJoin(
+      npcSnapshotTable,
+      eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+    )
+    .where(eq(lootNpcTable.lootId, loots.lootId))
+    .orderBy(sql`${npcSnapshotTable.lvl} desc nulls last`, npcSnapshotTable.id)
+    .limit(1);
+
+  const previewItems = query
+    .select({
+      id: sql`${itemSnapshotTable.itemId}`.as("id"),
+      name: itemSnapshotTable.name,
+      icon: itemSnapshotTable.icon,
+      rarity: itemSnapshotTable.rarity,
+      stat: sql`${itemSnapshotTable.statRaw}`.as("stat"),
+      type: sql`${itemSnapshotTable.itemType}`.as("type"),
+      lvl: itemSnapshotTable.lvl,
+    })
+    .from(lootItemTable)
+    .innerJoin(
+      itemSnapshotTable,
+      eq(itemSnapshotTable.id, lootItemTable.itemSnapshotId),
+    )
+    .where(eq(lootItemTable.lootId, loots.lootId))
+    .orderBy(lootItemTable.id)
+    .limit(3)
+    .as("i");
+
+  const items = query
+    .select({ value: sql`json_agg(${sql.identifier("i")})` })
+    .from(previewItems);
+
+  const itemCount = query
+    .select({ count: sql`count(*)` })
+    .from(lootItemTable)
+    .where(eq(lootItemTable.lootId, loots.lootId));
+
+  const guild = sql`json_build_object('id', ${guildTable.id}, 'name', ${guildTable.name}, 'vanityUrl', ${guildTable.vanityUrl})`;
+
+  const entries = query.$with("entries").as(
+    query
+      .select({
+        occurredAt: kills.occurredAt,
+        item: sql`json_build_object('id', ${kills.entryId}, 'groupKey', ${kills.groupKey}, 'version', ${kills.count}, 'type', 'kill',
+        'occurredAt', to_char(${kills.occurredAt}, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'), 'world', ${kills.world},
+        'guild', ${guild}, 'npc', json_build_object('id', ${kills.npcId}, 'name', ${kills.name}, 'type', ${kills.type}, 'lvl', ${kills.lvl}, 'icon', ${kills.icon}, 'prof', ${kills.prof}), 'count', ${kills.count})`.as(
+          "item",
+        ),
+      })
+      .from(kills)
+      .innerJoin(selected, eq(selected.groupKey, kills.groupKey))
+      .innerJoin(guildTable, eq(guildTable.id, kills.guildId))
+      .unionAll(
+        query
+          .select({
+            occurredAt: loots.occurredAt,
+            item: sql`json_build_object('id', ${loots.entryId}, 'groupKey', 'loot:' || ${loots.lootId}, 'version', 1, 'type', 'loot', 'lootId', ${loots.lootId},
+          'occurredAt', to_char(${loots.occurredAt}, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'), 'world', ${loots.world},
+          'guild', ${guild}, 'npc', (${npc}), 'items', coalesce((${items}), '[]'::json),
+          'additionalItemsCount', greatest(0, (${itemCount}) - 3))`.as("item"),
+          })
+          .from(loots)
+          .innerJoin(
+            selected,
+            eq(selected.groupKey, sql`'loot:' || ${loots.lootId}`),
+          )
+          .innerJoin(guildTable, eq(guildTable.id, loots.guildId)),
+      ),
+  );
+
+  return query
+    .with(kills, loots, candidates, selected, entries)
+    .select({ item: entries.item })
+    .from(entries)
+    .orderBy(desc(entries.occurredAt), desc(sql`${entries.item}->>'id'`));
 };
 
 const enrichFeedLoots = Effect.fn("feed.enrich-loots")(function* (
@@ -170,7 +349,7 @@ export const makeUserFeed = (database: typeof ApiDatabase.Service) =>
     }));
 
     const result = yield* database.execute(
-      userFeedSql(scopes, discordId, windowStart),
+      buildUserFeedQuery(scopes, discordId, windowStart),
     );
 
     const decoded = yield* Schema.decodeUnknownEffect(
@@ -194,7 +373,7 @@ export const readPublishedFeedEntry = Effect.fn("feed.read-published-entry")(
   function* (
     database: Pick<typeof ApiDatabase.Service, "select" | "execute">,
     guildId: string,
-    selection: NonNullable<Parameters<typeof userFeedSql>[3]>,
+    selection: NonNullable<Parameters<typeof buildUserFeedQuery>[3]>,
   ) {
     const [guild] = yield* database
       .select()
@@ -208,7 +387,12 @@ export const readPublishedFeedEntry = Effect.fn("feed.read-published-entry")(
     ).toISOString();
 
     const result = yield* database.execute(
-      userFeedSql([{ guild, roles: [] }], guild.ownerId, cutoff, selection),
+      buildUserFeedQuery(
+        [{ guild, roles: [] }],
+        guild.ownerId,
+        cutoff,
+        selection,
+      ),
     );
 
     const decoded = yield* Schema.decodeUnknownEffect(

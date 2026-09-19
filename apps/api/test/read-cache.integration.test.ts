@@ -1,7 +1,8 @@
 import { UserLootlogConfigData } from "#src/http-api/handlers/user-lootlog-config/user-lootlog-config.handlers";
 import { MemberReadData } from "#src/http-api/handlers/members/members.handlers";
 import { makeMemberReadDataLayer } from "#src/http-api/handlers/members/member-read.data-layer";
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
+import { createDatabaseBoundary } from "./database-fixtures.js";
 import { randomUUID } from "node:crypto";
 import { BunRedis } from "@effect/platform-bun";
 import { Effect, ManagedRuntime, Schema } from "effect";
@@ -10,9 +11,7 @@ import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
-import { makeLootStatsQuery } from "#src/loots/query/loot-stats-query";
 
-import { PgClient } from "@effect/sql-pg";
 import { eq } from "drizzle-orm";
 import { ApiDatabase, ApiDatabaseLive } from "#src/database/drizzle/database";
 import {
@@ -605,7 +604,6 @@ describe("Read cache Dragonfly integration", () => {
       await databaseRuntime.runPromise(
         Effect.gen(function* () {
           const db = yield* ApiDatabase;
-          const pg = yield* PgClient.PgClient;
 
           const [guild] = yield* db
             .insert(guildTable)
@@ -646,7 +644,7 @@ describe("Read cache Dragonfly integration", () => {
           const operations = makeLootsOperations({
             persistence: makeLootPersistence(db),
             query: makeLootQueryOperations(makeLootQueryPersistence(db)),
-            stats: new LootStatsService(makeLootStatsQuery(pg), cache),
+            stats: new LootStatsService(db, cache),
             redis: cache,
             logger: applicationLogger,
           });
@@ -770,50 +768,61 @@ describe("Read cache Dragonfly integration", () => {
   it("coalesces concurrent cold loot statistics requests at the SQL boundary", async () => {
     let queries = 0;
 
-    const query = makeLootStatsQuery({
-      unsafe: () =>
-        Effect.gen(function* () {
-          queries++;
-          yield* Effect.sleep("80 millis");
+    const boundary = await createDatabaseBoundary();
 
-          return [];
-        }),
+    const unsafe = boundary.database.$client.unsafe.bind(
+      boundary.database.$client,
+    );
+
+    const querySpy = spyOn(
+      boundary.database.$client,
+      "unsafe",
+    ).mockImplementation((...args) => {
+      queries++;
+
+      return unsafe(...args);
     });
 
-    const service = new LootStatsService(query, cache);
+    const service = new LootStatsService(boundary.database, cache);
 
-    const policy = createAccessPolicy({
-      capabilities: [Permission.LOOTLOG_LOOTS_READ],
-    });
+    try {
+      const policy = createAccessPolicy({
+        capabilities: [Permission.LOOTLOG_LOOTS_READ],
+      });
 
-    const request = () =>
-      Effect.runPromise(service.getLootStatsEffect(organization, policy, []));
+      const request = () =>
+        Effect.runPromise(service.getLootStatsEffect(organization, policy, []));
 
-    const responses = await Promise.all(Array.from({ length: 8 }, request));
-    expect(queries).toBe(6);
-    expect(await cache.scan(`loot-stats:${organization}:*`)).toEqual([]);
+      const responses = await Promise.all(Array.from({ length: 8 }, request));
+      expect(queries).toBe(6);
+      expect(await cache.scan(`loot-stats:${organization}:*`)).toEqual([]);
 
-    const firstGenerationKeys = await cache.scan(
-      `read-cache:v1:*:loot-stats:${organization}:*`,
-    );
+      const firstGenerationKeys = await cache.scan(
+        `read-cache:v1:*:loot-stats:${organization}:*`,
+      );
 
-    expect(firstGenerationKeys).toHaveLength(1);
-    expect(
-      responses.every(
-        (response) => JSON.stringify(response) === JSON.stringify(responses[0]),
-      ),
-    ).toBe(true);
-    await cache.invalidateScopes(`loot-stats:${organization}`);
-    await request();
-    expect(queries).toBe(12);
+      expect(firstGenerationKeys).toHaveLength(1);
+      expect(
+        responses.every(
+          (response) =>
+            JSON.stringify(response) === JSON.stringify(responses[0]),
+        ),
+      ).toBe(true);
+      await cache.invalidateScopes(`loot-stats:${organization}`);
+      await request();
+      expect(queries).toBe(12);
 
-    const nextGenerationKeys = await cache.scan(
-      `read-cache:v1:*:loot-stats:${organization}:*`,
-    );
+      const nextGenerationKeys = await cache.scan(
+        `read-cache:v1:*:loot-stats:${organization}:*`,
+      );
 
-    expect(nextGenerationKeys).toHaveLength(2);
-    expect(nextGenerationKeys).toEqual(
-      expect.arrayContaining(firstGenerationKeys),
-    );
+      expect(nextGenerationKeys).toHaveLength(2);
+      expect(nextGenerationKeys).toEqual(
+        expect.arrayContaining(firstGenerationKeys),
+      );
+    } finally {
+      querySpy.mockRestore();
+      await boundary.dispose();
+    }
   });
 });

@@ -5,6 +5,17 @@ import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 
+const unexpectedQuery = () => {
+  throw new Error("Unexpected SQL");
+};
+
+const database = {
+  select: unexpectedQuery,
+  selectDistinct: unexpectedQuery,
+  $with: unexpectedQuery,
+  with: unexpectedQuery,
+};
+
 type Role = typeof roleTable.$inferSelect;
 
 function role(id: string, permissions: Permission[]): Role {
@@ -24,7 +35,7 @@ function role(id: string, permissions: Permission[]): Role {
 
 describe("LootStatsService access-scoped caching", () => {
   it("separates cache entries for different effective loot visibility", () => {
-    const service = new LootStatsService(() => Effect.die("Unexpected SQL"), {
+    const service = new LootStatsService(database, {
       getOrSetJsonEffect: () => Effect.die("Unexpected cache read"),
       invalidateScopes: () =>
         Promise.reject(new Error("Unexpected cache invalidation")),
@@ -71,15 +82,12 @@ describe("LootStatsService access-scoped caching", () => {
       topItems: [],
     };
 
-    const service = new LootStatsService(
-      () => Effect.die("SQL must not run on a cache hit"),
-      {
-        getOrSetJsonEffect: (options) =>
-          Effect.succeed(options.codec.parse(JSON.stringify(expected))),
-        invalidateScopes: () =>
-          Promise.reject(new Error("Unexpected cache invalidation")),
-      },
-    );
+    const service = new LootStatsService(database, {
+      getOrSetJsonEffect: (options) =>
+        Effect.succeed(options.codec.parse(JSON.stringify(expected))),
+      invalidateScopes: () =>
+        Promise.reject(new Error("Unexpected cache invalidation")),
+    });
 
     await expect(
       Effect.runPromise(
