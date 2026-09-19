@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin, type ProxyOptions } from "vite";
-import { gameClientViteConfig } from "./vite.shared";
+import { gameClientViteConfig } from "./vite.shared.ts";
 
 const SANDBOX_PORT = 3010;
 
