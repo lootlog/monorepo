@@ -1,5 +1,5 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { upperFirst } from "es-toolkit";
+import { clamp, upperFirst } from "es-toolkit";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -189,7 +189,7 @@ export function ActivityHeatmap({
                     if (next === index) return;
                     event.preventDefault();
                     buttons.current
-                      .get(Math.max(0, Math.min(days.length - 1, next)))
+                      .get(clamp(next, 0, days.length - 1))
                       ?.focus();
                   }}
                 />

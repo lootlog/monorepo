@@ -20,7 +20,7 @@ import type { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { formatSeconds } from "@/utils/date/format-seconds";
 import type { Battle } from "@/lib/api/battlelog-types";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { cn } from "cn";
 import { BATTLE_TEXT_COLORS } from "./utils/battle-color-palette";
 
@@ -69,7 +69,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
     {
       key: "world",
       icon: <Earth size={14} />,
-      label: capitalizeFirstLetter(battle.world),
+      label: upperFirst(battle.world),
       tooltip: t("battleUi.metadata.world"),
     },
     {

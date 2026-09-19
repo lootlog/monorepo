@@ -2,7 +2,7 @@ import { CharacterSelector } from "@/components/filters/character-selector";
 import { LevelRangeFilter } from "@/components/filters/level-range-filter";
 import { WarriorSearchFilter } from "@/components/filters/warrior-search-filter";
 import type { SearchWarrior as Warrior } from "@/lib/api/battlelog-types";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -119,7 +119,7 @@ export const BattlesListFilterToolbar = ({
       <FilterPopover
         options={worlds.map((world) => ({
           value: world,
-          label: capitalizeFirstLetter(world),
+          label: upperFirst(world),
         }))}
         value={filters.world}
         onValueChange={onWorldChange}

@@ -1,5 +1,5 @@
 import type { FilterChip } from "@/components/common/filter-chip-list";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import type {
   ActivitiesControllerFindByGuildSourceItem as ActivitySource,
   ActivitiesControllerFindByGuildTypeItem as ActivityType,
@@ -43,7 +43,7 @@ export const buildActivityLogsFilterChips = ({
     {
       id: "world",
       key: "world",
-      value: filters.world && capitalizeFirstLetter(filters.world),
+      value: filters.world && upperFirst(filters.world),
     },
   ] as const;
 

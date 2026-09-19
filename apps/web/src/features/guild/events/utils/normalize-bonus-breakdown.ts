@@ -1,3 +1,4 @@
+import { isNotNil } from "es-toolkit";
 import { z } from "zod";
 
 const bonusBreakdownItem = z.object({
@@ -13,5 +14,5 @@ export type NormalizedBonusBreakdownItem = z.output<typeof bonusBreakdownItem>;
 
 export const normalizeBonusBreakdown = z
   .array(bonusBreakdownItem.nullable().catch(null))
-  .transform((entries) => entries.filter((entry) => entry !== null))
+  .transform((entries) => entries.filter(isNotNil))
   .catch([]).parse;

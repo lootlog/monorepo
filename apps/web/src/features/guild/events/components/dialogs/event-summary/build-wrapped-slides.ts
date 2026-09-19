@@ -1,3 +1,4 @@
+import { isNotNil } from "es-toolkit";
 import type { WrappedQualityModel } from "./wrapped-data-quality";
 
 export type WrappedFactId =
@@ -149,7 +150,7 @@ export const buildWrappedDeck = (quality: WrappedQualityModel): WrappedDeck => {
   ];
 
   const facts = [...spotlightCandidates, ...supportingCandidates]
-    .filter((candidate): candidate is WrappedFactSlide => candidate !== null)
+    .filter(isNotNil)
     .slice(0, 8);
 
   if (facts.length < 3) {

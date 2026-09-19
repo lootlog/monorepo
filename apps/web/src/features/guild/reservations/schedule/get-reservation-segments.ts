@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import { DAYS, HOURS } from "./constants";
 import type { NormalizedReservation } from "./normalize-reservation";
 import type { ReservationSegment } from "./types";
@@ -102,7 +103,7 @@ export function getReservationSegments(
         reservation,
         id: `${reservation.id}:${dayIdx}`,
         dayIdx,
-        startHour: Math.max(0, Math.min(HOURS.length, startHour)),
+        startHour: clamp(startHour, 0, HOURS.length),
         durationHours: Math.max(
           0,
           Math.min(HOURS.length - startHour, durationHours),

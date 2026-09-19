@@ -1,5 +1,5 @@
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import type { PaginatedActivitiesResponseDtoDataItem as Activity } from "@lootlog/client/activity";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -69,7 +69,7 @@ export const useActivityLogsTableColumns = ({
       header: () => t("activityLogs.table.columns.world"),
       cell: ({ row: { original: activity } }) => (
         <span className="text-sm text-muted-foreground">
-          {activity.world ? capitalizeFirstLetter(activity.world) : "—"}
+          {activity.world ? upperFirst(activity.world) : "—"}
         </span>
       ),
     },

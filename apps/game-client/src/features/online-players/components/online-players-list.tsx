@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorldSelector } from "@/components/world-selector";
@@ -16,7 +17,8 @@ import { useGameStore } from "@/store/game.store";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_ONLINE_PLAYERS_FILTERS,
-  clampOnlinePlayerLevel,
+  MIN_ONLINE_PLAYER_LEVEL,
+  MAX_ONLINE_PLAYER_LEVEL,
   getFilteredAccountEntries,
   getFilteredMemberEntries,
   type ProfessionFilterValue,
@@ -188,7 +190,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
     if (Number.isNaN(numericValue)) return;
 
-    const minLvl = clampOnlinePlayerLevel(numericValue);
+    const minLvl = clamp(
+      numericValue,
+      MIN_ONLINE_PLAYER_LEVEL,
+      MAX_ONLINE_PLAYER_LEVEL,
+    );
 
     setFilters(guildId, {
       ...filters,
@@ -204,7 +210,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
     if (Number.isNaN(numericValue)) return;
 
-    const maxLvl = clampOnlinePlayerLevel(numericValue);
+    const maxLvl = clamp(
+      numericValue,
+      MIN_ONLINE_PLAYER_LEVEL,
+      MAX_ONLINE_PLAYER_LEVEL,
+    );
 
     setFilters(guildId, {
       ...filters,

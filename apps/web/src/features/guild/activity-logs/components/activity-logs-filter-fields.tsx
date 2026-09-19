@@ -1,4 +1,4 @@
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
+import { upperFirst } from "es-toolkit";
 import { Button } from "@lootlog/ui/components/button";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { Label } from "@lootlog/ui/components/label";
@@ -88,7 +88,7 @@ export const ActivityLogsFilterFields = ({
         <FilterPopover
           options={worlds.map((world) => ({
             value: world,
-            label: capitalizeFirstLetter(world),
+            label: upperFirst(world),
           }))}
           value={filters.world || undefined}
           onValueChange={(world) =>

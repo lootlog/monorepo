@@ -1,3 +1,4 @@
+import { sumBy } from "es-toolkit";
 import type { BattleTimelineResponseDtoOutput } from "@lootlog/client/battlelog";
 import { getBattleHpTimelineEventLayerCounts } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-event-markers";
 import { BattleHpTimelineLayerControls } from "@/features/user/battle-panel/battle-panel-single-battle/components/battle-hp-timeline-layer-controls";
@@ -49,10 +50,10 @@ export function BattleHpTimelineDialog({
 }: BattleHpTimelineDialogProps) {
   const { t } = useTranslation();
 
-  const legendaryMarkerCount = buildLegendaryBonusMarkerGroups(
-    timeline,
-    warriors,
-  ).reduce((count, group) => count + group.bonuses.length, 0);
+  const legendaryMarkerCount = sumBy(
+    buildLegendaryBonusMarkerGroups(timeline, warriors),
+    (group) => group.bonuses.length,
+  );
 
   const layerCounts = {
     ...getBattleHpTimelineEventLayerCounts(timeline, warriors),
