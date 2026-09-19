@@ -7,6 +7,7 @@ const errorKeys = new Map([
     "errors.guilds.vanityUrlRestricted",
     "settings.general.vanityUrl.restricted",
   ],
+  ["errors.guilds.vanityUrlInvalid", "settings.general.vanityUrl.invalid"],
   [
     "errors.guilds.reservations.durationRangeInvalid",
     "settings.reservations.durationRangeInvalid",

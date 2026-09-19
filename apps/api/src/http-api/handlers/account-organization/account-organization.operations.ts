@@ -2,6 +2,7 @@ import type { makeUserGuildList } from "./user-guild-list.data-layer.js";
 import type { makeCurrentUserGuilds } from "./current-user-guilds.data-layer.js";
 import { statusCodeResponse } from "#src/shared/http/handler-response";
 import {
+  getGuildCacheKey,
   readGuildConfigurationCache,
   writeGuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
@@ -13,7 +14,8 @@ import { SqlError } from "effect/unstable/sql/SqlError";
 
 import { DiscordGuildSyncStateResponse as DiscordGuildSyncStateCodec } from "#src/shared/schema/discord-guild-sync";
 import { encodeUnknownResponse } from "#src/shared/schema/encode-response";
-import { and, eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { compact, uniq } from "es-toolkit";
 
 import {
   Permission,
@@ -26,9 +28,8 @@ import {
   ResourceNotFoundError,
   ResourceConflictError,
 } from "#src/shared/http/http-errors";
-import { getGuildCacheKey } from "#src/shared/cache";
-import { generateSlug } from "#src/shared/generate-slug";
-import { RESTRICTED_VANITY_URLS } from "#src/guilds/restricted-vanity-urls";
+import { findActiveGuild } from "#src/guilds/active-guild-lookup";
+import { parseVanityUrl } from "#src/guilds/vanity-url";
 import { ErrorKey } from "#src/guilds/error-key";
 import {
   DiscordGuildSyncStateResponse as DiscordGuildSyncStateSchema,
@@ -150,12 +151,6 @@ const validateGuildConfiguration = (
   ) {
     return invalidReservationRange();
   }
-
-  if (payload.vanityUrl && RESTRICTED_VANITY_URLS.includes(payload.vanityUrl)) {
-    return new InvalidRequestError({
-      message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
-    });
-  }
 };
 
 const validateGuildConfigurationAgainstStored = (
@@ -180,14 +175,13 @@ const validateGuildConfigurationAgainstStored = (
 
 const buildGuildConfigurationUpdate = (
   payload: UpdateOrganizationConfigRequest,
+  vanityUrl: string | null,
 ) => {
   const update: Partial<typeof guildTable.$inferInsert> = {
     updatedAt: new Date(),
   };
 
-  if (Object.hasOwn(payload, "vanityUrl")) {
-    update.vanityUrl = generateSlug(payload.vanityUrl ?? undefined);
-  }
+  if (Object.hasOwn(payload, "vanityUrl")) update.vanityUrl = vanityUrl;
 
   if (payload.publicStatsCardEnabled !== undefined)
     update.publicStatsCardEnabled = payload.publicStatsCardEnabled;
@@ -247,21 +241,7 @@ export class GuildConfigurationData extends Context.Service<
 
                 if (cached) return cached;
 
-                const rows = yield* database
-                  .select()
-                  .from(guildTable)
-                  .where(
-                    and(
-                      eq(guildTable.active, true),
-                      or(
-                        eq(guildTable.id, idOrVanityUrl),
-                        eq(guildTable.vanityUrl, idOrVanityUrl),
-                      ),
-                    ),
-                  )
-                  .limit(1);
-
-                const guild = rows[0];
+                const guild = yield* findActiveGuild(database, idOrVanityUrl);
 
                 if (!guild) {
                   return yield* Effect.fail(
@@ -271,7 +251,11 @@ export class GuildConfigurationData extends Context.Service<
                   );
                 }
 
-                yield* writeGuildConfigurationCache(cache, guild);
+                yield* writeGuildConfigurationCache(
+                  cache,
+                  idOrVanityUrl,
+                  guild,
+                );
 
                 return guild;
               }),
@@ -282,6 +266,16 @@ export class GuildConfigurationData extends Context.Service<
                 const validationError = validateGuildConfiguration(payload);
 
                 if (validationError) return yield* Effect.fail(validationError);
+
+                const vanityUrl = payload.vanityUrl
+                  ? parseVanityUrl(payload.vanityUrl)
+                  : null;
+
+                if (vanityUrl?.error) {
+                  return yield* Effect.fail(
+                    new InvalidRequestError({ message: vanityUrl.error }),
+                  );
+                }
 
                 const oldRows = yield* database
                   .select()
@@ -300,7 +294,12 @@ export class GuildConfigurationData extends Context.Service<
 
                 const updatedRows = yield* database
                   .update(guildTable)
-                  .set(buildGuildConfigurationUpdate(payload))
+                  .set(
+                    buildGuildConfigurationUpdate(
+                      payload,
+                      vanityUrl?.slug ?? null,
+                    ),
+                  )
                   .where(eq(guildTable.id, guildId))
                   .returning();
 
@@ -314,13 +313,13 @@ export class GuildConfigurationData extends Context.Service<
                   );
                 }
 
-                yield* Effect.all([
-                  cache.del(getGuildCacheKey(guildId)),
-                  ...(oldGuild?.vanityUrl &&
-                  oldGuild.vanityUrl !== guild.vanityUrl
-                    ? [cache.del(getGuildCacheKey(oldGuild.vanityUrl))]
-                    : []),
-                ]);
+                // The row is cached under every key it was looked up by, so a
+                // change must evict the id entry and both vanity entries.
+                yield* Effect.all(
+                  uniq(
+                    compact([guildId, oldGuild?.vanityUrl, guild.vanityUrl]),
+                  ).map((key) => cache.del(getGuildCacheKey(key))),
+                );
 
                 return guild;
               }).pipe(
