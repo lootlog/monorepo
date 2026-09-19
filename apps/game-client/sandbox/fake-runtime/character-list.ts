@@ -1,4 +1,4 @@
-import { Predicate } from "effect";
+import { isPlainObject } from "es-toolkit";
 
 // Shape of public-api.margonem.pl/account/charlist entries (TCharacterData in the
 // game's CharacterList.ts). Nicks, ids and levels are invented; icons, worlds and
@@ -225,11 +225,9 @@ export function seedMargonemCharacterList(): void {
       localStorage.getItem(MARGONEM_STORAGE_KEY) ?? "{}",
     );
 
-    const storage = Predicate.isObject(stored) ? stored : {};
+    const storage = isPlainObject(stored) ? stored : {};
 
-    const charlist = Predicate.isObject(storage.charlist)
-      ? storage.charlist
-      : {};
+    const charlist = isPlainObject(storage.charlist) ? storage.charlist : {};
 
     localStorage.setItem(
       MARGONEM_STORAGE_KEY,

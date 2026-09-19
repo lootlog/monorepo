@@ -1,0 +1,57 @@
+{
+  "extends": ["../../.oxlintrc.react.json"],
+  "overrides": [
+    {
+      "files": ["src/components/sidebar.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["setOpen", "SidebarMenuButton"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/chart.tsx"],
+      "rules": {
+        "anti-slop/no-unsafe-dictionary-type": [
+          "error",
+          {
+            "boundaryTypes": ["ChartSourceRow"]
+          }
+        ],
+        "anti-slop/no-unknown-parameters": [
+          "error",
+          {
+            "boundaryFunctions": ["getPayloadConfigFromPayload"]
+          }
+        ],
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": [
+              "getPayloadConfigFromPayload",
+              "resolveIndicatorColor",
+              "resolveTooltipLabel"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/spinner.tsx"],
+      "rules": {
+        "react/static-components": "off"
+      }
+    },
+    {
+      "files": ["src/components/date-time-picker.tsx"],
+      "rules": {
+        "react/set-state-in-effect": "off"
+      }
+    }
+  ]
+}

@@ -1,8 +1,21 @@
-/* oxlint-disable anti-slop/no-unknown-returns, anti-slop/no-unknown-parameters, anti-slop/no-unsafe-dictionary-type -- generic JSON path utilities operate on unparsed document overrides by design; callers validate values against the settings catalog. */
-import { Predicate } from "effect";
+import { Predicate, Schema } from "effect";
 
 // Dotted-path helpers shared by the API resolver and the Game client cache.
-export type SettingsJsonRecord = Record<string, unknown>;
+export const SettingsJsonRecordSchema = Schema.Record(
+  Schema.String,
+  Schema.Json,
+);
+
+export type SettingsJsonRecord = Record<string, typeof Schema.Json.Type>;
+
+export const decodeSettingsRecord = Schema.decodeUnknownSync(
+  SettingsJsonRecordSchema,
+);
+
+// JSON leaves have already been decoded at the document boundary.
+export const isSettingsRecord = (
+  value: typeof Schema.Json.Type | undefined,
+): value is SettingsJsonRecord => Predicate.isObject(value);
 
 const FORBIDDEN_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
 
@@ -23,11 +36,14 @@ const splitWritablePath = (path: string) => {
   return segments;
 };
 
-export const getPath = (value: SettingsJsonRecord, path: string): unknown => {
-  let currentValue: unknown = value;
+export const getPath = (
+  value: SettingsJsonRecord,
+  path: string,
+): typeof Schema.Json.Type | undefined => {
+  let currentValue: typeof Schema.Json.Type | undefined = value;
 
   for (const segment of path.split(".")) {
-    if (!Predicate.isObject(currentValue) || !(segment in currentValue)) {
+    if (!isSettingsRecord(currentValue) || !(segment in currentValue)) {
       return undefined;
     }
 
@@ -39,10 +55,10 @@ export const getPath = (value: SettingsJsonRecord, path: string): unknown => {
 
 export const hasPath = (value: SettingsJsonRecord, path: string) => {
   const segments = path.split(".");
-  let currentValue: unknown = value;
+  let currentValue: typeof Schema.Json.Type | undefined = value;
 
   for (const segment of segments) {
-    if (!Predicate.isObject(currentValue) || !(segment in currentValue)) {
+    if (!isSettingsRecord(currentValue) || !(segment in currentValue)) {
       return false;
     }
 
@@ -55,7 +71,7 @@ export const hasPath = (value: SettingsJsonRecord, path: string) => {
 export const setPath = (
   target: SettingsJsonRecord,
   path: string,
-  value: unknown,
+  value: typeof Schema.Json.Type,
 ) => {
   const segments = splitWritablePath(path);
   const finalSegment = segments.pop();
@@ -68,7 +84,7 @@ export const setPath = (
 
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
-    const child = Predicate.isObject(nestedValue) ? nestedValue : {};
+    const child = isSettingsRecord(nestedValue) ? nestedValue : {};
     currentTarget[segment] = child;
     currentTarget = child;
   }
@@ -90,7 +106,7 @@ export const unsetPath = (target: SettingsJsonRecord, path: string) => {
   for (const segment of segments) {
     const nestedValue = currentTarget[segment];
 
-    if (!Predicate.isObject(nestedValue)) {
+    if (!isSettingsRecord(nestedValue)) {
       return;
     }
 
@@ -104,7 +120,7 @@ export const unsetPath = (target: SettingsJsonRecord, path: string) => {
     const nestedValue = parent[segment];
 
     if (
-      Predicate.isObject(nestedValue) &&
+      isSettingsRecord(nestedValue) &&
       Object.keys(nestedValue).length === 0
     ) {
       delete parent[segment];
@@ -115,13 +131,13 @@ export const unsetPath = (target: SettingsJsonRecord, path: string) => {
 export const collectLeafPaths = (
   value: SettingsJsonRecord,
   prefix = "",
-): Array<{ path: string; value: unknown }> => {
-  const paths: Array<{ path: string; value: unknown }> = [];
+): Array<{ path: string; value: typeof Schema.Json.Type }> => {
+  const paths: Array<{ path: string; value: typeof Schema.Json.Type }> = [];
 
   for (const [key, nestedValue] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
 
-    if (Predicate.isObject(nestedValue)) {
+    if (isSettingsRecord(nestedValue)) {
       const nestedPaths = collectLeafPaths(nestedValue, path);
 
       if (nestedPaths.length > 0) {

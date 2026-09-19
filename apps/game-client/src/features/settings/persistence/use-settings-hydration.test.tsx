@@ -13,7 +13,11 @@ import { npcsDetectionProcessor } from "@/processors/npcs-detection-processor";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { markSettingsImportDone } from "./settings-import";
-import { settingsPatchQueue } from "./settings-patch-client";
+import {
+  settingsPatchQueue,
+  getCurrentSettingsDocumentsQueryKey,
+} from "./settings-patch-client";
+import { useSettingsDocuments } from "./use-settings-documents";
 import {
   applyTimerDocuments,
   useSettingsHydration,
@@ -81,6 +85,28 @@ describe("useSettingsHydration", () => {
 
     for (const domain of SETTINGS_DOMAINS) markSettingsImportDone(domain);
     respond(harness);
+  });
+
+  it("cancels the settings HTTP request when its last observer unmounts", async () => {
+    harness.queryClient.removeQueries({
+      queryKey: getCurrentSettingsDocumentsQueryKey(),
+    });
+    let signal: AbortSignal | null | undefined;
+    harness.request.mockImplementation((_input, init) => {
+      signal = init?.signal;
+
+      return new Promise(() => {});
+    });
+
+    const { unmount } = renderHook(() => useSettingsDocuments(), {
+      wrapper: harness.wrapper,
+    });
+
+    await waitFor(() => expect(signal).toBeInstanceOf(AbortSignal));
+    expect(signal?.aborted).toBe(false);
+
+    unmount();
+    expect(signal?.aborted).toBe(true);
   });
 
   it("resets legacy appearance when an older server document omits it", () => {

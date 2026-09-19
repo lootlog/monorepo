@@ -141,16 +141,14 @@ export class AirTagRenderer {
   private drawHandheldMiniMap(): void {
     const size = this.renderer.getMapGeometry()?.size;
     const miniMap = this.renderer.getHandheldMiniMap();
-    const context = miniMap?.context;
-    const margin = miniMap?.margin;
-    const normalSize = miniMap?.normalSize;
+
+    if (!miniMap) return;
+    const { context, margin, normalSize } = miniMap;
 
     if (!size || !context || !margin || !normalSize || normalSize <= 0) {
       return;
     }
 
-    // The preceding guard excludes missing, zero, and negative normalSize values.
-    // oxlint-disable-next-line react-doctor/no-arithmetic-on-optional-chained-operand
     const radius = Math.min(5, Math.max(2.5, normalSize * 0.9));
 
     for (const target of this.frameTargets) {

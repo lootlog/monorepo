@@ -1,0 +1,35 @@
+{
+  "extends": ["../../.oxlintrc.react.json"],
+  "overrides": [
+    {
+      "files": ["src/routes/items.tsx"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["validateSearch"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/routes/-search-route.utils.ts"],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true,
+            "boundaryFunctions": ["validateBasicRouteSearch"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/routes/-use-basic-search-form.ts", "src/routes/items.tsx"],
+      "rules": {
+        "react/set-state-in-effect": "off"
+      }
+    }
+  ]
+}

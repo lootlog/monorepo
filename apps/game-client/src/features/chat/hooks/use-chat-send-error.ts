@@ -8,15 +8,13 @@ import {
 export const useChatSendError = () => {
   const { t } = useTranslation("chat");
 
-  // Promise rejections may contain any value; classify them at this error boundary.
-  // oxlint-disable-next-line anti-slop/no-unknown-parameters
-  return (error: unknown) => {
-    if (error instanceof NotificationChatPublishError) {
+  return (cause: unknown) => {
+    if (cause instanceof NotificationChatPublishError) {
       toast.warning(t("quickActions.partialDelivery"));
     } else {
       toast.error(
         t(
-          isNotificationRateLimitError(error)
+          isNotificationRateLimitError(cause)
             ? "errors.rateLimited"
             : "errors.sendFailed",
         ),

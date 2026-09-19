@@ -1,33 +1,26 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Vite replaces these values at compilation, so stubEnv cannot exercise missing build metadata.
-const { buildMetadata, buildTimestamp, commitSha } = vi.hoisted(() => ({
-  buildMetadata: { commitSha: "1234567890abcdef1234567890abcdef12345678" },
-  buildTimestamp: "2026-07-23T10:20:30.000Z",
-  commitSha: "1234567890abcdef1234567890abcdef12345678",
-}));
+const commitSha = "1234567890abcdef1234567890abcdef12345678";
 
-// eslint-disable-next-line anti-slop/no-module-mocking -- Vite hard-defines these build metadata literals before execution; stubEnv cannot vary the missing-SHA boundary.
-vi.mock(import("@/config/app"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  APP_ENVIRONMENT: "production",
-  BUILD_TIMESTAMP: buildTimestamp,
-  get COMMIT_SHA() {
-    return buildMetadata.commitSha;
-  },
-  GAME_CLIENT_PACKAGE_VERSION: "1.0.1",
-}));
-
-import { InformationSettingsTab } from "./information-settings-tab";
+const buildTimestamp = "2026-07-23T10:20:30.000Z";
 
 describe("InformationSettingsTab", () => {
   beforeEach(() => {
-    buildMetadata.commitSha = commitSha;
+    vi.resetModules();
+    vi.stubEnv("VITE_COMMIT_SHA", commitSha);
+    vi.stubEnv("VITE_BUILD_TIMESTAMP", buildTimestamp);
+    vi.stubEnv("VITE_GAME_CLIENT_PACKAGE_VERSION", "1.0.1");
+    vi.stubEnv("MODE", "production");
   });
 
-  it("shows the current client build metadata", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("shows the current client build metadata", async () => {
+    const { InformationSettingsTab } =
+      await import("./information-settings-tab");
+
     render(<InformationSettingsTab />);
 
     const formattedBuildTimestamp = new Intl.DateTimeFormat("pl-PL", {
@@ -46,8 +39,11 @@ describe("InformationSettingsTab", () => {
     expect(screen.getByText(formattedBuildTimestamp)).toBeInTheDocument();
   });
 
-  it("shows a fallback without a copy action when commit sha is unavailable", () => {
-    buildMetadata.commitSha = "";
+  it("shows a fallback without a copy action when commit sha is unavailable", async () => {
+    vi.stubEnv("VITE_COMMIT_SHA", "");
+
+    const { InformationSettingsTab } =
+      await import("./information-settings-tab");
 
     render(<InformationSettingsTab />);
 
@@ -59,6 +55,10 @@ describe("InformationSettingsTab", () => {
 
   it("copies the commit sha to the clipboard", async () => {
     const user = userEvent.setup();
+
+    const { InformationSettingsTab } =
+      await import("./information-settings-tab");
+
     render(<InformationSettingsTab />);
 
     await user.click(screen.getByRole("button", { name: "Kopiuj Commit SHA" }));

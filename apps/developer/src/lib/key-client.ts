@@ -34,10 +34,8 @@ const keyErrorMessages = new Map([
 
 class KeyRequestError extends Error {}
 
-// Caught exceptions are untrusted; only our parsed HTTP errors may expose a message.
-// oxlint-disable-next-line anti-slop/no-unknown-parameters
-export function getKeyErrorMessage(error: unknown) {
-  return error instanceof KeyRequestError ? error.message : t.error;
+export function getKeyErrorMessage(cause: unknown) {
+  return cause instanceof KeyRequestError ? cause.message : t.error;
 }
 
 export async function keyRequest(path = "", init?: RequestInit) {

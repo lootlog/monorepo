@@ -1,4 +1,4 @@
-/* oxlint-disable eslint/complexity, anti-slop/no-runtime-typeof, anti-slop/no-unknown-parameters -- this module is the parsing boundary for lenient legacy preference storage and intentionally handles every optional field here. */
+import { flow, Option, Predicate, Schema } from "effect";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   DETECTOR_NPC_TYPES,
@@ -24,6 +24,16 @@ import type {
 // Preference documents arrive from lenient storage; every optional field is
 // normalized here so the API façade and the Game client agree on one shape.
 
+const readPreferenceRecord = flow(
+  Option.liftPredicate(isObjectRecord),
+  Option.getOrUndefined,
+);
+
+const readPreferenceList = flow(
+  Schema.decodeUnknownOption(Schema.Array(Schema.Unknown)),
+  Option.getOrUndefined,
+);
+
 export const DETECTOR_LEVEL_MIN = 0;
 
 export const DETECTOR_LEVEL_MAX = 500;
@@ -35,66 +45,71 @@ export const cloneMutes = (
   npcs: (mutes.npcs ?? []).map((npc) => ({ ...npc })),
 });
 
-export const normalizeMutedPlayers = (
-  players: unknown,
-): MutedPlayerPreference[] => {
-  if (!Array.isArray(players)) return [];
-  const values = new Map<string, MutedPlayerPreference>();
+export const normalizeMutedPlayers = flow(
+  readPreferenceList,
+  (players): MutedPlayerPreference[] => {
+    if (!players) return [];
+    const values = new Map<string, MutedPlayerPreference>();
 
-  for (const player of players) {
-    if (
-      !isObjectRecord(player) ||
-      typeof player.discordId !== "string" ||
-      player.discordId.length === 0
-    ) {
-      continue;
+    for (const player of players) {
+      if (
+        !isObjectRecord(player) ||
+        !Predicate.isString(player.discordId) ||
+        player.discordId.length === 0
+      ) {
+        continue;
+      }
+
+      values.set(player.discordId, {
+        discordId: player.discordId,
+        displayName: Predicate.isString(player.displayName)
+          ? player.displayName
+          : "",
+      });
     }
 
-    values.set(player.discordId, {
-      discordId: player.discordId,
-      displayName:
-        typeof player.displayName === "string" ? player.displayName : "",
-    });
-  }
+    return [...values.values()];
+  },
+);
 
-  return [...values.values()];
-};
+export const normalizeMutedNpcs = flow(
+  readPreferenceList,
+  (npcs): MutedNpcPreference[] => {
+    if (!npcs) return [];
+    const values = new Map<string, MutedNpcPreference>();
 
-export const normalizeMutedNpcs = (npcs: unknown): MutedNpcPreference[] => {
-  if (!Array.isArray(npcs)) return [];
-  const values = new Map<string, MutedNpcPreference>();
+    for (const npc of npcs) {
+      if (!isObjectRecord(npc)) continue;
+      const npcType = DETECTOR_NPC_TYPES.find((type) => type === npc.npcType);
 
-  for (const npc of npcs) {
-    if (!isObjectRecord(npc)) continue;
-    const npcType = DETECTOR_NPC_TYPES.find((type) => type === npc.npcType);
+      if (
+        !Predicate.isString(npc.npcKey) ||
+        npc.npcKey.length === 0 ||
+        !Predicate.isString(npc.name) ||
+        npc.name.length === 0 ||
+        !Predicate.isNumber(npc.npcId) ||
+        !Number.isInteger(npc.npcId) ||
+        npcType === undefined ||
+        !Predicate.isNumber(npc.lvl) ||
+        Number.isNaN(npc.lvl)
+      ) {
+        continue;
+      }
 
-    if (
-      typeof npc.npcKey !== "string" ||
-      npc.npcKey.length === 0 ||
-      typeof npc.name !== "string" ||
-      npc.name.length === 0 ||
-      typeof npc.npcId !== "number" ||
-      !Number.isInteger(npc.npcId) ||
-      npcType === undefined ||
-      typeof npc.lvl !== "number" ||
-      Number.isNaN(npc.lvl)
-    ) {
-      continue;
+      values.set(npc.npcKey, {
+        npcKey: npc.npcKey,
+        npcId: npc.npcId,
+        name: npc.name,
+        npcType,
+        lvl: Math.max(1, Math.trunc(npc.lvl)),
+        prof: Predicate.isString(npc.prof) ? npc.prof : null,
+        icon: Predicate.isString(npc.icon) ? npc.icon : null,
+      });
     }
 
-    values.set(npc.npcKey, {
-      npcKey: npc.npcKey,
-      npcId: npc.npcId,
-      name: npc.name,
-      npcType,
-      lvl: Math.max(1, Math.trunc(npc.lvl)),
-      prof: typeof npc.prof === "string" ? npc.prof : null,
-      icon: typeof npc.icon === "string" ? npc.icon : null,
-    });
-  }
-
-  return [...values.values()];
-};
+    return [...values.values()];
+  },
+);
 
 export const cloneNotifications = (
   settings: NotificationsSettings,
@@ -106,150 +121,142 @@ export const cloneNotifications = (
   return copy;
 };
 
-export const normalizeNotification = (
-  raw: unknown,
-  fallback: NotificationSettings,
-): NotificationSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    show: typeof settings?.show === "boolean" ? settings.show : fallback.show,
-    highlight:
-      typeof settings?.highlight === "boolean"
+export const normalizeNotification = (fallback: NotificationSettings) =>
+  flow(readPreferenceRecord, (settings): NotificationSettings => {
+    return {
+      show: Predicate.isBoolean(settings?.show) ? settings.show : fallback.show,
+      highlight: Predicate.isBoolean(settings?.highlight)
         ? settings.highlight
         : fallback.highlight,
-    ignoreOtherWorlds:
-      typeof settings?.ignoreOtherWorlds === "boolean"
+      ignoreOtherWorlds: Predicate.isBoolean(settings?.ignoreOtherWorlds)
         ? settings.ignoreOtherWorlds
         : fallback.ignoreOtherWorlds,
-    autoHideTimeout:
-      typeof settings?.autoHideTimeout === "number" &&
-      settings.autoHideTimeout >= 0
-        ? settings.autoHideTimeout
-        : fallback.autoHideTimeout,
-    sound:
-      typeof settings?.sound === "boolean" ? settings.sound : fallback.sound,
-  };
-};
+      autoHideTimeout:
+        Predicate.isNumber(settings?.autoHideTimeout) &&
+        settings.autoHideTimeout >= 0
+          ? settings.autoHideTimeout
+          : fallback.autoHideTimeout,
+      sound: Predicate.isBoolean(settings?.sound)
+        ? settings.sound
+        : fallback.sound,
+    };
+  });
 
-export const normalizeGuildIds = (raw: unknown, fallback: string[]) =>
-  Array.isArray(raw)
-    ? raw.filter((guildId): guildId is string => typeof guildId === "string")
-    : [...fallback];
+export const normalizeGuildIds = (fallback: string[]) =>
+  flow(readPreferenceList, (raw) =>
+    raw ? raw.filter(Predicate.isString) : [...fallback],
+  );
 
 /**
  * Expects the current `notifications` document shape (schema version 2):
  * the per-type lists of older documents are lifted by the catalog migration
  * before any reader sees them.
  */
-export const normalizeNotifications = (raw: unknown): NotificationsSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-  const normalized = cloneNotifications(defaultNotificationsSettings);
-  normalized.guildIds = normalizeGuildIds(
-    settings?.guildIds,
-    defaultNotificationsSettings.guildIds,
-  );
+export const normalizeNotifications = flow(
+  readPreferenceRecord,
+  (settings): NotificationsSettings => {
+    const normalized = cloneNotifications(defaultNotificationsSettings);
+    normalized.guildIds = normalizeGuildIds(
+      defaultNotificationsSettings.guildIds,
+    )(settings?.guildIds);
 
-  for (const type of NOTIFICATION_TYPES) {
-    normalized[type] = normalizeNotification(
-      settings?.[type],
-      settings?.[type] === undefined
-        ? defaultNotificationsSettings[type]
-        : { ...defaultNotificationsSettings[type], ignoreOtherWorlds: false },
-    );
-  }
-
-  return normalized;
-};
-
-export const normalizeDetectorType = (
-  raw: unknown,
-  fallback: DetectorTypeSettings,
-): DetectorTypeSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    detect:
-      typeof settings?.detect === "boolean" ? settings.detect : fallback.detect,
-    autoSend:
-      typeof settings?.autoSend === "boolean"
-        ? settings.autoSend
-        : fallback.autoSend,
-    notifyWindow:
-      typeof settings?.notifyWindow === "boolean"
-        ? settings.notifyWindow
-        : fallback.notifyWindow,
-    highlight:
-      typeof settings?.highlight === "boolean"
-        ? settings.highlight
-        : fallback.highlight,
-    notifySound:
-      typeof settings?.notifySound === "boolean"
-        ? settings.notifySound
-        : fallback.notifySound,
-  };
-};
-
-export const normalizeRoutingRules = (
-  rules: ReadonlyArray<unknown>,
-): DetectorRoutingRule[] => {
-  const result: DetectorRoutingRule[] = [];
-
-  for (const [index, rule] of rules.entries()) {
-    if (!isObjectRecord(rule)) continue;
-
-    const rawMin =
-      typeof rule.minLevel === "number" ? Math.trunc(rule.minLevel) : null;
-
-    const rawMax =
-      typeof rule.maxLevel === "number" ? Math.trunc(rule.maxLevel) : null;
-
-    if (
-      rawMin === null ||
-      rawMax === null ||
-      Number.isNaN(rawMin) ||
-      Number.isNaN(rawMax)
-    ) {
-      continue;
+    for (const type of NOTIFICATION_TYPES) {
+      normalized[type] = normalizeNotification(
+        settings?.[type] === undefined
+          ? defaultNotificationsSettings[type]
+          : { ...defaultNotificationsSettings[type], ignoreOtherWorlds: false },
+      )(settings?.[type]);
     }
 
-    const boundedMin = Math.min(
-      DETECTOR_LEVEL_MAX,
-      Math.max(DETECTOR_LEVEL_MIN, rawMin),
-    );
+    return normalized;
+  },
+);
 
-    const boundedMax = Math.min(
-      DETECTOR_LEVEL_MAX,
-      Math.max(DETECTOR_LEVEL_MIN, rawMax),
-    );
-
-    const name = typeof rule.name === "string" ? rule.name.trim() : undefined;
-
-    const world =
-      typeof rule.world === "string" ? rule.world.trim() : undefined;
-
-    const normalizedRule: DetectorRoutingRule = {
-      id:
-        typeof rule.id === "string" && rule.id.length > 0
-          ? rule.id
-          : `rule-${index + 1}`,
-      minLevel: Math.min(boundedMin, boundedMax),
-      maxLevel: Math.max(boundedMin, boundedMax),
-      guildIds: Array.isArray(rule.guildIds)
-        ? rule.guildIds.filter(
-            (guildId): guildId is string => typeof guildId === "string",
-          )
-        : [],
+export const normalizeDetectorType = (fallback: DetectorTypeSettings) =>
+  flow(readPreferenceRecord, (settings): DetectorTypeSettings => {
+    return {
+      detect: Predicate.isBoolean(settings?.detect)
+        ? settings.detect
+        : fallback.detect,
+      autoSend: Predicate.isBoolean(settings?.autoSend)
+        ? settings.autoSend
+        : fallback.autoSend,
+      notifyWindow: Predicate.isBoolean(settings?.notifyWindow)
+        ? settings.notifyWindow
+        : fallback.notifyWindow,
+      highlight: Predicate.isBoolean(settings?.highlight)
+        ? settings.highlight
+        : fallback.highlight,
+      notifySound: Predicate.isBoolean(settings?.notifySound)
+        ? settings.notifySound
+        : fallback.notifySound,
     };
+  });
 
-    if (name) normalizedRule.name = name;
+export const normalizeRoutingRules = flow(
+  readPreferenceList,
+  (rules): DetectorRoutingRule[] => {
+    const result: DetectorRoutingRule[] = [];
 
-    if (world) normalizedRule.world = world;
-    result.push(normalizedRule);
-  }
+    for (const [index, rule] of (rules ?? []).entries()) {
+      if (!isObjectRecord(rule)) continue;
 
-  return result;
-};
+      const rawMin = Predicate.isNumber(rule.minLevel)
+        ? Math.trunc(rule.minLevel)
+        : null;
+
+      const rawMax = Predicate.isNumber(rule.maxLevel)
+        ? Math.trunc(rule.maxLevel)
+        : null;
+
+      if (
+        rawMin === null ||
+        rawMax === null ||
+        Number.isNaN(rawMin) ||
+        Number.isNaN(rawMax)
+      ) {
+        continue;
+      }
+
+      const boundedMin = Math.min(
+        DETECTOR_LEVEL_MAX,
+        Math.max(DETECTOR_LEVEL_MIN, rawMin),
+      );
+
+      const boundedMax = Math.min(
+        DETECTOR_LEVEL_MAX,
+        Math.max(DETECTOR_LEVEL_MIN, rawMax),
+      );
+
+      const name = Predicate.isString(rule.name) ? rule.name.trim() : undefined;
+
+      const world = Predicate.isString(rule.world)
+        ? rule.world.trim()
+        : undefined;
+
+      const normalizedRule: DetectorRoutingRule = {
+        id:
+          Predicate.isString(rule.id) && rule.id.length > 0
+            ? rule.id
+            : `rule-${index + 1}`,
+        minLevel: Math.min(boundedMin, boundedMax),
+        maxLevel: Math.max(boundedMin, boundedMax),
+        guildIds: Array.isArray(rule.guildIds)
+          ? rule.guildIds.filter((guildId): guildId is string =>
+              Predicate.isString(guildId),
+            )
+          : [],
+      };
+
+      if (name) normalizedRule.name = name;
+
+      if (world) normalizedRule.world = world;
+      result.push(normalizedRule);
+    }
+
+    return result;
+  },
+);
 
 export const cloneDetector = (settings: DetectorSettings): DetectorSettings => {
   const copy = {
@@ -265,53 +272,55 @@ export const cloneDetector = (settings: DetectorSettings): DetectorSettings => {
   return copy;
 };
 
-export const normalizeDetector = (raw: unknown): DetectorSettings => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-  const normalized = cloneDetector(defaultDetectorSettings);
-  normalized.routingRules = Array.isArray(settings?.routingRules)
-    ? normalizeRoutingRules(settings.routingRules)
-    : defaultDetectorSettings.routingRules.map((rule) => ({
-        ...rule,
-        guildIds: [...rule.guildIds],
-      }));
+export const normalizeDetector = flow(
+  readPreferenceRecord,
+  (settings): DetectorSettings => {
+    const normalized = cloneDetector(defaultDetectorSettings);
+    normalized.routingRules = Array.isArray(settings?.routingRules)
+      ? normalizeRoutingRules(settings.routingRules)
+      : defaultDetectorSettings.routingRules.map((rule) => ({
+          ...rule,
+          guildIds: [...rule.guildIds],
+        }));
 
-  for (const type of DETECTOR_NPC_TYPES) {
-    normalized[type] = normalizeDetectorType(
-      settings?.[type],
-      defaultDetectorSettings[type],
-    );
-  }
+    for (const type of DETECTOR_NPC_TYPES) {
+      normalized[type] = normalizeDetectorType(defaultDetectorSettings[type])(
+        settings?.[type],
+      );
+    }
 
-  return normalized;
-};
+    return normalized;
+  },
+);
 
-export const normalizePings = (raw: unknown): MapPingPreferences => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    enabled:
-      typeof settings?.enabled === "boolean"
+export const normalizePings = flow(
+  readPreferenceRecord,
+  (settings): MapPingPreferences => {
+    return {
+      enabled: Predicate.isBoolean(settings?.enabled)
         ? settings.enabled
         : defaultMapPingPreferences.enabled,
-  };
-};
+    };
+  },
+);
 
-export const normalizeAirTags = (raw: unknown): AirTagPreferences => {
-  const settings = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    enabled:
-      typeof settings?.enabled === "boolean"
+export const normalizeAirTags = flow(
+  readPreferenceRecord,
+  (settings): AirTagPreferences => {
+    return {
+      enabled: Predicate.isBoolean(settings?.enabled)
         ? settings.enabled
         : defaultAirTagPreferences.enabled,
-  };
-};
+    };
+  },
+);
 
-export const normalizeNotificationMutes = (raw: unknown): NotificationMutes => {
-  const mutes = isObjectRecord(raw) ? raw : undefined;
-
-  return {
-    players: normalizeMutedPlayers(mutes?.players),
-    npcs: normalizeMutedNpcs(mutes?.npcs),
-  };
-};
+export const normalizeNotificationMutes = flow(
+  readPreferenceRecord,
+  (mutes): NotificationMutes => {
+    return {
+      players: normalizeMutedPlayers(mutes?.players),
+      npcs: normalizeMutedNpcs(mutes?.npcs),
+    };
+  },
+);

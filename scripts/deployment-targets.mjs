@@ -1,7 +1,7 @@
-/* oxlint-disable anti-slop/no-runtime-typeof -- This dependency-free CI entry point validates raw deployment catalog, planner input and persisted production-state JSON before dependencies are installed. Preserve its input acceptance and validation errors. */
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
+import { isObject, isString } from "./deployment-input.ts";
 
 const catalogPath = fileURLToPath(
   new URL("../.github/deployment-targets.json", import.meta.url),
@@ -41,6 +41,7 @@ const globalDockerInputs = new Set([
 const developmentPipelineInputs = new Set([
   ".github/workflows/dev-deploy.yml",
   "scripts/deployment-targets.mjs",
+  "scripts/deployment-input.ts",
 ]);
 
 const isWorkspaceManifest = (file) =>
@@ -60,7 +61,8 @@ function validateDockerTarget(target) {
 
   if (
     target.installFonts !== undefined &&
-    typeof target.installFonts !== "boolean"
+    target.installFonts !== true &&
+    target.installFonts !== false
   ) {
     throw new Error(`Docker target ${target.id} has invalid installFonts`);
   }
@@ -83,7 +85,7 @@ function validateCloudflareTarget(target) {
   if (
     !Array.isArray(requiredEnvironmentVariables) ||
     requiredEnvironmentVariables.some(
-      (name) => typeof name !== "string" || !/^[A-Z][A-Z0-9_]*$/u.test(name),
+      (name) => !isString(name) || !/^[A-Z][A-Z0-9_]*$/u.test(name),
     )
   ) {
     throw new Error(
@@ -146,7 +148,7 @@ function validateProductionState(state, label, targetsById) {
   if (
     state?.schemaVersion !== 1 ||
     !state.targets ||
-    typeof state.targets !== "object" ||
+    !isObject(state.targets) ||
     Array.isArray(state.targets)
   ) {
     throw new Error(`${label} production state has an unsupported schema`);
@@ -164,15 +166,14 @@ function validateProductionState(state, label, targetsById) {
 
     const validDocker =
       deployment.kind === "docker" &&
-      typeof deployment.image === "string" &&
-      typeof deployment.reference === "string";
+      isString(deployment.image) &&
+      isString(deployment.reference);
 
     const validCloudflare =
       deployment.kind !== "docker" &&
-      typeof deployment.project === "string" &&
-      typeof deployment.deploymentId === "string" &&
-      (deployment.kind !== "worker" ||
-        typeof deployment.configPath === "string");
+      isString(deployment.project) &&
+      isString(deployment.deploymentId) &&
+      (deployment.kind !== "worker" || isString(deployment.configPath));
 
     if (!validDocker && !validCloudflare) {
       throw new Error(`${label} state is incomplete for target: ${id}`);
@@ -269,9 +270,7 @@ export async function createDeploymentPlan(input) {
 
   if (input.mode === "ci") {
     const packages = [...affectedPackages]
-      .filter(
-        (name) => typeof name === "string" && name.startsWith("@lootlog/"),
-      )
+      .filter((name) => isString(name) && name.startsWith("@lootlog/"))
       .sort();
 
     const changedFiles = input.changedFiles ?? [];

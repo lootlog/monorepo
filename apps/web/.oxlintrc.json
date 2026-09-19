@@ -1,5 +1,5 @@
 {
-  "extends": ["../../.oxlintrc.json"],
+  "extends": ["../../.oxlintrc.react.json"],
   "rules": {
     "complexity": "error"
   },

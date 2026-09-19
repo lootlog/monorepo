@@ -11,6 +11,7 @@ import type {
 } from "@lootlog/schema/settings-documents";
 import {
   collectLeafPaths,
+  decodeSettingsRecord,
   getPath,
   hasPath,
   pathsOverlap,
@@ -63,7 +64,7 @@ export const resolveSettingsDomain = (
     ...layer,
     overrides: migrateSettingsDocument(
       domain,
-      layer.overrides,
+      decodeSettingsRecord(layer.overrides),
       layer.schemaVersion ?? definition.schemaVersion,
     ),
     schemaVersion: definition.schemaVersion,

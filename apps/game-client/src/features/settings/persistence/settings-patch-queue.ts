@@ -1,6 +1,5 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { isSettingsRecord } from "@lootlog/domain/settings-paths";
 import { groupBy } from "es-toolkit";
-import { Predicate } from "effect";
 import type { QueryKey } from "@tanstack/react-query";
 import type { SettingsOperation, SettingsScope } from "./settings-documents";
 import type { SettingsSaveStatus } from "./settings-save-status.store";
@@ -27,7 +26,7 @@ export type SettingsPatchQueueConfig<TResponse = unknown> = {
   /** Re-synchronize cache entries with the server (called after success/failure). */
   reconcile: (queryKeys: QueryKey[]) => Promise<void>;
   onStatus: (status: SettingsSaveStatus) => void;
-  onError?: (error: unknown) => void;
+  onError?: (cause: unknown) => void;
   debounceMs?: number;
 };
 
@@ -45,16 +44,16 @@ const operationKey = (operation: SettingsOperation) =>
   `${operation.domain}:${operation.scope.type}:${operation.scope.id}`;
 
 const mergeSet = (
-  current: Record<string, unknown>,
-  incoming: Record<string, unknown>,
-): Record<string, unknown> => {
-  const merged: Record<string, unknown> = { ...current };
+  current: SettingsOperation["set"],
+  incoming: SettingsOperation["set"],
+): SettingsOperation["set"] => {
+  const merged: SettingsOperation["set"] = { ...current };
 
   for (const [key, value] of Object.entries(incoming)) {
     const existing = merged[key];
 
     merged[key] =
-      Predicate.isObject(existing) && Predicate.isObject(value)
+      isSettingsRecord(existing) && isSettingsRecord(value)
         ? mergeSet(existing, value)
         : value;
   }
@@ -62,7 +61,7 @@ const mergeSet = (
   return merged;
 };
 
-const removePath = (set: Record<string, unknown>, path: string) => {
+const removePath = (set: SettingsOperation["set"], path: string) => {
   const [head, ...rest] = path.split(".");
 
   if (!head || !(head in set)) return;
@@ -75,7 +74,7 @@ const removePath = (set: Record<string, unknown>, path: string) => {
 
   const nested = set[head];
 
-  if (Predicate.isObject(nested)) removePath(nested, rest.join("."));
+  if (isSettingsRecord(nested)) removePath(nested, rest.join("."));
 };
 
 const mergeOperations = (

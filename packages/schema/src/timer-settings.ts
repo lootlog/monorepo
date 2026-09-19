@@ -32,12 +32,12 @@ export interface TimersDisplayConfig {
   singleTimerDisplayMode: "column" | "row";
 }
 
-export interface CustomTimerColor {
+export type CustomTimerColor = {
   id: string;
   name: string;
   borderColor: string;
   backgroundColor: string;
-}
+};
 
 export interface UserTimerSettings {
   userId: string;

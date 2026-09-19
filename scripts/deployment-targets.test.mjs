@@ -63,6 +63,7 @@ describe("deployment targets", () => {
     for (const changedFile of [
       ".github/workflows/dev-deploy.yml",
       "scripts/deployment-targets.mjs",
+      "scripts/deployment-input.ts",
     ]) {
       const plan = await createDeploymentPlan({
         mode: "dev",
@@ -288,6 +289,27 @@ describe("deployment targets", () => {
   });
 
   test("rollback fails closed for unknown or unrestorable targets", async () => {
+    await expect(
+      createDeploymentPlan({
+        mode: "rollback",
+        currentState: { schemaVersion: 1, targets: "api" },
+        previousState: { schemaVersion: 1, targets: {} },
+      }),
+    ).rejects.toThrow("Current production state has an unsupported schema");
+
+    await expect(
+      createDeploymentPlan({
+        mode: "rollback",
+        currentState: {
+          schemaVersion: 1,
+          targets: {
+            api: { kind: "docker", image: "registry/api", reference: 42 },
+          },
+        },
+        previousState: { schemaVersion: 1, targets: {} },
+      }),
+    ).rejects.toThrow("Current state is incomplete for target: api");
+
     await expect(
       createDeploymentPlan({
         mode: "rollback",
