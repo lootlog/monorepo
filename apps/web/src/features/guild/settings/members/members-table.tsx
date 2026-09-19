@@ -1,6 +1,8 @@
 import { MemberPresenceBadges } from "./member-presence-badges";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import type { MemberActivityStatsByDiscordId } from "@/features/guild/settings/members/member-activity-stats.utils";
 import type { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
 import type { MemberWebPresenceByDiscordId } from "@/features/guild/settings/members/member-web-presence.utils";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
@@ -15,16 +17,19 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
 import { useNavigate } from "@tanstack/react-router";
+import { useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { getMemberDisplayData } from "./member-display-data";
 import { MemberTableRow } from "./member-table-row";
+import {
+  type MemberTableRowData,
+  useMembersTableColumns,
+} from "./use-members-table-columns";
 
 export type MembersTableProps = {
   members: GuildMember[];
@@ -37,6 +42,11 @@ export type MembersTableProps = {
   memberWebPresenceByDiscordId: MemberWebPresenceByDiscordId | undefined;
   guildId: string;
 };
+
+const RIGHT_ALIGNED_COLUMN_IDS = new Set(["visits", "actions"]);
+
+// The mobile list is not a table, so it builds no row model.
+const NO_TABLE_ROWS: MemberTableRowData[] = [];
 
 export const MembersTable = ({
   members,
@@ -58,6 +68,33 @@ export const MembersTable = ({
       params: { guildId, memberId: String(member.id) },
     });
   };
+
+  const columns = useMembersTableColumns({
+    guildId,
+    guildOwnerId,
+    canManageMembers,
+    openMemberDetails,
+  });
+
+  const tableData = isMobile
+    ? NO_TABLE_ROWS
+    : members.map((member) => ({
+        member,
+        displayData: getMemberDisplayData(member, {
+          activityStatsByDiscordIdAndSource,
+          memberGamePresenceByDiscordId,
+          memberWebPresenceByDiscordId,
+        }),
+      }));
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: tableData,
+    columns,
+    getRowId: ({ member }) => String(member.id),
+  });
+
+  const rows = table.getRowModel().rows;
 
   const rowEstimateSize = isMobile ? 88 : 64;
 
@@ -169,51 +206,43 @@ export const MembersTable = ({
         <col className="w-[130px]" />
         <col className="w-16" />
       </colgroup>
-      <TableHeader className="sticky top-0 z-10 bg-background">
-        <TableRow className="border-b-1! border-border">
-          <TableHead>{t("settings.members.table.member")}</TableHead>
-          <TableHead>{t("settings.members.table.status")}</TableHead>
-          <TableHead>{t("settings.members.table.discord")}</TableHead>
-          <TableHead>{t("settings.members.table.activity")}</TableHead>
-          <TableHead className="text-right">
-            {t("settings.members.table.visits")}
-          </TableHead>
-          <TableHead className="text-right">
-            {t("settings.members.table.actions")}
-          </TableHead>
-        </TableRow>
-      </TableHeader>
+      <TanStackTableHeader
+        table={table}
+        className="sticky top-0 z-10 bg-background"
+        rowClassName="border-b-1! border-border"
+        getHeadClassName={(header) =>
+          RIGHT_ALIGNED_COLUMN_IDS.has(header.column.id) ? "text-right" : ""
+        }
+      />
       <TableBody>
         {topPadding > 0 && (
           <TableRow className="border-b-0 hover:bg-transparent">
-            <TableCell colSpan={6} style={{ height: topPadding }} />
+            <TableCell
+              colSpan={columns.length}
+              style={{ height: topPadding }}
+            />
           </TableRow>
         )}
         {virtualRows.map((virtualRow) => {
-          const member = members[virtualRow.index];
+          const row = rows[virtualRow.index];
 
-          if (!member) return null;
+          if (!row) return null;
 
           return (
             <MemberTableRow
               key={virtualRow.key}
-              member={member}
-              displayData={getMemberDisplayData(member, {
-                activityStatsByDiscordIdAndSource,
-                memberGamePresenceByDiscordId,
-                memberWebPresenceByDiscordId,
-              })}
-              isLastMember={virtualRow.index === members.length - 1}
+              row={row}
+              isLastMember={virtualRow.index === rows.length - 1}
               openMemberDetails={openMemberDetails}
-              guildId={guildId}
-              guildOwnerId={guildOwnerId}
-              canManageMembers={canManageMembers}
             />
           );
         })}
         {bottomPadding > 0 && (
           <TableRow className="border-b-0 hover:bg-transparent">
-            <TableCell colSpan={6} style={{ height: bottomPadding }} />
+            <TableCell
+              colSpan={columns.length}
+              style={{ height: bottomPadding }}
+            />
           </TableRow>
         )}
       </TableBody>

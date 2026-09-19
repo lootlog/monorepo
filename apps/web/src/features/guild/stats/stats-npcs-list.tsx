@@ -1,19 +1,19 @@
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-} from "@lootlog/ui/components/table";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
 import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsNpcCell } from "./components/stats-npc-cell";
 import { StatsRank } from "./components/stats-rank";
+import {
+  STATS_TABLE_COUNT_COLUMN_ID,
+  STATS_TABLE_POSITION_COLUMN_ID,
+  STATS_TABLE_TYPE_COLUMN_ID,
+  StatsTable,
+} from "./components/stats-table";
 import { StatsTableCard } from "./components/stats-table-card";
-import { StatsTableHeader } from "./components/stats-table-header";
-import { StatsTableRow } from "./components/stats-table-row";
 import { useStatsNpcsListModel } from "./use-stats-npcs-list-model";
 
 export const StatsNpcsList = () => {
@@ -39,6 +39,62 @@ export const StatsNpcsList = () => {
     handlePreviousPage,
     handleNextPage,
   } = useStatsNpcsListModel();
+
+  const columns: ColumnDef<
+    typeof coreTableFeatures,
+    (typeof paginatedData)[number]
+  >[] = [
+    {
+      id: STATS_TABLE_POSITION_COLUMN_ID,
+      header: () => t("kills.memberRanking.position"),
+      cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+    },
+    {
+      id: "npc",
+      header: () => t("kills.npcsList.npc"),
+      cell: ({ row: { original: npc } }) => (
+        <StatsNpcCell
+          npc={{
+            id: npc.npcId,
+            name: npc.npcName,
+            lvl: npc.npcLvl,
+            icon: npc.npcIcon,
+          }}
+          name={
+            <TextLink
+              onClick={(event) => event.stopPropagation()}
+              render=<Link
+                to="/$guildId/stats/npcs/$npcId"
+                params={{ guildId, npcId: String(npc.npcId) }}
+              />
+            >
+              {npc.npcName}
+            </TextLink>
+          }
+          subtitle={t("kills.level", { level: npc.npcLvl })}
+        />
+      ),
+    },
+    {
+      id: STATS_TABLE_TYPE_COLUMN_ID,
+      header: () => t("kills.npcsList.type"),
+      cell: ({ row: { original: npc } }) => t(`npcType.${npc.npcType}`),
+    },
+    {
+      id: STATS_TABLE_COUNT_COLUMN_ID,
+      header: () => t("kills.npcKillers.killCount"),
+      cell: ({ row: { original: npc } }) => (
+        <StatsCountCell value={npc.uniqueKills} emphasized />
+      ),
+    },
+  ];
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: paginatedData,
+    columns,
+    getRowId: (npc) => String(npc.npcId),
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3 pb-3">
@@ -117,58 +173,11 @@ export const StatsNpcsList = () => {
             </li>
           ))}
         </ul>
-        <Table className="hidden border-b md:table">
-          <StatsTableHeader>
-            <TableHead className="w-14 text-center">
-              {t("kills.memberRanking.position")}
-            </TableHead>
-            <TableHead>{t("kills.npcsList.npc")}</TableHead>
-            <TableHead>{t("kills.npcsList.type")}</TableHead>
-            <TableHead className="text-right">
-              {t("kills.npcKillers.killCount")}
-            </TableHead>
-          </StatsTableHeader>
-          <TableBody>
-            {paginatedData.map((npc, index) => (
-              <StatsTableRow
-                key={npc.npcId}
-                onClick={() => handleRowClick(npc)}
-              >
-                <TableCell className="text-center">
-                  <StatsRank rank={cursor + index + 1} />
-                </TableCell>
-                <TableCell>
-                  <StatsNpcCell
-                    npc={{
-                      id: npc.npcId,
-                      name: npc.npcName,
-                      lvl: npc.npcLvl,
-                      icon: npc.npcIcon,
-                    }}
-                    name={
-                      <TextLink
-                        onClick={(event) => event.stopPropagation()}
-                        render=<Link
-                          to="/$guildId/stats/npcs/$npcId"
-                          params={{ guildId, npcId: String(npc.npcId) }}
-                        />
-                      >
-                        {npc.npcName}
-                      </TextLink>
-                    }
-                    subtitle={t("kills.level", { level: npc.npcLvl })}
-                  />
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {t(`npcType.${npc.npcType}`)}
-                </TableCell>
-                <TableCell>
-                  <StatsCountCell value={npc.uniqueKills} emphasized />
-                </TableCell>
-              </StatsTableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StatsTable
+          table={table}
+          className="hidden border-b md:table"
+          onRowClick={handleRowClick}
+        />
       </StatsTableCard>
     </div>
   );

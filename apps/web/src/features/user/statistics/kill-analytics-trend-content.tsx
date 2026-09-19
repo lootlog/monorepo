@@ -1,14 +1,11 @@
 import { useState } from "react";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@lootlog/ui/components/table";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
+import { Table } from "@lootlog/ui/components/table";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 // eslint-disable-next-line react-doctor/prefer-dynamic-import -- This chart implementation is loaded only by its lazy wrapper; Recharts stays inside that async boundary.
 import {
   ResponsiveContainer,
@@ -23,9 +20,15 @@ import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 
+type KillAnalyticsTrendPoint = {
+  date: string;
+  kills: number | null;
+  partial?: boolean;
+};
+
 type KillAnalyticsTrendProps = {
   title: string;
-  data: { date: string; kills: number | null; partial?: boolean }[];
+  data: KillAnalyticsTrendPoint[];
 };
 
 export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
@@ -35,6 +38,39 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
   const partialDates = new Set(
     data.flatMap((point) => (point.partial ? [point.date] : [])),
   );
+
+  const columns: ColumnDef<
+    typeof coreTableFeatures,
+    KillAnalyticsTrendPoint
+  >[] = [
+    {
+      accessorKey: "date",
+      header: () => t("statistics.date"),
+      cell: ({ row: { original: day } }) => (
+        <>
+          {day.date}
+          {day.partial && (
+            <span className="ml-2 text-xs text-muted-foreground">
+              {t("statistics.partial")}
+            </span>
+          )}
+        </>
+      ),
+    },
+    {
+      accessorKey: "kills",
+      header: () => t("statistics.kills"),
+      cell: ({ row: { original: day } }) =>
+        day.kills?.toLocaleString("pl-PL") ?? t("statistics.unknown"),
+    },
+  ];
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data,
+    columns,
+    getRowId: (day) => day.date,
+  });
 
   return (
     <SectionCard>
@@ -90,36 +126,22 @@ export function KillAnalyticsTrend({ title, data }: KillAnalyticsTrendProps) {
         ) : (
           <ScrollArea className="h-[280px]">
             <Table aria-label={title}>
-              <TableHeader className="sticky top-0 z-10 bg-background">
-                <TableRow>
-                  <TableHead scope="col">{t("statistics.date")}</TableHead>
-                  <TableHead scope="col" className="text-right">
-                    {t("statistics.kills")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((day) => (
-                  <TableRow key={day.date}>
-                    <TableCell
-                      as="th"
-                      scope="row"
-                      className="text-left font-normal tabular-nums"
-                    >
-                      {day.date}
-                      {day.partial && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {t("statistics.partial")}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">
-                      {day.kills?.toLocaleString("pl-PL") ??
-                        t("statistics.unknown")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+              <TanStackTableHeader
+                table={table}
+                className="sticky top-0 z-10 bg-background"
+                getHeadClassName={(header) =>
+                  header.column.id === "kills" ? "text-right" : ""
+                }
+              />
+              <TanStackTableBody
+                table={table}
+                rowHeaderColumnId="date"
+                getCellClassName={(cell) =>
+                  cell.column.id === "kills"
+                    ? "text-right font-medium tabular-nums"
+                    : "tabular-nums"
+                }
+              />
             </Table>
           </ScrollArea>
         )}
