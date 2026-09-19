@@ -1,4 +1,4 @@
-import { Predicate } from "effect";
+import { isPlainObject } from "es-toolkit";
 import { z } from "zod";
 import { API_URL, AUTH_API_URL, BATTLELOG_API_URL } from "@/config/api";
 
@@ -180,7 +180,7 @@ export async function executeExtensionHttp(
   if (isSession && response.ok && body) {
     const data: unknown = JSON.parse(body);
 
-    if (Predicate.isObject(data) && Predicate.isObject(data.session)) {
+    if (isPlainObject(data) && isPlainObject(data.session)) {
       delete data.session.token;
     }
 

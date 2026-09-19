@@ -4,10 +4,9 @@ import { watchIntegratedChatHost } from "./chat-host-runtime-adapter";
 function fixture() {
   document.body.innerHTML = `<div class="new-chat-window"><div class="chat-channel-card-wrapper"><button class="chat-channel-card active">Native</button></div><div class="chat-message-wrapper" style="display:grid"></div><div class="chat-input-wrapper"></div></div>`;
 
-  // oxlint-disable-next-line anti-slop/no-unknown-parameters -- Characterizes opaque native forwarding.
-  const setChannel = vi.fn(function (this: unknown, ...args: unknown[]) {
-    return { receiver: this, args };
-  });
+  const nativeResult = Symbol("native result");
+
+  const setChannel = vi.fn((..._args: unknown[]) => nativeResult);
 
   const chatWindow = { setChannel };
   const input = { setChannel: vi.fn(), focus: vi.fn() };
@@ -21,7 +20,7 @@ function fixture() {
     },
   });
 
-  return { runtime, chatWindow, input, setChannel };
+  return { runtime, chatWindow, input, setChannel, nativeResult };
 }
 
 afterEach(() => {
@@ -97,7 +96,7 @@ describe("NI chat host", () => {
   });
 
   it("restores native channels, forwards arguments/receiver/result once, and cleans up", () => {
-    const { runtime, chatWindow, setChannel, input } = fixture();
+    const { runtime, chatWindow, setChannel, input, nativeResult } = fixture();
     const nativeHost = document.querySelector<HTMLElement>(".new-chat-window");
 
     if (!nativeHost) throw new Error("Missing native chat fixture");
@@ -109,10 +108,9 @@ describe("NI chat host", () => {
       document.querySelector<HTMLElement>(".chat-message-wrapper")?.style
         .display,
     ).toBe("none");
-    expect(chatWindow.setChannel("LOCAL", null, true)).toEqual({
-      receiver: chatWindow,
-      args: ["LOCAL", null, true],
-    });
+    expect(chatWindow.setChannel("LOCAL", null, true)).toBe(nativeResult);
+    expect(setChannel).toHaveBeenCalledWith("LOCAL", null, true);
+    expect(setChannel.mock.contexts[0]).toBe(chatWindow);
     expect(setChannel).toHaveBeenCalledTimes(1);
     expect(
       document.querySelector<HTMLElement>(".chat-message-wrapper")?.style

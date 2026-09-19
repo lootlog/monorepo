@@ -73,7 +73,6 @@ export const useNpcListLifecycle = ({
   }, [activeDetectionAnimations]);
 
   // The timer expires external detector-store cooldowns; these are not derived parent props.
-  // oxlint-disable-next-line react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent
   useEffect(() => {
     let timeoutId: number | undefined;
 

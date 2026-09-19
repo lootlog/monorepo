@@ -68,6 +68,38 @@ describe("planSettingsImport", () => {
     },
   );
 
+  it("keeps importing legacy timer maps with undefined optional properties", () => {
+    const plan = planSettingsImport({
+      documents: createSettingsDocuments(),
+      guildDocuments: undefined,
+      local: {
+        ...localSnapshot,
+        timers: {
+          ...localTimers,
+          generalConfig: { ...localTimers.generalConfig, obsolete: undefined },
+          displayConfig: {
+            fontSize: 14,
+            showType: undefined,
+            obsolete: undefined,
+          },
+        },
+      },
+      done: {},
+      accessibleGuildIds: [],
+      hasCharacterScope: true,
+    });
+
+    expect(
+      plan.patches.find((patch) => patch.domain === "timers")?.set
+        ?.generalConfig,
+    ).toEqual(localTimers.generalConfig);
+    expect(
+      plan.patches.find((patch) => patch.domain === "appearance")?.set,
+    ).toMatchObject({
+      timers: { displayConfig: { fontSize: 14, legacyAppearance: false } },
+    });
+  });
+
   it("imports only browser values that differ from defaults where the server holds defaults", () => {
     const plan = planSettingsImport({
       documents: createSettingsDocuments(),

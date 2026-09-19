@@ -1,5 +1,5 @@
 {
-  "plugins": ["oxc", "react", "typescript", "unicorn", "vitest"],
+  "plugins": ["oxc", "typescript", "unicorn", "vitest"],
   "categories": {
     "correctness": "error"
   },
@@ -42,11 +42,6 @@
     "node": true,
     "es2021": true
   },
-  "settings": {
-    "react": {
-      "version": "19.0"
-    }
-  },
   "overrides": [
     {
       // Effect tagged-value policy applies only to workspaces that depend on `effect`.
@@ -59,7 +54,6 @@
         "apps/gateway/**",
         "apps/search/**",
         "packages/cli/**",
-        "packages/client/**",
         "packages/database/**",
         "packages/domain/**",
         "packages/instrumentation/**",
@@ -161,12 +155,6 @@
             "boundaryFunctions": ["stableJsonStringify"]
           }
         ]
-      }
-    },
-    {
-      "files": ["apps/activity/src/http/activity-http.ts"],
-      "rules": {
-        "react-hooks/rules-of-hooks": "off"
       }
     },
     {
@@ -329,203 +317,6 @@
           "error",
           {
             "boundaryFunctions": ["isValid"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/client/src/realtime/event-listeners.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["emit"]
-          }
-        ],
-        "anti-slop/no-unknown-returns": [
-          "error",
-          {
-            "boundaryFunctions": ["unwrapOrganizationEvent"]
-          }
-        ],
-        "anti-slop/no-reflect-apply": [
-          "error",
-          {
-            "boundaryFunctions": ["emit"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/client/src/realtime/realtime-client.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": [
-              "resolve",
-              "toBytes",
-              "getPresenceSessionId",
-              "handleMessage",
-              "decodeFrame"
-            ]
-          }
-        ],
-        "anti-slop/no-unknown-returns": [
-          "error",
-          {
-            "boundaryFunctions": [
-              "join",
-              "subscribeScope",
-              "unsubscribeScope",
-              "request",
-              "performJoin"
-            ]
-          }
-        ],
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": ["getPresenceSessionId", "decodeFrame"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/client/src/realtime/realtime-client.test.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["respondToLastRequest"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/client/src/transport.ts"],
-      "rules": {
-        "anti-slop/no-unsafe-dictionary-type": [
-          "error",
-          {
-            "boundaryTypes": ["RawQueryParameters"]
-          }
-        ],
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": [
-              "getApiMessageFromData",
-              "appendQueryValue",
-              "requestWithBody",
-              "createRequestBody",
-              "post",
-              "put",
-              "patch",
-              "getApiErrorStatus",
-              "getApiErrorMessage"
-            ]
-          }
-        ],
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": [
-              "getApiMessageFromData",
-              "getApiErrorStatus",
-              "getApiErrorStringField"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/client/scripts/openapi-transformer.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": [
-              "replaceSchemaRef",
-              "transformOpenApiDocument"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/client/scripts/check-openapi.ts"],
-      "rules": {
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["assert"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["apps/wiki/src/routes/items.tsx"],
-      "rules": {
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": ["validateSearch"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["apps/wiki/src/routes/-search-route.utils.ts"],
-      "rules": {
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": ["validateBasicRouteSearch"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/ui/src/components/sidebar.tsx"],
-      "rules": {
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": ["setOpen", "SidebarMenuButton"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["packages/ui/src/components/chart.tsx"],
-      "rules": {
-        "anti-slop/no-unsafe-dictionary-type": [
-          "error",
-          {
-            "boundaryTypes": ["ChartSourceRow"]
-          }
-        ],
-        "anti-slop/no-unknown-parameters": [
-          "error",
-          {
-            "boundaryFunctions": ["getPayloadConfigFromPayload"]
-          }
-        ],
-        "anti-slop/no-runtime-typeof": [
-          "error",
-          {
-            "allowInTypeGuards": true,
-            "boundaryFunctions": [
-              "getPayloadConfigFromPayload",
-              "resolveIndicatorColor",
-              "resolveTooltipLabel"
-            ]
           }
         ]
       }
@@ -1464,24 +1255,6 @@
       }
     },
     {
-      // Context supplies a stable component; render does not create it.
-      "files": ["packages/ui/src/components/spinner.tsx"],
-      "rules": {
-        "react/static-components": "off"
-      }
-    },
-    {
-      "files": [
-        // Controlled date and router values synchronize editable drafts.
-        "packages/ui/src/components/date-time-picker.tsx",
-        "apps/wiki/src/routes/-use-basic-search-form.ts",
-        "apps/wiki/src/routes/items.tsx"
-      ],
-      "rules": {
-        "react/set-state-in-effect": "off"
-      }
-    },
-    {
       // Async fakes preserve Promise contracts; fixtures use asserted indices.
       "files": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
       "rules": {
@@ -1559,27 +1332,6 @@
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/consistent-type-imports": "warn",
     "@typescript-eslint/no-import-type-side-effects": "warn",
-    "react/react-in-jsx-scope": "off",
-    "react/jsx-key": "error",
-    "react/jsx-no-duplicate-props": "error",
-    "react/jsx-no-undef": "error",
-    "react/no-children-prop": "error",
-    "react/no-danger-with-children": "error",
-    "react/no-direct-mutation-state": "error",
-    "react/no-unescaped-entities": "warn",
-    "react/no-unknown-property": "error",
-    "react/self-closing-comp": "warn",
-    "react/jsx-boolean-value": "warn",
-    "react/jsx-curly-brace-presence": [
-      "warn",
-      {
-        "props": "never",
-        "children": "never",
-        "propElementValues": "ignore"
-      }
-    ],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
     "unicorn/catch-error-name": [
       "warn",
       {
@@ -1600,8 +1352,6 @@
     "vitest/valid-expect": "error",
     // Typed implementations infer signatures; assertion-only spies need no signature.
     "vitest/require-mock-type-parameters": "off",
-    // React Compiler safely skips unsupported RHF and TanStack APIs.
-    "react/incompatible-library": "off",
     // Effect generators capture their owning service with self.
     "@typescript-eslint/no-this-alias": [
       "warn",

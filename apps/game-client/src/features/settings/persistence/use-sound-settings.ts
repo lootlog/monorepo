@@ -1,4 +1,3 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
 import type {
   UpdateSoundSettingsPayload,
   UserSoundSettings,
@@ -7,6 +6,7 @@ import { normalizeSoundSettings } from "@/lib/api/generated-helpers";
 import {
   selectSettingsValue,
   type SettingsDocuments,
+  type SettingsOperation,
 } from "./settings-documents";
 import {
   enqueueSettingsPatch,
@@ -71,7 +71,7 @@ export const useUpdateSoundSettings = () => {
     masterVolume: _deviceLocalMasterVolume,
     ...payload
   }: UpdateSoundSettingsPayload) => {
-    const set: Record<string, unknown> = {};
+    const set: SettingsOperation["set"] = {};
 
     for (const [key, value] of Object.entries(payload)) {
       if (value !== undefined) set[key] = value;

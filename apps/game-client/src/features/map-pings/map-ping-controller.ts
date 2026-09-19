@@ -324,9 +324,9 @@ export class MapPingController {
   private drawHandheldMiniMap() {
     const currentMapId = this.renderer.getMapGeometry()?.id;
     const miniMap = this.renderer.getHandheldMiniMap();
-    const context = miniMap?.context;
-    const margin = miniMap?.margin;
-    const normalSize = miniMap?.normalSize;
+
+    if (!miniMap) return;
+    const { context, margin, normalSize } = miniMap;
 
     if (
       currentMapId === undefined ||
@@ -338,8 +338,6 @@ export class MapPingController {
       return;
     }
 
-    // The preceding guard excludes missing, zero, and negative normalSize values.
-    // oxlint-disable-next-line react-doctor/no-arithmetic-on-optional-chained-operand
     const radius = Math.min(14, Math.max(6, normalSize * 1.75));
 
     for (const ping of this.activePings.values()) {

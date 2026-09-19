@@ -1,4 +1,4 @@
-import { Predicate } from "effect";
+import { isPlainObject } from "es-toolkit";
 import { useGameStore } from "@/store/game.store";
 import type {
   CreatePartyGatheringDtoCharacter,
@@ -144,7 +144,7 @@ export const normalizeTimerMember = (
 };
 
 export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
-  const data = Predicate.isObject(npc) ? npc : undefined;
+  const data = isPlainObject(npc) ? npc : undefined;
 
   return {
     id: getNumber(data?.id),
@@ -162,13 +162,13 @@ export const normalizeTimerNpc = (npc: TimerResponseDto["npc"]): Npc => {
 const normalizeSoundCategoryConfig = (
   value: unknown,
 ): Record<string, NpcTypeSoundConfig> => {
-  if (!Predicate.isObject(value)) {
+  if (!isPlainObject(value)) {
     return {};
   }
 
   return Object.entries(value).reduce<Record<string, NpcTypeSoundConfig>>(
     (result, [key, config]) => {
-      if (!Predicate.isObject(config)) {
+      if (!isPlainObject(config)) {
         return result;
       }
 

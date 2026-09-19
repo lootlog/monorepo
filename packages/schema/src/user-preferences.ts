@@ -1,12 +1,12 @@
 import type { DetectorNpcType } from "./account-preferences.js";
 import type { ChatAppearanceSettings } from "./chat-appearance.js";
 
-export interface MutedPlayerPreference {
+export type MutedPlayerPreference = {
   discordId: string;
   displayName: string;
-}
+};
 
-export interface MutedNpcPreference {
+export type MutedNpcPreference = {
   npcKey: string;
   npcId: number;
   name: string;
@@ -14,17 +14,17 @@ export interface MutedNpcPreference {
   lvl: number;
   prof: string | null;
   icon: string | null;
-}
+};
 
-export interface NotificationMutes {
+export type NotificationMutes = {
   players: MutedPlayerPreference[];
   npcs: MutedNpcPreference[];
-}
+};
 
-export interface NotificationMutesPatch {
+export type NotificationMutesPatch = {
   players?: MutedPlayerPreference[];
   npcs?: MutedNpcPreference[];
-}
+};
 
 export interface UserPreferences {
   userId: string;

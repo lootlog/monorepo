@@ -122,7 +122,6 @@ export const SettingsRow: FC<SettingsRowProps> = ({
         {description ? (
           // The description is a click target for the control only; it must
           // not join the control's accessible name the way a second <label> would.
-          // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
           <p
             className={cn(
               "ll:m-0 ll:mt-0.5 ll:text-xs ll:leading-4 ll:text-muted-foreground",

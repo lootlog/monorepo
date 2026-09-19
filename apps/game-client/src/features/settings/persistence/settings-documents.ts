@@ -1,6 +1,8 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { z } from "zod";
 import {
   SETTINGS_CATALOG,
+  SETTINGS_DOMAINS,
+  SETTINGS_SCOPE_TYPES,
   type ServerSettingsCatalogKey,
   type SettingsCatalogValue,
   type SettingsDomain,
@@ -8,25 +10,61 @@ import {
 } from "@lootlog/domain/settings-documents";
 import {
   collectLeafPaths,
+  type SettingsJsonRecord,
   getPath,
   setPath,
   unsetPath,
 } from "@lootlog/domain/settings-paths";
-import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import {
   getSettingsDocumentsControllerGetGuildPreferencesQueryKey,
   getSettingsDocumentsControllerGetPreferencesQueryKey,
-  type GuildSettingsDocumentsResponseDtoOutput,
   type PatchSettingsDocumentsDtoOperationsItem,
   type SettingsDocumentsControllerGetGuildPreferencesParams,
   type SettingsDocumentsControllerGetPreferencesParams,
-  type SettingsDocumentsResponseDtoOutput,
 } from "@lootlog/client/main";
 
-export type SettingsDocuments = SettingsDocumentsResponseDtoOutput;
+const settingsScopeSchema = z.object({
+  type: z.enum(SETTINGS_SCOPE_TYPES),
+  id: z.string().min(1),
+});
+
+const settingsVersionSchema = z.number().int().min(1);
+
+const settingsValuesSchema = z.record(z.string(), z.json());
+
+export const settingsDocumentsSchema = z.object({
+  domains: z.record(
+    z.string(),
+    z.object({
+      effective: settingsValuesSchema,
+      layers: z.array(
+        z.object({
+          scope: settingsScopeSchema,
+          overrides: settingsValuesSchema,
+          schemaVersion: settingsVersionSchema.optional(),
+          updatedAt: z.iso.datetime().optional(),
+        }),
+      ),
+      sources: z.record(
+        z.string(),
+        z.union([z.literal("DEFAULT"), settingsScopeSchema]),
+      ),
+      schemaVersion: settingsVersionSchema,
+      updatedAt: z.iso.datetime().optional(),
+    }),
+  ),
+});
+
+export type SettingsDocuments = z.infer<typeof settingsDocumentsSchema>;
+
+export const guildSettingsDocumentsSchema = z.object({
+  guilds: z.record(z.string(), settingsDocumentsSchema),
+});
 
 /** Guild-scoped documents keyed by guild id, from one batched request. */
-export type GuildSettingsDocuments = GuildSettingsDocumentsResponseDtoOutput;
+export type GuildSettingsDocuments = z.infer<
+  typeof guildSettingsDocumentsSchema
+>;
 
 export type SettingsScopeType =
   PatchSettingsDocumentsDtoOperationsItem["scope"]["type"];
@@ -38,7 +76,7 @@ export type SettingsValueSource = "DEFAULT" | SettingsScope;
 export type SettingsOperation = {
   domain: SettingsDomain;
   scope: SettingsScope;
-  set: Record<string, unknown>;
+  set: SettingsJsonRecord;
   unset: string[];
 };
 
@@ -110,9 +148,16 @@ export const splitSettingsKey = <TKey extends ServerSettingsCatalogKey>(
 const getFieldDefinition = (
   domain: SettingsDomain,
   field: string,
-): SettingsFieldDefinition | undefined => {
-  const fields: Readonly<Record<string, SettingsFieldDefinition | undefined>> =
-    SETTINGS_CATALOG[domain].fields;
+):
+  | SettingsFieldDefinition<SettingsCatalogValue<ServerSettingsCatalogKey>>
+  | undefined => {
+  const fields: Readonly<
+    Record<
+      string,
+      | SettingsFieldDefinition<SettingsCatalogValue<ServerSettingsCatalogKey>>
+      | undefined
+    >
+  > = SETTINGS_CATALOG[domain].fields;
 
   return fields[field];
 };
@@ -275,5 +320,7 @@ export const mergeSettingsDocuments = (
     : current;
 
 /** Structural equality for catalog-shaped values (plain JSON). */
-export const areSettingsValuesEqual = (left: unknown, right: unknown) =>
-  left === right || JSON.stringify(left) === JSON.stringify(right);
+export const areSettingsValuesEqual = (
+  left: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,
+  right: SettingsCatalogValue<ServerSettingsCatalogKey> | undefined,
+) => left === right || JSON.stringify(left) === JSON.stringify(right);

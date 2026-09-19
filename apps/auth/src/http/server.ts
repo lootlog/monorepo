@@ -57,7 +57,6 @@ const betterAuthMethods = [
   "OPTIONS",
 ] as const;
 
-// oxlint-disable-next-line react-hooks/rules-of-hooks -- Effect router constructor, not React.
 const BetterAuthRawRoutes = HttpRouter.use((router) =>
   Effect.gen(function* () {
     const auth = yield* BetterAuthRuntime;

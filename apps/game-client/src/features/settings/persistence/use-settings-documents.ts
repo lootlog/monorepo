@@ -3,10 +3,12 @@ import { useGameStore } from "@/store/game.store";
 import {
   getSettingsDocumentsControllerGetPreferencesQueryKey,
   settingsDocumentsControllerGetGuildPreferences,
-  useSettingsDocumentsControllerGetPreferences,
+  settingsDocumentsControllerGetPreferences,
 } from "@lootlog/client/main";
 import { useQuery } from "@tanstack/react-query";
 import {
+  settingsDocumentsSchema,
+  guildSettingsDocumentsSchema,
   getGuildTimersDocumentsParams,
   getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsParams,
@@ -35,12 +37,14 @@ export const useSettingsDocuments = () => {
 
   const params = getSettingsDocumentsParams(useSettingsDocumentsContext());
 
-  return useSettingsDocumentsControllerGetPreferences(params, {
-    query: {
-      queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params),
-      enabled: gameInitialized,
-      ...QUERY_OPTIONS,
-    },
+  return useQuery({
+    queryFn: async ({ signal }) =>
+      settingsDocumentsSchema.parse(
+        await settingsDocumentsControllerGetPreferences(params, { signal }),
+      ),
+    queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params),
+    enabled: gameInitialized,
+    ...QUERY_OPTIONS,
   });
 };
 
@@ -54,8 +58,12 @@ export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
 
   return useQuery({
     queryKey: getGuildTimersDocumentsQueryKey(guildIds),
-    queryFn: (): Promise<GuildSettingsDocuments> =>
-      settingsDocumentsControllerGetGuildPreferences(params),
+    queryFn: async ({ signal }): Promise<GuildSettingsDocuments> =>
+      guildSettingsDocumentsSchema.parse(
+        await settingsDocumentsControllerGetGuildPreferences(params, {
+          signal,
+        }),
+      ),
     enabled: gameInitialized && guildIds.length > 0,
     ...QUERY_OPTIONS,
   });

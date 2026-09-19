@@ -1,4 +1,3 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
 import {
   normalizeAirTags,
   normalizeDetector,
@@ -105,7 +104,10 @@ export const useUpdateGameAccountPreferences = () => {
   const status = useSettingsSaveStatus();
 
   const mutate = (payload: UpdateUserGameAccountPreferencesPayload) => {
-    const gameDataSet: Record<string, unknown> = {};
+    const gameDataSet: Pick<
+      UpdateUserGameAccountPreferencesPayload,
+      "detector" | "pings" | "airTags"
+    > = {};
 
     if (payload.detector) gameDataSet.detector = payload.detector;
 

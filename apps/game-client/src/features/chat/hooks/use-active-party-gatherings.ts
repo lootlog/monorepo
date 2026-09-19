@@ -31,8 +31,7 @@ export function useActivePartyGatherings() {
     staleTime: 0,
   });
 
-  // Cleanup removes every listener with the same event and handler, including the events loop.
-  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup -- Cleanup removes every listener with the same event and handler, including the events loop.
   useEffect(() => {
     if (!connected || !joined || !socket) return;
 

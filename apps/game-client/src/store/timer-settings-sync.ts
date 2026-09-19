@@ -1,4 +1,5 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns, anti-slop/no-runtime-typeof, anti-slop/no-known-value-widening -- the settings persistence layer is the I/O boundary for catalog-validated document JSON; values are typed by the catalog when read through selectors. */
+import { isString } from "es-toolkit";
+import type { SettingsOperation } from "@/features/settings/persistence/settings-documents";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 import { queryClient } from "@/lib/query-client";
 import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
@@ -42,7 +43,7 @@ const BEHAVIOR_FIELDS = [
 export const GLOBAL_TIMER_SETTINGS_KEY = "global";
 
 const hasTimersQueryKey = (queryKey: readonly unknown[]) =>
-  typeof queryKey[0] === "string" && queryKey[0].startsWith("/timers");
+  isString(queryKey[0]) && queryKey[0].startsWith("/timers");
 
 /** The timer list API applies always-visible expired timers server-side. */
 export const invalidateTimerLists = () =>
@@ -60,19 +61,18 @@ export const syncTimerSettings = (
   payload: UpdateTimerSettingsPayload,
   previous: Pick<UpdateTimerSettingsPayload, AppearanceMapField> = {},
 ) => {
-  const appearance: Record<string, unknown> = {};
+  const appearance: SettingsOperation["set"] = {};
   const unsetAppearance: string[] = [];
-  const behavior: Record<string, unknown> = {};
+  const behavior: SettingsOperation["set"] = {};
 
   for (const field of APPEARANCE_FIELDS) {
-    const value = payload[field];
-
-    if (value === undefined) continue;
-
     if (field === "timersColors") {
+      const colors = payload[field];
+
+      if (colors === undefined) continue;
       const assigned: Record<string, string> = {};
 
-      for (const [npcName, colorId] of Object.entries(value)) {
+      for (const [npcName, colorId] of Object.entries(colors)) {
         if (colorId === undefined) {
           unsetAppearance.push(`timers.timersColors.${npcName}`);
         } else {
@@ -83,6 +83,10 @@ export const syncTimerSettings = (
       appearance[field] = assigned;
       continue;
     }
+
+    const value = payload[field];
+
+    if (value === undefined) continue;
 
     if (isAppearanceMapField(field) && Object.keys(value).length > 0) {
       for (const key of Object.keys(previous[field] ?? {})) {

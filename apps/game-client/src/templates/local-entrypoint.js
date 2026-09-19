@@ -50,8 +50,7 @@ const bundleUrl = "$GAME_CLIENT_LOCAL_BUNDLE_URL$";
         return;
       }
 
-      // Both script load and error handlers revoke this URL after execution finishes.
-      // oxlint-disable-next-line react-doctor/no-create-object-url-without-revoke
+      // oxlint-disable-next-line react-doctor/no-create-object-url-without-revoke -- Both script load and error handlers revoke this URL after execution finishes.
       const bundleObjectUrl = URL.createObjectURL(
         new Blob([response.responseText], { type: "text/javascript" }),
       );

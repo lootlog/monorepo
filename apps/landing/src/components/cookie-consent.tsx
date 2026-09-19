@@ -14,8 +14,7 @@ export function CookieConsent() {
     const consent = readCookieConsent(localStorage);
 
     if (!consent) {
-      // The persisted decision is only available after browser hydration.
-      // oxlint-disable-next-line react/set-state-in-effect
+      // oxlint-disable-next-line react/set-state-in-effect -- localStorage is unavailable during prerendering; reveal the banner after hydration to preserve matching server/client markup.
       setIsVisible(true);
     }
   }, []);
