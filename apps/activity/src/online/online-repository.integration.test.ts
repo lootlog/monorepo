@@ -82,7 +82,7 @@ describe("durable private online history", () => {
         const migration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
-              "../../drizzle/migrations/0001_user_online_history.sql",
+              "../../drizzle/migrations/20260906084000_user_online_history/migration.sql",
               import.meta.url,
             ),
           ).text(),
@@ -94,7 +94,7 @@ describe("durable private online history", () => {
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
-              "../../drizzle/migrations/0003_online_world_provenance.sql",
+              "../../drizzle/migrations/20260906115013_online_world_provenance/migration.sql",
               import.meta.url,
             ),
           ).text(),
@@ -655,7 +655,7 @@ describe("durable private online history", () => {
         const migration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
-              "../../drizzle/migrations/0002_online_history_16_week_retention.sql",
+              "../../drizzle/migrations/20260906084001_online_history_16_week_retention/migration.sql",
               import.meta.url,
             ),
           ).text(),
@@ -667,7 +667,7 @@ describe("durable private online history", () => {
         const worldsMigration = yield* Effect.promise(() =>
           Bun.file(
             new URL(
-              "../../drizzle/migrations/0003_online_world_provenance.sql",
+              "../../drizzle/migrations/20260906115013_online_world_provenance/migration.sql",
               import.meta.url,
             ),
           ).text(),

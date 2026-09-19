@@ -1,6 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import fs from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
@@ -10,25 +8,7 @@ import { makeAuthPostgresLayer, PostgresPool } from "./postgres.js";
 import { AuthDatabase } from "./drizzle.js";
 import { Effect, Layer, ManagedRuntime, Redacted } from "effect";
 import pg from "pg";
-import {
-  assertAuthSchemaFingerprint,
-  planAuthMigration,
-  runAuthMigrations,
-} from "./migrations.js";
-
-const baselinePath = fileURLToPath(
-  new URL(
-    "../../drizzle/20260422122033_loving_the_leader/migration.sql",
-    import.meta.url,
-  ),
-);
-
-const betterAuth17Path = fileURLToPath(
-  new URL(
-    "../../drizzle/20260902062446_aberrant_martin_li/migration.sql",
-    import.meta.url,
-  ),
-);
+import { planAuthMigration, runAuthMigrations } from "./migrations.js";
 
 describe("Better Auth 1.7 PostgreSQL migration", () => {
   let postgres: StartedPostgreSqlContainer;
@@ -91,7 +71,15 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       await Effect.runPromise(
         runAuthMigrations(connection.db, connection.client),
       );
+      await insertUser(connection.pool, "existing-user", "existing-discord");
+      await insertAccount(
+        connection.pool,
+        "existing-account",
+        "existing-user",
+        "existing-discord",
+      );
       await connection.pool.query(`
+        UPDATE "account" SET "issuer" = 'local:oauth:discord';
         DROP INDEX "account_providerId_accountId_uidx";
         ALTER TABLE "account" ALTER COLUMN "issuer" SET NOT NULL;
         CREATE UNIQUE INDEX "account_issuer_accountId_uidx" ON "account" ("issuer", "accountId");
@@ -106,6 +94,23 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       expect(
         await Effect.runPromise(planAuthMigration(connection.client)),
       ).toMatchObject({ status: "up-to-date", pendingMigrations: 0 });
+      await insertUser(connection.pool, "new-user", "new-discord");
+      await insertAccount(
+        connection.pool,
+        "new-account",
+        "new-user",
+        "new-discord",
+      );
+      expect(
+        (
+          await connection.pool.query(
+            'SELECT "id", "issuer" FROM "account" ORDER BY "id"',
+          )
+        ).rows,
+      ).toEqual([
+        { id: "existing-account", issuer: "local:oauth:discord" },
+        { id: "new-account", issuer: null },
+      ]);
     } finally {
       await connection.close();
     }
@@ -120,8 +125,6 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       ).toMatchObject({
         status: "ready",
         source: "fresh",
-        accountCount: 0,
-        issuerBackfillCount: 0,
       });
 
       await Effect.runPromise(
@@ -130,161 +133,12 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
       await Effect.runPromise(
         runAuthMigrations(connection.db, connection.client),
       );
-      await Effect.runPromise(assertAuthSchemaFingerprint(connection.client));
       expect(
         await Effect.runPromise(planAuthMigration(connection.client)),
       ).toMatchObject({
         status: "up-to-date",
-        source: "better-auth-1.7",
+        source: "drizzle",
         pendingMigrations: 0,
-      });
-    } finally {
-      await connection.close();
-    }
-  });
-
-  it("adds the Better Auth 1.7 JWKS metadata columns to an existing schema", async () => {
-    const databaseUri = await createDatabase(postgres, "auth_v17_jwks");
-    const connection = await makeConnection(databaseUri);
-
-    try {
-      await installCanonicalLegacySchema(connection.pool);
-      await connection.pool.query(await fs.readFile(betterAuth17Path, "utf8"));
-
-      expect(
-        await Effect.runPromise(planAuthMigration(connection.client)),
-      ).toMatchObject({
-        status: "ready",
-        source: "better-auth-1.7-pre-jwks-metadata",
-        pendingMigrations: 3,
-      });
-
-      await Effect.runPromise(
-        runAuthMigrations(connection.db, connection.client),
-      );
-
-      expect(
-        await connection.pool.query(`
-          SELECT column_name AS "columnName", is_nullable AS "isNullable"
-          FROM information_schema.columns
-          WHERE table_schema = 'public'
-            AND table_name = 'jwks'
-            AND column_name IN ('alg', 'crv')
-          ORDER BY column_name
-        `),
-      ).toMatchObject({
-        rows: [
-          { columnName: "alg", isNullable: "YES" },
-          { columnName: "crv", isNullable: "YES" },
-        ],
-      });
-      expect(
-        await Effect.runPromise(planAuthMigration(connection.client)),
-      ).toMatchObject({
-        status: "up-to-date",
-        source: "better-auth-1.7",
-        pendingMigrations: 0,
-      });
-    } finally {
-      await connection.close();
-    }
-  });
-
-  it("backfills a populated canonical 1.6 schema", async () => {
-    const databaseUri = await createDatabase(postgres, "auth_v16");
-    const connection = await makeConnection(databaseUri);
-
-    try {
-      await installCanonicalLegacySchema(connection.pool);
-      await insertUser(connection.pool, "user-1", "discord-1");
-      await insertAccount(connection.pool, "account-1", "user-1", "discord-1");
-
-      expect(
-        await Effect.runPromise(planAuthMigration(connection.client)),
-      ).toMatchObject({
-        status: "ready",
-        source: "better-auth-1.6",
-        accountCount: 1,
-        issuerBackfillCount: 1,
-      });
-
-      await Effect.runPromise(
-        runAuthMigrations(connection.db, connection.client),
-      );
-      expect(
-        await connection.pool.query(
-          `SELECT "issuer" FROM "account" WHERE "id" = 'account-1'`,
-        ),
-      ).toMatchObject({ rows: [{ issuer: "local:oauth:discord" }] });
-      await Effect.runPromise(assertAuthSchemaFingerprint(connection.client));
-    } finally {
-      await connection.close();
-    }
-  });
-
-  it("upgrades the imported production shape without changing identities or UTC instants", async () => {
-    const databaseUri = await createDatabase(postgres, "auth_imported_v16");
-    const connection = await makeConnection(databaseUri);
-
-    try {
-      await installImportedLegacySchema(connection.pool);
-      await insertUser(connection.pool, "user-1", "discord-a", {
-        createdAt: "2026-01-02 03:04:05",
-      });
-      await insertAccount(connection.pool, "account-a", "user-1", "discord-a");
-      await insertAccount(connection.pool, "account-b", "user-1", "discord-b");
-      await insertAccount(connection.pool, "account-c", "user-1", "discord-c");
-      await connection.pool.query(`
-        INSERT INTO "verification" (
-          "id", "identifier", "value", "expiresAt", "createdAt", "updatedAt"
-        ) VALUES (
-          'verification-1', 'identifier-1', 'value-1',
-          '2026-01-03 03:04:05', NULL, NULL
-        )
-      `);
-
-      const identitiesBefore = await readStableIdentities(connection.pool);
-      expect(
-        await Effect.runPromise(planAuthMigration(connection.client)),
-      ).toMatchObject({
-        status: "ready",
-        source: "better-auth-1.6-imported",
-        userCount: 1,
-        accountCount: 3,
-        verificationTimestampBackfillCount: 1,
-        timestampNormalizationColumns: 14,
-      });
-
-      await Effect.runPromise(
-        runAuthMigrations(connection.db, connection.client),
-      );
-
-      expect(await readStableIdentities(connection.pool)).toEqual(
-        identitiesBefore,
-      );
-      expect(
-        await connection.pool.query<{ utcCreatedAt: string }>(`
-          SELECT to_char(
-            "createdAt" AT TIME ZONE 'UTC',
-            'YYYY-MM-DD HH24:MI:SS'
-          ) AS "utcCreatedAt"
-          FROM "user"
-          WHERE "id" = 'user-1'
-        `),
-      ).toMatchObject({ rows: [{ utcCreatedAt: "2026-01-02 03:04:05" }] });
-      expect(
-        await connection.pool.query<{ count: string }>(`
-          SELECT COUNT(*)::text AS count
-          FROM "verification"
-          WHERE "createdAt" IS NULL OR "updatedAt" IS NULL
-        `),
-      ).toMatchObject({ rows: [{ count: "0" }] });
-      expect(
-        await Effect.runPromise(planAuthMigration(connection.client)),
-      ).toMatchObject({
-        status: "up-to-date",
-        source: "better-auth-1.7",
-        missingIndexes: [],
       });
     } finally {
       await connection.close();
@@ -341,7 +195,13 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
         const connection = await makeConnection(databaseUri);
 
         try {
-          await installCanonicalLegacySchema(connection.pool);
+          await Effect.runPromise(
+            runAuthMigrations(connection.db, connection.client),
+          );
+          await connection.pool.query(`
+            DROP INDEX "account_providerId_accountId_uidx";
+            DROP INDEX "user_discordId_key";
+          `);
           await insertUser(connection.pool, "user-1", "discord-1");
           await insertAccount(
             connection.pool,
@@ -362,7 +222,13 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
               runAuthMigrations(connection.db, connection.client),
             ),
           ).rejects.toThrow("No database changes were applied");
-          await expectIssuerAndTrackingToBeAbsent(connection.pool);
+          expect(
+            (
+              await connection.pool.query(
+                "SELECT count(*)::int AS count FROM drizzle.__drizzle_migrations",
+              )
+            ).rows,
+          ).toEqual([{ count: 5 }]);
         } finally {
           await connection.close();
         }
@@ -370,25 +236,125 @@ describe("Better Auth 1.7 PostgreSQL migration", () => {
     );
   });
 
-  it("blocks an unknown schema before the first write", async () => {
-    const databaseUri = await createDatabase(postgres, "auth_unknown");
-    const connection = await makeConnection(databaseUri);
+  it("upgrades a legacy Drizzle journal with subsecond timestamps without readopting it", async () => {
+    const connection = await makeConnection(
+      await createDatabase(postgres, "legacy_journal"),
+    );
 
     try {
-      await installCanonicalLegacySchema(connection.pool);
-      await connection.pool.query(`DROP INDEX "account_userId_idx"`);
+      const baseline = await Bun.file(
+        new URL(
+          "../../drizzle/20260422122033_loving_the_leader/migration.sql",
+          import.meta.url,
+        ),
+      ).text();
 
+      const hash = new Bun.CryptoHasher("sha256")
+        .update(baseline)
+        .digest("hex");
+
+      await connection.pool.query(baseline);
+      await connection.pool.query(`
+        CREATE SCHEMA drizzle;
+        CREATE TABLE drizzle.__drizzle_migrations (
+          id SERIAL PRIMARY KEY,
+          hash text NOT NULL,
+          created_at bigint
+        );
+      `);
+      await connection.pool.query(
+        "INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)",
+        [hash, 1776860433396],
+      );
+      await insertUser(connection.pool, "legacy-user", "legacy-discord");
+      await insertAccount(
+        connection.pool,
+        "legacy-account",
+        "legacy-user",
+        "legacy-discord",
+      );
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      expect(
+        (
+          await connection.pool.query(
+            "SELECT created_at::text FROM drizzle.__drizzle_migrations WHERE hash = $1",
+            [hash],
+          )
+        ).rows,
+      ).toEqual([{ created_at: "1776860433396" }]);
+      expect(
+        (
+          await connection.pool.query(
+            'SELECT "id", "accountId", "issuer" FROM "account"',
+          )
+        ).rows,
+      ).toEqual([
+        {
+          id: "legacy-account",
+          accountId: "legacy-discord",
+          issuer: "local:oauth:discord",
+        },
+      ]);
       expect(
         await Effect.runPromise(planAuthMigration(connection.client)),
-      ).toMatchObject({
-        status: "blocked",
-        source: "unknown",
-        integrityViolations: [{ code: "UNKNOWN_SCHEMA", count: 1 }],
-      });
+      ).toMatchObject({ status: "up-to-date", pendingMigrations: 0 });
+    } finally {
+      await connection.close();
+    }
+  });
+
+  it("refuses an existing database without its migration journal", async () => {
+    const connection = await makeConnection(
+      await createDatabase(postgres, "untracked"),
+    );
+
+    try {
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      await connection.pool.query("DROP SCHEMA drizzle CASCADE");
       await expect(
         Effect.runPromise(runAuthMigrations(connection.db, connection.client)),
-      ).rejects.toThrow("No database changes were applied");
-      await expectIssuerAndTrackingToBeAbsent(connection.pool);
+      ).rejects.toThrow("MIGRATION_TRACKING_MISMATCH");
+      expect(
+        (
+          await connection.pool.query(
+            "SELECT to_regclass('drizzle.__drizzle_migrations') AS journal",
+          )
+        ).rows,
+      ).toEqual([{ journal: null }]);
+    } finally {
+      await connection.close();
+    }
+  });
+
+  it("rejects a changed migration journal before applying pending SQL", async () => {
+    const connection = await makeConnection(
+      await createDatabase(postgres, "changed_journal"),
+    );
+
+    try {
+      await Effect.runPromise(
+        runAuthMigrations(connection.db, connection.client),
+      );
+      await connection.pool.query(
+        "UPDATE drizzle.__drizzle_migrations SET hash = 'unknown' WHERE id = 1",
+      );
+      await expect(
+        Effect.runPromise(runAuthMigrations(connection.db, connection.client)),
+      ).rejects.toThrow("MIGRATION_TRACKING_MISMATCH");
+      expect(
+        (
+          await connection.pool.query(
+            "SELECT hash FROM drizzle.__drizzle_migrations WHERE id = 1",
+          )
+        ).rows,
+      ).toEqual([{ hash: "unknown" }]);
     } finally {
       await connection.close();
     }
@@ -433,46 +399,6 @@ async function createDatabase(
   return new URL(`/${database}`, postgres.getConnectionUri()).toString();
 }
 
-async function installCanonicalLegacySchema(pool: pg.Pool) {
-  await pool.query(await fs.readFile(baselinePath, "utf8"));
-}
-
-async function installImportedLegacySchema(pool: pg.Pool) {
-  await installCanonicalLegacySchema(pool);
-  await pool.query(`
-    ALTER TABLE "account"
-      ALTER COLUMN "accessTokenExpiresAt" TYPE timestamp without time zone,
-      ALTER COLUMN "refreshTokenExpiresAt" TYPE timestamp without time zone,
-      ALTER COLUMN "createdAt" DROP DEFAULT,
-      ALTER COLUMN "createdAt" TYPE timestamp without time zone,
-      ALTER COLUMN "updatedAt" TYPE timestamp without time zone;
-    ALTER TABLE "jwks"
-      ALTER COLUMN "createdAt" TYPE timestamp without time zone;
-    ALTER TABLE "session"
-      ALTER COLUMN "createdAt" DROP DEFAULT,
-      ALTER COLUMN "createdAt" TYPE timestamp without time zone,
-      ALTER COLUMN "expiresAt" TYPE timestamp without time zone,
-      ALTER COLUMN "updatedAt" TYPE timestamp without time zone;
-    ALTER TABLE "user"
-      ALTER COLUMN "banExpires" TYPE timestamp without time zone,
-      ALTER COLUMN "createdAt" DROP DEFAULT,
-      ALTER COLUMN "createdAt" TYPE timestamp without time zone,
-      ALTER COLUMN "updatedAt" DROP DEFAULT,
-      ALTER COLUMN "updatedAt" TYPE timestamp without time zone;
-    ALTER TABLE "verification"
-      ALTER COLUMN "createdAt" DROP DEFAULT,
-      ALTER COLUMN "createdAt" DROP NOT NULL,
-      ALTER COLUMN "createdAt" TYPE timestamp without time zone,
-      ALTER COLUMN "expiresAt" TYPE timestamp without time zone,
-      ALTER COLUMN "updatedAt" DROP DEFAULT,
-      ALTER COLUMN "updatedAt" DROP NOT NULL,
-      ALTER COLUMN "updatedAt" TYPE timestamp without time zone;
-    DROP INDEX "account_userId_idx";
-    DROP INDEX "session_userId_idx";
-    DROP INDEX "verification_identifier_idx";
-  `);
-}
-
 async function insertUser(
   pool: pg.Pool,
   userId: string,
@@ -509,44 +435,4 @@ async function insertAccount(
     `,
     [accountRowId, discordId, userId],
   );
-}
-
-async function readStableIdentities(pool: pg.Pool) {
-  const [users, accounts, sessions] = await Promise.all([
-    pool.query(`SELECT "id", "discordId" FROM "user" ORDER BY "id"`),
-    pool.query(
-      `SELECT "id", "accountId", "providerId", "userId" FROM "account" ORDER BY "id"`,
-    ),
-    pool.query(`SELECT "id", "userId" FROM "session" ORDER BY "id"`),
-  ]);
-
-  return {
-    users: users.rows,
-    accounts: accounts.rows,
-    sessions: sessions.rows,
-  };
-}
-
-async function expectIssuerAndTrackingToBeAbsent(pool: pg.Pool) {
-  const result = await pool.query<{
-    issuerColumns: string;
-    trackingTables: string;
-  }>(`
-    SELECT
-      (
-        SELECT COUNT(*)::text
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'account'
-          AND column_name = 'issuer'
-      ) AS "issuerColumns",
-      (
-        SELECT COUNT(*)::text
-        FROM information_schema.tables
-        WHERE table_schema = 'drizzle'
-          AND table_name = '__drizzle_migrations'
-      ) AS "trackingTables"
-  `);
-
-  expect(result.rows[0]).toEqual({ issuerColumns: "0", trackingTables: "0" });
 }

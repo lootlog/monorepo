@@ -1,5 +1,8 @@
 import { expect, it } from "bun:test";
 import { Client } from "pg";
+import { Effect } from "effect";
+import { ApiDatabaseLive } from "../src/database/drizzle/database.js";
+import { migrateApiDatabase } from "../src/database/drizzle/migrate.js";
 
 it("normalizes legacy NULL arrays before enforcing the Drizzle schema", async () => {
   const client = new Client({
@@ -94,6 +97,28 @@ it("normalizes legacy NULL arrays before enforcing the Drizzle schema", async ()
     `);
 
     expect(nullableColumns.rows[0]?.count).toBe("0");
+
+    const journal = await client.query(
+      "SELECT * FROM drizzle.__drizzle_migrations ORDER BY id",
+    );
+
+    await Effect.runPromise(
+      migrateApiDatabase.pipe(Effect.provide(ApiDatabaseLive)),
+    );
+    expect(
+      (
+        await client.query(
+          "SELECT * FROM drizzle.__drizzle_migrations ORDER BY id",
+        )
+      ).rows,
+    ).toEqual(journal.rows);
+    expect(
+      (
+        await client.query(
+          `SELECT "guildsOrder" FROM "UserSettings" WHERE "userId" = 'review-user'`,
+        )
+      ).rows,
+    ).toEqual([{ guildsOrder: [] }]);
   } finally {
     await client.end();
   }

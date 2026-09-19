@@ -13,9 +13,9 @@ import {
 } from "testcontainers";
 import { Effect, Exit, Layer, ManagedRuntime, Redacted } from "effect";
 import { Redis } from "effect/unstable/persistence";
-import { readdir } from "node:fs/promises";
 import pg from "pg";
 import { drizzleDatabaseEffect } from "#src/database/database";
+import { migrateBattlelogDatabase } from "#src/database/migrate";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
 import { makeBattles } from "#src/battles/battles.service";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
@@ -153,14 +153,6 @@ beforeAll(async () => {
     .withWaitStrategy(Wait.forListeningPorts())
     .start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
-  const migrations = new URL("../../../drizzle/", import.meta.url);
-
-  for (const entry of (await readdir(migrations)).sort()) {
-    const file = Bun.file(new URL(`${entry}/migration.sql`, migrations));
-
-    if (await file.exists()) await pool.query(await file.text());
-  }
-
   runtime = ManagedRuntime.make(
     Layer.merge(
       makePostgresLayer({ url: Redacted.make(postgres.getConnectionUri()) }),
@@ -169,6 +161,7 @@ beforeAll(async () => {
       }),
     ),
   );
+  await runtime.runPromise(migrateBattlelogDatabase);
   services = await createServices();
 }, 60_000);
 

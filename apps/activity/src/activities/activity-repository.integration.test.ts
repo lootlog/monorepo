@@ -10,6 +10,8 @@ import { ActivityDatabase } from "#src/database/database";
 import { migrateActivityDatabase } from "#src/database/migrate";
 import { ActivitySource, ActivityType } from "#src/database/schema";
 import { ActivityRepository } from "./activity-repository.js";
+import { readMigrationFiles } from "drizzle-orm/migrator";
+import { fileURLToPath } from "node:url";
 
 describe("ActivityRepository", () => {
   let postgres: StartedPostgreSqlContainer;
@@ -37,15 +39,105 @@ describe("ActivityRepository", () => {
         ),
       ),
     );
-    expect(
-      (await pool.query('SELECT component FROM "__lootlog_drizzle_adoption"'))
-        .rows,
-    ).toEqual([{ component: "activity" }]);
   }, 60_000);
 
   afterAll(async () => {
-    await pool.end();
-    await postgres.stop();
+    await pool?.end();
+    await postgres?.stop();
+  });
+
+  it("tracks an existing unjournaled database without losing accepted records or replaying retention", async () => {
+    await pool.query("CREATE DATABASE activity_untracked");
+    const url = new URL(postgres.getConnectionUri());
+    url.pathname = "/activity_untracked";
+    const existing = new pg.Pool({ connectionString: url.toString() });
+
+    const migrations = readMigrationFiles({
+      migrationsFolder: fileURLToPath(
+        new URL("../../drizzle/migrations", import.meta.url),
+      ),
+    });
+
+    try {
+      // Reproduce the previous runner: SQL was applied without a Drizzle journal.
+      for (const migration of migrations) {
+        for (const statement of migration.sql) await existing.query(statement);
+      }
+
+      await existing.query(`
+        INSERT INTO "Activity" (id, "userId", "guildId", "discordId", type, source, "idempotencyKey")
+        VALUES ('accepted', 'user', 'guild', 'discord', 'CONNECT_EVENT', 'WEB_APP', 'accepted');
+        INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt", world)
+        VALUES ('user', 'session', 'segment', now() - interval '1 hour', now(), now(), 'world'),
+          ('expired', 'session', 'segment', now() - interval '114 days', now() - interval '113 days', now(), NULL);
+        CREATE FUNCTION reject_world_migration() RETURNS event_trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          IF current_query() LIKE '%ADD COLUMN IF NOT EXISTS "world"%' THEN
+            RAISE EXCEPTION 'Injected world migration failure';
+          END IF;
+        END $$;
+        CREATE EVENT TRIGGER reject_world_migration ON ddl_command_start
+          EXECUTE FUNCTION reject_world_migration();
+      `);
+
+      const migrateExisting = () =>
+        Effect.runPromise(
+          migrateActivityDatabase.pipe(
+            Effect.provide(
+              makePostgresLayer({ url: Redacted.make(url.toString()) }),
+            ),
+          ),
+        );
+
+      await expect(migrateExisting()).rejects.toThrow();
+      expect(
+        (
+          await existing.query(
+            'SELECT "userId" FROM "UserOnlineInterval" ORDER BY "userId"',
+          )
+        ).rows,
+      ).toEqual([{ userId: "expired" }, { userId: "user" }]);
+      expect(
+        (await existing.query("SELECT * FROM drizzle.__drizzle_migrations"))
+          .rows,
+      ).toEqual([]);
+      await existing.query(
+        "DROP EVENT TRIGGER reject_world_migration; DROP FUNCTION reject_world_migration()",
+      );
+      await Promise.all([migrateExisting(), migrateExisting()]);
+
+      const journal = await existing.query(
+        "SELECT name, hash, created_at, applied_at FROM drizzle.__drizzle_migrations ORDER BY id",
+      );
+
+      expect(journal.rows.map((row) => row.name)).toEqual(
+        migrations.map(({ name }) => name),
+      );
+      expect((await existing.query('SELECT id FROM "Activity"')).rows).toEqual([
+        { id: "accepted" },
+      ]);
+      expect(
+        (await existing.query('SELECT world FROM "UserOnlineInterval"')).rows,
+      ).toEqual([{ world: "world" }]);
+
+      // A repeated deploy must not rerun the one-off retention migration.
+      await existing.query(
+        `UPDATE "UserOnlineInterval" SET "startedAt" = now() - interval '114 days', "endedAt" = now() - interval '113 days'`,
+      );
+      await Promise.all([migrateExisting(), migrateExisting()]);
+      expect(
+        (await existing.query('SELECT world FROM "UserOnlineInterval"')).rows,
+      ).toEqual([{ world: "world" }]);
+      expect(
+        (
+          await existing.query(
+            "SELECT name, hash, created_at, applied_at FROM drizzle.__drizzle_migrations ORDER BY id",
+          )
+        ).rows,
+      ).toEqual(journal.rows);
+    } finally {
+      await existing.end();
+    }
   });
 
   it("persists a redelivered activity exactly once", async () => {
