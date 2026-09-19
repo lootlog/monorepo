@@ -6,6 +6,7 @@ import type {
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 import { cn } from "cn";
 import { useEffect, useRef, type ReactNode } from "react";
+import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 
 type BattlesListProps = {
@@ -94,7 +95,7 @@ export const BattlesList = ({
       if (scrollViewport) {
         scrollViewport.scrollTo({
           top: 0,
-          behavior: "smooth",
+          behavior: getPrefersReducedMotion() ? "auto" : "smooth",
         });
       }
     }
