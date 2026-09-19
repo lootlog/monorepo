@@ -92,6 +92,18 @@ const LocalServerRoutes = HttpRouter.serve(HttpRouter.addAll([
     })
   ),
   HttpRouter.route("GET", "/text", Effect.succeed(HttpServerResponse.text("test"))),
+  HttpRouter.route(
+    "QUERY",
+    "/search",
+    Effect.gen(function*() {
+      const request = yield* HttpServerRequest.HttpServerRequest
+      return HttpServerResponse.jsonUnsafe({
+        method: request.method,
+        contentType: request.headers["content-type"],
+        body: yield* request.text
+      })
+    })
+  ),
   HttpRouter.route("GET", "/bytes", Effect.succeed(HttpServerResponse.uint8Array(responseBytes))),
   ...formDataResponses.map(({ body, contentType, path }) =>
     HttpRouter.route("GET", path, Effect.succeed(HttpServerResponse.text(body, { contentType })))
@@ -127,10 +139,15 @@ const LocalServerRoutes = HttpRouter.serve(HttpRouter.addAll([
   describe(`NodeHttpClient - ${name}`, () => {
     it.effect("text", () =>
       Effect.gen(function*() {
-        const response = yield* HttpClient.get("/text").pipe(
-          Effect.flatMap((_) => _.text)
-        )
-        expect(response).toBe("test")
+        const response = yield* HttpClient.get("/text?existing=1", {
+          urlParams: { value: "a#b" },
+          hash: "fragment"
+        })
+        const url = new URL(response.url)
+        assert.strictEqual(url.pathname, "/text")
+        assert.strictEqual(url.search, "?existing=1&value=a%23b")
+        assert.strictEqual(url.hash, "")
+        expect(yield* response.text).toBe("test")
       }).pipe(Effect.provide(localServerTestLayer)))
 
     it.effect("accessing text preserves response bytes", () =>
@@ -154,10 +171,9 @@ const LocalServerRoutes = HttpRouter.serve(HttpRouter.addAll([
         const client = (yield* HttpClient.HttpClient).pipe(
           HttpClient.followRedirects()
         )
-        const response = yield* client.get("/redirect").pipe(
-          Effect.flatMap((_) => _.text)
-        )
-        expect(response).toBe("redirected")
+        const response = yield* client.get("/redirect")
+        expect(new URL(response.url).pathname).toBe("/redirected")
+        expect(yield* response.text).toBe("redirected")
       }).pipe(Effect.provide(localServerTestLayer)))
 
     it.effect("text stream", () =>
@@ -198,6 +214,21 @@ const LocalServerRoutes = HttpRouter.serve(HttpRouter.addAll([
       }).pipe(
         Effect.provide(localServerTestLayer)
       ))
+
+    it.effect("round trips QUERY method, body, and content type through the local server", () =>
+      Effect.gen(function*() {
+        const body = JSON.stringify({ query: "effect" })
+        const response = yield* HttpClient.query("/search", {
+          body: HttpBody.text(body, "application/json")
+        })
+
+        assert.strictEqual(response.status, 200)
+        assert.deepStrictEqual(yield* response.json, {
+          method: "QUERY",
+          contentType: "application/json",
+          body
+        })
+      }).pipe(Effect.provide(localServerTestLayer)))
 
     it.effect("head request with schemaJson", () =>
       Effect.gen(function*() {

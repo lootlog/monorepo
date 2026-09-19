@@ -49,8 +49,8 @@
     "@lootlog/messaging": "workspace:*",
     "@lootlog/protocol": "workspace:*",
     "@lootlog/schema": "workspace:*",
-    "bullmq": "^6.3.4",
-    "discord-api-types": "0.38.54",
+    "bullmq": "^6.3.8",
+    "discord-api-types": "0.38.55",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "sharp": "^0.35.4",
@@ -58,7 +58,7 @@
     "uuid": "^14.0.2"
   },
   "devDependencies": {
-    "@effect/sql-pglite": "^4.0.0-rc.112",
+    "@effect/sql-pglite": "^4.0.0-rc.116",
     "@electric-sql/pglite": "^0.5.8",
     "@lootlog/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.1.0",

@@ -53,10 +53,7 @@ const decodeNotificationJson = Schema.decodeUnknownOption(
   Schema.fromJsonString(Schema.JsonObject),
 );
 
-const decodeSendCommand = Schema.decodeUnknownOption(
-  DiscordNotificationSendCommandSchema,
-  { onExcessProperty: "preserve" },
-);
+const isSendCommand = Schema.is(DiscordNotificationSendCommandSchema);
 
 export const decodeNotificationCommand = (
   content: Uint8Array,
@@ -69,7 +66,7 @@ export const decodeNotificationCommand = (
   // Non-string content historically falls back to title/message in the delivery adapter.
   if (!Schema.is(Schema.String)(input.content)) delete input.content;
 
-  return Option.getOrUndefined(decodeSendCommand(input));
+  return isSendCommand(input) ? input : undefined;
 };
 
 export interface BotServicesValue {

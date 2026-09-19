@@ -30,7 +30,7 @@ const migrationsFolder = fileURLToPath(
 );
 
 const finalIndexNames = [
-  "account_issuer_accountId_uidx",
+  "account_providerId_accountId_uidx",
   "account_userId_idx",
   "session_userId_idx",
   "user_discordId_key",
@@ -216,7 +216,7 @@ export const AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA: ReadonlyArray<Schem
       : [schemaColumn],
   );
 
-export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> =
+const AUTH_SCHEMA_FINGERPRINT_WITH_REQUIRED_ISSUER: ReadonlyArray<SchemaColumn> =
   AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA.flatMap((schemaColumn) =>
     schemaColumn.tableName === "jwks" && schemaColumn.columnName === "createdAt"
       ? [
@@ -225,6 +225,13 @@ export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> =
           column("jwks", "crv", "text", "YES"),
         ]
       : [schemaColumn],
+  );
+
+export const AUTH_SCHEMA_FINGERPRINT: ReadonlyArray<SchemaColumn> =
+  AUTH_SCHEMA_FINGERPRINT_WITH_REQUIRED_ISSUER.map((entry) =>
+    entry.tableName === "account" && entry.columnName === "issuer"
+      ? { ...entry, isNullable: "YES" }
+      : entry,
   );
 
 export const AUTH_SCHEMA_INDEXES_V1_6: ReadonlyArray<SchemaIndex> = [
@@ -308,7 +315,7 @@ export const AUTH_SCHEMA_INDEXES_IMPORTED_V1_6 =
       indexName !== "verification_identifier_idx",
   );
 
-export const AUTH_SCHEMA_INDEXES: ReadonlyArray<SchemaIndex> = [
+const AUTH_SCHEMA_INDEXES_WITH_ISSUER: ReadonlyArray<SchemaIndex> = [
   ...AUTH_SCHEMA_INDEXES_V1_6,
   {
     tableName: "account",
@@ -325,6 +332,17 @@ export const AUTH_SCHEMA_INDEXES: ReadonlyArray<SchemaIndex> = [
     isPrimary: false,
   },
 ].sort(compareSchemaObjects);
+
+export const AUTH_SCHEMA_INDEXES: ReadonlyArray<SchemaIndex> =
+  AUTH_SCHEMA_INDEXES_WITH_ISSUER.map((entry) =>
+    entry.indexName === "account_issuer_accountId_uidx"
+      ? {
+          ...entry,
+          indexName: "account_providerId_accountId_uidx",
+          columns: ["providerId", "accountId"],
+        }
+      : entry,
+  ).sort(compareSchemaObjects);
 
 export const AUTH_SCHEMA_FOREIGN_KEYS: ReadonlyArray<SchemaForeignKey> = [
   {
@@ -677,9 +695,9 @@ const readIntegrityViolations = Effect.fn("readIntegrityViolations")(function* (
         ? `
             SELECT COUNT(*)::text AS count
             FROM (
-              SELECT "issuer", "accountId"
+              SELECT "providerId", "accountId"
               FROM "account"
-              GROUP BY "issuer", "accountId"
+              GROUP BY "providerId", "accountId"
               HAVING COUNT(*) > 1
             ) AS collisions
           `
@@ -836,11 +854,19 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
   } else if (
     matchesSchemaVariant(schema, {
       columns: AUTH_SCHEMA_FINGERPRINT_V1_7_PRE_JWKS_METADATA,
-      indexes: AUTH_SCHEMA_INDEXES,
+      indexes: AUTH_SCHEMA_INDEXES_WITH_ISSUER,
     })
   ) {
     source = "better-auth-1.7-pre-jwks-metadata";
-    expectedIndexes = AUTH_SCHEMA_INDEXES;
+    expectedIndexes = AUTH_SCHEMA_INDEXES_WITH_ISSUER;
+  } else if (
+    matchesSchemaVariant(schema, {
+      columns: AUTH_SCHEMA_FINGERPRINT_WITH_REQUIRED_ISSUER,
+      indexes: AUTH_SCHEMA_INDEXES_WITH_ISSUER,
+    })
+  ) {
+    source = "better-auth-1.7";
+    expectedIndexes = AUTH_SCHEMA_INDEXES_WITH_ISSUER;
   } else if (
     matchesSchemaVariant(schema, {
       columns: AUTH_SCHEMA_FINGERPRINT,
@@ -905,12 +931,16 @@ export const planAuthMigration = Effect.fn("planAuthMigration")(function* (
   const hasApiKeys = apiKeyTables[0]?.present === true;
 
   return {
-    status: getPlanStatus(source, integrityViolations, hasApiKeys),
+    status: getPlanStatus(
+      source,
+      integrityViolations,
+      hasApiKeys && expectedIndexes === AUTH_SCHEMA_INDEXES,
+    ),
     source,
     pendingMigrations:
       source === "better-auth-1.7"
         ? hasApiKeys
-          ? 0
+          ? Number(expectedIndexes !== AUTH_SCHEMA_INDEXES)
           : localMigrationCount - preApiKeyMigrationCount
         : Math.max(
             localMigrationCount -

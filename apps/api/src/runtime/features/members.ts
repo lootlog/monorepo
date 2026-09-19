@@ -319,7 +319,7 @@ export const memberServicesLive = Layer.effect(
       ({ queues }) =>
         Effect.tryPromise(async () => {
           await Promise.all(queues.map((queue) => queue.close()));
-        }),
+        }).pipe(Effect.orDie),
     ).pipe(
       Effect.map(
         ({ queues: _queues, ...services }): MemberServicesValue => services,

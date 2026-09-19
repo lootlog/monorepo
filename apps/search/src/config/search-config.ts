@@ -18,17 +18,17 @@ export class SearchConfig extends Context.Service<
     SearchConfig,
     Effect.gen(function* () {
       const value = yield* Config.all({
-        environment: Config.string("ENV").pipe(Config.withDefault("local")),
-        port: Config.int("PORT"),
-        serviceName: Config.string("SERVICE_NAME").pipe(
+        environment: Config.String("ENV").pipe(Config.withDefault("local")),
+        port: Config.Int("PORT"),
+        serviceName: Config.String("SERVICE_NAME").pipe(
           Config.withDefault("search"),
         ),
-        serviceNamespace: Config.string("SERVICE_NAMESPACE").pipe(
+        serviceNamespace: Config.String("SERVICE_NAMESPACE").pipe(
           Config.withDefault("local"),
         ),
-        meilisearchHost: Config.string("MEILISEARCH_HOST"),
-        meilisearchApiKey: Config.redacted("MEILISEARCH_API_KEY"),
-        rabbitmqUri: Config.redacted("RABBITMQ_URI"),
+        meilisearchHost: Config.String("MEILISEARCH_HOST"),
+        meilisearchApiKey: Config.Redacted("MEILISEARCH_API_KEY"),
+        rabbitmqUri: Config.Redacted("RABBITMQ_URI"),
       });
 
       return SearchConfig.of(value);

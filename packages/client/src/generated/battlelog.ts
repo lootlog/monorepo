@@ -2610,7 +2610,7 @@ export const prefetchHealthzControllerHealthCheckQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Health check
+ * @summary Invalidates the {@link useHealthzControllerHealthCheck} query
  */
 export const invalidateHealthzControllerHealthCheck = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -2626,8 +2626,8 @@ export const invalidateHealthzControllerHealthCheck = async (
  */
 export const useSetHealthzControllerHealthCheckQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined | ((old: Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined) => Awaited<ReturnType<typeof healthzControllerHealthCheck>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof healthzControllerHealthCheck>>>({ exact: $exactMatch, queryKey: getHealthzControllerHealthCheckQueryKey() }, updater);
   };
 }
 
@@ -2658,8 +2658,16 @@ export const battlesControllerCreateBattle = async (createBattleDto: CreateBattl
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return battlelogFetch<BattleCreatedResponseDtoOutput>(getBattlesControllerCreateBattleUrl(),
   {
@@ -2674,11 +2682,13 @@ return battlelogFetch<BattleCreatedResponseDtoOutput>(getBattlesControllerCreate
 
 
 
+export const getBattlesControllerCreateBattleMutationKey = () => ['battlesControllerCreateBattle'] as const;
+
 export const getBattlesControllerCreateBattleMutationOptions = <TError = ErrorType<BattlesControllerCreateBattle400 | BattlesControllerCreateBattle401 | BattlesControllerCreateBattle403 | BattlesControllerCreateBattle429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerCreateBattle>>, TError,BattlesControllerCreateBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerCreateBattle>>, TError,BattlesControllerCreateBattleMutationVariables, TContext> => {
 
-const mutationKey = ['battlesControllerCreateBattle'];
+const mutationKey = getBattlesControllerCreateBattleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -2846,7 +2856,7 @@ export const prefetchBattlesControllerGetDashboardBattlesQuery = async <TData = 
 }
 
 /**
- * @summary Get authenticated user battles
+ * @summary Invalidates the {@link useBattlesControllerGetDashboardBattles} query
  */
 export const invalidateBattlesControllerGetDashboardBattles = async (
  queryClient: QueryClient, params?: BattlesControllerGetDashboardBattlesParams, options?: InvalidateOptions
@@ -2862,8 +2872,8 @@ export const invalidateBattlesControllerGetDashboardBattles = async (
  */
 export const useSetBattlesControllerGetDashboardBattlesQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetDashboardBattlesParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>>({ queryKey: getBattlesControllerGetDashboardBattlesQueryKey(params) }, updater);
+  return (params: BattlesControllerGetDashboardBattlesParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetDashboardBattles>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetDashboardBattlesQueryKey(params) }, updater);
   };
 }
 
@@ -2989,7 +2999,7 @@ export const prefetchBattlesControllerGetUserCharactersQuery = async <TData = Aw
 }
 
 /**
- * @summary Get authenticated user battle characters
+ * @summary Invalidates the {@link useBattlesControllerGetUserCharacters} query
  */
 export const invalidateBattlesControllerGetUserCharacters = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -3005,8 +3015,8 @@ export const invalidateBattlesControllerGetUserCharacters = async (
  */
 export const useSetBattlesControllerGetUserCharactersQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetUserCharacters>>>({ queryKey: getBattlesControllerGetUserCharactersQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserCharacters>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetUserCharacters>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetUserCharactersQueryKey() }, updater);
   };
 }
 
@@ -3139,7 +3149,7 @@ export const prefetchBattlesControllerGetBattleAnalyticsQuery = async <TData = A
 }
 
 /**
- * @summary Get authenticated user battle analytics
+ * @summary Invalidates the {@link useBattlesControllerGetBattleAnalytics} query
  */
 export const invalidateBattlesControllerGetBattleAnalytics = async (
  queryClient: QueryClient, params?: BattlesControllerGetBattleAnalyticsParams, options?: InvalidateOptions
@@ -3155,8 +3165,8 @@ export const invalidateBattlesControllerGetBattleAnalytics = async (
  */
 export const useSetBattlesControllerGetBattleAnalyticsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetBattleAnalyticsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>>({ queryKey: getBattlesControllerGetBattleAnalyticsQueryKey(params) }, updater);
+  return (params: BattlesControllerGetBattleAnalyticsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleAnalytics>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetBattleAnalyticsQueryKey(params) }, updater);
   };
 }
 
@@ -3289,7 +3299,7 @@ export const prefetchBattlesControllerGetAbyssSeasonsQuery = async <TData = Awai
 }
 
 /**
- * @summary Get authenticated user Abyss seasons
+ * @summary Invalidates the {@link useBattlesControllerGetAbyssSeasons} query
  */
 export const invalidateBattlesControllerGetAbyssSeasons = async (
  queryClient: QueryClient, params: BattlesControllerGetAbyssSeasonsParams, options?: InvalidateOptions
@@ -3305,8 +3315,8 @@ export const invalidateBattlesControllerGetAbyssSeasons = async (
  */
 export const useSetBattlesControllerGetAbyssSeasonsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetAbyssSeasonsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>>({ queryKey: getBattlesControllerGetAbyssSeasonsQueryKey(params) }, updater);
+  return (params: BattlesControllerGetAbyssSeasonsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetAbyssSeasons>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetAbyssSeasonsQueryKey(params) }, updater);
   };
 }
 
@@ -3439,7 +3449,7 @@ export const prefetchBattlesControllerGetCombatProfileQuery = async <TData = Awa
 }
 
 /**
- * @summary Get combat profile statistics
+ * @summary Invalidates the {@link useBattlesControllerGetCombatProfile} query
  */
 export const invalidateBattlesControllerGetCombatProfile = async (
  queryClient: QueryClient, params?: BattlesControllerGetCombatProfileParams, options?: InvalidateOptions
@@ -3455,8 +3465,8 @@ export const invalidateBattlesControllerGetCombatProfile = async (
  */
 export const useSetBattlesControllerGetCombatProfileQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetCombatProfileParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetCombatProfile>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetCombatProfile>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetCombatProfile>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetCombatProfile>>>({ queryKey: getBattlesControllerGetCombatProfileQueryKey(params) }, updater);
+  return (params: BattlesControllerGetCombatProfileParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetCombatProfile>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetCombatProfile>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetCombatProfile>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetCombatProfile>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetCombatProfileQueryKey(params) }, updater);
   };
 }
 
@@ -3589,7 +3599,7 @@ export const prefetchBattlesControllerGetProfessionWinRateQuery = async <TData =
 }
 
 /**
- * @summary Get profession win rate statistics
+ * @summary Invalidates the {@link useBattlesControllerGetProfessionWinRate} query
  */
 export const invalidateBattlesControllerGetProfessionWinRate = async (
  queryClient: QueryClient, params?: BattlesControllerGetProfessionWinRateParams, options?: InvalidateOptions
@@ -3605,8 +3615,8 @@ export const invalidateBattlesControllerGetProfessionWinRate = async (
  */
 export const useSetBattlesControllerGetProfessionWinRateQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetProfessionWinRateParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>>>({ queryKey: getBattlesControllerGetProfessionWinRateQueryKey(params) }, updater);
+  return (params: BattlesControllerGetProfessionWinRateParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetProfessionWinRate>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetProfessionWinRateQueryKey(params) }, updater);
   };
 }
 
@@ -3739,7 +3749,7 @@ export const prefetchBattlesControllerGetHeadToHeadQuery = async <TData = Awaite
 }
 
 /**
- * @summary Get head-to-head statistics
+ * @summary Invalidates the {@link useBattlesControllerGetHeadToHead} query
  */
 export const invalidateBattlesControllerGetHeadToHead = async (
  queryClient: QueryClient, params?: BattlesControllerGetHeadToHeadParams, options?: InvalidateOptions
@@ -3755,8 +3765,8 @@ export const invalidateBattlesControllerGetHeadToHead = async (
  */
 export const useSetBattlesControllerGetHeadToHeadQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetHeadToHeadParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetHeadToHead>>>({ queryKey: getBattlesControllerGetHeadToHeadQueryKey(params) }, updater);
+  return (params: BattlesControllerGetHeadToHeadParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetHeadToHead>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetHeadToHead>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetHeadToHeadQueryKey(params) }, updater);
   };
 }
 
@@ -3889,7 +3899,7 @@ export const prefetchBattlesControllerGetCurrentStreakQuery = async <TData = Awa
 }
 
 /**
- * @summary Get current battle streak statistics
+ * @summary Invalidates the {@link useBattlesControllerGetCurrentStreak} query
  */
 export const invalidateBattlesControllerGetCurrentStreak = async (
  queryClient: QueryClient, params?: BattlesControllerGetCurrentStreakParams, options?: InvalidateOptions
@@ -3905,8 +3915,8 @@ export const invalidateBattlesControllerGetCurrentStreak = async (
  */
 export const useSetBattlesControllerGetCurrentStreakQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetCurrentStreakParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>>>({ queryKey: getBattlesControllerGetCurrentStreakQueryKey(params) }, updater);
+  return (params: BattlesControllerGetCurrentStreakParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetCurrentStreak>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetCurrentStreakQueryKey(params) }, updater);
   };
 }
 
@@ -4039,7 +4049,7 @@ export const prefetchBattlesControllerGetBattleDurationQuery = async <TData = Aw
 }
 
 /**
- * @summary Get battle duration statistics
+ * @summary Invalidates the {@link useBattlesControllerGetBattleDuration} query
  */
 export const invalidateBattlesControllerGetBattleDuration = async (
  queryClient: QueryClient, params?: BattlesControllerGetBattleDurationParams, options?: InvalidateOptions
@@ -4055,8 +4065,8 @@ export const invalidateBattlesControllerGetBattleDuration = async (
  */
 export const useSetBattlesControllerGetBattleDurationQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetBattleDurationParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleDuration>>>({ queryKey: getBattlesControllerGetBattleDurationQueryKey(params) }, updater);
+  return (params: BattlesControllerGetBattleDurationParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleDuration>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleDuration>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetBattleDurationQueryKey(params) }, updater);
   };
 }
 
@@ -4189,7 +4199,7 @@ export const prefetchBattlesControllerGetPhGrowthQuery = async <TData = Awaited<
 }
 
 /**
- * @summary Get PH growth statistics
+ * @summary Invalidates the {@link useBattlesControllerGetPhGrowth} query
  */
 export const invalidateBattlesControllerGetPhGrowth = async (
  queryClient: QueryClient, params?: BattlesControllerGetPhGrowthParams, options?: InvalidateOptions
@@ -4205,8 +4215,8 @@ export const invalidateBattlesControllerGetPhGrowth = async (
  */
 export const useSetBattlesControllerGetPhGrowthQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetPhGrowthParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetPhGrowth>>>({ queryKey: getBattlesControllerGetPhGrowthQueryKey(params) }, updater);
+  return (params: BattlesControllerGetPhGrowthParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetPhGrowth>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetPhGrowth>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetPhGrowthQueryKey(params) }, updater);
   };
 }
 
@@ -4339,7 +4349,7 @@ export const prefetchBattlesControllerGetRatingGrowthQuery = async <TData = Awai
 }
 
 /**
- * @summary Get rating growth statistics
+ * @summary Invalidates the {@link useBattlesControllerGetRatingGrowth} query
  */
 export const invalidateBattlesControllerGetRatingGrowth = async (
  queryClient: QueryClient, params?: BattlesControllerGetRatingGrowthParams, options?: InvalidateOptions
@@ -4355,8 +4365,8 @@ export const invalidateBattlesControllerGetRatingGrowth = async (
  */
 export const useSetBattlesControllerGetRatingGrowthQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetRatingGrowthParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>>>({ queryKey: getBattlesControllerGetRatingGrowthQueryKey(params) }, updater);
+  return (params: BattlesControllerGetRatingGrowthParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetRatingGrowth>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetRatingGrowthQueryKey(params) }, updater);
   };
 }
 
@@ -4489,7 +4499,7 @@ export const prefetchBattlesControllerGetRatingDeltaByOpponentQuery = async <TDa
 }
 
 /**
- * @summary Get rating delta by opponent statistics
+ * @summary Invalidates the {@link useBattlesControllerGetRatingDeltaByOpponent} query
  */
 export const invalidateBattlesControllerGetRatingDeltaByOpponent = async (
  queryClient: QueryClient, params?: BattlesControllerGetRatingDeltaByOpponentParams, options?: InvalidateOptions
@@ -4505,8 +4515,8 @@ export const invalidateBattlesControllerGetRatingDeltaByOpponent = async (
  */
 export const useSetBattlesControllerGetRatingDeltaByOpponentQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetRatingDeltaByOpponentParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>>>({ queryKey: getBattlesControllerGetRatingDeltaByOpponentQueryKey(params) }, updater);
+  return (params: BattlesControllerGetRatingDeltaByOpponentParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetRatingDeltaByOpponent>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetRatingDeltaByOpponentQueryKey(params) }, updater);
   };
 }
 
@@ -4639,7 +4649,7 @@ export const prefetchBattlesControllerGetPlayerVsPlayerBattlesQuery = async <TDa
 }
 
 /**
- * @summary Get player-vs-player battles
+ * @summary Invalidates the {@link useBattlesControllerGetPlayerVsPlayerBattles} query
  */
 export const invalidateBattlesControllerGetPlayerVsPlayerBattles = async (
  queryClient: QueryClient, params: BattlesControllerGetPlayerVsPlayerBattlesParams, options?: InvalidateOptions
@@ -4655,8 +4665,8 @@ export const invalidateBattlesControllerGetPlayerVsPlayerBattles = async (
  */
 export const useSetBattlesControllerGetPlayerVsPlayerBattlesQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerGetPlayerVsPlayerBattlesParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>>>({ queryKey: getBattlesControllerGetPlayerVsPlayerBattlesQueryKey(params) }, updater);
+  return (params: BattlesControllerGetPlayerVsPlayerBattlesParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetPlayerVsPlayerBattles>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetPlayerVsPlayerBattlesQueryKey(params) }, updater);
   };
 }
 
@@ -4789,7 +4799,7 @@ export const prefetchBattlesControllerSearchWarriorsQuery = async <TData = Await
 }
 
 /**
- * @summary Search warriors for authenticated user
+ * @summary Invalidates the {@link useBattlesControllerSearchWarriors} query
  */
 export const invalidateBattlesControllerSearchWarriors = async (
  queryClient: QueryClient, params: BattlesControllerSearchWarriorsParams, options?: InvalidateOptions
@@ -4805,8 +4815,8 @@ export const invalidateBattlesControllerSearchWarriors = async (
  */
 export const useSetBattlesControllerSearchWarriorsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: BattlesControllerSearchWarriorsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined) => Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerSearchWarriors>>>({ queryKey: getBattlesControllerSearchWarriorsQueryKey(params) }, updater);
+  return (params: BattlesControllerSearchWarriorsParams | undefined,updater: Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined) => Awaited<ReturnType<typeof battlesControllerSearchWarriors>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerSearchWarriors>>>({ exact: $exactMatch, queryKey: getBattlesControllerSearchWarriorsQueryKey(params) }, updater);
   };
 }
 
@@ -4932,7 +4942,7 @@ export const prefetchBattlesControllerGetUserWorldsQuery = async <TData = Awaite
 }
 
 /**
- * @summary Get worlds used by authenticated user battles
+ * @summary Invalidates the {@link useBattlesControllerGetUserWorlds} query
  */
 export const invalidateBattlesControllerGetUserWorlds = async (
  queryClient: QueryClient,  options?: InvalidateOptions
@@ -4948,8 +4958,8 @@ export const invalidateBattlesControllerGetUserWorlds = async (
  */
 export const useSetBattlesControllerGetUserWorldsQueryData = () => {
   const queryClient = useQueryClient();
-  return (updater: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>>({ queryKey: getBattlesControllerGetUserWorldsQueryKey() }, updater);
+  return (updater: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetUserWorlds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetUserWorlds>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetUserWorldsQueryKey() }, updater);
   };
 }
 
@@ -5075,7 +5085,7 @@ export const prefetchBattlesControllerGetBattleTimelineQuery = async <TData = Aw
 }
 
 /**
- * @summary Get computed battle timeline
+ * @summary Invalidates the {@link useBattlesControllerGetBattleTimeline} query
  */
 export const invalidateBattlesControllerGetBattleTimeline = async (
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattleTimelinePathParameters, options?: InvalidateOptions
@@ -5091,8 +5101,8 @@ export const invalidateBattlesControllerGetBattleTimeline = async (
  */
 export const useSetBattlesControllerGetBattleTimelineQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ battleId }: BattlesControllerGetBattleTimelinePathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>>>({ queryKey: getBattlesControllerGetBattleTimelineQueryKey({ battleId }) }, updater);
+  return ({ battleId }: BattlesControllerGetBattleTimelinePathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleTimeline>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetBattleTimelineQueryKey({ battleId }) }, updater);
   };
 }
 
@@ -5218,7 +5228,7 @@ export const prefetchBattlesControllerGetBattleQuery = async <TData = Awaited<Re
 }
 
 /**
- * @summary Get a single battle
+ * @summary Invalidates the {@link useBattlesControllerGetBattle} query
  */
 export const invalidateBattlesControllerGetBattle = async (
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattlePathParameters, options?: InvalidateOptions
@@ -5234,8 +5244,8 @@ export const invalidateBattlesControllerGetBattle = async (
  */
 export const useSetBattlesControllerGetBattleQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ battleId }: BattlesControllerGetBattlePathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattle>>>({ queryKey: getBattlesControllerGetBattleQueryKey({ battleId }) }, updater);
+  return ({ battleId }: BattlesControllerGetBattlePathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattle>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattle>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetBattleQueryKey({ battleId }) }, updater);
   };
 }
 
@@ -5267,8 +5277,16 @@ export const battlesControllerUpdateBattle = async ({ battleId }: BattlesControl
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return battlelogFetch<BattleResponseDtoOutput>(getBattlesControllerUpdateBattleUrl({ battleId }),
   {
@@ -5283,11 +5301,13 @@ return battlelogFetch<BattleResponseDtoOutput>(getBattlesControllerUpdateBattleU
 
 
 
+export const getBattlesControllerUpdateBattleMutationKey = () => ['battlesControllerUpdateBattle'] as const;
+
 export const getBattlesControllerUpdateBattleMutationOptions = <TError = ErrorType<BattlesControllerUpdateBattle400 | BattlesControllerUpdateBattle401 | BattlesControllerUpdateBattle403 | void | BattlesControllerUpdateBattle429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,BattlesControllerUpdateBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerUpdateBattle>>, TError,BattlesControllerUpdateBattleMutationVariables, TContext> => {
 
-const mutationKey = ['battlesControllerUpdateBattle'];
+const mutationKey = getBattlesControllerUpdateBattleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5355,11 +5375,13 @@ export const battlesControllerDeleteBattle = async ({ battleId }: BattlesControl
 
 
 
+export const getBattlesControllerDeleteBattleMutationKey = () => ['battlesControllerDeleteBattle'] as const;
+
 export const getBattlesControllerDeleteBattleMutationOptions = <TError = ErrorType<BattlesControllerDeleteBattle401 | BattlesControllerDeleteBattle403 | void | BattlesControllerDeleteBattle429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof battlesControllerDeleteBattle>>, TError,BattlesControllerDeleteBattleMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof battlesControllerDeleteBattle>>, TError,BattlesControllerDeleteBattleMutationVariables, TContext> => {
 
-const mutationKey = ['battlesControllerDeleteBattle'];
+const mutationKey = getBattlesControllerDeleteBattleMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -5512,7 +5534,7 @@ export const prefetchBattlesControllerGetBattleRawDataQuery = async <TData = Awa
 }
 
 /**
- * @summary Get raw battle payload
+ * @summary Invalidates the {@link useBattlesControllerGetBattleRawData} query
  */
 export const invalidateBattlesControllerGetBattleRawData = async (
  queryClient: QueryClient, { battleId }: BattlesControllerGetBattleRawDataPathParameters, options?: InvalidateOptions
@@ -5528,8 +5550,8 @@ export const invalidateBattlesControllerGetBattleRawData = async (
  */
 export const useSetBattlesControllerGetBattleRawDataQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>>({ queryKey: getBattlesControllerGetBattleRawDataQueryKey({ battleId }) }, updater);
+  return ({ battleId }: BattlesControllerGetBattleRawDataPathParameters,updater: Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined | ((old: Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined) => Awaited<ReturnType<typeof battlesControllerGetBattleRawData>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof battlesControllerGetBattleRawData>>>({ exact: $exactMatch, queryKey: getBattlesControllerGetBattleRawDataQueryKey({ battleId }) }, updater);
   };
 }
 
@@ -5655,7 +5677,7 @@ export const prefetchPublicBattlesControllerGetPublicBattleQuery = async <TData 
 }
 
 /**
- * @summary Get a public battle
+ * @summary Invalidates the {@link usePublicBattlesControllerGetPublicBattle} query
  */
 export const invalidatePublicBattlesControllerGetPublicBattle = async (
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattlePathParameters, options?: InvalidateOptions
@@ -5671,8 +5693,8 @@ export const invalidatePublicBattlesControllerGetPublicBattle = async (
  */
 export const useSetPublicBattlesControllerGetPublicBattleQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>>({ queryKey: getPublicBattlesControllerGetPublicBattleQueryKey({ battleId }) }, updater);
+  return ({ battleId }: PublicBattlesControllerGetPublicBattlePathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattle>>>({ exact: $exactMatch, queryKey: getPublicBattlesControllerGetPublicBattleQueryKey({ battleId }) }, updater);
   };
 }
 
@@ -5798,7 +5820,7 @@ export const prefetchPublicBattlesControllerGetPublicBattleRawQuery = async <TDa
 }
 
 /**
- * @summary Get raw payload for a public battle
+ * @summary Invalidates the {@link usePublicBattlesControllerGetPublicBattleRaw} query
  */
 export const invalidatePublicBattlesControllerGetPublicBattleRaw = async (
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters, options?: InvalidateOptions
@@ -5814,8 +5836,8 @@ export const invalidatePublicBattlesControllerGetPublicBattleRaw = async (
  */
 export const useSetPublicBattlesControllerGetPublicBattleRawQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>>({ queryKey: getPublicBattlesControllerGetPublicBattleRawQueryKey({ battleId }) }, updater);
+  return ({ battleId }: PublicBattlesControllerGetPublicBattleRawPathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleRaw>>>({ exact: $exactMatch, queryKey: getPublicBattlesControllerGetPublicBattleRawQueryKey({ battleId }) }, updater);
   };
 }
 
@@ -5941,7 +5963,7 @@ export const prefetchPublicBattlesControllerGetPublicBattleTimelineQuery = async
 }
 
 /**
- * @summary Get computed timeline for a public battle
+ * @summary Invalidates the {@link usePublicBattlesControllerGetPublicBattleTimeline} query
  */
 export const invalidatePublicBattlesControllerGetPublicBattleTimeline = async (
  queryClient: QueryClient, { battleId }: PublicBattlesControllerGetPublicBattleTimelinePathParameters, options?: InvalidateOptions
@@ -5957,8 +5979,8 @@ export const invalidatePublicBattlesControllerGetPublicBattleTimeline = async (
  */
 export const useSetPublicBattlesControllerGetPublicBattleTimelineQueryData = () => {
   const queryClient = useQueryClient();
-  return ({ battleId }: PublicBattlesControllerGetPublicBattleTimelinePathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>> | undefined)) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>>>({ queryKey: getPublicBattlesControllerGetPublicBattleTimelineQueryKey({ battleId }) }, updater);
+  return ({ battleId }: PublicBattlesControllerGetPublicBattleTimelinePathParameters,updater: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>> | undefined | ((old: Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>> | undefined) => Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof publicBattlesControllerGetPublicBattleTimeline>>>({ exact: $exactMatch, queryKey: getPublicBattlesControllerGetPublicBattleTimelineQueryKey({ battleId }) }, updater);
   };
 }
 
@@ -5990,8 +6012,16 @@ export const internalControllerDeleteUserData = async (deleteUserDataDto: Delete
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
 return battlelogFetch<BattleAcceptedResponseDtoOutput>(getInternalControllerDeleteUserDataUrl(),
   {
@@ -6006,11 +6036,13 @@ return battlelogFetch<BattleAcceptedResponseDtoOutput>(getInternalControllerDele
 
 
 
+export const getInternalControllerDeleteUserDataMutationKey = () => ['internalControllerDeleteUserData'] as const;
+
 export const getInternalControllerDeleteUserDataMutationOptions = <TError = ErrorType<InternalControllerDeleteUserData400 | InternalControllerDeleteUserData401 | InternalControllerDeleteUserData403 | InternalControllerDeleteUserData429>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof internalControllerDeleteUserData>>, TError,InternalControllerDeleteUserDataMutationVariables, TContext>, request?: SecondParameter<typeof battlelogFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof internalControllerDeleteUserData>>, TError,InternalControllerDeleteUserDataMutationVariables, TContext> => {
 
-const mutationKey = ['internalControllerDeleteUserData'];
+const mutationKey = getInternalControllerDeleteUserDataMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options

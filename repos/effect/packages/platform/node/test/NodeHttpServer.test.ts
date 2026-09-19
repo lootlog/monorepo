@@ -2,7 +2,7 @@
 import { NodeHttpServer } from "@effect/platform-node"
 import { NodeWS } from "@effect/platform-node/NodeSocket"
 import { assert, describe, expect, it } from "@effect/vitest"
-import { Effect, Option } from "effect"
+import { ByteSize, Effect, Option } from "effect"
 import * as Duration from "effect/Duration"
 import * as Fiber from "effect/Fiber"
 import { constVoid } from "effect/Function"
@@ -29,6 +29,7 @@ import {
   UrlParams
 } from "effect/unstable/http"
 import * as HttpApiError from "effect/unstable/httpapi/HttpApiError"
+import * as NetAddress from "effect/unstable/net/NetAddress"
 import { Socket } from "effect/unstable/socket"
 import * as Buffer from "node:buffer"
 import { randomBytes } from "node:crypto"
@@ -97,7 +98,9 @@ describe("HttpServer", () => {
         Layer.build
       )
       const server = yield* HttpServer.HttpServer
-      const port = (server.address as HttpServer.TcpAddress).port
+      assert.isTrue(NetAddress.isInetAddress(server.address))
+      if (!NetAddress.isInetAddress(server.address)) return
+      const port = server.address.port
 
       assert.strictEqual(yield* getStatusText(port), statusText)
     }).pipe(Effect.provide(NodeHttpServer.layerTest)))
@@ -175,7 +178,7 @@ describe("HttpServer", () => {
       ).pipe(
         HttpRouter.serve,
         Layer.build,
-        Effect.provideService(Multipart.MaxFileSize, 100)
+        Effect.provideService(Multipart.MaxFileSize, ByteSize.bytes(100))
       )
       const client = yield* HttpClient.HttpClient
       const formData = new FormData()
@@ -203,7 +206,7 @@ describe("HttpServer", () => {
       ).pipe(
         HttpRouter.serve,
         Layer.build,
-        Effect.provideService(Multipart.MaxFieldSize, 100)
+        Effect.provideService(Multipart.MaxFieldSize, ByteSize.bytes(100))
       )
       const client = yield* HttpClient.HttpClient
       const formData = new FormData()
@@ -896,7 +899,7 @@ describe("HttpServer", () => {
         Layer.build
       )
       const server = yield* HttpServer.HttpServer
-      const port = (server.address as HttpServer.TcpAddress).port
+      const port = (server.address as NetAddress.InetAddress).port
 
       const connect = (perMessageDeflate: boolean) =>
         Effect.acquireRelease(
@@ -925,7 +928,7 @@ describe("HttpServer", () => {
         Layer.build
       )
       const server = yield* HttpServer.HttpServer
-      const port = (server.address as HttpServer.TcpAddress).port
+      const port = (server.address as NetAddress.InetAddress).port
 
       const uncaught: Array<unknown> = []
       const onUncaught = (error: unknown) => uncaught.push(error)
@@ -974,7 +977,7 @@ describe("HttpServer", () => {
         Layer.build
       )
       const server = yield* HttpServer.HttpServer
-      const port = (server.address as HttpServer.TcpAddress).port
+      const port = (server.address as NetAddress.InetAddress).port
       const { frames, trailing } = yield* Effect.promise(() => rawWebSocket(port, "/ws"))
       assert.strictEqual(frames.length, 2)
       assert.strictEqual(frames[0].opcode, 1)
@@ -995,7 +998,7 @@ describe("HttpServer", () => {
         Layer.build
       )
       const server = yield* HttpServer.HttpServer
-      const port = (server.address as HttpServer.TcpAddress).port
+      const port = (server.address as NetAddress.InetAddress).port
       const response = yield* Effect.promise(() => rawUpgradeRequest(port, "/no-ws"))
       assert.match(response, /^HTTP\/1\.1 426/)
       assert.match(response, /upgrade refused/)

@@ -38,17 +38,8 @@ import { CurrentSpanTransformer } from "./Telemetry.ts"
 import type * as Tool from "./Tool.ts"
 import * as Toolkit from "./Toolkit.ts"
 
-// =============================================================================
-// Service Definition
-// =============================================================================
-
 /**
- * Service tag for AI model services.
- *
- * **When to use**
- *
- * Use to access or provide text generation, streaming generation, structured
- * output, and tool-calling capabilities through the Effect context.
+ * Service key for text generation, structured output, and tool calls.
  *
  * **Example** (Accessing the language model service)
  *
@@ -82,17 +73,35 @@ import * as Toolkit from "./Toolkit.ts"
  * @category services
  * @since 4.0.0
  */
-export class LanguageModel extends Context.Service<LanguageModel, Service>()(
+export const LanguageModel: Context.Service<LanguageModel, LanguageModel> = Context.Service(
   "effect/unstable/ai/LanguageModel"
-) {}
+)
 
 /**
- * The service interface for language model operations, defining the contract that all language model implementations must fulfill.
+ * Brand type for `LanguageModel`.
+ *
+ * @category type IDs
+ * @since 4.0.0
+ */
+export type TypeId = "~effect/ai/LanguageModel"
+
+/**
+ * Brand for `LanguageModel` implementations.
+ *
+ * @category type IDs
+ * @since 4.0.0
+ */
+export const TypeId: TypeId = "~effect/ai/LanguageModel"
+
+/**
+ * Text generation, streaming, and structured output operations.
  *
  * @category models
  * @since 4.0.0
  */
-export interface Service {
+export interface LanguageModel {
+  readonly [TypeId]: TypeId
+
   /**
    * Generate text using the language model.
    */
@@ -771,7 +780,7 @@ export interface ProviderOptions {
  * response format prepared in `ProviderOptions`; invalid parts fail decoding as
  * `AiError.InvalidOutputError`.
  *
- * @see {@link Service} for the returned service contract
+ * @see {@link LanguageModel} for the returned service contract
  * @see {@link ProviderOptions} for the normalized options passed to provider hooks
  * @see {@link defaultCodecTransformer} for the default structured-output schema transformer
  *
@@ -798,7 +807,7 @@ export const make: (params: {
    * for structured output generation.
    */
   readonly codecTransformer?: CodecTransformer | undefined
-}) => Effect.Effect<Service> = Effect.fnUntraced(function*(params) {
+}) => Effect.Effect<LanguageModel> = Effect.fnUntraced(function*(params) {
   const codecTransformer = params.codecTransformer ?? defaultCodecTransformer
 
   const parentSpanTransformer = yield* Effect.serviceOption(
@@ -1594,7 +1603,10 @@ export const make: (params: {
             id: part.id,
             name: part.name,
             providerExecuted: false,
-            ...result
+            result: result.result,
+            encodedResult: result.encodedResult,
+            isFailure: result.isFailure,
+            preliminary: result.preliminary
           }) as Response.StreamPart<Tools>
           return Effect.sync(() => {
             Queue.offerUnsafe(queue, toolResultPart)
@@ -1707,11 +1719,12 @@ export const make: (params: {
     return Stream.fromQueue(queue)
   }) as any
 
-  return {
-    generateText: generateText as Service["generateText"],
-    generateObject: generateObject as Service["generateObject"],
-    streamText: streamText as Service["streamText"]
-  } as const
+  return LanguageModel.of({
+    [TypeId]: TypeId,
+    generateText: generateText as LanguageModel["generateText"],
+    generateObject: generateObject as LanguageModel["generateObject"],
+    streamText: streamText as LanguageModel["streamText"]
+  })
 })
 
 // =============================================================================
@@ -2178,7 +2191,10 @@ const executeApprovedToolCalls = <Tools extends Record<string, Tool.Any>>(
     return Response.makePart("tool-result", {
       id: approval.toolCallId,
       name: toolCall.name,
-      ...terminalResult,
+      result: terminalResult.result,
+      encodedResult: terminalResult.encodedResult,
+      isFailure: terminalResult.isFailure,
+      preliminary: terminalResult.preliminary,
       providerExecuted: false
     })
   })
@@ -2324,7 +2340,10 @@ const resolveToolCalls = <Tools extends Record<string, Tool.Any>>(
                 id: toolCall.id,
                 name: toolCall.name,
                 providerExecuted: false,
-                ...result
+                result: result.result,
+                encodedResult: result.encodedResult,
+                isFailure: result.isFailure,
+                preliminary: result.preliminary
               }) as ToolResolutionResult<Tools>
           )
         )
@@ -2350,7 +2369,10 @@ const resolveToolCalls = <Tools extends Record<string, Tool.Any>>(
               id: toolCall.id,
               name: toolCall.name,
               providerExecuted: false,
-              ...result
+              result: result.result,
+              encodedResult: result.encodedResult,
+              isFailure: result.isFailure,
+              preliminary: result.preliminary
             }) as ToolResolutionResult<Tools>
         )
       )

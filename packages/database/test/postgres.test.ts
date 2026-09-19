@@ -2,7 +2,8 @@ import { expect, test } from "bun:test";
 import { createServer, type AddressInfo, type Socket } from "node:net";
 import { ManagedRuntime } from "effect";
 import { SqlError } from "effect/unstable/sql/SqlError";
-import { makePostgresLayer, PostgresPool } from "../src/postgres.js";
+import { PgClient } from "@effect/sql-pg";
+import { makePostgresLayer } from "../src/postgres.js";
 
 test("fails startup with the original driver error when PostgreSQL is unavailable", async () => {
   const runtime = ManagedRuntime.make(
@@ -14,7 +15,7 @@ test("fails startup with the original driver error when PostgreSQL is unavailabl
   );
 
   try {
-    const startup = runtime.runPromise(PostgresPool);
+    const startup = runtime.runPromise(PgClient.PgClient);
     await expect(startup).rejects.toBeInstanceOf(SqlError);
     await expect(startup).rejects.toMatchObject({
       reason: { cause: { code: "ECONNREFUSED" } },
@@ -27,10 +28,15 @@ test("fails startup with the original driver error when PostgreSQL is unavailabl
 test("closes a stalled connection after startup times out", async () => {
   const sockets = new Set<Socket>();
 
+  const closed = Promise.withResolvers<void>();
+
   const server = createServer((socket) => {
     sockets.add(socket);
     socket.resume();
-    socket.on("close", () => sockets.delete(socket));
+    socket.on("close", () => {
+      sockets.delete(socket);
+      closed.resolve();
+    });
   });
 
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -47,11 +53,11 @@ test("closes a stalled connection after startup times out", async () => {
   );
 
   try {
-    await expect(runtime.runPromise(PostgresPool)).rejects.toBeInstanceOf(
+    await expect(runtime.runPromise(PgClient.PgClient)).rejects.toBeInstanceOf(
       SqlError,
     );
     await runtime.dispose();
-    await new Promise<void>((resolve) => setImmediate(resolve));
+    await Promise.race([closed.promise, Bun.sleep(1000)]);
     expect(sockets.size).toBe(0);
   } finally {
     await runtime.dispose();

@@ -52,7 +52,7 @@ export interface HttpRouter {
   readonly prefixed: (prefix: string) => HttpRouter
 
   readonly add: <E = never, R = never>(
-    method: "*" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS",
+    method: "*" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "QUERY",
     path: PathInput,
     handler:
       | HttpServerResponse.HttpServerResponse
@@ -167,7 +167,7 @@ export const make = Effect.gen(function*() {
       prefix = removeTrailingSlash(prefix as PathInput)
       return HttpRouter.of({
         ...this,
-        prefixed: (newPrefix: string) => this.prefixed(prefixPath(prefix, newPrefix)),
+        prefixed: (newPrefix: string) => this.prefixed(prefixPath(newPrefix, prefix)),
         addAll: (routes) => addAll(routes.map(prefixRoute(prefix))) as any,
         add: (method, path, handler, options) =>
           addAll([
@@ -509,7 +509,7 @@ export const use = <A, E, R>(
  * @since 4.0.0
  */
 export const add = <E = never, R = never>(
-  method: "*" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS",
+  method: "*" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "QUERY",
   path: PathInput,
   handler:
     | HttpServerResponse.HttpServerResponse
@@ -1288,7 +1288,11 @@ export const serve = <A, E, R, HE, HR = Request.Only<"Requires", R> | Request.On
  *
  * The result contains a `handler` function that converts Web `Request` values to
  * Web `Response` values and a `dispose` function for releasing the layer
- * resources.
+ * resources. The layer is built immediately, so the cost is paid when the
+ * handler is created rather than on the first request. A layer that performs
+ * asynchronous work while building may still be in progress when the first
+ * request arrives, in which case that request waits for the build to finish.
+ * If the build fails, every request rejects with the build error.
  *
  * @category converting
  * @since 4.0.0

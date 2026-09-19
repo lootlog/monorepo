@@ -28,6 +28,7 @@ import * as Layer from "effect/Layer"
 import * as Option from "effect/Option"
 import type * as Path from "effect/Path"
 import type * as Record from "effect/Record"
+import * as Result from "effect/Result"
 import * as Scheduler from "effect/Scheduler"
 import type * as Schema from "effect/Schema"
 import * as Scope from "effect/Scope"
@@ -45,9 +46,10 @@ import type { HttpPlatform } from "effect/unstable/http/HttpPlatform"
 import * as Server from "effect/unstable/http/HttpServer"
 import * as Error from "effect/unstable/http/HttpServerError"
 import * as ServerRequest from "effect/unstable/http/HttpServerRequest"
-import type * as ServerResponse from "effect/unstable/http/HttpServerResponse"
+import * as ServerResponse from "effect/unstable/http/HttpServerResponse"
 import type * as Multipart from "effect/unstable/http/Multipart"
 import * as UrlParams from "effect/unstable/http/UrlParams"
+import * as NetAddress from "effect/unstable/net/NetAddress"
 import * as Socket from "effect/unstable/socket/Socket"
 import * as Platform from "./BunHttpPlatform.ts"
 import * as BunMultipart from "./BunMultipart.ts"
@@ -115,6 +117,22 @@ export const make = Effect.fnUntraced(
     }
   ) {
     const scope = yield* Effect.scope
+    let listenOptions = options
+    if (!("unix" in options) || options.unix === undefined) {
+      const internetOptions = options as Bun.Serve.HostnamePortServeOptions<WebSocketContext>
+      let hostname = internetOptions.hostname ?? "::"
+      if (Result.isFailure(NetAddress.ipFromString(hostname))) {
+        hostname = yield* Effect.tryPromise({
+          try: async () => {
+            const result = await Bun.dns.lookup(hostname, { socketType: "tcp" })
+            if (result.length === 0) throw new globalThis.Error(`Could not resolve hostname: ${hostname}`)
+            return result[0].address
+          },
+          catch: (cause) => new Error.ServeError({ cause })
+        })
+      }
+      listenOptions = { ...options, hostname }
+    }
     const { compressionThreshold = MIN_COMPRESSIBLE_SIZE, ...websocket } = options.websocket ?? {}
     const handlerStack: Array<(request: Request, server: BunServer<WebSocketContext>) => Response | Promise<Response>> =
       [
@@ -123,7 +141,7 @@ export const make = Effect.fnUntraced(
         }
       ]
     const server = Bun.serve<WebSocketContext, R>({
-      ...options as ServeOptions<R>,
+      ...listenOptions as ServeOptions<R>,
       fetch: handlerStack[0],
       websocket: {
         ...websocket,
@@ -154,10 +172,14 @@ export const make = Effect.fnUntraced(
 
     yield* Scope.addFinalizer(scope, shutdown)
 
+    const address = "unix" in options && options.unix !== undefined
+      ? NetAddress.unixPathAddress(options.unix)
+      : yield* Effect.fromResult(NetAddress.inetAddressFromIpString(server.hostname!, server.port!)).pipe(
+        Effect.mapError((cause) => new Error.ServeError({ cause }))
+      )
+
     return Server.make({
-      address: "unix" in options && options.unix !== undefined
-        ? { _tag: "UnixAddress", path: options.unix }
-        : { _tag: "TcpAddress", port: server.port!, hostname: server.hostname! },
+      address,
       serve: Effect.fnUntraced(function*(httpApp, middleware) {
         const parent = yield* Effect.fiber
         const services = parent.context
@@ -186,11 +208,17 @@ export const make = Effect.fnUntraced(
         yield* Scope.addFinalizerExit(serveScope, () => {
           const index = handlerStack.indexOf(handler)
           if (index !== -1) handlerStack.splice(index, 1)
-          server.reload({ fetch: handlerStack[handlerStack.length - 1] })
+          server.reload({
+            fetch: handlerStack[handlerStack.length - 1],
+            ...(options.routes === undefined ? undefined : { routes: options.routes })
+          })
           return handlerStack.length === 1 ? preemptiveShutdown : Effect.void
         })
         handlerStack.push(handler)
-        server.reload({ fetch: handler })
+        server.reload({
+          fetch: handler,
+          ...(options.routes === undefined ? undefined : { routes: options.routes })
+        })
       })
     })
   }
@@ -204,6 +232,9 @@ const makeResponse = (
   context: Context.Context<never>,
   scope: Scope.Scope
 ): Response => {
+  if (ServerResponse.omitsBody(response, request.method === "HEAD")) {
+    return ServerResponse.toWeb(response, { withoutBody: true })
+  }
   const fields: {
     headers: globalThis.Headers
     status?: number
@@ -223,9 +254,6 @@ const makeResponse = (
     fields.statusText = response.statusText
   }
 
-  if (request.method === "HEAD") {
-    return new Response(undefined, fields)
-  }
   response = HttpEffect.scopeTransferToStream(response)
   const body = response.body
   switch (body._tag) {
@@ -274,7 +302,7 @@ export const layerServer: <R extends string>(
     readonly gracefulShutdownTimeout?: Duration.Input | undefined
     readonly websocket?: WebSocketOptions | undefined
   }
-) => Layer.Layer<Server.HttpServer> = flow(make, Layer.effect(Server.HttpServer)) as any
+) => Layer.Layer<Server.HttpServer, Error.ServeError> = flow(make, Layer.effect(Server.HttpServer)) as any
 
 /**
  * Layer that provides Bun HTTP support services: `HttpPlatform`, weak ETag generation, and `BunServices`.
@@ -308,7 +336,8 @@ export const layer = <R extends string>(
   | Server.HttpServer
   | HttpPlatform
   | Etag.Generator
-  | BunServices.BunServices
+  | BunServices.BunServices,
+  Error.ServeError
 > => Layer.mergeAll(layerServer(options), layerHttpServices)
 
 /**
@@ -323,7 +352,7 @@ export const layerTest: Layer.Layer<
   Layer.provide(FetchHttpClient.layer.pipe(
     Layer.provide(Layer.succeed(FetchHttpClient.RequestInit)({ keepalive: false }))
   )),
-  Layer.provideMerge(layer({ port: 0 }))
+  Layer.provideMerge(Layer.orDie(layer({ hostname: "127.0.0.1", port: 0 })))
 )
 
 /**
@@ -342,7 +371,7 @@ export const layerConfig = <R extends string>(
   >
 ): Layer.Layer<
   Server.HttpServer | HttpPlatform | FileSystem.FileSystem | Etag.Generator | Path.Path,
-  ConfigError
+  ConfigError | Error.ServeError
 > =>
   Layer.mergeAll(
     Layer.effect(Server.HttpServer)(Effect.flatMap(Config.unwrap(options), make)),

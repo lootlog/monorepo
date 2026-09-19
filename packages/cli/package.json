@@ -19,7 +19,7 @@
     "seed:setup": "bun --env-file=../../.env src/index.ts seed setup"
   },
   "dependencies": {
-    "@clack/prompts": "^1.7.0",
+    "@clack/prompts": "^1.8.1",
     "@lootlog/api": "workspace:*",
     "@lootlog/battle-processor": "workspace:*",
     "@lootlog/battlelog": "workspace:*",
@@ -29,7 +29,7 @@
     "amqplib": "^2.0.1",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
-    "node-html-parser": "^9.0.2",
+    "node-html-parser": "^9.0.4",
     "pg": "^8.23.0",
     "random-words": "^2.0.1",
     "uuid": "^14.0.2",

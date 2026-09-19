@@ -43,6 +43,30 @@ to verify migrations against disposable PostgreSQL.
 TypeScript source is edited directly. Better Auth CLI generation and database
 introspection must not overwrite the application's schema.
 
+## Better Auth 1.7.5 rollout
+
+Before deploying Auth 1.7.5, run `bun run auth:migrate:plan` and
+`bun run auth:migrate:apply` with the reviewed migration decision. Migration
+`20260919081743_restore-provider-account-identity` makes `account.issuer`
+nullable and replaces its compound index with a unique index on
+`providerId, accountId`. Existing issuer values and account identities remain
+intact. Better Auth 1.7.3 and later no longer write issuer; deploying the new
+application before this migration would reject new Discord accounts.
+
+The preflight accepts the previous 1.7 schema and checks Discord-only identities
+and duplicate provider/account keys before writing. After applying, verify that
+the plan is `up-to-date`, then deploy and check Discord sign-in, existing
+sessions, and account linking. Do not restore the issuer `NOT NULL` constraint
+on rollback: accounts created after migration may have a null issuer. A return
+to pre-1.7.3 Auth requires maintenance, a reviewed Discord issuer backfill, and
+verification of the earlier schema contract before restoring the old application.
+
+Effect SQL now uses its native PostgreSQL driver. Better Auth retains a separate
+scoped node-postgres pool for its Promise-based Drizzle adapter. Auth divides
+its connection ceiling between the two pools (default: five each, ten total);
+other services use only the native pool. Cross-adapter writes become visible
+on commit, and each adapter preserves transaction rollback and isolation.
+
 ## Local developer portal
 
 The local portal at `http://localhost/developer/keys` requires

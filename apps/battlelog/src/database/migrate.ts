@@ -1,16 +1,23 @@
 import { BunRuntime } from "@effect/platform-bun";
-import { migrate } from "drizzle-orm/effect-postgres/migrator";
+import { migrationClient } from "@lootlog/database/migration";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Effect } from "effect";
 import { fileURLToPath } from "node:url";
-import { drizzleDatabaseEffect, PgClientLive } from "./database.js";
+import { PgClientLive } from "./database.js";
 
 export const migrateBattlelogDatabase = Effect.gen(function* () {
-  const database = yield* drizzleDatabaseEffect;
-  yield* migrate(database, {
-    migrationsFolder: fileURLToPath(new URL("../../drizzle", import.meta.url)),
-  });
+  const client = yield* migrationClient;
+
+  yield* Effect.tryPromise(() =>
+    migrate(drizzle({ client }), {
+      migrationsFolder: fileURLToPath(
+        new URL("../../drizzle", import.meta.url),
+      ),
+    }),
+  );
   yield* Effect.logInfo("Battlelog database migrations complete");
-});
+}).pipe(Effect.scoped);
 
 if (import.meta.main) {
   BunRuntime.runMain(
