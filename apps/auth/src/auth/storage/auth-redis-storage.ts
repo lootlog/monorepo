@@ -19,6 +19,9 @@ export const createAuthRedisConnection = (config: AuthConfig["redis"]) =>
 export class AuthRedisStorage extends Context.Service<
   AuthRedisStorage,
   {
+    readonly consumeApiKeyRateLimit: (
+      keyId: string,
+    ) => Effect.Effect<boolean, Redis.RedisError>;
     readonly secondaryStorage: ReturnType<
       typeof createFailOpenSecondaryStorage
     >;
@@ -82,7 +85,13 @@ export class AuthRedisStorage extends Context.Service<
         },
       );
 
-      return AuthRedisStorage.of({ secondaryStorage });
+      return AuthRedisStorage.of({
+        secondaryStorage,
+        consumeApiKeyRateLimit: (keyId) =>
+          redis
+            .eval(incrementScript)(`auth:api-key-rate-limit:${keyId}`, "60")
+            .pipe(Effect.map((count) => count <= 120)),
+      });
     }),
   );
 }
