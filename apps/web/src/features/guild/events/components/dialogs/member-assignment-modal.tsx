@@ -109,7 +109,7 @@ export const MemberAssignmentModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
           <div className="p-5 space-y-5">
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

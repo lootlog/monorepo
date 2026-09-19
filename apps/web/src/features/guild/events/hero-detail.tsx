@@ -1,8 +1,8 @@
+import { SectionLoading } from "@/components/common/section-loading";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -53,11 +53,7 @@ export const HeroDetail = () => {
   const model = useHeroDetail();
 
   if (model.status === "loading") {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
+    return <SectionLoading />;
   }
 
   if (model.status === "missing") {

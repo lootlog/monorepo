@@ -56,7 +56,7 @@ export function AnimatedToggleGroup<Value extends string>({
           className={cn(
             "pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-[inherit] bg-primary",
             !isStatic &&
-              "transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+              "transition-transform duration-150 ease-emphasized motion-reduce:transition-none",
           )}
           style={{
             width: `${100 / options.length}%`,
@@ -72,7 +72,7 @@ export function AnimatedToggleGroup<Value extends string>({
           aria-label={option.label}
           title={option.icon ? option.label : undefined}
           className={cn(
-            "min-w-0 cursor-pointer disabled:cursor-default bg-transparent hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-primary-foreground data-[state=on]:bg-transparent transition-[color,scale] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+            "min-w-0 cursor-pointer disabled:cursor-default bg-transparent hover:bg-transparent aria-pressed:bg-transparent aria-pressed:text-primary-foreground data-[state=on]:bg-transparent transition-[color,scale] duration-150 ease-emphasized motion-reduce:transition-none",
             "h-full",
             !isStatic && "active:scale-[0.96] motion-reduce:active:scale-100",
           )}

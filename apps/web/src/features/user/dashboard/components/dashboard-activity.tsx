@@ -61,7 +61,7 @@ export function DashboardActivity() {
           ]}
         />
       />
-      <SectionCardContent className="dashboard-activity-content flex min-h-0 flex-col overflow-y-auto">
+      <SectionCardContent className="dashboard-activity-content flex min-h-0 flex-col overflow-y-auto custom-scrollbar [scrollbar-gutter:stable]">
         {mode === "online" ? (
           <StatisticsQueryState
             query={online}

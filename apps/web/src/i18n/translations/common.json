@@ -96,6 +96,11 @@
   "greeting": "Cześć, {{name}}!",
   "routeErrors": {
     "guildShellTitle": "Nawigacja gildii",
+    "code": "Kod błędu: {{status}}",
+    "guildForbidden": {
+      "title": "Brak dostępu do tej organizacji",
+      "description": "Twoje role na serwerze Discord nie dają dostępu do jej Lootloga. Poproś lidera lub administratora o nadanie uprawnień."
+    },
     "actions": {
       "retry": "Spróbuj ponownie",
       "goToDashboard": "Przejdź do dashboardu",

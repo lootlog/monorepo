@@ -2,31 +2,30 @@ import { useBattleStatsSearchScroll } from "./use-battle-stats-search-scroll";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SectionCard as Card } from "@/components/common/section-card/section-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
+import { Table } from "@lootlog/ui/components/table";
+import { useTable } from "@tanstack/react-table";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { useStatsCustomization } from "@/hooks/use-stats-customization";
 import { BattleStatsCustomizationActions } from "./battle-stats-customization-actions";
 import { BattleStatsTableHeader } from "./battle-stats-table-header";
 import { useBattleStatsPinnedHeader } from "./use-battle-stats-pinned-header";
 import { useTranslation } from "react-i18next";
-import type {
-  BattleStatDefinition,
-  BattleStatValue,
-  BattleStatCategoryDefinition,
-  StatsCustomizationConfig,
-} from "@/types/stats-customization.types";
+import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
 import { cn } from "cn";
 import { SearchInput } from "@/components/ui/search-input";
-import { OneVsOneStatValueCell } from "./one-vs-one-stat-value-cell";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import {
+  getOneVsOneStatsColumns,
+  getOneVsOneStatsHeadClassName,
+} from "./one-vs-one-stats-columns";
 import { STAT_CATEGORIES } from "./one-vs-one-stats-definitions";
-import { BATTLE_SURFACE_COLORS } from "./utils/battle-color-palette";
+import {
+  getMatchingStatSearchKey,
+  getOneVsOneStatsRows,
+  getVisibleStats,
+} from "./one-vs-one-stats-rows";
+import { OneVsOneStatsTableBody } from "./one-vs-one-stats-table-body";
 
 interface OneVsOneStatsTableProps {
   battle: Battle;
@@ -42,147 +41,6 @@ interface OneVsOneStatsTableProps {
   pinnedHeader?: boolean;
   statsCustomizationConfig?: StatsCustomizationConfig;
 }
-
-type VisibleStatDefinition = BattleStatDefinition & {
-  label: string;
-};
-
-type VisibleStatCategory = {
-  id: string;
-  label: string;
-  stats: VisibleStatDefinition[];
-};
-
-const formatValue = (
-  value: BattleStatValue,
-  formatter?: (value: BattleStatValue) => string,
-  booleanLabels?: { yes: string; no: string },
-): string => {
-  if (formatter) {
-    return formatter(value);
-  }
-
-  if (Number.isFinite(value)) {
-    return Number(value).toLocaleString("pl-PL");
-  }
-
-  if (value === true || value === false) {
-    return value
-      ? (booleanLabels?.yes ?? "true")
-      : (booleanLabels?.no ?? "false");
-  }
-
-  return String(value ?? 0);
-};
-
-const normalizeStatSearchText = (value: string) =>
-  value
-    .trim()
-    .toLocaleLowerCase("pl-PL")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-const getMatchingStatSearchKey = (
-  query: string,
-  categories: VisibleStatCategory[],
-) => {
-  const normalizedQuery = normalizeStatSearchText(query);
-
-  if (!normalizedQuery) {
-    return null;
-  }
-
-  for (const category of categories) {
-    const categoryIndex = normalizeStatSearchText(
-      `${category.label} ${category.id}`,
-    );
-
-    if (categoryIndex.includes(normalizedQuery)) {
-      return `category:${category.id}`;
-    }
-
-    for (const stat of category.stats) {
-      const statIndex = normalizeStatSearchText(
-        `${stat.label} ${String(stat.key)}`,
-      );
-
-      if (statIndex.includes(normalizedQuery)) {
-        return `stat:${String(stat.key)}`;
-      }
-    }
-  }
-
-  return null;
-};
-
-const getVisibleStats = ({
-  config,
-  hideZeros,
-  opponent,
-  t,
-  user,
-}: {
-  config: ReturnType<typeof useStatsCustomization>["config"];
-  hideZeros: boolean;
-  opponent: Battle["warriors"][number] | undefined;
-  t: (key: string) => string;
-  user: Battle["warriors"][number] | undefined;
-}) => {
-  const categoriesMap = new Map<string, BattleStatCategoryDefinition>(
-    STAT_CATEGORIES.map((category) => [category.id, category]),
-  );
-
-  const allStatsMap = new Map<string, BattleStatDefinition>();
-
-  for (const category of STAT_CATEGORIES) {
-    for (const stat of category.stats) allStatsMap.set(String(stat.key), stat);
-  }
-
-  return config.categoryOrder
-    .map((categoryId) => {
-      const customization = config.categories[categoryId];
-      const categoryDefinition = categoriesMap.get(categoryId);
-
-      if (!customization?.visible) return null;
-
-      const orderedStats = customization.statOrder
-        .map((statKey) => allStatsMap.get(statKey))
-        .filter((stat): stat is BattleStatDefinition => stat !== undefined);
-
-      const filteredStats =
-        hideZeros && user && opponent
-          ? orderedStats.filter((stat) => {
-              const userValue = user[stat.key];
-              const opponentValue = opponent[stat.key];
-              const userNumber = Number.isFinite(userValue) ? userValue : 0;
-
-              const opponentNumber = Number.isFinite(opponentValue)
-                ? opponentValue
-                : 0;
-
-              return userNumber !== 0 || opponentNumber !== 0;
-            })
-          : orderedStats;
-
-      if (filteredStats.length === 0) return null;
-
-      return {
-        id: categoryId,
-        label:
-          customization.name ??
-          (categoryDefinition
-            ? t(categoryDefinition.labelKey)
-            : customization.id),
-        stats: filteredStats.map((stat) => ({
-          ...stat,
-          label: t(stat.labelKey),
-        })),
-      };
-    })
-    .filter(
-      (category): category is NonNullable<typeof category> => category !== null,
-    );
-};
 
 const resolveStatsTableConfiguration = ({
   controlledHideZeros,
@@ -308,6 +166,21 @@ export function OneVsOneStatsTable({
     categories: visibleStats,
   });
 
+  const columns = getOneVsOneStatsColumns({
+    booleanLabels,
+    compact,
+    opponent,
+    statHeader: t("battleUi.oneVsOne.stat"),
+    user,
+  });
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: getOneVsOneStatsRows(visibleStats),
+    columns,
+    getRowId: (row) => row.id,
+  });
+
   // A pinned header sticks to the page's scroller, so the table cannot sit in one of its own.
   const StatsScroller = pinnedHeader ? "div" : ScrollArea;
   const columnHeaderTopClassName = getColumnHeaderTopClassName(pinnedHeader);
@@ -382,123 +255,22 @@ export function OneVsOneStatsTable({
             <col style={{ width: compact ? "94px" : "120px" }} />
             <col style={{ width: compact ? "94px" : "120px" }} />
           </colgroup>
-          <TableHeader className="[&_tr]:border-b [&_tr]:border-border/70">
-            <TableRow className="border-b border-border/70">
-              <TableHead
-                className={cn(
-                  "sticky left-0 z-20 border-r border-b border-border/70 bg-muted shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                  columnHeaderTopClassName,
-                  compact && "h-8 px-2",
-                )}
-              >
-                {t("battleUi.oneVsOne.stat")}
-              </TableHead>
-              <TableHead
-                className={cn(
-                  "sticky z-10 border-b border-border/70 text-center whitespace-wrap px-2",
-                  columnHeaderTopClassName,
-                  BATTLE_SURFACE_COLORS.team.friendlyHeader,
-                  compact && "h-8 px-1.5",
-                )}
-              >
-                {user.name}
-              </TableHead>
-              <TableHead
-                className={cn(
-                  "sticky z-10 border-b border-border/70 text-center whitespace-wrap px-2",
-                  columnHeaderTopClassName,
-                  BATTLE_SURFACE_COLORS.team.enemyHeader,
-                  compact && "h-8 px-1.5",
-                )}
-              >
-                {opponent.name}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visibleStats.map((category) => [
-              <TableRow
-                key={`category-${category.id}`}
-                className={cn(
-                  "border-b border-border/70 bg-muted/50",
-                  activeStatSearchKey === `category:${category.id}` &&
-                    "outline outline-1 -outline-offset-1 outline-primary/60",
-                )}
-                data-battle-stat-search-key={`category:${category.id}`}
-              >
-                <TableCell
-                  className={cn(
-                    "sticky left-0 z-10 border-r border-border/70 bg-[color-mix(in_oklab,var(--muted)_50%,var(--card))] font-semibold shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]",
-                    compact ? "h-auto px-2 py-1.5" : "py-1",
-                  )}
-                >
-                  {category.label}
-                </TableCell>
-                <TableCell
-                  className={cn(
-                    "bg-muted/50",
-                    compact && "h-auto px-1.5 py-1.5",
-                  )}
-                />
-                <TableCell
-                  className={cn(
-                    "bg-muted/50",
-                    compact && "h-auto px-1.5 py-1.5",
-                  )}
-                />
-              </TableRow>,
-              ...category.stats.map((stat) => {
-                const userValue = user[stat.key];
-                const opponentValue = opponent[stat.key];
-                const statSearchKey = `stat:${String(stat.key)}`;
-
-                return (
-                  <TableRow
-                    key={`${category.id}-${stat.key}`}
-                    className={cn(
-                      "border-b border-border/70",
-                      activeStatSearchKey === statSearchKey &&
-                        "outline outline-1 -outline-offset-1 outline-primary/60",
-                    )}
-                    data-battle-stat-search-key={statSearchKey}
-                  >
-                    <TableCell
-                      className={cn(
-                        "sticky left-0 z-10 border-r border-border/70 bg-background font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] hover:bg-background",
-                        compact ? "h-auto px-2 py-1.5 leading-[1.35]" : "py-2",
-                        stat.color,
-                      )}
-                      style={{
-                        wordWrap: "break-word",
-                        overflowWrap: "break-word",
-                        whiteSpace: "normal",
-                      }}
-                    >
-                      {stat.label}
-                    </TableCell>
-                    <OneVsOneStatValueCell
-                      compact={compact}
-                      label={formatValue(userValue, stat.format, booleanLabels)}
-                      opposingValue={opponentValue}
-                      side="friendly"
-                      value={userValue}
-                    />
-                    <OneVsOneStatValueCell
-                      compact={compact}
-                      label={formatValue(
-                        opponentValue,
-                        stat.format,
-                        booleanLabels,
-                      )}
-                      opposingValue={userValue}
-                      side="enemy"
-                      value={opponentValue}
-                    />
-                  </TableRow>
-                );
-              }),
-            ])}
-          </TableBody>
+          <TanStackTableHeader
+            table={table}
+            className="[&_tr]:border-b [&_tr]:border-border/70"
+            rowClassName="border-b border-border/70"
+            getHeadClassName={(header) =>
+              getOneVsOneStatsHeadClassName({
+                columnId: header.column.id,
+                compact,
+                topClassName: columnHeaderTopClassName,
+              })
+            }
+          />
+          <OneVsOneStatsTableBody
+            table={table}
+            activeSearchKey={activeStatSearchKey}
+          />
         </Table>
       </StatsScroller>
     </Card>

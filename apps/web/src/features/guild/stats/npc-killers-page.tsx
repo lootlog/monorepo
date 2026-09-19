@@ -1,14 +1,10 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-} from "@lootlog/ui/components/table";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { TextLink } from "@lootlog/ui/components/text-link";
 import { Link } from "@tanstack/react-router";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { Ghost } from "lucide-react";
 import { KillStatsFilterBar } from "./components/kill-stats-filter-bar";
 import { MemberNameWithColor } from "./components/member-name-with-color";
@@ -16,9 +12,12 @@ import { StatsCountCell } from "./components/stats-count-cell";
 import { StatsDetailHeader } from "./components/stats-detail-header";
 import { StatsMemberAvatar } from "./components/stats-member-avatar";
 import { StatsRank } from "./components/stats-rank";
+import {
+  STATS_TABLE_COUNT_COLUMN_ID,
+  STATS_TABLE_POSITION_COLUMN_ID,
+  StatsTable,
+} from "./components/stats-table";
 import { StatsTableCard } from "./components/stats-table-card";
-import { StatsTableHeader } from "./components/stats-table-header";
-import { StatsTableRow } from "./components/stats-table-row";
 import { StatsDetailPageSkeleton } from "./stats-detail-page-skeleton";
 import { useNpcKillersPage } from "./use-npc-killers-page";
 
@@ -44,6 +43,60 @@ export const NpcKillersPage = () => {
     handlePreviousPage,
     handleNextPage,
   } = useNpcKillersPage();
+
+  const columns: ColumnDef<
+    typeof coreTableFeatures,
+    (typeof paginatedKillers)[number]
+  >[] = [
+    {
+      id: STATS_TABLE_POSITION_COLUMN_ID,
+      header: () => t("kills.memberRanking.position"),
+      cell: ({ row }) => <StatsRank rank={cursor + row.index + 1} />,
+    },
+    {
+      id: "member",
+      header: () => t("kills.npcKillers.member"),
+      cell: ({ row: { original: killer } }) => (
+        <div className="flex min-w-0 items-center gap-2.5">
+          <StatsMemberAvatar
+            userId={killer.memberUserId}
+            avatar={killer.memberAvatar}
+            name={killer.memberName}
+            className="size-7"
+          />
+          <TextLink
+            className="min-w-0 truncate text-sm"
+            render=<Link
+              to="/$guildId/stats/members/$memberId"
+              params={{
+                guildId,
+                memberId: String(killer.memberId),
+              }}
+            />
+          >
+            <MemberNameWithColor
+              name={killer.memberName}
+              member={membersMap.get(killer.memberUserId)}
+            />
+          </TextLink>
+        </div>
+      ),
+    },
+    {
+      id: STATS_TABLE_COUNT_COLUMN_ID,
+      header: () => t("kills.npcKillers.killCount"),
+      cell: ({ row: { original: killer } }) => (
+        <StatsCountCell value={killer.participationCount} emphasized />
+      ),
+    },
+  ];
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: paginatedKillers,
+    columns,
+    getRowId: (killer) => String(killer.memberId),
+  });
 
   if (isLoading) {
     return <StatsDetailPageSkeleton />;
@@ -127,57 +180,7 @@ export const NpcKillersPage = () => {
           />
         }
       >
-        <Table className="border-b">
-          <StatsTableHeader>
-            <TableHead className="w-14 text-center">
-              {t("kills.memberRanking.position")}
-            </TableHead>
-            <TableHead>{t("kills.npcKillers.member")}</TableHead>
-            <TableHead className="text-right">
-              {t("kills.npcKillers.killCount")}
-            </TableHead>
-          </StatsTableHeader>
-          <TableBody>
-            {paginatedKillers.map((killer, index) => (
-              <StatsTableRow key={killer.memberId}>
-                <TableCell className="text-center">
-                  <StatsRank rank={cursor + index + 1} />
-                </TableCell>
-                <TableCell>
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <StatsMemberAvatar
-                      userId={killer.memberUserId}
-                      avatar={killer.memberAvatar}
-                      name={killer.memberName}
-                      className="size-7"
-                    />
-                    <TextLink
-                      className="min-w-0 truncate text-sm"
-                      render=<Link
-                        to="/$guildId/stats/members/$memberId"
-                        params={{
-                          guildId,
-                          memberId: String(killer.memberId),
-                        }}
-                      />
-                    >
-                      <MemberNameWithColor
-                        name={killer.memberName}
-                        member={membersMap.get(killer.memberUserId)}
-                      />
-                    </TextLink>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <StatsCountCell
-                    value={killer.participationCount}
-                    emphasized
-                  />
-                </TableCell>
-              </StatsTableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StatsTable table={table} className="border-b" />
       </StatsTableCard>
     </div>
   );

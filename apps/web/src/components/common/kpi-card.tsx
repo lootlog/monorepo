@@ -33,19 +33,19 @@ export const KpiCard = ({
       {isLoading ? (
         <>
           <Skeleton className="h-7 w-24" />
-          <Skeleton className="h-3 w-16" />
+          <Skeleton className="my-0.5 h-3 w-16" />
         </>
       ) : (
         <>
           <div
             className={cn(
-              "truncate text-2xl font-semibold leading-7 tabular-nums",
+              "animate-content-in truncate text-2xl font-semibold leading-7 tabular-nums",
               valueClassName,
             )}
           >
             {value}
           </div>
-          <div className="min-h-4 truncate text-xs text-muted-foreground">
+          <div className="min-h-4 animate-content-in truncate text-xs text-muted-foreground">
             {detail}
           </div>
         </>

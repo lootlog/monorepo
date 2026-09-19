@@ -56,7 +56,7 @@ export const UserMenu = () => {
             render={
               <button
                 type="button"
-                className="group flex h-full w-full cursor-pointer items-center gap-2.5 pl-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-[state=open]:bg-sidebar-accent/45"
+                className="group flex h-full w-full cursor-pointer items-center gap-2.5 pl-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-sidebar-accent/45"
               >
                 <div className="relative shrink-0">
                   <Avatar className="size-8 rounded-full ring-1 ring-sidebar-border transition-[box-shadow] group-hover:ring-primary/45">
@@ -80,8 +80,9 @@ export const UserMenu = () => {
                   className="flex shrink-0 items-center gap-1.5 text-[10px] text-sidebar-foreground/75"
                 >
                   <span
+                    key={String(joined)}
                     aria-hidden="true"
-                    className={`size-1.5 rounded-full ${joined ? "bg-emerald-400" : "bg-amber-400"}`}
+                    className={`size-1.5 animate-pop-in rounded-full motion-reduce:animate-none ${joined ? "bg-emerald-400" : "bg-amber-400"}`}
                   />
                   {t(
                     joined
@@ -90,7 +91,7 @@ export const UserMenu = () => {
                   )}
                 </span>
                 <span className="flex h-8 w-12 shrink-0 items-center justify-center border-l border-sidebar-border text-sidebar-foreground/55 transition-colors group-hover:text-sidebar-foreground">
-                  <ChevronUp className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
+                  <ChevronUp className="size-4 transition-transform duration-200 group-data-popup-open:rotate-180 motion-reduce:transition-none" />
                 </span>
               </button>
             }

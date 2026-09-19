@@ -5,12 +5,15 @@ import {
   type RowData,
   type Table as TanStackTable,
 } from "@tanstack/react-table";
-import type { ComponentProps, ReactNode } from "react";
+import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { TableBody, TableCell, TableRow } from "@lootlog/ui/components/table";
 import { cn } from "cn";
+import { ROW_ENTRANCE_CLASS_NAME } from "@/components/ui/row-entrance";
 import type { coreTableFeatures } from "@/lib/tanstack-table-features";
 
-type TableRowProps = ComponentProps<typeof TableRow>;
+type TableRowProps = ComponentProps<typeof TableRow> & {
+  "data-state"?: string;
+};
 
 type TanStackTableBodyProps<TData extends RowData> = {
   table: TanStackTable<typeof coreTableFeatures, TData>;
@@ -26,6 +29,8 @@ type TanStackTableBodyProps<TData extends RowData> = {
     cell: Cell<typeof coreTableFeatures, TData, unknown>,
     content: ReactNode,
   ) => ReactNode;
+  /** Rows rendered directly after a data row, such as an expanded detail row. */
+  renderRowDetail?: (row: Row<typeof coreTableFeatures, TData>) => ReactNode;
 };
 
 export const TanStackTableBody = <TData extends RowData>({
@@ -37,6 +42,7 @@ export const TanStackTableBody = <TData extends RowData>({
   getCellClassName,
   getRowProps,
   renderCellContent,
+  renderRowDetail,
 }: TanStackTableBodyProps<TData>) => {
   return (
     <TableBody>
@@ -44,11 +50,15 @@ export const TanStackTableBody = <TData extends RowData>({
         const rowProps = getRowProps?.(row);
         const resolvedRowClassName = getRowClassName?.(row) ?? rowClassName;
 
-        return (
+        const dataRow = (
           <TableRow
             key={row.id}
             {...rowProps}
-            className={cn(resolvedRowClassName, rowProps?.className)}
+            className={cn(
+              ROW_ENTRANCE_CLASS_NAME,
+              resolvedRowClassName,
+              rowProps?.className,
+            )}
           >
             {row.getVisibleCells().map((cell) => {
               const resolvedCellClassName =
@@ -78,6 +88,17 @@ export const TanStackTableBody = <TData extends RowData>({
               );
             })}
           </TableRow>
+        );
+
+        if (!renderRowDetail) {
+          return dataRow;
+        }
+
+        return (
+          <Fragment key={row.id}>
+            {dataRow}
+            {renderRowDetail(row)}
+          </Fragment>
         );
       })}
     </TableBody>

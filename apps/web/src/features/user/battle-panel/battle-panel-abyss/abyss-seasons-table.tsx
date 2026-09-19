@@ -1,18 +1,15 @@
 import { BATTLE_TEXT_COLORS } from "@/components/battle/utils/battle-color-palette";
 import { SectionCard } from "@/components/common/section-card/section-card";
+import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
+import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
+import { coreTableFeatures } from "@/lib/tanstack-table-features";
+import { type ColumnDef, useTable } from "@tanstack/react-table";
 import { EmptyState } from "@/components/common/empty-state";
 import type { AbyssSeason } from "@/lib/api/battlelog-types";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@lootlog/ui/components/table";
+import { Table } from "@lootlog/ui/components/table";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "cn";
 import { Check, Trophy } from "lucide-react";
@@ -32,6 +29,18 @@ type AbyssSeasonsTableProps = {
 
 const formatOptionalNumber = (value: number | null) =>
   value === null ? "–" : formatAbyssNumber(value);
+
+const getAbyssSeasonCellClassName = (columnId: string) => {
+  if (columnId === "range") {
+    return "font-medium";
+  }
+
+  if (columnId === "record" || columnId === "ratingDelta") {
+    return "text-right font-medium";
+  }
+
+  return "text-right";
+};
 
 export function AbyssSeasonsTable({
   isLoading,
@@ -74,6 +83,64 @@ export function AbyssSeasonsTable({
     season.totalRatingDelta >= 0
       ? BATTLE_TEXT_COLORS.result.won
       : BATTLE_TEXT_COLORS.result.lost;
+
+  const columns: ColumnDef<typeof coreTableFeatures, AbyssSeason>[] = [
+    {
+      id: "range",
+      header: () => t("battlePanel.abyss.seasonsTable.range"),
+      cell: ({ row: { original: season } }) => getAbyssSeasonRangeLabel(season),
+    },
+    {
+      id: "totalBattles",
+      header: () => t("battlePanel.abyss.seasonsTable.totalBattles"),
+      cell: ({ row: { original: season } }) => season.totalBattles,
+    },
+    {
+      id: "record",
+      header: () => t("battlePanel.abyss.seasonsTable.record"),
+      cell: ({ row: { original: season } }) => renderRecord(season),
+    },
+    {
+      id: "winRate",
+      header: () => t("battlePanel.abyss.seasonsTable.winRate"),
+      cell: ({ row: { original: season } }) =>
+        `${formatAbyssNumber(season.winRate)}%`,
+    },
+    {
+      id: "ratingDelta",
+      header: () => t("battlePanel.abyss.seasonsTable.ratingDelta"),
+      cell: ({ row: { original: season } }) =>
+        formatAbyssSignedNumber(season.totalRatingDelta),
+    },
+    {
+      id: "peakRating",
+      header: () => t("battlePanel.abyss.seasonsTable.peakRating"),
+      cell: ({ row: { original: season } }) =>
+        formatOptionalNumber(season.peakRating),
+    },
+    {
+      id: "points",
+      header: () => t("battlePanel.abyss.seasonsTable.points"),
+      cell: ({ row: { original: season } }) =>
+        formatOptionalNumber(season.totalPointsGained),
+    },
+    {
+      id: "action",
+      header: () => (
+        <span className="sr-only">
+          {t("battlePanel.abyss.seasonsTable.action")}
+        </span>
+      ),
+      cell: ({ row: { original: season } }) => renderSelectButton(season),
+    },
+  ];
+
+  const table = useTable({
+    features: coreTableFeatures,
+    data: seasons,
+    columns,
+    getRowId: (season) => season.id,
+  });
 
   return (
     <SectionCard className="min-w-0 overflow-hidden">
@@ -141,79 +208,29 @@ export function AbyssSeasonsTable({
       ) : (
         <ScrollArea className="w-full">
           <Table className="min-w-[720px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  {t("battlePanel.abyss.seasonsTable.range")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.totalBattles")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.record")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.winRate")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.ratingDelta")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.peakRating")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("battlePanel.abyss.seasonsTable.points")}
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">
-                    {t("battlePanel.abyss.seasonsTable.action")}
-                  </span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {seasons.map((season) => {
-                const isSelected = season.id === selectedSeasonId;
-
-                return (
-                  <TableRow
-                    key={season.id}
-                    data-state={isSelected ? "selected" : undefined}
-                    className="h-12 tabular-nums"
-                  >
-                    <TableCell className="font-medium">
-                      {getAbyssSeasonRangeLabel(season)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {season.totalBattles}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {renderRecord(season)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatAbyssNumber(season.winRate)}%
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        "text-right font-medium",
-                        getRatingClassName(season),
-                      )}
-                    >
-                      {formatAbyssSignedNumber(season.totalRatingDelta)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatOptionalNumber(season.peakRating)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatOptionalNumber(season.totalPointsGained)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {renderSelectButton(season)}
-                    </TableCell>
-                  </TableRow>
-                );
+            <TanStackTableHeader
+              table={table}
+              getHeadClassName={(header) =>
+                header.column.id === "range" || header.column.id === "action"
+                  ? ""
+                  : "text-right"
+              }
+            />
+            <TanStackTableBody
+              table={table}
+              rowClassName="h-12 tabular-nums"
+              getCellClassName={(cell) =>
+                cn(
+                  getAbyssSeasonCellClassName(cell.column.id),
+                  cell.column.id === "ratingDelta" &&
+                    getRatingClassName(cell.row.original),
+                )
+              }
+              getRowProps={(row) => ({
+                "data-state":
+                  row.original.id === selectedSeasonId ? "selected" : undefined,
               })}
-            </TableBody>
+            />
           </Table>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
