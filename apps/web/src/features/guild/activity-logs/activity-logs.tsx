@@ -1,151 +1,168 @@
-import { ActivityLogsList } from "./components/activity-logs-list";
-import { ActivityLogsFiltersSidebar } from "./components/activity-logs-filters-sidebar";
-import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
-import { AnimatePresence } from "framer-motion";
-import * as m from "framer-motion/m";
-import { ActivityLogsFiltersHeader } from "./components/activity-logs-filters-header";
-import { useState, type FC } from "react";
+import { EmptyState } from "@/components/common/empty-state";
+import { ResultsSurface } from "@/components/common/results-surface";
+import { TableRowsSkeleton } from "@/components/ui/table-rows-skeleton";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@lootlog/ui/components/drawer";
+  useResetScrollTop,
+  useVirtualInfiniteScroll,
+} from "@/hooks/utils/use-virtual-infinite-scroll";
+import { useThemedKey } from "@/themes";
+import { useMembersControllerGetGuildMemberReferences } from "@lootlog/client/main";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useLocalStorage } from "usehooks-ts";
-import { Button } from "@lootlog/ui/components/button";
-import { Filter } from "lucide-react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import {
-  getActivitiesControllerSuggestWorldsQueryKey,
-  getActivitiesControllerSuggestWorldsQueryOptions,
-} from "@lootlog/client/activity";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { AlertCircle, SearchX } from "lucide-react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { activityLogsInfiniteQueryOptions } from "./activity-logs.queries";
+import { ActivityLogsFilterToolbar } from "./components/activity-logs-filter-toolbar";
+import { ActivityLogsTable } from "./components/activity-logs-table";
+import { useActivityLogsFilterModel } from "./components/use-activity-logs-filter-model";
 
-const FILTERS_OPEN_KEY = "activity-logs-filters-open";
+const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
-export const ActivityLogs: FC = () => {
+export const ActivityLogs = () => {
   const { t } = useTranslation();
+  const themedKey = useThemedKey();
+  const isMobile = useIsMobile();
+  const scrollElementRef = useRef<HTMLDivElement>(null);
 
   const { guildId } = useParams({
     from: "/_authenticated/$guildId/activity-logs",
   });
 
-  const { filters, setFilters, hasActiveFilters } = useActivityLogsFilters();
+  const filterModel = useActivityLogsFilterModel();
 
-  const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
-    FILTERS_OPEN_KEY,
-    true,
+  const { filters, selectedTypes, selectedSources, activeFilterChips } =
+    filterModel;
+
+  const {
+    data: activityLogs,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useInfiniteQuery(
+    activityLogsInfiniteQueryOptions({
+      guildId,
+      types: selectedTypes,
+      sources: selectedSources,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      name: filters.name,
+      world: filters.world,
+      clanName: filters.clanName,
+      limit: ACTIVITY_LOGS_PAGE_LIMIT,
+    }),
   );
 
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const hasGuildId = Boolean(guildId);
-
-  const { data: worldSuggestionsResponse } = useQuery(
-    getActivitiesControllerSuggestWorldsQueryOptions(
-      { guildId: guildId ?? "" },
-      { limit: 20 },
-      {
-        query: {
-          enabled: hasGuildId,
-          queryKey: getActivitiesControllerSuggestWorldsQueryKey(
-            { guildId: guildId ?? "" },
-            { limit: 20 },
-          ),
-          staleTime: 5 * 60 * 1000,
-        },
-      },
-    ),
+  const { data: members } = useMembersControllerGetGuildMemberReferences(
+    { guildId },
+    { includeInactive: true },
   );
 
-  const worldSuggestions = worldSuggestionsResponse?.worlds ?? [];
+  const memberNameByDiscordId = new Map(
+    members?.map((member) => [member.userId, member.name]),
+  );
 
-  const handleOpenSidebar = () => {
-    if (isMobile) {
-      setIsMobileFiltersOpen((prev) => !prev);
+  const activities = activityLogs?.pages.flatMap((page) => page.data) ?? [];
 
-      return;
+  const virtualizer = useVirtualizer({
+    count: activities.length,
+    getScrollElement: () => scrollElementRef.current,
+    estimateSize: () => (isMobile ? 88 : 56),
+    overscan: 8,
+  });
+
+  const virtualRows = virtualizer.getVirtualItems();
+
+  useVirtualInfiniteScroll({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    itemCount: activities.length,
+    virtualItems: virtualRows,
+  });
+  useResetScrollTop({
+    resetKey: JSON.stringify({ filters, guildId }),
+    scrollElementRef,
+  });
+
+  const renderResults = () => {
+    if (error) {
+      return (
+        <EmptyState
+          icon={AlertCircle}
+          title={t("common.activityLogs.loadError")}
+        />
+      );
     }
 
-    setIsFiltersOpen((prev) => !prev);
-  };
+    if (isLoading) {
+      return <TableRowsSkeleton rows={ACTIVITY_LOGS_PAGE_LIMIT} />;
+    }
 
-  const worldOptions = worldSuggestions.map((world) => ({
-    value: world,
-    label: world,
-  }));
+    if (activities.length === 0) {
+      return (
+        <EmptyState
+          icon={SearchX}
+          title={t(themedKey("common.activityLogs.empty"))}
+        />
+      );
+    }
 
-  const filtersOpenForHeader = isMobile ? isMobileFiltersOpen : isFiltersOpen;
-
-  const handleWorldChange = (world: string) => {
-    setFilters({
-      world: world || null,
-    });
+    return (
+      <ActivityLogsTable
+        activities={activities}
+        isMobile={isMobile}
+        memberNameByDiscordId={memberNameByDiscordId}
+        virtualRows={virtualRows}
+        totalSize={virtualizer.getTotalSize()}
+      />
+    );
   };
 
   return (
-    <>
-      {isMobile && (
-        <Drawer
-          open={isMobileFiltersOpen}
-          onOpenChange={setIsMobileFiltersOpen}
-        >
-          <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
-            <DrawerHeader className="border-b px-4 py-3 shrink-0">
-              <DrawerTitle>{t("activityLogs.filters.title")}</DrawerTitle>
-            </DrawerHeader>
-            <div className="flex-1 overflow-hidden">
-              <ActivityLogsFiltersSidebar className="w-full border-l-0 h-full p-0" />
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
-
-      <div className="w-full flex flex-col h-full overflow-hidden bg-background">
-        <div className="px-3 pt-3 pb-0">
-          <ActivityLogsFiltersHeader
-            onToggleFilters={handleOpenSidebar}
-            isFiltersOpen={filtersOpenForHeader}
-            hasActiveFilters={hasActiveFilters}
-            worldOptions={worldOptions}
-            selectedWorld={filters.world ?? ""}
-            onWorldChange={handleWorldChange}
-          />
-        </div>
-
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden pb-3">
-            <ActivityLogsList />
-          </div>
-
-          <AnimatePresence initial={false}>
-            {!isMobile && isFiltersOpen && (
-              <m.div
-                layout
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 24 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden h-full"
-              >
-                <ActivityLogsFiltersSidebar />
-              </m.div>
+    <div className="flex h-full min-h-0 flex-col bg-background p-3">
+      <h1 className="sr-only">{t("activityLogs.title")}</h1>
+      <ResultsSurface
+        chips={activeFilterChips}
+        clearFiltersLabel={t("activityLogs.filters.clear")}
+        onClearFilters={filterModel.clearFilters}
+        scrollRef={scrollElementRef}
+        toolbar={<ActivityLogsFilterToolbar model={filterModel} />}
+        toolbarLabel={t("activityLogs.filters.title")}
+        withHorizontalScroll={!isMobile}
+        footer={
+          <div
+            aria-live="polite"
+            className="flex h-14 shrink-0 items-center justify-between gap-3 border-t border-border px-4 text-sm text-muted-foreground"
+          >
+            <span className="whitespace-nowrap">
+              {t("activityLogs.table.loaded", { count: activities.length })}
+            </span>
+            {isFetchingNextPage ? (
+              <span className="flex min-w-0 items-center gap-2">
+                <Spinner className="size-4" />
+                <span className="truncate">
+                  {t(themedKey("common.activityLogs.loadingMore"))}
+                </span>
+              </span>
+            ) : (
+              !hasNextPage &&
+              activities.length > 0 && (
+                <span className="truncate">
+                  {t(themedKey("common.activityLogs.end"))}
+                </span>
+              )
             )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {isMobile && (
-        <Button
-          onClick={handleOpenSidebar}
-          size="icon"
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-20"
-        >
-          <Filter className="h-5 w-5" />
-        </Button>
-      )}
-    </>
+          </div>
+        }
+      >
+        {renderResults()}
+      </ResultsSurface>
+    </div>
   );
 };

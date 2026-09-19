@@ -7,7 +7,7 @@ import { getResetHeadToHeadFilters } from "@/features/user/battle-panel/componen
 import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelH2hCard } from "@/features/user/battle-panel/components/battle-panel-h2h-card";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
-import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
+import { ResultsSurface } from "@/components/common/results-surface";
 import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Table } from "@lootlog/ui/components/table";
@@ -215,7 +215,7 @@ export function HeadToHeadPageVariant({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
-          <BattlePanelResultsSurface
+          <ResultsSurface
             title={t(titleKey)}
             chips={activeFilterChips}
             clearFiltersLabel={t("battlePanel.filters.clear")}
@@ -225,7 +225,7 @@ export function HeadToHeadPageVariant({
             withHorizontalScroll={!isMobile}
           >
             {renderResults()}
-          </BattlePanelResultsSurface>
+          </ResultsSurface>
         </div>
       </div>
     </>

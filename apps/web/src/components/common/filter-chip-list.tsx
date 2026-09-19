@@ -1,23 +1,23 @@
 import { Button } from "@lootlog/ui/components/button";
 import { X } from "lucide-react";
 
-export type BattlePanelFilterChip = {
+export type FilterChip = {
   id: string;
   label: string;
   onRemove: () => void;
 };
 
-type BattlePanelFilterChipListProps = {
-  chips: BattlePanelFilterChip[];
+type FilterChipListProps = {
+  chips: FilterChip[];
   clearLabel: string;
   onClear: () => void;
 };
 
-export const BattlePanelFilterChipList = ({
+export const FilterChipList = ({
   chips,
   clearLabel,
   onClear,
-}: BattlePanelFilterChipListProps) => {
+}: FilterChipListProps) => {
   if (chips.length === 0) {
     return null;
   }

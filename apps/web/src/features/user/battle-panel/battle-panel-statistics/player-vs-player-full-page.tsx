@@ -10,7 +10,7 @@ import { getPlayerVsPlayerBattleResult } from "@/features/user/battle-panel/comp
 import { EmptyState } from "@/components/common/empty-state";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
 import { BattlePanelPvpBattleCard } from "@/features/user/battle-panel/components/battle-panel-pvp-battle-card";
-import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
+import { ResultsSurface } from "@/components/common/results-surface";
 import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import { getRouteErrorMessage } from "@/lib/router/route-errors";
 import { Label } from "@lootlog/ui/components/label";
@@ -238,7 +238,7 @@ export function PlayerVsPlayerFullPage() {
 
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
-            <BattlePanelResultsSurface
+            <ResultsSurface
               title={t("battlePanel.navigation.battles")}
               chips={activeFilterChips}
               clearFiltersLabel={t("battlePanel.filters.clear")}
@@ -248,7 +248,7 @@ export function PlayerVsPlayerFullPage() {
               withHorizontalScroll={!isMobile}
             >
               {renderResults()}
-            </BattlePanelResultsSurface>
+            </ResultsSurface>
           </div>
         </div>
       </div>

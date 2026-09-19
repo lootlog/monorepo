@@ -5,9 +5,9 @@ import { useBattleTableSelection } from "@/features/user/battle-panel/battle-pan
 import { BattlePanelBattleCard } from "@/features/user/battle-panel/components/battle-panel-battle-card";
 import { BattlePanelBattleCardSkeleton } from "@/features/user/battle-panel/components/battle-panel-battle-card-skeleton";
 import { getBattleResult } from "@/features/user/battle-panel/components/battle-panel-battle-presentation";
-import type { BattlePanelFilterChip } from "@/features/user/battle-panel/components/battle-panel-filter-chip-list";
+import type { FilterChip } from "@/components/common/filter-chip-list";
 import { BattlePanelPaginationFooter } from "@/features/user/battle-panel/components/battle-panel-pagination-footer";
-import { BattlePanelResultsSurface } from "@/features/user/battle-panel/components/battle-panel-results-surface";
+import { ResultsSurface } from "@/components/common/results-surface";
 import { getBattleResultRowClassName } from "@/features/user/battle-panel/components/battle-result-row-class-name";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
@@ -35,7 +35,7 @@ import { BattlesTableSkeletonBody } from "./battles-table-skeleton-body";
 import { useBattleTableColumns } from "./use-battle-table-columns";
 
 type BattlesTableProps = {
-  activeFilterChips?: BattlePanelFilterChip[];
+  activeFilterChips?: FilterChip[];
   battles: Battle[];
   clearFiltersLabel?: string;
   isLoading?: boolean;
@@ -254,7 +254,7 @@ export const BattlesTable = ({
 
   return (
     <>
-      <BattlePanelResultsSurface
+      <ResultsSurface
         chips={activeFilterChips}
         clearFiltersLabel={clearFiltersLabel}
         footer={paginationFooter}
@@ -262,6 +262,7 @@ export const BattlesTable = ({
         selectionBar={selectionBar}
         toolbar={toolbar}
         toolbarEnd={toolbarEnd}
+        toolbarLabel={t("battlePanel.filters.title")}
         withHorizontalScroll={!isMobile}
       >
         {!isLoading && battles.length === 0 ? (
@@ -350,7 +351,7 @@ export const BattlesTable = ({
             )}
           </Table>
         )}
-      </BattlePanelResultsSurface>
+      </ResultsSurface>
 
       <BattleTableDeleteDialogs
         isBulkDeleteDialogOpen={isBulkDeleteDialogOpen}
