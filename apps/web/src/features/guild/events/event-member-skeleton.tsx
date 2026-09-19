@@ -9,8 +9,11 @@ export const EventMemberSkeleton = () => {
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex flex-col gap-4 px-3 py-3">
         <PageHeader
-          title=<Skeleton className="h-5 w-40" />
-          description=<Skeleton className="h-3 w-56 max-w-full" />
+          title=<Skeleton render={<span />} className="block h-5 w-40" />
+          description=<Skeleton
+            render={<span />}
+            className="block h-3 w-56 max-w-full"
+          />
         />
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
