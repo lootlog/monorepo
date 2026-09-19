@@ -4,6 +4,8 @@ import { ContextMenu as ContextMenuPrimitive } from "@base-ui/react/context-menu
 import { Check, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
 
+import { nativeButtonForRender } from "@lootlog/ui/lib/native-button";
+
 import { cn } from "cn";
 
 function ContextMenu(props: ContextMenuPrimitive.Root.Props) {
@@ -44,6 +46,8 @@ function ContextMenuRadioGroup(props: ContextMenuPrimitive.RadioGroup.Props) {
 }
 
 function ContextMenuSubTrigger({
+  nativeButton,
+  render,
   className,
   inset,
   children,
@@ -52,6 +56,8 @@ function ContextMenuSubTrigger({
   return (
     <ContextMenuPrimitive.SubmenuTrigger
       data-slot="context-menu-sub-trigger"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       className={cn(
         "flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-popup-open:bg-accent data-popup-open:text-accent-foreground",
         inset && "pl-8",
@@ -112,6 +118,8 @@ function ContextMenuSubContent(props: ContextMenuContentProps) {
 }
 
 function ContextMenuItem({
+  nativeButton,
+  render,
   className,
   inset,
   ...props
@@ -119,6 +127,8 @@ function ContextMenuItem({
   return (
     <ContextMenuPrimitive.Item
       data-slot="context-menu-item"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
         inset && "pl-8",
@@ -130,6 +140,8 @@ function ContextMenuItem({
 }
 
 function ContextMenuCheckboxItem({
+  nativeButton,
+  render,
   className,
   children,
   checked,
@@ -138,6 +150,8 @@ function ContextMenuCheckboxItem({
   return (
     <ContextMenuPrimitive.CheckboxItem
       data-slot="context-menu-checkbox-item"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
         className,
@@ -156,6 +170,8 @@ function ContextMenuCheckboxItem({
 }
 
 function ContextMenuRadioItem({
+  nativeButton,
+  render,
   className,
   children,
   ...props
@@ -163,6 +179,8 @@ function ContextMenuRadioItem({
   return (
     <ContextMenuPrimitive.RadioItem
       data-slot="context-menu-radio-item"
+      nativeButton={nativeButton ?? nativeButtonForRender(render)}
+      render={render}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
         className,
