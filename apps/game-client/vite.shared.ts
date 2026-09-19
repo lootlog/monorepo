@@ -2,7 +2,7 @@ import { loadEnv, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
-import gameClientPackage from "./package.json";
+import gameClientPackage from "./package.json" with { type: "json" };
 
 export function gameClientViteConfig(mode: string): UserConfig {
   const env = loadEnv(mode, import.meta.dirname, "");
