@@ -138,11 +138,13 @@ WHERE "vanityUrl" IS NOT NULL
       ~ '^([0-9]*|battles)$';
 ```
 
-Deploy the API revision that validates vanity URLs first, then apply the
-migration straight away. That revision resolves ids before vanity URLs and
-reads only `guild-lookup:v2:*` cache entries, so it is safe on unmigrated data;
-an older API revision running against the constraint answers an all-digit
-vanity URL with a 500 instead of a 400. Until the migration runs, an
-Organization holding a rejected vanity URL cannot save its general settings.
-Legacy `guild:<id or vanity URL>` cache entries are never read again and expire
-within one hour.
+Apply the migration before deploying the API revision that validates vanity
+URLs. Only that revision writes `guild-lookup:v2:*` cache entries, so applying
+the migration first guarantees no entry can hold a vanity URL the migration
+cleared; in the reverse order such an entry would outlive the migration by up
+to one hour, keep a cleared `battles` alias resolving, and make the settings
+form resubmit the stale value into a 400. The constraint also closes the write
+path at once: until the new revision ships, the older one answers an all-digit
+or empty-slug vanity URL with a 500 instead of a 400, and every other save is
+unaffected. Legacy `guild:<id or vanity URL>` cache entries are never read
+again and expire within one hour.
