@@ -52,14 +52,12 @@ export const CatchingWhitelistWarning: FC = () => {
     (state) => state.game?.hero.characterId ?? "",
   );
 
-  const [
-    dismissedCharacters = DEFAULT_DISMISSED_CHARACTERS,
-    setDismissedCharacters,
-  ] = useLocalStorage<DismissedCharacters>(
-    STORAGE_KEY,
-    DEFAULT_DISMISSED_CHARACTERS,
-    dismissedCharactersSchema,
-  );
+  const [dismissedCharacters, setDismissedCharacters] =
+    useLocalStorage<DismissedCharacters>(
+      STORAGE_KEY,
+      DEFAULT_DISMISSED_CHARACTERS,
+      dismissedCharactersSchema,
+    );
 
   const checkedCharacterIdsRef = useRef(new Set<string>());
 
@@ -67,8 +65,7 @@ export const CatchingWhitelistWarning: FC = () => {
     if (
       !isSuccess ||
       !characterId ||
-      checkedCharacterIdsRef.current.has(characterId) ||
-      !dismissedCharacters
+      checkedCharacterIdsRef.current.has(characterId)
     )
       return;
 
@@ -95,7 +92,7 @@ export const CatchingWhitelistWarning: FC = () => {
   ]);
 
   const handleClose = () => {
-    if (characterId && dismissedCharacters) {
+    if (characterId) {
       setDismissedCharacters({
         ...dismissedCharacters,
         [characterId]: true,

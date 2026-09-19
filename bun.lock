@@ -252,6 +252,7 @@
         "react-hook-form": "catalog:",
         "react-i18next": "^17.0.14",
         "sonner": "^2.0.8",
+        "usehooks-ts": "^3.1.1",
         "zod": "catalog:",
         "zustand": "^5.0.15",
       },
@@ -488,7 +489,6 @@
         "node-html-parser": "^9.0.4",
         "pg": "^8.23.0",
         "random-words": "^2.0.1",
-        "uuid": "^14.0.2",
         "zx": "^8.8.5",
       },
       "devDependencies": {

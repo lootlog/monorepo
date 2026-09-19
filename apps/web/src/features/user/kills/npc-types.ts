@@ -13,7 +13,9 @@ export const TRACKABLE_NPC_TYPES: NpcType[] = [
   KillsControllerGetUserKillStatsNpcTypesItem.ELITE2,
 ];
 
+export const NPC_TYPES = Object.values(
+  KillsControllerGetUserKillStatsNpcTypesItem,
+);
+
 export const findTrackableNpcType = (value: string) =>
-  Object.values(KillsControllerGetUserKillStatsNpcTypesItem).find(
-    (type) => type === value,
-  );
+  NPC_TYPES.find((type) => type === value);
