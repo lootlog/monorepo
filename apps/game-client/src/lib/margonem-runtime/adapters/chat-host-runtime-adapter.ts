@@ -1,6 +1,7 @@
-// Native wrappers forward foreign values unchanged; parsing would alter the game contract.
-// oxlint-disable-next-line anti-slop/no-unknown-returns
-type NativeMethod = (...args: unknown[]) => unknown;
+import { isFunction } from "es-toolkit";
+
+// Native chat channel/focus operations have no result; the proxy still forwards runtime returns.
+type NativeMethod = (...args: unknown[]) => void;
 
 type ChatOwner = { setChannel?: NativeMethod; focus?: NativeMethod };
 
@@ -163,20 +164,20 @@ export function watchIntegratedChatHost(
     const wrap = (owner: ChatOwner | undefined, key: keyof ChatOwner) => {
       const original = owner?.[key];
 
-      // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Optional foreign runtime capability.
-      if (!owner || typeof original !== "function") return;
+      if (!owner || !isFunction(original)) return;
 
-      // oxlint-disable-next-line anti-slop/no-unknown-parameters -- Preserve the caller's native receiver.
-      const wrapped: NativeMethod = function (this: unknown, ...args) {
-        // UI failures cannot alter the native receiver, result, exception or calls.
-        try {
-          restore();
-        } catch {
-          /* The native method must still run. */
-        }
+      const wrapped = new Proxy(original, {
+        apply(target, receiver, args) {
+          // UI failures cannot alter the native receiver, result, exception or calls.
+          try {
+            restore();
+          } catch {
+            /* The native method must still run. */
+          }
 
-        return original.apply(this, args);
-      };
+          return target.apply(receiver, args);
+        },
+      });
 
       owner[key] = wrapped;
       restoreCallbacks.push(() => {

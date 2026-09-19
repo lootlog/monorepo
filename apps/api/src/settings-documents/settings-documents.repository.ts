@@ -1,3 +1,4 @@
+import { decodeSettingsRecord } from "@lootlog/domain/settings-paths";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   migrateSettingsDocument,
@@ -128,7 +129,7 @@ export class SettingsDocumentsRepository extends Context.Service<
                   )
                     ? migrateSettingsDocument(
                         operation.domain,
-                        current.overrides,
+                        decodeSettingsRecord(current.overrides),
                         current.schemaVersion,
                       )
                     : {};

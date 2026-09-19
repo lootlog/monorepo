@@ -1,4 +1,5 @@
 import { Schema, Predicate } from "effect";
+import { isSettingsRecord } from "./settings-paths.js";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   CHAT_FONT_SCALE_MAX_PERCENT,
@@ -56,7 +57,7 @@ export type SettingsValueSource = "DEFAULT" | SettingsScope;
 export type SettingsPersistence = "SERVER_DOCUMENT" | "DEVICE";
 
 // Values arrive from versioned storage and are validated per catalog field before use.
-export type RawSettingsValues = Record<string, unknown>;
+export type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
 
 export interface SettingsDocumentLayer {
   scope: SettingsScope;
@@ -377,12 +378,12 @@ export const SETTINGS_CATALOG = {
         // of the old lists keeps every notification the player received.
         fromVersion: 1,
         migrate: ({ presentation, ...overrides }) => {
-          if (!Predicate.isObject(presentation)) return overrides;
+          if (!isSettingsRecord(presentation)) return overrides;
           const guildIds = new Set<string>();
           const migratedPresentation: RawSettingsValues = {};
 
           for (const [type, rule] of Object.entries(presentation)) {
-            if (!Predicate.isObject(rule)) continue;
+            if (!isSettingsRecord(rule)) continue;
             const { guildIds: legacyGuildIds, ...rest } = rule;
 
             if (isStringArray(legacyGuildIds)) {

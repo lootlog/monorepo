@@ -46,8 +46,7 @@ function ToggleGroup<Value extends string>({
       {...props}
     >
       <ToggleGroupContext.Provider
-        // Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
-        // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
+        // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values -- Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
         value={{ variant, size, spacing, orientation }}
       >
         {children}

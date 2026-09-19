@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/complexity -- preference migrations intentionally normalize every optional legacy field at one boundary. */
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   cloneDetector,
@@ -109,6 +108,21 @@ const response = (
   mutes: cloneMutes(mutes),
 });
 
+const mergeStoredPreferences = (
+  current: Parameters<typeof response>[1],
+  settingsUpdate: Partial<NonNullable<Parameters<typeof response>[1]>>,
+) =>
+  settingsUpdate.guildsOrder ||
+  settingsUpdate.hiddenGuildIds ||
+  settingsUpdate.theme
+    ? {
+        guildsOrder: settingsUpdate.guildsOrder ?? current?.guildsOrder ?? [],
+        hiddenGuildIds:
+          settingsUpdate.hiddenGuildIds ?? current?.hiddenGuildIds ?? [],
+        theme: settingsUpdate.theme ?? current?.theme ?? "default",
+      }
+    : current;
+
 type StoredGamePreferences = {
   notifications?: unknown;
   detector?: unknown;
@@ -216,6 +230,62 @@ const legacyTypeGuildIds = (
   );
 
   return present ? [...new Set(lists)] : undefined;
+};
+
+const patchGamePreferences = (
+  current: UserGameAccountPreferences,
+  payload: UpdateUserGameAccountPreferencesRequest,
+) => {
+  const notifications = cloneNotifications(current.notifications);
+
+  if (payload.notifications) {
+    const guildIds =
+      payload.notifications.guildIds ??
+      legacyTypeGuildIds(payload.notifications);
+
+    if (guildIds) {
+      notifications.guildIds = normalizeGuildIds(notifications.guildIds)(
+        guildIds,
+      );
+    }
+
+    for (const type of NOTIFICATION_TYPES) {
+      const patch = payload.notifications[type];
+
+      if (patch) {
+        notifications[type] = normalizeNotification(notifications[type])(patch);
+      }
+    }
+  }
+
+  const detector = cloneDetector(current.detector);
+
+  if (payload.detector?.routingRules) {
+    detector.routingRules = normalizeRoutingRules(
+      payload.detector.routingRules.map((rule) => ({
+        ...rule,
+        guildIds: [...rule.guildIds],
+      })),
+    );
+  }
+
+  for (const type of DETECTOR_NPC_TYPES) {
+    const patch = payload.detector?.[type];
+
+    if (patch) detector[type] = normalizeDetectorType(detector[type])(patch);
+  }
+
+  const pings = normalizePings(
+    payload.pings ? { ...current.pings, ...payload.pings } : current.pings,
+  );
+
+  const airTags = normalizeAirTags(
+    payload.airTags
+      ? { ...current.airTags, ...payload.airTags }
+      : current.airTags,
+  );
+
+  return { notifications, detector, pings, airTags };
 };
 
 const readPreferences = (
@@ -419,19 +489,7 @@ export const makeUserPreferencesData = (
 
     return response(
       userId,
-      settingsUpdate.guildsOrder ||
-        settingsUpdate.hiddenGuildIds ||
-        settingsUpdate.theme
-        ? {
-            guildsOrder:
-              settingsUpdate.guildsOrder ?? current.settings?.guildsOrder ?? [],
-            hiddenGuildIds:
-              settingsUpdate.hiddenGuildIds ??
-              current.settings?.hiddenGuildIds ??
-              [],
-            theme: settingsUpdate.theme ?? current.settings?.theme ?? "default",
-          }
-        : current.settings,
+      mergeStoredPreferences(current.settings, settingsUpdate),
       nextMutes,
       nextAppearance ?? chatAppearance(current.appearance),
     );
@@ -466,57 +524,10 @@ export const makeUserPreferencesData = (
 
     const stored = yield* readGamePreferences(userId, accountId);
     const current = gamePreferencesResponse(accountId, stored);
-    const notifications = cloneNotifications(current.notifications);
 
-    if (payload.notifications) {
-      const guildIds =
-        payload.notifications.guildIds ??
-        legacyTypeGuildIds(payload.notifications);
-
-      if (guildIds) {
-        notifications.guildIds = normalizeGuildIds(
-          guildIds,
-          notifications.guildIds,
-        );
-      }
-
-      for (const type of NOTIFICATION_TYPES) {
-        const patch = payload.notifications[type];
-
-        if (patch) {
-          notifications[type] = normalizeNotification(
-            patch,
-            notifications[type],
-          );
-        }
-      }
-    }
-
-    const detector = cloneDetector(current.detector);
-
-    if (payload.detector?.routingRules) {
-      detector.routingRules = normalizeRoutingRules(
-        payload.detector.routingRules.map((rule) => ({
-          ...rule,
-          guildIds: [...rule.guildIds],
-        })),
-      );
-    }
-
-    for (const type of DETECTOR_NPC_TYPES) {
-      const patch = payload.detector?.[type];
-
-      if (patch) detector[type] = normalizeDetectorType(patch, detector[type]);
-    }
-
-    const pings = normalizePings(
-      payload.pings ? { ...current.pings, ...payload.pings } : current.pings,
-    );
-
-    const airTags = normalizeAirTags(
-      payload.airTags
-        ? { ...current.airTags, ...payload.airTags }
-        : current.airTags,
+    const { notifications, detector, pings, airTags } = patchGamePreferences(
+      current,
+      payload,
     );
 
     const hasStoredNotifications =

@@ -3,8 +3,7 @@
 import * as React from "react";
 import { isObjectRecord } from "@lootlog/schema/records";
 import type { CSSPropertiesWithVariables } from "../types/css";
-// Consumers load complete chart features through React.lazy; these primitives share their chart context.
-// oxlint-disable-next-line react-doctor/prefer-dynamic-import
+// oxlint-disable-next-line react-doctor/prefer-dynamic-import -- Chart features are lazy-loaded by consumers; these synchronous primitives must share the same Recharts context.
 import * as RechartsPrimitive from "recharts";
 
 import { cn } from "cn";

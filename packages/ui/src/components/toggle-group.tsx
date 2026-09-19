@@ -52,8 +52,7 @@ function ToggleGroup({
       {...props}
     >
       <ToggleGroupContext.Provider
-        // React Compiler in the consuming web build caches these four scalar fields.
-        // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values
+        // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values -- The consuming web build runs React Compiler over this source and memoizes these scalar context fields.
         value={{ variant, size, spacing, orientation }}
       >
         {children}

@@ -46,8 +46,7 @@ export const tryEncodeRealtimeFrame = (frame: RealtimeFrameType) =>
 // Only reuse values that MessagePack would leave unchanged. In particular,
 // open payloads may contain accessors, binary views, undefined or custom objects.
 // Keep the decoder as the authority for normalization and rejected map keys.
-// oxlint-disable-next-line anti-slop/no-unknown-parameters -- The codec must inspect schema-validated open payloads for MessagePack normalization.
-const isMessagePackStable = (value: unknown): boolean => {
+const isMessagePackStable = (value: unknown): value is Schema.Json => {
   if (Predicate.isNumber(value)) return !Object.is(value, -0);
 
   if (Predicate.isString(value)) return !/[\uD800-\uDFFF]/u.test(value);

@@ -1,11 +1,9 @@
-/* oxlint-disable anti-slop/no-unsafe-dictionary-type, anti-slop/no-unknown-parameters -- test fixtures assemble raw document JSON. */
 import type { QueryClient } from "@tanstack/react-query";
 import { SETTINGS_CATALOG } from "@lootlog/domain/settings-documents";
 import { setPath } from "@lootlog/domain/settings-paths";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import { SETTINGS_DOMAINS } from "@lootlog/schema/settings-documents";
 import type {
-  SettingsDocumentsResponseDtoOutput,
   SoundSettingsResponseDto,
   UserGameAccountPreferencesResponseDtoOutput,
   UserPreferencesResponseDtoOutput,
@@ -14,6 +12,7 @@ import { getCurrentSettingsDocumentsQueryKey } from "@/features/settings/persist
 import {
   getSettingsDocumentsQueryKey,
   type SettingsDocumentsContext,
+  type SettingsDocuments,
 } from "@/features/settings/persistence/settings-documents";
 
 type SettingsScope = {
@@ -22,7 +21,10 @@ type SettingsScope = {
 };
 
 /** Dotted `domain.field.path` keys mapped to stored values. */
-export type SettingsDocumentValues = Record<string, unknown>;
+export type SettingsDocumentValues = Record<
+  string,
+  SettingsDocuments["domains"][string]["effective"][string] | undefined
+>;
 
 const USER_SCOPE: SettingsScope = { type: "USER", id: "user" };
 
@@ -33,11 +35,11 @@ const USER_SCOPE: SettingsScope = { type: "USER", id: "user" };
 export const createSettingsDocuments = (
   values: SettingsDocumentValues = {},
   scope: SettingsScope = USER_SCOPE,
-): SettingsDocumentsResponseDtoOutput => {
-  const domains: SettingsDocumentsResponseDtoOutput["domains"] = {};
+): SettingsDocuments => {
+  const domains: Record<string, SettingsDocuments["domains"][string]> = {};
 
   for (const domain of SETTINGS_DOMAINS) {
-    const effective: Record<string, unknown> = {};
+    const effective: SettingsDocuments["domains"][string]["effective"] = {};
     const sources: Record<string, "DEFAULT" | SettingsScope> = {};
 
     for (const [field, definition] of Object.entries(
@@ -69,7 +71,10 @@ export const createSettingsDocuments = (
       (candidate) => field === candidate || field.startsWith(`${candidate}.`),
     );
 
-    resolution.sources[catalogField ?? field] = scope;
+    domains[domain] = {
+      ...resolution,
+      sources: { ...resolution.sources, [catalogField ?? field]: scope },
+    };
   }
 
   return { domains };
@@ -128,10 +133,10 @@ export const userPreferenceValues = (
 
 /** Applies stored values on top of an existing (or fresh) documents response. */
 export const applySettingsDocumentValues = (
-  documents: SettingsDocumentsResponseDtoOutput | undefined,
+  documents: SettingsDocuments | undefined,
   values: SettingsDocumentValues,
   scope: SettingsScope = USER_SCOPE,
-): SettingsDocumentsResponseDtoOutput => {
+): SettingsDocuments => {
   const patch = createSettingsDocuments(values, scope);
   const base = documents ?? createSettingsDocuments();
   const domains = { ...base.domains };
@@ -186,7 +191,7 @@ export const seedSettingsDocumentValues = (
  */
 export const seedSettingsDocuments = (
   queryClient: QueryClient,
-  documents: SettingsDocumentsResponseDtoOutput,
+  documents: SettingsDocuments,
   context?: SettingsDocumentsContext,
 ) => {
   queryClient.setQueryData(
@@ -200,6 +205,6 @@ export const seedSettingsDocuments = (
 };
 
 export const readSeededSettingsDocuments = (queryClient: QueryClient) =>
-  queryClient.getQueryData<SettingsDocumentsResponseDtoOutput>(
+  queryClient.getQueryData<SettingsDocuments>(
     getCurrentSettingsDocumentsQueryKey(),
   );

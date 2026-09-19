@@ -70,8 +70,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
   } = useDraggableWindowFrame(props);
 
   return (
-    // This container only stops click bubbling into Margonem; child controls own keyboard actions.
-    // oxlint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions
+    // oxlint-disable-next-line react-doctor/click-events-have-key-events, react-doctor/no-static-element-interactions -- This container only stops click bubbling into Margonem; child controls own keyboard actions.
     <div
       aria-hidden={animationPhase === "exit" ? true : undefined}
       className="ll:pointer-events-auto ll:absolute"

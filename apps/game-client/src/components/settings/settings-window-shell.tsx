@@ -40,7 +40,6 @@ export const SettingsWindowShell: FC<SettingsWindowShellProps> = ({
   onKeyDown,
 }) => (
   // Shortcuts apply only while focus is inside the window.
-  // oxlint-disable-next-line jsx-a11y/no-static-element-interactions
   <div
     className="ll:relative ll:flex ll:h-full ll:min-h-0 ll:w-full ll:flex-row ll:text-[13px]"
     onKeyDown={onKeyDown}
