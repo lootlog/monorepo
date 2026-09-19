@@ -8,12 +8,12 @@ import { LootStatsResponse as LootStatsResponseSchema } from "#src/contracts/loo
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { ItemRarityEnum as ItemRarity } from "@lootlog/schema/item-rarity";
 import type { Permission } from "@lootlog/schema/permissions";
-import type { roleTable } from "#src/database/drizzle/schema";
+import { lootTable, type roleTable } from "#src/database/drizzle/schema";
 import { createHash } from "node:crypto";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { createLootAccessFingerprint } from "@lootlog/domain/loot-visibility";
 import {
-  buildLootNpcVisibilitySql,
+  buildLootNpcVisibilityCondition,
   toLootVisibilityRoles,
 } from "#src/loots/loot-visibility";
 import type {
@@ -24,39 +24,11 @@ import type {
   TimelinePoint,
   TopNpc,
   TopContributor,
-  TopItem,
 } from "#src/loots/query/loot-stats";
-import type { LootStatsQuery } from "#src/loots/query/loot-stats-query";
-
-const NPC_TIER_ORDER = `CASE ns.type
-                WHEN 'TITAN' THEN 1
-                WHEN 'COLOSSUS' THEN 2
-                WHEN 'HERO' THEN 3
-                WHEN 'EVENT_HERO' THEN 4
-                WHEN 'ELITE3' THEN 5
-                WHEN 'ELITE2' THEN 6
-                WHEN 'ELITE' THEN 7
-                ELSE 8
-              END`;
-
-const visibleNpcLootSource = (
-  visibilityCondition: string,
-  dateCondition: string,
-  worldCondition: string,
-  npcTypeCondition: string,
-  excludeColossusCondition: string,
-) => `FROM "Loot" l
-          INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-          INNER JOIN "LootNpc" ln ON ln."lootId" = l.id
-          INNER JOIN "NpcSnapshot" ns ON ns.id = ln."npcSnapshotId"
-          WHERE olr."guildId" = $1
-            AND olr."archivedAt" IS NULL
-          ${visibilityCondition}
-            AND ns.type != 'COMMON'
-          ${dateCondition}
-          ${worldCondition}
-          ${npcTypeCondition}
-          ${excludeColossusCondition}`;
+import {
+  buildLootStatsQueries,
+  runLootStatsQuery,
+} from "#src/loots/query/loot-stats-query";
 
 type Role = typeof roleTable.$inferSelect;
 
@@ -66,7 +38,7 @@ export class LootStatsService {
   private readonly logger = new Logger(LootStatsService.name);
 
   constructor(
-    private readonly query: LootStatsQuery,
+    private readonly database: Parameters<typeof buildLootStatsQueries>[0],
     private readonly redis: Pick<
       RedisService,
       "getOrSetJsonEffect" | "invalidateScopes"
@@ -117,7 +89,12 @@ export class LootStatsService {
       excludeColossus,
     );
 
-    const visibilityCondition = buildLootNpcVisibilitySql(permissions, roles);
+    const visibility = buildLootNpcVisibilityCondition(
+      lootTable.id,
+      permissions,
+      roles,
+    );
+
     const dateFrom = this.getDateFromPeriod(period);
 
     const npcTypeFilter = npcTypes?.length
@@ -128,6 +105,16 @@ export class LootStatsService {
 
     const load = Effect.gen(
       function* (this: LootStatsService) {
+        const queries = buildLootStatsQueries(this.database, {
+          guildId,
+          dateFrom,
+          world,
+          npcTypes: npcTypeFilter,
+          excludeColossus,
+          visibility,
+          truncUnit: this.getTimelineTruncUnit(period),
+        });
+
         const [
           overview,
           byRarity,
@@ -137,55 +124,12 @@ export class LootStatsService {
           topItems,
         ] = yield* Effect.all(
           [
-            this.getOverview(
-              guildId,
-              dateFrom,
-              world,
-              npcTypeFilter,
-              excludeColossus,
-              visibilityCondition,
-            ),
-            this.getByRarity(
-              guildId,
-              dateFrom,
-              world,
-              npcTypeFilter,
-              excludeColossus,
-              visibilityCondition,
-            ),
-            this.getTimeline(
-              guildId,
-              dateFrom,
-              period,
-              world,
-              npcTypeFilter,
-              excludeColossus,
-              visibilityCondition,
-            ),
-            this.getTopNpcs(
-              guildId,
-              dateFrom,
-              world,
-              npcTypeFilter,
-              excludeColossus,
-              visibilityCondition,
-            ),
-            this.getTopContributors(
-              guildId,
-              dateFrom,
-              world,
-              npcTypeFilter,
-              excludeColossus,
-              visibilityCondition,
-            ),
-            this.getTopLegendaryItems(
-              guildId,
-              dateFrom,
-              world,
-              npcTypeFilter,
-              excludeColossus,
-              visibilityCondition,
-            ),
+            this.getOverview(queries.overview),
+            this.getByRarity(queries.byRarity),
+            this.getTimeline(queries.timeline),
+            this.getTopNpcs(queries.topNpcs),
+            this.getTopContributors(queries.topContributors),
+            this.getTopLegendaryItems(queries.topItems),
           ] as const,
           { concurrency: "unbounded" },
         );
@@ -248,88 +192,6 @@ export class LootStatsService {
     return parts.join(":");
   }
 
-  private buildFilterConditions(
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-  ) {
-    const dateParamIndex = this.getDateFilterParamIndex();
-    const worldParamIndex = this.getWorldFilterParamIndex(dateFrom);
-
-    const npcTypesParamIndex = this.getNpcTypesFilterParamIndex(
-      dateFrom,
-      world,
-    );
-
-    const dateCondition = dateFrom
-      ? `AND l."createdAt" >= $${dateParamIndex}`
-      : "";
-
-    const worldCondition = world ? `AND l.world = $${worldParamIndex}` : "";
-
-    const npcTypeCondition = npcTypes?.length
-      ? `AND ns.type = ANY($${npcTypesParamIndex}::text[])`
-      : "";
-
-    const excludeColossusCondition = excludeColossus
-      ? `AND ns.type != 'COLOSSUS'`
-      : "";
-
-    const needsNpcFilter = !!(npcTypes?.length || excludeColossus);
-
-    return {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    };
-  }
-
-  private getDateFilterParamIndex() {
-    return 2;
-  }
-
-  private getWorldFilterParamIndex(dateFrom: Date | null) {
-    if (dateFrom) {
-      return 3;
-    }
-
-    return 2;
-  }
-
-  private getNpcTypesFilterParamIndex(dateFrom: Date | null, world?: string) {
-    let paramIndex = 2;
-
-    if (dateFrom) {
-      paramIndex += 1;
-    }
-
-    if (world) {
-      paramIndex += 1;
-    }
-
-    return paramIndex;
-  }
-
-  private buildFilterParams(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-  ): (string | Date | string[])[] {
-    const params: (string | Date | string[])[] = [guildId];
-
-    if (dateFrom) params.push(dateFrom);
-
-    if (world) params.push(world);
-
-    if (npcTypes?.length) params.push(npcTypes);
-
-    return params;
-  }
-
   private getDateFromPeriod(period: Period): Date | null {
     if (period === "all") return null;
 
@@ -351,69 +213,9 @@ export class LootStatsService {
   }
 
   private getOverview(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-    visibilityCondition = "",
+    query: ReturnType<typeof buildLootStatsQueries>["overview"],
   ) {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-
-    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    return this.query<
-      Array<{
-        total_loots: bigint;
-        total_items: bigint;
-        legendary_items: bigint;
-        heroic_items: bigint;
-        avg_item_level: number | null;
-      }>
-    >(
-      "loot-stats.overview",
-      needsNpcFilter
-        ? `
-        WITH valid_loots AS (
-          SELECT DISTINCT l.id as loot_id
-          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
-        )
-        SELECT
-          COUNT(DISTINCT l.id) as total_loots,
-          COUNT(li.id) as total_items,
-          COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary_items,
-          COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic_items,
-          AVG(isnap.lvl)::numeric as avg_item_level
-        FROM valid_loots vl
-        INNER JOIN "Loot" l ON l.id = vl.loot_id
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-      `
-        : `
-        SELECT
-          COUNT(DISTINCT l.id) as total_loots,
-          COUNT(li.id) as total_items,
-          COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary_items,
-          COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic_items,
-          AVG(isnap.lvl)::numeric as avg_item_level
-        FROM "Loot" l
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-        ${dateCondition}
-        ${worldCondition}
-      `,
-      params,
-    ).pipe(
+    return runLootStatsQuery("loot-stats.overview", query).pipe(
       Effect.map((result): LootStatsOverview => {
         const row = result[0];
 
@@ -431,70 +233,17 @@ export class LootStatsService {
   }
 
   private getByRarity(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-    visibilityCondition = "",
+    query: ReturnType<typeof buildLootStatsQueries>["byRarity"],
   ) {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-
-    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    return this.query<
-      Array<{
-        rarity: ItemRarity;
-        count: bigint;
-      }>
-    >(
-      "loot-stats.by-rarity",
-      needsNpcFilter
-        ? `
-        WITH valid_loots AS (
-          SELECT DISTINCT l.id as loot_id
-          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
-        )
-        SELECT
-          isnap.rarity,
-          COUNT(*) as count
-        FROM valid_loots vl
-        INNER JOIN "Loot" l ON l.id = vl.loot_id
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE isnap.rarity IS NOT NULL
-        GROUP BY isnap.rarity
-      `
-        : `
-        SELECT
-          isnap.rarity,
-          COUNT(*) as count
-        FROM "Loot" l
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-          AND isnap.rarity IS NOT NULL
-        ${dateCondition}
-        ${worldCondition}
-        GROUP BY isnap.rarity
-      `,
-      params,
-    ).pipe(
+    return runLootStatsQuery("loot-stats.by-rarity", query).pipe(
       Effect.map((result): Partial<Record<ItemRarity, RarityStats>> => {
         const total = result.reduce((sum, row) => sum + Number(row.count), 0);
         const byRarity: Partial<Record<ItemRarity, RarityStats>> = {};
 
         for (const row of result) {
           const count = Number(row.count);
+
+          if (row.rarity === null) continue;
           byRarity[row.rarity] = {
             count,
             percentage:
@@ -508,68 +257,9 @@ export class LootStatsService {
   }
 
   private getTimeline(
-    guildId: string,
-    dateFrom: Date | null,
-    period: Period,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-    visibilityCondition = "",
+    query: ReturnType<typeof buildLootStatsQueries>["timeline"],
   ) {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-
-    const truncUnit = this.getTimelineTruncUnit(period);
-    const params = this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    return this.query<
-      Array<{
-        date: Date;
-        rarity: ItemRarity | null;
-        count: bigint;
-      }>
-    >(
-      "loot-stats.timeline",
-      needsNpcFilter
-        ? `
-        WITH valid_loots AS (
-          SELECT DISTINCT l.id as loot_id, l."createdAt"
-          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
-        )
-        SELECT
-          date_trunc('${truncUnit}', vl."createdAt") as date,
-          isnap.rarity,
-          COUNT(*) as count
-        FROM valid_loots vl
-        INNER JOIN "LootItem" li ON li."lootId" = vl.loot_id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        GROUP BY date_trunc('${truncUnit}', vl."createdAt"), isnap.rarity
-        ORDER BY date ASC
-      `
-        : `
-        SELECT
-          date_trunc('${truncUnit}', l."createdAt") as date,
-          isnap.rarity,
-          COUNT(*) as count
-        FROM "Loot" l
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-        ${dateCondition}
-        ${worldCondition}
-        GROUP BY date_trunc('${truncUnit}', l."createdAt"), isnap.rarity
-        ORDER BY date ASC
-      `,
-      params,
-    ).pipe(
+    return runLootStatsQuery("loot-stats.timeline", query).pipe(
       Effect.map((result): TimelinePoint[] => {
         const timelineMap = new Map<
           string,
@@ -599,7 +289,7 @@ export class LootStatsService {
     );
   }
 
-  private getTimelineTruncUnit(period: Period): string {
+  private getTimelineTruncUnit(period: Period): "hour" | "day" | "week" {
     switch (period) {
       case "24h":
       case "3d":
@@ -618,77 +308,9 @@ export class LootStatsService {
   }
 
   private getTopNpcs(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-    visibilityCondition = "",
-    limit = 10,
+    query: ReturnType<typeof buildLootStatsQueries>["topNpcs"],
   ) {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-
-    const params: (string | Date | string[] | number)[] =
-      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    const limitParamIndex = params.length + 1;
-    params.push(limit);
-
-    return this.query<
-      Array<{
-        npc_id: number;
-        name: string;
-        type: NpcType | null;
-        lvl: number | null;
-        icon: string | null;
-        count: bigint;
-        legendary: bigint;
-        heroic: bigint;
-      }>
-    >(
-      "loot-stats.top-npcs",
-      `
-      WITH ranked_npcs AS (
-        SELECT
-          l.id as loot_id,
-          ns."npcId",
-          ns.name,
-          ns.type,
-          ns.lvl,
-          ns.icon,
-          ROW_NUMBER() OVER (
-            PARTITION BY l.id
-            ORDER BY
-              ${NPC_TIER_ORDER}
-          ) as rn
-        ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
-      )
-      SELECT
-        rn."npcId" as npc_id,
-        rn.name,
-        rn.type,
-        rn.lvl,
-        rn.icon,
-        COUNT(li.id) as count,
-        COUNT(li.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary,
-        COUNT(li.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic
-      FROM ranked_npcs rn
-      INNER JOIN "Loot" l ON l.id = rn.loot_id
-      INNER JOIN "LootItem" li ON li."lootId" = l.id
-      INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-      WHERE rn.rn = 1
-        AND isnap.rarity IN ('LEGENDARY', 'HEROIC')
-      GROUP BY rn."npcId", rn.name, rn.type, rn.lvl, rn.icon
-      ORDER BY legendary DESC, count DESC
-      LIMIT $${limitParamIndex}
-    `,
-      params,
-    ).pipe(
+    return runLootStatsQuery("loot-stats.top-npcs", query).pipe(
       Effect.map((result): TopNpc[] =>
         result.map((row) => ({
           npcId: row.npc_id,
@@ -707,100 +329,9 @@ export class LootStatsService {
   }
 
   private getTopContributors(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-    visibilityCondition = "",
-    limit = 10,
+    query: ReturnType<typeof buildLootStatsQueries>["topContributors"],
   ) {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-      needsNpcFilter,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-
-    const params: (string | Date | string[] | number)[] =
-      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    const limitParamIndex = params.length + 1;
-    params.push(limit);
-
-    return this.query<
-      Array<{
-        member_id: number;
-        name: string;
-        avatar: string | null;
-        user_id: string;
-        count: bigint;
-        legendary: bigint;
-        heroic: bigint;
-        unique: bigint;
-        upgraded: bigint;
-      }>
-    >(
-      "loot-stats.top-contributors",
-      needsNpcFilter
-        ? `
-        WITH valid_loots AS (
-          SELECT DISTINCT l.id as loot_id
-          ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
-        )
-        SELECT
-          m.id as member_id,
-          m.name,
-          m.avatar,
-          m."userId" as user_id,
-          COUNT(DISTINCT l.id) as count,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UNIQUE') as unique,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UPGRADED') as upgraded
-        FROM valid_loots vl
-        INNER JOIN "Loot" l ON l.id = vl.loot_id
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootSubmission" ls ON ls."organizationLootRecordId" = olr.id
-        INNER JOIN "Member" m ON m.id = ls."memberId"
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-        GROUP BY m.id, m.name, m.avatar, m."userId"
-        ORDER BY count DESC
-        LIMIT $${limitParamIndex}
-      `
-        : `
-        SELECT
-          m.id as member_id,
-          m.name,
-          m.avatar,
-          m."userId" as user_id,
-          COUNT(DISTINCT l.id) as count,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'LEGENDARY') as legendary,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'HEROIC') as heroic,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UNIQUE') as unique,
-          COUNT(DISTINCT l.id) FILTER (WHERE isnap.rarity = 'UPGRADED') as upgraded
-        FROM "Loot" l
-        INNER JOIN "OrganizationLootRecord" olr ON olr."lootId" = l.id
-        INNER JOIN "LootSubmission" ls ON ls."organizationLootRecordId" = olr.id
-        INNER JOIN "Member" m ON m.id = ls."memberId"
-        INNER JOIN "LootItem" li ON li."lootId" = l.id
-        INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-        WHERE olr."guildId" = $1
-          AND olr."archivedAt" IS NULL
-        ${visibilityCondition}
-        ${dateCondition}
-        ${worldCondition}
-        GROUP BY m.id, m.name, m.avatar, m."userId"
-        ORDER BY count DESC
-        LIMIT $${limitParamIndex}
-      `,
-      params,
-    ).pipe(
+    return runLootStatsQuery("loot-stats.top-contributors", query).pipe(
       Effect.map((result): TopContributor[] =>
         result.map((row) => ({
           memberId: row.member_id,
@@ -820,72 +351,10 @@ export class LootStatsService {
   }
 
   private getTopLegendaryItems(
-    guildId: string,
-    dateFrom: Date | null,
-    world?: string,
-    npcTypes?: NpcType[],
-    excludeColossus?: boolean,
-    visibilityCondition = "",
-    limit = 10,
+    query: ReturnType<typeof buildLootStatsQueries>["topItems"],
   ) {
-    const {
-      dateCondition,
-      worldCondition,
-      npcTypeCondition,
-      excludeColossusCondition,
-    } = this.buildFilterConditions(dateFrom, world, npcTypes, excludeColossus);
-
-    const params: (string | Date | string[] | number)[] =
-      this.buildFilterParams(guildId, dateFrom, world, npcTypes);
-
-    const limitParamIndex = params.length + 1;
-    params.push(limit);
-
-    return this.query<
-      Array<{
-        item_id: number;
-        hid: string;
-        name: string;
-        icon: string;
-        rarity: ItemRarity;
-        lvl: number;
-        count: bigint;
-      }>
-    >(
-      "loot-stats.top-items",
-      `
-      WITH ranked_npcs AS (
-        SELECT
-          l.id as loot_id,
-          ROW_NUMBER() OVER (
-            PARTITION BY l.id
-            ORDER BY
-              ${NPC_TIER_ORDER}
-          ) as rn
-        ${visibleNpcLootSource(visibilityCondition, dateCondition, worldCondition, npcTypeCondition, excludeColossusCondition)}
-      )
-      SELECT
-        isnap."itemId" as item_id,
-        MIN(li.hid) as hid,
-        isnap.name,
-        isnap.icon,
-        isnap.rarity,
-        isnap.lvl,
-        COUNT(*) as count
-      FROM ranked_npcs rn
-      INNER JOIN "Loot" l ON l.id = rn.loot_id
-      INNER JOIN "LootItem" li ON li."lootId" = l.id
-      INNER JOIN "ItemSnapshot" isnap ON isnap.id = li."itemSnapshotId"
-      WHERE rn.rn = 1
-        AND isnap.rarity = 'LEGENDARY'
-        AND isnap."itemType" NOT IN ('BLESS', 'UPGRADE', 'CONSUME')
-      GROUP BY isnap."itemId", isnap.name, isnap.icon, isnap.rarity, isnap.lvl
-      ORDER BY count DESC
-      LIMIT $${limitParamIndex}
-    `,
-      params,
-    ).pipe(
-      Effect.map((result): TopItem[] =>
+    return runLootStatsQuery("loot-stats.top-items", query).pipe(
+      Effect.map((result) =>
         result.map((row) => ({
           itemId: row.item_id,
           hid: row.hid,
@@ -896,6 +365,10 @@ export class LootStatsService {
           count: Number(row.count),
         })),
       ),
+      Effect.flatMap(
+        Schema.decodeUnknownEffect(LootStatsResponseSchema.fields.topItems),
+      ),
+      Effect.map((items) => Array.from(items)),
     );
   }
 }

@@ -4,18 +4,7 @@ import { visibleReservationGuildIds } from "#src/reservations/reservation-visibi
 import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { randomUUID } from "node:crypto";
-import {
-  and,
-  count,
-  desc,
-  eq,
-  gt,
-  inArray,
-  lt,
-  ne,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, lt, ne, or } from "drizzle-orm";
 import { Clock, Effect, Layer } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 
@@ -657,9 +646,9 @@ export const makeReservationMutationsDataLayer = (
 
           const createResult = yield* database.transaction((transaction) =>
             Effect.gen(function* () {
-              yield* transaction.execute(
-                sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`,
-              );
+              yield* transaction.setTransaction({
+                isolationLevel: "serializable",
+              });
 
               const overlap = yield* transaction
                 .select({ id: reservationTable.id })
@@ -861,9 +850,9 @@ export const makeReservationMutationsDataLayer = (
 
           const updateResult = yield* database.transaction((transaction) =>
             Effect.gen(function* () {
-              yield* transaction.execute(
-                sql`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE`,
-              );
+              yield* transaction.setTransaction({
+                isolationLevel: "serializable",
+              });
 
               if (timeChanged) {
                 const overlap = yield* transaction

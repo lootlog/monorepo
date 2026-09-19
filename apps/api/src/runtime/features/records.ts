@@ -21,11 +21,9 @@ import {
 } from "#src/loots/loots.operations";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
-import { makeLootStatsQuery } from "#src/loots/query/loot-stats-query";
 import { LootStatsService } from "#src/loots/query/loot-stats.service";
 import { applicationLogger } from "#src/shared/application-logger";
 import { DependencyUnavailableError } from "#src/shared/http/http-errors";
-import { PgClient } from "@effect/sql-pg";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { Context, Effect, Layer } from "effect";
 import { recordsDataLayer } from "#src/http-api/handlers/records/records.data-layer";
@@ -50,8 +48,7 @@ export const recordsServicesLive = Layer.effect(
     const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
     const database = yield* ApiDatabase;
-    const postgres = yield* PgClient.PgClient;
-    const lootStats = new LootStatsService(makeLootStatsQuery(postgres), redis);
+    const lootStats = new LootStatsService(database, redis);
     const redlock = new RedlockService(redis).createInstance();
 
     const dispatchLootPublications = makeLootPublicationDispatcher(
