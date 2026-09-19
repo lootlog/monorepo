@@ -1,5 +1,4 @@
 import { Accordion } from "@lootlog/ui/components/accordion";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
@@ -154,53 +153,44 @@ export const LootsFiltersSidebar = (
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {allQuickFilters.map((filter) => (
-                      <Badge
+                      <div
                         key={filter.id}
-                        variant={
-                          isQuickFilterApplied(filter.filters)
-                            ? "default"
-                            : "outline"
-                        }
-                        className="group min-h-7 cursor-pointer transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-foreground"
-                        onClick={() => applyFilter(filter.filters)}
-                        onKeyDown={(event) => {
-                          if (
-                            (event.key === "Enter" &&
-                              !event.nativeEvent.isComposing) ||
-                            event.key === " "
-                          ) {
-                            event.preventDefault();
-                            applyFilter(filter.filters);
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        aria-pressed={isQuickFilterApplied(filter.filters)}
+                        className="group flex items-center gap-1"
                       >
-                        {"category" in filter && (
-                          <span className="text-xs opacity-80">
-                            {filter.category}:
-                          </span>
-                        )}
-                        <span className={"category" in filter ? "ml-1" : ""}>
+                        <Button
+                          type="button"
+                          variant={
+                            isQuickFilterApplied(filter.filters)
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => applyFilter(filter.filters)}
+                          aria-pressed={isQuickFilterApplied(filter.filters)}
+                        >
+                          {"category" in filter && (
+                            <span className="text-xs opacity-80">
+                              {filter.category}:
+                            </span>
+                          )}
                           {filter.label}
-                        </span>
+                        </Button>
                         {!("isDefault" in filter && filter.isDefault) && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             aria-label={t("common.removeOption", {
                               label: filter.label,
                             })}
-                            className="ml-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveCustomFilter(filter.id);
-                            }}
+                            className="size-7 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                            onClick={() => handleRemoveCustomFilter(filter.id)}
                           >
-                            <X className="h-3 w-3" />
-                          </button>
+                            <X className="size-3" />
+                          </Button>
                         )}
-                      </Badge>
+                      </div>
                     ))}
                   </div>
                 </div>

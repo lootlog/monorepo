@@ -1,4 +1,5 @@
-import { NoticeCard } from "@/components/common/notice-card";
+import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
+import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import {
   findNpcType,
   NPC_TYPE_NAMES,
@@ -20,7 +21,7 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import groupBy from "lodash/groupBy";
-import { Clock3, Globe2, RotateCcw, SearchX } from "lucide-react";
+import { Clock3, RotateCcw, SearchX } from "lucide-react";
 import { useState } from "react";
 import { SingleTimer } from "./single-timer";
 
@@ -155,17 +156,17 @@ export const Timers = () => {
 
       <div className="flex min-h-0 flex-1 flex-col pt-3">
         {world && isError && (
-          <div
-            role="alert"
-            className="mx-3 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3"
+          <Alert
+            variant="destructive"
+            className="mx-3 mb-3 w-auto flex flex-wrap items-center justify-between gap-3"
           >
-            <p className="text-sm">
+            <AlertDescription>
               {t(
                 timers === undefined
                   ? "timers.loadError"
                   : "timers.refreshError",
               )}
-            </p>
+            </AlertDescription>
             <Button
               variant="outline"
               size="sm"
@@ -175,26 +176,13 @@ export const Timers = () => {
             >
               {t("common.actions.retry")}
             </Button>
-          </div>
+          </Alert>
         )}
         {!world ? (
-          <NoticeCard
-            icon={
-              <ThemeEmptyStateIcon
-                className="size-8 text-muted-foreground"
-                fallback=<Globe2 className="size-8 text-primary" />
-              />
-            }
+          <WorldSelectionEmptyState
             title={t("timers.selectWorldTitle")}
             description={t("timers.noWorldSelected")}
-          >
-            <div className="text-left">
-              <WorldSwitcher
-                width="w-full"
-                triggerClassName="h-11 w-full justify-between px-3"
-              />
-            </div>
-          </NoticeCard>
+          />
         ) : !isPending && timers && !hasFilteredTimers ? (
           <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-3 pb-3 md:[align-items:safe_center]">
             <Empty className="min-h-56 w-full max-w-xl">

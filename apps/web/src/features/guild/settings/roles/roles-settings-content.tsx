@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -78,33 +79,35 @@ export const RolesSettingsContent = () => {
                     />
                   )}
                   {filteredRoles.length === 0 && (
-                    <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
-                      <Shield className="mb-4 size-12 opacity-30" />
-                      <p className="text-sm font-medium">
-                        {roles?.length === 0
+                    <EmptyState
+                      className="min-h-80"
+                      icon={Shield}
+                      title={
+                        roles?.length === 0
                           ? t("settings.roles.emptyGuildTitle")
-                          : t("settings.roles.emptyTitle")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        {hasActiveFilters
+                          : t("settings.roles.emptyTitle")
+                      }
+                      description={
+                        hasActiveFilters
                           ? t("settings.roles.emptyFilteredDescription")
-                          : t("settings.roles.emptyDescription")}
-                      </p>
-                      {hasActiveFilters && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="mt-4"
-                          onClick={() =>
-                            startTransition(() => setSearchValue(""))
-                          }
-                        >
-                          <FilterX className="size-4" />
-                          {t("settings.roles.resetFilters")}
-                        </Button>
-                      )}
-                    </div>
+                          : t("settings.roles.emptyDescription")
+                      }
+                      action={
+                        hasActiveFilters && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              startTransition(() => setSearchValue(""))
+                            }
+                          >
+                            <FilterX className="size-4" />
+                            {t("settings.roles.resetFilters")}
+                          </Button>
+                        )
+                      }
+                    />
                   )}
                 </div>
               </ScrollArea>

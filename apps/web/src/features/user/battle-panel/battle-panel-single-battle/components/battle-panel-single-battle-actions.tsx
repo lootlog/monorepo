@@ -12,16 +12,7 @@ import {
 } from "@lootlog/client/battlelog";
 
 import { Button } from "@lootlog/ui/components/button";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@lootlog/ui/components/alert-dialog";
+import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -56,8 +47,8 @@ export const BattlePanelSingleBattleActions: FC<
 
   const { mutateAsync: deleteBattle } = useBattlesControllerDeleteBattle();
   const [isDeletePending, setIsDeletePending] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const isBusy = isPending || isDeletePending;
+  const [deletedBattleId, setDeletedBattleId] = useState<string | null>(null);
+  const isBusy = isPending || isDeletePending || deletedBattleId === battle.id;
 
   const handleShareClick = () => {
     handleShare(battle.id);
@@ -74,10 +65,24 @@ export const BattlePanelSingleBattleActions: FC<
   const handleDeleteClick = async () => {
     if (isBusy) return;
     setIsDeletePending(true);
+
     await (async () => {
       try {
         await deleteBattle({ pathParams: { battleId: battle.id } });
-        await Promise.all([
+      } catch (error) {
+        toast.error(t("battlePanel.toasts.battleDeleteError"), {
+          duration: 3000,
+        });
+        throw error;
+      }
+
+      setDeletedBattleId(battle.id);
+      toast.success(t("battlePanel.toasts.battleDeleted"), {
+        duration: 3000,
+      });
+
+      try {
+        await Promise.allSettled([
           invalidateBattlesControllerGetDashboardBattles(queryClient),
           invalidateBattlesControllerGetBattle(queryClient, {
             battleId: battle.id,
@@ -98,15 +103,9 @@ export const BattlePanelSingleBattleActions: FC<
             },
           ),
         ]);
-        toast.success(t("battlePanel.toasts.battleDeleted"), {
-          duration: 3000,
-        });
-        setDeleteOpen(false);
         await navigate({ to: ROUTES.user.battlePanel.base });
       } catch {
-        toast.error(t("battlePanel.toasts.battleDeleteError"), {
-          duration: 3000,
-        });
+        // The battle is already deleted; navigation failure must not offer a retry.
       }
     })().finally(() => {
       setIsDeletePending(false);
@@ -177,54 +176,25 @@ export const BattlePanelSingleBattleActions: FC<
         </Tooltip>
       )}
 
-      <AlertDialog
-        open={deleteOpen}
-        onOpenChange={(open) => {
-          if (!isDeletePending) setDeleteOpen(open);
-        }}
-      >
-        <Tooltip>
-          <TooltipTrigger
-            render=<AlertDialogTrigger
-              render={
-                <Button
-                  aria-label={t("battlePanel.actions.delete")}
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  disabled={isBusy}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              }
-            />
-          />
-          <TooltipContent>{t("battlePanel.actions.delete")}</TooltipContent>
-        </Tooltip>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("battlePanel.dialogs.deleteBattle.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("battlePanel.dialogs.deleteBattle.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletePending}>
-              {t("common.cancel")}
-            </AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteClick}
-              loading={isDeletePending}
-              disabled={isBusy}
-            >
-              {t("battlePanel.dialogs.deleteBattle.confirm")}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        onConfirm={handleDeleteClick}
+        disabled={isBusy}
+        title={t("battlePanel.dialogs.deleteBattle.title")}
+        description={t("battlePanel.dialogs.deleteBattle.description")}
+        confirmButtonLabel={t("battlePanel.dialogs.deleteBattle.confirm")}
+        cancelButtonLabel={t("common.cancel")}
+        triggerTooltip={t("battlePanel.actions.delete")}
+        trigger={
+          <Button
+            aria-label={t("battlePanel.actions.delete")}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        }
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { SectionCard } from "@/components/common/section-card/section-card";
@@ -73,33 +74,35 @@ export const NpcsSettingsContent = () => {
                     />
                   )}
                   {filteredNpcs.length === 0 && (
-                    <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
-                      <Settings2 className="mb-4 size-12 opacity-30" />
-                      <p className="text-sm font-medium">
-                        {config?.npcs?.length === 0
+                    <EmptyState
+                      className="min-h-80"
+                      icon={Settings2}
+                      title={
+                        config?.npcs?.length === 0
                           ? t("settings.npcs.emptyGuildTitle")
-                          : t("settings.npcs.emptyTitle")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        {hasActiveFilters
+                          : t("settings.npcs.emptyTitle")
+                      }
+                      description={
+                        hasActiveFilters
                           ? t("settings.npcs.emptyFilteredDescription")
-                          : t("settings.npcs.emptyDescription")}
-                      </p>
-                      {hasActiveFilters && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="mt-4"
-                          onClick={() =>
-                            startTransition(() => setSearchValue(""))
-                          }
-                        >
-                          <FilterX className="size-4" />
-                          {t("settings.npcs.resetFilters")}
-                        </Button>
-                      )}
-                    </div>
+                          : t("settings.npcs.emptyDescription")
+                      }
+                      action={
+                        hasActiveFilters && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              startTransition(() => setSearchValue(""))
+                            }
+                          >
+                            <FilterX className="size-4" />
+                            {t("settings.npcs.resetFilters")}
+                          </Button>
+                        )
+                      }
+                    />
                   )}
                 </div>
               </ScrollArea>

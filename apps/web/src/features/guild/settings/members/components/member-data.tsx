@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@lootlog/ui/components/alert";
 import type { TOptions } from "i18next";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
@@ -240,12 +241,14 @@ export const MemberData = ({
             {accessSummary.description}
           </p>
           {(!member.active || hasProblem) && (
-            <p className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-              {member.active
-                ? t("settings.members.syncProblemHint")
-                : t("settings.members.reactivateHint")}
-            </p>
+            <Alert variant="alert" className="mt-3">
+              <AlertTriangle />
+              <AlertDescription>
+                {member.active
+                  ? t("settings.members.syncProblemHint")
+                  : t("settings.members.reactivateHint")}
+              </AlertDescription>
+            </Alert>
           )}
         </SectionCardContent>
       </SectionCard>
@@ -284,10 +287,12 @@ export const MemberData = ({
           ))}
         </dl>
         {member.isStale && (
-          <p className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-xs text-amber-500">
-            <Clock3 className="mt-0.5 size-3.5 shrink-0" />
-            {t("settings.members.discordSync.staleAccessHint")}
-          </p>
+          <Alert variant="alert" className="mt-3">
+            <Clock3 />
+            <AlertDescription>
+              {t("settings.members.discordSync.staleAccessHint")}
+            </AlertDescription>
+          </Alert>
         )}
       </DetailSection>
 

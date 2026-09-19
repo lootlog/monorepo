@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/common/empty-state";
 import { RefreshMembersButton } from "./components/refresh-members-button";
 import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
@@ -252,34 +253,36 @@ export const MembersSettingsContent = () => {
                     />
                   )}
                   {filteredMembers.length === 0 && (
-                    <div className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
-                      <Users className="mb-4 size-12 opacity-30" />
-                      <p className="text-sm font-medium">
-                        {members?.length === 0
+                    <EmptyState
+                      className="min-h-80"
+                      icon={Users}
+                      title={
+                        members?.length === 0
                           ? t("settings.members.emptyGuildTitle")
-                          : t("settings.members.emptyTitle")}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        {hasActiveFilters
+                          : t("settings.members.emptyTitle")
+                      }
+                      description={
+                        hasActiveFilters
                           ? t("settings.members.emptyFilteredDescription")
-                          : t("settings.members.emptyDescription")}
-                      </p>
-                      {hasActiveFilters && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="mt-4"
-                          onClick={() => {
-                            setSearchValue("");
-                            setStatusFilter(defaultStatusFilter);
-                          }}
-                        >
-                          <FilterX className="size-3.5" />
-                          {t("settings.members.resetFilters")}
-                        </Button>
-                      )}
-                    </div>
+                          : t("settings.members.emptyDescription")
+                      }
+                      action={
+                        hasActiveFilters && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSearchValue("");
+                              setStatusFilter(defaultStatusFilter);
+                            }}
+                          >
+                            <FilterX className="size-4" />
+                            {t("settings.members.resetFilters")}
+                          </Button>
+                        )
+                      }
+                    />
                   )}
                 </div>
               </ScrollArea>
