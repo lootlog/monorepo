@@ -8,7 +8,6 @@ import {
 } from "#src/activities/activity-consumer";
 import { ActivityRepository } from "#src/activities/activity-repository";
 import { ActivityConfig } from "#src/config/activity-config";
-import { verifyAndAdoptDatabase } from "#src/database/adoption";
 import { ActivityDatabase, PgClientLive } from "#src/database/database";
 import { ActivityHealth, ActivityHttpServer } from "#src/http/activity-http";
 import { ApiHttpClient } from "#src/http/api-http-client";
@@ -41,15 +40,10 @@ const PermissionsLive = Permissions.live.pipe(
   Layer.provide(ActivityConfig.layer),
 );
 
-const DatabaseAdoption = Layer.effectDiscard(verifyAndAdoptDatabase()).pipe(
-  Layer.provide(PgClientLive),
-);
-
 const DatabaseServices = Layer.mergeAll(
   OnlineRepository.layer.pipe(Layer.provide(PgClientLive)),
   RepositoryLive,
   HealthLive,
-  DatabaseAdoption,
 );
 
 export const ActivityApplication = Layer.mergeAll(

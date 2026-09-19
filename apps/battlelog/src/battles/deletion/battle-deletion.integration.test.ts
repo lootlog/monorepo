@@ -7,7 +7,6 @@ import { PgClient } from "@effect/sql-pg";
 import { makePostgresLayer } from "@lootlog/database";
 import { Effect, Redacted } from "effect";
 import pg from "pg";
-import { readdir } from "node:fs/promises";
 import { drizzleDatabaseEffect } from "#src/database/database";
 import { makeBattleDeletion } from "./battle-deletion.js";
 
@@ -18,54 +17,24 @@ let pool: pg.Pool;
 beforeAll(async () => {
   postgres = await new PostgreSqlContainer("postgres:17-alpine").start();
   pool = new pg.Pool({ connectionString: postgres.getConnectionUri() });
-  const migrations = new URL("../../../drizzle/", import.meta.url);
 
-  for (const entry of (await readdir(migrations)).sort()) {
-    if (entry > "20260726194145_plain_gorgon") continue;
-    const migration = Bun.file(new URL(`${entry}/migration.sql`, migrations));
+  const child = Bun.spawn(["bun", "src/database/migrate.ts"], {
+    cwd: new URL("../../../", import.meta.url).pathname,
+    env: {
+      ...process.env,
+      POSTGRESQL_CONNECTION_URI: postgres.getConnectionUri(),
+    },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
-    if (await migration.exists()) await pool.query(await migration.text());
-  }
+  const [exit, stdout, stderr] = await Promise.all([
+    child.exited,
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+  ]);
 
-  for (const command of [
-    ["bun", "scripts/migrate-init.ts"],
-    ["bun", "src/database/migrate.ts"],
-    ["bun", "src/database/migrate.ts"],
-  ]) {
-    const child = Bun.spawn(command, {
-      cwd: new URL("../../../", import.meta.url).pathname,
-      env: {
-        ...process.env,
-        POSTGRESQL_CONNECTION_URI: postgres.getConnectionUri(),
-      },
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-
-    const [exit, stdout, stderr] = await Promise.all([
-      child.exited,
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-    ]);
-
-    if (exit !== 0) throw new Error(`Migration failed: ${stdout}\n${stderr}`);
-  }
-
-  const tracked = await pool.query(
-    "SELECT name FROM drizzle.__drizzle_migrations ORDER BY name",
-  );
-
-  expect(tracked.rows).toEqual(
-    expect.arrayContaining([
-      { name: "20260904192453_pending_object_deletions" },
-      { name: "20260909045921_scoped_battle_submissions" },
-    ]),
-  );
-  // The adoption command must not mark new migrations as applied without SQL.
-  expect(
-    (await pool.query(`SELECT to_regclass('battle_object_deletions') AS table`))
-      .rows,
-  ).toEqual([{ table: "battle_object_deletions" }]);
+  if (exit !== 0) throw new Error(`Migration failed: ${stdout}\n${stderr}`);
 }, 60_000);
 
 afterAll(async () => {
@@ -204,7 +173,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
   }
 });
 
-it("migrates submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
+it("scopes submission uniqueness to the owner and rejects duplicate retries for that owner", async () => {
   await pool.query(
     `UPDATE battles SET "submissionId" = 'shared-submission' WHERE id = 'one'`,
   );

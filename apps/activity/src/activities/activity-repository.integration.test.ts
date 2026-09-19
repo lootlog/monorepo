@@ -28,7 +28,6 @@ describe("ActivityRepository", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* migrateActivityDatabase;
-        yield* migrateActivityDatabase;
       }).pipe(
         Effect.provide(
           makePostgresLayer({
@@ -37,15 +36,11 @@ describe("ActivityRepository", () => {
         ),
       ),
     );
-    expect(
-      (await pool.query('SELECT component FROM "__lootlog_drizzle_adoption"'))
-        .rows,
-    ).toEqual([{ component: "activity" }]);
   }, 60_000);
 
   afterAll(async () => {
-    await pool.end();
-    await postgres.stop();
+    await pool?.end();
+    await postgres?.stop();
   });
 
   it("persists a redelivered activity exactly once", async () => {

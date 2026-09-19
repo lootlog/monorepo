@@ -133,13 +133,7 @@
     "db:migrate:deploy": {
       "cache": false
     },
-    "db:migrate:init": {
-      "cache": false
-    },
     "auth:migrate:plan": {
-      "cache": false
-    },
-    "auth:migrate:apply": {
       "cache": false
     },
     "db:pull": {
