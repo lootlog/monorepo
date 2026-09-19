@@ -1,3 +1,4 @@
+import { SearchTextField } from "@/components/search-text-field";
 import { SearchResultsHeader } from "@/components/search-results-header";
 import { SearchStatusCard } from "@/components/search-status-card";
 import { createFileRoute } from "@tanstack/react-router";
@@ -6,7 +7,6 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Card, CardContent, CardHeader } from "@lootlog/ui/components/card";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Input } from "@lootlog/ui/components/input";
 import { ItemRarity, resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
 import { ItemTile } from "@lootlog/ui/components/item-tile";
 import { Label } from "@lootlog/ui/components/label";
@@ -512,42 +512,34 @@ function ItemsRoute() {
         <CardContent className="px-0">
           <form className="grid gap-3" onSubmit={handleSubmit}>
             <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr_0.6fr_0.6fr_0.75fr_auto]">
-              <Label className="grid gap-2">
-                <span>{t("search.queryLabel")}</span>
-                <Input
-                  value={queryValue}
-                  onChange={(event) => setQueryValue(event.target.value)}
-                  placeholder={t("search.queryPlaceholder")}
-                />
-              </Label>
-              <Label className="grid gap-2">
-                <span>{t("search.worldLabel")}</span>
-                <Input
-                  value={worldValue}
-                  onChange={(event) => setWorldValue(event.target.value)}
-                  placeholder={t("search.worldPlaceholder")}
-                />
-              </Label>
-              <Label className="grid gap-2">
-                <span>{t("filters.minLevel")}</span>
-                <Input
-                  min={0}
-                  type="number"
-                  value={minLevelValue}
-                  onChange={(event) => setMinLevelValue(event.target.value)}
-                  placeholder={t("filters.minLevelPlaceholder")}
-                />
-              </Label>
-              <Label className="grid gap-2">
-                <span>{t("filters.maxLevel")}</span>
-                <Input
-                  min={0}
-                  type="number"
-                  value={maxLevelValue}
-                  onChange={(event) => setMaxLevelValue(event.target.value)}
-                  placeholder={t("filters.maxLevelPlaceholder")}
-                />
-              </Label>
+              <SearchTextField
+                label={t("search.queryLabel")}
+                value={queryValue}
+                onValueChange={setQueryValue}
+                placeholder={t("search.queryPlaceholder")}
+              />
+              <SearchTextField
+                label={t("search.worldLabel")}
+                value={worldValue}
+                onValueChange={setWorldValue}
+                placeholder={t("search.worldPlaceholder")}
+              />
+              <SearchTextField
+                label={t("filters.minLevel")}
+                min={0}
+                type="number"
+                value={minLevelValue}
+                onValueChange={setMinLevelValue}
+                placeholder={t("filters.minLevelPlaceholder")}
+              />
+              <SearchTextField
+                label={t("filters.maxLevel")}
+                min={0}
+                type="number"
+                value={maxLevelValue}
+                onValueChange={setMaxLevelValue}
+                placeholder={t("filters.maxLevelPlaceholder")}
+              />
               <Label className="grid gap-2">
                 <span>{t("filters.sort")}</span>
                 <Select
@@ -661,14 +653,12 @@ function ItemsRoute() {
               </div>
             </div>
 
-            <Label className="grid gap-2">
-              <span>{t("filters.advancedFilter")}</span>
-              <Input
-                value={advancedFilterValue}
-                onChange={(event) => setAdvancedFilterValue(event.target.value)}
-                placeholder={t("filters.advancedFilterPlaceholder")}
-              />
-            </Label>
+            <SearchTextField
+              label={t("filters.advancedFilter")}
+              value={advancedFilterValue}
+              onValueChange={setAdvancedFilterValue}
+              placeholder={t("filters.advancedFilterPlaceholder")}
+            />
           </form>
         </CardContent>
       </Card>

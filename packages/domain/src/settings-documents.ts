@@ -57,7 +57,7 @@ export type SettingsValueSource = "DEFAULT" | SettingsScope;
 export type SettingsPersistence = "SERVER_DOCUMENT" | "DEVICE";
 
 // Values arrive from versioned storage and are validated per catalog field before use.
-export type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
+type RawSettingsValues = Record<string, typeof Schema.Json.Type>;
 
 export interface SettingsDocumentLayer {
   scope: SettingsScope;
@@ -81,12 +81,12 @@ export interface SettingsFieldDefinition<TValue = unknown> {
   isValid: (value: unknown) => boolean;
 }
 
-export interface SettingsDocumentMigration {
+interface SettingsDocumentMigration {
   fromVersion: number;
   migrate: (overrides: RawSettingsValues) => RawSettingsValues;
 }
 
-export interface SettingsDomainDefinition {
+interface SettingsDomainDefinition {
   schemaVersion: number;
   fields: Readonly<Record<string, SettingsFieldDefinition>>;
   migrations: readonly SettingsDocumentMigration[];
@@ -122,7 +122,7 @@ const field = <TValue>(
 type JsonValue = typeof Schema.Json.Type;
 
 // Opaque documents keep JSON values; owning features parse them at their boundary.
-export type OpaqueSettingsRecord = Record<string, JsonValue>;
+type OpaqueSettingsRecord = Record<string, JsonValue>;
 
 const UnknownRecord = Schema.Record(Schema.String, Schema.Unknown);
 
@@ -493,7 +493,7 @@ export type SettingsCatalogValue<TKey extends ServerSettingsCatalogKey> =
       : never
     : never;
 
-export type DeviceSettingsCatalogKey =
+type DeviceSettingsCatalogKey =
   `device.${keyof typeof DEVICE_SETTINGS_CATALOG}`;
 
 export type SettingsCatalogKey =
@@ -535,7 +535,3 @@ export const migrateSettingsDocument = (
 };
 
 export const isSettingsDomain = Schema.is(Schema.Literals(SETTINGS_DOMAINS));
-
-export const isSettingsScopeType = Schema.is(
-  Schema.Literals(SETTINGS_SCOPE_TYPES),
-);

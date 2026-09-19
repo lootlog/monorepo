@@ -86,8 +86,3 @@ export interface UpdateTimerSettingsPayload {
   timersSortOrder?: "asc" | "desc";
   syncEnabled?: boolean;
 }
-
-export interface UpdateGuildTimerSettingsPayload {
-  hiddenTimers?: string[];
-  pinnedTimers?: string[];
-}

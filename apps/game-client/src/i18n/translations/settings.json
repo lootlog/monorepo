@@ -54,10 +54,6 @@
     "showAll": "Pokaż wszystkie",
     "showAllCount": "Pokaż wszystkie ({{count}})",
     "visibleCount": "{{visibleCount}} z {{totalCount}}",
-    "presenceTitle": "Publikowanie obecności",
-    "presenceDescription": "Wybierz organizacje, które mogą widzieć Twoją obecność w grze. Bez wyboru obecność nie jest publikowana, dopóki Lootlog nie dopasuje organizacji do bieżącego klanu.",
-    "presenceLabel": "Obecność: {{name}}",
-    "presenceSwitchLabel": "Publikuj obecność w organizacji {{name}}",
     "loading": "Ładowanie Lootlogów…",
     "loadError": "Nie udało się pobrać listy Lootlogów.",
     "noGuilds": "Nie masz jeszcze dostępu do żadnego Lootloga.",
@@ -84,26 +80,6 @@
     "example": "Przykład:",
     "animationsRecommendation": "Wyłącz tę opcję, jeżeli interfejs gry traci płynność."
   },
-  "inheritance": {
-    "scopeTitle": "Zakres ustawień",
-    "scopeLabel": "Edytujesz ustawienia dla",
-    "default": "wartość domyślna",
-    "overridden": "Nadpisane tutaj",
-    "inherited": "Dziedziczone z: {{source}}",
-    "clear": "Dziedzicz",
-    "scopes": {
-      "USER": "Globalne",
-      "GAME_ACCOUNT": "Konto",
-      "CHARACTER": "Postać",
-      "GUILD": "Gildia"
-    },
-    "sources": {
-      "USER": "ustawień globalnych",
-      "GAME_ACCOUNT": "konta",
-      "CHARACTER": "postaci",
-      "GUILD": "gildii"
-    }
-  },
   "chat": {
     "preset": {
       "section": "Gotowe ustawienia",
@@ -113,10 +89,6 @@
       "compact": "Kompaktowy",
       "compactDescription": "Więcej wiadomości na ekranie przy mniejszych odstępach."
     },
-    "advanced": {
-      "title": "Więcej opcji"
-    },
-    "reset": "Resetuj",
     "layout": {
       "section": "Układ i czytelność"
     },
@@ -168,7 +140,6 @@
     "resetAllDescription": "Wraca do domyślnej palety dla wszystkich typów potworów."
   },
   "general": {
-    "title": "Ustawienia ogólne",
     "description": "Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.",
     "behaviorTitle": "Zachowanie dodatku",
     "allowWorldSelectionLabel": "Pozwalaj na wybór świata",
@@ -237,8 +208,6 @@
     }
   },
   "battlePanel": {
-    "title": "Ustawienia panelu walk",
-    "description": "Skonfiguruj ustawienia dotyczące zbierania danych walk w grze.",
     "dataCollectionTitle": "Zbieranie danych",
     "enableCollectionLabel": "Włącz zbieranie walk",
     "enableCollectionDescription": "Rejestruje dane walk używane przez panel."
@@ -335,7 +304,6 @@
     "removeLabel": "Usuń wyciszenie: {{name}}"
   },
   "detector": {
-    "title": "Ustawienia wykrywacza",
     "description": "Każdy wiersz to jeden typ potwora. Włącz „Wykrywaj”, a potem dobierz pozostałe opcje. Najedź na nagłówek kolumny, aby zobaczyć wyjaśnienie.",
     "toggles": {
       "detect": "Wykrywaj",
@@ -453,7 +421,6 @@
     }
   },
   "catching": {
-    "title": "Ustawienia łapania lootu i timerów",
     "description": "Skonfiguruj, które gildie mają odbierać looty i timery z każdej postaci.",
     "characterTitle": "Postać",
     "characterDescription": "Każda postać ma własny zakres zbierania. Wybierz postać, której ustawienia chcesz zmienić.",
@@ -472,7 +439,6 @@
     }
   },
   "hiddenTimers": {
-    "title": "Ukryte timery",
     "description": "Przywracaj ukryte timery i zarządzaj listą ukrytych wpisów.",
     "scopeTitle": "Zakres listy",
     "ungroupedDescription": "Wybierz Lootloga, dla którego chcesz zobaczyć ukryte timery.",
@@ -482,7 +448,6 @@
     "guildLabel": "Lootlog"
   },
   "sounds": {
-    "title": "Ustawienia dźwięków",
     "description": "Skonfiguruj dźwięki dla różnych funkcji.",
     "loading": "Ładowanie ustawień...",
     "invalidUrl": "Nieprawidłowy URL",
@@ -499,9 +464,6 @@
         "label": "Wykrywacz",
         "description": "Dźwięk wykrywacza dla każdego typu. Puste pole gra dźwięk domyślny."
       },
-      "timers": {
-        "label": "Timery"
-      },
       "pings": {
         "label": "Pingi na mapie",
         "description": "Dźwięk pingów, które grupa stawia na mapie."
@@ -509,7 +471,6 @@
     }
   },
   "logs": {
-    "title": "Logi",
     "description": "Zapisane akcje użytkownika z rozwijanymi wywołaniami API, payloadem, odpowiedzią i statusem.",
     "consoleDebugTitle": "Diagnostyka konsoli",
     "lootDebugLoggingLabel": "Loguj tworzenie łupów",
@@ -575,7 +536,6 @@
     }
   },
   "debug": {
-    "title": "Debug",
     "description": "Narzędzia pomocnicze do ręcznego wywoływania eventów i podglądu stanu klienta.",
     "eventTemplatesTitle": "Szablony eventów",
     "npcDetectorTitle": "Eventy wykrywacza NPC",

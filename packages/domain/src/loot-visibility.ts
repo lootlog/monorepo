@@ -17,16 +17,16 @@ export type LootVisibilityRole = {
   permissions: readonly string[];
 };
 
-export type LootVisibilityPolicy = {
+type LootVisibilityPolicy = {
   permissions: readonly string[];
   roles: readonly LootVisibilityRole[];
 };
 
-export type LootVisibilityDecisionInput = LootVisibilityPolicy & {
+type LootVisibilityDecisionInput = LootVisibilityPolicy & {
   npcs: readonly LootVisibilityNpc[];
 };
 
-export type LootAccessFingerprintInput = LootVisibilityPolicy & {
+type LootAccessFingerprintInput = LootVisibilityPolicy & {
   organizationId: string;
 };
 

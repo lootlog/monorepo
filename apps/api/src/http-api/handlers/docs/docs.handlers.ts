@@ -45,7 +45,7 @@ type Member = typeof memberTable.$inferSelect;
 
 type Role = typeof roleTable.$inferSelect;
 
-export const docsEndpointIdentifiers = [
+const docsEndpointIdentifiers = [
   "DocsControllerGetDocuments",
   "DocsControllerCreateDocument",
   "DocsControllerGetTrash",
@@ -84,15 +84,14 @@ export class DocsConflict extends TaggedErrorClass<DocsConflict>()(
   { status: Schema.Literal(409), code: Schema.String },
 ) {}
 
-export class DocsInvalidInput extends TaggedErrorClass<DocsInvalidInput>()(
+class DocsInvalidInput extends TaggedErrorClass<DocsInvalidInput>()(
   "DocsInvalidInput",
   { status: Schema.Literal(400), code: Schema.String },
 ) {}
 
-export class DocsDataError extends TaggedErrorClass<DocsDataError>()(
-  "DocsDataError",
-  { cause: Schema.Defect() },
-) {}
+class DocsDataError extends TaggedErrorClass<DocsDataError>()("DocsDataError", {
+  cause: Schema.Defect(),
+}) {}
 
 export interface DocsAuthorizationRequirement {
   readonly guildId: string;
@@ -352,7 +351,7 @@ export const createDocument = (
     Schema.decodeUnknownSync(DocumentResponse),
   );
 
-export const getTrash = (guildId: string) =>
+const getTrash = (guildId: string) =>
   execute(
     "DocsControllerGetTrash",
     guildId,

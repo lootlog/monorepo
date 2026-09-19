@@ -12,7 +12,7 @@ import {
   eventTable,
   memberTable,
 } from "#src/database/drizzle/schema";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { EventEmitter } from "#src/events/event-emitter";
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
@@ -311,7 +311,7 @@ export const makeEventPresenceTracking = (
 
             if (nonAfk.size === 0) yield* openUncoveredGap(map.id, hero.id);
             else yield* closeUncoveredGap(map.id);
-            yield* publisher.emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+            yield* publisher.emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
               guildId,
               eventId: event.id,
               mapId: map.id,

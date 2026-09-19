@@ -1,3 +1,4 @@
+import { upperFirst } from "es-toolkit";
 import { Globe } from "lucide-react";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
@@ -72,7 +73,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 
   const worldOptions = orderedWorlds.map((world) => ({
     value: world,
-    label: world.charAt(0).toUpperCase() + world.slice(1),
+    label: upperFirst(world),
   }));
 
   const options = showAllOption

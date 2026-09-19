@@ -34,16 +34,3 @@ export interface UserPreferences {
   chatAppearance: ChatAppearanceSettings;
   mutes: NotificationMutes;
 }
-
-export interface UpdateUserPreferencesPayload {
-  guildsOrder?: string[];
-  hiddenGuildIds?: string[];
-  theme?: string;
-  chatAppearance?: Partial<ChatAppearanceSettings>;
-  mutes?: NotificationMutesPatch;
-}
-
-export const defaultNotificationMutes: NotificationMutes = {
-  players: [],
-  npcs: [],
-};

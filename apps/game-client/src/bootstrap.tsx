@@ -15,7 +15,6 @@ import {
   type GameClientPlatform,
 } from "@/lib/game-client-platform";
 import { resetExtensionLoginWindow } from "@/store/windows.store";
-import { migrateRetiredLocalStorage } from "@/lib/storage-migrations";
 
 const ROOT_Z_INDEX_BY_INTERFACE = {
   ni: 11,
@@ -92,7 +91,6 @@ export function bootstrapGameClient(
   platform?: GameClientPlatform,
 ): GameClientRuntime {
   const installation = platform ? "extension" : "userscript";
-  migrateRetiredLocalStorage();
 
   const runtimeWindow: RuntimeWindow = window;
   const activeRuntime = runtimeWindow.__lootlogGameClientRuntime;

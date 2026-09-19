@@ -63,15 +63,11 @@
     "startsAtPlaceholder": "Wybierz datę rozpoczęcia",
     "endsAtLabel": "Data zakończenia",
     "endsAtPlaceholder": "Wybierz datę zakończenia",
-    "datesHint": "Daty są opcjonalne. Możesz je ustawić później w edycji eventu.",
-    "noHeroesHint": "Możesz utworzyć event bez herosów i dodać ich później w ustawieniach eventu.",
     "heroIdLabel": "ID NPC (opcjonalne)",
     "heroIdPlaceholder": "opcjonalne",
     "heroNameLabel": "Nazwa herosa",
     "heroNamePlaceholder": "np. Anielska zabójczyni",
     "heroMapsLabel": "Mapy spawnu",
-    "mapPlaceholder": "Nazwa mapy",
-    "fromTemplate": "Z szablonu",
     "addHero": "Dodaj herosa",
     "heroValidation": "Wypełnij nazwę i dodaj przynajmniej jedną mapę",
     "nameRequired": "Nazwa eventu jest wymagana",
@@ -175,14 +171,7 @@
     }
   },
   "actionsCard": {
-    "title": "Akcje",
-    "subtitle": "Zarządzanie",
-    "description": "Najważniejsze operacje dla eventu „{{name}}”."
-  },
-  "event": {
-    "common": {
-      "pointsShort": "pkt"
-    }
+    "subtitle": "Zarządzanie"
   },
   "common": {
     "pointsShort": "pkt"
@@ -247,7 +236,6 @@
     "acknowledgeError": "Nie udało się zapamiętać przeterminowanych potwierdzeń"
   },
   "ranking": {
-    "subtitle": "Statystyki",
     "title": "Ranking Eventowy",
     "position": "Miejsce",
     "player": "Gracz",
@@ -269,16 +257,6 @@
     "actions": "Akcje",
     "moreActions": "Więcej akcji"
   },
-  "templates": {
-    "title": "Szablony Map",
-    "select": "Wybierz Szablon",
-    "noTemplates": "Brak szablonów"
-  },
-  "presence": {
-    "online": "Online",
-    "afk": "AFK",
-    "offline": "Offline"
-  },
   "common": {
     "backToEvent": "Powrót do eventu",
     "backToHero": "Powrót do herosa",
@@ -286,7 +264,6 @@
   },
   "sidebarBanner": {
     "pinnedEvent": "Przypięty event",
-    "activeEvent": "Aktywny event",
     "showMore": "+{{count}} więcej",
     "collapse": "Zwiń"
   },
@@ -299,7 +276,6 @@
     "manageShort": "Zarządzaj",
     "assign": "Przypisz członka",
     "unassign": "Usuń przypisanie",
-    "selfAssign": "Weź tę mapę",
     "assignSuccess": "Przypisano do mapy",
     "assignError": "Błąd podczas przypisywania",
     "unassignSuccess": "Wypisano z mapy",
@@ -324,13 +300,6 @@
       "addFailed": "Błąd podczas dodawania mapy",
       "deleteFailed": "Błąd podczas usuwania mapy"
     },
-    "status": {
-      "assignedPresent": "Monitoruje",
-      "assignedAbsent": "Nieobecny",
-      "assignedAfk": "AFK",
-      "unassigned": "Nieprzypisany",
-      "wrongPlayer": "Zły Gracz"
-    },
     "clearAll": "Wyczyść przypisania",
     "clearAllSuccess": "Wyczyszczono wszystkie przypisania",
     "clearAllError": "Błąd podczas czyszczenia przypisań",
@@ -353,14 +322,12 @@
     }
   },
   "heroes": {
-    "subtitle": "Cele eventu",
     "title": "Herosi Eventowi",
     "count_one": "{{count}} heros eventowy",
     "count_few": "{{count}} herosi eventowi",
     "count_many": "{{count}} herosów eventowych",
     "notFound": "Nie znaleziono herosa",
     "killed": "Heros Zabity!",
-    "pointsAwarded": "{{points}} punktów przyznano",
     "kills": "bicia",
     "kill": "bicie",
     "killCount_one": "{{count}} bicie",
@@ -387,7 +354,6 @@
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
-    "nameLockedHint": "Po ustawieniu realnego ID nazwa herosa jest blokowana, żeby nie rozłączyć go z aktywnym timerem eventowym.",
     "nameLockedError": "Nie można zmienić nazwy herosa po ustawieniu jego ID.",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
@@ -399,17 +365,12 @@
     "empty": "Brak herosów"
   },
   "loots": {
-    "subtitle": "Kolekcja",
     "title": "Ostatnie łupy",
     "noLoots": "Brak łupów z herosów eventowych",
     "showAll": "Pokaż wszystkie łupy"
   },
   "participants": {
-    "title": "Uczestnicy",
-    "count": "Uczestników",
-    "count_one": "{{count}} uczestnik",
-    "count_few": "{{count}} uczestników",
-    "count_many": "{{count}} uczestników"
+    "title": "Uczestnicy"
   },
   "kills": {
     "title": "Historia bić",
@@ -437,10 +398,6 @@
     "manualCloseLabel": "Ręczne",
     "killCount": "Bicia",
     "statsUnavailable": "Statystyka liczby bić jest niedostępna",
-    "breakdownBase": "base",
-    "breakdownGroup": "grupa",
-    "breakdownNight": "noc",
-    "breakdownPvp": "pvp",
     "allHeroes": "Wszyscy herosi",
     "viewAll": "Zobacz wszystkie",
     "noKills": "Brak historii bić",
@@ -470,23 +427,11 @@
     "noMapBreakdown": "Brak danych o czasie na mapach",
     "afkPercentage": "Procent AFK",
     "trackingDuration": "obstawiania",
-    "assignmentTime": "przypisanie",
-    "presenceTime": "obecność",
-    "multipliers": {
-      "title": "Mnożniki",
-      "timeOfDay": "Pora dnia",
-      "trackers": "Tropiciele",
-      "mapsCount": "Liczba map"
-    },
     "pointsTooltip": {
       "basePoints": "Punkty bazowe",
-      "trackingPercentage": "Czas obstawiania respawnu",
       "bonusItem": "{{name}}",
       "bonusTotal": "Bonusy razem",
       "manualAdjustment": "Ręczna korekta",
-      "groupBonus": "Bonus małej grupy",
-      "nightBonus": "Bonus nocnej warty",
-      "pvpBonus": "Bonus żółtej mapy/PvP",
       "unnamedBonus": "Nienazwany bonus",
       "capReduction": "Redukcja przez limit 2.0",
       "total": "Łącznie"
@@ -522,10 +467,8 @@
   "killDetail": {
     "title": "Szczegóły bicia",
     "notFound": "Nie znaleziono bicia",
-    "totalPoints": "Suma punktów",
     "participantCount": "Uczestników",
     "lootCount": "Dopasowanych łupów",
-    "detectedBy": "Wykryto przez",
     "participants": "Uczestnicy",
     "participantsSubtitle": "Szczegóły bicia",
     "matchingLoots": "Dopasowane łupy",
@@ -547,7 +490,6 @@
     "summaryStatus": "Zamknięcie",
     "automaticClose": "Automatyczne",
     "multipliers": {
-      "subtitle": "Punktacja",
       "title": "Zasady punktacji",
       "simpleMode": "Tryb prosty: 1 punkt per bicie.",
       "noRules": "Brak skonfigurowanych reguł punktacji.",
@@ -562,18 +504,9 @@
       "disabledStatus": "Wyłączona",
       "appliedForCurrentMember": "Zastosowane dla Ciebie",
       "configuredRules": "Skonfigurowane zasady punktacji",
-      "baseSection": "Podstawa",
-      "bonusesSection": "Bonusy",
-      "leaveGrace": "Dla progu 75%: punkt 1.0 tylko jeśli kill był do {{minutes}} min od zejścia",
-      "groupBonus": "Mała grupa ({{min}}-{{max}} osób): +{{points}}",
-      "nightBonus": "Nocna warta {{from}}-{{to}} (>= {{coverage}}% czasu): +{{points}}",
-      "pvpBonus": "Kill w godzinach {{from}}-{{to}}: +{{points}}",
-      "cap": "Maksymalnie {{points}} pkt za jednego herosa",
-      "timezone": "Strefa: {{timezone}}",
-      "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%"
+      "cap": "Maksymalnie {{points}} pkt za jednego herosa"
     },
     "mapCoverage": {
-      "subtitle": "Pokrycie",
       "title": "Pokrycie map",
       "covered": "Pokryte",
       "uncovered": "Nieobstawione",
@@ -614,14 +547,6 @@
       },
       "expandMap": "Pokaż szczegóły pokrycia mapy {{map}}",
       "collapseMap": "Ukryj szczegóły pokrycia mapy {{map}}"
-    },
-    "coverageGaps": {
-      "subtitle": "Analiza",
-      "title": "Okresy nieobstawienia",
-      "unassigned": "Brak przypisania",
-      "uncovered": "Brak obecności",
-      "details": "Szczegóły",
-      "more": "więcej"
     }
   },
   "settings": {
@@ -640,22 +565,11 @@
   "scoring": {
     "title": "Punktacja",
     "description": "Jak przyznawać punkty za kille",
-    "fixedRulesTitle": "Stałe zasady punktacji",
-    "baseThresholdsLabel": "Progi punktów bazowych",
-    "thresholdPercentage": "Procent",
-    "thresholdPoints": "Punkty",
     "addThreshold": "Dodaj próg",
-    "leaveGraceMinutes": "Czas na zejście (min)",
     "hardCapPoints": "Limit punktów za killa",
-    "groupBonusTitle": "Bonus: mała grupa",
     "minMembers": "Min osób",
-    "maxMembers": "Max osób",
     "bonusPoints": "Bonus pkt",
-    "nightBonusTitle": "Bonus: nocna warta",
-    "requiredCoverage": "Wymagane pokrycie %",
-    "pvpBonusTitle": "Bonus: żółta mapa / PvP",
     "timezoneFixedHint": "Godziny liczone wg strefy Europe/Warsaw",
-    "groupRangeError": "Max osób musi być większe lub równe min osób",
     "mode": "Tryb punktacji",
     "chooseMode": "Krok 1/2: wybierz tryb punktacji",
     "configureEvent": "Krok 2/2: skonfiguruj event",
@@ -718,66 +632,15 @@
       "respawnWindowCoverage": "% respawnu w godz. {{from}}–{{to}} {{operator}} {{value}}%"
     },
     "summary": {
-      "baseTitle": "Punkty bazowe",
-      "baseRule": ">= {{percentage}}% czasu = {{points}} pkt",
-      "leaveGrace": "Gracz, który zszedł z mapy, dostaje punkty tylko jeśli kill był do {{minutes}} min od zejścia.",
-      "bonusTitle": "Bonusy",
-      "groupBonus": "Mała grupa ({{min}}–{{max}} os.): +{{points}}",
-      "nightBonus": "Nocna warta {{from}}–{{to}}, min. {{coverage}}% obecności: +{{points}}",
-      "pvpBonus": "Kill w godz. {{from}}–{{to}}: +{{points}}",
       "cap": "Max {{points}} pkt za killa",
       "minTrackingForBonuses": "Bonusy tylko przy min. {{percentage}}% czasu na mapie",
-      "timezone": "Strefa: {{timezone}}",
       "simple": "Każdy gracz przypisany do mapy dostaje 1 pkt za killa."
-    },
-    "rule": {
-      "base75": "≥ 75% czasu na mapie → 1.0 pkt bazowego",
-      "base50": "≥ 50% czasu na mapie → 0.5 pkt bazowego",
-      "base25": "≥ 25% czasu na mapie → 0.25 pkt bazowego",
-      "leaveGrace": "Zszedł z mapy i kill był >10 min po zejściu → 0 pkt",
-      "groupBonus": "+0.5 za małą grupę (1–4 osoby)",
-      "nightBonus": "+0.5 za nocną wartę 03:00–08:00 (min. 75% obecności)",
-      "pvpBonus": "+0.5 za killa w godz. 08:00–11:00",
-      "cap": "Max 2.0 pkt za killa"
     },
     "recalculateButton": "Przelicz punkty",
     "recalculating": "Przeliczanie...",
     "recalculateSuccess": "Punkty przeliczone wg aktualnych zasad",
     "recalculateError": "Nie udało się przeliczyć punktów",
     "recalculateHint": "Przelicza punkty za wcześniejsze kille według obecnych ustawień.",
-    "timeOfDay": {
-      "title": "Mnożnik pory dnia",
-      "description": "Dodatkowe punkty za obecność o określonych porach",
-      "from": "Od",
-      "to": "Do",
-      "multiplier": "Mnożnik",
-      "add": "Dodaj przedział",
-      "empty": "Brak przedziałów"
-    },
-    "trackers": {
-      "title": "Mnożnik za liczbę obstawiających",
-      "description": "Mniej osób na mapie = większy mnożnik punktów",
-      "count": "Liczba osób",
-      "multiplier": "Mnożnik",
-      "add": "Dodaj próg",
-      "empty": "Brak progów"
-    },
-    "mapsCount": {
-      "title": "Mnożnik za liczbę map",
-      "description": "Bonus za obstawianie wielu map naraz",
-      "count": "Liczba map",
-      "multiplier": "Mnożnik",
-      "add": "Dodaj próg",
-      "empty": "Brak progów"
-    },
-    "trackingDuration": {
-      "title": "Mnożnik za czas na mapie",
-      "description": "Mniej czasu na mapie = mniejszy mnożnik. Np. próg 0% × 0.5 i próg 50% × 1.0 oznacza, że gracze poniżej 50% czasu dostaną połowę punktów.",
-      "percentage": "Min. % czasu",
-      "multiplier": "Mnożnik",
-      "add": "Dodaj próg",
-      "empty": "Brak progów (domyślnie ×1.0 dla wszystkich)"
-    },
     "save": "Zapisz",
     "saving": "Zapisywanie...",
     "saveSuccess": "Zapisano ustawienia punktacji",
@@ -848,17 +711,7 @@
   },
   "header": {
     "assignmentTimeoutTooltip": "Czas przed respawnem, kiedy można się przypisać do mapy",
-    "assignmentTimeoutValue": "{{minutes}} min",
-    "autoPointsOn": "Auto",
-    "multipliers_one": "{{count}} mnożnik",
-    "multipliers_few": "{{count}} mnożniki",
-    "multipliers_many": "{{count}} mnożników",
-    "timeMultipliers": "Mnożniki czasowe",
-    "trackersMultipliers": "Mnożniki za obecność",
-    "mapsMultipliers": "Mnożniki za mapy",
-    "trackingDurationMultipliers": "Mnożniki czasu obstawiania",
-    "people": "osób",
-    "mapsLabel": "map"
+    "assignmentTimeoutValue": "{{minutes}} min"
   },
   "points": {
     "edit": "Edytuj punkty",

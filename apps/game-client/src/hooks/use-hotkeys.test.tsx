@@ -9,7 +9,7 @@ import { readyRoomOrganizerFixture } from "@/test/ready-room-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useGlobalStore } from "@/store/global.store";
-import { resetReadyRoomInvitationCoordinatorForTests } from "@/features/party-finder/ready-room-invitation-coordinator";
+import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
 
 describe("useHotkeys", () => {
   beforeEach(() => {
@@ -245,8 +245,8 @@ describe("useHotkeys", () => {
   });
 
   it("enqueues every explicit rapid invite-all hotkey activation", async () => {
-    resetReadyRoomInvitationCoordinatorForTests();
-    onTestFinished(resetReadyRoomInvitationCoordinatorForTests);
+    disposeReadyRoomInvitationCoordinator();
+    onTestFinished(disposeReadyRoomInvitationCoordinator);
     setTestRuntimeGame({
       hero: {
         accountId: "organizer-account",

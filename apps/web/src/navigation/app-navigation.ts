@@ -1,4 +1,4 @@
-import { maxBy } from "es-toolkit";
+import { maxBy, upperFirst } from "es-toolkit";
 import { z } from "zod";
 import type { TOptions } from "i18next";
 import { Capability, type AccessPolicy } from "@lootlog/domain/access-policy";
@@ -952,9 +952,7 @@ function resolveSimpleRoute(
           path: routes.reservations,
         },
         {
-          label: reservationId
-            ? reservationId.charAt(0).toUpperCase() + reservationId.slice(1)
-            : "",
+          label: reservationId ? upperFirst(reservationId) : "",
           path: null,
         },
       ],

@@ -18,7 +18,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { EventHeroStatsResponse } from "#src/events/kills/event-kill-response.schema";
 
-export class EventHeroSummaryError extends TaggedErrorClass<EventHeroSummaryError>()(
+class EventHeroSummaryError extends TaggedErrorClass<EventHeroSummaryError>()(
   "EventHeroSummaryError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

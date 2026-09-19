@@ -46,7 +46,7 @@ export interface ProofVerificationOptions {
   readonly clanId?: number;
 }
 
-export class MargonemSigningKeyFailure extends TaggedErrorClass<MargonemSigningKeyFailure>()(
+class MargonemSigningKeyFailure extends TaggedErrorClass<MargonemSigningKeyFailure>()(
   "MargonemSigningKeyFailure",
   {
     reason: Schema.Literals([

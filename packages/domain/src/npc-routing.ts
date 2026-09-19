@@ -54,3 +54,23 @@ export function getNpcRoutingTier(npc?: NpcRoutingData | null): NpcRoutingTier {
 
   return "base";
 }
+
+/**
+ * Whether an NPC source can be classified into a routing tier at all.
+ *
+ * `getNpcRoutingTier` answers "base" for an NPC it cannot classify, which is
+ * the right default for routing but the wrong one for visibility: it would
+ * grant an NPC-scoped source to anyone holding the feature's base permission.
+ * Visibility callers must deny instead, so they ask this first.
+ */
+export function isRoutableNpcSource(
+  npc?: (NpcRoutingData & { readonly lvl: number }) | null,
+): boolean {
+  if (!npc) return false;
+
+  // `Number.isFinite` does not coerce, so it also rejects a level that arrived
+  // as a non-number from stored or decoded data.
+  return (
+    Number.isFinite(npc.lvl) && npc.lvl >= 0 && resolveNpcType(npc) !== null
+  );
+}

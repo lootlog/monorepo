@@ -110,14 +110,12 @@ const declaredHttpFailure = <A, R>(effect: Effect.Effect<A, ChatFailure, R>) =>
     },
   });
 
-export const ChatMessageDomainResponse = Schema.Struct({
+const ChatMessageDomainResponse = Schema.Struct({
   ...ChatMessageResponse.fields,
   timestamp: DomainDateTime,
 });
 
-export const ChatMessagesDomainResponse = Schema.Array(
-  ChatMessageDomainResponse,
-);
+const ChatMessagesDomainResponse = Schema.Array(ChatMessageDomainResponse);
 
 const readCapabilities = [Permission.LOOTLOG_CHAT_READ] as const;
 

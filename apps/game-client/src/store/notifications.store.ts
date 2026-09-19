@@ -18,15 +18,13 @@ export type MentionNotification = {
   servers: string[];
 };
 
-export type PartyGatheringCharacter = PartyGatheringCharacterBase;
-
 export type PartyGatheringNotification = {
   notificationId: string;
   guildId: string;
   discordId: string;
   world: string;
   createdAt: string;
-  character: PartyGatheringCharacter;
+  character: PartyGatheringCharacterBase;
   description?: string;
   minLvl?: number;
   maxLvl?: number;

@@ -1,19 +1,11 @@
 {
   "messageActions": {
-    "label": "Akcje wiadomości",
-    "more": "Więcej akcji",
     "copy": "Kopiuj wiadomość",
     "copied": "Skopiowano",
     "copyFailed": "Nie udało się skopiować",
     "showOriginal": "Przejdź do wiadomości: {{name}}",
     "clearReply": "Anuluj odpowiedź",
-    "copyLocation": "Kopiuj lokalizację",
-    "gathered": "Utworzono zbiórkę",
-    "gatherFailed": "Nie udało się utworzyć zbiórki",
-    "activeGathering": "Masz już aktywną zbiórkę. Znajdziesz ją na pasku zbiórek.",
-    "finishDraft": "Dokończ obecną wiadomość przed przygotowaniem wezwania",
-    "helpTooLong": "Wezwanie przekracza limit 128 znaków",
-    "missingLocation": "Zgłoszenie nie zawiera pełnej lokalizacji"
+    "copyLocation": "Kopiuj lokalizację"
   },
   "gatherings": {
     "listTitle": "Zbiórki",
@@ -121,9 +113,6 @@
   "reply": {
     "replyingTo": "Odpowiedź"
   },
-  "presence": {
-    "offline": "Offline"
-  },
   "contextMenu": {
     "unknownUser": "Nieznany",
     "sendMessage": "Wyślij wiadomość",
@@ -138,9 +127,7 @@
   },
   "errors": {
     "rateLimited": "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
-    "sendFailed": "Nie udało się wysłać wiadomości na czat",
-    "clearFailed": "Nie udało się wyczyścić czatu",
-    "deleteFailed": "Nie udało się usunąć wiadomości"
+    "sendFailed": "Nie udało się wysłać wiadomości na czat"
   },
   "quickActions": {
     "menu": "Szybkie akcje",
@@ -151,8 +138,6 @@
     "enemyCount": " Wrogowie: {{count}}.",
     "helpSent": "Wysłano wezwanie pomocy",
     "partialDelivery": "Powiadomienie wysłano, ale nie udało się zapisać go w czacie. Nie wysyłaj ponownie.",
-    "runtimeUnavailable": "Dane gry nie są jeszcze dostępne",
-    "organizationsUnavailable": "Poczekaj na załadowanie organizacji",
     "unassigned": "Nieprzypisany",
     "hotkeys": {
       "chat-position": {
@@ -176,12 +161,6 @@
   "navigation": {
     "unread": "Nieprzeczytane wiadomości",
     "attention": "Wzmianki i odpowiedzi do Ciebie",
-    "sent": "Wiadomość wysłana",
-    "latest": "Najnowsze wiadomości",
-    "newMessages_one": "{{count}} nowa wiadomość",
-    "newMessages_few": "{{count}} nowe wiadomości",
-    "newMessages_many": "{{count}} nowych wiadomości",
-    "newMessages_other": "{{count}} nowych wiadomości",
-    "messageUnavailable": "Wiadomość została usunięta lub nie jest już dostępna w historii"
+    "latest": "Najnowsze wiadomości"
   }
 }

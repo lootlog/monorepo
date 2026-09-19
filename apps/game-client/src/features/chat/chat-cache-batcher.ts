@@ -1,3 +1,4 @@
+import { groupByToMap } from "@/lib/group-by-to-map";
 import type { ChatMessage } from "@/api/chat.api";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -89,18 +90,11 @@ export const createChatCacheBatcher = (queryClient: QueryClient) => {
     const acceptedOperations = queuedOperations;
     queuedOperations = [];
     cancelScheduledFlush();
-    const operationsByGuildId = new Map<string, ChatCacheOperation[]>();
 
-    for (const { operation } of acceptedOperations) {
-      const guildId = getOperationGuildId(operation);
-      const guildOperations = operationsByGuildId.get(guildId);
-
-      if (guildOperations) {
-        guildOperations.push(operation);
-      } else {
-        operationsByGuildId.set(guildId, [operation]);
-      }
-    }
+    const operationsByGuildId = groupByToMap(
+      acceptedOperations.map(({ operation }) => operation),
+      getOperationGuildId,
+    );
 
     for (const [guildId, operations] of operationsByGuildId) {
       updateChatMessagesCache({

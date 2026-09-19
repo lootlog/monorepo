@@ -65,7 +65,7 @@ export const decodeCreateActivity = Function.compose(decodeBase, (value) => {
   return value;
 });
 
-export const GuildMemberRemoved = Schema.Struct({
+const GuildMemberRemoved = Schema.Struct({
   discordId: Schema.NonEmptyString,
   guildId: Schema.NonEmptyString,
   userId: Schema.optional(Schema.String),

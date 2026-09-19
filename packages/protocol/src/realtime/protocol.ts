@@ -69,11 +69,11 @@ export type SubscriptionScope = typeof SubscriptionScope.Type;
 
 export const PresencePlatform = Schema.Literals(["game", "web-app"]);
 
-export const PresenceStatus = Schema.Literals(["online", "offline"]);
+const PresenceStatus = Schema.Literals(["online", "offline"]);
 
 export const PresenceConfidence = Schema.Literals(["verified", "reported"]);
 
-export const PresenceClan = Schema.Struct({
+const PresenceClan = Schema.Struct({
   id: Schema.optional(NonNegativeInt),
   name: Schema.optional(Schema.String),
   rank: Schema.optional(Schema.Int),
@@ -90,7 +90,7 @@ export const PresenceCharacter = Schema.Struct({
   clan: Schema.optional(PresenceClan),
 });
 
-export const PrecisePresenceLocation = Schema.Struct({
+const PrecisePresenceLocation = Schema.Struct({
   mapId: Schema.optional(NonNegativeInt),
   map: Schema.NonEmptyString,
   x: Schema.optional(NonNegativeInt),
@@ -135,7 +135,7 @@ export const PresenceSnapshot = Schema.Struct({
   presences: Schema.Array(Schema.Union([PresenceWithLocation, BasicPresence])),
 });
 
-export const PresenceDelta = Schema.Struct({
+const PresenceDelta = Schema.Struct({
   organizationId: Schema.NonEmptyString,
   revision: Revision,
   changes: Schema.Array(
@@ -168,7 +168,7 @@ const command = <
     data,
   });
 
-export const SessionJoinCommand = command(
+const SessionJoinCommand = command(
   "session.join",
   Schema.Struct({
     world: Schema.optional(Schema.NonEmptyString),
@@ -177,17 +177,14 @@ export const SessionJoinCommand = command(
   }),
 );
 
-export const HeartbeatCommand = command(
+const HeartbeatCommand = command(
   "presence.heartbeat",
   Schema.Struct({ sessionId: Schema.NonEmptyString }),
 );
 
-export const PresencePublishCommand = command(
-  "presence.publish",
-  PublishedPresence,
-);
+const PresencePublishCommand = command("presence.publish", PublishedPresence);
 
-export const PresenceFetchCommand = command(
+const PresenceFetchCommand = command(
   "presence.fetch",
   Schema.Struct({
     organizationId: Schema.NonEmptyString,
@@ -195,12 +192,9 @@ export const PresenceFetchCommand = command(
   }),
 );
 
-export const SubscribeCommand = command(
-  "subscription.subscribe",
-  SubscriptionScope,
-);
+const SubscribeCommand = command("subscription.subscribe", SubscriptionScope);
 
-export const UnsubscribeCommand = command(
+const UnsubscribeCommand = command(
   "subscription.unsubscribe",
   SubscriptionScope,
 );
@@ -274,7 +268,7 @@ export const ClientCommand = Schema.Union([
 
 export type ClientCommand = typeof ClientCommand.Type;
 
-export const RealtimeError = Schema.Struct({
+const RealtimeError = Schema.Struct({
   code: Schema.NonEmptyString,
   message: Schema.NonEmptyString,
   retryable: Schema.Boolean,
@@ -282,7 +276,7 @@ export const RealtimeError = Schema.Struct({
   details: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
 
-export type RealtimeError = typeof RealtimeError.Type;
+type RealtimeError = typeof RealtimeError.Type;
 
 export const Response = Schema.Union([
   Schema.Struct({
@@ -395,8 +389,6 @@ export const RealtimeFrame = Schema.Union([
 export type RealtimeFrame = typeof RealtimeFrame.Type;
 
 export const decodeClientCommand = Schema.decodeUnknownSync(ClientCommand);
-
-export const decodeResponse = Schema.decodeUnknownSync(Response);
 
 export const decodeServerEvent = Schema.decodeUnknownSync(ServerEvent);
 

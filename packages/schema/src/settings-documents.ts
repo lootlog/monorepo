@@ -12,7 +12,7 @@ export const SETTINGS_DOMAINS = [
   "controls",
 ] as const;
 
-export const SettingsDomainSchema = Schema.Literals(SETTINGS_DOMAINS);
+const SettingsDomainSchema = Schema.Literals(SETTINGS_DOMAINS);
 
 export type SettingsDomain = typeof SettingsDomainSchema.Type;
 
@@ -23,25 +23,25 @@ export const SETTINGS_SCOPE_TYPES = [
   "GUILD",
 ] as const;
 
-export const SettingsScopeTypeSchema = Schema.Literals(SETTINGS_SCOPE_TYPES);
+const SettingsScopeTypeSchema = Schema.Literals(SETTINGS_SCOPE_TYPES);
 
 export type SettingsScopeType = typeof SettingsScopeTypeSchema.Type;
 
-export const SettingsScopeSchema = Schema.Struct({
+const SettingsScopeSchema = Schema.Struct({
   type: SettingsScopeTypeSchema,
   id: Schema.NonEmptyString,
 });
 
 export type SettingsScope = typeof SettingsScopeSchema.Type;
 
-export const SettingsValueSourceSchema = Schema.Union([
+const SettingsValueSourceSchema = Schema.Union([
   Schema.Literal("DEFAULT"),
   SettingsScopeSchema,
 ]);
 
 export type SettingsValueSource = typeof SettingsValueSourceSchema.Type;
 
-export const SettingsPersistenceSchema = Schema.Literals([
+const SettingsPersistenceSchema = Schema.Literals([
   "SERVER_DOCUMENT",
   "DEVICE",
 ]);
@@ -53,7 +53,7 @@ const PositiveSafeInt = Schema.Int.check(
   Schema.isLessThanOrEqualTo(Number.MAX_SAFE_INTEGER),
 );
 
-export const SettingsDocumentLayerSchema = Schema.Struct({
+const SettingsDocumentLayerSchema = Schema.Struct({
   scope: SettingsScopeSchema,
   overrides: Schema.Record(Schema.String, Schema.Unknown),
   schemaVersion: Schema.optionalKey(PositiveSafeInt),
@@ -62,7 +62,7 @@ export const SettingsDocumentLayerSchema = Schema.Struct({
 
 export type SettingsDocumentLayer = typeof SettingsDocumentLayerSchema.Type;
 
-export const SettingsDomainResolutionSchema = Schema.Struct({
+const SettingsDomainResolutionSchema = Schema.Struct({
   effective: Schema.Record(Schema.String, Schema.Unknown),
   layers: Schema.Array(SettingsDocumentLayerSchema),
   sources: Schema.Record(Schema.String, SettingsValueSourceSchema),
@@ -82,7 +82,7 @@ export const SettingsDocumentsQuerySchema = Schema.Struct({
 
 export type SettingsDocumentsQuery = typeof SettingsDocumentsQuerySchema.Type;
 
-export const SettingsPatchOperationSchema = Schema.Struct({
+const SettingsPatchOperationSchema = Schema.Struct({
   domain: SettingsDomainSchema,
   scope: SettingsScopeSchema,
   set: Schema.Record(Schema.String, Schema.Json)
@@ -98,7 +98,7 @@ export const SettingsPatchOperationSchema = Schema.Struct({
  * it gets back the documents resolved for that context, so the client can
  * replace its cache entry with the response instead of refetching.
  */
-export const SettingsDocumentsContextSchema = Schema.Struct({
+const SettingsDocumentsContextSchema = Schema.Struct({
   gameAccountId: Schema.optionalKey(Schema.NonEmptyString),
   characterId: Schema.optionalKey(Schema.NonEmptyString),
   guildId: Schema.optionalKey(Schema.NonEmptyString),
@@ -128,9 +128,6 @@ export const GUILD_SETTINGS_DOCUMENTS_MAX_GUILDS = 50;
 
 export type PatchSettingsDocuments = typeof PatchSettingsDocumentsSchema.Type;
 
-export type EncodedPatchSettingsDocuments =
-  typeof PatchSettingsDocumentsSchema.Encoded;
-
 const SettingsDocumentLayerResponseSchema = Schema.Struct({
   scope: SettingsScopeSchema,
   overrides: Schema.Record(Schema.String, Schema.Json),
@@ -152,9 +149,6 @@ export const SettingsDocumentsResponseSchema = Schema.Struct({
 
 export type SettingsDocumentsResponse =
   typeof SettingsDocumentsResponseSchema.Type;
-
-export type EncodedSettingsDocumentsResponse =
-  typeof SettingsDocumentsResponseSchema.Encoded;
 
 /** Documents per guild; guilds the user is not an active member of are omitted. */
 export const GuildSettingsDocumentsResponseSchema = Schema.Struct({

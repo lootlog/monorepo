@@ -2,7 +2,7 @@ import { Logger } from "#src/shared/application-logger";
 import { makeJsonCodec, RedisService } from "#src/redis/redis.service";
 import superjson from "superjson";
 import { Effect, Schema } from "effect";
-import { stableJsonStringify } from "@lootlog/schema/stable-json";
+import { stableJsonCacheKey } from "@lootlog/schema/stable-json";
 
 const EVENT_READ_CACHE_PREFIX = "event-read:v2";
 
@@ -24,7 +24,7 @@ export const eventReadCacheEntry = <Params extends object>(
     guildId,
     eventId,
     view,
-    Buffer.from(stableJsonStringify(params ?? {})).toString("base64url"),
+    stableJsonCacheKey(params ?? {}),
   ].join(":"),
   scopes: [eventReadCacheScope(guildId), eventReadCacheScope(guildId, eventId)],
 });

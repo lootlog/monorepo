@@ -33,8 +33,6 @@ export const createBattleFilterHandlers = (
     change({ ...filters, result: toggleValue(filters.result, value) }),
   handlePhToggle: (checked: boolean) =>
     change({ ...filters, ph: checked ? true : undefined }),
-  handleMatchmakingToggle: (checked: boolean) =>
-    change({ ...filters, matchmaking: checked ? true : undefined }),
   handleWorldChange: (value: string) =>
     change({ ...filters, world: filters.world === value ? undefined : value }),
   handleMinLevelChange: (value: number | undefined) =>

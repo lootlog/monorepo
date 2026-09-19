@@ -12,13 +12,10 @@ import {
 } from "@/features/guild/settings/members/members.constants";
 import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
 import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
-import { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
-import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-web-presence.utils";
 import {
-  compareMemberListSortValues,
-  isMemberProblematic,
-  memberMatchesSearch,
-  memberMatchesStatusFilter,
+  buildGuildRolePositionById,
+  computeMembersStats,
+  getFilteredSortedMembers,
   type MemberStatusFilter,
 } from "@/features/guild/settings/members/member-list-item.utils";
 import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
@@ -31,10 +28,7 @@ import {
   useRolesControllerGetGuildRoles,
 } from "@lootlog/client/main";
 
-import type {
-  GuildMember,
-  MembersStats,
-} from "@/features/guild/settings/members/members.types";
+import type { MembersStats } from "@/features/guild/settings/members/members.types";
 import { AnimatedToggleGroup } from "@/components/ui/animated-toggle-group";
 import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
@@ -42,7 +36,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { FilterX, Users } from "lucide-react";
-import { startTransition, useMemo, useRef, useState } from "react";
+import { startTransition, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const MembersSettingsContent = () => {
@@ -81,20 +75,10 @@ export const MembersSettingsContent = () => {
   const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
   const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
 
-  const memberActivityStatsByDiscordIdAndSource = useMemo(
-    () => mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats),
-    [memberActivityStats],
-  );
+  const memberActivityStatsByDiscordIdAndSource =
+    mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats);
 
-  const guildRolePositionById = useMemo(() => {
-    const rolePositions = new Map<string, number>();
-
-    for (const role of guildRoles ?? []) {
-      rolePositions.set(role.id, role.position ?? 0);
-    }
-
-    return rolePositions;
-  }, [guildRoles]);
+  const guildRolePositionById = buildGuildRolePositionById(guildRoles);
 
   const isMobile = useIsMobile();
 
@@ -103,93 +87,20 @@ export const MembersSettingsContent = () => {
     accessPolicy?.allows(Permission.OWNER),
   );
 
-  const memberStats = useMemo<MembersStats>(() => {
-    const stats = {
-      totalMembers: 0,
-      activeMembers: 0,
-      inactiveMembers: 0,
-      onlineMembers: 0,
-      problematicMembers: 0,
-    };
+  const memberStats: MembersStats = computeMembersStats({
+    members,
+    memberGamePresenceByDiscordId,
+    memberWebPresenceByDiscordId,
+  });
 
-    for (const member of members ?? []) {
-      const isOnline =
-        isMemberOnlineOnWeb(memberWebPresenceByDiscordId, member.userId) ||
-        isMemberOnlineInGame(memberGamePresenceByDiscordId, member.userId);
-
-      stats.totalMembers += 1;
-
-      if (member.active) {
-        stats.activeMembers += 1;
-      } else {
-        stats.inactiveMembers += 1;
-      }
-
-      if (isOnline) {
-        stats.onlineMembers += 1;
-      }
-
-      if (isMemberProblematic(member)) {
-        stats.problematicMembers += 1;
-      }
-    }
-
-    return stats;
-  }, [memberGamePresenceByDiscordId, memberWebPresenceByDiscordId, members]);
-
-  const filteredMembers = useMemo(() => {
-    if (!members) return [];
-
-    const getMemberSortRolePosition = (member: GuildMember) => {
-      let highestRolePosition = 0;
-
-      for (const role of member.roles) {
-        const rolePosition =
-          guildRolePositionById.get(role.id) ?? role.position ?? 0;
-
-        if (rolePosition > highestRolePosition) {
-          highestRolePosition = rolePosition;
-        }
-      }
-
-      return highestRolePosition;
-    };
-
-    const filtered = members.filter((member) => {
-      const isOnline =
-        isMemberOnlineOnWeb(memberWebPresenceByDiscordId, member.userId) ||
-        isMemberOnlineInGame(memberGamePresenceByDiscordId, member.userId);
-
-      return (
-        memberMatchesSearch({ member, search: searchValue }) &&
-        memberMatchesStatusFilter({
-          member,
-          filter: statusFilter,
-          isOnline,
-        })
-      );
-    });
-
-    return [...filtered].sort((firstMember, secondMember) =>
-      compareMemberListSortValues(
-        {
-          rolePosition: getMemberSortRolePosition(firstMember),
-          name: firstMember.name,
-        },
-        {
-          rolePosition: getMemberSortRolePosition(secondMember),
-          name: secondMember.name,
-        },
-      ),
-    );
-  }, [
+  const filteredMembers = getFilteredSortedMembers({
+    members,
     guildRolePositionById,
     memberGamePresenceByDiscordId,
     memberWebPresenceByDiscordId,
-    members,
     searchValue,
     statusFilter,
-  ]);
+  });
 
   const hasActiveFilters =
     statusFilter !== defaultStatusFilter || searchValue.trim() !== "";

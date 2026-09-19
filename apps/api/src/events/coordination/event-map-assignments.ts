@@ -18,7 +18,7 @@ import {
   memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import type { RedisService } from "#src/redis/redis.service";
 import {
   InvalidRequestError,
@@ -28,7 +28,7 @@ import type { ApplicationLogger as Logger } from "#src/shared/application-logger
 import type { EventTimersPort } from "#src/events/respawn/event-timers.port";
 import { getSyntheticNpcId } from "#src/events/kills/get-synthetic-npc-id";
 
-export class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignmentError>()(
+class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignmentError>()(
   "EventMapAssignmentError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
@@ -36,8 +36,8 @@ export class EventMapAssignmentError extends TaggedErrorClass<EventMapAssignment
 export interface EventAssignmentPublisher {
   readonly publish: <
     Key extends
-      | typeof RoutingKey.EVENT_MAP_STATUS_UPDATE
-      | typeof RoutingKey.PRESENCE_CHECK_REQUEST,
+      | typeof RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE
+      | typeof RabbitRoutingKey.PRESENCE_CHECK_REQUEST,
   >(
     routingKey: Key,
     payload: CanonicalRabbitEvent<Key>,
@@ -247,7 +247,7 @@ export const makeEventMapAssignments = (
     heroNpcLvl: number | null,
   ) =>
     bestEffort(
-      publisher.publish(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+      publisher.publish(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
         guildId,
         eventId,
         mapId,
@@ -376,7 +376,7 @@ export const makeEventMapAssignments = (
           yield* closeGap(mapId, "UNASSIGNED", now);
           yield* openGap(mapId, scoped.hero.id, "UNCOVERED", now);
           yield* bestEffort(
-            publisher.publish(RoutingKey.PRESENCE_CHECK_REQUEST, {
+            publisher.publish(RabbitRoutingKey.PRESENCE_CHECK_REQUEST, {
               guildId: guild.id,
               mapName: scoped.map.mapName,
             }),

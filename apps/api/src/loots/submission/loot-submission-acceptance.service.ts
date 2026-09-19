@@ -12,7 +12,7 @@ import {
   PermissionDeniedError,
 } from "#src/shared/http/http-errors";
 import { createHash } from "node:crypto";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
 import {
   LootShareSourceEnum as LootShareSource,
@@ -466,21 +466,21 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     };
 
     rabbit(
-      RoutingKey.SEARCH_PLAYERS_INDEX,
+      RabbitRoutingKey.SEARCH_PLAYERS_INDEX,
       this.mapPlayers(options.submission.players).map((player) => ({
         ...player,
         world: options.submission.world,
       })),
     );
     rabbit(
-      RoutingKey.SEARCH_NPCS_INDEX,
+      RabbitRoutingKey.SEARCH_NPCS_INDEX,
       options.npcs.map((npc) => ({ ...npc, world: options.submission.world })),
     );
     const items = this.mapItems(options.submission.loots);
 
     if (items.length > 0)
       rabbit(
-        RoutingKey.SEARCH_ITEMS_INDEX,
+        RabbitRoutingKey.SEARCH_ITEMS_INDEX,
         items.map((item) => ({
           id: item.id,
           name: item.name,
@@ -492,7 +492,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
           world: options.submission.world,
         })),
       );
-    rabbit(RoutingKey.NOTIFICATIONS_LOOT_CREATED, {
+    rabbit(RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED, {
       version: 2,
       lootId: options.lootId,
       world: options.submission.world,
@@ -819,7 +819,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         organizationIds: [guildId],
         payload: {
           kind: "rabbit",
-          routingKey: RoutingKey.GUILDS_LOOTS_CREATE,
+          routingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE,
           data: {
             version: 2,
             guildId,

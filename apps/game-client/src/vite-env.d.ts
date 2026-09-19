@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_BATTLELOG_API_URL: string;
   readonly VITE_AUTH_SERVICE_URL: string;
   readonly VITE_GATEWAY_URL: string;
+  readonly VITE_LOOTLOG_APP_URL: string;
   readonly VITE_GATEWAY_SOCKET_PATH: string;
   readonly VITE_BUILD_TIMESTAMP: string;
   readonly VITE_COMMIT_SHA: string;

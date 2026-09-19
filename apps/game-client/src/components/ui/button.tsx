@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
  * shadcn button variants on the game client's compact scale. `menu` is the
  * left-aligned item used inside popover menus.
  */
-export const buttonVariants = cva(
+const buttonVariants = cva(
   "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-[13px] ll:font-medium ll:transition-[background-color,color,border-color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll-custom-cursor-pointer",
   {
     variants: {

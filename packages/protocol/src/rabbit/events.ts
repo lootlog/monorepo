@@ -75,12 +75,12 @@ export const GuildMemberChanged = Schema.Struct({
   userId: Schema.NonEmptyString,
 });
 
-export const PresenceCheckRequested = Schema.Struct({
+const PresenceCheckRequested = Schema.Struct({
   guildId: Schema.NonEmptyString,
   mapName: Schema.NonEmptyString,
 });
 
-export const PresenceCoverageChecked = Schema.Struct({
+const PresenceCoverageChecked = Schema.Struct({
   guildId: Schema.NonEmptyString,
   mapName: Schema.NonEmptyString,
   discordId: Schema.NonEmptyString,
@@ -114,42 +114,42 @@ const DiscordGuildSyncState = Schema.Struct({
   updatedAt: Schema.NonEmptyString,
 });
 
-export const DiscordGuildChannelsSynced = Schema.Struct({
+const DiscordGuildChannelsSynced = Schema.Struct({
   guildId: Schema.NonEmptyString,
   channels: Schema.Array(DiscordGuildChannel),
   syncState: DiscordGuildSyncState,
 });
 
-export const DiscordGuildChannelUpserted = Schema.Struct({
+const DiscordGuildChannelUpserted = Schema.Struct({
   guildId: Schema.NonEmptyString,
   channel: DiscordGuildChannel,
   syncState: DiscordGuildSyncState,
 });
 
-export const DiscordGuildChannelsSyncFailed = Schema.Struct({
+const DiscordGuildChannelsSyncFailed = Schema.Struct({
   guildId: Schema.NonEmptyString,
   status: DiscordGuildSyncStatus,
   lastAttemptAt: Schema.NonEmptyString,
   lastError: Schema.NonEmptyString,
 });
 
-export const DiscordGuildSyncStateUpdated = Schema.Struct({
+const DiscordGuildSyncStateUpdated = Schema.Struct({
   guildId: Schema.NonEmptyString,
   syncState: DiscordGuildSyncState,
 });
 
-export const OrganizationScopedEvent = Schema.Union([
+const OrganizationScopedEvent = Schema.Union([
   Schema.Struct({ guildId: Schema.NonEmptyString }),
   Schema.Struct({ organizationId: Schema.NonEmptyString }),
 ]);
 
-export const PartyReadyRoomUpdated = Schema.Struct({
+const PartyReadyRoomUpdated = Schema.Struct({
   recipientDiscordId: Schema.NonEmptyString,
   eligibleGuildIds: Schema.Array(Schema.NonEmptyString),
   update: Schema.Unknown,
 });
 
-export const NotificationVolunteer = Schema.Struct({
+const NotificationVolunteer = Schema.Struct({
   notificationId: Schema.NonEmptyString,
   targetDiscordId: Schema.NonEmptyString,
   volunteerDiscordId: Schema.NonEmptyString,
@@ -215,26 +215,26 @@ export const EventScope = Schema.Struct({
   eventId: Schema.NonEmptyString,
 });
 
-export const EventMapStatusUpdated = Schema.Struct({
+const EventMapStatusUpdated = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
   mapId: Schema.NonEmptyString,
   reason: Schema.optional(Schema.String),
 });
 
-export const EventHeroKilled = Schema.Struct({
+const EventHeroKilled = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
   heroId: Schema.optional(Schema.NonEmptyString),
 });
 
-export const EventRespawnWindowChanged = Schema.Struct({
+const EventRespawnWindowChanged = Schema.Struct({
   ...EventScope.fields,
   heroNpcLvl: Schema.optional(Schema.NullOr(NonNegativeInt)),
   heroId: Schema.NonEmptyString,
 });
 
-export const ActivityLogCreated = Schema.Struct({
+const ActivityLogCreated = Schema.Struct({
   userId: Schema.NonEmptyString,
   guildId: Schema.optional(Schema.NonEmptyString),
   action: Schema.NonEmptyString,
@@ -243,7 +243,7 @@ export const ActivityLogCreated = Schema.Struct({
   metadata: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
 
-export const NotificationTimerUpdated = Schema.Struct({
+const NotificationTimerUpdated = Schema.Struct({
   guildId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
   npcId: NonNegativeInt,
@@ -255,7 +255,7 @@ export const NotificationTimerUpdated = Schema.Struct({
   ),
 });
 
-export const NotificationTimerDeleted = Schema.Struct({
+const NotificationTimerDeleted = Schema.Struct({
   guildId: Schema.NonEmptyString,
   world: Schema.NonEmptyString,
   timerKey: Schema.NonEmptyString,
@@ -277,7 +277,7 @@ export const LootCreatedNotificationEventV2 = Schema.Struct({
   ),
 });
 
-export const DiscordNotificationDeliveryResult = Schema.Struct({
+const DiscordNotificationDeliveryResult = Schema.Struct({
   notificationJobId: Schema.NonEmptyString,
   success: Schema.Boolean,
   retryable: Schema.Boolean,
@@ -287,7 +287,7 @@ export const DiscordNotificationDeliveryResult = Schema.Struct({
   deliveredAt: Schema.NonEmptyString,
 });
 
-export const DiscordGuildChannelDeleted = Schema.Struct({
+const DiscordGuildChannelDeleted = Schema.Struct({
   guildId: Schema.NonEmptyString,
   channelId: Schema.NonEmptyString,
   syncState: DiscordGuildSyncState,
@@ -316,14 +316,14 @@ export const UserOnlineCheckpointV1 = Schema.Struct({
 export type UserOnlineCheckpointV1 = typeof UserOnlineCheckpointV1.Type;
 
 /** Published only after the durable publisher has drained its pending checkpoints. */
-export const UserOnlineHealthV1 = Schema.Struct({
+const UserOnlineHealthV1 = Schema.Struct({
   version: Schema.Literal(1),
   type: Schema.Literal("collector"),
   observedAt: DateTimeWithOffsetString,
   status: Schema.Literals(["healthy", "degraded"]),
 });
 
-export type UserOnlineHealthV1 = typeof UserOnlineHealthV1.Type;
+type UserOnlineHealthV1 = typeof UserOnlineHealthV1.Type;
 
 export const UserOnlineEventV1 = Schema.Union([
   UserOnlineCheckpointV1,
@@ -332,7 +332,7 @@ export const UserOnlineEventV1 = Schema.Union([
 
 export type UserOnlineEventV1 = typeof UserOnlineEventV1.Type;
 
-export const canonicalRabbitEventSchemas = {
+const canonicalRabbitEventSchemas = {
   [RabbitRoutingKey.GAME_CHARACTER_OFFLINE]: GameCharacterOffline,
   [RabbitRoutingKey.GUILDS_KILLS_ACCEPTED_V1]: GuildKillsAcceptedV1,
   [RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1]: UserOnlineEventV1,

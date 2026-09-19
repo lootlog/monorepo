@@ -6,7 +6,7 @@ import { AuthApi } from "#src/http-api/auth-api";
 
 const NonEmptyTrimmedString = Schema.Trim.check(Schema.isMinLength(1));
 
-export const IdpTokenRequest = Schema.Struct({
+const IdpTokenRequest = Schema.Struct({
   userId: NonEmptyTrimmedString,
   discordId: NonEmptyTrimmedString,
 });

@@ -30,7 +30,7 @@ export const DomainJsonValue: Schema.Codec<DomainJsonValue> = Schema.suspend(
     ]),
 );
 
-export const encodeDomainJson = Schema.encodeUnknownEffect(DomainJsonValue);
+const encodeDomainJson = Schema.encodeUnknownEffect(DomainJsonValue);
 
 export const decodeDomainJson = <A, I, R>(
   schema: Schema.Codec<A, I, R>,

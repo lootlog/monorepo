@@ -1,4 +1,5 @@
 import { apiKey, API_KEY_ERROR_CODES } from "@better-auth/api-key";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/schema/discord";
 import type { AuthProvider } from "#src/auth/auth-service";
 import { runLogEffect } from "@lootlog/instrumentation";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
@@ -15,13 +16,6 @@ import { betterAuthSchema } from "#src/database/drizzle.schema";
 import { AuthRedisStorage } from "#src/auth/storage/auth-redis-storage";
 import { resolveBetterAuthBaseURL } from "./better-auth-url.js";
 import { createDiscordAuthOptions } from "./discord-auth-options.js";
-
-export const DISCORD_AUTH_SCOPES = [
-  "guilds.members.read",
-  "guilds",
-  "identify",
-  "email",
-] as const;
 
 const logBetterAuthEvent = (
   level: Parameters<

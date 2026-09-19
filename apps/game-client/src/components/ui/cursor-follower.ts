@@ -75,7 +75,7 @@ const invalidateViewportSize = () => {
 };
 
 export const ensureCursorTracking = () => {
-  if (cursorTracked || typeof window === "undefined") return;
+  if (cursorTracked) return;
 
   cursorTracked = true;
   window.addEventListener("pointermove", trackCursor, { passive: true });
@@ -99,21 +99,18 @@ export const registerCursorFollower = (
 
   // ResizeObserver delivers after layout, so reading offset sizes here does
   // not force one; it keeps the cached size right when the content changes.
-  const resizeObserver =
-    typeof ResizeObserver === "undefined"
-      ? null
-      : new ResizeObserver(() => {
-          follower.size = {
-            width: element.offsetWidth,
-            height: element.offsetHeight,
-          };
-          scheduleFollowerPlacement();
-        });
+  const resizeObserver = new ResizeObserver(() => {
+    follower.size = {
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+    };
+    scheduleFollowerPlacement();
+  });
 
-  resizeObserver?.observe(element);
+  resizeObserver.observe(element);
 
   return () => {
     cursorFollowers.delete(follower);
-    resizeObserver?.disconnect();
+    resizeObserver.disconnect();
   };
 };

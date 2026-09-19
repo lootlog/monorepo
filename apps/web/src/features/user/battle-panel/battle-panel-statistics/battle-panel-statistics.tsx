@@ -49,7 +49,6 @@ export function BattlePanelStatistics() {
   const startDate = queryState.startDate ?? undefined;
   const endDate = queryState.endDate ?? undefined;
   const ph = queryState.ph ?? undefined;
-  const matchmaking = false;
   const selectedCharacterId = currentCharacterId ?? characters?.[0]?.id;
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export function BattlePanelStatistics() {
     startDate,
     endDate,
     ph,
-    matchmaking,
+    matchmaking: false,
   };
 
   const queryOptions = { query: { enabled: Boolean(selectedCharacterId) } };
@@ -128,7 +127,7 @@ export function BattlePanelStatistics() {
     startDate,
     endDate,
     ph,
-    matchmaking,
+    matchmaking: false,
   };
 
   if (!selectedCharacterId) {
@@ -158,8 +157,6 @@ export function BattlePanelStatistics() {
               minLevel={minLevel}
               maxLevel={maxLevel}
               ph={ph}
-              matchmaking={matchmaking}
-              showMatchmakingFilter={false}
               onCharacterChange={(characterId) => {
                 startTransition(() => {
                   void setQueryState({
@@ -192,13 +189,6 @@ export function BattlePanelStatistics() {
                 startTransition(() => {
                   void setQueryState({
                     ph: newPh ? true : null,
-                  });
-                });
-              }}
-              onMatchmakingChange={(newMatchmaking) => {
-                startTransition(() => {
-                  void setQueryState({
-                    matchmaking: newMatchmaking ? true : null,
                   });
                 });
               }}

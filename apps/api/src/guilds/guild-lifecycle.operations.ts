@@ -28,7 +28,7 @@ import {
   getPermissionsCachePattern,
 } from "#src/shared/cache";
 
-export class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
+class GuildLifecycleFailure extends TaggedErrorClass<GuildLifecycleFailure>()(
   "GuildLifecycleFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

@@ -17,7 +17,8 @@ import type {
 } from "#src/database/drizzle/schema";
 import { RedisService } from "#src/redis/redis.service";
 import type { EventEmitter } from "#src/events/event-emitter";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
+import { keysetNextCursor, takeKeysetPage } from "#src/shared/keyset-page";
 import type { EventPoints } from "#src/events/kills/event-points.service";
 import type { EventReadCache } from "#src/events/catalog/event-read-cache.service";
 import type { EventPresenceTracking } from "#src/events/monitoring/event-presence-tracking";
@@ -866,7 +867,7 @@ export const makeEventKills = (
         eventReadCache.invalidateEvent(guildId, event.id),
       );
       yield* eventEmitter
-        .emit(RoutingKey.EVENT_HERO_KILLED, {
+        .emit(RabbitRoutingKey.EVENT_HERO_KILLED, {
           guildId,
           eventId: event.id,
           heroNpcLvl: eventHero.npcLvl,
@@ -876,7 +877,7 @@ export const makeEventKills = (
 
       if (!isManualClose) {
         yield* eventEmitter
-          .emit(RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
+          .emit(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED, {
             guildId,
             eventId: event.id,
             heroNpcLvl: eventHero.npcLvl,
@@ -886,7 +887,7 @@ export const makeEventKills = (
 
         if (timerData.minSpawnTime && timerData.maxSpawnTime) {
           yield* eventEmitter
-            .emit(RoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
+            .emit(RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED, {
               guildId,
               eventId: event.id,
               heroNpcLvl: eventHero.npcLvl,
@@ -900,7 +901,7 @@ export const makeEventKills = (
         heroMaps,
         (map) =>
           eventEmitter
-            .emit(RoutingKey.EVENT_MAP_STATUS_UPDATE, {
+            .emit(RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE, {
               guildId,
               eventId: event.id,
               heroNpcLvl: eventHero.npcLvl,
@@ -1003,8 +1004,7 @@ export const makeEventKills = (
       limit: limit + 1,
     });
 
-    const hasMore = kills.length > limit;
-    const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+    const { rows: paginatedKills, hasMore } = takeKeysetPage(kills, limit);
 
     const windowStartByKillId =
       yield* getEffectiveWindowStartByKillId(paginatedKills);
@@ -1022,7 +1022,7 @@ export const makeEventKills = (
       })),
     }));
 
-    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+    const nextCursor = keysetNextCursor(data, hasMore);
 
     return { data, nextCursor };
   });
@@ -1145,8 +1145,7 @@ export const makeEventKills = (
         limit: limit + 1,
       });
 
-      const hasMore = kills.length > limit;
-      const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
+      const { rows: paginatedKills, hasMore } = takeKeysetPage(kills, limit);
 
       const windowStartByKillId =
         yield* getEffectiveWindowStartByKillId(paginatedKills);
@@ -1183,7 +1182,7 @@ export const makeEventKills = (
         };
       });
 
-      const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+      const nextCursor = keysetNextCursor(data, hasMore);
 
       return { member, data, nextCursor };
     });

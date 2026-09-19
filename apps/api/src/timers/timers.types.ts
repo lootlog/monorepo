@@ -28,12 +28,3 @@ export const TimerHistoryAction = {
 
 export type TimerHistoryAction =
   (typeof TimerHistoryAction)[keyof typeof TimerHistoryAction];
-
-export const Profession = {
-  WARRIOR: "WARRIOR",
-  PALADIN: "PALADIN",
-  HUNTER: "HUNTER",
-  MAGE: "MAGE",
-  BLADE_DANCER: "BLADE_DANCER",
-  TRACKER: "TRACKER",
-} as const;

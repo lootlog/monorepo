@@ -24,17 +24,6 @@
     "title": "Ranking graczy",
     "metricLabel": "Statystyka rankingu"
   },
-  "overviewHeader": {
-    "title": "Przegląd walki",
-    "copyLink": "Skopiuj link",
-    "hide": "Ukryj",
-    "share": "Udostępnij",
-    "delete": "Usuń",
-    "deleteConfirmTitle": "Czy na pewno chcesz usunąć tę walkę?",
-    "deleteConfirmDescription": "Tej operacji nie można cofnąć. Walka zostanie całkowicie usunięta z systemu i nie będzie już uwzględniana w statystykach.",
-    "cancel": "Anuluj",
-    "deleteBattle": "Usuń walkę"
-  },
   "metadata": {
     "startTime": "Data i godzina rozpoczęcia walki",
     "duration": "Czas trwania walki",
@@ -173,9 +162,6 @@
   },
   "oneVsOne": {
     "empty": "Nie znaleziono danych walki 1v1",
-    "title": "Statystyki walki 1v1",
-    "showAll": "Pokaż wszystkie",
-    "hideZeroValues": "Ukryj zerowe wartości",
     "stat": "Statystyka",
     "categories": {
       "turnStats": "Statystyki tur",

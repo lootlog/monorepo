@@ -29,7 +29,7 @@ import {
   type ResolvedLootQueryFilters,
 } from "#src/loots/query/loot-query-filter";
 
-export class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersistenceError>()(
+class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersistenceError>()(
   "LootQueryPersistenceError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

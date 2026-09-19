@@ -2,8 +2,10 @@ import type { Hero } from "@lootlog/margonem/hero";
 import type { Other } from "@lootlog/margonem/others";
 import type { RuntimeOther } from "@/lib/margonem-runtime/runtime.types";
 import { create } from "zustand";
+import { getCharacterIdentityKey } from "@/lib/character-identity-key";
 import type { UserLootlogPlayersCatchingGuildsResponseDtoOutputPlayersItemGuildsItem } from "@lootlog/client/main";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
+import { pruneByRecency } from "@/lib/prune-by-recency";
 
 export type CharacterTooltipCatchingGuildsStatus =
   | "idle"
@@ -58,13 +60,6 @@ type CharacterTooltipCatchingGuildsState = {
   setUnavailable: (key: string) => void;
 };
 
-export function getCharacterTooltipCatchingGuildsCharacterKey(
-  accountId: string,
-  characterId: string,
-): string {
-  return `${accountId}:${characterId}`;
-}
-
 export function getOtherCatchingGuildsTarget(
   other: { d: Pick<Other["d"] | Hero["d"], "account" | "id"> } | RuntimeOther,
 ): CharacterTooltipCatchingGuildsTarget | null {
@@ -89,7 +84,7 @@ export function getOtherCatchingGuildsTarget(
   return {
     accountId,
     characterId,
-    key: getCharacterTooltipCatchingGuildsCharacterKey(accountId, characterId),
+    key: getCharacterIdentityKey(accountId, characterId),
     ownerName: owner.guildMemberName ?? owner.userId,
     playerName: owner.playerName,
     requestKey: `${owner.userId}:${accountId}:${characterId}`,
@@ -136,14 +131,14 @@ function withEntryRetention(
     return entriesByKey;
   }
 
-  inactiveEntries.sort(([, firstEntry], [, secondEntry]) => {
-    return secondEntry.lastAccessedAt - firstEntry.lastAccessedAt;
+  const { retained } = pruneByRecency({
+    entries: inactiveEntries,
+    now,
+    cap: CHARACTER_TOOLTIP_ENTRY_CAP,
+    timestampOf: ([, entry]) => entry.lastAccessedAt,
   });
 
-  return Object.fromEntries([
-    ...protectedEntries,
-    ...inactiveEntries.slice(0, CHARACTER_TOOLTIP_ENTRY_CAP),
-  ]);
+  return Object.fromEntries([...protectedEntries, ...retained]);
 }
 
 function updateTargetEntry(

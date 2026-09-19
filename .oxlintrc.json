@@ -152,7 +152,7 @@
         "anti-slop/no-unknown-parameters": [
           "error",
           {
-            "boundaryFunctions": ["stableJsonStringify"]
+            "boundaryFunctions": ["stableJsonStringify", "stableJsonCacheKey"]
           }
         ]
       }

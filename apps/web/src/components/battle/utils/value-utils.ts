@@ -55,3 +55,6 @@ export const processDamageValue = (
 
   return ` ${prefix}${rounded}`;
 };
+
+export const formatNumber = (value: number): string =>
+  value.toLocaleString("pl-PL");

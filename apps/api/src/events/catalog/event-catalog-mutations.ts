@@ -44,7 +44,7 @@ import type {
   UpdateEventLocationRequest,
 } from "#src/contracts/events/schemas";
 
-export class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
+class EventCatalogMutationError extends TaggedErrorClass<EventCatalogMutationError>()(
   "EventCatalogMutationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

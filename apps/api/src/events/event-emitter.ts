@@ -1,27 +1,29 @@
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import { Logger } from "#src/shared/application-logger";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import {
+  RabbitExchange,
+  RabbitRoutingKey,
+} from "@lootlog/protocol/rabbit/topology";
 import { Effect } from "effect";
 
 type EventScope = { guildId: string; eventId: string };
 
 export type EventEmitPayloads = {
-  [RoutingKey.EVENT_MAP_STATUS_UPDATE]: EventScope & {
+  [RabbitRoutingKey.EVENT_MAP_STATUS_UPDATE]: EventScope & {
     heroNpcLvl: number | null;
     mapId: string;
     reason?: string;
   };
-  [RoutingKey.EVENT_HERO_KILLED]: EventScope & {
+  [RabbitRoutingKey.EVENT_HERO_KILLED]: EventScope & {
     killId: string;
     heroNpcLvl: number | null;
   };
-  [RoutingKey.EVENT_RANKING_UPDATE]: EventScope;
-  [RoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: EventScope & {
+  [RabbitRoutingKey.EVENT_RANKING_UPDATE]: EventScope;
+  [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_OPENED]: EventScope & {
     heroId: string;
     heroNpcLvl: number | null;
   };
-  [RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: EventScope & {
+  [RabbitRoutingKey.EVENT_RESPAWN_WINDOW_CLOSED]: EventScope & {
     heroId: string;
     heroNpcLvl: number | null;
   };
@@ -36,7 +38,7 @@ export const makeEventEmitter = (amqpConnection: AmqpPublisher) => {
     routingKey: K,
     payload: EventEmitPayloads[K],
   ): Effect.Effect<void> =>
-    amqpConnection.publish(DEFAULT_EXCHANGE_NAME, routingKey, payload).pipe(
+    amqpConnection.publish(RabbitExchange.DEFAULT, routingKey, payload).pipe(
       Effect.catch((error) =>
         Effect.sync(() => logger.error(`Failed to emit ${routingKey}`, error)),
       ),

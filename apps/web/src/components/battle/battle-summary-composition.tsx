@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import type { FC } from "react";
 import type { BattleSegmentValue } from "./utils/battle-team-summary";
+import { formatNumber } from "@/components/battle/utils/value-utils";
 
 export type BattleSummaryCompositionProps = {
   /** Background class per segment key; shared by the bar and its legend. */
@@ -10,8 +11,6 @@ export type BattleSummaryCompositionProps = {
   teamClassName: string;
   teamLabel: string;
 };
-
-const formatNumber = (value: number) => value.toLocaleString("pl-PL");
 
 const formatShare = (share: number) => `${Math.round(share * 100)}%`;
 

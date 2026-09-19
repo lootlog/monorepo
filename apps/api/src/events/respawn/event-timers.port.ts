@@ -2,8 +2,10 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { Clock, Effect, Schema } from "effect";
 import { ExecutionError, type RedlockService } from "#src/redis/redlock";
-import { DEFAULT_EXCHANGE_NAME } from "#src/config/rabbitmq.config";
-import { RoutingKey } from "#src/rabbitmq/routing-key";
+import {
+  RabbitExchange,
+  RabbitRoutingKey,
+} from "@lootlog/protocol/rabbit/topology";
 import { mapTimerResponse, timerNpcField } from "#src/timers/timer-projection";
 import type { AmqpPublisher } from "#src/rabbitmq/amqp-publisher";
 import type { RedisService } from "#src/redis/redis.service";
@@ -118,16 +120,16 @@ export const makeEventTimersPort = ({
         mapped(
           "eventTimers.rabbit.update",
           amqp.publish(
-            DEFAULT_EXCHANGE_NAME,
-            RoutingKey.GUILDS_TIMERS_UPDATE,
+            RabbitExchange.DEFAULT,
+            RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
             response,
           ),
         ),
         mapped(
           "eventTimers.rabbit.notification",
           amqp.publish(
-            DEFAULT_EXCHANGE_NAME,
-            RoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+            RabbitExchange.DEFAULT,
+            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
             response,
           ),
         ),
@@ -155,16 +157,16 @@ export const makeEventTimersPort = ({
         mapped(
           "eventTimers.rabbit.delete",
           amqp.publish(
-            DEFAULT_EXCHANGE_NAME,
-            RoutingKey.GUILDS_TIMERS_DELETE,
+            RabbitExchange.DEFAULT,
+            RabbitRoutingKey.GUILDS_TIMERS_DELETE,
             payload,
           ),
         ),
         mapped(
           "eventTimers.rabbit.notificationDelete",
           amqp.publish(
-            DEFAULT_EXCHANGE_NAME,
-            RoutingKey.NOTIFICATIONS_TIMER_DELETED,
+            RabbitExchange.DEFAULT,
+            RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
             payload,
           ),
         ),

@@ -1,18 +1,13 @@
 import { Schema } from "effect";
 import { NonNegativeInt } from "./primitives.js";
 
-export const MAP_PING_TYPES = [
-  "attention",
-  "enemy",
-  "regroup",
-  "avoid",
-] as const;
+const MAP_PING_TYPES = ["attention", "enemy", "regroup", "avoid"] as const;
 
 export type MapPingType = (typeof MAP_PING_TYPES)[number];
 
-export const MapPingTypeSchema = Schema.Literals(MAP_PING_TYPES);
+const MapPingTypeSchema = Schema.Literals(MAP_PING_TYPES);
 
-export const MapPingRejectCodeSchema = Schema.Literals([
+const MapPingRejectCodeSchema = Schema.Literals([
   "forbidden",
   "invalid-context",
   "invalid-payload",
@@ -29,7 +24,7 @@ export interface MapPingSendPayload {
   y: number;
 }
 
-export type MapPingRejectCode =
+type MapPingRejectCode =
   | "forbidden"
   | "invalid-context"
   | "invalid-payload"

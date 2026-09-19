@@ -128,7 +128,7 @@ export type FailurePolicy =
       readonly deadLetterRoutingKey: RabbitRoutingKeyName;
     };
 
-export interface ConsumeOptions {
+interface ConsumeOptions {
   readonly queue: string;
   readonly consumerTag?: string;
   readonly prefetch?: number;
@@ -175,7 +175,7 @@ export interface RabbitMessagingService {
   ) => Effect.Effect<void, MessagingError>;
 }
 
-export interface RabbitMessagingConfig {
+interface RabbitMessagingConfig {
   readonly uri: string;
   readonly connectionName?: string;
   readonly queues?: ReadonlyArray<RabbitQueueDefinition>;

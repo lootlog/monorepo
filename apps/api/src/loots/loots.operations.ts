@@ -47,7 +47,7 @@ type LootComments = Effect.Success<ReturnType<LootPersistence["listComments"]>>;
 
 type LootComment = Effect.Success<ReturnType<LootPersistence["createComment"]>>;
 
-export class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
+class LootsOperationError extends TaggedErrorClass<LootsOperationError>()(
   "LootsOperationError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

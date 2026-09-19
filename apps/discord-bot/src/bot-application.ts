@@ -75,10 +75,9 @@ export interface BotServicesValue {
   readonly sync: DiscordSync;
 }
 
-export class BotServices extends Context.Service<
-  BotServices,
-  BotServicesValue
->()("@lootlog/discord-bot/BotServices") {
+class BotServices extends Context.Service<BotServices, BotServicesValue>()(
+  "@lootlog/discord-bot/BotServices",
+) {
   static readonly layer = Layer.effect(
     BotServices,
     Effect.gen(function* () {
@@ -194,7 +193,7 @@ export const makeBotHttpBoundary = (services: BotServicesValue) => {
   };
 };
 
-export const BotConsumer = Layer.effectDiscard(
+const BotConsumer = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const services = yield* BotServices;
@@ -222,7 +221,7 @@ export const BotConsumer = Layer.effectDiscard(
   }),
 );
 
-export const BotHttpServer = Layer.unwrap(
+const BotHttpServer = Layer.unwrap(
   Effect.map(BotConfig, ({ port }) =>
     HttpRouter.serve(
       BotHttpRoutes.pipe(Layer.provide(httpServerRouteMetrics)),

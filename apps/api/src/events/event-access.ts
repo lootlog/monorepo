@@ -18,7 +18,7 @@ import { filterHeroesByLevel } from "@lootlog/domain/event-hero-visibility";
 
 type Role = typeof roleTable.$inferSelect;
 
-export class EventAccessError extends TaggedErrorClass<EventAccessError>()(
+class EventAccessError extends TaggedErrorClass<EventAccessError>()(
   "EventAccessError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

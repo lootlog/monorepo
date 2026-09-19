@@ -9,7 +9,7 @@ export interface ApiLifecycleHooks {
  * A scoped lifecycle boundary for the future HTTP host. Its release action is
  * guaranteed to run when BunRuntime interrupts the launched layer on SIGTERM.
  */
-export const makeApiLifecycleLayer = (
+const makeApiLifecycleLayer = (
   hooks: ApiLifecycleHooks = {},
 ): Layer.Layer<never> =>
   Layer.effectDiscard(

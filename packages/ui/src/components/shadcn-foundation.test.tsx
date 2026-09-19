@@ -10,7 +10,6 @@ import {
   InputGroupInput,
   InputGroupTextarea,
 } from "./input-group";
-import { Item, ItemGroup } from "./item";
 import { Progress } from "./progress";
 
 afterEach(cleanup);
@@ -95,15 +94,5 @@ describe("shadcn foundation", () => {
     fireEvent.click(screen.getByText("Message"));
 
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveFocus();
-  });
-
-  it("does not claim incomplete list semantics for generic items", () => {
-    render(
-      <ItemGroup data-testid="items">
-        <Item>Entry</Item>
-      </ItemGroup>,
-    );
-
-    expect(screen.getByTestId("items")).not.toHaveAttribute("role", "list");
   });
 });

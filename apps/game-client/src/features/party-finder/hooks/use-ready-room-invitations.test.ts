@@ -6,7 +6,7 @@ import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready
 import {
   READY_ROOM_INVITATION_PARTICIPANT_CAP,
   READY_ROOM_INVITATION_TIMEOUT_MS,
-  resetReadyRoomInvitationCoordinatorForTests,
+  disposeReadyRoomInvitationCoordinator,
 } from "@/features/party-finder/ready-room-invitation-coordinator";
 import { useGlobalStore } from "@/store/global.store";
 import { usePartyFinderStore } from "@/store/party-finder.store";
@@ -52,7 +52,7 @@ describe("useReadyRoomInvitations", () => {
         Response.json(await resolveInvitationTargets(new Request(input, init))),
     );
     vi.stubGlobal("_g", inviteCharacterToParty);
-    resetReadyRoomInvitationCoordinatorForTests();
+    disposeReadyRoomInvitationCoordinator();
     usePartyFinderStore.getState().clearReadyRooms();
     usePartyFinderStore.getState().mergeProjection(projection);
     usePartyFinderStore.getState().setReadyRoomsSynchronized(true);

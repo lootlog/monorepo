@@ -27,7 +27,7 @@ type MemberRefreshJobState =
   | "waiting"
   | "waiting-children";
 
-export class MemberRefreshSchedulerFailure extends TaggedErrorClass<MemberRefreshSchedulerFailure>()(
+class MemberRefreshSchedulerFailure extends TaggedErrorClass<MemberRefreshSchedulerFailure>()(
   "MemberRefreshSchedulerFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

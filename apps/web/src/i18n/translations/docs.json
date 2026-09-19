@@ -1,7 +1,6 @@
 {
   "list": {
     "title": "Dokumenty",
-    "subtitle": "Ustalenia i notatki administracji dla członków klanu.",
     "searchLabel": "Szukaj dokumentu",
     "searchPlaceholder": "Szukaj dokumentu...",
     "limit": "{{used}} / {{max}} dokumentów",

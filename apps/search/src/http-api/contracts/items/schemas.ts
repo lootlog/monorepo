@@ -1,6 +1,6 @@
 /** Transport schemas owned by the items HTTP module. */
 import * as Schema from "effect/Schema";
-import { FiniteNumber } from "../scalars.js";
+import { FiniteNumber } from "@lootlog/schema/http-scalars";
 
 export type SearchItemsResponseDto_Output =
   typeof SearchItemsResponseDto_Output.Type;

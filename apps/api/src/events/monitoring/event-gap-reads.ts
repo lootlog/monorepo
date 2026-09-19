@@ -20,7 +20,7 @@ import {
   NullableCoverageGapResponse,
 } from "#src/events/monitoring/event-monitoring-response.schema";
 
-export class EventGapReadError extends TaggedErrorClass<EventGapReadError>()(
+class EventGapReadError extends TaggedErrorClass<EventGapReadError>()(
   "EventGapReadError",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}

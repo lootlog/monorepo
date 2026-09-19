@@ -1,0 +1,25 @@
+import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { SectionCard } from "@/components/common/section-card/section-card";
+
+import { Skeleton } from "@lootlog/ui/components/skeleton";
+
+export const NotificationHistoryRowsSkeleton = () => (
+  <div className="space-y-3">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <SectionCard key={i}>
+        <SectionCardContent className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 shrink-0 rounded-lg" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-40" />
+              <div className="flex gap-2">
+                <Skeleton className="h-4 w-16 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+          </div>
+        </SectionCardContent>
+      </SectionCard>
+    ))}
+  </div>
+);

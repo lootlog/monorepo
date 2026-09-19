@@ -1,4 +1,5 @@
 import { isNotNil } from "es-toolkit";
+import { getCharacterIdentityKey } from "@/lib/character-identity-key";
 import { create } from "zustand";
 import type {
   PlayerPresence,
@@ -47,13 +48,6 @@ type OnlineCharacterOwnersState = {
     guildMembersByUserId?: GuildMembersByUserId,
   ) => void;
 };
-
-export function getOnlineCharacterOwnerKey(
-  accountId: string,
-  characterId: string,
-): string {
-  return `${accountId}:${characterId}`;
-}
 
 function toOwner(
   presence: PlayerPresence,
@@ -108,7 +102,7 @@ export const useOnlineCharacterOwnersStore =
       }),
     getOwner: (accountId, characterId) =>
       get().ownersByCharacterKey[
-        getOnlineCharacterOwnerKey(accountId, characterId)
+        getCharacterIdentityKey(accountId, characterId)
       ],
     removePresence: (presence) =>
       set((state) => {
@@ -131,7 +125,7 @@ export const useOnlineCharacterOwnersStore =
           return { ownersByCharacterKey };
         }
 
-        const key = getOnlineCharacterOwnerKey(
+        const key = getCharacterIdentityKey(
           player.accountId,
           player.characterId,
         );
@@ -160,7 +154,7 @@ export const useOnlineCharacterOwnersStore =
             .map((presence) => toOwner(presence, guildMembersByUserId))
             .filter(isNotNil)
             .map((owner) => [
-              getOnlineCharacterOwnerKey(owner.accountId, owner.characterId),
+              getCharacterIdentityKey(owner.accountId, owner.characterId),
               owner,
             ]),
         ),
@@ -176,7 +170,7 @@ export const useOnlineCharacterOwnersStore =
         return {
           ownersByCharacterKey: {
             ...state.ownersByCharacterKey,
-            [getOnlineCharacterOwnerKey(owner.accountId, owner.characterId)]:
+            [getCharacterIdentityKey(owner.accountId, owner.characterId)]:
               owner,
           },
         };

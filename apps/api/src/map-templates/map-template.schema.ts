@@ -6,7 +6,7 @@ const SafeInteger = Schema.Int.check(
   Schema.isLessThanOrEqualTo(Number.MAX_SAFE_INTEGER),
 );
 
-export const MapTemplateMapSchema = Schema.Struct({
+const MapTemplateMapSchema = Schema.Struct({
   id: SafeInteger,
   name: Schema.String,
 });
