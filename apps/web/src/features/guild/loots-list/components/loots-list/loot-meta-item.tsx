@@ -16,7 +16,7 @@ export const LootMetaItem = ({
 }) => (
   <span
     className={cn(
-      "flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground",
+      "flex items-center gap-1 whitespace-nowrap text-xs tabular-nums text-muted-foreground",
       className,
     )}
     title={title}

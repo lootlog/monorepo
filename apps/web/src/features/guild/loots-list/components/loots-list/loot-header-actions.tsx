@@ -12,7 +12,7 @@ export const LootHeaderActions = ({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex shrink-0 items-center gap-1.5">
       <Button
         type="button"
         onClick={(e) => {
@@ -21,9 +21,11 @@ export const LootHeaderActions = ({
         }}
         variant="secondary"
         size="sm"
+        aria-label={t("loots.list.commentsCount", { count: commentsCount })}
+        title={t("loots.list.commentsCount", { count: commentsCount })}
       >
         <MessageSquare />
-        <span className="font-medium">{commentsCount}</span>
+        <span className="font-medium tabular-nums">{commentsCount}</span>
       </Button>
       <Button
         type="button"
@@ -33,9 +35,14 @@ export const LootHeaderActions = ({
         }}
         variant="secondary"
         size="sm"
+        aria-label={t("loots.list.details")}
+        title={t("loots.list.details")}
+        className="max-sm:size-9 max-sm:px-0"
       >
         <ExternalLink />
-        <span className="font-medium">{t("loots.list.details")}</span>
+        <span className="font-medium max-sm:sr-only">
+          {t("loots.list.details")}
+        </span>
       </Button>
     </div>
   );

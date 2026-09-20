@@ -38,6 +38,20 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
   return { ...npc, prof, margonemType, type };
 };
 
+type IndexNpc = IndexNpcsCommand["npcs"][number];
+
+/** The stored shape of one NPC; the seed script and the consumer share it. */
+export const toNpcDocument = (npc: IndexNpc) => {
+  const prof = npc.prof ?? "";
+
+  return {
+    ...npc,
+    prof,
+    type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
+    uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
+  };
+};
+
 export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
   const getNpcs = Effect.fn("SearchNpcs.get")(function* ({
     ids,
@@ -108,16 +122,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       );
     }
 
-    const npcsWithUid = validNpcs.map((npc) => {
-      const prof = npc.prof ?? "";
-
-      return {
-        ...npc,
-        prof,
-        type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
-        uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
-      };
-    });
+    const npcsWithUid = validNpcs.map(toNpcDocument);
 
     yield* indexChangedDocuments(
       meilisearch.index<(typeof npcsWithUid)[number]>(NPCS_INDEX),

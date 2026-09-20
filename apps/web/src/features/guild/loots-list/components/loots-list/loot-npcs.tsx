@@ -90,7 +90,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
         />
       )}
       {firstNpc && (
-        <span className="truncate text-sm font-bold text-foreground">
+        <span className="truncate text-sm font-semibold text-foreground">
           {firstNpc.name}{" "}
           {firstNpc.lvl !== 0
             ? `(${firstNpc.lvl}${firstNpc.prof?.charAt(0).toLowerCase() ?? ""})`
@@ -100,7 +100,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
       {specialNpcType && (
         <span
           className={cn(
-            "inline-flex w-fit shrink-0 items-center rounded-md border px-2 py-0.5 text-xs font-semibold",
+            "inline-flex h-5 w-fit shrink-0 items-center rounded-md border px-2 text-[11px] font-semibold leading-none",
             getNpcBadgeStyle(specialNpcType),
           )}
         >

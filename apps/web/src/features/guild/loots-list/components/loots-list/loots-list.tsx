@@ -1,6 +1,13 @@
 import { WorldSelectionEmptyState } from "@/components/common/world-selection-empty-state";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
-import { LootsListItemSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-item-skeleton";
+import { LootsListSkeleton } from "@/features/guild/loots-list/components/loots-list/loots-list-skeleton";
+import { LootListSentinelRow } from "@/features/guild/loots-list/components/loots-list/loot-list-sentinel-row";
+import {
+  LOOTS_GRID_CLASS,
+  LOOTS_LIST_INSET_CLASS,
+  LOOTS_LIST_ROW_GAP_CLASS,
+} from "@/features/guild/loots-list/loots-list-layout";
+import { cn } from "cn";
 import { SharedTooltipProvider } from "@lootlog/ui/components/shared-tooltip-provider";
 
 import { ThemeEmptyStateIcon } from "@/themes";
@@ -14,15 +21,30 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Spinner } from "@lootlog/ui/components/spinner";
-import { PackageOpen, SearchX } from "lucide-react";
+import { CircleAlert, PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
+
+// The empty states share the world-selection card: a fixed-size card near
+// the top instead of a panel stretched over the whole list.
+const EMPTY_STATE_WRAPPER_CLASS =
+  "flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8";
+
+const EMPTY_STATE_CLASS = "w-full max-w-sm flex-none bg-card";
+
+// Dimming the current page signals a reload without moving anything.
+const REFRESHABLE_LIST_CLASS =
+  "relative w-full transition-opacity duration-200 motion-reduce:transition-none";
 
 export const LootsList = () => {
   const {
     scrollElementRef,
-    isLoading,
+    isEmpty,
+    isError,
+    isFailed,
+    isPending,
+    isRefreshing,
+    retry,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
@@ -36,7 +58,6 @@ export const LootsList = () => {
     totalCount,
     allLoots,
     world,
-    hasLoots,
     hasActiveFilters,
     clearFilters,
   } = useLiveLootList();
@@ -50,10 +71,33 @@ export const LootsList = () => {
     );
   }
 
-  if (!isLoading && !hasLoots) {
+  if (isFailed) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 pb-3">
-        <Empty className="min-h-56 w-full max-w-xl">
+      <div className={EMPTY_STATE_WRAPPER_CLASS}>
+        <Empty className={EMPTY_STATE_CLASS}>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>{t("loots.list.loadError")}</EmptyTitle>
+            <EmptyDescription>
+              {t("loots.list.loadErrorDescription")}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button type="button" variant="outline" size="sm" onClick={retry}>
+              {t("common.actions.retry")}
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <div className={EMPTY_STATE_WRAPPER_CLASS}>
+        <Empty className={EMPTY_STATE_CLASS}>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               {hasActiveFilters ? (
@@ -100,26 +144,13 @@ export const LootsList = () => {
         ref={scrollElementRef}
         onScroll={resumeReconciliation}
       >
-        {isLoading ? (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 xl:grid-cols-2 gap-4 p-3 pt-0"
-                : "flex flex-col gap-4 p-3 pt-0"
-            }
-          >
-            {Array.from({ length: 8 }).map((_, index) => (
-              <LootsListItemSkeleton key={index} index={index} />
-            ))}
-          </div>
+        {isPending ? (
+          <LootsListSkeleton viewMode={viewMode} />
         ) : viewMode === "grid" ? (
           <div
-            className="p-3 pt-0"
-            style={{
-              height: `${gridVirtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
+            aria-busy={isRefreshing}
+            className={cn(REFRESHABLE_LIST_CLASS, isRefreshing && "opacity-60")}
+            style={{ height: `${gridVirtualizer.getTotalSize()}px` }}
           >
             {gridVirtualItems.map((virtualRow) => {
               const isLoaderRow = virtualRow.index >= gridRows.length;
@@ -130,32 +161,25 @@ export const LootsList = () => {
                   key={virtualRow.key}
                   data-index={virtualRow.index}
                   ref={gridVirtualizer.measureElement}
-                  className="pb-3"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 12,
-                    right: 12,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
+                  className={cn(
+                    "absolute top-0",
+                    LOOTS_LIST_INSET_CLASS,
+                    LOOTS_LIST_ROW_GAP_CLASS,
+                  )}
+                  style={{ transform: `translateY(${virtualRow.start}px)` }}
                 >
                   {isLoaderRow ? (
-                    hasNextPage ? (
-                      <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30  h-16">
-                        <Spinner className="h-5 w-5 text-primary" />
-                        <span className="text-sm text-muted-foreground font-medium">
-                          {t(themedKey("loots.list.loadingMore"))}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30  h-16">
-                        <span className="text-xs text-muted-foreground">
-                          {t(themedKey("loots.list.end"))}
-                        </span>
-                      </div>
-                    )
+                    <LootListSentinelRow
+                      hasNextPage={hasNextPage}
+                      hasError={isError}
+                      onRetry={retry}
+                      loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                      endLabel={t(themedKey("loots.list.end"))}
+                      errorLabel={t("loots.list.loadError")}
+                      retryLabel={t("common.actions.retry")}
+                    />
                   ) : rowLoots ? (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-stretch">
+                    <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
                       {rowLoots.map((loot) => (
                         <div key={loot.id} className="h-full">
                           <LootsListItem loot={loot} />
@@ -169,12 +193,9 @@ export const LootsList = () => {
           </div>
         ) : (
           <div
-            className="p-4 pt-6"
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
+            aria-busy={isRefreshing}
+            className={cn(REFRESHABLE_LIST_CLASS, isRefreshing && "opacity-60")}
+            style={{ height: `${virtualizer.getTotalSize()}px` }}
           >
             {virtualItems.map((virtualItem) => {
               const isLoaderRow = virtualItem.index > totalCount - 1;
@@ -185,30 +206,23 @@ export const LootsList = () => {
                   key={virtualItem.key}
                   data-index={virtualItem.index}
                   ref={virtualizer.measureElement}
-                  className="pb-3"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 12,
-                    right: 12,
-                    transform: `translateY(${virtualItem.start}px)`,
-                  }}
+                  className={cn(
+                    "absolute top-0",
+                    LOOTS_LIST_INSET_CLASS,
+                    LOOTS_LIST_ROW_GAP_CLASS,
+                  )}
+                  style={{ transform: `translateY(${virtualItem.start}px)` }}
                 >
                   {isLoaderRow ? (
-                    hasNextPage ? (
-                      <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30  h-16">
-                        <Spinner className="h-5 w-5 text-primary" />
-                        <span className="text-sm text-muted-foreground font-medium">
-                          {t(themedKey("loots.list.loadingMore"))}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30  h-16">
-                        <span className="text-xs text-muted-foreground">
-                          {t(themedKey("loots.list.end"))}
-                        </span>
-                      </div>
-                    )
+                    <LootListSentinelRow
+                      hasNextPage={hasNextPage}
+                      hasError={isError}
+                      onRetry={retry}
+                      loadingLabel={t(themedKey("loots.list.loadingMore"))}
+                      endLabel={t(themedKey("loots.list.end"))}
+                      errorLabel={t("loots.list.loadError")}
+                      retryLabel={t("common.actions.retry")}
+                    />
                   ) : loot ? (
                     <LootsListItem loot={loot} />
                   ) : null}
