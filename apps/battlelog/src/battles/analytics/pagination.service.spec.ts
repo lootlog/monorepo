@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
   makeBattlePagination,
@@ -118,7 +119,7 @@ describe("battle pagination", () => {
   beforeEach(() => {
     const mockDrizzleService = createDatabaseFixture();
 
-    service = makeBattlePagination(mockDrizzleService.db);
+    service = makeBattlePagination(mockDrizzleService.db, (effect) => effect);
     drizzleService = mockDrizzleService;
   });
 
@@ -244,6 +245,29 @@ describe("battle pagination", () => {
         previousCursor: undefined,
       });
       expect(drizzleService.db.query.battles.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it("fails an exhausted filtered count without submitting the same expensive read again", async () => {
+      drizzleService.db.query.battles.findMany.mockReturnValue(
+        Effect.succeed(mockBattles),
+      );
+      const failure = new Error("canceling statement due to statement timeout");
+      drizzleService.db
+        .select()
+        .from()
+        .where.mockReturnValueOnce(Effect.fail(failure))
+        .mockReturnValueOnce(Effect.succeed([{ count: 2 }]));
+
+      await expect(
+        Effect.runPromise(
+          service.paginateBattles((table) => eq(table.userId, "user1"), {
+            size: 2,
+            sortOrder: "desc",
+            includeTotal: true,
+          }),
+        ),
+      ).rejects.toBe(failure);
+      expect(drizzleService.db.select().from().where).toHaveBeenCalledTimes(1);
     });
 
     it("should work without includeTotal", async () => {
