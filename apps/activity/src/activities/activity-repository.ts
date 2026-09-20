@@ -159,12 +159,21 @@ export class ActivityRepository extends Context.Service<
           )
           .digest("hex");
 
-        const id = crypto.randomUUID();
+        const findExisting = () =>
+          db
+            .select({ id: activityActorSnapshots.id })
+            .from(activityActorSnapshots)
+            .where(eq(activityActorSnapshots.fingerprint, fingerprint))
+            .limit(1);
+
+        const existing = (yield* findExisting())[0];
+
+        if (existing) return existing.id;
 
         const rows = yield* db
           .insert(activityActorSnapshots)
           .values({
-            id,
+            id: crypto.randomUUID(),
             accountId: snapshot.accountId,
             characterId: snapshot.characterId,
             name: snapshot.name,
@@ -176,17 +185,18 @@ export class ActivityRepository extends Context.Service<
             source: dto.source,
             fingerprint,
           })
-          .onConflictDoUpdate({
+          .onConflictDoNothing({
             target: activityActorSnapshots.fingerprint,
-            set: { fingerprint },
           })
           .returning({ id: activityActorSnapshots.id });
 
-        const row = rows[0];
+        // A concurrent insert may commit after our first read. A separate query
+        // sees that winner even when it was invisible to the INSERT's snapshot.
+        const row = rows[0] ?? (yield* findExisting())[0];
 
         if (!row)
           return yield* Effect.fail(
-            new Error("Actor snapshot upsert did not return an identifier"),
+            new Error("Actor snapshot resolution did not return an identifier"),
           );
 
         return row.id;
