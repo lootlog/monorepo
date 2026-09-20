@@ -7,11 +7,26 @@ import {
   sendChatMessage,
   updateLoot,
 } from "@/api";
+import type {
+  CreateLootDto,
+  CreateLootDtoLootsItem,
+} from "@lootlog/client/main";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
 import { useSettingsStore } from "@/store/settings.store";
 
 const http = vi.fn<typeof fetch>();
+
+const lootItem = (name: string): CreateLootDtoLootsItem => ({
+  cl: 16,
+  hid: `${name}-hid`,
+  icon: `${name}.gif`,
+  id: 9001,
+  name,
+  pr: 1,
+  prc: "1",
+  stat: "rarity=unique",
+});
 
 describe("api.service logging", () => {
   beforeEach(() => {
@@ -38,12 +53,12 @@ describe("api.service logging", () => {
       source: "fight" as const,
     };
 
-    const payload = {
+    const payload: CreateLootDto = {
       world: "luvia",
       source: "FIGHT",
       location: "Karka-han",
       npcs: [],
-      loots: [{ name: "Miecz" }],
+      loots: [lootItem("Miecz")],
       players: [],
       accountId: "10",
       characterId: "20",
@@ -162,7 +177,7 @@ describe("api.service logging", () => {
           source: "DIALOG",
           location: "Karka-han",
           npcs: [],
-          loots: [{ name: "Tarcza" }],
+          loots: [lootItem("Tarcza")],
           players: [],
           accountId: "10",
           characterId: "20",
@@ -221,12 +236,12 @@ describe("api.service logging", () => {
       source: "fight" as const,
     };
 
-    const payload = {
+    const payload: CreateLootDto = {
       world: "luvia",
       source: "FIGHT",
       location: "Karka-han",
       npcs: [],
-      loots: [{ name: "Miecz" }],
+      loots: [lootItem("Miecz")],
       players: [],
       accountId: "10",
       characterId: "20",

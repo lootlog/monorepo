@@ -4,7 +4,8 @@ import type { PropsWithChildren } from "react";
 import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { usePartyGatheringOrchestration } from "./use-party-gathering-orchestration";
@@ -91,7 +92,6 @@ describe("usePartyGatheringOrchestration", () => {
         name: "Hero",
       },
     });
-    usePartyFinderStore.getState().clearReadyRooms();
     useWindowsStore.getState().setOpen("party-finder", false);
     useWindowsStore.getState().setOpen("create-party-gathering", true);
     createRoom.mockImplementation(() =>
@@ -137,7 +137,7 @@ describe("usePartyGatheringOrchestration", () => {
       }),
     );
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
-    expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
+    expect(readSeededReadyRoomCache(queryClient).projections["room-1"]).toEqual(
       projection,
     );
     expect(sendChat).not.toHaveBeenCalled();
@@ -158,12 +158,12 @@ describe("usePartyGatheringOrchestration", () => {
     expect(useWindowsStore.getState()["create-party-gathering"].open).toBe(
       false,
     );
-    expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
+    expect(readSeededReadyRoomCache(queryClient).projections["room-1"]).toEqual(
       projection,
     );
   });
   it("opens a known active gathering without creating another one", async () => {
-    usePartyFinderStore.getState().mergeProjection(projection);
+    mergeReadyRoomProjectionIntoCache(projection, queryClient);
 
     const { result } = renderHook(() => usePartyGatheringOrchestration(), {
       wrapper: Wrapper,
@@ -210,7 +210,7 @@ describe("usePartyGatheringOrchestration", () => {
     expect(getRoom.mock.calls[0]?.[0].url).toBe(
       "https://api.test/messaging/party-gathering/room-1",
     );
-    expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
+    expect(readSeededReadyRoomCache(queryClient).projections["room-1"]).toEqual(
       projection,
     );
     expect(useWindowsStore.getState()["party-finder"].open).toBe(true);
@@ -230,7 +230,7 @@ describe("usePartyGatheringOrchestration", () => {
       }),
     );
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
-    expect(usePartyFinderStore.getState().projections["room-1"]).toEqual(
+    expect(readSeededReadyRoomCache(queryClient).projections["room-1"]).toEqual(
       projection,
     );
     expect(sendChat).not.toHaveBeenCalled();
@@ -256,6 +256,6 @@ describe("usePartyGatheringOrchestration", () => {
       type: "NPC",
       npc: { name: "Hydra", world: "tempest" },
     });
-    expect(usePartyFinderStore.getState().projections).toEqual({});
+    expect(readSeededReadyRoomCache(queryClient).projections).toEqual({});
   });
 });

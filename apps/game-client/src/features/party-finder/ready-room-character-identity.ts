@@ -1,5 +1,5 @@
 import { useGameStore } from "@/store/game.store";
-import type { ReadyRoomCharacterIdentity } from "@/store/party-finder.store";
+import type { ReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-cache";
 
 export function getCurrentReadyRoomCharacterIdentity(): ReadyRoomCharacterIdentity | null {
   const hero = useGameStore.getState().game?.hero;

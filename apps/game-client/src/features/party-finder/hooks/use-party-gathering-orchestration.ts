@@ -3,17 +3,18 @@ import { ActivePartyGatheringError } from "@/features/party-finder/active-party-
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import {
   useMessagingControllerSendNotification,
-  partyReadyRoomControllerGet,
   usePartyReadyRoomControllerCreate,
 } from "@lootlog/client/main";
 
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { getApiErrorStringField, isApiError } from "@lootlog/client/transport";
+import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
+import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
 import {
-  selectOwnedReadyRoom,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+  useReadyRoomsCache,
+  useRefreshReadyRoom,
+} from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   buildNpcChatMessagePayload,
@@ -21,6 +22,7 @@ import {
 } from "@/utils/notifications-and-detector/npc-notification";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 type StartPartyGatheringOptions = {
   guildIds: string[];
@@ -77,7 +79,9 @@ export const usePartyGatheringOrchestration = () => {
     useMessagingControllerSendNotification();
 
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
-  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
+  const queryClient = useQueryClient();
+  const { mergeProjection } = useReadyRoomsCache();
+  const refreshReadyRoom = useRefreshReadyRoom();
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const openPartyFinder = (closeCreateWindow = false) => {
@@ -96,11 +100,7 @@ export const usePartyGatheringOrchestration = () => {
     const notificationId = getActivePartyGatheringNotificationId(cause);
 
     if (!notificationId) return;
-    mergeProjection(
-      decodePartyReadyRoomProjection(
-        await partyReadyRoomControllerGet({ notificationId }),
-      ),
-    );
+    await refreshReadyRoom(notificationId);
 
     if (shouldOpen) openPartyFinder(closeCreateWindow);
 
@@ -136,7 +136,9 @@ export const usePartyGatheringOrchestration = () => {
 
     if (!character) return Promise.resolve(undefined);
 
-    const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
+    const ownedReadyRoom = selectOwnedReadyRoom(
+      readReadyRoomCache(queryClient),
+    );
 
     if (ownedReadyRoom) {
       if (shouldOpen) openPartyFinder(closeCreateWindow);
@@ -192,7 +194,9 @@ export const usePartyGatheringOrchestration = () => {
   }: StartNpcPartyGatheringOptions): Promise<
     ReturnType<typeof finalizePartyGathering> | undefined
   > => {
-    const ownedReadyRoom = selectOwnedReadyRoom(usePartyFinderStore.getState());
+    const ownedReadyRoom = selectOwnedReadyRoom(
+      readReadyRoomCache(queryClient),
+    );
 
     if (ownedReadyRoom) {
       if (shouldOpen) openPartyFinder();
@@ -227,13 +231,7 @@ export const usePartyGatheringOrchestration = () => {
 
       const resolvedGuildIds = response.guildIds ?? guildIds;
 
-      const projection = decodePartyReadyRoomProjection(
-        await partyReadyRoomControllerGet({
-          notificationId: response.notificationId,
-        }),
-      );
-
-      mergeProjection(projection);
+      await refreshReadyRoom(response.notificationId);
 
       return finalizePartyGathering({
         notificationId: response.notificationId,

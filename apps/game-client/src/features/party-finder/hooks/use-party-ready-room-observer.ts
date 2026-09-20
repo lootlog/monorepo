@@ -1,26 +1,46 @@
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { partyReadyRoomControllerObserveParty } from "@lootlog/client/main";
-import {
-  selectOwnedReadyRoom,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
 import { usePartyStore } from "@/store/party.store";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { useGlobalStore } from "@/store/global.store";
+import {
+  useOwnedReadyRoom,
+  useReadyRoomsSynchronized,
+} from "@/features/party-finder/hooks/use-ready-rooms";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+
+type ObservePartyVariables = {
+  notificationId: string;
+  memberCharacterIds: string[];
+  organizerAccountId: string;
+  organizerCharacterId: string;
+};
 
 export function usePartyReadyRoomObserver(): void {
-  const ownedReadyRoom = usePartyFinderStore(selectOwnedReadyRoom);
-  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
-
-  const readyRoomsSynchronized = usePartyFinderStore(
-    (state) => state.readyRoomsSynchronized,
-  );
-
+  const ownedReadyRoom = useOwnedReadyRoom();
+  const readyRoomsSynchronized = useReadyRoomsSynchronized();
+  const { mergeProjection } = useReadyRoomsCache();
   const { connected, joined } = useGlobalStore((state) => state.socketState);
   const partyMembers = usePartyStore((state) => state.members);
   const partyStatus = usePartyStore((state) => state.status);
   const lastReportedSnapshot = useRef<string | null>(null);
+
+  const { mutate: observeParty } = useMutation({
+    mutationFn: ({ notificationId, ...body }: ObservePartyVariables) =>
+      partyReadyRoomControllerObserveParty({ notificationId }, body),
+    onSuccess: (projection) => {
+      mergeProjection(decodePartyReadyRoomProjection(projection));
+    },
+    onError: (cause) => {
+      console.warn("Failed to report the observed party snapshot", cause);
+    },
+  });
+
+  const reportSnapshot = useEffectEvent((variables: ObservePartyVariables) => {
+    observeParty(variables);
+  });
 
   useEffect(() => {
     const currentCharacter = getCurrentReadyRoomCharacterIdentity();
@@ -54,25 +74,16 @@ export function usePartyReadyRoomObserver(): void {
     if (lastReportedSnapshot.current === snapshot) return;
     lastReportedSnapshot.current = snapshot;
 
-    void partyReadyRoomControllerObserveParty(
-      { notificationId: ownedReadyRoom.notificationId },
-      {
-        memberCharacterIds,
-        organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
-        organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
-      },
-    )
-      .then((projection) => {
-        mergeProjection(decodePartyReadyRoomProjection(projection));
-      })
-      .catch((cause: unknown) => {
-        console.warn("Failed to report the observed party snapshot", cause);
-      });
+    reportSnapshot({
+      notificationId: ownedReadyRoom.notificationId,
+      memberCharacterIds,
+      organizerAccountId: ownedReadyRoom.organizerCharacter.accountId,
+      organizerCharacterId: ownedReadyRoom.organizerCharacter.characterId,
+    });
   }, [
     ownedReadyRoom,
     partyMembers,
     partyStatus,
-    mergeProjection,
     connected,
     joined,
     readyRoomsSynchronized,

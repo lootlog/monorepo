@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import {
+  readSeededReadyRoomCache,
+  seedReadyRoomCache,
+} from "@/test/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
 import { PartyFinder } from "./party-finder";
@@ -12,7 +15,6 @@ let restore = () => {};
 
 afterEach(() => {
   restore();
-  usePartyFinderStore.getState().clearReadyRooms();
   useWindowsStore.getState().setOpen("party-finder", false);
 });
 
@@ -20,9 +22,9 @@ it("does not expose management to a participant with a previously open window", 
   setTestRuntimeGame({
     hero: { accountId: "account-1", characterId: "101" },
   });
-  usePartyFinderStore.getState().mergeProjection(createChatReadyRoom());
   useWindowsStore.getState().setOpen("party-finder", true);
   const client = new QueryClient();
+  seedReadyRoomCache(client, [createChatReadyRoom()]);
   render(
     <QueryClientProvider client={client}>
       <PartyFinder />
@@ -57,33 +59,36 @@ it("shows and cancels an owned gathering after switching character and world wit
     world: "Other",
   });
   useWindowsStore.getState().setOpen("party-finder", true);
-  usePartyFinderStore.getState().mergeProjection({
-    schemaVersion: 3,
-    notificationId: "room",
-    organizerDiscordId: "owner",
-    organizerCharacter: {
-      accountId: "account",
-      characterId: "first",
-      nick: "First",
-      lvl: 100,
-      prof: "w",
-      icon: "hero.gif",
-    },
-    guildIds: ["org"],
-    world: "Original",
-    status: "ACTIVE",
-    revision: 1,
-    createdAt: "2026-09-09T00:00:00Z",
-    updatedAt: "2026-09-09T00:00:00Z",
-    expiresAt: "2999-09-09T00:30:00Z",
-    viewer: "ORGANIZER",
-    participants: {},
-    ownedParticipantIds: [],
-  });
 
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
   });
+
+  seedReadyRoomCache(client, [
+    {
+      schemaVersion: 3,
+      notificationId: "room",
+      organizerDiscordId: "owner",
+      organizerCharacter: {
+        accountId: "account",
+        characterId: "first",
+        nick: "First",
+        lvl: 100,
+        prof: "w",
+        icon: "hero.gif",
+      },
+      guildIds: ["org"],
+      world: "Original",
+      status: "ACTIVE",
+      revision: 1,
+      createdAt: "2026-09-09T00:00:00Z",
+      updatedAt: "2026-09-09T00:00:00Z",
+      expiresAt: "2999-09-09T00:30:00Z",
+      viewer: "ORGANIZER",
+      participants: {},
+      ownedParticipantIds: [],
+    },
+  ]);
 
   render(
     <QueryClientProvider client={client}>
@@ -106,7 +111,7 @@ it("shows and cancels an owned gathering after switching character and world wit
   );
   expect(await request.json()).toEqual({ expectedRevision: 1 });
   await waitFor(() =>
-    expect(usePartyFinderStore.getState().projections).toEqual({}),
+    expect(readSeededReadyRoomCache(client).projections).toEqual({}),
   );
   client.clear();
 });

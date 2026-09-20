@@ -14,7 +14,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useOnlineCharacterOwnersStore } from "@/store/online-character-owners.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { clearReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
 import { settingsPatchQueue } from "@/features/settings/persistence/settings-patch-client";
 
@@ -30,7 +30,7 @@ export function resetTransientRuntimeState(): void {
   useNpcsStore.getState().clearNpcs();
   useOnlineCharacterOwnersStore.getState().clearOwners();
   useOthersStore.getState().clearOthers();
-  usePartyFinderStore.getState().clearReadyRooms();
+  clearReadyRoomCache();
   usePartyStore.getState().clearParty();
 
   const battleStore = useBattleStore.getState();

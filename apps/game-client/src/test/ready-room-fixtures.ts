@@ -1,7 +1,15 @@
 import type {
   PartyReadyRoomOrganizerProjection,
   PartyReadyRoomParticipant,
+  PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
+import type { QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/features/public-api/query-keys";
+import {
+  EMPTY_READY_ROOM_CACHE,
+  mergeReadyRoomProjections,
+  type ReadyRoomCache,
+} from "@/features/party-finder/ready-room-cache";
 
 export function createReadyRoomParticipant(
   participantId: string,
@@ -52,3 +60,24 @@ export const readyRoomOrganizerFixture = {
   participants: { "participant-1": participant },
   ownedParticipantIds: [],
 } satisfies PartyReadyRoomOrganizerProjection;
+
+/**
+ * Seeds the Ready Room query entry the way a completed synchronization would,
+ * so a test can start from a known collection without stubbing the list call.
+ */
+export function seedReadyRoomCache(
+  client: QueryClient,
+  projections: PartyReadyRoomProjection[],
+): void {
+  client.setQueryData<ReadyRoomCache>(queryKeys.readyRooms(), {
+    ...mergeReadyRoomProjections(EMPTY_READY_ROOM_CACHE, projections),
+    listAppliedAt: Date.now(),
+  });
+}
+
+export function readSeededReadyRoomCache(client: QueryClient): ReadyRoomCache {
+  return (
+    client.getQueryData<ReadyRoomCache>(queryKeys.readyRooms()) ??
+    EMPTY_READY_ROOM_CACHE
+  );
+}

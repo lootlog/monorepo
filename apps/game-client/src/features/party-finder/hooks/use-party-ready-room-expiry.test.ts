@@ -1,9 +1,14 @@
 import { configureApiClients } from "@lootlog/client/transport";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
 import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
+import {
+  readSeededReadyRoomCache,
+  seedReadyRoomCache,
+} from "@/test/ready-room-fixtures";
 
 const projection: PartyReadyRoomProjection = {
   schemaVersion: 3,
@@ -30,13 +35,18 @@ const projection: PartyReadyRoomProjection = {
 
 let restoreClient = () => {};
 
+let queryClient: QueryClient;
+
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(QueryClientProvider, { client: queryClient }, children);
+
 describe("usePartyReadyRoomExpiry", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-07-13T10:00:00.000Z"));
     vi.clearAllMocks();
-    usePartyFinderStore.getState().clearReadyRooms();
-    usePartyFinderStore.getState().mergeProjection(projection);
+    queryClient = new QueryClient();
+    seedReadyRoomCache(queryClient, [projection]);
     restoreClient = configureApiClients({
       main: { baseUrl: "https://api.test" },
     });
@@ -52,7 +62,7 @@ describe("usePartyReadyRoomExpiry", () => {
   });
 
   it("removes a locally expired projection after the API confirms 404", async () => {
-    renderHook(() => usePartyReadyRoomExpiry());
+    renderHook(() => usePartyReadyRoomExpiry(), { wrapper });
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
@@ -60,7 +70,7 @@ describe("usePartyReadyRoomExpiry", () => {
     });
 
     expect(
-      usePartyFinderStore.getState().projections["room-1"],
+      readSeededReadyRoomCache(queryClient).projections["room-1"],
     ).toBeUndefined();
   });
 });
