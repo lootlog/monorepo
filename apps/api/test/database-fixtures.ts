@@ -1,4 +1,5 @@
 import { PgliteClient } from "@effect/sql-pglite";
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { Effect, ManagedRuntime } from "effect";
@@ -6,7 +7,12 @@ import { fileURLToPath } from "node:url";
 import { ApiDatabase } from "../src/database/drizzle/database.js";
 
 export const createDatabaseBoundary = async () => {
-  const runtime = ManagedRuntime.make(PgliteClient.layer({}));
+  // Loot search migrations install pg_trgm; PGlite only offers an extension
+  // the client was created with.
+  const runtime = ManagedRuntime.make(
+    PgliteClient.layer({ extensions: { pg_trgm } }),
+  );
+
   const database = await runtime.runPromise(makeWithDefaults());
 
   try {

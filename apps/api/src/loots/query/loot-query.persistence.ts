@@ -5,7 +5,7 @@ import {
   mapNpc,
 } from "#src/loots/query/loot-snapshot-mappers";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -24,9 +24,12 @@ import {
 } from "#src/database/drizzle/schema";
 import {
   buildLootQueryConditions,
+  LOOT_SEARCH_SNAPSHOT_LIMIT,
+  lootSearchMatchesNothing,
   type LootQueryFilters,
   type LootQueryVisibilityRole,
   type ResolvedLootQueryFilters,
+  type ResolvedLootSearch,
 } from "#src/loots/query/loot-query-filter";
 
 class LootQueryPersistenceError extends TaggedErrorClass<LootQueryPersistenceError>()(
@@ -58,26 +61,118 @@ export const makeLootQueryPersistence = (
             .where(inArray(itemSnapshotTable.name, [...names])),
         );
 
+  const findNpcNameSnapshotIds = (names: ReadonlyArray<string>) =>
+    protect(
+      "loots.query.npc-snapshots",
+      database
+        .select({ id: npcSnapshotTable.id })
+        .from(npcSnapshotTable)
+        .where(inArray(npcSnapshotTable.name, [...names]))
+        .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
+    );
+
+  const searchSnapshotSources = {
+    item: itemSnapshotTable,
+    npc: npcSnapshotTable,
+    player: playerSnapshotTable,
+  } as const;
+
+  // One more row than the limit distinguishes an enumerable term from one that
+  // matches too many snapshots to send as an array.
+  const findSearchSnapshotIds = (
+    relation: keyof typeof searchSnapshotSources,
+    pattern: string,
+  ) => {
+    const source = searchSnapshotSources[relation];
+
+    return protect(
+      `loots.query.search-${relation}-snapshots`,
+      database
+        .select({ id: source.id })
+        .from(source)
+        .where(ilike(source.name, pattern))
+        .limit(LOOT_SEARCH_SNAPSHOT_LIMIT + 1)
+        .pipe(
+          Effect.map((rows) =>
+            rows.length > LOOT_SEARCH_SNAPSHOT_LIMIT
+              ? null
+              : rows.map(({ id }) => id),
+          ),
+        ),
+    );
+  };
+
+  // Whether any loot anywhere carries a matching location. The trigram index
+  // answers this without reading the Organization's loots, and a term that
+  // matches no location drops that arm from the page query.
+  const findSearchMatchesLocation = (pattern: string) =>
+    protect(
+      "loots.query.search-locations",
+      database
+        .select({ id: lootTable.id })
+        .from(lootTable)
+        .where(ilike(lootTable.location, pattern))
+        .limit(1)
+        .pipe(Effect.map((rows) => rows.length > 0)),
+    );
+
+  // Resolving the term first turns every arm into an indexed membership test.
+  // The correlated form it replaces read a snapshot row and ran ILIKE for each
+  // loot the descending scan examined, so a term matching nothing paid for the
+  // whole Organization before returning no rows.
+  const resolveSearch = Effect.fn("loots.query.resolve-search")(function* (
+    search: string | undefined,
+  ) {
+    const value = search?.trim();
+
+    if (!value) return undefined;
+    const pattern = `%${value}%`;
+
+    const [
+      matchesLocation,
+      itemSnapshotIds,
+      npcSnapshotIds,
+      playerSnapshotIds,
+    ] = yield* Effect.all(
+      [
+        findSearchMatchesLocation(pattern),
+        findSearchSnapshotIds("item", pattern),
+        findSearchSnapshotIds("npc", pattern),
+        findSearchSnapshotIds("player", pattern),
+      ] as const,
+      { concurrency: "unbounded" },
+    );
+
+    return {
+      pattern: value,
+      matchesLocation,
+      itemSnapshotIds,
+      npcSnapshotIds,
+      playerSnapshotIds,
+    } satisfies ResolvedLootSearch;
+  });
+
   // Resolve names once so the page query can use LootNpc statistics and avoid
   // repeated NpcSnapshot probes. Keep type/level predicates independent: they
   // may match a different NPC in the same encounter.
   const resolveQueryFilters = Effect.fn("loots.query.resolve-filters")(
     function* (filters: LootQueryFilters) {
-      const { npcs, ...rest } = filters;
+      const { npcs, search, ...rest } = filters;
 
-      if (!npcs?.length) return rest;
-
-      const snapshots = yield* protect(
-        "loots.query.npc-snapshots",
-        database
-          .select({ id: npcSnapshotTable.id })
-          .from(npcSnapshotTable)
-          .where(inArray(npcSnapshotTable.name, [...npcs])),
+      const [npcNameSnapshotIds, resolvedSearch] = yield* Effect.all(
+        [
+          npcs?.length
+            ? findNpcNameSnapshotIds(npcs)
+            : Effect.succeed(undefined),
+          resolveSearch(search),
+        ] as const,
+        { concurrency: "unbounded" },
       );
 
       return {
         ...rest,
-        npcNameSnapshotIds: snapshots.map(({ id }) => id),
+        npcNameSnapshotIds,
+        search: resolvedSearch,
       } satisfies ResolvedLootQueryFilters;
     },
   );
@@ -91,32 +186,34 @@ export const makeLootQueryPersistence = (
   }) =>
     resolveQueryFilters(options.filters).pipe(
       Effect.flatMap((filters) =>
-        protect(
-          "loots.query.ids",
-          database
-            .select({ id: lootTable.id })
-            .from(lootTable)
-            .innerJoin(
-              organizationLootRecordTable,
-              and(
-                eq(organizationLootRecordTable.lootId, lootTable.id),
-                eq(organizationLootRecordTable.guildId, options.guildId),
-                isNull(organizationLootRecordTable.archivedAt),
-              ),
-            )
-            .where(
-              and(
-                ...buildLootQueryConditions(
-                  filters,
-                  options.permissions,
-                  options.roles,
-                ),
-              ),
-            )
-            .orderBy(desc(lootTable.id))
-            .limit(options.limit)
-            .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
-        ),
+        filters.search && lootSearchMatchesNothing(filters.search)
+          ? Effect.succeed<Array<number>>([])
+          : protect(
+              "loots.query.ids",
+              database
+                .select({ id: lootTable.id })
+                .from(lootTable)
+                .innerJoin(
+                  organizationLootRecordTable,
+                  and(
+                    eq(organizationLootRecordTable.lootId, lootTable.id),
+                    eq(organizationLootRecordTable.guildId, options.guildId),
+                    isNull(organizationLootRecordTable.archivedAt),
+                  ),
+                )
+                .where(
+                  and(
+                    ...buildLootQueryConditions(
+                      filters,
+                      options.permissions,
+                      options.roles,
+                    ),
+                  ),
+                )
+                .orderBy(desc(lootTable.id))
+                .limit(options.limit)
+                .pipe(Effect.map((rows) => rows.map(({ id }) => id))),
+            ),
       ),
     );
 
