@@ -17,6 +17,7 @@ import {
 import {
   PRESENCE_EXPIRY_MS,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
+  type ClientCommand,
   type RealtimeFrame,
 } from "../src/realtime/protocol.ts";
 
@@ -138,16 +139,26 @@ describe("realtime MessagePack codec", () => {
       expect(result.failure.operation).toBe("encode");
   });
 
-  test("round-trips a client command", () => {
-    const frame = {
-      v: 1,
-      type: "presence.fetch",
-      requestId: "request-1",
-      data: { organizationId: "organization-1", world: "Aldous" },
-    } satisfies RealtimeFrame;
+  test.each([undefined, "response"] as const)(
+    "round-trips presence fetch delivery %s",
+    (delivery) => {
+      let data: Extract<ClientCommand, { type: "presence.fetch" }>["data"] = {
+        organizationId: "organization-1",
+        world: "Aldous",
+      };
 
-    expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
-  });
+      if (delivery) data = { ...data, delivery };
+
+      const frame = {
+        v: 1,
+        type: "presence.fetch",
+        requestId: "request-1",
+        data,
+      } satisfies RealtimeFrame;
+
+      expect(decodeRealtimeFrame(encodeRealtimeFrame(frame))).toEqual(frame);
+    },
+  );
 
   test.each([undefined, "discord-1"])(
     "round-trips presence deltas with optional Discord identity %s",

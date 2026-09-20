@@ -69,6 +69,7 @@ const cleanups: Array<() => void> = [];
 afterEach(() => {
   for (const cleanup of cleanups.splice(0)) cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 function setup() {
@@ -99,6 +100,46 @@ function setup() {
 }
 
 describe("background connection", () => {
+  it("forwards measured automatic heartbeats and clears latency after a failed heartbeat", async () => {
+    vi.useFakeTimers();
+    let now = 1_000;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const bridge = setup();
+    await bridge.receive({ type: "connect", id: "connect" });
+    bridge.socket.open();
+
+    const publication = bridge.receive({
+      type: "command",
+      id: "publish",
+      command: {
+        v: 1,
+        type: "presence.publish",
+        data: { organizationIds: ["organization"] },
+      },
+    });
+
+    bridge.socket.respond({ sessionId: "session" });
+    await publication;
+    await vi.advanceTimersByTimeAsync(25_000);
+    now += 37;
+    bridge.socket.respond({});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(bridge.messages).toContainEqual({
+      type: "heartbeat-latency",
+      latencyMs: 37,
+    });
+    expect(bridge.socket.sent.map(decodeRealtimeFrame)).toEqual([
+      expect.objectContaining({ type: "presence.publish" }),
+      expect.objectContaining({ type: "presence.heartbeat" }),
+    ]);
+    await vi.advanceTimersByTimeAsync(45_000);
+    expect(
+      bridge.messages
+        .filter((message) => message.type === "heartbeat-latency")
+        .at(-1),
+    ).toEqual({ type: "heartbeat-latency", latencyMs: null });
+  });
+
   it("handles validated join and presence commands with a cookie-authenticated handshake", async () => {
     const bridge = setup();
     await bridge.receive({ type: "connect", id: "connect" });
@@ -127,7 +168,11 @@ describe("background connection", () => {
       command: {
         v: 1,
         type: "presence.fetch",
-        data: { organizationId: "organization", world: "jaruna" },
+        data: {
+          organizationId: "organization",
+          world: "jaruna",
+          delivery: "response",
+        },
       },
     });
 
@@ -155,7 +200,11 @@ describe("background connection", () => {
       }),
       expect.objectContaining({
         type: "presence.fetch",
-        data: { organizationId: "organization", world: "jaruna" },
+        data: {
+          organizationId: "organization",
+          world: "jaruna",
+          delivery: "response",
+        },
       }),
     ]);
   });

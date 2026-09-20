@@ -201,6 +201,7 @@ export class GatewayClient {
       .request("presence.fetch", {
         organizationId: payload.guildId,
         world: payload.world,
+        delivery: "response",
       })
       .then((response) => {
         const { presences } = decodePresenceSnapshot(response);
@@ -284,14 +285,6 @@ export class GatewayClient {
         featureRooms: event.data.subscriptionScopes.map((scope) => scope.topic),
         accessPolicyChanges,
       });
-
-      return;
-    }
-
-    if (event.type === "presence.snapshot") {
-      for (const presence of event.data.presences) {
-        this.dispatchPresence(event.data.organizationId, presence, false);
-      }
 
       return;
     }

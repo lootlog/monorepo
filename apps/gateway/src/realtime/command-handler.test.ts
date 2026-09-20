@@ -13,6 +13,7 @@ import { CommandIngress } from "./command-ingress.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
 import {
   decodeServerEvent,
+  type ClientCommand,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
 import { isAirTagSubscriptionAcknowledgement } from "@lootlog/protocol/realtime/codec";
@@ -105,7 +106,7 @@ class FakePresence {
   heartbeat: PresenceStore["heartbeat"] = () =>
     Effect.die("Unexpected heartbeat");
   publish = () => Effect.die("Unexpected presence publish");
-  snapshot = () => Effect.die("Unexpected snapshot");
+  snapshot: PresenceStore["snapshot"] = () => Effect.die("Unexpected snapshot");
   readonly reconciled: GatewaySocket[] = [];
 
   reconcileAccess(socket: GatewaySocket): Effect.Effect<void> {
@@ -189,6 +190,134 @@ const setup = (
 
   return { handler, guilds, hub, activity, presence };
 };
+
+describe("presence fetch delivery", () => {
+  test.each([undefined, "response"] as const)(
+    "returns the snapshot once when opted in, preserving legacy delivery (%s)",
+    async (delivery) => {
+      const { handler, hub, presence } = setup();
+      const { socket } = makeSocket();
+
+      socket.data.joined = true;
+      socket.data.guilds = [guild()];
+
+      const snapshot = {
+        organizationId: "organization-1",
+        revision: 7,
+        presences: [
+          {
+            userId: "user-1",
+            sessionId: "session-1",
+            organizationIds: ["organization-1"],
+            platform: "web-app" as const,
+            status: "online" as const,
+            confidence: "reported" as const,
+            isAfk: false,
+            lastSeen: 1,
+          },
+        ],
+      };
+
+      presence.snapshot = () => Effect.succeed(snapshot);
+
+      let data: Extract<ClientCommand, { type: "presence.fetch" }>["data"] = {
+        organizationId: "organization-1",
+      };
+
+      if (delivery) data = { ...data, delivery };
+
+      await Effect.runPromise(
+        handler.handle(
+          socket,
+          Buffer.from(
+            encode({
+              v: 1,
+              type: "presence.fetch",
+              requestId: "fetch-1",
+              data,
+            }),
+          ),
+        ),
+      );
+
+      expect(hub.responses).toEqual([
+        { v: 1, requestId: "fetch-1", status: "success", data: snapshot },
+      ]);
+      expect(hub.events).toEqual(
+        delivery === "response"
+          ? []
+          : [{ v: 1, type: "presence.snapshot", sequence: 7, data: snapshot }],
+      );
+    },
+  );
+
+  test("keeps event delivery for commands without a response address", async () => {
+    const { handler, hub, presence } = setup();
+    const { socket } = makeSocket();
+    socket.data.joined = true;
+    socket.data.guilds = [guild()];
+
+    const snapshot = {
+      organizationId: "organization-1",
+      revision: 8,
+      presences: [],
+    };
+
+    presence.snapshot = () => Effect.succeed(snapshot);
+
+    await Effect.runPromise(
+      handler.handle(
+        socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "presence.fetch",
+            data: { organizationId: "organization-1", delivery: "response" },
+          }),
+        ),
+      ),
+    );
+
+    expect(hub.responses).toEqual([]);
+    expect(hub.events).toEqual([
+      { v: 1, type: "presence.snapshot", sequence: 8, data: snapshot },
+    ]);
+  });
+
+  test("does not expose a snapshot after Organization access is revoked", async () => {
+    const { handler, hub } = setup();
+    const { socket } = makeSocket();
+    socket.data.joined = true;
+
+    await Effect.runPromise(
+      handler.handle(
+        socket,
+        Buffer.from(
+          encode({
+            v: 1,
+            type: "presence.fetch",
+            requestId: "denied",
+            data: { organizationId: "organization-1", delivery: "response" },
+          }),
+        ),
+      ),
+    );
+
+    expect(hub.events).toEqual([]);
+    expect(hub.responses).toEqual([
+      {
+        v: 1,
+        requestId: "denied",
+        status: "error",
+        error: {
+          code: "COMMAND_REJECTED",
+          message: "organization access denied",
+          retryable: false,
+        },
+      },
+    ]);
+  });
+});
 
 describe("CommandHandler session lifecycle", () => {
   test("stalled permission HTTP keeps one join in flight, rejects excess work, and drains accepted joins before disconnect", async () => {

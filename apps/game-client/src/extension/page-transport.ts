@@ -45,6 +45,21 @@ export function createPageTransport(
   const pending = new Map<string, Pending>();
   const events = new Set<(event: ServerEvent) => void>();
   const states = new Set<(state: RealtimeConnectionState) => void>();
+  const heartbeatLatencies = new Set<(latencyMs: number | null) => void>();
+  let heartbeatLatencyMs: number | null = null;
+
+  const setHeartbeatLatency = (latencyMs: number | null) => {
+    heartbeatLatencyMs = latencyMs;
+
+    for (const listener of heartbeatLatencies) {
+      try {
+        listener(latencyMs);
+      } catch {
+        /* Isolate UI observers. */
+      }
+    }
+  };
+
   let state: RealtimeConnectionState = "disconnected";
   let disposed = false;
   let wantsConnection = false;
@@ -54,6 +69,9 @@ export function createPageTransport(
 
   const setState = (next: RealtimeConnectionState) => {
     state = next;
+
+    if (next === "disconnected" || next === "reconnecting")
+      setHeartbeatLatency(null);
 
     for (const listener of states) {
       try {
@@ -188,9 +206,27 @@ export function createPageTransport(
         states.delete(listener);
       };
     },
+    subscribeHeartbeatLatency: (listener) => {
+      heartbeatLatencies.add(listener);
+      listener(heartbeatLatencyMs);
+
+      return () => {
+        heartbeatLatencies.delete(listener);
+      };
+    },
     setReconnectHandler: (handler) => {
       reconnectHandler = handler;
     },
+  };
+
+  const deliverEvent = (frame: ServerEvent) => {
+    for (const listener of events) {
+      try {
+        listener(frame);
+      } catch {
+        /* Isolate UI observers from transport delivery. */
+      }
+    }
   };
 
   port.onmessage = (event: MessageEvent<unknown>) => {
@@ -226,19 +262,15 @@ export function createPageTransport(
           return;
         }
 
-        case "event": {
-          const frame = decodeServerEvent(message.event);
-
-          for (const listener of events) {
-            try {
-              listener(frame);
-            } catch {
-              /* Isolate UI observers from transport delivery. */
-            }
-          }
+        case "heartbeat-latency":
+          setHeartbeatLatency(message.latencyMs);
 
           return;
-        }
+
+        case "event":
+          deliverEvent(decodeServerEvent(message.event));
+
+          return;
 
         case "result":
         case "error": {
@@ -286,6 +318,7 @@ export function createPageTransport(
     port.close();
     events.clear();
     states.clear();
+    heartbeatLatencies.clear();
   }
 
   return {

@@ -135,6 +135,10 @@ export class RealtimeClient {
   private readonly stateListeners = new Set<
     (state: RealtimeConnectionState) => void
   >();
+  private heartbeatLatencyMs: number | null = null;
+  private readonly heartbeatLatencyListeners = new Set<
+    (latencyMs: number | null) => void
+  >();
   private readonly pending = new Map<string, PendingRequest>();
   private readonly subscriptions = new Map<string, SubscriptionScope>();
   private socket: RealtimeWebSocket | null = null;
@@ -198,6 +202,27 @@ export class RealtimeClient {
     listener(this.stateValue);
 
     return () => this.stateListeners.delete(listener);
+  }
+
+  subscribeHeartbeatLatency(
+    listener: (latencyMs: number | null) => void,
+  ): () => void {
+    this.heartbeatLatencyListeners.add(listener);
+    listener(this.heartbeatLatencyMs);
+
+    return () => this.heartbeatLatencyListeners.delete(listener);
+  }
+
+  private setHeartbeatLatency(latencyMs: number | null): void {
+    this.heartbeatLatencyMs = latencyMs;
+
+    for (const listener of this.heartbeatLatencyListeners) {
+      try {
+        listener(latencyMs);
+      } catch {
+        // UI observers must not interrupt the presence heartbeat.
+      }
+    }
   }
 
   setReconnectHandler(handler: (() => Promise<void>) | null): void {
@@ -417,14 +442,31 @@ export class RealtimeClient {
   private scheduleHeartbeat(): void {
     this.clearHeartbeat();
 
-    if (!this.presenceSessionId || !this.connected) return;
+    if (!this.presenceSessionId || !this.connected) {
+      this.setHeartbeatLatency(null);
+
+      return;
+    }
+
     this.heartbeatTimeout = setTimeout(() => {
       const sessionId = this.presenceSessionId;
 
       if (!sessionId) return;
+      const startedAt = performance.now();
+      const socket = this.socket;
       void this.request("presence.heartbeat", { sessionId })
-        .then(() => this.scheduleHeartbeat())
-        .catch(() => this.socket?.close());
+        .then(() => {
+          if (this.socket !== socket || this.presenceSessionId !== sessionId)
+            return;
+          this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
+          this.scheduleHeartbeat();
+        })
+        .catch(() => {
+          if (this.socket !== socket || this.presenceSessionId !== sessionId)
+            return;
+          this.setHeartbeatLatency(null);
+          socket?.close();
+        });
     }, PRESENCE_HEARTBEAT_INTERVAL_MS);
   }
 
@@ -440,6 +482,8 @@ export class RealtimeClient {
   private setState(state: RealtimeConnectionState): void {
     if (this.stateValue === state) return;
     this.stateValue = state;
+
+    if (state === "disconnected") this.setHeartbeatLatency(null);
 
     for (const listener of this.stateListeners) listener(state);
   }

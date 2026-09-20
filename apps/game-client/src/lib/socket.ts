@@ -206,6 +206,12 @@ export class AppSocket {
     return this.wasConnected;
   }
 
+  subscribeHeartbeatLatency(
+    listener: (latencyMs: number | null) => void,
+  ): () => void {
+    return this.realtime.subscribeHeartbeatLatency(listener);
+  }
+
   getAccessPolicy(): AccessPolicySnapshot | undefined {
     return this.currentAccessPolicy;
   }
@@ -411,6 +417,7 @@ export class AppSocket {
       const response = await this.realtime.request("presence.fetch", {
         organizationId: data.guildId,
         world: data.world,
+        delivery: "response",
       });
 
       if (!isPresenceFetchResult(response))
@@ -533,13 +540,7 @@ export class AppSocket {
     }
 
     if (event.type === "presence.snapshot") {
-      for (const presence of event.data.presences) {
-        this.listeners.emit(
-          GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-          toLegacyPresence(event.data.organizationId, presence),
-        );
-      }
-
+      // Older gateways also emit fetch results as events; callers hydrate from the response.
       return;
     }
 

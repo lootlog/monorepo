@@ -63,6 +63,21 @@ An integration receives available events and uses permitted subscriptions and qu
 
 An integration connection does not represent a character's presence in the game. The game client publishes presence and game observations.
 
+## Presence snapshots
+
+`presence.fetch` accepts an Organization ID, an optional world, and optional
+`delivery: "response"`. With a `requestId`, this option returns the snapshot only
+in the correlated response. Without the option, the gateway also emits
+`presence.snapshot` for compatibility with existing integrations. Commands
+without a `requestId` always receive the snapshot event.
+
+Clients using response delivery must hydrate from the response and apply
+`presence.delta` events for subsequent changes. Older gateways ignore the option
+and still send both frames; ignore their snapshot events to avoid applying the
+same collection twice. Deploying the gateway first enables the bandwidth saving
+as soon as clients opt in. The existing permission and location filters apply to
+both delivery modes.
+
 ## Disconnection
 
 Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.

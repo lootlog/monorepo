@@ -189,6 +189,7 @@ const PresenceFetchCommand = command(
   Schema.Struct({
     organizationId: Schema.NonEmptyString,
     world: Schema.optional(Schema.NonEmptyString),
+    delivery: Schema.optional(Schema.Literal("response")),
   }),
 );
 

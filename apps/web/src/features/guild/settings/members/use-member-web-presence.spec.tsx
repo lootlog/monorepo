@@ -41,6 +41,7 @@ it("fetches initial web presence from the gateway", async () => {
   expect(gateway.request).toHaveBeenCalledWith("presence.fetch", {
     organizationId: "guild-1",
     world: undefined,
+    delivery: "response",
   });
 });
 
