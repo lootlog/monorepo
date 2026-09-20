@@ -20,7 +20,7 @@ import {
   selectReadyRoomForCharacter,
   type ReadyRoomCache,
 } from "@/features/party-finder/ready-room-cache";
-import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
+import { useGameStore } from "@/store/game.store";
 
 export const readReadyRoomCache = (
   client: QueryClient = gameQueryClient,
@@ -81,13 +81,16 @@ const decodeProjections = (
  * Every consumer calls this, so a Ready Room view loads its own data instead
  * of depending on another component being mounted first.
  */
-export const useReadyRooms = () => {
+export const useReadyRooms = <TData = ReadyRoomCache>(
+  select?: (cache: ReadyRoomCache) => TData,
+) => {
   const queryClient = useQueryClient();
   const joined = useGlobalStore((state) => state.socketState.joined);
 
   return useQuery({
     queryKey: queryKeys.readyRooms(),
     enabled: joined,
+    select,
     // A collection that has never had a list applied, or whose sync was
     // invalidated, must be fetched; once a list lands only an explicit
     // resynchronization refetches it.
@@ -113,28 +116,45 @@ export const useReadyRooms = () => {
   });
 };
 
+const selectSynchronized = (cache: ReadyRoomCache) =>
+  cache.listAppliedAt !== null;
+
+const selectProjections = (cache: ReadyRoomCache) => cache.projections;
+
+const selectHasOwnedRoom = (cache: ReadyRoomCache) =>
+  selectOwnedReadyRoom(cache) !== null;
+
 export const useReadyRoomsSynchronized = (): boolean => {
   const joined = useGlobalStore((state) => state.socketState.joined);
-  const { listAppliedAt } = useReadyRoomCache();
+  const { data: synchronized = false } = useReadyRooms(selectSynchronized);
 
-  return joined && listAppliedAt !== null;
+  return joined && synchronized;
 };
 
-export const useReadyRoomCache = (): ReadyRoomCache =>
-  useReadyRooms().data ?? EMPTY_READY_ROOM_CACHE;
+export const useReadyRoomProjections = () =>
+  useReadyRooms(selectProjections).data ?? EMPTY_READY_ROOM_CACHE.projections;
 
 export const useOwnedReadyRoom = () =>
-  selectOwnedReadyRoom(useReadyRoomCache());
+  useReadyRooms(selectOwnedReadyRoom).data ?? null;
 
-/**
- * The room the current character acts in: the one it organizes, otherwise the
- * one it applied to.
- */
+export const useHasOwnedReadyRoom = () =>
+  useReadyRooms(selectHasOwnedRoom).data ?? false;
+
+/** The room the current character organizes or participates in. */
 export const useCurrentCharacterReadyRoom = () => {
-  const cache = useReadyRoomCache();
+  const accountId = useGameStore((state) => state.game?.hero.accountId);
+  const characterId = useGameStore((state) => state.game?.hero.characterId);
 
   return (
-    selectOwnedReadyRoom(cache) ??
-    selectReadyRoomForCharacter(cache, getCurrentReadyRoomCharacterIdentity())
+    useReadyRooms(
+      (cache) =>
+        selectOwnedReadyRoom(cache) ??
+        selectReadyRoomForCharacter(
+          cache,
+          accountId !== undefined && characterId !== undefined
+            ? { accountId, characterId }
+            : null,
+        ),
+    ).data ?? null
   );
 };
