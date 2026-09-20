@@ -804,6 +804,16 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
   expect(
     await runtime.runPromise(services.metadata.searchWarriors(" a ", "owner")),
   ).toEqual({ warriors: [] });
+  expect(
+    await runtime.runPromise(
+      services.metadata.searchWarriors("Missing warrior", "owner"),
+    ),
+  ).toEqual({ warriors: [] });
+  expect(
+    await runtime.runPromise(
+      services.metadata.searchWarriors("Alpha", "absent-owner"),
+    ),
+  ).toEqual({ warriors: [] });
 
   await pool.query(`INSERT INTO battle_warriors (id,"battleId","originalId",name,lvl,prof,icon,team,turns,ph)
     SELECT 'ordered-' || n, 'new', 'hero', 'Ordered ' || lpad(n::text,2,'0'), 100, 'w', 'hero.gif', 1, 1, 0
@@ -825,6 +835,90 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
     "Ordered 09",
     "Ordered 10",
   ]);
+
+  await pool.query("DELETE FROM battles WHERE id = 'old'");
+
+  expect(
+    await runtime.runPromise(
+      services.metadata.searchWarriors("Alpha", "owner"),
+    ),
+  ).toEqual({
+    warriors: [
+      { name: "Alpha", lvl: 100, prof: "m", icon: "new.gif" },
+      { name: "alpha", lvl: 110, prof: "p", icon: "case.gif" },
+    ],
+  });
+
+  await pool.query("DELETE FROM battles WHERE id = 'new'");
+
+  expect(
+    await runtime.runPromise(
+      services.metadata.searchWarriors("Alpha", "owner"),
+    ),
+  ).toEqual({ warriors: [] });
+});
+
+it("requires valid prebuilt search indexes for populated histories without losing accepted battles", async () => {
+  const created = await runtime.runPromise(
+    services.battles.createBattle({ data, userId }),
+  );
+
+  const migration = await Bun.file(
+    new URL(
+      "../../../drizzle/20260920142519_warrior_search_covering_indexes/migration.sql",
+      import.meta.url,
+    ),
+  ).text();
+
+  // An existing installation with the concurrent prebuild can migrate safely.
+  await pool.query(migration);
+
+  const client = await pool.connect();
+
+  try {
+    for (const index of [
+      "battle_warriors_battleId_name_id_idx",
+      "battles_userId_id_idx",
+    ]) {
+      await client.query("BEGIN");
+
+      try {
+        await client.query(`DROP INDEX "${index}"`);
+        await expect(client.query(migration)).rejects.toThrow("Prebuild index");
+      } finally {
+        await client.query("ROLLBACK");
+      }
+    }
+
+    await client.query("BEGIN");
+
+    try {
+      await client.query(`DROP INDEX "battle_warriors_battleId_name_id_idx";
+        CREATE INDEX "battle_warriors_battleId_name_id_idx" ON battle_warriors ("battleId")`);
+      await expect(client.query(migration)).rejects.toThrow(
+        "invalid or has an unexpected definition",
+      );
+    } finally {
+      await client.query("ROLLBACK");
+    }
+  } finally {
+    client.release();
+  }
+
+  expect(
+    (
+      await pool.query("SELECT id FROM battles WHERE id = $1", [
+        created.battleId,
+      ])
+    ).rows,
+  ).toEqual([{ id: created.battleId }]);
+  expect(
+    (
+      await runtime.runPromise(
+        services.metadata.searchWarriors("first", userId),
+      )
+    ).warriors,
+  ).toHaveLength(1);
 });
 
 it("applies combined dashboard filters and counts only the requesting owner's matching battles", async () => {
