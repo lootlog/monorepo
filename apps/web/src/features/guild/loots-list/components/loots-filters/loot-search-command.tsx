@@ -12,10 +12,13 @@ import { ItemRarity } from "@/lib/loots/loot-types";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
+import { Button } from "@lootlog/ui/components/button";
+import { LootDirectSearchNotice } from "./loot-direct-search-notice";
 import {
   ArrowRight,
   CircleAlert,
   ClipboardPaste,
+  DatabaseZap,
   PackageSearch,
   SearchX,
 } from "lucide-react";
@@ -37,6 +40,10 @@ export const LootSearchCommand = (
 ) => {
   const {
     t,
+    activeDirectSearch,
+    canSearchDirectly,
+    handleDirectSearch,
+    handleClearDirectSearch,
     searchQuery,
     setSearchQuery,
     trimmedSearch,
@@ -311,6 +318,39 @@ export const LootSearchCommand = (
           )}
         </AnimatePresence>
       </CommandList>
+
+      {(canSearchDirectly || activeDirectSearch) && (
+        <div className="flex flex-col gap-2 border-t border-border p-2">
+          {canSearchDirectly && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDirectSearch}
+                className="w-full justify-start"
+              >
+                <DatabaseZap className="text-primary" />
+                <span className="min-w-0 flex-1 truncate text-left">
+                  {t("loots.searchCommand.directSearch", {
+                    term: trimmedSearch,
+                  })}
+                </span>
+                <ArrowRight className="text-primary" />
+              </Button>
+              <p className="px-1 text-xs leading-4 text-muted-foreground">
+                {t("loots.searchCommand.directSearchHint")}
+              </p>
+            </>
+          )}
+
+          {activeDirectSearch && (
+            <LootDirectSearchNotice
+              term={activeDirectSearch}
+              onClear={handleClearDirectSearch}
+            />
+          )}
+        </div>
+      )}
     </>
   );
 
