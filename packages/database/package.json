@@ -9,6 +9,7 @@
     "./migration": "./src/migration.ts",
     "./snapshot-hash": "./src/snapshot-hash.ts",
     "./redis-script": "./src/redis-script.ts",
+    "./redis-cache-fill": "./src/redis-cache-fill.ts",
     "./sliding-window-rate-limit": "./src/sliding-window-rate-limit.ts"
   },
   "scripts": {
