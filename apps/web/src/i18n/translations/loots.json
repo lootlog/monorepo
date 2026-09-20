@@ -129,8 +129,9 @@
     "noResultsDescription": "Spróbuj krótszej nazwy albo sprawdź pisownię.",
     "directSearch": "Szukaj „{{term}}” bezpośrednio w łupach",
     "directSearchHint": "Pomija wyszukiwarkę: dopasowuje nazwy przedmiotów, potworów i graczy zapisane w łupach.",
-    "directSearchActive": "Aktywne wyszukiwanie w łupach: „{{term}}”",
-    "directSearchClear": "Wyczyść"
+    "directSearchActive": "Szukanie w łupach: „{{term}}”",
+    "directSearchClear": "Wyczyść",
+    "directSearchActiveHint": "Dopasowanie bezpośrednio w łupach, z pominięciem wyszukiwarki."
   },
   "list": {
     "selectWorldTitle": "Wybierz świat",

@@ -15,6 +15,7 @@ import { cn } from "cn";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Bookmark, Plus, X } from "lucide-react";
+import { LootDirectSearchNotice } from "./loot-direct-search-notice";
 import { LootItemFilters } from "./loot-item-filters";
 import { LootNpcFilters } from "./loot-npc-filters";
 import { LootPlayerFilters } from "./loot-player-filters";
@@ -197,6 +198,15 @@ export const LootsFiltersSidebar = (
                     ))}
                   </div>
                 </div>
+
+                {filters.search !== "" && (
+                  <div className="border-b border-border/70 p-3 sm:p-4">
+                    <LootDirectSearchNotice
+                      term={filters.search}
+                      onClear={() => updateFilters({ search: "" })}
+                    />
+                  </div>
+                )}
 
                 <Accordion multiple defaultValue={["npc", "item", "player"]}>
                   <LootNpcFilters
