@@ -1,6 +1,18 @@
 import type { BattleEventPayload, BattleEventWarriorPayload } from "@/api";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
 
+/**
+ * Only fight events reach the capture: BattleEventProcessor.handle returns
+ * before storing anything without `f`. The contract requires `f` on every
+ * submitted event, so an event without it could only produce a rejected
+ * submission.
+ */
+type CapturedBattleEvent = GameEvent & { f: NonNullable<GameEvent["f"]> };
+
+const isCapturedBattleEvent = (
+  event: GameEvent,
+): event is CapturedBattleEvent => event.f !== undefined;
+
 const mapBattleWarriorToPayload = ({
   icon,
   lvl,
@@ -21,25 +33,25 @@ export const mapBattleEventsToPayload = (
   events: GameEvent[],
 ): BattleEventPayload[] | null => {
   if (!events || events.length === 0) return null;
+  const capturedEvents = events.filter(isCapturedBattleEvent);
 
-  const result = events.map((event) => {
+  if (capturedEvents.length !== events.length) return null;
+
+  const result = capturedEvents.map((event) => {
     const fightWarriors: Record<string, BattleEventWarriorPayload> = {};
-    Object.entries(event.f?.w ?? {}).forEach(([key, warrior]) => {
+    Object.entries(event.f.w ?? {}).forEach(([key, warrior]) => {
       const entry = mapBattleWarriorToPayload(warrior);
 
       fightWarriors[key] = entry;
     });
 
-    const f = event.f
-      ? {
-          m: event.f.m,
-          endBattle: event.f.endBattle,
-          init: event.f.init,
-          auto: event.f.auto,
-          w:
-            Object.keys(fightWarriors).length === 0 ? undefined : fightWarriors,
-        }
-      : undefined;
+    const f = {
+      m: event.f.m,
+      endBattle: event.f.endBattle,
+      init: event.f.init,
+      auto: event.f.auto,
+      w: Object.keys(fightWarriors).length === 0 ? undefined : fightWarriors,
+    };
 
     const match_summary = event.match_summary
       ? {
