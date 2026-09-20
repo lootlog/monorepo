@@ -281,6 +281,42 @@ describe("RedisService", () => {
     expect(factory).not.toHaveBeenCalled();
   });
 
+  it("releases a lease acquired after the wait deadline without starting another fill", async () => {
+    const clock = vi.spyOn(performance, "now").mockReturnValue(0);
+    const client = createRedisClient();
+    client.get.mockResolvedValue(null);
+    client.set.mockResolvedValueOnce(null).mockImplementation(async () => {
+      clock.mockReturnValue(21);
+
+      return "OK";
+    });
+    client.eval.mockResolvedValue(1);
+    const service = createRedisService(client);
+    const factory = vi.fn(async () => ({ value: 2 }));
+
+    try {
+      await expect(
+        service.getOrSetJsonBestEffort({
+          key: "delayed-acquisition",
+          ttlSeconds: 60,
+          codec: valueCodec,
+          waitTimeoutMs: 20,
+          waitIntervalMs: 1,
+          factory,
+        }),
+      ).rejects.toThrow("Cache fill wait timed out");
+      expect(factory).not.toHaveBeenCalled();
+      expect(client.eval).toHaveBeenCalledWith(
+        expect.stringContaining('redis.call("del", KEYS[1])'),
+        "1",
+        "lootlog:delayed-acquisition:single-flight",
+        expect.any(String),
+      );
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it("returns the completed fill without repeating SQL when publication fails", async () => {
     const client = createRedisClient();
     client.get.mockResolvedValue(null);

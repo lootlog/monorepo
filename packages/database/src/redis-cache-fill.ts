@@ -86,6 +86,10 @@ export async function fillJsonCache<T>(
 
     if (cached !== null) return cached;
 
+    if (waiting && performance.now() >= deadline) {
+      throw new CacheFillTimeoutError();
+    }
+
     signal?.throwIfAborted();
     const value = await factory();
     signal?.throwIfAborted();
