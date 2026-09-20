@@ -24,10 +24,8 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { resolveNpcNotificationRouting } from "@/utils/notifications-and-detector/npc-notification";
 import type { useWindowsStore } from "@/store/windows.store";
-import {
-  selectOwnedReadyRoom,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
+import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
 import type { SettingsTabValue } from "@/features/settings/constants/settings-tabs";
 import { useTranslation } from "react-i18next";
 import type { PartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
@@ -165,7 +163,7 @@ export const NpcListItem = ({
         notificationSentAt: Date.now(),
       });
 
-      if (selectOwnedReadyRoom(usePartyFinderStore.getState()))
+      if (selectOwnedReadyRoom(readReadyRoomCache()))
         setOpen("party-finder", true);
     } catch (error) {
       console.warn("Failed to send notification:", error);

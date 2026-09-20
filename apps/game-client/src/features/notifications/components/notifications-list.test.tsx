@@ -18,7 +18,7 @@ import {
 } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
 import { createChatReadyRoom } from "@/features/chat/chat-test-fixtures";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useSettingsStore } from "@/store/settings.store";
@@ -65,7 +65,6 @@ describe("NotificationsList", () => {
         useNotificationsStore.getInitialState(),
         true,
       );
-      usePartyFinderStore.getState().clearReadyRooms();
       useWindowsStore.getState().setOpen("party-finder", false);
       useWindowsStore.getState().setOpen("chat", false);
     });
@@ -126,7 +125,9 @@ describe("NotificationsList", () => {
     expect(useWindowsStore.getState()["party-finder"].open).toBe(false);
     expect(useWindowsStore.getState().notifications.open).toBe(false);
     expect(
-      usePartyFinderStore.getState().projections[room.notificationId],
+      readSeededReadyRoomCache(test.queryClient).projections[
+        room.notificationId
+      ],
     ).toEqual(room);
     expect(useNotificationsStore.getState().notifications).toEqual([]);
     expect(apply).toHaveBeenCalledTimes(1);

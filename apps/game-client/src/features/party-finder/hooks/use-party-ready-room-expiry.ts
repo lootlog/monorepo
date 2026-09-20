@@ -1,20 +1,38 @@
 import { isObjectRecord } from "@lootlog/schema/records";
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { useEffect } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { partyReadyRoomControllerGet } from "@lootlog/client/main";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 
 function hasHttpStatus(cause: unknown, status: number): boolean {
   return isObjectRecord(cause) && cause.status === status;
 }
 
+/**
+ * A room can lapse without the server sending anything, so each expiry is
+ * rechecked against the room itself: a 404 means it is gone, any other
+ * response replaces the stale projection.
+ */
 export function usePartyReadyRoomExpiry(): void {
-  const projections = usePartyFinderStore((state) => state.projections);
-  const mergeProjection = usePartyFinderStore((state) => state.mergeProjection);
+  const { projections } = useReadyRoomCache();
+  const { mergeProjection, removeProjection } = useReadyRoomsCache();
 
-  const removeProjection = usePartyFinderStore(
-    (state) => state.removeProjection,
-  );
+  const recheckExpiredRoom = useEffectEvent((notificationId: string) => {
+    void partyReadyRoomControllerGet({ notificationId })
+      .then((latestProjection) => {
+        mergeProjection(decodePartyReadyRoomProjection(latestProjection));
+      })
+      .catch((cause: unknown) => {
+        if (hasHttpStatus(cause, 404)) {
+          removeProjection(notificationId);
+
+          return;
+        }
+
+        console.warn("Failed to resynchronize expired party Ready Room", cause);
+      });
+  });
 
   useEffect(() => {
     const activeProjections = Object.values(projections).filter(
@@ -34,29 +52,12 @@ export function usePartyReadyRoomExpiry(): void {
         );
 
         for (const projection of expiredProjections) {
-          void partyReadyRoomControllerGet({
-            notificationId: projection.notificationId,
-          })
-            .then((latestProjection) => {
-              mergeProjection(decodePartyReadyRoomProjection(latestProjection));
-            })
-            .catch((cause: unknown) => {
-              if (hasHttpStatus(cause, 404)) {
-                removeProjection(projection.notificationId);
-
-                return;
-              }
-
-              console.warn(
-                "Failed to resynchronize expired party Ready Room",
-                cause,
-              );
-            });
+          recheckExpiredRoom(projection.notificationId);
         }
       },
       Math.max(0, nextExpiry - Date.now()),
     );
 
     return () => window.clearTimeout(timeout);
-  }, [projections, mergeProjection, removeProjection]);
+  }, [projections]);
 }

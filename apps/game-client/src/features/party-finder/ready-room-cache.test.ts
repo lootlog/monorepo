@@ -2,14 +2,18 @@ import type {
   PartyReadyRoomParticipant,
   PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  applyAuthoritativeReadyRoomSync,
+  applyReadyRoomUpdate,
   captureReadyRoomSyncBaseline,
+  EMPTY_READY_ROOM_CACHE,
+  mergeReadyRoomProjection,
+  mergeReadyRoomProjections,
   selectOwnedReadyRoom,
   selectReadyRoomForCharacter,
   selectReadyRoomParticipantForCharacter,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+} from "@/features/party-finder/ready-room-cache";
 
 const participantIdentity = {
   accountId: "participant-account",
@@ -65,18 +69,14 @@ function createProjection(
   };
 }
 
-describe("party-finder Ready Room store", () => {
-  beforeEach(() => {
-    usePartyFinderStore.getState().clearReadyRooms();
-  });
-
+describe("Ready Room cache", () => {
   it("does not let an older REST snapshot replace a newer socket projection", () => {
-    usePartyFinderStore.getState().mergeProjection(createProjection(5));
-    usePartyFinderStore.getState().mergeProjection(createProjection(4));
-
-    expect(usePartyFinderStore.getState().projections["room-1"]?.revision).toBe(
-      5,
+    const cache = mergeReadyRoomProjection(
+      mergeReadyRoomProjection(EMPTY_READY_ROOM_CACHE, createProjection(5)),
+      createProjection(4),
     );
+
+    expect(cache.projections["room-1"]?.revision).toBe(5);
   });
 
   it("selects the participant entry matching the active account and character", () => {
@@ -94,17 +94,14 @@ describe("party-finder Ready Room store", () => {
 
     const projection = createProjection(2, matchingParticipant);
     projection.participants[otherParticipant.participantId] = otherParticipant;
-    usePartyFinderStore.getState().mergeProjection(projection);
+    const cache = mergeReadyRoomProjection(EMPTY_READY_ROOM_CACHE, projection);
 
     expect(
       selectReadyRoomParticipantForCharacter(projection, participantIdentity)
         ?.participantId,
     ).toBe("participant-matching");
     expect(
-      selectReadyRoomForCharacter(
-        usePartyFinderStore.getState(),
-        participantIdentity,
-      )?.notificationId,
+      selectReadyRoomForCharacter(cache, participantIdentity)?.notificationId,
     ).toBe("room-1");
   });
 
@@ -117,14 +114,15 @@ describe("party-finder Ready Room store", () => {
       ownedParticipantIds: [],
     };
 
-    usePartyFinderStore
-      .getState()
-      .mergeProjections([participantProjection, organizerProjection]);
-    usePartyFinderStore.getState().mergeProjection(participantProjection);
+    const cache = mergeReadyRoomProjection(
+      mergeReadyRoomProjections(EMPTY_READY_ROOM_CACHE, [
+        participantProjection,
+        organizerProjection,
+      ]),
+      participantProjection,
+    );
 
-    expect(
-      selectOwnedReadyRoom(usePartyFinderStore.getState())?.notificationId,
-    ).toBe("room-1");
+    expect(selectOwnedReadyRoom(cache)?.notificationId).toBe("room-1");
   });
 
   it("uses the active character role when one Discord user has multiple accounts", () => {
@@ -139,18 +137,16 @@ describe("party-finder Ready Room store", () => {
       notificationId: "room-2",
     };
 
-    usePartyFinderStore
-      .getState()
-      .mergeProjections([ownedReadyRoom, participantReadyRoom]);
+    const cache = mergeReadyRoomProjections(EMPTY_READY_ROOM_CACHE, [
+      ownedReadyRoom,
+      participantReadyRoom,
+    ]);
 
     expect(
-      selectReadyRoomForCharacter(
-        usePartyFinderStore.getState(),
-        participantIdentity,
-      )?.notificationId,
+      selectReadyRoomForCharacter(cache, participantIdentity)?.notificationId,
     ).toBe("room-2");
     expect(
-      selectReadyRoomForCharacter(usePartyFinderStore.getState(), {
+      selectReadyRoomForCharacter(cache, {
         accountId: "organizer-account",
         characterId: "organizer-character",
       })?.notificationId,
@@ -158,32 +154,38 @@ describe("party-finder Ready Room store", () => {
   });
 
   it("does not delete a newer socket update after an authoritative REST absence", () => {
-    usePartyFinderStore.getState().mergeProjection(createProjection(2));
-
-    const baseline = captureReadyRoomSyncBaseline(
-      usePartyFinderStore.getState(),
+    const synchronized = mergeReadyRoomProjection(
+      EMPTY_READY_ROOM_CACHE,
+      createProjection(2),
     );
 
-    usePartyFinderStore.getState().mergeProjection(createProjection(3));
-    usePartyFinderStore.getState().applyAuthoritativeSync([], baseline);
+    const baseline = captureReadyRoomSyncBaseline(synchronized);
 
-    expect(usePartyFinderStore.getState()).toMatchObject({
-      readyRoomsSynchronized: true,
+    const cache = applyAuthoritativeReadyRoomSync(
+      mergeReadyRoomProjection(synchronized, createProjection(3)),
+      [],
+      baseline,
+    );
+
+    expect(cache).toMatchObject({
       projections: { "room-1": { revision: 3 } },
     });
   });
 
   it("records an authoritative absence as a removal watermark", () => {
-    usePartyFinderStore.getState().mergeProjection(createProjection(2));
-
-    const baseline = captureReadyRoomSyncBaseline(
-      usePartyFinderStore.getState(),
+    const synchronized = mergeReadyRoomProjection(
+      EMPTY_READY_ROOM_CACHE,
+      createProjection(2),
     );
 
-    usePartyFinderStore.getState().applyAuthoritativeSync([], baseline);
-    usePartyFinderStore.getState().mergeProjection(createProjection(2));
+    const baseline = captureReadyRoomSyncBaseline(synchronized);
 
-    expect(usePartyFinderStore.getState()).toMatchObject({
+    const cache = mergeReadyRoomProjection(
+      applyAuthoritativeReadyRoomSync(synchronized, [], baseline),
+      createProjection(2),
+    );
+
+    expect(cache).toMatchObject({
       projections: {},
       roomVersions: {
         "room-1": { revision: 2, presence: "REMOVED" },
@@ -192,26 +194,28 @@ describe("party-finder Ready Room store", () => {
   });
 
   it("lets REMOVE win at an equal revision and accepts a later UPSERT", () => {
-    usePartyFinderStore.getState().mergeProjection(createProjection(2));
-    usePartyFinderStore.getState().applyUpdate({
-      schemaVersion: 3,
-      type: "REMOVE",
-      notificationId: "room-1",
-      revision: 2,
-    });
-    usePartyFinderStore.getState().mergeProjection(createProjection(2));
+    const removed = mergeReadyRoomProjection(
+      applyReadyRoomUpdate(
+        mergeReadyRoomProjection(EMPTY_READY_ROOM_CACHE, createProjection(2)),
+        {
+          schemaVersion: 3,
+          type: "REMOVE",
+          notificationId: "room-1",
+          revision: 2,
+        },
+      ),
+      createProjection(2),
+    );
 
-    expect(usePartyFinderStore.getState().projections).toEqual({});
+    expect(removed.projections).toEqual({});
 
-    usePartyFinderStore.getState().applyUpdate({
+    const reopened = applyReadyRoomUpdate(removed, {
       schemaVersion: 3,
       type: "UPSERT",
       projection: createProjection(3),
     });
 
-    expect(usePartyFinderStore.getState().projections["room-1"]?.revision).toBe(
-      3,
-    );
+    expect(reopened.projections["room-1"]?.revision).toBe(3);
   });
 
   it("allows an equal revision after the removal watermark expires", () => {
@@ -219,21 +223,27 @@ describe("party-finder Ready Room store", () => {
     vi.setSystemTime(1_000_000);
 
     try {
-      usePartyFinderStore.getState().mergeProjection(createProjection(2));
-      usePartyFinderStore.getState().applyUpdate({
-        schemaVersion: 3,
-        type: "REMOVE",
-        notificationId: "room-1",
-        revision: 2,
-      });
-      usePartyFinderStore.getState().mergeProjection(createProjection(2));
-      expect(usePartyFinderStore.getState().projections).toEqual({});
+      const removed = mergeReadyRoomProjection(
+        applyReadyRoomUpdate(
+          mergeReadyRoomProjection(EMPTY_READY_ROOM_CACHE, createProjection(2)),
+          {
+            schemaVersion: 3,
+            type: "REMOVE",
+            notificationId: "room-1",
+            revision: 2,
+          },
+        ),
+        createProjection(2),
+      );
+
+      expect(removed.projections).toEqual({});
 
       vi.advanceTimersByTime(120_001);
-      usePartyFinderStore.getState().mergeProjection(createProjection(2));
 
       expect(
-        usePartyFinderStore.getState().projections["room-1"]?.revision,
+        mergeReadyRoomProjection(removed, createProjection(2)).projections[
+          "room-1"
+        ]?.revision,
       ).toBe(2);
     } finally {
       vi.useRealTimers();
@@ -245,8 +255,10 @@ describe("party-finder Ready Room store", () => {
     vi.setSystemTime(1_000_000);
 
     try {
+      let cache = EMPTY_READY_ROOM_CACHE;
+
       for (let index = 0; index < 513; index += 1) {
-        usePartyFinderStore.getState().applyUpdate({
+        cache = applyReadyRoomUpdate(cache, {
           schemaVersion: 3,
           type: "REMOVE",
           notificationId: `room-${index}`,
@@ -254,10 +266,9 @@ describe("party-finder Ready Room store", () => {
         });
       }
 
-      const roomVersions = usePartyFinderStore.getState().roomVersions;
-      expect(Object.keys(roomVersions)).toHaveLength(512);
-      expect(roomVersions["room-0"]).toBeUndefined();
-      expect(roomVersions["room-512"]).toMatchObject({
+      expect(Object.keys(cache.roomVersions)).toHaveLength(512);
+      expect(cache.roomVersions["room-0"]).toBeUndefined();
+      expect(cache.roomVersions["room-512"]).toMatchObject({
         presence: "REMOVED",
         revision: 512,
       });

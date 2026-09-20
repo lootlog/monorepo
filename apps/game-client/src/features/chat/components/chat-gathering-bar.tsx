@@ -13,14 +13,10 @@ import {
   useActivePartyGatherings,
   ACTIVE_GATHERINGS_QUERY_KEY,
 } from "@/features/chat/hooks/use-active-party-gatherings";
-import {
-  selectOwnedReadyRoom,
-  selectReadyRoomForCharacter,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+import { useCurrentCharacterReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useGameStore } from "@/store/game.store";
 import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
-import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { Button } from "@/components/ui/button";
 import {
   getHiddenPartyGatheringsScopeKey,
@@ -70,13 +66,8 @@ export function ChatGatheringBar({
     (state) => state.hiddenByScope,
   );
 
-  const identity = getCurrentReadyRoomCharacterIdentity();
-
-  const room = usePartyFinderStore(
-    (state) =>
-      selectOwnedReadyRoom(state) ??
-      selectReadyRoomForCharacter(state, identity),
-  );
+  const { mergeProjection } = useReadyRoomsCache();
+  const room = useCurrentCharacterReadyRoom();
 
   const roomId = room?.notificationId;
   const isOrganizer = room?.viewer === "ORGANIZER";
@@ -110,9 +101,7 @@ export function ChatGatheringBar({
       );
     },
     onSuccess: (projection) =>
-      usePartyFinderStore
-        .getState()
-        .mergeProjection(decodePartyReadyRoomProjection(projection)),
+      mergeProjection(decodePartyReadyRoomProjection(projection)),
     onSettled: () => {
       pendingRef.current = false;
       void queryClient.invalidateQueries({

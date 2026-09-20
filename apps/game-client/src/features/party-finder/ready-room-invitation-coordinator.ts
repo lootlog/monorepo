@@ -9,8 +9,11 @@ import {
   isReadyRoomExpired,
   selectOwnedReadyRoom,
   type ReadyRoomCharacterIdentity,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+} from "@/features/party-finder/ready-room-cache";
+import {
+  areReadyRoomsSynchronized,
+  readReadyRoomCache,
+} from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
 import { inviteCharacterToParty } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
@@ -64,12 +67,11 @@ function hasReadyRoomGameContext(
   room: PartyReadyRoomOrganizerProjection,
 ): boolean {
   const { connected, joined } = useGlobalStore.getState().socketState;
-  const { readyRoomsSynchronized } = usePartyFinderStore.getState();
 
   return (
     connected &&
     joined &&
-    readyRoomsSynchronized &&
+    areReadyRoomsSynchronized() &&
     !isReadyRoomExpired(room) &&
     characterIdentitiesMatch(
       getCurrentReadyRoomCharacterIdentity(),
@@ -106,7 +108,7 @@ function getInvitableParticipantIds(
 function captureInvitationIntent(
   participantIds?: string[],
 ): InvitationIntent | null {
-  const room = selectOwnedReadyRoom(usePartyFinderStore.getState());
+  const room = selectOwnedReadyRoom(readReadyRoomCache());
 
   if (!room || !hasReadyRoomGameContext(room)) return null;
 
@@ -127,8 +129,7 @@ function captureInvitationIntent(
 function getCurrentIntentRoom(
   intent: InvitationIntent,
 ): PartyReadyRoomOrganizerProjection | null {
-  const projection =
-    usePartyFinderStore.getState().projections[intent.notificationId];
+  const projection = readReadyRoomCache().projections[intent.notificationId];
 
   if (
     !projection ||
