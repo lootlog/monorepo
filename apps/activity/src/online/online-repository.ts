@@ -178,13 +178,82 @@ export class OnlineRepository extends Context.Service<
           now - ONLINE_HISTORY_RETENTION_DAYS * 86_400_000,
         ).toISOString();
 
-        yield* sql.withTransaction(
-          Effect.gen(function* () {
-            yield* sql`DELETE FROM "UserOnlineInterval" WHERE "endedAt" <= ${cutoff}::timestamptz`;
-            yield* sql`UPDATE "UserOnlineInterval" SET "startedAt" = ${cutoff}::timestamptz WHERE "startedAt" < ${cutoff}::timestamptz`;
-            yield* sql`DELETE FROM "UserOnlineTracking" WHERE "lastObservedAt" <= ${cutoff}::timestamptz`;
-          }),
-        );
+        const windowStart = new Date(
+          Math.floor(now / 3600_000) * 3600_000,
+        ).toISOString();
+
+        // Each transaction changes at most 1000 rows per phase. A failed owner leaves the
+        // fixed cutoff available to any replica; completed windows survive restarts.
+        let pending = true;
+
+        while (pending) {
+          pending = yield* sql.withTransaction(
+            Effect.gen(function* () {
+              yield* sql`SET LOCAL statement_timeout = '5s'`;
+              yield* sql`SET LOCAL lock_timeout = '1s'`;
+
+              const lock = yield* sql<{ acquired: boolean }>`
+                SELECT pg_try_advisory_xact_lock(hashtext('lootlog:activity:online-retention')) AS acquired`;
+
+              if (!lock[0]?.acquired) return false;
+
+              const state = yield* sql<{ cutoff: string; completed: boolean }>`
+                INSERT INTO "UserOnlineRetention" (id, "windowStart", cutoff, completed)
+                VALUES (1, ${windowStart}::timestamptz, ${cutoff}::timestamptz, false)
+                ON CONFLICT (id) DO UPDATE SET
+                  "windowStart" = EXCLUDED."windowStart", cutoff = EXCLUDED.cutoff, completed = false
+                WHERE "UserOnlineRetention".completed AND "UserOnlineRetention"."windowStart" < EXCLUDED."windowStart"
+                RETURNING cutoff::text, completed`;
+
+              const current =
+                state[0] ??
+                (yield* sql<{ cutoff: string; completed: boolean }>`
+                SELECT cutoff::text, completed FROM "UserOnlineRetention" WHERE id = 1`)[0];
+
+              if (!current || current.completed) return false;
+
+              const expired = yield* sql<{ count: number }>`
+                WITH removed AS (
+                  DELETE FROM "UserOnlineInterval" WHERE ctid IN (
+                    SELECT ctid FROM "UserOnlineInterval"
+                    WHERE "endedAt" <= ${current.cutoff}::timestamptz
+                    ORDER BY "endedAt" LIMIT 1000 FOR UPDATE
+                  ) RETURNING 1
+                ) SELECT count(*)::int AS count FROM removed`;
+
+              if (expired[0]?.count === 1000) return true;
+
+              const trimmed = yield* sql<{ count: number }>`
+                WITH updated AS (
+                  UPDATE "UserOnlineInterval" SET "startedAt" = ${current.cutoff}::timestamptz
+                  WHERE ctid IN (
+                    SELECT ctid FROM "UserOnlineInterval"
+                    WHERE "startedAt" < ${current.cutoff}::timestamptz
+                      AND "endedAt" > ${current.cutoff}::timestamptz
+                    ORDER BY "startedAt" LIMIT 1000 FOR UPDATE
+                  ) RETURNING 1
+                ) SELECT count(*)::int AS count FROM updated`;
+
+              if (trimmed[0]?.count === 1000) return true;
+
+              const tracking = yield* sql<{ count: number }>`
+                WITH removed AS (
+                  DELETE FROM "UserOnlineTracking" WHERE ctid IN (
+                    SELECT ctid FROM "UserOnlineTracking"
+                    WHERE "lastObservedAt" <= ${current.cutoff}::timestamptz
+                    ORDER BY "lastObservedAt" LIMIT 1000 FOR UPDATE
+                  ) RETURNING 1
+                ) SELECT count(*)::int AS count FROM removed`;
+
+              if (tracking[0]?.count === 1000) return true;
+
+              yield* sql`UPDATE "UserOnlineRetention" SET completed = true WHERE id = 1`;
+
+              // A recovered older window may finish after the next one is due.
+              return true;
+            }),
+          );
+        }
       });
 
       return OnlineRepository.of({ ingest, find, prune });

@@ -100,6 +100,17 @@ describe("durable private online history", () => {
         );
 
         yield* Effect.tryPromise(() => client.query(worldsMigration));
+
+        const retentionMigration = yield* Effect.promise(() =>
+          Bun.file(
+            new URL(
+              "../../drizzle/migrations/20260920121702_online_retention_windows/migration.sql",
+              import.meta.url,
+            ),
+          ).text(),
+        );
+
+        yield* Effect.tryPromise(() => client.query(retentionMigration));
       }).pipe(Effect.scoped, Effect.provide(database)),
     );
   }, 60_000);
@@ -532,6 +543,175 @@ describe("durable private online history", () => {
     expect(result.days[0]?.onlineSeconds).toBe(3600);
   });
 
+  it("cleans every batch while preserving retained history and tracking", async () => {
+    const now = "2026-09-06T12:00:00Z";
+    const cutoff = new Date(Date.parse(now) - 112 * 86_400_000).toISOString();
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+        yield* sql`DELETE FROM "UserOnlineRetention"`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
+          SELECT 'batch-' || kind, n::text, n::text, 'luvia', ${cutoff}::timestamptz - interval '1 hour',
+            ${cutoff}::timestamptz + CASE WHEN kind = 'expired' THEN interval '0 hours' ELSE interval '1 hour' END,
+            ${cutoff}::timestamptz + interval '1 hour'
+          FROM generate_series(1, 2001) n CROSS JOIN (VALUES ('expired'), ('retained')) kinds(kind)`;
+        yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
+          SELECT 'batch-tracking-' || n, ${cutoff}::timestamptz FROM generate_series(1, 2001) n`;
+        yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt") VALUES ('batch-fresh', ${now}::timestamptz)`;
+      }).pipe(Effect.provide(database)),
+    );
+    await runAt(
+      now,
+      Effect.gen(function* () {
+        const repo = yield* OnlineRepository;
+        yield* repo.prune();
+      }),
+    );
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+
+        const intervals = yield* sql<{
+          userId: string;
+          count: number;
+          trimmed: boolean;
+          worlds: boolean;
+        }>`
+          SELECT "userId", count(*)::integer AS count,
+            bool_and("startedAt" = ${cutoff}::timestamptz AND "endedAt" = ${cutoff}::timestamptz + interval '1 hour') AS trimmed,
+            bool_and(world = 'luvia') AS worlds
+          FROM "UserOnlineInterval" WHERE "userId" IN ('batch-expired', 'batch-retained') GROUP BY "userId"`;
+
+        const tracking = yield* sql<{
+          userId: string;
+        }>`SELECT "userId" FROM "UserOnlineTracking" WHERE "userId" LIKE 'batch-%'`;
+
+        return { intervals, tracking };
+      }).pipe(Effect.provide(database)),
+    );
+
+    expect(result.intervals).toEqual([
+      { userId: "batch-retained", count: 2001, trimmed: true, worlds: true },
+    ]);
+    expect(result.tracking).toEqual([{ userId: "batch-fresh" }]);
+  });
+
+  it("coordinates concurrent replicas and does not repeat a completed hourly window", async () => {
+    const now = "2026-09-06T12:00:00Z";
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+        yield* sql`DELETE FROM "UserOnlineRetention"`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt") VALUES ('window-first', 's', 's', '2020-01-01', '2020-01-02', '2020-01-02')`;
+      }).pipe(Effect.provide(database)),
+    );
+
+    const prune = Effect.gen(function* () {
+      const repo = yield* OnlineRepository;
+      yield* repo.prune();
+    });
+
+    await Promise.all([runAt(now, prune), runAt(now, prune)]);
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+
+        const rows =
+          yield* sql`SELECT 1 FROM "UserOnlineInterval" WHERE "userId" = 'window-first'`;
+
+        expect(rows).toHaveLength(0);
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt") VALUES ('window-next', 's', 's', '2020-01-01', '2020-01-02', '2020-01-02')`;
+      }).pipe(Effect.provide(database)),
+    );
+    await runAt("2026-09-06T12:59:00Z", prune);
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+
+        const rows =
+          yield* sql`SELECT 1 FROM "UserOnlineInterval" WHERE "userId" = 'window-next'`;
+
+        expect(rows).toHaveLength(1);
+      }).pipe(Effect.provide(database)),
+    );
+    await runAt("2026-09-06T13:00:00Z", prune);
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+
+        const rows =
+          yield* sql`SELECT 1 FROM "UserOnlineInterval" WHERE "userId" = 'window-next'`;
+
+        expect(rows).toHaveLength(0);
+      }).pipe(Effect.provide(database)),
+    );
+  });
+
+  it("preserves committed batches after a database failure and resumes unfinished cleanup", async () => {
+    const now = "2026-09-06T12:00:00Z";
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+        yield* sql`DELETE FROM "UserOnlineRetention"`;
+        yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "startedAt", "endedAt", "observedAt")
+          SELECT 'recovery', n::text, n::text, '2020-01-01', '2020-01-02', '2020-01-02' FROM generate_series(1, 2001) n`;
+        yield* sql`CREATE SEQUENCE retention_failure_counter`;
+        yield* sql`CREATE FUNCTION fail_retention_once() RETURNS trigger LANGUAGE plpgsql AS $$
+          BEGIN
+            IF OLD."userId" = 'recovery' AND nextval('retention_failure_counter') = 1001 THEN
+              RAISE EXCEPTION 'Injected retention failure';
+            END IF;
+            RETURN OLD;
+          END $$`;
+        yield* sql`CREATE TRIGGER retention_failure BEFORE DELETE ON "UserOnlineInterval" FOR EACH ROW EXECUTE FUNCTION fail_retention_once()`;
+      }).pipe(Effect.provide(database)),
+    );
+
+    const prune = Effect.gen(function* () {
+      const repo = yield* OnlineRepository;
+      yield* repo.prune();
+    });
+
+    try {
+      const failure = await runAt(now, prune.pipe(Effect.result));
+      expect(failure._tag).toBe("Failure");
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const sql = yield* PgClient.PgClient;
+
+          const rows = yield* sql<{
+            count: number;
+          }>`SELECT count(*)::integer AS count FROM "UserOnlineInterval" WHERE "userId" = 'recovery'`;
+
+          expect(rows[0]?.count).toBeGreaterThan(0);
+          expect(rows[0]?.count).toBeLessThan(2001);
+        }).pipe(Effect.provide(database)),
+      );
+      await runAt(now, prune);
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const sql = yield* PgClient.PgClient;
+
+          const rows =
+            yield* sql`SELECT 1 FROM "UserOnlineInterval" WHERE "userId" = 'recovery'`;
+
+          expect(rows).toHaveLength(0);
+        }).pipe(Effect.provide(database)),
+      );
+    } finally {
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const sql = yield* PgClient.PgClient;
+          yield* sql`DROP TRIGGER retention_failure ON "UserOnlineInterval"`;
+          yield* sql`DROP FUNCTION fail_retention_once()`;
+          yield* sql`DROP SEQUENCE retention_failure_counter`;
+        }).pipe(Effect.provide(database)),
+      );
+    }
+  });
+
   it("expires old intervals independently and ignores delayed expired redeliveries", async () => {
     const expired = checkpoint(
       "expired",
@@ -543,6 +723,7 @@ describe("durable private online history", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
+        yield* sql`DELETE FROM "UserOnlineRetention"`;
         yield* sql`INSERT INTO "UserOnlineInterval" ("userId","sessionId","segmentId","startedAt","endedAt","observedAt") VALUES ('expired','old','old','2020-01-01','2020-01-02','2020-01-02')`;
       }).pipe(Effect.provide(database)),
     );
@@ -566,6 +747,12 @@ describe("durable private online history", () => {
   });
 
   it("physically trims the 112-day boundary and replay cannot restore the forgotten start", async () => {
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const sql = yield* PgClient.PgClient;
+        yield* sql`DELETE FROM "UserOnlineRetention"`;
+      }).pipe(Effect.provide(database)),
+    );
     const now = "2026-09-06T12:00:00Z";
     const cutoff = Date.parse(now) - 112 * 86_400_000;
 

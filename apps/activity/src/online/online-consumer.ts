@@ -114,7 +114,8 @@ export const OnlineConsumer = Layer.effectDiscard(
       Effect.catch(() =>
         Effect.logWarning("Online history retention cleanup failed"),
       ),
-      Effect.repeat(Schedule.spaced("1 hour")),
+      // The repository gates completed hours; poll sooner to recover failed batches.
+      Effect.repeat(Schedule.spaced("1 minute")),
       Effect.forkScoped,
     );
   }),
