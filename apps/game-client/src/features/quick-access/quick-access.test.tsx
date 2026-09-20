@@ -3,7 +3,7 @@ import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room"
 import { beforeEach, describe, expect, it } from "vitest";
 import { createGuildPreferencesTest } from "@/test/guild-preferences-test";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { seedReadyRoomCache } from "@/test/ready-room-fixtures";
 import { useWindowsStore } from "@/store/windows.store";
 import { QuickAccess } from "./quick-access";
 
@@ -32,7 +32,6 @@ const activeReadyRoom: PartyReadyRoomProjection = {
 
 describe("QuickAccess", () => {
   beforeEach(() => {
-    usePartyFinderStore.getState().clearReadyRooms();
     useWindowsStore.setState((state) => ({
       ...state,
       "quick-access": {
@@ -110,11 +109,7 @@ describe("QuickAccess", () => {
     expect(quickAccessWindow?.style.width).toBe("340px");
     expect(quickAccessWindow?.style.height).toBe("84px");
 
-    act(() =>
-      usePartyFinderStore.setState({
-        projections: { [activeReadyRoom.notificationId]: activeReadyRoom },
-      }),
-    );
+    act(() => seedReadyRoomCache(fixture.queryClient, [activeReadyRoom]));
     rerender(
       <QueryClientProvider client={fixture.queryClient}>
         <QuickAccess />

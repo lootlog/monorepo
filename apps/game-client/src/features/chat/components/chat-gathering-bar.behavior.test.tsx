@@ -19,9 +19,11 @@ import { createRealtimeTest } from "@/test/realtime-test";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import {
   createReadyRoomParticipant,
+  readSeededReadyRoomCache,
   readyRoomOrganizerFixture,
+  seedReadyRoomCache,
 } from "@/test/ready-room-fixtures";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatStore } from "@/store/chat.store";
 import { useHiddenPartyGatheringsStore } from "@/store/hidden-party-gatherings.store";
@@ -48,7 +50,9 @@ const createGathering = (
 
 const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
   const harness = createRealtimeTest();
-  usePartyFinderStore.getState().clearReadyRooms();
+  // Start from a synchronized empty collection so mounting a Ready Room view
+  // reads the cache instead of issuing its own list request.
+  seedReadyRoomCache(harness.queryClient, []);
   useHiddenPartyGatheringsStore.setState({ hiddenByScope: {} });
   useHotkeysStore.getState().resetAll();
   useChatStore.setState(useChatStore.getInitialState(), true);
@@ -112,7 +116,6 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
   onTestFinished(() => {
     view.unmount();
     restoreApi();
-    usePartyFinderStore.getState().clearReadyRooms();
     useHiddenPartyGatheringsStore.setState({ hiddenByScope: {} });
     useHotkeysStore.getState().resetAll();
     useChatStore.setState(useChatStore.getInitialState(), true);
@@ -145,10 +148,10 @@ const setup = async (rooms: ActivePartyGatheringSummary[] = []) => {
   };
 };
 
-const openGatheringMenu = (index = 0) => {
-  const trigger = screen.getAllByRole("button", { name: "Opcje zbiórki" })[
-    index
-  ];
+const openGatheringMenu = async (index = 0) => {
+  const trigger = (
+    await screen.findAllByRole("button", { name: "Opcje zbiórki" })
+  )[index];
 
   if (!trigger) throw new Error("Expected gathering menu");
   fireEvent.click(trigger);
@@ -175,7 +178,7 @@ it("keeps application errors separate from discovery and blocks duplicate or sta
     signup.click();
   });
   await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
-  openGatheringMenu();
+  await openGatheringMenu();
   const hide = screen.getByRole("button", { name: "Ukryj zbiórkę" });
   expect(hide).toBeDisabled();
   fireEvent.click(hide);
@@ -211,9 +214,10 @@ it("keeps application errors separate from discovery and blocks duplicate or sta
   );
   fireEvent.click(screen.getByRole("button", { name: "Zgłoś się" }));
   await waitFor(() =>
-    expect(usePartyFinderStore.getState().projections["room-1"]?.viewer).toBe(
-      "PARTICIPANT",
-    ),
+    expect(
+      readSeededReadyRoomCache(harness.queryClient).projections["room-1"]
+        ?.viewer,
+    ).toBe("PARTICIPANT"),
   );
   expect(harness.mutation).toHaveBeenCalledTimes(2);
   await waitFor(() =>
@@ -231,7 +235,9 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
         ? { ...readyRoomOrganizerFixture, world: "luvia" }
         : createChatReadyRoom({ world: "luvia" });
 
-    act(() => usePartyFinderStore.getState().mergeProjection(room));
+    await act(async () =>
+      mergeReadyRoomProjectionIntoCache(room, harness.queryClient),
+    );
     harness.mutation.mockImplementation(async () =>
       Response.json({ message: "Failed" }, { status: 500 }),
     );
@@ -239,10 +245,12 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
     const name =
       viewer === "ORGANIZER" ? "Anuluj zbiórkę" : "Wycofaj zgłoszenie";
 
-    if (viewer === "ORGANIZER") openGatheringMenu();
+    if (viewer === "ORGANIZER") await openGatheringMenu();
     fireEvent.click(await screen.findByRole("button", { name }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Nie udało się");
-    expect(usePartyFinderStore.getState().projections["room-1"]).toBeDefined();
+    expect(
+      readSeededReadyRoomCache(harness.queryClient).projections["room-1"],
+    ).toBeDefined();
     harness.mutation.mockImplementation(async () =>
       Response.json({
         schemaVersion: 3,
@@ -252,11 +260,11 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
       }),
     );
 
-    if (viewer === "ORGANIZER") openGatheringMenu();
+    if (viewer === "ORGANIZER") await openGatheringMenu();
     fireEvent.click(screen.getByRole("button", { name }));
     await waitFor(() =>
       expect(
-        usePartyFinderStore.getState().projections["room-1"],
+        readSeededReadyRoomCache(harness.queryClient).projections["room-1"],
       ).toBeUndefined(),
     );
     await waitFor(() =>
@@ -267,7 +275,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
 );
 
 it("shows actual party size independently of applications and opens management", async () => {
-  await setup();
+  const harness = await setup();
 
   const room = {
     ...readyRoomOrganizerFixture,
@@ -294,25 +302,28 @@ it("shows actual party size independently of applications and opens management",
     },
   };
 
-  act(() => {
+  await act(async () => {
     useWindowsStore.getState().setOpen("party-finder", false);
-    usePartyFinderStore.getState().mergeProjection(room);
+    mergeReadyRoomProjectionIntoCache(room, harness.queryClient);
   });
   expect(
-    screen.getByLabelText("W grupie: 5/10", { exact: false }),
+    await screen.findByLabelText("W grupie: 5/10", { exact: false }),
   ).toBeVisible();
-  openGatheringMenu();
+  await openGatheringMenu();
   fireEvent.click(screen.getByRole("button", { name: /^Lista chętnych/ }));
   expect(useWindowsStore.getState()["party-finder"].open).toBe(true);
-  act(() =>
-    usePartyFinderStore.getState().mergeProjection({
-      ...room,
-      revision: room.revision + 1,
-      participants: {},
-    }),
+  await act(async () =>
+    mergeReadyRoomProjectionIntoCache(
+      {
+        ...room,
+        revision: room.revision + 1,
+        participants: {},
+      },
+      harness.queryClient,
+    ),
   );
   expect(
-    screen.getByLabelText("W grupie: 5/10", { exact: false }),
+    await screen.findByLabelText("W grupie: 5/10", { exact: false }),
   ).toBeVisible();
   useWindowsStore.getState().setOpen("party-finder", false);
 });
@@ -326,11 +337,14 @@ it("invites applicants only when available, blocks double clicks and recovers af
     disposeReadyRoomInvitationCoordinator();
     vi.unstubAllGlobals();
   });
-  act(() =>
-    usePartyFinderStore.getState().mergeProjection({
-      ...readyRoomOrganizerFixture,
-      world: "luvia",
-    }),
+  await act(async () =>
+    mergeReadyRoomProjectionIntoCache(
+      {
+        ...readyRoomOrganizerFixture,
+        world: "luvia",
+      },
+      harness.queryClient,
+    ),
   );
 
   const invite = await screen.findByRole("button", {
@@ -347,7 +361,6 @@ it("invites applicants only when available, blocks double clicks and recovers af
         characterId: "organizer-character",
       },
     });
-    usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
   });
   await waitFor(() => expect(invite).toBeEnabled());
   const pending = Promise.withResolvers<Response>();
@@ -393,22 +406,26 @@ it("invites applicants only when available, blocks double clicks and recovers af
 it.each(["OUTSIDE", "IN_PARTY"] as const)(
   "shows the current participant's %s status rather than another applicant's",
   async (partyPresence) => {
-    await setup();
+    const harness = await setup();
     const room = createChatReadyRoom({ world: "luvia" });
     const participant = room.participants["participant-1"];
 
     if (!participant) throw new Error("Expected current character fixture");
-    act(() =>
-      usePartyFinderStore.getState().mergeProjection({
-        ...room,
-        participants: {
-          "participant-1": { ...participant, partyPresence },
-          second: {
-            ...createReadyRoomParticipant("second", "other-character"),
-            partyPresence: partyPresence === "OUTSIDE" ? "IN_PARTY" : "OUTSIDE",
+    await act(async () =>
+      mergeReadyRoomProjectionIntoCache(
+        {
+          ...room,
+          participants: {
+            "participant-1": { ...participant, partyPresence },
+            second: {
+              ...createReadyRoomParticipant("second", "other-character"),
+              partyPresence:
+                partyPresence === "OUTSIDE" ? "IN_PARTY" : "OUTSIDE",
+            },
           },
         },
-      }),
+        harness.queryClient,
+      ),
     );
     expect(
       await screen.findByRole("button", { name: "Wycofaj zgłoszenie" }),
@@ -445,10 +462,11 @@ it("keeps the hovered signup target and prioritizes an owned room", async () => 
   expect(String(harness.mutation.mock.calls[0]?.[0])).toContain(
     "original-room",
   );
-  act(() =>
-    usePartyFinderStore
-      .getState()
-      .mergeProjection({ ...readyRoomOrganizerFixture, world: "luvia" }),
+  await act(async () =>
+    mergeReadyRoomProjectionIntoCache(
+      { ...readyRoomOrganizerFixture, world: "luvia" },
+      harness.queryClient,
+    ),
   );
   await waitFor(() => {
     for (const signup of screen.getAllByRole("button", { name: "Zgłoś się" }))
@@ -476,7 +494,9 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
         ? { ...readyRoomOrganizerFixture, world: "luvia" }
         : createChatReadyRoom({ world: "luvia" });
 
-    act(() => usePartyFinderStore.getState().mergeProjection(room));
+    await act(async () =>
+      mergeReadyRoomProjectionIntoCache(room, harness.queryClient),
+    );
 
     const currentAction = await screen.findByRole("button", {
       name:
@@ -589,7 +609,7 @@ it("hides a frozen hovered target and makes the next visible gathering the hotke
   );
   await harness.refresh();
   expect(screen.getByText("Original gathering")).toBeVisible();
-  openGatheringMenu();
+  await openGatheringMenu();
   const firstHide = screen.getAllByRole("button", { name: "Ukryj zbiórkę" })[0];
 
   if (!firstHide) throw new Error("Expected first gathering hide action");
@@ -609,7 +629,7 @@ it("hides a frozen hovered target and makes the next visible gathering the hotke
   await waitFor(() => expect(harness.mutation).toHaveBeenCalledTimes(1));
   expect(String(harness.mutation.mock.calls[0]?.[0])).toContain("newer-room");
   await screen.findByRole("alert");
-  openGatheringMenu();
+  await openGatheringMenu();
   fireEvent.click(screen.getByRole("button", { name: "Ukryj zbiórkę" }));
   expect(screen.queryByRole("button", { name: "Zgłoś się" })).toBeNull();
   act(() => window.dispatchEvent(new Event("lootlog:join-visible-gathering")));
@@ -624,7 +644,7 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
   const editor = screen.getByRole("textbox", { name: "Wiadomość..." });
   await user.click(editor);
   await user.paste("Keep this draft");
-  openGatheringMenu();
+  await openGatheringMenu();
   await user.click(screen.getByRole("button", { name: "Ukryj zbiórkę" }));
   expect(screen.queryByRole("button", { name: "Zgłoś się" })).toBeNull();
   expect(screen.getByRole("textbox", { name: "Wiadomość..." })).toBe(editor);
@@ -658,7 +678,7 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
       screen.getByRole("button", { name: "Ukryte zbiórki (0)" }),
     ).toHaveFocus(),
   );
-  openGatheringMenu();
+  await openGatheringMenu();
   await user.click(screen.getByRole("button", { name: "Ukryj zbiórkę" }));
 
   const newGathering = {
@@ -701,7 +721,7 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
     createGathering({ notificationId: "second-room", description: "Second" }),
   ]);
   expandGatherings();
-  openGatheringMenu(1);
+  await openGatheringMenu(1);
   const secondaryHide = screen.getByRole("button", { name: "Ukryj zbiórkę" });
   act(() => secondaryHide.focus());
   await user.keyboard("{Enter}");
@@ -712,7 +732,7 @@ it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary 
 
   await waitFor(() => expect(menu).toHaveFocus());
   expect(screen.queryByText("Second")).toBeNull();
-  openGatheringMenu();
+  await openGatheringMenu();
   act(() => screen.getByRole("button", { name: "Ukryj zbiórkę" }).focus());
   await user.keyboard("{Enter}");
   await waitFor(() => expect(menu).toHaveFocus());
@@ -763,7 +783,7 @@ it("joins the selected organizer from the visible list and enables other signups
 
   expect(screen.getByText("First")).toBeVisible();
   expect(screen.getByRole("button", { name: "Zgłoś się" })).toBeDisabled();
-  openGatheringMenu();
+  await openGatheringMenu();
   expect(screen.getByRole("button", { name: "Ukryj zbiórkę" })).toBeEnabled();
   await user.keyboard("{Escape}");
   harness.mutation.mockResolvedValueOnce(
@@ -896,10 +916,11 @@ it("updates the main join tooltip from the live binding without advertising its 
 
 it("withdraws an existing application with the signup hotkey and ignores repeated presses while pending", async () => {
   const harness = await setup([createGathering()]);
-  act(() =>
-    usePartyFinderStore
-      .getState()
-      .mergeProjection(createChatReadyRoom({ world: "luvia" })),
+  await act(async () =>
+    mergeReadyRoomProjectionIntoCache(
+      createChatReadyRoom({ world: "luvia" }),
+      harness.queryClient,
+    ),
   );
   await screen.findByRole("button", { name: "Wycofaj zgłoszenie" });
   vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue(
@@ -920,7 +941,7 @@ it("withdraws an existing application with the signup hotkey and ignores repeate
 it("applies directly from the hidden tab without restoring the gathering and surfaces a failed request", async () => {
   const harness = await setup([createGathering()]);
   await screen.findByRole("button", { name: "Zgłoś się" });
-  openGatheringMenu();
+  await openGatheringMenu();
   fireEvent.click(screen.getByRole("button", { name: "Ukryj zbiórkę" }));
   const hiddenBefore = useHiddenPartyGatheringsStore.getState().hiddenByScope;
   fireEvent.click(screen.getByRole("button", { name: "Ukryte zbiórki (1)" }));

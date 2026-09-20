@@ -1,10 +1,7 @@
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
-import {
-  selectOwnedReadyRoom,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+import { useOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +16,7 @@ export const PartyFinder = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
-  const readyRoom = usePartyFinderStore(selectOwnedReadyRoom);
+  const readyRoom = useOwnedReadyRoom();
   const partyMembers = usePartyStore((s) => s.members);
 
   const { mutate: cancelPartyGathering, isPending: isCancelling } =

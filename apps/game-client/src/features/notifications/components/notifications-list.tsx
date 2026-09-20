@@ -20,7 +20,7 @@ import {
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
@@ -74,9 +74,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const { isPending: isJoiningReadyRoom, mutate: applyToReadyRoom } =
     usePartyReadyRoomControllerApply();
 
-  const mergeReadyRoomProjection = usePartyFinderStore(
-    (state) => state.mergeProjection,
-  );
+  const { mergeProjection: mergeReadyRoomProjection } = useReadyRoomsCache();
 
   const setOpen = useWindowsStore((state) => state.setOpen);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);

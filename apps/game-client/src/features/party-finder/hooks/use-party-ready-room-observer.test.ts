@@ -4,13 +4,24 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { PartyReadyRoomOrganizerProjection } from "@lootlog/schema/party-ready-room";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createElement, type ReactNode } from "react";
+import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import { seedReadyRoomCache } from "@/test/ready-room-fixtures";
 import { usePartyStore } from "@/store/party.store";
 import { useGlobalStore } from "@/store/global.store";
 
 const observeParty = vi.fn<(request: Request) => Promise<Response>>();
 
 let restoreClient = () => {};
+
+let queryClient: QueryClient;
+
+const renderObserver = () =>
+  renderHook(() => usePartyReadyRoomObserver(), {
+    wrapper: ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children),
+  });
 
 afterEach(() => {
   restoreClient();
@@ -58,16 +69,20 @@ describe("usePartyReadyRoomObserver", () => {
     setTestRuntimeGame({
       hero: { accountId: "account", characterId: "character" },
     });
-    usePartyFinderStore.getState().clearReadyRooms();
-    usePartyFinderStore.getState().mergeProjection(projection);
-    usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
+    queryClient = new QueryClient({
+      defaultOptions: {
+        mutations: { retry: false },
+        queries: { retry: false },
+      },
+    });
+    seedReadyRoomCache(queryClient, [projection]);
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
     usePartyStore.getState().clearParty();
   });
 
   it("reports the initial empty snapshot and only changed normalized member sets", async () => {
     usePartyStore.getState().setMembers([]);
-    renderHook(() => usePartyReadyRoomObserver());
+    renderObserver();
 
     await waitFor(() => expect(observeParty).toHaveBeenCalledTimes(1));
     usePartyStore.getState().setMembers([
@@ -112,7 +127,7 @@ describe("usePartyReadyRoomObserver", () => {
   });
 
   it("waits for the runtime party snapshot and does not report reset state as an empty party", async () => {
-    renderHook(() => usePartyReadyRoomObserver());
+    renderObserver();
     expect(observeParty).not.toHaveBeenCalled();
 
     act(() => usePartyStore.getState().setMembers([]));
@@ -127,16 +142,19 @@ describe("usePartyReadyRoomObserver", () => {
 
   it("does not report another character's party for the organizer", async () => {
     usePartyStore.getState().setMembers([]);
-    usePartyFinderStore.getState().mergeProjection({
-      ...projection,
-      revision: 2,
-      organizerCharacter: {
-        ...projection.organizerCharacter,
-        characterId: "different-character",
+    mergeReadyRoomProjectionIntoCache(
+      {
+        ...projection,
+        revision: 2,
+        organizerCharacter: {
+          ...projection.organizerCharacter,
+          characterId: "different-character",
+        },
       },
-    });
+      queryClient,
+    );
 
-    renderHook(() => usePartyReadyRoomObserver());
+    renderObserver();
     await Promise.resolve();
 
     expect(observeParty).not.toHaveBeenCalled();

@@ -7,10 +7,9 @@ import {
   partyReadyRoomControllerCancel,
 } from "@lootlog/client/main";
 
-import {
-  selectOwnedReadyRoom,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
+import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useWindowsStore } from "@/store/windows.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
@@ -18,12 +17,14 @@ export const useCancelPartyGathering = () => {
   const t = getFixedT("partyFinder");
   const queryClient = useQueryClient();
   const setOpen = useWindowsStore((s) => s.setOpen);
+  const { applyUpdate } = useReadyRoomsCache();
 
   return useMutation({
     mutationKey: ["cancel-party-gathering"],
     mutationFn: async () => {
-      const state = usePartyFinderStore.getState();
-      const ownedReadyRoom = selectOwnedReadyRoom(state);
+      const ownedReadyRoom = selectOwnedReadyRoom(
+        readReadyRoomCache(queryClient),
+      );
 
       if (!ownedReadyRoom) {
         throw new Error("No active party gathering");
@@ -34,7 +35,7 @@ export const useCancelPartyGathering = () => {
         { expectedRevision: ownedReadyRoom.revision },
       );
 
-      state.applyUpdate(decodePartyReadyRoomClientUpdate(response));
+      applyUpdate(decodePartyReadyRoomClientUpdate(response));
       queryClient.setQueriesData<ActivePartyGatheringSummary[]>(
         { queryKey: ACTIVE_GATHERINGS_QUERY_KEY },
         (rooms) =>

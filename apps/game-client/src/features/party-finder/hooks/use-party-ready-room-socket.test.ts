@@ -1,4 +1,5 @@
 import { act, render } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RealtimeClient } from "@lootlog/client/realtime";
@@ -6,7 +7,7 @@ import { SocketProvider } from "@/contexts/socket-context";
 import { configureGameClientPlatform } from "@/lib/game-client-platform";
 import { disposeSocket } from "@/lib/socket";
 import { RealtimeWire } from "@/test/realtime-wire";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
 import { usePartyReadyRoomSocket } from "./use-party-ready-room-socket";
 
 function ReadyRoomListener() {
@@ -19,10 +20,14 @@ describe("usePartyReadyRoomSocket", () => {
   let wire: RealtimeWire;
   let realtime: RealtimeClient;
   let restorePlatform: () => void;
+  let queryClient: QueryClient;
+
+  const withClient = (children?: ReturnType<typeof createElement>) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
 
   beforeEach(() => {
     disposeSocket();
-    usePartyFinderStore.setState(usePartyFinderStore.getInitialState(), true);
+    queryClient = new QueryClient();
     wire = new RealtimeWire();
     realtime = new RealtimeClient({
       url: "https://gateway.example.test",
@@ -37,12 +42,14 @@ describe("usePartyReadyRoomSocket", () => {
   afterEach(() => {
     disposeSocket();
     restorePlatform();
-    usePartyFinderStore.setState(usePartyFinderStore.getInitialState(), true);
+    queryClient.clear();
   });
 
   it("applies personalized gateway updates and stops applying them after unmount", async () => {
     const view = render(
-      createElement(SocketProvider, null, createElement(ReadyRoomListener)),
+      withClient(
+        createElement(SocketProvider, null, createElement(ReadyRoomListener)),
+      ),
     );
 
     act(() => wire.open());
@@ -66,11 +73,11 @@ describe("usePartyReadyRoomSocket", () => {
     act(() => update(4));
     await vi.waitFor(() => {
       expect(
-        usePartyFinderStore.getState().roomVersions["room-1"]?.revision,
+        readSeededReadyRoomCache(queryClient).roomVersions["room-1"]?.revision,
       ).toBe(4);
     });
 
-    view.rerender(createElement(SocketProvider, null));
+    view.rerender(withClient(createElement(SocketProvider, null)));
     const received = Promise.withResolvers<void>();
     const stopObserving = realtime.subscribe(() => received.resolve());
     await act(async () => {
@@ -79,7 +86,7 @@ describe("usePartyReadyRoomSocket", () => {
     });
     stopObserving();
     expect(
-      usePartyFinderStore.getState().roomVersions["room-1"]?.revision,
+      readSeededReadyRoomCache(queryClient).roomVersions["room-1"]?.revision,
     ).toBe(4);
     view.unmount();
   });

@@ -1,22 +1,33 @@
 import { configureApiClients } from "@lootlog/client/transport";
+import type { PartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useWindowsStore } from "@/store/windows.store";
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, onTestFinished } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
 import { useCancelPartyGathering } from "./use-cancel-party-gathering";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import {
+  readSeededReadyRoomCache,
+  seedReadyRoomCache,
+} from "@/test/ready-room-fixtures";
 import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 
 const requests: Request[] = [];
+
+let ownedReadyRoom: PartyReadyRoomProjection;
 
 function createWrapper(
   queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   }),
 ) {
-  return ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
+  seedReadyRoomCache(queryClient, [ownedReadyRoom]);
+
+  return {
+    queryClient,
+    wrapper: ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children),
+  };
 }
 
 describe("useCancelPartyGathering", () => {
@@ -43,8 +54,7 @@ describe("useCancelPartyGathering", () => {
     });
 
     onTestFinished(restore);
-    usePartyFinderStore.getState().clearReadyRooms();
-    usePartyFinderStore.getState().mergeProjection({
+    ownedReadyRoom = {
       schemaVersion: 3,
       notificationId: "notif-123",
       organizerDiscordId: "user-1",
@@ -66,12 +76,14 @@ describe("useCancelPartyGathering", () => {
       viewer: "ORGANIZER",
       participants: {},
       ownedParticipantIds: [],
-    });
+    };
   });
 
   it("cancels with the current revision and removes the local projection", async () => {
+    const { queryClient, wrapper } = createWrapper();
+
     const { result } = renderHook(() => useCancelPartyGathering(), {
-      wrapper: createWrapper(),
+      wrapper,
     });
 
     result.current.mutate();
@@ -81,7 +93,7 @@ describe("useCancelPartyGathering", () => {
     expect(requests).toHaveLength(1);
     expect(requests[0]?.url).toContain("notif-123");
     expect(await requests[0]?.json()).toEqual({ expectedRevision: 1 });
-    expect(usePartyFinderStore.getState()).toMatchObject({
+    expect(readSeededReadyRoomCache(queryClient)).toMatchObject({
       projections: {},
       roomVersions: {
         "notif-123": { revision: 2, presence: "REMOVED" },
@@ -102,7 +114,7 @@ describe("useCancelPartyGathering", () => {
     queryClient.setQueryData(chatQueryKey, [{ id: "message-1" }]);
 
     const { result } = renderHook(() => useCancelPartyGathering(), {
-      wrapper: createWrapper(queryClient),
+      wrapper: createWrapper(queryClient).wrapper,
     });
 
     result.current.mutate();

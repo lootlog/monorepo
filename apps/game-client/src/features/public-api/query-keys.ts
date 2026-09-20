@@ -1,4 +1,5 @@
 import {
+  getPartyReadyRoomControllerListQueryKey,
   getTimersControllerGetAllTimersQueryKey,
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
 } from "@lootlog/client/main";
@@ -8,4 +9,5 @@ export const queryKeys = {
   timers: (world?: string) =>
     getTimersControllerGetAllTimersQueryKey({ world }),
   allTimers: () => getTimersControllerGetAllTimersQueryKey(),
+  readyRooms: () => getPartyReadyRoomControllerListQueryKey(),
 };

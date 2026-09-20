@@ -9,8 +9,17 @@ import {
   disposeReadyRoomInvitationCoordinator,
 } from "@/features/party-finder/ready-room-invitation-coordinator";
 import { useGlobalStore } from "@/store/global.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { queryClient } from "@/lib/query-client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createElement, type ReactNode } from "react";
+import { mergeReadyRoomProjectionIntoCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(QueryClientProvider, { client: queryClient }, children);
+
+const renderInvitations = () =>
+  renderHook(() => useReadyRoomInvitations(), { wrapper });
 
 type InvitationResponse = { targets: PartyReadyRoomInvitationTarget[] };
 
@@ -30,6 +39,7 @@ afterEach(() => {
 import {
   createReadyRoomParticipant as createParticipant,
   readyRoomOrganizerFixture as projection,
+  seedReadyRoomCache,
 } from "@/test/ready-room-fixtures";
 
 const participant = createParticipant("participant-1", "participant-character");
@@ -53,9 +63,8 @@ describe("useReadyRoomInvitations", () => {
     );
     vi.stubGlobal("_g", inviteCharacterToParty);
     disposeReadyRoomInvitationCoordinator();
-    usePartyFinderStore.getState().clearReadyRooms();
-    usePartyFinderStore.getState().mergeProjection(projection);
-    usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
+    queryClient.clear();
+    seedReadyRoomCache(queryClient, [projection]);
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
   });
 
@@ -68,7 +77,7 @@ describe("useReadyRoomInvitations", () => {
         },
       ],
     });
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     await act(() => result.current.inviteParticipants(["participant-1"]));
 
@@ -98,7 +107,7 @@ describe("useReadyRoomInvitations", () => {
     resolveInvitationTargets
       .mockImplementationOnce(() => firstResolution.promise)
       .mockResolvedValueOnce(response);
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     const firstIntent = result.current.inviteParticipants();
     const secondIntent = result.current.inviteParticipants();
@@ -134,7 +143,7 @@ describe("useReadyRoomInvitations", () => {
     resolveInvitationTargets
       .mockImplementationOnce(() => firstResolution.promise)
       .mockResolvedValueOnce(response);
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     const firstIntent = result.current.inviteParticipants();
 
@@ -155,7 +164,7 @@ describe("useReadyRoomInvitations", () => {
   });
 
   it("keeps an outside participant available for repeated clicks", () => {
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     expect(result.current.canInviteParticipants()).toBe(true);
     expect(result.current.canInviteParticipants(["participant-1"])).toBe(true);
@@ -166,7 +175,7 @@ describe("useReadyRoomInvitations", () => {
     resolveInvitationTargets.mockImplementationOnce(
       () => firstResolution.promise,
     );
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
     const firstIntent = result.current.inviteParticipants();
     const secondIntent = result.current.inviteParticipants();
     await waitFor(() =>
@@ -174,13 +183,16 @@ describe("useReadyRoomInvitations", () => {
     );
 
     act(() => {
-      usePartyFinderStore.getState().mergeProjection({
-        ...projection,
-        revision: 4,
-        participants: {
-          "participant-1": { ...participant, partyPresence: "IN_PARTY" },
+      mergeReadyRoomProjectionIntoCache(
+        {
+          ...projection,
+          revision: 4,
+          participants: {
+            "participant-1": { ...participant, partyPresence: "IN_PARTY" },
+          },
         },
-      });
+        queryClient,
+      );
     });
     firstResolution.resolve({
       targets: [
@@ -199,7 +211,7 @@ describe("useReadyRoomInvitations", () => {
 
   it("does not touch the game when target resolution fails", async () => {
     resolveInvitationTargets.mockRejectedValue(new Error("resolver conflict"));
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     await expect(
       act(() => result.current.inviteParticipants(["participant-1"])),
@@ -212,7 +224,7 @@ describe("useReadyRoomInvitations", () => {
 
     try {
       resolveInvitationTargets.mockReturnValue(new Promise(() => undefined));
-      const { result } = renderHook(() => useReadyRoomInvitations());
+      const { result } = renderInvitations();
       const invitation = result.current.inviteParticipants();
       await Promise.all([
         expect(invitation).rejects.toThrow(
@@ -243,13 +255,16 @@ describe("useReadyRoomInvitations", () => {
       ),
     );
 
-    usePartyFinderStore.getState().mergeProjection({
-      ...projection,
-      revision: 4,
-      participants,
-    });
+    mergeReadyRoomProjectionIntoCache(
+      {
+        ...projection,
+        revision: 4,
+        participants,
+      },
+      queryClient,
+    );
     resolveInvitationTargets.mockResolvedValue({ targets: [] });
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     await act(() => result.current.inviteParticipants());
 
@@ -268,14 +283,17 @@ describe("useReadyRoomInvitations", () => {
       "second-character",
     );
 
-    usePartyFinderStore.getState().mergeProjection({
-      ...projection,
-      revision: 4,
-      participants: {
-        "participant-1": participant,
-        "participant-2": secondParticipant,
+    mergeReadyRoomProjectionIntoCache(
+      {
+        ...projection,
+        revision: 4,
+        participants: {
+          "participant-1": participant,
+          "participant-2": secondParticipant,
+        },
       },
-    });
+      queryClient,
+    );
     resolveInvitationTargets.mockResolvedValue({
       targets: [
         {
@@ -292,7 +310,7 @@ describe("useReadyRoomInvitations", () => {
       throw new Error("game rejected invite");
     });
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const { result } = renderHook(() => useReadyRoomInvitations());
+    const { result } = renderInvitations();
 
     await act(() => result.current.inviteParticipants());
 

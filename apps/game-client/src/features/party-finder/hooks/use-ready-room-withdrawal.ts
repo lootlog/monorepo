@@ -2,13 +2,11 @@ import {
   decodePartyReadyRoomClientUpdate,
   type PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 import { partyReadyRoomControllerWithdraw } from "@lootlog/client/main";
-import {
-  selectReadyRoomParticipantForCharacter,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+import { selectReadyRoomParticipantForCharacter } from "@/features/party-finder/ready-room-cache";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 
 export const useReadyRoomWithdrawal = (
   room: PartyReadyRoomProjection | null,
@@ -20,22 +18,29 @@ export const useReadyRoomWithdrawal = (
       )
     : null;
 
-  const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const { applyUpdate } = useReadyRoomsCache();
+
+  const { mutateAsync, isPending: isWithdrawing } = useMutation({
+    mutationFn: ({
+      notificationId,
+      participantId,
+    }: {
+      notificationId: string;
+      participantId: string;
+    }) =>
+      partyReadyRoomControllerWithdraw({ notificationId }, { participantId }),
+    onSuccess: (update) => {
+      applyUpdate(decodePartyReadyRoomClientUpdate(update));
+    },
+  });
 
   const withdraw = () => {
     if (!room || !participant || isWithdrawing) return;
 
-    setIsWithdrawing(true);
-
-    return partyReadyRoomControllerWithdraw(
-      { notificationId: room.notificationId },
-      { participantId: participant.participantId },
-    )
-      .then((update) => {
-        applyUpdate(decodePartyReadyRoomClientUpdate(update));
-      })
-      .finally(() => setIsWithdrawing(false));
+    return mutateAsync({
+      notificationId: room.notificationId,
+      participantId: participant.participantId,
+    });
   };
 
   return { isWithdrawing, participant, withdraw };
