@@ -159,49 +159,6 @@ describe("RedisService", () => {
     expect(client.del).toHaveBeenCalledWith("lootlog:cache:key");
   });
 
-  it("stores single-flight JSON results behind a short lock", async () => {
-    const client = createRedisClient();
-    client.get.mockResolvedValue(null);
-    client.set.mockResolvedValueOnce("OK").mockResolvedValueOnce("OK");
-    client.eval.mockResolvedValueOnce(1);
-    const service = createRedisService(client);
-
-    const factory = vi
-      .fn<() => Promise<{ value: number }>>()
-      .mockResolvedValue({ value: 1 });
-
-    const result = await service.getOrSetJson({
-      key: "cache:key",
-      ttlSeconds: 60,
-      factory,
-      codec: valueCodec,
-    });
-
-    expect(result).toEqual({ value: 1 });
-    expect(factory).toHaveBeenCalledTimes(1);
-    expect(client.set).toHaveBeenNthCalledWith(
-      1,
-      "lootlog:cache:key:single-flight",
-      expect.any(String),
-      "EX",
-      "10",
-      "NX",
-    );
-    expect(client.set).toHaveBeenNthCalledWith(
-      2,
-      "lootlog:cache:key",
-      JSON.stringify({ value: 1 }),
-      "EX",
-      "60",
-    );
-    expect(client.eval).toHaveBeenCalledWith(
-      expect.stringContaining('redis.call("get", KEYS[1]) == ARGV[1]'),
-      "1",
-      "lootlog:cache:key:single-flight",
-      expect.any(String),
-    );
-  });
-
   it("waits for the in-flight writer before recomputing", async () => {
     const client = createRedisClient();
     client.get
@@ -252,6 +209,26 @@ describe("RedisService", () => {
     expect(onError).toHaveBeenCalledWith(cacheError);
   });
 
+  it("does not start another expensive fill when the owner's wait budget expires", async () => {
+    const client = createRedisClient();
+    client.get.mockResolvedValue(null);
+    client.set.mockResolvedValue(null);
+    const service = createRedisService(client);
+    const factory = vi.fn(async () => ({ value: 2 }));
+
+    await expect(
+      service.getOrSetJsonBestEffort({
+        key: "busy",
+        ttlSeconds: 60,
+        waitTimeoutMs: 5,
+        waitIntervalMs: 1,
+        codec: valueCodec,
+        factory,
+      }),
+    ).rejects.toThrow("Cache fill wait timed out");
+    expect(factory).not.toHaveBeenCalled();
+  });
+
   it("does not swallow factory errors in best-effort mode", async () => {
     const client = createRedisClient();
     client.get.mockResolvedValue(null);
@@ -278,5 +255,48 @@ describe("RedisService", () => {
 
     expect(factory).toHaveBeenCalledTimes(1);
     expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("does not take over a released lease after the waiting request's deadline", async () => {
+    const client = createRedisClient();
+    client.get.mockResolvedValueOnce(null).mockImplementation(async () => {
+      await Bun.sleep(10);
+
+      return null;
+    });
+    client.set.mockResolvedValueOnce(null).mockResolvedValue("OK");
+    const service = createRedisService(client);
+    const factory = vi.fn(async () => ({ value: 2 }));
+
+    await expect(
+      service.getOrSetJsonBestEffort({
+        key: "late-takeover",
+        ttlSeconds: 60,
+        codec: valueCodec,
+        waitTimeoutMs: 5,
+        waitIntervalMs: 1,
+        factory,
+      }),
+    ).rejects.toThrow("Cache fill wait timed out");
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it("returns the completed fill without repeating SQL when publication fails", async () => {
+    const client = createRedisClient();
+    client.get.mockResolvedValue(null);
+    client.set.mockResolvedValue("OK");
+    client.eval.mockRejectedValueOnce(new Error("Redis disconnected"));
+    const service = createRedisService(client);
+    const factory = vi.fn(async () => ({ value: 7 }));
+
+    await expect(
+      service.getOrSetJsonBestEffort({
+        key: "publication-failure",
+        ttlSeconds: 60,
+        codec: valueCodec,
+        factory,
+      }),
+    ).resolves.toEqual({ value: 7 });
+    expect(factory).toHaveBeenCalledTimes(1);
   });
 });

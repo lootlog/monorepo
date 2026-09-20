@@ -82,6 +82,188 @@ describe("Read cache Dragonfly integration", () => {
     await runtime.dispose();
   });
 
+  it("shares a fill slower than the former two-second deadline across service instances", async () => {
+    const second = new RedisService(
+      await runtime.runPromise(Redis.Redis),
+      { prefix: `cache-test-${organization}` },
+      (effect) => runtime.runPromise(effect),
+    );
+
+    const started = Promise.withResolvers<void>();
+    let executions = 0;
+
+    const options = {
+      key: "slow-fill",
+      ttlSeconds: 30,
+      codec,
+      factory: async () => {
+        executions++;
+        started.resolve();
+        await Bun.sleep(2_150);
+
+        return { value: 1 };
+      },
+    };
+
+    const owner = cache.getOrSetJsonBestEffort(options);
+    await started.promise;
+
+    const waiters = Array.from({ length: 8 }, () =>
+      second.getOrSetJsonBestEffort(options),
+    );
+
+    const values = await Promise.all([owner, ...waiters]);
+    expect(executions).toBe(1);
+
+    for (const value of values) expect(value).toEqual({ value: 1 });
+  }, 10_000);
+
+  it("fails busy best-effort reads without running SQL and leaves the owner intact", async () => {
+    const started = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+
+    const owner = cache.getOrSetJson({
+      key: "busy-fill",
+      codec,
+      ttlSeconds: 30,
+      factory: async () => {
+        started.resolve();
+        await finish.promise;
+
+        return { value: 1 };
+      },
+    });
+
+    await started.promise;
+    let executions = 0;
+
+    try {
+      const waiters = Array.from({ length: 8 }, () =>
+        cache.getOrSetJsonBestEffort({
+          key: "busy-fill",
+          codec,
+          ttlSeconds: 30,
+          waitTimeoutMs: 20,
+          waitIntervalMs: 1,
+          factory: async () => {
+            executions++;
+
+            return { value: 2 };
+          },
+        }),
+      );
+
+      const results = await Promise.allSettled(waiters);
+      expect(
+        results.every(
+          (result) =>
+            result.status === "rejected" &&
+            result.reason instanceof Error &&
+            result.reason.message === "Cache fill wait timed out",
+        ),
+      ).toBe(true);
+      expect(executions).toBe(0);
+      expect(await cache.get("busy-fill:single-flight")).not.toBeNull();
+    } finally {
+      finish.resolve();
+      await owner;
+    }
+
+    expect(await cache.getJson("busy-fill", codec)).toEqual({ value: 1 });
+  });
+
+  it("allows a waiting reader to recover after the owner fails", async () => {
+    const started = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+
+    const owner = cache.getOrSetJson({
+      key: "failed-fill",
+      codec,
+      ttlSeconds: 30,
+      factory: async () => {
+        started.resolve();
+        await finish.promise;
+        throw new Error("loader failed");
+      },
+    });
+
+    const ownerResult = Promise.allSettled([owner]);
+    await started.promise;
+
+    const waiter = cache.getOrSetJsonBestEffort({
+      key: "failed-fill",
+      codec,
+      ttlSeconds: 30,
+      waitIntervalMs: 1,
+      factory: async () => ({ value: 2 }),
+    });
+
+    finish.resolve();
+    expect((await ownerResult)[0]?.status).toBe("rejected");
+    expect(await waiter).toEqual({ value: 2 });
+    expect(await cache.getJson("failed-fill", codec)).toEqual({ value: 2 });
+  });
+
+  it("does not let an expired owner overwrite or unlock its successor", async () => {
+    const started = Promise.withResolvers<void>();
+    const finish = Promise.withResolvers<void>();
+
+    const owner = cache.getOrSetJson({
+      key: "expired-fill",
+      codec,
+      ttlSeconds: 30,
+      factory: async () => {
+        started.resolve();
+        await finish.promise;
+
+        return { value: 1 };
+      },
+    });
+
+    await started.promise;
+
+    try {
+      await cache.pexpire("expired-fill:single-flight", 0);
+      await cache.setNX("expired-fill:single-flight", "successor", 10);
+      await cache.setJson("expired-fill", { value: 2 });
+    } finally {
+      finish.resolve();
+    }
+
+    expect(await owner).toEqual({ value: 1 });
+    expect(await cache.getJson("expired-fill", codec)).toEqual({ value: 2 });
+    expect(await cache.get("expired-fill:single-flight")).toBe("successor");
+  });
+
+  it("cancels a waiting Effect read without invoking its factory after owner failure", async () => {
+    await cache.setNX("cancelled-fill:single-flight", "owner", 10);
+    const controller = new AbortController();
+    let executions = 0;
+
+    const result = Effect.runPromiseExit(
+      cache.getOrSetJsonEffect({
+        key: "cancelled-fill",
+        codec,
+        ttlSeconds: 30,
+        waitIntervalMs: 1,
+        factory: Effect.sync(() => {
+          executions++;
+
+          return { value: 2 };
+        }),
+      }),
+      { signal: controller.signal },
+    );
+
+    await Bun.sleep(10);
+    controller.abort();
+    await result;
+    await cache.del("cancelled-fill:single-flight");
+    await Bun.sleep(20);
+    expect(executions).toBe(0);
+    expect(await cache.get("cancelled-fill")).toBeNull();
+  });
+
   it("expires idle generations and renews existing generations without evicting cached data", async () => {
     const entry = { key: "ttl:payload", scopes: ["ttl:scope"] };
     const generationKey = "cache-generation:v1:ttl:scope";
