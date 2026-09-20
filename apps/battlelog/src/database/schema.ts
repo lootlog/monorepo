@@ -62,6 +62,7 @@ export const battles = pgTable(
     dailyRewardsMax: integer("dailyRewardsMax"),
   },
   (table) => [
+    index("battles_userId_id_idx").on(table.userId, table.id),
     index("battles_userId_createdAt_idx").on(table.userId, table.createdAt),
     index("battles_world_createdAt_idx").on(table.world, table.createdAt),
     index("battles_userId_world_createdAt_idx").on(
@@ -249,6 +250,11 @@ export const battleWarriors = pgTable(
     ph: integer("ph").default(0).notNull(),
   },
   (table) => [
+    index("battle_warriors_battleId_name_id_idx").on(
+      table.battleId,
+      table.name,
+      table.id.desc(),
+    ),
     index("battle_warriors_originalId_idx").on(table.originalId),
     index("battle_warriors_name_idx").on(table.name),
     index("battle_warriors_battleId_team_idx").on(table.battleId, table.team),
