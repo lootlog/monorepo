@@ -8,5 +8,5 @@
     "types": ["bun", "node"]
   },
   "include": ["src", "test"],
-  "exclude": ["dist", "node_modules", "src/scripts"]
+  "exclude": ["dist", "node_modules"]
 }

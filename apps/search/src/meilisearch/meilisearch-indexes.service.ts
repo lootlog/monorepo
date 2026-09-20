@@ -21,7 +21,10 @@ type IndexSettings = Record<
   >
 >;
 
-const indexSettings: IndexSettings = {
+export const SEARCH_INDEX_PRIMARY_KEY = "uid";
+
+/** The settings every index runs with; the seed script applies the same ones. */
+export const searchIndexSettings: IndexSettings = {
   [NPCS_INDEX]: { filterableAttributes: ["name", "type", "world"] },
   [PLAYERS_INDEX]: { filterableAttributes: ["name", "world"] },
   [ITEMS_INDEX]: {
@@ -68,9 +71,9 @@ export const configureMeilisearchIndexes = (
 ) =>
   Effect.gen(function* () {
     yield* Effect.all(
-      Object.entries(indexSettings).map(([indexName, desired]) =>
+      Object.entries(searchIndexSettings).map(([indexName, desired]) =>
         Effect.gen(function* () {
-          yield* ensureIndex(meilisearch, indexName, "uid");
+          yield* ensureIndex(meilisearch, indexName, SEARCH_INDEX_PRIMARY_KEY);
           const index = meilisearch.index(indexName);
 
           const current = yield* attemptMeilisearch(
