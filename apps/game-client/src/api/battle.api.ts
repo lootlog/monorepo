@@ -6,20 +6,14 @@ import {
 import {
   battlesControllerCreateBattle,
   type CreateBattleDto,
-  type CreateBattleDtoEventsItem,
-  type CreateBattleDtoEventsItemFW,
   type BattleCreatedResponseDtoOutput,
 } from "@lootlog/client/battlelog";
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 
-export type CreateKillParams = CreateKillDto;
-
-export type CreateKillResponse = CreateKillResponseDtoOutput;
-
 export async function createKill(
-  params: CreateKillParams,
-): Promise<CreateKillResponse> {
+  params: CreateKillDto,
+): Promise<CreateKillResponseDtoOutput> {
   const response = await runSingleLoggedAction({
     actionType: "create_kill",
     actionPayload: params,
@@ -35,19 +29,14 @@ export async function createKill(
   return response;
 }
 
-export type BattleEventWarriorPayload = CreateBattleDtoEventsItemFW[string];
-
-export type BattleEventPayload = CreateBattleDtoEventsItem;
-
+/** The contract accepts a submission id; the Game client always sends one. */
 export type CreateBattleOptions = CreateBattleDto & {
   submissionId: string;
 };
 
-export type CreateBattleResponse = BattleCreatedResponseDtoOutput;
-
 export async function createBattle(
   options: CreateBattleOptions,
-): Promise<CreateBattleResponse> {
+): Promise<BattleCreatedResponseDtoOutput> {
   const { events, ...battleContext } = options;
 
   const response = await runSingleLoggedAction({

@@ -2,8 +2,6 @@ import {
   lootsControllerCreateLoot,
   lootsControllerUpdateLoot,
   type CreateLootDto,
-  type CreateLootDtoLootsItem,
-  type CreateLootDtoMapPlayersSnapshotItem,
   type CreateLootResponseDtoOutput,
   type UpdateLootDto,
 } from "@lootlog/client/main";
@@ -15,18 +13,10 @@ import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import { requireLocation } from "./require-location";
 
-export type LootDto = CreateLootDtoLootsItem;
-
-export type MapPlayerSnapshot = CreateLootDtoMapPlayersSnapshotItem;
-
-export type CreateLootOptions = CreateLootDto;
-
-export type CreateLootResponse = CreateLootResponseDtoOutput;
-
 export async function createLoot(
-  options: CreateLootOptions,
+  options: CreateLootDto,
   debugContext: LootCreateDebugContext,
-): Promise<CreateLootResponse> {
+): Promise<CreateLootResponseDtoOutput> {
   const { mapPlayersSnapshot: _mapPlayersSnapshot, ...loggedOptions } = options;
   let attempt = 0;
 
@@ -77,14 +67,10 @@ export async function createLoot(
   return response;
 }
 
-export type UpdateLootOptions = UpdateLootDto & {
-  id: number;
-};
-
 export async function updateLoot({
   id,
   ...rest
-}: UpdateLootOptions): Promise<void> {
+}: UpdateLootDto & { id: number }): Promise<void> {
   await runSingleLoggedAction({
     actionType: "update_loot",
     actionPayload: { id, ...rest },
