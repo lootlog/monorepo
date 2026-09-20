@@ -99,6 +99,11 @@ const getLootPages = (loots: LootsInfiniteData | undefined) => loots?.pages;
 const hasInitialLoots = (loots: LootsInfiniteData | undefined) =>
   (loots?.pages?.[0]?.length ?? 0) > 0;
 
+// A fetched empty result has one empty page; a policy clear leaves no pages,
+// and a list without pages is still waiting for data.
+const hasFetchedPage = (loots: LootsInfiniteData | undefined) =>
+  (loots?.pages?.length ?? 0) > 0;
+
 const useStableLootCollections = (pages: Loot[][] | undefined) => {
   const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
 
@@ -143,10 +148,11 @@ export const useLiveLootList = () => {
     data: loots,
     fetchNextPage,
     hasNextPage,
+    isError,
     isFetching,
     isFetchingNextPage,
-    isLoading,
     isPlaceholderData,
+    refetch,
   } = useInfiniteQuery({
     queryKey,
     queryFn: ({ pageParam, signal }) => {
@@ -368,10 +374,19 @@ export const useLiveLootList = () => {
   // background reconciliation refetches the same key and stays silent.
   const isRefreshing = isPlaceholderData && isFetching && !isFetchingNextPage;
 
+  // Only a fetched, non-placeholder empty page means there is nothing to show.
+  const isEmpty =
+    !isError && !isPlaceholderData && hasFetchedPage(loots) && !hasLoots;
+
+  const isPending = !isError && !hasLoots && !isEmpty;
+
   return {
     scrollElementRef,
-    isLoading,
+    isEmpty,
+    isError,
+    isPending,
     isRefreshing,
+    refetch,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
@@ -385,7 +400,6 @@ export const useLiveLootList = () => {
     totalCount,
     allLoots,
     world,
-    hasLoots,
     hasActiveFilters,
     clearFilters,
   };

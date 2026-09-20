@@ -39,6 +39,8 @@ function Probe() {
       <output>
         {JSON.stringify({
           ids: list.allLoots.map((loot) => loot.id),
+          isEmpty: list.isEmpty,
+          isPending: list.isPending,
         })}
       </output>
     </>
@@ -345,6 +347,47 @@ it.each([
     );
   },
 );
+
+it("reports a fetched empty page as empty but a policy clear as pending", async () => {
+  const { gateway } = await mount(async () => Response.json([]));
+
+  expect(screen.getByRole("status").textContent).toContain(
+    '"isEmpty":true,"isPending":false',
+  );
+
+  // A restriction clears the active list; the tab is hidden, so the
+  // reconciliation refetch has not run yet and no page exists.
+  vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+  await act(async () => {
+    gateway.deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        organizationIds: ["one"],
+        subscriptionScopes: [],
+        accessPolicy: createAccessPolicySnapshot(
+          [
+            {
+              guild: { id: "one", ownerId: "owner" },
+              roles: [
+                {
+                  permissions: [Permission.LOOTLOG_LOOTS_READ],
+                  lvlRangeFrom: 0,
+                  lvlRangeTo: 100,
+                },
+              ],
+            },
+          ],
+          "member",
+        ),
+      },
+    });
+    await vi.advanceTimersByTimeAsync(1);
+  });
+  expect(screen.getByRole("status").textContent).toContain(
+    '"isEmpty":false,"isPending":true',
+  );
+});
 
 it.each(["reconnect", "permissions"] as const)(
   "%s restrictions clear only the affected Organization's canonical and alias caches",
