@@ -148,3 +148,45 @@ path at once: until the new revision ships, the older one answers an all-digit
 or empty-slug vanity URL with a 500 instead of a 400, and every other save is
 unaffected. Legacy `guild:<id or vanity URL>` cache entries are never read
 again and expire within one hour.
+
+## Free-text loot search
+
+`20260920134427_loot_search_trigram_indexes` installs `pg_trgm` and adds
+`Loot_location_trgm_idx` and `PlayerSnapshot_name_trgm_idx`. `pg_trgm` is a
+trusted extension, so the database owner can install it without superuser
+rights. Apply the migration before deploying the API revision that resolves
+search terms; an older revision ignores both indexes.
+
+`makeLootQueryPersistence` resolves a search term before the page query. It
+asks, concurrently, which `ItemSnapshot`, `NpcSnapshot` and `PlayerSnapshot`
+ids match the term and whether any `Loot` location can match it. Each relation
+then contributes an arm only when it can still match, using the resolved
+snapshot ids instead of a correlated name join. A term that matches nothing
+anywhere skips the page query and returns no rows.
+
+The previous condition ORed four correlated subqueries that read a snapshot row
+and ran `ILIKE` for every loot the descending scan examined, so a term matching
+nothing paid for the whole Organization before returning nothing. Measured on a
+local production copy (13,403,753 loots; the largest Organization holds 383,683
+nonarchived records; `shared_buffers` 512 MiB, parallel query disabled), a
+no-match term exceeded a 60 s statement timeout; after the change the same
+request resolves in about 11 ms of database time and runs no page query. These
+are local fixture measurements, not production latency.
+
+A term matching more than `LOOT_SEARCH_SNAPSHOT_LIMIT` snapshots of one
+relation keeps that relation's original pattern arm: such a term matches
+densely, so the descending scan reaches its page early. Case-insensitive
+substring semantics, Organization isolation, archival, visibility, ordering and
+filter combinations are unchanged; the resolution queries use the same `ILIKE`
+patterns the arms used before.
+
+Index sizes on that copy: `Loot_location_trgm_idx` 537 MB and
+`PlayerSnapshot_name_trgm_idx` 36 MB. Loot ingestion adds one GIN entry per
+inserted row in each; the copy received at most about 30,000 loots per day
+during the sampled week.
+
+The migrator runs inside a transaction, so these are plain `CREATE INDEX`
+statements holding a `SHARE` lock that blocks loot inserts while they build.
+Applying the migration to that copy took about 50 seconds end to end. Loot
+acceptance waits for the lock rather than failing, and its publication intents
+survive a restart, but apply the migration when ingestion is quiet.

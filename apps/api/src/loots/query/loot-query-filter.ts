@@ -55,9 +55,41 @@ export type LootQueryVisibilityRole = {
   readonly permissions: ReadonlyArray<string>;
 };
 
-export type ResolvedLootQueryFilters = Omit<LootQueryFilters, "npcs"> & {
-  readonly npcNameSnapshotIds?: ReadonlyArray<number>;
+/**
+ * A free-text term resolved against the snapshot tables and the location
+ * trigram index before the page query runs.
+ *
+ * An empty array means the term cannot match that relation, so its arm is
+ * dropped. `null` means the term matched more snapshots than
+ * {@link LOOT_SEARCH_SNAPSHOT_LIMIT} enumerates, so that arm keeps the original
+ * pattern; such a term matches densely enough for the descending scan to stop
+ * early.
+ */
+export type ResolvedLootSearch = {
+  readonly pattern: string;
+  readonly matchesLocation: boolean;
+  readonly itemSnapshotIds: ReadonlyArray<number> | null;
+  readonly npcSnapshotIds: ReadonlyArray<number> | null;
+  readonly playerSnapshotIds: ReadonlyArray<number> | null;
 };
+
+export type ResolvedLootQueryFilters = Omit<
+  LootQueryFilters,
+  "npcs" | "search"
+> & {
+  readonly npcNameSnapshotIds?: ReadonlyArray<number>;
+  readonly search?: ResolvedLootSearch;
+};
+
+/** Snapshot ids enumerated per relation before a term falls back to its pattern. */
+export const LOOT_SEARCH_SNAPSHOT_LIMIT = 1000;
+
+/** A resolved term that can match nothing anywhere: the page query is skipped. */
+export const lootSearchMatchesNothing = (search: ResolvedLootSearch) =>
+  !search.matchesLocation &&
+  search.itemSnapshotIds?.length === 0 &&
+  search.npcSnapshotIds?.length === 0 &&
+  search.playerSnapshotIds?.length === 0;
 
 const query = new QueryBuilder();
 
@@ -121,7 +153,9 @@ const levelRange = (
         maximum === undefined ? undefined : lte(column, maximum),
       );
 
-const rangeConditions = (filters: LootQueryFilters): Array<SQL | undefined> => {
+const rangeConditions = (
+  filters: ResolvedLootQueryFilters,
+): Array<SQL | undefined> => {
   const npc = levelRange(
     queryNpcSnapshot.lvl,
     filters.npcLevelMin,
@@ -147,12 +181,21 @@ const rangeConditions = (filters: LootQueryFilters): Array<SQL | undefined> => {
   ];
 };
 
-const npcNameCondition = (snapshotIds: ReadonlyArray<number> | undefined) => {
-  if (snapshotIds === undefined) return undefined;
+const existsItemSnapshotIds = (snapshotIds: ReadonlyArray<number>) =>
+  exists(
+    query
+      .select({ id: queryItem.id })
+      .from(queryItem)
+      .where(
+        and(
+          eq(queryItem.lootId, lootTable.id),
+          inArray(queryItem.itemSnapshotId, [...snapshotIds]),
+        ),
+      ),
+  );
 
-  if (snapshotIds.length === 0) return sql`false`;
-
-  return exists(
+const existsNpcSnapshotIds = (snapshotIds: ReadonlyArray<number>) =>
+  exists(
     query
       .select({ id: queryNpc.id })
       .from(queryNpc)
@@ -163,6 +206,26 @@ const npcNameCondition = (snapshotIds: ReadonlyArray<number> | undefined) => {
         ),
       ),
   );
+
+const existsPlayerSnapshotIds = (snapshotIds: ReadonlyArray<number>) =>
+  exists(
+    query
+      .select({ id: queryPlayer.id })
+      .from(queryPlayer)
+      .where(
+        and(
+          eq(queryPlayer.lootId, lootTable.id),
+          inArray(queryPlayer.playerSnapshotId, [...snapshotIds]),
+        ),
+      ),
+  );
+
+const npcNameCondition = (snapshotIds: ReadonlyArray<number> | undefined) => {
+  if (snapshotIds === undefined) return undefined;
+
+  if (snapshotIds.length === 0) return sql`false`;
+
+  return existsNpcSnapshotIds(snapshotIds);
 };
 
 const relationConditions = (
@@ -182,9 +245,7 @@ const relationConditions = (
     : undefined,
   filters.hid ? existsItem(eq(queryItem.hid, filters.hid)) : undefined,
   filters.itemSnapshotIds
-    ? existsItem(
-        inArray(queryItem.itemSnapshotId, [...filters.itemSnapshotIds]),
-      )
+    ? existsItemSnapshotIds(filters.itemSnapshotIds)
     : undefined,
 ];
 
@@ -211,17 +272,42 @@ const professionCondition = (
   return condition ? existsItem(condition) : undefined;
 };
 
-const searchCondition = (search: string | undefined) => {
-  const value = search?.trim();
+// Each relation contributes an arm only when the term can still match it.
+// Enumerated snapshot ids replace the correlated name join, which otherwise
+// reads a snapshot row and runs ILIKE for every loot the scan examines.
+const searchRelationArm = (
+  snapshotIds: ReadonlyArray<number> | null,
+  membership: (ids: ReadonlyArray<number>) => SQL,
+  pattern: SQL,
+) => {
+  if (snapshotIds === null) return pattern;
 
-  if (!value) return undefined;
-  const pattern = `%${value}%`;
+  return snapshotIds.length === 0 ? undefined : membership(snapshotIds);
+};
 
-  return or(
-    ilike(lootTable.location, pattern),
-    existsItem(ilike(queryItemSnapshot.name, pattern)),
-    existsNpc(ilike(queryNpcSnapshot.name, pattern)),
-    existsPlayer(ilike(queryPlayerSnapshot.name, pattern)),
+const searchCondition = (search: ResolvedLootSearch | undefined) => {
+  if (!search) return undefined;
+  const pattern = `%${search.pattern}%`;
+
+  return (
+    or(
+      search.matchesLocation ? ilike(lootTable.location, pattern) : undefined,
+      searchRelationArm(
+        search.itemSnapshotIds,
+        existsItemSnapshotIds,
+        existsItem(ilike(queryItemSnapshot.name, pattern)),
+      ),
+      searchRelationArm(
+        search.npcSnapshotIds,
+        existsNpcSnapshotIds,
+        existsNpc(ilike(queryNpcSnapshot.name, pattern)),
+      ),
+      searchRelationArm(
+        search.playerSnapshotIds,
+        existsPlayerSnapshotIds,
+        existsPlayer(ilike(queryPlayerSnapshot.name, pattern)),
+      ),
+    ) ?? sql`false`
   );
 };
 

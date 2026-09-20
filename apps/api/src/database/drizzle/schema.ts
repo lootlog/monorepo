@@ -484,6 +484,13 @@ export const lootTable = pgTable(
     index("Loot_createdAt_idx").on(table["createdAt"]),
     index("Loot_world_createdAt_idx").on(table["world"], table["createdAt"]),
     index("Loot_world_id_idx").on(table["world"], table["id"]),
+    // Free-text loot search asks whether any location can match before it
+    // scans an Organization. Without this trigram index that question costs a
+    // sequential scan of every loot.
+    index("Loot_location_trgm_idx").using(
+      "gin",
+      sql`${table["location"]} gin_trgm_ops`,
+    ),
   ],
 );
 
@@ -579,6 +586,12 @@ export const playerSnapshotTable = pgTable(
       table["characterId"],
     ),
     index("PlayerSnapshot_name_idx").on(table["name"]),
+    // Free-text loot search resolves player names to snapshot ids; the btree
+    // above cannot serve a substring match.
+    index("PlayerSnapshot_name_trgm_idx").using(
+      "gin",
+      sql`${table["name"]} gin_trgm_ops`,
+    ),
   ],
 );
 
