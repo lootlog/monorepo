@@ -1,6 +1,6 @@
 import { isObjectRecord } from "@lootlog/schema/records";
 import { useEffect, useEffectEvent } from "react";
-import { useReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
+import { useReadyRoomProjections } from "@/features/party-finder/hooks/use-ready-rooms";
 import {
   useReadyRoomsCache,
   useRefreshReadyRoom,
@@ -16,7 +16,7 @@ function hasHttpStatus(cause: unknown, status: number): boolean {
  * response replaces the stale projection.
  */
 export function usePartyReadyRoomExpiry(): void {
-  const { projections } = useReadyRoomCache();
+  const projections = useReadyRoomProjections();
   const { removeProjection } = useReadyRoomsCache();
   const refreshReadyRoom = useRefreshReadyRoom();
 
