@@ -29,20 +29,25 @@ export const readReadyRoomCache = (
   EMPTY_READY_ROOM_CACHE;
 
 /**
- * True once a list response has been applied and no resynchronization is in
- * flight, so callers never act on a collection that is about to be replaced.
- * A collection loaded before the gateway dropped is not synchronized either:
- * updates missed while disconnected are only recovered by the next list.
+ * True once a list response has been applied and no resynchronization is
+ * pending, so callers never act on a collection that may be incomplete. A
+ * collection loaded before the gateway dropped does not count either: updates
+ * missed while disconnected are only recovered by the next list.
  */
 export const areReadyRoomsSynchronized = (
   client: QueryClient = gameQueryClient,
-): boolean => {
-  const state = client.getQueryState(queryKeys.readyRooms());
+): boolean =>
+  useGlobalStore.getState().socketState.joined &&
+  readReadyRoomCache(client).listAppliedAt !== null;
 
-  return (
-    useGlobalStore.getState().socketState.joined &&
-    state?.status === "success" &&
-    state.fetchStatus === "idle"
+/**
+ * Marks the collection as awaiting a list response. Called before every
+ * resynchronization so a socket update arriving while the request is in
+ * flight, or after it failed, cannot present the collection as current.
+ */
+export const invalidateReadyRoomSync = (client: QueryClient): void => {
+  client.setQueryData<ReadyRoomCache>(queryKeys.readyRooms(), (cache) =>
+    cache ? { ...cache, listAppliedAt: null } : cache,
   );
 };
 
@@ -83,7 +88,11 @@ export const useReadyRooms = () => {
   return useQuery({
     queryKey: queryKeys.readyRooms(),
     enabled: joined,
-    staleTime: Infinity,
+    // A collection that has never had a list applied, or whose sync was
+    // invalidated, must be fetched; once a list lands only an explicit
+    // resynchronization refetches it.
+    staleTime: () =>
+      readReadyRoomCache(queryClient).listAppliedAt === null ? 0 : Infinity,
     refetchOnWindowFocus: false,
     queryFn: async ({ signal }) => {
       const baseline = captureReadyRoomSyncBaseline(
@@ -92,20 +101,23 @@ export const useReadyRooms = () => {
 
       const projections = await partyReadyRoomControllerList({ signal });
 
-      return applyAuthoritativeReadyRoomSync(
-        readReadyRoomCache(queryClient),
-        decodeProjections(projections),
-        baseline,
-      );
+      return {
+        ...applyAuthoritativeReadyRoomSync(
+          readReadyRoomCache(queryClient),
+          decodeProjections(projections),
+          baseline,
+        ),
+        listAppliedAt: Date.now(),
+      };
     },
   });
 };
 
 export const useReadyRoomsSynchronized = (): boolean => {
   const joined = useGlobalStore((state) => state.socketState.joined);
-  const { isSuccess, isFetching } = useReadyRooms();
+  const { listAppliedAt } = useReadyRoomCache();
 
-  return joined && isSuccess && !isFetching;
+  return joined && listAppliedAt !== null;
 };
 
 export const useReadyRoomCache = (): ReadyRoomCache =>

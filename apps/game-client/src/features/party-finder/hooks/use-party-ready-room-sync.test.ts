@@ -98,6 +98,21 @@ describe("usePartyReadyRoomSync", () => {
       expect(areReadyRoomsSynchronized(queryClient)).toBe(true);
     });
   });
+  it("keeps the collection unsynchronized when a socket update follows a failed list", async () => {
+    listReadyRooms.mockRejectedValue(new Error("Gateway unavailable"));
+    renderSync();
+
+    await waitFor(() => expect(listReadyRooms).toHaveBeenCalled());
+    expect(areReadyRoomsSynchronized(queryClient)).toBe(false);
+
+    act(() => {
+      mergeReadyRoomProjectionIntoCache(createProjection(4), queryClient);
+    });
+
+    expect(readCache().projections["room-1"]?.revision).toBe(4);
+    expect(areReadyRoomsSynchronized(queryClient)).toBe(false);
+  });
+
   it("synchronizes once per gateway join instead of polling", async () => {
     vi.useFakeTimers();
     listReadyRooms

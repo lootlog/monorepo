@@ -13,15 +13,22 @@ import {
   mergeReadyRoomProjection,
   removeReadyRoom,
   type ReadyRoomCache,
+  type ReadyRoomProjections,
 } from "@/features/party-finder/ready-room-cache";
 
+/**
+ * Rewrites the projections while carrying the rest of the cache forward: only
+ * a list response may decide whether the collection counts as synchronized.
+ */
 const writeReadyRoomCache = (
   client: QueryClient,
-  update: (cache: ReadyRoomCache) => ReadyRoomCache,
+  update: (cache: ReadyRoomProjections) => ReadyRoomProjections,
 ) => {
-  client.setQueryData<ReadyRoomCache>(queryKeys.readyRooms(), (cache) =>
-    update(cache ?? EMPTY_READY_ROOM_CACHE),
-  );
+  client.setQueryData<ReadyRoomCache>(queryKeys.readyRooms(), (cache) => {
+    const current = cache ?? EMPTY_READY_ROOM_CACHE;
+
+    return { ...current, ...update(current) };
+  });
 };
 
 export const mergeReadyRoomProjectionIntoCache = (

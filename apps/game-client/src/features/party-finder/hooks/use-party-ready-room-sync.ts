@@ -9,7 +9,10 @@ import {
   EMPTY_READY_ROOM_CACHE,
   resetReadyRoomObservationSequence,
 } from "@/features/party-finder/ready-room-cache";
-import { useReadyRooms } from "@/features/party-finder/hooks/use-ready-rooms";
+import {
+  invalidateReadyRoomSync,
+  useReadyRooms,
+} from "@/features/party-finder/hooks/use-ready-rooms";
 
 /**
  * Mounts the Ready Room query and resynchronizes it whenever the viewer's
@@ -42,6 +45,7 @@ export function usePartyReadyRoomSync(): void {
 
     if (!joined || (!rejoined && !identityChanged)) return;
 
+    invalidateReadyRoomSync(queryClient);
     void queryClient.invalidateQueries({
       queryKey: queryKeys.readyRooms(),
       exact: true,
@@ -54,6 +58,7 @@ export function usePartyReadyRoomSync(): void {
     const permissionsChanged = () => {
       resetReadyRoomObservationSequence();
       queryClient.setQueryData(queryKeys.readyRooms(), EMPTY_READY_ROOM_CACHE);
+      invalidateReadyRoomSync(queryClient);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.readyRooms(),
         exact: true,
