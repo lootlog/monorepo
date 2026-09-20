@@ -46,6 +46,14 @@ const uniquePlayers = (players: ReadonlyArray<PlayerHit>) => {
   return [...unique.values()];
 };
 
+type IndexPlayer = IndexPlayersCommand["players"][number];
+
+/** The stored shape of one player; the seed script and the consumer share it. */
+export const toPlayerDocument = (player: IndexPlayer) => ({
+  ...player,
+  uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
+});
+
 export const makePlayersModule = (
   meilisearch: Meilisearch,
   logger: AppLogger,
@@ -108,10 +116,7 @@ export const makePlayersModule = (
       );
     }
 
-    const playersWithUid = validPlayers.map((player) => ({
-      ...player,
-      uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
-    }));
+    const playersWithUid = validPlayers.map(toPlayerDocument);
 
     yield* indexChangedDocuments(
       meilisearch.index<(typeof playersWithUid)[number]>(PLAYERS_INDEX),

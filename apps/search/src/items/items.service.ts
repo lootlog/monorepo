@@ -84,6 +84,17 @@ const mergeItemsById = (items: ReadonlyArray<IndexItem>): IndexedItem[] => {
   return [...itemsById.values()];
 };
 
+/**
+ * The stored shape of items: one document per item id with its worlds merged
+ * and the searchable stat fields expanded. The seed script and the consumer
+ * share it.
+ */
+export const toItemDocuments = (items: ReadonlyArray<IndexItem>) =>
+  mergeItemsById(items).map(({ world: _world, ...item }) => ({
+    ...item,
+    ...createItemSearchFields(item.stat),
+  }));
+
 export const makeItemsModule = (
   meilisearch: Meilisearch,
   logger: AppLogger,
@@ -199,14 +210,7 @@ export const makeItemsModule = (
       );
     }
 
-    const itemsById = mergeItemsById(validItems);
-
-    const itemsWithSearchFields = itemsById.map(
-      ({ world: _world, ...item }) => ({
-        ...item,
-        ...createItemSearchFields(item.stat),
-      }),
-    );
+    const itemsWithSearchFields = toItemDocuments(validItems);
 
     yield* indexChangedDocuments(
       index,

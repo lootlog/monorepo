@@ -1248,8 +1248,8 @@
       }
     },
     {
-      // Console output is the CLI and benchmark interface.
-      "files": ["packages/cli/**", "**/*.bench.ts"],
+      // Console output is the CLI, benchmark and maintenance script interface.
+      "files": ["packages/cli/**", "**/*.bench.ts", "apps/*/src/scripts/**"],
       "rules": {
         "no-console": "off"
       }
