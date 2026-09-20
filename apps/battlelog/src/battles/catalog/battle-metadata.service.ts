@@ -1,8 +1,9 @@
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
-import { and, desc, eq, ilike } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
+import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles, battleWarriors, userCharacters } from "#src/database/schema";
 
@@ -19,8 +20,6 @@ const UserCharactersResponseSchema = Schema.Struct({
   ),
 });
 
-type UserCharactersResponse = typeof UserCharactersResponseSchema.Type;
-
 const UserWorldsResponseSchema = Schema.Struct({
   worlds: Schema.Array(Schema.String),
 });
@@ -30,18 +29,12 @@ type UserWorldsResponse = typeof UserWorldsResponseSchema.Type;
 type BattleMetadataDatabase = Pick<
   DrizzleDatabase,
   "select" | "selectDistinctOn" | "insert"
-> & {
-  query: {
-    userCharacters: Pick<
-      DrizzleDatabase["query"]["userCharacters"],
-      "findMany"
-    >;
-  };
-};
+>;
 
 export const makeBattleMetadata = (
   drizzle: BattleMetadataDatabase,
   redisService: RedisStore,
+  read: BattleReadBudget,
 ) => {
   const logger = new Logger("BattleMetadata");
   const cache = makeBattleAnalyticsCache(redisService);
@@ -52,80 +45,47 @@ export const makeBattleMetadata = (
   const getUserWorldsCacheKey = (userId: string) =>
     `battle-worlds:${userId}:list`;
 
-  // Level and profession are not stored per character; they come from the
-  // character's own warrior in its most recent battle.
-  const getLatestCharacterWarriors = (userId: string) =>
-    drizzle
-      .selectDistinctOn([battles.characterId, battles.world], {
-        characterId: battles.characterId,
-        world: battles.world,
-        lvl: battleWarriors.lvl,
-        prof: battleWarriors.prof,
-      })
-      .from(battles)
-      .innerJoin(
-        battleWarriors,
-        and(
-          eq(battleWarriors.battleId, battles.id),
-          eq(battleWarriors.originalId, battles.characterId),
-        ),
-      )
-      .where(eq(battles.userId, userId))
-      .orderBy(battles.characterId, battles.world, desc(battles.createdAt));
-
-  const getCharacterKey = (characterId: string, world: string) =>
-    `${world}:${characterId}`;
+  // Keep the join inside LIMIT: an incomplete newest battle must not hide
+  // the character's last recorded level/profession.
+  const latestCharacterWarrior = drizzle
+    .select({ lvl: battleWarriors.lvl, prof: battleWarriors.prof })
+    .from(battles)
+    .innerJoin(
+      battleWarriors,
+      and(
+        eq(battleWarriors.battleId, battles.id),
+        eq(battleWarriors.originalId, battles.characterId),
+      ),
+    )
+    .where(
+      and(
+        eq(battles.userId, userCharacters.userId),
+        eq(battles.characterId, userCharacters.characterId),
+        eq(battles.world, userCharacters.world),
+      ),
+    )
+    .orderBy(desc(battles.createdAt))
+    .limit(1)
+    .as("latest_character_warrior");
 
   const getUserCharactersUncached = (userId: string) =>
-    Effect.all(
-      [
-        drizzle.query.userCharacters.findMany({
-          where: { userId },
-          orderBy: { lastSeenAt: "desc" },
-          columns: {
-            characterId: true,
-            name: true,
-            world: true,
-            icon: true,
-          },
-        }),
-        getLatestCharacterWarriors(userId),
-      ],
-      { concurrency: 2 },
-    ).pipe(
-      Effect.mapError((error) => {
-        logger.error("Failed to retrieve user characters:", error);
-
-        return new Error(
-          `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }),
-      Effect.map(([characters, latestWarriors]) => {
-        const warriorsByCharacter = new Map(
-          latestWarriors.map((warrior) => [
-            getCharacterKey(warrior.characterId, warrior.world),
-            warrior,
-          ]),
-        );
-
-        return {
-          characters: characters.map((character) => {
-            const warrior = warriorsByCharacter.get(
-              getCharacterKey(character.characterId, character.world),
-            );
-
-            return {
-              id: character.characterId,
-              name: character.name,
-              world: character.world,
-              icon: character.icon,
-              lvl: warrior?.lvl ?? null,
-              prof: warrior?.prof ?? null,
-            };
-          }),
-        } satisfies UserCharactersResponse;
-      }),
-    );
+    drizzle
+      .select({
+        id: userCharacters.characterId,
+        name: userCharacters.name,
+        world: userCharacters.world,
+        icon: userCharacters.icon,
+        lvl: latestCharacterWarrior.lvl,
+        prof: latestCharacterWarrior.prof,
+      })
+      .from(userCharacters)
+      .leftJoinLateral(latestCharacterWarrior, sql`true`)
+      .where(eq(userCharacters.userId, userId))
+      .orderBy(desc(userCharacters.lastSeenAt))
+      .pipe(
+        read,
+        Effect.map((characters) => ({ characters })),
+      );
 
   const getUserWorldsUncached = (userId: string) =>
     drizzle
@@ -136,6 +96,7 @@ export const makeBattleMetadata = (
       .where(eq(userCharacters.userId, userId))
       .orderBy(userCharacters.world)
       .pipe(
+        read,
         Effect.mapError((error) => {
           logger.error("Failed to retrieve user worlds:", error);
 
@@ -237,23 +198,31 @@ export const makeBattleMetadata = (
         return { warriors: [] };
       }
 
+      // OFFSET 0 keeps this join owner-first: the global name index can otherwise
+      // scan other users' history to find ten distinct names for this user.
       const results = yield* drizzle
-        .selectDistinctOn([battleWarriors.name], {
-          name: battleWarriors.name,
-          icon: battleWarriors.icon,
-          prof: battleWarriors.prof,
-          lvl: battleWarriors.lvl,
+        .selectDistinctOn([sql`w.name`], {
+          name: sql<string>`w.name`,
+          icon: sql<string>`w.icon`,
+          prof: sql<string>`w.prof`,
+          lvl: sql<number>`w.lvl`,
         })
-        .from(battleWarriors)
-        .innerJoin(battles, eq(battleWarriors.battleId, battles.id))
-        .where(
-          and(
-            eq(battles.userId, userId),
-            ilike(battleWarriors.name, `%${query.trim()}%`),
-          ),
+        .from(battles)
+        .innerJoinLateral(
+          sql`(
+          SELECT ${battleWarriors.id}, ${battleWarriors.name},
+                 ${battleWarriors.icon}, ${battleWarriors.prof}, ${battleWarriors.lvl}
+          FROM ${battleWarriors}
+          WHERE ${battleWarriors.battleId} = ${battles.id}
+            AND ${battleWarriors.name} ILIKE ${`%${query.trim()}%`}
+          OFFSET 0
+        ) w`,
+          sql`true`,
         )
-        .orderBy(battleWarriors.name, desc(battleWarriors.id))
-        .limit(10);
+        .where(eq(battles.userId, userId))
+        .orderBy(sql`w.name`, sql`w.id DESC`)
+        .limit(10)
+        .pipe(read);
 
       return { warriors: results };
     }).pipe(
