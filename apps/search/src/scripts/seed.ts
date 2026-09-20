@@ -1,11 +1,19 @@
 /**
  * Rebuilds the Meilisearch indexes from the API database.
  *
- * Every index is dropped and recreated with the service settings, then the
- * latest snapshot of each NPC, player and item is loaded in one query per
- * entity and pushed in large batches. Batches are enqueued without waiting,
- * so Meilisearch merges them into a few indexing runs; the script waits once
- * at the end. The three entities run concurrently.
+ * Each index is rebuilt in a shadow index (`<name>_rebuild`) that receives the
+ * service settings and the latest snapshot of every NPC, player and item,
+ * loaded in one query per entity and pushed in large batches. Batches are
+ * enqueued without waiting, so Meilisearch merges them into a few indexing
+ * runs; the script waits once, then swaps the shadow indexes into place in a
+ * single atomic task, so searches never see a half-built index. The three
+ * entities run concurrently.
+ *
+ * The queue consumer keeps writing to the live indexes while this runs;
+ * events consumed during the rebuild are replaced by the database state read
+ * at query time. That state already includes everything the API accepted
+ * before the query ran, so the window is the rebuild duration; run it at a
+ * quiet hour or replay the queue afterwards.
  *
  * Usage: `bun run seed` in `apps/search` with `POSTGRESQL_CONNECTION_URI`,
  * `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY` set.
@@ -31,6 +39,10 @@ const DOCUMENTS_PER_BATCH = 10_000;
 const TASK_POLL_INTERVAL_MS = 500;
 
 const TASK_TIMEOUT_MS = 30 * 60 * 1000;
+
+const REBUILD_SUFFIX = "_rebuild";
+
+const rebuildIndexName = (indexName: string) => `${indexName}${REBUILD_SUFFIX}`;
 
 const config = await Effect.runPromise(
   Config.all({
@@ -118,32 +130,67 @@ const dropIndex = async (indexName: string) => {
   }
 };
 
-/** Settings go in before documents so Meilisearch indexes each batch once. */
-const resetIndexes = async () => {
+const createIndex = async (indexName: string) => {
+  try {
+    const task = await meilisearch
+      .createIndex(indexName, { primaryKey: SEARCH_INDEX_PRIMARY_KEY })
+      .waitTask({ interval: TASK_POLL_INTERVAL_MS, timeout: TASK_TIMEOUT_MS });
+
+    if (
+      task.status === "failed" &&
+      task.error?.code !== "index_already_exists"
+    ) {
+      throw task.error;
+    }
+  } catch (error) {
+    if (getMeilisearchErrorCode(error) !== "index_already_exists") throw error;
+  }
+};
+
+/**
+ * Shadow indexes start empty with the service settings, so Meilisearch
+ * indexes each batch once. The live indexes must exist for the final swap.
+ */
+const prepareRebuildIndexes = async () => {
   const startedAt = performance.now();
   const indexNames = Object.keys(searchIndexSettings);
 
-  await Promise.all(indexNames.map(dropIndex));
-
-  await waitForTasks(
-    await Promise.all(
-      indexNames.map((indexName) =>
-        meilisearch.createIndex(indexName, {
-          primaryKey: SEARCH_INDEX_PRIMARY_KEY,
-        }),
-      ),
-    ),
+  await Promise.all(indexNames.map(rebuildIndexName).map(dropIndex));
+  await Promise.all(
+    indexNames.flatMap((indexName) => [
+      createIndex(indexName),
+      createIndex(rebuildIndexName(indexName)),
+    ]),
   );
 
   await waitForTasks(
     await Promise.all(
       Object.entries(searchIndexSettings).map(([indexName, settings]) =>
-        meilisearch.index(indexName).updateSettings(settings),
+        meilisearch.index(rebuildIndexName(indexName)).updateSettings(settings),
       ),
     ),
   );
 
-  console.log(`Indexes recreated in ${formatDuration(startedAt)}`);
+  console.log(`Shadow indexes prepared in ${formatDuration(startedAt)}`);
+};
+
+/** One atomic swap publishes every rebuilt index; the old data is dropped. */
+const publishRebuildIndexes = async () => {
+  const startedAt = performance.now();
+  const indexNames = Object.keys(searchIndexSettings);
+
+  await waitForTasks([
+    await meilisearch.swapIndexes(
+      indexNames.map((indexName) => ({
+        indexes: [indexName, rebuildIndexName(indexName)],
+        rename: false,
+      })),
+    ),
+  ]);
+
+  await Promise.all(indexNames.map(rebuildIndexName).map(dropIndex));
+
+  console.log(`Indexes swapped in ${formatDuration(startedAt)}`);
 };
 
 /** Enqueues every batch first; Meilisearch merges queued batches of one index. */
@@ -153,7 +200,7 @@ const indexDocuments = async <Document extends { uid: string }>(
   loadedIn: string,
 ) => {
   const startedAt = performance.now();
-  const index = meilisearch.index<Document>(indexName);
+  const index = meilisearch.index<Document>(rebuildIndexName(indexName));
   const enqueued: EnqueuedTask[] = [];
 
   for (const batch of chunk([...documents], DOCUMENTS_PER_BATCH)) {
@@ -219,38 +266,28 @@ const seedNpcs = async () => {
 const seedPlayers = async () => {
   const startedAt = performance.now();
 
-  // Levels only rise, so the highest level recorded with a character's newest
-  // snapshot is its current one. One hash aggregate over LootPlayer beats a
-  // lookup per snapshot by an order of magnitude.
+  // Live indexing only sees loot participants, so map-capture snapshots stay
+  // out. Levels only rise, so the highest level recorded with a character's
+  // newest participating snapshot is its current one; one hash aggregate over
+  // LootPlayer beats a lookup per snapshot by an order of magnitude.
   const rows = await sql<PlayerRow[]>`
-    WITH latest AS (
-      SELECT DISTINCT ON (ps."world", ps."accountId", ps."characterId")
-        ps."id",
-        ps."world",
-        ps."accountId",
-        ps."characterId",
-        ps."name",
-        ps."prof",
-        ps."icon"
-      FROM "PlayerSnapshot" ps
-      ORDER BY ps."world", ps."accountId", ps."characterId",
-        ps."createdAt" DESC, ps."id" DESC
-    ),
-    levels AS (
+    WITH levels AS (
       SELECT lp."playerSnapshotId", MAX(lp."lvl") AS "lvl"
       FROM "LootPlayer" lp
       GROUP BY lp."playerSnapshotId"
     )
-    SELECT
-      latest."world",
-      latest."accountId",
-      latest."characterId",
-      latest."name",
-      latest."prof",
-      latest."icon",
+    SELECT DISTINCT ON (ps."world", ps."accountId", ps."characterId")
+      ps."world",
+      ps."accountId",
+      ps."characterId",
+      ps."name",
+      ps."prof",
+      ps."icon",
       levels."lvl"
-    FROM latest
-    LEFT JOIN levels ON levels."playerSnapshotId" = latest."id"
+    FROM "PlayerSnapshot" ps
+    INNER JOIN levels ON levels."playerSnapshotId" = ps."id"
+    ORDER BY ps."world", ps."accountId", ps."characterId",
+      ps."createdAt" DESC, ps."id" DESC
   `;
 
   const documents = rows.map((player) =>
@@ -328,8 +365,9 @@ const main = async () => {
   console.log(`Seeding Meilisearch at ${config.meilisearchHost}`);
 
   try {
-    await resetIndexes();
+    await prepareRebuildIndexes();
     await Promise.all([seedNpcs(), seedPlayers(), seedItems()]);
+    await publishRebuildIndexes();
     console.log(`Done in ${formatDuration(startedAt)}`);
   } finally {
     await sql.close();

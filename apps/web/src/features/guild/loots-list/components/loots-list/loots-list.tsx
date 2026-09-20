@@ -41,9 +41,10 @@ export const LootsList = () => {
     scrollElementRef,
     isEmpty,
     isError,
+    isFailed,
     isPending,
     isRefreshing,
-    refetch,
+    retry,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
@@ -70,7 +71,7 @@ export const LootsList = () => {
     );
   }
 
-  if (isError) {
+  if (isFailed) {
     return (
       <div className={EMPTY_STATE_WRAPPER_CLASS}>
         <Empty className={EMPTY_STATE_CLASS}>
@@ -84,12 +85,7 @@ export const LootsList = () => {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void refetch()}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={retry}>
               {t("common.actions.retry")}
             </Button>
           </EmptyContent>
@@ -175,8 +171,12 @@ export const LootsList = () => {
                   {isLoaderRow ? (
                     <LootListSentinelRow
                       hasNextPage={hasNextPage}
+                      hasError={isError}
+                      onRetry={retry}
                       loadingLabel={t(themedKey("loots.list.loadingMore"))}
                       endLabel={t(themedKey("loots.list.end"))}
+                      errorLabel={t("loots.list.loadError")}
+                      retryLabel={t("common.actions.retry")}
                     />
                   ) : rowLoots ? (
                     <div className={cn(LOOTS_GRID_CLASS, "items-stretch")}>
@@ -216,8 +216,12 @@ export const LootsList = () => {
                   {isLoaderRow ? (
                     <LootListSentinelRow
                       hasNextPage={hasNextPage}
+                      hasError={isError}
+                      onRetry={retry}
                       loadingLabel={t(themedKey("loots.list.loadingMore"))}
                       endLabel={t(themedKey("loots.list.end"))}
+                      errorLabel={t("loots.list.loadError")}
+                      retryLabel={t("common.actions.retry")}
                     />
                   ) : loot ? (
                     <LootsListItem loot={loot} />

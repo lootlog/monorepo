@@ -374,19 +374,28 @@ export const useLiveLootList = () => {
   // background reconciliation refetches the same key and stays silent.
   const isRefreshing = isPlaceholderData && isFetching && !isFetchingNextPage;
 
+  // A failure only replaces the list when nothing was loaded; a failed page
+  // or refresh keeps the accepted records on screen with a retry row.
+  const isFailed = isError && !hasLoots;
+
   // Only a fetched, non-placeholder empty page means there is nothing to show.
   const isEmpty =
     !isError && !isPlaceholderData && hasFetchedPage(loots) && !hasLoots;
 
-  const isPending = !isError && !hasLoots && !isEmpty;
+  const isPending = !isFailed && !hasLoots && !isEmpty;
+
+  const retry = () => {
+    void (hasLoots && hasNextPage ? fetchNextPage() : refetch());
+  };
 
   return {
     scrollElementRef,
     isEmpty,
     isError,
+    isFailed,
     isPending,
     isRefreshing,
-    refetch,
+    retry,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
