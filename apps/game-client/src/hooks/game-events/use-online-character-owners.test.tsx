@@ -76,6 +76,7 @@ describe("useOnlineCharacterOwners", () => {
     expect(test.requests()[0]?.data).toEqual({
       organizationId: "guild-1",
       world: "luvia",
+      delivery: "response",
     });
     await waitFor(() =>
       expect(

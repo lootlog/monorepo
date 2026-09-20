@@ -1,6 +1,6 @@
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { cn } from "cn";
-import type { FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -13,7 +13,16 @@ import { useTranslation } from "react-i18next";
 /** Gateway connection dot for the quick access title bar; lists joined guilds on hover. */
 export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
-  const { connected, joined, joinedGuilds } = useSocket();
+  const { socket, connected, joined, joinedGuilds } = useSocket();
+
+  const [heartbeatLatencyMs, setHeartbeatLatencyMs] = useState<number | null>(
+    null,
+  );
+
+  useEffect(
+    () => socket?.subscribeHeartbeatLatency(setHeartbeatLatencyMs),
+    [socket],
+  );
 
   const {
     guildsQuery: { data: guilds },
@@ -29,12 +38,19 @@ export const ConnectionStatus: FC = () => {
         <button
           type="button"
           data-ll-draggable="false"
-          aria-label={t(
-            connectedToServers
-              ? "connection.connectedToServers"
-              : "connection.notConnected",
-          )}
-          className="ll-custom-cursor-pointer ll:inline-flex ll:size-5 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
+          aria-label={[
+            t(
+              connectedToServers
+                ? "connection.connectedToServers"
+                : "connection.notConnected",
+            ),
+            connectedToServers && heartbeatLatencyMs !== null
+              ? t("connection.heartbeatPing", { ping: heartbeatLatencyMs })
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          className="ll-custom-cursor-pointer ll:inline-flex ll:h-5 ll:min-w-5 ll:gap-1 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:p-0 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:outline-ring"
         >
           <span
             aria-hidden="true"
@@ -45,6 +61,11 @@ export const ConnectionStatus: FC = () => {
                 connectedToServers,
             })}
           />
+          {connectedToServers && heartbeatLatencyMs !== null && (
+            <span className="ll:text-[10px] ll:tabular-nums" aria-hidden="true">
+              {t("connection.ping", { ping: heartbeatLatencyMs })}
+            </span>
+          )}
         </button>
       </TooltipTrigger>
       <TooltipContent>

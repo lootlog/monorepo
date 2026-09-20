@@ -1,4 +1,4 @@
-import { isNotNil } from "es-toolkit";
+import { isEqual, isNotNil } from "es-toolkit";
 import { getCharacterIdentityKey } from "@/lib/character-identity-key";
 import { create } from "zustand";
 import type {
@@ -72,17 +72,20 @@ function withGuildMemberNames(
   ownersByCharacterKey: Record<string, OnlineCharacterOwner | undefined>,
   guildMembersByUserId: GuildMembersByUserId,
 ) {
-  return Object.fromEntries(
-    Object.entries(ownersByCharacterKey).map(([key, owner]) => [
-      key,
-      owner
-        ? {
-            ...owner,
-            guildMemberName: guildMembersByUserId?.[owner.userId]?.name,
-          }
-        : owner,
-    ]),
-  );
+  let next = ownersByCharacterKey;
+
+  for (const [key, owner] of Object.entries(ownersByCharacterKey)) {
+    if (!owner) continue;
+
+    const guildMemberName = guildMembersByUserId?.[owner.userId]?.name;
+
+    if (owner.guildMemberName === guildMemberName) continue;
+
+    if (next === ownersByCharacterKey) next = { ...ownersByCharacterKey };
+    next[key] = { ...owner, guildMemberName };
+  }
+
+  return next;
 }
 
 export const useOnlineCharacterOwnersStore =
@@ -140,12 +143,16 @@ export const useOnlineCharacterOwnersStore =
     setError: () => set({ ownersByCharacterKey: {}, status: "error" }),
     setForbidden: () => set({ ownersByCharacterKey: {}, status: "forbidden" }),
     setGuildMembers: (guildMembersByUserId) =>
-      set((state) => ({
-        ownersByCharacterKey: withGuildMemberNames(
+      set((state) => {
+        const ownersByCharacterKey = withGuildMemberNames(
           state.ownersByCharacterKey,
           guildMembersByUserId,
-        ),
-      })),
+        );
+
+        return ownersByCharacterKey === state.ownersByCharacterKey
+          ? state
+          : { ownersByCharacterKey };
+      }),
     setPresenceResponse: (response, guildMembersByUserId) =>
       set({
         ownersByCharacterKey: Object.fromEntries(
@@ -167,11 +174,14 @@ export const useOnlineCharacterOwnersStore =
 
         if (!owner) return state;
 
+        const key = getCharacterIdentityKey(owner.accountId, owner.characterId);
+
+        if (isEqual(state.ownersByCharacterKey[key], owner)) return state;
+
         return {
           ownersByCharacterKey: {
             ...state.ownersByCharacterKey,
-            [getCharacterIdentityKey(owner.accountId, owner.characterId)]:
-              owner,
+            [key]: owner,
           },
         };
       }),

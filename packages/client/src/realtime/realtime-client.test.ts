@@ -243,6 +243,11 @@ describe("RealtimeClient", () => {
       },
     });
 
+    let now = 1_000;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const latencies: Array<number | null> = [];
+    client.subscribeHeartbeatLatency((value) => latencies.push(value));
+
     const restoreSession = async () => {
       await client.join(joinData);
       await client.request("presence.publish", { organizationIds: ["org-1"] });
@@ -273,9 +278,14 @@ describe("RealtimeClient", () => {
       type: "presence.heartbeat",
       data: { sessionId: "restored-presence" },
     });
+    expect(latencies.at(-1)).toBeNull();
+    now += 42;
     respondToLastRequest(second);
     await flushMessages();
+    expect(latencies.at(-1)).toBe(42);
+    expect(second.sent).toHaveLength(3);
     client.disconnect();
+    expect(latencies.at(-1)).toBeNull();
   });
 
   it("backs off when sockets open but session joins keep failing", async () => {

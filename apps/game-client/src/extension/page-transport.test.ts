@@ -61,6 +61,19 @@ const httpResponse = (status = 200, body = '{"saved":true}') => ({
 });
 
 describe("page transport", () => {
+  it("delivers heartbeat latency without page requests and clears stale samples on reset", async () => {
+    const bridge = setup();
+    const latencies: Array<number | null> = [];
+    bridge.platform
+      .createRealtime()
+      .subscribeHeartbeatLatency((value) => latencies.push(value));
+    bridge.send({ type: "heartbeat-latency", latencyMs: 42 });
+    await vi.waitFor(() => expect(latencies.at(-1)).toBe(42));
+    expect(bridge.received).toHaveLength(0);
+    bridge.send({ type: "reset" });
+    await vi.waitFor(() => expect(latencies.at(-1)).toBeNull());
+  });
+
   it("does not restart an in-flight connection when the initial ready arrives", async () => {
     const bridge = setup();
     bridge.platform.createRealtime().connect();
