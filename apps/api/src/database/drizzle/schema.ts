@@ -579,6 +579,12 @@ export const playerSnapshotTable = pgTable(
       table["characterId"],
     ),
     index("PlayerSnapshot_name_idx").on(table["name"]),
+    // Free-text loot search resolves player names to snapshot ids; the btree
+    // above cannot serve a substring match.
+    index("PlayerSnapshot_name_trgm_idx").using(
+      "gin",
+      sql`${table["name"]} gin_trgm_ops`,
+    ),
   ],
 );
 

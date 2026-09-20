@@ -148,3 +148,53 @@ path at once: until the new revision ships, the older one answers an all-digit
 or empty-slug vanity URL with a 500 instead of a 400, and every other save is
 unaffected. Legacy `guild:<id or vanity URL>` cache entries are never read
 again and expire within one hour.
+
+## Free-text loot search
+
+`20260920141617_player_snapshot_name_trigram` installs `pg_trgm` and adds
+`PlayerSnapshot_name_trgm_idx`. `pg_trgm` is a trusted extension, so the
+database owner can install it without superuser rights. Apply the migration
+before deploying the API revision that resolves search terms; an older revision
+ignores the index.
+
+`makeLootQueryPersistence` resolves the `search` term before the page query. It
+asks, concurrently, which `ItemSnapshot`, `NpcSnapshot` and `PlayerSnapshot`
+ids match it. Each relation then contributes an arm only when it can still
+match, using the resolved snapshot ids instead of a correlated name join. A
+term that matches no snapshot skips the page query and returns no rows.
+
+The previous condition ORed four correlated subqueries that read a snapshot row
+and ran `ILIKE` for every loot the descending scan examined, so a term matching
+nothing paid for the whole Organization before returning nothing. Measured on a
+local production copy (13,403,753 loots; the largest Organization holds 383,683
+nonarchived records; `shared_buffers` 512 MiB, parallel query disabled), a
+no-match term exceeded a 60 s statement timeout; after the change the same
+request resolves in about 11 ms of database time and runs no page query. These
+are local fixture measurements, not production latency.
+
+`Loot.location` is no longer searchable. The fourth arm matched map names,
+which the product never offered: the Web search field advertises items,
+monsters and players, and the loot query contract has no location filter.
+Removing it also removed the only reason to index a text column on the
+13-million-row `Loot` table.
+
+A term matching more than `LOOT_SEARCH_SNAPSHOT_LIMIT` snapshots of one
+relation keeps that relation's original pattern arm: such a term matches
+densely, so the descending scan reaches its page early. Case-insensitive
+substring semantics over item, NPC and player names, Organization isolation,
+archival, visibility, ordering and filter combinations are unchanged; the
+resolution queries use the same `ILIKE` patterns the arms used before.
+
+`search` is the fallback for names the search service has not indexed. The Web
+palette resolves what the user types through `apps/search` and commits exact
+names into `npcs`, `itemNames` or `players`; when that service is stale, broken
+or missing an entry, the palette offers the typed term as a direct loot search
+instead. It reads the same snapshot rows the loot list already owns, so a
+missing search index cannot hide a loot from its Organization.
+
+`PlayerSnapshot_name_trgm_idx` measures 36 MB on that copy and replaces a
+250 ms sequential scan with a sub-millisecond probe. Loot ingestion adds one
+GIN entry per inserted player snapshot; the copy received at most about 30,000
+loots per day during the sampled week. The migrator runs inside a transaction,
+so this is a plain `CREATE INDEX` holding a `SHARE` lock on `PlayerSnapshot`
+while it builds.

@@ -125,3 +125,108 @@ describe("LootSearchCommand search failures", () => {
     },
   );
 });
+
+describe("LootSearchCommand direct loot search", () => {
+  const renderPalette = async (options: {
+    searchParams?: string;
+    onUrlUpdate?: (update: { searchParams: URLSearchParams }) => void;
+  }) => {
+    const RouterWrapper = await createOrganizationTestWrapper("/test-org");
+    const storage = new MemoryStorage();
+    storage.setItem(
+      "lootlog:guild:test-org:world",
+      JSON.stringify("test-world"),
+    );
+    vi.stubGlobal("localStorage", storage);
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+
+    render(
+      <RouterWrapper>
+        <NuqsTestingAdapter
+          searchParams={options.searchParams ?? ""}
+          onUrlUpdate={options.onUrlUpdate}
+        >
+          <GuildContextProvider>
+            <QueryClientProvider client={client}>
+              <LootSearchCommand open onOpenChange={() => {}} />
+            </QueryClientProvider>
+          </GuildContextProvider>
+        </NuqsTestingAdapter>
+      </RouterWrapper>,
+    );
+
+    return client;
+  };
+
+  it("sends the typed term to the loot list instead of a resolved name", async () => {
+    const updates: URLSearchParams[] = [];
+    const previousSkipAnimations = MotionGlobalConfig.skipAnimations;
+    let client: QueryClient | undefined;
+
+    try {
+      MotionGlobalConfig.skipAnimations = true;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => Response.json({ npcs: [], players: [], items: [] })),
+      );
+      client = await renderPalette({
+        onUrlUpdate: ({ searchParams }) => updates.push(searchParams),
+      });
+
+      fireEvent.change(
+        screen.getByPlaceholderText("loots.searchCommand.placeholder"),
+        { target: { value: "  Zbojca Gorski  " } },
+      );
+
+      const action = await screen.findByText(
+        "loots.searchCommand.directSearch",
+      );
+
+      fireEvent.click(action);
+
+      await waitFor(() => expect(updates.length).toBeGreaterThan(0));
+
+      const applied = updates[updates.length - 1];
+
+      expect(applied?.get("search")).toBe("Zbojca Gorski");
+      expect(applied?.get("npcs")).toBeNull();
+      expect(applied?.get("itemNames")).toBeNull();
+    } finally {
+      cleanup();
+      client?.clear();
+      MotionGlobalConfig.skipAnimations = previousSkipAnimations;
+    }
+  });
+
+  it("shows an active term and clears it", async () => {
+    const updates: URLSearchParams[] = [];
+    const previousSkipAnimations = MotionGlobalConfig.skipAnimations;
+    let client: QueryClient | undefined;
+
+    try {
+      MotionGlobalConfig.skipAnimations = true;
+      client = await renderPalette({
+        searchParams: "?search=Zbojca",
+        onUrlUpdate: ({ searchParams }) => updates.push(searchParams),
+      });
+
+      expect(
+        screen.getByText("loots.searchCommand.directSearchActive"),
+      ).toBeTruthy();
+
+      fireEvent.click(
+        screen.getByText("loots.searchCommand.directSearchClear"),
+      );
+
+      await waitFor(() => expect(updates.length).toBeGreaterThan(0));
+      expect(updates[updates.length - 1]?.get("search")).toBeNull();
+    } finally {
+      cleanup();
+      client?.clear();
+      MotionGlobalConfig.skipAnimations = previousSkipAnimations;
+    }
+  });
+});

@@ -28,6 +28,7 @@ export type LootFiltersHeaderProps = {
 const getLootFiltersHeaderState = (
   filters: {
     hid: string;
+    search: string;
     itemNames: readonly unknown[];
     npcs: readonly unknown[];
     players: readonly unknown[];
@@ -40,6 +41,7 @@ const getLootFiltersHeaderState = (
     filters.npcs.length > 0 ||
     filters.itemNames.length > 0 ||
     filters.hid !== "" ||
+    filters.search !== "" ||
     filters.players.length > 0,
   showWorldControls: !isMobile || Boolean(world),
   usesStackedControls: isMobile || isCompactLayout,
