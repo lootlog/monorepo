@@ -987,7 +987,7 @@ export const makeBattles = (
                   .onConflictDoNothing({
                     target: [battles.userId, battles.submissionId],
                   })
-                  .returning(),
+                  .returning({ id: battles.id }),
               );
 
               if (!insertedBattle) return null;
@@ -1084,16 +1084,16 @@ export const makeBattles = (
                 }),
               );
 
-              const insertedWarriors = yield* queryEffect(
-                tx.insert(battleWarriors).values(warriorValues).returning(),
+              yield* queryEffect(
+                tx.insert(battleWarriors).values(warriorValues),
               );
 
-              return { ...insertedBattle, warriors: insertedWarriors };
+              return insertedBattle;
             }),
           ),
         );
 
-        if (battle) return inflateBattleWarriorsInBattle(battle);
+        if (battle) return battle;
 
         const existingBattle =
           yield* battlesModule.getMatchingBattleBySubmissionId(
@@ -1102,7 +1102,7 @@ export const makeBattles = (
             semanticFingerprint,
           );
 
-        if (existingBattle) return existingBattle;
+        if (existingBattle) return { id: existingBattle.id };
 
         return yield* Effect.fail(
           new Error("Battle insert did not return a row"),
