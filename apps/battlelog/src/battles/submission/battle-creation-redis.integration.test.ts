@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, expect, it } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
 import { makePostgresLayer } from "@lootlog/database";
+import { CacheFillTimeoutError } from "@lootlog/database/redis-cache-fill";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
@@ -589,6 +590,143 @@ it("coalesces concurrent analytics fills and retries factory failures without ca
       cache.getOrSetJson("burst", "failure", () => Effect.succeed(7), Number),
     ),
   ).toBe(7);
+});
+
+it("does not retry a loader that rejects without an error value", async () => {
+  let calls = 0;
+
+  const results = await Promise.allSettled([
+    services.redis.getOrSetJsonBestEffort({
+      key: "undefined-failure",
+      ttlSeconds: 30,
+      codec: { stringify: JSON.stringify, parse: Number },
+      factory: () => {
+        calls++;
+
+        return Promise.reject(undefined);
+      },
+    }),
+  ]);
+
+  expect(results).toEqual([{ status: "rejected", reason: undefined }]);
+  expect(calls).toBe(1);
+});
+
+it("times out best-effort cache waiters without duplicating the active fill", async () => {
+  const key = "slow-cache-fill";
+  const { promise: started, resolve: begin } = Promise.withResolvers<void>();
+  const { promise: result, resolve: finish } = Promise.withResolvers<number>();
+  let calls = 0;
+
+  const options = {
+    key,
+    ttlSeconds: 30,
+    codec: { stringify: JSON.stringify, parse: Number },
+    waitTimeoutMs: 60,
+    waitIntervalMs: 10,
+    factory: async () => {
+      calls++;
+      begin();
+
+      return result;
+    },
+  };
+
+  const owner = services.redis.getOrSetJsonBestEffort(options);
+
+  try {
+    await started;
+
+    const waiters = await Promise.allSettled(
+      Array.from({ length: 8 }, () =>
+        services.redis.getOrSetJsonBestEffort(options),
+      ),
+    );
+
+    for (const waiter of waiters) {
+      expect(waiter.status).toBe("rejected");
+
+      if (waiter.status === "rejected") {
+        expect(waiter.reason).toBeInstanceOf(CacheFillTimeoutError);
+      }
+    }
+
+    expect(calls).toBe(1);
+  } finally {
+    finish(42);
+    await owner;
+  }
+
+  expect(await services.redis.get(key)).toBe("42");
+});
+
+it("prevents an expired cache owner from replacing its successor's cached result", async () => {
+  const key = "expired-cache-fill";
+  const { promise: started, resolve: begin } = Promise.withResolvers<void>();
+  const { promise: result, resolve: finish } = Promise.withResolvers<number>();
+
+  const options = {
+    key,
+    ttlSeconds: 30,
+    lockTtlSeconds: 1,
+    codec: { stringify: JSON.stringify, parse: Number },
+  };
+
+  const owner = services.redis.getOrSetJsonBestEffort({
+    ...options,
+    factory: async () => {
+      begin();
+
+      return result;
+    },
+  });
+
+  try {
+    await started;
+    // Let the real Redis lease expire while the original query remains pending.
+    await Bun.sleep(1_100);
+    expect(
+      await services.redis.getOrSetJsonBestEffort({
+        ...options,
+        factory: async () => 99,
+      }),
+    ).toBe(99);
+  } finally {
+    finish(42);
+    expect(await owner).toBe(42);
+  }
+
+  expect(await services.redis.get(key)).toBe("99");
+});
+
+it("cancels a waiting best-effort reader without running its factory after lock release", async () => {
+  const key = "cancelled-cache-waiter";
+  const controller = new AbortController();
+  await services.redis.setNX(`${key}:single-flight`, "owner", 10);
+  let calls = 0;
+
+  const reading = services.redis.getOrSetJsonBestEffort({
+    key,
+    ttlSeconds: 30,
+    waitTimeoutMs: 500,
+    waitIntervalMs: 10,
+    signal: controller.signal,
+    codec: { stringify: JSON.stringify, parse: Number },
+    factory: async () => {
+      calls++;
+
+      return 42;
+    },
+  });
+
+  const settled = Promise.allSettled([reading]);
+  await Bun.sleep(30);
+  controller.abort();
+  expect((await settled)[0]?.status).toBe("rejected");
+  await services.redis.del(`${key}:single-flight`);
+  await Bun.sleep(30);
+  expect(calls).toBe(0);
+  expect(await services.redis.get(key)).toBeNull();
 });
 
 it("interrupts a coalesced analytics factory and permits a subsequent fill", async () => {

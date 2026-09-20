@@ -1,6 +1,9 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import { randomUUID } from "node:crypto";
-import { setTimeout as sleep } from "node:timers/promises";
+import {
+  CacheFillTimeoutError,
+  fillJsonCache,
+} from "@lootlog/database/redis-cache-fill";
 import { type Cause, Effect, Exit, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 
@@ -43,6 +46,7 @@ export interface RedisGetOrSetJsonOptions<T> {
   lockTtlSeconds?: number;
   waitTimeoutMs?: number;
   waitIntervalMs?: number;
+  signal?: AbortSignal;
   codec: JsonCodec<T>;
 }
 
@@ -55,12 +59,6 @@ export interface RedisGetOrSetJsonBestEffortOptions<
 const DEFAULT_SCAN_COUNT = 500;
 
 const DEFAULT_DELETE_BATCH_SIZE = 500;
-
-const DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS = 10;
-
-const DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS = 2_000;
-
-const DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS = 50;
 
 // Reads renew active scopes; idle metadata expires. A missing scope gets a new
 // random token, so expiry cannot make an old cache fill reachable again.
@@ -159,10 +157,7 @@ export class RedisService {
     scopes = [],
     ttlSeconds,
     factory,
-    lockTtlSeconds = DEFAULT_SINGLE_FLIGHT_LOCK_TTL_SECONDS,
-    waitTimeoutMs = DEFAULT_SINGLE_FLIGHT_WAIT_TIMEOUT_MS,
-    waitIntervalMs = DEFAULT_SINGLE_FLIGHT_WAIT_INTERVAL_MS,
-    codec,
+    ...options
   }: RedisGetOrSetJsonOptions<T>): Promise<T> {
     if (scopes.length > 0) {
       const generations = await this.eval<string[]>(
@@ -175,37 +170,7 @@ export class RedisService {
       key = `read-cache:v1:${generations.join(":")}:${key}`;
     }
 
-    const cached = await this.getJson<T>(key, codec);
-
-    if (cached !== null) {
-      return cached;
-    }
-
-    const lockKey = `${key}:single-flight`;
-    const lockToken = randomUUID();
-    const lockAcquired = await this.setNX(lockKey, lockToken, lockTtlSeconds);
-
-    try {
-      const cachedAfterLock = lockAcquired
-        ? await this.getJson<T>(key, codec)
-        : await this.waitForJsonCache<T>(
-            key,
-            waitTimeoutMs,
-            waitIntervalMs,
-            codec,
-          );
-
-      if (cachedAfterLock !== null) {
-        return cachedAfterLock;
-      }
-
-      const value = await factory();
-      await this.setJson(key, value, ttlSeconds, codec);
-
-      return value;
-    } finally {
-      if (lockAcquired) await this.releaseSingleFlightLock(lockKey, lockToken);
-    }
+    return fillJsonCache<T>(this, { key, ttlSeconds, factory, ...options });
   }
 
   async getOrSetJsonBestEffort<T>({
@@ -235,6 +200,10 @@ export class RedisService {
         factory: guardedFactory,
       });
     } catch (error) {
+      options.signal?.throwIfAborted();
+
+      if (error instanceof CacheFillTimeoutError) throw error;
+
       if (factoryRejected) {
         return Promise.reject(factoryError);
       }
@@ -263,6 +232,7 @@ export class RedisService {
           try: (signal) =>
             this.getOrSetJsonBestEffort({
               ...options,
+              signal,
               factory: async () => {
                 const exit = await Effect.runPromiseExitWith(context)(
                   options.factory,
@@ -287,38 +257,6 @@ export class RedisService {
         );
       }.bind(this),
     );
-  }
-
-  private async waitForJsonCache<T>(
-    key: string,
-    waitTimeoutMs: number,
-    waitIntervalMs: number,
-    codec: JsonCodec<T>,
-  ): Promise<T | null> {
-    const deadline = Date.now() + waitTimeoutMs;
-
-    while (Date.now() < deadline) {
-      await sleep(waitIntervalMs);
-
-      const cached = await this.getJson<T>(key, codec);
-
-      if (cached !== null) {
-        return cached;
-      }
-    }
-
-    return null;
-  }
-
-  private async releaseSingleFlightLock(
-    lockKey: string,
-    lockToken: string,
-  ): Promise<void> {
-    try {
-      await this.deleteIfValue(lockKey, lockToken);
-    } catch {
-      // The lock has a short TTL; a release failure should not fail the read.
-    }
   }
 
   async deleteIfValue(key: string, value: string): Promise<number> {

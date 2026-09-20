@@ -1,6 +1,8 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
-import { randomUUID } from "node:crypto";
-import { setTimeout as sleep } from "node:timers/promises";
+import {
+  CacheFillTimeoutError,
+  fillJsonCache,
+} from "@lootlog/database/redis-cache-fill";
 import { Effect, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 
@@ -25,6 +27,7 @@ export interface RedisGetOrSetJsonOptions<T> {
   readonly lockTtlSeconds?: number;
   readonly waitTimeoutMs?: number;
   readonly waitIntervalMs?: number;
+  readonly signal?: AbortSignal;
   readonly codec: JsonCodec<T>;
 }
 
@@ -48,13 +51,6 @@ export const makeJsonCodec = <S extends Schema.ConstraintDecoder<unknown>>(
     parse: (text) => decodeValue(decodeJsonUnknown(text)),
   };
 };
-
-const releaseLockScript = `
-if redis.call("get", KEYS[1]) == ARGV[1] then
-  return redis.call("del", KEYS[1])
-end
-return 0
-`;
 
 export const makeRedisStore = (
   redis: Redis.Redis["Service"],
@@ -115,63 +111,8 @@ export const makeRedisStore = (
       );
     },
 
-    async getOrSetJson<T>({
-      key,
-      ttlSeconds,
-      factory,
-      lockTtlSeconds = 10,
-      waitTimeoutMs = 2_000,
-      waitIntervalMs = 50,
-      codec,
-    }: RedisGetOrSetJsonOptions<T>): Promise<T> {
-      const cached = await redisStore.getJson<T>(key, codec);
-
-      if (cached !== null) return cached;
-
-      const lockKey = `${key}:single-flight`;
-      const lockToken = randomUUID();
-
-      const lockAcquired = await redisStore.setNX(
-        lockKey,
-        lockToken,
-        lockTtlSeconds,
-      );
-
-      if (!lockAcquired) {
-        const deadline = Date.now() + waitTimeoutMs;
-
-        while (Date.now() < deadline) {
-          await sleep(waitIntervalMs);
-          const cachedAfterWait = await redisStore.getJson<T>(key, codec);
-
-          if (cachedAfterWait !== null) return cachedAfterWait;
-        }
-
-        const value = await factory();
-        await redisStore.setJson(key, value, ttlSeconds, codec);
-
-        return value;
-      }
-
-      try {
-        const cachedAfterLock = await redisStore.getJson<T>(key, codec);
-
-        if (cachedAfterLock !== null) return cachedAfterLock;
-        const value = await factory();
-        await redisStore.setJson(key, value, ttlSeconds, codec);
-
-        return value;
-      } finally {
-        try {
-          await redisStore.eval<number>(
-            releaseLockScript,
-            [lockKey],
-            [lockToken],
-          );
-        } catch {
-          // The lock expires after its bounded TTL.
-        }
-      }
+    getOrSetJson<T>(options: RedisGetOrSetJsonOptions<T>): Promise<T> {
+      return fillJsonCache<T>(redisStore, options);
     },
 
     async getOrSetJsonBestEffort<T>({
@@ -180,6 +121,7 @@ export const makeRedisStore = (
     }: RedisGetOrSetJsonBestEffortOptions<T>): Promise<T> {
       let factoryResult: { readonly value: T } | undefined;
       let factoryError: unknown;
+      let factoryRejected = false;
 
       try {
         return await redisStore.getOrSetJson({
@@ -191,13 +133,18 @@ export const makeRedisStore = (
 
               return value;
             } catch (error) {
+              factoryRejected = true;
               factoryError = error;
               throw error;
             }
           },
         });
       } catch (error) {
-        if (factoryError !== undefined) throw factoryError;
+        options.signal?.throwIfAborted();
+
+        if (error instanceof CacheFillTimeoutError) throw error;
+
+        if (factoryRejected) throw factoryError;
         onError?.(error);
 
         if (factoryResult !== undefined) return factoryResult.value;
