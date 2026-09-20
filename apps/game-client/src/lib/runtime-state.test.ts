@@ -8,7 +8,9 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { queryClient } from "@/lib/query-client";
+import { queryKeys } from "@/features/public-api/query-keys";
+import { readSeededReadyRoomCache } from "@/test/ready-room-fixtures";
 import { resetTransientRuntimeState } from "./runtime-state";
 
 describe("resetTransientRuntimeState", () => {
@@ -89,8 +91,8 @@ describe("resetTransientRuntimeState", () => {
         },
       ],
     });
-    usePartyFinderStore.setState({
-      readyRoomsSynchronized: true,
+    queryClient.setQueryData(queryKeys.readyRooms(), {
+      projections: {},
       roomVersions: {
         room: {
           observedAtMs: Date.now(),
@@ -131,7 +133,7 @@ describe("resetTransientRuntimeState", () => {
     expect(useFriendsStore.getState().friendsMax).toBe(0);
     expect(useNotificationsStore.getState().notifications).toEqual([]);
     expect(useChatStore.getState().replyDraft).toBeNull();
-    expect(usePartyFinderStore.getState().roomVersions).toEqual({});
+    expect(readSeededReadyRoomCache(queryClient).roomVersions).toEqual({});
     expect(
       useCharacterTooltipCatchingGuildsStore.getState().entriesByKey,
     ).toEqual({});

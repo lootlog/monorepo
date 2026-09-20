@@ -4,7 +4,7 @@ import {
   type PartyReadyRoomParticipant,
 } from "@lootlog/schema/party-ready-room";
 import { Plus, UserMinus, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready
 import { partyReadyRoomControllerRemove } from "@lootlog/client/main";
 import { cn } from "cn";
 import { useFriendsStore } from "@/store/friends.store";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { inviteCharacterToFriends } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 
 type ReadyRoomParticipantItemProps = {
@@ -26,8 +26,7 @@ export function ReadyRoomParticipantItem({
   participant,
 }: ReadyRoomParticipantItemProps) {
   const { t } = useTranslation("partyFinder");
-  const [isRemoving, setIsRemoving] = useState(false);
-  const applyUpdate = usePartyFinderStore((state) => state.applyUpdate);
+  const { applyUpdate } = useReadyRoomsCache();
 
   const isFriend = useFriendsStore((state) =>
     state.isFriend(participant.character.characterId),
@@ -41,21 +40,22 @@ export function ReadyRoomParticipantItem({
     room.organizerCharacter.clan?.id !== undefined &&
     participant.character.clan.id === room.organizerCharacter.clan.id;
 
-  const removeParticipant = () => {
-    setIsRemoving(true);
-
-    return partyReadyRoomControllerRemove(
-      { notificationId: room.notificationId },
-      {
-        participantId: participant.participantId,
-        expectedRevision: room.revision,
-      },
-    )
-      .then((update) => {
-        applyUpdate(decodePartyReadyRoomClientUpdate(update));
-      })
-      .finally(() => setIsRemoving(false));
-  };
+  const { mutate: removeParticipant, isPending: isRemoving } = useMutation({
+    mutationFn: () =>
+      partyReadyRoomControllerRemove(
+        { notificationId: room.notificationId },
+        {
+          participantId: participant.participantId,
+          expectedRevision: room.revision,
+        },
+      ),
+    onSuccess: (update) => {
+      applyUpdate(decodePartyReadyRoomClientUpdate(update));
+    },
+    onError: (cause) => {
+      console.warn("Failed to remove the Ready Room participant", cause);
+    },
+  });
 
   return (
     <Tile
@@ -113,7 +113,7 @@ export function ReadyRoomParticipantItem({
           className="ll:p-0"
           title={t("actions.remove")}
           disabled={isRemoving}
-          onClick={() => void removeParticipant()}
+          onClick={() => removeParticipant()}
         >
           <UserMinus size={17} className="ll:text-red-400" />
         </Button>

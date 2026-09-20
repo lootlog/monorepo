@@ -1,4 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import {
   beforeEach,
   afterEach,
@@ -67,12 +69,31 @@ const mountActions = (
     ],
   };
 
-  const hook = renderHook(() =>
-    useTimerActions(timer, "guild-1", "luvia", ["guild-1", "guild-2"], grouped),
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  });
+
+  const hook = renderHook(
+    () =>
+      useTimerActions(
+        timer,
+        "guild-1",
+        "luvia",
+        ["guild-1", "guild-2"],
+        grouped,
+      ),
+    {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      ),
+    },
   );
 
   onTestFinished(() => {
     hook.unmount();
+    queryClient.clear();
     fixture.cleanup();
   });
 

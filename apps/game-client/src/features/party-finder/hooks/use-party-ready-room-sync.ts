@@ -1,81 +1,74 @@
-import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { useEffect } from "react";
-import { partyReadyRoomControllerList } from "@lootlog/client/main";
+import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useSocket } from "@/contexts/socket-context";
-import { useGameStore } from "@/store/game.store";
 import { GatewayEvent } from "@/config/gateway";
+import { queryKeys } from "@/features/public-api/query-keys";
 import {
-  captureReadyRoomSyncBaseline,
-  usePartyFinderStore,
-} from "@/store/party-finder.store";
+  EMPTY_READY_ROOM_CACHE,
+  resetReadyRoomObservationSequence,
+} from "@/features/party-finder/ready-room-cache";
+import {
+  invalidateReadyRoomSync,
+  useReadyRooms,
+} from "@/features/party-finder/hooks/use-ready-rooms";
 
+/**
+ * Mounts the Ready Room query and resynchronizes it whenever the viewer's
+ * character, world or guild permissions change. A permission change can hide
+ * rooms the viewer may no longer see, so it drops the collection instead of
+ * merging the next response into it.
+ */
 export function usePartyReadyRoomSync(): void {
-  const joined = useGlobalStore((state) => state.socketState.joined);
+  const queryClient = useQueryClient();
   const world = useGameStore((state) => state.game?.world);
   const characterId = useGameStore((state) => state.game?.hero.characterId);
+  const joined = useGlobalStore((state) => state.socketState.joined);
   const { socket } = useSocket();
 
-  const applyAuthoritativeSync = usePartyFinderStore(
-    (state) => state.applyAuthoritativeSync,
-  );
+  useReadyRooms();
 
-  const setReadyRoomsSynchronized = usePartyFinderStore(
-    (state) => state.setReadyRoomsSynchronized,
-  );
+  const wasJoined = useRef(joined);
+  const lastIdentity = useRef(`${world ?? ""}:${characterId ?? ""}`);
+
+  // Every gateway join and character switch resynchronizes: updates missed
+  // while disconnected are only recovered by a fresh list, never by the
+  // cached collection. Mounting the query already fetches it, so the first
+  // render needs no invalidation of its own.
+  useEffect(() => {
+    const identity = `${world ?? ""}:${characterId ?? ""}`;
+    const rejoined = joined && !wasJoined.current;
+    const identityChanged = identity !== lastIdentity.current;
+    wasJoined.current = joined;
+    lastIdentity.current = identity;
+
+    if (!joined || (!rejoined && !identityChanged)) return;
+
+    invalidateReadyRoomSync(queryClient);
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.readyRooms(),
+      exact: true,
+    });
+  }, [queryClient, world, characterId, joined]);
 
   useEffect(() => {
-    setReadyRoomsSynchronized(false);
-
-    if (!joined) return;
-    let controller: AbortController | undefined;
-
-    const synchronize = () => {
-      controller?.abort();
-      const request = new AbortController();
-      controller = request;
-
-      const baseline = captureReadyRoomSyncBaseline(
-        usePartyFinderStore.getState(),
-      );
-
-      void partyReadyRoomControllerList({ signal: request.signal })
-        .then((projections) => {
-          if (request.signal.aborted) return;
-          applyAuthoritativeSync(
-            projections.flatMap((projection) =>
-              projection.schemaVersion === 3
-                ? [decodePartyReadyRoomProjection(projection)]
-                : [],
-            ),
-            baseline,
-          );
-        })
-        .catch((cause: unknown) => {
-          if (request.signal.aborted) return;
-          setReadyRoomsSynchronized(false);
-          console.warn("Failed to synchronize party Ready Rooms", cause);
-        });
-    };
+    if (!socket) return;
 
     const permissionsChanged = () => {
-      usePartyFinderStore.getState().clearReadyRooms();
-      synchronize();
+      resetReadyRoomObservationSequence();
+      queryClient.setQueryData(queryKeys.readyRooms(), EMPTY_READY_ROOM_CACHE);
+      invalidateReadyRoomSync(queryClient);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.readyRooms(),
+        exact: true,
+      });
     };
 
-    synchronize();
-    socket?.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
-      controller?.abort();
-      socket?.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
+      socket.off(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
     };
-  }, [
-    joined,
-    world,
-    characterId,
-    socket,
-    applyAuthoritativeSync,
-    setReadyRoomsSynchronized,
-  ]);
+  }, [queryClient, socket]);
 }

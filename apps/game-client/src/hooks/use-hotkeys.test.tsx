@@ -5,9 +5,12 @@ import { migrateHotkeysState, useHotkeysStore } from "@/store/hotkeys.store";
 import { useWindowsStore } from "@/store/windows.store";
 
 import { configureApiClients } from "@lootlog/client/transport";
-import { readyRoomOrganizerFixture } from "@/test/ready-room-fixtures";
+import {
+  readyRoomOrganizerFixture,
+  seedReadyRoomCache,
+} from "@/test/ready-room-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
-import { usePartyFinderStore } from "@/store/party-finder.store";
+import { queryClient } from "@/lib/query-client";
 import { useGlobalStore } from "@/store/global.store";
 import { disposeReadyRoomInvitationCoordinator } from "@/features/party-finder/ready-room-invitation-coordinator";
 
@@ -253,9 +256,8 @@ describe("useHotkeys", () => {
         characterId: "organizer-character",
       },
     });
-    usePartyFinderStore.getState().clearReadyRooms();
-    usePartyFinderStore.getState().mergeProjection(readyRoomOrganizerFixture);
-    usePartyFinderStore.getState().setReadyRoomsSynchronized(true);
+    queryClient.clear();
+    seedReadyRoomCache(queryClient, [readyRoomOrganizerFixture]);
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
     const requests: Request[] = [];
 

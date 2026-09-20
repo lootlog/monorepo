@@ -3,6 +3,7 @@ import {
   timersControllerResetTimer,
 } from "@lootlog/client/main";
 import { getApiErrorStringField } from "@lootlog/client/transport";
+import { useMutation } from "@tanstack/react-query";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
@@ -116,72 +117,78 @@ export const useTimerActions = (
     showExpiredTimerAlways(timer.world, timer.timerKey);
   };
 
-  const handleRestartTimer = async () => {
-    if (!world) return;
+  const { mutateAsync: restartTimer, isPending: isRestartingTimer } =
+    useMutation({
+      mutationFn: (resetWorld: string) => {
+        const actorCharacter = buildCurrentTimerActorCharacterPayload();
 
-    try {
-      const actorCharacter = buildCurrentTimerActorCharacterPayload();
+        const scopes =
+          timersGrouping && timer.mergedGuildIds
+            ? timer.mergedGuildIds.flatMap(({ guildId, timerKey }) =>
+                timerKey ? [{ guildId, timerIdentifier: timerKey }] : [],
+              )
+            : [
+                {
+                  guildId: timer.guildId,
+                  timerIdentifier: timer.timerKey,
+                },
+              ];
 
-      if (timersGrouping && timer.mergedGuildIds) {
-        await Promise.all(
-          timer.mergedGuildIds.flatMap(({ guildId, timerKey }) =>
-            timerKey
-              ? [
-                  timersControllerResetTimer(
-                    {
-                      guildId,
-                      timerIdentifier: timerKey,
-                    },
-                    {
-                      world,
-                      actorCharacter,
-                    },
-                  ),
-                ]
-              : [],
+        return Promise.all(
+          scopes.map((scope) =>
+            timersControllerResetTimer(scope, {
+              world: resetWorld,
+              actorCharacter,
+            }),
           ),
         );
-      } else {
-        await timersControllerResetTimer(
-          {
-            guildId: timer.guildId,
-            timerIdentifier: timer.timerKey,
-          },
-          {
-            world,
-            actorCharacter,
-          },
+      },
+      onSuccess: () => {
+        showRuntimeMessage(
+          t("messages.resetSuccess", { name: timer.npc.name }),
         );
-      }
+      },
+      onError: (error) => {
+        showRuntimeMessage(getResetTimerErrorMessage(error));
+      },
+    });
 
-      showRuntimeMessage(t("messages.resetSuccess", { name: timer.npc.name }));
-    } catch (error) {
-      showRuntimeMessage(getResetTimerErrorMessage(error));
-    }
+  const { mutate: deleteTimer, isPending: isDeletingTimer } = useMutation({
+    mutationFn: ({
+      guildId,
+      timerKey,
+      deleteWorld,
+    }: {
+      guildId: string;
+      timerKey: string;
+      deleteWorld: string;
+    }) =>
+      timersControllerDeleteTimer(
+        { guildId, timerIdentifier: timerKey },
+        { world: deleteWorld },
+      ),
+    onSuccess: () => {
+      showRuntimeMessage(t("messages.deleteSuccess", { name: timer.npc.name }));
+    },
+    onError: (error) => {
+      showRuntimeMessage(getDeleteTimerErrorMessage(error));
+    },
+  });
+
+  const handleRestartTimer = async () => {
+    if (!world) return;
+    await restartTimer(world).catch(() => undefined);
   };
 
   const handleDeleteTimer = (guildId: string, timerKey: string) => {
     if (!world) return;
 
-    void timersControllerDeleteTimer(
-      {
-        guildId,
-        timerIdentifier: timerKey,
-      },
-      world ? { world } : undefined,
-    ).then(
-      () => {
-        showRuntimeMessage(
-          t("messages.deleteSuccess", { name: timer.npc.name }),
-        );
-      },
-      (error) => {
-        showRuntimeMessage(getDeleteTimerErrorMessage(error));
-      },
-    );
+    deleteTimer({ guildId, timerKey, deleteWorld: world });
   };
 
   return {
+    isRestartingTimer,
+    isDeletingTimer,
     isPinned,
     isAlwaysVisibleExpiredTimer,
     handleHideTimer,

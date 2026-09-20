@@ -1,4 +1,4 @@
-import { isApiError } from "@lootlog/client/transport";
+import { isRetryableApiFailure } from "@lootlog/client/transport";
 import {
   userLootlogConfigControllerGetPlayersCatchingGuilds,
   type UserLootlogPlayersCatchingGuildsRequestDtoPlayersItem,
@@ -55,16 +55,6 @@ const defaultDependencies: CoordinatorDependencies = {
       globalThis.setTimeout(resolve, delayMs);
     }),
 };
-
-function isRetryableRequestError(cause: unknown): boolean {
-  if (!isApiError(cause)) {
-    return false;
-  }
-
-  return (
-    cause.status === undefined || cause.status === 429 || cause.status >= 500
-  );
-}
 
 class CatchingGuildsRequestTimeoutError extends Error {
   constructor() {
@@ -336,7 +326,7 @@ export class CharacterTooltipCatchingGuildsCoordinator {
     } catch (error) {
       if (
         !(error instanceof CatchingGuildsRequestTimeoutError) &&
-        !isRetryableRequestError(error)
+        !isRetryableApiFailure(error)
       ) {
         throw error;
       }
