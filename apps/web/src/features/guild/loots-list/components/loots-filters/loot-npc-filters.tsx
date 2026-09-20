@@ -4,9 +4,14 @@ import {
   AccordionTrigger,
 } from "@lootlog/ui/components/accordion";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { FilterCombobox } from "./filter-combobox";
+import { NpcSearchTile } from "@/components/tiles";
+import {
+  SearchCombobox,
+  type SearchComboboxOption,
+} from "@/components/filters/search-combobox";
+import { LootFilterSectionBadge } from "./loot-filter-section-badge";
+import { LootLevelRangeFilter } from "./loot-level-range-filter";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
 
 type Props = Pick<
@@ -17,11 +22,12 @@ type Props = Pick<
   | "selectedNpcTypes"
   | "filters"
   | "updateFilters"
-  | "npcsOptions"
-  | "setDebouncedNpcsSearchValue"
-  | "debouncedNpcsSearchValue"
-  | "npcsQuery"
-  | "filterInputValues"
+  | "npcHits"
+  | "npcsSearchValue"
+  | "setNpcsSearchValue"
+  | "isNpcsSearching"
+  | "npcsSearchError"
+  | "levelRanges"
 >;
 
 export const LootNpcFilters = ({
@@ -31,28 +37,36 @@ export const LootNpcFilters = ({
   selectedNpcTypes,
   filters,
   updateFilters,
-  npcsOptions,
-  setDebouncedNpcsSearchValue,
-  debouncedNpcsSearchValue,
-  npcsQuery,
-  filterInputValues,
-}: Props) => (
-  <>
+  npcHits,
+  npcsSearchValue,
+  setNpcsSearchValue,
+  isNpcsSearching,
+  npcsSearchError,
+  levelRanges,
+}: Props) => {
+  const npcOptions: SearchComboboxOption[] = npcHits.map((npc) => ({
+    value: npc.name,
+    label: npc.name,
+    description: t(`npcType.${npc.type}`),
+    meta:
+      npc.lvl > 0
+        ? t("loots.searchCommand.level", { level: npc.lvl })
+        : undefined,
+    icon: <NpcSearchTile icon={npc.icon} name={npc.name} />,
+  }));
+
+  return (
     <AccordionItem
       value="npc"
       className="border-b border-border/70 px-3 sm:px-4"
     >
       <AccordionTrigger className="min-h-11 py-0">
         {t("loots.filtersPanel.npcSection.title")}
-        {npcActiveFilterCount > 0 && (
-          <span className="ml-2 inline-flex size-5 items-center justify-center rounded-md bg-primary/15 text-[11px] font-semibold text-primary">
-            {npcActiveFilterCount}
-          </span>
-        )}
+        <LootFilterSectionBadge count={npcActiveFilterCount} />
       </AccordionTrigger>
-      <AccordionContent className="space-y-4 border-t border-border/70 pb-3 pt-3">
-        <div>
-          <Label className="text-xs text-muted-foreground mb-2 block">
+      <AccordionContent className="space-y-4 border-t border-border/70 pb-4 pt-3">
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
             {t("loots.filtersPanel.npcSection.npcTypesLabel")}
           </Label>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
@@ -76,7 +90,7 @@ export const LootNpcFilters = ({
                 />
                 <Label
                   htmlFor={`npcType-${npcType.value}`}
-                  className="text-sm cursor-pointer"
+                  className="cursor-pointer text-sm"
                 >
                   {npcType.label}
                 </Label>
@@ -85,53 +99,38 @@ export const LootNpcFilters = ({
           </div>
         </div>
 
-        <div>
-          <Label className="text-xs text-muted-foreground mb-2 block">
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
             {t("loots.filtersPanel.npcSection.npcsLabel")}
           </Label>
-          <FilterCombobox
-            name="npcs"
+          <SearchCombobox
+            options={npcOptions}
+            selected={filters.npcs}
+            onSelectedChange={(values) => updateFilters({ npcs: values })}
+            searchValue={npcsSearchValue}
+            onSearchChange={setNpcsSearchValue}
             placeholder={t("loots.filtersPanel.npcSection.npcsPlaceholder")}
-            options={npcsOptions}
-            defaultValue={filters.npcs}
-            onSelect={(_, values) => updateFilters({ npcs: values })}
-            controlledSearch
-            onSearchChange={setDebouncedNpcsSearchValue}
-            searchValue={debouncedNpcsSearchValue}
-            loading={npcsQuery.isLoading}
-            searchError={npcsQuery.isError}
+            searchPlaceholder={t(
+              "loots.filtersPanel.npcSection.npcsSearchPlaceholder",
+            )}
+            loading={isNpcsSearching}
+            errorMessage={
+              npcsSearchError ? t("common.searchUnavailable") : undefined
+            }
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              {t("loots.filtersPanel.common.minLevel")}
-            </Label>
-            <Input
-              type="number"
-              placeholder="0"
-              value={filterInputValues.npcLevelMin}
-              onChange={(e) => updateFilters({ npcLevelMin: e.target.value })}
-              min={0}
-              max={500}
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              {t("loots.filtersPanel.common.maxLevel")}
-            </Label>
-            <Input
-              type="number"
-              placeholder="500"
-              value={filterInputValues.npcLevelMax}
-              onChange={(e) => updateFilters({ npcLevelMax: e.target.value })}
-              min={0}
-              max={500}
-            />
-          </div>
-        </div>
+        <LootLevelRangeFilter
+          min={levelRanges.npc.min}
+          max={levelRanges.npc.max}
+          onChange={({ min, max }) =>
+            updateFilters({
+              ...(min !== undefined && { npcLevelMin: min }),
+              ...(max !== undefined && { npcLevelMax: max }),
+            })
+          }
+        />
       </AccordionContent>
     </AccordionItem>
-  </>
-);
+  );
+};

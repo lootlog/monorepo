@@ -13,6 +13,7 @@ import {
   useNpcsControllerGetNpcs,
   usePlayersControllerGetPlayers,
 } from "@lootlog/client/search";
+import { uniqBy } from "es-toolkit";
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
@@ -53,23 +54,11 @@ type LootsFiltersSidebarProps = {
 
 type LootFilters = ReturnType<typeof useLootsFilters>["filters"];
 
+// Selected names need no lookup: the filter value is the label.
 const getEntitySearchParams = (
   search: string,
-  selectedNames: string,
   world: string | null | undefined,
-) => {
-  const queryWorld = world || "";
-
-  if (search.length > 0) {
-    return { search, world: queryWorld };
-  }
-
-  if (selectedNames.length > 0) {
-    return { search: selectedNames.split(","), world: queryWorld };
-  }
-
-  return undefined;
-};
+) => (search.length > 0 ? { search, world: world || "" } : undefined);
 
 const getHidQueryState = (
   hid: string | null | undefined,
@@ -86,13 +75,9 @@ const getHidQueryState = (
   };
 };
 
-const toFilterOptions = <Item extends { name: string }>(
-  items: Item[] | undefined,
-) =>
-  (items ?? []).map((item) => ({
-    value: item.name,
-    label: item.name,
-  }));
+// Filters match by name, so one hit per name is enough for the option list.
+const uniqueByName = <Hit extends { name: string }>(hits: Hit[] | undefined) =>
+  uniqBy(hits ?? [], (hit) => hit.name);
 
 const getFilterSectionState = (filters: LootFilters) => {
   const npcActiveFilterCount =
@@ -117,13 +102,26 @@ const getFilterSectionState = (filters: LootFilters) => {
   };
 };
 
-const getLootFilterInputValues = (filters: LootFilters) => ({
-  npcLevelMin: filters.npcLevelMin ?? "",
-  npcLevelMax: filters.npcLevelMax ?? "",
-  itemLevelMin: filters.itemLevelMin ?? "",
-  itemLevelMax: filters.itemLevelMax ?? "",
-  playerLevelMin: filters.playerLevelMin ?? "",
-  playerLevelMax: filters.playerLevelMax ?? "",
+// Level bounds travel through the URL as strings; the inputs work on numbers.
+const toLevelNumber = (value: string) =>
+  value.length > 0 ? Number(value) : undefined;
+
+export const toLevelFilterValue = (value: number | undefined) =>
+  value === undefined ? "" : String(value);
+
+const getLootLevelRanges = (filters: LootFilters) => ({
+  npc: {
+    min: toLevelNumber(filters.npcLevelMin),
+    max: toLevelNumber(filters.npcLevelMax),
+  },
+  item: {
+    min: toLevelNumber(filters.itemLevelMin),
+    max: toLevelNumber(filters.itemLevelMax),
+  },
+  player: {
+    min: toLevelNumber(filters.playerLevelMin),
+    max: toLevelNumber(filters.playerLevelMax),
+  },
 });
 
 export const useLootFiltersSidebar = ({
@@ -145,7 +143,7 @@ export const useLootFiltersSidebar = ({
   const { filters, setFilters, hasActiveFilters, clearFilters } =
     useLootsFilters();
 
-  const filterInputValues = getLootFilterInputValues(filters);
+  const levelRanges = getLootLevelRanges(filters);
 
   const [customFilters, setCustomFilters] = useLocalStorage<SavedFilter[]>(
     CUSTOM_FILTERS_STORAGE_KEY,
@@ -155,39 +153,34 @@ export const useLootFiltersSidebar = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newFilterName, setNewFilterName] = useState("");
 
-  const [playersSearchValue, setDebouncedPlayersSearchValue] = useState("");
+  const [playersSearchValue, setPlayersSearchValue] = useState("");
 
   const debouncedPlayersSearchValue = useDebounce(
     playersSearchValue,
     DEFAULT_DEBOUNCE_MS,
   );
 
-  const [npcsSearchValue, setDebouncedNpcsSearchValue] = useState("");
+  const [npcsSearchValue, setNpcsSearchValue] = useState("");
 
   const debouncedNpcsSearchValue = useDebounce(
     npcsSearchValue,
     DEFAULT_DEBOUNCE_MS,
   );
 
-  const [itemsSearchValue, setDebouncedItemsSearchValue] = useState("");
+  const [itemsSearchValue, setItemsSearchValue] = useState("");
 
   const debouncedItemsSearchValue = useDebounce(
     itemsSearchValue,
     DEFAULT_DEBOUNCE_MS,
   );
 
-  const selectedPlayerNames = filters.players.join(",");
-  const selectedNpcNames = filters.npcs.join(",");
-
   const playersSearchParams = getEntitySearchParams(
     debouncedPlayersSearchValue,
-    selectedPlayerNames,
     world,
   );
 
   const npcsSearchParams = getEntitySearchParams(
     debouncedNpcsSearchValue,
-    selectedNpcNames,
     world,
   );
 
@@ -200,17 +193,14 @@ export const useLootFiltersSidebar = ({
   const playersQuery = usePlayersControllerGetPlayers(playersSearchParams, {
     query: {
       queryKey: getPlayersControllerGetPlayersQueryKey(playersSearchParams),
-      enabled:
-        debouncedPlayersSearchValue.length > 0 ||
-        selectedPlayerNames.length > 0,
+      enabled: debouncedPlayersSearchValue.length > 0,
     },
   });
 
   const npcsQuery = useNpcsControllerGetNpcs(npcsSearchParams, {
     query: {
       queryKey: getNpcsControllerGetNpcsQueryKey(npcsSearchParams),
-      enabled:
-        debouncedNpcsSearchValue.length > 0 || selectedNpcNames.length > 0,
+      enabled: debouncedNpcsSearchValue.length > 0,
     },
   });
 
@@ -240,9 +230,20 @@ export const useLootFiltersSidebar = ({
     },
   );
 
-  const playersOptions = toFilterOptions(playersQuery.data);
-  const npcsOptions = toFilterOptions(npcsQuery.data);
-  const itemsOptions = toFilterOptions(itemsQuery.data?.hits);
+  const playerHits = uniqueByName(playersQuery.data);
+  const npcHits = uniqueByName(npcsQuery.data);
+  const itemHits = uniqueByName(itemsQuery.data?.hits);
+
+  // A pending debounce reads as "searching" so the list never shows stale hits.
+  const isPlayersSearching =
+    playersSearchValue !== debouncedPlayersSearchValue ||
+    playersQuery.isFetching;
+
+  const isNpcsSearching =
+    npcsSearchValue !== debouncedNpcsSearchValue || npcsQuery.isFetching;
+
+  const isItemsSearching =
+    itemsSearchValue !== debouncedItemsSearchValue || itemsQuery.isFetching;
 
   const updateFilters = (newFilters: Partial<typeof filters>) => {
     setFilters((currentFilters) => {
@@ -374,26 +375,29 @@ export const useLootFiltersSidebar = ({
     npcTypeOptions,
     selectedNpcTypes,
     updateFilters,
-    npcsOptions,
-    setDebouncedNpcsSearchValue,
-    debouncedNpcsSearchValue,
-    npcsQuery,
-    filterInputValues,
+    npcHits,
+    npcsSearchValue,
+    setNpcsSearchValue,
+    isNpcsSearching,
+    npcsSearchError: npcsQuery.isError,
+    levelRanges,
     itemActiveFilterCount,
     rarityOptions,
     selectedRarities,
     professionOptions,
     selectedProfessions,
-    itemsOptions,
-    setDebouncedItemsSearchValue,
-    debouncedItemsSearchValue,
-    itemsQuery,
+    itemHits,
+    itemsSearchValue,
+    setItemsSearchValue,
+    isItemsSearching,
+    itemsSearchError: itemsQuery.isError,
     hidItem,
     playerActiveFilterCount,
-    playersOptions,
-    setDebouncedPlayersSearchValue,
-    debouncedPlayersSearchValue,
-    playersQuery,
+    playerHits,
+    playersSearchValue,
+    setPlayersSearchValue,
+    isPlayersSearching,
+    playersSearchError: playersQuery.isError,
     hasActiveFilters,
     clearFilters,
   };

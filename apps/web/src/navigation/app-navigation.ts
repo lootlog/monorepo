@@ -314,6 +314,22 @@ function buildOrganizationSidebarRegistry(
   ];
 }
 
+/**
+ * The section an Organization opens on: the first sidebar entry the member
+ * may see, so a member without loot access lands on reservations rather than
+ * on a forbidden loot list. `null` when no section is visible.
+ */
+export function getOrganizationLandingItemId(
+  organizationId: string,
+  accessPolicy: AccessPolicy | undefined,
+): AppNavigationItemId | null {
+  const item = buildOrganizationSidebarRegistry(organizationId).find((entry) =>
+    entry.visible(accessPolicy),
+  );
+
+  return item?.id ?? null;
+}
+
 type Breadcrumb = {
   label: string;
   path: string | null;

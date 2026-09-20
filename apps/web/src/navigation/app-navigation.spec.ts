@@ -5,6 +5,7 @@ import {
 } from "@lootlog/domain/access-policy";
 import { describe, expect, it } from "vitest";
 import {
+  getOrganizationLandingItemId,
   resolveAppNavigation,
   type AppNavigationMatch,
 } from "./app-navigation";
@@ -278,5 +279,21 @@ describe("resolveAppNavigation", () => {
     expect(
       navigation.sidebarItems.find(({ id }) => id === "organization-settings"),
     ).toMatchObject({ visible: false });
+  });
+
+  it("lands a member without loot access on the first section they may read", () => {
+    expect(
+      getOrganizationLandingItemId(
+        "org",
+        policy(Capability.LOOTLOG_ACCESS, Capability.LOOTLOG_RESERVATIONS_READ),
+      ),
+    ).toBe("organization-reservations");
+    expect(
+      getOrganizationLandingItemId(
+        "org",
+        policy(Capability.LOOTLOG_LOOTS_READ, Capability.LOOTLOG_TIMERS_READ),
+      ),
+    ).toBe("organization-loots");
+    expect(getOrganizationLandingItemId("org", policy())).toBeNull();
   });
 });

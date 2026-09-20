@@ -6,11 +6,18 @@ import {
 } from "@lootlog/ui/components/accordion";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { Input } from "@lootlog/ui/components/input";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import { Label } from "@lootlog/ui/components/label";
+import { resolveItemRarity } from "@lootlog/ui/lib/item-rarity";
+import { cn } from "cn";
 import { X } from "lucide-react";
-import { FilterCombobox } from "./filter-combobox";
+import {
+  SearchCombobox,
+  type SearchComboboxOption,
+} from "@/components/filters/search-combobox";
+import { getRarityStyle } from "./loot-search-presentation";
+import { LootFilterSectionBadge } from "./loot-filter-section-badge";
+import { LootLevelRangeFilter } from "./loot-level-range-filter";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
 
 type Props = Pick<
@@ -23,13 +30,16 @@ type Props = Pick<
   | "updateFilters"
   | "professionOptions"
   | "selectedProfessions"
-  | "itemsOptions"
-  | "setDebouncedItemsSearchValue"
-  | "debouncedItemsSearchValue"
-  | "itemsQuery"
+  | "itemHits"
+  | "itemsSearchValue"
+  | "setItemsSearchValue"
+  | "isItemsSearching"
+  | "itemsSearchError"
   | "hidItem"
-  | "filterInputValues"
+  | "levelRanges"
 >;
+
+const ITEM_SEARCH_MINIMUM_LENGTH = 2;
 
 export const LootItemFilters = ({
   t,
@@ -40,29 +50,47 @@ export const LootItemFilters = ({
   updateFilters,
   professionOptions,
   selectedProfessions,
-  itemsOptions,
-  setDebouncedItemsSearchValue,
-  debouncedItemsSearchValue,
-  itemsQuery,
+  itemHits,
+  itemsSearchValue,
+  setItemsSearchValue,
+  isItemsSearching,
+  itemsSearchError,
   hidItem,
-  filterInputValues,
-}: Props) => (
-  <>
+  levelRanges,
+}: Props) => {
+  const itemOptions: SearchComboboxOption[] = itemHits.map((item) => ({
+    value: item.name,
+    label: item.name,
+    description: item.rarity ? (
+      <span className={cn("font-semibold", getRarityStyle(item.rarity))}>
+        {t(`itemRarity.${item.rarity}`, { defaultValue: item.rarity })}
+      </span>
+    ) : undefined,
+    meta:
+      item.lvl > 0
+        ? t("loots.searchCommand.level", { level: item.lvl })
+        : undefined,
+    icon: (
+      <ItemImage
+        icon={item.icon}
+        rarity={resolveItemRarity(item.rarity)}
+        className="[&>div]:cursor-default"
+      />
+    ),
+  }));
+
+  return (
     <AccordionItem
       value="item"
       className="border-b border-border/70 px-3 sm:px-4"
     >
       <AccordionTrigger className="min-h-11 py-0">
         {t("loots.filtersPanel.itemSection.title")}
-        {itemActiveFilterCount > 0 && (
-          <span className="ml-2 inline-flex size-5 items-center justify-center rounded-md bg-primary/15 text-[11px] font-semibold text-primary">
-            {itemActiveFilterCount}
-          </span>
-        )}
+        <LootFilterSectionBadge count={itemActiveFilterCount} />
       </AccordionTrigger>
-      <AccordionContent className="space-y-4 border-t border-border/70 pb-3 pt-3">
-        <div>
-          <Label className="text-xs text-muted-foreground mb-2 block">
+      <AccordionContent className="space-y-4 border-t border-border/70 pb-4 pt-3">
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
             {t("loots.filtersPanel.itemSection.raritiesLabel")}
           </Label>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
@@ -86,7 +114,7 @@ export const LootItemFilters = ({
                 />
                 <Label
                   htmlFor={`rarity-${rarity.value}`}
-                  className="text-sm cursor-pointer"
+                  className="cursor-pointer text-sm"
                 >
                   {rarity.label}
                 </Label>
@@ -95,8 +123,8 @@ export const LootItemFilters = ({
           </div>
         </div>
 
-        <div>
-          <Label className="text-xs text-muted-foreground mb-2 block">
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
             {t("loots.filtersPanel.itemSection.professionsLabel")}
           </Label>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
@@ -124,7 +152,7 @@ export const LootItemFilters = ({
                 />
                 <Label
                   htmlFor={`itemProfession-${profession.value}`}
-                  className="text-sm cursor-pointer"
+                  className="cursor-pointer text-sm"
                 >
                   {profession.label}
                 </Label>
@@ -133,37 +161,40 @@ export const LootItemFilters = ({
           </div>
         </div>
 
-        <div>
-          <Label className="text-xs text-muted-foreground mb-2 block">
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
             {t("loots.filtersPanel.itemSection.itemsLabel")}
           </Label>
-          <FilterCombobox
-            name="itemNames"
+          <SearchCombobox
+            options={itemOptions}
+            selected={filters.itemNames}
+            onSelectedChange={(values) => updateFilters({ itemNames: values })}
+            searchValue={itemsSearchValue}
+            onSearchChange={setItemsSearchValue}
             placeholder={t("loots.filtersPanel.itemSection.itemsPlaceholder")}
-            options={itemsOptions}
-            defaultValue={filters.itemNames}
-            onSelect={(_, values) => updateFilters({ itemNames: values })}
-            controlledSearch
-            onSearchChange={setDebouncedItemsSearchValue}
-            searchValue={debouncedItemsSearchValue}
-            loading={itemsQuery.isLoading}
-            searchError={itemsQuery.isError}
-            minimumSearchLength={2}
+            searchPlaceholder={t(
+              "loots.filtersPanel.itemSection.itemsSearchPlaceholder",
+            )}
+            loading={isItemsSearching}
+            errorMessage={
+              itemsSearchError ? t("common.searchUnavailable") : undefined
+            }
+            minimumSearchLength={ITEM_SEARCH_MINIMUM_LENGTH}
           />
         </div>
 
         {hidItem && filters.hid && (
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">
               {t("loots.filtersPanel.itemSection.filteredItemLabel")}
             </Label>
-            <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-2">
               <ItemImage
                 icon={hidItem.icon}
                 rarity={hidItem.rarity ?? ItemRarity.COMMON}
               />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{hidItem.name}</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{hidItem.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {t("loots.filtersPanel.common.levelValue", {
                     level: hidItem.lvl,
@@ -173,44 +204,27 @@ export const LootItemFilters = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 shrink-0"
+                className="size-7 shrink-0"
+                aria-label={t("common.removeOption", { label: hidItem.name })}
                 onClick={() => updateFilters({ hid: "" })}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3.5" />
               </Button>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              {t("loots.filtersPanel.common.minLevel")}
-            </Label>
-            <Input
-              type="number"
-              placeholder="0"
-              value={filterInputValues.itemLevelMin}
-              onChange={(e) => updateFilters({ itemLevelMin: e.target.value })}
-              min={0}
-              max={500}
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              {t("loots.filtersPanel.common.maxLevel")}
-            </Label>
-            <Input
-              type="number"
-              placeholder="500"
-              value={filterInputValues.itemLevelMax}
-              onChange={(e) => updateFilters({ itemLevelMax: e.target.value })}
-              min={0}
-              max={500}
-            />
-          </div>
-        </div>
+        <LootLevelRangeFilter
+          min={levelRanges.item.min}
+          max={levelRanges.item.max}
+          onChange={({ min, max }) =>
+            updateFilters({
+              ...(min !== undefined && { itemLevelMin: min }),
+              ...(max !== undefined && { itemLevelMax: max }),
+            })
+          }
+        />
       </AccordionContent>
     </AccordionItem>
-  </>
-);
+  );
+};

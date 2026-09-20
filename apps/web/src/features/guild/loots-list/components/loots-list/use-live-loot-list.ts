@@ -3,6 +3,7 @@ import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
+import { LOOTS_VIEW_MODE_KEY } from "@/features/guild/loots-list/loots-list-layout";
 import {
   useResetScrollTop,
   useVirtualInfiniteScroll,
@@ -98,6 +99,11 @@ const getLootPages = (loots: LootsInfiniteData | undefined) => loots?.pages;
 const hasInitialLoots = (loots: LootsInfiniteData | undefined) =>
   (loots?.pages?.[0]?.length ?? 0) > 0;
 
+// A fetched empty result has one empty page; a policy clear leaves no pages,
+// and a list without pages is still waiting for data.
+const hasFetchedPage = (loots: LootsInfiniteData | undefined) =>
+  (loots?.pages?.length ?? 0) > 0;
+
 const useStableLootCollections = (pages: Loot[][] | undefined) => {
   const allLoots = pages?.flatMap((page) => page) ?? EMPTY_LOOTS;
 
@@ -142,8 +148,11 @@ export const useLiveLootList = () => {
     data: loots,
     fetchNextPage,
     hasNextPage,
+    isError,
     isFetching,
-    isLoading,
+    isFetchingNextPage,
+    isPlaceholderData,
+    refetch,
   } = useInfiniteQuery({
     queryKey,
     queryFn: ({ pageParam, signal }) => {
@@ -311,7 +320,7 @@ export const useLiveLootList = () => {
     queryIdentity,
   ]);
 
-  const { viewMode } = useViewMode("loots-view-mode");
+  const { viewMode } = useViewMode(LOOTS_VIEW_MODE_KEY);
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
   const totalCount = allLoots.length;
 
@@ -361,9 +370,32 @@ export const useLiveLootList = () => {
 
   const hasLoots = hasInitialLoots(loots);
 
+  // New filters keep the previous page on screen while the next one loads;
+  // background reconciliation refetches the same key and stays silent.
+  const isRefreshing = isPlaceholderData && isFetching && !isFetchingNextPage;
+
+  // A failure only replaces the list when nothing was loaded; a failed page
+  // or refresh keeps the accepted records on screen with a retry row.
+  const isFailed = isError && !hasLoots;
+
+  // Only a fetched, non-placeholder empty page means there is nothing to show.
+  const isEmpty =
+    !isError && !isPlaceholderData && hasFetchedPage(loots) && !hasLoots;
+
+  const isPending = !isFailed && !hasLoots && !isEmpty;
+
+  const retry = () => {
+    void (hasLoots && hasNextPage ? fetchNextPage() : refetch());
+  };
+
   return {
     scrollElementRef,
-    isLoading,
+    isEmpty,
+    isError,
+    isFailed,
+    isPending,
+    isRefreshing,
+    retry,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
@@ -377,7 +409,6 @@ export const useLiveLootList = () => {
     totalCount,
     allLoots,
     world,
-    hasLoots,
     hasActiveFilters,
     clearFilters,
   };
