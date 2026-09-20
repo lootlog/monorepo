@@ -238,6 +238,13 @@ Before calling a change complete, account for every applicable item:
   Tailwind keeps stale candidates in dev mode.
 - Add a deployable service only when its scaling, failure, data, security, or
   release boundary justifies independent deployment.
+- Build database queries with Drizzle's query builder, including CTEs, joins,
+  filters, grouping, ordering, and pagination. Use tagged `sql` only for
+  expressions or syntax the builder does not support; keep values parameterized
+  and reference schema columns instead of spelling identifiers in SQL strings.
+  Use a full raw SQL query only for a demonstrated builder limitation, and
+  explain that limitation alongside the query. Verify generated SQL and relevant
+  PostgreSQL behavior when query structure or performance matters.
 - Import from the module that owns a symbol. Do not create source files that
   only re-export symbols.
 - When importing node built-in modules, first, look for Bun built-ins and only then Node built-ins.
