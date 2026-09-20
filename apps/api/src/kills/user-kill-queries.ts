@@ -3,7 +3,7 @@ import type {
   UserKillAnalyticsQuery,
   UserKillActivityQuery,
 } from "#src/contracts/kills/analytics-schemas";
-import { addNpcKills } from "./npc-kill-aggregation.js";
+import { readNpcKillPage } from "./npc-kill-page.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, gte, ilike, inArray, lte, type SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
@@ -53,7 +53,7 @@ export const makeUserKillQueries = (
       }),
     );
 
-  const readStats = (
+  const statsCondition = (
     userId: string,
     options: {
       readonly world?: string;
@@ -92,23 +92,22 @@ export const makeUserKillQueries = (
         periodCondition,
       );
 
-    if (options.periodStart) {
-      return database
-        .select()
-        .from(userKillStatsBucketTable)
-        .where(
-          conditions(
-            userKillStatsBucketTable,
-            gte(userKillStatsBucketTable.periodStart, options.periodStart),
-          ),
-        );
-    }
-
-    return database
-      .select()
-      .from(userKillStatsTable)
-      .where(conditions(userKillStatsTable));
+    return options.periodStart
+      ? conditions(
+          userKillStatsBucketTable,
+          gte(userKillStatsBucketTable.periodStart, options.periodStart),
+        )
+      : conditions(userKillStatsTable);
   };
+
+  const readStats = (
+    userId: string,
+    options: Parameters<typeof statsCondition>[1],
+  ) =>
+    database
+      .select()
+      .from(options.periodStart ? userKillStatsBucketTable : userKillStatsTable)
+      .where(statsCondition(userId, options));
 
   const cached = <S extends Schema.ConstraintDecoder<unknown>>(
     userId: string,
@@ -210,8 +209,10 @@ export const makeUserKillQueries = (
       UserNpcKillsResponse,
       protect(
         "kills.user-npcs.query",
-        Effect.suspend(() =>
-          readStats(userId, {
+        readNpcKillPage(
+          database,
+          periodStart ? userKillStatsBucketTable : userKillStatsTable,
+          statsCondition(userId, {
             world: query.world,
             npcTypes: query.npcTypes,
             search: query.search,
@@ -219,49 +220,17 @@ export const makeUserKillQueries = (
             maxLvl: query.maxLvl,
             periodStart,
           }),
+          { limit, cursor, sortBy: query.sortBy, sortOrder: query.sortOrder },
         ).pipe(
-          Effect.map((stats) => {
-            const npcMap = new Map<
-              number,
-              {
-                npcId: number;
-                npcName: string;
-                npcType: string;
-                npcLvl: number;
-                npcProf: string | null;
-                npcIcon: string | null;
-                totalKills: number;
-              }
-            >();
-
-            for (const stat of stats) {
-              addNpcKills(npcMap, stat, stat.totalKills);
-            }
-
-            const sortBy = query.sortBy ?? "kills";
-            const sortAscending = query.sortOrder === "asc";
-
-            const allNpcs = Array.from(npcMap.values()).sort((left, right) => {
-              const difference =
-                sortBy === "level"
-                  ? left.npcLvl - right.npcLvl
-                  : left.totalKills - right.totalKills;
-
-              return sortAscending ? difference : -difference;
-            });
-
-            const total = allNpcs.length;
-
-            return {
-              npcs: allNpcs.slice(cursor, cursor + limit),
-              pagination: {
-                total,
-                cursor,
-                limit,
-                hasNext: cursor + limit < total,
-              },
-            };
-          }),
+          Effect.map(({ npcs, total }) => ({
+            npcs,
+            pagination: {
+              total,
+              cursor,
+              limit,
+              hasNext: cursor + limit < total,
+            },
+          })),
         ),
       ),
     );
