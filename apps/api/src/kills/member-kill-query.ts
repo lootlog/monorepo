@@ -1,4 +1,3 @@
-import { addNpcKills } from "./npc-kill-aggregation.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
 import { Effect, Schema } from "effect";
@@ -77,39 +76,13 @@ export const makeMemberKillQuery =
 
         if (!member) return null;
 
-        const stats = yield* persistence.findMemberStats(
-          filter,
-          periodStart !== undefined,
-        );
-
-        const participationsByType: Record<string, number> = {};
-        let totalParticipations = 0;
-
-        const npcMap = new Map<
-          number,
-          {
-            npcId: number;
-            npcName: string;
-            npcType: string;
-            npcLvl: number;
-            npcProf: string | null;
-            npcIcon: string | null;
-            totalKills: number;
-          }
-        >();
-
-        for (const stat of stats) {
-          participationsByType[stat.npcType] =
-            (participationsByType[stat.npcType] ?? 0) + stat.memberKills;
-          totalParticipations += stat.memberKills;
-          addNpcKills(npcMap, stat, stat.memberKills);
-        }
-
-        const allNpcs = Array.from(npcMap.values()).sort(
-          (left, right) => right.totalKills - left.totalKills,
-        );
-
-        const total = allNpcs.length;
+        const { npcs, total, totalParticipations, participationsByType } =
+          yield* persistence.findMemberNpcPage(
+            filter,
+            periodStart !== undefined,
+            limit,
+            cursor,
+          );
 
         return {
           member: {
@@ -119,7 +92,7 @@ export const makeMemberKillQuery =
             memberUserId: member.userId,
           },
           overview: { totalParticipations, participationsByType },
-          npcs: allNpcs.slice(cursor, cursor + limit),
+          npcs,
           pagination: {
             total,
             cursor,
