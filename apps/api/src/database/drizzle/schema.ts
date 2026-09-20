@@ -484,13 +484,6 @@ export const lootTable = pgTable(
     index("Loot_createdAt_idx").on(table["createdAt"]),
     index("Loot_world_createdAt_idx").on(table["world"], table["createdAt"]),
     index("Loot_world_id_idx").on(table["world"], table["id"]),
-    // Free-text loot search asks whether any location can match before it
-    // scans an Organization. Without this trigram index that question costs a
-    // sequential scan of every loot.
-    index("Loot_location_trgm_idx").using(
-      "gin",
-      sql`${table["location"]} gin_trgm_ops`,
-    ),
   ],
 );
 

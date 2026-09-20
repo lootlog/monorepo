@@ -126,7 +126,11 @@
     "items": "Przedmioty",
     "players": "Gracze",
     "noResults": "Brak wyników",
-    "noResultsDescription": "Spróbuj krótszej nazwy albo sprawdź pisownię."
+    "noResultsDescription": "Spróbuj krótszej nazwy albo sprawdź pisownię.",
+    "directSearch": "Szukaj „{{term}}” bezpośrednio w łupach",
+    "directSearchHint": "Pomija wyszukiwarkę: dopasowuje nazwy przedmiotów, potworów i graczy zapisane w łupach.",
+    "directSearchActive": "Aktywne wyszukiwanie w łupach: „{{term}}”",
+    "directSearchClear": "Wyczyść"
   },
   "list": {
     "selectWorldTitle": "Wybierz świat",

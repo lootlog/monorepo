@@ -35,7 +35,7 @@ export const useLootSearchCommand = ({
   const debouncedSearch = useDebounce(searchQuery, 200);
   const { world } = useGuildContext();
   const guildId = useGuildId();
-  const { setFilters } = useLootsFilters();
+  const { filters, setFilters } = useLootsFilters();
   const trimmedSearch = searchQuery.trim();
   const parsedHid = parseItemHid(trimmedSearch);
   const isHidInput = trimmedSearch.toUpperCase().startsWith("ITEM#");
@@ -144,6 +144,23 @@ export const useLootSearchCommand = ({
     setSearchQuery("");
   };
 
+  // The search service can be behind or miss a name entirely. This matches the
+  // term against the loot database itself, so a name it has not indexed is
+  // still reachable.
+  const handleDirectSearch = () => {
+    setFilters({ search: trimmedSearch });
+    onOpenChange(false);
+    setSearchQuery("");
+  };
+
+  const handleClearDirectSearch = () => {
+    setFilters({ search: null });
+  };
+
+  const activeDirectSearch = filters.search;
+
+  const canSearchDirectly = allTrue(!isHidInput, trimmedSearch.length >= 2);
+
   const npcResults = searchResults?.npcs ?? [];
   const itemResults = searchResults?.items ?? [];
   const playerResults = searchResults?.players ?? [];
@@ -206,6 +223,10 @@ export const useLootSearchCommand = ({
 
   return {
     t,
+    activeDirectSearch,
+    canSearchDirectly,
+    handleDirectSearch,
+    handleClearDirectSearch,
     searchQuery,
     setSearchQuery,
     trimmedSearch,
