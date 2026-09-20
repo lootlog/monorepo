@@ -11,7 +11,7 @@ import { type FC, useLayoutEffect, useRef, useState } from "react";
 import type { DetectorSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
-import { useOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
+import { useHasOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { useWindowsStore } from "@/store/windows.store";
 import { useShallow } from "zustand/react/shallow";
 import { useNpcListLifecycle } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
@@ -76,7 +76,7 @@ export const NpcsList: FC<NpcsListProps> = ({
     (state) => state.animationEffectsEnabled,
   );
 
-  const hasActivePartyGathering = useOwnedReadyRoom() !== null;
+  const hasActivePartyGathering = useHasOwnedReadyRoom();
 
   const setOpen = useWindowsStore((state) => state.setOpen);
   const orchestration = usePartyGatheringOrchestration();

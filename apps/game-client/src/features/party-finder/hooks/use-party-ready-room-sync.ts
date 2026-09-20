@@ -11,7 +11,7 @@ import {
 } from "@/features/party-finder/ready-room-cache";
 import {
   invalidateReadyRoomSync,
-  useReadyRooms,
+  useReadyRoomsSynchronized,
 } from "@/features/party-finder/hooks/use-ready-rooms";
 
 /**
@@ -27,7 +27,7 @@ export function usePartyReadyRoomSync(): void {
   const joined = useGlobalStore((state) => state.socketState.joined);
   const { socket } = useSocket();
 
-  useReadyRooms();
+  useReadyRoomsSynchronized();
 
   const wasJoined = useRef(joined);
   const lastIdentity = useRef(`${world ?? ""}:${characterId ?? ""}`);
