@@ -12,6 +12,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
+import type { BattleReadBudget } from "#src/database/battle-read-budget";
 import type { DrizzleDatabase } from "#src/database/database";
 import { battles } from "#src/database/schema";
 import type {
@@ -30,7 +31,10 @@ type BattlePaginationDatabase = Pick<DrizzleDatabase, "select" | "execute"> & {
   query: { battles: Pick<DrizzleDatabase["query"]["battles"], "findMany"> };
 };
 
-export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
+export const makeBattlePagination = (
+  drizzle: BattlePaginationDatabase,
+  read: BattleReadBudget,
+) => {
   const logger = new Logger("BattlePagination");
 
   const encodeCursor = (createdAt: Date, id: string): string =>
@@ -127,6 +131,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
         },
       };
     }).pipe(
+      read,
       Effect.withSpan("BattlePagination_paginate", {
         attributes: { adapter: "drizzle", retryCount: 0 },
       }),
@@ -247,17 +252,7 @@ export const makeBattlePagination = (drizzle: BattlePaginationDatabase) => {
         .where(where);
 
       return result[0]?.count ?? 0;
-    }).pipe(
-      Effect.catch((error) => {
-        logger.warn("Failed to get estimated count, falling back", error);
-
-        return drizzle
-          .select({ count: count() })
-          .from(battles)
-          .where(where)
-          .pipe(Effect.map((result) => result[0]?.count ?? 0));
-      }),
-    );
+    });
 
   return { paginateBattles };
 };

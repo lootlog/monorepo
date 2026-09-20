@@ -35,7 +35,7 @@
     "db:studio": "bunx drizzle-kit studio",
     "maintenance:audit-actions": "bun --env-file=.env scripts/audit-r2-battle-actions.ts",
     "maintenance:backfill-warrior-stats": "bun --env-file=.env scripts/backfill-battle-warrior-stats.ts",
-    "test:integration": "bun --conditions=development test src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts"
+    "test:integration": "bun --conditions=development test src/database/battle-read-budget.integration.test.ts src/battles/deletion/battle-deletion.integration.test.ts src/battles/submission/battle-creation-redis.integration.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1136.0",

@@ -20,6 +20,7 @@ import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.se
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
 import { makeBattlePagination } from "#src/battles/analytics/pagination.service";
 import { BattlelogConfig, type BattlelogConfiguration } from "#src/config/env";
+import { makeBattleReadBudget } from "#src/database/battle-read-budget";
 import { drizzleDatabaseEffect, PgClientLive } from "#src/database/database";
 import { makeBattleObjectStorage } from "#src/infrastructure/battle-object-storage";
 import { makeRedisStore } from "#src/infrastructure/redis-store";
@@ -68,13 +69,14 @@ export class BattlelogApplication extends Context.Service<
         queryService,
       );
 
-      const metadataService = makeBattleMetadata(drizzle, redis);
+      const read = makeBattleReadBudget(drizzle);
+      const metadataService = makeBattleMetadata(drizzle, redis, read);
 
       const battlesService = makeBattles(
         drizzle,
         makeBattleObjectStorage(redis, config.r2),
         redis,
-        makeBattlePagination(drizzle),
+        makeBattlePagination(drizzle, read),
         analyticsService,
         makeBattleListFilter(drizzle),
         metadataService,

@@ -1,4 +1,4 @@
-import { makeWarriorExists } from "#src/battles/battle-warrior-query";
+import { warriorExists } from "#src/battles/battle-warrior-query";
 import {
   and,
   eq,
@@ -21,7 +21,7 @@ export type BattleListWhereBuilder = (
   battlesRef: typeof battles,
 ) => SQL | undefined;
 
-type BattleListFilterDatabase = Pick<DrizzleDatabase, "select"> & {
+type BattleListFilterDatabase = {
   query: {
     userCharacters: Pick<
       DrizzleDatabase["query"]["userCharacters"],
@@ -31,8 +31,6 @@ type BattleListFilterDatabase = Pick<DrizzleDatabase, "select"> & {
 };
 
 export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
-  const warriorExists = makeWarriorExists(drizzle);
-
   const appendTeamResultConditions = (
     resultConditions: (SQL | undefined)[],
     battlesRef: typeof battles,
