@@ -175,13 +175,6 @@
     "copyId": "Kopiuj identyfikator przedmiotu",
     "notFound": "Nie znaleziono łupu",
     "obtainedAt": "Zdobyto {{date}}",
-    "mapPlayers": {
-      "title": "Gracze na mapie w chwili dropu",
-      "inParty": "W party",
-      "titleWithCount": "Gracze na mapie w chwili dropu ({{count}})",
-      "unavailable": "Brak danych o graczach na mapie"
-    },
-    "participants": "Uczestnicy ({{count}})",
     "comments": {
       "title": "Komentarze ({{count}})",
       "placeholder": "Dodaj komentarz...",
@@ -189,7 +182,14 @@
       "empty": "Brak komentarzy. Dodaj pierwszy.",
       "error": "Nie udało się wczytać komentarzy."
     },
-    "showLess": "Pokaż mniej",
-    "showMore": "Pokaż więcej ({{count}})"
+    "title": "Szczegóły łupu",
+    "players": "Gracze ({{count}})",
+    "bystanders": "Pozostali na mapie w chwili dropu ({{count}})",
+    "mapPlayersUnavailable": "Brak danych o graczach na mapie w chwili dropu",
+    "itemIds": "Identyfikatory przedmiotów ({{count}})",
+    "delete": {
+      "title": "Usunąć ten łup?",
+      "description": "Łup zniknie z listy i statystyk organizacji. Tej operacji nie można cofnąć."
+    }
   }
 }

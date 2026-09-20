@@ -33,7 +33,7 @@ import {
 export const LootsListPage: React.FC = () => {
   const { t } = useTranslation();
   const { world } = useGuildContext();
-  const { hasActiveFilters } = useLootsFilters();
+  const { hasActiveFilters, setFilters } = useLootsFilters();
 
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     LOOTS_FILTERS_OPEN_KEY,
@@ -133,7 +133,11 @@ export const LootsListPage: React.FC = () => {
         </Button>
       )}
 
-      <LootDetailsDialog />
+      <LootDetailsDialog
+        onShowPlayerLoots={(playerName) =>
+          setFilters({ players: [playerName] })
+        }
+      />
     </>
   );
 };

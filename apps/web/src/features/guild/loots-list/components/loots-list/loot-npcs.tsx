@@ -8,6 +8,8 @@ export type LootNpcsProps = {
   npcs: LootNpc[];
   className?: string;
   showIcon?: boolean;
+  /** `lg` is the details dialog title; cards and feed rows use `sm`. */
+  size?: "sm" | "lg";
 };
 
 // NPC type priority for sorting (higher = more important)
@@ -58,6 +60,7 @@ export const LootNpcs: FC<LootNpcsProps> = ({
   npcs,
   className,
   showIcon = false,
+  size = "sm",
 }) => {
   const { t } = useTranslation();
 
@@ -74,9 +77,9 @@ export const LootNpcs: FC<LootNpcsProps> = ({
     firstNpcType && isSpecialNpcType(firstNpcType) ? firstNpcType : undefined;
 
   return (
-    <div
+    <span
       className={cn(
-        "flex min-w-0 flex-row items-center gap-2 leading-none",
+        "flex min-w-0 flex-row flex-wrap items-center gap-x-2 gap-y-1",
         className,
       )}
     >
@@ -90,7 +93,12 @@ export const LootNpcs: FC<LootNpcsProps> = ({
         />
       )}
       {firstNpc && (
-        <span className="truncate text-sm font-semibold text-foreground">
+        <span
+          className={cn(
+            "min-w-0 break-words font-semibold leading-tight text-foreground",
+            size === "lg" ? "text-base" : "text-sm",
+          )}
+        >
           {firstNpc.name}{" "}
           {firstNpc.lvl !== 0
             ? `(${firstNpc.lvl}${firstNpc.prof?.charAt(0).toLowerCase() ?? ""})`
@@ -107,6 +115,6 @@ export const LootNpcs: FC<LootNpcsProps> = ({
           {t(`npcType.${specialNpcType}`)}
         </span>
       )}
-    </div>
+    </span>
   );
 };
