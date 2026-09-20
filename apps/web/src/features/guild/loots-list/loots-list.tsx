@@ -25,10 +25,10 @@ import { Button } from "@lootlog/ui/components/button";
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
-
-const FILTERS_OPEN_KEY = "loots-filters-open";
-
-const COMPACT_FILTERS_BREAKPOINT = 1100;
+import {
+  LOOTS_COMPACT_FILTERS_BREAKPOINT,
+  LOOTS_FILTERS_OPEN_KEY,
+} from "./loots-list-layout";
 
 export const LootsListPage: React.FC = () => {
   const { t } = useTranslation();
@@ -36,13 +36,13 @@ export const LootsListPage: React.FC = () => {
   const { hasActiveFilters } = useLootsFilters();
 
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
-    FILTERS_OPEN_KEY,
+    LOOTS_FILTERS_OPEN_KEY,
     true,
   );
 
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const isMobile = useIsMobile();
-  const usesOverlayFilters = useMaxWidth(COMPACT_FILTERS_BREAKPOINT);
+  const usesOverlayFilters = useMaxWidth(LOOTS_COMPACT_FILTERS_BREAKPOINT);
   const usesSideSheet = usesOverlayFilters && !isMobile;
 
   const handleOpenSidebar = () => {

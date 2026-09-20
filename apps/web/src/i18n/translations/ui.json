@@ -26,6 +26,10 @@
     "searchPlaceholder": "Szukaj postaci...",
     "empty": "Nie znaleziono postaci."
   },
+  "searchCombobox": {
+    "selectedCount": "{{count}} wybranych",
+    "searching": "Wyszukiwanie..."
+  },
   "warriorSearch": {
     "defaultPlaceholder": "Szukaj wojowników...",
     "inputPlaceholder": "Wpisz nazwę wojownika...",

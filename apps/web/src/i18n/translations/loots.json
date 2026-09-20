@@ -51,6 +51,7 @@
     "common": {
       "minLevel": "Min poziom",
       "maxLevel": "Max poziom",
+      "levelRange": "Zakres poziomów",
       "levelValue": "Lvl {{level}}"
     },
     "saveDialog": {
@@ -65,7 +66,8 @@
       "title": "Filtry potworów",
       "npcTypesLabel": "Typy potworów",
       "npcsLabel": "Potwory",
-      "npcsPlaceholder": "Wybierz potwory"
+      "npcsPlaceholder": "Wybierz potwory",
+      "npcsSearchPlaceholder": "Szukaj potwora..."
     },
     "itemSection": {
       "title": "Filtry przedmiotów",
@@ -73,12 +75,14 @@
       "professionsLabel": "Profesje",
       "itemsLabel": "Przedmioty",
       "itemsPlaceholder": "Wybierz przedmioty",
+      "itemsSearchPlaceholder": "Szukaj przedmiotu...",
       "filteredItemLabel": "Filtrowany przedmiot (ID)"
     },
     "playerSection": {
       "title": "Filtry graczy",
       "playersLabel": "Gracze",
-      "playersPlaceholder": "Wybierz graczy"
+      "playersPlaceholder": "Wybierz graczy",
+      "playersSearchPlaceholder": "Szukaj gracza..."
     },
     "quickFilters": {
       "title": "Szybkie filtry",
@@ -96,7 +100,8 @@
     "shortcut": "{{modifier}} + K",
     "listView": "Widok listy",
     "gridView": "Widok siatki",
-    "mobileFiltersTitle": "Filtry łupów"
+    "mobileFiltersTitle": "Filtry łupów",
+    "toolbarLabel": "Wyszukiwanie i widok łupów"
   },
   "searchCommand": {
     "dialogTitle": "Wyszukaj łup",
@@ -148,6 +153,10 @@
     "unassignedItems": "Przedmioty bez podziału",
     "obtainedBy": "Zdobyto przez:",
     "details": "Szczegóły",
+    "commentsCount_one": "{{count}} komentarz",
+    "commentsCount_few": "{{count}} komentarze",
+    "commentsCount_many": "{{count}} komentarzy",
+    "commentsCount_other": "{{count}} komentarza",
     "playerActions": {
       "label": "Akcje gracza {{name}}",
       "showLoots": "Pokaż łupy tego gracza",

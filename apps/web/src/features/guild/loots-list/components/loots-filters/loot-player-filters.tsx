@@ -3,99 +3,107 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@lootlog/ui/components/accordion";
-import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { FilterCombobox } from "./filter-combobox";
+import { PlayerSearchTile } from "@/components/tiles";
+import {
+  SearchCombobox,
+  type SearchComboboxOption,
+} from "@/components/filters/search-combobox";
+import { getShortnameByProf } from "@lootlog/domain/profession";
+import { LootFilterSectionBadge } from "./loot-filter-section-badge";
+import { LootLevelRangeFilter } from "./loot-level-range-filter";
 import type { useLootFiltersSidebar } from "./use-loot-filters-sidebar";
 
 type Props = Pick<
   ReturnType<typeof useLootFiltersSidebar>,
   | "t"
   | "playerActiveFilterCount"
-  | "playersOptions"
   | "filters"
   | "updateFilters"
-  | "setDebouncedPlayersSearchValue"
-  | "debouncedPlayersSearchValue"
-  | "playersQuery"
-  | "filterInputValues"
+  | "playerHits"
+  | "playersSearchValue"
+  | "setPlayersSearchValue"
+  | "isPlayersSearching"
+  | "playersSearchError"
+  | "levelRanges"
 >;
 
 export const LootPlayerFilters = ({
   t,
   playerActiveFilterCount,
-  playersOptions,
   filters,
   updateFilters,
-  setDebouncedPlayersSearchValue,
-  debouncedPlayersSearchValue,
-  playersQuery,
-  filterInputValues,
-}: Props) => (
-  <>
+  playerHits,
+  playersSearchValue,
+  setPlayersSearchValue,
+  isPlayersSearching,
+  playersSearchError,
+  levelRanges,
+}: Props) => {
+  const playerOptions: SearchComboboxOption[] = playerHits.map((player) => {
+    const professionShortname = getShortnameByProf(player.prof);
+
+    return {
+      value: player.name,
+      label: player.name,
+      description: professionShortname
+        ? t(`professions.${professionShortname}`)
+        : undefined,
+      meta:
+        player.lvl > 0
+          ? t("loots.searchCommand.level", { level: player.lvl })
+          : undefined,
+      icon: (
+        <PlayerSearchTile
+          icon={player.icon}
+          name={player.name}
+          className="mr-0 h-9 w-6 cursor-default bg-[length:24px_36px]"
+        />
+      ),
+    };
+  });
+
+  return (
     <AccordionItem value="player" className="px-3 sm:px-4">
       <AccordionTrigger className="min-h-11 py-0">
         {t("loots.filtersPanel.playerSection.title")}
-        {playerActiveFilterCount > 0 && (
-          <span className="ml-2 inline-flex size-5 items-center justify-center rounded-md bg-primary/15 text-[11px] font-semibold text-primary">
-            {playerActiveFilterCount}
-          </span>
-        )}
+        <LootFilterSectionBadge count={playerActiveFilterCount} />
       </AccordionTrigger>
-      <AccordionContent className="space-y-4 border-t border-border/70 pb-3 pt-3">
-        <div>
-          <Label className="text-xs text-muted-foreground mb-2 block">
+      <AccordionContent className="space-y-4 border-t border-border/70 pb-4 pt-3">
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
             {t("loots.filtersPanel.playerSection.playersLabel")}
           </Label>
-          <FilterCombobox
-            name="players"
+          <SearchCombobox
+            options={playerOptions}
+            selected={filters.players}
+            onSelectedChange={(values) => updateFilters({ players: values })}
+            searchValue={playersSearchValue}
+            onSearchChange={setPlayersSearchValue}
             placeholder={t(
               "loots.filtersPanel.playerSection.playersPlaceholder",
             )}
-            options={playersOptions}
-            defaultValue={filters.players}
-            onSelect={(_, values) => updateFilters({ players: values })}
-            controlledSearch
-            onSearchChange={setDebouncedPlayersSearchValue}
-            searchValue={debouncedPlayersSearchValue}
-            loading={playersQuery.isLoading}
-            searchError={playersQuery.isError}
+            searchPlaceholder={t(
+              "loots.filtersPanel.playerSection.playersSearchPlaceholder",
+            )}
+            loading={isPlayersSearching}
+            errorMessage={
+              playersSearchError ? t("common.searchUnavailable") : undefined
+            }
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              {t("loots.filtersPanel.common.minLevel")}
-            </Label>
-            <Input
-              type="number"
-              placeholder="0"
-              value={filterInputValues.playerLevelMin}
-              onChange={(e) =>
-                updateFilters({ playerLevelMin: e.target.value })
-              }
-              min={0}
-              max={500}
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">
-              {t("loots.filtersPanel.common.maxLevel")}
-            </Label>
-            <Input
-              type="number"
-              placeholder="500"
-              value={filterInputValues.playerLevelMax}
-              onChange={(e) =>
-                updateFilters({ playerLevelMax: e.target.value })
-              }
-              min={0}
-              max={500}
-            />
-          </div>
-        </div>
+        <LootLevelRangeFilter
+          min={levelRanges.player.min}
+          max={levelRanges.player.max}
+          onChange={({ min, max }) =>
+            updateFilters({
+              ...(min !== undefined && { playerLevelMin: min }),
+              ...(max !== undefined && { playerLevelMax: max }),
+            })
+          }
+        />
       </AccordionContent>
     </AccordionItem>
-  </>
-);
+  );
+};

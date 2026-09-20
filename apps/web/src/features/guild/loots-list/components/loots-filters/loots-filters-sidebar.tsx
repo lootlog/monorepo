@@ -49,26 +49,29 @@ export const LootsFiltersSidebar = (
     npcTypeOptions,
     selectedNpcTypes,
     updateFilters,
-    npcsOptions,
-    setDebouncedNpcsSearchValue,
-    debouncedNpcsSearchValue,
-    npcsQuery,
-    filterInputValues,
+    npcHits,
+    npcsSearchValue,
+    setNpcsSearchValue,
+    isNpcsSearching,
+    npcsSearchError,
+    levelRanges,
     itemActiveFilterCount,
     rarityOptions,
     selectedRarities,
     professionOptions,
     selectedProfessions,
-    itemsOptions,
-    setDebouncedItemsSearchValue,
-    debouncedItemsSearchValue,
-    itemsQuery,
+    itemHits,
+    itemsSearchValue,
+    setItemsSearchValue,
+    isItemsSearching,
+    itemsSearchError,
     hidItem,
     playerActiveFilterCount,
-    playersOptions,
-    setDebouncedPlayersSearchValue,
-    debouncedPlayersSearchValue,
-    playersQuery,
+    playerHits,
+    playersSearchValue,
+    setPlayersSearchValue,
+    isPlayersSearching,
+    playersSearchError,
     hasActiveFilters,
     clearFilters,
   } = useLootFiltersSidebar(props);
@@ -203,11 +206,12 @@ export const LootsFiltersSidebar = (
                     selectedNpcTypes={selectedNpcTypes}
                     filters={filters}
                     updateFilters={updateFilters}
-                    npcsOptions={npcsOptions}
-                    setDebouncedNpcsSearchValue={setDebouncedNpcsSearchValue}
-                    debouncedNpcsSearchValue={debouncedNpcsSearchValue}
-                    npcsQuery={npcsQuery}
-                    filterInputValues={filterInputValues}
+                    npcHits={npcHits}
+                    npcsSearchValue={npcsSearchValue}
+                    setNpcsSearchValue={setNpcsSearchValue}
+                    isNpcsSearching={isNpcsSearching}
+                    npcsSearchError={npcsSearchError}
+                    levelRanges={levelRanges}
                   />
 
                   <LootItemFilters
@@ -219,26 +223,26 @@ export const LootsFiltersSidebar = (
                     updateFilters={updateFilters}
                     professionOptions={professionOptions}
                     selectedProfessions={selectedProfessions}
-                    itemsOptions={itemsOptions}
-                    setDebouncedItemsSearchValue={setDebouncedItemsSearchValue}
-                    debouncedItemsSearchValue={debouncedItemsSearchValue}
-                    itemsQuery={itemsQuery}
+                    itemHits={itemHits}
+                    itemsSearchValue={itemsSearchValue}
+                    setItemsSearchValue={setItemsSearchValue}
+                    isItemsSearching={isItemsSearching}
+                    itemsSearchError={itemsSearchError}
                     hidItem={hidItem}
-                    filterInputValues={filterInputValues}
+                    levelRanges={levelRanges}
                   />
 
                   <LootPlayerFilters
                     t={t}
                     playerActiveFilterCount={playerActiveFilterCount}
-                    playersOptions={playersOptions}
                     filters={filters}
                     updateFilters={updateFilters}
-                    setDebouncedPlayersSearchValue={
-                      setDebouncedPlayersSearchValue
-                    }
-                    debouncedPlayersSearchValue={debouncedPlayersSearchValue}
-                    playersQuery={playersQuery}
-                    filterInputValues={filterInputValues}
+                    playerHits={playerHits}
+                    playersSearchValue={playersSearchValue}
+                    setPlayersSearchValue={setPlayersSearchValue}
+                    isPlayersSearching={isPlayersSearching}
+                    playersSearchError={playersSearchError}
+                    levelRanges={levelRanges}
                   />
                 </Accordion>
               </div>
