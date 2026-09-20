@@ -3,7 +3,6 @@ import { ActivePartyGatheringError } from "@/features/party-finder/active-party-
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import {
   useMessagingControllerSendNotification,
-  partyReadyRoomControllerGet,
   usePartyReadyRoomControllerCreate,
 } from "@lootlog/client/main";
 
@@ -12,7 +11,10 @@ import { buildCurrentCharacterPayload } from "@/lib/api/generated-helpers";
 import { getApiErrorStringField, isApiError } from "@lootlog/client/transport";
 import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
 import { readReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
-import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import {
+  useReadyRoomsCache,
+  useRefreshReadyRoom,
+} from "@/features/party-finder/hooks/use-ready-rooms-cache";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   buildNpcChatMessagePayload,
@@ -79,6 +81,7 @@ export const usePartyGatheringOrchestration = () => {
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
   const queryClient = useQueryClient();
   const { mergeProjection } = useReadyRoomsCache();
+  const refreshReadyRoom = useRefreshReadyRoom();
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const openPartyFinder = (closeCreateWindow = false) => {
@@ -97,11 +100,7 @@ export const usePartyGatheringOrchestration = () => {
     const notificationId = getActivePartyGatheringNotificationId(cause);
 
     if (!notificationId) return;
-    mergeProjection(
-      decodePartyReadyRoomProjection(
-        await partyReadyRoomControllerGet({ notificationId }),
-      ),
-    );
+    await refreshReadyRoom(notificationId);
 
     if (shouldOpen) openPartyFinder(closeCreateWindow);
 
@@ -232,13 +231,7 @@ export const usePartyGatheringOrchestration = () => {
 
       const resolvedGuildIds = response.guildIds ?? guildIds;
 
-      const projection = decodePartyReadyRoomProjection(
-        await partyReadyRoomControllerGet({
-          notificationId: response.notificationId,
-        }),
-      );
-
-      mergeProjection(projection);
+      await refreshReadyRoom(response.notificationId);
 
       return finalizePartyGathering({
         notificationId: response.notificationId,

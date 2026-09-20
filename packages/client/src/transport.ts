@@ -617,20 +617,24 @@ const TOO_MANY_REQUESTS_STATUS = 429;
 /**
  * A client error is an answer, not a failure: retrying a 401, 403 or 404 only
  * repeats a request the server will reject again, and on the Game client an
- * expired session would keep re-asking the API and auth for it.
+ * expired session would keep re-asking the API and auth for it. Everything
+ * else — a timeout, a rate limit, a server error, a dropped connection — can
+ * succeed on a second attempt.
  */
-export const shouldRetryQuery = (failureCount: number, error: Error) => {
-  const status = getApiErrorStatus(error);
+export const isRetryableApiFailure = (cause: unknown): boolean => {
+  const status = getApiErrorStatus(cause);
 
-  const isFinalClientError =
+  return !(
     status !== undefined &&
     status >= 400 &&
     status < 500 &&
     status !== REQUEST_TIMEOUT_STATUS &&
-    status !== TOO_MANY_REQUESTS_STATUS;
-
-  return !isFinalClientError && failureCount < MAX_QUERY_RETRIES;
+    status !== TOO_MANY_REQUESTS_STATUS
+  );
 };
+
+export const shouldRetryQuery = (failureCount: number, error: Error) =>
+  isRetryableApiFailure(error) && failureCount < MAX_QUERY_RETRIES;
 
 export const getApiErrorMessage = (error: unknown) => {
   if (isApiError(error)) {
