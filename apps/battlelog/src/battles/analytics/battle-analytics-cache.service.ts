@@ -80,6 +80,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
         try: (signal) =>
           redisService.getOrSetJsonBestEffort<T>({
             key: versionedKey,
+            signal,
             ttlSeconds: ANALYTICS_CACHE_TTL_SECONDS,
             codec: { stringify: JSON.stringify, parse: decodeJson },
             factory: async () => {
