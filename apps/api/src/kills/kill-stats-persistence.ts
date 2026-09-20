@@ -1,3 +1,4 @@
+import { readNpcKillPage } from "./npc-kill-page.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import {
   and,
@@ -170,10 +171,6 @@ export class KillStatsPersistenceError extends TaggedErrorClass<KillStatsPersist
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
 
-type MemberStat =
-  | typeof npcKillStatsTable.$inferSelect
-  | typeof npcKillStatsBucketTable.$inferSelect;
-
 type Member = typeof memberTable.$inferSelect;
 
 type MemberSummary = Pick<Member, "id" | "name" | "avatar" | "userId">;
@@ -222,83 +219,21 @@ export const makeKillStatsPersistence = (
         .pipe(Effect.map((rows) => rows[0] ?? null)),
     );
 
-  function findMemberStats(
+  const findMemberNpcPage = (
     filter: KillStatsFilter,
     bucket: boolean,
-    includeMember: true,
-  ): Effect.Effect<
-    ReadonlyArray<MemberStat & { member: Member }>,
-    KillStatsPersistenceError
-  >;
-  function findMemberStats(
-    filter: KillStatsFilter,
-    bucket: boolean,
-    includeMember?: false,
-  ): Effect.Effect<ReadonlyArray<MemberStat>, KillStatsPersistenceError>;
-  function findMemberStats(
-    filter: KillStatsFilter,
-    bucket: boolean,
-    includeMember = false,
-  ): Effect.Effect<
-    ReadonlyArray<MemberStat | (MemberStat & { member: Member })>,
-    KillStatsPersistenceError
-  > {
-    if (bucket && includeMember) {
-      return protect(
-        "kills.stats.member-list",
-        database
-          .select({ stat: npcKillStatsBucketTable, member: memberTable })
-          .from(npcKillStatsBucketTable)
-          .innerJoin(
-            memberTable,
-            eq(memberTable.id, npcKillStatsBucketTable.memberId),
-          )
-          .where(buildKillStatsCondition(memberColumns(true), filter))
-          .pipe(
-            Effect.map((rows) =>
-              rows.map(({ stat, member }) => ({ ...stat, member })),
-            ),
-          ),
-      );
-    }
-
-    if (bucket) {
-      return protect(
-        "kills.stats.member-list",
-        database
-          .select()
-          .from(npcKillStatsBucketTable)
-          .where(buildKillStatsCondition(memberColumns(true), filter)),
-      );
-    }
-
-    if (includeMember) {
-      return protect(
-        "kills.stats.member-list",
-        database
-          .select({ stat: npcKillStatsTable, member: memberTable })
-          .from(npcKillStatsTable)
-          .innerJoin(
-            memberTable,
-            eq(memberTable.id, npcKillStatsTable.memberId),
-          )
-          .where(buildKillStatsCondition(memberColumns(false), filter))
-          .pipe(
-            Effect.map((rows) =>
-              rows.map(({ stat, member }) => ({ ...stat, member })),
-            ),
-          ),
-      );
-    }
-
-    return protect(
-      "kills.stats.member-list",
-      database
-        .select()
-        .from(npcKillStatsTable)
-        .where(buildKillStatsCondition(memberColumns(false), filter)),
+    limit: number,
+    cursor: number,
+  ) =>
+    protect(
+      "kills.stats.member-page",
+      readNpcKillPage(
+        database,
+        bucket ? npcKillStatsBucketTable : npcKillStatsTable,
+        buildKillStatsCondition(memberColumns(bucket), filter),
+        { limit, cursor, includeOverview: true },
+      ),
     );
-  }
 
   const findGuildSummaries = (filter: KillStatsFilter, bucket: boolean) =>
     protect(
@@ -506,7 +441,7 @@ export const makeKillStatsPersistence = (
     findMemberNpcMetadata,
     findMembers,
     findMember,
-    findMemberStats,
+    findMemberNpcPage,
     findGuildSummaries,
     groupMemberStats,
     groupGuildSummaries,
