@@ -16,6 +16,8 @@
     "emptyGuilds": "Nie masz żadnych gildii"
   },
   "connection": {
+    "ping": "{{ping}} ms",
+    "heartbeatPing": "Ping heartbeat: {{ping}} ms",
     "connectedToServers": "Połączono z serwerami:",
     "notConnected": "Nie połączono z żadnym serwerem"
   }

@@ -14,6 +14,7 @@ export type GameRealtimeClient = Pick<
   | "request"
   | "subscribe"
   | "subscribeState"
+  | "subscribeHeartbeatLatency"
   | "setReconnectHandler"
 >;
 

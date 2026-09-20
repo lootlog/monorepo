@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useOnlineCharacterOwnersStore } from "./online-character-owners.store";
 
 describe("useOnlineCharacterOwnersStore", () => {
@@ -97,5 +97,118 @@ describe("useOnlineCharacterOwnersStore", () => {
     expect(
       useOnlineCharacterOwnersStore.getState().getOwner("9822301", "617"),
     ).toBeUndefined();
+  });
+
+  it("does not notify owner subscribers for movement or AFK changes, but publishes renames and ownership changes", () => {
+    const presence = {
+      discordId: "player-discord",
+      isAfk: false,
+      player: {
+        accountId: "9822301",
+        characterId: "617",
+        icon: "other.gif",
+        lvl: 300,
+        name: "Other",
+        prof: "w",
+        world: "tempest",
+      },
+    };
+
+    const store = useOnlineCharacterOwnersStore.getState();
+
+    store.upsertPresence(presence);
+    const listener = vi.fn();
+    const unsubscribe = useOnlineCharacterOwnersStore.subscribe(listener);
+
+    try {
+      store.upsertPresence({
+        ...presence,
+        isAfk: true,
+        mapName: "New map",
+        player: {
+          ...presence.player,
+          location: { x: 10, y: 20, map: "New map" },
+        },
+      });
+      expect(listener).not.toHaveBeenCalled();
+
+      store.upsertPresence({
+        ...presence,
+        player: { ...presence.player, name: "Renamed" },
+      });
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(store.getOwner("9822301", "617")?.playerName).toBe("Renamed");
+
+      store.upsertPresence({ ...presence, discordId: "new-owner" });
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(store.getOwner("9822301", "617")?.userId).toBe("new-owner");
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  it("ignores unrelated member updates while publishing changed and removed owner names", () => {
+    const members = {
+      "player-discord": {
+        avatar: null,
+        color: null,
+        id: 1,
+        name: "Guild Member",
+        userId: "player-discord",
+      },
+    };
+
+    const store = useOnlineCharacterOwnersStore.getState();
+
+    store.upsertPresence(
+      {
+        discordId: "player-discord",
+        isAfk: false,
+        player: {
+          accountId: "9822301",
+          characterId: "617",
+          icon: "other.gif",
+          lvl: 300,
+          name: "Other",
+          prof: "w",
+          world: "tempest",
+        },
+      },
+      members,
+    );
+    const listener = vi.fn();
+    const unsubscribe = useOnlineCharacterOwnersStore.subscribe(listener);
+
+    try {
+      store.setGuildMembers({
+        "player-discord": {
+          ...members["player-discord"],
+          avatar: "new-avatar",
+        },
+        "unrelated-player": {
+          ...members["player-discord"],
+          userId: "unrelated-player",
+          name: "Unrelated",
+        },
+      });
+      expect(listener).not.toHaveBeenCalled();
+
+      store.setGuildMembers({
+        "player-discord": {
+          ...members["player-discord"],
+          name: "Renamed Member",
+        },
+      });
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(store.getOwner("9822301", "617")?.guildMemberName).toBe(
+        "Renamed Member",
+      );
+
+      store.setGuildMembers({});
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(store.getOwner("9822301", "617")?.guildMemberName).toBeUndefined();
+    } finally {
+      unsubscribe();
+    }
   });
 });
