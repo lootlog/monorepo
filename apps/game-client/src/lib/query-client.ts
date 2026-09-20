@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
+import { shouldRetryQuery } from "@lootlog/client/transport";
 
 const ACCESSIBLE_GUILDS_CACHE_TIME = 1000 * 60 * 5;
 
@@ -12,6 +13,7 @@ export const queryClient = new QueryClient({
     queries: {
       gcTime: DEFAULT_QUERY_GC_TIME,
       staleTime: DEFAULT_QUERY_STALE_TIME,
+      retry: shouldRetryQuery,
       refetchOnMount: true,
       refetchOnWindowFocus: false,
     },
