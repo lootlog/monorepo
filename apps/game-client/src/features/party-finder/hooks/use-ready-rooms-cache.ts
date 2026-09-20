@@ -1,7 +1,9 @@
-import type {
-  PartyReadyRoomClientUpdate,
-  PartyReadyRoomProjection,
+import {
+  decodePartyReadyRoomProjection,
+  type PartyReadyRoomClientUpdate,
+  type PartyReadyRoomProjection,
 } from "@lootlog/schema/party-ready-room";
+import { partyReadyRoomControllerGet } from "@lootlog/client/main";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { queryClient as gameQueryClient } from "@/lib/query-client";
 import { queryKeys } from "@/features/public-api/query-keys";
@@ -62,5 +64,24 @@ export const useReadyRoomsCache = () => {
       applyReadyRoomUpdateToCache(update, queryClient),
     removeProjection: (notificationId: string) =>
       removeReadyRoomFromCache(notificationId, queryClient),
+  };
+};
+
+/**
+ * Reads one room from its own endpoint and stores it. Used wherever a room is
+ * known to be stale — a gathering just created, a lapsed expiry — and the
+ * collection has to catch up without waiting for a socket update.
+ */
+export const useRefreshReadyRoom = () => {
+  const { mergeProjection } = useReadyRoomsCache();
+
+  return async (notificationId: string) => {
+    const projection = decodePartyReadyRoomProjection(
+      await partyReadyRoomControllerGet({ notificationId }),
+    );
+
+    mergeProjection(projection);
+
+    return projection;
   };
 };

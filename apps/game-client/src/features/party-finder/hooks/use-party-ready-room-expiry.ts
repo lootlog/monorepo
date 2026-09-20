@@ -1,9 +1,10 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { useEffect, useEffectEvent } from "react";
-import { partyReadyRoomControllerGet } from "@lootlog/client/main";
 import { useReadyRoomCache } from "@/features/party-finder/hooks/use-ready-rooms";
-import { useReadyRoomsCache } from "@/features/party-finder/hooks/use-ready-rooms-cache";
+import {
+  useReadyRoomsCache,
+  useRefreshReadyRoom,
+} from "@/features/party-finder/hooks/use-ready-rooms-cache";
 
 function hasHttpStatus(cause: unknown, status: number): boolean {
   return isObjectRecord(cause) && cause.status === status;
@@ -16,22 +17,19 @@ function hasHttpStatus(cause: unknown, status: number): boolean {
  */
 export function usePartyReadyRoomExpiry(): void {
   const { projections } = useReadyRoomCache();
-  const { mergeProjection, removeProjection } = useReadyRoomsCache();
+  const { removeProjection } = useReadyRoomsCache();
+  const refreshReadyRoom = useRefreshReadyRoom();
 
   const recheckExpiredRoom = useEffectEvent((notificationId: string) => {
-    void partyReadyRoomControllerGet({ notificationId })
-      .then((latestProjection) => {
-        mergeProjection(decodePartyReadyRoomProjection(latestProjection));
-      })
-      .catch((cause: unknown) => {
-        if (hasHttpStatus(cause, 404)) {
-          removeProjection(notificationId);
+    void refreshReadyRoom(notificationId).catch((cause: unknown) => {
+      if (hasHttpStatus(cause, 404)) {
+        removeProjection(notificationId);
 
-          return;
-        }
+        return;
+      }
 
-        console.warn("Failed to resynchronize expired party Ready Room", cause);
-      });
+      console.warn("Failed to resynchronize expired party Ready Room", cause);
+    });
   });
 
   useEffect(() => {

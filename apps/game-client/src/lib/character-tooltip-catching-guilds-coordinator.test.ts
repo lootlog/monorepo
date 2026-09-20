@@ -115,32 +115,34 @@ describe("CharacterTooltipCatchingGuildsCoordinator", () => {
     });
   });
 
-  it.each([undefined, 429, 500])(
-    "retries one retryable failure with status %s",
-    async (status) => {
-      const target = createTarget("1");
+  it.each([
+    ["status undefined", createApiError()],
+    ["status 429", createApiError(429)],
+    ["status 500", createApiError(500)],
+    ["a dropped connection", new TypeError("Failed to fetch")],
+  ])("retries one retryable failure with %s", async (_label, cause) => {
+    const target = createTarget("1");
 
-      const fetchPlayersCatchingGuilds = vi
-        .fn<FetchPlayers>()
-        .mockRejectedValueOnce(createApiError(status))
-        .mockResolvedValueOnce(createResponse([target]));
+    const fetchPlayersCatchingGuilds = vi
+      .fn<FetchPlayers>()
+      .mockRejectedValueOnce(cause)
+      .mockResolvedValueOnce(createResponse([target]));
 
-      const sleep = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const sleep = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
 
-      const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
-        fetchPlayersCatchingGuilds,
-        sleep,
-      });
+    const coordinator = new CharacterTooltipCatchingGuildsCoordinator({
+      fetchPlayersCatchingGuilds,
+      sleep,
+    });
 
-      coordinator.sync([target], true);
+    coordinator.sync([target], true);
 
-      await vi.waitFor(() => {
-        expect(getEntry(target)?.status).toBe("success");
-      });
-      expect(fetchPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
-      expect(sleep).toHaveBeenCalledWith(300);
-    },
-  );
+    await vi.waitFor(() => {
+      expect(getEntry(target)?.status).toBe("success");
+    });
+    expect(fetchPlayersCatchingGuilds).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(300);
+  });
 
   it("does not retry a non-retryable 4xx response", async () => {
     const target = createTarget("1");
