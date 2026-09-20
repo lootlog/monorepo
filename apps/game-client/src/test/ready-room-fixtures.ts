@@ -69,10 +69,10 @@ export function seedReadyRoomCache(
   client: QueryClient,
   projections: PartyReadyRoomProjection[],
 ): void {
-  client.setQueryData<ReadyRoomCache>(
-    queryKeys.readyRooms(),
-    mergeReadyRoomProjections(EMPTY_READY_ROOM_CACHE, projections),
-  );
+  client.setQueryData<ReadyRoomCache>(queryKeys.readyRooms(), {
+    ...mergeReadyRoomProjections(EMPTY_READY_ROOM_CACHE, projections),
+    listAppliedAt: Date.now(),
+  });
 }
 
 export function readSeededReadyRoomCache(client: QueryClient): ReadyRoomCache {

@@ -13,6 +13,7 @@ import {
   selectOwnedReadyRoom,
   selectReadyRoomForCharacter,
   selectReadyRoomParticipantForCharacter,
+  type ReadyRoomProjections,
 } from "@/features/party-finder/ready-room-cache";
 
 const participantIdentity = {
@@ -255,7 +256,7 @@ describe("Ready Room cache", () => {
     vi.setSystemTime(1_000_000);
 
     try {
-      let cache = EMPTY_READY_ROOM_CACHE;
+      let cache: ReadyRoomProjections = EMPTY_READY_ROOM_CACHE;
 
       for (let index = 0; index < 513; index += 1) {
         cache = applyReadyRoomUpdate(cache, {

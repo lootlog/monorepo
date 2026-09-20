@@ -24,18 +24,29 @@ export const READY_ROOM_TOMBSTONE_CAP = 512;
 
 /**
  * Ready Rooms arrive from the list endpoint, from socket updates and from the
- * responses of the room's own mutations, in any order. The cache keeps the
- * highest revision seen per room and remembers removals as tombstones so a
- * late response cannot resurrect a room that was already closed.
+ * responses of the room's own mutations, in any order. The collection keeps
+ * the highest revision seen per room and remembers removals as tombstones so
+ * a late response cannot resurrect a room that was already closed.
  */
-export type ReadyRoomCache = {
+export type ReadyRoomProjections = {
   projections: Record<string, PartyReadyRoomProjection>;
   roomVersions: Record<string, ReadyRoomVersion>;
+};
+
+export type ReadyRoomCache = ReadyRoomProjections & {
+  /**
+   * When the last authoritative list response was applied, and null while a
+   * resynchronization is pending or its request failed. A socket update is not
+   * a synchronization: it says nothing about the rooms it does not mention, so
+   * it must never make an incomplete collection look current.
+   */
+  listAppliedAt: number | null;
 };
 
 export const EMPTY_READY_ROOM_CACHE: ReadyRoomCache = {
   projections: {},
   roomVersions: {},
+  listAppliedAt: null,
 };
 
 export type ReadyRoomSyncBaseline = Record<string, ReadyRoomVersion>;
@@ -53,7 +64,7 @@ export function resetReadyRoomObservationSequence(): void {
 }
 
 export function selectOwnedReadyRoom(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
 ): PartyReadyRoomOrganizerProjection | null {
   return (
     Object.values(cache.projections).find(
@@ -86,7 +97,7 @@ export function selectReadyRoomParticipantForCharacter(
 }
 
 export function selectReadyRoomForCharacter(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   identity: ReadyRoomCharacterIdentity | null,
 ): PartyReadyRoomProjection | null {
   if (!identity) return null;
@@ -109,7 +120,7 @@ export function selectReadyRoomForCharacter(
 }
 
 export function captureReadyRoomSyncBaseline(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
 ): ReadyRoomSyncBaseline {
   return structuredClone(cache.roomVersions);
 }
@@ -151,9 +162,9 @@ function pruneExpiredRoomTombstones(
 }
 
 export function mergeReadyRoomProjection(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   projection: PartyReadyRoomProjection,
-): ReadyRoomCache {
+): ReadyRoomProjections {
   const { projections, roomVersions } = cache;
   const observedAtMs = Date.now();
 
@@ -204,10 +215,10 @@ export function mergeReadyRoomProjection(
 }
 
 function removeReadyRoomAtRevision(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   notificationId: string,
   revision: number,
-): ReadyRoomCache {
+): ReadyRoomProjections {
   const { projections, roomVersions } = cache;
   const observedAtMs = Date.now();
 
@@ -251,9 +262,9 @@ export function isReadyRoomExpired(
 }
 
 export function mergeReadyRoomProjections(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   incomingProjections: PartyReadyRoomProjection[],
-): ReadyRoomCache {
+): ReadyRoomProjections {
   return incomingProjections.reduce(mergeReadyRoomProjection, {
     projections: cache.projections,
     roomVersions: pruneExpiredRoomTombstones(cache.roomVersions, Date.now()),
@@ -261,9 +272,9 @@ export function mergeReadyRoomProjections(
 }
 
 export function applyReadyRoomUpdate(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   update: PartyReadyRoomClientUpdate,
-): ReadyRoomCache {
+): ReadyRoomProjections {
   if (update.schemaVersion !== 3) return cache;
 
   if (update.type === "UPSERT") {
@@ -278,9 +289,9 @@ export function applyReadyRoomUpdate(
 }
 
 export function removeReadyRoom(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   notificationId: string,
-): ReadyRoomCache {
+): ReadyRoomProjections {
   const revision =
     cache.roomVersions[notificationId]?.revision ??
     cache.projections[notificationId]?.revision;
@@ -296,10 +307,10 @@ export function removeReadyRoom(
  * be dropped just because the response predates it.
  */
 export function applyAuthoritativeReadyRoomSync(
-  cache: ReadyRoomCache,
+  cache: ReadyRoomProjections,
   incomingProjections: PartyReadyRoomProjection[],
   baseline: ReadyRoomSyncBaseline,
-): ReadyRoomCache {
+): ReadyRoomProjections {
   const validIncomingProjections =
     incomingProjections.filter(isSchemaVersionThree);
 
