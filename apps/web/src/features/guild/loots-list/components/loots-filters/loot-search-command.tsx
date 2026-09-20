@@ -13,6 +13,7 @@ import { Spinner } from "@lootlog/ui/components/spinner";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
 import { Button } from "@lootlog/ui/components/button";
+import { LootDirectSearchNotice } from "./loot-direct-search-notice";
 import {
   ArrowRight,
   CircleAlert,
@@ -20,7 +21,6 @@ import {
   DatabaseZap,
   PackageSearch,
   SearchX,
-  X,
 } from "lucide-react";
 import { useLootSearchCommand } from "./use-loot-search-command";
 
@@ -322,44 +322,32 @@ export const LootSearchCommand = (
       {(canSearchDirectly || activeDirectSearch) && (
         <div className="flex flex-col gap-2 border-t border-border p-2">
           {canSearchDirectly && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDirectSearch}
-              className="h-auto w-full justify-start gap-3 px-3 py-2 text-left"
-            >
-              <DatabaseZap className="size-4 shrink-0 text-primary" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-foreground">
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDirectSearch}
+                className="w-full justify-start"
+              >
+                <DatabaseZap className="text-primary" />
+                <span className="min-w-0 flex-1 truncate text-left">
                   {t("loots.searchCommand.directSearch", {
                     term: trimmedSearch,
                   })}
                 </span>
-                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                  {t("loots.searchCommand.directSearchHint")}
-                </span>
-              </span>
-              <ArrowRight className="size-4 shrink-0 text-primary" />
-            </Button>
+                <ArrowRight className="text-primary" />
+              </Button>
+              <p className="px-1 text-xs leading-4 text-muted-foreground">
+                {t("loots.searchCommand.directSearchHint")}
+              </p>
+            </>
           )}
 
           {activeDirectSearch && (
-            <div className="flex items-center gap-2 rounded-md bg-muted/40 px-3 py-2">
-              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                {t("loots.searchCommand.directSearchActive", {
-                  term: activeDirectSearch,
-                })}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearDirectSearch}
-                className="h-7 shrink-0 px-2"
-              >
-                <X className="size-3.5" />
-                {t("loots.searchCommand.directSearchClear")}
-              </Button>
-            </div>
+            <LootDirectSearchNotice
+              term={activeDirectSearch}
+              onClear={handleClearDirectSearch}
+            />
           )}
         </div>
       )}
