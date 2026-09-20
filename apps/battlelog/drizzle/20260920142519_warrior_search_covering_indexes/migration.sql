@@ -25,7 +25,7 @@ BEGIN
       EXECUTE format('SELECT EXISTS (SELECT 1 FROM %s LIMIT 1)', table_oid)
         INTO has_rows;
       IF has_rows THEN
-        RAISE EXCEPTION 'Prebuild index % CONCURRENTLY before migrating populated table %; see drizzle/README.md',
+        RAISE EXCEPTION 'Prebuild index % CONCURRENTLY before migrating populated table %',
           expected.index_name, expected.table_name;
       END IF;
     ELSIF NOT EXISTS (
@@ -36,7 +36,7 @@ BEGIN
           expected.index_name, table_schema, expected.table_name, expected.columns
         )
     ) THEN
-      RAISE EXCEPTION 'Index % is invalid or has an unexpected definition; see drizzle/README.md',
+      RAISE EXCEPTION 'Index % is invalid or has an unexpected definition',
         expected.index_name;
     END IF;
   END LOOP;
