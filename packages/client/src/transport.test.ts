@@ -9,6 +9,7 @@ import {
   getApiErrorStringField,
   getApiErrorStatus,
   isApiError,
+  shouldRetryQuery,
 } from "./transport";
 
 type TestFetch = (
@@ -369,6 +370,25 @@ describe("API client transport", () => {
     expect(getApiErrorMessage(error)).toBe("Invalid request");
     expect(getApiErrorStatus({ statusCode: 409 })).toBe(409);
     expect(getApiErrorMessage(new Error("Fallback"))).toBe("Fallback");
+  });
+});
+
+describe("query retry policy", () => {
+  const httpError = (status: number) =>
+    Object.assign(new Error(`HTTP ${status}`), { status });
+
+  it("treats a definitive client answer as final", () => {
+    expect(shouldRetryQuery(0, httpError(401))).toBe(false);
+    expect(shouldRetryQuery(0, httpError(403))).toBe(false);
+    expect(shouldRetryQuery(0, httpError(404))).toBe(false);
+  });
+
+  it("retries transient failures up to the limit", () => {
+    expect(shouldRetryQuery(0, httpError(408))).toBe(true);
+    expect(shouldRetryQuery(0, httpError(429))).toBe(true);
+    expect(shouldRetryQuery(0, httpError(503))).toBe(true);
+    expect(shouldRetryQuery(1, new TypeError("Failed to fetch"))).toBe(true);
+    expect(shouldRetryQuery(2, httpError(503))).toBe(false);
   });
 });
 
