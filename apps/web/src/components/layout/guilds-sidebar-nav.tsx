@@ -86,7 +86,6 @@ export const GuildsSidebarNav: FC = () => {
             activeOnly: "true",
           },
         ),
-        refetchInterval: 60_000,
       },
     },
   );
