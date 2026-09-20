@@ -2,6 +2,7 @@ import { desc, sql } from "drizzle-orm";
 // Hand-maintained Activity database schema; Drizzle generates SQL migrations from it.
 import {
   check,
+  boolean,
   foreignKey,
   index,
   integer,
@@ -193,6 +194,7 @@ export const userOnlineIntervals = pgTable(
       table.endedAt,
     ),
     index("UserOnlineInterval_endedAt_idx").on(table.endedAt),
+    index("UserOnlineInterval_startedAt_idx").on(table.startedAt),
     check(
       "UserOnlineInterval_check",
       sql`${table.endedAt} >= ${table.startedAt} AND ${table.observedAt} >= ${table.endedAt}`,
@@ -202,8 +204,20 @@ export const userOnlineIntervals = pgTable(
 
 export const userOnlineTracking = pgTable("UserOnlineTracking", {
   userId: text().primaryKey(),
+  // Keep checkpoint updates HOT-eligible; scan this per-user metadata only during retention.
   lastObservedAt: timestamp({ withTimezone: true, mode: "date" }).notNull(),
 });
+
+export const userOnlineRetention = pgTable(
+  "UserOnlineRetention",
+  {
+    id: integer().primaryKey(),
+    windowStart: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+    cutoff: timestamp({ withTimezone: true, mode: "date" }).notNull(),
+    completed: boolean().notNull(),
+  },
+  (table) => [check("UserOnlineRetention_id_check", sql`${table.id} = 1`)],
+);
 
 export const userOnlineCollector = pgTable(
   "UserOnlineCollector",
