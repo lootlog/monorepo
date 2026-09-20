@@ -1,4 +1,12 @@
-import { createApiClient } from "@lootlog/client/transport";
+import {
+  lootsControllerCreateLoot,
+  lootsControllerUpdateLoot,
+  type CreateLootDto,
+  type CreateLootDtoLootsItem,
+  type CreateLootDtoMapPlayersSnapshotItem,
+  type CreateLootResponseDtoOutput,
+  type UpdateLootDto,
+} from "@lootlog/client/main";
 import {
   logLootCreateDebug,
   type LootCreateDebugContext,
@@ -6,60 +14,19 @@ import {
 import { runSingleLoggedAction } from "@/lib/logs/log-actions";
 import { GAME_EVENT_RETRY_OPTIONS } from "@/api/retry-policy";
 import { requireLocation } from "./require-location";
-import type { CreateLootDtoMapPlayersSnapshotItem } from "@lootlog/client/main";
-import type { Item } from "@lootlog/margonem/game-events";
-import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 
-export type LootDto = {
-  id: number;
-  hid: string;
-  icon: string;
-  name: string;
-  pr: number;
-  prc: string;
-  stat: string;
-  cl: number;
-  own?: number;
-};
+export type LootDto = CreateLootDtoLootsItem;
 
 export type MapPlayerSnapshot = CreateLootDtoMapPlayersSnapshotItem;
 
-export type CreateLootOptions = {
-  mapPlayersSnapshot?: MapPlayerSnapshot[];
-  npcs: Npc[];
-  players: PartyMember[];
-  loots: Partial<Item>[];
-  source: string;
-  world: string;
-  accountId: string;
-  characterId: string;
-  location: string;
-};
+export type CreateLootOptions = CreateLootDto;
 
-type CreateLootGuildOutcome = {
-  guildId: string;
-  guildName: string;
-};
-
-type CreateLootRejectedGuild = CreateLootGuildOutcome & {
-  reason:
-    | "NOT_ON_CHARACTER_WHITELIST"
-    | "MISSING_LOOTLOG_CONFIG"
-    | "LOOT_NOT_ACCEPTED_BY_CONFIG"
-    | "MISSING_MEMBER";
-};
-
-type CreateLootResponse = {
-  id: number;
-  submittedGuilds: CreateLootGuildOutcome[];
-  rejectedGuilds: CreateLootRejectedGuild[];
-};
+export type CreateLootResponse = CreateLootResponseDtoOutput;
 
 export async function createLoot(
   options: CreateLootOptions,
   debugContext: LootCreateDebugContext,
 ): Promise<CreateLootResponse> {
-  const client = createApiClient("main");
   const { mapPlayersSnapshot: _mapPlayersSnapshot, ...loggedOptions } = options;
   let attempt = 0;
 
@@ -86,10 +53,7 @@ export async function createLoot(
       });
 
       try {
-        const requestResponse = await client.post<CreateLootResponse>(
-          "/loots",
-          options,
-        );
+        const requestResponse = await lootsControllerCreateLoot(options);
 
         logLootCreateDebug("http-success", {
           ...debugContext,
@@ -113,8 +77,7 @@ export async function createLoot(
   return response;
 }
 
-export type UpdateLootOptions = {
-  msg: string;
+export type UpdateLootOptions = UpdateLootDto & {
   id: number;
 };
 
@@ -122,8 +85,6 @@ export async function updateLoot({
   id,
   ...rest
 }: UpdateLootOptions): Promise<void> {
-  const client = createApiClient("main");
-
   await runSingleLoggedAction({
     actionType: "update_loot",
     actionPayload: { id, ...rest },
@@ -132,6 +93,6 @@ export async function updateLoot({
       endpoint: `/loots/${id}`,
       payload: rest,
     },
-    execute: () => client.patch(`/loots/${id}`, rest),
+    execute: () => lootsControllerUpdateLoot({ id }, rest),
   });
 }

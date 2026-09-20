@@ -2,6 +2,7 @@ import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import type { MapPlayerSnapshot } from "@/api/loot.api";
+import { CreateLootDtoSource } from "@lootlog/client/main";
 import { getItemRarity } from "@/utils/game/get-item-rarity";
 import { useOthersStore } from "@/store/others.store";
 import {
@@ -15,7 +16,7 @@ import {
   type Npc,
   type PartyMember,
 } from "@/utils/game/get-battle-participants";
-import type { GameEvent } from "@lootlog/margonem/game-events";
+import type { GameEvent, LootEvent } from "@lootlog/margonem/game-events";
 import { createLoot } from "@/api";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useLootStore } from "@/store/game-store/loot.store";
@@ -31,6 +32,14 @@ import type {
 } from "@/lib/margonem-runtime/runtime.types";
 import { useGameStore } from "@/store/game.store";
 import { resolveDialogLootNpcLevel } from "@/utils/game/resolve-dialog-loot-npc-level";
+
+// The game reports the source in lowercase; the contract accepts the uppercase
+// enum, so the mapping stays exhaustive instead of relying on toUpperCase().
+const LOOT_SOURCE_BY_EVENT_SOURCE = {
+  dialog: CreateLootDtoSource.DIALOG,
+  lootbox: CreateLootDtoSource.LOOTBOX,
+  fight: CreateLootDtoSource.FIGHT,
+} satisfies Record<LootEvent["source"], CreateLootDtoSource>;
 
 export class LootEventProcessor {
   handleLootFromBattle(
@@ -175,7 +184,7 @@ export class LootEventProcessor {
 
     const payload = {
       world: game.world,
-      source: loot.source.toUpperCase(),
+      source: LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
       location: map.name,
       npcs,
       loots,
@@ -330,7 +339,7 @@ export class LootEventProcessor {
 
     const payload = {
       world: game.world,
-      source: loot.source.toUpperCase(),
+      source: LOOT_SOURCE_BY_EVENT_SOURCE[loot.source],
       location: mapName,
       loots,
       npcs,
