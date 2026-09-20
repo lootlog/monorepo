@@ -19,7 +19,6 @@ export const GuildPinnedEventsSection = ({
       query: {
         enabled: Boolean(guildId),
         queryKey: getListPinnedEventsQueryKey({ guildId }),
-        refetchInterval: 60_000,
       },
     },
   );

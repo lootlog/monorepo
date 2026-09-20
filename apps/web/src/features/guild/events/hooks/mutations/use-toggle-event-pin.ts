@@ -32,7 +32,6 @@ export const useToggleEventPin = (guildId: string) => {
       query: {
         enabled: Boolean(guildId),
         queryKey: pinnedEventsQueryKey,
-        refetchInterval: 60_000,
       },
     },
   );
