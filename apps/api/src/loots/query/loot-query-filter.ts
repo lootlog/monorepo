@@ -56,8 +56,9 @@ export type LootQueryVisibilityRole = {
 };
 
 /**
- * A free-text term resolved against the snapshot tables and the location
- * trigram index before the page query runs.
+ * A free-text term resolved against the snapshot tables before the page query
+ * runs. The term matches item, NPC and player names; map names are not
+ * searchable.
  *
  * An empty array means the term cannot match that relation, so its arm is
  * dropped. `null` means the term matched more snapshots than
@@ -67,7 +68,6 @@ export type LootQueryVisibilityRole = {
  */
 export type ResolvedLootSearch = {
   readonly pattern: string;
-  readonly matchesLocation: boolean;
   readonly itemSnapshotIds: ReadonlyArray<number> | null;
   readonly npcSnapshotIds: ReadonlyArray<number> | null;
   readonly playerSnapshotIds: ReadonlyArray<number> | null;
@@ -86,7 +86,6 @@ export const LOOT_SEARCH_SNAPSHOT_LIMIT = 1000;
 
 /** A resolved term that can match nothing anywhere: the page query is skipped. */
 export const lootSearchMatchesNothing = (search: ResolvedLootSearch) =>
-  !search.matchesLocation &&
   search.itemSnapshotIds?.length === 0 &&
   search.npcSnapshotIds?.length === 0 &&
   search.playerSnapshotIds?.length === 0;
@@ -291,7 +290,6 @@ const searchCondition = (search: ResolvedLootSearch | undefined) => {
 
   return (
     or(
-      search.matchesLocation ? ilike(lootTable.location, pattern) : undefined,
       searchRelationArm(
         search.itemSnapshotIds,
         existsItemSnapshotIds,

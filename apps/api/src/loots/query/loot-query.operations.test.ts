@@ -271,7 +271,7 @@ describe("filtered loot reads", () => {
 });
 
 describe("free-text loot search", () => {
-  it("matches each searchable field, isolates Organizations and returns nothing for an unmatched term", async () => {
+  it("matches item, NPC and player names, ignores map names, isolates Organizations and returns nothing for an unmatched term", async () => {
     const boundary = await createDatabaseBoundary();
 
     try {
@@ -344,9 +344,9 @@ describe("free-text loot search", () => {
         ]),
       );
 
-      // 1 matches through its location, 2 through an item, 3 through an NPC,
-      // 4 through a player. 5 matches nothing, and 6 matches everywhere but
-      // belongs to another Organization.
+      // 2 matches through an item, 3 through an NPC, 4 through a player. 1
+      // carries the term only in its map name and must not match. 5 matches
+      // nothing, and 6 matches everywhere but belongs to another Organization.
       const locations = [
         "Grota Cieni",
         "Puszcza",
@@ -416,15 +416,17 @@ describe("free-text loot search", () => {
       // A term that resolves to no snapshot and no location must return
       // nothing rather than dropping the predicate and listing every loot.
       expect(await search({ search: "smok" })).toEqual([]);
-      expect(await search({ search: "cien" })).toEqual([4, 3, 2, 1]);
+      // Loot 1 carries "Cieni" only in its map name, so it stays out.
+      expect(await search({ search: "cien" })).toEqual([4, 3, 2]);
       // Case-insensitive substring semantics, one field at a time.
-      expect(await search({ search: "CIEN" })).toEqual([4, 3, 2, 1]);
-      expect(await search({ search: "grota" })).toEqual([1]);
+      expect(await search({ search: "CIEN" })).toEqual([4, 3, 2]);
+      // A map name is not searchable, even an exact one.
+      expect(await search({ search: "Grota Cieni" })).toEqual([]);
       expect(await search({ search: "iecz Cieni" })).toEqual([2]);
       expect(await search({ search: "enisty" })).toEqual([3]);
       expect(await search({ search: "eniolub" })).toEqual([4]);
       // Search intersects other filters instead of replacing them.
-      expect(await search({ search: "cien", cursor: 3 })).toEqual([2, 1]);
+      expect(await search({ search: "cien", cursor: 3 })).toEqual([2]);
       expect(await search({ search: "cien", limit: 2 })).toEqual([4, 3]);
       expect(await search({ search: "cien", world: "other" })).toEqual([]);
       expect(

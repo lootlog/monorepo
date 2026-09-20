@@ -102,24 +102,14 @@ export const makeLootQueryPersistence = (
     );
   };
 
-  // Whether any loot anywhere carries a matching location. The trigram index
-  // answers this without reading the Organization's loots, and a term that
-  // matches no location drops that arm from the page query.
-  const findSearchMatchesLocation = (pattern: string) =>
-    protect(
-      "loots.query.search-locations",
-      database
-        .select({ id: lootTable.id })
-        .from(lootTable)
-        .where(ilike(lootTable.location, pattern))
-        .limit(1)
-        .pipe(Effect.map((rows) => rows.length > 0)),
-    );
-
   // Resolving the term first turns every arm into an indexed membership test.
   // The correlated form it replaces read a snapshot row and ran ILIKE for each
   // loot the descending scan examined, so a term matching nothing paid for the
   // whole Organization before returning no rows.
+  //
+  // This is the fallback for names the search service has not indexed. It
+  // reads the same snapshot rows the loot list already owns, so a missing or
+  // stale search index cannot hide a loot from its Organization.
   const resolveSearch = Effect.fn("loots.query.resolve-search")(function* (
     search: string | undefined,
   ) {
@@ -128,24 +118,18 @@ export const makeLootQueryPersistence = (
     if (!value) return undefined;
     const pattern = `%${value}%`;
 
-    const [
-      matchesLocation,
-      itemSnapshotIds,
-      npcSnapshotIds,
-      playerSnapshotIds,
-    ] = yield* Effect.all(
-      [
-        findSearchMatchesLocation(pattern),
-        findSearchSnapshotIds("item", pattern),
-        findSearchSnapshotIds("npc", pattern),
-        findSearchSnapshotIds("player", pattern),
-      ] as const,
-      { concurrency: "unbounded" },
-    );
+    const [itemSnapshotIds, npcSnapshotIds, playerSnapshotIds] =
+      yield* Effect.all(
+        [
+          findSearchSnapshotIds("item", pattern),
+          findSearchSnapshotIds("npc", pattern),
+          findSearchSnapshotIds("player", pattern),
+        ] as const,
+        { concurrency: "unbounded" },
+      );
 
     return {
       pattern: value,
-      matchesLocation,
       itemSnapshotIds,
       npcSnapshotIds,
       playerSnapshotIds,
