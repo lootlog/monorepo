@@ -1,4 +1,4 @@
-import { makeWarriorExists } from "#src/battles/battle-warrior-query";
+import { warriorExists } from "#src/battles/battle-warrior-query";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 import {
   and,
@@ -41,8 +41,6 @@ export const makeBattleAnalyticsQuery = (
   drizzle: BattleAnalyticsQueryDatabase,
   cache: BattleAnalyticsCache,
 ) => {
-  const warriorExists = makeWarriorExists(drizzle);
-
   const getCharacterIdsUncached = (
     userId: string,
     query: { characterId?: string; world?: string },

@@ -16,6 +16,6 @@ export const PgClientLive = Layer.unwrap(
       Config.withDefault("battlelog-service"),
     );
 
-    return makePostgresLayer({ url, applicationName });
+    return makePostgresLayer({ url, applicationName, maxConnections: 10 });
   }),
 );
