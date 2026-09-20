@@ -751,6 +751,46 @@ it("applies combined dashboard filters and counts only the requesting owner's ma
   expect(result.pagination.hasNext).toBe(true);
 });
 
+it("rolls back the battle and skips object upload when participant storage fails", async () => {
+  await pool.query(`
+    CREATE FUNCTION reject_test_warrior() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN RAISE EXCEPTION 'Participant storage unavailable'; END;
+    $$;
+    CREATE TRIGGER reject_test_warrior BEFORE INSERT ON battle_warriors
+    FOR EACH ROW EXECUTE FUNCTION reject_test_warrior();
+  `);
+
+  try {
+    const result = await runtime.runPromise(
+      Effect.exit(services.battles.createBattle({ data, userId })),
+    );
+
+    expect(Exit.isFailure(result)).toBe(true);
+    expect((await pool.query("SELECT id FROM battles")).rows).toEqual([]);
+    expect((await pool.query("SELECT id FROM battle_warriors")).rows).toEqual(
+      [],
+    );
+    expect(services.uploads.size).toBe(0);
+  } finally {
+    await pool.query(`
+      DROP TRIGGER reject_test_warrior ON battle_warriors;
+      DROP FUNCTION reject_test_warrior();
+    `);
+  }
+
+  const retried = await runtime.runPromise(
+    services.battles.createBattle({ data, userId }),
+  );
+
+  expect((await pool.query("SELECT id FROM battles")).rows).toEqual([
+    { id: retried.battleId },
+  ]);
+  expect(
+    (await pool.query("SELECT id FROM battle_warriors")).rows,
+  ).toHaveLength(2);
+  expect(services.uploads.has(retried.battleId)).toBe(true);
+});
+
 it("keeps HTTP submissions durable and retry-safe during concurrent catalog reads", async () => {
   const boundary = makeBattlelogTestBoundary(
     makeBattlelogOperations(
@@ -803,11 +843,28 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
     expect(
       (
         await pool.query(
-          'SELECT name FROM battle_warriors WHERE "battleId" = $1 ORDER BY name',
+          'SELECT "originalId", name, team, "damageDealt", "damageTaken", stats, "statsVersion" FROM battle_warriors WHERE "battleId" = $1 ORDER BY name',
           [created.battleId],
         )
       ).rows,
-    ).toEqual([{ name: "first" }, { name: "second" }]);
+    ).toEqual([
+      expect.objectContaining({
+        originalId: "220",
+        name: "first",
+        team: 1,
+        damageDealt: 10,
+        statsVersion: 1,
+        stats: expect.objectContaining({ damageDealt: 10 }),
+      }),
+      expect.objectContaining({
+        originalId: "7533",
+        name: "second",
+        team: 2,
+        damageTaken: 10,
+        statsVersion: 1,
+        stats: expect.objectContaining({ damageTaken: 10 }),
+      }),
+    ]);
     expect(services.uploads.has(created.battleId)).toBe(true);
   } finally {
     await boundary.dispose();
