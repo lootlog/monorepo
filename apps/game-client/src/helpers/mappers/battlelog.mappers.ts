@@ -1,4 +1,7 @@
-import type { BattleEventPayload, BattleEventWarriorPayload } from "@/api";
+import type {
+  CreateBattleDtoEventsItem,
+  CreateBattleDtoEventsItemFW,
+} from "@lootlog/client/battlelog";
 import type { GameEvent, W } from "@lootlog/margonem/game-events";
 
 /**
@@ -20,7 +23,7 @@ const mapBattleWarriorToPayload = ({
   originalId,
   prof,
   team,
-}: W[string]): BattleEventWarriorPayload => ({
+}: W[string]): CreateBattleDtoEventsItemFW[string] => ({
   icon,
   lvl,
   name,
@@ -31,14 +34,14 @@ const mapBattleWarriorToPayload = ({
 
 export const mapBattleEventsToPayload = (
   events: GameEvent[],
-): BattleEventPayload[] | null => {
+): CreateBattleDtoEventsItem[] | null => {
   if (!events || events.length === 0) return null;
   const capturedEvents = events.filter(isCapturedBattleEvent);
 
   if (capturedEvents.length !== events.length) return null;
 
   const result = capturedEvents.map((event) => {
-    const fightWarriors: Record<string, BattleEventWarriorPayload> = {};
+    const fightWarriors: CreateBattleDtoEventsItemFW = {};
     Object.entries(event.f.w ?? {}).forEach(([key, warrior]) => {
       const entry = mapBattleWarriorToPayload(warrior);
 

@@ -6,16 +6,18 @@ import {
   MessageType,
   sendChatMessage,
   updateLoot,
-  type CreateLootOptions,
-  type LootDto,
 } from "@/api";
+import type {
+  CreateLootDto,
+  CreateLootDtoLootsItem,
+} from "@lootlog/client/main";
 import { LOGS_STORAGE_KEY, useLogsStore } from "@/store/logs.store";
 import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
 import { useSettingsStore } from "@/store/settings.store";
 
 const http = vi.fn<typeof fetch>();
 
-const lootItem = (name: string): LootDto => ({
+const lootItem = (name: string): CreateLootDtoLootsItem => ({
   cl: 16,
   hid: `${name}-hid`,
   icon: `${name}.gif`,
@@ -51,7 +53,7 @@ describe("api.service logging", () => {
       source: "fight" as const,
     };
 
-    const payload: CreateLootOptions = {
+    const payload: CreateLootDto = {
       world: "luvia",
       source: "FIGHT",
       location: "Karka-han",
@@ -234,7 +236,7 @@ describe("api.service logging", () => {
       source: "fight" as const,
     };
 
-    const payload: CreateLootOptions = {
+    const payload: CreateLootDto = {
       world: "luvia",
       source: "FIGHT",
       location: "Karka-han",

@@ -1,7 +1,8 @@
 import { configureApiClients } from "@lootlog/client/transport";
 import { beforeEach, describe, expect, it, vi, onTestFinished } from "vitest";
 import { useLogsStore } from "@/store/logs.store";
-import { createLoot, type CreateLootOptions } from "./loot.api";
+import { createLoot } from "./loot.api";
+import type { CreateLootDto } from "@lootlog/client/main";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { createAutoTimer } from "./timers.api";
 import { createNotification } from "./messaging.api";
@@ -35,7 +36,7 @@ describe("createLoot", () => {
         wt: 85,
       };
 
-      const options: CreateLootOptions = {
+      const options: CreateLootDto = {
         accountId: "1",
         characterId: "2",
         location: operation === "loot" ? "" : "Nithal",
@@ -87,7 +88,7 @@ describe("createLoot", () => {
       stat: "rarity=unique",
     };
 
-    const options: CreateLootOptions = {
+    const options: CreateLootDto = {
       accountId: "account-1",
       characterId: "character-1",
       location: "Nithal",
@@ -145,7 +146,7 @@ describe("createLoot", () => {
   });
 
   it("preserves API validation details in logs without retrying a rejected submission", async () => {
-    const options: CreateLootOptions = {
+    const options: CreateLootDto = {
       accountId: "1",
       characterId: "2",
       location: "Nithal",
@@ -196,7 +197,7 @@ describe("createLoot", () => {
   });
 
   it("sends map presence without storing it in diagnostic action payloads", async () => {
-    const options: CreateLootOptions = {
+    const options: CreateLootDto = {
       accountId: "1",
       characterId: "2",
       location: "Map",

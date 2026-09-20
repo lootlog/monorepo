@@ -1,8 +1,10 @@
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
-import type { MapPlayerSnapshot } from "@/api/loot.api";
-import { CreateLootDtoSource } from "@lootlog/client/main";
+import {
+  CreateLootDtoSource,
+  type CreateLootDtoMapPlayersSnapshotItem,
+} from "@lootlog/client/main";
 import { getItemRarity } from "@/utils/game/get-item-rarity";
 import { useOthersStore } from "@/store/others.store";
 import {
@@ -248,7 +250,7 @@ export class LootEventProcessor {
     )
       return {};
 
-    const mapPlayersSnapshot: MapPlayerSnapshot[] = [];
+    const mapPlayersSnapshot: CreateLootDtoMapPlayersSnapshotItem[] = [];
     const seen = new Set<number>();
 
     for (const character of [game.hero, ...Object.values(others.othersById)]) {
