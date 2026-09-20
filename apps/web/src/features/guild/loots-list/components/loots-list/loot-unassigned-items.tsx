@@ -20,18 +20,17 @@ export const LootUnassignedItems = ({
   if (items.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1 border-l border-border/30 pl-4">
-      <span className="text-xs text-muted-foreground whitespace-nowrap">
+    <div className="flex max-w-full flex-col gap-1.5 @max-md:basis-full @max-md:border-t @max-md:border-border/40 @max-md:pt-2.5 @md:border-l @md:border-border/40 @md:pl-4">
+      <span className="text-[11px] font-medium leading-none text-muted-foreground">
         {t("loots.list.unassignedItems")}
       </span>
-      <div className="flex flex-row flex-wrap gap-1">
+      <div className="flex flex-row flex-wrap gap-1.5">
         {items.map((item, itemIdx) => (
           <Fragment key={`unassigned-${item.hid}-${itemIdx}`}>
             {renderItem ? (
               renderItem(item)
             ) : (
               <WatchableItemTile
-                key={`unassigned-${item.hid}-${itemIdx}`}
                 item={item}
                 watchContext={watchContext}
                 selectedItemNames={selectedItemNames}

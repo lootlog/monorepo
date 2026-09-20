@@ -1,24 +1,32 @@
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import type { FC } from "react";
+import type { ComponentType, FC, ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerTitle,
+} from "@lootlog/ui/components/drawer";
+import { Button } from "@lootlog/ui/components/button";
 import { LootNpcs } from "@/features/guild/loots-list/components/loots-list/loot-npcs";
 import { LootComments } from "@/features/guild/loots-list/components/loots-list/loot-comments";
-import { LootDetails } from "@/features/guild/loots-list/components/loots-list/loot-details";
+import { LootItemIds } from "@/features/guild/loots-list/components/loots-list/loot-item-ids";
+import { LootPlayersSection } from "@/features/guild/loots-list/components/loots-list/loot-players-section";
+import { LootMetaItem } from "@/features/guild/loots-list/components/loots-list/loot-meta-item";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { PlayerTile } from "@/components/tiles";
 import { LootDetailsActions } from "@/features/guild/loots-list/components/loots-list/loot-details-actions";
-import { AlertCircle, Calendar, MapPin } from "lucide-react";
+import { AlertCircle, Calendar, MapPin, Package, Users, X } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import { useLootFromCache } from "@/hooks/use-loot-from-cache";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Loot } from "@/lib/loots/loot-types";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -26,14 +34,17 @@ import {
   getLootsControllerFetchLootByIdQueryKey,
   useLootsControllerFetchLootById,
 } from "@lootlog/client/main";
-import { buildLootShareMaps } from "@/features/guild/loots-list/utils/build-loot-share-maps";
-
-import { LootMapPlayers } from "./loot-map-players";
+import { cn } from "cn";
 
 const ARCHIVE_LOOTS_PERMISSION = "LOOTLOG_LOOTS_ARCHIVE";
 
+type TitleComponent = ComponentType<{
+  className?: string;
+  children?: ReactNode;
+}>;
+
 const LoadingState: FC = () => (
-  <div className="flex h-64 items-center justify-center">
+  <div className="flex flex-1 items-center justify-center py-16">
     <Spinner className="size-7 text-muted-foreground" />
   </div>
 );
@@ -42,7 +53,7 @@ const NotFoundState: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex h-64 flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center text-muted-foreground">
       <div className="flex size-12 items-center justify-center rounded-xl border border-border bg-card">
         <AlertCircle className="size-5" />
       </div>
@@ -54,74 +65,93 @@ const NotFoundState: FC = () => {
 type LootDetailsContentProps = {
   loot: Loot;
   canManageLoots: boolean;
+  Title: TitleComponent;
+  closeButton?: ReactNode;
+  onDeleted: () => void;
+  onShowPlayerLoots: (playerName: string) => void;
 };
 
 const LootDetailsContent: FC<LootDetailsContentProps> = ({
   loot,
   canManageLoots,
+  Title,
+  closeButton,
+  onDeleted,
+  onShowPlayerLoots,
 }) => {
   const { t } = useTranslation();
   const date = timestampToDate(loot.createdAt);
-  const { playerColorMap, itemOwnerMap } = buildLootShareMaps(loot);
 
   return (
-    <div className="relative flex min-h-0 w-full flex-col overflow-hidden rounded-2xl bg-background">
-      <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12 text-left sm:px-6 sm:py-5 sm:pr-14">
-        <DialogTitle className="flex flex-col items-start px-0 pt-0">
-          <LootNpcs npcs={loot.npcs} className="text-left" />
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
-              <MapPin className="size-3.5 shrink-0" />
-              {loot.location}
-            </span>
-            <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
-              <Calendar className="size-3.5 shrink-0" />
-              {t("loots.details.obtainedAt", { date })}
-            </span>
+    <>
+      <header
+        className={cn(
+          "shrink-0 border-b border-border px-3 py-3 text-left sm:px-4",
+          closeButton ? "pr-3" : "pr-12 sm:pr-14",
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0 flex-1 basis-56">
+            <Title className="px-0 pt-0 text-base leading-tight">
+              <LootNpcs npcs={loot.npcs} size="lg" />
+            </Title>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <LootMetaItem
+                icon={MapPin}
+                className="min-w-0 max-w-full whitespace-normal"
+              >
+                <span className="min-w-0 break-words">{loot.location}</span>
+              </LootMetaItem>
+              <LootMetaItem icon={Calendar}>
+                {t("loots.details.obtainedAt", { date })}
+              </LootMetaItem>
+              <LootMetaItem
+                icon={Users}
+                label={t("statistics.feedPlayersCountLabel")}
+              >
+                {loot.players.length}
+              </LootMetaItem>
+              <LootMetaItem
+                icon={Package}
+                label={t("statistics.feedItemsCountLabel")}
+              >
+                {loot.items.length}
+              </LootMetaItem>
+            </div>
           </div>
-        </DialogTitle>
-      </DialogHeader>
-      {canManageLoots && (
-        <div className="shrink-0 border-b border-border bg-card/40 px-5 py-3 sm:px-6">
-          <LootDetailsActions loot={loot} />
+          <div className="flex shrink-0 items-center gap-2">
+            {canManageLoots && (
+              <LootDetailsActions loot={loot} onDeleted={onDeleted} />
+            )}
+            {closeButton}
+          </div>
         </div>
-      )}
-      <ScrollArea className="min-h-0 flex-1 sm:max-h-[65vh]">
-        <section className="border-b border-border">
-          <SectionCardHeader
-            title={t("loots.details.participants", {
-              count: loot.players.length,
-            })}
-          />
-          <div className="flex flex-wrap items-end gap-2 p-3">
-            {loot.players.map((player, idx) => {
-              const color = playerColorMap[player.id];
-
-              return (
-                <PlayerTile
-                  key={player.id}
-                  player={player}
-                  idx={idx}
-                  color={color?.color}
-                />
-              );
-            })}
-          </div>
-        </section>
-        <LootMapPlayers loot={loot} />
-        <LootDetails loot={loot} ownerMap={itemOwnerMap} />
+      </header>
+      <ScrollArea className="min-h-0 flex-1" orientation="vertical">
+        <LootPlayersSection loot={loot} onShowPlayerLoots={onShowPlayerLoots} />
+        <LootItemIds loot={loot} />
         <LootComments lootId={loot.id} />
       </ScrollArea>
-    </div>
+    </>
   );
 };
 
-export const LootDetailsDialog: FC = () => {
+type LootDetailsDialogProps = {
+  /** Shows the player's loots in place; without it the dialog navigates to the loot list. */
+  onShowPlayerLoots?: (playerName: string) => void;
+};
+
+export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
+  onShowPlayerLoots,
+}) => {
+  const { t } = useTranslation();
   const { selectedLootId, closeLootDetails, isOpen } = useSelectedLoot();
   const cachedLoot = useLootFromCache(selectedLootId);
   const guildId = useGuildId();
   const { data: accessPolicy } = useGuildPermissions();
   const isOwner = useIsOwner();
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const {
     data: fetchedLoot,
@@ -146,30 +176,101 @@ export const LootDetailsDialog: FC = () => {
   const canManageLoots =
     accessPolicy?.allows(ARCHIVE_LOOTS_PERMISSION) || isOwner;
 
-  const renderContent = () => {
-    if (loot) {
-      return <LootDetailsContent loot={loot} canManageLoots={canManageLoots} />;
+  const showPlayerLoots = (playerName: string) => {
+    if (onShowPlayerLoots) {
+      onShowPlayerLoots(playerName);
+      closeLootDetails();
+
+      return;
     }
 
-    if (isLoading) {
-      return <LoadingState />;
+    if (guildId) {
+      void navigate({
+        to: "/$guildId",
+        params: { guildId },
+        search: { players: playerName },
+      });
     }
-
-    if (isError || (!loot && !isLoading)) {
-      return <NotFoundState />;
-    }
-
-    return <LoadingState />;
   };
+
+  const renderContent = (Title: TitleComponent, closeButton?: ReactNode) => {
+    if (loot) {
+      return (
+        <LootDetailsContent
+          loot={loot}
+          canManageLoots={canManageLoots}
+          Title={Title}
+          closeButton={closeButton}
+          onDeleted={closeLootDetails}
+          onShowPlayerLoots={showPlayerLoots}
+        />
+      );
+    }
+
+    // Overlays still need an accessible name while the loot is not loaded.
+    const hiddenTitle = (
+      <Title className="sr-only">{t("loots.details.title")}</Title>
+    );
+
+    if (isLoading || (!isError && !loot)) {
+      return (
+        <>
+          {hiddenTitle}
+          {closeButton && (
+            <div className="flex justify-end p-3">{closeButton}</div>
+          )}
+          <LoadingState />
+        </>
+      );
+    }
+
+    return (
+      <>
+        {hiddenTitle}
+        {closeButton && (
+          <div className="flex justify-end p-3">{closeButton}</div>
+        )}
+        <NotFoundState />
+      </>
+    );
+  };
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={isOpen}
+        onOpenChange={(open) => !open && closeLootDetails()}
+      >
+        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0">
+          {renderContent(
+            DrawerTitle,
+            <DrawerClose
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t("common.close")}
+                />
+              }
+            >
+              <X className="size-4" />
+            </DrawerClose>,
+          )}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
-        className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-hidden rounded-2xl border-border bg-background p-0 sm:max-w-[36rem]"
+        // A fixed height keeps the dialog still while comments are added.
+        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-2xl border-border bg-background p-0 sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
       >
-        {renderContent()}
+        {renderContent(DialogTitle)}
       </DialogContent>
     </Dialog>
   );

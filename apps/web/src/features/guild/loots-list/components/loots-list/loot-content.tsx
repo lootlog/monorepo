@@ -4,6 +4,11 @@ import type { ItemsByPlayer } from "./build-loot-presentation";
 import type { Loot, Item } from "@/lib/loots/loot-types";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
 import type { ReactNode } from "react";
+import { cn } from "cn";
+import {
+  LOOT_CARD_DIVIDER_CLASS,
+  LOOT_CARD_INSET_CLASS,
+} from "@/features/guild/loots-list/loots-list-layout";
 
 export const LootContent = ({
   sortedPlayers,
@@ -27,8 +32,16 @@ export const LootContent = ({
   const selectedNames = new Set(selectedPlayerNames);
 
   return (
-    <div className="flex flex-row justify-between gap-4 py-2 border-t border-border/30 -mx-4 px-4 flex-1">
-      <div className="flex flex-row items-start gap-2 flex-wrap">
+    // The container query lets the unassigned block sit beside the players
+    // when the card is wide and drop under them when it is not.
+    <div
+      className={cn(
+        "@container flex flex-1 flex-wrap gap-x-4 gap-y-2.5 py-2.5",
+        LOOT_CARD_DIVIDER_CLASS,
+        LOOT_CARD_INSET_CLASS,
+      )}
+    >
+      <div className="flex min-w-0 flex-1 basis-48 flex-wrap content-start gap-x-2 gap-y-2.5">
         {sortedPlayers.map((player) => (
           <LootPlayerWithItems
             key={player.id}

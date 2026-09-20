@@ -26,19 +26,21 @@ export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
   const color = getColorFromRole(comment.member.roles);
 
   return (
-    <li className="text-sm border-b border-border/50 px-4 py-3 flex flex-row gap-3 bg-card/10 hover:bg-card/30 transition-colors">
+    <li className="flex flex-row gap-3 border-b border-border/50 bg-card/10 px-3 py-2.5 text-sm transition-colors hover:bg-card/30 sm:px-4">
       <Avatar className="size-7 ring-2 ring-border/30">
         <AvatarImage src={avatarUrl} alt={t("common.avatarAlt")} />
         <AvatarFallback>{comment.member.name.slice(0, 1)}</AvatarFallback>
       </Avatar>
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-semibold" style={{ color: `#${color}` }}>
             {comment.member.name}
           </span>
           <div className="text-xs text-muted-foreground">{relativeTime}</div>
         </div>
-        <div className="text-foreground mt-0.5">{comment.content}</div>
+        <div className="mt-0.5 break-words text-foreground">
+          {comment.content}
+        </div>
       </div>
     </li>
   );

@@ -16,13 +16,13 @@ export const LootMetaItem = ({
 }) => (
   <span
     className={cn(
-      "flex items-center gap-1 whitespace-nowrap text-xs tabular-nums text-muted-foreground",
+      "flex items-center gap-1.5 whitespace-nowrap text-xs leading-tight tabular-nums text-muted-foreground",
       className,
     )}
     title={title}
   >
-    <span aria-hidden>
-      <Icon className="h-3 w-3 shrink-0" />
+    <span aria-hidden className="flex shrink-0">
+      <Icon className="size-3.5 shrink-0" />
     </span>
     {label && <span className="sr-only">{label} </span>}
     {children}
