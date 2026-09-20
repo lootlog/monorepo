@@ -41,6 +41,7 @@ function Probe() {
           ids: list.allLoots.map((loot) => loot.id),
           isEmpty: list.isEmpty,
           isPending: list.isPending,
+          isFailed: list.isFailed,
         })}
       </output>
     </>
@@ -223,7 +224,9 @@ it("retains visible loots through reconnect, background refresh and its failure"
     resolvePending(new Response(null, { status: 503 }));
     await vi.advanceTimersByTimeAsync(1);
   });
-  expect(screen.getByRole("status").textContent).toContain('"ids":[1]');
+  expect(screen.getByRole("status").textContent).toContain(
+    '"ids":[1],"isEmpty":false,"isPending":false,"isFailed":false',
+  );
   await act(async () => {
     await vi.advanceTimersByTimeAsync(65_000);
   });
