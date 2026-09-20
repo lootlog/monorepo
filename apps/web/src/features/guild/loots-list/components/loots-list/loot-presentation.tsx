@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import type { Item } from "@/lib/loots/loot-types";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { LOOT_CARD_INSET_CLASS } from "@/features/guild/loots-list/loots-list-layout";
+import { cn } from "cn";
 import {
   buildLootData,
   type LootPresentationData,
@@ -30,8 +32,13 @@ export const LootPresentation = ({
 
   return (
     <>
-      <div className="flex flex-row justify-between items-center gap-2 mb-1">
-        <div className="min-w-0">
+      <div
+        className={cn(
+          "flex min-h-11 items-center justify-between gap-3 py-1.5",
+          LOOT_CARD_INSET_CLASS,
+        )}
+      >
+        <div className="min-w-0 flex-1">
           <LootNpcs npcs={loot.npcs} />
         </div>
         {headerActions}

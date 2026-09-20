@@ -1,5 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { Calendar, MapPin, Users, Package, Dot } from "lucide-react";
+import { Calendar, MapPin, Users, Package } from "lucide-react";
+import { cn } from "cn";
+import {
+  LOOT_CARD_DIVIDER_CLASS,
+  LOOT_CARD_INSET_CLASS,
+} from "@/features/guild/loots-list/loots-list-layout";
 import { LootMetaItem } from "./loot-meta-item";
 
 export const LootFooter = ({
@@ -16,23 +21,28 @@ export const LootFooter = ({
   const { t } = useTranslation();
 
   return (
-    <div className="-mx-4 mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border/30 px-4 py-1.5">
-      {/* The location keeps a readable width and the counters wrap under it on narrow cards. */}
-      <div className="flex min-h-4 min-w-0 flex-1 basis-40 items-center">
-        <LootMetaItem icon={MapPin} className="min-w-0 flex-1" title={location}>
-          <span className="truncate">{location}</span>
-        </LootMetaItem>
-      </div>
-      <div className="flex min-h-4 shrink-0 items-center gap-2">
+    <div
+      className={cn(
+        "mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5",
+        LOOT_CARD_DIVIDER_CLASS,
+        LOOT_CARD_INSET_CLASS,
+      )}
+    >
+      {/* The location wraps instead of truncating; the counters move under it on narrow cards. */}
+      <LootMetaItem
+        icon={MapPin}
+        className="min-h-5 min-w-0 flex-1 basis-40 whitespace-normal"
+      >
+        <span className="min-w-0 break-words">{location}</span>
+      </LootMetaItem>
+      <div className="flex min-h-5 shrink-0 items-center gap-x-3">
         <LootMetaItem icon={Calendar}>{date}</LootMetaItem>
-        <Dot className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <LootMetaItem
           icon={Users}
           label={t("statistics.feedPlayersCountLabel")}
         >
           {playersCount}
         </LootMetaItem>
-        <Dot className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <LootMetaItem
           icon={Package}
           label={t("statistics.feedItemsCountLabel")}

@@ -9,6 +9,7 @@ import { LiveFeedTime } from "./live-feed-time";
 import { Calendar, Dot, MapPin, Package, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
+import { LEGENDARY_LOOT_ROW_CLASS } from "@/features/guild/loots-list/loots-list-layout";
 
 type Props = {
   loot: LootPresentationData;
@@ -24,7 +25,7 @@ export const LiveFeedLootRow = ({ loot, now, organizations }: Props) => {
       className={cn(
         "group relative flex flex-col px-4 pt-2 pb-1 transition-colors hover:bg-muted/20",
         loot.items.some((item) => item.rarity === "LEGENDARY") &&
-          "bg-red-500/5",
+          LEGENDARY_LOOT_ROW_CLASS,
       )}
     >
       <div className="-mx-4 -mt-2 flex flex-wrap items-center px-4 py-2 gap-x-3 gap-y-2">

@@ -17,20 +17,26 @@ afterEach(() => {
   cleanup();
 });
 
-describe("PlayerTile", () => {
-  it("gives the profile link an accessible name", () => {
-    render(
-      <PlayerTile
-        player={{
-          id: "player-1",
-          name: "Tester",
-          icon: "tester.png",
-        }}
-        accountId={123}
-      />,
-    );
+const player = {
+  id: "player-1",
+  name: "Tester",
+  lvl: 123,
+  prof: "Warrior",
+  icon: "tester.png",
+};
 
-    const profileLink = screen.getByRole("link", {
+describe("PlayerTile", () => {
+  it("opens the profile link from the click popover instead of navigating directly", async () => {
+    render(<PlayerTile player={player} accountId={123} />);
+
+    const tile = screen.getByRole("button", {
+      name: "loots.list.playerActions.label",
+    });
+
+    expect(tile.tagName).toBe("BUTTON");
+    fireEvent.click(tile);
+
+    const profileLink = await screen.findByRole("link", {
       name: "loots.list.playerActions.openMargonemProfile",
     });
 
@@ -40,21 +46,11 @@ describe("PlayerTile", () => {
   });
 
   it("shows and hides player details on hover without a shared tooltip provider", async () => {
-    const { container } = render(
-      <PlayerTile
-        player={{
-          id: "player-1",
-          name: "Tester",
-          lvl: 123,
-          prof: "Warrior",
-          icon: "tester.png",
-        }}
-      />,
-    );
+    render(<PlayerTile player={player} />);
 
-    const trigger = container.firstElementChild;
-
-    if (!trigger) throw new Error("Missing player tile trigger");
+    const trigger = screen.getByRole("button", {
+      name: "loots.list.playerActions.label",
+    });
 
     fireEvent.pointerEnter(trigger, { pointerType: "mouse" });
     fireEvent.mouseEnter(trigger);
@@ -71,49 +67,29 @@ describe("PlayerTile", () => {
     });
   });
 
-  it("keeps the tooltip and loot action when loot controls are enabled", async () => {
+  it("runs the loot action from the popover and closes it", async () => {
     const onShowLoots = vi.fn();
 
-    render(
-      <PlayerTile
-        player={{
-          id: "player-1",
-          name: "Tester",
-          lvl: 123,
-          prof: "Warrior",
-          icon: "tester.png",
-        }}
-        onShowLoots={onShowLoots}
-      />,
+    render(<PlayerTile player={player} onShowLoots={onShowLoots} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "loots.list.playerActions.label" }),
     );
 
-    const actionTrigger = screen.getByLabelText(
-      "loots.list.playerActions.label",
-    );
-
-    const tooltipTrigger = actionTrigger.querySelector(
-      '[data-slot="tooltip-trigger"]',
-    );
-
-    if (!tooltipTrigger) throw new Error("Missing tooltip trigger");
-
-    fireEvent.pointerEnter(tooltipTrigger, {
-      pointerType: "mouse",
+    const showLootsAction = await screen.findByRole("button", {
+      name: "loots.list.playerActions.showLoots",
     });
-    fireEvent.mouseEnter(tooltipTrigger);
-    fireEvent.mouseMove(tooltipTrigger);
-
-    const tooltip = await screen.findByRole("tooltip");
-    expect(tooltip.textContent).toBe("Tester (123w)");
-
-    fireEvent.contextMenu(actionTrigger);
-
-    const showLootsAction = await screen.findByText(
-      "loots.list.playerActions.showLoots",
-    );
 
     fireEvent.click(showLootsAction);
 
     expect(onShowLoots).toHaveBeenCalledOnce();
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", {
+          name: "loots.list.playerActions.showLoots",
+        }),
+      ).toBeNull();
+    });
   });
 });

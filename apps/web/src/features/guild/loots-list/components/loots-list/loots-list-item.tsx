@@ -5,6 +5,10 @@ import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import * as m from "framer-motion/m";
 import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
+import {
+  LEGENDARY_LOOT_CARD_CLASS,
+  LEGENDARY_LOOT_ROW_CLASS,
+} from "@/features/guild/loots-list/loots-list-layout";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
 
@@ -47,8 +51,8 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
       className={cn(
         "h-full",
         variant === "embedded" &&
-          "group relative flex flex-col gap-0 px-4 pt-2 pb-1 transition-colors hover:bg-muted/20",
-        variant === "embedded" && hasLegendaryItem && "bg-red-500/5",
+          "group relative flex flex-col transition-colors hover:bg-muted/20",
+        variant === "embedded" && hasLegendaryItem && LEGENDARY_LOOT_ROW_CLASS,
         variant === "card" &&
           isRukiaTheme &&
           "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",
@@ -59,12 +63,10 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
       ) : (
         <Card
           className={cn(
-            "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
-            "rounded-xl bg-card border-border overflow-visible",
-            "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
+            "group relative flex h-full flex-col gap-0 overflow-visible rounded-xl border-border bg-card p-0",
+            "transition-[background-color,border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-md",
             isNew && "border-primary/70 ring-1 ring-primary/40 shadow-lg",
-            hasLegendaryItem &&
-              "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:border-red-500/100",
+            hasLegendaryItem && LEGENDARY_LOOT_CARD_CLASS,
           )}
         >
           {lootContent}
