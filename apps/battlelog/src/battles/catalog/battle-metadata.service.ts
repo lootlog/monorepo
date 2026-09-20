@@ -1,6 +1,6 @@
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, sql } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
 import type { BattleReadBudget } from "#src/database/battle-read-budget";
@@ -198,30 +198,40 @@ export const makeBattleMetadata = (
         return { warriors: [] };
       }
 
-      // OFFSET 0 keeps this join owner-first: the global name index can otherwise
-      // scan other users' history to find ten distinct names for this user.
-      const results = yield* drizzle
-        .selectDistinctOn([sql`w.name`], {
-          name: sql<string>`w.name`,
-          icon: sql<string>`w.icon`,
-          prof: sql<string>`w.prof`,
-          lvl: sql<number>`w.lvl`,
-        })
+      const ownedBattles = drizzle
+        .select({ id: battles.id })
         .from(battles)
-        .innerJoinLateral(
-          sql`(
-          SELECT ${battleWarriors.id}, ${battleWarriors.name},
-                 ${battleWarriors.icon}, ${battleWarriors.prof}, ${battleWarriors.lvl}
-          FROM ${battleWarriors}
-          WHERE ${battleWarriors.battleId} = ${battles.id}
-            AND ${battleWarriors.name} ILIKE ${`%${query.trim()}%`}
-          OFFSET 0
-        ) w`,
-          sql`true`,
+        .where(eq(battles.userId, userId));
+
+      // One owner-scoped array lets PostgreSQL batch the index lookup instead
+      // of probing participants separately for every battle. Keep the scan
+      // covered by IDs/names; hydrate only the ten selected representatives.
+      const matches = drizzle
+        .selectDistinctOn([battleWarriors.name], {
+          id: battleWarriors.id,
+          name: battleWarriors.name,
+        })
+        .from(battleWarriors)
+        .where(
+          and(
+            sql`${battleWarriors.battleId} = ANY(ARRAY(${ownedBattles.getSQL()}))`,
+            ilike(battleWarriors.name, `%${query.trim()}%`),
+          ),
         )
-        .where(eq(battles.userId, userId))
-        .orderBy(sql`w.name`, sql`w.id DESC`)
+        .orderBy(battleWarriors.name, desc(battleWarriors.id))
         .limit(10)
+        .as("warrior_matches");
+
+      const results = yield* drizzle
+        .select({
+          name: battleWarriors.name,
+          icon: battleWarriors.icon,
+          prof: battleWarriors.prof,
+          lvl: battleWarriors.lvl,
+        })
+        .from(matches)
+        .innerJoin(battleWarriors, eq(battleWarriors.id, matches.id))
+        .orderBy(matches.name)
         .pipe(read);
 
       return { warriors: results };
