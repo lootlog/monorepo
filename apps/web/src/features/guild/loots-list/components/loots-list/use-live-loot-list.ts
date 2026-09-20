@@ -144,7 +144,9 @@ export const useLiveLootList = () => {
     fetchNextPage,
     hasNextPage,
     isFetching,
+    isFetchingNextPage,
     isLoading,
+    isPlaceholderData,
   } = useInfiniteQuery({
     queryKey,
     queryFn: ({ pageParam, signal }) => {
@@ -362,9 +364,14 @@ export const useLiveLootList = () => {
 
   const hasLoots = hasInitialLoots(loots);
 
+  // New filters keep the previous page on screen while the next one loads;
+  // background reconciliation refetches the same key and stays silent.
+  const isRefreshing = isPlaceholderData && isFetching && !isFetchingNextPage;
+
   return {
     scrollElementRef,
     isLoading,
+    isRefreshing,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,

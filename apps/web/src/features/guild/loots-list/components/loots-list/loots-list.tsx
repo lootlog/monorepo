@@ -25,10 +25,15 @@ import { PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
 
+// Dimming the current page signals a reload without moving anything.
+const REFRESHABLE_LIST_CLASS =
+  "relative w-full transition-opacity duration-200 motion-reduce:transition-none";
+
 export const LootsList = () => {
   const {
     scrollElementRef,
     isLoading,
+    isRefreshing,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
@@ -110,7 +115,8 @@ export const LootsList = () => {
           <LootsListSkeleton viewMode={viewMode} />
         ) : viewMode === "grid" ? (
           <div
-            className="relative w-full"
+            aria-busy={isRefreshing}
+            className={cn(REFRESHABLE_LIST_CLASS, isRefreshing && "opacity-60")}
             style={{ height: `${gridVirtualizer.getTotalSize()}px` }}
           >
             {gridVirtualItems.map((virtualRow) => {
@@ -150,7 +156,8 @@ export const LootsList = () => {
           </div>
         ) : (
           <div
-            className="relative w-full"
+            aria-busy={isRefreshing}
+            className={cn(REFRESHABLE_LIST_CLASS, isRefreshing && "opacity-60")}
             style={{ height: `${virtualizer.getTotalSize()}px` }}
           >
             {virtualItems.map((virtualItem) => {
