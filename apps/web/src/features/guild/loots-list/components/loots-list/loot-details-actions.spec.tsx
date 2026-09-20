@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -21,7 +22,7 @@ import { LootDetailsActions } from "./loot-details-actions";
 
 afterEach(cleanup);
 
-it("keeps archive pending until the request finishes and prevents duplicate requests", async () => {
+it("deletes only after confirmation and reports completion once the request finishes", async () => {
   let resolveResponse: (response: Response) => void = () => {};
 
   const response = new Promise<Response>((resolve) => {
@@ -39,6 +40,8 @@ it("keeps archive pending until the request finishes and prevents duplicate requ
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
+
+  const onDeleted = vi.fn();
 
   const loot = {
     id: 1,
@@ -61,7 +64,7 @@ it("keeps archive pending until the request finishes and prevents duplicate requ
   const route = createRoute({
     getParentRoute: () => root,
     path: "$guildId/loots",
-    component: () => <LootDetailsActions loot={loot} />,
+    component: () => <LootDetailsActions loot={loot} onDeleted={onDeleted} />,
   });
 
   const router = createRouter({
@@ -75,19 +78,24 @@ it("keeps archive pending until the request finishes and prevents duplicate requ
         <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    const button = await screen.findByRole("button", { name: "Usuń" });
-    fireEvent.click(button);
-    await waitFor(() => expect(button.getAttribute("aria-busy")).toBe("true"));
-    fireEvent.click(button);
+    fireEvent.click(await screen.findByRole("button", { name: "Usuń" }));
+    expect(fetch).not.toHaveBeenCalled();
+
+    const dialog = await screen.findByRole("alertdialog");
+    const confirm = within(dialog).getByRole("button", { name: "Usuń" });
+    fireEvent.click(confirm);
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    fireEvent.click(confirm);
     expect(fetch).toHaveBeenCalledOnce();
     expect(String(fetch.mock.calls[0]?.[0])).toBe(
       "http://api.test/guilds/guild-1/loots/1",
     );
     expect(fetch.mock.calls[0]?.[1]?.method).toBe("DELETE");
+    expect(onDeleted).not.toHaveBeenCalled();
+
     resolveResponse(new Response(null, { status: 204 }));
-    await waitFor(() => expect(button.hasAttribute("disabled")).toBe(false));
-    expect(button.textContent).toBe("Usuń");
-    expect(fetch).toHaveBeenCalledOnce();
+    await waitFor(() => expect(onDeleted).toHaveBeenCalledOnce());
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   } finally {
     cleanup();
     client.clear();

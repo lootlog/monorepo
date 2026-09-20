@@ -85,10 +85,10 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
         })}
       />
 
-      <div className="border-b border-border bg-card/20 px-5 py-4 sm:px-6">
-        <form className="space-y-3" onSubmit={handleAddComment}>
+      <div className="border-b border-border bg-card/20 px-3 py-3 sm:px-4">
+        <form className="space-y-2" onSubmit={handleAddComment}>
           <Textarea
-            className="min-h-24 w-full resize-y rounded-xl border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary/60"
+            className="min-h-20 w-full resize-y rounded-xl border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary/60"
             placeholder={t("loots.details.comments.placeholder")}
             autoFocus={false}
             maxLength={MAX_LENGTH}
@@ -100,7 +100,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
               {value.length}/{MAX_LENGTH}
             </span>
             <Button
-              className="h-8 min-w-32 cursor-pointer"
+              className="h-8 px-3 text-xs"
               size="sm"
               type="submit"
               disabled={isSubmitDisabled}
@@ -113,17 +113,17 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
       </div>
 
       {isLoading && (
-        <div className="flex items-center justify-center px-5 py-6">
+        <div className="flex items-center justify-center px-4 py-5">
           <Spinner className="size-5 text-muted-foreground" />
         </div>
       )}
       {isError && (
-        <p className="px-5 py-6 text-center text-sm text-destructive sm:px-6">
+        <p className="px-4 py-5 text-center text-sm text-destructive">
           {t("loots.details.comments.error")}
         </p>
       )}
       {!isLoading && !isError && comments?.length === 0 && (
-        <p className="px-5 py-6 text-center text-sm text-muted-foreground sm:px-6">
+        <p className="px-4 py-5 text-center text-sm text-muted-foreground">
           {t("loots.details.comments.empty")}
         </p>
       )}
