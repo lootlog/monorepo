@@ -142,6 +142,8 @@
     "noResults": "Brak pasujących łupów",
     "noResultsDescription": "Zmień kryteria albo wyczyść filtry, aby zobaczyć więcej łupów.",
     "clearFilters": "Wyczyść filtry",
+    "loadError": "Nie udało się wczytać łupów",
+    "loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
     "loadingMore": "Ładowanie kolejnych lootów...",
     "loadingMoreCat": "Kotek poluje na kolejne łupy...",
     "loadingMoreRukia": "Szron pokrywa kolejne łupy...",

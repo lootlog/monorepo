@@ -21,9 +21,16 @@ import {
   EmptyTitle,
 } from "@lootlog/ui/components/empty";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { PackageOpen, SearchX } from "lucide-react";
+import { CircleAlert, PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
+
+// The empty states share the world-selection card: a fixed-size card near
+// the top instead of a panel stretched over the whole list.
+const EMPTY_STATE_WRAPPER_CLASS =
+  "flex min-h-0 flex-1 items-start justify-center overflow-y-auto px-4 pb-8 pt-5 sm:px-6 md:[align-items:safe_center] md:py-8";
+
+const EMPTY_STATE_CLASS = "w-full max-w-sm flex-none bg-card";
 
 // Dimming the current page signals a reload without moving anything.
 const REFRESHABLE_LIST_CLASS =
@@ -32,8 +39,11 @@ const REFRESHABLE_LIST_CLASS =
 export const LootsList = () => {
   const {
     scrollElementRef,
-    isLoading,
+    isEmpty,
+    isError,
+    isPending,
     isRefreshing,
+    refetch,
     viewMode,
     gridVirtualizer,
     gridVirtualItems,
@@ -47,7 +57,6 @@ export const LootsList = () => {
     totalCount,
     allLoots,
     world,
-    hasLoots,
     hasActiveFilters,
     clearFilters,
   } = useLiveLootList();
@@ -61,10 +70,38 @@ export const LootsList = () => {
     );
   }
 
-  if (!isLoading && !hasLoots) {
+  if (isError) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-3 pb-3">
-        <Empty className="min-h-56 w-full max-w-xl">
+      <div className={EMPTY_STATE_WRAPPER_CLASS}>
+        <Empty className={EMPTY_STATE_CLASS}>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>{t("loots.list.loadError")}</EmptyTitle>
+            <EmptyDescription>
+              {t("loots.list.loadErrorDescription")}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void refetch()}
+            >
+              {t("common.actions.retry")}
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <div className={EMPTY_STATE_WRAPPER_CLASS}>
+        <Empty className={EMPTY_STATE_CLASS}>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               {hasActiveFilters ? (
@@ -111,7 +148,7 @@ export const LootsList = () => {
         ref={scrollElementRef}
         onScroll={resumeReconciliation}
       >
-        {isLoading ? (
+        {isPending ? (
           <LootsListSkeleton viewMode={viewMode} />
         ) : viewMode === "grid" ? (
           <div
