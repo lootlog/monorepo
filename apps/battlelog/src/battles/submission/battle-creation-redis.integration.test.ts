@@ -858,6 +858,161 @@ it("searches only owned warriors with trimmed ILIKE and preserves distinct names
   ).toEqual({ warriors: [] });
 });
 
+const runDeployMigration = async () => {
+  const child = Bun.spawn(["bun", "run", "db:migrate:deploy"], {
+    cwd: new URL("../../../", import.meta.url).pathname,
+    env: {
+      ...process.env,
+      POSTGRESQL_CONNECTION_URI: postgres.getConnectionUri(),
+    },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  const [exit, stdout, stderr] = await Promise.all([
+    child.exited,
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+  ]);
+
+  return { exit, stdout, stderr };
+};
+
+it("migrates populated histories through the deploy command without manual index preparation", async () => {
+  const created = await runtime.runPromise(
+    services.battles.createBattle({ data, userId }),
+  );
+
+  await pool.query(`
+    DELETE FROM drizzle.__drizzle_migrations
+    WHERE name = '20260920142519_warrior_search_covering_indexes';
+    DROP INDEX "battle_warriors_battleId_name_id_idx";
+    DROP INDEX "battles_userId_id_idx";
+  `);
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { exit, stdout, stderr } = await runDeployMigration();
+
+    expect({ exit, error: exit === 0 ? "" : stdout + stderr }).toEqual({
+      exit: 0,
+      error: "",
+    });
+  }
+
+  expect(
+    (
+      await pool.query("SELECT id FROM battles WHERE id = $1", [
+        created.battleId,
+      ])
+    ).rows,
+  ).toEqual([{ id: created.battleId }]);
+  expect(
+    (
+      await runtime.runPromise(
+        services.metadata.searchWarriors("first", userId),
+      )
+    ).warriors,
+  ).toHaveLength(1);
+});
+
+it("recovers an interrupted concurrent search index build without losing accepted battles", async () => {
+  const created = await runtime.runPromise(
+    services.battles.createBattle({ data, userId }),
+  );
+
+  await pool.query(`DROP INDEX "battle_warriors_battleId_name_id_idx"`);
+
+  const writer = await pool.connect();
+  const builder = await pool.connect();
+
+  const {
+    rows: [{ pid }],
+  } = await builder.query<{ pid: number }>("SELECT pg_backend_pid() AS pid");
+
+  try {
+    await writer.query("BEGIN");
+    await writer.query(
+      'UPDATE battle_warriors SET turns = turns WHERE "battleId" = $1',
+      [created.battleId],
+    );
+
+    const build = builder
+      .query(`CREATE INDEX CONCURRENTLY
+      "battle_warriors_battleId_name_id_idx" ON battle_warriors
+      ("battleId", name, id DESC NULLS LAST)`)
+      .then(
+        () => null,
+        (error: pg.DatabaseError) => error,
+      );
+
+    const deadline = Date.now() + 5_000;
+    let waitingForWriter = false;
+
+    while (Date.now() < deadline) {
+      const { rows } = await pool.query(
+        `SELECT 1 FROM pg_stat_progress_create_index
+         WHERE pid = $1 AND phase = 'waiting for writers before build'`,
+        [pid],
+      );
+
+      if (rows.length > 0) {
+        waitingForWriter = true;
+        break;
+      }
+
+      await Bun.sleep(20);
+    }
+
+    await pool.query("SELECT pg_cancel_backend($1)", [pid]);
+    expect(await build).toMatchObject({ code: "57014" });
+    expect(waitingForWriter).toBe(true);
+    expect(
+      (
+        await pool.query(`SELECT indisvalid FROM pg_index
+        WHERE indexrelid = '"battle_warriors_battleId_name_id_idx"'::regclass`)
+      ).rows,
+    ).toEqual([{ indisvalid: false }]);
+  } finally {
+    await pool.query("SELECT pg_cancel_backend($1)", [pid]);
+    await writer.query("ROLLBACK");
+    writer.release();
+    builder.release();
+  }
+
+  const { exit, stdout, stderr } = await runDeployMigration();
+  expect({ exit, error: exit === 0 ? "" : stdout + stderr }).toEqual({
+    exit: 0,
+    error: "",
+  });
+  expect(
+    (
+      await pool.query(`SELECT indisvalid, pg_get_indexdef(indexrelid) AS definition
+      FROM pg_index
+      WHERE indexrelid = '"battle_warriors_battleId_name_id_idx"'::regclass`)
+    ).rows,
+  ).toEqual([
+    {
+      indisvalid: true,
+      definition:
+        'CREATE INDEX "battle_warriors_battleId_name_id_idx" ON public.battle_warriors USING btree ("battleId", name, id DESC NULLS LAST)',
+    },
+  ]);
+  expect(
+    (
+      await pool.query("SELECT id FROM battles WHERE id = $1", [
+        created.battleId,
+      ])
+    ).rows,
+  ).toEqual([{ id: created.battleId }]);
+  expect(
+    (
+      await runtime.runPromise(
+        services.metadata.searchWarriors("first", userId),
+      )
+    ).warriors,
+  ).toHaveLength(1);
+}, 20_000);
+
 it("requires valid prebuilt search indexes for populated histories without losing accepted battles", async () => {
   const created = await runtime.runPromise(
     services.battles.createBattle({ data, userId }),
