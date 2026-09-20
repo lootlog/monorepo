@@ -423,14 +423,17 @@ export class CommandHandler {
             ),
           ),
           Effect.tap((snapshot) =>
-            Effect.sync(() =>
+            Effect.sync(() => {
+              if (command.requestId && command.data.delivery === "response")
+                return;
+
               this.hub.sendEvent(socket, {
                 v: 1,
                 type: "presence.snapshot",
                 sequence: snapshot.revision,
                 data: snapshot,
-              }),
-            ),
+              });
+            }),
           ),
         );
       }

@@ -23,35 +23,44 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("gateway presence identity", () => {
   it("keys fetched web and game presence by Discord identity", async () => {
-    vi.spyOn(RealtimeClient.prototype, "request").mockResolvedValue({
-      organizationId: "organization-1",
-      revision: 1,
-      presences: [
-        presence,
-        {
-          ...presence,
-          platform: "game",
-          character: {
-            world: "alpha",
-            name: "Hero",
-            lvl: 100,
-            icon: "hero.gif",
-            characterId: "10",
-            accountId: "20",
-            prof: "w",
+    const request = vi
+      .spyOn(RealtimeClient.prototype, "request")
+      .mockResolvedValue({
+        organizationId: "organization-1",
+        revision: 1,
+        presences: [
+          presence,
+          {
+            ...presence,
+            platform: "game",
+            character: {
+              world: "alpha",
+              name: "Hero",
+              lvl: 100,
+              icon: "hero.gif",
+              characterId: "10",
+              accountId: "20",
+              prof: "w",
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
+
     const client = new GatewayClient();
 
     for (const [event, field] of [
       [GatewayEvent.MEMBER_WEB_PRESENCE_FETCH, "sessions"],
       [GatewayEvent.EVENT_PRESENCE_FETCH, "players"],
+      [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, "players"],
     ] as const) {
       const acknowledgement = vi.fn();
       client.emit(event, { guildId: "organization-1" }, acknowledgement);
-      await vi.waitFor(() => expect(acknowledgement).toHaveBeenCalled());
+      await vi.waitFor(() => expect(acknowledgement).toHaveBeenCalledOnce());
+      expect(request).toHaveBeenLastCalledWith("presence.fetch", {
+        organizationId: "organization-1",
+        world: undefined,
+        delivery: "response",
+      });
       expect(acknowledgement.mock.calls[0]?.[0]).toEqual({
         status: "success",
         [field]: {
@@ -63,7 +72,7 @@ describe("gateway presence identity", () => {
     }
   });
 
-  it("preserves Discord identity through snapshot, upsert and removal", () => {
+  it("ignores legacy snapshots and preserves Discord identity through live updates", () => {
     const subscribe = vi.spyOn(RealtimeClient.prototype, "subscribe");
     const client = new GatewayClient();
     const deliver = subscribe.mock.calls[0]?.[0];
@@ -72,14 +81,26 @@ describe("gateway presence identity", () => {
     client.on(GatewayEvent.MEMBER_WEB_PRESENCE_UPDATE, webUpdates);
     client.on(GatewayEvent.EVENT_PRESENCE_UPDATE, gameUpdates);
 
+    deliver?.({
+      v: 1,
+      type: "presence.snapshot",
+      data: {
+        organizationId: "organization-1",
+        revision: 1,
+        presences: [presence, { ...presence, platform: "game" }],
+      },
+    });
+    expect(webUpdates).not.toHaveBeenCalled();
+    expect(gameUpdates).not.toHaveBeenCalled();
+
     const events: ServerEvent[] = [
       {
         v: 1,
-        type: "presence.snapshot",
+        type: "presence.delta",
         data: {
           organizationId: "organization-1",
           revision: 1,
-          presences: [presence],
+          changes: [{ action: "upsert", presence }],
         },
       },
       {
@@ -114,6 +135,7 @@ describe("gateway presence identity", () => {
     for (const event of events) deliver?.(event);
 
     for (const updates of [webUpdates, gameUpdates]) {
+      expect(updates).toHaveBeenCalledTimes(2);
       expect(updates).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({

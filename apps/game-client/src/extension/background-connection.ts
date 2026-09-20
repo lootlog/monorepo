@@ -35,6 +35,10 @@ export function createBackgroundConnection(
     send({ type: "state", state }),
   );
 
+  const unsubscribeHeartbeatLatency = realtime.subscribeHeartbeatLatency(
+    (latencyMs) => send({ type: "heartbeat-latency", latencyMs }),
+  );
+
   return {
     async receive(raw: unknown): Promise<void> {
       if (disposed) return;
@@ -121,6 +125,7 @@ export function createBackgroundConnection(
       disposed = true;
       unsubscribeEvents();
       unsubscribeState();
+      unsubscribeHeartbeatLatency();
       realtime.disconnect();
 
       for (const controller of pending.values()) controller.abort();

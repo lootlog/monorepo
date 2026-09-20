@@ -59,6 +59,10 @@ export const ExtensionMessageSchema = z.discriminatedUnion("type", [
       "reconnecting",
     ]),
   }),
+  z.object({
+    type: z.literal("heartbeat-latency"),
+    latencyMs: z.number().finite().nonnegative().nullable(),
+  }),
   z.object({ type: z.literal("event"), event: z.unknown() }),
 ]);
 

@@ -141,7 +141,7 @@ describe("game realtime verification and presence selection", () => {
     });
   });
 
-  it("preserves Discord member identity across presence fetch, snapshot and deltas", async () => {
+  it("hydrates via the response without replaying legacy snapshots as deltas", async () => {
     const socket = createSocket();
     const listener = vi.fn<(payload: PlayerPresenceUpdatePayload) => void>();
     socket.on(GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE, listener);
@@ -165,6 +165,10 @@ describe("game realtime verification and presence selection", () => {
       }),
     ).resolves.toMatchObject({
       players: { "discord-1": [{ discordId: "discord-1" }] },
+    });
+    expect(mocks.request).toHaveBeenCalledWith("presence.fetch", {
+      organizationId: "organization-1",
+      delivery: "response",
     });
 
     const events: ServerEvent[] = [
@@ -205,8 +209,7 @@ describe("game realtime verification and presence selection", () => {
     ];
 
     for (const event of events) wire.receive(event);
-    await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(3));
-    expect(listener).toHaveBeenCalledTimes(3);
+    await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(2));
 
     for (const [payload] of listener.mock.calls)
       expect(payload).toMatchObject({
