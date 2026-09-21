@@ -217,7 +217,7 @@ export const EventCoordinationPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <EventActionDialog
         open={closingHero !== null}
         onOpenChange={(open) => {

@@ -11,7 +11,7 @@ const DESKTOP_FILTER_WIDTHS = [
 ];
 
 export const ActivityLogsPageSkeleton = () => (
-  <div className="flex h-full min-h-0 flex-col bg-background p-3">
+  <div className="flex h-full min-h-0 flex-col p-3">
     <ResultsSurface
       toolbar={
         <div

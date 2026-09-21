@@ -105,7 +105,7 @@ export const StatsRanking = () => {
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3 pb-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 px-3 pb-3">
       <h1 className="sr-only">{t("kills.fullRanking.title")}</h1>
       <KillStatsFilterBar
         world={settings.world}

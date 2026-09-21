@@ -39,7 +39,7 @@ export const NpcSettingsDetailPage = () => {
 
   if (config && !npc) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="flex h-full min-h-0 flex-col">
         <header className="shrink-0 border-b border-border bg-background px-4 py-3">
           <Button type="button" variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="size-4" />
@@ -70,7 +70,7 @@ export const NpcSettingsDetailPage = () => {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-background px-3 custom-scrollbar [scrollbar-gutter:stable]">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto px-3 custom-scrollbar [scrollbar-gutter:stable]">
       <PageHeader
         title={t(`npcType.${npc.npcType}`)}
         icon={Settings2}

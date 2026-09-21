@@ -13,7 +13,7 @@ const SKELETON_PAGINATION = {
 
 export const BattlePanelBattlesSkeleton = () => {
   return (
-    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-3">
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

@@ -6,7 +6,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const RoleSettingsDetailSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 px-3">
       <SectionCard className="shrink-0 border-b border-t">
         <SectionCardContent className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -2,7 +2,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const EventKillsSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-col gap-3 px-3 py-3">
         <div className="rounded-2xl border border-border/80 bg-card p-3 md:px-4">
           <div className="flex items-center gap-3">

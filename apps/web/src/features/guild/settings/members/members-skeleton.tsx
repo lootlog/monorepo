@@ -8,7 +8,7 @@ const filterButtons = Array.from({ length: 5 });
 
 export const MembersSettingsSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-background px-3 pb-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden px-3 pb-3">
       <SectionCard className="min-h-0 flex-1 overflow-hidden">
         <div className="flex shrink-0 flex-col gap-3 border-b border-border/70 bg-background/30 p-2 xl:flex-row xl:items-center xl:justify-between">
           <Skeleton className="h-9 w-full rounded-md xl:max-w-md 2xl:max-w-xl" />

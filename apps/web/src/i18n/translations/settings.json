@@ -981,6 +981,7 @@
     "title": "Wygląd",
     "description": "Dostosuj wygląd aplikacji według swoich preferencji.",
     "themeLabel": "Motyw",
+    "saveError": "Nie udało się zapisać motywu na koncie. Podgląd pozostaje aktywny. Wybierz motyw ponownie, aby spróbować jeszcze raz.",
     "themes": {
       "default": {
         "title": "Default v2",

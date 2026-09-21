@@ -9,11 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import { useSession } from "@/hooks/auth/use-session";
+import { useUpdateUserPreferences } from "@/hooks/api/user/use-user-preferences";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   getUsersControllerGetUserPreferencesQueryKey,
-  useSetUsersControllerGetUserPreferencesQueryData,
   useUsersControllerGetUserPreferences,
-  useUsersControllerUpdateUserPreferences,
 } from "@lootlog/client/main";
 import {
   applyThemeClassToRoot,
@@ -30,7 +31,8 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const { data: session } = useSession();
-  const setUserPreferences = useSetUsersControllerGetUserPreferencesQueryData();
+  const { t } = useTranslation();
+  const updatePreferences = useUpdateUserPreferences();
 
   const { data: preferences, isLoading } = useUsersControllerGetUserPreferences(
     {
@@ -41,14 +43,6 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       },
     },
   );
-
-  const updatePreferences = useUsersControllerUpdateUserPreferences({
-    mutation: {
-      onSuccess: (updatedPreferences) => {
-        setUserPreferences(updatedPreferences);
-      },
-    },
-  });
 
   const [localTheme, setLocalTheme] = useState<ThemeId>(() => {
     return resolveStoredTheme(localStorage.getItem(THEME_STORAGE_KEY));
@@ -88,7 +82,12 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const setTheme = (newTheme: ThemeId) => {
     setHasThemeOverride(true);
     setLocalTheme(newTheme);
-    updatePreferences.mutate({ data: { theme: newTheme } });
+    updatePreferences.mutate(
+      { theme: newTheme },
+      {
+        onError: () => toast.error(t("settings.appearance.saveError")),
+      },
+    );
   };
 
   return (

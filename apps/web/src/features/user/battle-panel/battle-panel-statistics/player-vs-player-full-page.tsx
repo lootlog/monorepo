@@ -194,7 +194,7 @@ export function PlayerVsPlayerFullPage() {
         </MobileFiltersDrawer>
       )}
 
-      <div className="flex h-full w-full flex-col overflow-hidden bg-background">
+      <div className="flex h-full w-full flex-col overflow-hidden">
         <div className="px-3 pb-0 pt-3">
           <PageHeader
             icon={Swords}
