@@ -10,7 +10,6 @@ import {
 import { AvatarFallback } from "@/components/ui/avatar";
 import { type FC, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatChatUnreadBadge } from "@/features/chat/chat-unread.helpers";
 import { GuildButton } from "@/components/guild-button";
 import { useTranslation } from "react-i18next";
 import { useCurrentCharacterId } from "@/hooks/use-selected-lootlog-guild";
@@ -33,7 +32,6 @@ type GuildSwitcherProps = {
   allowAll?: boolean;
   className?: string;
   onChange?: (guildId: string) => void;
-  unreadCountByGuildId?: Record<string, number>;
   unreadGuildIds?: ReadonlySet<string>;
   value?: string;
 };
@@ -89,7 +87,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   allowAll = false,
   className,
   onChange,
-  unreadCountByGuildId,
   unreadGuildIds,
   value,
 }) => {
@@ -254,7 +251,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           isSelected={"all" === selectedValue}
           onClick={() => handleChange("all")}
           tooltipLabel={t("guildSwitcher.allServers")}
-          unreadBadge={null}
+          unreadLabel={null}
         >
           <AvatarFallback className="ll:mt-1.5 ll:rounded-none ll:text-xl ll:font-semibold">
             *
@@ -269,9 +266,8 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           onHide={() => hideGuild(guild.id, guild.name)}
           hideLabel={t("guildSwitcher.hideInGameClient")}
           guild={guild}
-          unreadBadge={
-            formatChatUnreadBadge(unreadCountByGuildId?.[guild.id]) ??
-            (unreadGuildIds?.has(guild.id) ? "•" : null)
+          unreadLabel={
+            unreadGuildIds?.has(guild.id) ? t("guildSwitcher.unread") : null
           }
         />
       ))}

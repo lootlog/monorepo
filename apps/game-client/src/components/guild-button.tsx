@@ -12,7 +12,7 @@ type GuildButtonProps = PropsWithChildren<{
   isSelected: boolean;
   onClick: () => void;
   tooltipLabel: string;
-  unreadBadge?: string | null;
+  unreadLabel?: string | null;
 }>;
 
 /** Flush tiles divided by hairlines. */
@@ -25,8 +25,8 @@ const STRIP_SELECTED_CLASS_NAME =
 
 /**
  * Idle artwork is dimmed and desaturated until the tile is hovered, so the one
- * coloured icon reads as active. Only the avatar is filtered: the unread badge
- * sits outside it and keeps its red.
+ * coloured icon reads as active. Only the avatar is filtered: the unread dot
+ * sits above it and keeps its red.
  */
 const IDLE_AVATAR_CLASS_NAME =
   "ll:opacity-50 ll:grayscale ll:transition-[opacity,filter] ll:motion-reduce:transition-none ll:group-hover:opacity-100 ll:group-hover:grayscale-0";
@@ -36,7 +36,7 @@ export const GuildButton: FC<GuildButtonProps> = ({
   isSelected,
   onClick,
   tooltipLabel,
-  unreadBadge,
+  unreadLabel,
   children,
 }) => (
   <Tooltip>
@@ -46,7 +46,9 @@ export const GuildButton: FC<GuildButtonProps> = ({
         size="xs"
         type="button"
         onClick={onClick}
-        aria-label={tooltipLabel}
+        aria-label={
+          unreadLabel ? `${tooltipLabel} – ${unreadLabel}` : tooltipLabel
+        }
         aria-pressed={isSelected}
         className={cn(
           "ll-custom-cursor-pointer ll:relative ll:flex ll:size-7 ll:shrink-0 ll:items-center ll:justify-center ll:overflow-visible ll:p-0",
@@ -62,10 +64,13 @@ export const GuildButton: FC<GuildButtonProps> = ({
         >
           {children}
         </Avatar>
-        {unreadBadge ? (
-          <span className="ll:pointer-events-none ll:absolute ll:-right-2 ll:-top-2 ll:flex ll:h-3.5 ll:min-w-3.5 ll:items-center ll:justify-center ll:rounded-full ll:border ll:border-black/70 ll:bg-red-600 ll:px-0.5 ll:text-[8px] ll:font-bold ll:leading-none ll:text-white">
-            {unreadBadge}
-          </span>
+        {/* The dot stays inside the tile: the strip scrolls and clips anything
+            that reaches past the tile's edges. */}
+        {unreadLabel ? (
+          <span
+            aria-hidden
+            className="ll:pointer-events-none ll:absolute ll:right-px ll:top-px ll:size-2 ll:rounded-full ll:bg-red-500"
+          />
         ) : null}
       </Button>
     </TooltipTrigger>
