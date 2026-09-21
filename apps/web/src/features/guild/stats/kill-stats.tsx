@@ -69,7 +69,7 @@ export const KillStats = () => {
     settings.period !== "all";
 
   return (
-    <ScrollArea className="h-full bg-background">
+    <ScrollArea className="h-full">
       <div className="flex flex-col gap-3 px-3 pb-3">
         <h1 className="sr-only">{t("common.stats.kills")}</h1>
         <KillStatsFilterBar

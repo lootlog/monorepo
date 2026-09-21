@@ -6,7 +6,7 @@ type AppContentFrameProps = {
 };
 
 export const AppContentFrame = ({ header, children }: AppContentFrameProps) => (
-  <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+  <div className="app-content-frame flex min-h-0 min-w-0 flex-1 flex-col">
     {header}
     <main
       id="main-content"

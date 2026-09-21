@@ -119,7 +119,7 @@ export const Timers = () => {
   const groups = groupBy(sorted, (timer) => timer.npc?.type ?? "");
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("layout.navigation.timers")}</h1>
       <div className="px-3 pt-3">
         <SectionCard className="rounded-xl">

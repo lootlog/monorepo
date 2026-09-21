@@ -45,7 +45,7 @@ const panelCardClassName =
 
 export const BattlePanelSingleBattleSkeleton = () => {
   return (
-    <ScrollArea className="h-full bg-background" aria-hidden="true">
+    <ScrollArea className="h-full" aria-hidden="true">
       <div className={getBattleDetailContentClassName({ isGroup: false })}>
         <ScrollArea className={BATTLE_DETAIL_BATTLE_COLUMN_CLASS_NAME}>
           <div className={BATTLE_DETAIL_BATTLE_CONTENT_CLASS_NAME}>

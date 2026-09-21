@@ -108,7 +108,7 @@ export function BattleDetailView({
   return (
     <ScrollArea
       ref={scrollViewportRef}
-      className="h-full min-h-0 bg-background"
+      className="h-full min-h-0"
       onScroll={handleBattleScroll}
     >
       <div className={getBattleDetailContentClassName({ isGroup })}>

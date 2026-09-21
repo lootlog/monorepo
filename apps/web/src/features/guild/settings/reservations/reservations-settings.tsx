@@ -16,7 +16,7 @@ export const ReservationsSettings = () => {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("settings.guildNavigation.reservations")}</h1>
-      <ScrollArea className="min-h-0 flex-1 bg-background">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="w-full space-y-4 px-3 pb-24">
           {guild && <ReservationsSettingsForm guild={guild} />}
           <ReservationSharingSettings />

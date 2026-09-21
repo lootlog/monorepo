@@ -15,7 +15,7 @@ export const GeneralSettings = () => {
   return (
     <div className="flex flex-col h-full min-h-0 overflow-y-auto">
       <h1 className="sr-only">{t("settings.general.title")}</h1>
-      <ScrollArea className="flex-1 min-h-48 bg-background">
+      <ScrollArea className="flex-1 min-h-48">
         {guild && <GeneralForm />}
       </ScrollArea>
     </div>

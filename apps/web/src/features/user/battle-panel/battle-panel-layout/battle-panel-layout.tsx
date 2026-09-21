@@ -32,7 +32,7 @@ export const BattlePanelLayout = () => {
   ];
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 w-full flex-col bg-background">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-col">
       {showTopLevelNavigation && (
         <HorizontalMenu
           items={navigationItems}

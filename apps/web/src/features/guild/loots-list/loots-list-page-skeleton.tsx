@@ -24,7 +24,7 @@ export const LootsListPageSkeleton = () => {
   return (
     <div
       aria-busy="true"
-      className="flex h-full w-full flex-col overflow-hidden bg-background"
+      className="flex h-full w-full flex-col overflow-hidden"
     >
       <div className="px-3 pb-0 pt-3">
         <LootFiltersHeaderSkeleton

@@ -93,7 +93,7 @@ export const EventEditRulebookPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full bg-background">
+    <ScrollArea className="h-full">
       <div className="flex flex-col gap-3 px-3 py-3">
         <PageHeader
           icon={BookOpenText}

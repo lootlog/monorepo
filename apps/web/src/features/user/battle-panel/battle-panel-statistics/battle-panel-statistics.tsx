@@ -143,7 +143,7 @@ export function BattlePanelStatistics() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background pt-3">
+    <div className="flex h-full min-h-0 flex-col pt-3">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col gap-3 px-3 pb-3">
           {charactersQuery.isError && (

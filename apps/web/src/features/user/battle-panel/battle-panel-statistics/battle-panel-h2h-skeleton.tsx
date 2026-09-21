@@ -7,7 +7,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const BattlePanelH2hSkeleton = () => {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-background">
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="px-3 pt-3 pb-0">
         <PageHeader
           title=<Skeleton render={<span />} className="block h-5 w-40" />

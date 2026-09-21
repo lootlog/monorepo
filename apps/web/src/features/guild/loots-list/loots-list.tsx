@@ -90,7 +90,7 @@ export const LootsListPage: React.FC = () => {
         </Sheet>
       )}
 
-      <div className="w-full flex flex-col h-full overflow-hidden bg-background">
+      <div className="w-full flex flex-col h-full overflow-hidden">
         <div className="px-3 pt-3 pb-0">
           <LootFiltersHeader
             onToggleFilters={handleOpenSidebar}
