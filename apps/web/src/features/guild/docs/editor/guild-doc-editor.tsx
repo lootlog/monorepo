@@ -20,8 +20,8 @@ import { GuildDocEditorEditablePlugin } from "./guild-doc-editor-editable-plugin
 import { GuildDocCodeHighlightPlugin } from "./guild-doc-code-highlight-plugin";
 import {
   type GuildDocEditorContent,
-  guildDocContent,
   normalizeGuildDocEditorContent,
+  serializeGuildDocEditorState,
 } from "./guild-doc-editor-content";
 import { guildDocEditorNodes } from "./guild-doc-editor-nodes";
 import { guildDocEditorTheme } from "./guild-doc-editor-theme";
@@ -108,7 +108,13 @@ export const GuildDocEditor = ({
                   return;
                 }
 
-                onChange(guildDocContent.parse(editorState.toJSON()));
+                const nextContent = serializeGuildDocEditorState(
+                  editorState.toJSON(),
+                );
+
+                if (nextContent) {
+                  onChange(nextContent);
+                }
               }}
             />
           )}
