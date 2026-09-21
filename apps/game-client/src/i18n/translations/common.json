@@ -65,6 +65,7 @@
   },
   "guildSwitcher": {
     "allServers": "Wszystkie serwery",
+    "unread": "Nieprzeczytane wiadomości",
     "allHidden": "Wszystkie serwery są ukryte",
     "hideInGameClient": "Ukryj w grze",
     "hidden": "Ukryto {{name}} w grze",

@@ -16,7 +16,7 @@ type GuildSwitcherItemProps = {
   isSelected: boolean;
   onClick: () => void;
   onHide: () => void;
-  unreadBadge: string | null;
+  unreadLabel: string | null;
 };
 
 export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
@@ -25,7 +25,7 @@ export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
   isSelected,
   onClick,
   onHide,
-  unreadBadge,
+  unreadLabel,
 }) => (
   <ContextMenu>
     <ContextMenuTrigger asChild>
@@ -35,7 +35,7 @@ export const GuildSwitcherItem: FC<GuildSwitcherItemProps> = ({
           isSelected={isSelected}
           onClick={onClick}
           tooltipLabel={guild.name}
-          unreadBadge={unreadBadge}
+          unreadLabel={unreadLabel}
         >
           <AvatarImage
             src={guild.icon ?? undefined}

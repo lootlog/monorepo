@@ -265,13 +265,6 @@ export const ChatView = ({
     (visibleGuilds ?? []).map((guild) => guild.id),
   );
 
-  const unreadCountByGuildId = Object.fromEntries(
-    Object.entries(unreadByGuildId).map(([guildId, summary]) => [
-      guildId,
-      summary.attention,
-    ]),
-  );
-
   const unreadGuildIds = new Set(
     Object.entries(unreadByGuildId).flatMap(([guildId, summary]) =>
       summary.ids.size > 0 ? [guildId] : [],
@@ -407,7 +400,6 @@ export const ChatView = ({
           <ChatViewHeader
             selectedGuildId={selectedGuildId}
             onGuildChange={setSelectedGuildId}
-            unreadCountByGuildId={unreadCountByGuildId}
             unreadGuildIds={unreadGuildIds}
             actions={embedded ? actions : null}
           />

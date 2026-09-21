@@ -13,6 +13,7 @@ import {
   getNotificationSettingsKey,
   isNotificationSettingsKey,
 } from "@/features/notifications/utils/get-notification-settings-key";
+import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
 
 interface UseVisibleNotificationsOptions {
   autoCleanup?: boolean;
@@ -49,15 +50,6 @@ type VisibleNotificationsCacheOwner = {
   selection?: VisibleNotificationsSelection;
 };
 
-const getExpirationTimeMs = (
-  notification: StoredNotification,
-  timeoutSeconds: number,
-) => {
-  if (timeoutSeconds <= 0) return null;
-
-  return notification.receivedAtMs + timeoutSeconds * 1000;
-};
-
 const getScheduledExpirationTimeMs = ({
   notification,
   notificationAutoHideByListKey,
@@ -73,26 +65,11 @@ const getScheduledExpirationTimeMs = ({
     return null;
   }
 
-  const notificationSettings = settings[key];
-
-  if (!notificationSettings?.autoHideTimeout) {
-    return null;
-  }
-
-  if (notificationSettings.autoHideTimeout <= 0) {
-    return null;
-  }
-
-  const autoHideState = notificationAutoHideByListKey[notification.listKey];
-
-  if (autoHideState && autoHideState.pausedRemainingMs !== null) {
-    return null;
-  }
-
-  return (
-    autoHideState?.deadlineMs ??
-    getExpirationTimeMs(notification, notificationSettings.autoHideTimeout)
-  );
+  return getNotificationAutoHideDeadlineMs({
+    autoHideState: notificationAutoHideByListKey[notification.listKey],
+    durationMs: (settings[key]?.autoHideTimeout ?? 0) * 1000,
+    receivedAtMs: notification.receivedAtMs,
+  });
 };
 
 const isNotificationVisible = ({
@@ -258,24 +235,53 @@ export const useVisibleNotifications = ({
       return;
     }
 
-    const timeoutId = window.setTimeout(
-      () => {
-        const currentTimeMs = Date.now();
+    let timeoutId = 0;
 
-        const expiredNotificationIds = scheduledExpirationsRef.current.flatMap(
-          ({ expirationTimeMs, notificationId }) => {
-            if (currentTimeMs < expirationTimeMs) {
-              return [];
-            }
+    function arm(expirationTimeMs: number) {
+      timeoutId = window.setTimeout(
+        sweep,
+        Math.max(1, expirationTimeMs - Date.now()),
+      );
+    }
 
-            return [notificationId];
-          },
-        );
+    // A sweep that removes nothing leaves the store untouched, so this effect
+    // does not re-run and nothing else would arm the timer again: a timeout
+    // that fires a fraction of a millisecond before its deadline, or an entry
+    // the store no longer holds, used to strand the notification on screen
+    // forever. The sweep therefore re-arms itself from the live schedule.
+    function sweep() {
+      const currentTimeMs = Date.now();
+      const expiredNotificationIds: string[] = [];
+      let nextExpirationTimeMs: number | null = null;
 
+      for (const {
+        expirationTimeMs,
+        notificationId,
+      } of scheduledExpirationsRef.current) {
+        if (currentTimeMs >= expirationTimeMs) {
+          expiredNotificationIds.push(notificationId);
+
+          continue;
+        }
+
+        if (
+          nextExpirationTimeMs === null ||
+          expirationTimeMs < nextExpirationTimeMs
+        ) {
+          nextExpirationTimeMs = expirationTimeMs;
+        }
+      }
+
+      if (expiredNotificationIds.length > 0) {
         removeRef.current(expiredNotificationIds);
-      },
-      Math.max(0, nearestExpirationTimeMs - Date.now()),
-    );
+      }
+
+      if (nextExpirationTimeMs !== null) {
+        arm(nextExpirationTimeMs);
+      }
+    }
+
+    arm(nearestExpirationTimeMs);
 
     return () => {
       window.clearTimeout(timeoutId);
