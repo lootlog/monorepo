@@ -99,7 +99,7 @@ export const ServerVisibilitySettings = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("settings.servers.title")}</h1>
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 pb-3">

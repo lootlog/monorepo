@@ -1,0 +1,119 @@
+/* Paint on the content frame so the application shell cannot hide the wallpaper. */
+.app-content-frame {
+  background-color: var(--background);
+  background-image: var(--theme-background-image, none);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.cyberpunk {
+  --theme-background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='cyberGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FF1493;stop-opacity:0.12' /%3E%3Cstop offset='50%25' style='stop-color:%239D4EDD;stop-opacity:0.09' /%3E%3Cstop offset='100%25' style='stop-color:%2300F0FF;stop-opacity:0.12' /%3E%3C/linearGradient%3E%3Cpattern id='grid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='%23FF1493' stroke-width='0.5' opacity='0.06'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23cyberGrad)'/%3E%3Crect width='400' height='300' fill='url(%23grid)'/%3E%3Ccircle cx='100' cy='80' r='30' fill='%23FF1493' opacity='0.05'/%3E%3Ccircle cx='300' cy='180' r='40' fill='%2300F0FF' opacity='0.05'/%3E%3Ccircle cx='200' cy='220' r='25' fill='%239D4EDD' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+.pastel {
+  --theme-background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='pastelGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FFB3D9;stop-opacity:0.07' /%3E%3Cstop offset='50%25' style='stop-color:%23E0BBE4;stop-opacity:0.05' /%3E%3Cstop offset='100%25' style='stop-color:%23B4E7CE;stop-opacity:0.07' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23pastelGrad)'/%3E%3Ccircle cx='80' cy='60' r='50' fill='%23FFB3D9' opacity='0.05'/%3E%3Ccircle cx='320' cy='100' r='60' fill='%23E0BBE4' opacity='0.04'/%3E%3Ccircle cx='150' cy='200' r='70' fill='%23B4E7CE' opacity='0.05'/%3E%3Ccircle cx='280' cy='240' r='45' fill='%23FFB3D9' opacity='0.04'/%3E%3Cpath d='M 50 150 Q 100 100 150 150 T 250 150' stroke='%23E0BBE4' stroke-width='2' fill='none' opacity='0.05'/%3E%3Cpath d='M 200 80 Q 250 50 300 80' stroke='%23FFB3D9' stroke-width='2' fill='none' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+.fantasy {
+  --theme-background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient id='fantasyGrad'%3E%3Cstop offset='0%25' style='stop-color:%234A0E4E;stop-opacity:0.12' /%3E%3Cstop offset='60%25' style='stop-color:%238B0000;stop-opacity:0.09' /%3E%3Cstop offset='100%25' style='stop-color:%23000000;stop-opacity:0.12' /%3E%3C/radialGradient%3E%3Cfilter id='glow'%3E%3CfeGaussianBlur stdDeviation='3' result='coloredBlur'/%3E%3CfeMerge%3E%3CfeMergeNode in='coloredBlur'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23fantasyGrad)'/%3E%3Cpolygon points='200,50 210,80 240,80 215,100 225,130 200,110 175,130 185,100 160,80 190,80' fill='%23FFD700' opacity='0.07' filter='url(%23glow)'/%3E%3Cpolygon points='100,150 105,165 120,165 110,175 115,190 100,180 85,190 90,175 80,165 95,165' fill='%23FFD700' opacity='0.05'/%3E%3Cpolygon points='320,180 325,195 340,195 330,205 335,220 320,210 305,220 310,205 300,195 315,195' fill='%23FFD700' opacity='0.05'/%3E%3Ccircle cx='200' cy='150' r='80' fill='%234A0E4E' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+.shonen {
+  --theme-background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='shonenGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FF6B35;stop-opacity:0.10' /%3E%3Cstop offset='50%25' style='stop-color:%2300A8E8;stop-opacity:0.08' /%3E%3Cstop offset='100%25' style='stop-color:%23FFD23F;stop-opacity:0.10' /%3E%3C/linearGradient%3E%3Cpattern id='energy' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 10 30 L 20 10 L 30 30 L 20 50 Z' fill='%23FFD23F' opacity='0.04'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23shonenGrad)'/%3E%3Crect width='400' height='300' fill='url(%23energy)'/%3E%3Cpath d='M 50 100 L 80 50 L 90 100 L 120 60 L 130 100' stroke='%23FFD23F' stroke-width='3' fill='none' opacity='0.07'/%3E%3Cpath d='M 250 180 L 280 130 L 290 180 L 320 140 L 330 180' stroke='%23FF6B35' stroke-width='3' fill='none' opacity='0.07'/%3E%3Ccircle cx='150' cy='150' r='40' fill='%2300A8E8' opacity='0.05'/%3E%3Ccircle cx='300' cy='80' r='35' fill='%23FF6B35' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+.onepiece {
+  --theme-background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='onepieceGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%232D8659;stop-opacity:0.12' /%3E%3Cstop offset='50%25' style='stop-color:%237FD99A;stop-opacity:0.09' /%3E%3Cstop offset='100%25' style='stop-color:%231A5238;stop-opacity:0.12' /%3E%3C/linearGradient%3E%3Cpattern id='swords' width='80' height='80' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 10 10 L 30 30 M 10 30 L 30 10' stroke='%232D8659' stroke-width='1' opacity='0.05'/%3E%3Cpath d='M 50 50 L 70 70 M 50 70 L 70 50' stroke='%237FD99A' stroke-width='1' opacity='0.06'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23onepieceGrad)'/%3E%3Crect width='400' height='300' fill='url(%23swords)'/%3E%3Ccircle cx='100' cy='100' r='40' fill='%232D8659' opacity='0.05'/%3E%3Ccircle cx='300' cy='200' r='50' fill='%237FD99A' opacity='0.06'/%3E%3Cpath d='M 150 150 L 170 100 L 175 150 L 180 100 L 185 150 L 200 80' stroke='%232D8659' stroke-width='2' fill='none' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+.goth {
+  --theme-background-image: url("data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='gothGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23000000;stop-opacity:0.18' /%3E%3Cstop offset='50%25' style='stop-color:%238B1A3D;stop-opacity:0.14' /%3E%3Cstop offset='100%25' style='stop-color:%236A0DAD;stop-opacity:0.16' /%3E%3C/linearGradient%3E%3Cpattern id='crosses' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 30 10 L 30 50 M 10 30 L 50 30' stroke='%238B1A3D' stroke-width='1.5' opacity='0.08'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23gothGrad)'/%3E%3Crect width='400' height='300' fill='url(%23crosses)'/%3E%3Ccircle cx='100' cy='100' r='35' fill='%236A0DAD' opacity='0.08'/%3E%3Ccircle cx='320' cy='220' r='45' fill='%238B1A3D' opacity='0.09'/%3E%3Cpath d='M 200 80 Q 220 100 200 120 Q 180 100 200 80' fill='%238B1A3D' opacity='0.06'/%3E%3Cpath d='M 280 150 L 290 140 L 300 150 L 290 160 Z' fill='%236A0DAD' opacity='0.08'/%3E%3Ccircle cx='150' cy='250' r='30' fill='%23000' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+.anime {
+  --theme-background-image: url("/themes/anime-bg.webp");
+}
+
+.waguri {
+  --theme-background-image: url("/themes/waguri-bg.webp");
+}
+
+.halloween {
+  --theme-background-image: url("/themes/halloween-bg.webp");
+}
+
+.realmadrid {
+  --theme-background-image: url("/themes/realmadrid-bg.webp");
+}
+
+.realmadrid-3rd {
+  --theme-background-image: url("/themes/realmadrid-3rd-bg.webp");
+}
+
+.barcelona {
+  --theme-background-image: url("/themes/barcelona-bg.webp");
+}
+
+.rukia {
+  --theme-background-image: url("/themes/rukia-bg.webp");
+}
+
+.rias {
+  --theme-background-image: url("/themes/rias-bg.webp");
+}
+
+:is(
+    .anime,
+    .waguri,
+    .halloween,
+    .realmadrid,
+    .realmadrid-3rd,
+    .barcelona,
+    .rukia,
+    .rias
+  )
+  .app-content-frame {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--background) 78%, transparent),
+      color-mix(in srgb, var(--background) 78%, transparent)
+    ),
+    var(--theme-background-image);
+  background-position:
+    center,
+    65% center;
+}
+
+@media (max-width: 767px) {
+  :is(
+      .anime,
+      .waguri,
+      .halloween,
+      .realmadrid,
+      .realmadrid-3rd,
+      .barcelona,
+      .rukia,
+      .rias
+    )
+    .app-content-frame {
+    background-position:
+      center,
+      75% center;
+  }
+}
+
+:is(
+    .anime,
+    .waguri,
+    .halloween,
+    .realmadrid,
+    .realmadrid-3rd,
+    .barcelona,
+    .rukia,
+    .rias
+  )
+  .app-content-frame
+  [data-slot="card"] {
+  background-color: color-mix(in srgb, var(--card) 30%, transparent);
+}

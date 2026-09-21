@@ -14,8 +14,8 @@ export const StatsTablePageSkeleton = ({
   <div
     className={
       withHeader
-        ? "flex h-full min-h-0 flex-col gap-3 bg-background p-3"
-        : "flex h-full min-h-0 flex-col gap-3 bg-background px-3 pb-3"
+        ? "flex h-full min-h-0 flex-col gap-3 p-3"
+        : "flex h-full min-h-0 flex-col gap-3 px-3 pb-3"
     }
   >
     {withHeader && (

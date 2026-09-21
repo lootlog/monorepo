@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Check, Eye } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "cn";
 
 export interface ThemeCardProps {
@@ -25,22 +25,27 @@ export const ThemeCard: FC<ThemeCardProps> = ({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={isActive}
       className={cn(
-        "relative flex flex-col gap-3 rounded-lg border-2 p-4 transition-all overflow-hidden cursor-pointer bg-card",
-        "hover:shadow-md hover:scale-[1.02]",
+        "relative flex flex-col gap-3 rounded-lg border-2 p-4 transition-[border-color,box-shadow] cursor-pointer bg-card outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-4",
+        "hover:shadow-md",
         isActive
-          ? "border-primary shadow-md ring-2 ring-primary ring-offset-2"
+          ? "border-primary shadow-md ring-2 ring-primary ring-inset"
           : "border-border hover:border-primary/50",
       )}
     >
       {isActive && (
-        <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground z-20 p-1 m-4">
-          <Check className="h-4 w-4" />
+        <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground z-20 p-1">
+          <Check aria-hidden className="size-4" />
         </div>
       )}
 
       {backgroundImage && (
-        <div className="relative z-10 h-32 w-full rounded-md overflow-hidden border border-border mb-1 bg-muted">
+        <div
+          aria-hidden
+          className="relative z-10 h-32 w-full rounded-md overflow-hidden border border-border mb-1 bg-muted"
+          style={{ backgroundColor: colors[2] }}
+        >
           <div
             className="h-full w-full"
             style={{
@@ -54,19 +59,14 @@ export const ThemeCard: FC<ThemeCardProps> = ({
               backgroundRepeat: "no-repeat",
             }}
           />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-sm">
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
         </div>
       )}
 
-      <div className="relative z-10 flex gap-2">
+      <div aria-hidden className="relative z-10 flex gap-2">
         {colors.map((color, index) => (
           <div
             key={index}
-            className="h-10 w-10 rounded-md border border-border shadow-sm"
+            className="size-10 rounded-md border border-border shadow-sm"
             style={{ backgroundColor: color }}
           />
         ))}

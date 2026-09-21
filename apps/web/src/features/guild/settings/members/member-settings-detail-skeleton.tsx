@@ -9,7 +9,7 @@ const sections = Array.from({ length: 4 });
 
 export const MemberSettingsDetailSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-background px-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden px-3">
       <SectionCard className="shrink-0 border-b border-t">
         <SectionCardContent className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

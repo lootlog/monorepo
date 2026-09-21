@@ -26,7 +26,6 @@
   --input: #656674;
   --destructive: #ff8f96;
   --destructive-foreground: #271419;
-  --destructive-action: #a03f4d;
   --signal-ready: var(--primary);
   --text-supporting: var(--muted-foreground);
   --radius: 0.5rem;
@@ -169,10 +168,6 @@ body {
 [data-slot="card"] {
   border-radius: 0.75rem;
   box-shadow: none;
-}
-
-[data-slot="button"].bg-destructive {
-  background: var(--destructive-action);
 }
 
 #nd-sidebar {
