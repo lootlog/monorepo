@@ -125,7 +125,7 @@ export const ActivityLogs = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background p-3">
+    <div className="flex h-full min-h-0 flex-col p-3">
       <h1 className="sr-only">{t("activityLogs.title")}</h1>
       <ResultsSurface
         chips={activeFilterChips}

@@ -66,7 +66,7 @@ export const GuildDocEditorPage = () => {
 
   if (documentQuery.isError || !document) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="flex h-full min-h-0 flex-col">
         <ScrollArea className="min-h-0 flex-1">
           <div className="px-3 py-3">
             <Card className="flex flex-col items-center justify-center gap-3 border-border bg-card py-12">
@@ -82,7 +82,7 @@ export const GuildDocEditorPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col gap-4 px-3 py-3">
           <PageHeader

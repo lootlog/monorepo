@@ -26,7 +26,7 @@ export const BattlePanelStatisticsSkeleton = () => {
     <ScrollArea className="h-full min-h-0 pt-3">
       <div
         aria-busy="true"
-        className="flex min-h-full flex-col gap-3 bg-background px-3 pb-3"
+        className="flex min-h-full flex-col gap-3 px-3 pb-3"
       >
         <FilterBar ariaLabel={t("battlePanel.filters.title")}>
           {FILTER_WIDTHS.map((width, index) => (

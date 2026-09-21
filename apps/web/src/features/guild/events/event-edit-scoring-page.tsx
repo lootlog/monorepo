@@ -65,7 +65,7 @@ export const EventEditScoringPage = () => {
   }
 
   return (
-    <ScrollArea className="h-full bg-background">
+    <ScrollArea className="h-full">
       <EventEditScoringForm
         key={`${event.id}:${event.updatedAt}:${event.scoringMode}`}
         event={event}

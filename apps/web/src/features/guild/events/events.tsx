@@ -71,7 +71,7 @@ export const Events = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{t("events.title")}</h1>
       <div className="px-3 pt-3">
         <SectionCard className="rounded-xl">

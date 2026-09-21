@@ -133,7 +133,7 @@ export const ScoringRuleCard = ({
                   <Input
                     {...register(`scoringRules.rules.${ruleIndex}.name`)}
                     placeholder={t("events.scoring.ruleName")}
-                    className="h-8 text-sm bg-muted/30 border-border/40"
+                    className="h-8 text-sm bg-muted/30"
                   />
                   <p className="text-[10px] text-muted-foreground/60 mt-0.5 pl-0.5">
                     {t("events.scoring.ruleNameHint")}

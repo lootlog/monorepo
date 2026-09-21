@@ -157,7 +157,7 @@ export const MemberStatsPage = () => {
   });
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 bg-background p-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
       <StatsDetailHeader
         media={
           <StatsMemberAvatar

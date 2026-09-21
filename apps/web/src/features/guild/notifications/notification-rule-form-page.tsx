@@ -61,7 +61,7 @@ export const NotificationRuleFormPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-background">
+      <div className="flex h-full min-h-0 flex-col">
         <div className="flex flex-col gap-3 px-3 py-3">
           <NotificationFormSkeleton />
         </div>
@@ -89,7 +89,7 @@ export const NotificationRuleFormPage = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-3 py-3">
           <PageHeader

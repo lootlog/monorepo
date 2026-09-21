@@ -100,7 +100,7 @@ export const InfoSettings = () => {
   );
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background">
+    <div className="flex flex-col h-full min-h-0">
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 pb-3 flex flex-col gap-4">
           <h1 className="sr-only">{t("settings.guildInfo.title")}</h1>

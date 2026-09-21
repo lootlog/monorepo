@@ -5,7 +5,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const NpcSettingsSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background px-3 pb-3 gap-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden px-3 pb-3 gap-3">
       <SectionCard>
         <SectionCardContent className="flex flex-col gap-0 p-0">
           <div className="border-b border-border/70 bg-background/30 p-2">

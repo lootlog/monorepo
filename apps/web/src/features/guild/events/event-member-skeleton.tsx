@@ -6,7 +6,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 
 export const EventMemberSkeleton = () => {
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-col gap-4 px-3 py-3">
         <PageHeader
           title=<Skeleton render={<span />} className="block h-5 w-40" />
