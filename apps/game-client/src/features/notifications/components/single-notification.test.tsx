@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import type { NotificationMutes } from "@lootlog/schema/user-preferences";
 import type { NotificationSettings } from "@lootlog/schema/account-preferences";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,7 +42,14 @@ const animate = vi.fn<
   onfinish: null,
 }));
 
-const renderNotification = () =>
+const renderNotification = (
+  props?: Partial<
+    Pick<
+      ComponentProps<typeof SingleNotification>,
+      "autoHideState" | "notification"
+    >
+  >,
+) =>
   render(
     <SingleNotification
       animationEffectsEnabled
@@ -62,6 +70,7 @@ const renderNotification = () =>
       onRemoveNotification={noop}
       onResumeAutoHide={noop}
       onUpdateMutes={noop}
+      {...props}
     />,
   );
 
@@ -81,17 +90,10 @@ describe("SingleNotification auto-hide perimeter", () => {
       configurable: true,
       value: animate,
     });
-    vi.spyOn(SVGSVGElement.prototype, "getBoundingClientRect").mockReturnValue({
-      bottom: 64,
-      height: 64,
-      left: 0,
-      right: 242,
-      top: 0,
-      width: 242,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    });
+    // The ring measures the row's layout box, which the window's entry
+    // animation must not scale down.
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(242);
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(64);
   });
 
   afterEach(() => {
@@ -118,6 +120,25 @@ describe("SingleNotification auto-hide perimeter", () => {
       [{ strokeDashoffset: "306" }, { strokeDashoffset: "612" }],
       {
         duration: 15_000,
+        easing: "linear",
+        fill: "forwards",
+      },
+    );
+  });
+
+  it("counts down from the arrival time when no auto-hide state was stored", () => {
+    renderNotification({
+      autoHideState: undefined,
+      notification: { ...notification, receivedAtMs: Date.now() - 10_000 },
+    });
+
+    // The cleanup sweep removes this row 20s from now, so the ring must run
+    // for what is left instead of restarting a full 30s countdown it would
+    // never finish.
+    expect(animate).toHaveBeenCalledWith(
+      [{ strokeDashoffset: "204" }, { strokeDashoffset: "612" }],
+      {
+        duration: 20_000,
         easing: "linear",
         fill: "forwards",
       },

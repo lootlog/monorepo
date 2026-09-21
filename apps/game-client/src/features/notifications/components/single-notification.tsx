@@ -30,6 +30,7 @@ import { SingleNotificationNpc } from "@/features/notifications/components/singl
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
 import { useTranslation } from "react-i18next";
 import { getNotificationSettingsKey } from "@/features/notifications/utils/get-notification-settings-key";
+import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 import type {
   NotificationMutes,
@@ -252,26 +253,42 @@ export const SingleNotification = memo(function SingleNotification({
     onJoinReadyRoom(notification);
   };
 
-  const hasAutoHideState = Boolean(autoHideState);
-  const autoHideDeadlineMs = autoHideState?.deadlineMs;
-  const autoHidePausedRemainingMs = autoHideState?.pausedRemainingMs;
+  const autoHidePausedRemainingMs = autoHideState?.pausedRemainingMs ?? null;
+
+  const autoHideDeadlineMs = getNotificationAutoHideDeadlineMs({
+    autoHideState,
+    durationMs: autoHideDurationMs,
+    receivedAtMs: notification.receivedAtMs,
+  });
 
   useEffect(() => {
     const path = autoHidePathRef.current;
-    const svg = path?.ownerSVGElement;
+    const host = path?.ownerSVGElement?.parentElement;
 
-    if (!animationEffectsEnabled || !path || !svg || autoHideDurationMs <= 0) {
+    if (!animationEffectsEnabled || !path || !host || autoHideDurationMs <= 0) {
       return;
     }
 
-    const { width, height } = svg.getBoundingClientRect();
-    const totalLength = 2 * (width + height);
-    const deadlineMs = autoHideDeadlineMs ?? Date.now() + autoHideDurationMs;
+    // The window plays its entry animation with `scale(0.94)`, and a client
+    // rect reports that painted box: the dash length has to come from the
+    // untransformed layout box or the ring closes before the countdown ends.
+    // A row that is not laid out yet measures zero, and a zero dash array
+    // paints a solid ring that never moves, so leave the plain border instead.
+    const totalLength = 2 * (host.offsetWidth + host.offsetHeight);
+
+    if (totalLength <= 0) {
+      return;
+    }
 
     const remainingMs =
-      autoHidePausedRemainingMs ?? Math.max(0, deadlineMs - Date.now());
+      autoHidePausedRemainingMs ??
+      (autoHideDeadlineMs === null ? 0 : autoHideDeadlineMs - Date.now());
 
-    const clampedRemainingMs = Math.min(autoHideDurationMs, remainingMs);
+    const clampedRemainingMs = Math.min(
+      autoHideDurationMs,
+      Math.max(0, remainingMs),
+    );
+
     const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
     const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
     const dashGapLength = totalLength * 2;
@@ -289,7 +306,7 @@ export const SingleNotification = memo(function SingleNotification({
       };
     }
 
-    if (hasAutoHideState && autoHidePausedRemainingMs !== null) {
+    if (autoHidePausedRemainingMs !== null) {
       return () => {
         path.style.strokeDasharray = "";
         path.style.strokeDashoffset = "";
@@ -324,7 +341,6 @@ export const SingleNotification = memo(function SingleNotification({
     autoHideDurationMs,
     autoHideDeadlineMs,
     autoHidePausedRemainingMs,
-    hasAutoHideState,
   ]);
 
   const handleMuteMenuOpenChange = (open: boolean) => {

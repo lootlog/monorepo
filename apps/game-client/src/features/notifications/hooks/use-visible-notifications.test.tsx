@@ -101,6 +101,50 @@ describe("useVisibleNotifications", () => {
     setIntervalSpy.mockRestore();
   });
 
+  it("keeps sweeping when a timer fires before its deadline", () => {
+    const deadlineMs = Date.now() + 1_000;
+
+    useNotificationsStore.setState({
+      notifications: [
+        createStoredNotification({
+          notificationId: "notification-1",
+          listKey: "notification-1",
+          receivedAtMs: Date.now(),
+        }),
+      ],
+      notificationAutoHideByListKey: {
+        "notification-1": {
+          deadlineMs,
+          pausedRemainingMs: null,
+          durationMs: 1_000,
+        },
+      },
+    });
+
+    renderHook(() => useVisibleNotifications({ autoCleanup: true }), {
+      wrapper: test.wrapper,
+    });
+
+    // Browsers fire a timeout a fraction of a millisecond early, so the sweep
+    // finds nothing expired and the store never changes: without re-arming
+    // itself the notification would stay on screen forever.
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(deadlineMs - 1);
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toHaveLength(1);
+
+    nowSpy.mockRestore();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
+  });
+
   it("does not auto-remove paused notifications", () => {
     useNotificationsStore.setState({
       notifications: [

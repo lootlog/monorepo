@@ -205,20 +205,19 @@ describe("GuildSwitcher", () => {
     expect(viewport.scrollLeft).toBe(48);
   });
 
-  it("renders unread badges for guilds and clamps them to 9+", () => {
+  it("marks only the guilds with unread messages", () => {
     render(
       <GuildSwitcher
         allowAll
         value="guild-3"
-        unreadCountByGuildId={{
-          "guild-1": 3,
-          "guild-2": 14,
-        }}
+        unreadGuildIds={new Set(["guild-1"])}
       />,
     );
 
-    expect(screen.getByText("3")).toBeInTheDocument();
-    expect(screen.getByText("9+")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Alpha – Nieprzeczytane wiadomości" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Beta" })).toBeInTheDocument();
   });
 
   it("removes hidden guilds and falls back to the first visible guild", async () => {
