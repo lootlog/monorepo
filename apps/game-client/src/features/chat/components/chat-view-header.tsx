@@ -9,7 +9,6 @@ import type { ReactNode } from "react";
 type Props = {
   selectedGuildId: string;
   onGuildChange: (guildId: string) => void;
-  unreadCountByGuildId: Record<string, number>;
   unreadGuildIds: Set<string>;
   actions: ReactNode;
 };
@@ -17,7 +16,6 @@ type Props = {
 export function ChatViewHeader({
   selectedGuildId,
   onGuildChange,
-  unreadCountByGuildId,
   unreadGuildIds,
   actions,
 }: Props) {
@@ -33,7 +31,6 @@ export function ChatViewHeader({
         className="ll:min-w-0 ll:flex-1"
         value={selectedGuildId}
         onChange={onGuildChange}
-        unreadCountByGuildId={unreadCountByGuildId}
         unreadGuildIds={unreadGuildIds}
       />
       {actions ? (
