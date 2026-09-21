@@ -1,4 +1,5 @@
 import { getNotificationFieldVisibility } from "./utils/notification-field-visibility";
+import { useWatch } from "react-hook-form";
 import { CreateNotificationRuleDtoScheduleIntervalType as NotificationScheduleIntervalType } from "@lootlog/client/main";
 import {
   FormControl,
@@ -24,6 +25,11 @@ import {
 type Props = Pick<ReturnType<typeof useNotificationRuleForm>, "form" | "t">;
 
 export const NotificationScheduleFields = ({ form, t }: Props) => {
+  const [triggerType, intervalType] = useWatch({
+    control: form.control,
+    name: ["triggerType", "scheduleIntervalType"],
+  });
+
   const {
     isScheduledMessage,
     isRecurring,
@@ -31,10 +37,7 @@ export const NotificationScheduleFields = ({ form, t }: Props) => {
     showTimeOfDayField,
     showWeekdayField,
     showIntervalValueField,
-  } = getNotificationFieldVisibility(
-    form.watch("triggerType"),
-    form.watch("scheduleIntervalType"),
-  );
+  } = getNotificationFieldVisibility(triggerType, intervalType);
 
   return (
     <>
