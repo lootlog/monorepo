@@ -1659,8 +1659,20 @@
 .rias[data-theme-effects-idle] [data-slot="horizontal-menu-highlight"]::after,
 .rias[data-theme-effects-idle] [data-slot="sidebar-nav"] button::after,
 .rias[data-theme-effects-idle] [data-slot="sidebar-nav"] a::after,
+.rias[data-theme-effects-idle]
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  )::after,
 .rias[data-theme-effects-idle] [data-slot="rail-avatar"]::before {
-  animation-play-state: paused;
+  /* The seal rules set the animation shorthand at a higher specificity, and the
+     shorthand resets the play state; idle has to win over all of them. */
+  animation-play-state: paused !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

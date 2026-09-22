@@ -1351,6 +1351,104 @@
   }
 }
 
+/* ---------- Effects preference ---------- */
+
+/* Subtle: no ambient motion, only reactions to what the player does; off: nothing
+   decorative moves. Materials stay. */
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  .app-content-frame::before,
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  [data-slot="dialog-overlay"]::before,
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  [data-slot="alert-dialog-overlay"]::before,
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  [data-slot="dialog-content"]::after,
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  [data-slot="alert-dialog-content"]::after {
+  animation: none;
+  opacity: 0.12;
+}
+
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  :is(
+    :is(button, a)[data-variant="default"],
+    [data-slot="tabs-trigger"][data-active],
+    [data-slot="horizontal-menu"] a[aria-current="page"],
+    :is(button, a)[data-variant][aria-pressed="true"],
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  ):not(:hover, [data-popup-open], :focus-visible)::before,
+.rukia:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  :is(
+    :is(button, a)[data-variant="default"],
+    [data-slot="tabs-trigger"][data-active],
+    [data-slot="horizontal-menu"] a[aria-current="page"],
+    :is(button, a)[data-variant][aria-pressed="true"],
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  ):not(:hover, [data-popup-open], :focus-visible)::after {
+  animation: none;
+}
+
+.rukia[data-theme-effects="off"]
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  )::before,
+.rukia[data-theme-effects="off"]
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  )::after {
+  animation: none;
+  transition-duration: 0s;
+}
+
+/* Idle (hidden tab, or unfocused window when asked): ambient motion stands still. */
+.rukia[data-theme-effects-idle] .app-content-frame::before,
+.rukia[data-theme-effects-idle] [data-slot="dialog-overlay"]::before,
+.rukia[data-theme-effects-idle] [data-slot="alert-dialog-overlay"]::before,
+.rukia[data-theme-effects-idle] [data-slot="dialog-content"]::after,
+.rukia[data-theme-effects-idle] [data-slot="alert-dialog-content"]::after,
+.rukia[data-theme-effects-idle]
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"],
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  )::before,
+.rukia[data-theme-effects-idle]
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"],
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  )::after {
+  /* The seal rules set the animation shorthand at a higher specificity, and the
+     shorthand resets the play state; idle has to win over all of them. */
+  animation-play-state: paused !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rukia .app-content-frame::before,
   .rukia [data-slot="dialog-overlay"]::before,
