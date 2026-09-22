@@ -4,7 +4,6 @@ import { cn } from "cn";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { MenuItem } from "./types";
-import { ThemeInteractiveFrame } from "@/themes";
 
 export const SidebarNavItem = ({
   url,
@@ -14,7 +13,6 @@ export const SidebarNavItem = ({
   label,
   badge,
   highlight,
-  isRukiaTheme,
   isCatTheme,
   onItemClick,
 }: {
@@ -25,7 +23,6 @@ export const SidebarNavItem = ({
   label: string;
   badge?: MenuItem["badge"];
   highlight?: boolean;
-  isRukiaTheme: boolean;
   isCatTheme: boolean;
   onItemClick: (e: MouseEvent) => void;
 }) => {
@@ -90,7 +87,7 @@ export const SidebarNavItem = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {isActive && !isRukiaTheme ? (
+      {isActive ? (
         <div className="absolute inset-x-2 inset-y-0 rounded-md bg-primary/5" />
       ) : null}
       <Link
@@ -104,9 +101,7 @@ export const SidebarNavItem = ({
           "hover:cursor-not-allowed": !available,
         })}
       >
-        <ThemeInteractiveFrame isHovered={isHovered} isActive={isActive}>
-          {buttonContent}
-        </ThemeInteractiveFrame>
+        {buttonContent}
       </Link>
     </div>
   );

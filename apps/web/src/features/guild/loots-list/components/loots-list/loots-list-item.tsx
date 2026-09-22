@@ -3,7 +3,6 @@ import { SectionCard as Card } from "@/components/common/section-card/section-ca
 import { cn } from "cn";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import * as m from "framer-motion/m";
-import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import {
   LEGENDARY_LOOT_CARD_CLASS,
@@ -22,7 +21,6 @@ const animate = {
 export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const { filters, setFilters } = useLootsFilters();
-  const { isRukiaTheme } = useThemeMeta();
 
   const hasLegendaryItem = loot.items.some(
     (item) => item.rarity === ItemRarity.LEGENDARY,
@@ -53,9 +51,6 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
         variant === "embedded" &&
           "group relative flex flex-col transition-colors hover:bg-muted/20",
         variant === "embedded" && hasLegendaryItem && LEGENDARY_LOOT_ROW_CLASS,
-        variant === "card" &&
-          isRukiaTheme &&
-          "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",
       )}
     >
       {variant === "embedded" ? (

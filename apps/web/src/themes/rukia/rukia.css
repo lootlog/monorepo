@@ -1,0 +1,1167 @@
+/*
+ * Rukia Kuchiki — Hakka no Togame (白霞罸), absolute-zero bankai.
+ *
+ * Design language: white ice on indigo night. Shippori Mincho display type
+ * (serifs like icicles), hoarfrost that creeps in from the corners of a surface
+ * under the cursor, snow crystals falling slowly behind the content, ribbon
+ * hairlines in white-violet. Every animation is compositor-only; nothing runs
+ * on the main thread while the page is idle.
+ *
+ * All selectors are rooted at html.rukia so portaled overlays are covered.
+ * Rules stay on paint properties so call-site utilities keep their box model.
+ */
+
+@import "@fontsource/shippori-mincho/latin-600.css";
+@import "@fontsource/shippori-mincho/latin-ext-600.css";
+@import "@fontsource/shippori-mincho/latin-500.css";
+@import "@fontsource/shippori-mincho/latin-ext-500.css";
+
+.rukia {
+  /* Palette: wallpaper-derived. Indigo night, white ice, violet eyes. */
+  --background: oklch(0.13 0.03 268);
+  --foreground: oklch(0.965 0.012 250);
+  --card: oklch(0.17 0.035 266);
+  --card-foreground: oklch(0.965 0.012 250);
+  --popover: oklch(0.15 0.035 266);
+  --popover-foreground: oklch(0.965 0.012 250);
+  --primary: oklch(0.88 0.03 252);
+  --primary-foreground: oklch(0.18 0.04 268);
+  --secondary: oklch(0.22 0.045 268);
+  --secondary-foreground: oklch(0.965 0.012 250);
+  --muted: oklch(0.24 0.04 266);
+  --muted-foreground: oklch(0.79 0.03 260);
+  --accent: oklch(0.29 0.06 275);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.74 0.16 22);
+  --destructive-foreground: oklch(0.13 0.03 268);
+  --border: oklch(0.32 0.05 268);
+  --input: oklch(0.56 0.05 265);
+  --ring: oklch(0.85 0.06 255);
+  --chart-1: oklch(0.85 0.06 255);
+  --chart-2: oklch(0.7 0.14 290);
+  --chart-3: oklch(0.75 0.1 220);
+  --chart-4: oklch(0.65 0.12 265);
+  --chart-5: oklch(0.55 0.08 250);
+  --sidebar: oklch(0.11 0.028 268);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.965 0.012 250);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.22 0.04 266);
+  --sidebar-accent-foreground: oklch(0.965 0.012 250);
+  --sidebar-border: oklch(0.3 0.045 268);
+  --sidebar-ring: var(--ring);
+
+  /* Theme-private tokens. */
+  --rukia-ice: oklch(0.96 0.02 250);
+  --rukia-ice-soft: oklch(0.9 0.04 255 / 0.4);
+  --rukia-ice-faint: oklch(0.9 0.04 255 / 0.12);
+  --rukia-violet: oklch(0.72 0.12 295);
+  --rukia-glow: oklch(0.85 0.07 255);
+  --rukia-line: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.85 0.07 255 / 0.7) 20%,
+    var(--rukia-ice) 50%,
+    oklch(0.85 0.07 255 / 0.7) 80%,
+    transparent
+  );
+  --font-display:
+    "Shippori Mincho", "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho",
+    Georgia, serif;
+  --radius: 0.25rem;
+  --shadow-xs:
+    0 1px 0 oklch(0.9 0.04 255 / 0.1), 0 8px 24px -12px oklch(0 0 0 / 0.6);
+  --shadow-sm:
+    0 1px 0 oklch(0.9 0.04 255 / 0.1), 0 10px 28px -12px oklch(0 0 0 / 0.65);
+  --shadow-md:
+    0 1px 0 oklch(0.9 0.04 255 / 0.14), 0 18px 40px -16px oklch(0 0 0 / 0.7);
+  --shadow-lg:
+    0 1px 0 oklch(0.9 0.04 255 / 0.18), 0 24px 56px -20px oklch(0 0 0 / 0.75);
+  --shadow-xl:
+    0 0 0 1px oklch(0.9 0.04 255 / 0.2), 0 32px 72px -24px oklch(0 0 0 / 0.8);
+}
+
+/* ---------- Typography ---------- */
+
+.rukia
+  :is(
+    h1,
+    h2,
+    h3,
+    [data-slot="card-title"],
+    [data-slot="dialog-title"],
+    [data-slot="alert-dialog-title"],
+    [data-slot="sheet-title"],
+    [data-slot="drawer-title"],
+    [data-slot="empty-title"]
+  ),
+.rukia [data-slot="section-card-header"] h2,
+.rukia [data-slot="sidebar"] nav a > [data-slot="button"],
+.rukia [data-slot="app-top-bar"] :is(h1, h2, [data-slot="breadcrumb-page"]),
+.rukia [data-slot="kpi-value"],
+.rukia [data-slot="horizontal-menu"] a {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rukia [data-slot="section-card-header"] h2 {
+  font-size: 1.1rem;
+}
+
+.rukia
+  :is(
+    [data-slot="dialog-title"],
+    [data-slot="alert-dialog-title"],
+    [data-slot="sheet-title"],
+    [data-slot="drawer-title"]
+  ) {
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+}
+
+.rukia [data-slot="kpi-value"] {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.rukia [data-slot="horizontal-menu"] a,
+.rukia [data-slot="sidebar"] nav a > [data-slot="button"] {
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Text selection, scrollbars, focus ---------- */
+
+.rukia ::selection {
+  background: oklch(0.85 0.07 255 / 0.35);
+  color: oklch(0.99 0.005 250);
+}
+
+.rukia .custom-scrollbar {
+  scrollbar-color: oklch(0.8 0.05 255 / 0.35) transparent;
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.8 0.05 255 / 0.3);
+}
+
+.rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.9 0.04 255 / 0.55);
+}
+
+.rukia [data-slot="scroll-area-thumb"] {
+  background-color: oklch(0.8 0.05 255 / 0.3);
+}
+
+.rukia
+  [data-slot="scroll-area-scrollbar"]:hover
+  [data-slot="scroll-area-thumb"],
+.rukia [data-slot="scroll-area-thumb"]:hover {
+  background-color: oklch(0.9 0.04 255 / 0.55);
+}
+
+.rukia
+  :is(
+    input,
+    textarea,
+    select,
+    [role="combobox"],
+    [data-slot="select-trigger"]
+  ):focus-visible:not([data-slot="input-group-control"], [cmdk-input]) {
+  --tw-ring-color: oklch(0.9 0.05 255 / 0.65);
+  border-color: oklch(0.9 0.05 255 / 0.7);
+  box-shadow:
+    var(--tw-inset-shadow),
+    var(--tw-inset-ring-shadow),
+    var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow),
+    0 0 18px -4px oklch(0.85 0.07 255 / 0.5);
+}
+
+.rukia [data-slot="input-group"]:focus-within {
+  border-color: oklch(0.9 0.05 255 / 0.7);
+  box-shadow: 0 0 18px -4px oklch(0.85 0.07 255 / 0.45);
+}
+
+/* ---------- Surfaces: cards, popups, dialogs ---------- */
+
+.rukia .app-content-frame [data-slot="card"] {
+  background-color: color-mix(in srgb, var(--card) 34%, transparent);
+  border-color: oklch(0.9 0.04 255 / 0.2);
+  isolation: isolate;
+}
+
+.rukia [data-slot="card"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Cards that keep overflow visible (loot cards) must still clip the ornament to their corners. */
+  border-radius: inherit;
+  clip-path: inset(0 round inherit);
+  overflow: hidden;
+  background-image: url("/themes/rukia/corner.webp");
+  background-repeat: no-repeat;
+  background-size: 96px auto;
+  background-position: -8px -8px;
+  opacity: 0.5;
+}
+
+.rukia [data-slot="section-card-header"] {
+  border-bottom-color: transparent;
+  background-image: var(--rukia-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+.rukia [data-slot="section-card-header"] h2 svg {
+  color: var(--rukia-ice);
+  filter: drop-shadow(0 0 6px oklch(0.85 0.07 255 / 0.6));
+}
+
+.rukia
+  :is(
+    [data-slot="popover-content"],
+    [data-slot="select-content"],
+    [data-slot="combobox-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    [data-slot="context-menu-content"],
+    [data-slot="context-menu-sub-content"]
+  ) {
+  background-color: color-mix(in srgb, var(--popover) 92%, black);
+  border-color: oklch(0.9 0.04 255 / 0.32);
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.5),
+    0 22px 48px -16px oklch(0 0 0 / 0.8),
+    0 0 32px -12px oklch(0.85 0.07 255 / 0.4);
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.9 0.05 255 / 0.1),
+    transparent 28px
+  );
+}
+
+.rukia [data-slot="combobox-content"] {
+  --tw-ring-color: oklch(0.9 0.04 255 / 0.32);
+}
+
+.rukia [data-slot="tooltip-content"]:not([class*="border-2"]) {
+  background-color: color-mix(in srgb, var(--popover) 94%, black);
+  border-color: oklch(0.9 0.04 255 / 0.38);
+  box-shadow:
+    0 8px 24px -8px oklch(0 0 0 / 0.7),
+    0 0 16px -6px oklch(0.85 0.07 255 / 0.35);
+}
+
+.rukia
+  :is(
+    [data-slot="select-item"],
+    [data-slot="combobox-item"],
+    [data-slot="dropdown-menu-item"],
+    [data-slot="dropdown-menu-checkbox-item"],
+    [data-slot="dropdown-menu-radio-item"],
+    [data-slot="dropdown-menu-sub-trigger"],
+    [data-slot="context-menu-item"],
+    [data-slot="command-item"]
+  ) {
+  transition:
+    background-color 120ms var(--ease-emphasized),
+    color 120ms var(--ease-emphasized);
+}
+
+.rukia
+  :is(
+    [data-slot="select-item"][data-highlighted],
+    [data-slot="select-item"]:focus,
+    [data-slot="combobox-item"][data-highlighted],
+    [data-slot="dropdown-menu-item"][data-highlighted],
+    [data-slot="dropdown-menu-item"]:focus,
+    [data-slot="dropdown-menu-checkbox-item"][data-highlighted],
+    [data-slot="dropdown-menu-radio-item"][data-highlighted],
+    [data-slot="dropdown-menu-sub-trigger"][data-highlighted],
+    [data-slot="dropdown-menu-sub-trigger"]:focus,
+    [data-slot="context-menu-item"][data-highlighted],
+    [data-slot="context-menu-item"]:focus,
+    [data-slot="command-item"][data-selected="true"]
+  ) {
+  background-color: oklch(0.9 0.05 255 / 0.12);
+  color: var(--rukia-ice);
+}
+
+.rukia [data-slot="select-item"][data-selected] {
+  color: var(--rukia-ice);
+}
+
+.rukia :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
+  background-color: color-mix(in srgb, var(--background) 96%, black);
+  border-color: oklch(0.9 0.04 255 / 0.38);
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.6),
+    0 40px 90px -30px oklch(0 0 0 / 0.9),
+    0 0 60px -20px oklch(0.85 0.07 255 / 0.45);
+  isolation: isolate;
+}
+
+.rukia [data-slot="dialog-content"]::before,
+.rukia [data-slot="alert-dialog-content"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rukia/sigil.webp"), url("/themes/rukia/corner.webp");
+  background-repeat: no-repeat;
+  background-size:
+    420px 420px,
+    120px auto;
+  background-position:
+    calc(100% + 150px) calc(100% + 150px),
+    -10px -10px;
+  opacity: 0.14;
+}
+
+.rukia [data-slot="alert-dialog-content"] {
+  overflow: hidden;
+}
+
+.rukia
+  :is(
+    [data-slot="dialog-overlay"],
+    [data-slot="alert-dialog-overlay"],
+    [data-slot="sheet-overlay"],
+    [data-slot="drawer-overlay"]
+  ) {
+  background-color: oklch(0.06 0.02 268 / 0.72);
+}
+
+.rukia :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
+  background-color: color-mix(in srgb, var(--background) 96%, black);
+  border-color: oklch(0.9 0.04 255 / 0.38);
+}
+
+/* ---------- Buttons and triggers ---------- */
+
+/* Shared hover: a slow band of cold light gliding over the surface, never a flash. */
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="context-menu-trigger"][role="button"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day]) {
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color 220ms var(--ease-emphasized),
+    color 220ms var(--ease-emphasized),
+    border-color 220ms var(--ease-emphasized),
+    box-shadow 260ms var(--ease-emphasized),
+    translate 120ms var(--ease-emphasized);
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day])::after {
+  content: "";
+  position: absolute;
+  inset: -768px 0 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
+    url("/themes/rukia/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 420ms var(--ease-emphasized);
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    :disabled,
+    [data-disabled]
+  ):is(
+    :hover,
+    [data-popup-open],
+    [data-variant="default"],
+    [data-active],
+    [aria-current="page"],
+    [aria-pressed="true"]
+  ) {
+  overflow: clip;
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="context-menu-trigger"][role="button"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day]) {
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color 220ms var(--ease-emphasized),
+    color 220ms var(--ease-emphasized),
+    border-color 220ms var(--ease-emphasized),
+    box-shadow 260ms var(--ease-emphasized),
+    translate 120ms var(--ease-emphasized);
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day])::after {
+  content: "";
+  position: absolute;
+  inset: -768px 0 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
+    url("/themes/rukia/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 420ms var(--ease-emphasized);
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    :disabled,
+    [data-disabled]
+  ):is(
+    :hover,
+    [data-popup-open],
+    [data-variant="default"],
+    [data-active],
+    [aria-current="page"],
+    [aria-pressed="true"]
+  )::after {
+  opacity: 1;
+  animation:
+    rukia-motes 48s steps(288) infinite,
+    rukia-twinkle 3.2s steps(16) infinite;
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    :disabled,
+    [data-disabled]
+  ):is(:hover, [data-popup-open])::after {
+  animation-duration: 30s, 2.2s;
+  animation-timing-function: steps(240), steps(11);
+}
+
+/* Segmented control thumb and the horizontal menu pill glimmer while idle too. */
+.rukia
+  :is(
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  ) {
+  position: absolute;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.rukia
+  :is(
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  )::after {
+  content: "";
+  position: absolute;
+  inset: -768px 0 0 0;
+  pointer-events: none;
+  background-image:
+    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
+    url("/themes/rukia/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  animation:
+    rukia-motes 48s steps(288) infinite,
+    rukia-twinkle 3.2s steps(16) infinite;
+}
+
+@keyframes rukia-motes {
+  33% {
+    transform: translate3d(6px, 253px, 0);
+  }
+  66% {
+    transform: translate3d(-4px, 507px, 0);
+  }
+  to {
+    transform: translate3d(0, 768px, 0);
+  }
+}
+
+@keyframes rukia-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Primary: matte white ice with a cold hairline, nothing glossy. */
+.rukia
+  :is(button, a)[data-variant="default"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ) {
+  background-color: oklch(0.88 0.03 252);
+  color: oklch(0.18 0.04 268);
+  box-shadow: inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7);
+}
+
+.rukia
+  :is(button, a)[data-variant="default"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):hover {
+  background-color: oklch(0.92 0.03 252);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.8 0.06 260 / 0.8),
+    0 0 20px -8px oklch(0.85 0.07 255 / 0.8);
+}
+
+.rukia
+  :is(button, a)[data-variant="default"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):active {
+  background-color: oklch(0.84 0.04 255);
+}
+
+.rukia
+  :is(button, a)[data-variant="outline"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ),
+.rukia [data-slot="select-trigger"],
+.rukia [data-slot="combobox-trigger"] {
+  border-color: oklch(0.9 0.04 255 / 0.28);
+  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+}
+
+.rukia
+  :is(button, a)[data-variant="outline"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):is(:hover, [data-popup-open]),
+.rukia [data-slot="select-trigger"]:is(:hover, [data-popup-open]),
+.rukia [data-slot="combobox-trigger"]:is(:hover, [data-popup-open]) {
+  border-color: oklch(0.92 0.04 255 / 0.75);
+  background-color: oklch(0.9 0.05 255 / 0.06);
+  color: var(--rukia-ice);
+  box-shadow: 0 0 18px -8px oklch(0.85 0.07 255 / 0.6);
+}
+
+.rukia
+  :is(button, a)[data-variant="ghost"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):is(:hover, [data-popup-open]) {
+  background-color: oklch(0.9 0.05 255 / 0.08);
+  color: var(--rukia-ice);
+}
+
+.rukia
+  :is(button, a)[data-variant="secondary"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ) {
+  background-color: oklch(0.25 0.045 268);
+  box-shadow: inset 0 0 0 1px oklch(0.9 0.04 255 / 0.16);
+}
+
+.rukia
+  :is(button, a)[data-variant="secondary"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):hover {
+  background-color: oklch(0.28 0.05 268);
+  box-shadow: inset 0 0 0 1px oklch(0.9 0.04 255 / 0.3);
+}
+
+.rukia
+  :is(button, a)[data-variant="destructive"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ) {
+  background-color: oklch(0.55 0.15 22);
+  color: oklch(0.98 0.01 20);
+  box-shadow: inset 0 0 0 1px oklch(0.68 0.16 22 / 0.6);
+}
+
+.rukia
+  :is(button, a)[data-variant="destructive"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):hover {
+  background-color: oklch(0.59 0.16 22);
+}
+
+.rukia :is(button, a)[data-variant="link"]:hover {
+  color: var(--rukia-ice);
+}
+
+/* Sidebar navigation: the active item is an ice bar with a white left edge, not a pill. */
+.rukia
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="default"] {
+  background-color: oklch(0.9 0.05 255 / 0.1);
+  background-image: linear-gradient(
+    90deg,
+    oklch(0.9 0.05 255 / 0.16),
+    transparent 70%
+  );
+  color: var(--rukia-ice);
+  box-shadow: inset 0 0 0 1px oklch(0.9 0.05 255 / 0.28);
+}
+
+.rukia
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="default"]:hover {
+  background-color: oklch(0.9 0.05 255 / 0.14);
+}
+
+.rukia
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="default"]
+  svg {
+  color: var(--rukia-ice);
+  filter: drop-shadow(0 0 6px oklch(0.85 0.07 255 / 0.8));
+}
+
+/* ---------- Segmented controls, tabs, horizontal menu ---------- */
+
+.rukia [data-slot="toggle-group"] {
+  border-color: oklch(0.9 0.04 255 / 0.28);
+  background-color: color-mix(in srgb, var(--background) 75%, transparent);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.05);
+}
+
+.rukia [data-slot="toggle-group-thumb"] {
+  background-color: oklch(0.88 0.03 252);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7),
+    0 0 16px -8px oklch(0.85 0.07 255 / 0.8);
+  transition: transform 260ms var(--ease-emphasized);
+}
+
+.rukia [data-slot="toggle-group-item"] {
+  transition:
+    color 160ms var(--ease-emphasized),
+    scale 150ms var(--ease-emphasized);
+}
+
+.rukia [data-slot="toggle-group-item"]:hover:not([data-pressed]) {
+  color: var(--rukia-ice);
+}
+
+.rukia [data-slot="toggle-group-item"][data-pressed] {
+  color: oklch(0.18 0.04 268);
+}
+
+.rukia [data-slot="horizontal-menu-viewport"] {
+  border-color: oklch(0.9 0.04 255 / 0.26);
+  background-color: color-mix(in srgb, var(--card) 40%, transparent);
+}
+
+.rukia [data-slot="horizontal-menu-highlight"] {
+  background-color: oklch(0.88 0.03 252);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7),
+    0 0 16px -8px oklch(0.85 0.07 255 / 0.8);
+  transition:
+    transform 280ms var(--ease-emphasized),
+    width 200ms var(--ease-emphasized),
+    height 200ms var(--ease-emphasized);
+}
+
+.rukia [data-slot="horizontal-menu"] a[aria-current="page"] {
+  color: oklch(0.18 0.04 268);
+}
+
+.rukia [data-slot="horizontal-menu"] a:hover:not([aria-current="page"]) {
+  color: var(--rukia-ice);
+  background-color: oklch(0.9 0.05 255 / 0.08);
+}
+
+.rukia [data-slot="tabs-list"] {
+  background-color: color-mix(in srgb, var(--background) 70%, transparent);
+  box-shadow: inset 0 0 0 1px oklch(0.9 0.04 255 / 0.22);
+}
+
+.rukia [data-slot="tabs-trigger"][data-active] {
+  background-color: oklch(0.9 0.05 255 / 0.14);
+  border-color: oklch(0.9 0.04 255 / 0.45);
+  color: var(--rukia-ice);
+}
+
+/* ---------- Form controls ---------- */
+
+.rukia
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="time"]),
+    textarea,
+    [data-slot="select-trigger"],
+    [data-slot="input-group"]
+  ):not([data-slot="input-group-control"], [cmdk-input]) {
+  border-color: oklch(0.9 0.04 255 / 0.26);
+  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+  transition:
+    border-color 160ms var(--ease-emphasized),
+    background-color 160ms var(--ease-emphasized),
+    box-shadow 200ms var(--ease-emphasized);
+}
+
+.rukia
+  :is(input, textarea, [data-slot="select-trigger"]):not(
+    [data-slot="input-group-control"],
+    [cmdk-input]
+  ):hover {
+  border-color: oklch(0.92 0.04 255 / 0.6);
+  background-color: oklch(0.9 0.05 255 / 0.04);
+}
+
+.rukia [data-slot="select-trigger"][data-popup-open] {
+  --tw-ring-color: oklch(0.9 0.05 255 / 0.65);
+  border-color: oklch(0.9 0.05 255 / 0.7);
+}
+
+.rukia [data-slot="switch"][data-checked] {
+  background-color: oklch(0.88 0.03 252);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7),
+    0 0 12px -3px oklch(0.85 0.07 255 / 0.7);
+}
+
+.rukia [data-slot="switch"][data-unchecked] {
+  background-color: oklch(0.34 0.05 268);
+}
+
+.rukia [data-slot="switch-thumb"][data-checked] {
+  background-color: oklch(0.2 0.04 268);
+}
+
+.rukia [data-slot="checkbox"] {
+  border-color: oklch(0.9 0.04 255 / 0.55);
+  border-radius: 2px;
+}
+
+.rukia [data-slot="checkbox"][data-checked] {
+  background-color: oklch(0.88 0.03 252);
+  border-color: oklch(0.9 0.04 255);
+  box-shadow: 0 0 10px -3px oklch(0.85 0.07 255 / 0.7);
+}
+
+.rukia [data-slot="radio-group-item"] {
+  border-color: oklch(0.9 0.04 255 / 0.45);
+}
+
+.rukia [data-slot="radio-group-item"][data-checked] {
+  border-color: var(--rukia-ice);
+  box-shadow: 0 0 10px -2px oklch(0.85 0.07 255 / 0.8);
+}
+
+.rukia [data-slot="badge"] {
+  letter-spacing: 0.03em;
+}
+
+/* ---------- Tables ---------- */
+
+.rukia [data-slot="table-header"] {
+  background-color: transparent;
+  background-image: var(--rukia-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+.rukia [data-slot="table-header"].sticky {
+  background-color: color-mix(in srgb, var(--background) 92%, transparent);
+}
+
+.rukia [data-slot="table-head"] {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: oklch(0.85 0.04 255);
+}
+
+.rukia [data-slot="table-row"]:hover {
+  background-color: oklch(0.9 0.05 255 / 0.06);
+}
+
+.rukia [data-slot="table-row"][data-state="selected"] {
+  background-color: oklch(0.9 0.05 255 / 0.12);
+}
+
+/* ---------- Skeleton, progress, empty ---------- */
+
+.rukia [data-slot="skeleton"] {
+  background-color: oklch(0.22 0.04 266);
+  animation:
+    rukia-pulse 2.2s ease-in-out infinite,
+    placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
+}
+
+.rukia [data-slot="progress-indicator"] {
+  background-color: oklch(0.88 0.03 252);
+  box-shadow: 0 0 10px -3px oklch(0.85 0.07 255 / 0.8);
+}
+
+.rukia [data-slot="empty"] {
+  position: relative;
+  isolation: isolate;
+  border-color: oklch(0.9 0.04 255 / 0.28);
+  background-color: oklch(0.9 0.05 255 / 0.03);
+}
+
+.rukia [data-slot="empty"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/themes/rukia/empty.webp");
+  background-repeat: no-repeat;
+  background-size: auto 76%;
+  background-position: right 6% bottom;
+  opacity: 0.3;
+}
+
+.rukia [data-slot="empty-icon"] {
+  background-color: oklch(0.9 0.05 255 / 0.1);
+  color: var(--rukia-ice);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.9 0.04 255 / 0.35),
+    0 0 22px -6px oklch(0.85 0.07 255 / 0.8);
+}
+
+/* ---------- Toasts ---------- */
+
+.rukia [data-sonner-toast][data-styled="true"] {
+  font-family: inherit;
+  border-color: oklch(0.9 0.04 255 / 0.38);
+  background: color-mix(in srgb, var(--popover) 94%, black);
+  box-shadow:
+    0 18px 40px -16px oklch(0 0 0 / 0.8),
+    0 0 30px -12px oklch(0.85 0.07 255 / 0.45);
+}
+
+/* ---------- Shell: sidebar and top bar ---------- */
+
+.rukia [data-slot="app-top-bar"] {
+  background-color: color-mix(in srgb, var(--background) 82%, transparent);
+  border-bottom-color: transparent;
+  background-image: var(--rukia-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+.rukia [data-slot="sidebar-container"] {
+  border-right-color: oklch(0.9 0.04 255 / 0.22);
+}
+
+.rukia [data-slot="sidebar"] [data-slot="sidebar-content"] {
+  background-image: linear-gradient(
+    180deg,
+    transparent 55%,
+    oklch(0.9 0.05 255 / 0.05)
+  );
+}
+
+/* Ambient: random snow motes drifting down behind the content, kept off the character.
+   Three tiles of one random sprite at different scales; transform-only, no JS. */
+.rukia .app-content-frame {
+  position: relative;
+  isolation: isolate;
+}
+
+.rukia .app-content-frame::before {
+  content: "";
+  position: absolute;
+  inset: -30% 0 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
+    url("/themes/rukia/sparks.webp");
+  background-size:
+    300px 300px,
+    470px 470px,
+    720px 720px;
+  background-position:
+    0 0,
+    130px 40px,
+    260px 200px;
+  opacity: 0;
+  will-change: transform;
+  mask-image: linear-gradient(90deg, black 0%, black 38%, transparent 60%);
+  animation:
+    rukia-snow 80s linear infinite,
+    rukia-fade-in 2s ease-out 1s forwards;
+}
+
+@keyframes rukia-snow {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(1.5%, 12%, 0);
+  }
+  to {
+    transform: translate3d(0, 23%, 0);
+  }
+}
+
+@keyframes rukia-fade-in {
+  to {
+    opacity: 0.22;
+  }
+}
+
+@keyframes rukia-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.rukia-spinner {
+  display: inline-block;
+  background-image: url("/themes/rukia/sigil.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px oklch(0.85 0.07 255 / 0.7));
+  animation: rukia-spin 8s linear infinite;
+}
+
+@keyframes rukia-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rukia .app-content-frame::before {
+    animation: none;
+    opacity: 0.12;
+  }
+}
+
+/* ---------- Sidebar art, rail avatars, guild name ---------- */
+
+.rukia [data-slot="sidebar-nav"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 62%;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("/themes/rukia/sidebar.webp");
+  background-repeat: no-repeat;
+  background-size: 220px auto;
+  background-position: right -26px bottom -6px;
+  opacity: 0.5;
+  mask-image: linear-gradient(180deg, transparent, black 45%);
+}
+
+.rukia [data-slot="sidebar-nav"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.rukia [data-slot="rail-avatar"] {
+  transition:
+    box-shadow 220ms var(--ease-emphasized),
+    translate 160ms var(--ease-emphasized);
+}
+
+.rukia [data-slot="rail-avatar"]::after {
+  --tw-ring-color: var(--rukia-ice);
+}
+
+.rukia [data-slot="rail-avatar"][data-active] {
+  box-shadow:
+    0 0 0 1px oklch(0.9 0.05 255 / 0.8),
+    0 0 18px -2px oklch(0.85 0.07 255 / 0.8);
+}
+
+.rukia a:hover > [data-slot="rail-avatar"]:not([data-active]) {
+  box-shadow: 0 0 14px -2px oklch(0.85 0.07 255 / 0.65);
+}
+
+.rukia [data-slot="guild-name"] {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: var(--rukia-ice);
+  text-shadow: 0 0 12px oklch(0.85 0.07 255 / 0.6);
+}
+
+/* ---------- Shell: one continuous wallpaper under the sidebar and the content ---------- */
+
+.rukia .app-content-frame,
+.rukia [data-slot="sidebar-container"] {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--background) 78%, transparent),
+      color-mix(in srgb, var(--background) 78%, transparent)
+    ),
+    var(--theme-background-image);
+  background-attachment: fixed, fixed;
+  background-size: auto, cover;
+  background-position:
+    center,
+    65% center;
+  background-repeat: no-repeat;
+}
+
+.rukia [data-slot="sidebar-container"] {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--sidebar) S78%, transparent),
+      color-mix(in srgb, var(--sidebar) S78%, transparent)
+    ),
+    var(--theme-background-image);
+}
+
+.rukia
+  [data-slot="sidebar-container"]
+  :is(
+    [data-slot="sidebar-content"],
+    [data-slot="sidebar-footer"],
+    .bg-sidebar
+  ) {
+  background-color: transparent;
+}
+
+.rukia [data-slot="sidebar-container"] [data-slot="sidebar-footer"] {
+  background-color: color-mix(in srgb, var(--sidebar) 55%, transparent);
+}
+
+/* Different particle phases per sibling so no two controls flicker in sync. */
+.rukia
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(2n)::after {
+  animation-delay: -5.3s, -1.1s;
+}
+
+.rukia
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(3n)::after {
+  animation-delay: -11.7s, -2.3s;
+}
+
+.rukia
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(5n + 1)::after {
+  animation-delay: -8.1s, -0.7s;
+}

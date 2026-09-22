@@ -1,0 +1,1162 @@
+/*
+ * Rias Gremory — "Crimson-Haired Ruin Princess".
+ *
+ * Design language: gothic heraldry. Cinzel inscriptional capitals, hairline crimson filigree,
+ * chess-crown and rose sigils, Power of Destruction as a smoky texture that only
+ * appears under the cursor. Every animation here is compositor-only
+ * (transform / opacity / background-position on a promoted pseudo-element);
+ * nothing runs on the main thread while the page is idle.
+ *
+ * All selectors are rooted at html.rias so portaled overlays are covered.
+ * Rules stay on paint properties so call-site utilities keep their box model.
+ */
+
+@import "@fontsource-variable/cinzel/index.css";
+
+.rias {
+  /* Palette: wallpaper-derived. Crimson hair, blue eyes, black blazer with silver piping. */
+  --background: oklch(0.13 0.028 355);
+  --foreground: oklch(0.955 0.012 10);
+  --card: oklch(0.165 0.034 352);
+  --card-foreground: oklch(0.955 0.012 10);
+  --popover: oklch(0.15 0.034 352);
+  --popover-foreground: oklch(0.955 0.012 10);
+  --primary: oklch(0.55 0.21 18);
+  --primary-foreground: oklch(0.96 0.03 10);
+  --secondary: oklch(0.22 0.05 350);
+  --secondary-foreground: oklch(0.955 0.012 10);
+  --muted: oklch(0.23 0.04 350);
+  --muted-foreground: oklch(0.78 0.03 355);
+  --accent: oklch(0.27 0.065 355);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.72 0.19 28);
+  --destructive-foreground: oklch(0.985 0.01 10);
+  --border: oklch(0.31 0.06 352);
+  --input: oklch(0.55 0.07 352);
+  --ring: oklch(0.72 0.19 15);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.62 0.13 250);
+  --chart-3: oklch(0.8 0.08 350);
+  --chart-4: oklch(0.6 0.17 335);
+  --chart-5: oklch(0.55 0.12 15);
+  --sidebar: oklch(0.11 0.026 355);
+  --filters-sidebar: var(--sidebar);
+  --sidebar-foreground: oklch(0.955 0.012 10);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.21 0.045 350);
+  --sidebar-accent-foreground: oklch(0.955 0.012 10);
+  --sidebar-border: oklch(0.29 0.055 352);
+  --sidebar-ring: var(--ring);
+
+  /* Theme-private tokens. */
+  --rias-crimson: oklch(0.62 0.23 18);
+  --rias-crimson-soft: oklch(0.62 0.23 18 / 0.35);
+  --rias-crimson-faint: oklch(0.62 0.23 18 / 0.14);
+  --rias-rose: oklch(0.9 0.06 10);
+  --rias-silver: oklch(0.86 0.012 300);
+  --rias-eye: oklch(0.7 0.13 250);
+  --rias-line: linear-gradient(
+    90deg,
+    transparent,
+    var(--rias-crimson) 20%,
+    var(--rias-rose) 50%,
+    var(--rias-crimson) 80%,
+    transparent
+  );
+  --font-display:
+    "Cinzel Variable", "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia,
+    serif;
+  --radius: 0.5rem;
+  --shadow-xs:
+    0 1px 0 oklch(0.62 0.23 18 / 0.12), 0 8px 24px -12px oklch(0 0 0 / 0.6);
+  --shadow-sm:
+    0 1px 0 oklch(0.62 0.23 18 / 0.12), 0 10px 28px -12px oklch(0 0 0 / 0.65);
+  --shadow-md:
+    0 1px 0 oklch(0.62 0.23 18 / 0.16), 0 18px 40px -16px oklch(0 0 0 / 0.7);
+  --shadow-lg:
+    0 1px 0 oklch(0.62 0.23 18 / 0.2), 0 24px 56px -20px oklch(0 0 0 / 0.75);
+  --shadow-xl:
+    0 0 0 1px oklch(0.62 0.23 18 / 0.25), 0 32px 72px -24px oklch(0 0 0 / 0.8);
+}
+
+/* ---------- Typography ---------- */
+
+.rias
+  :is(
+    h1,
+    h2,
+    h3,
+    [data-slot="card-title"],
+    [data-slot="dialog-title"],
+    [data-slot="alert-dialog-title"],
+    [data-slot="sheet-title"],
+    [data-slot="drawer-title"],
+    [data-slot="empty-title"]
+  ),
+.rias [data-slot="section-card-header"] h2,
+.rias [data-slot="sidebar"] [data-slot="sidebar-menu-button"],
+.rias [data-slot="sidebar"] nav a > [data-slot="button"],
+.rias [data-slot="app-top-bar"] :is(h1, h2, [data-slot="breadcrumb-page"]),
+.rias [data-slot="kpi-value"],
+.rias [data-slot="horizontal-menu"] a {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-feature-settings: "liga", "kern";
+}
+
+.rias [data-slot="section-card-header"] h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.rias
+  :is(
+    [data-slot="dialog-title"],
+    [data-slot="alert-dialog-title"],
+    [data-slot="sheet-title"],
+    [data-slot="drawer-title"]
+  ) {
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+}
+
+.rias [data-slot="kpi-value"] {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.rias [data-slot="horizontal-menu"] a,
+.rias [data-slot="sidebar"] nav a > [data-slot="button"] {
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Text selection, scrollbars, focus ---------- */
+
+.rias ::selection {
+  background: oklch(0.55 0.22 18 / 0.45);
+  color: var(--rias-rose);
+}
+
+.rias .custom-scrollbar {
+  scrollbar-color: oklch(0.45 0.16 18 / 0.45) transparent;
+}
+
+.rias .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: oklch(0.45 0.16 18 / 0.4);
+}
+
+.rias .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.58 0.2 18 / 0.6);
+}
+
+.rias [data-slot="scroll-area-thumb"] {
+  background-color: oklch(0.45 0.16 18 / 0.4);
+}
+
+.rias [data-slot="scroll-area-scrollbar"]:hover [data-slot="scroll-area-thumb"],
+.rias [data-slot="scroll-area-thumb"]:hover {
+  background-color: oklch(0.6 0.2 18 / 0.6);
+}
+
+/* Keep Tailwind's ring channel; only recolour the ring and add a soft halo. */
+.rias
+  :is(
+    input,
+    textarea,
+    select,
+    [role="combobox"],
+    [data-slot="select-trigger"]
+  ):focus-visible:not([data-slot="input-group-control"], [cmdk-input]) {
+  --tw-ring-color: oklch(0.7 0.2 15 / 0.7);
+  border-color: oklch(0.62 0.2 18 / 0.7);
+  box-shadow:
+    var(--tw-inset-shadow),
+    var(--tw-inset-ring-shadow),
+    var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow),
+    0 0 18px -4px oklch(0.62 0.23 18 / 0.55);
+}
+
+.rias [data-slot="input-group"]:focus-within {
+  border-color: oklch(0.62 0.2 18 / 0.7);
+  box-shadow: 0 0 18px -4px oklch(0.62 0.23 18 / 0.5);
+}
+
+/* ---------- Surfaces: cards, popups, dialogs ---------- */
+
+/* Corner filigree on cards. One asset, one pseudo-element, no React overlay. */
+.rias .app-content-frame [data-slot="card"] {
+  --card-alpha: 34%;
+  background-color: color-mix(
+    in srgb,
+    var(--card) var(--card-alpha),
+    transparent
+  );
+  border-color: oklch(0.62 0.23 18 / 0.22);
+  isolation: isolate;
+}
+
+.rias [data-slot="card"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Cards that keep overflow visible (loot cards) must still clip the ornament to their corners. */
+  border-radius: inherit;
+  clip-path: inset(0 round inherit);
+  overflow: hidden;
+  background-image: url("/themes/rias/corner.webp");
+  background-repeat: no-repeat;
+  background-size: 92px auto;
+  background-position: -6px -6px;
+  opacity: 0.55;
+}
+
+/* Section headers: hairline underline drawn in crimson-to-rose. */
+.rias [data-slot="section-card-header"] {
+  border-bottom-color: transparent;
+  background-image: var(--rias-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+.rias [data-slot="section-card-header"] h2 svg {
+  color: var(--rias-crimson);
+  filter: drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.5));
+}
+
+/* Popups share the same skin: near-black glass, crimson edge light, rose top line. */
+.rias
+  :is(
+    [data-slot="popover-content"],
+    [data-slot="select-content"],
+    [data-slot="combobox-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    [data-slot="context-menu-content"],
+    [data-slot="context-menu-sub-content"]
+  ) {
+  background-color: color-mix(in srgb, var(--popover) 92%, black);
+  border-color: oklch(0.62 0.23 18 / 0.35);
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.5),
+    0 22px 48px -16px oklch(0 0 0 / 0.8),
+    0 0 32px -12px oklch(0.62 0.23 18 / 0.45);
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.62 0.23 18 / 0.12),
+    transparent 28px
+  );
+}
+
+.rias [data-slot="combobox-content"] {
+  --tw-ring-color: oklch(0.62 0.23 18 / 0.35);
+}
+
+.rias [data-slot="tooltip-content"]:not([class*="border-2"]) {
+  background-color: color-mix(in srgb, var(--popover) 94%, black);
+  border-color: oklch(0.62 0.23 18 / 0.4);
+  box-shadow:
+    0 8px 24px -8px oklch(0 0 0 / 0.7),
+    0 0 16px -6px oklch(0.62 0.23 18 / 0.4);
+}
+
+/* Highlighted rows in menus / listboxes: a crimson leaf on the left, not a flat fill. */
+.rias
+  :is(
+    [data-slot="select-item"],
+    [data-slot="combobox-item"],
+    [data-slot="dropdown-menu-item"],
+    [data-slot="dropdown-menu-checkbox-item"],
+    [data-slot="dropdown-menu-radio-item"],
+    [data-slot="dropdown-menu-sub-trigger"],
+    [data-slot="context-menu-item"],
+    [data-slot="command-item"]
+  ) {
+  transition:
+    background-color 120ms var(--ease-emphasized),
+    color 120ms var(--ease-emphasized);
+}
+
+.rias
+  :is(
+    [data-slot="select-item"][data-highlighted],
+    [data-slot="select-item"]:focus,
+    [data-slot="combobox-item"][data-highlighted],
+    [data-slot="dropdown-menu-item"][data-highlighted],
+    [data-slot="dropdown-menu-item"]:focus,
+    [data-slot="dropdown-menu-checkbox-item"][data-highlighted],
+    [data-slot="dropdown-menu-radio-item"][data-highlighted],
+    [data-slot="dropdown-menu-sub-trigger"][data-highlighted],
+    [data-slot="dropdown-menu-sub-trigger"]:focus,
+    [data-slot="context-menu-item"][data-highlighted],
+    [data-slot="context-menu-item"]:focus,
+    [data-slot="command-item"][data-selected="true"]
+  ) {
+  background-color: oklch(0.62 0.23 18 / 0.16);
+  color: var(--foreground);
+}
+
+.rias [data-slot="select-item"][data-selected] {
+  color: var(--rias-rose);
+}
+
+/* Dialogs: the sigil watermark behind the content and a filigree corner. */
+.rias :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
+  background-color: color-mix(in srgb, var(--background) 96%, black);
+  border-color: oklch(0.62 0.23 18 / 0.4);
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.6),
+    0 40px 90px -30px oklch(0 0 0 / 0.9),
+    0 0 60px -20px oklch(0.62 0.23 18 / 0.5);
+  isolation: isolate;
+}
+
+.rias [data-slot="dialog-content"]::before,
+.rias [data-slot="alert-dialog-content"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/sigil.webp"), url("/themes/rias/corner.webp");
+  background-repeat: no-repeat;
+  background-size:
+    420px 420px,
+    110px auto;
+  background-position:
+    calc(100% + 140px) calc(100% + 140px),
+    -8px -8px;
+  opacity: 0.16;
+}
+
+.rias [data-slot="alert-dialog-content"] {
+  overflow: hidden;
+}
+
+.rias
+  :is(
+    [data-slot="dialog-overlay"],
+    [data-slot="alert-dialog-overlay"],
+    [data-slot="sheet-overlay"],
+    [data-slot="drawer-overlay"]
+  ) {
+  background-color: oklch(0.06 0.02 355 / 0.72);
+}
+
+.rias :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
+  background-color: color-mix(in srgb, var(--background) 96%, black);
+  border-color: oklch(0.62 0.23 18 / 0.4);
+}
+
+/* ---------- Buttons and triggers ---------- */
+
+/* Shared hover: a slow band of light gliding over the surface ("mieni się"), never a flash.
+   The band is a background layer on a static pseudo-element, so nothing is clipped and
+   badges positioned outside the button stay visible. */
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="context-menu-trigger"][role="button"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day]) {
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color 220ms var(--ease-emphasized),
+    color 220ms var(--ease-emphasized),
+    border-color 220ms var(--ease-emphasized),
+    box-shadow 260ms var(--ease-emphasized),
+    translate 120ms var(--ease-emphasized);
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day])::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 -768px 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
+    url("/themes/rias/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 420ms var(--ease-emphasized);
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    :disabled,
+    [data-disabled]
+  ):is(
+    :hover,
+    [data-popup-open],
+    [data-variant="default"],
+    [data-active],
+    [aria-current="page"],
+    [aria-pressed="true"]
+  ) {
+  overflow: clip;
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="context-menu-trigger"][role="button"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day]) {
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color 220ms var(--ease-emphasized),
+    color 220ms var(--ease-emphasized),
+    border-color 220ms var(--ease-emphasized),
+    box-shadow 260ms var(--ease-emphasized),
+    translate 120ms var(--ease-emphasized);
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not([data-slot="toggle-group-item"], [data-day])::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 -768px 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
+    url("/themes/rias/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 420ms var(--ease-emphasized);
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    :disabled,
+    [data-disabled]
+  ):is(
+    :hover,
+    [data-popup-open],
+    [data-variant="default"],
+    [data-active],
+    [aria-current="page"],
+    [aria-pressed="true"]
+  )::after {
+  opacity: 1;
+  animation:
+    rias-embers 48s steps(288) infinite,
+    rias-twinkle 3.2s steps(16) infinite;
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a,
+    [data-slot="theme-card"]
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    :disabled,
+    [data-disabled]
+  ):is(:hover, [data-popup-open])::after {
+  animation-duration: 30s, 2.2s;
+  animation-timing-function: steps(240), steps(11);
+}
+
+/* Segmented control thumb and the horizontal menu pill glimmer while idle too. */
+.rias
+  :is(
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  ) {
+  position: absolute;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.rias
+  :is(
+    [data-slot="toggle-group-thumb"],
+    [data-slot="horizontal-menu-highlight"]
+  )::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 -768px 0;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
+    url("/themes/rias/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  animation:
+    rias-embers 48s steps(288) infinite,
+    rias-twinkle 3.2s steps(16) infinite;
+}
+
+@keyframes rias-embers {
+  33% {
+    transform: translate3d(6px, -253px, 0);
+  }
+  66% {
+    transform: translate3d(-4px, -507px, 0);
+  }
+  to {
+    transform: translate3d(0, -768px, 0);
+  }
+}
+
+@keyframes rias-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Primary: flat deep crimson, a hairline edge, nothing glossy. */
+.rias
+  :is(button, a)[data-variant="default"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ) {
+  background-color: oklch(0.47 0.19 18);
+  color: var(--rias-rose);
+  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55);
+}
+
+.rias
+  :is(button, a)[data-variant="default"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):hover {
+  background-color: oklch(0.5 0.2 18);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.68 0.22 18 / 0.7),
+    0 0 20px -8px oklch(0.62 0.23 18 / 0.7);
+}
+
+.rias
+  :is(button, a)[data-variant="default"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):active {
+  background-color: oklch(0.44 0.19 18);
+}
+
+/* Outline / ghost / secondary: quiet surfaces, crimson edge on hover, same glimmer. */
+.rias
+  :is(button, a)[data-variant="outline"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ),
+.rias [data-slot="select-trigger"],
+.rias [data-slot="combobox-trigger"] {
+  border-color: oklch(0.62 0.23 18 / 0.3);
+  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+}
+
+.rias
+  :is(button, a)[data-variant="outline"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):is(:hover, [data-popup-open]),
+.rias [data-slot="select-trigger"]:is(:hover, [data-popup-open]),
+.rias [data-slot="combobox-trigger"]:is(:hover, [data-popup-open]) {
+  border-color: oklch(0.66 0.22 18 / 0.75);
+  background-color: oklch(0.62 0.23 18 / 0.07);
+  color: var(--rias-rose);
+  box-shadow: 0 0 18px -8px oklch(0.62 0.23 18 / 0.55);
+}
+
+.rias
+  :is(button, a)[data-variant="ghost"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):is(:hover, [data-popup-open]) {
+  background-color: oklch(0.62 0.23 18 / 0.09);
+  color: var(--rias-rose);
+}
+
+.rias
+  :is(button, a)[data-variant="secondary"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ) {
+  background-color: oklch(0.24 0.05 352);
+  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.18);
+}
+
+.rias
+  :is(button, a)[data-variant="secondary"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):hover {
+  background-color: oklch(0.27 0.06 352);
+  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.35);
+}
+
+.rias
+  :is(button, a)[data-variant="destructive"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ) {
+  background-color: oklch(0.5 0.17 28);
+  color: oklch(0.985 0.01 10);
+  box-shadow: inset 0 0 0 1px oklch(0.65 0.18 28 / 0.6);
+}
+
+.rias
+  :is(button, a)[data-variant="destructive"]:not(
+    [data-slot="toggle-group-item"],
+    [data-day]
+  ):hover {
+  background-color: oklch(0.54 0.18 28);
+}
+
+.rias :is(button, a)[data-variant="link"]:hover {
+  color: var(--rias-rose);
+}
+
+/* Sidebar navigation: the active item is a crimson seal bar with a rose edge, not a pill. */
+.rias
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="default"] {
+  background-color: oklch(0.62 0.23 18 / 0.14);
+  background-image: linear-gradient(
+    90deg,
+    oklch(0.62 0.23 18 / 0.22),
+    transparent 70%
+  );
+  color: var(--rias-rose);
+  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
+}
+
+.rias
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="default"]:hover {
+  background-color: oklch(0.62 0.23 18 / 0.18);
+}
+
+.rias
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="default"]
+  svg {
+  color: var(--rias-rose);
+  filter: drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.7));
+}
+
+/* ---------- Segmented controls, tabs, horizontal menu ---------- */
+
+.rias [data-slot="toggle-group"] {
+  border-color: oklch(0.62 0.23 18 / 0.3);
+  background-color: color-mix(in srgb, var(--background) 75%, transparent);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.04);
+}
+
+.rias [data-slot="toggle-group-thumb"] {
+  background-color: oklch(0.47 0.19 18);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55),
+    0 0 16px -8px oklch(0.62 0.23 18 / 0.7);
+  transition: transform 260ms var(--ease-emphasized);
+}
+
+.rias [data-slot="toggle-group-item"] {
+  transition:
+    color 160ms var(--ease-emphasized),
+    scale 150ms var(--ease-emphasized);
+}
+
+.rias [data-slot="toggle-group-item"]:hover:not([data-pressed]) {
+  color: var(--rias-rose);
+}
+
+.rias [data-slot="toggle-group-item"][data-pressed] {
+  color: var(--rias-rose);
+}
+
+.rias [data-slot="horizontal-menu-viewport"] {
+  border-color: oklch(0.62 0.23 18 / 0.28);
+  background-color: color-mix(in srgb, var(--card) 40%, transparent);
+}
+
+.rias [data-slot="horizontal-menu-highlight"] {
+  background-color: oklch(0.47 0.19 18);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55),
+    0 0 16px -8px oklch(0.62 0.23 18 / 0.7);
+  transition:
+    transform 280ms var(--ease-emphasized),
+    width 200ms var(--ease-emphasized),
+    height 200ms var(--ease-emphasized);
+}
+
+.rias [data-slot="horizontal-menu"] a[aria-current="page"] {
+  color: var(--rias-rose);
+}
+
+.rias [data-slot="horizontal-menu"] a:hover:not([aria-current="page"]) {
+  color: var(--rias-rose);
+  background-color: oklch(0.62 0.23 18 / 0.1);
+}
+
+.rias [data-slot="tabs-list"] {
+  background-color: color-mix(in srgb, var(--background) 70%, transparent);
+  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.25);
+}
+
+.rias [data-slot="tabs-trigger"][data-active] {
+  background-color: oklch(0.62 0.23 18 / 0.18);
+  border-color: oklch(0.62 0.23 18 / 0.5);
+  color: var(--rias-rose);
+}
+
+/* ---------- Form controls ---------- */
+
+.rias
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="time"]),
+    textarea,
+    [data-slot="select-trigger"],
+    [data-slot="input-group"]
+  ):not([data-slot="input-group-control"], [cmdk-input]) {
+  border-color: oklch(0.62 0.23 18 / 0.28);
+  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+  transition:
+    border-color 160ms var(--ease-emphasized),
+    background-color 160ms var(--ease-emphasized),
+    box-shadow 200ms var(--ease-emphasized);
+}
+
+.rias
+  :is(input, textarea, [data-slot="select-trigger"]):not(
+    [data-slot="input-group-control"],
+    [cmdk-input]
+  ):hover {
+  border-color: oklch(0.66 0.22 18 / 0.6);
+  background-color: oklch(0.62 0.23 18 / 0.05);
+}
+
+.rias [data-slot="select-trigger"][data-popup-open] {
+  --tw-ring-color: oklch(0.7 0.2 15 / 0.7);
+  border-color: oklch(0.62 0.2 18 / 0.7);
+}
+
+.rias [data-slot="switch"][data-checked] {
+  background-color: oklch(0.5 0.2 18);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.6),
+    0 0 12px -3px oklch(0.62 0.23 18 / 0.6);
+}
+
+.rias [data-slot="switch"][data-unchecked] {
+  background-color: oklch(0.32 0.05 352);
+}
+
+.rias [data-slot="switch-thumb"][data-checked] {
+  background-color: var(--rias-rose);
+}
+
+.rias [data-slot="checkbox"] {
+  border-color: oklch(0.62 0.23 18 / 0.6);
+  border-radius: 3px;
+}
+
+.rias [data-slot="checkbox"][data-checked] {
+  background-color: oklch(0.5 0.2 18);
+  border-color: oklch(0.62 0.23 18);
+  box-shadow: 0 0 10px -3px oklch(0.62 0.23 18 / 0.6);
+}
+
+.rias [data-slot="radio-group-item"] {
+  border-color: oklch(0.62 0.23 18 / 0.5);
+}
+
+.rias [data-slot="radio-group-item"][data-checked] {
+  border-color: var(--rias-crimson);
+  box-shadow: 0 0 10px -2px oklch(0.62 0.23 18 / 0.7);
+}
+
+.rias [data-slot="badge"] {
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Tables ---------- */
+
+.rias [data-slot="table-header"] {
+  background-color: transparent;
+  background-image: var(--rias-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+.rias [data-slot="table-header"].sticky {
+  background-color: color-mix(in srgb, var(--background) 92%, transparent);
+}
+
+.rias [data-slot="table-head"] {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: oklch(0.8 0.06 10);
+}
+
+.rias [data-slot="table-row"]:hover {
+  background-color: oklch(0.62 0.23 18 / 0.07);
+}
+
+.rias [data-slot="table-row"][data-state="selected"] {
+  background-color: oklch(0.62 0.23 18 / 0.14);
+}
+
+/* ---------- Skeleton, progress, empty ---------- */
+
+.rias [data-slot="skeleton"] {
+  background-color: oklch(0.2 0.04 352);
+  animation:
+    rias-pulse 2.2s ease-in-out infinite,
+    placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
+}
+
+.rias [data-slot="progress-indicator"] {
+  background-color: oklch(0.55 0.21 18);
+  box-shadow: 0 0 10px -3px oklch(0.62 0.23 18 / 0.7);
+}
+
+.rias [data-slot="empty"] {
+  position: relative;
+  isolation: isolate;
+  border-color: oklch(0.62 0.23 18 / 0.3);
+  background-color: oklch(0.62 0.23 18 / 0.04);
+}
+
+.rias [data-slot="empty"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/themes/rias/empty.webp");
+  background-repeat: no-repeat;
+  background-size: auto 72%;
+  background-position: right 4% bottom;
+  opacity: 0.32;
+}
+
+.rias [data-slot="empty-icon"] {
+  background-color: oklch(0.62 0.23 18 / 0.14);
+  color: var(--rias-rose);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.35),
+    0 0 22px -6px oklch(0.62 0.23 18 / 0.7);
+}
+
+/* ---------- Toasts ---------- */
+
+.rias [data-sonner-toast][data-styled="true"] {
+  font-family: inherit;
+  border-color: oklch(0.62 0.23 18 / 0.4);
+  background: color-mix(in srgb, var(--popover) 94%, black);
+  box-shadow:
+    0 18px 40px -16px oklch(0 0 0 / 0.8),
+    0 0 30px -12px oklch(0.62 0.23 18 / 0.5);
+}
+
+/* ---------- Shell: sidebar and top bar ---------- */
+
+.rias [data-slot="app-top-bar"] {
+  background-color: color-mix(in srgb, var(--background) 82%, transparent);
+  border-bottom-color: transparent;
+  background-image: var(--rias-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+.rias [data-slot="sidebar-container"] {
+  border-right-color: oklch(0.62 0.23 18 / 0.25);
+}
+
+.rias [data-slot="sidebar"] [data-slot="sidebar-content"] {
+  background-image: linear-gradient(
+    180deg,
+    transparent 55%,
+    oklch(0.62 0.23 18 / 0.06)
+  );
+}
+
+/* Ambient: the wallpaper stays untouched. Only a faint crimson breath in the far corner,
+   away from the character, so the frame feels alive without covering her. */
+.rias .app-content-frame {
+  position: relative;
+  isolation: isolate;
+}
+
+.rias .app-content-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    ellipse 40% 35% at 0% 100%,
+    oklch(0.62 0.23 18 / 0.16),
+    transparent 70%
+  );
+  opacity: 0.6;
+  animation: rias-breathe 9s steps(54) infinite;
+}
+
+@keyframes rias-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes rias-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Spinner emblem (replaces the SVG spinner). */
+.rias-spinner {
+  display: inline-block;
+  background-image: url("/themes/rias/sigil.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px oklch(0.62 0.23 18 / 0.6));
+  animation: rias-spin 6s linear infinite;
+}
+
+@keyframes rias-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rias .app-content-frame::before {
+    animation: none;
+  }
+}
+
+/* ---------- Sidebar art, rail avatars, guild name ---------- */
+
+.rias [data-slot="sidebar-nav"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 62%;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("/themes/rias/sidebar.webp");
+  background-repeat: no-repeat;
+  background-size: 210px auto;
+  background-position: right -30px bottom -10px;
+  opacity: 0.55;
+  mask-image: linear-gradient(180deg, transparent, black 45%);
+}
+
+.rias [data-slot="sidebar-nav"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.rias [data-slot="rail-avatar"] {
+  transition:
+    box-shadow 220ms var(--ease-emphasized),
+    translate 160ms var(--ease-emphasized);
+}
+
+.rias [data-slot="rail-avatar"]::after {
+  --tw-ring-color: var(--rias-crimson);
+}
+
+.rias [data-slot="rail-avatar"][data-active] {
+  box-shadow:
+    0 0 0 1px oklch(0.62 0.23 18 / 0.8),
+    0 0 18px -2px oklch(0.62 0.23 18 / 0.75);
+}
+
+.rias a:hover > [data-slot="rail-avatar"]:not([data-active]) {
+  box-shadow: 0 0 14px -2px oklch(0.62 0.23 18 / 0.6);
+}
+
+.rias [data-slot="guild-name"] {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--rias-rose);
+  text-shadow: 0 0 12px oklch(0.62 0.23 18 / 0.55);
+}
+
+/* ---------- Shell: one continuous wallpaper under the sidebar and the content ---------- */
+
+.rias .app-content-frame,
+.rias [data-slot="sidebar-container"] {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--background) 78%, transparent),
+      color-mix(in srgb, var(--background) 78%, transparent)
+    ),
+    var(--theme-background-image);
+  background-attachment: fixed, fixed;
+  background-size: auto, cover;
+  background-position:
+    center,
+    65% center;
+  background-repeat: no-repeat;
+}
+
+.rias [data-slot="sidebar-container"] {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--sidebar) S78%, transparent),
+      color-mix(in srgb, var(--sidebar) S78%, transparent)
+    ),
+    var(--theme-background-image);
+}
+
+.rias
+  [data-slot="sidebar-container"]
+  :is(
+    [data-slot="sidebar-content"],
+    [data-slot="sidebar-footer"],
+    .bg-sidebar
+  ) {
+  background-color: transparent;
+}
+
+.rias [data-slot="sidebar-container"] [data-slot="sidebar-footer"] {
+  background-color: color-mix(in srgb, var(--sidebar) 55%, transparent);
+}
+
+/* Different particle phases per sibling so no two controls flicker in sync. */
+.rias
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(2n)::after {
+  animation-delay: -5.3s, -1.1s;
+}
+
+.rias
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(3n)::after {
+  animation-delay: -11.7s, -2.3s;
+}
+
+.rias
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(5n + 1)::after {
+  animation-delay: -8.1s, -0.7s;
+}

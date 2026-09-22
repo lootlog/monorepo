@@ -13,7 +13,6 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import { useTranslation } from "react-i18next";
 import {
   ContextMenu,
@@ -40,7 +39,6 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   isHidden = false,
   onToggleHidden,
 }) => {
-  const { isRukiaTheme } = useThemeMeta();
   const { t } = useTranslation();
 
   const isActive =
@@ -61,9 +59,11 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
 
   const avatarElement = (
     <Avatar
+      data-slot="rail-avatar"
+      data-active={isActive || undefined}
       className={cn(
         "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
-        isActive && !isRukiaTheme && "after:opacity-100",
+        isActive && "after:opacity-100",
       )}
     >
       <AvatarImage
@@ -102,9 +102,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
                       onClick={handleClick}
                       style={{ pointerEvents: isDragging ? "none" : "auto" }}
                     >
-                      <ThemeCircularFrame isActive={isActive}>
-                        {avatarElement}
-                      </ThemeCircularFrame>
+                      {avatarElement}
                       {isHidden ? (
                         <EyeOff
                           aria-hidden
