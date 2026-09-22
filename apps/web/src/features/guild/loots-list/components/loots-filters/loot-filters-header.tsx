@@ -117,19 +117,15 @@ export const LootFiltersHeader = ({
             </Button>
           </div>
 
-          {!usesStackedControls && (
-            <div aria-hidden className="relative h-9 w-3 shrink-0">
-              <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
-            </div>
-          )}
-
           {!isMobile && (
             // The controls wrap as one group, so a narrow toolbar never strands
-            // a single button on its own line.
+            // a single button on its own line. With the filters panel open the
+            // group is as wide as the panel, so the search field ends on the
+            // loot cards' right edge with the same 12px gap the panel keeps.
             <div
               className={cn(
                 "flex shrink-0 items-center gap-2",
-                isCompactLayout ? "ml-auto" : "w-[19.5rem]",
+                isCompactLayout ? "ml-auto" : "ml-1 w-[319px]",
               )}
             >
               <div
