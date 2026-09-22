@@ -1,12 +1,15 @@
 /*
  * Rias Gremory — "Crimson-Haired Ruin Princess".
  *
- * Design language: gothic heraldry. Cinzel inscriptional capitals, hairline crimson filigree,
- * chess-crown and rose sigils, Power of Destruction as a smoky texture that only
- * appears under the cursor. Every animation here is compositor-only
- * (transform / opacity / background-position on a promoted pseudo-element);
- * nothing runs on the main thread while the page is idle.
+ * Design language: gothic heraldry, warm and ornate. Cinzel inscriptional
+ * capitals set as small caps, velvet surfaces with filigree in the corner,
+ * hairlines of crimson light that brighten to rose at their centre, chess
+ * royalty and roses. The Gremory seal turns slowly behind the content; embers
+ * of the Power of Destruction rise from any control that is active or under
+ * the cursor. Everything glows; nothing is flat.
  *
+ * Every animation is compositor-only (transform / opacity on a promoted
+ * pseudo-element); nothing runs on the main thread while the page is idle.
  * All selectors are rooted at html.rias so portaled overlays are covered.
  * Rules stay on paint properties so call-site utilities keep their box model.
  */
@@ -56,6 +59,7 @@
   --rias-rose: oklch(0.9 0.06 10);
   --rias-silver: oklch(0.86 0.012 300);
   --rias-eye: oklch(0.7 0.13 250);
+  /* The hairline of light: crimson at the ends, rose at the centre. */
   --rias-line: linear-gradient(
     90deg,
     transparent,
@@ -64,10 +68,19 @@
     var(--rias-crimson) 80%,
     transparent
   );
+  /* Its soft halo, painted one pixel wider on either side. */
+  --rias-line-halo: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.62 0.23 18 / 0.35) 30%,
+    oklch(0.9 0.06 10 / 0.45) 50%,
+    oklch(0.62 0.23 18 / 0.35) 70%,
+    transparent
+  );
   --font-display:
     "Cinzel Variable", "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia,
     serif;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --shadow-xs:
     0 1px 0 oklch(0.62 0.23 18 / 0.12), 0 8px 24px -12px oklch(0 0 0 / 0.6);
   --shadow-sm:
@@ -80,7 +93,7 @@
     0 0 0 1px oklch(0.62 0.23 18 / 0.25), 0 32px 72px -24px oklch(0 0 0 / 0.8);
 }
 
-/* ---------- Typography ---------- */
+/* ---------- Typography: inscriptional capitals ---------- */
 
 .rias
   :is(
@@ -106,9 +119,14 @@
   font-feature-settings: "liga", "kern";
 }
 
-.rias [data-slot="section-card-header"] h2 {
-  font-size: 1rem;
-  font-weight: 700;
+/* Section and page titles are set as small capitals over the hairline. */
+.rias [data-slot="section-card-header"] h2,
+.rias [data-slot="app-top-bar"] :is(h1, h2, [data-slot="breadcrumb-page"]) {
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rias-rose);
+  text-shadow: 0 0 14px oklch(0.62 0.23 18 / 0.35);
 }
 
 .rias
@@ -118,8 +136,10 @@
     [data-slot="sheet-title"],
     [data-slot="drawer-title"]
   ) {
-  font-size: 1.25rem;
-  letter-spacing: 0.05em;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rias-rose);
 }
 
 .rias [data-slot="kpi-value"] {
@@ -186,20 +206,18 @@
   box-shadow: 0 0 18px -4px oklch(0.62 0.23 18 / 0.5);
 }
 
-/* ---------- Surfaces: cards, popups, dialogs ---------- */
+/* ---------- Surfaces: velvet cards with filigree, glass popups ---------- */
 
-/* Corner filigree on cards. One asset, one pseudo-element, no React overlay. */
 .rias .app-content-frame [data-slot="card"] {
-  --card-alpha: 34%;
-  background-color: color-mix(
-    in srgb,
-    var(--card) var(--card-alpha),
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--card) 44%, transparent);
   border-color: oklch(0.62 0.23 18 / 0.22);
+  box-shadow:
+    inset 0 1px 0 oklch(0.9 0.06 10 / 0.07),
+    var(--shadow-sm);
   isolation: isolate;
 }
 
+/* Corner filigree: one asset, one pseudo-element. */
 .rias [data-slot="card"]::before {
   content: "";
   position: absolute;
@@ -217,13 +235,17 @@
   opacity: 0.55;
 }
 
-/* Section headers: hairline underline drawn in crimson-to-rose. */
+/* Section headers: the hairline and its halo, drawn crimson-to-rose. */
 .rias [data-slot="section-card-header"] {
   border-bottom-color: transparent;
-  background-image: var(--rias-line);
+  background-image: var(--rias-line), var(--rias-line-halo);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
-  background-position: bottom left;
+  background-size:
+    100% 1px,
+    100% 3px;
+  background-position:
+    bottom left,
+    bottom left;
 }
 
 .rias [data-slot="section-card-header"] h2 svg {
@@ -231,7 +253,7 @@
   filter: drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.5));
 }
 
-/* Popups share the same skin: near-black glass, crimson edge light, rose top line. */
+/* Popups: near-black glass, crimson edge light, rose top line. */
 .rias
   :is(
     [data-slot="popover-content"],
@@ -248,11 +270,16 @@
     0 0 0 1px oklch(0 0 0 / 0.5),
     0 22px 48px -16px oklch(0 0 0 / 0.8),
     0 0 32px -12px oklch(0.62 0.23 18 / 0.45);
-  background-image: linear-gradient(
-    180deg,
-    oklch(0.62 0.23 18 / 0.12),
-    transparent 28px
-  );
+  background-image:
+    var(--rias-line),
+    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.12), transparent 28px);
+  background-repeat: no-repeat;
+  background-size:
+    100% 1px,
+    100% 100%;
+  background-position:
+    top left,
+    top left;
 }
 
 .rias [data-slot="combobox-content"] {
@@ -267,7 +294,6 @@
     0 0 16px -6px oklch(0.62 0.23 18 / 0.4);
 }
 
-/* Highlighted rows in menus / listboxes: a crimson leaf on the left, not a flat fill. */
 .rias
   :is(
     [data-slot="select-item"],
@@ -284,6 +310,7 @@
     color 120ms var(--ease-emphasized);
 }
 
+/* Highlighted rows glow crimson from the left, like a lit seal. */
 .rias
   :is(
     [data-slot="select-item"][data-highlighted],
@@ -300,14 +327,19 @@
     [data-slot="command-item"][data-selected="true"]
   ) {
   background-color: oklch(0.62 0.23 18 / 0.16);
-  color: var(--foreground);
+  background-image: linear-gradient(
+    90deg,
+    oklch(0.62 0.23 18 / 0.18),
+    transparent 60%
+  );
+  color: var(--rias-rose);
 }
 
 .rias [data-slot="select-item"][data-selected] {
   color: var(--rias-rose);
 }
 
-/* Dialogs: the sigil watermark behind the content and a filigree corner. */
+/* Dialogs: the seal watermark behind the content and a filigree corner. */
 .rias :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
   background-color: color-mix(in srgb, var(--background) 96%, black);
   border-color: oklch(0.62 0.23 18 / 0.4);
@@ -356,11 +388,8 @@
   border-color: oklch(0.62 0.23 18 / 0.4);
 }
 
-/* ---------- Buttons and triggers ---------- */
+/* ---------- Buttons and triggers: embers rising from active controls ---------- */
 
-/* Shared hover: a slow band of light gliding over the surface ("mieni się"), never a flash.
-   The band is a background layer on a static pseudo-element, so nothing is clipped and
-   badges positioned outside the button stay visible. */
 .rias
   :is(
     :is(button, a)[data-variant],
@@ -382,6 +411,9 @@
     translate 120ms var(--ease-emphasized);
 }
 
+/* The ember layer: three tiles of one random sprite, scrolled upward on the compositor.
+   It is a background layer on a static pseudo-element, so nothing is clipped while idle
+   and badges positioned outside the button stay visible. */
 .rias
   :is(
     :is(button, a)[data-variant],
@@ -436,58 +468,6 @@
     [aria-pressed="true"]
   ) {
   overflow: clip;
-}
-
-.rias
-  :is(
-    :is(button, a)[data-variant],
-    [data-slot="select-trigger"],
-    [data-slot="combobox-trigger"],
-    [data-slot="dropdown-menu-trigger"],
-    [data-slot="context-menu-trigger"][role="button"],
-    [data-slot="tabs-trigger"],
-    [data-slot="horizontal-menu"] a,
-    [data-slot="theme-card"]
-  ):not([data-slot="toggle-group-item"], [data-day]) {
-  position: relative;
-  isolation: isolate;
-  transition:
-    background-color 220ms var(--ease-emphasized),
-    color 220ms var(--ease-emphasized),
-    border-color 220ms var(--ease-emphasized),
-    box-shadow 260ms var(--ease-emphasized),
-    translate 120ms var(--ease-emphasized);
-}
-
-.rias
-  :is(
-    :is(button, a)[data-variant],
-    [data-slot="select-trigger"],
-    [data-slot="combobox-trigger"],
-    [data-slot="dropdown-menu-trigger"],
-    [data-slot="tabs-trigger"],
-    [data-slot="horizontal-menu"] a,
-    [data-slot="theme-card"]
-  ):not([data-slot="toggle-group-item"], [data-day])::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 -768px 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
-    url("/themes/rias/sparks.webp");
-  background-size:
-    128px 128px,
-    192px 192px,
-    256px 256px;
-  background-position:
-    0 0,
-    40px 90px,
-    110px 30px;
-  will-change: transform;
-  opacity: 0;
-  transition: opacity 420ms var(--ease-emphasized);
 }
 
 .rias
@@ -596,7 +576,38 @@
   }
 }
 
-/* Primary: flat deep crimson, a hairline edge, nothing glossy. */
+/* Different ember phases per sibling so no two controls flicker in sync. */
+.rias
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(2n)::after {
+  animation-delay: -5.3s, -1.1s;
+}
+
+.rias
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(3n)::after {
+  animation-delay: -11.7s, -2.3s;
+}
+
+.rias
+  :is(
+    button,
+    a,
+    [data-slot="tabs-trigger"],
+    [data-slot="select-trigger"]
+  ):nth-child(5n + 1)::after {
+  animation-delay: -8.1s, -0.7s;
+}
+
+/* Primary: deep crimson velvet, a hairline edge and a rose sheen along the top. */
 .rias
   :is(button, a)[data-variant="default"]:not(
     [data-slot="toggle-group-item"],
@@ -604,7 +615,9 @@
   ) {
   background-color: oklch(0.47 0.19 18);
   color: var(--rias-rose);
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55);
+  box-shadow:
+    inset 0 1px 0 oklch(0.9 0.06 10 / 0.18),
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55);
 }
 
 .rias
@@ -614,6 +627,7 @@
   ):hover {
   background-color: oklch(0.5 0.2 18);
   box-shadow:
+    inset 0 1px 0 oklch(0.9 0.06 10 / 0.22),
     inset 0 0 0 1px oklch(0.68 0.22 18 / 0.7),
     0 0 20px -8px oklch(0.62 0.23 18 / 0.7);
 }
@@ -700,7 +714,7 @@
   color: var(--rias-rose);
 }
 
-/* Sidebar navigation: the active item is a crimson seal bar with a rose edge, not a pill. */
+/* Sidebar navigation: the active item is a lit crimson seal, brightest at the left. */
 .rias
   [data-slot="sidebar-nav"]
   a
@@ -742,6 +756,7 @@
 .rias [data-slot="toggle-group-thumb"] {
   background-color: oklch(0.47 0.19 18);
   box-shadow:
+    inset 0 1px 0 oklch(0.9 0.06 10 / 0.18),
     inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55),
     0 0 16px -8px oklch(0.62 0.23 18 / 0.7);
   transition: transform 260ms var(--ease-emphasized);
@@ -769,6 +784,7 @@
 .rias [data-slot="horizontal-menu-highlight"] {
   background-color: oklch(0.47 0.19 18);
   box-shadow:
+    inset 0 1px 0 oklch(0.9 0.06 10 / 0.18),
     inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55),
     0 0 16px -8px oklch(0.62 0.23 18 / 0.7);
   transition:
@@ -871,10 +887,14 @@
 
 .rias [data-slot="table-header"] {
   background-color: transparent;
-  background-image: var(--rias-line);
+  background-image: var(--rias-line), var(--rias-line-halo);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
-  background-position: bottom left;
+  background-size:
+    100% 1px,
+    100% 3px;
+  background-position:
+    bottom left,
+    bottom left;
 }
 
 .rias [data-slot="table-header"].sticky {
@@ -883,8 +903,8 @@
 
 .rias [data-slot="table-head"] {
   font-family: var(--font-display);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: oklch(0.8 0.06 10);
 }
@@ -950,36 +970,31 @@
     0 0 30px -12px oklch(0.62 0.23 18 / 0.5);
 }
 
-/* ---------- Shell: sidebar and top bar ---------- */
+/* ---------- Shell: top bar and content frame ---------- */
 
 .rias [data-slot="app-top-bar"] {
   background-color: color-mix(in srgb, var(--background) 82%, transparent);
   border-bottom-color: transparent;
-  background-image: var(--rias-line);
+  background-image: var(--rias-line), var(--rias-line-halo);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
-  background-position: bottom left;
+  background-size:
+    100% 1px,
+    100% 3px;
+  background-position:
+    bottom left,
+    bottom left;
 }
 
 .rias [data-slot="sidebar-container"] {
   border-right-color: oklch(0.62 0.23 18 / 0.25);
 }
 
-.rias [data-slot="sidebar"] [data-slot="sidebar-content"] {
-  background-image: linear-gradient(
-    180deg,
-    transparent 55%,
-    oklch(0.62 0.23 18 / 0.06)
-  );
-}
-
-/* Ambient: the wallpaper stays untouched. Only a faint crimson breath in the far corner,
-   away from the character, so the frame feels alive without covering her. */
 .rias .app-content-frame {
   position: relative;
   isolation: isolate;
 }
 
+/* Ambient 1: a crimson breath in the far corner, away from the character. */
 .rias .app-content-frame::before {
   content: "";
   position: absolute;
@@ -987,12 +1002,36 @@
   z-index: -1;
   pointer-events: none;
   background-image: radial-gradient(
-    ellipse 40% 35% at 0% 100%,
-    oklch(0.62 0.23 18 / 0.16),
+    ellipse 45% 40% at 0% 100%,
+    oklch(0.62 0.23 18 / 0.18),
     transparent 70%
   );
   opacity: 0.6;
   animation: rias-breathe 9s steps(54) infinite;
+}
+
+/* Ambient 2: the Gremory seal, turning once every four minutes in the lower left. */
+.rias .app-content-frame::after {
+  content: "";
+  position: absolute;
+  left: -140px;
+  bottom: -140px;
+  width: 600px;
+  height: 600px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/themes/rias/sigil.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.15;
+  will-change: transform;
+  animation: rias-seal 240s linear infinite;
+}
+
+@keyframes rias-seal {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes rias-breathe {
@@ -1032,15 +1071,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rias .app-content-frame::before {
+  .rias .app-content-frame::before,
+  .rias .app-content-frame::after {
     animation: none;
   }
 }
 
 /* ---------- Sidebar: rail, header, navigation, art, footer ---------- */
 
-/* Rail: a darker glass column, parted from the navigation by a hairline of light
-   instead of a flat border. */
+/* Rail: a darker glass column, parted from the navigation by a hairline of light. */
 .rias [data-slot="guild-rail"] {
   border-right-color: transparent;
   background-color: color-mix(in srgb, var(--sidebar) 45%, transparent);
@@ -1084,7 +1123,7 @@
   box-shadow: 0 0 14px -2px oklch(0.62 0.23 18 / 0.6);
 }
 
-/* Header: the Organization name set as an inscription over the rose divider. */
+/* Header: the Organization name set as an inscription over the crowned divider. */
 .rias [data-slot="sidebar-nav-header"] {
   border-bottom-color: transparent;
   background-image: url("/themes/rias/divider.webp");
@@ -1096,8 +1135,9 @@
 .rias [data-slot="guild-name"] {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--rias-rose);
   text-shadow: 0 0 12px oklch(0.62 0.23 18 / 0.55);
 }
@@ -1110,20 +1150,20 @@
   background-position: bottom left;
 }
 
-/* Art: chess royalty and roses in the lower right, fading in from the top. */
+/* Art: a garland of roses and a chess queen lying along the foot of the navigation. */
 .rias [data-slot="sidebar-nav"]::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 60%;
+  height: 50%;
   z-index: 0;
   pointer-events: none;
   background-image: url("/themes/rias/sidebar.webp");
   background-repeat: no-repeat;
-  background-size: 196px auto;
-  background-position: right -2px bottom -6px;
-  opacity: 0.62;
-  mask-image: linear-gradient(180deg, transparent, black 48%);
+  background-size: 112% auto;
+  background-position: right -8px bottom -4px;
+  opacity: 0.8;
+  mask-image: linear-gradient(180deg, transparent, black 40%);
 }
 
 .rias [data-slot="sidebar-nav"] > * {
@@ -1173,8 +1213,8 @@
 .rias [data-slot="sidebar-container"] {
   background-image:
     linear-gradient(
-      color-mix(in srgb, var(--sidebar) S78%, transparent),
-      color-mix(in srgb, var(--sidebar) S78%, transparent)
+      color-mix(in srgb, var(--sidebar) 78%, transparent),
+      color-mix(in srgb, var(--sidebar) 78%, transparent)
     ),
     var(--theme-background-image);
 }
@@ -1183,35 +1223,4 @@
   [data-slot="sidebar-container"]
   :is([data-slot="sidebar-content"], .bg-sidebar) {
   background-color: transparent;
-}
-
-/* Different particle phases per sibling so no two controls flicker in sync. */
-.rias
-  :is(
-    button,
-    a,
-    [data-slot="tabs-trigger"],
-    [data-slot="select-trigger"]
-  ):nth-child(2n)::after {
-  animation-delay: -5.3s, -1.1s;
-}
-
-.rias
-  :is(
-    button,
-    a,
-    [data-slot="tabs-trigger"],
-    [data-slot="select-trigger"]
-  ):nth-child(3n)::after {
-  animation-delay: -11.7s, -2.3s;
-}
-
-.rias
-  :is(
-    button,
-    a,
-    [data-slot="tabs-trigger"],
-    [data-slot="select-trigger"]
-  ):nth-child(5n + 1)::after {
-  animation-delay: -8.1s, -0.7s;
 }

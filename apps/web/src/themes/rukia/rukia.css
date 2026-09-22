@@ -1,20 +1,24 @@
 /*
- * Rukia Kuchiki — Hakka no Togame (白霞罸), absolute-zero bankai.
+ * Rukia Kuchiki — Sode no Shirayuki, Hakka no Togame (白霞罸).
  *
- * Design language: white ice on indigo night. Shippori Mincho display type
- * (serifs like icicles), hoarfrost that creeps in from the corners of a surface
- * under the cursor, snow crystals falling slowly behind the content, ribbon
- * hairlines in white-violet. Every animation is compositor-only; nothing runs
- * on the main thread while the page is idle.
+ * Design language: stillness. White ice on indigo night, cut edges instead of
+ * ornament. The one recurring device is the double hairline (二重罫): two thin
+ * lines with a breath of dark between them, drawn under headers, around
+ * surfaces and along the shell. Active states are solid white ice with dark
+ * ink on top, never a glow. Interaction is hoarfrost creeping up from the
+ * bottom edge of a control; the only ambient motion is snow drifting down
+ * behind the content and frost sitting in the upper corners of the frame.
  *
+ * Every animation is compositor-only (transform / opacity on a promoted
+ * pseudo-element); nothing runs on the main thread while the page is idle.
  * All selectors are rooted at html.rukia so portaled overlays are covered.
  * Rules stay on paint properties so call-site utilities keep their box model.
  */
 
-@import "@fontsource/shippori-mincho/latin-600.css";
-@import "@fontsource/shippori-mincho/latin-ext-600.css";
 @import "@fontsource/shippori-mincho/latin-500.css";
 @import "@fontsource/shippori-mincho/latin-ext-500.css";
+@import "@fontsource/shippori-mincho/latin-600.css";
+@import "@fontsource/shippori-mincho/latin-ext-600.css";
 
 .rukia {
   /* Palette: wallpaper-derived. Indigo night, white ice, violet eyes. */
@@ -24,8 +28,8 @@
   --card-foreground: oklch(0.965 0.012 250);
   --popover: oklch(0.15 0.035 266);
   --popover-foreground: oklch(0.965 0.012 250);
-  --primary: oklch(0.88 0.03 252);
-  --primary-foreground: oklch(0.18 0.04 268);
+  --primary: oklch(0.9 0.025 252);
+  --primary-foreground: oklch(0.17 0.04 268);
   --secondary: oklch(0.22 0.045 268);
   --secondary-foreground: oklch(0.965 0.012 250);
   --muted: oklch(0.24 0.04 266);
@@ -54,35 +58,30 @@
 
   /* Theme-private tokens. */
   --rukia-ice: oklch(0.96 0.02 250);
-  --rukia-ice-soft: oklch(0.9 0.04 255 / 0.4);
-  --rukia-ice-faint: oklch(0.9 0.04 255 / 0.12);
+  --rukia-ink: oklch(0.17 0.04 268);
   --rukia-violet: oklch(0.72 0.12 295);
   --rukia-glow: oklch(0.85 0.07 255);
-  --rukia-line: linear-gradient(
-    90deg,
-    transparent,
-    oklch(0.85 0.07 255 / 0.7) 20%,
-    var(--rukia-ice) 50%,
-    oklch(0.85 0.07 255 / 0.7) 80%,
-    transparent
+  --rukia-hair: oklch(0.9 0.04 255 / 0.32);
+  --rukia-hair-strong: oklch(0.92 0.04 255 / 0.55);
+  /* The double hairline: two 1px lines with a 2px gap, painted from the bottom. */
+  --rukia-rule: linear-gradient(
+    180deg,
+    var(--rukia-hair) 0 1px,
+    transparent 1px 3px,
+    var(--rukia-hair) 3px 4px
   );
   --font-display:
     "Shippori Mincho", "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho",
     Georgia, serif;
-  --radius: 0.25rem;
-  --shadow-xs:
-    0 1px 0 oklch(0.9 0.04 255 / 0.1), 0 8px 24px -12px oklch(0 0 0 / 0.6);
-  --shadow-sm:
-    0 1px 0 oklch(0.9 0.04 255 / 0.1), 0 10px 28px -12px oklch(0 0 0 / 0.65);
-  --shadow-md:
-    0 1px 0 oklch(0.9 0.04 255 / 0.14), 0 18px 40px -16px oklch(0 0 0 / 0.7);
-  --shadow-lg:
-    0 1px 0 oklch(0.9 0.04 255 / 0.18), 0 24px 56px -20px oklch(0 0 0 / 0.75);
-  --shadow-xl:
-    0 0 0 1px oklch(0.9 0.04 255 / 0.2), 0 32px 72px -24px oklch(0 0 0 / 0.8);
+  --radius: 0.125rem;
+  --shadow-xs: 0 8px 24px -12px oklch(0 0 0 / 0.6);
+  --shadow-sm: 0 10px 28px -12px oklch(0 0 0 / 0.65);
+  --shadow-md: 0 18px 40px -16px oklch(0 0 0 / 0.7);
+  --shadow-lg: 0 24px 56px -20px oklch(0 0 0 / 0.75);
+  --shadow-xl: 0 32px 72px -24px oklch(0 0 0 / 0.8);
 }
 
-/* ---------- Typography ---------- */
+/* ---------- Typography: light Mincho, wide tracking, never bold ---------- */
 
 .rukia
   :is(
@@ -102,12 +101,17 @@
 .rukia [data-slot="kpi-value"],
 .rukia [data-slot="horizontal-menu"] a {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
 }
 
 .rukia [data-slot="section-card-header"] h2 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.14em;
+}
+
+.rukia [data-slot="app-top-bar"] :is(h1, h2, [data-slot="breadcrumb-page"]) {
+  letter-spacing: 0.16em;
 }
 
 .rukia
@@ -118,26 +122,25 @@
     [data-slot="drawer-title"]
   ) {
   font-size: 1.3rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
 }
 
 .rukia [data-slot="kpi-value"] {
-  font-weight: 500;
   letter-spacing: 0.02em;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
 .rukia [data-slot="horizontal-menu"] a,
 .rukia [data-slot="sidebar"] nav a > [data-slot="button"] {
-  font-size: 0.92rem;
-  letter-spacing: 0.06em;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
 }
 
 /* ---------- Text selection, scrollbars, focus ---------- */
 
 .rukia ::selection {
-  background: oklch(0.85 0.07 255 / 0.35);
-  color: oklch(0.99 0.005 250);
+  background: var(--rukia-ice);
+  color: var(--rukia-ink);
 }
 
 .rukia .custom-scrollbar {
@@ -146,6 +149,7 @@
 
 .rukia .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: oklch(0.8 0.05 255 / 0.3);
+  border-radius: 0;
 }
 
 .rukia .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -154,6 +158,7 @@
 
 .rukia [data-slot="scroll-area-thumb"] {
   background-color: oklch(0.8 0.05 255 / 0.3);
+  border-radius: 0;
 }
 
 .rukia
@@ -163,6 +168,7 @@
   background-color: oklch(0.9 0.04 255 / 0.55);
 }
 
+/* Focus: a crisp white edge, no halo. */
 .rukia
   :is(
     input,
@@ -171,57 +177,38 @@
     [role="combobox"],
     [data-slot="select-trigger"]
   ):focus-visible:not([data-slot="input-group-control"], [cmdk-input]) {
-  --tw-ring-color: oklch(0.9 0.05 255 / 0.65);
-  border-color: oklch(0.9 0.05 255 / 0.7);
-  box-shadow:
-    var(--tw-inset-shadow),
-    var(--tw-inset-ring-shadow),
-    var(--tw-ring-offset-shadow),
-    var(--tw-ring-shadow),
-    0 0 18px -4px oklch(0.85 0.07 255 / 0.5);
+  --tw-ring-color: oklch(0.92 0.04 255 / 0.55);
+  border-color: var(--rukia-ice);
 }
 
 .rukia [data-slot="input-group"]:focus-within {
-  border-color: oklch(0.9 0.05 255 / 0.7);
-  box-shadow: 0 0 18px -4px oklch(0.85 0.07 255 / 0.45);
+  border-color: var(--rukia-ice);
 }
 
-/* ---------- Surfaces: cards, popups, dialogs ---------- */
+/* ---------- Surfaces: the double-rule frame ---------- */
 
+/* Cards: thin glass with a cut edge. The outer border is the first line, the inset
+   ring one pixel in is the second; the dark gap between them is the frame. */
 .rukia .app-content-frame [data-slot="card"] {
-  background-color: color-mix(in srgb, var(--card) 34%, transparent);
-  border-color: oklch(0.9 0.04 255 / 0.2);
-  isolation: isolate;
-}
-
-.rukia [data-slot="card"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  /* Cards that keep overflow visible (loot cards) must still clip the ornament to their corners. */
-  border-radius: inherit;
-  clip-path: inset(0 round inherit);
-  overflow: hidden;
-  background-image: url("/themes/rukia/corner.webp");
-  background-repeat: no-repeat;
-  background-size: 96px auto;
-  background-position: -8px -8px;
-  opacity: 0.5;
+  background-color: color-mix(in srgb, var(--card) 26%, transparent);
+  border-color: var(--rukia-hair);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--background) 70%, transparent),
+    inset 0 0 0 2px oklch(0.9 0.04 255 / 0.14),
+    var(--shadow-xs);
 }
 
 .rukia [data-slot="section-card-header"] {
   border-bottom-color: transparent;
-  background-image: var(--rukia-line);
+  background-image: var(--rukia-rule);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
+  background-size: 100% 4px;
   background-position: bottom left;
+  padding-bottom: 0.75rem;
 }
 
 .rukia [data-slot="section-card-header"] h2 svg {
   color: var(--rukia-ice);
-  filter: drop-shadow(0 0 6px oklch(0.85 0.07 255 / 0.6));
 }
 
 .rukia
@@ -234,29 +221,23 @@
     [data-slot="context-menu-content"],
     [data-slot="context-menu-sub-content"]
   ) {
-  background-color: color-mix(in srgb, var(--popover) 92%, black);
-  border-color: oklch(0.9 0.04 255 / 0.32);
+  background-color: color-mix(in srgb, var(--popover) 94%, black);
+  border-color: var(--rukia-hair-strong);
   box-shadow:
-    0 0 0 1px oklch(0 0 0 / 0.5),
-    0 22px 48px -16px oklch(0 0 0 / 0.8),
-    0 0 32px -12px oklch(0.85 0.07 255 / 0.4);
-  background-image: linear-gradient(
-    180deg,
-    oklch(0.9 0.05 255 / 0.1),
-    transparent 28px
-  );
+    inset 0 0 0 1px var(--background),
+    inset 0 0 0 2px oklch(0.9 0.04 255 / 0.16),
+    0 22px 48px -16px oklch(0 0 0 / 0.8);
 }
 
 .rukia [data-slot="combobox-content"] {
-  --tw-ring-color: oklch(0.9 0.04 255 / 0.32);
+  --tw-ring-color: transparent;
 }
 
 .rukia [data-slot="tooltip-content"]:not([class*="border-2"]) {
-  background-color: color-mix(in srgb, var(--popover) 94%, black);
-  border-color: oklch(0.9 0.04 255 / 0.38);
-  box-shadow:
-    0 8px 24px -8px oklch(0 0 0 / 0.7),
-    0 0 16px -6px oklch(0.85 0.07 255 / 0.35);
+  background-color: var(--rukia-ice);
+  color: var(--rukia-ink);
+  border-color: var(--rukia-ice);
+  box-shadow: 0 8px 24px -8px oklch(0 0 0 / 0.7);
 }
 
 .rukia
@@ -275,6 +256,7 @@
     color 120ms var(--ease-emphasized);
 }
 
+/* Highlighted rows invert to ice, the same way every active control does. */
 .rukia
   :is(
     [data-slot="select-item"][data-highlighted],
@@ -290,21 +272,34 @@
     [data-slot="context-menu-item"]:focus,
     [data-slot="command-item"][data-selected="true"]
   ) {
-  background-color: oklch(0.9 0.05 255 / 0.12);
+  background-color: var(--rukia-ice);
+  color: var(--rukia-ink);
+}
+
+.rukia
+  :is(
+    [data-slot="select-item"][data-highlighted],
+    [data-slot="combobox-item"][data-highlighted],
+    [data-slot="dropdown-menu-item"][data-highlighted],
+    [data-slot="context-menu-item"][data-highlighted],
+    [data-slot="command-item"][data-selected="true"]
+  )
+  :is(svg, [data-slot="dropdown-menu-shortcut"], span) {
+  color: inherit;
+}
+
+.rukia [data-slot="select-item"][data-selected]:not([data-highlighted]) {
   color: var(--rukia-ice);
 }
 
-.rukia [data-slot="select-item"][data-selected] {
-  color: var(--rukia-ice);
-}
-
+/* Dialogs: frost sits in both upper corners; the lower half stays clear for content. */
 .rukia :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
-  background-color: color-mix(in srgb, var(--background) 96%, black);
-  border-color: oklch(0.9 0.04 255 / 0.38);
+  background-color: color-mix(in srgb, var(--background) 97%, black);
+  border-color: var(--rukia-hair-strong);
   box-shadow:
-    0 0 0 1px oklch(0 0 0 / 0.6),
-    0 40px 90px -30px oklch(0 0 0 / 0.9),
-    0 0 60px -20px oklch(0.85 0.07 255 / 0.45);
+    inset 0 0 0 1px var(--background),
+    inset 0 0 0 2px oklch(0.9 0.04 255 / 0.16),
+    0 40px 90px -30px oklch(0 0 0 / 0.9);
   isolation: isolate;
 }
 
@@ -316,15 +311,16 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    url("/themes/rukia/sigil.webp"), url("/themes/rukia/corner.webp");
+    url("/themes/rukia/frost-corner.webp"),
+    url("/themes/rukia/frost-corner-right.webp");
   background-repeat: no-repeat;
   background-size:
-    420px 420px,
-    120px auto;
+    260px 260px,
+    260px 260px;
   background-position:
-    calc(100% + 150px) calc(100% + 150px),
-    -10px -10px;
-  opacity: 0.14;
+    -20px -20px,
+    calc(100% + 20px) -20px;
+  opacity: 0.38;
 }
 
 .rukia [data-slot="alert-dialog-content"] {
@@ -338,17 +334,16 @@
     [data-slot="sheet-overlay"],
     [data-slot="drawer-overlay"]
   ) {
-  background-color: oklch(0.06 0.02 268 / 0.72);
+  background-color: oklch(0.06 0.02 268 / 0.74);
 }
 
 .rukia :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
-  background-color: color-mix(in srgb, var(--background) 96%, black);
-  border-color: oklch(0.9 0.04 255 / 0.38);
+  background-color: color-mix(in srgb, var(--background) 97%, black);
+  border-color: var(--rukia-hair-strong);
 }
 
-/* ---------- Buttons and triggers ---------- */
+/* ---------- Buttons and triggers: hoarfrost creeping up from the bottom edge ---------- */
 
-/* Shared hover: a slow band of cold light gliding over the surface, never a flash. */
 .rukia
   :is(
     :is(button, a)[data-variant],
@@ -363,13 +358,14 @@
   position: relative;
   isolation: isolate;
   transition:
-    background-color 220ms var(--ease-emphasized),
-    color 220ms var(--ease-emphasized),
-    border-color 220ms var(--ease-emphasized),
-    box-shadow 260ms var(--ease-emphasized),
+    background-color 200ms var(--ease-emphasized),
+    color 200ms var(--ease-emphasized),
+    border-color 200ms var(--ease-emphasized),
+    box-shadow 240ms var(--ease-emphasized),
     translate 120ms var(--ease-emphasized);
 }
 
+/* The frost layer: one strip, anchored to the bottom, slid up on hover. */
 .rukia
   :is(
     :is(button, a)[data-variant],
@@ -382,23 +378,19 @@
   ):not([data-slot="toggle-group-item"], [data-day])::after {
   content: "";
   position: absolute;
-  inset: -768px 0 0 0;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
-    url("/themes/rukia/sparks.webp");
-  background-size:
-    128px 128px,
-    192px 192px,
-    256px 256px;
-  background-position:
-    0 0,
-    40px 90px,
-    110px 30px;
-  will-change: transform;
+  background-image: url("/themes/rukia/frost-edge.webp");
+  background-repeat: repeat-x;
+  background-size: auto 130%;
+  background-position: center bottom;
   opacity: 0;
-  transition: opacity 420ms var(--ease-emphasized);
+  transform: translate3d(0, 45%, 0);
+  will-change: transform, opacity;
+  transition:
+    opacity 360ms var(--ease-emphasized),
+    transform 520ms var(--ease-emphasized);
 }
 
 .rukia
@@ -415,14 +407,7 @@
     [data-day],
     :disabled,
     [data-disabled]
-  ):is(
-    :hover,
-    [data-popup-open],
-    [data-variant="default"],
-    [data-active],
-    [aria-current="page"],
-    [aria-pressed="true"]
-  ) {
+  ):is(:hover, [data-popup-open], :focus-visible) {
   overflow: clip;
 }
 
@@ -432,58 +417,6 @@
     [data-slot="select-trigger"],
     [data-slot="combobox-trigger"],
     [data-slot="dropdown-menu-trigger"],
-    [data-slot="context-menu-trigger"][role="button"],
-    [data-slot="tabs-trigger"],
-    [data-slot="horizontal-menu"] a,
-    [data-slot="theme-card"]
-  ):not([data-slot="toggle-group-item"], [data-day]) {
-  position: relative;
-  isolation: isolate;
-  transition:
-    background-color 220ms var(--ease-emphasized),
-    color 220ms var(--ease-emphasized),
-    border-color 220ms var(--ease-emphasized),
-    box-shadow 260ms var(--ease-emphasized),
-    translate 120ms var(--ease-emphasized);
-}
-
-.rukia
-  :is(
-    :is(button, a)[data-variant],
-    [data-slot="select-trigger"],
-    [data-slot="combobox-trigger"],
-    [data-slot="dropdown-menu-trigger"],
-    [data-slot="tabs-trigger"],
-    [data-slot="horizontal-menu"] a,
-    [data-slot="theme-card"]
-  ):not([data-slot="toggle-group-item"], [data-day])::after {
-  content: "";
-  position: absolute;
-  inset: -768px 0 0 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
-    url("/themes/rukia/sparks.webp");
-  background-size:
-    128px 128px,
-    192px 192px,
-    256px 256px;
-  background-position:
-    0 0,
-    40px 90px,
-    110px 30px;
-  will-change: transform;
-  opacity: 0;
-  transition: opacity 420ms var(--ease-emphasized);
-}
-
-.rukia
-  :is(
-    :is(button, a)[data-variant],
-    [data-slot="select-trigger"],
-    [data-slot="combobox-trigger"],
-    [data-slot="dropdown-menu-trigger"],
     [data-slot="tabs-trigger"],
     [data-slot="horizontal-menu"] a,
     [data-slot="theme-card"]
@@ -492,107 +425,30 @@
     [data-day],
     :disabled,
     [data-disabled]
-  ):is(
-    :hover,
-    [data-popup-open],
-    [data-variant="default"],
-    [data-active],
-    [aria-current="page"],
-    [aria-pressed="true"]
-  )::after {
-  opacity: 1;
-  animation:
-    rukia-motes 48s steps(288) infinite,
-    rukia-twinkle 3.2s steps(16) infinite;
+  ):is(:hover, [data-popup-open], :focus-visible)::after {
+  opacity: 0.55;
+  transform: translate3d(0, 0, 0);
 }
 
+/* Solid ice controls carry the frost too, but darker so it reads as depth, not light. */
 .rukia
-  :is(
-    :is(button, a)[data-variant],
-    [data-slot="select-trigger"],
-    [data-slot="combobox-trigger"],
-    [data-slot="dropdown-menu-trigger"],
-    [data-slot="tabs-trigger"],
-    [data-slot="horizontal-menu"] a,
-    [data-slot="theme-card"]
-  ):not(
+  :is(button, a)[data-variant="default"]:not(
     [data-slot="toggle-group-item"],
-    [data-day],
-    :disabled,
-    [data-disabled]
-  ):is(:hover, [data-popup-open])::after {
-  animation-duration: 30s, 2.2s;
-  animation-timing-function: steps(240), steps(11);
+    [data-day]
+  ):hover::after {
+  opacity: 0.22;
+  filter: invert(1) brightness(0.6);
 }
 
-/* Segmented control thumb and the horizontal menu pill glimmer while idle too. */
-.rukia
-  :is(
-    [data-slot="toggle-group-thumb"],
-    [data-slot="horizontal-menu-highlight"]
-  ) {
-  position: absolute;
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.rukia
-  :is(
-    [data-slot="toggle-group-thumb"],
-    [data-slot="horizontal-menu-highlight"]
-  )::after {
-  content: "";
-  position: absolute;
-  inset: -768px 0 0 0;
-  pointer-events: none;
-  background-image:
-    url("/themes/rukia/sparks.webp"), url("/themes/rukia/sparks.webp"),
-    url("/themes/rukia/sparks.webp");
-  background-size:
-    128px 128px,
-    192px 192px,
-    256px 256px;
-  background-position:
-    0 0,
-    40px 90px,
-    110px 30px;
-  will-change: transform;
-  animation:
-    rukia-motes 48s steps(288) infinite,
-    rukia-twinkle 3.2s steps(16) infinite;
-}
-
-@keyframes rukia-motes {
-  33% {
-    transform: translate3d(6px, 253px, 0);
-  }
-  66% {
-    transform: translate3d(-4px, 507px, 0);
-  }
-  to {
-    transform: translate3d(0, 768px, 0);
-  }
-}
-
-@keyframes rukia-twinkle {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* Primary: matte white ice with a cold hairline, nothing glossy. */
+/* Primary: solid white ice, ink on top. */
 .rukia
   :is(button, a)[data-variant="default"]:not(
     [data-slot="toggle-group-item"],
     [data-day]
   ) {
-  background-color: oklch(0.88 0.03 252);
-  color: oklch(0.18 0.04 268);
-  box-shadow: inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7);
+  background-color: var(--rukia-ice);
+  color: var(--rukia-ink);
+  box-shadow: inset 0 -1px 0 oklch(0.78 0.06 258 / 0.7);
 }
 
 .rukia
@@ -600,10 +456,7 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):hover {
-  background-color: oklch(0.92 0.03 252);
-  box-shadow:
-    inset 0 0 0 1px oklch(0.8 0.06 260 / 0.8),
-    0 0 20px -8px oklch(0.85 0.07 255 / 0.8);
+  background-color: oklch(0.99 0.008 250);
 }
 
 .rukia
@@ -611,7 +464,8 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):active {
-  background-color: oklch(0.84 0.04 255);
+  background-color: oklch(0.88 0.03 252);
+  translate: 0 1px;
 }
 
 .rukia
@@ -621,7 +475,7 @@
   ),
 .rukia [data-slot="select-trigger"],
 .rukia [data-slot="combobox-trigger"] {
-  border-color: oklch(0.9 0.04 255 / 0.28);
+  border-color: var(--rukia-hair);
   background-color: color-mix(in srgb, var(--background) 72%, transparent);
 }
 
@@ -632,10 +486,8 @@
   ):is(:hover, [data-popup-open]),
 .rukia [data-slot="select-trigger"]:is(:hover, [data-popup-open]),
 .rukia [data-slot="combobox-trigger"]:is(:hover, [data-popup-open]) {
-  border-color: oklch(0.92 0.04 255 / 0.75);
-  background-color: oklch(0.9 0.05 255 / 0.06);
+  border-color: var(--rukia-ice);
   color: var(--rukia-ice);
-  box-shadow: 0 0 18px -8px oklch(0.85 0.07 255 / 0.6);
 }
 
 .rukia
@@ -643,7 +495,7 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):is(:hover, [data-popup-open]) {
-  background-color: oklch(0.9 0.05 255 / 0.08);
+  background-color: oklch(0.9 0.05 255 / 0.07);
   color: var(--rukia-ice);
 }
 
@@ -653,7 +505,7 @@
     [data-day]
   ) {
   background-color: oklch(0.25 0.045 268);
-  box-shadow: inset 0 0 0 1px oklch(0.9 0.04 255 / 0.16);
+  box-shadow: inset 0 0 0 1px oklch(0.9 0.04 255 / 0.14);
 }
 
 .rukia
@@ -672,7 +524,7 @@
   ) {
   background-color: oklch(0.55 0.15 22);
   color: oklch(0.98 0.01 20);
-  box-shadow: inset 0 0 0 1px oklch(0.68 0.16 22 / 0.6);
+  box-shadow: inset 0 -1px 0 oklch(0.4 0.14 22 / 0.8);
 }
 
 .rukia
@@ -687,26 +539,21 @@
   color: var(--rukia-ice);
 }
 
-/* Sidebar navigation: the active item is an ice bar with a white left edge, not a pill. */
+/* Sidebar navigation: the active item is solid ice with ink on it. */
 .rukia
   [data-slot="sidebar-nav"]
   a
   > [data-slot="button"][data-variant="default"] {
-  background-color: oklch(0.9 0.05 255 / 0.1);
-  background-image: linear-gradient(
-    90deg,
-    oklch(0.9 0.05 255 / 0.16),
-    transparent 70%
-  );
-  color: var(--rukia-ice);
-  box-shadow: inset 0 0 0 1px oklch(0.9 0.05 255 / 0.28);
+  background-color: var(--rukia-ice);
+  color: var(--rukia-ink);
+  box-shadow: inset 0 -1px 0 oklch(0.78 0.06 258 / 0.7);
 }
 
 .rukia
   [data-slot="sidebar-nav"]
   a
   > [data-slot="button"][data-variant="default"]:hover {
-  background-color: oklch(0.9 0.05 255 / 0.14);
+  background-color: oklch(0.99 0.008 250);
 }
 
 .rukia
@@ -714,23 +561,27 @@
   a
   > [data-slot="button"][data-variant="default"]
   svg {
-  color: var(--rukia-ice);
-  filter: drop-shadow(0 0 6px oklch(0.85 0.07 255 / 0.8));
+  color: var(--rukia-ink);
+}
+
+.rukia
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="ghost"] {
+  color: oklch(0.82 0.03 258);
 }
 
 /* ---------- Segmented controls, tabs, horizontal menu ---------- */
 
 .rukia [data-slot="toggle-group"] {
-  border-color: oklch(0.9 0.04 255 / 0.28);
+  border-color: var(--rukia-hair);
   background-color: color-mix(in srgb, var(--background) 75%, transparent);
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.05);
+  box-shadow: none;
 }
 
 .rukia [data-slot="toggle-group-thumb"] {
-  background-color: oklch(0.88 0.03 252);
-  box-shadow:
-    inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7),
-    0 0 16px -8px oklch(0.85 0.07 255 / 0.8);
+  background-color: var(--rukia-ice);
+  box-shadow: inset 0 -1px 0 oklch(0.78 0.06 258 / 0.7);
   transition: transform 260ms var(--ease-emphasized);
 }
 
@@ -745,19 +596,17 @@
 }
 
 .rukia [data-slot="toggle-group-item"][data-pressed] {
-  color: oklch(0.18 0.04 268);
+  color: var(--rukia-ink);
 }
 
 .rukia [data-slot="horizontal-menu-viewport"] {
-  border-color: oklch(0.9 0.04 255 / 0.26);
+  border-color: var(--rukia-hair);
   background-color: color-mix(in srgb, var(--card) 40%, transparent);
 }
 
 .rukia [data-slot="horizontal-menu-highlight"] {
-  background-color: oklch(0.88 0.03 252);
-  box-shadow:
-    inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7),
-    0 0 16px -8px oklch(0.85 0.07 255 / 0.8);
+  background-color: var(--rukia-ice);
+  box-shadow: inset 0 -1px 0 oklch(0.78 0.06 258 / 0.7);
   transition:
     transform 280ms var(--ease-emphasized),
     width 200ms var(--ease-emphasized),
@@ -765,26 +614,26 @@
 }
 
 .rukia [data-slot="horizontal-menu"] a[aria-current="page"] {
-  color: oklch(0.18 0.04 268);
+  color: var(--rukia-ink);
 }
 
 .rukia [data-slot="horizontal-menu"] a:hover:not([aria-current="page"]) {
   color: var(--rukia-ice);
-  background-color: oklch(0.9 0.05 255 / 0.08);
+  background-color: oklch(0.9 0.05 255 / 0.07);
 }
 
 .rukia [data-slot="tabs-list"] {
   background-color: color-mix(in srgb, var(--background) 70%, transparent);
-  box-shadow: inset 0 0 0 1px oklch(0.9 0.04 255 / 0.22);
+  box-shadow: inset 0 0 0 1px var(--rukia-hair);
 }
 
 .rukia [data-slot="tabs-trigger"][data-active] {
-  background-color: oklch(0.9 0.05 255 / 0.14);
-  border-color: oklch(0.9 0.04 255 / 0.45);
-  color: var(--rukia-ice);
+  background-color: var(--rukia-ice);
+  border-color: var(--rukia-ice);
+  color: var(--rukia-ink);
 }
 
-/* ---------- Form controls ---------- */
+/* ---------- Form controls: square, crisp, ink on ice when set ---------- */
 
 .rukia
   :is(
@@ -793,7 +642,7 @@
     [data-slot="select-trigger"],
     [data-slot="input-group"]
   ):not([data-slot="input-group-control"], [cmdk-input]) {
-  border-color: oklch(0.9 0.04 255 / 0.26);
+  border-color: var(--rukia-hair);
   background-color: color-mix(in srgb, var(--background) 72%, transparent);
   transition:
     border-color 160ms var(--ease-emphasized),
@@ -806,20 +655,17 @@
     [data-slot="input-group-control"],
     [cmdk-input]
   ):hover {
-  border-color: oklch(0.92 0.04 255 / 0.6);
-  background-color: oklch(0.9 0.05 255 / 0.04);
+  border-color: var(--rukia-hair-strong);
 }
 
 .rukia [data-slot="select-trigger"][data-popup-open] {
-  --tw-ring-color: oklch(0.9 0.05 255 / 0.65);
-  border-color: oklch(0.9 0.05 255 / 0.7);
+  --tw-ring-color: oklch(0.92 0.04 255 / 0.55);
+  border-color: var(--rukia-ice);
 }
 
 .rukia [data-slot="switch"][data-checked] {
-  background-color: oklch(0.88 0.03 252);
-  box-shadow:
-    inset 0 0 0 1px oklch(0.75 0.06 260 / 0.7),
-    0 0 12px -3px oklch(0.85 0.07 255 / 0.7);
+  background-color: var(--rukia-ice);
+  box-shadow: inset 0 -1px 0 oklch(0.78 0.06 258 / 0.7);
 }
 
 .rukia [data-slot="switch"][data-unchecked] {
@@ -827,40 +673,40 @@
 }
 
 .rukia [data-slot="switch-thumb"][data-checked] {
-  background-color: oklch(0.2 0.04 268);
+  background-color: var(--rukia-ink);
 }
 
 .rukia [data-slot="checkbox"] {
-  border-color: oklch(0.9 0.04 255 / 0.55);
-  border-radius: 2px;
+  border-color: var(--rukia-hair-strong);
+  border-radius: 0;
 }
 
 .rukia [data-slot="checkbox"][data-checked] {
-  background-color: oklch(0.88 0.03 252);
-  border-color: oklch(0.9 0.04 255);
-  box-shadow: 0 0 10px -3px oklch(0.85 0.07 255 / 0.7);
+  background-color: var(--rukia-ice);
+  border-color: var(--rukia-ice);
+  color: var(--rukia-ink);
 }
 
 .rukia [data-slot="radio-group-item"] {
-  border-color: oklch(0.9 0.04 255 / 0.45);
+  border-color: var(--rukia-hair-strong);
 }
 
 .rukia [data-slot="radio-group-item"][data-checked] {
   border-color: var(--rukia-ice);
-  box-shadow: 0 0 10px -2px oklch(0.85 0.07 255 / 0.8);
 }
 
 .rukia [data-slot="badge"] {
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
+  border-radius: 0.125rem;
 }
 
 /* ---------- Tables ---------- */
 
 .rukia [data-slot="table-header"] {
   background-color: transparent;
-  background-image: var(--rukia-line);
+  background-image: var(--rukia-rule);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
+  background-size: 100% 4px;
   background-position: bottom left;
 }
 
@@ -870,38 +716,61 @@
 
 .rukia [data-slot="table-head"] {
   font-family: var(--font-display);
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: oklch(0.85 0.04 255);
+  font-weight: 500;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: none;
+  color: oklch(0.86 0.035 255);
 }
 
 .rukia [data-slot="table-row"]:hover {
-  background-color: oklch(0.9 0.05 255 / 0.06);
+  background-color: oklch(0.9 0.05 255 / 0.05);
 }
 
 .rukia [data-slot="table-row"][data-state="selected"] {
-  background-color: oklch(0.9 0.05 255 / 0.12);
+  background-color: oklch(0.9 0.05 255 / 0.1);
 }
 
 /* ---------- Skeleton, progress, empty ---------- */
 
+/* Skeletons do not pulse; a band of cold light passes over them. */
 .rukia [data-slot="skeleton"] {
-  background-color: oklch(0.22 0.04 266);
-  animation:
-    rukia-pulse 2.2s ease-in-out infinite,
-    placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
+  position: relative;
+  overflow: hidden;
+  background-color: oklch(0.2 0.04 266);
+  animation: placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
+}
+
+.rukia [data-slot="skeleton"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    oklch(0.9 0.04 255 / 0.1) 50%,
+    transparent 70%
+  );
+  transform: translate3d(-100%, 0, 0);
+  will-change: transform;
+  animation: rukia-sheen 2.4s var(--ease-emphasized) infinite;
+}
+
+@keyframes rukia-sheen {
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
 }
 
 .rukia [data-slot="progress-indicator"] {
-  background-color: oklch(0.88 0.03 252);
-  box-shadow: 0 0 10px -3px oklch(0.85 0.07 255 / 0.8);
+  background-color: var(--rukia-ice);
 }
 
 .rukia [data-slot="empty"] {
   position: relative;
   isolation: isolate;
-  border-color: oklch(0.9 0.04 255 / 0.28);
+  border-color: var(--rukia-hair);
+  border-style: solid;
   background-color: oklch(0.9 0.05 255 / 0.03);
 }
 
@@ -913,60 +782,53 @@
   pointer-events: none;
   background-image: url("/themes/rukia/empty.webp");
   background-repeat: no-repeat;
-  background-size: auto 76%;
+  background-size: auto 78%;
   background-position: right 6% bottom;
   opacity: 0.3;
 }
 
 .rukia [data-slot="empty-icon"] {
-  background-color: oklch(0.9 0.05 255 / 0.1);
+  background-color: transparent;
   color: var(--rukia-ice);
   box-shadow:
-    inset 0 0 0 1px oklch(0.9 0.04 255 / 0.35),
-    0 0 22px -6px oklch(0.85 0.07 255 / 0.8);
+    inset 0 0 0 1px var(--rukia-hair-strong),
+    inset 0 0 0 3px var(--background),
+    inset 0 0 0 4px var(--rukia-hair);
 }
 
 /* ---------- Toasts ---------- */
 
 .rukia [data-sonner-toast][data-styled="true"] {
   font-family: inherit;
-  border-color: oklch(0.9 0.04 255 / 0.38);
+  border-color: var(--rukia-hair-strong);
   background: color-mix(in srgb, var(--popover) 94%, black);
   box-shadow:
-    0 18px 40px -16px oklch(0 0 0 / 0.8),
-    0 0 30px -12px oklch(0.85 0.07 255 / 0.45);
+    inset 0 0 0 1px var(--background),
+    inset 0 0 0 2px oklch(0.9 0.04 255 / 0.16),
+    0 18px 40px -16px oklch(0 0 0 / 0.8);
 }
 
-/* ---------- Shell: sidebar and top bar ---------- */
+/* ---------- Shell: top bar and content frame ---------- */
 
 .rukia [data-slot="app-top-bar"] {
   background-color: color-mix(in srgb, var(--background) 82%, transparent);
   border-bottom-color: transparent;
-  background-image: var(--rukia-line);
+  background-image: var(--rukia-rule);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
+  background-size: 100% 4px;
   background-position: bottom left;
 }
 
 .rukia [data-slot="sidebar-container"] {
-  border-right-color: oklch(0.9 0.04 255 / 0.22);
+  border-right-color: var(--rukia-hair);
 }
 
-.rukia [data-slot="sidebar"] [data-slot="sidebar-content"] {
-  background-image: linear-gradient(
-    180deg,
-    transparent 55%,
-    oklch(0.9 0.05 255 / 0.05)
-  );
-}
-
-/* Ambient: random snow motes drifting down behind the content, kept off the character.
-   Three tiles of one random sprite at different scales; transform-only, no JS. */
 .rukia .app-content-frame {
   position: relative;
   isolation: isolate;
 }
 
+/* Ambient 1: snow drifting down behind the content, kept off the character on the right. */
 .rukia .app-content-frame::before {
   content: "";
   position: absolute;
@@ -992,6 +854,38 @@
     rukia-fade-in 2s ease-out 1s forwards;
 }
 
+/* Ambient 2: hoarfrost settled in the upper corners of the frame. Static. */
+.rukia .app-content-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rukia/frost-corner.webp"),
+    url("/themes/rukia/frost-corner-right.webp");
+  background-repeat: no-repeat;
+  background-size:
+    420px 420px,
+    420px 420px;
+  background-position:
+    -40px -40px,
+    calc(100% + 40px) -40px;
+  opacity: 0.28;
+}
+
+@media (max-width: 767px) {
+  .rukia .app-content-frame::after {
+    background-size:
+      240px 240px,
+      240px 240px;
+    background-position:
+      -30px -30px,
+      calc(100% + 30px) -30px;
+    opacity: 0.22;
+  }
+}
+
 @keyframes rukia-snow {
   from {
     transform: translate3d(0, 0, 0);
@@ -1007,16 +901,6 @@
 @keyframes rukia-fade-in {
   to {
     opacity: 0.22;
-  }
-}
-
-@keyframes rukia-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
   }
 }
 
@@ -1040,20 +924,36 @@
     animation: none;
     opacity: 0.12;
   }
+
+  .rukia [data-slot="skeleton"]::after {
+    animation: none;
+  }
+
+  .rukia
+    :is(
+      :is(button, a)[data-variant],
+      [data-slot="select-trigger"],
+      [data-slot="combobox-trigger"],
+      [data-slot="dropdown-menu-trigger"],
+      [data-slot="tabs-trigger"],
+      [data-slot="horizontal-menu"] a,
+      [data-slot="theme-card"]
+    )::after {
+    transition-duration: 0s;
+  }
 }
 
 /* ---------- Sidebar: rail, header, navigation, art, footer ---------- */
 
-/* Rail: a darker glass column, parted from the navigation by a hairline of light
-   instead of a flat border. */
+/* Rail: a darker column parted from the navigation by a single hairline. */
 .rukia [data-slot="guild-rail"] {
   border-right-color: transparent;
   background-color: color-mix(in srgb, var(--sidebar) 45%, transparent);
   background-image: linear-gradient(
     180deg,
     transparent,
-    oklch(0.9 0.04 255 / 0.4) 25%,
-    oklch(0.9 0.04 255 / 0.4) 75%,
+    var(--rukia-hair) 15%,
+    var(--rukia-hair) 85%,
     transparent
   );
   background-repeat: no-repeat;
@@ -1061,15 +961,13 @@
   background-position: right top;
 }
 
-/* Every hairline inside the sidebar fades out at both ends. */
 .rukia [data-slot="sidebar-container"] [data-slot="separator"] {
-  background-color: transparent;
-  background-image: var(--rukia-line);
-  opacity: 0.45;
+  background-color: var(--rukia-hair);
 }
 
+/* Rail avatars are cut square, like ice. */
 .rukia [data-slot="rail-avatar"] {
-  border-radius: 6px;
+  border-radius: 2px;
   transition:
     box-shadow 220ms var(--ease-emphasized),
     translate 160ms var(--ease-emphasized);
@@ -1081,54 +979,54 @@
 
 .rukia [data-slot="rail-avatar"][data-active] {
   box-shadow:
-    0 0 0 1px oklch(0.9 0.05 255 / 0.8),
-    0 0 18px -2px oklch(0.85 0.07 255 / 0.8);
+    0 0 0 1px var(--background),
+    0 0 0 2px var(--rukia-ice);
 }
 
 .rukia a:hover > [data-slot="rail-avatar"]:not([data-active]) {
-  box-shadow: 0 0 14px -2px oklch(0.85 0.07 255 / 0.65);
+  box-shadow:
+    0 0 0 1px var(--background),
+    0 0 0 2px var(--rukia-hair-strong);
 }
 
-/* Header: the Organization name set as an inscription over a hairline of light. */
+/* Header: the Organization name set in Mincho over the double rule. */
 .rukia [data-slot="sidebar-nav-header"] {
   border-bottom-color: transparent;
-  background-image: var(--rukia-line);
+  background-image: var(--rukia-rule);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
+  background-size: 100% 4px;
   background-position: bottom left;
 }
 
 .rukia [data-slot="guild-name"] {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  font-size: 0.92rem;
+  letter-spacing: 0.14em;
   color: var(--rukia-ice);
-  text-shadow: 0 0 12px oklch(0.85 0.07 255 / 0.6);
 }
 
 .rukia [data-slot="pinned-events"] {
   border-bottom-color: transparent;
-  background-image: var(--rukia-line);
+  background-image: var(--rukia-rule);
   background-repeat: no-repeat;
-  background-size: 100% 1px;
+  background-size: 100% 4px;
   background-position: bottom left;
 }
 
-/* Art: Sode no Shirayuki and its ribbon in the lower right, fading in from the top. */
+/* Art: Sode no Shirayuki standing along the right edge, its ribbon rising into the nav. */
 .rukia [data-slot="sidebar-nav"]::after {
   content: "";
   position: absolute;
-  inset: auto 0 0 0;
-  height: 60%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   background-image: url("/themes/rukia/sidebar.webp");
   background-repeat: no-repeat;
-  background-size: 196px auto;
-  background-position: right -2px bottom -6px;
-  opacity: 0.55;
-  mask-image: linear-gradient(180deg, transparent, black 48%);
+  background-size: auto 68%;
+  background-position: right -28px bottom -10px;
+  opacity: 0.5;
+  mask-image: linear-gradient(180deg, transparent 30%, black 62%);
 }
 
 .rukia [data-slot="sidebar-nav"] > * {
@@ -1136,14 +1034,20 @@
   z-index: 1;
 }
 
-/* Footer: the account row sits under a hairline of light, not a border. */
+/* Footer: the account row sits above a double rule. */
 .rukia [data-slot="sidebar-container"] [data-slot="sidebar-footer"] {
   border-top-color: transparent;
   background-color: color-mix(in srgb, var(--sidebar) 55%, transparent);
-  background-image: var(--rukia-line);
-  background-repeat: no-repeat;
-  background-size: 100% 1px;
-  background-position: top left;
+  background-image: linear-gradient(
+    0deg,
+    transparent 0,
+    transparent calc(100% - 4px),
+    var(--rukia-hair) calc(100% - 4px),
+    var(--rukia-hair) calc(100% - 3px),
+    transparent calc(100% - 3px),
+    transparent calc(100% - 1px),
+    var(--rukia-hair) calc(100% - 1px)
+  );
 }
 
 .rukia [data-slot="sidebar-footer"] button:is(:hover, [data-popup-open]) {
@@ -1152,7 +1056,8 @@
 
 .rukia [data-slot="user-menu-name"] {
   font-family: var(--font-display);
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   color: var(--rukia-ice);
 }
 
@@ -1178,8 +1083,8 @@
 .rukia [data-slot="sidebar-container"] {
   background-image:
     linear-gradient(
-      color-mix(in srgb, var(--sidebar) S78%, transparent),
-      color-mix(in srgb, var(--sidebar) S78%, transparent)
+      color-mix(in srgb, var(--sidebar) 78%, transparent),
+      color-mix(in srgb, var(--sidebar) 78%, transparent)
     ),
     var(--theme-background-image);
 }
@@ -1188,35 +1093,4 @@
   [data-slot="sidebar-container"]
   :is([data-slot="sidebar-content"], .bg-sidebar) {
   background-color: transparent;
-}
-
-/* Different particle phases per sibling so no two controls flicker in sync. */
-.rukia
-  :is(
-    button,
-    a,
-    [data-slot="tabs-trigger"],
-    [data-slot="select-trigger"]
-  ):nth-child(2n)::after {
-  animation-delay: -5.3s, -1.1s;
-}
-
-.rukia
-  :is(
-    button,
-    a,
-    [data-slot="tabs-trigger"],
-    [data-slot="select-trigger"]
-  ):nth-child(3n)::after {
-  animation-delay: -11.7s, -2.3s;
-}
-
-.rukia
-  :is(
-    button,
-    a,
-    [data-slot="tabs-trigger"],
-    [data-slot="select-trigger"]
-  ):nth-child(5n + 1)::after {
-  animation-delay: -8.1s, -0.7s;
 }
