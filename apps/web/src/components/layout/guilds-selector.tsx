@@ -160,7 +160,10 @@ export const GuildsSelector: FC = () => {
       : orderedGuilds;
 
   return (
-    <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden">
+    <div
+      data-slot="guild-rail"
+      className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden"
+    >
       <UserNavItem />
       <Separator className="-mt-[1px]" />
       <ScrollArea className="flex-1 h-24">

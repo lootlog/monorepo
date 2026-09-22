@@ -712,7 +712,9 @@
     transparent 70%
   );
   color: var(--rias-rose);
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
+  box-shadow:
+    inset 2px 0 0 var(--rias-crimson),
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
 }
 
 .rias
@@ -1037,29 +1039,63 @@
   }
 }
 
-/* ---------- Sidebar art, rail avatars, guild name ---------- */
+/* ---------- Sidebar: rail, header, navigation, art, footer ---------- */
 
-.rias [data-slot="sidebar-nav"]::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 62%;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url("/themes/rias/sidebar.webp");
+/* Rail: a darker glass column, parted from the navigation by a hairline of light
+   instead of a flat border. */
+.rias [data-slot="guild-rail"] {
+  border-right-color: transparent;
+  background-color: color-mix(in srgb, var(--sidebar) 45%, transparent);
+  background-image: linear-gradient(
+    180deg,
+    transparent,
+    oklch(0.62 0.23 18 / 0.45) 25%,
+    oklch(0.62 0.23 18 / 0.45) 75%,
+    transparent
+  );
   background-repeat: no-repeat;
-  background-size: 210px auto;
-  background-position: right -30px bottom -10px;
-  opacity: 0.55;
-  mask-image: linear-gradient(180deg, transparent, black 45%);
+  background-size: 1px 100%;
+  background-position: right top;
 }
 
-.rias [data-slot="sidebar-nav"] > * {
-  position: relative;
-  z-index: 1;
+/* Every hairline inside the sidebar fades out at both ends. */
+.rias [data-slot="sidebar-container"] [data-slot="separator"] {
+  background-color: transparent;
+  background-image: var(--rias-line);
+  opacity: 0.45;
+}
+
+/* Rail entries: a seal mark grows on the left edge; the active one stays lit.
+   The same left bar marks the active navigation item below. */
+.rias [data-slot="rail-item"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  translate: 0 -50%;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--rias-crimson);
+  box-shadow: 0 0 10px oklch(0.62 0.23 18 / 0.8);
+  opacity: 0;
+  transition:
+    height 200ms var(--ease-emphasized),
+    opacity 200ms var(--ease-emphasized);
+}
+
+.rias [data-slot="rail-item"]:hover::before {
+  height: 12px;
+  opacity: 0.7;
+}
+
+.rias [data-slot="rail-item"][data-active]::before {
+  height: 26px;
+  opacity: 1;
 }
 
 .rias [data-slot="rail-avatar"] {
+  border-radius: 10px;
   transition:
     box-shadow 220ms var(--ease-emphasized),
     translate 160ms var(--ease-emphasized);
@@ -1079,6 +1115,15 @@
   box-shadow: 0 0 14px -2px oklch(0.62 0.23 18 / 0.6);
 }
 
+/* Header: the Organization name set as an inscription over the rose divider. */
+.rias [data-slot="sidebar-nav-header"] {
+  border-bottom-color: transparent;
+  background-image: url("/themes/rias/divider.webp");
+  background-repeat: no-repeat;
+  background-size: 96% auto;
+  background-position: center bottom -3px;
+}
+
 .rias [data-slot="guild-name"] {
   font-family: var(--font-display);
   font-weight: 700;
@@ -1086,6 +1131,63 @@
   letter-spacing: 0.06em;
   color: var(--rias-rose);
   text-shadow: 0 0 12px oklch(0.62 0.23 18 / 0.55);
+}
+
+.rias [data-slot="pinned-events"] {
+  border-bottom-color: transparent;
+  background-image: var(--rias-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
+/* Navigation: idle items answer hover with the same left seal edge as the rail. */
+.rias
+  [data-slot="sidebar-nav"]
+  a
+  > [data-slot="button"][data-variant="ghost"]:hover {
+  box-shadow: inset 2px 0 0 oklch(0.62 0.23 18 / 0.75);
+}
+
+/* Art: chess royalty and roses in the lower right, fading in from the top. */
+.rias [data-slot="sidebar-nav"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 60%;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("/themes/rias/sidebar.webp");
+  background-repeat: no-repeat;
+  background-size: 196px auto;
+  background-position: right -2px bottom -6px;
+  opacity: 0.62;
+  mask-image: linear-gradient(180deg, transparent, black 48%);
+}
+
+.rias [data-slot="sidebar-nav"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Footer: the account row sits under a hairline of light, not a border. */
+.rias [data-slot="sidebar-container"] [data-slot="sidebar-footer"] {
+  border-top-color: transparent;
+  background-color: color-mix(in srgb, var(--sidebar) 55%, transparent);
+  background-image: var(--rias-line);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: top left;
+}
+
+.rias [data-slot="sidebar-footer"] button:is(:hover, [data-popup-open]) {
+  background-color: oklch(0.62 0.23 18 / 0.08);
+}
+
+.rias [data-slot="user-menu-name"] {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--rias-rose);
 }
 
 /* ---------- Shell: one continuous wallpaper under the sidebar and the content ---------- */
@@ -1118,16 +1220,8 @@
 
 .rias
   [data-slot="sidebar-container"]
-  :is(
-    [data-slot="sidebar-content"],
-    [data-slot="sidebar-footer"],
-    .bg-sidebar
-  ) {
+  :is([data-slot="sidebar-content"], .bg-sidebar) {
   background-color: transparent;
-}
-
-.rias [data-slot="sidebar-container"] [data-slot="sidebar-footer"] {
-  background-color: color-mix(in srgb, var(--sidebar) 55%, transparent);
 }
 
 /* Different particle phases per sibling so no two controls flicker in sync. */
