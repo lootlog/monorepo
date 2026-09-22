@@ -712,9 +712,7 @@
     transparent 70%
   );
   color: var(--rias-rose);
-  box-shadow:
-    inset 2px 0 0 var(--rias-crimson),
-    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
+  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
 }
 
 .rias
@@ -1065,35 +1063,6 @@
   opacity: 0.45;
 }
 
-/* Rail entries: a seal mark grows on the left edge; the active one stays lit.
-   The same left bar marks the active navigation item below. */
-.rias [data-slot="rail-item"]::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 3px;
-  height: 0;
-  translate: 0 -50%;
-  border-radius: 0 2px 2px 0;
-  background-color: var(--rias-crimson);
-  box-shadow: 0 0 10px oklch(0.62 0.23 18 / 0.8);
-  opacity: 0;
-  transition:
-    height 200ms var(--ease-emphasized),
-    opacity 200ms var(--ease-emphasized);
-}
-
-.rias [data-slot="rail-item"]:hover::before {
-  height: 12px;
-  opacity: 0.7;
-}
-
-.rias [data-slot="rail-item"][data-active]::before {
-  height: 26px;
-  opacity: 1;
-}
-
 .rias [data-slot="rail-avatar"] {
   border-radius: 10px;
   transition:
@@ -1139,14 +1108,6 @@
   background-repeat: no-repeat;
   background-size: 100% 1px;
   background-position: bottom left;
-}
-
-/* Navigation: idle items answer hover with the same left seal edge as the rail. */
-.rias
-  [data-slot="sidebar-nav"]
-  a
-  > [data-slot="button"][data-variant="ghost"]:hover {
-  box-shadow: inset 2px 0 0 oklch(0.62 0.23 18 / 0.75);
 }
 
 /* Art: chess royalty and roses in the lower right, fading in from the top. */
