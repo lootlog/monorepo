@@ -554,8 +554,7 @@
     url("/themes/rias/corner-grand-tl.webp"),
     url("/themes/rias/corner-grand-tr.webp"),
     url("/themes/rias/corner-grand-bl.webp"),
-    url("/themes/rias/corner-grand-br.webp"),
-    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.1), transparent 36%);
+    url("/themes/rias/corner-grand-br.webp"), none;
   background-repeat: no-repeat;
   background-size:
     100% 1px,
@@ -573,13 +572,14 @@
     left -6px bottom -6px,
     right -6px bottom -6px,
     0 0;
-  /* The corners stay on the edges and fade before the content area. */
+  /* The corners are kept by four round masks at the corners themselves, not by
+     bands along the edges: bands read as a vignette and bulge the middle. */
   mask-image:
     linear-gradient(#000, #000),
-    linear-gradient(to right, #000 8px, transparent 34px),
-    linear-gradient(to left, #000 8px, transparent 34px),
-    linear-gradient(to top, #000 8px, transparent 30px),
-    linear-gradient(to bottom, #000 10px, transparent 34px);
+    radial-gradient(circle at 0 0, #000 70px, transparent 150px),
+    radial-gradient(circle at 100% 0, #000 70px, transparent 150px),
+    radial-gradient(circle at 0 100%, #000 70px, transparent 150px),
+    radial-gradient(circle at 100% 100%, #000 70px, transparent 150px);
   mask-size:
     100% 2px,
     100% 100%,
