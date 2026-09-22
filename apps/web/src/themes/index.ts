@@ -22,3 +22,12 @@ export {
 } from "./resolver";
 
 export { useThemeMeta } from "./use-theme-meta";
+
+export { ThemeEffectsController } from "./effects/theme-effects-controller";
+
+export { useThemeEffects } from "./effects/use-theme-effects";
+
+export {
+  THEME_EFFECTS_LEVELS,
+  type ThemeEffectsLevel,
+} from "./effects/theme-effects";
