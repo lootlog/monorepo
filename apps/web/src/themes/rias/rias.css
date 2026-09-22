@@ -80,7 +80,16 @@
   --font-display:
     "Cinzel Variable", "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia,
     serif;
-  --radius: 0.625rem;
+  /* Rias is cut square: every surface, control and tile has sharp corners. */
+  --radius: 0;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
   --shadow-xs:
     0 1px 0 oklch(0.62 0.23 18 / 0.12), 0 8px 24px -12px oklch(0 0 0 / 0.6);
   --shadow-sm:
@@ -686,7 +695,6 @@
     [data-slot="tabs-trigger"],
     [data-slot="horizontal-menu"] a
   ):not([data-slot="toggle-group-item"], [data-day], [data-slot="theme-card"]) {
-  border-radius: 0;
   scale: 1;
 }
 
@@ -704,10 +712,6 @@
     [data-slot="theme-card"]
   ):not(:disabled, [data-disabled]):active {
   scale: 0.97;
-}
-
-.rias :is([data-slot="tabs-list"], [data-slot="toggle-group"]) {
-  border-radius: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -982,7 +986,6 @@
 
 .rias [data-slot="checkbox"] {
   border-color: oklch(0.62 0.23 18 / 0.6);
-  border-radius: 3px;
 }
 
 .rias [data-slot="checkbox"][data-checked] {
@@ -1228,7 +1231,7 @@
 }
 
 .rias [data-slot="rail-avatar"] {
-  border-radius: 10px;
+  border-radius: 0;
   transition:
     box-shadow 220ms var(--ease-emphasized),
     translate 160ms var(--ease-emphasized);
