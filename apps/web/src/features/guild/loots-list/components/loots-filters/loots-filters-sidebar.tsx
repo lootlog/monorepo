@@ -145,9 +145,9 @@ export const LootsFiltersSidebar = (
               <div>
                 <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
                   <div className="flex min-h-7 items-center justify-between">
-                    <Label className="text-sm font-semibold">
+                    <h3 className="text-sm font-semibold">
                       {t("loots.filtersPanel.quickFilters.title")}
-                    </Label>
+                    </h3>
                     {canSaveCurrentFilter && (
                       <Button
                         onClick={() => setIsDialogOpen(true)}
