@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
 import { ChevronUp, LogOut, Settings, User2 } from "lucide-react";
-import { Button } from "@lootlog/ui/components/button";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useUser } from "@/hooks/api/user/use-user";
@@ -70,7 +69,10 @@ export const UserMenu = () => {
                   <span className="text-[11px] font-medium leading-none text-sidebar-foreground/55">
                     {t("layout.userMenu.account")}
                   </span>
-                  <span className="max-w-full truncate text-sm font-bold leading-none">
+                  <span
+                    data-slot="user-menu-name"
+                    className="max-w-full truncate text-sm font-bold leading-none"
+                  >
                     {user.name}
                   </span>
                 </div>
@@ -135,14 +137,14 @@ export const UserMenu = () => {
               <DropdownMenuItem
                 closeOnClick={false}
                 disabled={isLogoutPending}
-                render=<Button
-                  variant="ghost"
-                  loading={isLogoutPending}
-                  icon={<LogOut className="size-4" />}
-                />
                 onClick={logout}
-                className="w-full justify-start rounded-lg px-2.5 py-2"
+                className="rounded-lg px-2.5 py-2"
               >
+                {isLogoutPending ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <LogOut className="size-4" />
+                )}
                 <span>{t("ui.actions.logout")}</span>
               </DropdownMenuItem>
             </div>

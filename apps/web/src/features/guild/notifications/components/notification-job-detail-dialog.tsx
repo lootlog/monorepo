@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -60,14 +61,14 @@ export const NotificationJobDetailDialog = ({
 
   return (
     <Dialog open={job !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-xl">
-        <DialogHeader className="border-b bg-muted/30 px-5 py-4">
-          <DialogTitle className="px-0 pt-0 text-base">
+      <DialogContent className="max-h-[90vh] sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>
             {t("settings.notifications.jobDetail.title")}
           </DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[calc(90vh-180px)]">
-          <div className="flex flex-col gap-5 px-5 py-5">
+        <ScrollArea className="min-h-0 flex-1">
+          <DialogBody className="flex flex-col gap-5">
             <section>
               <SectionCardHeader
                 title={t("settings.notifications.jobDetail.sectionOverview")}
@@ -223,7 +224,7 @@ export const NotificationJobDetailDialog = ({
                 </p>
               </div>
             ) : null}
-          </div>
+          </DialogBody>
         </ScrollArea>
       </DialogContent>
     </Dialog>

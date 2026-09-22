@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -86,24 +87,28 @@ export const GuildDocCreateDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4 px-4 pb-4 pt-1" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="guild-doc-title">{t("docs.list.titleLabel")}</Label>
-            <Input
-              id="guild-doc-title"
-              name="guild-doc-title"
-              autoComplete="off"
-              value={title}
-              maxLength={120}
-              placeholder={t("docs.list.titlePlaceholder")}
-              onChange={(event) => setTitle(event.target.value)}
-            />
-            {titleTooLong && (
-              <p className="text-xs text-destructive">
-                {t("docs.editor.titleTooLong")}
-              </p>
-            )}
-          </div>
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+          <DialogBody className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="guild-doc-title">
+                {t("docs.list.titleLabel")}
+              </Label>
+              <Input
+                id="guild-doc-title"
+                name="guild-doc-title"
+                autoComplete="off"
+                value={title}
+                maxLength={120}
+                placeholder={t("docs.list.titlePlaceholder")}
+                onChange={(event) => setTitle(event.target.value)}
+              />
+              {titleTooLong && (
+                <p className="text-xs text-destructive">
+                  {t("docs.editor.titleTooLong")}
+                </p>
+              )}
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button

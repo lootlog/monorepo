@@ -25,7 +25,10 @@ export const KpiCard = ({
   className,
 }: KpiCardProps) => {
   return (
-    <SectionCard className={cn("flex min-w-0 flex-col gap-2 p-3", className)}>
+    <SectionCard
+      data-ornament="minor"
+      className={cn("flex min-w-0 flex-col gap-2 p-3", className)}
+    >
       <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground">
         <Icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
         <span className="truncate">{label}</span>
@@ -38,6 +41,7 @@ export const KpiCard = ({
       ) : (
         <>
           <div
+            data-slot="kpi-value"
             className={cn(
               "animate-content-in truncate text-2xl font-semibold leading-7 tabular-nums",
               valueClassName,

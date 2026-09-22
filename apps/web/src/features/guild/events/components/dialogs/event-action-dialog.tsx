@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -79,10 +80,12 @@ const EventActionDialogSimple = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t(titleKey)}</AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogBody>
           <AlertDialogDescription>
             {t(descriptionKey, { name: eventName })}
           </AlertDialogDescription>
-        </AlertDialogHeader>
+        </AlertDialogBody>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>
             {t("common.cancel")}
@@ -146,37 +149,39 @@ const EventActionDialogWithConfirmation = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t(titleKey)}</AlertDialogTitle>
+        </AlertDialogHeader>
+
+        <AlertDialogBody className="space-y-4">
           <AlertDialogDescription>
             {t(descriptionKey, { name: eventName })}
           </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="space-y-2">
-          <Label htmlFor={inputId}>
-            {t(
-              "events.deleteDialog.confirmLabel",
-              "Wpisz nazwę eventu, aby potwierdzić",
-            )}
-          </Label>
-          <Input
-            id={inputId}
-            value={confirmationValue}
-            onChange={(e) => setConfirmationValue(e.target.value)}
-            placeholder={t(
-              "events.deleteDialog.confirmPlaceholder",
-              "Nazwa eventu",
-            )}
-            autoComplete="off"
-            disabled={isPending}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t(
-              "events.deleteDialog.confirmHint",
-              "Aby usunąć event, wpisz dokładnie: {{name}}",
-              { name: eventName },
-            )}
-          </p>
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor={inputId}>
+              {t(
+                "events.deleteDialog.confirmLabel",
+                "Wpisz nazwę eventu, aby potwierdzić",
+              )}
+            </Label>
+            <Input
+              id={inputId}
+              value={confirmationValue}
+              onChange={(e) => setConfirmationValue(e.target.value)}
+              placeholder={t(
+                "events.deleteDialog.confirmPlaceholder",
+                "Nazwa eventu",
+              )}
+              autoComplete="off"
+              disabled={isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "events.deleteDialog.confirmHint",
+                "Aby usunąć event, wpisz dokładnie: {{name}}",
+                { name: eventName },
+              )}
+            </p>
+          </div>
+        </AlertDialogBody>
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>

@@ -2,12 +2,12 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { BookOpen, Scale } from "lucide-react";
 import { EventScoringRulesSummary } from "./event-scoring-rules-summary";
 import type {
@@ -40,54 +40,50 @@ export const EventRulesDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
-          <DialogTitle className="text-base">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>
             {t("events.rulesDialog.title", "Zasady eventu")}
           </DialogTitle>
-          <DialogDescription className="text-xs mt-0.5">
-            {eventName}
-          </DialogDescription>
+          <DialogDescription>{eventName}</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
-          <div className="p-5 space-y-5">
-            <div className="space-y-2">
-              <SectionCardHeader
-                icon={BookOpen}
-                title={t("events.rulesDialog.rulebookTitle")}
-              />
-              {hasRulebook ? (
-                <div className="p-3">
-                  <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">
-                    {rulebookMarkdown}
-                  </pre>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  {t(
-                    "events.rulesDialog.noRulebook",
-                    "Brak opisanego regulaminu dla tego eventu.",
-                  )}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <SectionCardHeader
-                icon={Scale}
-                title={t("events.rulesDialog.scoringTitle")}
-              />
+        <DialogBody className="space-y-5 overflow-y-auto">
+          <div className="space-y-2">
+            <SectionCardHeader
+              icon={BookOpen}
+              title={t("events.rulesDialog.rulebookTitle")}
+            />
+            {hasRulebook ? (
               <div className="p-3">
-                <EventScoringRulesSummary
-                  scoringMode={scoringMode}
-                  rules={scoringRules}
-                  t={t}
-                />
+                <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">
+                  {rulebookMarkdown}
+                </pre>
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "events.rulesDialog.noRulebook",
+                  "Brak opisanego regulaminu dla tego eventu.",
+                )}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <SectionCardHeader
+              icon={Scale}
+              title={t("events.rulesDialog.scoringTitle")}
+            />
+            <div className="p-3">
+              <EventScoringRulesSummary
+                scoringMode={scoringMode}
+                rules={scoringRules}
+                t={t}
+              />
             </div>
           </div>
-        </ScrollArea>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

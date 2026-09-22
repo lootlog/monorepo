@@ -3,6 +3,7 @@ import { Reorder } from "framer-motion";
 import { Settings2, RotateCcw } from "lucide-react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -115,13 +116,13 @@ export const StatsCustomizationModal = ({
       ) : (
         <DialogTrigger render={triggerButton} />
       )}
-      <DialogContent className="max-sm:w-screen max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0 py-4">
+      <DialogContent className="max-sm:w-screen max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh]">
+        <DialogHeader>
           <DialogTitle>{t("battleUi.customization.title")}</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 max-sm:px-2 sm:px-1">
-          <div className="space-y-4 p-4">
+        <ScrollArea className="min-h-0 flex-1">
+          <DialogBody className="space-y-4">
             <div className="text-sm text-muted-foreground">
               {t("battleUi.customization.description")}
             </div>
@@ -183,10 +184,10 @@ export const StatsCustomizationModal = ({
             </Reorder.Group>
 
             <AddCategoryForm onAddCategory={onAddCategory} />
-          </div>
+          </DialogBody>
         </ScrollArea>
 
-        <DialogFooter className="flex-shrink-0 gap-2 p-4">
+        <DialogFooter>
           <Button
             variant="outline"
             onClick={onResetToDefaults}
