@@ -78,38 +78,38 @@
   --rias-well: oklch(0.075 0.012 350);
   --rias-silver: oklch(0.86 0.012 300);
   --rias-eye: oklch(0.7 0.13 250);
-  /* The hairline of light: crimson at the ends, rose at the centre. */
+  /* The hairline: dull crimson fading out at both ends, lifting only a little in the
+     middle. It is a metal rod catching light, not a light source. */
   --rias-line: linear-gradient(
     90deg,
     transparent,
-    var(--rias-crimson) 20%,
-    var(--rias-rose) 50%,
-    var(--rias-crimson) 80%,
+    oklch(0.5 0.19 18) 18%,
+    oklch(0.62 0.2 18) 50%,
+    oklch(0.5 0.19 18) 82%,
     transparent
   );
   --rias-line-halo: linear-gradient(
     90deg,
     transparent,
-    oklch(0.62 0.23 18 / 0.35) 30%,
-    oklch(0.9 0.06 10 / 0.45) 50%,
-    oklch(0.62 0.23 18 / 0.35) 70%,
+    oklch(0.62 0.23 18 / 0.14) 30%,
+    oklch(0.62 0.23 18 / 0.22) 50%,
+    oklch(0.62 0.23 18 / 0.14) 70%,
     transparent
   );
   /* Blackened metal: a light along the top edge, a shadow under the bottom one. */
   --rias-metal-edge:
-    inset 0 1px 0 oklch(0.72 0.07 45 / 0.22), inset 0 -1px 0 oklch(0 0 0 / 0.55);
+    inset 0 1px 0 oklch(0.72 0.07 45 / 0.1), inset 0 -1px 0 oklch(0 0 0 / 0.35);
   /* The scene is lit from the right; main panels catch the same light on their right edge. */
   --rias-right-reflex: inset -1px 0 0 oklch(0.62 0.23 18 / 0.16);
-  /* Enamel set into a bezel: gloss on top, iron ring, rose-gold rim below. */
+  /* Enamel set into a bezel: a flat fill with the faintest fall-off, held by an
+     iron ring. No gloss and no rim; the surface reads as matte, not domed. */
   --rias-enamel-fill: linear-gradient(
     180deg,
-    var(--rias-enamel-lit),
-    var(--rias-enamel) 55%,
-    oklch(0.42 0.19 18)
+    var(--rias-enamel),
+    oklch(0.46 0.2 19)
   );
   --rias-enamel-bezel:
-    inset 0 1px 0 oklch(1 0 0 / 0.26), inset 0 0 0 1px oklch(0.2 0.02 350),
-    inset 0 -1px 0 oklch(0 0 0 / 0.5), 0 1px 0 oklch(0.72 0.07 45 / 0.28);
+    inset 0 0 0 1px oklch(0.2 0.02 350), inset 0 -1px 0 oklch(0 0 0 / 0.25);
   --font-display:
     "Cinzel Variable", "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia,
     serif;
@@ -303,16 +303,20 @@
   box-shadow: var(--rias-metal-edge), var(--shadow-xs);
 }
 
-/* Section headers: the hairline and its halo, drawn crimson-to-rose. */
-.rias [data-slot="section-card-header"] {
+/* Section headers: a thorned vine wound along the hairline. The vine is a fixed
+   height and centred, never stretched; the hairline underneath spans the width. */
+.rias [data-slot="section-card-header"],
+.rias [data-slot="app-top-bar"],
+.rias [data-slot="table-header"],
+.rias [data-slot="dialog-content"] [data-slot="command-input-wrapper"] {
   border-bottom-color: transparent;
-  background-image: var(--rias-line), var(--rias-line-halo);
+  background-image: url("/themes/rias/rule.webp"), var(--rias-line);
   background-repeat: no-repeat;
   background-size:
-    100% 1px,
-    100% 3px;
+    auto 14px,
+    100% 1px;
   background-position:
-    bottom left,
+    bottom -3px center,
     bottom left;
 }
 
@@ -333,8 +337,7 @@
   border-color: var(--rias-iron-lit);
   background-color: oklch(0.17 0.032 352);
   box-shadow:
-    inset 0 1px 0 oklch(0.72 0.07 45 / 0.34),
-    inset 0 -1px 0 oklch(0 0 0 / 0.55),
+    var(--rias-metal-edge),
     0 0 0 1px oklch(0.62 0.23 18 / 0.14),
     var(--shadow-xs);
 }
@@ -429,8 +432,8 @@
   /* Rarity colour stays on the border (from the component); the well and the
      bezel come from here. The glow is set per rarity below. */
   box-shadow:
-    inset 0 0 0 1px oklch(0 0 0 / 0.85),
-    inset 0 2px 5px oklch(0 0 0 / 0.75),
+    inset 0 0 0 1px oklch(0 0 0 / 0.7),
+    inset 0 1px 3px oklch(0 0 0 / 0.5),
     0 0 0 1px var(--rias-iron),
     var(--rias-item-glow, 0 0 0 0 transparent);
 }
@@ -527,8 +530,7 @@
   border-color: var(--rias-iron-lit);
   box-shadow:
     0 0 0 1px oklch(0 0 0 / 0.7),
-    inset 0 1px 0 oklch(0.72 0.07 45 / 0.3),
-    inset 0 -1px 0 oklch(0 0 0 / 0.6),
+    inset 0 1px 0 oklch(0.72 0.07 45 / 0.12),
     0 40px 90px -30px oklch(0 0 0 / 0.95),
     0 0 80px -16px oklch(0.62 0.23 18 / 0.4);
   isolation: isolate;
@@ -657,6 +659,43 @@
     inset 0 0 0 1px oklch(0.66 0.22 18 / 0.8),
     var(--rias-metal-edge),
     0 0 14px -4px oklch(0.62 0.23 18 / 0.7);
+}
+
+/* The search palette: the command surface is part of the dialog, not a box over it.
+   Its input row is the dialog's header, drawn over the hairline, with the close
+   control tucked into the corner clear of the field. */
+.rias [data-slot="dialog-content"] > [data-slot="command"] {
+  background-color: transparent;
+}
+
+.rias [data-slot="dialog-content"] [data-slot="command-input-wrapper"] {
+  height: 3.25rem;
+  padding-right: 3.25rem;
+}
+
+.rias [data-slot="dialog-content"] [data-slot="command-input-wrapper"] svg {
+  color: var(--rias-crimson);
+}
+
+.rias [data-slot="dialog-content"] [data-slot="command-input"] {
+  font-size: 1rem;
+  box-shadow: none;
+}
+
+.rias
+  [data-slot="dialog-content"]
+  [data-slot="command"]
+  ~ [data-slot="dialog-close"] {
+  top: 12px;
+  right: 12px;
+}
+
+.rias [data-slot="dialog-content"] [cmdk-group-heading] {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: oklch(0.72 0.08 15);
 }
 
 .rias :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
@@ -946,13 +985,12 @@
   ):hover {
   background-image: linear-gradient(
     180deg,
-    oklch(0.62 0.22 20),
-    oklch(0.53 0.21 20) 55%,
-    oklch(0.45 0.2 18)
+    var(--rias-enamel-lit),
+    oklch(0.5 0.2 19)
   );
   box-shadow:
     var(--rias-enamel-bezel),
-    0 0 18px -6px oklch(0.62 0.23 18 / 0.6);
+    0 0 16px -6px oklch(0.62 0.23 18 / 0.5);
 }
 
 .rias
@@ -965,9 +1003,7 @@
     oklch(0.44 0.19 18),
     oklch(0.47 0.2 20)
   );
-  box-shadow:
-    inset 0 2px 4px oklch(0 0 0 / 0.5),
-    inset 0 0 0 1px oklch(0.2 0.02 350);
+  box-shadow: inset 0 0 0 1px oklch(0.2 0.02 350);
 }
 
 /* Outline / ghost / secondary: iron frames; hover is a reflex on the frame. */
@@ -994,8 +1030,7 @@
   background-color: oklch(0.16 0.03 352);
   color: var(--rias-rose);
   box-shadow:
-    inset 0 1px 0 oklch(0.72 0.07 45 / 0.34),
-    inset 0 -1px 0 oklch(0 0 0 / 0.55),
+    var(--rias-metal-edge),
     0 0 14px -6px oklch(0.62 0.23 18 / 0.5);
 }
 
@@ -1204,9 +1239,7 @@
   ):not([data-slot="input-group-control"], [cmdk-input]) {
   border-color: var(--rias-iron-lit);
   background-color: oklch(0.11 0.02 352);
-  box-shadow:
-    inset 0 1px 3px oklch(0 0 0 / 0.55),
-    inset 0 -1px 0 oklch(0.72 0.07 45 / 0.08);
+  box-shadow: none;
   transition:
     border-color 160ms var(--ease-emphasized),
     background-color 160ms var(--ease-emphasized),
@@ -1237,7 +1270,7 @@
 
 .rias [data-slot="switch"][data-unchecked] {
   background-color: var(--rias-well);
-  box-shadow: inset 0 0 0 1px var(--rias-iron-lit);
+  box-shadow: 0 0 0 1px var(--rias-iron-lit);
 }
 
 .rias [data-slot="switch-thumb"][data-checked] {
@@ -1253,9 +1286,7 @@
 .rias [data-slot="checkbox"] {
   border-color: oklch(0.62 0.2 18 / 0.85);
   background-color: var(--rias-well);
-  box-shadow:
-    inset 0 1px 3px oklch(0 0 0 / 0.7),
-    0 0 0 1px oklch(0 0 0 / 0.5);
+  box-shadow: none;
 }
 
 .rias [data-slot="checkbox"]:hover:not([data-checked]) {
@@ -1268,20 +1299,16 @@
   background-image: var(--rias-enamel-fill);
   border-color: oklch(0.25 0.03 350);
   color: #fff;
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.26),
-    0 0 10px -3px oklch(0.62 0.23 18 / 0.6);
+  box-shadow: 0 0 10px -3px oklch(0.62 0.23 18 / 0.6);
 }
 
 .rias [data-slot="checkbox-indicator"] svg {
   stroke-width: 3;
-  filter: drop-shadow(0 1px 0 oklch(0 0 0 / 0.5));
 }
 
 .rias [data-slot="radio-group-item"] {
   border-color: oklch(0.62 0.2 18 / 0.7);
   background-color: var(--rias-well);
-  box-shadow: inset 0 1px 3px oklch(0 0 0 / 0.7);
 }
 
 .rias [data-slot="radio-group-item"][data-checked] {
@@ -1297,14 +1324,6 @@
 
 .rias [data-slot="table-header"] {
   background-color: transparent;
-  background-image: var(--rias-line), var(--rias-line-halo);
-  background-repeat: no-repeat;
-  background-size:
-    100% 1px,
-    100% 3px;
-  background-position:
-    bottom left,
-    bottom left;
 }
 
 .rias [data-slot="table-header"].sticky {
@@ -1415,7 +1434,6 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
-  box-shadow: inset 0 1px 3px oklch(0 0 0 / 0.7);
 }
 
 .rias [data-slot="stat-medallion"] svg {
@@ -1447,15 +1465,6 @@
 
 .rias [data-slot="app-top-bar"] {
   background-color: color-mix(in srgb, var(--background) 88%, transparent);
-  border-bottom-color: transparent;
-  background-image: var(--rias-line), var(--rias-line-halo);
-  background-repeat: no-repeat;
-  background-size:
-    100% 1px,
-    100% 3px;
-  background-position:
-    bottom left,
-    bottom left;
 }
 
 .rias [data-slot="sidebar-container"] {
@@ -1825,9 +1834,7 @@
   background-image: none;
   background-color: oklch(0.2 0.035 70 / 0.55);
   border-color: oklch(0.7 0.1 75 / 0.4);
-  box-shadow:
-    inset 0 1px 0 oklch(0.85 0.1 85 / 0.22),
-    inset 0 -1px 0 oklch(0 0 0 / 0.5);
+  box-shadow: none;
 }
 
 /* Footer: the account row sits under a hairline of light, not a border. */
