@@ -475,7 +475,7 @@
     [data-slot="tabs-trigger"],
     [data-slot="horizontal-menu"] a,
     [data-slot="theme-card"]
-  ):not([data-slot="toggle-group-item"], [data-day]) {
+  ):not([data-slot="toggle-group-item"], [data-day], .fixed, .absolute) {
   position: relative;
   isolation: isolate;
   transition:

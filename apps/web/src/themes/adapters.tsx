@@ -23,12 +23,6 @@ const RukiaEmptyStateIcon = lazy(() =>
   })),
 );
 
-const RiasEmptyStateIcon = lazy(() =>
-  import("./rias/rias-empty-state-icon").then((module) => ({
-    default: module.RiasEmptyStateIcon,
-  })),
-);
-
 const getSpinnerOverride = (
   isCatTheme: boolean,
   isRukiaTheme: boolean,
@@ -93,7 +87,7 @@ export const ThemeEmptyStateIcon = ({
   className?: string;
   fallback?: ReactNode;
 }) => {
-  const { isCatTheme, isRukiaTheme, isRiasTheme } = useThemeMeta();
+  const { isCatTheme, isRukiaTheme } = useThemeMeta();
 
   if (isCatTheme) {
     return (
@@ -107,14 +101,6 @@ export const ThemeEmptyStateIcon = ({
     return (
       <Suspense fallback={<>{fallback}</>}>
         <RukiaEmptyStateIcon className={className} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{fallback}</>}>
-        <RiasEmptyStateIcon className={className} />
       </Suspense>
     );
   }
