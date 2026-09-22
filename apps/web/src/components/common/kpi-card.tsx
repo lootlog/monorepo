@@ -38,6 +38,7 @@ export const KpiCard = ({
       ) : (
         <>
           <div
+            data-slot="kpi-value"
             className={cn(
               "animate-content-in truncate text-2xl font-semibold leading-7 tabular-nums",
               valueClassName,

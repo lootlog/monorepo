@@ -120,12 +120,17 @@ export const LootsFiltersSidebar = (
 
       <div
         className={cn(
-          "h-full flex shrink-0 flex-col bg-background",
-          embeddedValue(embedded, "w-full p-0", "w-[340px] py-3 pr-3"),
+          "h-full flex shrink-0 flex-col",
+          embeddedValue(
+            embedded,
+            "w-full p-0 bg-background",
+            "w-[340px] py-3 pr-3",
+          ),
           className,
         )}
       >
         <div
+          data-slot="filters-panel"
           className={cn(
             "flex min-h-0 flex-1 flex-col overflow-hidden bg-filters-sidebar",
             embeddedValue(
@@ -267,7 +272,8 @@ export const LootsFiltersSidebar = (
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0.96 }}
                 style={{ transformOrigin: "bottom" }}
-                className="overflow-hidden border-t border-border bg-background/95 px-3"
+                data-slot="filters-panel-footer"
+                className="overflow-hidden border-t border-border bg-filters-sidebar px-3"
               >
                 <div className="flex h-14 w-full items-center">
                   <Button

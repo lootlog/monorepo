@@ -12,7 +12,6 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -26,15 +25,16 @@ export const UserNavItem = () => {
   const { t } = useTranslation();
   const { data } = useSession();
   const { pathname } = useLocation();
-  const { isRukiaTheme } = useThemeMeta();
 
   const isActive = pathname.startsWith("/@me");
 
   const avatarElement = (
     <Avatar
+      data-slot="rail-avatar"
+      data-active={isActive || undefined}
       className={cn(
         "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
-        isActive && !isRukiaTheme && "after:opacity-100",
+        isActive && "after:opacity-100",
       )}
     >
       <AvatarImage src={data?.user.image ?? ""} alt="" />
@@ -55,9 +55,7 @@ export const UserNavItem = () => {
               className="block"
               onClick={handleClick}
             >
-              <ThemeCircularFrame isActive={isActive}>
-                {avatarElement}
-              </ThemeCircularFrame>
+              {avatarElement}
             </Link>
           </div>
         }
