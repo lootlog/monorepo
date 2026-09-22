@@ -166,7 +166,8 @@ export const GuildsSelector: FC = () => {
     >
       <UserNavItem />
       <Separator className="-mt-[1px]" />
-      <ScrollArea className="flex-1 h-24">
+      {/* The rail is too narrow for a scrollbar; it scrolls with the wheel only. */}
+      <ScrollArea className="h-24 flex-1 [&>[data-slot=scroll-area-scrollbar]]:hidden">
         {(guildsQuery.isError && !guilds) ||
         (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
           <div className="flex h-12 items-center justify-center">
