@@ -325,6 +325,16 @@
     bottom left;
 }
 
+/* A table that sits under a section header already has the vine above it;
+   its own header row keeps the plain hairline so the two never stack. */
+.rias
+  [data-slot="card"]:has([data-slot="section-card-header"])
+  [data-slot="table-header"] {
+  background-image: var(--rias-line);
+  background-size: 100% 1px;
+  background-position: bottom left;
+}
+
 /* Card headers carry the inscription alone, no icon, set in from the edge. */
 .rias [data-slot="section-card-header"] {
   padding-inline: 1.25rem;
@@ -711,7 +721,7 @@
     [data-slot="tabs-trigger"],
     [data-slot="horizontal-menu"] a,
     [data-slot="theme-card"]
-  ):not([data-slot="toggle-group-item"], [data-day]) {
+  ):not([data-slot="toggle-group-item"], [data-day], .fixed, .absolute) {
   position: relative;
   isolation: isolate;
   transition:

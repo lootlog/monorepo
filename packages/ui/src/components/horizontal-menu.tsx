@@ -48,6 +48,9 @@ export function HorizontalMenu({
       if (!active) return;
 
       if (activeChanged || recenter) scheduleReveal(active);
+      // A web font that lands after mount reflows the links without resizing the
+      // list, so the active link itself is what the observer has to watch.
+      resize.observe(active);
       highlight.style.width = `${active.offsetWidth}px`;
       highlight.style.height = `${active.offsetHeight}px`;
       highlight.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
@@ -61,11 +64,11 @@ export function HorizontalMenu({
       scheduleReveal(link);
     };
 
-    list.addEventListener("click", onInteraction);
-    update();
     const resize = new ResizeObserver(() => update(true));
     resize.observe(list);
     resize.observe(viewport);
+    list.addEventListener("click", onInteraction);
+    update();
     const mutation = new MutationObserver(() => update());
     mutation.observe(list, {
       subtree: true,
