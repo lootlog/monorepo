@@ -1291,7 +1291,7 @@
   background-position: bottom left;
 }
 
-/* Art: a garland of roses and a chess queen lying along the foot of the navigation. */
+/* Art: a crimson wax seal framed by roses and gold filigree, centered along the foot of the navigation. */
 .rias [data-slot="sidebar-nav"]::after {
   content: "";
   position: absolute;
@@ -1301,8 +1301,8 @@
   pointer-events: none;
   background-image: url("/themes/rias/sidebar.webp");
   background-repeat: no-repeat;
-  background-size: 112% auto;
-  background-position: right -8px bottom -4px;
+  background-size: 100% auto;
+  background-position: center bottom;
   opacity: 0.8;
   mask-image: linear-gradient(180deg, transparent, black 40%);
 }
