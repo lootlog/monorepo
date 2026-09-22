@@ -53,7 +53,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-lg border p-0 shadow-lg transition-[scale,opacity] duration-200 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 motion-reduce:transition-none sm:max-w-lg",
+          "bg-background fixed top-[50%] left-[50%] z-50 flex w-full max-w-[calc(100%-2rem)] max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden rounded-lg border p-0 shadow-lg transition-[scale,opacity] duration-200 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 motion-reduce:transition-none sm:max-w-lg",
           className,
         )}
         {...props}
@@ -74,11 +74,39 @@ function DialogContent({
   );
 }
 
+/*
+ * One dialog anatomy for the whole product: a header on a hairline, a body
+ * that owns the padding and the scrolling, and a footer on a hairline. The
+ * spacing lives here so every dialog and every theme inherits the same box.
+ */
+export const DIALOG_HEADER_CLASS =
+  "flex shrink-0 flex-col gap-1 border-b border-border px-5 py-4 pr-14 text-left";
+
+export const DIALOG_BODY_CLASS = "min-h-0 flex-1 px-5 py-4";
+
+export const DIALOG_FOOTER_CLASS =
+  "flex shrink-0 flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-end";
+
+export const DIALOG_TITLE_CLASS = "text-base leading-tight font-semibold";
+
+export const DIALOG_DESCRIPTION_CLASS = "text-muted-foreground text-sm";
+
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn(DIALOG_HEADER_CLASS, className)}
+      {...props}
+    />
+  );
+}
+
+/** The scrollable middle of a dialog. Pass `overflow-y-auto` when the content may grow. */
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn(DIALOG_BODY_CLASS, className)}
       {...props}
     />
   );
@@ -88,10 +116,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-        className,
-      )}
+      className={cn(DIALOG_FOOTER_CLASS, className)}
       {...props}
     />
   );
@@ -101,7 +126,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg leading-none font-semibold px-4 pt-4", className)}
+      className={cn(DIALOG_TITLE_CLASS, className)}
       {...props}
     />
   );
@@ -114,7 +139,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm px-4", className)}
+      className={cn(DIALOG_DESCRIPTION_CLASS, className)}
       {...props}
     />
   );
@@ -122,6 +147,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

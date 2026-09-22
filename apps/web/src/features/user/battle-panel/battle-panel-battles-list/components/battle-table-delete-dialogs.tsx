@@ -1,6 +1,7 @@
 import type { Battle } from "@/lib/api/battlelog-types";
 import {
   AlertDialog,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -48,12 +49,14 @@ export const BattleTableDeleteDialogs = ({
             <AlertDialogTitle>
               {t("battlePanel.bulk.deleteDialog.title")}
             </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogBody>
             <AlertDialogDescription>
               {t("battlePanel.bulk.deleteDialog.description", {
                 count: selectedCount,
               })}
             </AlertDialogDescription>
-          </AlertDialogHeader>
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeletePending}>
               {t("common.cancel")}
@@ -80,10 +83,12 @@ export const BattleTableDeleteDialogs = ({
             <AlertDialogTitle>
               {t("battlePanel.dialogs.deleteBattle.title")}
             </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogBody>
             <AlertDialogDescription>
               {t("battlePanel.dialogs.deleteBattle.description")}
             </AlertDialogDescription>
-          </AlertDialogHeader>
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeletePending}>
               {t("common.cancel")}

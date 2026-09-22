@@ -1,6 +1,7 @@
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -97,10 +98,12 @@ export const MemberDeactivationButton = ({
           <AlertDialogTitle>
             {t("settings.members.deactivateConfirmTitle")}
           </AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogBody>
           <AlertDialogDescription>
             {t("settings.members.deactivateConfirmDescription")}
           </AlertDialogDescription>
-        </AlertDialogHeader>
+        </AlertDialogBody>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deactivateMemberMutation.isPending}>
             {t("common.cancel")}

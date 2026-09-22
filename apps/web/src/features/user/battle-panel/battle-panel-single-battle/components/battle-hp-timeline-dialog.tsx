@@ -11,6 +11,7 @@ import { BattleHpTimelinePlot } from "@/features/user/battle-panel/battle-panel-
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -81,14 +82,12 @@ export function BattleHpTimelineDialog({
         />
         <TooltipContent>{openLabel}</TooltipContent>
       </Tooltip>
-      <DialogContent className="flex h-[88dvh] max-h-[900px] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100vw-2rem)] xl:max-w-[1500px] max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none">
-        <DialogHeader className="shrink-0 border-b px-4 py-3 pr-12">
-          <DialogTitle className="px-0 pt-0 text-base">
-            {t("battlePanel.single.chart.dialogTitle")}
-          </DialogTitle>
+      <DialogContent className="h-[88dvh] max-h-[900px] w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-2rem)] xl:max-w-[1500px] max-sm:h-dvh max-sm:w-screen max-sm:max-w-none max-sm:rounded-none">
+        <DialogHeader>
+          <DialogTitle>{t("battlePanel.single.chart.dialogTitle")}</DialogTitle>
         </DialogHeader>
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <div className="flex min-h-0 flex-1 flex-col p-4">
+        <DialogBody className="flex flex-col p-0 lg:flex-row">
+          <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
             <BattleHpTimelinePlot
               timeline={timeline}
               warriors={warriors}
@@ -106,7 +105,7 @@ export function BattleHpTimelineDialog({
             onLayerVisibilityChange={onLayerVisibilityChange}
             onReset={onResetLayers}
           />
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

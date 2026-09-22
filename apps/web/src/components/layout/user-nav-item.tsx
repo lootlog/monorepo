@@ -6,6 +6,7 @@ import {
 import { useSession } from "@/hooks/auth/use-session";
 import { ROUTES } from "@/config/routes";
 import { cn } from "cn";
+import { railAvatarStateClassName } from "@/components/layout/rail-avatar-state";
 import {
   Avatar,
   AvatarFallback,
@@ -37,8 +38,14 @@ export const UserNavItem = () => {
         isActive && "after:opacity-100",
       )}
     >
-      <AvatarImage src={data?.user.image ?? ""} alt="" />
-      <AvatarFallback className="rounded-none">
+      <AvatarImage
+        src={data?.user.image ?? ""}
+        alt=""
+        className={railAvatarStateClassName(isActive)}
+      />
+      <AvatarFallback
+        className={cn("rounded-none", railAvatarStateClassName(isActive))}
+      >
         {data?.user?.name[0] || ""}
       </AvatarFallback>
     </Avatar>
@@ -48,11 +55,11 @@ export const UserNavItem = () => {
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="relative h-10 flex items-center justify-center">
+          <div className="relative flex h-10 w-full items-center justify-center">
             <Link
               to={ROUTES.user.dashboard}
               aria-label={t("common.routeErrors.actions.goToDashboard")}
-              className="block"
+              className="group/rail-item isolate relative block"
               onClick={handleClick}
             >
               {avatarElement}
