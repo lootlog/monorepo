@@ -36,7 +36,10 @@ export const SidebarNav = ({
       className="relative flex flex-col w-full gap-1.5 flex-1 overflow-hidden"
     >
       {header && (
-        <div className="relative h-14 min-h-14 flex flex-row items-center justify-between border-b mb-2 px-2 font-semibold">
+        <div
+          data-slot="sidebar-nav-header"
+          className="relative h-14 min-h-14 flex flex-row items-center justify-between border-b mb-2 px-2 font-semibold"
+        >
           {header}
         </div>
       )}

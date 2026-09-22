@@ -48,7 +48,11 @@ export const UserNavItem = () => {
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="relative h-10 flex items-center justify-center">
+          <div
+            data-slot="rail-item"
+            data-active={isActive || undefined}
+            className="relative h-10 flex items-center justify-center"
+          >
             <Link
               to={ROUTES.user.dashboard}
               aria-label={t("common.routeErrors.actions.goToDashboard")}

@@ -70,7 +70,10 @@ export const UserMenu = () => {
                   <span className="text-[11px] font-medium leading-none text-sidebar-foreground/55">
                     {t("layout.userMenu.account")}
                   </span>
-                  <span className="max-w-full truncate text-sm font-bold leading-none">
+                  <span
+                    data-slot="user-menu-name"
+                    className="max-w-full truncate text-sm font-bold leading-none"
+                  >
                     {user.name}
                   </span>
                 </div>

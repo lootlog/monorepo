@@ -93,7 +93,11 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <div className="relative mb-2 flex w-full items-center justify-center">
+                  <div
+                    data-slot="rail-item"
+                    data-active={isActive || undefined}
+                    className="relative mb-2 flex w-full items-center justify-center"
+                  >
                     <Link
                       to="/$guildId"
                       params={{ guildId: guild.vanityUrl ?? guild.id }}
