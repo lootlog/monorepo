@@ -15,10 +15,6 @@ const getSnapshot = () => {
   )
     return "cat";
 
-  if (classes.contains("rukia")) return "rukia";
-
-  if (classes.contains("rias")) return "rias";
-
   return null;
 };
 

@@ -5,12 +5,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { cn } from "cn";
 import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 import { RefreshCcw } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import * as m from "framer-motion/m";
-import { useThemeMeta } from "@/themes";
 import {
   getLootsControllerFetchLootsByGuildIdQueryKey,
   getGuildsControllerGetGuildByIdQueryKey,
@@ -77,7 +75,6 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
     },
   });
 
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
   const currentTimestamp = useMinuteTimestamp();
 
   const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
@@ -105,23 +102,8 @@ export const GuildSidebarHeader = ({ guildId }: { guildId?: string }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 4 }}
             transition={{ duration: 0.15, delay: 0.03 }}
-            className={cn(
-              "max-w-36 overflow-hidden text-ellipsis text-nowrap text-sm",
-              (isRukiaTheme || isRiasTheme) && "font-semibold",
-            )}
-            style={
-              isRukiaTheme
-                ? {
-                    background:
-                      "linear-gradient(135deg, #e0f4ff 0%, #a8d8ff 30%, #7cc4ff 50%, #b8e0ff 70%, #ffffff 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    filter:
-                      "drop-shadow(0 0 4px rgba(180, 220, 255, 0.6)) drop-shadow(0 0 8px rgba(150, 200, 255, 0.3))",
-                  }
-                : undefined
-            }
+            data-slot="guild-name"
+            className="max-w-36 overflow-hidden text-ellipsis text-nowrap text-sm"
           >
             {guild?.name}
           </m.span>

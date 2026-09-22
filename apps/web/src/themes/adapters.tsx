@@ -1,8 +1,8 @@
 import { SpinnerOverrideProvider } from "@lootlog/ui/components/spinner";
 import { lazy, Suspense, type FC, type ReactNode } from "react";
 import { LazyCatPawSpinner } from "./cat/lazy-cat-paw-spinner";
-import { LazyRukiaIceSpinner } from "./rukia/lazy-rukia-ice-spinner";
-import { LazyRiasMagicSpinner } from "./rias/lazy-rias-magic-spinner";
+import { RukiaSigilSpinner } from "./rukia/rukia-sigil-spinner";
+import { RiasSigilSpinner } from "./rias/rias-sigil-spinner";
 import { useThemeMeta } from "./use-theme-meta";
 
 const SidebarCatAnimation = lazy(() =>
@@ -23,78 +23,6 @@ const RukiaEmptyStateIcon = lazy(() =>
   })),
 );
 
-const RiasEmptyStateIcon = lazy(() =>
-  import("./rias/rias-empty-state-icon").then((module) => ({
-    default: module.RiasEmptyStateIcon,
-  })),
-);
-
-const FrozenSidebarBackground = lazy(() =>
-  import("./rukia/frozen-sidebar-background").then((module) => ({
-    default: module.FrozenSidebarBackground,
-  })),
-);
-
-const RiasSidebarBackground = lazy(() =>
-  import("./rias/rias-sidebar-background").then((module) => ({
-    default: module.RiasSidebarBackground,
-  })),
-);
-
-const SidebarMagicCircle = lazy(() =>
-  import("./rias/sidebar-magic-circle").then((module) => ({
-    default: module.SidebarMagicCircle,
-  })),
-);
-
-const FrozenButton = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
-    default: module.FrozenButton,
-  })),
-);
-
-const FrozenCircle = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
-    default: module.FrozenCircle,
-  })),
-);
-
-const FrostOverlay = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
-    default: module.FrostOverlay,
-  })),
-);
-
-const GremoryButton = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
-    default: module.GremoryButton,
-  })),
-);
-
-const GremoryCircle = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
-    default: module.GremoryCircle,
-  })),
-);
-
-const DestructionOverlay = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
-    default: module.DestructionOverlay,
-  })),
-);
-
-const RukiaFrostOverlay = lazy(() =>
-  import("./rukia/rukia-frost").then((module) => ({
-    default: module.GlobalFrostOverlay,
-  })),
-);
-
-const RiasDestructionOverlay = lazy(() =>
-  import("./rias/rias-effects").then((module) => ({
-    default: module.GlobalDestructionOverlay,
-  })),
-);
-
 const getSpinnerOverride = (
   isCatTheme: boolean,
   isRukiaTheme: boolean,
@@ -102,9 +30,9 @@ const getSpinnerOverride = (
 ) => {
   if (isCatTheme) return LazyCatPawSpinner;
 
-  if (isRukiaTheme) return LazyRukiaIceSpinner;
+  if (isRukiaTheme) return RukiaSigilSpinner;
 
-  if (isRiasTheme) return LazyRiasMagicSpinner;
+  if (isRiasTheme) return RiasSigilSpinner;
 
   return null;
 };
@@ -123,175 +51,14 @@ export const ThemeSpinnerProvider: FC<{ children: ReactNode }> = ({
   );
 };
 
-export const ThemeRootEffects = () => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={null}>
-        <RukiaFrostOverlay />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <RiasDestructionOverlay />
-      </Suspense>
-    );
-  }
-
-  return null;
-};
-
-export const ThemeSidebarBackground = () => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={null}>
-        <FrozenSidebarBackground />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <RiasSidebarBackground />
-      </Suspense>
-    );
-  }
-
-  return null;
-};
-
+/* Rias and Rukia decorate the sidebar from CSS (rias.css / rukia.css); only the cat needs React. */
 export const ThemeSidebarFooterDecoration = () => {
-  const { isCatTheme, isRiasTheme, resolvedTheme } = useThemeMeta();
+  const { isCatTheme, resolvedTheme } = useThemeMeta();
 
   if (isCatTheme) {
     return (
       <Suspense fallback={null}>
         <SidebarCatAnimation theme={resolvedTheme} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <SidebarMagicCircle />
-      </Suspense>
-    );
-  }
-
-  return null;
-};
-
-type ThemeInteractiveFrameProps = {
-  children: ReactNode;
-  isHovered: boolean;
-  isActive: boolean;
-  className?: string;
-  subtle?: boolean;
-  rounded?: string;
-};
-
-export const ThemeInteractiveFrame = ({
-  children,
-  isHovered,
-  isActive,
-  className,
-  subtle,
-  rounded,
-}: ThemeInteractiveFrameProps) => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <FrozenButton
-          isHovered={isHovered}
-          isActive={isActive}
-          className={className}
-          subtle={subtle}
-          rounded={rounded}
-        >
-          {children}
-        </FrozenButton>
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <GremoryButton
-          isHovered={isHovered}
-          isActive={isActive}
-          className={className}
-          subtle={subtle}
-          rounded={rounded}
-        >
-          {children}
-        </GremoryButton>
-      </Suspense>
-    );
-  }
-
-  return <>{children}</>;
-};
-
-export const ThemeCircularFrame = ({
-  children,
-  isActive,
-}: {
-  children: ReactNode;
-  isActive: boolean;
-}) => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <FrozenCircle isActive={isActive}>{children}</FrozenCircle>
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{children}</>}>
-        <GremoryCircle isActive={isActive}>{children}</GremoryCircle>
-      </Suspense>
-    );
-  }
-
-  return <>{children}</>;
-};
-
-export const ThemeSurfaceOverlay = ({
-  subtle = false,
-  rounded = "rounded-xl",
-}: {
-  subtle?: boolean;
-  rounded?: string;
-}) => {
-  const { isRukiaTheme, isRiasTheme } = useThemeMeta();
-
-  if (isRukiaTheme) {
-    return (
-      <Suspense fallback={null}>
-        <FrostOverlay subtle={subtle} rounded={rounded} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={null}>
-        <DestructionOverlay subtle={subtle} rounded={rounded} />
       </Suspense>
     );
   }
@@ -320,7 +87,7 @@ export const ThemeEmptyStateIcon = ({
   className?: string;
   fallback?: ReactNode;
 }) => {
-  const { isCatTheme, isRukiaTheme, isRiasTheme } = useThemeMeta();
+  const { isCatTheme, isRukiaTheme } = useThemeMeta();
 
   if (isCatTheme) {
     return (
@@ -334,14 +101,6 @@ export const ThemeEmptyStateIcon = ({
     return (
       <Suspense fallback={<>{fallback}</>}>
         <RukiaEmptyStateIcon className={className} />
-      </Suspense>
-    );
-  }
-
-  if (isRiasTheme) {
-    return (
-      <Suspense fallback={<>{fallback}</>}>
-        <RiasEmptyStateIcon className={className} />
       </Suspense>
     );
   }

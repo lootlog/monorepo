@@ -39,39 +39,3 @@
 [data-slot="scroll-area-thumb"]:hover {
   background-color: var(--muted-foreground);
 }
-
-.dark.rias [data-slot="scroll-area-thumb"] {
-  background-color: oklch(0.4 0.15 15 / 0.35);
-}
-
-.dark.rias
-  [data-slot="scroll-area-scrollbar"]:hover
-  [data-slot="scroll-area-thumb"],
-.dark.rias [data-slot="scroll-area-thumb"]:hover {
-  background-color: oklch(0.5 0.2 15 / 0.5);
-  box-shadow: 0 0 8px oklch(0.5 0.2 15 / 0.3);
-}
-
-.rukia [data-slot="scroll-area-thumb"] {
-  background-color: oklch(0.75 0.08 230 / 0.4);
-}
-
-.rukia
-  [data-slot="scroll-area-scrollbar"]:hover
-  [data-slot="scroll-area-thumb"],
-.rukia [data-slot="scroll-area-thumb"]:hover {
-  background-color: oklch(0.7 0.1 220 / 0.6);
-  box-shadow: 0 0 6px oklch(0.7 0.12 220 / 0.3);
-}
-
-.dark.rukia [data-slot="scroll-area-thumb"] {
-  background-color: oklch(0.5 0.1 220 / 0.35);
-}
-
-.dark.rukia
-  [data-slot="scroll-area-scrollbar"]:hover
-  [data-slot="scroll-area-thumb"],
-.dark.rukia [data-slot="scroll-area-thumb"]:hover {
-  background-color: oklch(0.6 0.12 220 / 0.5);
-  box-shadow: 0 0 8px oklch(0.6 0.14 220 / 0.3);
-}

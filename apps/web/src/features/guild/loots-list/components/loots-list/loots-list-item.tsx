@@ -3,11 +3,11 @@ import { SectionCard as Card } from "@/components/common/section-card/section-ca
 import { cn } from "cn";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
 import * as m from "framer-motion/m";
-import { useThemeMeta } from "@/themes";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import {
   LEGENDARY_LOOT_CARD_CLASS,
   LEGENDARY_LOOT_ROW_CLASS,
+  LOOT_INSET_ROOT_CLASS,
 } from "@/features/guild/loots-list/loots-list-layout";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
@@ -22,7 +22,6 @@ const animate = {
 export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const { filters, setFilters } = useLootsFilters();
-  const { isRukiaTheme } = useThemeMeta();
 
   const hasLegendaryItem = loot.items.some(
     (item) => item.rarity === ItemRarity.LEGENDARY,
@@ -50,18 +49,18 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "h-full",
+        LOOT_INSET_ROOT_CLASS,
         variant === "embedded" &&
           "group relative flex flex-col transition-colors hover:bg-muted/20",
         variant === "embedded" && hasLegendaryItem && LEGENDARY_LOOT_ROW_CLASS,
-        variant === "card" &&
-          isRukiaTheme &&
-          "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",
       )}
     >
       {variant === "embedded" ? (
         lootContent
       ) : (
         <Card
+          data-ornament="minor"
+          data-new-legendary={isNew && hasLegendaryItem ? "" : undefined}
           className={cn(
             "group relative flex h-full flex-col gap-0 overflow-visible rounded-xl border-border bg-card p-0",
             "transition-[background-color,border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-md",

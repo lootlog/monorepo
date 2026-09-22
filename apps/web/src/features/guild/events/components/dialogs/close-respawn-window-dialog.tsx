@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -119,26 +120,25 @@ export const CloseRespawnWindowDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-destructive/10">
               <XCircle className="size-4 text-destructive" />
             </div>
             <div>
-              <DialogTitle className="text-base">
-                {t("events.respawn.closeWindow")}
-              </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                {heroName}
-              </DialogDescription>
+              <DialogTitle>{t("events.respawn.closeWindow")}</DialogTitle>
+              <DialogDescription>{heroName}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleConfirm)}>
-            <div className="p-5 space-y-4">
+          <form
+            className="flex min-h-0 flex-1 flex-col"
+            onSubmit={form.handleSubmit(handleConfirm)}
+          >
+            <DialogBody className="space-y-4 overflow-y-auto">
               <p className="text-sm text-muted-foreground">
                 {t("events.respawn.closeWindowDesc")}
               </p>
@@ -204,7 +204,7 @@ export const CloseRespawnWindowDialog = ({
                   />
                 </div>
               )}
-            </div>
+            </DialogBody>
 
             <DialogActionFooter
               cancelLabel={t("common.cancel")}

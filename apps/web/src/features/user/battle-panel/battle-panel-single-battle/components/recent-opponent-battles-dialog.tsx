@@ -3,6 +3,7 @@ import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -55,12 +56,12 @@ export function RecentOpponentBattlesDialog({
           {t("battlePanel.single.recentOpponent.openDialog")}
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="border-b px-4 py-3">
-          <DialogTitle className="text-base">
+      <DialogContent className="max-h-[85dvh] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
             {t("battlePanel.single.recentOpponent.title")}
           </DialogTitle>
-          <p className="truncate text-sm text-muted-foreground">
+          <DialogDescription className="truncate">
             {t("battlePanel.single.recentOpponent.subtitle", {
               opponentLevel: context.opponentLvl,
               opponentName: context.opponentName,
@@ -69,12 +70,9 @@ export function RecentOpponentBattlesDialog({
               userName: context.userName,
               userProf: context.userProf,
             })}
-          </p>
+          </DialogDescription>
         </DialogHeader>
-        <RecentOpponentBattlesList
-          battle={battle}
-          className="max-h-[calc(85dvh-72px)]"
-        />
+        <RecentOpponentBattlesList battle={battle} />
       </DialogContent>
     </Dialog>
   );

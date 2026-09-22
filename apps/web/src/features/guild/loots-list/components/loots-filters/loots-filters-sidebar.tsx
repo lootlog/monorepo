@@ -2,6 +2,7 @@ import { Accordion } from "@lootlog/ui/components/accordion";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -89,7 +90,7 @@ export const LootsFiltersSidebar = (
               {t("loots.filtersPanel.saveDialog.description")}
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4">
+          <DialogBody>
             <Label htmlFor="filterName" className="text-sm font-medium">
               {t("loots.filtersPanel.saveDialog.nameLabel")}
             </Label>
@@ -105,8 +106,8 @@ export const LootsFiltersSidebar = (
                 }
               }}
             />
-          </div>
-          <DialogFooter className="p-4 pt-0">
+          </DialogBody>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               {t("loots.filtersPanel.saveDialog.cancel")}
             </Button>
@@ -120,12 +121,17 @@ export const LootsFiltersSidebar = (
 
       <div
         className={cn(
-          "h-full flex shrink-0 flex-col bg-background",
-          embeddedValue(embedded, "w-full p-0", "w-[340px] py-3 pr-3"),
+          "h-full flex shrink-0 flex-col",
+          embeddedValue(
+            embedded,
+            "w-full p-0 bg-background",
+            "w-[340px] py-3 pr-3",
+          ),
           className,
         )}
       >
         <div
+          data-slot="filters-panel"
           className={cn(
             "flex min-h-0 flex-1 flex-col overflow-hidden bg-filters-sidebar",
             embeddedValue(
@@ -140,9 +146,9 @@ export const LootsFiltersSidebar = (
               <div>
                 <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
                   <div className="flex min-h-7 items-center justify-between">
-                    <Label className="text-sm font-semibold">
+                    <h3 className="text-sm font-semibold">
                       {t("loots.filtersPanel.quickFilters.title")}
-                    </Label>
+                    </h3>
                     {canSaveCurrentFilter && (
                       <Button
                         onClick={() => setIsDialogOpen(true)}
@@ -267,7 +273,8 @@ export const LootsFiltersSidebar = (
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0.96 }}
                 style={{ transformOrigin: "bottom" }}
-                className="overflow-hidden border-t border-border bg-background/95 px-3"
+                data-slot="filters-panel-footer"
+                className="overflow-hidden border-t border-border bg-filters-sidebar px-3"
               >
                 <div className="flex h-14 w-full items-center">
                   <Button

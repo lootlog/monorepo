@@ -102,8 +102,7 @@ describe("ReservationDetails", () => {
       name: "common.cancel",
     });
 
-    const footer = dismissButton.closest("footer");
-    expect(footer?.classList.contains("border-t")).toBe(true);
+    expect(dismissButton.closest("[data-slot='dialog-footer']")).not.toBeNull();
     expect(
       screen.queryByRole("button", {
         name: "reservations.details.cancel",

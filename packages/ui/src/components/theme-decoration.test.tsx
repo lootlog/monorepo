@@ -14,8 +14,6 @@ describe("theme decorations", () => {
     ["cat-pink", "cat-paw-overlay"],
     ["cat-purple", "cat-paw-overlay"],
     ["cat-blue", "cat-paw-overlay"],
-    ["rukia", "rukia-frost-card-overlay"],
-    ["rias", "rias-magic-card-overlay"],
   ])(
     "switches mounted cards to %s and back to the default theme",
     async (theme, slot) => {

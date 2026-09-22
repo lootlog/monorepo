@@ -7,6 +7,7 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -224,12 +225,14 @@ export const GuildDocEditorPage = () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t("docs.trash.moveTitle")}</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogBody>
               <AlertDialogDescription>
                 {t("docs.trash.moveDescription", {
                   title: document.title,
                 })}
               </AlertDialogDescription>
-            </AlertDialogHeader>
+            </AlertDialogBody>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleteDocument.isPending}>
                 {t("common.cancel")}
