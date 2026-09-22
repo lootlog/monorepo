@@ -67,7 +67,7 @@ export const CreateGuildModal: FC = () => {
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="flex flex-col p-0">
-          <div className="border-b border-border px-5 py-4">
+          <div className="border-b border-border px-(--dialog-inset) py-4">
             <SearchInput
               placeholder={t("ui.modals.createLootlog.searchPlaceholder")}
               value={searchValue}
@@ -86,7 +86,7 @@ export const CreateGuildModal: FC = () => {
                   <div
                     key={guild.id}
                     className={cn(
-                      "px-5 py-4 flex flex-row justify-between items-center border-b",
+                      "px-(--dialog-inset) py-4 flex flex-row justify-between items-center border-b",
                       {
                         "border-none": index === filteredGuilds.length - 1,
                       },

@@ -87,7 +87,7 @@ export function BattleHpTimelineDialog({
           <DialogTitle>{t("battlePanel.single.chart.dialogTitle")}</DialogTitle>
         </DialogHeader>
         <DialogBody className="flex flex-col p-0 lg:flex-row">
-          <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
+          <div className="flex min-h-0 flex-1 flex-col px-(--dialog-inset) py-4">
             <BattleHpTimelinePlot
               timeline={timeline}
               warriors={warriors}

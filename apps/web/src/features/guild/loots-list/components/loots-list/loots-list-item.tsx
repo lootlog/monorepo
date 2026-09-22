@@ -7,6 +7,7 @@ import { useLootsFilters } from "@/hooks/use-loots-filters";
 import {
   LEGENDARY_LOOT_CARD_CLASS,
   LEGENDARY_LOOT_ROW_CLASS,
+  LOOT_INSET_ROOT_CLASS,
 } from "@/features/guild/loots-list/loots-list-layout";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
@@ -48,6 +49,7 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         "h-full",
+        LOOT_INSET_ROOT_CLASS,
         variant === "embedded" &&
           "group relative flex flex-col transition-colors hover:bg-muted/20",
         variant === "embedded" && hasLegendaryItem && LEGENDARY_LOOT_ROW_CLASS,
