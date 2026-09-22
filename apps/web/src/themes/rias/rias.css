@@ -1205,7 +1205,7 @@
   }
 }
 
-/* ---------- Sidebar: rail, header, navigation, art, footer ---------- */
+/* ---------- Sidebar: rail, header, navigation, footer ---------- */
 
 /* Rail: a darker glass column, parted from the navigation by a hairline of light. */
 .rias [data-slot="guild-rail"] {
@@ -1289,27 +1289,6 @@
   background-repeat: no-repeat;
   background-size: 100% 1px;
   background-position: bottom left;
-}
-
-/* Art: a crimson wax seal framed by roses and gold filigree, centered along the foot of the navigation. */
-.rias [data-slot="sidebar-nav"]::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 50%;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url("/themes/rias/sidebar.webp");
-  background-repeat: no-repeat;
-  background-size: 100% auto;
-  background-position: center bottom;
-  opacity: 0.8;
-  mask-image: linear-gradient(180deg, transparent, black 40%);
-}
-
-.rias [data-slot="sidebar-nav"] > * {
-  position: relative;
-  z-index: 1;
 }
 
 /* Footer: the account row sits under a hairline of light, not a border. */
