@@ -1320,10 +1320,11 @@
   background-color: oklch(0.11 0.03 352);
 }
 
+/* The rim stays crimson when checked; an iron rim on enamel reads as a smaller box. */
 .rias [data-slot="checkbox"][data-checked] {
   background-color: var(--rias-enamel);
-  background-image: var(--rias-enamel-fill);
-  border-color: oklch(0.25 0.03 350);
+  background-image: none;
+  border-color: oklch(0.7 0.21 18);
   color: #fff;
   box-shadow: 0 0 10px -3px oklch(0.62 0.23 18 / 0.6);
 }
