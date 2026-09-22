@@ -1200,7 +1200,8 @@
   .rias [data-slot="dialog-overlay"]::before,
   .rias [data-slot="alert-dialog-overlay"]::before,
   .rias [data-slot="dialog-content"]::after,
-  .rias [data-slot="alert-dialog-content"]::after {
+  .rias [data-slot="alert-dialog-content"]::after,
+  .rias [data-slot="guild-rail"] a::before {
     animation: none;
   }
 }
@@ -1230,36 +1231,86 @@
   opacity: 0.45;
 }
 
-/* Rail entries: the same crimson seal as the navigation, drawn as an overlay on the avatar.
-   Active is a tinted fill fading to the right under a 1px inset ring; hover is the quieter ghost fill. */
+/* Rail entries: the navigation seal without the fill, so the avatar stays legible.
+   The active entry is framed by a crimson ring and halo, the hover by a fainter one,
+   and both burn with the same embers the navigation buttons carry. */
+.rias [data-slot="guild-rail"] a:has(> [data-slot="rail-avatar"]) {
+  isolation: isolate;
+  transition: scale 180ms var(--ease-emphasized);
+}
+
+.rias [data-slot="guild-rail"] a:has(> [data-slot="rail-avatar"])::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -768px 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
+    url("/themes/rias/sparks.webp");
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 420ms var(--ease-emphasized);
+}
+
+.rias
+  [data-slot="guild-rail"]
+  a:is(:hover, :has(> [data-slot="rail-avatar"][data-active])) {
+  overflow: clip;
+}
+
+.rias
+  [data-slot="guild-rail"]
+  a:is(:hover, :has(> [data-slot="rail-avatar"][data-active]))::before {
+  opacity: 1;
+  animation:
+    rias-embers 48s steps(288) infinite,
+    rias-twinkle 3.2s steps(16) infinite;
+}
+
+.rias [data-slot="guild-rail"] a:hover::before {
+  animation-duration: 30s, 2.2s;
+  animation-timing-function: steps(240), steps(11);
+}
+
+.rias [data-slot="guild-rail"] a:active:has(> [data-slot="rail-avatar"]) {
+  scale: 0.97;
+}
+
 .rias [data-slot="rail-avatar"] {
   border-radius: 0;
-  transition: translate 160ms var(--ease-emphasized);
+  transition:
+    box-shadow 260ms var(--ease-emphasized),
+    translate 160ms var(--ease-emphasized);
 }
 
 .rias [data-slot="rail-avatar"]::after {
-  background-color: oklch(0.62 0.23 18 / 0.14);
-  background-image: linear-gradient(
-    90deg,
-    oklch(0.62 0.23 18 / 0.22),
-    transparent 70%
-  );
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
-  transition:
-    opacity 200ms var(--ease-emphasized),
-    background-color 160ms var(--ease-emphasized),
-    box-shadow 160ms var(--ease-emphasized);
+  box-shadow: inset 0 0 0 1px oklch(0.66 0.22 18 / 0.85);
+  transition: opacity 220ms var(--ease-emphasized);
 }
 
-.rias a:hover > [data-slot="rail-avatar"][data-active]::after {
-  background-color: oklch(0.62 0.23 18 / 0.18);
+.rias [data-slot="rail-avatar"][data-active] {
+  box-shadow:
+    0 0 0 1px oklch(0.62 0.23 18 / 0.7),
+    0 0 18px -2px oklch(0.62 0.23 18 / 0.75);
+}
+
+.rias a:hover > [data-slot="rail-avatar"]:not([data-active]) {
+  box-shadow:
+    0 0 0 1px oklch(0.62 0.23 18 / 0.35),
+    0 0 14px -2px oklch(0.62 0.23 18 / 0.55);
 }
 
 .rias a:hover > [data-slot="rail-avatar"]:not([data-active])::after {
-  opacity: 1;
-  background-color: oklch(0.62 0.23 18 / 0.09);
-  background-image: none;
-  box-shadow: none;
+  opacity: 0.55;
 }
 
 /* Header: the Organization name set as an inscription over the crowned divider. */
