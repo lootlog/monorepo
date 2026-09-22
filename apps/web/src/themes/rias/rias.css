@@ -471,7 +471,8 @@
     color 220ms var(--ease-emphasized),
     border-color 220ms var(--ease-emphasized),
     box-shadow 260ms var(--ease-emphasized),
-    translate 120ms var(--ease-emphasized);
+    translate 120ms var(--ease-emphasized),
+    scale 180ms var(--ease-emphasized);
 }
 
 /* The ember layer: three tiles of one random sprite, scrolled upward on the compositor.
@@ -668,6 +669,58 @@
     [data-slot="select-trigger"]
   ):nth-child(5n + 1)::after {
   animation-delay: -8.1s, -0.7s;
+}
+
+/* Controls are cut square, and a press is a short sink with a spring back. */
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a
+  ):not([data-slot="toggle-group-item"], [data-day], [data-slot="theme-card"]) {
+  border-radius: 0;
+  scale: 1;
+}
+
+.rias
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    [data-slot="theme-card"]
+  ):not(:disabled, [data-disabled]):active {
+  scale: 0.97;
+}
+
+.rias :is([data-slot="tabs-list"], [data-slot="toggle-group"]) {
+  border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rias
+    :is(
+      :is(button, a)[data-variant],
+      [data-slot="select-trigger"],
+      [data-slot="combobox-trigger"],
+      [data-slot="dropdown-menu-trigger"],
+      [data-slot="tabs-trigger"],
+      [data-slot="horizontal-menu"] a
+    ):not(
+      [data-slot="toggle-group-item"],
+      [data-day],
+      [data-slot="theme-card"]
+    ) {
+    scale: 1;
+  }
 }
 
 /* Primary: deep crimson velvet, a hairline edge and a rose sheen along the top. */
@@ -1193,13 +1246,23 @@
 /* Header: the Organization name set as an inscription over the crowned divider. */
 .rias [data-slot="sidebar-nav-header"] {
   border-bottom-color: transparent;
-  /* The divider's hairline sits at 47% of the asset's height; sized to 24px and
-     pushed 12px below the box, it lands exactly on the header's bottom edge, level
-     with the top bar's hairline. */
+}
+
+/* The divider is drawn by a pseudo-element so the roses below the hairline can
+   hang past the header box; a background would be clipped at its bottom edge.
+   The asset's hairline sits 50px into its 88px height, so at 24px it lies 13.6px
+   below the top of the box: lifting the box 10px past the header's bottom edge
+   puts the hairline on that edge, level with the rail separator and the top bar. */
+.rias [data-slot="sidebar-nav-header"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -10px 0;
+  height: 24px;
+  pointer-events: none;
   background-image: url("/themes/rias/divider.webp");
   background-repeat: no-repeat;
   background-size: auto 24px;
-  background-position: center bottom -12px;
+  background-position: center top;
 }
 
 .rias [data-slot="guild-name"] {
