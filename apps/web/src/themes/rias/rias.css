@@ -339,14 +339,66 @@
   color: var(--rias-rose);
 }
 
-/* Dialogs: the seal watermark behind the content and a filigree corner. */
+/* ---------- Dialogs: a lit seal ---------- */
+
+/* The overlay: a crimson pool of light behind the dialog and embers rising through it. */
+.rias
+  :is(
+    [data-slot="dialog-overlay"],
+    [data-slot="alert-dialog-overlay"],
+    [data-slot="sheet-overlay"],
+    [data-slot="drawer-overlay"]
+  ) {
+  background-color: oklch(0.06 0.02 355 / 0.72);
+  background-image: radial-gradient(
+    ellipse 55% 50% at 50% 55%,
+    oklch(0.62 0.23 18 / 0.22),
+    transparent 70%
+  );
+  overflow: hidden;
+}
+
+.rias [data-slot="dialog-overlay"]::before,
+.rias [data-slot="alert-dialog-overlay"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -40% 0;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
+    url("/themes/rias/sparks.webp");
+  background-size:
+    320px 320px,
+    520px 520px,
+    800px 800px;
+  background-position:
+    0 0,
+    140px 60px,
+    300px 220px;
+  opacity: 0.55;
+  will-change: transform;
+  mask-image: linear-gradient(180deg, transparent 10%, black 60%);
+  animation: rias-overlay-embers 50s linear infinite;
+}
+
+@keyframes rias-overlay-embers {
+  50% {
+    transform: translate3d(-1.5%, -14%, 0);
+  }
+  to {
+    transform: translate3d(0, -28%, 0);
+  }
+}
+
+/* The dialog: filigree in the corner, a rose top light, and the Gremory seal turning
+   slowly in the lower right, clipped by the dialog's own frame. */
 .rias :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
   background-color: color-mix(in srgb, var(--background) 96%, black);
-  border-color: oklch(0.62 0.23 18 / 0.4);
+  border-color: oklch(0.62 0.23 18 / 0.45);
   box-shadow:
     0 0 0 1px oklch(0 0 0 / 0.6),
     0 40px 90px -30px oklch(0 0 0 / 0.9),
-    0 0 60px -20px oklch(0.62 0.23 18 / 0.5);
+    0 0 80px -16px oklch(0.62 0.23 18 / 0.6);
   isolation: isolate;
 }
 
@@ -358,29 +410,40 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    url("/themes/rias/sigil.webp"), url("/themes/rias/corner.webp");
+    url("/themes/rias/corner.webp"), var(--rias-line),
+    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.14), transparent 36%);
   background-repeat: no-repeat;
   background-size:
-    420px 420px,
-    110px auto;
+    120px auto,
+    100% 1px,
+    100% 100%;
   background-position:
-    calc(100% + 140px) calc(100% + 140px),
-    -8px -8px;
-  opacity: 0.16;
+    -8px -8px,
+    top left,
+    0 0;
+  opacity: 0.7;
+}
+
+.rias [data-slot="dialog-content"]::after,
+.rias [data-slot="alert-dialog-content"]::after {
+  content: "";
+  position: absolute;
+  right: -150px;
+  bottom: -150px;
+  width: 440px;
+  height: 440px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/themes/rias/sigil.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.18;
+  will-change: transform;
+  animation: rias-seal 120s linear infinite;
 }
 
 .rias [data-slot="alert-dialog-content"] {
   overflow: hidden;
-}
-
-.rias
-  :is(
-    [data-slot="dialog-overlay"],
-    [data-slot="alert-dialog-overlay"],
-    [data-slot="sheet-overlay"],
-    [data-slot="drawer-overlay"]
-  ) {
-  background-color: oklch(0.06 0.02 355 / 0.72);
 }
 
 .rias :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
@@ -1072,7 +1135,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rias .app-content-frame::before,
-  .rias .app-content-frame::after {
+  .rias .app-content-frame::after,
+  .rias [data-slot="dialog-overlay"]::before,
+  .rias [data-slot="alert-dialog-overlay"]::before,
+  .rias [data-slot="dialog-content"]::after,
+  .rias [data-slot="alert-dialog-content"]::after {
     animation: none;
   }
 }
@@ -1126,10 +1193,13 @@
 /* Header: the Organization name set as an inscription over the crowned divider. */
 .rias [data-slot="sidebar-nav-header"] {
   border-bottom-color: transparent;
+  /* The divider's hairline sits at 47% of the asset's height; sized to 24px and
+     pushed 12px below the box, it lands exactly on the header's bottom edge, level
+     with the top bar's hairline. */
   background-image: url("/themes/rias/divider.webp");
   background-repeat: no-repeat;
-  background-size: 96% auto;
-  background-position: center bottom -3px;
+  background-size: auto 24px;
+  background-position: center bottom -12px;
 }
 
 .rias [data-slot="guild-name"] {
