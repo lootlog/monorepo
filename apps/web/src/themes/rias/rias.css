@@ -233,6 +233,11 @@
   background-size: 92px auto;
   background-position: -6px -6px;
   opacity: 0.55;
+  /* Keep the tendrils on the edges and fade the rose out before it reaches the header icon or title. */
+  mask-image:
+    linear-gradient(to right, #000 10px, transparent 40px),
+    linear-gradient(to bottom, #000 10px, transparent 40px);
+  mask-composite: add;
 }
 
 /* Section headers: the hairline and its halo, drawn crimson-to-rose. */
