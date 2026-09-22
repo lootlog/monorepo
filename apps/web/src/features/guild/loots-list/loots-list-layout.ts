@@ -14,7 +14,7 @@ export const LOOTS_LIST_INSET_CLASS = "inset-x-3";
 export const LOOTS_GRID_CLASS = "grid grid-cols-1 gap-3 xl:grid-cols-2";
 
 /** Horizontal inset shared by every loot card section and the details dialog body. */
-export const LOOT_CARD_INSET_CLASS = "px-3 sm:px-4";
+export const LOOT_CARD_INSET_CLASS = "px-4 sm:px-5";
 
 export const LOOT_CARD_DIVIDER_CLASS = "border-t border-border/40";
 
