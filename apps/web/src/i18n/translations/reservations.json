@@ -165,6 +165,7 @@
     "tabsLabel": "Zakres rezerwacji",
     "upcoming": "Nadchodzące",
     "history": "Historia 30 dni",
+    "emptyUpcomingTitle": "Terminarz jest pusty",
     "emptyUpcoming": "Nie masz nadchodzących rezerwacji",
     "emptyHistory": "Brak rezerwacji w ostatnich 30 dniach",
     "emptyDescription": "Nowe zapisy pojawią się tutaj automatycznie.",

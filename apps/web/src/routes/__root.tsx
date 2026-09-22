@@ -13,7 +13,7 @@ import { DocumentTitleUpdater } from "@/components/router/document-title-updater
 import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
-import { ThemeSpinnerProvider } from "@/themes";
+import { ThemeEffectsController, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
 import "@/themes/default.css";
@@ -43,6 +43,7 @@ function RootComponent() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <ThemeSpinnerProvider>
+            <ThemeEffectsController />
             <NuqsAdapter>
               <GlobalContextProvider>
                 <Outlet />

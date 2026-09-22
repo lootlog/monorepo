@@ -163,7 +163,7 @@ export const THEME_CATALOG: ThemePreview[] = [
   {
     name: "rias",
     family: "rias",
-    colors: ["#BE1446", "#3A1A30", "#170A12"],
+    colors: ["#C1122F", "#2A1218", "#0C0709"],
     backgroundImage: "/themes/rias-preview.webp",
   },
   {

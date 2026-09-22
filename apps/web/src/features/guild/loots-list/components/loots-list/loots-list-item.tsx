@@ -57,6 +57,8 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
         lootContent
       ) : (
         <Card
+          data-ornament="minor"
+          data-new-legendary={isNew && hasLegendaryItem ? "" : undefined}
           className={cn(
             "group relative flex h-full flex-col gap-0 overflow-visible rounded-xl border-border bg-card p-0",
             "transition-[background-color,border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-md",

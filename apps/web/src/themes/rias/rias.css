@@ -1,62 +1,81 @@
 /*
- * Rias Gremory — "Crimson-Haired Ruin Princess".
+ * Rias Gremory — "Szkarłatny Dwór" (the Scarlet Court).
  *
- * Design language: gothic heraldry, warm and ornate. Cinzel inscriptional
- * capitals set as small caps, velvet surfaces with filigree in the corner,
- * hairlines of crimson light that brighten to rose at their centre, chess
- * royalty and roses. The Gremory seal turns slowly behind the content; embers
- * of the Power of Destruction rise from any control that is active or under
- * the cursor. Everything glows; nothing is flat.
+ * One world, made of real materials: a near-black atmospheric background where
+ * the illustration lives, matte velvet panels that stand clearly off it,
+ * blackened-metal edges with a hairline of light along the top and a shadow
+ * below, and scarlet enamel set into a metal bezel for anything active. The
+ * scene is lit from the right, and the right edge of every main panel carries
+ * the same faint scarlet reflex, so the interface and the illustration share
+ * one light. Ornament comes in three tiers so the modal can still impress:
+ * grand corners for the main frame, a simplified filigree for sections, and a
+ * bare metal cap for repeated data. Item slots are recessed, near-black wells
+ * whose frame is the item's own rarity colour; the theme frames information
+ * and never changes what it means.
  *
- * Every animation is compositor-only (transform / opacity on a promoted
- * pseudo-element); nothing runs on the main thread while the page is idle.
- * All selectors are rooted at html.rias so portaled overlays are covered.
- * Rules stay on paint properties so call-site utilities keep their box model.
+ * Motion is compositor-only (transform / opacity on promoted pseudo-elements)
+ * and answers to the effects preference on <html>:
+ *   [data-theme-effects="full"]    petals drift at the edges, active seals burn
+ *   [data-theme-effects="subtle"]  only short reactions to what the player does
+ *   [data-theme-effects="off"]     no ambient motion at all
+ *   [data-theme-effects-idle]      ambient motion stands still (hidden or unfocused)
+ * prefers-reduced-motion switches everything decorative off regardless.
+ *
+ * All selectors are rooted at html.rias so portaled overlays are covered, and
+ * rules stay on paint properties so call-site utilities keep their box model.
  */
 
 @import "@fontsource-variable/cinzel/index.css";
 
 .rias {
-  /* Palette: wallpaper-derived. Crimson hair, blue eyes, black blazer with silver piping. */
-  --background: oklch(0.13 0.028 355);
-  --foreground: oklch(0.955 0.012 10);
-  --card: oklch(0.165 0.034 352);
-  --card-foreground: oklch(0.955 0.012 10);
-  --popover: oklch(0.15 0.034 352);
-  --popover-foreground: oklch(0.955 0.012 10);
-  --primary: oklch(0.55 0.21 18);
-  --primary-foreground: oklch(0.96 0.03 10);
-  --secondary: oklch(0.22 0.05 350);
-  --secondary-foreground: oklch(0.955 0.012 10);
-  --muted: oklch(0.23 0.04 350);
-  --muted-foreground: oklch(0.78 0.03 355);
-  --accent: oklch(0.27 0.065 355);
+  /* Palette: near-black plum, dark velvet, scarlet, rose-white, dull rose-gold, blackened iron. */
+  --background: oklch(0.105 0.02 355);
+  --foreground: oklch(0.95 0.012 15);
+  --card: oklch(0.155 0.03 352);
+  --card-foreground: oklch(0.95 0.012 15);
+  --popover: oklch(0.14 0.03 352);
+  --popover-foreground: oklch(0.95 0.012 15);
+  --primary: oklch(0.52 0.21 20);
+  --primary-foreground: oklch(0.96 0.03 15);
+  --secondary: oklch(0.21 0.045 350);
+  --secondary-foreground: oklch(0.95 0.012 15);
+  --muted: oklch(0.215 0.035 350);
+  --muted-foreground: oklch(0.77 0.03 355);
+  --accent: oklch(0.25 0.06 355);
   --accent-foreground: var(--foreground);
-  --destructive: oklch(0.72 0.19 28);
+  /* Error is a different red from decoration: hotter, more orange, and always paired with an icon. */
+  --destructive: oklch(0.7 0.2 32);
   --destructive-foreground: oklch(0.985 0.01 10);
-  --border: oklch(0.31 0.06 352);
-  --input: oklch(0.55 0.07 352);
+  --border: oklch(0.27 0.035 350);
+  --input: oklch(0.5 0.06 352);
   --ring: oklch(0.72 0.19 15);
   --chart-1: var(--primary);
   --chart-2: oklch(0.62 0.13 250);
   --chart-3: oklch(0.8 0.08 350);
   --chart-4: oklch(0.6 0.17 335);
   --chart-5: oklch(0.55 0.12 15);
-  --sidebar: oklch(0.11 0.026 355);
+  --sidebar: oklch(0.09 0.018 355);
   --filters-sidebar: var(--sidebar);
-  --sidebar-foreground: oklch(0.955 0.012 10);
+  --sidebar-foreground: oklch(0.95 0.012 15);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.21 0.045 350);
-  --sidebar-accent-foreground: oklch(0.955 0.012 10);
-  --sidebar-border: oklch(0.29 0.055 352);
+  --sidebar-accent: oklch(0.2 0.04 350);
+  --sidebar-accent-foreground: oklch(0.95 0.012 15);
+  --sidebar-border: oklch(0.25 0.04 352);
   --sidebar-ring: var(--ring);
 
-  /* Theme-private tokens. */
-  --rias-crimson: oklch(0.62 0.23 18);
+  /* Theme-private tokens. Four reds with four jobs. */
+  --rias-crimson: oklch(0.62 0.23 18); /* decoration: hairlines, glows */
+  --rias-enamel: oklch(0.5 0.21 20); /* active state: enamel in a bezel */
+  --rias-enamel-lit: oklch(0.58 0.22 20);
+  --rias-alert: oklch(0.66 0.21 12); /* notifications: cooler, pinker */
   --rias-crimson-soft: oklch(0.62 0.23 18 / 0.35);
   --rias-crimson-faint: oklch(0.62 0.23 18 / 0.14);
-  --rias-rose: oklch(0.9 0.06 10);
+  --rias-rose: oklch(0.9 0.045 15);
+  --rias-rose-gold: oklch(0.72 0.07 45);
+  --rias-iron: oklch(0.24 0.012 340);
+  --rias-iron-lit: oklch(0.36 0.014 340);
+  --rias-well: oklch(0.075 0.012 350);
   --rias-silver: oklch(0.86 0.012 300);
   --rias-eye: oklch(0.7 0.13 250);
   /* The hairline of light: crimson at the ends, rose at the centre. */
@@ -68,7 +87,6 @@
     var(--rias-crimson) 80%,
     transparent
   );
-  /* Its soft halo, painted one pixel wider on either side. */
   --rias-line-halo: linear-gradient(
     90deg,
     transparent,
@@ -77,6 +95,21 @@
     oklch(0.62 0.23 18 / 0.35) 70%,
     transparent
   );
+  /* Blackened metal: a light along the top edge, a shadow under the bottom one. */
+  --rias-metal-edge:
+    inset 0 1px 0 oklch(0.72 0.07 45 / 0.22), inset 0 -1px 0 oklch(0 0 0 / 0.55);
+  /* The scene is lit from the right; main panels catch the same light on their right edge. */
+  --rias-right-reflex: inset -1px 0 0 oklch(0.62 0.23 18 / 0.16);
+  /* Enamel set into a bezel: gloss on top, iron ring, rose-gold rim below. */
+  --rias-enamel-fill: linear-gradient(
+    180deg,
+    var(--rias-enamel-lit),
+    var(--rias-enamel) 55%,
+    oklch(0.42 0.19 18)
+  );
+  --rias-enamel-bezel:
+    inset 0 1px 0 oklch(1 0 0 / 0.26), inset 0 0 0 1px oklch(0.2 0.02 350),
+    inset 0 -1px 0 oklch(0 0 0 / 0.5), 0 1px 0 oklch(0.72 0.07 45 / 0.28);
   --font-display:
     "Cinzel Variable", "Cinzel", "Trajan Pro", "Cormorant Garamond", Georgia,
     serif;
@@ -91,18 +124,18 @@
   --radius-3xl: 0;
   --radius-4xl: 0;
   --shadow-xs:
-    0 1px 0 oklch(0.62 0.23 18 / 0.12), 0 8px 24px -12px oklch(0 0 0 / 0.6);
+    0 1px 2px oklch(0 0 0 / 0.5), 0 8px 24px -12px oklch(0 0 0 / 0.7);
   --shadow-sm:
-    0 1px 0 oklch(0.62 0.23 18 / 0.12), 0 10px 28px -12px oklch(0 0 0 / 0.65);
+    0 1px 2px oklch(0 0 0 / 0.5), 0 10px 28px -12px oklch(0 0 0 / 0.75);
   --shadow-md:
-    0 1px 0 oklch(0.62 0.23 18 / 0.16), 0 18px 40px -16px oklch(0 0 0 / 0.7);
+    0 1px 2px oklch(0 0 0 / 0.55), 0 18px 40px -16px oklch(0 0 0 / 0.8);
   --shadow-lg:
-    0 1px 0 oklch(0.62 0.23 18 / 0.2), 0 24px 56px -20px oklch(0 0 0 / 0.75);
+    0 1px 2px oklch(0 0 0 / 0.6), 0 24px 56px -20px oklch(0 0 0 / 0.85);
   --shadow-xl:
-    0 0 0 1px oklch(0.62 0.23 18 / 0.25), 0 32px 72px -24px oklch(0 0 0 / 0.8);
+    0 0 0 1px oklch(0 0 0 / 0.6), 0 32px 72px -24px oklch(0 0 0 / 0.9);
 }
 
-/* ---------- Typography: inscriptional capitals ---------- */
+/* ---------- Typography: inscriptional capitals for titles, plain type for data ---------- */
 
 .rias
   :is(
@@ -120,7 +153,6 @@
 .rias [data-slot="sidebar"] [data-slot="sidebar-menu-button"],
 .rias [data-slot="sidebar"] nav a > [data-slot="button"],
 .rias [data-slot="app-top-bar"] :is(h1, h2, [data-slot="breadcrumb-page"]),
-.rias [data-slot="kpi-value"],
 .rias [data-slot="horizontal-menu"] a {
   font-family: var(--font-display);
   font-weight: 700;
@@ -128,14 +160,13 @@
   font-feature-settings: "liga", "kern";
 }
 
-/* Section and page titles are set as small capitals over the hairline. */
 .rias [data-slot="section-card-header"] h2,
 .rias [data-slot="app-top-bar"] :is(h1, h2, [data-slot="breadcrumb-page"]) {
   font-size: 0.92rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--rias-rose);
-  text-shadow: 0 0 14px oklch(0.62 0.23 18 / 0.35);
+  text-shadow: 0 0 14px oklch(0.62 0.23 18 / 0.3);
 }
 
 .rias
@@ -151,9 +182,9 @@
   color: var(--rias-rose);
 }
 
-.rias [data-slot="kpi-value"] {
-  font-weight: 600;
-  letter-spacing: 0.02em;
+/* Counters stay in the plain face with lining, tabular figures. */
+.rias [data-slot="kpi-value"],
+.rias dd {
   font-variant-numeric: lining-nums tabular-nums;
 }
 
@@ -215,38 +246,61 @@
   box-shadow: 0 0 18px -4px oklch(0.62 0.23 18 / 0.5);
 }
 
-/* ---------- Surfaces: velvet cards with filigree, glass popups ---------- */
+/* ---------- Surfaces: matte velvet panels in blackened-metal frames ---------- */
 
-.rias .app-content-frame [data-slot="card"] {
-  background-color: color-mix(in srgb, var(--card) 44%, transparent);
-  border-color: oklch(0.62 0.23 18 / 0.22);
+/* Panels are opaque: the illustration lives in the background, not under the data.
+   The velvet shows through a 10% window in the fill, visible only up close. */
+.rias .app-content-frame [data-slot="card"],
+.rias [data-slot="card"] {
+  background-color: var(--card);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--card) 90%, transparent),
+      color-mix(in srgb, var(--card) 90%, transparent)
+    ),
+    url("/themes/rias/velvet.webp");
+  background-size:
+    auto,
+    256px 256px;
+  border-color: var(--rias-iron);
   box-shadow:
-    inset 0 1px 0 oklch(0.9 0.06 10 / 0.07),
-    var(--shadow-sm);
+    var(--rias-metal-edge), var(--rias-right-reflex), var(--shadow-sm);
   isolation: isolate;
 }
 
-/* Corner filigree: one asset, one pseudo-element. */
+/* Tier 2, sections: the simplified filigree, kept on the edges and faded before
+   it reaches the header icon or title. */
 .rias [data-slot="card"]::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* Cards that keep overflow visible (loot cards) must still clip the ornament to their corners. */
   border-radius: inherit;
   clip-path: inset(0 round inherit);
   overflow: hidden;
   background-image: url("/themes/rias/corner.webp");
   background-repeat: no-repeat;
-  background-size: 92px auto;
-  background-position: -6px -6px;
-  opacity: 0.55;
-  /* Keep the tendrils on the edges and fade the rose out before it reaches the header icon or title. */
+  background-size: 76px auto;
+  background-position: -5px -5px;
+  opacity: 0.5;
   mask-image:
-    linear-gradient(to right, #000 10px, transparent 40px),
-    linear-gradient(to bottom, #000 10px, transparent 40px);
+    linear-gradient(to right, #000 10px, transparent 36px),
+    linear-gradient(to bottom, #000 10px, transparent 36px);
   mask-composite: add;
+}
+
+/* Tier 3, repeated data (loot cards, KPI tiles): a bare metal cap, no rose. */
+.rias [data-slot="card"][data-ornament="minor"]::before {
+  background-image: url("/themes/rias/corner-tip.webp");
+  background-size: 34px auto;
+  background-position: 0 0;
+  opacity: 0.7;
+  mask-image: none;
+}
+
+.rias [data-slot="card"][data-ornament="minor"] {
+  box-shadow: var(--rias-metal-edge), var(--shadow-xs);
 }
 
 /* Section headers: the hairline and its halo, drawn crimson-to-rose. */
@@ -267,7 +321,25 @@
   filter: drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.5));
 }
 
-/* Popups: near-black glass, crimson edge light, rose top line. */
+/* Loot cards react on the edge and the surface only; nothing lifts or tilts. */
+.rias [data-presentation="card"] > [data-slot="card"] {
+  transition:
+    border-color 160ms var(--ease-emphasized),
+    box-shadow 160ms var(--ease-emphasized),
+    background-color 160ms var(--ease-emphasized);
+}
+
+.rias [data-presentation="card"] > [data-slot="card"]:hover {
+  border-color: var(--rias-iron-lit);
+  background-color: oklch(0.17 0.032 352);
+  box-shadow:
+    inset 0 1px 0 oklch(0.72 0.07 45 / 0.34),
+    inset 0 -1px 0 oklch(0 0 0 / 0.55),
+    0 0 0 1px oklch(0.62 0.23 18 / 0.14),
+    var(--shadow-xs);
+}
+
+/* Popups: near-black glass, iron edge, rose top line. */
 .rias
   :is(
     [data-slot="popover-content"],
@@ -279,14 +351,15 @@
     [data-slot="context-menu-sub-content"]
   ) {
   background-color: color-mix(in srgb, var(--popover) 92%, black);
-  border-color: oklch(0.62 0.23 18 / 0.35);
+  border-color: var(--rias-iron-lit);
   box-shadow:
     0 0 0 1px oklch(0 0 0 / 0.5),
+    var(--rias-metal-edge),
     0 22px 48px -16px oklch(0 0 0 / 0.8),
-    0 0 32px -12px oklch(0.62 0.23 18 / 0.45);
+    0 0 32px -12px oklch(0.62 0.23 18 / 0.35);
   background-image:
     var(--rias-line),
-    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.12), transparent 28px);
+    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.1), transparent 28px);
   background-repeat: no-repeat;
   background-size:
     100% 1px,
@@ -302,10 +375,11 @@
 
 .rias [data-slot="tooltip-content"]:not([class*="border-2"]) {
   background-color: color-mix(in srgb, var(--popover) 94%, black);
-  border-color: oklch(0.62 0.23 18 / 0.4);
+  border-color: var(--rias-iron-lit);
   box-shadow:
+    var(--rias-metal-edge),
     0 8px 24px -8px oklch(0 0 0 / 0.7),
-    0 0 16px -6px oklch(0.62 0.23 18 / 0.4);
+    0 0 16px -6px oklch(0.62 0.23 18 / 0.3);
 }
 
 .rias
@@ -324,7 +398,6 @@
     color 120ms var(--ease-emphasized);
 }
 
-/* Highlighted rows glow crimson from the left, like a lit seal. */
 .rias
   :is(
     [data-slot="select-item"][data-highlighted],
@@ -340,12 +413,7 @@
     [data-slot="context-menu-item"]:focus,
     [data-slot="command-item"][data-selected="true"]
   ) {
-  background-color: oklch(0.62 0.23 18 / 0.16);
-  background-image: linear-gradient(
-    90deg,
-    oklch(0.62 0.23 18 / 0.18),
-    transparent 60%
-  );
+  background-color: oklch(0.62 0.23 18 / 0.14);
   color: var(--rias-rose);
 }
 
@@ -353,9 +421,79 @@
   color: var(--rias-rose);
 }
 
-/* ---------- Dialogs: a lit seal ---------- */
+/* ---------- Item slots: recessed wells framed by the item's rarity ---------- */
 
-/* The overlay: a crimson pool of light behind the dialog and embers rising through it. */
+.rias [data-slot="item-image"] {
+  border-radius: 0;
+  background-color: var(--rias-well);
+  /* Rarity colour stays on the border (from the component); the well and the
+     bezel come from here. The glow is set per rarity below. */
+  box-shadow:
+    inset 0 0 0 1px oklch(0 0 0 / 0.85),
+    inset 0 2px 5px oklch(0 0 0 / 0.75),
+    0 0 0 1px var(--rias-iron),
+    var(--rias-item-glow, 0 0 0 0 transparent);
+}
+
+.rias [data-slot="item-image"][data-rarity="LEGENDARY"] {
+  --rias-item-glow: 0 0 12px -2px rgb(234 88 12 / 0.55);
+}
+
+.rias [data-slot="item-image"][data-rarity="HEROIC"] {
+  --rias-item-glow: 0 0 10px -2px rgb(59 130 246 / 0.5);
+}
+
+.rias [data-slot="item-image"][data-rarity="UNIQUE"] {
+  --rias-item-glow: 0 0 10px -2px rgb(252 211 77 / 0.45);
+}
+
+.rias [data-slot="item-image"][data-rarity="COMMON"] {
+  border-color: var(--rias-iron-lit);
+}
+
+.rias [data-slot="item-image"][data-rarity="UPGRADED"] {
+  border-color: oklch(0.62 0.23 18 / 0.5);
+}
+
+/* A new legendary drop: one short flare of glints over the card, played once. */
+.rias [data-new-legendary]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    url("/themes/rias/glints.webp"), url("/themes/rias/glints.webp");
+  background-repeat: no-repeat;
+  background-size:
+    256px 128px,
+    192px 96px;
+  background-position:
+    8% 12%,
+    88% 70%;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  animation: rias-glint 800ms var(--ease-emphasized) 1;
+}
+
+@keyframes rias-glint {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+/* ---------- Dialogs: opening the reliquary ---------- */
+
+/* The overlay: the application dims and holds still; nothing sparkles outside the window. */
 .rias
   :is(
     [data-slot="dialog-overlay"],
@@ -363,56 +501,36 @@
     [data-slot="sheet-overlay"],
     [data-slot="drawer-overlay"]
   ) {
-  background-color: oklch(0.06 0.02 355 / 0.72);
+  background-color: oklch(0.04 0.012 355 / 0.8);
   background-image: radial-gradient(
     ellipse 55% 50% at 50% 55%,
-    oklch(0.62 0.23 18 / 0.22),
+    oklch(0.62 0.23 18 / 0.14),
     transparent 70%
   );
-  overflow: hidden;
 }
 
-.rias [data-slot="dialog-overlay"]::before,
-.rias [data-slot="alert-dialog-overlay"]::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 -40% 0;
-  pointer-events: none;
-  background-image:
-    url("/themes/rias/sparks.webp"), url("/themes/rias/sparks.webp"),
-    url("/themes/rias/sparks.webp");
-  background-size:
-    320px 320px,
-    520px 520px,
-    800px 800px;
-  background-position:
-    0 0,
-    140px 60px,
-    300px 220px;
-  opacity: 0.55;
-  will-change: transform;
-  mask-image: linear-gradient(180deg, transparent 10%, black 60%);
-  animation: rias-overlay-embers 50s linear infinite;
+.rias:has(:is([data-slot="dialog-overlay"], [data-slot="alert-dialog-overlay"]))
+  .app-content-frame::after {
+  animation-play-state: paused;
 }
 
-@keyframes rias-overlay-embers {
-  50% {
-    transform: translate3d(-1.5%, -14%, 0);
-  }
-  to {
-    transform: translate3d(0, -28%, 0);
-  }
-}
-
-/* The dialog: filigree in the corner, a rose top light, and the Gremory seal turning
-   slowly in the lower right, clipped by the dialog's own frame. */
+/* The dialog: a heavier frame than any card. Grand corners at the foot, a hairline
+   with a single sheen along the top, and the rosette engraved faintly in the base. */
 .rias :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
-  background-color: color-mix(in srgb, var(--background) 96%, black);
-  border-color: oklch(0.62 0.23 18 / 0.45);
+  background-color: oklch(0.12 0.024 352);
+  background-image:
+    linear-gradient(oklch(0.12 0.024 352 / 0.92), oklch(0.12 0.024 352 / 0.92)),
+    url("/themes/rias/velvet.webp");
+  background-size:
+    auto,
+    256px 256px;
+  border-color: var(--rias-iron-lit);
   box-shadow:
-    0 0 0 1px oklch(0 0 0 / 0.6),
-    0 40px 90px -30px oklch(0 0 0 / 0.9),
-    0 0 80px -16px oklch(0.62 0.23 18 / 0.6);
+    0 0 0 1px oklch(0 0 0 / 0.7),
+    inset 0 1px 0 oklch(0.72 0.07 45 / 0.3),
+    inset 0 -1px 0 oklch(0 0 0 / 0.6),
+    0 40px 90px -30px oklch(0 0 0 / 0.95),
+    0 0 80px -16px oklch(0.62 0.23 18 / 0.4);
   isolation: isolate;
 }
 
@@ -424,48 +542,129 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    url("/themes/rias/corner.webp"), var(--rias-line),
-    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.14), transparent 36%);
+    var(--rias-line),
+    linear-gradient(
+      90deg,
+      transparent,
+      oklch(0.9 0.06 10 / 0.9) 50%,
+      transparent
+    ),
+    url("/themes/rias/corner-grand-bl.webp"),
+    url("/themes/rias/corner-grand-br.webp"),
+    linear-gradient(180deg, oklch(0.62 0.23 18 / 0.1), transparent 36%);
   background-repeat: no-repeat;
   background-size:
-    120px auto,
     100% 1px,
+    36% 1px,
+    120px auto,
+    120px auto,
     100% 100%;
   background-position:
-    -8px -8px,
     top left,
+    -40% 0,
+    left -6px bottom -6px,
+    right -6px bottom -6px,
     0 0;
-  opacity: 0.7;
+  /* The corners stay on the edges and fade before the content area. */
+  mask-image:
+    linear-gradient(#000, #000),
+    linear-gradient(to right, #000 8px, transparent 34px),
+    linear-gradient(to left, #000 8px, transparent 34px),
+    linear-gradient(to top, #000 8px, transparent 30px);
+  mask-size:
+    100% 40px,
+    100% 100%,
+    100% 100%,
+    100% 100%;
+  mask-position: top left;
+  mask-repeat: no-repeat;
+  mask-composite: add;
+  animation: rias-sheen 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 1;
+}
+
+/* One sheen crosses the top edge as the window opens; then the frame is still. */
+@keyframes rias-sheen {
+  from {
+    background-position:
+      top left,
+      -40% 0,
+      left -6px bottom -6px,
+      right -6px bottom -6px,
+      0 0;
+  }
+  to {
+    background-position:
+      top left,
+      140% 0,
+      left -6px bottom -6px,
+      right -6px bottom -6px,
+      0 0;
+  }
 }
 
 .rias [data-slot="dialog-content"]::after,
 .rias [data-slot="alert-dialog-content"]::after {
   content: "";
   position: absolute;
-  right: -150px;
-  bottom: -150px;
-  width: 440px;
-  height: 440px;
+  right: -120px;
+  bottom: -120px;
+  width: 380px;
+  height: 380px;
   z-index: -1;
   pointer-events: none;
   background-image: url("/themes/rias/sigil.webp");
   background-size: contain;
   background-repeat: no-repeat;
-  opacity: 0.18;
-  will-change: transform;
-  animation: rias-seal 120s linear infinite;
+  opacity: 0.09;
+  /* An engraving that dies out before the text and items. */
+  mask-image: radial-gradient(circle at 70% 70%, #000 20%, transparent 62%);
 }
 
 .rias [data-slot="alert-dialog-content"] {
   overflow: hidden;
 }
 
-.rias :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
-  background-color: color-mix(in srgb, var(--background) 96%, black);
-  border-color: oklch(0.62 0.23 18 / 0.4);
+/* The close control: a small iron ring carrying the rose emblem, the X set over it. */
+.rias :is([data-slot="dialog-close"], [data-slot="alert-dialog-close"]) {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  opacity: 1;
+  color: var(--rias-rose);
+  background-color: var(--rias-well);
+  background-image: url("/themes/rias/emblem-small.webp");
+  background-size: 22px auto;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow:
+    inset 0 0 0 1px var(--rias-iron-lit),
+    var(--rias-metal-edge);
+  transition:
+    box-shadow 160ms var(--ease-emphasized),
+    color 160ms var(--ease-emphasized);
 }
 
-/* ---------- Buttons and triggers: embers rising from active controls ---------- */
+.rias :is([data-slot="dialog-close"], [data-slot="alert-dialog-close"]) svg {
+  filter: drop-shadow(0 0 3px oklch(0 0 0 / 0.9));
+}
+
+.rias :is([data-slot="dialog-close"], [data-slot="alert-dialog-close"]):hover {
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1px oklch(0.66 0.22 18 / 0.8),
+    var(--rias-metal-edge),
+    0 0 14px -4px oklch(0.62 0.23 18 / 0.7);
+}
+
+.rias :is([data-slot="sheet-content"], [data-slot="drawer-popup"]) {
+  background-color: oklch(0.12 0.024 352);
+  border-color: var(--rias-iron-lit);
+}
+
+/* ---------- Buttons and triggers ---------- */
 
 .rias
   :is(
@@ -481,17 +680,17 @@
   position: relative;
   isolation: isolate;
   transition:
-    background-color 220ms var(--ease-emphasized),
-    color 220ms var(--ease-emphasized),
-    border-color 220ms var(--ease-emphasized),
-    box-shadow 260ms var(--ease-emphasized),
+    background-color 180ms var(--ease-emphasized),
+    color 180ms var(--ease-emphasized),
+    border-color 180ms var(--ease-emphasized),
+    box-shadow 200ms var(--ease-emphasized),
     translate 120ms var(--ease-emphasized),
-    scale 180ms var(--ease-emphasized);
+    scale 150ms var(--ease-emphasized);
 }
 
 /* The ember layer: three tiles of one random sprite, scrolled upward on the compositor.
-   It is a background layer on a static pseudo-element, so nothing is clipped while idle
-   and badges positioned outside the button stay visible. */
+   It burns only under a seal that is lit (active, selected, open) and while a control
+   is pressed. Hover is a reflex on the frame, not a fire. */
 .rias
   :is(
     :is(button, a)[data-variant],
@@ -542,7 +741,7 @@
     :disabled,
     [data-disabled]
   ):is(
-    :hover,
+    :active,
     [data-popup-open],
     [data-variant="default"],
     [data-active],
@@ -552,7 +751,7 @@
   overflow: clip;
 }
 
-.rias
+.rias:not([data-theme-effects="subtle"], [data-theme-effects="off"])
   :is(
     :is(button, a)[data-variant],
     [data-slot="select-trigger"],
@@ -567,41 +766,21 @@
     :disabled,
     [data-disabled]
   ):is(
-    :hover,
     [data-popup-open],
     [data-variant="default"],
     [data-active],
     [aria-current="page"],
     [aria-pressed="true"]
   )::after {
-  opacity: 1;
+  opacity: 0.8;
   animation:
     rias-embers 48s steps(288) infinite,
     rias-twinkle 3.2s steps(16) infinite;
 }
 
-.rias
-  :is(
-    :is(button, a)[data-variant],
-    [data-slot="select-trigger"],
-    [data-slot="combobox-trigger"],
-    [data-slot="dropdown-menu-trigger"],
-    [data-slot="tabs-trigger"],
-    [data-slot="horizontal-menu"] a,
-    [data-slot="theme-card"]
-  ):not(
-    [data-slot="toggle-group-item"],
-    [data-day],
-    :disabled,
-    [data-disabled]
-  ):is(:hover, [data-popup-open])::after {
-  animation-duration: 30s, 2.2s;
-  animation-timing-function: steps(240), steps(11);
-}
-
 /* A press stokes the embers: for as long as the control is held the sparks rush upward
    and burn brighter and larger, then the flare decays over half a second after release. */
-.rias
+.rias:not([data-theme-effects="off"])
   :is(
     :is(button, a)[data-variant],
     [data-slot="select-trigger"],
@@ -619,8 +798,9 @@
   opacity: 1;
   scale: 1.3;
   filter: brightness(1.7) saturate(1.3);
-  animation-duration: 1.4s, 0.32s;
-  animation-timing-function: steps(160), steps(4);
+  animation:
+    rias-embers 1.4s steps(160) infinite,
+    rias-twinkle 0.32s steps(4) infinite;
   transition:
     opacity 120ms var(--ease-emphasized),
     scale 120ms var(--ease-emphasized),
@@ -638,7 +818,7 @@
   overflow: hidden;
 }
 
-.rias
+.rias:not([data-theme-effects="subtle"], [data-theme-effects="off"])
   :is(
     [data-slot="toggle-group-thumb"],
     [data-slot="horizontal-menu-highlight"]
@@ -659,6 +839,7 @@
     40px 90px,
     110px 30px;
   will-change: transform;
+  opacity: 0.8;
   animation:
     rias-embers 48s steps(288) infinite,
     rias-twinkle 3.2s steps(16) infinite;
@@ -717,7 +898,7 @@
   animation-delay: -8.1s, -0.7s;
 }
 
-/* Controls are cut square, and a press is a short sink with a spring back. */
+/* Controls are cut square; a press is a short sink with no spring. */
 .rias
   :is(
     :is(button, a)[data-variant],
@@ -746,35 +927,16 @@
   scale: 0.97;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .rias
-    :is(
-      :is(button, a)[data-variant],
-      [data-slot="select-trigger"],
-      [data-slot="combobox-trigger"],
-      [data-slot="dropdown-menu-trigger"],
-      [data-slot="tabs-trigger"],
-      [data-slot="horizontal-menu"] a
-    ):not(
-      [data-slot="toggle-group-item"],
-      [data-day],
-      [data-slot="theme-card"]
-    ) {
-    scale: 1;
-  }
-}
-
-/* Primary: deep crimson velvet, a hairline edge and a rose sheen along the top. */
+/* Primary: scarlet enamel in an iron bezel. */
 .rias
   :is(button, a)[data-variant="default"]:not(
     [data-slot="toggle-group-item"],
     [data-day]
   ) {
-  background-color: oklch(0.47 0.19 18);
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
   color: var(--rias-rose);
-  box-shadow:
-    inset 0 1px 0 oklch(0.9 0.06 10 / 0.18),
-    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55);
+  box-shadow: var(--rias-enamel-bezel);
 }
 
 .rias
@@ -782,11 +944,15 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):hover {
-  background-color: oklch(0.5 0.2 18);
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.62 0.22 20),
+    oklch(0.53 0.21 20) 55%,
+    oklch(0.45 0.2 18)
+  );
   box-shadow:
-    inset 0 1px 0 oklch(0.9 0.06 10 / 0.22),
-    inset 0 0 0 1px oklch(0.68 0.22 18 / 0.7),
-    0 0 20px -8px oklch(0.62 0.23 18 / 0.7);
+    var(--rias-enamel-bezel),
+    0 0 18px -6px oklch(0.62 0.23 18 / 0.6);
 }
 
 .rias
@@ -794,10 +960,17 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):active {
-  background-color: oklch(0.44 0.19 18);
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.44 0.19 18),
+    oklch(0.47 0.2 20)
+  );
+  box-shadow:
+    inset 0 2px 4px oklch(0 0 0 / 0.5),
+    inset 0 0 0 1px oklch(0.2 0.02 350);
 }
 
-/* Outline / ghost / secondary: quiet surfaces, crimson edge on hover, same glimmer. */
+/* Outline / ghost / secondary: iron frames; hover is a reflex on the frame. */
 .rias
   :is(button, a)[data-variant="outline"]:not(
     [data-slot="toggle-group-item"],
@@ -805,8 +978,9 @@
   ),
 .rias [data-slot="select-trigger"],
 .rias [data-slot="combobox-trigger"] {
-  border-color: oklch(0.62 0.23 18 / 0.3);
-  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+  border-color: var(--rias-iron-lit);
+  background-color: oklch(0.13 0.024 352);
+  box-shadow: var(--rias-metal-edge);
 }
 
 .rias
@@ -816,10 +990,13 @@
   ):is(:hover, [data-popup-open]),
 .rias [data-slot="select-trigger"]:is(:hover, [data-popup-open]),
 .rias [data-slot="combobox-trigger"]:is(:hover, [data-popup-open]) {
-  border-color: oklch(0.66 0.22 18 / 0.75);
-  background-color: oklch(0.62 0.23 18 / 0.07);
+  border-color: oklch(0.62 0.23 18 / 0.6);
+  background-color: oklch(0.16 0.03 352);
   color: var(--rias-rose);
-  box-shadow: 0 0 18px -8px oklch(0.62 0.23 18 / 0.55);
+  box-shadow:
+    inset 0 1px 0 oklch(0.72 0.07 45 / 0.34),
+    inset 0 -1px 0 oklch(0 0 0 / 0.55),
+    0 0 14px -6px oklch(0.62 0.23 18 / 0.5);
 }
 
 .rias
@@ -836,8 +1013,10 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ) {
-  background-color: oklch(0.24 0.05 352);
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.18);
+  background-color: oklch(0.22 0.04 352);
+  box-shadow:
+    inset 0 0 0 1px var(--rias-iron),
+    var(--rias-metal-edge);
 }
 
 .rias
@@ -845,8 +1024,10 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):hover {
-  background-color: oklch(0.27 0.06 352);
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.35);
+  background-color: oklch(0.25 0.05 352);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.35),
+    var(--rias-metal-edge);
 }
 
 .rias
@@ -854,9 +1035,14 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ) {
-  background-color: oklch(0.5 0.17 28);
+  background-color: oklch(0.5 0.17 30);
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.56 0.18 32),
+    oklch(0.46 0.17 28)
+  );
   color: oklch(0.985 0.01 10);
-  box-shadow: inset 0 0 0 1px oklch(0.65 0.18 28 / 0.6);
+  box-shadow: var(--rias-enamel-bezel);
 }
 
 .rias
@@ -864,26 +1050,42 @@
     [data-slot="toggle-group-item"],
     [data-day]
   ):hover {
-  background-color: oklch(0.54 0.18 28);
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.6 0.19 32),
+    oklch(0.5 0.18 28)
+  );
 }
 
 .rias :is(button, a)[data-variant="link"]:hover {
   color: var(--rias-rose);
 }
 
-/* Sidebar navigation: the active item is a lit crimson seal, brightest at the left. */
+/* Sidebar navigation: the active item is enamel set in the rail, with a small
+   seal lit at its far end. State lives in the fill and the ring, never a left bar. */
 .rias
   [data-slot="sidebar-nav"]
   a
   > [data-slot="button"][data-variant="default"] {
-  background-color: oklch(0.62 0.23 18 / 0.14);
-  background-image: linear-gradient(
-    90deg,
-    oklch(0.62 0.23 18 / 0.22),
-    transparent 70%
-  );
+  background-color: oklch(0.62 0.23 18 / 0.13);
+  background-image:
+    url("/themes/rias/emblem-small.webp"),
+    linear-gradient(90deg, oklch(0.62 0.23 18 / 0.16), transparent 70%);
+  background-repeat: no-repeat;
+  background-size:
+    14px auto,
+    100% 100%;
+  background-position:
+    right 10px center,
+    0 0;
   color: var(--rias-rose);
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.28);
+  box-shadow:
+    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.32),
+    var(--rias-metal-edge);
+  transition:
+    background-color 160ms var(--ease-emphasized),
+    box-shadow 160ms var(--ease-emphasized),
+    color 160ms var(--ease-emphasized);
 }
 
 .rias
@@ -902,20 +1104,30 @@
   filter: drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.7));
 }
 
+/* The BETA tag: a small enamel plate in the same bezel, not a pink pill. */
+.rias [data-slot="sidebar-nav"] [data-slot="badge"] {
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
+  color: var(--rias-rose);
+  box-shadow: var(--rias-enamel-bezel);
+}
+
 /* ---------- Segmented controls, tabs, horizontal menu ---------- */
 
 .rias [data-slot="toggle-group"] {
-  border-color: oklch(0.62 0.23 18 / 0.3);
-  background-color: color-mix(in srgb, var(--background) 75%, transparent);
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.04);
+  border-color: var(--rias-iron-lit);
+  background-color: oklch(0.12 0.022 352);
+  box-shadow: var(--rias-metal-edge);
 }
 
 .rias [data-slot="toggle-group-thumb"] {
-  background-color: oklch(0.47 0.19 18);
-  box-shadow:
-    inset 0 1px 0 oklch(0.9 0.06 10 / 0.18),
-    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55),
-    0 0 16px -8px oklch(0.62 0.23 18 / 0.7);
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
+  box-shadow: var(--rias-enamel-bezel);
   transition: transform 260ms var(--ease-emphasized);
 }
 
@@ -933,17 +1145,24 @@
   color: var(--rias-rose);
 }
 
+.rias
+  [data-slot="toggle-group"][data-variant="outline"]
+  [data-slot="toggle-group-item"][data-pressed] {
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
+  box-shadow: var(--rias-enamel-bezel);
+}
+
 .rias [data-slot="horizontal-menu-viewport"] {
-  border-color: oklch(0.62 0.23 18 / 0.28);
-  background-color: color-mix(in srgb, var(--card) 40%, transparent);
+  border-color: var(--rias-iron);
+  background-color: oklch(0.13 0.024 352);
+  box-shadow: var(--rias-metal-edge);
 }
 
 .rias [data-slot="horizontal-menu-highlight"] {
-  background-color: oklch(0.47 0.19 18);
-  box-shadow:
-    inset 0 1px 0 oklch(0.9 0.06 10 / 0.18),
-    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.55),
-    0 0 16px -8px oklch(0.62 0.23 18 / 0.7);
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
+  box-shadow: var(--rias-enamel-bezel);
   transition:
     transform 280ms var(--ease-emphasized),
     width 200ms var(--ease-emphasized),
@@ -960,17 +1179,21 @@
 }
 
 .rias [data-slot="tabs-list"] {
-  background-color: color-mix(in srgb, var(--background) 70%, transparent);
-  box-shadow: inset 0 0 0 1px oklch(0.62 0.23 18 / 0.25);
+  background-color: oklch(0.12 0.022 352);
+  box-shadow:
+    inset 0 0 0 1px var(--rias-iron),
+    var(--rias-metal-edge);
 }
 
 .rias [data-slot="tabs-trigger"][data-active] {
-  background-color: oklch(0.62 0.23 18 / 0.18);
-  border-color: oklch(0.62 0.23 18 / 0.5);
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
+  border-color: transparent;
   color: var(--rias-rose);
+  box-shadow: var(--rias-enamel-bezel);
 }
 
-/* ---------- Form controls ---------- */
+/* ---------- Form controls: recessed wells, enamel when set ---------- */
 
 .rias
   :is(
@@ -979,8 +1202,11 @@
     [data-slot="select-trigger"],
     [data-slot="input-group"]
   ):not([data-slot="input-group-control"], [cmdk-input]) {
-  border-color: oklch(0.62 0.23 18 / 0.28);
-  background-color: color-mix(in srgb, var(--background) 72%, transparent);
+  border-color: var(--rias-iron-lit);
+  background-color: oklch(0.11 0.02 352);
+  box-shadow:
+    inset 0 1px 3px oklch(0 0 0 / 0.55),
+    inset 0 -1px 0 oklch(0.72 0.07 45 / 0.08);
   transition:
     border-color 160ms var(--ease-emphasized),
     background-color 160ms var(--ease-emphasized),
@@ -992,8 +1218,8 @@
     [data-slot="input-group-control"],
     [cmdk-input]
   ):hover {
-  border-color: oklch(0.66 0.22 18 / 0.6);
-  background-color: oklch(0.62 0.23 18 / 0.05);
+  border-color: oklch(0.66 0.22 18 / 0.55);
+  background-color: oklch(0.125 0.024 352);
 }
 
 .rias [data-slot="select-trigger"][data-popup-open] {
@@ -1002,32 +1228,60 @@
 }
 
 .rias [data-slot="switch"][data-checked] {
-  background-color: oklch(0.5 0.2 18);
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
   box-shadow:
-    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.6),
-    0 0 12px -3px oklch(0.62 0.23 18 / 0.6);
+    inset 0 0 0 1px oklch(0.2 0.02 350),
+    0 0 12px -3px oklch(0.62 0.23 18 / 0.55);
 }
 
 .rias [data-slot="switch"][data-unchecked] {
-  background-color: oklch(0.32 0.05 352);
+  background-color: var(--rias-well);
+  box-shadow: inset 0 0 0 1px var(--rias-iron-lit);
 }
 
 .rias [data-slot="switch-thumb"][data-checked] {
   background-color: var(--rias-rose);
 }
 
+.rias [data-slot="switch-thumb"][data-unchecked] {
+  background-color: oklch(0.6 0.02 340);
+}
+
+/* Checkboxes: a dark well with a 3:1 iron-and-crimson rim, a clear rose-white
+   check on enamel when set. */
 .rias [data-slot="checkbox"] {
-  border-color: oklch(0.62 0.23 18 / 0.6);
+  border-color: oklch(0.62 0.2 18 / 0.85);
+  background-color: var(--rias-well);
+  box-shadow:
+    inset 0 1px 3px oklch(0 0 0 / 0.7),
+    0 0 0 1px oklch(0 0 0 / 0.5);
+}
+
+.rias [data-slot="checkbox"]:hover:not([data-checked]) {
+  border-color: oklch(0.7 0.21 18);
+  background-color: oklch(0.11 0.03 352);
 }
 
 .rias [data-slot="checkbox"][data-checked] {
-  background-color: oklch(0.5 0.2 18);
-  border-color: oklch(0.62 0.23 18);
-  box-shadow: 0 0 10px -3px oklch(0.62 0.23 18 / 0.6);
+  background-color: var(--rias-enamel);
+  background-image: var(--rias-enamel-fill);
+  border-color: oklch(0.25 0.03 350);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.26),
+    0 0 10px -3px oklch(0.62 0.23 18 / 0.6);
+}
+
+.rias [data-slot="checkbox-indicator"] svg {
+  stroke-width: 3;
+  filter: drop-shadow(0 1px 0 oklch(0 0 0 / 0.5));
 }
 
 .rias [data-slot="radio-group-item"] {
-  border-color: oklch(0.62 0.23 18 / 0.5);
+  border-color: oklch(0.62 0.2 18 / 0.7);
+  background-color: var(--rias-well);
+  box-shadow: inset 0 1px 3px oklch(0 0 0 / 0.7);
 }
 
 .rias [data-slot="radio-group-item"][data-checked] {
@@ -1054,7 +1308,7 @@
 }
 
 .rias [data-slot="table-header"].sticky {
-  background-color: color-mix(in srgb, var(--background) 92%, transparent);
+  background-color: color-mix(in srgb, var(--card) 96%, transparent);
 }
 
 .rias [data-slot="table-head"] {
@@ -1073,28 +1327,30 @@
   background-color: oklch(0.62 0.23 18 / 0.14);
 }
 
-/* ---------- Skeleton, progress, empty ---------- */
+/* ---------- Skeleton, progress, empty states ---------- */
 
 .rias [data-slot="skeleton"] {
-  background-color: oklch(0.2 0.04 352);
+  background-color: oklch(0.19 0.035 352);
   animation:
     rias-pulse 2.2s ease-in-out infinite,
     placeholder-in 200ms var(--ease-emphasized) 150ms backwards;
 }
 
 .rias [data-slot="progress-indicator"] {
-  background-color: oklch(0.55 0.21 18);
+  background-color: var(--rias-enamel-lit);
+  background-image: var(--rias-enamel-fill);
   box-shadow: 0 0 10px -3px oklch(0.62 0.23 18 / 0.7);
 }
 
 .rias [data-slot="empty"] {
   position: relative;
   isolation: isolate;
-  border-color: oklch(0.62 0.23 18 / 0.3);
-  background-color: oklch(0.62 0.23 18 / 0.04);
+  border-color: var(--rias-iron);
+  background-color: oklch(0.62 0.23 18 / 0.03);
 }
 
-.rias [data-slot="empty"]::before {
+/* Default empty state: the crystal king, engraved at the right. */
+.rias [data-slot="empty"]:not([data-illustration])::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1104,32 +1360,93 @@
   background-repeat: no-repeat;
   background-size: auto 72%;
   background-position: right 4% bottom;
-  opacity: 0.32;
+  opacity: 0.28;
 }
 
 .rias [data-slot="empty-icon"] {
-  background-color: oklch(0.62 0.23 18 / 0.14);
+  background-color: var(--rias-well);
   color: var(--rias-rose);
   box-shadow:
-    inset 0 0 0 1px oklch(0.62 0.23 18 / 0.35),
-    0 0 22px -6px oklch(0.62 0.23 18 / 0.7);
+    inset 0 0 0 1px var(--rias-iron-lit),
+    var(--rias-metal-edge),
+    0 0 22px -6px oklch(0.62 0.23 18 / 0.5);
 }
 
-/* ---------- Toasts ---------- */
+/* Dedicated illustrations replace the icon tile: the closed chronicle, the empty
+   ledger, the empty reliquary. Each is small, one family, above its heading. */
+.rias [data-illustration] [data-slot="empty-icon"],
+.rias [data-illustration="search"] > div:first-child {
+  display: none;
+}
+
+.rias [data-illustration] [data-slot="empty-header"]::before,
+.rias [data-illustration="search"]::before {
+  content: "";
+  display: block;
+  width: 200px;
+  height: 132px;
+  margin-bottom: 4px;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center bottom;
+  filter: saturate(0.9) brightness(0.92)
+    drop-shadow(0 8px 14px oklch(0 0 0 / 0.6));
+}
+
+.rias [data-illustration="chronicle"] [data-slot="empty-header"]::before {
+  background-image: url("/themes/rias/empty-chronicle.webp");
+}
+
+.rias [data-illustration="ledger"] [data-slot="empty-header"]::before {
+  background-image: url("/themes/rias/empty-ledger.webp");
+}
+
+.rias [data-illustration="search"]::before {
+  height: 112px;
+  background-image: url("/themes/rias/empty-search.webp");
+}
+
+/* ---------- Statistic medallions ---------- */
+
+.rias [data-slot="stat-medallion"] {
+  border-radius: 50%;
+  background-color: var(--rias-well);
+  background-image: url("/themes/rias/medallion.webp");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: inset 0 1px 3px oklch(0 0 0 / 0.7);
+}
+
+.rias [data-slot="stat-medallion"] svg {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* ---------- Toasts: a small panel with the theme's seal ---------- */
 
 .rias [data-sonner-toast][data-styled="true"] {
   font-family: inherit;
-  border-color: oklch(0.62 0.23 18 / 0.4);
+  border-color: var(--rias-iron-lit);
   background: color-mix(in srgb, var(--popover) 94%, black);
+  background-image: url("/themes/rias/emblem-small.webp");
+  background-repeat: no-repeat;
+  background-size: 22px auto;
+  background-position: left 12px center;
+  padding-left: 44px;
   box-shadow:
-    0 18px 40px -16px oklch(0 0 0 / 0.8),
-    0 0 30px -12px oklch(0.62 0.23 18 / 0.5);
+    var(--rias-metal-edge),
+    0 18px 40px -16px oklch(0 0 0 / 0.85),
+    0 0 30px -12px oklch(0.66 0.21 12 / 0.4);
 }
 
-/* ---------- Shell: top bar and content frame ---------- */
+.rias [data-sonner-toast][data-styled="true"] [data-icon] {
+  display: none;
+}
+
+/* ---------- Shell: top bar, sidebar, content frame ---------- */
 
 .rias [data-slot="app-top-bar"] {
-  background-color: color-mix(in srgb, var(--background) 82%, transparent);
+  background-color: color-mix(in srgb, var(--background) 88%, transparent);
   border-bottom-color: transparent;
   background-image: var(--rias-line), var(--rias-line-halo);
   background-repeat: no-repeat;
@@ -1142,15 +1459,37 @@
 }
 
 .rias [data-slot="sidebar-container"] {
-  border-right-color: oklch(0.62 0.23 18 / 0.25);
+  border-right-color: oklch(0.62 0.23 18 / 0.22);
+  position: relative;
+  isolation: isolate;
+}
+
+/* The frame's foot: one grand corner at the bottom of the sidebar. */
+.rias [data-slot="sidebar-container"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/themes/rias/corner-grand-bl.webp");
+  background-repeat: no-repeat;
+  background-size: 140px auto;
+  background-position: left -4px bottom -4px;
+  opacity: 0.55;
+  mask-image:
+    linear-gradient(to right, #000 12px, transparent 56px),
+    linear-gradient(to top, #000 12px, transparent 56px);
+  mask-composite: add;
 }
 
 .rias .app-content-frame {
   position: relative;
   isolation: isolate;
+  /* The filters panel is a panel, not a veil: the character must not show through the checkboxes. */
+  --filters-sidebar: color-mix(in srgb, var(--sidebar) 90%, transparent);
 }
 
-/* Ambient 1: a crimson breath in the far corner, away from the character. */
+/* Ambient 1: the scarlet light breathing in from the right, where the scene is lit. */
 .rias .app-content-frame::before {
   content: "";
   position: absolute;
@@ -1158,35 +1497,55 @@
   z-index: -1;
   pointer-events: none;
   background-image: radial-gradient(
-    ellipse 45% 40% at 0% 100%,
-    oklch(0.62 0.23 18 / 0.18),
+    ellipse 40% 55% at 100% 60%,
+    oklch(0.62 0.23 18 / 0.16),
     transparent 70%
   );
   opacity: 0.6;
-  animation: rias-breathe 9s steps(54) infinite;
+  animation: rias-breathe 11s steps(66) infinite;
 }
 
-/* Ambient 2: the Gremory seal, turning once every four minutes in the lower left. */
+/* Ambient 2: a few rose petals drifting down the margins, never over the data.
+   Two tiles of one scatter scroll on the compositor; the mask keeps them to the
+   outer 20% of the frame and fades them in from the top. */
 .rias .app-content-frame::after {
   content: "";
   position: absolute;
-  left: -140px;
-  bottom: -140px;
-  width: 600px;
-  height: 600px;
+  inset: -1024px 0 0 0;
   z-index: -1;
   pointer-events: none;
-  background-image: url("/themes/rias/sigil.webp");
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.15;
+  background-image:
+    url("/themes/rias/petals.webp"), url("/themes/rias/petals.webp");
+  background-repeat: repeat;
+  background-size:
+    512px 1024px,
+    256px 512px;
+  background-position:
+    60px 0,
+    -90px 300px;
+  opacity: 0.42;
   will-change: transform;
-  animation: rias-seal 240s linear infinite;
+  mask-image:
+    linear-gradient(
+      to right,
+      #000 0,
+      #000 4%,
+      transparent 13%,
+      transparent 87%,
+      #000 96%,
+      #000 100%
+    ),
+    linear-gradient(to bottom, transparent 1024px, #000 1200px);
+  mask-composite: intersect;
+  animation: rias-petals 90s linear infinite;
 }
 
-@keyframes rias-seal {
+@keyframes rias-petals {
+  50% {
+    transform: translate3d(14px, 512px, 0);
+  }
   to {
-    transform: rotate(360deg);
+    transform: translate3d(0, 1024px, 0);
   }
 }
 
@@ -1196,7 +1555,7 @@
     opacity: 0.45;
   }
   50% {
-    opacity: 0.9;
+    opacity: 0.85;
   }
 }
 
@@ -1226,24 +1585,85 @@
   }
 }
 
+/* ---------- Effects preference and reduced motion ---------- */
+
+/* Subtle: no ambient motion; off: nothing decorative moves. Materials stay. */
+.rias:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  .app-content-frame::after {
+  display: none;
+}
+
+.rias:is([data-theme-effects="subtle"], [data-theme-effects="off"])
+  .app-content-frame::before {
+  animation: none;
+  opacity: 0.55;
+}
+
+.rias[data-theme-effects="off"] [data-slot="dialog-content"]::before,
+.rias[data-theme-effects="off"] [data-slot="alert-dialog-content"]::before,
+.rias[data-theme-effects="off"] [data-new-legendary]::after {
+  animation: none;
+}
+
+.rias[data-theme-effects="off"] [data-new-legendary]::after {
+  display: none;
+}
+
+/* Idle (hidden tab, or unfocused window when asked): ambient motion stands still. */
+.rias[data-theme-effects-idle] .app-content-frame::before,
+.rias[data-theme-effects-idle] .app-content-frame::after,
+.rias[data-theme-effects-idle] [data-slot="toggle-group-thumb"]::after,
+.rias[data-theme-effects-idle] [data-slot="horizontal-menu-highlight"]::after,
+.rias[data-theme-effects-idle] [data-slot="sidebar-nav"] button::after,
+.rias[data-theme-effects-idle] [data-slot="sidebar-nav"] a::after,
+.rias[data-theme-effects-idle] [data-slot="guild-rail"] a::before {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rias .app-content-frame::before,
   .rias .app-content-frame::after,
-  .rias [data-slot="dialog-overlay"]::before,
-  .rias [data-slot="alert-dialog-overlay"]::before,
+  .rias [data-slot="dialog-content"]::before,
+  .rias [data-slot="alert-dialog-content"]::before,
   .rias [data-slot="dialog-content"]::after,
   .rias [data-slot="alert-dialog-content"]::after,
-  .rias [data-slot="guild-rail"] a::before {
+  .rias [data-new-legendary]::after,
+  .rias [data-slot="guild-rail"] a::before,
+  .rias [data-slot="toggle-group-thumb"]::after,
+  .rias [data-slot="horizontal-menu-highlight"]::after,
+  .rias button::after,
+  .rias a::after {
     animation: none;
+  }
+
+  .rias .app-content-frame::after,
+  .rias [data-new-legendary]::after {
+    display: none;
+  }
+
+  .rias
+    :is(
+      :is(button, a)[data-variant],
+      [data-slot="select-trigger"],
+      [data-slot="combobox-trigger"],
+      [data-slot="dropdown-menu-trigger"],
+      [data-slot="tabs-trigger"],
+      [data-slot="horizontal-menu"] a
+    ):not(
+      [data-slot="toggle-group-item"],
+      [data-day],
+      [data-slot="theme-card"]
+    ) {
+    scale: 1;
   }
 }
 
 /* ---------- Sidebar: rail, header, navigation, footer ---------- */
 
-/* Rail: a darker glass column, parted from the navigation by a hairline of light. */
+/* Rail: a darker column, parted from the navigation by a hairline of light. */
 .rias [data-slot="guild-rail"] {
   border-right-color: transparent;
-  background-color: color-mix(in srgb, var(--sidebar) 45%, transparent);
+  background-color: color-mix(in srgb, var(--sidebar) 55%, transparent);
   background-image: linear-gradient(
     180deg,
     transparent,
@@ -1265,7 +1685,7 @@
 
 /* Rail entries: the navigation seal without the fill, so the avatar stays legible.
    The active entry is framed by a crimson ring and halo, the hover by a fainter one,
-   and both burn with the same embers the navigation buttons carry. */
+   and the active one burns with the same embers the navigation carries. */
 .rias [data-slot="guild-rail"] a:has(> [data-slot="rail-avatar"]) {
   isolation: isolate;
   transition: scale 180ms var(--ease-emphasized);
@@ -1299,30 +1719,28 @@
 
 .rias
   [data-slot="guild-rail"]
-  a:is(:hover, :has(> [data-slot="rail-avatar"][data-active])) {
+  a:is(:active, :has(> [data-slot="rail-avatar"][data-active])) {
   overflow: clip;
 }
 
-.rias
+.rias:not([data-theme-effects="subtle"], [data-theme-effects="off"])
   [data-slot="guild-rail"]
-  a:is(:hover, :has(> [data-slot="rail-avatar"][data-active]))::before {
-  opacity: 1;
+  a:has(> [data-slot="rail-avatar"][data-active])::before {
+  opacity: 0.8;
   animation:
     rias-embers 48s steps(288) infinite,
     rias-twinkle 3.2s steps(16) infinite;
 }
 
-.rias [data-slot="guild-rail"] a:hover::before {
-  animation-duration: 30s, 2.2s;
-  animation-timing-function: steps(240), steps(11);
-}
-
-.rias [data-slot="guild-rail"] a:active::before {
+.rias:not([data-theme-effects="off"])
+  [data-slot="guild-rail"]
+  a:active::before {
   opacity: 1;
   scale: 1.3;
   filter: brightness(1.7) saturate(1.3);
-  animation-duration: 1.4s, 0.32s;
-  animation-timing-function: steps(160), steps(4);
+  animation:
+    rias-embers 1.4s steps(160) infinite,
+    rias-twinkle 0.32s steps(4) infinite;
   transition:
     opacity 120ms var(--ease-emphasized),
     scale 120ms var(--ease-emphasized),
@@ -1401,6 +1819,17 @@
   background-position: bottom left;
 }
 
+/* Pinned events keep their gold, set as a dull gilt plate instead of a glowing gradient. */
+.rias [data-slot="pinned-events"] > div {
+  border-radius: 0;
+  background-image: none;
+  background-color: oklch(0.2 0.035 70 / 0.55);
+  border-color: oklch(0.7 0.1 75 / 0.4);
+  box-shadow:
+    inset 0 1px 0 oklch(0.85 0.1 85 / 0.22),
+    inset 0 -1px 0 oklch(0 0 0 / 0.5);
+}
+
 /* Footer: the account row sits under a hairline of light, not a border. */
 .rias [data-slot="sidebar-container"] [data-slot="sidebar-footer"] {
   border-top-color: transparent;
@@ -1421,36 +1850,58 @@
   color: var(--rias-rose);
 }
 
-/* ---------- Shell: one continuous wallpaper under the sidebar and the content ---------- */
+/* ---------- Shell: one scene under the sidebar and the content ---------- */
 
+/* The scene was composed for the interface: its left and centre are near-black
+   and calm, its light and detail sit on the right. The character is a separate
+   layer anchored to the bottom-right corner, so she keeps her place at any width
+   instead of being stretched with the scene. A 50% veil calms both under the data. */
 .rias .app-content-frame,
 .rias [data-slot="sidebar-container"] {
   background-color: var(--background);
   background-image:
     linear-gradient(
-      color-mix(in srgb, var(--background) 78%, transparent),
-      color-mix(in srgb, var(--background) 78%, transparent)
+      color-mix(in srgb, var(--background) 50%, transparent),
+      color-mix(in srgb, var(--background) 50%, transparent)
     ),
-    var(--theme-background-image);
-  background-attachment: fixed, fixed;
-  background-size: auto, cover;
+    url("/themes/rias/character.webp"), var(--theme-background-image);
+  background-attachment: fixed, fixed, fixed;
+  background-size:
+    auto,
+    auto min(86vh, 900px),
+    cover;
   background-position:
     center,
-    65% center;
+    right bottom,
+    right center;
   background-repeat: no-repeat;
 }
 
 .rias [data-slot="sidebar-container"] {
   background-image:
     linear-gradient(
-      color-mix(in srgb, var(--sidebar) 78%, transparent),
-      color-mix(in srgb, var(--sidebar) 78%, transparent)
+      color-mix(in srgb, var(--sidebar) 62%, transparent),
+      color-mix(in srgb, var(--sidebar) 62%, transparent)
     ),
-    var(--theme-background-image);
+    url("/themes/rias/character.webp"), var(--theme-background-image);
 }
 
 .rias
   [data-slot="sidebar-container"]
   :is([data-slot="sidebar-content"], .bg-sidebar) {
   background-color: transparent;
+}
+
+@media (max-width: 767px) {
+  .rias .app-content-frame,
+  .rias [data-slot="sidebar-container"] {
+    background-size:
+      auto,
+      auto 52vh,
+      cover;
+    background-position:
+      center,
+      right -12vw bottom,
+      70% center;
+  }
 }

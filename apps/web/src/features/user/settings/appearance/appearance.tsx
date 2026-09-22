@@ -6,6 +6,7 @@ import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { THEME_CATALOG } from "@/themes/catalog";
 import { isThemeId } from "@/themes/resolver";
+import { ThemeEffectsSettings } from "./theme-effects-settings";
 
 export const AppearanceSettings: FC = () => {
   const { theme, setTheme } = useTheme();
@@ -29,6 +30,7 @@ export const AppearanceSettings: FC = () => {
     <ScrollArea className="h-full">
       <div className="px-3 pb-3 flex flex-col gap-4">
         <h1 className="sr-only">{t("settings.appearance.title")}</h1>
+        <ThemeEffectsSettings />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {THEME_CATALOG.map((themeOption) => (
             <ThemeCard
