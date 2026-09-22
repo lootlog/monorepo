@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -141,17 +142,17 @@ export const HeroManageDialog = ({
         if (!isPending) onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-yellow-500/10">
               <Swords className="size-4 text-yellow-500" />
             </div>
             <div>
-              <DialogTitle className="text-base">
+              <DialogTitle>
                 {isEditing ? t("events.heroes.edit") : t("events.heroes.add")}
               </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
+              <DialogDescription>
                 {isEditing ? hero?.npcName : t("events.heroes.addDescription")}
               </DialogDescription>
             </div>
@@ -161,53 +162,55 @@ export const HeroManageDialog = ({
         <form
           id="hero-manage-form"
           onSubmit={handleSubmit(onSubmit)}
-          className="p-5 space-y-4"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.createDialog.heroIdLabel")}
-              </Label>
-              <Input
-                type="number"
-                placeholder={t("events.createDialog.heroIdPlaceholder")}
-                {...register("npcId")}
-                disabled={false}
-                className="h-9 text-sm font-mono"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.createDialog.heroNameLabel")}
-              </Label>
-              <Input
-                placeholder={t("events.createDialog.heroNamePlaceholder")}
-                {...register("npcName", { required: true })}
-                className="h-9 text-sm"
-              />
-            </div>
-          </div>
-
-          {!isEditing && (
-            <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">
-              <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>
-                  <Trans
-                    i18nKey="events.heroes.nameHint"
-                    defaults="Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze."
-                    components={{
-                      strong: (
-                        <strong className="font-semibold text-foreground" />
-                      ),
-                    }}
-                  />
-                </p>
-                <p>{t("events.heroes.idHint")}</p>
-                <p>{t("events.heroes.mapsHint")}</p>
+          <DialogBody className="space-y-4 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("events.createDialog.heroIdLabel")}
+                </Label>
+                <Input
+                  type="number"
+                  placeholder={t("events.createDialog.heroIdPlaceholder")}
+                  {...register("npcId")}
+                  disabled={false}
+                  className="h-9 text-sm font-mono"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("events.createDialog.heroNameLabel")}
+                </Label>
+                <Input
+                  placeholder={t("events.createDialog.heroNamePlaceholder")}
+                  {...register("npcName", { required: true })}
+                  className="h-9 text-sm"
+                />
               </div>
             </div>
-          )}
+
+            {!isEditing && (
+              <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">
+                <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>
+                    <Trans
+                      i18nKey="events.heroes.nameHint"
+                      defaults="Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze."
+                      components={{
+                        strong: (
+                          <strong className="font-semibold text-foreground" />
+                        ),
+                      }}
+                    />
+                  </p>
+                  <p>{t("events.heroes.idHint")}</p>
+                  <p>{t("events.heroes.mapsHint")}</p>
+                </div>
+              </div>
+            )}
+          </DialogBody>
         </form>
 
         <DialogActionFooter

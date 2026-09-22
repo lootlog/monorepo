@@ -3,6 +3,7 @@ import { Eye, Gauge, ShieldAlert, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -41,13 +42,13 @@ export const UserNotificationsInfoDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader className="px-1 pb-4">
+      <DialogContent className="max-h-[85vh] sm:max-w-lg">
+        <DialogHeader>
           <DialogTitle>
             {t("settings.userNotifications.infoDialog.title")}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4 px-5 pb-5 pt-2">
+        <DialogBody className="flex flex-col gap-4 overflow-y-auto">
           {sections.map(({ key, icon: Icon }) => (
             <section key={key}>
               <SectionCardHeader
@@ -60,7 +61,7 @@ export const UserNotificationsInfoDialog = ({
               />
             </section>
           ))}
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -1,5 +1,6 @@
 import type { UserCurrentGuildResponseDtoOutput as Guild } from "@lootlog/client/main";
 import { cn } from "cn";
+import { railAvatarStateClassName } from "@/components/layout/rail-avatar-state";
 import {
   Avatar,
   AvatarFallback,
@@ -70,13 +71,15 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
         src={guild.icon ?? undefined}
         alt={guild.name}
         className={cn(
-          "pointer-events-none select-none transition-opacity",
+          "pointer-events-none select-none",
+          railAvatarStateClassName(isActive),
           isHidden && "opacity-35",
         )}
       />
       <AvatarFallback
         className={cn(
-          "rounded-none font-medium text-white transition-opacity",
+          "rounded-none font-medium text-white",
+          railAvatarStateClassName(isActive),
           isHidden && "opacity-35",
         )}
       >
@@ -98,7 +101,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
                       to="/$guildId"
                       params={{ guildId: guild.vanityUrl ?? guild.id }}
                       draggable={false}
-                      className="group/guild-item isolate block relative"
+                      className="group/rail-item isolate block relative"
                       onClick={handleClick}
                       style={{ pointerEvents: isDragging ? "none" : "auto" }}
                     >

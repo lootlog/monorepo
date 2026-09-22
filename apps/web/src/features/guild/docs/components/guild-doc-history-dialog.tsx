@@ -4,6 +4,7 @@ import { FileClock } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -128,10 +129,10 @@ export const GuildDocHistoryDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
-        className="flex h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
+        className="h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-none sm:max-w-none lg:h-[min(92vh,860px)] lg:max-h-[min(92vh,860px)] xl:w-[1200px]"
       >
-        <DialogHeader className="shrink-0 border-b border-border/70 bg-card px-4 py-3 pr-12  sm:px-5">
-          <DialogTitle className="flex items-center gap-2 px-0 pt-0 text-base sm:text-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <span className="rounded-xl bg-primary/10 p-2">
               <FileClock className="size-4 text-primary" />
             </span>
@@ -139,7 +140,7 @@ export const GuildDocHistoryDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid min-h-0 flex-1 grid-rows-[220px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] lg:grid-rows-1">
+        <DialogBody className="grid grid-rows-[220px_minmax(0,1fr)] p-0 lg:grid-cols-[220px_minmax(0,1fr)] lg:grid-rows-1">
           <aside className="flex min-h-0 flex-col border-b border-border/70 bg-card/25 lg:border-b-0 lg:border-r">
             <SectionCardHeader
               title={t("docs.history.versions")}
@@ -209,7 +210,7 @@ export const GuildDocHistoryDialog = ({
               </p>
             )}
           </section>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -2,6 +2,7 @@ import { Accordion } from "@lootlog/ui/components/accordion";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -89,7 +90,7 @@ export const LootsFiltersSidebar = (
               {t("loots.filtersPanel.saveDialog.description")}
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4">
+          <DialogBody>
             <Label htmlFor="filterName" className="text-sm font-medium">
               {t("loots.filtersPanel.saveDialog.nameLabel")}
             </Label>
@@ -105,8 +106,8 @@ export const LootsFiltersSidebar = (
                 }
               }}
             />
-          </div>
-          <DialogFooter className="p-4 pt-0">
+          </DialogBody>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               {t("loots.filtersPanel.saveDialog.cancel")}
             </Button>
