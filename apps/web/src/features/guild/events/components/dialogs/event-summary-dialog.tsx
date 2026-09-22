@@ -159,7 +159,7 @@ export const EventSummaryDialog = ({
         className="h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none sm:h-[calc(100dvh-2rem)] sm:max-h-[900px] sm:w-[calc(100vw-2rem)] sm:max-w-6xl"
         showCloseButton={false}
       >
-        <DialogHeader className="pr-5">
+        <DialogHeader className="pr-(--dialog-inset)">
           <div className="flex items-start justify-between gap-4 pr-1">
             <div className="min-w-0">
               <DialogTitle>{t("events.summaryDialog.title")}</DialogTitle>

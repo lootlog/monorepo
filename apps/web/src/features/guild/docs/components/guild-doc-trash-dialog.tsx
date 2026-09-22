@@ -111,7 +111,7 @@ export const GuildDocTrashDialog = ({
         <ScrollArea className="min-h-0 flex-1">
           <DialogBody className="flex flex-col p-0">
             {trashQuery.isLoading ? (
-              <div className="flex flex-col gap-2 px-5 py-4">
+              <div className="flex flex-col gap-2 px-(--dialog-inset) py-4">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <Skeleton key={index} className="h-20 w-full rounded-md" />
                 ))}
@@ -145,7 +145,7 @@ export const GuildDocTrashDialog = ({
                 return (
                   <div
                     key={document.id}
-                    className="flex flex-col gap-3 border-b border-border px-5 py-3 last:border-b-0 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 border-b border-border px-(--dialog-inset) py-3 last:border-b-0 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex min-w-0 items-center gap-2">

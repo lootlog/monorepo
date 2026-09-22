@@ -88,7 +88,10 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
       {/* The same header box as every dialog; the drawer carries its own close button inside it. */}
       <header
         data-slot="dialog-header"
-        className={cn(DIALOG_HEADER_CLASS, closeButton && "pr-5")}
+        className={cn(
+          DIALOG_HEADER_CLASS,
+          closeButton && "pr-(--dialog-inset)",
+        )}
       >
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="min-w-0 flex-1 basis-56">
@@ -127,7 +130,11 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
           </div>
         </div>
       </header>
-      <ScrollArea className="min-h-0 flex-1" orientation="vertical">
+      {/* The sections follow the host's gutter: the dialog's inset, or the drawer's. */}
+      <ScrollArea
+        className="min-h-0 flex-1 [--loot-inset:var(--dialog-inset)]"
+        orientation="vertical"
+      >
         <LootPlayersSection loot={loot} onShowPlayerLoots={onShowPlayerLoots} />
         <LootItemIds loot={loot} />
         <LootComments lootId={loot.id} />
@@ -241,7 +248,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
         open={isOpen}
         onOpenChange={(open) => !open && closeLootDetails()}
       >
-        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0">
+        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0 [--dialog-inset:1rem]">
           {renderContent(
             DrawerTitle,
             <DrawerClose

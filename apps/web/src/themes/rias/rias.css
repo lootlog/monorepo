@@ -325,9 +325,18 @@
     bottom left;
 }
 
+/* Card headers carry the inscription alone, no icon, set in from the edge. */
+.rias [data-slot="section-card-header"] {
+  padding-inline: 1.25rem;
+}
+
 .rias [data-slot="section-card-header"] h2 svg {
-  color: var(--rias-crimson);
-  filter: drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.5));
+  display: none;
+}
+
+/* The description no longer hangs under an icon. */
+.rias [data-slot="section-card-header"] h2 + p {
+  padding-left: 0;
 }
 
 /* Loot cards react on the edge and the surface only; nothing lifts or tilts. */
@@ -526,6 +535,8 @@
    top-left and one in the bottom-right corner, a hairline with a single sheen
    along the top, and nothing under the content. */
 .rias :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"]) {
+  /* The metal caps in the corners want a wider gutter; the close control keeps its place. */
+  --dialog-inset: 1.75rem;
   background-color: oklch(0.12 0.024 352);
   background-image:
     linear-gradient(oklch(0.12 0.024 352 / 0.92), oklch(0.12 0.024 352 / 0.92)),
