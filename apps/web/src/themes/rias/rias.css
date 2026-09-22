@@ -548,9 +548,11 @@
     linear-gradient(
       90deg,
       transparent,
-      oklch(0.9 0.06 10 / 0.9) 50%,
+      oklch(0.85 0.08 15 / 0.7) 50%,
       transparent
     ),
+    url("/themes/rias/corner-grand-tl.webp"),
+    url("/themes/rias/corner-grand-tr.webp"),
     url("/themes/rias/corner-grand-bl.webp"),
     url("/themes/rias/corner-grand-br.webp"),
     linear-gradient(180deg, oklch(0.62 0.23 18 / 0.1), transparent 36%);
@@ -558,12 +560,16 @@
   background-size:
     100% 1px,
     36% 1px,
+    128px auto,
+    128px auto,
     120px auto,
     120px auto,
     100% 100%;
   background-position:
     top left,
     -40% 0,
+    left -6px top -6px,
+    right -6px top -6px,
     left -6px bottom -6px,
     right -6px bottom -6px,
     0 0;
@@ -572,9 +578,11 @@
     linear-gradient(#000, #000),
     linear-gradient(to right, #000 8px, transparent 34px),
     linear-gradient(to left, #000 8px, transparent 34px),
-    linear-gradient(to top, #000 8px, transparent 30px);
+    linear-gradient(to top, #000 8px, transparent 30px),
+    linear-gradient(to bottom, #000 10px, transparent 34px);
   mask-size:
-    100% 40px,
+    100% 2px,
+    100% 100%,
     100% 100%,
     100% 100%,
     100% 100%;
@@ -590,6 +598,8 @@
     background-position:
       top left,
       -40% 0,
+      left -6px top -6px,
+      right -6px top -6px,
       left -6px bottom -6px,
       right -6px bottom -6px,
       0 0;
@@ -598,10 +608,32 @@
     background-position:
       top left,
       140% 0,
+      left -6px top -6px,
+      right -6px top -6px,
       left -6px bottom -6px,
       right -6px bottom -6px,
       0 0;
   }
+}
+
+/* The dialog header sits a little lower so the top corners never touch the title,
+   and its rule is the same vine the sections carry. */
+.rias [data-slot="dialog-content"] > header,
+.rias [data-slot="dialog-content"] > [data-slot="dialog-header"],
+.rias [data-slot="alert-dialog-content"] > [data-slot="alert-dialog-header"] {
+  padding-top: 1.25rem;
+}
+
+.rias [data-slot="dialog-content"] > header {
+  border-bottom-color: transparent;
+  background-image: url("/themes/rias/rule.webp"), var(--rias-line);
+  background-repeat: no-repeat;
+  background-size:
+    auto 14px,
+    100% 1px;
+  background-position:
+    bottom -3px center,
+    bottom left;
 }
 
 .rias [data-slot="dialog-content"]::after,
@@ -636,16 +668,13 @@
   border-radius: 0;
   opacity: 1;
   color: var(--rias-rose);
-  background-color: var(--rias-well);
+  background-color: transparent;
   background-image: url("/themes/rias/emblem-small.webp");
-  background-size: 22px auto;
+  background-size: 26px auto;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow:
-    inset 0 0 0 1px var(--rias-iron-lit),
-    var(--rias-metal-edge);
   transition:
-    box-shadow 160ms var(--ease-emphasized),
+    filter 160ms var(--ease-emphasized),
     color 160ms var(--ease-emphasized);
 }
 
@@ -655,10 +684,7 @@
 
 .rias :is([data-slot="dialog-close"], [data-slot="alert-dialog-close"]):hover {
   color: #fff;
-  box-shadow:
-    inset 0 0 0 1px oklch(0.66 0.22 18 / 0.8),
-    var(--rias-metal-edge),
-    0 0 14px -4px oklch(0.62 0.23 18 / 0.7);
+  filter: brightness(1.25) drop-shadow(0 0 6px oklch(0.62 0.23 18 / 0.7));
 }
 
 /* The search palette: the command surface is part of the dialog, not a box over it.
