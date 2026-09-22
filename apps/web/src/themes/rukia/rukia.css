@@ -464,7 +464,7 @@
 /* Three layers on every control:
    the control itself (fill, edge, glow),
    ::before — light gliding over the surface (glint),
-   ::after  — hoarfrost creeping up from the bottom edge, or, on solid ice, snow. */
+   ::after  — snow drifting down inside any lit control (dark on solid ice). */
 .rukia
   :is(
     :is(button, a)[data-variant],
@@ -484,7 +484,8 @@
     border-color 200ms var(--ease-emphasized),
     box-shadow 300ms var(--ease-emphasized),
     text-shadow 300ms var(--ease-emphasized),
-    translate 120ms var(--ease-emphasized);
+    translate 120ms var(--ease-emphasized),
+    scale 180ms var(--ease-emphasized);
 }
 
 .rukia
@@ -522,19 +523,22 @@
   ):not([data-slot="toggle-group-item"], [data-day])::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -768px 0 0 0;
   z-index: -1;
   pointer-events: none;
-  background-image: url("/themes/rukia/frost-edge.webp");
-  background-repeat: repeat-x;
-  background-size: auto 150%;
-  background-position: center bottom;
+  background-image: var(--rukia-snow);
+  background-repeat: repeat;
+  background-size:
+    128px 128px,
+    192px 192px,
+    256px 256px;
+  background-position:
+    0 0,
+    40px 90px,
+    110px 30px;
+  will-change: transform;
   opacity: 0;
-  transform: translate3d(0, 55%, 0);
-  will-change: transform, opacity;
-  transition:
-    opacity 320ms var(--ease-emphasized),
-    transform 600ms var(--ease-emphasized);
+  transition: opacity 420ms var(--ease-emphasized);
 }
 
 /* Anything lit — hovered, open, active, pressed — clips its layers to its own box. */
@@ -564,8 +568,8 @@
   overflow: clip;
 }
 
-/* Under the cursor: the frost climbs, the edge turns to ice, the glow comes on
-   and one band of light passes over the surface. */
+/* Under the cursor: snow starts to drift, the edge turns to ice, the glow comes
+   on and one band of light passes over the surface. */
 .rukia
   :is(
     :is(button, a)[data-variant],
@@ -581,8 +585,10 @@
     :disabled,
     [data-disabled]
   ):is(:hover, [data-popup-open], :focus-visible)::after {
-  opacity: 0.7;
-  transform: translate3d(0, 0, 0);
+  opacity: 0.85;
+  animation:
+    rukia-motes 30s steps(240) infinite,
+    rukia-twinkle 2.2s steps(11) infinite;
 }
 
 .rukia
@@ -644,21 +650,8 @@
     [data-slot="horizontal-menu"] a[aria-current="page"],
     :is(button, a)[data-variant][aria-pressed="true"]
   ):not([data-slot="toggle-group-item"], [data-day])::after {
-  inset: -768px 0 0 0;
-  background-image: var(--rukia-snow);
-  background-repeat: repeat;
-  background-size:
-    128px 128px,
-    192px 192px,
-    256px 256px;
-  background-position:
-    0 0,
-    40px 90px,
-    110px 30px;
   opacity: 0.9;
-  transform: none;
   filter: invert(1) brightness(0.35);
-  transition: none;
   animation:
     rukia-motes 48s steps(288) infinite,
     rukia-twinkle 3.2s steps(16) infinite;
@@ -763,6 +756,58 @@
     [data-slot="select-trigger"]
   ):nth-child(3n)::after {
   animation-delay: -11.7s, -2.3s;
+}
+
+/* Controls are cut square, and a press is a short sink with a spring back. */
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a
+  ):not([data-slot="toggle-group-item"], [data-day], [data-slot="theme-card"]) {
+  border-radius: 0;
+  scale: 1;
+}
+
+.rukia
+  :is(
+    :is(button, a)[data-variant],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-trigger"],
+    [data-slot="dropdown-menu-trigger"],
+    [data-slot="tabs-trigger"],
+    [data-slot="horizontal-menu"] a
+  ):not(
+    [data-slot="toggle-group-item"],
+    [data-day],
+    [data-slot="theme-card"]
+  ):not(:disabled, [data-disabled]):active {
+  scale: 0.97;
+}
+
+.rukia :is([data-slot="tabs-list"], [data-slot="toggle-group"]) {
+  border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rukia
+    :is(
+      :is(button, a)[data-variant],
+      [data-slot="select-trigger"],
+      [data-slot="combobox-trigger"],
+      [data-slot="dropdown-menu-trigger"],
+      [data-slot="tabs-trigger"],
+      [data-slot="horizontal-menu"] a
+    ):not(
+      [data-slot="toggle-group-item"],
+      [data-day],
+      [data-slot="theme-card"]
+    ) {
+    scale: 1;
+  }
 }
 
 /* Primary: solid white ice, ink on top, a cold glow around. */
