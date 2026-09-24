@@ -69,7 +69,9 @@ it("deduplicates timers and shows the same visible state in the regular and unde
 it("adds a manual timer from an overlay inside the timers window", async () => {
   const user = userEvent.setup();
   const fixture = mountTimers();
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("dialog", { name: /Dodaj timer/ }),
+  ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
   const panel = screen.getByRole("dialog", { name: /Dodaj timer/ });
   expect(panel).toBeVisible();
@@ -94,7 +96,9 @@ it("adds a manual timer from an overlay inside the timers window", async () => {
   await waitFor(() => expect(posts()).toHaveLength(1));
   expect(posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
   await waitFor(() =>
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    expect(
+      screen.queryByRole("dialog", { name: /Dodaj timer/ }),
+    ).not.toBeInTheDocument(),
   );
   expect(useWindowsStore.getState()).not.toHaveProperty("add-timer");
 });
@@ -105,7 +109,9 @@ it("closes the add timer overlay with Escape and keeps the window open", async (
   await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
   expect(screen.getByRole("dialog", { name: /Dodaj timer/ })).toBeVisible();
   await user.keyboard("{Escape}");
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("dialog", { name: /Dodaj timer/ }),
+  ).not.toBeInTheDocument();
   expect(useWindowsStore.getState().timers.open).toBe(true);
 });
 

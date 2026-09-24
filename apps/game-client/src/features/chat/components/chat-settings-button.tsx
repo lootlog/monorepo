@@ -5,13 +5,13 @@ import { WindowActionButton } from "@/components/draggable-window/window-action-
 
 export const ChatSettingsButton = () => {
   const { t } = useTranslation("chat");
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
   return (
     <WindowActionButton
       label={t("actions.openSettings")}
       onClick={() =>
-        setOpen("settings", true, {
+        openAndFocus("settings", {
           activeTab: "chat",
           activeSubsection: "chat-appearance",
         })

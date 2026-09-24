@@ -194,9 +194,10 @@ export const CommandWindow = () => {
                 onKeyDown={(e) => {
                   if (suggestions.handleKeyDown(e)) return;
 
+                  // The window frame closes the palette on Escape; the
+                  // unsent draft goes with it.
                   if (e.key === "Escape") {
                     setValue("message", "");
-                    setOpen("command", false);
 
                     return;
                   }

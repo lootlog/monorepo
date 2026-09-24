@@ -1,7 +1,28 @@
 import { act, renderHook, render, fireEvent } from "@testing-library/react";
-import type { PointerEventHandler, RefObject } from "react";
+import { type PointerEventHandler, type RefObject, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useDrag } from "./use-drag";
+
+const ORIGIN = { x: 0, y: 0 };
+
+/** Owns the resting position the way a window frame does with its store. */
+const useStatefulDrag = (
+  ref: RefObject<HTMLDivElement | null>,
+  onDragStop: (position: { x: number; y: number }) => void,
+) => {
+  const [position, setPosition] = useState(ORIGIN);
+
+  const drag = useDrag({
+    ref,
+    position,
+    onDragStop: (dropped) => {
+      onDragStop(dropped);
+      setPosition(dropped);
+    },
+  });
+
+  return { ...drag, position };
+};
 
 const startDrag = (
   handler: PointerEventHandler<HTMLElement>,
@@ -35,6 +56,7 @@ describe("useDrag", () => {
     renderHook(() =>
       useDrag({
         ref,
+        position: ORIGIN,
         onDragStop: vi.fn<(position: { x: number; y: number }) => void>(),
       }),
     );
@@ -79,6 +101,7 @@ describe("useDrag", () => {
     const { result, unmount } = renderHook(() =>
       useDrag({
         ref,
+        position: ORIGIN,
         onDragStop: vi.fn<(position: { x: number; y: number }) => void>(),
       }),
     );
@@ -125,7 +148,7 @@ describe("useDrag", () => {
     });
     const ref: RefObject<HTMLDivElement | null> = { current: element };
     const onDragStop = vi.fn<(position: { x: number; y: number }) => void>();
-    const { result } = renderHook(() => useDrag({ ref, onDragStop }));
+    const { result } = renderHook(() => useStatefulDrag(ref, onDragStop));
 
     startDrag(result.current.handlePointerDown, 1);
 
@@ -196,7 +219,10 @@ describe("useDrag", () => {
       toJSON: () => ({}),
     });
     const ref: RefObject<HTMLDivElement | null> = { current: element };
-    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    const { result } = renderHook(() =>
+      useDrag({ ref, position: ORIGIN, onDragStop: vi.fn() }),
+    );
 
     try {
       startDrag(result.current.handlePointerDown, 1);
@@ -262,7 +288,10 @@ describe("useDrag", () => {
       toJSON: () => ({}),
     });
     const ref: RefObject<HTMLDivElement | null> = { current: element };
-    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    const { result } = renderHook(() =>
+      useDrag({ ref, position: ORIGIN, onDragStop: vi.fn() }),
+    );
 
     try {
       const { getByTestId } = render(
@@ -306,7 +335,10 @@ describe("useDrag", () => {
   it("cancels the pointerdown default action so a drag does not start a text selection", () => {
     const element = document.createElement("div");
     const ref: RefObject<HTMLDivElement | null> = { current: element };
-    const { result } = renderHook(() => useDrag({ ref, onDragStop: vi.fn() }));
+
+    const { result } = renderHook(() =>
+      useDrag({ ref, position: ORIGIN, onDragStop: vi.fn() }),
+    );
 
     const { getByTestId } = render(
       <div
@@ -338,7 +370,7 @@ describe("useDrag", () => {
     expect(result.current.isDragging).toBe(true);
   });
 
-  it("ignores another pointer and ends the active session on pointer cancel", () => {
+  it("ignores another pointer and ends the session on pointer cancel without saving an unmoved position", () => {
     const element = document.createElement("div");
     vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
       bottom: 100,
@@ -353,7 +385,10 @@ describe("useDrag", () => {
     });
     const onDragStop = vi.fn<(position: { x: number; y: number }) => void>();
     const ref: RefObject<HTMLDivElement | null> = { current: element };
-    const { result } = renderHook(() => useDrag({ ref, onDragStop }));
+
+    const { result } = renderHook(() =>
+      useDrag({ ref, position: ORIGIN, onDragStop }),
+    );
 
     startDrag(result.current.handlePointerDown, 7);
 
@@ -371,7 +406,7 @@ describe("useDrag", () => {
       );
     });
     expect(result.current.isDragging).toBe(false);
-    expect(onDragStop).toHaveBeenCalledOnce();
-    expect(onDragStop).toHaveBeenCalledWith({ x: 0, y: 0 });
+    // A press is not a placement: saving here would freeze a default layout.
+    expect(onDragStop).not.toHaveBeenCalled();
   });
 });

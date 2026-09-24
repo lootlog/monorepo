@@ -8,6 +8,7 @@ import {
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 
 const resizeObserverCallbacks: Array<() => void> = [];
@@ -18,9 +19,27 @@ const mutationObserverCallbacks: Array<() => void> = [];
 
 const initialWindowInnerWidth = window.innerWidth;
 
+const initialWindowInnerHeight = window.innerHeight;
+
+const resizeViewport = async (width: number, height: number) => {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(window, "innerHeight", {
+    configurable: true,
+    value: height,
+  });
+  await act(() => {
+    window.dispatchEvent(new Event("resize"));
+  });
+};
+
 class ResizeObserverMock {
-  constructor(private readonly callback: () => void) {
-    resizeObserverCallbacks.push(callback);
+  constructor(callback: ResizeObserverCallback) {
+    resizeObserverCallbacks.push(() => {
+      callback([], this);
+    });
   }
 
   observe(target: Element) {
@@ -212,6 +231,10 @@ describe("DraggableWindow", () => {
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       value: initialWindowInnerWidth,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: initialWindowInnerHeight,
     });
   });
 
@@ -445,7 +468,8 @@ describe("DraggableWindow", () => {
 
     expect(windowElement.style.height).toBe("auto");
     expect(contentElement.style.maxHeight).toBe("180px");
-    expect(resizeObserverCallbacks).toHaveLength(0);
+    // Only the frame's own size is observed, for placement and clamping.
+    expect(resizeObserverObservedElements).toEqual([windowElement]);
     expect(mutationObserverCallbacks).toHaveLength(0);
   });
 
@@ -579,6 +603,7 @@ describe("DraggableWindow", () => {
     expect(previewOverlay.children[2]).toHaveStyle({ top: "79px" });
 
     fireEvent.mouseMove(document, { buttons: 1, clientX: 140, clientY: 140 });
+    await flushAnimationFrame();
 
     expect(getMaxHeightPreviewOverlay(container)).not.toBeNull();
     expect(windowElement.style.height).toBe("170px");
@@ -1066,5 +1091,134 @@ describe("DraggableWindow", () => {
     await waitFor(() => {
       expect(windowElement.style.height).toBe("130px");
     });
+  });
+
+  it("shows a locked window on-screen in a smaller viewport and restores its saved position without rewriting it", async () => {
+    await resizeViewport(1600, 1000);
+    useWindowsStore.setState((state) => ({
+      timers: {
+        ...state.timers,
+        position: { x: 900, y: 600 },
+        hasDefinedPosition: true,
+        size: { width: 242, height: 240 },
+        locked: true,
+      },
+    }));
+
+    const { container } = render(
+      <DraggableWindow isOpen id="timers" title="Timery">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+
+    const windowElement = container.querySelector("#ll-timers");
+
+    expect(windowElement).toHaveStyle({ left: "900px", top: "600px" });
+
+    await resizeViewport(800, 600);
+
+    await waitFor(() => {
+      expect(windowElement).toHaveStyle({ left: "558px", top: "360px" });
+    });
+    expect(useWindowsStore.getState().timers.position).toEqual({
+      x: 900,
+      y: 600,
+    });
+
+    await resizeViewport(1600, 1000);
+
+    await waitFor(() => {
+      expect(windowElement).toHaveStyle({ left: "900px", top: "600px" });
+    });
+  });
+
+  it("closes on Escape only while focus is inside the window and keeps the key from the game", () => {
+    const onClose = vi.fn<() => void>();
+    const gameKeyDown = vi.fn<(event: KeyboardEvent) => void>();
+    document.addEventListener("keydown", gameKeyDown);
+    const outside = document.createElement("button");
+    document.body.append(outside);
+
+    try {
+      render(
+        <DraggableWindow
+          isOpen
+          id="notifications"
+          title="Powiadomienia"
+          onClose={onClose}
+        >
+          <button type="button">Wewnątrz</button>
+        </DraggableWindow>,
+      );
+
+      fireEvent.keyDown(outside, { key: "Escape" });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(gameKeyDown).toHaveBeenCalledOnce();
+
+      fireEvent.keyDown(screen.getByRole("button", { name: "Wewnątrz" }), {
+        key: "Escape",
+      });
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(gameKeyDown).toHaveBeenCalledOnce();
+    } finally {
+      document.removeEventListener("keydown", gameKeyDown);
+      outside.remove();
+    }
+  });
+
+  it("takes focus only when the player opens it and returns focus on close", async () => {
+    useSettingsStore.setState({ animationEffectsEnabled: false });
+    useWindowsStore.setState((state) => ({
+      timers: { ...state.timers, open: false },
+      "npc-detector": { ...state["npc-detector"], open: false },
+      focusRequest: undefined,
+    }));
+
+    const StoreWindow = ({ id }: { id: "timers" | "npc-detector" }) => {
+      const open = useWindowsStore((state) => state[id].open);
+
+      return (
+        <DraggableWindow
+          isOpen={open}
+          id={id}
+          title={id}
+          onClose={() => useWindowsStore.getState().setOpen(id, false)}
+        >
+          <div>Treść</div>
+        </DraggableWindow>
+      );
+    };
+
+    const chatInput = document.createElement("input");
+    document.body.append(chatInput);
+
+    try {
+      render(
+        <>
+          <StoreWindow id="timers" />
+          <StoreWindow id="npc-detector" />
+        </>,
+      );
+
+      chatInput.focus();
+      await act(() => {
+        useWindowsStore.getState().setOpen("npc-detector", true);
+      });
+      expect(document.querySelector("#ll-npc-detector")).toBeInTheDocument();
+      expect(chatInput).toHaveFocus();
+
+      await act(() => {
+        useWindowsStore.getState().toggleOpen("timers");
+      });
+      expect(document.querySelector("#ll-timers")).toHaveFocus();
+
+      await act(() => {
+        useWindowsStore.getState().toggleOpen("timers");
+      });
+      expect(document.querySelector("#ll-timers")).toBeNull();
+      expect(chatInput).toHaveFocus();
+    } finally {
+      chatInput.remove();
+    }
   });
 });

@@ -34,6 +34,7 @@ export const CatchingWhitelistWarning: FC = () => {
   );
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
   const { data: lootlogCharactersConfig, isSuccess } =
     useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
@@ -103,7 +104,7 @@ export const CatchingWhitelistWarning: FC = () => {
   };
 
   const handleOpenSettings = () => {
-    setOpen("settings", true);
+    openAndFocus("settings");
     handleClose();
   };
 
