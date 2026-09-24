@@ -1,22 +1,20 @@
 import { cn } from "cn";
 import type { CSSProperties, FC } from "react";
-import {
-  isUnpaintedTimerColor,
-  type TimerColorPaint,
-} from "@/features/timers/constants/timer-colors";
+import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
 
 export type TimerTileViewProps = {
   paint: TimerColorPaint;
   legacyAppearance?: boolean;
+  /** Paints the timer colour as a stripe on the tile's left edge. */
+  showColorStripe?: boolean;
   displayMode: "column" | "row";
   fontSize: number;
   hasPassedRedThreshold?: boolean;
   isExpired?: boolean;
   id?: string;
   /**
-   * Every other grid row of unpainted tiles (no colour, or expired) gets a
-   * lighter fill so neighbouring records stay apart; coloured tiles keep
-   * their own fill so a colour reads the same on every row.
+   * Every other grid row gets a faint light veil, so neighbouring timers of
+   * one colour stay apart while keeping their hue.
    */
   isAlternateRow?: boolean;
   isMinSpawnTime?: boolean;
@@ -25,38 +23,47 @@ export type TimerTileViewProps = {
   timeLabel: string;
 };
 
-const EXPIRED_FILL = "rgba(255, 255, 255, 0.04)";
+const ALTERNATE_ROW_VEIL = "white 6%";
 
-const ALTERNATE_ROW_FILL = "rgba(255, 255, 255, 0.08)";
+/** An expired tile keeps its colour, darkened. */
+const EXPIRED_VEIL = "black 40%";
+
+const veil = (color: string, overlay: string) =>
+  `color-mix(in srgb, ${color}, ${overlay})`;
 
 const resolveFill = (
-  paint: TimerColorPaint,
+  fill: string,
   isExpired: boolean,
   isAlternateRow: boolean,
 ) => {
-  if (isAlternateRow && (isExpired || isUnpaintedTimerColor(paint))) {
-    return ALTERNATE_ROW_FILL;
-  }
+  const base = isExpired ? veil(fill, EXPIRED_VEIL) : fill;
 
-  return isExpired ? EXPIRED_FILL : paint.fill;
+  return isAlternateRow ? veil(base, ALTERNATE_ROW_VEIL) : base;
 };
 
-/** An expired tile keeps a dimmed stripe so its colour group stays readable. */
-const dimAccent = (accent: string) =>
-  `color-mix(in srgb, ${accent} 40%, transparent)`;
-
+/**
+ * The whole tile text follows the spawn window: orange once the minimum
+ * spawn time passes, red after the maximum, and a dimmed red once expired.
+ */
 const resolveTextColor = (
   legacyAppearance: boolean,
   isExpired: boolean,
   hasPassedRedThreshold: boolean,
   isMinSpawnTime: boolean,
 ) => {
-  if (!legacyAppearance)
-    return isExpired ? "ll:text-gray-400" : "ll:text-white";
+  if (legacyAppearance) {
+    if (hasPassedRedThreshold) return "ll:text-red-500";
 
-  if (hasPassedRedThreshold) return "ll:text-red-500";
+    if (isMinSpawnTime) return "ll:text-orange-400";
 
-  if (isMinSpawnTime) return "ll:text-orange-400";
+    return "ll:text-white";
+  }
+
+  if (isExpired) return "ll:text-red-400/70";
+
+  if (hasPassedRedThreshold) return "ll:text-red-400";
+
+  if (isMinSpawnTime) return "ll:text-orange-300";
 
   return "ll:text-white";
 };
@@ -64,6 +71,7 @@ const resolveTextColor = (
 export const TimerTileView: FC<TimerTileViewProps> = ({
   paint,
   legacyAppearance = false,
+  showColorStripe = true,
   displayMode,
   fontSize,
   hasPassedRedThreshold = false,
@@ -79,10 +87,12 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   // `--ll-timer-*` entries are consumed by this element's own classes.
   const style = {
     "--ll-timer-accent":
-      isExpired && !legacyAppearance ? dimAccent(paint.accent) : paint.accent,
+      isExpired && !legacyAppearance
+        ? veil(paint.accent, EXPIRED_VEIL)
+        : paint.accent,
     "--ll-timer-fill": legacyAppearance
       ? paint.fill
-      : resolveFill(paint, isExpired, isAlternateRow),
+      : resolveFill(paint.fill, isExpired, isAlternateRow),
     "--ll-timer-hover-fill": paint.hoverFill ?? paint.fill,
     fontSize: `${fontSize}px`,
   } as CSSProperties;
@@ -94,7 +104,11 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:border-solid ll:bg-[var(--ll-timer-fill)] ll:transition-colors ll:motion-reduce:transition-none",
         legacyAppearance
           ? "ll:rounded-[2px] ll:border ll:border-[var(--ll-timer-accent)] ll:px-1 ll:py-0.5 ll:hover:bg-[var(--ll-timer-hover-fill)]"
-          : "ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-l-[var(--ll-timer-accent)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
+          : "ll:gap-1 ll:border-0 ll:py-[4px] ll:font-semibold ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
+        !legacyAppearance &&
+          (showColorStripe
+            ? "ll:border-l-[3px] ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]"
+            : "ll:px-[6px]"),
         resolveTextColor(
           legacyAppearance,
           isExpired,
@@ -124,9 +138,6 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         className={cn("ll:shrink-0 ll:whitespace-nowrap", {
           "ll:text-center": displayMode === "column",
           "ll:tabular-nums": !legacyAppearance,
-          "ll:text-red-400": !legacyAppearance && hasPassedRedThreshold,
-          "ll:text-orange-300":
-            !legacyAppearance && isMinSpawnTime && !hasPassedRedThreshold,
         })}
       >
         {timeLabel}
