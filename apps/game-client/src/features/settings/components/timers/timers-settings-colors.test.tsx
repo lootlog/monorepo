@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
+import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { getDefaultColorName } from "@/features/timers/utils/get-default-color-name";
 import { useTimersStore } from "@/store/timers.store";
 import { TimersSettingsColors } from "./timers-settings-colors";
@@ -72,7 +73,7 @@ describe("TimersSettingsColors", () => {
     expect(
       useTimersStore.getState().overriddenDefaultColors.red,
     ).toBeUndefined();
-    expect(borderHexInput).toHaveValue("#EF4444");
+    expect(borderHexInput).toHaveValue(TIMERS_COLORS.red.accent.toUpperCase());
   });
 
   it("does not mark an unchanged persisted default name as modified", () => {
