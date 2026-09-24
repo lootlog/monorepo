@@ -1,16 +1,7 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
-import { Effect, FiberSet, Layer, Schedule } from "effect";
-import {
-  RabbitMessaging,
-  type FailurePolicy,
-  type RabbitDelivery,
-} from "@lootlog/messaging";
-import {
-  decodeRabbitEventJson,
-  type CanonicalRabbitEventRoutingKey,
-  type CanonicalRabbitEvent,
-} from "@lootlog/protocol/rabbit/events";
+import { Effect, FiberSet, Layer } from "effect";
+import { RabbitMessaging, type FailurePolicy } from "@lootlog/messaging";
 import {
   RabbitRoutingKey,
   type RabbitRoutingKeyName,
@@ -38,6 +29,7 @@ import { applicationLogger } from "#src/shared/application-logger";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { forkCronTask } from "#src/runtime/background/cron";
+import { makeRabbitConsumer } from "#src/runtime/background/rabbit-consumer";
 import { EventsServices } from "#src/runtime/features/events";
 import { RecordsServices } from "#src/runtime/features/records";
 import { NotificationsServices } from "#src/runtime/features/notifications";
@@ -54,22 +46,13 @@ const rabbitRetryPolicy = (
   deadLetterRoutingKey,
 });
 
-const decodeRabbitText = (delivery: RabbitDelivery): string =>
-  new TextDecoder().decode(delivery.content);
-
 export const RabbitConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
     const rabbit = yield* RabbitMessaging;
     const redis = yield* ApiRedis;
     const database = yield* ApiDatabase;
-    const { dispatchLootPublications } = yield* RecordsServices;
-    yield* dispatchLootPublications().pipe(
-      Effect.catch((error) =>
-        Effect.logError("Loot publication dispatch failed", error),
-      ),
-      Effect.repeat(Schedule.spaced("1 second")),
-      Effect.forkScoped,
-    );
+    const { runLootPublications } = yield* RecordsServices;
+    yield* runLootPublications.pipe(Effect.forkScoped);
     const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
     const { removal } = yield* MemberServices;
@@ -99,36 +82,7 @@ export const RabbitConsumers = Layer.effectDiscard(
       logger: applicationLogger,
     });
 
-    const consume = <Key extends CanonicalRabbitEventRoutingKey>(
-      queue: string,
-      routingKey: Key,
-      handler: (
-        payload: CanonicalRabbitEvent<Key>,
-        delivery: RabbitDelivery,
-      ) => Effect.Effect<unknown, unknown> | Promise<void> | void,
-      failurePolicy: FailurePolicy = { strategy: "nack" },
-    ) =>
-      Effect.acquireRelease(
-        rabbit.consume({ queue, failurePolicy }, (delivery) =>
-          Effect.try({
-            try: () =>
-              decodeRabbitEventJson(routingKey, decodeRabbitText(delivery)),
-            catch: (cause) => cause,
-          }).pipe(
-            Effect.flatMap((payload) => {
-              const result = handler(payload, delivery);
-
-              return Effect.isEffect(result)
-                ? result.pipe(Effect.asVoid)
-                : Effect.tryPromise({
-                    try: () => Promise.resolve(result),
-                    catch: (cause) => cause,
-                  });
-            }),
-          ),
-        ),
-        ({ cancel }) => cancel.pipe(Effect.ignore),
-      );
+    const consume = yield* makeRabbitConsumer(rabbit);
 
     const retry = {
       guildCreate: rabbitRetryPolicy(

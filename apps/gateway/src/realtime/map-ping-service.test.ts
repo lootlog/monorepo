@@ -49,7 +49,6 @@ const makeSocket = (): GatewaySocket => ({
       },
       location: { mapId: 7, map: "Map", x: 1, y: 2 },
     },
-    backpressureStrikes: 0,
   } satisfies SessionData,
 });
 

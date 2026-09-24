@@ -19,7 +19,6 @@ const socket = (connectionId: string): GatewaySocket => ({
     subscriptions: new Map(),
     airTagScopes: [],
     confidence: "reported",
-    backpressureStrikes: 0,
   },
   send: () => 1,
   close: () => undefined,
@@ -396,7 +395,7 @@ test("queued commands on closed sockets cannot consume reserved disconnect capac
 
 test("WebSocket close removes delivery targets immediately and rejects excess lifecycles before registration", async () => {
   const hub = new RealtimeHub(
-    { maxBackpressureBytes: 1024, maxBackpressureStrikes: 3 },
+    { maxBackpressureBytes: 1024 },
     unusedFederationStore,
     () => {},
   );

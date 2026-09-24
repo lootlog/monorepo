@@ -409,6 +409,35 @@ describe("battle creation deduplication", () => {
     ]);
   });
 
+  it("keeps analytics cached when reading an accepted battle and its timeline", async () => {
+    const testApplication = createTestApplication();
+    app = testApplication.app;
+
+    const { body } = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "analytics-read-cache",
+      events: [battleEvent],
+    });
+
+    expect(
+      testApplication.analyticsService.invalidateAnalyticsCache,
+    ).toHaveBeenCalledTimes(1);
+
+    const detail = await Effect.runPromise(
+      app.battles.getBattleFromDatabase(body.battleId, "user-1"),
+    );
+
+    const timeline = await Effect.runPromise(
+      app.battles.getBattleTimeline(body.battleId, "user-1"),
+    );
+
+    expect(detail.id).toBe(body.battleId);
+    expect(timeline.timeline.length).toBeGreaterThan(0);
+    expect(
+      testApplication.analyticsService.invalidateAnalyticsCache,
+    ).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects changed payloads for an accepted submission without changing its data", async () => {
     const testApplication = createTestApplication();
     app = testApplication.app;

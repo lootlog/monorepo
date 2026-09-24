@@ -37,7 +37,6 @@ const config = {
   allowedWebOrigins: new Set<string>(),
   allowedExtensionOrigins: new Set<string>(),
   maxBackpressureBytes: 1_048_576,
-  maxBackpressureStrikes: 3,
 } satisfies GatewayConfiguration;
 
 const redis = { ...unusedFederationStore, publish: () => Promise.resolve() };
@@ -136,7 +135,6 @@ for (const scenario of [
       guilds: [],
       airTagScopes: [],
       confidence: "reported",
-      backpressureStrikes: 0,
       subscriptions: new Map(
         scopes.map((scope) => [getScopeKey(scope), scope]),
       ),

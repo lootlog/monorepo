@@ -58,8 +58,11 @@ const setup = async () => {
       return { consumerTag: queue };
     },
     prefetch: async () => ({}),
-    publish: () => true,
-    waitForConfirms: async () => {},
+    publish: (_exchange, _key, _content, _options, confirm) => {
+      confirm?.(null, {});
+
+      return true;
+    },
   };
 
   type Document = { uid: string };
