@@ -1,4 +1,5 @@
 import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
+import { toast } from "sonner";
 import type { InputVariant } from "@/components/ui/input";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -592,6 +593,7 @@ export function useChatInputController({
       resetInputState();
       focusEditorCaret(0);
     } catch {
+      toast.error(t("errors.clearFailed"));
       focusEditorCaret(caretIndex);
     }
   };
@@ -689,15 +691,6 @@ export function useChatInputController({
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.nativeEvent.isComposing) {
-      return;
-    }
-
-    if (isClearConfirmOpen && event.key === "Escape") {
-      event.preventDefault();
-      setIsClearConfirmOpen(false);
-      setTabCompletionSession(null);
-      focusEditorCaret(caretIndex);
-
       return;
     }
 

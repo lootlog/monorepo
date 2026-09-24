@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
 import { NpcType } from "@/api/npcs.api";
@@ -144,7 +145,7 @@ export const NpcListItem = ({
 
   const handleSendNotification = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      showRuntimeMessage(t("actions.noMatchingGuilds"));
+      toast.error(t("actions.noMatchingGuilds"));
 
       return;
     }
@@ -167,13 +168,13 @@ export const NpcListItem = ({
         setOpen("party-finder", true);
     } catch (error) {
       console.warn("Failed to send notification:", error);
-      showRuntimeMessage(t("actions.messageFailed"));
+      toast.error(t("actions.messageFailed"));
     }
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      showRuntimeMessage(t("actions.noMatchingGuilds"));
+      toast.error(t("actions.noMatchingGuilds"));
 
       return;
     }
@@ -193,7 +194,7 @@ export const NpcListItem = ({
       });
     } catch (error) {
       console.warn("Failed to gather party:", error);
-      showRuntimeMessage(t("actions.gatherPartyFailed"));
+      toast.error(t("actions.gatherPartyFailed"));
     }
   };
 
@@ -359,5 +360,3 @@ export const NpcListItem = ({
     </div>
   );
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

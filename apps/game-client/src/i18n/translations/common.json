@@ -8,6 +8,7 @@
   "actions": {
     "resizeWindow": "Zmień rozmiar okna strzałkami; Shift zmienia rozmiar o 10 pikseli",
     "remove": "Usuń",
+    "cancel": "Anuluj",
     "reset": "Przywróć domyślny",
     "restore": "Przywróć",
     "clear": "Wyczyść",

@@ -101,8 +101,7 @@
     "clearChatConfirm": {
       "title": "Wyczyścić czat?",
       "description": "Ta operacja usunie historię czatu dla wszystkich członków organizacji.",
-      "confirm": "Wyczyść",
-      "cancel": "Anuluj"
+      "confirm": "Wyczyść"
     },
     "commandSuggestions": {
       "title": "Wybierz komendę",
@@ -128,6 +127,10 @@
     "reply": "Odpowiedz",
     "delete": "Usuń",
     "deleting": "Usuwanie wiadomości",
+    "deleteConfirm": {
+      "title": "Usunąć wiadomość?",
+      "description": "Wiadomość zniknie u wszystkich członków organizacji."
+    },
     "showEquipment": "Pokaż ekwipunek",
     "inviteFriends": "Dodaj do znajomych",
     "inviteParty": "Zaproś do grupy",
@@ -136,7 +139,9 @@
   },
   "errors": {
     "rateLimited": "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
-    "sendFailed": "Nie udało się wysłać wiadomości na czat"
+    "sendFailed": "Nie udało się wysłać wiadomości na czat",
+    "clearFailed": "Nie udało się wyczyścić czatu. Spróbuj ponownie.",
+    "deleteFailed": "Nie udało się usunąć wiadomości. Spróbuj ponownie."
   },
   "quickActions": {
     "menu": "Szybkie akcje",

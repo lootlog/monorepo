@@ -6,6 +6,7 @@ import {
 import { Plus, UserMinus, UserPlus } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { CharacterTile } from "@/components/character-tile";
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
@@ -25,7 +26,7 @@ export function ReadyRoomParticipantItem({
   room,
   participant,
 }: ReadyRoomParticipantItemProps) {
-  const { t } = useTranslation("partyFinder");
+  const { t } = useTranslation(["partyFinder", "chat"]);
   const { applyUpdate } = useReadyRoomsCache();
 
   const isFriend = useFriendsStore((state) =>
@@ -52,8 +53,8 @@ export function ReadyRoomParticipantItem({
     onSuccess: (update) => {
       applyUpdate(decodePartyReadyRoomClientUpdate(update));
     },
-    onError: (cause) => {
-      console.warn("Failed to remove the Ready Room participant", cause);
+    onError: () => {
+      toast.error(t("messages.removeFailed"));
     },
   });
 
@@ -94,14 +95,9 @@ export function ReadyRoomParticipantItem({
             title={t("actions.invite")}
             disabled={!canInviteParticipants([participant.participantId])}
             onClick={() => {
-              void inviteParticipants([participant.participantId]).catch(
-                (cause: unknown) => {
-                  console.warn(
-                    "Failed to invite a Ready Room participant",
-                    cause,
-                  );
-                },
-              );
+              void inviteParticipants([participant.participantId]).catch(() => {
+                toast.error(t("gatherings.inviteFailed", { ns: "chat" }));
+              });
             }}
           >
             <Plus size={17} className="ll:text-green-400" />

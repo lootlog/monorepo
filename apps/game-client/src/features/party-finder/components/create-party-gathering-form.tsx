@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
@@ -10,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import * as z from "zod";
 import { useGameStore } from "@/store/game.store";
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
 
 const createFormSchema = (t: TFunction<"partyFinder">) =>
   z
@@ -61,7 +61,7 @@ export const CreatePartyGatheringForm = () => {
 
   const onSubmit = async (data: FormData) => {
     if (selectedGuildIds.length === 0) {
-      showRuntimeMessage(t("form.selectGuild"));
+      toast.error(t("form.selectGuild"));
 
       return;
     }
@@ -79,7 +79,7 @@ export const CreatePartyGatheringForm = () => {
       });
       reset();
     } catch (error) {
-      showRuntimeMessage(getCreatePartyGatheringErrorMessage(error));
+      toast.error(getCreatePartyGatheringErrorMessage(error));
     }
   };
 
