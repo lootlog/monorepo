@@ -496,6 +496,8 @@ describe("game event pipeline golden replay", () => {
       }),
     );
 
+    await vi.waitFor(() => expect(requestsFor("/kills")).toHaveLength(1));
+
     dispatcher.cleanup();
   });
 

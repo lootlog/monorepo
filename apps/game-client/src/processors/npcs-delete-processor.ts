@@ -34,7 +34,7 @@ export class NpcsDeleteProcessor {
     let timerContext: {
       accountId: string;
       characterId: string;
-      catchingGuildIds: string[];
+      catchingGuildIds: string[] | undefined;
       mapId: number | string;
       mapName: string;
     } | null = null;
@@ -53,17 +53,22 @@ export class NpcsDeleteProcessor {
           accountId,
         });
 
-      const charactersConfig =
-        queryClient.getQueryData<UserLootlogConfigAccountResponseDtoOutput>(
+      const configQuery =
+        queryClient.getQueryState<UserLootlogConfigAccountResponseDtoOutput>(
           lootlogCharacterConfigQueryKey,
         );
 
-      const characterConfig = charactersConfig?.[characterId];
+      const characterConfig =
+        configQuery?.status === "success" &&
+        configQuery.fetchStatus === "idle" &&
+        !configQuery.isInvalidated
+          ? configQuery.data?.[characterId]
+          : undefined;
 
       timerContext = {
         accountId,
         characterId,
-        catchingGuildIds: characterConfig?.catchingGuildIds ?? [],
+        catchingGuildIds: characterConfig?.catchingGuildIds,
         mapId: map.id,
         mapName: map.name,
       };
@@ -94,7 +99,9 @@ export class NpcsDeleteProcessor {
 
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.name;
 
-      if (context.catchingGuildIds.length === 0) {
+      // Only an explicit empty whitelist can suppress a submission. When the
+      // cache is unavailable, the API still checks the current whitelist.
+      if (context.catchingGuildIds?.length === 0) {
         return;
       }
 

@@ -1,5 +1,6 @@
 import { expect, it } from "bun:test";
 import { Deferred, Effect, Fiber, Queue } from "effect";
+import { eq } from "drizzle-orm";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Permission } from "@lootlog/schema/permissions";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
@@ -20,6 +21,7 @@ import {
   createMemberFixture,
 } from "../../../../test/organization-fixtures.js";
 import { makeAutoTimer } from "./timer-auto.data-layer.js";
+import { TimerHistoryAction } from "#src/timers/timers.types";
 
 it("limits independent Organization writes to three, settles delivery pairs, and preserves ordered partial results and deduplication", async () => {
   const boundary = await createDatabaseBoundary();
@@ -367,6 +369,140 @@ it.each([false, true])(
           ).toHaveLength(1);
         }).pipe(Effect.scoped, Effect.timeout("10 seconds")),
       );
+    } finally {
+      await boundary.dispose();
+    }
+  },
+);
+
+it.each([false, true])(
+  "retries a committed timer after a Redis failure without duplicating history, and accepts the next kill after the dedup window (restored window: %s)",
+  async (restoredWindow) => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      const { database } = boundary;
+      const guild = createGuildFixture();
+
+      const member = createMemberFixture({
+        userId: guild.ownerId,
+        globalUserId: "user",
+      });
+
+      await boundary.run(database.insert(guildTable).values(guild));
+      await boundary.run(database.insert(memberTable).values(member));
+      await boundary.run(
+        database.insert(userCharactersLootlogSettingsTable).values({
+          userId: member.userId,
+          accountId: "1",
+          characterId: "2",
+          catchingGuildIds: [guild.id],
+          updatedAt: new Date(),
+        }),
+      );
+
+      let failCacheWrite = true;
+      const publications: string[] = [];
+
+      const create = makeAutoTimer(database, {
+        get: () => Effect.succeed(null),
+        set: () =>
+          failCacheWrite ? Effect.fail("Redis unavailable") : Effect.void,
+        setNx: () => Effect.succeed(true),
+        releaseDedup: () => Effect.void,
+        invalidateList: () => Effect.void,
+        enqueueEventHeroCheck: () => Effect.void,
+        withLock: (_key, operation) => operation,
+        publish: (routingKey) =>
+          Effect.sync(() => {
+            publications.push(routingKey);
+          }),
+      });
+
+      const request = {
+        respBaseSeconds: 60,
+        world: "world",
+        npc: {
+          id: 300,
+          name: "Hero",
+          location: "Map",
+          lvl: 100,
+          wt: 85,
+          icon: "hero.png",
+          type: 2,
+        },
+        accountId: "1",
+        characterId: "2",
+      };
+
+      const identity = { discordId: member.userId, userId: "user" };
+
+      const firstResult = await boundary.run(
+        create(identity, request).pipe(Effect.result),
+      );
+
+      expect(firstResult._tag).toBe("Failure");
+
+      if (restoredWindow) {
+        // Restoring an earlier snapshot replaces windowOpenedAt but retains the
+        // latest CREATE in history; the pending submission must not undo it.
+        await boundary.run(
+          database.update(timerTable).set({
+            windowOpenedAt: new Date(Date.now() - 60_000),
+          }),
+        );
+      }
+
+      const acceptedTimers = await boundary.run(
+        database.select().from(timerTable),
+      );
+
+      expect(acceptedTimers).toHaveLength(1);
+
+      failCacheWrite = false;
+      expect(await boundary.run(create(identity, request))).toEqual({
+        submittedGuilds: [{ guildId: guild.id, guildName: guild.name }],
+        rejectedGuilds: [],
+      });
+      expect(await boundary.run(database.select().from(timerTable))).toEqual(
+        acceptedTimers,
+      );
+      expect(
+        await boundary.run(database.select().from(timerHistoryEntryTable)),
+      ).toHaveLength(1);
+
+      const previousKill = new Date(Date.now() - 31_000);
+      await boundary.run(
+        database
+          .update(timerHistoryEntryTable)
+          .set({ createdAt: previousKill })
+          .where(eq(timerHistoryEntryTable.action, TimerHistoryAction.CREATE)),
+      );
+      await boundary.run(
+        database.update(timerTable).set({
+          windowOpenedAt: previousKill,
+          wasReset: true,
+          updatedAt: new Date(),
+        }),
+      );
+      await boundary.run(
+        create(identity, { ...request, respBaseSeconds: 120 }),
+      );
+      expect(
+        (await boundary.run(database.select().from(timerTable))).map(
+          ({ latestRespBaseSeconds, wasReset }) => ({
+            latestRespBaseSeconds,
+            wasReset,
+          }),
+        ),
+      ).toEqual([{ latestRespBaseSeconds: 120, wasReset: false }]);
+      expect(
+        await boundary.run(database.select().from(timerHistoryEntryTable)),
+      ).toHaveLength(2);
+      expect(publications).toEqual([
+        RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+        RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+      ]);
     } finally {
       await boundary.dispose();
     }

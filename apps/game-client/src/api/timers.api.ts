@@ -14,6 +14,7 @@ import {
 } from "@/lib/api/generated-helpers";
 import type { GuildMember } from "@/types/guild-member";
 import { requireLocation } from "./require-location";
+import { GAME_EVENT_RETRY_OPTIONS } from "./retry-policy";
 import {
   getAggregateActionStatus,
   getErrorMessage,
@@ -63,6 +64,7 @@ export function createAutoTimer(
   return runSingleLoggedAction({
     actionType: "create_timer",
     actionPayload: timer,
+    retry: GAME_EVENT_RETRY_OPTIONS,
     request: {
       method: "POST",
       endpoint: "/timers/auto",
