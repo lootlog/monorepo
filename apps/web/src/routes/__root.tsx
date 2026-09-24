@@ -21,6 +21,7 @@ import "@/themes/default.css";
 import "@/themes/muted.css";
 import "@/themes/backgrounds.css";
 import "../scrollbars.css";
+import "../page-scroll.css";
 import "@/i18n/config";
 
 const ReactQueryDevtools = lazy(() =>

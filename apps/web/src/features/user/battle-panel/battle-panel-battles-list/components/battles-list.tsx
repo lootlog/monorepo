@@ -5,8 +5,9 @@ import type {
 } from "@/lib/api/battlelog-types";
 import { BattlesTable } from "@/features/user/battle-panel/battle-panel-battles-list/components/battles-table";
 import { cn } from "cn";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { getPrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
 import type { FilterChip } from "@/components/common/filter-chip-list";
 
 type BattlesListProps = {
@@ -86,20 +87,15 @@ export const BattlesList = ({
   const currentFilters = getCurrentFilters(params);
   const tableState = getBattlesTableState(battlesResponse, pageSize, params);
 
-  useEffect(() => {
-    if (enableScrollToTop && containerRef.current) {
-      const scrollViewport = containerRef.current.closest(
+  useResetScrollTop({
+    behavior: getPrefersReducedMotion() ? "auto" : "smooth",
+    enabled: enableScrollToTop,
+    getScrollElement: () =>
+      containerRef.current?.closest<HTMLElement>(
         '[data-slot="scroll-area-viewport"]',
-      );
-
-      if (scrollViewport) {
-        scrollViewport.scrollTo({
-          top: 0,
-          behavior: getPrefersReducedMotion() ? "auto" : "smooth",
-        });
-      }
-    }
-  }, [params?.cursor, enableScrollToTop]);
+      ) ?? null,
+    resetKey: params?.cursor ?? "",
+  });
 
   const handleNextPage = () => {
     if (onCursorChange && battlesResponse?.pagination.nextCursor) {
