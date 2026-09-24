@@ -61,6 +61,63 @@ const resolveRightColumnPosition = (
   };
 };
 
+const RIGHT_COLUMN_WINDOWS = ["quick-access", "timers", "chat"] as const;
+
+const overlaps = (
+  position: WindowPosition,
+  size: WindowSize,
+  other: WindowPosition & WindowSize,
+) =>
+  position.x < other.x + other.width &&
+  other.x < position.x + size.width &&
+  position.y < other.y + other.height &&
+  other.y < position.y + size.height;
+
+/**
+ * On narrow maps the two corner stacks meet. A left-corner window then slides
+ * left until it clears the right column, over the game's chat column if it
+ * must, and moves down past the right column only when the viewport is too
+ * narrow for that.
+ */
+const clearOfRightColumn = (
+  position: WindowPosition,
+  size: WindowSize,
+  sizeOf: SizeOf,
+  viewport: WindowSize,
+): WindowPosition => {
+  const rightColumn = RIGHT_COLUMN_WINDOWS.map((id) => ({
+    ...resolveRightColumnPosition(id, sizeOf, viewport),
+    ...sizeOf(id),
+  }));
+
+  const findBlocker = (candidate: WindowPosition) =>
+    rightColumn.find((rect) => overlaps(candidate, size, rect));
+
+  const blocker = findBlocker(position);
+
+  if (!blocker) return position;
+
+  const beside = {
+    x: blocker.x - WINDOW_GAP - size.width,
+    y: position.y,
+  };
+
+  if (beside.x >= 0 && !findBlocker(beside)) return beside;
+
+  let below = position;
+  let belowBlocker = findBlocker(below);
+
+  while (belowBlocker) {
+    below = {
+      x: position.x,
+      y: belowBlocker.y + belowBlocker.height + WINDOW_GAP,
+    };
+    belowBlocker = findBlocker(below);
+  }
+
+  return below;
+};
+
 /**
  * Windows that open on their own when something happens in the game stack
  * down the map's top-left corner, away from the windows open from the start.
@@ -68,17 +125,30 @@ const resolveRightColumnPosition = (
 const resolveLeftColumnPosition = (
   id: "npc-detector" | "notifications",
   sizeOf: SizeOf,
+  viewport: WindowSize,
 ): WindowPosition => {
   const left = GAME_LEFT_COLUMN_WIDTH + WINDOW_GAP;
 
-  if (id === "npc-detector") return { x: left, y: MAP_TOP };
+  const detector = clearOfRightColumn(
+    { x: left, y: MAP_TOP },
+    sizeOf("npc-detector"),
+    sizeOf,
+    viewport,
+  );
+
+  if (id === "npc-detector") return detector;
 
   // Both grow with their content up to the stored size, so stacking on that
   // upper bound keeps them apart at any fill level.
-  return {
-    x: left,
-    y: MAP_TOP + sizeOf("npc-detector").height + WINDOW_GAP,
-  };
+  return clearOfRightColumn(
+    {
+      x: left,
+      y: detector.y + sizeOf("npc-detector").height + WINDOW_GAP,
+    },
+    sizeOf("notifications"),
+    sizeOf,
+    viewport,
+  );
 };
 
 /**
@@ -98,7 +168,7 @@ export const resolveDefaultWindowPosition = (
       return resolveRightColumnPosition(id, sizeOf, viewport);
     case "npc-detector":
     case "notifications":
-      return resolveLeftColumnPosition(id, sizeOf);
+      return resolveLeftColumnPosition(id, sizeOf, viewport);
     default: {
       const size = sizeOf(id);
 
