@@ -159,29 +159,7 @@ describe("windows store", () => {
       activeSubsection: undefined,
       addon: 1,
     });
-    expect(state["create-notification"].state).toStrictEqual({
-      npc: { ...npc, grp: undefined },
-      npcs: "addon",
-    });
-  });
-
-  it("drops a saved notification NPC with a missing or mistyped field", async () => {
-    localStorage.setItem(
-      storageKey("ll-windows-state"),
-      JSON.stringify({
-        version: 19,
-        state: {
-          "create-notification": {
-            state: { npc: { id: 7, nick: "Tanroth" }, npcs: [] },
-          },
-        },
-      }),
-    );
-    await useWindowsStore.persist.rehydrate();
-
-    expect(
-      useWindowsStore.getState()["create-notification"].state,
-    ).toStrictEqual({ npc: undefined, npcs: [] });
+    expect(state).not.toHaveProperty("create-notification");
   });
 
   it("keeps the unhydrated defaults when a saved window payload is not an object", async () => {

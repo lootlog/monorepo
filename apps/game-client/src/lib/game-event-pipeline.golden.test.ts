@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import { configureApiClients } from "@lootlog/client/transport";
 import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
@@ -60,18 +60,20 @@ async function captureHttp(
 const requestsFor = (path: string) =>
   requests.filter((request) => request.path === path);
 
-const submittedBattleSchema = z.object({
-  events: z.array(
-    z.object({
-      f: z
-        .object({
-          m: z.array(z.string()).optional(),
-          w: z.record(z.string(), z.unknown()).optional(),
-        })
-        .optional(),
-    }),
-  ),
-});
+const decodeSubmittedBattle = Schema.decodeUnknownSync(
+  Schema.Struct({
+    events: Schema.Array(
+      Schema.Struct({
+        f: Schema.optional(
+          Schema.Struct({
+            m: Schema.optional(Schema.Array(Schema.String)),
+            w: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+          }),
+        ),
+      }),
+    ),
+  }),
+);
 
 const pipelineWindow: Window & { successData?: RuntimeFunction } = window;
 
@@ -706,7 +708,7 @@ describe("game event pipeline golden replay", () => {
 
     await vi.waitFor(() => expect(requestsFor("/battles")).toHaveLength(1));
 
-    const submittedBattle = submittedBattleSchema.parse(
+    const submittedBattle = decodeSubmittedBattle(
       requestsFor("/battles")[0]?.body,
     );
 

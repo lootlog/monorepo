@@ -15,7 +15,7 @@ import {
 import type { QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  settingsDocumentsSchema,
+  decodeSettingsDocuments,
   applyGuildSettingsOperation,
   applySettingsOperation,
   GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX,
@@ -190,7 +190,7 @@ const applyServerDocuments = (
 
 export const settingsPatchQueue = createSettingsPatchQueue({
   send: async (operations) =>
-    settingsDocumentsSchema.parse(
+    decodeSettingsDocuments(
       await settingsDocumentsControllerPatchPreferences({
         operations,
         context: getPatchContext(operations),

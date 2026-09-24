@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import {
   Combobox,
   ComboboxCollection,
@@ -27,7 +27,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 
-const recentWorldsSchema = z.array(z.string());
+const recentWorldsSchema = Schema.mutable(Schema.Array(Schema.String));
 
 type WorldOption = { value: string; label: string };
 

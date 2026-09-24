@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { isObjectRecord } from "@lootlog/schema/records";
 import {
   resolveSettingsPath,
@@ -20,6 +20,7 @@ import {
   type StateStorage,
 } from "zustand/middleware";
 import { storageKey } from "@/lib/storage-key";
+import { looseStruct, optionalOrUndefined } from "@/lib/stored-value-schema";
 
 const STORAGE_KEY = storageKey("ll-windows-state");
 
@@ -189,10 +190,12 @@ const hasNonZeroPosition = (
 
 type RawPersistedWindows = Record<string, unknown>;
 
-const settingsTabSchema = z.enum([
+const settingsTabSchema = Schema.Literals([
   ...SETTINGS_DOMAIN_VALUES,
   ...LEGACY_SETTINGS_TAB_VALUES,
 ]);
+
+const isSettingsTab = Schema.is(settingsTabSchema);
 
 const inferLegacyDefinedPosition = (
   windowId: WindowId,
@@ -262,14 +265,17 @@ const migrateQuickAccessWidth = (state: RawPersistedWindows): void => {
 const migrateSettingsTabToPath = (state: RawPersistedWindows): void => {
   const settings = isObjectRecord(state.settings) ? state.settings : {};
   const settingsState = isObjectRecord(settings.state) ? settings.state : {};
-  const previousTab = settingsTabSchema.safeParse(settingsState.activeTab);
+
+  const previousTab = isSettingsTab(settingsState.activeTab)
+    ? settingsState.activeTab
+    : undefined;
 
   // Version 12 mapped "appearance" to its chat subsection, which version 14
   // later moved into the chat domain; keep that historical destination.
   const nextPath: SettingsPath =
-    previousTab.success && previousTab.data === "appearance"
+    previousTab === "appearance"
       ? { domain: "chat", subsection: "chat-appearance" }
-      : resolveSettingsPath(previousTab.success ? previousTab.data : undefined);
+      : resolveSettingsPath(previousTab);
 
   state.settings = {
     ...settings,
@@ -431,44 +437,35 @@ export const migrateWindowsState = (
   return state;
 };
 
-const optionalNumber = z.number().optional().catch(undefined);
+const optionalNumber = optionalOrUndefined(Schema.Finite);
 
-const optionalBoolean = z.boolean().optional().catch(undefined);
+const optionalBoolean = optionalOrUndefined(Schema.Boolean);
 
-const windowSchema = z.looseObject({
+const windowSchema = looseStruct({
   open: optionalBoolean,
   hasDefinedPosition: optionalBoolean,
   locked: optionalBoolean,
-  opacity: z
-    .union([
-      z.literal(1),
-      z.literal(2),
-      z.literal(3),
-      z.literal(4),
-      z.literal(5),
-    ])
-    .optional()
-    .catch(undefined),
+  opacity: optionalOrUndefined(Schema.Literals([1, 2, 3, 4, 5])),
   autofocus: optionalBoolean,
   maxContentHeight: optionalNumber,
-  position: z
-    .looseObject({ x: optionalNumber, y: optionalNumber })
-    .optional()
-    .catch(undefined),
-  size: z
-    .looseObject({ width: optionalNumber, height: optionalNumber })
-    .optional()
-    .catch(undefined),
+  position: optionalOrUndefined(
+    looseStruct({ x: optionalNumber, y: optionalNumber }),
+  ),
+  size: optionalOrUndefined(
+    looseStruct({ width: optionalNumber, height: optionalNumber }),
+  ),
 });
+
+const decodeWindow = Schema.decodeUnknownOption(windowSchema);
 
 const parsePersistedWindow = (
   value: unknown,
   defaults: WindowData,
 ): WindowData => {
-  const parsed = windowSchema.safeParse(value);
+  const parsed = decodeWindow(value);
 
-  if (!parsed.success) return defaults;
-  const data = parsed.data;
+  if (Option.isNone(parsed)) return defaults;
+  const data = parsed.value;
 
   return {
     ...defaults,
@@ -494,13 +491,15 @@ const parsePersistedWindow = (
   };
 };
 
-const settingsPayloadSchema = z.looseObject({
-  activeTab: settingsTabSchema.optional().catch(undefined),
-  activeSubsection: z
-    .enum(SETTINGS_SUBSECTION_VALUES)
-    .optional()
-    .catch(undefined),
-});
+// A payload that is not an object throws, which leaves the store unhydrated.
+const decodeSettingsPayload = Schema.decodeUnknownSync(
+  looseStruct({
+    activeTab: optionalOrUndefined(settingsTabSchema),
+    activeSubsection: optionalOrUndefined(
+      Schema.Literals(SETTINGS_SUBSECTION_VALUES),
+    ),
+  }),
+);
 
 const readPersistedWindowPayload = (value: unknown) =>
   isObjectRecord(value) && isObjectRecord(value.state) ? value.state : {};
@@ -522,7 +521,7 @@ const mergePersistedWindows = (
     ...parsePersistedWindow(raw.settings, current.settings),
     state: {
       ...current.settings.state,
-      ...settingsPayloadSchema.parse(readPersistedWindowPayload(raw.settings)),
+      ...decodeSettingsPayload(readPersistedWindowPayload(raw.settings)),
     },
   };
 
