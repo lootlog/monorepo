@@ -15,6 +15,7 @@ import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
+import { Toaster } from "@lootlog/ui/components/sonner";
 
 import "@lootlog/ui/globals.css";
 import "@/themes/default.css";
@@ -48,6 +49,7 @@ function RootComponent() {
             <NuqsAdapter>
               <GlobalContextProvider>
                 <Outlet />
+                <Toaster />
                 {!prefersReducedMotion && <ThemeRootEffects />}
                 {import.meta.env.DEV ? (
                   <Suspense fallback={null}>
