@@ -57,29 +57,13 @@ const canReadLootSource = (
 };
 
 export const eventOrganizationId = (event: Event): string | undefined => {
-  switch (event.type) {
-    case "member-refresh.updated":
-    case "event.map-status-updated":
-    case "event.hero-killed":
-    case "event.respawn-window-opened":
-    case "event.respawn-window-closed":
-    case "party-ready-room.updated":
-    case "timer.created":
-    case "timer.deleted":
-    case "chat.created":
-    case "chat.updated":
-    case "chat.deleted":
-    case "notification.sent":
-      return event.data.organizationId;
-    case "loot.created":
-    case "loot.share-updated":
-    case "kills.changed":
-      return event.data.guildId;
-    case "feed.entry":
-      return event.data.guild.id;
-    default:
-      return undefined;
-  }
+  if ("organizationId" in event.data) return event.data.organizationId;
+
+  if ("guildId" in event.data) return event.data.guildId;
+
+  if (event.type === "feed.entry") return event.data.guild.id;
+
+  return undefined;
 };
 
 export const findEventGuild = (

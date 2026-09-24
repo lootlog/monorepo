@@ -1,25 +1,64 @@
 import { boundedHttpGet } from "@lootlog/instrumentation/bounded-http-get";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { UserGuildPermissionsDtoSchema } from "@lootlog/schema/permissions";
-import { Clock, Effect, Option, Schema } from "effect";
+import { Clock, Effect, Option, Result, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import type { GetUserGuildsOptions, UserGuildData } from "#src/guilds/guild";
 import { CACHE_TTL, getUserGuildsCacheKey } from "#src/guilds/cache-keys";
-import type { RedisGatewayStore } from "#src/platform/redis-store";
+import type {
+  RedisGatewayStore,
+  RedisScriptReply,
+} from "#src/platform/redis-store";
 
 const UserGuildsJson = Schema.fromJsonString(
   Schema.Array(UserGuildPermissionsDtoSchema),
 );
 
 const CachedGuildDataJson = Schema.fromJsonString(
-  Schema.Struct({
-    guilds: Schema.Array(UserGuildPermissionsDtoSchema),
-    cachedAt: Schema.Number,
-  }),
+  Schema.Union([
+    Schema.Struct({
+      guilds: Schema.Array(UserGuildPermissionsDtoSchema),
+      cachedAt: Schema.Number,
+      revision: Schema.optional(Schema.String),
+    }),
+    Schema.Struct({
+      revision: Schema.String,
+      invalidated: Schema.Literal(true),
+      stale: Schema.optional(Schema.String),
+    }),
+  ]),
 );
 
-class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
+// Keep the last projection, but never use it to authorize after invalidation.
+// The revision also fences HTTP requests started on another gateway instance.
+const invalidateGuildsScript = `
+local raw = redis.call("GET", KEYS[1])
+local stale = raw or nil
+if raw then
+  local valid, decoded = pcall(cjson.decode, raw)
+  if valid and type(decoded) == "table" and decoded.invalidated == true then
+    stale = decoded.stale
+  end
+end
+local invalidated = { revision = ARGV[1], invalidated = true, stale = stale }
+redis.call("SET", KEYS[1], cjson.encode(invalidated), "EX", ARGV[2])
+return 1
+`;
+
+const cacheGuildsScript = `
+local raw = redis.call("GET", KEYS[1])
+local revision = ""
+if raw then
+  local valid, cached = pcall(cjson.decode, raw)
+  if valid and type(cached) == "table" then revision = cached.revision or "" end
+end
+if revision ~= ARGV[1] then return 0 end
+redis.call("SET", KEYS[1], ARGV[2], "EX", ARGV[3])
+return 1
+`;
+
+export class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
   "GuildStoreFailure",
   {
     reason: Schema.Literals([
@@ -28,6 +67,8 @@ class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
       "status",
       "timeout",
       "transport",
+      "cache",
+      "invalidated",
     ]),
     retryable: Schema.Boolean,
     status: Schema.optional(Schema.Number),
@@ -37,8 +78,11 @@ class GuildStoreFailure extends TaggedErrorClass<GuildStoreFailure>()(
 export interface GuildStore {
   readonly getUserGuilds: (
     options: GetUserGuildsOptions,
-  ) => Effect.Effect<UserGuildData[]>;
-  readonly invalidate: (options: GetUserGuildsOptions) => Effect.Effect<void>;
+    readOptions?: { readonly freshness: "required" },
+  ) => Effect.Effect<UserGuildData[], GuildStoreFailure>;
+  readonly invalidate: (
+    options: GetUserGuildsOptions,
+  ) => Effect.Effect<void, GuildStoreFailure>;
 }
 
 const failure = (
@@ -57,9 +101,26 @@ const decodeGuilds = (body: ArrayBuffer): UserGuildData[] => {
   ];
 };
 
+const cacheCommand = <A>(command: () => Promise<A>) =>
+  Effect.tryPromise({
+    try: command,
+    catch: () => failure("cache", { retryable: true }),
+  }).pipe(
+    Effect.timeoutOrElse({
+      duration: "10 seconds",
+      orElse: () => Effect.fail(failure("cache", { retryable: true })),
+    }),
+  );
+
 export const makeGuildStore = (
   config: Pick<GatewayConfiguration, "apiUrl">,
-  redis: { command: Pick<RedisGatewayStore["command"], "get" | "set" | "del"> },
+  redis: {
+    command: Pick<RedisGatewayStore["command"], "get"> & {
+      eval(
+        ...args: Parameters<RedisGatewayStore["command"]["eval"]>
+      ): Promise<RedisScriptReply>;
+    };
+  },
   httpClient: HttpClientValue,
 ): GuildStore => {
   const fetchGuilds = Effect.fn("GuildStore_fetchUserGuilds")(function* (
@@ -84,71 +145,91 @@ export const makeGuildStore = (
   });
 
   const readCache = (key: string) =>
-    Effect.tryPromise(() => redis.command.get(key)).pipe(
-      Effect.flatMap((value) =>
-        Effect.try({
-          try: () => {
-            if (!value) return null;
+    cacheCommand(() => redis.command.get(key)).pipe(
+      Effect.map((value) => {
+        if (!value) return null;
 
-            return Schema.decodeUnknownSync(CachedGuildDataJson)(value);
-          },
-          catch: () => null,
-        }),
-      ),
-      Effect.catch(() => Effect.succeed(null)),
+        const decoded = Schema.decodeUnknownOption(CachedGuildDataJson)(value);
+
+        return Option.getOrNull(decoded);
+      }),
     );
 
   const loadUserGuilds = Effect.fn("GuildStore_getUserGuilds")(function* (
     options: GetUserGuildsOptions,
+    readOptions?: { readonly freshness: "required" },
   ) {
-    const now = yield* Clock.currentTimeMillis;
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
     const cached = yield* readCache(cacheKey);
-
-    if (cached && now - cached.cachedAt <= CACHE_TTL.USER_GUILDS * 1_000) {
-      return [...cached.guilds];
-    }
-
-    const guilds = yield* fetchGuilds(options).pipe(Effect.option);
-
-    if (Option.isSome(guilds)) {
-      const value = JSON.stringify({
-        guilds: guilds.value,
-        cachedAt: now,
-      });
-
-      yield* Effect.tryPromise(() =>
-        redis.command.set(cacheKey, value, "EX", CACHE_TTL.USER_GUILDS * 2),
-      ).pipe(Effect.ignore);
-
-      return guilds.value;
-    }
+    const now = yield* Clock.currentTimeMillis;
 
     if (
+      readOptions?.freshness !== "required" &&
       cached &&
-      now - cached.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
+      "guilds" in cached &&
+      now - cached.cachedAt <= CACHE_TTL.USER_GUILDS * 1_000
     ) {
       return [...cached.guilds];
     }
 
-    return [];
+    const result = yield* fetchGuilds(options).pipe(Effect.result);
+
+    if (Result.isFailure(result)) {
+      if (readOptions?.freshness === "required")
+        return yield* Effect.fail(result.failure);
+
+      const fallback = yield* readCache(cacheKey);
+      const fallbackAt = yield* Clock.currentTimeMillis;
+
+      if (
+        fallback &&
+        "guilds" in fallback &&
+        fallbackAt - fallback.cachedAt <= CACHE_TTL.MAX_STALE_CACHE_AGE * 1_000
+      ) {
+        return [...fallback.guilds];
+      }
+
+      return yield* Effect.fail(result.failure);
+    }
+
+    const cachedAt = yield* Clock.currentTimeMillis;
+    const revision = cached?.revision ?? "";
+
+    const committed = yield* cacheCommand(() =>
+      redis.command.eval(
+        cacheGuildsScript,
+        1,
+        cacheKey,
+        revision,
+        JSON.stringify({ guilds: result.success, cachedAt, revision }),
+        CACHE_TTL.MAX_STALE_CACHE_AGE,
+      ),
+    );
+
+    if (committed !== 1)
+      return yield* Effect.fail(failure("invalidated", { retryable: true }));
+
+    return result.success;
   });
 
   return {
-    getUserGuilds: (options) =>
-      loadUserGuilds(options).pipe(
+    getUserGuilds: (options, readOptions) =>
+      loadUserGuilds(options, readOptions).pipe(
         Effect.withSpan("GuildStore_getUserGuilds", {
           attributes: { adapter: "api-user-permissions", retryCount: 0 },
         }),
       ),
     invalidate: (options) =>
-      Effect.tryPromise(() =>
-        redis.command.del(
+      cacheCommand(() =>
+        redis.command.eval(
+          invalidateGuildsScript,
+          1,
           getUserGuildsCacheKey(options.discordId, options.userId),
+          crypto.randomUUID(),
+          CACHE_TTL.MAX_STALE_CACHE_AGE,
         ),
       ).pipe(
         Effect.asVoid,
-        Effect.orDie,
         Effect.withSpan("GuildStore_invalidate", {
           attributes: { adapter: "redis", retryCount: 0 },
         }),
