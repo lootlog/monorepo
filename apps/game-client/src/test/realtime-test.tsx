@@ -47,6 +47,10 @@ export const createRealtimeTest = () => {
     .fn<typeof fetch>()
     .mockImplementation(() => Promise.resolve(Response.json(null)));
 
+  const chatHistoryRequest = vi
+    .fn<typeof fetch>()
+    .mockImplementation(() => Promise.resolve(Response.json([])));
+
   const requests: string[] = [];
   let sessionDiscordId: string | null = null;
   const soundSettings = createSoundSettings();
@@ -89,6 +93,9 @@ export const createRealtimeTest = () => {
       );
 
     if (url.pathname.endsWith("/members/summary")) return Response.json([]);
+
+    if (url.pathname.endsWith("/chat-messages"))
+      return await chatHistoryRequest(input, init);
 
     if (url.pathname.endsWith("/members/@me"))
       return await memberRequest(input, init);
@@ -183,6 +190,7 @@ export const createRealtimeTest = () => {
     realtime,
     requests,
     memberRequest,
+    chatHistoryRequest,
     receive,
     open,
     join,

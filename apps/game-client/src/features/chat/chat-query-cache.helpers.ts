@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { isString } from "es-toolkit";
 import {
   getChatControllerGetChatMessagesQueryKey,
   type ChatMessageResponseDtoOutput as ChatMessageType,
@@ -19,7 +20,7 @@ const CHAT_MESSAGES_QUERY_PATH_PATTERN = /^\/guilds\/([^/]+)\/chat-messages$/;
 export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
   const queryPath = query.queryKey[0];
 
-  if (typeof queryPath !== "string") {
+  if (!isString(queryPath)) {
     return undefined;
   }
 
@@ -28,13 +29,6 @@ export const getChatMessagesQueryGuildId = (query: QueryWithKey) => {
 
 export const isChatMessagesQuery = (query: QueryWithKey) => {
   return getChatMessagesQueryGuildId(query) !== undefined;
-};
-
-export const invalidateChatMessagesQueries = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({
-    predicate: isChatMessagesQuery,
-    refetchType: "active",
-  });
 };
 
 export const removeChatMessagesQueriesOutsideGuilds = (
@@ -76,4 +70,12 @@ export const updateChatMessagesCache = ({
   }
 
   queryClient.setQueryData<ChatMessageType[]>(queryKey, updater);
+
+  if (queryState?.isInvalidated) {
+    void queryClient.invalidateQueries({
+      queryKey,
+      exact: true,
+      refetchType: "none",
+    });
+  }
 };
