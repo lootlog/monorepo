@@ -29,7 +29,6 @@ import {
 import { useSession } from "@/hooks/auth/use-session";
 import { useGameStore } from "@/store/game.store";
 import {
-  invalidateChatMessagesQueries,
   removeAllChatMessagesQueries,
   removeChatMessagesQueriesOutsideGuilds,
 } from "@/features/chat/chat-query-cache.helpers";
@@ -93,7 +92,6 @@ export const useChatMessagesListener = (
   const sessionDiscordIdRef = useRef(sessionData?.user?.discordId);
   const onRemoteMessageRef = useRef(options?.onRemoteMessage);
   const hiddenNpcTypesRef = useRef(options?.hiddenNpcTypes);
-  const wasJoinedRef = useRef(joined);
   const permissionGenerationRef = useRef(0);
   const guildPermissionGenerationsRef = useRef(new Map<string, number>());
   useEffect(() => retainChatAccessPolicy(queryClient), [queryClient]);
@@ -122,14 +120,6 @@ export const useChatMessagesListener = (
     runtimeWorld,
     sessionData?.user?.discordId,
   ]);
-
-  useEffect(() => {
-    if (joined && !wasJoinedRef.current && !socket?.getAccessPolicy?.()) {
-      void invalidateChatMessagesQueries(queryClient);
-    }
-
-    wasJoinedRef.current = joined;
-  }, [joined, queryClient, socket]);
 
   useEffect(() => {
     if (previousAccountCacheIdentityRef.current !== accountCacheIdentity) {
