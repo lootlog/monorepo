@@ -2,21 +2,20 @@
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
-  act,
   cleanup,
   fireEvent,
   render,
   screen,
   within,
 } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
-import { KillAnalyticsTrend } from "./kill-analytics-trend";
+import { afterEach, expect, it } from "vitest";
+import { KillAnalyticsTrend } from "./kill-analytics-trend-content";
 
 await initializeTestTranslations();
 
 afterEach(cleanup);
 
-it("keeps incomplete intervals identifiable in table view", async () => {
+it("keeps incomplete intervals identifiable in table view", () => {
   render(
     <KillAnalyticsTrend
       title="Weekly kills"
@@ -26,9 +25,6 @@ it("keeps incomplete intervals identifiable in table view", async () => {
       ]}
     />,
   );
-  await act(async () => {
-    await vi.dynamicImportSettled();
-  });
   fireEvent.click(screen.getByRole("button", { name: "statistics.table" }));
   const table = screen.getByRole("table", { name: "Weekly kills" });
   const partialRow = within(table).getByRole("row", { name: /2026-08-03/ });
