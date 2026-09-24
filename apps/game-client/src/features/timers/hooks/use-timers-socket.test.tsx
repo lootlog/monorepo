@@ -1,6 +1,6 @@
 import { act, render, waitFor } from "@testing-library/react";
-import { QueryClientProvider, QueryObserver } from "@tanstack/react-query";
-import { expect, it, vi } from "vitest";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { expect, it } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { getSocket } from "@/lib/socket";
 import { SocketProvider } from "@/contexts/socket-context";
@@ -8,9 +8,13 @@ import { queryKeys } from "@/features/public-api/query-keys";
 import { createTimerFixture } from "../timer-fixtures";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useGlobalStore } from "@/store/global.store";
+import { useTimers } from "@/hooks/api/use-timers";
 import { useTimersSocket } from "./use-timers-socket";
 
-function TimerListener() {
+function TimerListener({ readSnapshot = false }: { readSnapshot?: boolean }) {
+  useTimers({ world: readSnapshot ? "luvia" : undefined });
   useTimersSocket();
 
   return null;
@@ -70,49 +74,57 @@ it("updates world cache only while joined and subscribed, including listener cle
 });
 
 it("refreshes an active timer snapshot after a socket reconnect with unchanged permissions", async () => {
-  const fixture = createTimerHttpFixture();
+  setTestRuntimeGame();
+  useGlobalStore.setState({ gameState: { gameInitialized: true } });
+  const timer = createTimerFixture();
+  let snapshot = [timer];
+  let unavailable = false;
+
+  const fixture = createTimerHttpFixture(() =>
+    unavailable
+      ? Response.json({ message: "temporarily unavailable" }, { status: 503 })
+      : Response.json(snapshot),
+  );
+
   const gateway = createTimerRealtimeFixture();
   const key = queryKeys.timers("luvia");
   const policy = createAccessPolicySnapshot([], "user-1");
-  const timer = createTimerFixture();
-  const fetchTimers = vi.fn().mockResolvedValue([]);
-
-  const observer = new QueryObserver(fixture.queryClient, {
-    queryKey: key,
-    queryFn: fetchTimers,
-    staleTime: Infinity,
-  });
-
-  const unsubscribe = observer.subscribe(() => {});
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
       <SocketProvider>
-        <TimerListener />
+        <TimerListener readSnapshot />
       </SocketProvider>
     </QueryClientProvider>,
   );
 
   try {
     act(() => gateway.wire.open());
-    await gateway.join(["guild-1"], policy);
-    await waitFor(() => expect(fetchTimers).toHaveBeenCalledTimes(1));
+    await gateway.acknowledgeJoin(["guild-1"], policy);
+    await waitFor(() => expect(fixture.requests).toHaveLength(1));
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryState(key)?.fetchStatus).toBe("idle"),
+    );
     act(() => getSocket().disconnect());
-    fetchTimers.mockResolvedValue([timer]);
+    snapshot = [createTimerFixture({ ...timer, wasReset: true })];
     act(() => {
       getSocket().connect();
       gateway.wire.open();
     });
-    await gateway.join(["guild-1"], policy);
-    await waitFor(() => expect(fetchTimers).toHaveBeenCalledTimes(2));
-    expect(fixture.queryClient.getQueryData(key)).toEqual([timer]);
+    await gateway.acknowledgeJoin(["guild-1"], policy);
+    await waitFor(() => expect(fixture.requests).toHaveLength(2));
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryData(key)).toMatchObject([
+        { timerKey: timer.timerKey, wasReset: true },
+      ]),
+    );
     await gateway.receive({
       v: 1,
       type: "timer.deleted",
       data: { organizationId: "guild-1", payload: timer },
     });
     expect(fixture.queryClient.getQueryData(key)).toEqual([]);
-    expect(fetchTimers).toHaveBeenCalledTimes(2);
+    expect(fixture.requests).toHaveLength(2);
     await gateway.receive({
       v: 1,
       type: "timer.created",
@@ -121,11 +133,34 @@ it("refreshes an active timer snapshot after a socket reconnect with unchanged p
     expect(fixture.queryClient.getQueryData(key)).toEqual([
       { ...timer, isPending: false },
     ]);
-    expect(fetchTimers).toHaveBeenCalledTimes(2);
+    expect(fixture.requests).toHaveLength(2);
+    unavailable = true;
+    act(() => getSocket().disconnect());
+    act(() => {
+      getSocket().connect();
+      gateway.wire.open();
+    });
+    await gateway.acknowledgeJoin(["guild-1"], policy);
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryState(key)?.status).toBe("error"),
+    );
+    expect(fixture.requests).toHaveLength(3);
+    unavailable = false;
+    snapshot = [];
+    act(() => getSocket().disconnect());
+    act(() => {
+      getSocket().connect();
+      gateway.wire.open();
+    });
+    await gateway.acknowledgeJoin(["guild-1"], policy);
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryData(key)).toEqual([]),
+    );
+    expect(fixture.requests).toHaveLength(4);
   } finally {
-    unsubscribe();
     view.unmount();
     gateway.cleanup();
     fixture.cleanup();
+    useGlobalStore.setState({ gameState: { gameInitialized: false } });
   }
 });

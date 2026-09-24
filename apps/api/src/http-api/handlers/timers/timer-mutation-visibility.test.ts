@@ -11,10 +11,12 @@ import {
 import {
   guildTable,
   memberTable,
+  memberToRoleTable,
   roleTable,
   timerTable,
   timerHistoryEntryTable,
 } from "#src/database/drizzle/schema";
+import { makeAllTimerList } from "./timer-list.data-layer.js";
 import { makeResetTimer } from "./timer-reset.data-layer.js";
 import { makeDeleteTimer } from "./timer-delete.data-layer.js";
 import { makeRestoreTimer } from "./timer-restore.data-layer.js";
@@ -38,17 +40,24 @@ it.each([
     max: 500,
     allowed: true,
   },
+  {
+    name: "visible hero with only tier read access",
+    read: Permission.LOOTLOG_TIMERS_HEROES_READ,
+    max: 500,
+    allowed: true,
+    tierOnly: true,
+  },
   { name: "administrator", read: Permission.ADMIN, max: 100, allowed: true },
 ])(
   "preserves source visibility for timer mutations: $name",
-  async ({ read, max, allowed }) => {
+  async ({ read, max, allowed, tierOnly }) => {
     const boundary = await createDatabaseBoundary();
 
     try {
       const database = boundary.database;
       const now = new Date();
       const guild = createGuildFixture();
-      const member = createMemberFixture();
+      const member = createMemberFixture({ globalUserId: "user" });
       await boundary.run(database.insert(guildTable).values(guild));
       await boundary.run(database.insert(memberTable).values(member));
 
@@ -62,6 +71,7 @@ it.each([
             lvlRangeFrom: 1,
             lvlRangeTo: max,
             permissions: [
+              ...(tierOnly ? [] : [Permission.LOOTLOG_TIMERS_READ]),
               read,
               Permission.LOOTLOG_TIMERS_RESET,
               Permission.LOOTLOG_TIMERS_WRITE,
@@ -70,6 +80,10 @@ it.each([
             updatedAt: now,
           })
           .returning(),
+      );
+
+      await boundary.run(
+        database.insert(memberToRoleTable).values({ A: member.id, B: "role" }),
       );
 
       const access = {
@@ -111,6 +125,29 @@ it.each([
           }),
       };
 
+      const list = makeAllTimerList(database);
+
+      const readTimers = async () => {
+        const result = await boundary.run(
+          list({ userId: "user", discordId: member.userId }, "world").pipe(
+            Effect.result,
+          ),
+        );
+
+        if (tierOnly) {
+          expect(result).toMatchObject({
+            failure: { kind: "forbidden", response: { statusCode: 403 } },
+          });
+
+          return [];
+        }
+
+        return Result.getOrThrow(result);
+      };
+
+      const visibleCount = allowed && !tierOnly ? 1 : 0;
+      expect(await readTimers()).toHaveLength(visibleCount);
+
       const reset = makeResetTimer(database, {
         ...ports,
         withLock: (_key, operation) => operation,
@@ -124,12 +161,23 @@ it.each([
       );
 
       expect(resetResult._tag).toBe(allowed ? "Success" : "Failure");
+      const afterReset = await readTimers();
+      expect(afterReset).toHaveLength(visibleCount);
+
+      if (allowed) {
+        const [persistedReset] = await boundary.run(
+          database.select().from(timerTable),
+        );
+
+        expect(persistedReset?.wasReset).toBe(true);
+      }
 
       const deleteResult = await boundary.run(
         remove(access, "300", "world").pipe(Effect.result),
       );
 
       expect(deleteResult._tag).toBe(allowed ? "Success" : "Failure");
+      expect(await readTimers()).toEqual([]);
 
       let history = await boundary.run(
         database.select().from(timerHistoryEntryTable),
@@ -178,6 +226,7 @@ it.each([
       );
 
       expect(restored._tag).toBe(allowed ? "Success" : "Failure");
+      expect(await readTimers()).toHaveLength(visibleCount);
 
       const [persisted] = await boundary.run(
         database.select().from(timerTable),
