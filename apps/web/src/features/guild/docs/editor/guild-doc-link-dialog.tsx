@@ -3,6 +3,7 @@ import { Link as LinkIcon } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -71,36 +72,38 @@ export const GuildDocLinkDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <form className="space-y-4 px-4 pb-4 pt-1" onSubmit={handleSubmit}>
-          {needsText && (
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+          <DialogBody className="space-y-4">
+            {needsText && (
+              <div className="space-y-2">
+                <Label htmlFor="guild-doc-link-text">
+                  {t("docs.linkDialog.text")}
+                </Label>
+                <Input
+                  id="guild-doc-link-text"
+                  name="guild-doc-link-text"
+                  autoComplete="off"
+                  value={text}
+                  placeholder={t("docs.linkDialog.textPlaceholder")}
+                  onChange={(event) => setText(event.target.value)}
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="guild-doc-link-text">
-                {t("docs.linkDialog.text")}
+              <Label htmlFor="guild-doc-link-url">
+                {t("docs.linkDialog.url")}
               </Label>
               <Input
-                id="guild-doc-link-text"
-                name="guild-doc-link-text"
+                id="guild-doc-link-url"
+                name="guild-doc-link-url"
                 autoComplete="off"
-                value={text}
-                placeholder={t("docs.linkDialog.textPlaceholder")}
-                onChange={(event) => setText(event.target.value)}
+                value={url}
+                placeholder={t("docs.linkDialog.urlPlaceholder")}
+                onChange={(event) => setUrl(event.target.value)}
               />
             </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="guild-doc-link-url">
-              {t("docs.linkDialog.url")}
-            </Label>
-            <Input
-              id="guild-doc-link-url"
-              name="guild-doc-link-url"
-              autoComplete="off"
-              value={url}
-              placeholder={t("docs.linkDialog.urlPlaceholder")}
-              onChange={(event) => setUrl(event.target.value)}
-            />
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button

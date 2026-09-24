@@ -8,9 +8,12 @@ const SECTION_TITLE_WIDTHS = ["w-32", "w-36", "w-28"] as const;
 export const LootsFiltersSidebarSkeleton = () => (
   <div
     aria-hidden="true"
-    className="flex h-full w-[340px] shrink-0 flex-col bg-background py-3 pr-3"
+    className="flex h-full w-[340px] shrink-0 flex-col py-3 pr-3"
   >
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-filters-sidebar">
+    <div
+      data-slot="filters-panel"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-filters-sidebar"
+    >
       <div className="space-y-3 border-b border-border/70 p-3 sm:p-4">
         <div className="flex min-h-7 items-center">
           <Skeleton className="h-4 w-24" />

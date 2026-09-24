@@ -144,6 +144,7 @@ export function DashboardKillSummary() {
                   >
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <span
+                        data-slot="stat-medallion"
                         className={cn(
                           "flex size-8 shrink-0 items-center justify-center rounded-lg",
                           color,

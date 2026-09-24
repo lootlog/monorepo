@@ -6,6 +6,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -92,56 +93,60 @@ export const GuildDocTableDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4 px-4 pb-4 pt-1" onSubmit={handleSubmit}>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="guild-doc-table-rows">
-                {t("docs.tableDialog.rows")}
-              </Label>
-              <Input
-                id="guild-doc-table-rows"
-                type="number"
-                name="guild-doc-table-rows"
-                inputMode="numeric"
-                autoComplete="off"
-                min={MIN_TABLE_SIZE}
-                max={MAX_TABLE_SIZE}
-                value={rows}
-                onChange={(event) => setRows(event.target.value)}
-              />
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+          <DialogBody className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="guild-doc-table-rows">
+                  {t("docs.tableDialog.rows")}
+                </Label>
+                <Input
+                  id="guild-doc-table-rows"
+                  type="number"
+                  name="guild-doc-table-rows"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  min={MIN_TABLE_SIZE}
+                  max={MAX_TABLE_SIZE}
+                  value={rows}
+                  onChange={(event) => setRows(event.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="guild-doc-table-columns">
+                  {t("docs.tableDialog.columns")}
+                </Label>
+                <Input
+                  id="guild-doc-table-columns"
+                  type="number"
+                  name="guild-doc-table-columns"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  min={MIN_TABLE_SIZE}
+                  max={MAX_TABLE_SIZE}
+                  value={columns}
+                  onChange={(event) => setColumns(event.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="guild-doc-table-columns">
-                {t("docs.tableDialog.columns")}
-              </Label>
-              <Input
-                id="guild-doc-table-columns"
-                type="number"
-                name="guild-doc-table-columns"
-                inputMode="numeric"
-                autoComplete="off"
-                min={MIN_TABLE_SIZE}
-                max={MAX_TABLE_SIZE}
-                value={columns}
-                onChange={(event) => setColumns(event.target.value)}
+            <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
+              <Checkbox
+                id="guild-doc-table-headers"
+                checked={includeHeaders}
+                onCheckedChange={(checked) =>
+                  setIncludeHeaders(checked === true)
+                }
               />
+              <Label
+                htmlFor="guild-doc-table-headers"
+                className="cursor-pointer text-sm font-normal"
+              >
+                {t("docs.tableDialog.includeHeaders")}
+              </Label>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
-            <Checkbox
-              id="guild-doc-table-headers"
-              checked={includeHeaders}
-              onCheckedChange={(checked) => setIncludeHeaders(checked === true)}
-            />
-            <Label
-              htmlFor="guild-doc-table-headers"
-              className="cursor-pointer text-sm font-normal"
-            >
-              {t("docs.tableDialog.includeHeaders")}
-            </Label>
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button

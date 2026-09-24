@@ -4,6 +4,7 @@ import { cn } from "cn";
 import {
   LOOT_CARD_DIVIDER_CLASS,
   LOOT_CARD_INSET_CLASS,
+  LOOT_INSET_ROOT_CLASS,
 } from "@/features/guild/loots-list/loots-list-layout";
 import { ItemSilhouetteSkeleton } from "./item-silhouette-skeleton";
 import { PlayerSilhouetteSkeleton } from "./player-silhouette-skeleton";
@@ -31,7 +32,10 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
   return (
     <Card
       aria-hidden="true"
-      className="flex h-full flex-col gap-0 rounded-xl border-border bg-card p-0"
+      className={cn(
+        "flex h-full flex-col gap-0 rounded-xl border-border bg-card p-0",
+        LOOT_INSET_ROOT_CLASS,
+      )}
     >
       <div
         className={cn(
