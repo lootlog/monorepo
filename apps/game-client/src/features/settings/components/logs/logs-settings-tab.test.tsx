@@ -152,7 +152,7 @@ describe("LogsSettingsTab", () => {
     await user.click(screen.getByText("Błąd"));
 
     expect(
-      screen.getByText("Brak akcji pasujących do aktualnych filtrów."),
+      screen.getByText("Żadna akcja nie pasuje do filtrów."),
     ).toBeInTheDocument();
   });
 

@@ -420,10 +420,9 @@ export const ChatView = ({
                 appearance={chatAppearance}
                 npcTypeColors={npcTypeColors}
                 ariaLabel={t("window.title")}
-                emptyStateTitle={t(
-                  effectiveSelectedGuildId === "all"
-                    ? "emptyState.allTitle"
-                    : "emptyState.guildTitle",
+                emptyStateTitle={t(`emptyState.${effectiveFilter}.title`)}
+                emptyStateDescription={t(
+                  `emptyState.${effectiveFilter}.description`,
                 )}
                 guildNamesById={guildNamesById}
                 membersByGuildId={membersByGuildId}

@@ -15,7 +15,7 @@ import {
   type PointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowDown, MessageCircle } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import {
   CHAT_APPEARANCE_READABLE_PRESET,
   type ChatAppearanceSettings,
@@ -46,6 +46,7 @@ export type ChatTranscriptProps = {
   npcTypeColors?: NpcTypeColors;
   ariaLabel: string;
   emptyStateTitle: string;
+  emptyStateDescription?: string;
   guildNamesById: Record<string, string>;
   membersByGuildId: ChatGuildData["membersByGuildId"];
   mentionContextsByGuildId: ChatGuildData["mentionContextsByGuildId"];
@@ -86,6 +87,7 @@ export const ChatTranscript = ({
   npcTypeColors,
   ariaLabel,
   emptyStateTitle,
+  emptyStateDescription,
   guildNamesById,
   membersByGuildId,
   mentionContextsByGuildId,
@@ -283,7 +285,10 @@ export const ChatTranscript = ({
       className="ll:relative ll:flex ll:size-full ll:min-h-0 ll:flex-col ll:overflow-hidden"
     >
       {isEmpty ? (
-        <EmptyState icon={MessageCircle} title={emptyStateTitle} />
+        <EmptyState
+          description={emptyStateDescription}
+          title={emptyStateTitle}
+        />
       ) : null}
       <BaseScrollArea.Viewport
         render=<MessageScroller.Viewport />

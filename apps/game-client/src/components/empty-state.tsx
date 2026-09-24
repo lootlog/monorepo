@@ -1,36 +1,55 @@
-import type { LucideIcon } from "lucide-react";
-import type { FC, ReactNode } from "react";
+import type { FC } from "react";
 import { cn } from "cn";
+import { Button } from "@/components/ui/button";
 
 type EmptyStateProps = {
-  action?: ReactNode;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
   className?: string;
-  icon: LucideIcon;
+  description?: string;
   title: string;
 };
 
+/**
+ * Quiet placeholder for a window whose list has nothing to show: what is
+ * missing, optionally why or what brings entries back, and one way out.
+ */
 export const EmptyState: FC<EmptyStateProps> = ({
   action,
   className,
-  icon: Icon,
+  description,
   title,
 }) => {
   return (
     <div
       aria-live="polite"
       className={cn(
-        "ll:flex ll:h-full ll:min-h-20 ll:w-full ll:flex-col ll:items-center ll:justify-center ll:px-4 ll:py-3 ll:text-center",
+        "ll:flex ll:h-full ll:min-h-16 ll:w-full ll:flex-col ll:items-center ll:justify-center ll:gap-0.5 ll:px-4 ll:py-3 ll:text-center",
         className,
       )}
       role="status"
     >
-      <span className="ll:mb-2 ll:flex ll:size-9 ll:items-center ll:justify-center ll:rounded-full ll:border ll:border-gray-600/70 ll:bg-gray-800/60 ll:text-gray-400">
-        <Icon aria-hidden className="ll:size-4.5" />
-      </span>
-      <span className="ll:text-xs ll:font-medium ll:text-gray-200">
+      <p className="ll:m-0 ll:text-xs ll:font-semibold ll:leading-4 ll:text-foreground/85 ll:text-balance">
         {title}
-      </span>
-      {action ? <div className="ll:mt-2.5">{action}</div> : null}
+      </p>
+      {description ? (
+        <p className="ll:m-0 ll:max-w-60 ll:text-[11px] ll:leading-4 ll:text-muted-foreground ll:text-pretty">
+          {description}
+        </p>
+      ) : null}
+      {action ? (
+        <Button
+          className="ll:mt-2"
+          onClick={action.onClick}
+          size="xs"
+          type="button"
+          variant="outline"
+        >
+          {action.label}
+        </Button>
+      ) : null}
     </div>
   );
 };
