@@ -1,5 +1,5 @@
-import { Cause, Effect } from "effect";
-import type { HttpClient } from "effect/unstable/http/HttpClient";
+import { Effect, Stream } from "effect";
+import { withScope, type HttpClient } from "effect/unstable/http/HttpClient";
 
 type FailureReason =
   | "invalid-response"
@@ -23,50 +23,85 @@ export const boundedHttpGet = Effect.fnUntraced(function* <
   failure: (reason: FailureReason, retryable: boolean, status?: number) => E;
   decode: (body: ArrayBuffer, status: number) => A;
 }) {
+  const client = withScope(options.client);
+  const responseLimitBytes = 1024 * 1024;
   let retryCount = 0;
 
   const attempt = Effect.suspend(() => {
     const currentRetryCount = retryCount++;
 
-    return options.client.get(String(options.url)).pipe(
-      Effect.timeout(options.timeoutMilliseconds),
-      Effect.mapError((error) =>
-        options.failure(
-          Cause.isTimeoutError(error) ? "timeout" : "transport",
-          true,
-        ),
-      ),
-      Effect.flatMap((response) => {
-        if (
-          options.response === "successful" &&
-          (response.status < 200 || response.status >= 300)
-        ) {
-          return Effect.fail(
-            options.failure("status", response.status >= 500, response.status),
-          );
-        }
+    return Effect.gen(function* () {
+      const response = yield* client
+        .get(String(options.url))
+        .pipe(Effect.mapError(() => options.failure("transport", true)));
 
-        const status = options.response === "raw" ? response.status : undefined;
-
-        return response.arrayBuffer.pipe(
-          Effect.mapError(() =>
-            options.failure(
-              "invalid-response",
-              options.response === "raw" && response.status >= 500,
-              status,
-            ),
-          ),
-          Effect.flatMap((body) =>
-            body.byteLength <= 1024 * 1024
-              ? Effect.try({
-                  try: () => options.decode(body, response.status),
-                  catch: () => options.failure("invalid-response", false),
-                })
-              : Effect.fail(
-                  options.failure("response-too-large", false, status),
-                ),
-          ),
+      if (
+        options.response === "successful" &&
+        (response.status < 200 || response.status >= 300)
+      ) {
+        return yield* Effect.fail(
+          options.failure("status", response.status >= 500, response.status),
         );
+      }
+
+      const status = options.response === "raw" ? response.status : undefined;
+      let bytes = new Uint8Array(0);
+      let byteLength = 0;
+
+      yield* response.stream.pipe(
+        Stream.catchReason(
+          "HttpClientError",
+          "EmptyBodyError",
+          () => Stream.empty,
+        ),
+        Stream.mapError(() =>
+          options.failure(
+            "invalid-response",
+            options.response === "raw" && response.status >= 500,
+            status,
+          ),
+        ),
+        Stream.runForEach((chunk) =>
+          Effect.suspend(() => {
+            const nextByteLength = byteLength + chunk.byteLength;
+
+            if (nextByteLength > responseLimitBytes) {
+              return Effect.fail(
+                options.failure("response-too-large", false, status),
+              );
+            }
+
+            // Bound retained memory even when the transport yields tiny chunks.
+            if (nextByteLength > bytes.byteLength) {
+              const grown = new Uint8Array(
+                Math.min(
+                  responseLimitBytes,
+                  Math.max(nextByteLength, bytes.byteLength * 2),
+                ),
+              );
+
+              grown.set(bytes);
+              bytes = grown;
+            }
+
+            bytes.set(chunk, byteLength);
+            byteLength = nextByteLength;
+
+            return Effect.void;
+          }),
+        ),
+      );
+
+      return yield* Effect.try({
+        try: () =>
+          options.decode(bytes.slice(0, byteLength).buffer, response.status),
+        catch: () => options.failure("invalid-response", false),
+      });
+    }).pipe(
+      Effect.scoped,
+      Effect.timeoutOrElse({
+        duration: options.timeoutMilliseconds,
+        orElse: () => Effect.fail(options.failure("timeout", true)),
       }),
       Effect.withSpan(`${options.operationId}.attempt`, {
         attributes: { adapter: options.adapter, retryCount: currentRetryCount },
