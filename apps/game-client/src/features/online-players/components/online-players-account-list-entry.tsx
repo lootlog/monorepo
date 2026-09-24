@@ -6,7 +6,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Button } from "@/components/ui/button";
-import { Tile } from "@/components/ui/tile";
+import { ListRow } from "@/components/list-row";
 import {
   Tooltip,
   TooltipContent,
@@ -14,9 +14,13 @@ import {
 } from "@/components/ui/tooltip";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
+import {
+  OnlinePlayerTooltip,
+  type OnlinePlayerRelation,
+} from "@/features/online-players/components/online-player-tooltip";
+import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
-import { cn } from "cn";
 import { useFriendsStore } from "@/store/friends.store";
 import { usePartyStore } from "@/store/party.store";
 import { useGameStore } from "@/store/game.store";
@@ -27,56 +31,44 @@ import {
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 import { Plus, Shirt, UserPlus, UserRound } from "lucide-react";
-import type { CSSProperties, FC } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type OnlinePlayersAccountListEntryProps = {
   presence: PlayerPresence;
   guildMember?: MemberSummaryResponseDtoOutput;
+  isAlternateRow?: boolean;
 };
 
-/**
- * The status colour tints the tile's own background instead of replacing
- * it, so a highlighted row stays opaque over the map like its neighbours.
- */
-const HIGHLIGHT_CLASS_NAME =
-  "ll:bg-[color-mix(in_oklab,var(--ll-presence-tint)_35%,var(--color-secondary))] ll:hover:bg-[color-mix(in_oklab,var(--ll-presence-tint)_45%,var(--color-secondary))]";
-
-const getHighlightTintColor = ({
+const resolveRelation = ({
   isSelf,
-  isAfk,
   isPartyMember,
   isSameClan,
 }: {
   isSelf: boolean;
-  isAfk: boolean;
   isPartyMember: boolean;
   isSameClan: boolean;
-}) => {
-  if (isSelf) return "var(--ll-color-yellow-500)";
+}): OnlinePlayerRelation => {
+  if (isSelf) return "self";
 
-  if (isAfk) return "var(--ll-color-orange-500)";
+  if (isPartyMember) return "party";
 
-  if (isPartyMember) return "var(--ll-color-sky-500)";
-
-  if (isSameClan) return "var(--ll-color-green-500)";
+  if (isSameClan) return "clan";
 
   return undefined;
 };
 
-const getHighlightTint = (
-  status: Parameters<typeof getHighlightTintColor>[0],
-) => {
-  const color = getHighlightTintColor(status);
+/** Highlights use the timer palette, so every list paints rows alike. */
+const getHighlightFill = (relation: OnlinePlayerRelation, isAfk: boolean) => {
+  if (relation === "self") return TIMERS_COLORS.yellow.fill;
 
-  if (!color) return { className: undefined, style: undefined };
+  if (isAfk) return TIMERS_COLORS.orange.fill;
 
-  return {
-    className: HIGHLIGHT_CLASS_NAME,
-    // SAFETY: CSSProperties has no index signature for custom properties;
-    // "--ll-presence-tint" is consumed by HIGHLIGHT_CLASS_NAME on the tile.
-    style: { "--ll-presence-tint": color } as CSSProperties,
-  };
+  if (relation === "party") return TIMERS_COLORS.sky.fill;
+
+  if (relation === "clan") return TIMERS_COLORS.green.fill;
+
+  return undefined;
 };
 
 const resolvePresenceDetails = (
@@ -141,7 +133,7 @@ const resolveOnlinePlayerActionState = ({
 
 export const OnlinePlayersAccountListEntry: FC<
   OnlinePlayersAccountListEntryProps
-> = ({ presence, guildMember }) => {
+> = ({ presence, guildMember, isAlternateRow = false }) => {
   const { t } = useTranslation("onlinePlayers");
   const character = getPresenceCharacter(presence);
 
@@ -185,12 +177,7 @@ export const OnlinePlayersAccountListEntry: FC<
     playerClanId: player?.clan?.id,
   });
 
-  const highlight = getHighlightTint({
-    isSelf,
-    isAfk: presence.isAfk,
-    isPartyMember,
-    isSameClan,
-  });
+  const relation = resolveRelation({ isSelf, isPartyMember, isSameClan });
 
   const visibleLocationName =
     isSelf && !player?.location?.map && !presence.mapName && currentMapName
@@ -233,12 +220,11 @@ export const OnlinePlayersAccountListEntry: FC<
       <Tooltip>
         <ContextMenuTrigger asChild>
           <TooltipTrigger asChild>
-            <span className="ll:block ll:w-full" style={highlight.style}>
-              <Tile
-                className={cn(
-                  "ll:px-[5px] ll:flex-row ll:items-center ll:justify-between ll:gap-1 ll:rounded-none ll:border-0 ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]",
-                  highlight.className,
-                )}
+            <span className="ll:block ll:w-full">
+              <ListRow
+                className="ll:justify-between ll:py-0.5"
+                fill={getHighlightFill(relation, presence.isAfk)}
+                isAlternateRow={isAlternateRow}
                 onDoubleClick={handleDoubleClick}
               >
                 <span className="ll:flex ll:min-w-0 ll:items-start ll:gap-1">
@@ -248,7 +234,7 @@ export const OnlinePlayersAccountListEntry: FC<
                     className="ll:scale-65 ll:-my-2 ll:-ml-1 ll:-mr-1 ll:shrink-0"
                   />
                   <span className="ll:flex ll:min-w-0 ll:flex-col ll:py-0.5 ll:leading-tight">
-                    <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1 ll:text-[11px] ll:font-semibold ll:text-gray-100">
+                    <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-1 ll:text-[11px] ll:text-white">
                       <span className="ll:truncate">
                         {player?.name || t("player.unknown")} ({character.lvl}
                         {character.prof})
@@ -257,37 +243,37 @@ export const OnlinePlayersAccountListEntry: FC<
                         <VerifiedMargonemAccountIcon className="ll:shrink-0" />
                       ) : null}
                     </span>
-                    <span className="ll:text-[10px] ll:text-gray-400 ll:truncate">
+                    <span className="ll:truncate ll:text-[10px] ll:font-normal ll:text-white/65">
                       {visibleLocationName}
                     </span>
                   </span>
                 </span>
                 {canInviteToParty ? (
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="xs"
                     type="button"
-                    className="ll:h-5 ll:min-w-5 ll:w-5 ll:p-0 ll:shrink-0"
+                    className="ll:size-5 ll:shrink-0 ll:bg-green-500/20 ll:p-0 ll:text-green-300 ll:shadow-[inset_0_0_0_1px_rgb(74_222_128/0.4)] ll:hover:bg-green-500/35 ll:hover:text-green-200"
                     onClick={handleInviteToParty}
                     onDoubleClick={(event) => event.stopPropagation()}
                     title={t("actions.inviteParty")}
                   >
-                    <Plus size="16" className="ll:text-green-500" />
+                    <Plus aria-hidden="true" className="ll:size-3.5" />
                   </Button>
                 ) : null}
-              </Tile>
+              </ListRow>
             </span>
           </TooltipTrigger>
         </ContextMenuTrigger>
-        <TooltipContent>
-          <span className="ll:flex ll:flex-col ll:gap-0.5">
-            <span>{memberName}</span>
-            {canInviteToParty ? (
-              <span className="ll:text-muted-foreground">
-                {t("actions.doubleClickInviteParty")}
-              </span>
-            ) : null}
-          </span>
+        <TooltipContent className="ll:max-w-64">
+          <OnlinePlayerTooltip
+            canInviteToParty={canInviteToParty}
+            isFriend={isFriend}
+            locationName={visibleLocationName}
+            memberName={memberName}
+            presence={presence}
+            relation={relation}
+          />
         </TooltipContent>
       </Tooltip>
       {canShowGameContextActions || canAddFriend ? (

@@ -1,9 +1,8 @@
 import { CharacterTile } from "@/components/character-tile";
-import { Tile } from "@/components/ui/tile";
+import { ListRow } from "@/components/list-row";
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
-import { cn } from "cn";
 import type { FC } from "react";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
@@ -11,20 +10,23 @@ import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 type OnlinePlayersListEntryProps = {
   presences: PlayerPresence[];
   guildMember?: MemberSummaryResponseDtoOutput;
+  isAlternateRow?: boolean;
 };
 
 export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   presences,
   guildMember,
+  isAlternateRow = false,
 }) => {
   const color = useMemberColor(guildMember);
 
   return (
-    <Tile className="ll:px-[5px] ll:flex ll:flex-row ll:justify-between ll:rounded-none ll:border-0 ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]">
+    <ListRow
+      className="ll:justify-between ll:py-0.5"
+      isAlternateRow={isAlternateRow}
+    >
       <div
-        className={cn(
-          "ll:font-semibold ll:text-[11px] ll:min-w-16 ll:max-w-32 ll:whitespace-nowrap ll:truncate",
-        )}
+        className="ll:min-w-16 ll:max-w-32 ll:truncate ll:whitespace-nowrap ll:text-[11px]"
         style={{ color: `#${color}` }}
       >
         ({presences.length}) {guildMember?.name}
@@ -46,6 +48,6 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
           </span>
         ))}
       </span>
-    </Tile>
+    </ListRow>
   );
 };

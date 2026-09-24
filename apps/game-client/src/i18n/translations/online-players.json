@@ -9,15 +9,15 @@
     "minLvlLabel": "Minimalny poziom",
     "maxLvlLabel": "Maksymalny poziom",
     "professionLabel": "Profesja",
-    "professions": {
-      "all": "Wszystkie",
-      "p": "Paladyn",
-      "w": "Wojownik",
-      "h": "Łowca",
-      "m": "Mag",
-      "b": "Tancerz ostrzy",
-      "t": "Tropiciel"
-    }
+    "allProfessions": "Wszystkie"
+  },
+  "professions": {
+    "p": "Paladyn",
+    "w": "Wojownik",
+    "h": "Łowca",
+    "m": "Mag",
+    "b": "Tancerz ostrzy",
+    "t": "Tropiciel"
   },
   "actions": {
     "hideFilters": "Ukryj filtry",
@@ -55,5 +55,18 @@
     "refreshing": "Odświeżanie graczy online",
     "offline": "Połączenie przerwane - dane mogą być nieaktualne",
     "disconnected": "Brak połączenia z serwerem - nie można pobrać graczy online"
+  },
+  "tooltip": {
+    "levelAndProfession": "{{profession}}, poziom {{level}}",
+    "discord": "Discord",
+    "clan": "Klan",
+    "location": "Lokacja",
+    "status": {
+      "self": "To Ty",
+      "afk": "AFK",
+      "party": "W Twojej drużynie",
+      "clan": "Twój klan",
+      "friend": "Znajomy"
+    }
   }
 }
