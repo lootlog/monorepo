@@ -1,5 +1,5 @@
-import { isObjectRecord } from "@lootlog/schema/records";
-import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { accessibleGuildsQuery } from "#src/members/member-access-query";
+import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
 import {
   and,
   desc,
@@ -12,11 +12,15 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect, Predicate } from "effect";
+import { Effect } from "effect";
 import { canViewTimer } from "./timer-selection.js";
-import { canViewNpcTimer } from "@lootlog/domain/npc-permissions";
+import {
+  canViewNpcTimer,
+  type RolePermissionData,
+} from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  guildTable,
   memberTable,
   memberToRoleTable,
   playerSnapshotTable,
@@ -43,67 +47,51 @@ export interface TimerListCache {
   ) => Effect.Effect<ReadonlyArray<CachedTimerProjection>, unknown>;
 }
 
-const visibleExpiredKeys = (
-  overrides: unknown,
-  world: string | undefined,
-): ReadonlyArray<string> => {
-  if (!world || !isObjectRecord(overrides)) return [];
-  const alwaysVisible = overrides.alwaysVisibleExpiredTimers;
-
-  if (!Predicate.isObject(alwaysVisible)) {
-    return [];
-  }
-
-  const configured = alwaysVisible[world];
-
-  return Array.isArray(configured)
-    ? configured.filter((key): key is string => typeof key === "string")
-    : [];
-};
-
-const readSelectedTimerKeys = (
+const selectedTimerKeysQuery = (
   database: typeof ApiDatabase.Service,
   userId: string,
-  world: string | undefined,
-) =>
-  !world
-    ? Effect.succeed<ReadonlyArray<string>>([])
-    : database
-        .select({ overrides: userSettingDocumentTable.overrides })
-        .from(userSettingDocumentTable)
-        .where(
-          and(
-            eq(userSettingDocumentTable.userId, userId),
-            eq(userSettingDocumentTable.domain, "timers"),
-            eq(userSettingDocumentTable.scopeType, "USER"),
-            eq(userSettingDocumentTable.scopeId, userId),
-          ),
-        )
-        .limit(1)
-        .pipe(
-          Effect.map((rows) => visibleExpiredKeys(rows[0]?.overrides, world)),
-        );
+  world: string,
+) => {
+  const configured = sql`${userSettingDocumentTable.overrides}->'alwaysVisibleExpiredTimers'->${world}`;
+
+  return database
+    .select({
+      // The JSONB existence operator matches only string array members. Keep
+      // malformed stored settings equivalent to the former JS array filter.
+      keys: sql`CASE WHEN jsonb_typeof(${configured}) = 'array' THEN ${configured} ELSE '[]'::jsonb END`,
+    })
+    .from(userSettingDocumentTable)
+    .where(
+      and(
+        eq(userSettingDocumentTable.userId, userId),
+        eq(userSettingDocumentTable.domain, "timers"),
+        eq(userSettingDocumentTable.scopeType, "USER"),
+        eq(userSettingDocumentTable.scopeId, userId),
+      ),
+    )
+    .limit(1);
+};
 
 const readVisibleTimers = (
   database: typeof ApiDatabase.Service,
   guildIds: ReadonlyArray<string>,
   world: string | undefined,
-  selectedKeys: ReadonlyArray<string>,
-) => {
-  const now = new Date();
+  userId: string,
+) =>
+  Effect.suspend(() => {
+    const now = new Date();
 
-  const active = and(
-    isNull(timerTable.deletedAt),
-    gt(timerTable.maxSpawnTime, now),
-  );
+    const active = and(
+      isNull(timerTable.deletedAt),
+      gt(timerTable.maxSpawnTime, now),
+    );
 
-  const visibility =
-    selectedKeys.length === 0
+    const visibility = !world
       ? active
       : or(
           active,
           and(
-            inArray(timerTable.timerKey, [...selectedKeys]),
+            sql`(${selectedTimerKeysQuery(database, userId, world)}) ? ${timerTable.timerKey}`,
             sql`COALESCE(${timerTable.npc}->>'margonemType', '0') != ${String(TIMER_TYPES.CUSTOM_MANUAL)}`,
             or(
               lte(timerTable.maxSpawnTime, now),
@@ -112,37 +100,37 @@ const readVisibleTimers = (
           ),
         );
 
-  const scope = world
-    ? and(
-        inArray(timerTable.guildId, [...guildIds]),
-        eq(timerTable.world, world),
-      )
-    : inArray(timerTable.guildId, [...guildIds]);
+    const scope = world
+      ? and(
+          inArray(timerTable.guildId, [...guildIds]),
+          eq(timerTable.world, world),
+        )
+      : inArray(timerTable.guildId, [...guildIds]);
 
-  return database
-    .select({
-      timer: timerTable,
-      member: memberTable,
-      actorCharacter: playerSnapshotTable,
-    })
-    .from(timerTable)
-    .leftJoin(memberTable, eq(memberTable.id, timerTable.createdById))
-    .leftJoin(
-      playerSnapshotTable,
-      eq(playerSnapshotTable.id, timerTable.actorCharacterSnapshotId),
-    )
-    .where(and(scope, visibility))
-    .orderBy(desc(timerTable.maxSpawnTime))
-    .pipe(
-      Effect.map((rows) =>
-        rows.map(({ timer, member, actorCharacter }) => ({
-          ...timer,
-          member,
-          actorCharacter,
-        })),
-      ),
-    );
-};
+    return database
+      .select({
+        timer: timerTable,
+        member: memberTable,
+        actorCharacter: playerSnapshotTable,
+      })
+      .from(timerTable)
+      .leftJoin(memberTable, eq(memberTable.id, timerTable.createdById))
+      .leftJoin(
+        playerSnapshotTable,
+        eq(playerSnapshotTable.id, timerTable.actorCharacterSnapshotId),
+      )
+      .where(and(scope, visibility))
+      .orderBy(desc(timerTable.maxSpawnTime))
+      .pipe(
+        Effect.map((rows) =>
+          rows.map(({ timer, member, actorCharacter }) => ({
+            ...timer,
+            member,
+            actorCharacter,
+          })),
+        ),
+      );
+  });
 
 export const makeGuildTimerList = (
   database: typeof ApiDatabase.Service,
@@ -157,20 +145,7 @@ export const makeGuildTimerList = (
     const timers = yield* cache.getOrSet(
       cacheKey,
       access.guild.id,
-      Effect.gen(function* () {
-        const selectedKeys = yield* readSelectedTimerKeys(
-          database,
-          access.userId,
-          world,
-        );
-
-        return yield* readVisibleTimers(
-          database,
-          [access.guild.id],
-          world,
-          selectedKeys,
-        );
-      }),
+      readVisibleTimers(database, [access.guild.id], world, access.userId),
     );
 
     return timers
@@ -187,66 +162,68 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,
   ) {
-    const guildRows = yield* selectAccessibleGuilds(
-      database,
-      identity.discordId,
-      [Permission.LOOTLOG_TIMERS_READ, Permission.ADMIN],
-    );
+    const keyScope = yield* apiKeyOrganizationFilter(guildTable.id);
 
-    if (guildRows.length === 0) {
-      return yield* Effect.fail(new PermissionDeniedError());
-    }
-
-    const guildIds = guildRows.map(({ guild }) => guild.id);
-
-    const members = yield* database
-      .select({ member: memberTable, role: roleTable })
-      .from(memberTable)
-      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
-      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-      .where(
-        and(
-          eq(memberTable.userId, identity.discordId),
-          eq(memberTable.active, true),
-          inArray(memberTable.guildId, guildIds),
+    const accessible = database
+      .$with("accessible_timer_guilds")
+      .as(
+        accessibleGuildsQuery(
+          database,
+          identity.discordId,
+          [Permission.LOOTLOG_TIMERS_READ, Permission.ADMIN],
+          keyScope,
         ),
       );
 
-    const rolesByGuild = new Map<
-      string,
-      Array<typeof roleTable.$inferSelect>
-    >();
+    const accessRows = yield* database
+      .with(accessible)
+      .select({
+        guildId: accessible.guild.id,
+        ownerId: accessible.guild.ownerId,
+        role: {
+          permissions: roleTable.permissions,
+          lvlRangeFrom: roleTable.lvlRangeFrom,
+          lvlRangeTo: roleTable.lvlRangeTo,
+        },
+      })
+      .from(accessible)
+      .leftJoin(
+        memberTable,
+        and(
+          eq(memberTable.guildId, accessible.guild.id),
+          eq(memberTable.userId, identity.discordId),
+          eq(memberTable.active, true),
+        ),
+      )
+      .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
+      .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id));
 
-    for (const { member, role } of members) {
-      if (!role) continue;
-      const roles = rolesByGuild.get(member.guildId) ?? [];
-      roles.push(role);
-      rolesByGuild.set(member.guildId, roles);
+    if (accessRows.length === 0) {
+      return yield* Effect.fail(new PermissionDeniedError());
     }
 
-    const selectedKeys = yield* readSelectedTimerKeys(
-      database,
-      identity.userId,
-      world,
-    );
+    const rolesByGuild = new Map<string, RolePermissionData[]>();
+    const administrativeGuilds = new Set<string>();
+
+    for (const { guildId, ownerId, role } of accessRows) {
+      const roles = rolesByGuild.get(guildId) ?? [];
+
+      if (role) roles.push(role);
+      rolesByGuild.set(guildId, roles);
+
+      if (
+        ownerId === identity.discordId ||
+        role?.permissions.includes(Permission.ADMIN)
+      ) {
+        administrativeGuilds.add(guildId);
+      }
+    }
 
     const timers = yield* readVisibleTimers(
       database,
-      guildIds,
+      [...rolesByGuild.keys()],
       world,
-      selectedKeys,
-    );
-
-    const administrativeGuilds = new Set(
-      guildRows
-        .filter(
-          ({ guild }) =>
-            guild.ownerId === identity.discordId ||
-            rolesByGuild
-              .get(guild.id)
-              ?.some((role) => role.permissions.includes(Permission.ADMIN)),
-        )
-        .map(({ guild }) => guild.id),
+      identity.userId,
     );
 
     return timers
