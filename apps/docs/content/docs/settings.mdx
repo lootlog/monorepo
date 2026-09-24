@@ -52,7 +52,7 @@ pokazuje samo tło wiersza. Timery pozostawione na liście po upływie ustawione
 czasu do ukrycia zachowują swój kolor, ale są ciemniejsze.
 
 W dodatku do gry w **Ustawienia → Timery → Wygląd** możesz włączyć
-**Wygląd legacy**. Opcja jest domyślnie wyłączona. Przywraca poprzednie kolory,
+**Poprzedni wygląd**. Opcja jest domyślnie wyłączona. Przywraca poprzednie kolory,
 obramowania, odstępy, wypełnienia i kolorowanie tekstu timerów,
 bez naprzemiennie jaśniejszych rzędów i przyciemniania wygasłych kafelków.
 Działa od razu w oknie timerów i pod torbą, także w trybie kompaktowym. Wybór
@@ -65,15 +65,15 @@ Jeżeli należysz do kilku organizacji lub grasz w kilku klanach, sprawdź, do
 których kontekstów mogą trafiać dane konkretnej postaci. Błędne przypisanie jest
 częstą przyczyną braku wpisów w oczekiwanym panelu.
 
-### Lootlogi: widoczność i kolejność
+### Organizacje: widoczność i kolejność
 
-Zakładka **Lootlogi** w oknie ustawień w grze pokazuje wszystkie Lootlogi, do
+Zakładka **Organizacje** w oknie ustawień w grze pokazuje wszystkie organizacje, do
 których masz dostęp, jeden pod drugim. Kliknięcie kafelka włącza lub wyłącza
-jego widoczność: ukryte Lootlogi znikają z przełączników w grze, ale
+jego widoczność: ukryte organizacje znikają z przełączników w grze, ale
 powiadomienia i przetwarzanie w tle działają dalej.
 
-Uchwyt przed kafelkiem pozwala przeciągnąć Lootloga w górę lub w dół i tak
-ustawić kolejność, w jakiej Lootlogi pojawiają się w przełącznikach w grze. Ten
+Uchwyt przed kafelkiem pozwala przeciągnąć organizację w górę lub w dół i tak
+ustawić kolejność, w jakiej organizacje pojawiają się w przełącznikach w grze. Ten
 sam uchwyt obsługują strzałki góra/dół oraz Home/End na klawiaturze. Kolejność
 zmienisz tylko przy pustym wyszukiwaniu i filtrze „Wszystkie”. Kolejność i
 widoczność są zapisywane na koncie Lootlog.
@@ -82,13 +82,14 @@ widoczność są zapisywane na koncie Lootlog.
 
 Publikowanie obecności w grze jest tymczasowo zawsze włączone dla wszystkich
 organizacji, do których masz dostęp. Przełączniki publikowania są ukryte, a
-wcześniej zapisany wybór organizacji nie ogranicza publikacji. Ukrycie serwera
+wcześniej zapisany wybór organizacji nie ogranicza publikacji. Ukrycie organizacji
 w interfejsie nie wyłącza wysyłania obecności.
 
 ## Okno ustawień w grze
 
 Obok kropki stanu połączenia na pasku szybkiego dostępu widzisz ping w
-milisekundach. To czas odpowiedzi serwera Lootlog na ostatni heartbeat.
+milisekundach (podpowiedź „Opóźnienie połączenia”). To czas odpowiedzi serwera
+Lootlog na ostatni pomiar połączenia.
 Wartość pojawia się po pierwszym pomiarze i znika po utracie połączenia.
 
 Okno ustawień w kliencie gry otwierasz z paska szybkiego dostępu lub skrótem
@@ -121,21 +122,21 @@ i suwak z odczytem, który zapisuje wartość po puszczeniu.
 
 - **Powiadomienia → Reguły** i **Powiadomienia → Wykrywacz** pokazują wszystkie
   kategorie NPC w jednej tabeli: wiersz to typ potwora, kolumna to opcja.
-- **Powiadomienia → Reguły** ma pod tabelą sekcję **Z których Lootlogów** z
-  jednym wyborem Lootlogów wspólnym dla wszystkich typów powiadomień. Jeśli
-  wcześniej różne typy miały różne Lootlogi, po aktualizacji wybór obejmuje
+- **Powiadomienia → Reguły** ma pod tabelą sekcję **Z których organizacji** z
+  jednym wyborem organizacji wspólnym dla wszystkich typów powiadomień. Jeśli
+  wcześniej różne typy miały różne organizacje, po aktualizacji wybór obejmuje
   ich sumę.
 - **Powiadomienia → Wykrywacz** ma pod tabelą sekcję **Gdzie wysyłać
-  powiadomienia** z regułami wysyłki na Lootlogi. Każda reguła jest zawsze
+  powiadomienia** z regułami wysyłki do organizacji. Każda reguła jest zawsze
   rozwinięta: ustawiasz zakres poziomu potwora, świat (puste
-  = każdy świat, przycisk wstawia świat, na którym grasz) i Lootlogi. Stopka
-  reguły opisuje słowami, co reguła wyśle; gdy nie zaznaczysz żadnego
-  Lootloga, w nagłówku reguły pojawia się ostrzeżenie, że nic nie wysyła.
+  = każdy świat, przycisk wstawia świat, na którym grasz) i organizacje. Stopka
+  reguły opisuje słowami, co reguła wyśle; gdy nie zaznaczysz żadnej
+  organizacji, w nagłówku reguły pojawia się ostrzeżenie, że nic nie wysyła.
 - **Wyciszenia** to osobna kategoria z sekcjami **Gracze** i **Potwory**. Każda
   sekcja ma własne pole wyszukiwania nad listą, a wyciszenie usuwasz ikoną
   kosza przy wpisie. Wyciszenia działają obecnie na powiadomienia.
 - **Diagnostyka → Logi** prezentuje akcje jako tabelę z filtrami w pasku nad
-  nią; kliknięcie wiersza rozwija payload, szczegóły i żądania API.
+  nią; kliknięcie wiersza rozwija dane akcji, szczegóły i żądania API.
 - **Sterowanie → Skróty klawiszowe** pokazują skrót jako klawisz; ikona
   przywracania pojawia się tylko przy zmienionych skrótach, a „Przywróć
   domyślne” jest w pasku nad listą.

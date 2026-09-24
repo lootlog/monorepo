@@ -73,9 +73,9 @@ Dostęp kontrolują między innymi:
 Czat Lootlog jest dostępny w osobnym, przesuwanym oknie zarówno w NI, jak
 i w starym interfejsie. Integracja z czatem gry jest tymczasowo niedostępna.
 
-Ustawienia czatu znajdziesz w zakładce **Chat** okna ustawień dodatku. Podzakładka
+Ustawienia czatu znajdziesz w zakładce **Czat** okna ustawień dodatku. Podzakładka
 **Wygląd** zawiera gotowe ustawienia, układ wiadomości NPC, skalę tekstu i metadane, a **Filtry**
-pozwala wyłączyć wiadomości NPC wybranych typów, np. Elita 2, zachowując herosów
+pozwala wyłączyć wiadomości NPC wybranych typów, np. elity II, zachowując herosów
 i tytanów. Domyślnie wszystkie typy są włączone. Wyłączone typy nie pojawiają się
 w czacie i nie wywołują powiadomień o wzmiankach; po ponownym włączeniu historia
 wraca w całości. Ten sam filtr włączysz z czatu: kliknij prawym przyciskiem
@@ -117,12 +117,12 @@ Kliknięcie cytatu przewija czat do oryginalnej wiadomości i podświetla ją na
 1,5 sekundy. Ponowne kliknięcie przedłuża podświetlenie.
 
 Przycisk **+** w prawym dolnym rogu czatu otwiera menu **Pozycja**, **Pomoc**,
-**Party finder**, który od razu tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
-Korzysta z organizacji wybranych w oknie komend; wymaga wybrania co najmniej jednej.
+**Utwórz zbiórkę**, która od razu tworzy pustą zbiórkę, tak jak `/grp` bez opisu.
+Korzysta z organizacji wybranej u góry czatu; bez wybranej organizacji jest nieaktywna.
 Obok akcji **Pozycja** i **Pomoc** widoczny jest aktualny skrót, który możesz przypisać w ustawieniach
 skrótów klawiszowych. Domyślnie **Alt+P** wysyła pozycję, a **Alt+H** wzywa pomoc.
-Skrót **Utwórz grupę — Party finder** jest domyślnie nieprzypisany. Po przypisaniu
-otwiera formularz tworzenia grupy; nie działa podczas pisania.
+Skrót **Utwórz zbiórkę** jest domyślnie nieprzypisany. Po przypisaniu
+otwiera okno **Nowa zbiórka** z formularzem; nie działa podczas pisania.
 Wpis zaczynający się od `!` już podczas pisania przyjmuje kolor powiadomienia.
 **Pozycja** od razu wysyła wpis w formacie `Postać(230w), Ithan (1, 2)`, zachowując szkic. **Pomoc**
 od razu wysyła powiadomienie do organizacji wybranej u góry czatu. Gdy aktualne
@@ -131,10 +131,10 @@ dane gry są dostępne, wiadomość zawiera liczbę wykrytych wrogich postaci.
 ### Zbiórki
 
 Zgłoszenia NPC zajmują pełną szerokość wiersza i mają subtelne tło zgodne
-z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek Party findera.
-Nie mają przycisków tworzenia grupy ani przygotowania komunikatu.
+z ustawieniami **Wygląd → Kolory NPC**, tak jak pasek zbiórki.
+Nie mają przycisków tworzenia zbiórki ani przygotowania komunikatu.
 
-Opcja **Party finder** w menu **+** tworzy zbiórkę w organizacji wybranej
+Opcja **Utwórz zbiórkę** w menu **+** tworzy zbiórkę w organizacji wybranej
 w czacie, tak jak **Pozycja** i **Pomoc**.
 
 Utworzenie zbiórki z NPC lub bez NPC nie dodaje wiadomości do historii czatu.
@@ -158,7 +158,7 @@ Zbiórki NPC pokazują również grafikę potwora, jeśli zapisano ją przy zgł
 Obok grafiki widać nazwę, poziom i dostępną profesję, a niżej lokację oraz
 współrzędne, jeśli zostały podane.
 Nagłówek zbiórki pokazuje nazwę organizatora z Discorda w kolorze jego roli — przed zgłoszeniem i po nim.
-Licznik obok tytułu pokazuje aktualny skład drużyny względem limitu 10 osób.
+Licznik obok tytułu pokazuje aktualny skład grupy względem limitu 10 osób.
 Przykładowo `(2/10)` oznacza dwie osoby w grupie. Obejmuje organizatora i osoby
 bez zgłoszenia; nie pokazuje liczby chętnych. Przed pierwszym odczytem składu
 wyświetla `(—/10)`. Uczestnik dodatkowo widzi
@@ -172,8 +172,8 @@ znajduje się po prawej stronie jego danych. Bez NPC jest obok opisu lub
 zakresu poziomów; tylko pusta zbiórka ma tę akcję w nagłówku.
 Zapraszanie działa na postaci organizatora po synchronizacji zbiórki.
 Wysłanie zaproszenia nie oznacza, że dana osoba już dołączyła do grupy.
-Organizator ma ikonę **Zarządzaj** w prawym górnym rogu. Otwiera ona okno
-organizowania grupy, dostępne tylko dla organizatora. Obok znajduje się
+Organizator ma w menu zbiórki opcję **Lista chętnych**. Otwiera ona okno
+**Twoja zbiórka**, dostępne tylko dla organizatora. Obok znajduje się
 **Anuluj zbiórkę**. Uczestnik sprawdza swój status w czacie i wycofuje
 zgłoszenie, klikając ponownie zaznaczony przycisk zgłoszenia.
 Zgłoszenie z powiadomienia otwiera czat z paskiem tej zbiórki.
