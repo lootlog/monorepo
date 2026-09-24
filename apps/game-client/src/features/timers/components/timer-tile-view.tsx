@@ -5,6 +5,8 @@ import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
 export type TimerTileViewProps = {
   paint: TimerColorPaint;
   legacyAppearance?: boolean;
+  /** Paints the timer colour as a stripe on the tile's left edge. */
+  showColorStripe?: boolean;
   displayMode: "column" | "row";
   fontSize: number;
   hasPassedRedThreshold?: boolean;
@@ -69,6 +71,7 @@ const resolveTextColor = (
 export const TimerTileView: FC<TimerTileViewProps> = ({
   paint,
   legacyAppearance = false,
+  showColorStripe = true,
   displayMode,
   fontSize,
   hasPassedRedThreshold = false,
@@ -101,7 +104,11 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
         "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:border-solid ll:bg-[var(--ll-timer-fill)] ll:transition-colors ll:motion-reduce:transition-none",
         legacyAppearance
           ? "ll:rounded-[2px] ll:border ll:border-[var(--ll-timer-accent)] ll:px-1 ll:py-0.5 ll:hover:bg-[var(--ll-timer-hover-fill)]"
-          : "ll:gap-1 ll:border-0 ll:border-l-[3px] ll:border-l-[var(--ll-timer-accent)] ll:px-[5px] ll:py-[4px] ll:font-semibold ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
+          : "ll:gap-1 ll:border-0 ll:py-[4px] ll:font-semibold ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
+        !legacyAppearance &&
+          (showColorStripe
+            ? "ll:border-l-[3px] ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]"
+            : "ll:px-[6px]"),
         resolveTextColor(
           legacyAppearance,
           isExpired,

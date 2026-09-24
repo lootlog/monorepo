@@ -32,6 +32,7 @@ type SingleTimerProps = {
   settingsKey: string;
   isHidden?: boolean;
   isAlternateRow?: boolean;
+  showColorStripe?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -42,6 +43,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   settingsKey,
   isHidden = false,
   isAlternateRow = false,
+  showColorStripe = true,
 }) => {
   const world = useGameStore((state) => state.game?.world ?? "unknown");
 
@@ -112,6 +114,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 id={timer.npc.id.toString()}
                 paint={paint}
                 legacyAppearance={displayConfig.legacyAppearance}
+                showColorStripe={showColorStripe}
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}
