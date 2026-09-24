@@ -273,6 +273,53 @@ describe("lootlogOtherGlowManager", () => {
     ]);
   });
 
+  it("loads the mask once and shares tinted masks across glows and Shift presses", () => {
+    const context = canvas.create().context;
+    const drawImage = vi.spyOn(context, "drawImage");
+
+    const drawGlows = () => {
+      drawImage.mockClear();
+
+      for (const drawable of getRuntimeDrawableList()) {
+        if (drawable !== "base" && "draw" in drawable) {
+          drawable.draw(context);
+        }
+      }
+
+      return drawImage.mock.calls.map(([source]) => source);
+    };
+
+    const press = () => {
+      lootlogOtherGlowManager.install();
+      lootlogOtherGlowManager.setGlow(
+        createOther("617"),
+        LOOTLOG_OTHER_GLOW_BLUE,
+      );
+      lootlogOtherGlowManager.setGlow(
+        createOther("618"),
+        LOOTLOG_OTHER_GLOW_BLUE,
+      );
+      lootlogOtherGlowManager.setGlow(
+        createOther("619"),
+        LOOTLOG_OTHER_GLOW_RED_ORANGE,
+      );
+
+      return drawGlows();
+    };
+
+    const [firstBlue, secondBlue, red] = press();
+    lootlogOtherGlowManager.uninstall();
+    const [nextPressBlue] = press();
+
+    expect(runtime.imgLoader.onload).toHaveBeenCalledOnce();
+    expect(secondBlue).toBe(firstBlue);
+    expect(nextPressBlue).toBe(firstBlue);
+    expect(red).not.toBe(firstBlue);
+    expect(Array.from(context.getImageData(335, 320, 1, 1).data)).toEqual([
+      255, 90, 47, 255,
+    ]);
+  });
+
   it("suppresses native Margonem other glows while keeping other drawables and Lootlog glows", () => {
     const other = createOther("617");
 
