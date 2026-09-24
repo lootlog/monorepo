@@ -1,5 +1,8 @@
+// Generated API clients are ignored by .oxlintrc.json and .oxfmtrc.jsonc,
+// but oxlint still lints ignored files passed to it by path.
 const generatedSourcePattern =
-  /(?:^|\/)apps\/(?:web|game-client)\/src\/lib\/api\/generated\//;
+  /(?:^|\/)packages\/(?:client|sdk)\/src\/generated\//;
+
 const ignoredFilePattern = /(?:^|\/)bun\.lock$/;
 
 const quote = (file) => JSON.stringify(file);
