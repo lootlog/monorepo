@@ -1,4 +1,4 @@
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsNumberField } from "@/components/settings/settings-number-field";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsTextField } from "@/components/settings/settings-text-field";
@@ -106,15 +106,15 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
             total: guildCount,
           })}
         </span>
-        <SettingsIconButton
-          variant="destructive"
+        <IconButton
+          variant="quiet-destructive"
           label={t("settings.detector.routing.deleteRuleLabel", {
             name: label,
           })}
           onClick={onRemove}
         >
           <Trash2 />
-        </SettingsIconButton>
+        </IconButton>
       </header>
       <div className="ll:flex ll:flex-col ll:gap-0.5 ll:border-0 ll:border-t ll:border-solid ll:border-border ll:p-1">
         <div className="ll:grid ll:grid-cols-1 ll:gap-0.5 ll:@min-[440px]/settings:grid-cols-2">
@@ -157,13 +157,13 @@ export const DetectorRoutingRule: FC<DetectorRoutingRuleProps> = ({
               value={world}
               onCommit={onWorldCommit}
             />
-            <SettingsIconButton
+            <IconButton
               label={t("settings.detector.routing.useCurrentWorldLabel")}
               disabled={!canUseCurrentWorld}
               onClick={() => onWorldCommit(currentWorldLabel)}
             >
               <MapPin />
-            </SettingsIconButton>
+            </IconButton>
           </SettingsRow>
         </div>
         <SettingsRow

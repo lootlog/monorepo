@@ -22,7 +22,9 @@
     "playSound": "Odtwórz dźwięk",
     "mute": "Wycisz",
     "unmute": "Włącz dźwięk",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "moreActions": "Więcej akcji"
   },
   "auth": {
     "extensionChecking": "Sprawdzanie sesji…",
@@ -105,5 +107,9 @@
     "connecting": "Łączenie z serwerem…",
     "reconnecting": "Połączenie przerwane, ponowne łączenie…",
     "unreachable": "Nie można połączyć z serwerem, ponawianie…"
+  },
+  "filters": {
+    "minLevel": "Poziom od",
+    "maxLevel": "Poziom do"
   }
 }

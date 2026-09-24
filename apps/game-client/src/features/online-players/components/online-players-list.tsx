@@ -1,4 +1,3 @@
-import { clamp } from "es-toolkit";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorldSelector } from "@/components/world-selector";
@@ -12,13 +11,11 @@ import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import { useState, type ChangeEvent, type FC, type ReactNode } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { useGameStore } from "@/store/game.store";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_ONLINE_PLAYERS_FILTERS,
-  MIN_ONLINE_PLAYER_LEVEL,
-  MAX_ONLINE_PLAYER_LEVEL,
   getFilteredAccountEntries,
   getFilteredMemberEntries,
   type ProfessionFilterValue,
@@ -30,6 +27,7 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
+import type { LevelRange } from "@/components/level-range-filter";
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
@@ -180,44 +178,10 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const areFiltersActive = areOnlinePlayerFiltersActive(searchQuery, filters);
 
-  const handleMinLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleLevelRangeChange = (range: LevelRange) => {
     if (!guildId) return;
 
-    const numericValue = Number(event.target.value);
-
-    if (Number.isNaN(numericValue)) return;
-
-    const minLvl = clamp(
-      numericValue,
-      MIN_ONLINE_PLAYER_LEVEL,
-      MAX_ONLINE_PLAYER_LEVEL,
-    );
-
-    setFilters(guildId, {
-      ...filters,
-      minLvl,
-      maxLvl: minLvl > filters.maxLvl ? minLvl : filters.maxLvl,
-    });
-  };
-
-  const handleMaxLvlChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!guildId) return;
-
-    const numericValue = Number(event.target.value);
-
-    if (Number.isNaN(numericValue)) return;
-
-    const maxLvl = clamp(
-      numericValue,
-      MIN_ONLINE_PLAYER_LEVEL,
-      MAX_ONLINE_PLAYER_LEVEL,
-    );
-
-    setFilters(guildId, {
-      ...filters,
-      minLvl: maxLvl < filters.minLvl ? maxLvl : filters.minLvl,
-      maxLvl,
-    });
+    setFilters(guildId, { ...filters, ...range });
   };
 
   const handleProfessionChange = (profession: ProfessionFilterValue) => {
@@ -336,9 +300,8 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
             <OnlinePlayersFilters
               searchQuery={searchQuery}
               filters={filters}
-              onSearchChange={(event) => setSearchQuery(event.target.value)}
-              onMinLvlChange={handleMinLvlChange}
-              onMaxLvlChange={handleMaxLvlChange}
+              onSearchChange={setSearchQuery}
+              onLevelRangeChange={handleLevelRangeChange}
               onProfessionChange={handleProfessionChange}
             />
           </>

@@ -1,4 +1,4 @@
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   Table,
   TableBody,
@@ -78,7 +78,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
         </TableCell>
         <TableCell className="ll:w-0">
           <div className="ll:flex ll:items-center ll:justify-end ll:gap-0.5">
-            <SettingsIconButton
+            <IconButton
               label={t("common:actions.copyAction")}
               onClick={(event) => {
                 event.stopPropagation();
@@ -86,8 +86,8 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
               }}
             >
               <Copy />
-            </SettingsIconButton>
-            <SettingsIconButton
+            </IconButton>
+            <IconButton
               aria-expanded={isOpen}
               label={t("settings.logs.toggleActionDetails")}
               onClick={(event) => {
@@ -101,7 +101,7 @@ export const LogsActionRow: FC<LogsActionRowProps> = ({
                   isOpen && "ll:rotate-180",
                 )}
               />
-            </SettingsIconButton>
+            </IconButton>
           </div>
         </TableCell>
       </TableRow>

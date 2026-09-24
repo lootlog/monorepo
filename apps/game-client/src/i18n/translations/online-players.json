@@ -6,8 +6,6 @@
     "placeholder": "Szukaj gracza…"
   },
   "filters": {
-    "minLvlLabel": "Minimalny poziom",
-    "maxLvlLabel": "Maksymalny poziom",
     "professionLabel": "Profesja",
     "allProfessions": "Wszystkie"
   },

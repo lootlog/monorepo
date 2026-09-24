@@ -11,12 +11,10 @@
     "searchPlaceholder": "Szukaj…",
     "minPlaceholder": "Od",
     "maxPlaceholder": "Do",
-    "clearSearch": "Wyczyść wyszukiwanie",
-    "minLvlLabel": "Poziom od",
-    "maxLvlLabel": "Poziom do",
     "npcTypesLabel": "Typy potworów",
     "npcTypes": "Typy",
-    "npcTypesOnlyHint": "Prawy przycisk myszy: tylko ten typ"
+    "npcTypesOnly": "Tylko",
+    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}"
   },
   "toolbar": {
     "filters": "Filtry",

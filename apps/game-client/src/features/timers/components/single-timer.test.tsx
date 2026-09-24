@@ -119,6 +119,46 @@ describe("SingleTimer", () => {
     },
   );
 
+  it.each(["keyboard", "more actions button"])(
+    "opens the timer actions without a right-click (%s)",
+    async (opener) => {
+      const user = userEvent.setup();
+      const fixture = createTimerHttpFixture();
+
+      const view = render(
+        <QueryClientProvider client={fixture.queryClient}>
+          <TimerClockProvider>
+            <SingleTimer
+              guildIds={["guild-1"]}
+              guildNamesById={{}}
+              accessPolicy={createAccessPolicy({
+                capabilities: [Permission.LOOTLOG_TIMERS_DELETE],
+              })}
+              timer={createTimer()}
+              settingsKey="guild-1"
+            />
+          </TimerClockProvider>
+        </QueryClientProvider>,
+      );
+
+      onTestFinished(() => {
+        view.unmount();
+        fixture.cleanup();
+      });
+
+      if (opener === "keyboard") {
+        await user.tab();
+        await user.keyboard("{Shift>}{F10}{/Shift}");
+      } else {
+        await user.click(screen.getByRole("button", { name: "Więcej akcji" }));
+      }
+
+      expect(
+        await screen.findByRole("menuitem", { name: "Usuń timer" }),
+      ).toBeVisible();
+    },
+  );
+
   it("shows pending and hidden states with the configured custom color", async () => {
     const user = userEvent.setup();
     const fixture = createTimerHttpFixture();

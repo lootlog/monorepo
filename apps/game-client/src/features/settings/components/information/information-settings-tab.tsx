@@ -1,4 +1,4 @@
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -79,14 +79,14 @@ export const InformationSettingsTab = () => {
               {row.value}
             </span>
             {copyValue ? (
-              <SettingsIconButton
+              <IconButton
                 label={t("settings.information.copy", { label: row.label })}
                 onClick={() => {
                   void copyToClipboard(copyValue);
                 }}
               >
                 <Copy aria-hidden />
-              </SettingsIconButton>
+              </IconButton>
             ) : null}
           </SettingsRow>
         ))}
