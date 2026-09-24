@@ -2,7 +2,7 @@ import { AlertCircle, Loader2, RotateCcw, WifiOff } from "lucide-react";
 import type { FC } from "react";
 import { cn } from "cn";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 
 type AsyncStatusIndicatorProps = {
   active: boolean;
@@ -66,17 +66,14 @@ export const AsyncStatusIndicator: FC<AsyncStatusIndicatorProps> = ({
       )}
       <span className="ll:min-w-0 ll:flex-1">{label}</span>
       {onRetry && retryLabel ? (
-        <Button
-          size="xs"
-          aria-label={retryLabel}
-          className="ll:size-4 ll:h-4 ll:border-0 ll:bg-transparent! ll:p-0"
+        // Pulled into the padding so the 24px target keeps the pill's height.
+        <IconButton
+          label={retryLabel}
+          className="ll:-my-1.5 ll:-mr-1.5"
           onClick={onRetry}
-          title={retryLabel}
-          type="button"
-          variant="ghost"
         >
           <RotateCcw aria-hidden className="ll:size-3" />
-        </Button>
+        </IconButton>
       ) : null}
     </div>
   );

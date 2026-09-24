@@ -3,6 +3,7 @@ import { UsersRound, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ActivePartyGatheringSummary } from "@lootlog/client/main";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   Popover,
   PopoverContent,
@@ -64,15 +65,12 @@ export function ChatHiddenGatherings({
       >
         <div className="ll:flex ll:items-center ll:justify-between ll:px-2 ll:py-1 ll:text-[12px]">
           <strong>{t("gatherings.listTitle")}</strong>
-          <Button
-            size="xs"
-            variant="ghost"
-            className="ll:size-6 ll:border-0 ll:p-0"
-            aria-label={t("gatherings.closeList")}
+          <IconButton
+            label={t("gatherings.closeList")}
             onClick={() => setOpen(false)}
           >
-            <X size={14} aria-hidden />
-          </Button>
+            <X aria-hidden />
+          </IconButton>
         </div>
         <div className="ll:flex ll:border-x-0 ll:border-y ll:border-gray-400/40">
           {[false, true].map((isHidden) => (
