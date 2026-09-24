@@ -75,7 +75,7 @@ export const AppLayout = () => {
         <ThemeAnnouncement />
       </Suspense>
       <SidebarProvider
-        className="min-h-0 flex-1 overflow-hidden"
+        className="relative min-h-0 flex-1 overflow-hidden"
         style={sidebarStyle}
       >
         <AppSidebar
