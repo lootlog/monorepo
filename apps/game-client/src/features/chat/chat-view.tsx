@@ -2,6 +2,7 @@ import { ChatFilterSwitcher } from "./components/chat-filter-switcher";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { ChatViewHeader } from "./components/chat-view-header";
 import { ChatComposeArea } from "./components/chat-compose-area";
@@ -346,6 +347,9 @@ export const ChatView = ({
           updater: (old) =>
             old ? removeChatMessage(old, pathParams.messageId) : old,
         });
+      },
+      onError: () => {
+        toast.error(t("errors.deleteFailed"));
       },
       onSettled: (_response, _error, { pathParams }) => {
         setDeletingMessageIds((current) => {

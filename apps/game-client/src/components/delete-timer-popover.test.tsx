@@ -82,13 +82,30 @@ it("shows pending permissions without exposing deletion", async () => {
   expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
 });
 
-it("accepts LOOTLOG_TIMERS_DELETE for a single organization", async () => {
+it("deletes a single organization's timer only after confirmation", async () => {
   const { user, onDeleteTimer } = await setup([
     [Permission.LOOTLOG_TIMERS_DELETE],
     [],
   ]);
 
+  const gameKeyDown = vi.fn<(event: KeyboardEvent) => void>();
+  document.addEventListener("keydown", gameKeyDown);
+  onTestFinished(() => document.removeEventListener("keydown", gameKeyDown));
+
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+  expect(screen.getByRole("alertdialog")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Anuluj" })).toHaveFocus();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  // Margonem reacts to document key presses, so Escape stays with Lootlog.
+  expect(gameKeyDown).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+  await user.click(screen.getByRole("button", { name: "Anuluj" }));
+  expect(onDeleteTimer).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+  await user.click(screen.getByRole("button", { name: "Usuń" }));
   expect(onDeleteTimer).toHaveBeenCalledWith("guild-1", "timer-1");
 });
 

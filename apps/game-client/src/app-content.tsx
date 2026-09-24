@@ -51,27 +51,30 @@ export const AppContent = () => {
     Boolean(state.gameState.gameInitialized),
   );
 
-  if (!gameInitialized) {
-    return null;
-  }
-
+  // The Toaster stays mounted while the game loads, so feedback raised before
+  // then (such as a missing session) is not dropped. Its @lootlog/ui wrapper
+  // uses the dark theme that ThemeProvider applies to the whole overlay.
   return (
     <>
-      <AnimationEffectsRootClass />
-      <Timers />
-      <Settings />
-      <Chat />
-      <CommandWindow />
-      <OnlinePlayers />
-      <NpcDetector />
-      <Notifications />
-      <QuickAccess />
-      <CatchingWhitelistWarning />
-      <BackendPreferencesWarning />
-      <Toaster theme="light" />
-      <PartyFinder />
-      <CreatePartyGathering />
-      <MapPingWheel />
+      <Toaster />
+      {gameInitialized ? (
+        <>
+          <AnimationEffectsRootClass />
+          <Timers />
+          <Settings />
+          <Chat />
+          <CommandWindow />
+          <OnlinePlayers />
+          <NpcDetector />
+          <Notifications />
+          <QuickAccess />
+          <CatchingWhitelistWarning />
+          <BackendPreferencesWarning />
+          <PartyFinder />
+          <CreatePartyGathering />
+          <MapPingWheel />
+        </>
+      ) : null}
     </>
   );
 };

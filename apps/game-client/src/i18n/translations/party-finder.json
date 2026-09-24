@@ -4,7 +4,12 @@
     "createTitle": "Nowa zbiórka"
   },
   "header": {
-    "party": "Grupa:"
+    "party": "Grupa:",
+    "partyFull": "pełna"
+  },
+  "states": {
+    "refreshError": "Nie udało się odświeżyć zbiórki",
+    "refreshing": "Odświeżanie zbiórki"
   },
   "actions": {
     "inviteAll": "Zaproś wszystkich",
@@ -39,6 +44,12 @@
   },
   "messages": {
     "cancelSuccess": "Anulowano zbiórkę",
-    "cancelFailed": "Nie udało się anulować zbiórki"
+    "cancelFailed": "Nie udało się anulować zbiórki",
+    "removeFailed": "Nie udało się usunąć gracza ze zbiórki. Spróbuj ponownie."
+  },
+  "cancelConfirm": {
+    "title": "Anulować zbiórkę?",
+    "description": "Zbiórka zniknie u wszystkich członków organizacji, a zgłoszeni do niej gracze nie dostaną zaproszeń.",
+    "confirm": "Anuluj zbiórkę"
   }
 }

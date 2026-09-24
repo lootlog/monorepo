@@ -764,8 +764,16 @@ describe("ChatInput", () => {
     await user.keyboard("{Enter}");
 
     expect(screen.getByText("Wyczyścić czat?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveFocus();
     expect(sendRequest).not.toHaveBeenCalled();
 
+    await user.keyboard("{Escape}");
+    expect(screen.queryByText("Wyczyścić czat?")).not.toBeInTheDocument();
+    await waitFor(() => expect(editor).toHaveFocus());
+    expect(clearRequest).not.toHaveBeenCalled();
+    expect(editor.textContent?.trim()).toBe("/clr");
+
+    await user.keyboard("{Enter}");
     await user.click(screen.getByRole("button", { name: "Wyczyść" }));
 
     await waitFor(() => {
@@ -777,6 +785,29 @@ describe("ChatInput", () => {
     expect(queryClient.getQueryData(chatQueryKey)).toEqual([]);
     expect(editor.textContent).toBe("");
     expect(screen.queryByText("Wyczyścić czat?")).not.toBeInTheDocument();
+  });
+
+  it("reports a failed chat clear and keeps the messages", async () => {
+    const user = userEvent.setup();
+    mockGuildPermissions = [Permission.OWNER];
+    clearRequest.mockResolvedValue(Response.json({}, { status: 500 }));
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const messages = queryClient.getQueryData(chatQueryKey);
+
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("/clr");
+    await user.keyboard("{Enter}");
+    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("button", { name: "Wyczyść" }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Nie udało się wyczyścić czatu. Spróbuj ponownie.",
+      ),
+    );
+    expect(clearRequest).toHaveBeenCalledOnce();
+    expect(queryClient.getQueryData(chatQueryKey)).toBe(messages);
   });
 
   it("stops keyboard events from bubbling outside the editor", async () => {

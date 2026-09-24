@@ -29,6 +29,8 @@ import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { toast } from "sonner";
+import { getFixedT } from "@/i18n/get-fixed-t";
 
 type NotificationsListProps = {
   notifications?: StoredNotification[];
@@ -172,9 +174,16 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   };
 
   const handleJoinReadyRoom = (notification: StoredNotification) => {
+    const reportJoinFailure = () =>
+      toast.error(getFixedT("chat")("gatherings.applyFailed"));
+
     const character = buildCurrentCharacterPayload();
 
-    if (!character) return;
+    if (!character) {
+      reportJoinFailure();
+
+      return;
+    }
 
     applyToReadyRoom(
       {
@@ -194,6 +203,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
           setOpen("chat", true);
           clearNotifications();
         },
+        onError: reportJoinFailure,
       },
     );
   };

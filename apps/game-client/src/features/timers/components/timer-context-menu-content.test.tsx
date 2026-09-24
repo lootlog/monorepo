@@ -95,6 +95,8 @@ describe("TimerContextMenuContent", () => {
     await user.click(screen.getByRole("button", { name: "Czerwony" }));
     expect(props.onColorChange).toHaveBeenCalledWith("red");
     await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
+    expect(props.onDelete).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Usuń" }));
     expect(props.onDelete).toHaveBeenCalledWith("guild-1", "timer-1");
   });
 

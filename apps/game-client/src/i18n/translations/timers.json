@@ -63,6 +63,11 @@
     "restart": "Zresetuj timer",
     "history": "Historia",
     "delete": "Usuń timer",
+    "deleteConfirm": {
+      "title": "Usunąć timer {{name}}?",
+      "description": "Timer zniknie u wszystkich członków organizacji.",
+      "confirm": "Usuń"
+    },
     "loadingPermissions": "Sprawdzanie uprawnień…",
     "deleteChooseGuild": "Wybierz organizację, z której usunąć timer:"
   },
