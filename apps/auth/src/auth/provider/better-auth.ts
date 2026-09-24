@@ -143,6 +143,8 @@ export const createLootlogAuth = ({
         keyExpiration: { defaultExpiresIn: null },
       }),
       jwt({
+        // Session verification does not consume JWTs; /token still issues them.
+        disableSettingJwtHeader: true,
         jwt: {
           issuer: config.appUrl,
           audience: config.appUrl,
