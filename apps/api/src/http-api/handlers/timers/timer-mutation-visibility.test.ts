@@ -40,10 +40,17 @@ it.each([
     max: 500,
     allowed: true,
   },
+  {
+    name: "visible hero with only tier read access",
+    read: Permission.LOOTLOG_TIMERS_HEROES_READ,
+    max: 500,
+    allowed: true,
+    tierOnly: true,
+  },
   { name: "administrator", read: Permission.ADMIN, max: 100, allowed: true },
 ])(
   "preserves source visibility for timer mutations: $name",
-  async ({ read, max, allowed }) => {
+  async ({ read, max, allowed, tierOnly }) => {
     const boundary = await createDatabaseBoundary();
 
     try {
@@ -64,7 +71,7 @@ it.each([
             lvlRangeFrom: 1,
             lvlRangeTo: max,
             permissions: [
-              Permission.LOOTLOG_TIMERS_READ,
+              ...(tierOnly ? [] : [Permission.LOOTLOG_TIMERS_READ]),
               read,
               Permission.LOOTLOG_TIMERS_RESET,
               Permission.LOOTLOG_TIMERS_WRITE,
@@ -120,12 +127,26 @@ it.each([
 
       const list = makeAllTimerList(database);
 
-      const readTimers = () =>
-        boundary.run(
-          list({ userId: "user", discordId: member.userId }, "world"),
+      const readTimers = async () => {
+        const result = await boundary.run(
+          list({ userId: "user", discordId: member.userId }, "world").pipe(
+            Effect.result,
+          ),
         );
 
-      expect(await readTimers()).toHaveLength(allowed ? 1 : 0);
+        if (tierOnly) {
+          expect(result).toMatchObject({
+            failure: { kind: "forbidden", response: { statusCode: 403 } },
+          });
+
+          return [];
+        }
+
+        return Result.getOrThrow(result);
+      };
+
+      const visibleCount = allowed && !tierOnly ? 1 : 0;
+      expect(await readTimers()).toHaveLength(visibleCount);
 
       const reset = makeResetTimer(database, {
         ...ports,
@@ -141,9 +162,15 @@ it.each([
 
       expect(resetResult._tag).toBe(allowed ? "Success" : "Failure");
       const afterReset = await readTimers();
-      expect(afterReset).toHaveLength(allowed ? 1 : 0);
+      expect(afterReset).toHaveLength(visibleCount);
 
-      if (allowed) expect(afterReset[0].wasReset).toBe(true);
+      if (allowed) {
+        const [persistedReset] = await boundary.run(
+          database.select().from(timerTable),
+        );
+
+        expect(persistedReset?.wasReset).toBe(true);
+      }
 
       const deleteResult = await boundary.run(
         remove(access, "300", "world").pipe(Effect.result),
@@ -199,7 +226,7 @@ it.each([
       );
 
       expect(restored._tag).toBe(allowed ? "Success" : "Failure");
-      expect(await readTimers()).toHaveLength(allowed ? 1 : 0);
+      expect(await readTimers()).toHaveLength(visibleCount);
 
       const [persisted] = await boundary.run(
         database.select().from(timerTable),

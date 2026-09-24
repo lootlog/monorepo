@@ -1,6 +1,11 @@
 import { expect, it } from "bun:test";
 import { eq, sql } from "drizzle-orm";
 import { Effect } from "effect";
+import { TestClock } from "effect/testing";
+import {
+  accessibleGuildsQuery,
+  selectAccessibleGuilds,
+} from "#src/members/member-access-query";
 import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
 import { TIMER_TYPES } from "#src/timers/timer-limits";
 import { Permission } from "@lootlog/schema/permissions";
@@ -250,6 +255,47 @@ it("keeps owner access, API-key scope, worlds and selected expired timers fresh 
     expect(await boundary.run(scoped([]).pipe(Effect.result))).toMatchObject({
       failure: { kind: "forbidden", response: { statusCode: 403 } },
     });
+
+    for (const organizationIds of [["2"], []]) {
+      const allowed = await boundary.run(
+        Effect.gen(function* () {
+          const selection = yield* selectAccessibleGuilds(
+            database,
+            identity.discordId,
+          );
+
+          const accessible = database
+            .$with("scoped_guilds")
+            .as(
+              yield* accessibleGuildsQuery(database, identity.discordId, [
+                Permission.LOOTLOG_TIMERS_READ,
+              ]),
+            );
+
+          const composed = yield* database
+            .with(accessible)
+            .select({ guild: { id: accessible.guild.id } })
+            .from(accessible);
+
+          return [selection, composed];
+        }).pipe(
+          Effect.provideService(ForwardAuthIdentity, {
+            ...identity,
+            apiKey: {
+              keyId: "key",
+              organizationIds,
+              mode: "read",
+              personalData: false,
+              expiresAt: null,
+            },
+          }),
+        ),
+      );
+
+      for (const guilds of allowed)
+        expect(guilds.map(({ guild }) => guild.id)).toEqual(organizationIds);
+    }
+
     expect(
       await boundary.run(
         list({ userId: "unknown", discordId: "unknown" }, "world").pipe(
@@ -278,6 +324,16 @@ it("keeps owner access, API-key scope, worlds and selected expired timers fresh 
       );
       expect(await keys("world")).toEqual(["active", "other-organization"]);
     }
+
+    expect(
+      await boundary.run(
+        Effect.gen(function* () {
+          yield* TestClock.setTime(now.getTime() + 60_000);
+
+          return yield* list(identity, "world");
+        }).pipe(Effect.provide(TestClock.layer())),
+      ),
+    ).toEqual([]);
 
     await boundary.run(
       database

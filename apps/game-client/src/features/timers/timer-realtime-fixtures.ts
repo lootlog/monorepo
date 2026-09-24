@@ -1,3 +1,4 @@
+import { stubMargonemAccountFetch } from "@/test/margonem-account-fetch";
 import { act } from "@testing-library/react";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { vi } from "vitest";
@@ -10,19 +11,7 @@ export const createTimerRealtimeFixture = () => {
   disposeSocket();
   const wire = new RealtimeWire();
 
-  const externalFetch = vi
-    .spyOn(globalThis, "fetch")
-    .mockImplementation((input) => {
-      const url = input instanceof Request ? input.url : String(input);
-
-      if (url.startsWith("https://public-api.margonem.pl/account/validate")) {
-        return Promise.resolve(
-          Response.json({ error: "No game session in test" }, { status: 503 }),
-        );
-      }
-
-      return Promise.reject(new Error(`Unexpected external fetch: ${url}`));
-    });
+  const externalFetch = stubMargonemAccountFetch();
 
   const realtime = new RealtimeClient({
     url: "https://gateway.example.test",
