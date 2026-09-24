@@ -25,7 +25,7 @@ interface EventMapGridProps {
   presenceData?: Map<string, PlayerPresence[]>;
   actionsDisabled?: boolean;
   assignmentDisabled?: boolean;
-  assignmentEnabledAt?: Date | null;
+  assignmentEnabledAt?: number | null;
   assignmentDisabledMessage?: string | null;
   windowStatus?: WindowStatus;
   activeGapsMap?: Map<string, CoverageGap>;
@@ -40,7 +40,7 @@ interface LocationSectionProps {
   presenceData?: Map<string, PlayerPresence[]>;
   actionsDisabled?: boolean;
   assignmentDisabled: boolean;
-  assignmentEnabledAt?: Date | null;
+  assignmentEnabledAt?: number | null;
   assignmentDisabledMessage?: string | null;
   windowStatus: WindowStatus;
   activeGapsMap?: Map<string, CoverageGap>;

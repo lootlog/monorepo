@@ -1,6 +1,6 @@
 import { getNotificationFieldVisibility } from "../utils/notification-field-visibility";
 import { z } from "zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -84,6 +84,42 @@ const getEmptyRuleFormValues = (): RuleFormValues => ({
   targetIds: [],
   enabled: true,
 });
+
+const getScheduledMessagePayload = (values: RuleFormValues) => {
+  const visibleFields = getNotificationFieldVisibility(
+    values.triggerType,
+    values.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
+  );
+
+  return {
+    scheduledAt: visibleFields.showScheduledAtField
+      ? parseDateTimeLocalInputToIsoString(
+          values.scheduledAt,
+          GUILD_NOTIFICATION_TIMEZONE,
+        )
+      : undefined,
+    scheduleIntervalType:
+      values.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
+    scheduleIntervalValue:
+      visibleFields.showIntervalValueField && values.scheduleIntervalValue
+        ? Number(values.scheduleIntervalValue)
+        : undefined,
+    scheduleTimeOfDay: visibleFields.showTimeOfDayField
+      ? values.scheduleTimeOfDay || undefined
+      : undefined,
+    scheduleWeekday:
+      visibleFields.showWeekdayField && values.scheduleWeekday !== ""
+        ? Number(values.scheduleWeekday)
+        : undefined,
+    scheduledUntil: visibleFields.isRecurring
+      ? (parseDateTimeLocalInputToIsoString(
+          values.scheduledUntil,
+          GUILD_NOTIFICATION_TIMEZONE,
+        ) ?? null)
+      : null,
+    scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
+  };
+};
 
 const stringifyNullable = (value: number | null | undefined, fallback = "") =>
   value === null || value === undefined ? fallback : String(value);
@@ -220,6 +256,7 @@ export const useNotificationRuleForm = () => {
   const params = useParams({ strict: false });
   const ruleId = notificationRuleRouteParams.parse(params).ruleId;
   const isCreateMode = ruleId === undefined;
+  const draftIdentity = JSON.stringify([guildId, ruleId]);
 
   const { targetsQuery, rulesQuery, worlds, guildRoles, rule, maxNpcCount } =
     useNotificationRuleData(guildId, ruleId);
@@ -251,18 +288,22 @@ export const useNotificationRuleForm = () => {
   });
 
   const [draftOptions, setDraftOptions] = useState<{
-    rule: typeof rule;
+    identity: string;
     npcSearch: string;
     extraTargets: NotificationTargetResponseDto[];
-  }>({ rule, npcSearch: "", extraTargets: [] });
+  }>({ identity: draftIdentity, npcSearch: "", extraTargets: [] });
 
-  const npcSearch = draftOptions.rule === rule ? draftOptions.npcSearch : "";
-
-  const extraTargets =
-    draftOptions.rule === rule ? draftOptions.extraTargets : [];
+  const { npcSearch, extraTargets } =
+    draftOptions.identity === draftIdentity
+      ? draftOptions
+      : { npcSearch: "", extraTargets: [] };
 
   const setNpcSearch = (value: string) => {
-    setDraftOptions({ rule, npcSearch: value, extraTargets });
+    setDraftOptions({
+      identity: draftIdentity,
+      npcSearch: value,
+      extraTargets,
+    });
   };
 
   const [formResetKey, setFormResetKey] = useState(0);
@@ -275,10 +316,20 @@ export const useNotificationRuleForm = () => {
     defaultValues: getEmptyRuleFormValues(),
   });
 
+  const initializedDraft = useRef<string | undefined>(undefined);
+
   useEffect(() => {
+    if (
+      initializedDraft.current === draftIdentity ||
+      (ruleId !== undefined && !rule)
+    ) {
+      return;
+    }
+
+    initializedDraft.current = draftIdentity;
     form.reset(getRuleFormDefaultValues(rule));
     setFormResetKey((prev) => prev + 1);
-  }, [form, rule, t]);
+  }, [draftIdentity, form, rule, ruleId]);
 
   const mergedTargets = mergeGuildNotificationTargets(targets, extraTargets);
   const contentTemplate = form.watch("contentTemplate");
@@ -354,14 +405,18 @@ export const useNotificationRuleForm = () => {
   const handleTargetCreated = (
     createdTarget: NotificationTargetResponseDto,
   ) => {
-    setDraftOptions((current) => ({
-      rule,
-      npcSearch: current.rule === rule ? current.npcSearch : "",
-      extraTargets: [
-        ...(current.rule === rule ? current.extraTargets : []),
-        createdTarget,
-      ],
-    }));
+    setDraftOptions((current) => {
+      const currentDraft =
+        current.identity === draftIdentity
+          ? current
+          : { npcSearch: "", extraTargets: [] };
+
+      return {
+        identity: draftIdentity,
+        npcSearch: currentDraft.npcSearch,
+        extraTargets: [...currentDraft.extraTargets, createdTarget],
+      };
+    });
     form.setValue(
       "targetIds",
       Array.from(
@@ -420,26 +475,7 @@ export const useNotificationRuleForm = () => {
       values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
         ? {
             ...basePayload,
-            scheduledAt: parseDateTimeLocalInputToIsoString(
-              values.scheduledAt,
-              GUILD_NOTIFICATION_TIMEZONE,
-            ),
-            scheduleIntervalType:
-              values.scheduleIntervalType ??
-              NotificationScheduleIntervalType.ONCE,
-            scheduleIntervalValue: values.scheduleIntervalValue
-              ? Number(values.scheduleIntervalValue)
-              : undefined,
-            scheduleTimeOfDay: values.scheduleTimeOfDay || undefined,
-            scheduleWeekday:
-              values.scheduleWeekday !== ""
-                ? Number(values.scheduleWeekday)
-                : undefined,
-            scheduledUntil: parseDateTimeLocalInputToIsoString(
-              values.scheduledUntil,
-              GUILD_NOTIFICATION_TIMEZONE,
-            ),
-            scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
+            ...getScheduledMessagePayload(values),
           }
         : (() => {
             const npcFilterPayload = buildNotificationRuleNpcFilterPayload(

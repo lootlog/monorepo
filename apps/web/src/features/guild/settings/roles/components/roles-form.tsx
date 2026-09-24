@@ -3,7 +3,6 @@ import { SectionCardContent } from "@/components/common/section-card/section-car
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 import {
   Form,
@@ -50,6 +49,10 @@ import {
   useRolesControllerUpdateGuildRole,
   type RoleResponseDtoOutput as GuildRole,
 } from "@lootlog/client/main";
+import {
+  createRolesFormSchema,
+  type RolesFormInput,
+} from "./roles-form.schema";
 
 const PERMISSION_GROUPS = [
   {
@@ -165,42 +168,6 @@ const DEFAULT_LVL_RANGE_FROM = "0";
 
 const DEFAULT_LVL_RANGE_TO = "500";
 
-const formSchema = z.object({
-  lvlRangeFrom: z
-    .string()
-    .min(0)
-    .max(500)
-    .transform((val) => {
-      const num = Number(val);
-
-      if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
-
-      if (num > 500) return DEFAULT_LVL_RANGE_TO;
-
-      if (num < 0) return DEFAULT_LVL_RANGE_FROM;
-
-      return String(num);
-    }),
-  lvlRangeTo: z
-    .string()
-    .min(0)
-    .max(500)
-    .transform((val) => {
-      const num = Number(val);
-
-      if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
-
-      if (num > 500) return DEFAULT_LVL_RANGE_TO;
-
-      if (num < 0) return DEFAULT_LVL_RANGE_FROM;
-
-      return String(num);
-    }),
-  permissions: z.partialRecord(z.enum(Permission), z.boolean()),
-});
-
-type FormSchemaType = z.infer<typeof formSchema>;
-
 type RolesFormProps = {
   role: GuildRole;
 };
@@ -214,8 +181,8 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
 
   const { t } = useTranslation();
 
-  const form = useForm<FormSchemaType>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<RolesFormInput>({
+    resolver: zodResolver(createRolesFormSchema(t), undefined, { raw: true }),
     defaultValues: {
       lvlRangeFrom: role.lvlRangeFrom?.toString() ?? DEFAULT_LVL_RANGE_FROM,
       lvlRangeTo: role.lvlRangeTo?.toString() ?? DEFAULT_LVL_RANGE_TO,
@@ -242,7 +209,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
-  function onSubmit(values: FormSchemaType) {
+  function onSubmit(values: RolesFormInput) {
     if (isPending) return;
 
     updateGuildRole(
@@ -289,6 +256,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
+        noValidate
       >
         <SectionCard>
           <SectionCardHeader
@@ -306,6 +274,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                     <FormControl
                       render=<Input
                         placeholder={DEFAULT_LVL_RANGE_FROM}
+                        aria-label={t("settings.roles.levelRangeFrom")}
                         type="number"
                         max={500}
                         min={0}
@@ -313,7 +282,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         {...field}
                       />
                     />
-                    <FormMessage />
+                    <FormMessage role="alert" />
                   </FormItem>
                 )}
               />
@@ -326,6 +295,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                     <FormControl
                       render=<Input
                         placeholder={DEFAULT_LVL_RANGE_TO}
+                        aria-label={t("settings.roles.levelRangeTo")}
                         type="number"
                         max={500}
                         min={0}
@@ -333,7 +303,7 @@ export const RolesForm: FC<RolesFormProps> = ({ role }) => {
                         {...field}
                       />
                     />
-                    <FormMessage />
+                    <FormMessage role="alert" />
                   </FormItem>
                 )}
               />

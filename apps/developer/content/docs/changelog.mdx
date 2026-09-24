@@ -3,6 +3,19 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased — Notification schedule updates
+
+Notification rule create and update requests accept `scheduledUntil: null`.
+For a recurring rule, `null` removes the end date; omitting the field preserves
+it. Switching to a one-time schedule clears recurring fields, including the end date.
+Send only fields relevant to the selected schedule type. For daily and weekly
+schedules, omit `scheduledAt` to calculate the next occurrence from the selected
+time, weekday and timezone when the schedule changes.
+
+Deploy the API before clients begin sending `null`. Existing requests remain
+compatible, and no database migration is required. Generated SDK types include
+this change for the next SDK release.
+
 ## 2026-09-17 — SDK 0.1.1
 
 Documentation update with runnable organization, timer and loot examples,

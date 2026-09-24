@@ -335,7 +335,9 @@ const notificationRuleInputFields = {
       }),
     ),
   ),
-  scheduledUntil: Schema.optionalKey(DateTimeWithOffsetString),
+  scheduledUntil: Schema.optionalKey(
+    Schema.Union([DateTimeWithOffsetString, Schema.Null]),
+  ),
   scheduleTimezone: Schema.optionalKey(
     Schema.String.check(
       Schema.isMaxLength(50).annotate({

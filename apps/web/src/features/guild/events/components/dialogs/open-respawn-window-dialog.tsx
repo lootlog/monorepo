@@ -1,4 +1,5 @@
 import { DialogActionFooter } from "./dialog-action-footer";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,6 +72,12 @@ export const OpenRespawnWindowDialog = ({
     resolver: zodResolver(formSchema),
     defaultValues: getDefaultValues(),
   });
+
+  const { reset } = form;
+
+  useEffect(() => {
+    if (open) reset(getDefaultValues());
+  }, [open, reset]);
 
   const handleConfirm = async (values: FormValues) => {
     if (isLoading) return;

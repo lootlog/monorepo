@@ -1,4 +1,5 @@
 import { DialogActionFooter } from "./dialog-action-footer";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,6 +86,12 @@ export const CloseRespawnWindowDialog = ({
 
   const createNewWindow = form.watch("createNewWindow");
 
+  const { reset } = form;
+
+  useEffect(() => {
+    if (open) reset();
+  }, [open, reset]);
+
   const handleConfirm = async (values: FormValues) => {
     let newMinSpawnTime: string | undefined;
     let newMaxSpawnTime: string | undefined;
@@ -102,6 +109,7 @@ export const CloseRespawnWindowDialog = ({
         newMinSpawnTime,
         newMaxSpawnTime,
       });
+      form.reset();
     } catch {
       // Preserve the entered times for retry after the action reports its error.
     }
