@@ -136,6 +136,7 @@ export const UpdateUserPreferencesRequest = Schema.Struct({
   theme: Schema.optionalKey(
     Schema.Literals([
       "default",
+      "muted",
       "cyberpunk",
       "pastel",
       "fantasy",

@@ -22520,6 +22520,7 @@
             "type": "string",
             "enum": [
               "default",
+              "muted",
               "cyberpunk",
               "pastel",
               "fantasy",
