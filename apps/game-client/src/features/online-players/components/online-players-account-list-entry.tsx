@@ -27,7 +27,7 @@ import {
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 import { Plus, Shirt, UserPlus, UserRound } from "lucide-react";
-import type { FC } from "react";
+import type { CSSProperties, FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type OnlinePlayersAccountListEntryProps = {
@@ -35,7 +35,14 @@ type OnlinePlayersAccountListEntryProps = {
   guildMember?: MemberSummaryResponseDtoOutput;
 };
 
-const getHighlightClassName = ({
+/**
+ * The status colour tints the tile's own background instead of replacing
+ * it, so a highlighted row stays opaque over the map like its neighbours.
+ */
+const HIGHLIGHT_CLASS_NAME =
+  "ll:bg-[color-mix(in_oklab,var(--ll-presence-tint)_35%,var(--color-secondary))] ll:hover:bg-[color-mix(in_oklab,var(--ll-presence-tint)_45%,var(--color-secondary))]";
+
+const getHighlightTintColor = ({
   isSelf,
   isAfk,
   isPartyMember,
@@ -46,29 +53,35 @@ const getHighlightClassName = ({
   isPartyMember: boolean;
   isSameClan: boolean;
 }) => {
-  if (isSelf) {
-    return "ll:bg-yellow-500/15";
-  }
+  if (isSelf) return "var(--ll-color-yellow-500)";
 
-  if (isAfk) {
-    return "ll:bg-orange-500/15";
-  }
+  if (isAfk) return "var(--ll-color-orange-500)";
 
-  if (isPartyMember) {
-    return "ll:bg-accent";
-  }
+  if (isPartyMember) return "var(--ll-color-sky-500)";
 
-  if (isSameClan) {
-    return "ll:bg-green-500/15";
-  }
+  if (isSameClan) return "var(--ll-color-green-500)";
 
   return undefined;
+};
+
+const getHighlightTint = (
+  status: Parameters<typeof getHighlightTintColor>[0],
+) => {
+  const color = getHighlightTintColor(status);
+
+  if (!color) return { className: undefined, style: undefined };
+
+  return {
+    className: HIGHLIGHT_CLASS_NAME,
+    // SAFETY: CSSProperties has no index signature for custom properties;
+    // "--ll-presence-tint" is consumed by HIGHLIGHT_CLASS_NAME on the tile.
+    style: { "--ll-presence-tint": color } as CSSProperties,
+  };
 };
 
 const resolvePresenceDetails = (
   presence: PlayerPresence,
   unknownLocation: string,
-  unknownWorld: string,
 ) => {
   const { player } = presence;
 
@@ -79,7 +92,6 @@ const resolvePresenceDetails = (
       : 0,
     locationName: player?.location?.map ?? presence.mapName ?? unknownLocation,
     player,
-    world: player?.world ?? unknownWorld,
   };
 };
 
@@ -133,8 +145,8 @@ export const OnlinePlayersAccountListEntry: FC<
   const { t } = useTranslation("onlinePlayers");
   const character = getPresenceCharacter(presence);
 
-  const { accountId, characterId, locationName, player, world } =
-    resolvePresenceDetails(presence, t("location.unknown"), t("world.unknown"));
+  const { accountId, characterId, locationName, player } =
+    resolvePresenceDetails(presence, t("location.unknown"));
 
   const heroCharacterId = useGameStore((state) => state.game?.hero.characterId);
   const heroName = useGameStore((state) => state.game?.hero.name);
@@ -173,7 +185,7 @@ export const OnlinePlayersAccountListEntry: FC<
     playerClanId: player?.clan?.id,
   });
 
-  const highlightClassName = getHighlightClassName({
+  const highlight = getHighlightTint({
     isSelf,
     isAfk: presence.isAfk,
     isPartyMember,
@@ -221,11 +233,11 @@ export const OnlinePlayersAccountListEntry: FC<
       <Tooltip>
         <ContextMenuTrigger asChild>
           <TooltipTrigger asChild>
-            <span className="ll:block ll:w-full">
+            <span className="ll:block ll:w-full" style={highlight.style}>
               <Tile
                 className={cn(
                   "ll:px-[5px] ll:flex-row ll:items-center ll:justify-between ll:gap-1 ll:rounded-none ll:border-0 ll:shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.4)]",
-                  highlightClassName,
+                  highlight.className,
                 )}
                 onDoubleClick={handleDoubleClick}
               >
@@ -246,7 +258,7 @@ export const OnlinePlayersAccountListEntry: FC<
                       ) : null}
                     </span>
                     <span className="ll:text-[10px] ll:text-gray-400 ll:truncate">
-                      {visibleLocationName} • {world}
+                      {visibleLocationName}
                     </span>
                   </span>
                 </span>

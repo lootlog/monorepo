@@ -147,7 +147,7 @@ describe("OnlinePlayersList", () => {
   it("renders account entries with locations in accounts view", async () => {
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
     expect(await screen.findByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
+    expect(screen.getByText("Karka-han")).toBeVisible();
     expect(screen.getByText("Scout (80h)")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe("OnlinePlayersList", () => {
     expect(playerName).toHaveClass("ll:truncate");
     expect(playerName.parentElement).toHaveClass("ll:min-w-0");
     expect(playerName.parentElement?.parentElement).toHaveClass("ll:min-w-0");
-    expect(screen.getByText(`${map} • luvia`)).toHaveClass("ll:truncate");
+    expect(screen.getByText(map)).toHaveClass("ll:truncate");
   });
 
   it("renders account entries sorted by level descending", async () => {
