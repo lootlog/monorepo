@@ -1,5 +1,6 @@
 import { cn } from "cn";
 import type { CSSProperties, FC } from "react";
+import { ListRow, veilColor } from "@/components/list-row";
 import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
 
 export type TimerTileViewProps = {
@@ -12,10 +13,6 @@ export type TimerTileViewProps = {
   hasPassedRedThreshold?: boolean;
   isExpired?: boolean;
   id?: string;
-  /**
-   * Every other grid row gets a faint light veil, so neighbouring timers of
-   * one colour stay apart while keeping their hue.
-   */
   isAlternateRow?: boolean;
   isMinSpawnTime?: boolean;
   isPending?: boolean;
@@ -23,23 +20,8 @@ export type TimerTileViewProps = {
   timeLabel: string;
 };
 
-const ALTERNATE_ROW_VEIL = "white 6%";
-
 /** An expired tile keeps its colour, darkened. */
 const EXPIRED_VEIL = "black 40%";
-
-const veil = (color: string, overlay: string) =>
-  `color-mix(in srgb, ${color}, ${overlay})`;
-
-const resolveFill = (
-  fill: string,
-  isExpired: boolean,
-  isAlternateRow: boolean,
-) => {
-  const base = isExpired ? veil(fill, EXPIRED_VEIL) : fill;
-
-  return isAlternateRow ? veil(base, ALTERNATE_ROW_VEIL) : base;
-};
 
 /**
  * The whole tile text follows the spawn window: orange once the minimum
@@ -83,49 +65,15 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   label,
   timeLabel,
 }) => {
-  // SAFETY: CSSProperties has no index signature for custom properties; the
-  // `--ll-timer-*` entries are consumed by this element's own classes.
-  const style = {
-    "--ll-timer-accent":
-      isExpired && !legacyAppearance
-        ? veil(paint.accent, EXPIRED_VEIL)
-        : paint.accent,
-    "--ll-timer-fill": legacyAppearance
-      ? paint.fill
-      : resolveFill(paint.fill, isExpired, isAlternateRow),
-    "--ll-timer-hover-fill": paint.hoverFill ?? paint.fill,
-    fontSize: `${fontSize}px`,
-  } as CSSProperties;
+  const textColorClassName = resolveTextColor(
+    legacyAppearance,
+    isExpired,
+    hasPassedRedThreshold,
+    isMinSpawnTime,
+  );
 
-  return (
-    <span
-      id={id}
-      className={cn(
-        "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:border-solid ll:bg-[var(--ll-timer-fill)] ll:transition-colors ll:motion-reduce:transition-none",
-        legacyAppearance
-          ? "ll:rounded-[2px] ll:border ll:border-[var(--ll-timer-accent)] ll:px-1 ll:py-0.5 ll:hover:bg-[var(--ll-timer-hover-fill)]"
-          : "ll:gap-1 ll:border-0 ll:py-[4px] ll:font-semibold ll:hover:bg-[color-mix(in_srgb,var(--ll-timer-fill),rgba(255,255,255,0.75)_12%)]",
-        !legacyAppearance &&
-          (showColorStripe
-            ? "ll:border-l-[3px] ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]"
-            : "ll:px-[6px]"),
-        resolveTextColor(
-          legacyAppearance,
-          isExpired,
-          hasPassedRedThreshold,
-          isMinSpawnTime,
-        ),
-        {
-          "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
-            displayMode === "column" && !legacyAppearance,
-          "ll:flex-col ll:items-center ll:px-0 ll:leading-[1.05]":
-            displayMode === "column" && legacyAppearance,
-          "ll:justify-between": displayMode === "row",
-          "ll:opacity-60 ll:blur-[0.5px]": isPending,
-        },
-      )}
-      style={style}
-    >
+  const content = (
+    <>
       <span
         className={cn("ll:min-w-0 ll:truncate ll:whitespace-nowrap", {
           "ll:text-center": displayMode === "column",
@@ -142,6 +90,64 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       >
         {timeLabel}
       </span>
-    </span>
+    </>
+  );
+
+  if (legacyAppearance) {
+    return (
+      <span
+        id={id}
+        className={cn(
+          "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-1 ll:py-0.5 ll:transition-colors ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
+          textColorClassName,
+          {
+            "ll:flex-col ll:items-center ll:px-0 ll:leading-[1.05]":
+              displayMode === "column",
+            "ll:justify-between": displayMode === "row",
+            "ll:opacity-60 ll:blur-[0.5px]": isPending,
+          },
+        )}
+        // SAFETY: CSSProperties has no index signature for custom properties;
+        // the `--ll-timer-*` entries are consumed by this element's classes.
+        style={
+          {
+            "--ll-timer-accent": paint.accent,
+            "--ll-timer-fill": paint.fill,
+            "--ll-timer-hover-fill": paint.hoverFill ?? paint.fill,
+            fontSize: `${fontSize}px`,
+          } as CSSProperties
+        }
+      >
+        {content}
+      </span>
+    );
+  }
+
+  return (
+    <ListRow
+      id={id}
+      fill={isExpired ? veilColor(paint.fill, EXPIRED_VEIL) : paint.fill}
+      isAlternateRow={isAlternateRow}
+      className={cn("ll:h-full ll:py-[4px]", textColorClassName, {
+        "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
+          showColorStripe,
+        "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
+          displayMode === "column",
+        "ll:justify-between": displayMode === "row",
+        "ll:opacity-60 ll:blur-[0.5px]": isPending,
+      })}
+      // SAFETY: CSSProperties has no index signature for custom properties;
+      // "--ll-timer-accent" is consumed by the stripe class.
+      style={
+        {
+          "--ll-timer-accent": isExpired
+            ? veilColor(paint.accent, EXPIRED_VEIL)
+            : paint.accent,
+          fontSize: `${fontSize}px`,
+        } as CSSProperties
+      }
+    >
+      {content}
+    </ListRow>
   );
 };

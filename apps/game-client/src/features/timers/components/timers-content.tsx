@@ -33,7 +33,8 @@ type TimersContentProps = {
   onRetry?: () => void;
   refreshError?: boolean;
   refreshing?: boolean;
-  stale?: boolean;
+  /** Loaded timers are on screen; realtime keeps them current. */
+  hasData?: boolean;
   /** Covers the strips and the list, e.g. the add timer panel. */
   overlay?: ReactNode;
 };
@@ -56,7 +57,7 @@ export const TimersContent: FC<TimersContentProps> = ({
   onRetry,
   refreshError = false,
   refreshing = false,
-  stale = false,
+  hasData = false,
   overlay,
 }) => {
   const { t } = useTranslation(["timers", "common"]);
@@ -94,8 +95,7 @@ export const TimersContent: FC<TimersContentProps> = ({
           className={toolbarStripBleedClassName}
           error={refreshError}
           errorLabel={t("states.refreshError")}
-          offline={stale}
-          offlineLabel={t("states.offline")}
+          hasData={hasData}
           refreshing={refreshing}
           refreshingLabel={t("states.refreshing")}
           onRetry={onRetry}

@@ -359,12 +359,22 @@ describe("usePlayersPresence", () => {
     expect(harness.fetchPresence).toHaveBeenCalledTimes(4);
   });
 
-  it("keeps loaded players and marks them stale after disconnecting", async () => {
+  it("keeps loaded players after disconnecting", async () => {
     const { result } = await mount();
     await waitFor(() => expect(result.current.hasLoaded).toBe(true));
     act(() => harness.realtime.disconnect());
-    expect(result.current.stale).toBe(true);
     expect(result.current.onlinePlayers["discord-1"]).toHaveLength(1);
+    expect(result.current.disconnected).toBe(false);
+  });
+
+  it("treats the first gateway connection as loading, not as a lost connection", () => {
+    const { result } = renderHook(
+      () => usePlayersPresence("guild-1", "alpha"),
+      { wrapper: harness.wrapper },
+    );
+
+    expect(result.current.initialLoading).toBe(true);
+    expect(result.current.disconnected).toBe(false);
   });
 
   it("hides the previous scope while the next scope is loading", async () => {

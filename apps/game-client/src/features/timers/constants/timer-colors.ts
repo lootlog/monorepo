@@ -18,22 +18,23 @@ const paint = (hex: string): TimerColorPaint => ({
 });
 
 /**
- * Built-in colours share one OKLCH lightness and chroma band (yellow and lime
- * sit a little lighter, blue and purple darker to stay apart from sky and
- * violet), so no colour outshines the others behind white text.
+ * Built-in colours keep the legacy hues and saturation (OKLCH chroma capped at
+ * 0.2) on one lightness band (yellow and lime sit a little lighter, blue and
+ * purple darker to stay apart from sky and violet), so no colour outshines the
+ * others behind white text.
  */
 export const TIMERS_COLORS = {
-  red: paint("#d86e67"),
-  orange: paint("#e28d57"),
-  yellow: paint("#deb95c"),
-  lime: paint("#9fc769"),
-  green: paint("#66b679"),
-  teal: paint("#52b5a7"),
-  sky: paint("#5da8d5"),
-  blue: paint("#5f71be"),
-  violet: paint("#a797e3"),
-  purple: paint("#8d60c2"),
-  pink: paint("#d5749e"),
+  red: paint("#f4514e"),
+  orange: paint("#fb7c03"),
+  yellow: paint("#e9b60d"),
+  lime: paint("#91ce14"),
+  green: paint("#0ec15b"),
+  teal: paint("#18baa9"),
+  sky: paint("#19aaee"),
+  blue: paint("#556ade"),
+  violet: paint("#a98efe"),
+  purple: paint("#9452d9"),
+  pink: paint("#f057a1"),
   // "Bez koloru": a faint stripe keeps columns readable, no fill.
   white: { accent: "#9ca3af66", fill: "#9ca3af00" },
 } satisfies Record<string, TimerColorPaint>;

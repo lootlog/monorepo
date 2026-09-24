@@ -3,5 +3,4 @@ export type AsyncResourceState = {
   initialLoading: boolean;
   refreshing: boolean;
   retry: () => void;
-  stale: boolean;
 };

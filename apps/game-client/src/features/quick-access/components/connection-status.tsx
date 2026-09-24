@@ -7,13 +7,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSocket } from "@/contexts/socket-context";
-import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
 import { useTranslation } from "react-i18next";
 
 /** Gateway connection dot for the quick access title bar; lists joined guilds on hover. */
 export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
-  const { socket, connected, joined, joinedGuilds } = useSocket();
+  const { t: tCommon } = useTranslation("common");
+  const { socket, joinedGuilds, status } = useSocket();
 
   const [heartbeatLatencyMs, setHeartbeatLatencyMs] = useState<number | null>(
     null,
@@ -28,9 +28,8 @@ export const ConnectionStatus: FC = () => {
     guildsQuery: { data: guilds },
   } = useLootlogGuilds();
 
-  const connectedToServers =
-    summarizeRealtimeConnection({ connected, joined, joinedGuilds }) ===
-    "connected";
+  const online = status === "online";
+  const statusLabel = tCommon(`connection.${status}`);
 
   return (
     <Tooltip>
@@ -39,12 +38,8 @@ export const ConnectionStatus: FC = () => {
           type="button"
           data-ll-draggable="false"
           aria-label={[
-            t(
-              connectedToServers
-                ? "connection.connectedToServers"
-                : "connection.notConnected",
-            ),
-            connectedToServers && heartbeatLatencyMs !== null
+            statusLabel,
+            online && heartbeatLatencyMs !== null
               ? t("connection.heartbeatPing", { ping: heartbeatLatencyMs })
               : null,
           ]
@@ -54,14 +49,19 @@ export const ConnectionStatus: FC = () => {
         >
           <span
             aria-hidden="true"
-            className={cn("ll:size-2 ll:rounded-full", {
-              "ll:bg-red-400 ll:shadow-[0_0_5px_rgba(248,113,113,0.7)]":
-                !connectedToServers,
-              "ll:bg-green-400 ll:shadow-[0_0_5px_rgba(74,222,128,0.7)]":
-                connectedToServers,
-            })}
+            className={cn(
+              "ll:size-2 ll:rounded-full ll:transition-colors ll:duration-300 ll:motion-reduce:transition-none",
+              {
+                "ll:bg-green-400 ll:shadow-[0_0_5px_rgba(74,222,128,0.7)]":
+                  online,
+                "ll:bg-yellow-400 ll:shadow-[0_0_5px_rgba(250,204,21,0.6)]":
+                  status === "connecting",
+                "ll:bg-red-400 ll:shadow-[0_0_5px_rgba(248,113,113,0.7)]":
+                  status === "reconnecting" || status === "unreachable",
+              },
+            )}
           />
-          {connectedToServers && heartbeatLatencyMs !== null && (
+          {online && heartbeatLatencyMs !== null && (
             <span className="ll:text-[10px] ll:tabular-nums" aria-hidden="true">
               {t("connection.ping", { ping: heartbeatLatencyMs })}
             </span>
@@ -69,11 +69,9 @@ export const ConnectionStatus: FC = () => {
         </button>
       </TooltipTrigger>
       <TooltipContent>
-        {connectedToServers ? (
+        {online && joinedGuilds.length > 0 ? (
           <div className="ll:flex ll:flex-col ll:gap-1">
-            <div className="ll:font-semibold">
-              {t("connection.connectedToServers")}
-            </div>
+            <div className="ll:font-semibold">{statusLabel}</div>
             <div className="ll:flex ll:flex-col ll:gap-0.5 ll:text-muted-foreground">
               {joinedGuilds.map((g) => (
                 <div key={g}>
@@ -83,7 +81,7 @@ export const ConnectionStatus: FC = () => {
             </div>
           </div>
         ) : (
-          <div>{t("connection.notConnected")}</div>
+          <div>{statusLabel}</div>
         )}
       </TooltipContent>
     </Tooltip>

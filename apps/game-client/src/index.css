@@ -239,6 +239,30 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   animation-iteration-count: infinite !important;
 }
 
+/* A status strip unfolds under the window's toolbar instead of pushing the
+   list down in one jump, and folds away the same way. */
+@keyframes ll-status-strip-enter {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ll-status-strip-exit {
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.ll-status-strip-enter {
+  animation: ll-status-strip-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ll-status-strip-exit {
+  animation: ll-status-strip-exit 160ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
 /* Short elastic scale bump: a value or icon acknowledging a change. */
 @keyframes ll-bump {
   0%,

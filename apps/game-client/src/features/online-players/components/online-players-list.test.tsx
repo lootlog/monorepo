@@ -147,7 +147,7 @@ describe("OnlinePlayersList", () => {
   it("renders account entries with locations in accounts view", async () => {
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
     expect(await screen.findByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
+    expect(screen.getByText("Karka-han")).toBeVisible();
     expect(screen.getByText("Scout (80h)")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
@@ -170,7 +170,7 @@ describe("OnlinePlayersList", () => {
     ).toHaveClass("ll:animate-spin");
   });
 
-  it("explains a missing gateway session instead of loading forever, then loads once joined", async () => {
+  it("loads during the first gateway connection, explains a failed one instead of loading forever, then loads once joined", async () => {
     vi.useFakeTimers();
 
     const offlineView = renderUi(
@@ -179,6 +179,13 @@ describe("OnlinePlayersList", () => {
     );
 
     act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByRole("status", { busy: true })).toBeVisible();
+    expect(
+      screen.queryByText(
+        "Brak połączenia z serwerem - nie można pobrać graczy online",
+      ),
+    ).toBeNull();
+    act(() => harness.wire.close());
     expect(
       screen.getByText(
         "Brak połączenia z serwerem - nie można pobrać graczy online",
@@ -236,7 +243,7 @@ describe("OnlinePlayersList", () => {
     expect(playerName).toHaveClass("ll:truncate");
     expect(playerName.parentElement).toHaveClass("ll:min-w-0");
     expect(playerName.parentElement?.parentElement).toHaveClass("ll:min-w-0");
-    expect(screen.getByText(`${map} • luvia`)).toHaveClass("ll:truncate");
+    expect(screen.getByText(map)).toHaveClass("ll:truncate");
   });
 
   it("renders account entries sorted by level descending", async () => {

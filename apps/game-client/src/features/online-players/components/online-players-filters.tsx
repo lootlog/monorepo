@@ -98,11 +98,11 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
           </SelectTrigger>
           <SelectContent className="ll:min-w-28">
             <SelectItem value={ALL_PROFESSIONS_VALUE}>
-              {t("filters.professions.all")}
+              {t("filters.allProfessions")}
             </SelectItem>
             {PROFESSION_OPTIONS.map((profession) => (
               <SelectItem key={profession} value={profession}>
-                {t(`filters.professions.${profession}`)}
+                {t(`professions.${profession}`)}
               </SelectItem>
             ))}
           </SelectContent>
