@@ -82,6 +82,14 @@ export const eventOrganizationId = (event: Event): string | undefined => {
   }
 };
 
+export const findEventGuild = (
+  session: SessionData,
+  organizationId: string | undefined,
+): UserGuildData | undefined =>
+  organizationId === undefined
+    ? undefined
+    : session.guilds.find((entry) => entry.guild.id === organizationId);
+
 export const prepareSourceEventVisibility = (
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
@@ -130,7 +138,5 @@ export const canReadSourceEvent = (
 ): boolean =>
   prepareSourceEventVisibility(event, sourceNpcs)(
     session,
-    session.guilds.find(
-      (entry) => entry.guild.id === eventOrganizationId(event),
-    ),
+    findEventGuild(session, eventOrganizationId(event)),
   );

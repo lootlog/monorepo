@@ -1,7 +1,7 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { PRESENCE_EXPIRY_MS } from "@lootlog/protocol/realtime";
 import { Permission } from "@lootlog/schema/permissions";
-import { Cause, Effect, Exit } from "effect";
+import { Cause, Effect, Exit, Fiber } from "effect";
 import { TestClock } from "effect/testing";
 import { PresenceStore } from "./presence-store.js";
 import { RealtimeStoreError } from "./realtime-errors.js";
@@ -11,6 +11,7 @@ import type { GatewaySocket, SessionData } from "#src/realtime/session";
 class MemoryRedis {
   readonly values = new Map<string, string>();
   readonly sets = new Map<string, Set<string>>();
+  readonly sortedSets = new Map<string, Map<string, number>>();
 
   async set(
     key: string,
@@ -41,54 +42,163 @@ class MemoryRedis {
     parameters: Array<string | number>,
   ): Promise<string | number> {
     const args = parameters.map(String);
-    const key = args[0]!;
 
-    if (_script.includes("-- presence:refresh")) {
-      await this.set(key, args[4]!);
-      await this.set(args[1]!, args[6]!);
-
-      if (!this.sets.get(args[2]!)?.has(args[7]!))
-        await this.sadd(args[2]!, args[7]!);
-
-      if (!this.sets.get(args[3]!)?.has(args[8]!))
-        await this.sadd(args[3]!, args[8]!);
-
-      return 1;
-    }
+    if (_script.includes("-- presence:refresh")) return this.refresh(args);
 
     if (_script.includes("-- presence:offline-batch"))
       return this.readBatch(args);
 
-    if (_script.includes("-- presence:offline-release")) {
-      if (this.values.get(key) !== args[1]) return 0;
+    if (_script.includes("-- presence:offline-schedule"))
+      return this.scheduleOffline(args);
 
-      return await this.del(key);
-    }
+    if (_script.includes("-- presence:offline-index-due"))
+      return this.indexOfflineDue(args, _numberOfKeys);
+
+    if (_script.includes("-- presence:offline-ready"))
+      return this.readOfflineReady(args);
+
+    if (_script.includes("-- presence:offline-drop"))
+      return this.dropOffline(args);
+
+    if (_script.includes("-- presence:offline-unindex-due"))
+      return this.unindexOfflineDue(args);
 
     if (_script.includes("-- presence:offline-renew"))
-      return Number(this.values.get(key) === args[1]);
+      return Number(this.values.get(args[0]!) === args[1]);
 
-    if (_script.includes("-- presence:offline-ack")) {
-      if (
-        this.values.get(key) !== args[3] ||
-        this.values.get(args[1]!) !== args[4]
-      )
-        return 0;
-      await this.del(args[1]!);
-      await this.srem(args[2]!, args[5]!);
+    if (_script.includes("-- presence:offline-release"))
+      return this.releaseOffline(args);
 
-      return 1;
+    if (_script.includes("-- presence:offline-ack"))
+      return this.ackOffline(args);
+
+    return this.claimOffline(args, _numberOfKeys);
+  }
+
+  private async refresh(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    await this.set(key, args[4]!);
+    await this.set(args[1]!, args[6]!);
+
+    if (!this.sets.get(args[2]!)?.has(args[7]!))
+      await this.sadd(args[2]!, args[7]!);
+
+    if (!this.sets.get(args[3]!)?.has(args[8]!))
+      await this.sadd(args[3]!, args[8]!);
+
+    return 1;
+  }
+
+  private async scheduleOffline(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    await this.set(key, args[4]!);
+    await this.sadd(args[1]!, args[5]!);
+    await this.sadd(args[2]!, args[5]!);
+    const due = this.sortedSets.get(args[3]!) ?? new Map<string, number>();
+    due.set(args[5]!, Number(args[6]));
+    this.sortedSets.set(args[3]!, due);
+
+    return 1;
+  }
+
+  private async indexOfflineDue(
+    args: string[],
+    numberOfKeys: number,
+  ): Promise<string | number> {
+    const key = args[0]!;
+
+    const values = args.slice(numberOfKeys);
+
+    if (this.values.get(key) !== values[0]) return -1;
+    const due = this.sortedSets.get(args[1]!) ?? new Map<string, number>();
+
+    for (let index = 2; index < numberOfKeys; index++) {
+      const offset = 1 + (index - 2) * 3;
+
+      if (this.values.get(args[index]!) === values[offset])
+        due.set(values[offset + 1]!, Number(values[offset + 2]));
     }
 
-    const [lock, pendingIndex, outboxIndex] = args;
+    this.sortedSets.set(args[1]!, due);
+
+    return 1;
+  }
+
+  private async readOfflineReady(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    if (this.values.get(key) !== args[2]) return "[]";
+
+    const entries =
+      args[4] === "pending"
+        ? [...(this.sortedSets.get(args[1]!) ?? [])]
+            .filter(([, due]) => due <= Number(args[5]))
+            .sort((left, right) => left[1] - right[1])
+            .map(([member]) => member)
+        : [...(this.sets.get(args[1]!) ?? [])];
+
+    return JSON.stringify(entries.slice(0, Number(args[6])));
+  }
+
+  private async dropOffline(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    if (this.values.get(key) !== args[4]) return -1;
+
+    if ((this.values.get(args[1]!) ?? "") !== args[5]) return 0;
+    await this.del(args[1]!);
+    await this.srem(args[2]!, args[6]!);
+    this.sortedSets.get(args[3]!)?.delete(args[6]!);
+
+    return 1;
+  }
+
+  private async unindexOfflineDue(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    let removed = 0;
+
+    for (const member of args.slice(1))
+      if (this.sortedSets.get(key)?.delete(member)) removed++;
+
+    return removed;
+  }
+
+  private async releaseOffline(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    if (this.values.get(key) !== args[1]) return 0;
+
+    return await this.del(key);
+  }
+
+  private async ackOffline(args: string[]): Promise<string | number> {
+    const key = args[0]!;
+
+    if (this.values.get(key) !== args[3]) return -1;
+
+    if (this.values.get(args[1]!) !== args[4]) return 0;
+    await this.del(args[1]!);
+    await this.srem(args[2]!, args[5]!);
+
+    return 1;
+  }
+
+  private async claimOffline(
+    args: string[],
+    _numberOfKeys: number,
+  ): Promise<number> {
+    const [lock, pendingIndex, outboxIndex, dueIndex] = args;
     const values = args.slice(_numberOfKeys);
 
     if (this.values.get(lock!) !== values[0]) return -1;
     let completed = 0;
 
-    for (let index = 3; index < _numberOfKeys; index += 3) {
+    for (let index = 4; index < _numberOfKeys; index += 3) {
       const [pending, outbox, characterIndex] = args.slice(index, index + 3);
-      const offset = 2 + ((index - 3) / 3) * 4;
+      const offset = 2 + ((index - 4) / 3) * 4;
 
       const [value, pendingMember, outboxMember, publish] = values.slice(
         offset,
@@ -98,6 +208,7 @@ class MemoryRedis {
       if (this.values.get(pending!) !== value) continue;
       this.values.delete(pending!);
       this.sets.get(pendingIndex!)?.delete(pendingMember!);
+      this.sortedSets.get(dueIndex!)?.delete(pendingMember!);
       this.sets.get(characterIndex!)?.delete(pendingMember!);
 
       if (publish === "1") {
@@ -114,7 +225,8 @@ class MemoryRedis {
   }
 
   private readBatch(args: string[]): string {
-    if (this.values.get(args[0]!) !== args[4]) return "[]";
+    if (this.values.get(args[0]!) !== args[4])
+      return JSON.stringify({ keys: [], complete: true });
     const members = [...(this.sets.get(args[1]!) ?? [])];
     const cursor = Number(this.values.get(args[2]!) ?? 0);
     const size = Number(args[5]);
@@ -123,7 +235,10 @@ class MemoryRedis {
       String(cursor + size >= members.length ? 0 : cursor + size),
     );
 
-    return JSON.stringify(members.slice(cursor, cursor + size));
+    return JSON.stringify({
+      keys: members.slice(cursor, cursor + size),
+      complete: cursor + size >= members.length,
+    });
   }
 
   async get(key: string): Promise<string | null> {
@@ -312,6 +427,8 @@ describe("PresenceStore", () => {
       redis.values.set(key, updated);
       writeGate.resolve("OK");
       await writeGate.promise;
+      // The atomic refresh settles after its metadata and index updates too.
+      await Bun.sleep(0);
       const later = Effect.runPromise(store.snapshot(viewer, "organization-1"));
       metadataGate.resolve();
       await first;
@@ -1350,6 +1467,269 @@ describe("game character offline grace", () => {
     ]);
     await Effect.runPromise(makeStore().sweepOffline());
     expect(events).toHaveLength(1);
+  });
+
+  test("drains a disconnect burst when grace expires even after earlier sweeps saw only young entries", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: Array<{ userId: string }> = [];
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+
+    for (let index = 0; index < 350; index++) {
+      const game = socket({
+        ...session([]),
+        userId: `user-${index}`,
+        connectionId: `session-${index}`,
+        character,
+      });
+
+      await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+      await Effect.runPromise(store.disconnect(game.data));
+    }
+
+    now = 9_999;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(350);
+    expect(new Set(events.map(({ userId }) => userId)).size).toBe(350);
+  });
+
+  test("drops malformed pending and outbox records while valid departures continue", async () => {
+    const redis = new MemoryRedis();
+    let now = 0;
+    const events: unknown[] = [];
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => now,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+
+    const game = socket({ ...session([]), character });
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(game.data));
+
+    for (const index of ["pending", "outbox"]) {
+      await redis.set(`invalid-${index}`, '{"userId":"old-schema"}');
+      await redis.sadd(`presence:offline:${index}`, `invalid-${index}`);
+    }
+
+    now = 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+
+    for (const index of ["pending", "outbox"]) {
+      expect(await redis.get(`invalid-${index}`)).toBeNull();
+      expect(await redis.smembers(`presence:offline:${index}`)).toEqual([]);
+    }
+
+    // A later sweep remains usable after malformed persisted values.
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    await Effect.runPromise(store.disconnect(game.data));
+    now += 10_000;
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(2);
+  });
+
+  test("interrupts lease acquisition while Redis is unavailable", async () => {
+    const started = Promise.withResolvers<void>();
+    const stalled = Promise.withResolvers<string | null>();
+
+    class StalledRedis extends MemoryRedis {
+      override set(
+        key: string,
+        value: string,
+        ...options: Array<string | number>
+      ) {
+        if (key === "presence:offline:sweep-lock") {
+          started.resolve();
+
+          return stalled.promise;
+        }
+
+        return super.set(key, value, ...options);
+      }
+    }
+
+    const store = new PresenceStore(
+      { command: new StalledRedis() },
+      new RecordingHub(),
+      () => 0,
+      undefined,
+      undefined,
+      () => Effect.void,
+    );
+
+    const fiber = Effect.runFork(store.sweepOffline());
+    await started.promise;
+
+    try {
+      const interrupted = await Promise.race([
+        Effect.runPromise(Fiber.interrupt(fiber)).then(() => true),
+        Bun.sleep(100).then(() => false),
+      ]);
+
+      expect(interrupted).toBe(true);
+    } finally {
+      stalled.resolve(null);
+      await Effect.runPromise(Fiber.interrupt(fiber));
+    }
+  });
+
+  test("bounds lease release during shutdown when Redis stops responding", async () => {
+    const started = Promise.withResolvers<void>();
+    const stalled = Promise.withResolvers<void>();
+
+    class StalledRedis extends MemoryRedis {
+      override async eval<A>(
+        script: string,
+        numberOfKeys: number,
+        ...parameters: Array<string | number>
+      ): Promise<A> {
+        if (script.includes("-- presence:offline-release")) {
+          started.resolve();
+          await stalled.promise;
+        }
+
+        return super.eval<A>(script, numberOfKeys, ...parameters);
+      }
+    }
+
+    const store = new PresenceStore(
+      { command: new StalledRedis() },
+      new RecordingHub(),
+      () => 0,
+      undefined,
+      undefined,
+      () => Effect.void,
+    );
+
+    try {
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const fiber = yield* store.sweepOffline().pipe(Effect.forkScoped);
+          yield* Effect.promise(() => started.promise);
+          yield* TestClock.adjust("1 second");
+          expect(fiber.pollUnsafe()?._tag).toBe("Success");
+        }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
+      );
+    } finally {
+      stalled.resolve();
+    }
+  });
+
+  test("does not publish captured outbox records after losing the lease during their read", async () => {
+    let replaceLease = true;
+
+    class LeaseLosingRedis extends MemoryRedis {
+      override async mget(keys: string[]): Promise<Array<string | null>> {
+        const values = await super.mget(keys);
+
+        if (replaceLease && keys.includes("outbox-departure")) {
+          replaceLease = false;
+          await this.set("presence:offline:sweep-lock", "successor");
+        }
+
+        return values;
+      }
+    }
+
+    const redis = new LeaseLosingRedis();
+    const events: unknown[] = [];
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => 10_000,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+        }),
+    );
+
+    const departure = {
+      userId: "user-1",
+      discordId: "discord-1",
+      world: character.world,
+      characterId: character.characterId,
+      organizationIds: ["organization-1"],
+      disconnectedAt: 0,
+    };
+
+    await redis.set("outbox-departure", JSON.stringify(departure));
+    await redis.sadd("presence:offline:outbox", "outbox-departure");
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([]);
+    expect(await redis.get("outbox-departure")).toBe(JSON.stringify(departure));
+    expect(await redis.smembers("presence:offline:outbox")).toEqual([
+      "outbox-departure",
+    ]);
+    expect(await redis.get("presence:offline:sweep-lock")).toBe("successor");
+
+    await redis.del("presence:offline:sweep-lock");
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toEqual([departure]);
+    expect(await redis.smembers("presence:offline:outbox")).toEqual([]);
+  });
+
+  test("stops publishing as soon as an acknowledgement loses its lease", async () => {
+    const redis = new MemoryRedis();
+    const events: unknown[] = [];
+
+    const store = new PresenceStore(
+      { command: redis },
+      new RecordingHub(),
+      () => 10_000,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          events.push(event);
+          redis.values.set("presence:offline:sweep-lock", "successor");
+        }),
+    );
+
+    for (let index = 0; index < 2; index++) {
+      const key = `outbox-${index}`;
+      await redis.set(
+        key,
+        JSON.stringify({
+          userId: `user-${index}`,
+          discordId: "discord-1",
+          world: character.world,
+          characterId: character.characterId,
+          organizationIds: ["organization-1"],
+          disconnectedAt: 0,
+        }),
+      );
+      await redis.sadd("presence:offline:outbox", key);
+    }
+
+    await Effect.runPromise(store.sweepOffline());
+    expect(events).toHaveLength(1);
+    expect(await redis.smembers("presence:offline:outbox")).toHaveLength(2);
+    expect(await redis.get("presence:offline:sweep-lock")).toBe("successor");
   });
 
   test("refresh cancels the previous deadline and a later exit gets a full grace period", async () => {
