@@ -36,12 +36,8 @@ export const NpcDetector = () => {
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
 
-  const [measuredMaxContentHeight, setMeasuredMaxContentHeight] = useState(
-    storedMaxContentHeight ?? defaultWindowHeight,
-  );
-
   const resolvedMaxContentHeight =
-    storedMaxContentHeight ?? measuredMaxContentHeight;
+    storedMaxContentHeight ?? defaultWindowHeight;
 
   // Closing only hides the window: detections stay until they leave the map,
   // the map changes or the player clears them, and the next detection
@@ -66,26 +62,30 @@ export const NpcDetector = () => {
         />
       </>
       onClose={handleClose}
-      heightMode="auto-up-to-max"
-      maxContentHeight={storedMaxContentHeight}
+      heightMode="css-auto-up-to-max"
+      maxContentHeight={resolvedMaxContentHeight}
       isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
       onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
       onMaxContentHeightChange={(nextMaxContentHeight) =>
         setMaxContentHeight("npc-detector", nextMaxContentHeight)
       }
-      onResolvedMaxContentHeightChange={setMeasuredMaxContentHeight}
       resizable
       minHeight={82}
       maxHeight={600}
       minWidth={242}
     >
-      <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
+      {/* A grid, not a flex column: the list's scroll viewport needs the
+          definite height of its grid area to stay within the window's max
+          height while the status strip takes its own row above the list. */}
+      <div className="ll:grid ll:max-h-[inherit] ll:grid-rows-[auto_minmax(0,1fr)]">
         <ConnectionStatusStrip hasData={filteredNpcs.length > 0} />
-        <NpcsList
-          detectorSettings={settings}
-          npcTypeColors={npcTypeColors}
-          npcs={filteredNpcs}
-        />
+        <div className="ll:row-start-2 ll:min-h-0">
+          <NpcsList
+            detectorSettings={settings}
+            npcTypeColors={npcTypeColors}
+            npcs={filteredNpcs}
+          />
+        </div>
       </div>
     </DraggableWindow>
   );
