@@ -1,5 +1,7 @@
-import { accessibleGuildsQuery } from "#src/members/member-access-query";
-import { apiKeyOrganizationFilter } from "#src/runtime/auth/organization-scope";
+import {
+  accessibleGuildsQuery,
+  activeGuildMemberJoin,
+} from "#src/members/member-access-query";
 import {
   and,
   desc,
@@ -12,7 +14,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 import { canViewTimer } from "./timer-selection.js";
 import {
   canViewNpcTimer,
@@ -20,7 +22,6 @@ import {
 } from "@lootlog/domain/npc-permissions";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  guildTable,
   memberTable,
   memberToRoleTable,
   playerSnapshotTable,
@@ -54,22 +55,24 @@ const selectedTimerKeysQuery = (
 ) => {
   const configured = sql`${userSettingDocumentTable.overrides}->'alwaysVisibleExpiredTimers'->${world}`;
 
+  const selectedKey = sql`selected_timer_key.value`;
+  const configuredArray = sql`CASE WHEN jsonb_typeof(${configured}) = 'array' THEN ${configured} ELSE '[]'::jsonb END`;
+
   return database
-    .select({
-      // The JSONB existence operator matches only string array members. Keep
-      // malformed stored settings equivalent to the former JS array filter.
-      keys: sql`CASE WHEN jsonb_typeof(${configured}) = 'array' THEN ${configured} ELSE '[]'::jsonb END`,
-    })
+    .select({ key: sql<string>`${selectedKey} #>> '{}'` })
     .from(userSettingDocumentTable)
+    .crossJoin(
+      sql`jsonb_array_elements(${configuredArray}) AS selected_timer_key(value)`,
+    )
     .where(
       and(
         eq(userSettingDocumentTable.userId, userId),
         eq(userSettingDocumentTable.domain, "timers"),
         eq(userSettingDocumentTable.scopeType, "USER"),
         eq(userSettingDocumentTable.scopeId, userId),
+        sql`jsonb_typeof(${selectedKey}) = 'string'`,
       ),
-    )
-    .limit(1);
+    );
 };
 
 const readVisibleTimers = (
@@ -78,8 +81,8 @@ const readVisibleTimers = (
   world: string | undefined,
   userId: string,
 ) =>
-  Effect.suspend(() => {
-    const now = new Date();
+  Effect.gen(function* () {
+    const now = new Date(yield* Clock.currentTimeMillis);
 
     const active = and(
       isNull(timerTable.deletedAt),
@@ -91,7 +94,7 @@ const readVisibleTimers = (
       : or(
           active,
           and(
-            sql`(${selectedTimerKeysQuery(database, userId, world)}) ? ${timerTable.timerKey}`,
+            sql`${timerTable.timerKey} = ANY(ARRAY(${selectedTimerKeysQuery(database, userId, world)}))`,
             sql`COALESCE(${timerTable.npc}->>'margonemType', '0') != ${String(TIMER_TYPES.CUSTOM_MANUAL)}`,
             or(
               lte(timerTable.maxSpawnTime, now),
@@ -107,7 +110,7 @@ const readVisibleTimers = (
         )
       : inArray(timerTable.guildId, [...guildIds]);
 
-    return database
+    return yield* database
       .select({
         timer: timerTable,
         member: memberTable,
@@ -162,17 +165,13 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
     identity: { readonly userId: string; readonly discordId: string },
     world?: string,
   ) {
-    const keyScope = yield* apiKeyOrganizationFilter(guildTable.id);
-
     const accessible = database
       .$with("accessible_timer_guilds")
       .as(
-        accessibleGuildsQuery(
-          database,
-          identity.discordId,
-          [Permission.LOOTLOG_TIMERS_READ, Permission.ADMIN],
-          keyScope,
-        ),
+        yield* accessibleGuildsQuery(database, identity.discordId, [
+          Permission.LOOTLOG_TIMERS_READ,
+          Permission.ADMIN,
+        ]),
       );
 
     const accessRows = yield* database
@@ -189,11 +188,7 @@ export const makeAllTimerList = (database: typeof ApiDatabase.Service) => {
       .from(accessible)
       .leftJoin(
         memberTable,
-        and(
-          eq(memberTable.guildId, accessible.guild.id),
-          eq(memberTable.userId, identity.discordId),
-          eq(memberTable.active, true),
-        ),
+        activeGuildMemberJoin(identity.discordId, accessible.guild.id),
       )
       .leftJoin(memberToRoleTable, eq(memberToRoleTable.A, memberTable.id))
       .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id));
