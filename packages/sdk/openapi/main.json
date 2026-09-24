@@ -289,7 +289,16 @@
       "get": {
         "tags": ["users"],
         "operationId": "UsersController_getCurrentUserGuilds",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "refresh",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
         "security": [
           {
             "apiKey": []
@@ -371,7 +380,7 @@
             }
           }
         },
-        "description": "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status",
+        "description": "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes; set refresh to fetch it from Discord again.",
         "summary": "Get current user guilds",
         "x-lootlog-access": "read",
         "x-lootlog-data": "mixed"

@@ -845,6 +845,36 @@ const normalizeServiceAuthentication = (
   return normalized;
 };
 
+// Verified by http-boundary.e2e-spec.ts: refresh bypasses the cached Discord
+// guild list.
+const normalizeGuildListRefreshParameter = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (service !== "api" || operationKey !== "GET /users/@me/guilds")
+    return operation;
+
+  const refreshParameter = [
+    {
+      name: "refresh",
+      in: "query",
+      required: false,
+      schema: { type: "boolean" },
+    },
+  ];
+
+  if (
+    !isJsonObject(operation) ||
+    JSON.stringify(
+      normalizeOpenApiRepresentation(operation.parameters ?? null),
+    ) !== JSON.stringify(normalizeOpenApiRepresentation(refreshParameter))
+  )
+    throw new Error(`${operationKey} must declare the refresh parameter`);
+
+  return { ...operation, parameters: [] };
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -877,6 +907,12 @@ export const normalizeAllowedChanges = (
   if (service === "api" && operationKey === "GET /guilds/@me/manageable") {
     normalized = normalizeManageableOrganizationResponse(normalized, schemas);
   }
+
+  normalized = normalizeGuildListRefreshParameter(
+    service,
+    operationKey,
+    normalized,
+  );
 
   if (service === "api") normalized = removePresencePermission(normalized);
   normalized = normalizeErrorResponseMigrations(

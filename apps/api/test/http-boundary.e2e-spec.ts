@@ -17,7 +17,7 @@ import { BunRedis, BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
-import { getFreshCompleteUserGuildsHandoffKey } from "#src/discord/discord-cache.util";
+import { getCompleteUserGuildsCacheKey } from "#src/discord/discord-cache.util";
 import { RedisService } from "#src/redis/redis.service";
 import { LootlogApiRouter } from "../src/runtime/application/http-routes.js";
 import { ApiRedis } from "../src/runtime/infrastructure/api-redis.js";
@@ -328,16 +328,52 @@ describe("API HTTP boundary", () => {
     },
   );
 
-  it("returns watched item snapshots after create, quick-add and retry", async () => {
+  it("serves the Organization list from a cached Discord guild list without deactivating members", async () => {
     await redis.set(
-      getFreshCompleteUserGuildsHandoffKey(caller),
+      getCompleteUserGuildsCacheKey(caller),
       JSON.stringify({
         guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
-        fresh: true,
-        complete: true,
+        fetchedAt: Date.now() - 10 * 60_000,
       }),
       60,
     );
+
+    const cached = await request("/users/@me/guilds");
+
+    expect(cached.status).toBe(200);
+    expect(await cached.json()).toEqual([
+      expect.objectContaining({
+        id: authorizedGuildId,
+        isAccessDataStale: false,
+      }),
+    ]);
+    expect(
+      await databaseRuntime.runPromise(
+        database
+          .select({ active: memberTable.active })
+          .from(memberTable)
+          .where(eq(memberTable.guildId, forbiddenGuildId)),
+      ),
+    ).toEqual([{ active: true }]);
+
+    // Discord is unreachable here, so only the cached list could answer.
+    const refreshed = await request("/users/@me/guilds?refresh=true");
+
+    expect(refreshed.status).not.toBe(200);
+  });
+
+  it("returns watched item snapshots after create, quick-add and retry", async () => {
+    // Watched items accept only a Discord guild list fetched within seconds.
+    const seedDiscordGuilds = () =>
+      redis.set(
+        getCompleteUserGuildsCacheKey(caller),
+        JSON.stringify({
+          guilds: [{ id: authorizedGuildId, name: "Authorized Organization" }],
+          fetchedAt: Date.now(),
+        }),
+        60,
+      );
+
     const itemId = 990001;
     await databaseRuntime.runPromise(
       Effect.gen(function* () {
@@ -373,6 +409,9 @@ describe("API HTTP boundary", () => {
         { name: "Watched item", icon: "item.png" },
       ],
     ] as const) {
+      // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
+      await seedDiscordGuilds();
+
       // eslint-disable-next-line no-await-in-loop -- Each mutation depends on the previous persisted state.
       const response = await request(
         `/users/@me/notifications/watched-items${path}`,
