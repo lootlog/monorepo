@@ -23,6 +23,10 @@
   --broadcast-text-muted: #b9c8de;
   --broadcast-text-subtle: #9aacc4;
   --broadcast-paper-muted: #3a4a60;
+  --broadcast-navy: #101f45;
+  --broadcast-navy-deep: #0a1734;
+  --broadcast-navy-line: #27407c;
+  --broadcast-navy-muted: #b7c6ee;
   --broadcast-radius-control: 12px;
   --broadcast-radius-card: 20px;
   --broadcast-radius-panel: 28px;
@@ -35,10 +39,6 @@ html {
 
 body {
   background: var(--broadcast-ink);
-}
-
-.broadcast-display {
-  font-variation-settings: "wght" 850;
 }
 
 .broadcast-hero-layout {
@@ -204,6 +204,7 @@ body {
 
 .landing-heading-display {
   font-size: clamp(2rem, 8.8vw, 2.5rem);
+  line-height: 1;
 }
 
 .landing-heading-section {
@@ -211,7 +212,35 @@ body {
 }
 
 .landing-heading-card {
-  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.landing-lead {
+  max-width: 60ch;
+  font-size: 1rem;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.landing-section {
+  padding-block: 4rem;
+}
+
+@media (min-width: 640px) {
+  .landing-lead {
+    font-size: 1.125rem;
+    line-height: 1.75;
+  }
+
+  .landing-section {
+    padding-block: 5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-section {
+    padding-block: 7rem;
+  }
 }
 
 @media (min-width: 640px) {

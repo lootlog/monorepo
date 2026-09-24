@@ -21,7 +21,7 @@ export function TimerIllustration() {
   const countdown = `00:${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
 
   return (
-    <figure className="relative mx-auto w-full max-w-xl text-[var(--broadcast-text-muted)] px-1 py-3 sm:px-6 sm:py-8">
+    <figure className="relative mx-auto w-full max-w-xl px-1 py-3 sm:px-6 sm:py-8">
       <div className="relative rounded-[var(--broadcast-radius-panel)] border-2 border-[var(--broadcast-ink)] bg-[var(--broadcast-lime)] p-4 text-[var(--broadcast-ink)] sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-bold uppercase tracking-widest">
@@ -41,20 +41,20 @@ export function TimerIllustration() {
         </p>
         <div
           aria-hidden="true"
-          className="mt-4 h-2 sm:mt-7 overflow-hidden rounded-full bg-[var(--broadcast-ink)]/15"
+          className="mt-4 h-2 overflow-hidden sm:mt-7 rounded-full bg-[var(--broadcast-ink)]/15"
         >
           <div
             className="h-full rounded-full bg-[var(--broadcast-ink)]"
             style={{ width: `${(remaining / (60 * 60)) * 100}%` }}
           />
         </div>
-        <p className="mt-3 flex items-center sm:mt-5 gap-2 text-sm font-semibold">
+        <p className="mt-3 flex items-center gap-2 text-sm font-semibold sm:mt-5">
           <UsersRound className="size-4" aria-hidden="true" />
           {t("landing.illustrations.shared")}
         </p>
       </div>
-      <div className="relative -mt-2 ml-5 flex sm:-mt-3 sm:ml-8 items-center gap-3 rounded-[var(--broadcast-radius-card)] sm:gap-4 border-2 border-[var(--broadcast-ink)] bg-[var(--broadcast-paper)] p-3 text-[var(--broadcast-ink)] sm:p-5">
-        <span className="grid size-10 shrink-0 sm:size-14 place-items-center rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-amber)]">
+      <div className="relative -mt-2 ml-5 flex items-center gap-3 rounded-[var(--broadcast-radius-card)] border-2 sm:-mt-3 sm:ml-8 sm:gap-4 border-[var(--broadcast-ink)] bg-[var(--broadcast-paper)] p-3 text-[var(--broadcast-ink)] sm:p-5">
+        <span className="grid size-10 shrink-0 place-items-center sm:size-14 rounded-[var(--broadcast-radius-card)] bg-[var(--broadcast-amber)]">
           <Gem className="size-6 sm:size-8" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -67,7 +67,7 @@ export function TimerIllustration() {
         </div>
         <Check className="size-5 shrink-0" aria-hidden="true" />
       </div>
-      <figcaption className="landing-caption">
+      <figcaption className="landing-caption text-[var(--broadcast-text-subtle)]">
         {t("landing.illustrations.example")}
       </figcaption>
     </figure>
