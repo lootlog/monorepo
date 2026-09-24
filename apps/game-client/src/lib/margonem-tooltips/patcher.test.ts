@@ -505,14 +505,16 @@ describe("installCharacterTooltipTransforms", () => {
 
     // A player who leaves the map while Shift is held is no longer drawn.
     seedRuntimeOthers({ 1: hovered, 2: idle });
-    vi.mocked(departed.updateTip).mockClear();
+    const departedUpdateTip = vi.fn<() => void>();
+
+    departed.updateTip = departedUpdateTip;
 
     useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
     refreshActiveOtherCanvasTooltip();
 
     expect(hovered.tip?.[0]).toBe("<div>Hovered</div>");
     expect(idle.tip?.[0]).toBe("<div>Idle</div>");
-    expect(departed.updateTip).not.toHaveBeenCalled();
+    expect(departedUpdateTip).not.toHaveBeenCalled();
 
     cleanup();
   });
