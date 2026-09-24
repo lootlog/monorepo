@@ -189,11 +189,8 @@ export const userOnlineIntervals = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.sessionId, table.segmentId] }),
-    index("UserOnlineInterval_userId_endedAt_idx").on(
-      table.userId,
-      table.endedAt,
-    ),
-    index("UserOnlineInterval_endedAt_idx").on(table.endedAt),
+    // The primary key covers per-user history reads. Keep advancing checkpoint
+    // fields out of B-tree indexes so ordinary updates can stay on the heap page.
     index("UserOnlineInterval_startedAt_idx").on(table.startedAt),
     check(
       "UserOnlineInterval_check",
