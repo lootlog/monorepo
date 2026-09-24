@@ -36,7 +36,7 @@ describe("HiddenTimersTab", () => {
 
     expect(screen.getByText("Alpha hidden boss")).toBeInTheDocument();
 
-    const guildSelect = screen.getByRole("combobox", { name: "Lootlog" });
+    const guildSelect = screen.getByRole("combobox", { name: "Organizacja" });
 
     expect(guildSelect).toHaveTextContent("Alpha");
 
@@ -74,7 +74,7 @@ describe("HiddenTimersTab", () => {
     render();
 
     expect(
-      screen.queryByRole("combobox", { name: "Lootlog" }),
+      screen.queryByRole("combobox", { name: "Organizacja" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Global hidden boss")).toBeInTheDocument();
     expect(screen.queryByText("Alpha hidden boss")).not.toBeInTheDocument();

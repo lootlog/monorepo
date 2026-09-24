@@ -8,7 +8,7 @@
     "title": "Timery"
   },
   "filters": {
-    "searchPlaceholder": "Szukaj...",
+    "searchPlaceholder": "Szukaj…",
     "minPlaceholder": "Od",
     "maxPlaceholder": "Do",
     "clearSearch": "Wyczyść wyszukiwanie",
@@ -16,7 +16,7 @@
     "maxLvlLabel": "Poziom do",
     "npcTypesLabel": "Typy potworów",
     "npcTypes": "Typy",
-    "npcTypesOnlyHint": "Prawy klik: tylko ten typ"
+    "npcTypesOnlyHint": "Prawy przycisk myszy: tylko ten typ"
   },
   "toolbar": {
     "filters": "Filtry",
@@ -33,13 +33,13 @@
     "addedAt": "Dodano:",
     "min": "Min:",
     "max": "Max:",
-    "reset": "⟳ Timer został zresetowany"
+    "reset": "Timer został zresetowany"
   },
   "emptyState": {
     "filteredTitle": "Żaden timer nie pasuje do filtrów",
     "showAll": "Pokaż wszystkie",
     "noneTitle": "Nie ma jeszcze timerów",
-    "noneDescription": "Timer pojawi się, gdy ktoś z Lootloga pokona elitę II, herosa lub tytana."
+    "noneDescription": "Timer pojawi się, gdy ktoś z organizacji pokona elitę II, herosa lub tytana."
   },
   "states": {
     "loading": "Ładowanie timerów",
@@ -49,27 +49,27 @@
   },
   "contextMenu": {
     "color": "Kolor",
-    "creating": "Tworzenie timera...",
+    "creating": "Tworzenie timera…",
     "unpin": "Odepnij",
     "pin": "Przypnij",
-    "unpinAll": "Odepnij wszędzie",
-    "pinAll": "Przypnij wszędzie",
+    "unpinAll": "Odepnij we wszystkich organizacjach",
+    "pinAll": "Przypnij we wszystkich organizacjach",
     "show": "Pokaż",
     "hide": "Ukryj",
-    "showAll": "Pokaż wszędzie",
-    "hideAll": "Ukryj wszędzie",
-    "showAlways": "Pokaż zawsze",
-    "hideAlways": "Nie pokazuj zawsze",
-    "restart": "Odliczaj od początku",
+    "showAll": "Pokaż we wszystkich organizacjach",
+    "hideAll": "Ukryj we wszystkich organizacjach",
+    "showAlways": "Zostaw po wyzerowaniu",
+    "hideAlways": "Usuwaj po wyzerowaniu",
+    "restart": "Zresetuj timer",
     "history": "Historia",
     "delete": "Usuń timer",
-    "loadingPermissions": "Sprawdzanie uprawnień...",
-    "deleteChooseGuild": "Wybierz serwer do usunięcia timera:"
+    "loadingPermissions": "Sprawdzanie uprawnień…",
+    "deleteChooseGuild": "Wybierz organizację, z której usunąć timer:"
   },
   "history": {
     "title": "Historia timera",
     "globalTitle": "Historia timerów",
-    "loading": "Ładowanie historii...",
+    "loading": "Ładowanie historii…",
     "empty": "Ten timer nie ma jeszcze historii.",
     "restore": "Przywróć timer",
     "restoreSuccess": "Przywrócono timer.",
@@ -78,7 +78,7 @@
       "action": "Akcja",
       "npc": "Potwór",
       "member": "Użytkownik",
-      "guild": "Serwer",
+      "guild": "Organizacja",
       "character": "Postać",
       "world": "Świat",
       "min": "Min",
@@ -122,7 +122,7 @@
     "validation": {
       "nameRequired": "Nazwa jest wymagana",
       "nameMax": "Nazwa może mieć maksymalnie {{max}} znaków",
-      "provideRespawnOrDates": "Podaj czasy respawnu lub niestandardowe daty",
+      "provideRespawnOrDates": "Podaj czas odrodzenia albo własne daty odrodzenia",
       "minDurationRequired": "Minimalny czas jest wymagany",
       "maxDurationRequired": "Maksymalny czas jest wymagany",
       "durationGreaterThanZero": "Czas musi być większy niż 0 sekund",
@@ -133,37 +133,37 @@
       "endDateAfterStart": "Data końca musi być późniejsza niż data startu"
     },
     "searchNpcLabel": "Szukaj potwora",
-    "searchNpcPlaceholder": "Wpisz nazwę potwora...",
-    "npcSearching": "Szukanie potwora...",
+    "searchNpcPlaceholder": "Wpisz nazwę potwora…",
+    "npcSearching": "Szukanie potwora…",
     "npcSearchError": "Nie udało się wyszukać potwora",
     "npcNotFound": "Nie znaleziono potwora",
-    "mobFallback": "mob",
+    "mobFallback": "Potwór",
     "nameLabel": "Nazwa",
     "namePlaceholder": "np. Młody Smok",
     "lvlLabel": "Poziom",
     "lvlPlaceholder": "np. 120",
     "typeLabel": "Typ",
     "typePlaceholder": "Bez typu",
-    "minDurationLabel": "Minimalny czas (max 300h)",
+    "minDurationLabel": "Minimalny czas (maks. 300 h)",
     "minDurationPlaceholder": "np. 2h 30m 45s",
-    "maxDurationLabel": "Maksymalny czas (max 300h)",
+    "maxDurationLabel": "Maksymalny czas (maks. 300 h)",
     "maxDurationPlaceholder": "np. 3h 15m 30s",
-    "customDates": "Niestandardowe daty spawnu",
+    "customDates": "Własne daty odrodzenia",
     "startDateLabel": "Data startu",
     "endDateLabel": "Data końca",
     "windowLabel": "Okno:",
     "invalidRange": "Nieprawidłowy zakres",
-    "submitting": "Dodawanie...",
+    "submitting": "Dodawanie…",
     "submit": "Dodaj",
     "cancel": "Anuluj"
   },
   "conflictDialog": {
     "description": "Twoje ustawienia timerów zostały zmodyfikowane na wielu urządzeniach. Którą wersję chcesz zachować?",
-    "localTitle": "Lokalne (To urządzenie)",
-    "remoteTitle": "Zdalne (Serwer)",
+    "localTitle": "Lokalne (to urządzenie)",
+    "remoteTitle": "Zdalne (serwer)",
     "lastUpdated": "Ostatnia aktualizacja: {{date}}",
     "useLocal": "Użyj ustawień lokalnych",
     "useRemote": "Użyj ustawień z serwera",
-    "warning": "Uwaga: Wybrane ustawienia nadpiszą drugą wersję."
+    "warning": "Uwaga: wybrane ustawienia nadpiszą drugą wersję."
   }
 }

@@ -241,7 +241,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     await user.hover(tile);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Kliknij dwukrotnie, aby zaprosić do drużyny",
+      "Kliknij dwukrotnie, aby zaprosić do grupy",
     );
   });
 
@@ -268,7 +268,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("invites the character to party from the right-side button", () => {
     render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
 
-    fireEvent.click(screen.getByTitle("Zaproś do drużyny"));
+    fireEvent.click(screen.getByTitle("Zaproś do grupy"));
 
     expect(inviteToPartySpy).toHaveBeenCalledWith("party&a=inv&id=10");
   });
@@ -304,7 +304,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(getHighlightFill(container)).toBe(TIMERS_COLORS.sky.fill);
-    expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Zaproś do grupy")).not.toBeInTheDocument();
   });
 
   it("does not invite party members on tile double click", () => {
@@ -358,7 +358,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
-    expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Zaproś do grupy")).not.toBeInTheDocument();
   });
 
   it("does not invite the current player on tile double click", () => {
@@ -389,7 +389,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(getHighlightFill(container)).toBe(TIMERS_COLORS.green.fill);
-    expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
+    expect(screen.getByTitle("Zaproś do grupy")).toBeVisible();
   });
 
   it("highlights afk players with orange and shows warning icon", () => {

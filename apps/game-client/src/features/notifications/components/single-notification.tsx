@@ -110,7 +110,7 @@ const renderLeadingVisual = (
     <div className="ll:flex ll:h-8 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center">
       <img
         src={avatarUrl}
-        alt="Avatar"
+        alt=""
         className="ll:h-8 ll:w-8 ll:rounded-full ll:object-cover"
       />
     </div>
@@ -166,7 +166,9 @@ const resolveNotificationAppearance = ({
     autoHideDurationMs,
     background: getBackgroundColor(key, highlight, npcTypeColors),
     borderColor: getBorderColor(key, highlight, npcTypeColors),
-    metaText: `${time}@${serverNames.join(", ")}${notification.world ? ` - ${notification.world}` : ""}`,
+    metaText: [time, serverNames.join(", "), notification.world]
+      .filter(Boolean)
+      .join(" · "),
   };
 };
 

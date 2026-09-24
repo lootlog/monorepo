@@ -3,12 +3,12 @@
     "title": "Powiadomienia"
   },
   "content": {
-    "gatheringParty": "Zbiera grupę",
-    "levelRange": "Poziom: {{min}} - {{max}}"
+    "gatheringParty": "Organizuje zbiórkę",
+    "levelRange": "Poziom: {{min}}–{{max}}"
   },
   "actions": {
-    "join": "Dołącz",
-    "joinAria": "Idę",
+    "join": "Zgłoś się",
+    "joinAria": "Zgłoś się do zbiórki",
     "closeAria": "Zamknij powiadomienie",
     "muteOptionsAria": "Opcje wyciszenia",
     "mutePlayer": "Nie otrzymuj powiadomień od tego gracza",

@@ -31,7 +31,7 @@ it("does not expose management to a participant with a previously open window", 
     </QueryClientProvider>,
   );
 
-  expect(screen.queryByText("Party finder")).not.toBeInTheDocument();
+  expect(screen.queryByText("Twoja zbiórka")).not.toBeInTheDocument();
   client.clear();
 });
 

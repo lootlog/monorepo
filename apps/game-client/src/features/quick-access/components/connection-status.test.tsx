@@ -116,7 +116,7 @@ it("shows connecting, then memberships and heartbeat latency, and a dropped conn
       await vi.advanceTimersByTimeAsync(0);
     });
     expect(
-      screen.getByRole("button", { name: /Ping heartbeat: 42 ms/ }),
+      screen.getByRole("button", { name: /Opóźnienie połączenia: 42 ms/ }),
     ).toBeVisible();
     expect(screen.getByText("42 ms")).toBeVisible();
     act(() => getSocket().disconnect());

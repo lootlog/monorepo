@@ -97,10 +97,12 @@ describe("DetectorRoutingSection", () => {
 
     expect(screen.queryByRole("button", { expanded: false })).toBeNull();
     expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Od levela")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Do levela")).toHaveLength(2);
-    expect(screen.getByLabelText("Lootlogi: Bossy hero")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lootlogi: Reguła 2")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Poziom od")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Poziom do")).toHaveLength(2);
+    expect(
+      screen.getByLabelText("Organizacje: Bossy hero"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Organizacje: Reguła 2")).toBeInTheDocument();
   });
 
   it("clamps a committed level to the allowed range before saving", async () => {
@@ -108,7 +110,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const maxLevel = screen.getAllByLabelText("Do levela")[0];
+    const maxLevel = screen.getAllByLabelText("Poziom do")[0];
     await user.clear(maxLevel);
     await user.type(maxLevel, "9999");
     expect(harness.request).not.toHaveBeenCalled();
@@ -130,7 +132,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const minLevel = screen.getAllByLabelText("Od levela")[0];
+    const minLevel = screen.getAllByLabelText("Poziom od")[0];
     await user.clear(minLevel);
     await user.type(minLevel, "100");
     await user.tab();
@@ -203,7 +205,7 @@ describe("DetectorRoutingSection", () => {
     });
 
     expect(harness.request).toHaveBeenCalledTimes(1);
-    const picker = within(screen.getByLabelText("Lootlogi: Bossy hero"));
+    const picker = within(screen.getByLabelText("Organizacje: Bossy hero"));
     expect(
       picker.getByRole("button", { name: "Gamma", pressed: false }),
     ).toBeInTheDocument();
@@ -219,9 +221,9 @@ describe("DetectorRoutingSection", () => {
 
     await user.click(screen.getByRole("button", { name: "Dodaj regułę" }));
 
-    expect(screen.getByLabelText("Lootlogi: Reguła 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Organizacje: Reguła 3")).toBeInTheDocument();
     expect(
-      screen.getByText("Nic nie wysyła – zaznacz Lootloga"),
+      screen.getByText("Nic nie wysyła – zaznacz organizację"),
     ).toBeInTheDocument();
 
     await user.click(
@@ -244,7 +246,9 @@ describe("DetectorRoutingSection", () => {
     await user.type(nameInput, "  Gordion hero  ");
     await user.tab();
 
-    expect(screen.getByLabelText("Lootlogi: Gordion hero")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Organizacje: Gordion hero"),
+    ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(savedBody()).toEqual(

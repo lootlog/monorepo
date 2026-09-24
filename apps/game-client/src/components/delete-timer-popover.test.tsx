@@ -78,7 +78,7 @@ it("hides deletion when neither organization permits it", async () => {
 
 it("shows pending permissions without exposing deletion", async () => {
   await setup(null);
-  expect(screen.getByText("Sprawdzanie uprawnień...")).toBeVisible();
+  expect(screen.getByText("Sprawdzanie uprawnień…")).toBeVisible();
   expect(screen.queryByText("Usuń timer")).not.toBeInTheDocument();
 });
 
@@ -99,7 +99,9 @@ it("keeps the organization chooser open until its target is selected", async () 
   ]);
 
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
-  expect(screen.getByText("Wybierz serwer do usunięcia timera:")).toBeVisible();
+  expect(
+    screen.getByText("Wybierz organizację, z której usunąć timer:"),
+  ).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Beta" }));
   expect(onDeleteTimer).toHaveBeenCalledWith("guild-2", "timer-2");
 });

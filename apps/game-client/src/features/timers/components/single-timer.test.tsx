@@ -106,7 +106,7 @@ describe("SingleTimer", () => {
         await screen.findByRole("menuitem", { name: "Usuń timer" }),
       ).toBeVisible();
       expect(
-        screen.getByRole("menuitem", { name: "Odliczaj od początku" }),
+        screen.getByRole("menuitem", { name: "Zresetuj timer" }),
       ).toBeVisible();
       expect(screen.getByRole("menuitem", { name: "Odepnij" })).toBeVisible();
       view.rerender(content([]));
@@ -114,7 +114,7 @@ describe("SingleTimer", () => {
         screen.queryByRole("menuitem", { name: "Usuń timer" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("menuitem", { name: "Odliczaj od początku" }),
+        screen.queryByRole("menuitem", { name: "Zresetuj timer" }),
       ).not.toBeInTheDocument();
     },
   );
@@ -172,7 +172,7 @@ describe("SingleTimer", () => {
       keys: "[MouseRight]",
       target: screen.getByText(/Tanroth/),
     });
-    expect(await screen.findByText("Tworzenie timera...")).toBeVisible();
+    expect(await screen.findByText("Tworzenie timera…")).toBeVisible();
     expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 });

@@ -117,7 +117,9 @@ describe("NotificationsList", () => {
       wrapper: test.wrapper,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Idę" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Zgłoś się do zbiórki" }),
+    );
 
     await waitFor(() =>
       expect(useWindowsStore.getState().chat.open).toBe(true),

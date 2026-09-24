@@ -152,9 +152,9 @@ export function AddTimerForm(props: AddTimerFormProps) {
               selectedIndex={selectedIndex}
               keyExtractor={(npc) => npc.npcId}
               renderItem={(npc, _index, isSelected) => {
-                const longname =
-                  getNpcTypeNames(npc.type)?.longname ??
-                  t("addForm.mobFallback");
+                const longname = getNpcTypeNames(npc.type)
+                  ? t(`common:npcTypes.${npc.type.toLowerCase()}`)
+                  : t("addForm.mobFallback");
 
                 const npcDetails =
                   npc.lvl > 0 && npc.prof

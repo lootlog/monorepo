@@ -3,15 +3,15 @@
     "title": "Konsola"
   },
   "actions": {
-    "infoTooltip": "! = powiadomienie, /grp = szukaj grupy"
+    "infoTooltip": "! = powiadomienie, /grp = utwórz zbiórkę"
   },
   "input": {
-    "placeholder": "Wiadomość..."
+    "placeholder": "Wiadomość…"
   },
   "suggestions": {
-    "partySearchLabel": "Szukaj grupy",
-    "partySearchDescription": "/grp [opis] - Rozpocznij szukanie grupy",
+    "partySearchLabel": "Utwórz zbiórkę",
+    "partySearchDescription": "/grp [opis] – utwórz zbiórkę",
     "clearChatLabel": "Wyczyść czat",
-    "clearChatDescription": "/clr - Wyczyść historię czatu klanu"
+    "clearChatDescription": "/clr – wyczyść historię czatu organizacji"
   }
 }

@@ -59,9 +59,9 @@ describe("SettingsTabs", () => {
     expect(tabNames).toEqual([
       "Ogólne",
       "Zakres zbierania",
-      "Lootlogi",
+      "Organizacje",
       "Wygląd",
-      "Chat",
+      "Czat",
       "Timery",
       "Powiadomienia",
       "Wykrywacz",
@@ -140,7 +140,7 @@ describe("SettingsTabs", () => {
       screen.queryByRole("tablist", { name: "Sekcje ustawień" }),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "Chat" }));
+    await user.click(screen.getByRole("tab", { name: "Czat" }));
 
     const subsections = within(
       screen.getByRole("tablist", { name: "Sekcje ustawień" }),
