@@ -13,7 +13,7 @@ import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skel
 import { useLootUnreadCounts } from "@/contexts/loot-unread-context";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { refreshCurrentUserGuilds } from "@/lib/current-user-guilds";
 import {
   useUpdateUserPreferences,
@@ -158,13 +158,12 @@ export const GuildsSelector: FC = () => {
     );
   };
 
-  const refreshGuilds = async () => {
-    try {
-      await refreshCurrentUserGuilds(queryClient);
-    } catch {
+  const refreshGuilds = useMutation({
+    mutationFn: () => refreshCurrentUserGuilds(queryClient),
+    onError: () => {
       toast.error(t("layout.guildsSelector.refreshError"));
-    }
-  };
+    },
+  });
 
   const guildList =
     isDragging || (pendingOrderKey && pendingOrderKey !== orderedGuildsKey)
@@ -250,8 +249,8 @@ export const GuildsSelector: FC = () => {
             </Reorder.Group>
             <div className="flex justify-center pb-2">
               <GuildsRefreshButton
-                isRefreshing={guildsQuery.isFetching}
-                onRefresh={() => void refreshGuilds()}
+                isRefreshing={refreshGuilds.isPending}
+                onRefresh={() => refreshGuilds.mutate()}
               />
             </div>
           </>

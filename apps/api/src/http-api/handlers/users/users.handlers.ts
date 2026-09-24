@@ -32,10 +32,11 @@ export const UsersHandlers = HttpApiBuilder.group(
           updateCurrentUserPreferences(payload),
         ),
       )
-      .handle("UsersControllerGetCurrentUserGuilds", ({ query }) =>
-        toAccountOrganizationHttpResponse(
-          getCurrentUserGuilds(query.refresh ?? false),
-        ),
+      .handle("UsersControllerGetCurrentUserGuilds", () =>
+        toAccountOrganizationHttpResponse(getCurrentUserGuilds(false)),
+      )
+      .handle("UsersControllerRefreshCurrentUserGuilds", () =>
+        toAccountOrganizationHttpResponse(getCurrentUserGuilds(true)),
       )
       .handle("UsersControllerGetCurrentUserAccessibleGuilds", () =>
         toAccountOrganizationHttpResponse(getCurrentUserAccessibleGuilds()),

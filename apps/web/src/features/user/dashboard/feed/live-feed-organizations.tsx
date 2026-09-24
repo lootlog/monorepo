@@ -20,7 +20,7 @@ type Props = {
 };
 
 export const LiveFeedOrganizations = ({ organizations }: Props) => {
-  const { data: guilds } = useUsersControllerGetCurrentUserGuilds(undefined, {
+  const { data: guilds } = useUsersControllerGetCurrentUserGuilds({
     query: { enabled: false },
   });
 

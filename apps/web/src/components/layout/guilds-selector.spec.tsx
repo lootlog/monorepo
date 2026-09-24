@@ -113,7 +113,7 @@ beforeEach(() => {
 
           const url = new URL(request.url);
 
-          if (url.searchParams.get("refresh") === "true") {
+          if (url.pathname.endsWith("/users/@me/guilds/refresh")) {
             refreshedServerGuilds = true;
           }
 
