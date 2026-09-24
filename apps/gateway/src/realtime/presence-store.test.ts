@@ -18,33 +18,85 @@ class MemoryRedis {
     ...options: Array<string | number>
   ): Promise<string | null> {
     if (options.includes("NX") && this.values.has(key)) return null;
+    const previous = this.values.get(key);
+
+    if (options.includes("XX") && previous === undefined) return null;
     this.values.set(key, value);
 
-    return "OK";
+    return options.includes("GET") ? (previous ?? null) : "OK";
   }
 
   async eval<A>(
-    _script: string,
-    _numberOfKeys: number,
+    script: string,
+    numberOfKeys: number,
     ...parameters: Array<string | number>
   ): Promise<A> {
+    // SAFETY: This Redis boundary fake returns the same numeric/string replies as the exercised scripts; real Lua is covered by Dragonfly integration tests.
+    return (await this.evaluate(script, numberOfKeys, parameters)) as A;
+  }
+
+  private async evaluate(
+    _script: string,
+    _numberOfKeys: number,
+    parameters: Array<string | number>,
+  ): Promise<string | number> {
+    const args = parameters.map(String);
+    const key = args[0]!;
+
+    if (_script.includes("-- presence:refresh")) {
+      await this.set(key, args[4]!);
+      await this.set(args[1]!, args[6]!);
+
+      if (!this.sets.get(args[2]!)?.has(args[7]!))
+        await this.sadd(args[2]!, args[7]!);
+
+      if (!this.sets.get(args[3]!)?.has(args[8]!))
+        await this.sadd(args[3]!, args[8]!);
+
+      return 1;
+    }
+
+    if (_script.includes("-- presence:offline-batch"))
+      return this.readBatch(args);
+
+    if (_script.includes("-- presence:offline-release")) {
+      if (this.values.get(key) !== args[1]) return 0;
+
+      return await this.del(key);
+    }
+
+    if (_script.includes("-- presence:offline-renew"))
+      return Number(this.values.get(key) === args[1]);
+
+    if (_script.includes("-- presence:offline-ack")) {
+      if (
+        this.values.get(key) !== args[3] ||
+        this.values.get(args[1]!) !== args[4]
+      )
+        return 0;
+      await this.del(args[1]!);
+      await this.srem(args[2]!, args[5]!);
+
+      return 1;
+    }
+
     const [
       pending,
       outbox,
       pendingIndex,
       characterIndex,
       outboxIndex,
+      lock,
       value,
       pendingMember,
       outboxMember,
       publish,
-    ] = parameters.map(String);
+      token,
+    ] = args;
 
-    if (this.values.get(pending!) !== value) {
-      // SAFETY: PresenceStore only invokes its numeric offline-claim script through this fake.
-      return 0 as A;
-    }
+    if (this.values.get(lock!) !== token) return -1;
 
+    if (this.values.get(pending!) !== value) return 0;
     this.values.delete(pending!);
     this.sets.get(pendingIndex!)?.delete(pendingMember!);
     this.sets.get(characterIndex!)?.delete(pendingMember!);
@@ -56,8 +108,20 @@ class MemoryRedis {
       this.sets.set(outboxIndex!, set);
     }
 
-    // SAFETY: The successful offline-claim script returns the numeric literal 1.
-    return 1 as A;
+    return 1;
+  }
+
+  private readBatch(args: string[]): string {
+    if (this.values.get(args[0]!) !== args[4]) return "[]";
+    const members = [...(this.sets.get(args[1]!) ?? [])];
+    const cursor = Number(this.values.get(args[2]!) ?? 0);
+    const size = Number(args[5]);
+    this.values.set(
+      args[2]!,
+      String(cursor + size >= members.length ? 0 : cursor + size),
+    );
+
+    return JSON.stringify(members.slice(cursor, cursor + size));
   }
 
   async get(key: string): Promise<string | null> {
@@ -128,8 +192,6 @@ class RecordingHub {
   ): Promise<void> {
     this.events.push(event);
   }
-
-  async refreshRegistry(): Promise<void> {}
 }
 
 class RecordingCoverage {
@@ -1398,8 +1460,11 @@ describe("game character offline grace", () => {
         numberOfKeys: number,
         ...parameters: Array<string | number>
       ): Promise<A> {
-        const operation = reconnect;
-        reconnect = undefined;
+        const operation = script.includes("-- presence:offline-claim")
+          ? reconnect
+          : undefined;
+
+        if (operation) reconnect = undefined;
         await operation?.();
 
         return super.eval<A>(script, numberOfKeys, ...parameters);

@@ -1,4 +1,4 @@
-import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
+import { prepareApiKeyEventVisibility } from "#src/realtime/api-key-event-visibility";
 import type { GuildLootEventNpc } from "@lootlog/protocol/rabbit/events";
 import { Option, Schema } from "effect";
 import {
@@ -7,7 +7,8 @@ import {
 } from "@lootlog/domain/loot-visibility";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
-import { canReadNpcSourceEvent } from "#src/realtime/npc-event-visibility";
+import { prepareNpcSourceEvent } from "#src/realtime/npc-event-visibility";
+import type { UserGuildData } from "#src/guilds/guild";
 import type { SessionData } from "#src/realtime/session";
 
 type Event = typeof ServerEvent.Type;
@@ -22,14 +23,10 @@ export const lootEventVisibilityNpcs = (
 
 const canReadLootSource = (
   session: SessionData,
-  organizationId: string,
+  guild: UserGuildData | undefined,
   npcs: readonly LootVisibilityNpc[],
   allowAdministrator: boolean,
 ): boolean => {
-  const guild = session.guilds.find(
-    (entry) => entry.guild.id === organizationId,
-  );
-
   if (!guild) return false;
 
   const permissions =
@@ -59,38 +56,81 @@ const canReadLootSource = (
   });
 };
 
+export const eventOrganizationId = (event: Event): string | undefined => {
+  switch (event.type) {
+    case "member-refresh.updated":
+    case "event.map-status-updated":
+    case "event.hero-killed":
+    case "event.respawn-window-opened":
+    case "event.respawn-window-closed":
+    case "party-ready-room.updated":
+    case "timer.created":
+    case "timer.deleted":
+    case "chat.created":
+    case "chat.updated":
+    case "chat.deleted":
+    case "notification.sent":
+      return event.data.organizationId;
+    case "loot.created":
+    case "loot.share-updated":
+    case "kills.changed":
+      return event.data.guildId;
+    case "feed.entry":
+      return event.data.guild.id;
+    default:
+      return undefined;
+  }
+};
+
+export const prepareSourceEventVisibility = (
+  event: Event,
+  sourceNpcs: readonly LootVisibilityNpc[] = [],
+) => {
+  const canReadApiKey = prepareApiKeyEventVisibility(event);
+  const canReadNpc = prepareNpcSourceEvent(event);
+
+  const npcs =
+    event.type === "loot.created" || event.type === "loot.share-updated"
+      ? lootEventVisibilityNpcs(event.data.npcs)
+      : sourceNpcs;
+
+  return (session: SessionData, guild: UserGuildData | undefined): boolean => {
+    if (!canReadApiKey(session)) return false;
+
+    if (event.type === "notification.volunteer")
+      return session.supportsNotificationVolunteer === true;
+
+    if (!canReadNpc(session, guild)) return false;
+
+    switch (event.type) {
+      case "loot.created":
+      case "loot.share-updated":
+        return canReadLootSource(session, guild, npcs, false);
+      case "kills.changed":
+      case "feed.entry":
+        if (session.platform !== "web-app" || !session.supportsFeed)
+          return false;
+
+        return canReadLootSource(
+          session,
+          guild,
+          npcs,
+          event.type === "kills.changed" || event.data.type === "kill",
+        );
+      default:
+        return true;
+    }
+  };
+};
+
 export const canReadSourceEvent = (
   session: SessionData,
   event: Event,
   sourceNpcs: readonly LootVisibilityNpc[] = [],
-): boolean => {
-  if (!canReadApiKeyEvent(session, event)) return false;
-
-  if (event.type === "notification.volunteer")
-    return session.supportsNotificationVolunteer === true;
-
-  if (!canReadNpcSourceEvent(session, event)) return false;
-
-  switch (event.type) {
-    case "loot.created":
-    case "loot.share-updated":
-      return canReadLootSource(
-        session,
-        event.data.guildId,
-        lootEventVisibilityNpcs(event.data.npcs),
-        false,
-      );
-    case "kills.changed":
-    case "feed.entry":
-      if (session.platform !== "web-app" || !session.supportsFeed) return false;
-
-      return canReadLootSource(
-        session,
-        event.type === "feed.entry" ? event.data.guild.id : event.data.guildId,
-        sourceNpcs,
-        event.type === "kills.changed" || event.data.type === "kill",
-      );
-    default:
-      return true;
-  }
-};
+): boolean =>
+  prepareSourceEventVisibility(event, sourceNpcs)(
+    session,
+    session.guilds.find(
+      (entry) => entry.guild.id === eventOrganizationId(event),
+    ),
+  );

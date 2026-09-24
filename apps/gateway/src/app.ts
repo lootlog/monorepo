@@ -166,19 +166,10 @@ class GatewayApplication extends Context.Service<
         (socket, message) => commands.rejectOverloaded(socket, message),
         (socket) =>
           Effect.suspend(() => {
-            const registryCleanup = Effect.tryPromise(() =>
-              hub.cleanupRegistry(socket.data),
-            ).pipe(
-              Effect.catchCause((error) =>
-                Effect.logError("Gateway registry cleanup failed", error),
-              ),
-            );
-
-            if (socket.data.apiKeyAccess) return registryCleanup;
+            if (socket.data.apiKeyAccess) return Effect.void;
 
             return Effect.all(
               [
-                registryCleanup,
                 activity
                   .publish("DISCONNECT_EVENT", socket.data)
                   .pipe(
@@ -200,7 +191,7 @@ class GatewayApplication extends Context.Service<
                     ),
                   ),
               ],
-              { concurrency: 3, discard: true },
+              { concurrency: 2, discard: true },
             );
           }),
         runBackground,

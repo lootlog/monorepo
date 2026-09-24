@@ -70,12 +70,8 @@ type Routing = typeof RoutingSchema.Type;
 
 const isOrganizationAdministrator = (
   session: SessionData,
-  organizationId: string,
+  guild: UserGuildData | undefined,
 ): boolean => {
-  const guild = session.guilds.find(
-    (entry) => entry.guild.id === organizationId,
-  );
-
   return (
     guild !== undefined &&
     (guild.guild.ownerId === session.discordId ||
@@ -177,7 +173,7 @@ const eventRouting = (event: NpcEvent): Routing | null => {
  * only maps the event type onto a feature.
  *
  * Owner/ADMIN bypass and the party-gathering organizer bypass are applied by
- * `canReadNpcSourceEvent` before this is asked. An undecodable routing
+ * `prepareNpcSourceEvent` before this is asked. An undecodable routing
  * envelope never reaches here: `npcRouting` returns null and the push is
  * denied.
  */
@@ -205,18 +201,15 @@ const canReadFeatureEvent = (
 
 const canReadEventHeroSource = (
   session: SessionData,
+  guild: UserGuildData | undefined,
   organizationId: string,
   source: ReturnType<typeof decodeEventHeroSource>,
 ): boolean => {
   if (Option.isNone(source) || source.value.guildId !== organizationId)
     return false;
 
-  const guild = session.guilds.find(
-    (entry) => entry.guild.id === organizationId,
-  );
-
   if (!guild) return false;
-  const administrator = isOrganizationAdministrator(session, organizationId);
+  const administrator = isOrganizationAdministrator(session, guild);
 
   const permissions = administrator
     ? [Permission.ADMIN]
@@ -246,42 +239,27 @@ const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   );
 };
 
-const canReadOwnReadyRoom = (
-  session: SessionData,
-  event: Extract<NpcEvent, { type: "party-ready-room.updated" }>,
-  guild: UserGuildData,
-): boolean => {
-  const update = decodeReadyRoomOrganizer(event.data.payload);
-
-  return (
-    Option.isSome(update) &&
-    update.value.projection.guildIds.includes(event.data.organizationId) &&
-    canManageOwnPartyGathering(
-      guild.roles,
-      update.value.projection.organizerDiscordId,
-      session.discordId,
-    )
-  );
-};
-
-export const canReadNpcSourceEvent = (
-  session: SessionData,
+export const prepareNpcSourceEvent = (
   event: Event,
-): boolean => {
-  if (isUnscopedReadyRoomUpdate(event)) return true;
+): ((session: SessionData, guild: UserGuildData | undefined) => boolean) => {
+  if (isUnscopedReadyRoomUpdate(event)) return () => true;
 
   switch (event.type) {
     case "member-refresh.updated":
-      return isOrganizationAdministrator(session, event.data.organizationId);
+      return (session, guild) => isOrganizationAdministrator(session, guild);
     case "event.map-status-updated":
     case "event.hero-killed":
     case "event.respawn-window-opened":
     case "event.respawn-window-closed": {
-      return canReadEventHeroSource(
-        session,
-        event.data.organizationId,
-        decodeEventHeroSource(event.data.payload),
-      );
+      const source = decodeEventHeroSource(event.data.payload);
+
+      return (session, guild) =>
+        canReadEventHeroSource(
+          session,
+          guild,
+          event.data.organizationId,
+          source,
+        );
     }
 
     case "party-ready-room.updated":
@@ -291,27 +269,36 @@ export const canReadNpcSourceEvent = (
     case "chat.updated":
     case "chat.deleted":
     case "notification.sent": {
-      const guild = session.guilds.find(
-        (entry) => entry.guild.id === event.data.organizationId,
-      );
-
       const routing = eventRouting(event);
 
-      if (!guild || !routing) return false;
+      const organizer =
+        event.type === "party-ready-room.updated"
+          ? decodeReadyRoomOrganizer(event.data.payload)
+          : Option.none();
 
-      if (isOrganizationAdministrator(session, event.data.organizationId))
-        return true;
+      return (session, guild) => {
+        if (!guild || !routing) return false;
 
-      if (
-        event.type === "party-ready-room.updated" &&
-        canReadOwnReadyRoom(session, event, guild)
-      )
-        return true;
+        if (isOrganizationAdministrator(session, guild)) return true;
 
-      return canReadFeatureEvent(guild, event, routing);
+        if (
+          Option.isSome(organizer) &&
+          organizer.value.projection.guildIds.includes(
+            event.data.organizationId,
+          ) &&
+          canManageOwnPartyGathering(
+            guild.roles,
+            organizer.value.projection.organizerDiscordId,
+            session.discordId,
+          )
+        )
+          return true;
+
+        return canReadFeatureEvent(guild, event, routing);
+      };
     }
 
     default:
-      return true;
+      return () => true;
   }
 };

@@ -1,6 +1,7 @@
+import * as npcRouting from "@lootlog/domain/npc-routing";
 import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
 import { Permission } from "@lootlog/schema/permissions";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { decodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
 import type {
   RabbitDelivery,
@@ -20,16 +21,6 @@ class FederationBus {
 }
 
 class FakeRedisStore {
-  readonly command = {
-    set: async () => "OK",
-    del: async () => 1,
-    sadd: async () => 1,
-    srem: async () => 1,
-    expire: async () => 1,
-    smembers: async () => [],
-    mget: async () => [],
-  };
-
   constructor(private readonly bus: FederationBus) {}
 
   async subscribe(
@@ -366,7 +357,6 @@ describe("RealtimeHub federation", () => {
 
       if (!target) throw new Error("Missing lifecycle target");
       hub.detach(target.socket);
-      await hub.cleanupRegistry(target.socket.data);
       // An asynchronous subscription request may finish after the socket closes.
       hub.subscribe(target.socket, otherScope);
     }
@@ -765,7 +755,6 @@ describe("RealtimeHub federation", () => {
 
       if (!target) throw new Error("Missing identity target");
       hub.detach(target.socket);
-      await hub.cleanupRegistry(target.socket.data);
       expect(hub.getLocalSocketsForUser("user-shared")).toHaveLength(1);
     }
 
@@ -1760,116 +1749,61 @@ test("API key user-targeted organization events stay inside selected current org
   expect(target.sent).toHaveLength(1);
 });
 
-test("disconnect detaches local delivery before ordered registry cleanup waits for registration", async () => {
-  const redis = new FakeRedisStore(new FederationBus());
-  const write = Promise.withResolvers<void>();
-  let registered = false;
-  redis.command.set = async () => {
-    await write.promise;
-    registered = true;
+// Regresses the 300 identical routing decodes that used to accompany one broadcast.
+test("resolves timer routing once while preserving recipient authorization across a large audience", async () => {
+  const routing = spyOn(npcRouting, "getNpcRoutingTier");
 
-    return "OK";
-  };
+  try {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()),
+    );
 
-  redis.command.del = async () => {
-    registered = false;
+    const scope = {
+      topic: "organization.timers",
+      organizationId: "organization-1",
+    } as const;
 
-    return 1;
-  };
+    const targets = Array.from({ length: 300 }, (_, index) => {
+      const target = makeSocket({
+        ...makeSession(String(index)),
+        guilds: [
+          {
+            guild: { id: scope.organizationId, ownerId: "owner" },
+            roles: [
+              {
+                id: "role",
+                lvlRangeFrom: 0,
+                lvlRangeTo: index % 2 === 0 ? 500 : 50,
+                permissions: [
+                  Permission.LOOTLOG_TIMERS_READ,
+                  Permission.LOOTLOG_TIMERS_HEROES_READ,
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
-  const tasks: Array<Effect.Effect<void, unknown>> = [];
+      hub.register(target.socket);
+      hub.subscribe(target.socket, scope);
 
-  const hub = new RealtimeHub(config, redis, (_label, task) =>
-    tasks.push(task),
-  );
-
-  const target = makeSocket(makeSession("closing"));
-  hub.register(target.socket);
-
-  const event = {
-    v: 1,
-    type: "reservation.created",
-    data: { organizationId: "123", payload: {} },
-  } as const;
-
-  await hub.publishToUser(target.socket.data.userId, event);
-  expect(target.sent).toHaveLength(1);
-  hub.detach(target.socket);
-  await hub.publishToUser(target.socket.data.userId, event);
-  expect(target.sent).toHaveLength(1);
-  expect(hub.getLocalSocketsForUser(target.socket.data.userId)).toEqual([]);
-  const cleaned = hub.cleanupRegistry(target.socket.data);
-  write.resolve();
-  await cleaned;
-  await Promise.all(tasks.map((task) => Effect.runPromise(task)));
-  expect(registered).toBe(false);
-});
-
-test("registry cleanup waits for remaining registration writes after one fails", async () => {
-  const redis = new FakeRedisStore(new FederationBus());
-  const write = Promise.withResolvers<void>();
-  let registered = false;
-  redis.command.set = async () => {
-    await write.promise;
-    registered = true;
-
-    return "OK";
-  };
-
-  redis.command.sadd = async () => {
-    throw new Error("Redis failure");
-  };
-
-  redis.command.del = async () => {
-    registered = false;
-
-    return 1;
-  };
-
-  const tasks: Array<Effect.Effect<void, unknown>> = [];
-
-  const hub = new RealtimeHub(config, redis, (_label, task) =>
-    tasks.push(task),
-  );
-
-  const target = makeSocket(makeSession("failed-registration"));
-  hub.register(target.socket);
-  hub.detach(target.socket);
-  const cleaned = hub.cleanupRegistry(target.socket.data);
-  write.resolve();
-  await cleaned;
-  await Promise.all(tasks.map((task) => Effect.runPromiseExit(task)));
-  expect(registered).toBe(false);
-});
-
-test("failed registry deletion retains cleanup until remaining Redis work settles", async () => {
-  const redis = new FakeRedisStore(new FederationBus());
-  const removal = Promise.withResolvers<number>();
-  const started = Promise.withResolvers<void>();
-  redis.command.del = async () => {
-    throw new Error("Redis deletion failed");
-  };
-
-  redis.command.srem = () => {
-    started.resolve();
-
-    return removal.promise;
-  };
-
-  const hub = new RealtimeHub(config, redis);
-  let settled = false;
-
-  const cleanup = hub
-    .cleanupRegistry(makeSession("failed-cleanup"))
-    .catch((error) => {
-      settled = true;
-
-      return error;
+      return target;
     });
 
-  await started.promise;
-  await new Promise<void>((resolve) => setImmediate(resolve));
-  expect(settled).toBe(false);
-  removal.resolve(1);
-  expect(await cleanup).toEqual(new Error("Redis deletion failed"));
+    await hub.publishToScope(scope, {
+      v: 1,
+      type: "timer.created",
+      data: {
+        organizationId: scope.organizationId,
+        payload: { npc: { type: "HERO", lvl: 100 } },
+      },
+    });
+    expect(routing).toHaveBeenCalledTimes(1);
+
+    for (const [index, target] of targets.entries())
+      expect(target.sent).toHaveLength(index % 2 === 0 ? 1 : 0);
+  } finally {
+    routing.mockRestore();
+  }
 });

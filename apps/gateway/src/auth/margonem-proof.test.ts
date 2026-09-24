@@ -1,5 +1,7 @@
 import { httpClientFromResponses } from "../../test/http-fixtures.js";
 import { describe, expect, mock, test } from "bun:test";
+import { generateKeyPairSync, sign } from "node:crypto";
+import { TestClock } from "effect/testing";
 import { Effect, Fiber } from "effect";
 import { makeMargonemProofVerifier } from "./margonem-proof.js";
 
@@ -88,15 +90,38 @@ describe("Margonem proof verifier", () => {
     expect(get).toHaveBeenCalledTimes(2);
   });
 
-  test("propagates interruption to the signing-key request", async () => {
-    let interrupted = false;
+  test("shares a cold fetch and preserves it when one joining socket disconnects", async () => {
+    const responseReady = Promise.withResolvers<Response>();
+    const get = mock(() => Effect.promise(() => responseReady.promise));
 
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
+
+    const first = Effect.runFork(verifier.verify(proofOptions()));
+
+    while (get.mock.calls.length === 0) await Bun.sleep(1);
+    const other = Effect.runPromise(verifier.verify(proofOptions()));
+    await Effect.runPromise(Fiber.interrupt(first));
+    responseReady.resolve(
+      response(
+        new TextEncoder().encode("-----BEGIN PUBLIC KEY-----\ninvalid\n"),
+      ),
+    );
+    expect(await other).toEqual({
+      valid: false,
+      reason: "invalid proof signature",
+    });
+    // One shared cold request and at most one shared forced refresh.
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  test("an invalid-signature join storm performs only one forced refresh per minute", async () => {
     const get = mock(() =>
-      Effect.never.pipe(
-        Effect.onInterrupt(() =>
-          Effect.sync(() => {
-            interrupted = true;
-          }),
+      Effect.succeed(
+        response(
+          new TextEncoder().encode("-----BEGIN PUBLIC KEY-----\ninvalid\n"),
         ),
       ),
     );
@@ -106,12 +131,77 @@ describe("Margonem proof verifier", () => {
       httpClientFromResponses(get),
     );
 
-    const fiber = Effect.runFork(verifier.verify(proofOptions()));
+    const results = await Promise.all(
+      Array.from({ length: 100 }, () =>
+        Effect.runPromise(verifier.verify(proofOptions())),
+      ),
+    );
 
-    while (get.mock.calls.length === 0) await Promise.resolve();
+    expect(results.every((result) => !result.valid)).toBe(true);
+    expect(get).toHaveBeenCalledTimes(2);
+    await Effect.runPromise(verifier.verify(proofOptions()));
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+  test("accepts signing-key rotation after the forced refresh window, including a failed refresh", async () => {
+    const oldPair = generateKeyPairSync("rsa", { modulusLength: 1024 });
+    const newPair = generateKeyPairSync("rsa", { modulusLength: 1024 });
 
-    await Effect.runPromise(Fiber.interrupt(fiber));
+    let currentPem = oldPair.publicKey
+      .export({ type: "spki", format: "pem" })
+      .toString();
 
-    expect(interrupted).toBe(true);
+    let unavailable = false;
+
+    const get = mock(() =>
+      unavailable
+        ? Effect.succeed(new Response(null, { status: 503 }))
+        : Effect.succeed(new Response(currentPem)),
+    );
+
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
+
+    const options = proofOptions();
+
+    const signed = (key: typeof oldPair.privateKey) => ({
+      ...options,
+      proof: {
+        ...options.proof,
+        signatureBase64: sign(
+          "sha256",
+          Buffer.from(options.proof.validatedString),
+          key,
+        ).toString("base64"),
+      },
+    });
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* TestClock.setTime(options.proof.ts);
+        expect(yield* verifier.verify(signed(oldPair.privateKey))).toEqual({
+          valid: true,
+        });
+        unavailable = true;
+        expect((yield* verifier.verify(signed(newPair.privateKey))).valid).toBe(
+          false,
+        );
+        expect(get).toHaveBeenCalledTimes(2);
+        currentPem = newPair.publicKey
+          .export({ type: "spki", format: "pem" })
+          .toString();
+        unavailable = false;
+        expect((yield* verifier.verify(signed(newPair.privateKey))).valid).toBe(
+          false,
+        );
+        expect(get).toHaveBeenCalledTimes(2);
+        yield* TestClock.adjust(60_000);
+        expect(yield* verifier.verify(signed(newPair.privateKey))).toEqual({
+          valid: true,
+        });
+        expect(get).toHaveBeenCalledTimes(3);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
   });
 });

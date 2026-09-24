@@ -104,7 +104,6 @@ for (const scenario of [
   "map.pings.wildcard",
 ] as const) {
   let deliveries = 0;
-  // Registry background writes are outside this routing/codec benchmark.
   const hub = new RealtimeHub(config, redis, () => {});
 
   for (let index = 0; index < connections; index++) {
