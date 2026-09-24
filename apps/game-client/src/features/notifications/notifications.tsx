@@ -1,6 +1,6 @@
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NotificationsList } from "@/features/notifications/components/notifications-list";
 import { useNotifications } from "@/features/notifications/hooks/use-notifications";
@@ -58,12 +58,9 @@ export const Notifications = () => {
       id="notifications"
       title={t("window.title")}
       actions=<>
-        <WindowActionButton
-          label={t("actions.clearAll")}
-          onClick={clearNotifications}
-        >
+        <IconButton label={t("actions.clearAll")} onClick={clearNotifications}>
           <ListX size={14} aria-hidden="true" />
-        </WindowActionButton>
+        </IconButton>
         <WindowMaxHeightAction
           currentMaxHeight={resolvedMaxContentHeight}
           isArmed={isMaxHeightAdjustmentArmed}

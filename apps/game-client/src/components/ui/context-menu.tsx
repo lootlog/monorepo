@@ -81,4 +81,42 @@ const ContextMenuItem = React.forwardRef<HTMLElement, ContextMenuItemProps>(
 
 ContextMenuItem.displayName = "ContextMenuItem";
 
-export { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem };
+/**
+ * Opens the context menu whose trigger contains `element`, anchored under
+ * the element's left edge, as a right-click there would.
+ */
+const openContextMenuFrom = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+
+  element.dispatchEvent(
+    new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: rect.left,
+      clientY: rect.bottom,
+    }),
+  );
+};
+
+/**
+ * Keyboard equivalent of a right-click for a focusable trigger: the
+ * ContextMenu key or Shift+F10 opens its menu. Keys pressed inside the
+ * trigger's own controls are left to them.
+ */
+const openContextMenuOnKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+  if (event.target !== event.currentTarget) return;
+
+  if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10"))
+    return;
+  event.preventDefault();
+  openContextMenuFrom(event.currentTarget);
+};
+
+export {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  openContextMenuFrom,
+  openContextMenuOnKeyDown,
+};

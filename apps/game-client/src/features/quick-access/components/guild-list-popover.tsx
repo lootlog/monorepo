@@ -37,8 +37,10 @@ export const GuildListPopover = () => {
       <PopoverTrigger asChild>
         <QuickAccessButton
           label={t("guildPopover.lootlogPage")}
-          icon=<SquareArrowOutUpRight size={16} aria-hidden="true" />
-          active={open}
+          icon=<SquareArrowOutUpRight
+            aria-hidden="true"
+            className="ll:size-4"
+          />
         />
       </PopoverTrigger>
 

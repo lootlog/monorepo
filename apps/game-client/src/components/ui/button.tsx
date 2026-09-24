@@ -6,7 +6,13 @@ import { Spinner } from "@/components/ui/spinner";
 
 /**
  * shadcn button variants on the game client's compact scale. `menu` is the
- * left-aligned item used inside popover menus.
+ * left-aligned item used inside popover menus; `quiet` is the icon-only action
+ * of title bars, toolbars and list rows, lit while its toggle is pressed or
+ * its popup is expanded.
+ *
+ * An icon at either edge of a labelled button pulls into the padding with a
+ * negative margin instead of a `:has(> svg)` padding rule: the game client
+ * stylesheet is matched against every element the game inserts.
  */
 const buttonVariants = cva(
   "ll:inline-flex ll:shrink-0 ll:items-center ll:justify-center ll:gap-1.5 ll:whitespace-nowrap ll:rounded-sm ll:border ll:border-transparent ll:text-[13px] ll:font-medium ll:transition-[background-color,color,border-color,box-shadow] ll:outline-none ll:disabled:pointer-events-none ll:disabled:opacity-50 ll:focus-visible:border-ring ll:focus-visible:ring-[3px] ll:focus-visible:ring-ring/50 ll:aria-invalid:border-destructive ll:aria-invalid:ring-destructive/20 ll:[&_svg]:pointer-events-none ll:[&_svg]:shrink-0 ll:[&_svg:not([class*=size-])]:size-3.5 ll-custom-cursor-pointer",
@@ -24,12 +30,16 @@ const buttonVariants = cva(
         ghost:
           "ll:text-foreground ll:hover:bg-accent/50 ll:hover:text-accent-foreground",
         link: "ll:text-primary ll:underline-offset-4 ll:hover:underline",
+        quiet:
+          "ll:text-gray-300 ll:hover:bg-white/10 ll:hover:text-white ll:aria-expanded:bg-white/15 ll:aria-expanded:text-white ll:aria-pressed:bg-white/15 ll:aria-pressed:text-white ll:aria-pressed:shadow-[inset_0_-2px_0_var(--ll-color-blue-400)]",
+        "quiet-destructive": "ll:text-destructive ll:hover:bg-destructive/10",
         menu: "ll:h-auto ll:min-h-7 ll:justify-start ll:px-2 ll:py-1.5 ll:text-xs ll:font-semibold ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:disabled:text-muted-foreground",
       },
       size: {
-        default: "ll:h-8 ll:px-3 ll:has-[>svg]:px-2.5",
-        sm: "ll:h-7 ll:px-2 ll:text-xs ll:has-[>svg]:px-1.5",
-        xs: "ll:h-6 ll:px-1.5 ll:text-xs ll:has-[>svg]:px-1",
+        default:
+          "ll:h-8 ll:px-3 ll:[&>svg:first-child]:-ml-0.5 ll:[&>svg:last-child]:-mr-0.5",
+        sm: "ll:h-7 ll:px-2 ll:text-xs ll:[&>svg:first-child]:-ml-0.5 ll:[&>svg:last-child]:-mr-0.5",
+        xs: "ll:h-6 ll:px-1.5 ll:text-xs ll:[&>svg:first-child]:-ml-0.5 ll:[&>svg:last-child]:-mr-0.5",
         icon: "ll:size-8",
         "icon-sm": "ll:size-7",
         "icon-xs": "ll:size-6",

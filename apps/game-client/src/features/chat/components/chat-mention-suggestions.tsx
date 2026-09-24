@@ -168,7 +168,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
           </div>
         </ScrollArea>
       )}
-      <div className="ll:border-x-0 ll:border-b-0 ll:border-t ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[9px] ll:text-neutral-400">
+      <div className="ll:border-x-0 ll:border-b-0 ll:border-t ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
         {t("input.suggestionKeyboardHint")}
       </div>
     </div>

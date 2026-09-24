@@ -2,7 +2,7 @@ import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, RotateCcw } from "lucide-react";
 import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface AutocompleteSuggestionsProps<T> {
   items: T[];
@@ -69,16 +69,9 @@ export const AutocompleteSuggestions = <T,>({
       >
         <span>{errorMessage}</span>
         {onRetry ? (
-          <Button
-            size="xs"
-            aria-label={t("actions.retry")}
-            className="ll:size-5 ll:p-0"
-            onClick={onRetry}
-            type="button"
-            variant="ghost"
-          >
-            <RotateCcw aria-hidden className="ll:size-3" />
-          </Button>
+          <IconButton label={t("actions.retry")} onClick={onRetry}>
+            <RotateCcw aria-hidden />
+          </IconButton>
         ) : null}
       </div>
     );

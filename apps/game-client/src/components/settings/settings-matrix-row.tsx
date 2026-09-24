@@ -1,6 +1,14 @@
 import { SettingsMatrixHoveredColumnContext } from "@/components/settings/settings-matrix";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "cn";
-import { useContext, type FC, type MouseEvent, type ReactNode } from "react";
+import {
+  isValidElement,
+  useContext,
+  type ComponentProps,
+  type FC,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 
 type SettingsMatrixRowProps = {
   /** Category name; usually an NpcTypeChip. */
@@ -38,6 +46,15 @@ const forwardCellClick = (event: MouseEvent<HTMLTableCellElement>) => {
   toggle?.click();
 };
 
+/**
+ * Whether a click on the cell toggles its switch, read from the cell element
+ * instead of a `:has()` selector, which the game client stylesheet must avoid.
+ */
+const hasEnabledSwitch = (cell: ReactNode) =>
+  isValidElement<ComponentProps<typeof Switch>>(cell) &&
+  cell.type === Switch &&
+  !cell.props.disabled;
+
 /** One category of a SettingsMatrix: name cell plus one cell per column. */
 export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
   title,
@@ -69,7 +86,7 @@ export const SettingsMatrixRow: FC<SettingsMatrixRowProps> = ({
           onClick={forwardCellClick}
           className={cn(
             "ll:h-9 ll:p-0 ll:text-center ll:align-middle ll:transition-colors",
-            "ll:has-[[data-slot=switch]:not([data-disabled])]:cursor-pointer",
+            hasEnabledSwitch(cell) && "ll:cursor-pointer",
             index === 0 &&
               "ll:border-0 ll:border-e ll:border-solid ll:border-border",
             hoveredColumn === index && "ll:bg-white/5",

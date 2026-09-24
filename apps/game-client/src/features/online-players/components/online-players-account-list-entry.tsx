@@ -4,8 +4,10 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  openContextMenuOnKeyDown,
 } from "@/components/ui/context-menu";
-import { Button } from "@/components/ui/button";
+import { ContextMenuMoreButton } from "@/components/ui/context-menu-more-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { ListRow } from "@/components/list-row";
 import {
   Tooltip,
@@ -121,11 +123,16 @@ const resolveOnlinePlayerActionState = ({
     playerClanId === heroClanId;
 
   const canUseCharacterActions = characterId > 0 && accountId > 0;
+  const canAddFriend = characterId > 0 && !isSelf && !isFriend;
+
+  const canShowGameContextActions =
+    gameInterface === "ni" && canUseCharacterActions;
 
   return {
-    canAddFriend: characterId > 0 && !isSelf && !isFriend,
+    canAddFriend,
     canInviteToParty: characterId > 0 && !isSelf && !isPartyMember,
-    canShowGameContextActions: gameInterface === "ni" && canUseCharacterActions,
+    canShowGameContextActions,
+    hasContextActions: canShowGameContextActions || canAddFriend,
     isSameClan,
     isSelf,
   };
@@ -162,6 +169,7 @@ export const OnlinePlayersAccountListEntry: FC<
     canAddFriend,
     canInviteToParty,
     canShowGameContextActions,
+    hasContextActions,
     isSameClan,
     isSelf,
   } = resolveOnlinePlayerActionState({
@@ -218,9 +226,13 @@ export const OnlinePlayersAccountListEntry: FC<
   return (
     <ContextMenu>
       <Tooltip>
-        <ContextMenuTrigger asChild>
+        <ContextMenuTrigger
+          asChild
+          tabIndex={0}
+          onKeyDown={openContextMenuOnKeyDown}
+        >
           <TooltipTrigger asChild>
-            <span className="ll:block ll:w-full">
+            <span className="ll:group/player ll:block ll:w-full ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
               <ListRow
                 className="ll:justify-between ll:py-0.5"
                 fill={getHighlightFill(relation, presence.isAfk)}
@@ -248,19 +260,20 @@ export const OnlinePlayersAccountListEntry: FC<
                     </span>
                   </span>
                 </span>
-                {canInviteToParty ? (
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    type="button"
-                    className="ll:size-5 ll:shrink-0 ll:bg-green-500/20 ll:p-0 ll:text-green-300 ll:shadow-[inset_0_0_0_1px_rgb(74_222_128/0.4)] ll:hover:bg-green-500/35 ll:hover:text-green-200"
-                    onClick={handleInviteToParty}
-                    onDoubleClick={(event) => event.stopPropagation()}
-                    title={t("actions.inviteParty")}
-                  >
-                    <Plus aria-hidden="true" className="ll:size-3.5" />
-                  </Button>
-                ) : null}
+                <span className="ll:flex ll:shrink-0 ll:items-center">
+                  {hasContextActions ? (
+                    <ContextMenuMoreButton className="ll:opacity-0 ll:group-hover/player:opacity-100 ll:group-focus-within/player:opacity-100" />
+                  ) : null}
+                  {canInviteToParty ? (
+                    <IconButton
+                      label={t("actions.inviteParty")}
+                      onClick={handleInviteToParty}
+                      onDoubleClick={(event) => event.stopPropagation()}
+                    >
+                      <Plus aria-hidden="true" className="ll:text-green-300" />
+                    </IconButton>
+                  ) : null}
+                </span>
               </ListRow>
             </span>
           </TooltipTrigger>
@@ -276,7 +289,7 @@ export const OnlinePlayersAccountListEntry: FC<
           />
         </TooltipContent>
       </Tooltip>
-      {canShowGameContextActions || canAddFriend ? (
+      {hasContextActions ? (
         <ContextMenuContent className="ll:w-44 ll:flex ll:flex-col">
           {canShowGameContextActions ? (
             <>

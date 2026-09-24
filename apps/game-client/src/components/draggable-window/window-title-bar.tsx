@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Blend, Lock, Unlock, X } from "lucide-react";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import type { WindowOpacity } from "@/store/windows.store";
 import { useTranslation } from "react-i18next";
 
@@ -58,7 +58,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       style={{ touchAction: "none" }}
     >
       <div
-        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start"
+        className="ll:flex ll:items-center ll:justify-self-start"
         data-ll-draggable="false"
       >
         {actions}
@@ -70,10 +70,10 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         {title}
       </p>
       <div
-        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-end"
+        className="ll:flex ll:items-center ll:justify-self-end"
         data-ll-draggable="false"
       >
-        <WindowActionButton
+        <IconButton
           label={t("windowControls.opacityLevel", {
             level: opacity,
             max: OPACITY_LEVELS.length,
@@ -81,25 +81,21 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
           onClick={handleOpacityChange}
         >
           <Blend size={ICON_SIZE} aria-hidden="true" />
-        </WindowActionButton>
-        <WindowActionButton
-          label={lockLabel}
-          active={isLocked}
-          onClick={onLockToggle}
-        >
+        </IconButton>
+        <IconButton label={lockLabel} active={isLocked} onClick={onLockToggle}>
           {isLocked ? (
             <Lock size={ICON_SIZE} aria-hidden="true" />
           ) : (
             <Unlock size={ICON_SIZE} aria-hidden="true" />
           )}
-        </WindowActionButton>
+        </IconButton>
         {closable && (
-          <WindowActionButton
+          <IconButton
             label={t("windowControls.closeWindow")}
             onClick={() => onClose?.()}
           >
-            <X size={16} aria-hidden="true" />
-          </WindowActionButton>
+            <X aria-hidden="true" className="ll:size-4" />
+          </IconButton>
         )}
       </div>
     </div>

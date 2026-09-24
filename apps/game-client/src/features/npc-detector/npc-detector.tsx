@@ -1,6 +1,6 @@
 import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
@@ -71,9 +71,9 @@ export const NpcDetector = () => {
       id="npc-detector"
       title={t("window.title")}
       actions=<>
-        <WindowActionButton label={t("actions.clearAll")} onClick={clearNpcs}>
+        <IconButton label={t("actions.clearAll")} onClick={clearNpcs}>
           <ListX size={14} aria-hidden="true" />
-        </WindowActionButton>
+        </IconButton>
         <WindowMaxHeightAction
           currentMaxHeight={resolvedMaxContentHeight}
           isArmed={isMaxHeightAdjustmentArmed}

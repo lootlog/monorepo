@@ -58,6 +58,18 @@ describe("timers controls", () => {
       minLvl: 0,
       maxLvl: 500,
     });
+    // Lowering the upper bound under the lower one drags the lower one along
+    // instead of leaving a range that matches no timer.
+    fireEvent.change(screen.getByLabelText("Poziom od"), {
+      target: { value: "300" },
+    });
+    fireEvent.change(screen.getByLabelText("Poziom do"), {
+      target: { value: "100" },
+    });
+    expect(useTimersStore.getState().timersFilters["guild-1"]).toMatchObject({
+      minLvl: 100,
+      maxLvl: 100,
+    });
     await user.click(screen.getByRole("button", { name: "Typy potworów" }));
     await user.click(await screen.findByRole("button", { name: "Heros" }));
     expect(
@@ -75,7 +87,7 @@ describe("timers controls", () => {
     ).toEqual(["red", "custom-1"]);
   });
 
-  it("selects only the right-clicked npc type and preserves the other filters", async () => {
+  it("selects only one npc type by right-click or its visible button and preserves the other filters", async () => {
     const user = userEvent.setup();
     useTimersStore.getState().setTimersFilters("guild-1", {
       ...useTimersStore.getState().timersFilters["guild-1"],
@@ -98,6 +110,12 @@ describe("timers controls", () => {
       selectedNpcTypes: [NpcType.ELITE2],
       selectedColors: ["red"],
     });
+    await user.click(
+      screen.getByRole("button", { name: "Pokaż tylko: Tytan" }),
+    );
+    expect(
+      useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
+    ).toEqual([NpcType.TITAN]);
   });
 
   it("dispatches toolbar actions in regular and under-bag layouts using real controls", async () => {
