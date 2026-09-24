@@ -2,6 +2,7 @@ import {
   GatewayMetrics,
   GatewayRuntimeMetrics,
 } from "#src/realtime/gateway-metrics";
+import { GatewayConnectionMetrics } from "#src/realtime/connection-metrics";
 import { OnlineHistory } from "#src/realtime/online-history";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -479,12 +480,15 @@ export const createGatewayFetch =
 
 export const createGatewayWebSocket = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
+  metrics = new GatewayConnectionMetrics(),
 ) =>
   ({
     perMessageDeflate: false,
     maxPayloadLength: 256 * 1_024,
     idleTimeout: 70,
     open(socket: GatewaySocket) {
+      metrics.open(socket);
+
       if (!application.ingress.open(socket)) {
         socket.close(1013, "connection capacity exceeded");
 
@@ -496,7 +500,8 @@ export const createGatewayWebSocket = (
     message(socket: GatewaySocket, message: string | Buffer) {
       application.ingress.message(socket, message);
     },
-    close(socket: GatewaySocket) {
+    close(socket: GatewaySocket, code = 1005) {
+      metrics.close(socket, code);
       application.hub.detach(socket);
       application.ingress.close(socket);
     },
