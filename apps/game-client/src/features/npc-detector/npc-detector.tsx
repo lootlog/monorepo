@@ -3,16 +3,12 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
-import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
+import { useDetectorWindowNpcs } from "@/features/npc-detector/hooks/use-detector-window-npcs";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import { getDetectorNpcSettings } from "@lootlog/schema/account-preferences";
-import { NpcType } from "@/api/npcs.api";
 import { ListX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useShallow } from "zustand/react/shallow";
 import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 
 export const NpcDetector = () => {
@@ -34,14 +30,8 @@ export const NpcDetector = () => {
     (state) => state.setMaxContentHeight,
   );
 
-  const { npcs, clearNpcs } = useNpcDetectorStore(
-    useShallow((state) => ({
-      npcs: state.npcs,
-      clearNpcs: state.clearNpcs,
-    })),
-  );
-
-  const { settings } = useCurrentGameAccountDetectorSettings();
+  const clearNpcs = useNpcDetectorStore((state) => state.clearNpcs);
+  const { npcs: filteredNpcs, settings } = useDetectorWindowNpcs();
 
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
@@ -57,13 +47,6 @@ export const NpcDetector = () => {
   // the map changes or the player clears them, and the next detection
   // reopens the window with them.
   const handleClose = () => setOpen("npc-detector", false);
-
-  const filteredNpcs = npcs.filter((npc) => {
-    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-    const settingsByNpcType = getDetectorNpcSettings(settings, npcType);
-
-    return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
-  });
 
   return (
     <DraggableWindow
