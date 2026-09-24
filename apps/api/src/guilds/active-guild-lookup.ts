@@ -2,7 +2,7 @@ import { eq, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { guildTable } from "#src/database/drizzle/schema";
-import { isOrganizationIdLike } from "./vanity-url.js";
+import { isOrganizationIdLike } from "@lootlog/domain/organization-vanity-url";
 
 /**
  * Picks the Organization a path segment refers to. The id owner always wins,
