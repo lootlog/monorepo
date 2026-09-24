@@ -7,8 +7,6 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 A discipline for hard bugs. Scale the investigation to the defect and explain when a phase is impractical or unnecessary. Follow `AGENTS.md` for permissions, running applications, and required verification.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
-
 ## Phase 1 — Build a feedback loop
 
 Prefer a focused pass/fail signal that catches the reported bug. Use code inspection to locate the relevant path and build the cheapest useful reproduction; scale setup effort to the defect and available environment.
