@@ -26,7 +26,7 @@ Follow `AGENTS.md` and the repository lint configuration first.
 
 ## React
 
-- Let React Compiler handle memoization. Do not add `memo`, `useMemo`, or `useCallback`.
+- Let React Compiler handle memoization. Add `memo`, `useMemo`, or `useCallback` only for a measured integration constraint.
 - Keep one component per file.
 - Route all static user-facing text through i18n.
 
