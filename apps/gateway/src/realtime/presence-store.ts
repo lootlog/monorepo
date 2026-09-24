@@ -8,13 +8,14 @@ import {
   type PublishedPresence,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
+import { SingleFlight } from "#src/platform/single-flight";
 import { yieldToEventLoop } from "#src/platform/background-tasks";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
 import type { CoveragePublisher } from "#src/rabbit/coverage-publisher";
-import { Deferred, Effect, Schedule, Schema } from "effect";
+import { Effect, Option, Schedule, Schema } from "effect";
 import {
   PresenceNotPublished,
   PresenceSessionMismatch,
@@ -46,7 +47,15 @@ type Snapshot = typeof PresenceSnapshot.Type;
 
 type Event = typeof ServerEvent.Type;
 
+type OfflineRecord = {
+  readonly key: string;
+  readonly value: string;
+  readonly event: GameCharacterOffline;
+};
+
 const OFFLINE_PENDING_INDEX = "presence:offline:pending";
+
+const OFFLINE_DUE_INDEX = "presence:offline:due";
 
 const OFFLINE_OUTBOX_INDEX = "presence:offline:outbox";
 
@@ -56,12 +65,11 @@ const OFFLINE_BATCH_SIZE = 100;
 
 const OFFLINE_LEASE_MS = 30_000;
 
-// Keep the cursor in Redis so competing replicas continue the same fair scan.
-// Values are captured before reading Organizations; later departures must never
-// be decided from this batch's earlier positive online observations.
+// Keep the legacy set while older replicas can still schedule departures. Its
+// bounded scan backfills the due queue; new writes enter both indexes atomically.
 const READ_OFFLINE_BATCH = `
 -- presence:offline-batch
-if redis.call('GET', KEYS[1]) ~= ARGV[1] then return '[]' end
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return '{"keys":[],"complete":true}' end
 local members = redis.call('LRANGE', KEYS[4], 0, tonumber(ARGV[2]) - 1)
 if #members > 0 then
   redis.call('LTRIM', KEYS[4], #members, -1)
@@ -76,8 +84,59 @@ for index, member in ipairs(members) do
   if index > tonumber(ARGV[2]) then redis.call('RPUSH', KEYS[4], member)
   else table.insert(result, member) end
 end
-if #result == 0 then return '[]' end
-return cjson.encode(result)
+local complete = (redis.call('GET', KEYS[3]) or '0') == '0' and redis.call('LLEN', KEYS[4]) == 0
+return '{"keys":' .. (#result == 0 and '[]' or cjson.encode(result)) .. ',"complete":' .. tostring(complete) .. '}'
+`;
+
+const SCHEDULE_OFFLINE = `
+-- presence:offline-schedule
+redis.call('SET', KEYS[1], ARGV[1])
+redis.call('SADD', KEYS[2], ARGV[2])
+redis.call('SADD', KEYS[3], ARGV[2])
+redis.call('ZADD', KEYS[4], ARGV[3], ARGV[2])
+return 1
+`;
+
+const INDEX_OFFLINE_DUE = `
+-- presence:offline-index-due
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
+for key = 3, #KEYS do
+  local arg = 2 + (key - 3) * 3
+  if redis.call('GET', KEYS[key]) == ARGV[arg] then
+    redis.call('ZADD', KEYS[2], ARGV[arg + 2], ARGV[arg + 1])
+  end
+end
+return 1
+`;
+
+const READ_OFFLINE_READY = `
+-- presence:offline-ready
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return '[]' end
+redis.call('PEXPIRE', KEYS[1], ARGV[2])
+local keys
+if ARGV[3] == 'pending' then
+  keys = redis.call('ZRANGEBYSCORE', KEYS[2], '-inf', ARGV[4], 'LIMIT', 0, ARGV[5])
+else
+  keys = redis.call('SRANDMEMBER', KEYS[2], ARGV[5])
+end
+if #keys == 0 then return '[]' end
+return cjson.encode(keys)
+`;
+
+// Compare captured values so cleanup cannot discard a replacement departure.
+const DROP_OFFLINE = `
+-- presence:offline-drop
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
+if redis.call('GET', KEYS[2]) ~= ARGV[2] and not (ARGV[2] == '' and redis.call('EXISTS', KEYS[2]) == 0) then return 0 end
+redis.call('DEL', KEYS[2])
+redis.call('SREM', KEYS[3], ARGV[3])
+redis.call('ZREM', KEYS[4], ARGV[3])
+return 1
+`;
+
+const UNINDEX_OFFLINE_DUE = `
+-- presence:offline-unindex-due
+return redis.call('ZREM', KEYS[1], unpack(ARGV))
 `;
 
 const RELEASE_OFFLINE_LEASE = `
@@ -94,7 +153,8 @@ return redis.call('PEXPIRE', KEYS[1], ARGV[2])
 
 const ACK_OFFLINE = `
 -- presence:offline-ack
-if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
+redis.call('PEXPIRE', KEYS[1], ARGV[4])
 if redis.call('GET', KEYS[2]) ~= ARGV[2] then return 0 end
 redis.call('DEL', KEYS[2])
 redis.call('SREM', KEYS[3], ARGV[3])
@@ -123,11 +183,12 @@ const CLAIM_OFFLINE = `
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
 redis.call('PEXPIRE', KEYS[1], ARGV[2])
 local completed = 0
-for key = 4, #KEYS, 3 do
-  local arg = 3 + ((key - 4) / 3) * 4
+for key = 5, #KEYS, 3 do
+  local arg = 3 + ((key - 5) / 3) * 4
   if redis.call('GET', KEYS[key]) == ARGV[arg] then
     redis.call('DEL', KEYS[key])
     redis.call('SREM', KEYS[2], ARGV[arg + 1])
+    redis.call('ZREM', KEYS[4], ARGV[arg + 1])
     redis.call('SREM', KEYS[key + 2], ARGV[arg + 1])
     if ARGV[arg + 3] == '1' then
       redis.call('SET', KEYS[key + 1], ARGV[arg])
@@ -139,11 +200,20 @@ end
 return completed
 `;
 
-const decodeOfflineBatch = Schema.decodeUnknownSync(
+const decodeOfflineKeys = Schema.decodeUnknownEffect(
   Schema.fromJsonString(Schema.Array(Schema.String)),
 );
 
-const decodeOffline = Schema.decodeUnknownSync(
+const decodeOfflineBatch = Schema.decodeUnknownEffect(
+  Schema.fromJsonString(
+    Schema.Struct({
+      keys: Schema.Array(Schema.String),
+      complete: Schema.Boolean,
+    }),
+  ),
+);
+
+const decodeOffline = Schema.decodeUnknownOption(
   Schema.fromJsonString(GameCharacterOffline),
 );
 
@@ -184,9 +254,10 @@ const withoutLocation = (presence: Basic | Precise): Basic => {
 };
 
 export class PresenceStore {
-  private readonly pendingSnapshots = new Map<
+  private readonly pendingSnapshots = new SingleFlight<
     string,
-    Deferred.Deferred<Array<Basic | Precise>, unknown>
+    Array<Basic | Precise>,
+    unknown
   >();
 
   constructor(
@@ -273,7 +344,7 @@ export class PresenceStore {
       }
 
       for (const organizationId of selectedOrganizationIds) {
-        yield* this.write(organizationId, presence, socket.data.discordId);
+        yield* this.refresh(organizationId, presence, socket.data.discordId);
         yield* this.broadcastUpsert(organizationId, presence);
         yield* this.publishCoverageChange(
           socket.data.discordId,
@@ -383,6 +454,16 @@ export class PresenceStore {
         this.redis.command.smembers(index),
       );
 
+      if (keys.length > 0)
+        yield* fromPromise("presence.offline-unindex-due", () =>
+          this.redis.command.eval(
+            UNINDEX_OFFLINE_DUE,
+            1,
+            OFFLINE_DUE_INDEX,
+            ...keys,
+          ),
+        );
+
       for (const key of keys) {
         yield* fromPromise("presence.offline-cancel", () =>
           this.redis.command.del(key),
@@ -421,11 +502,14 @@ export class PresenceStore {
         );
 
         if (
-          pendingValues.some(
-            (value) =>
-              value !== null &&
-              decodeOffline(value).disconnectedAt > disconnectedAt,
-          )
+          pendingValues.some((value) => {
+            const event = decodeOffline(value);
+
+            return (
+              Option.isSome(event) &&
+              event.value.disconnectedAt > disconnectedAt
+            );
+          })
         )
           return;
       }
@@ -443,13 +527,17 @@ export class PresenceStore {
 
       const key = `${this.offlineCharacterKey(presence)}:session:${presence.sessionId}:${crypto.randomUUID()}`;
       yield* fromPromise("presence.offline-schedule", () =>
-        this.redis.command.set(key, JSON.stringify(event)),
-      );
-      yield* fromPromise("presence.offline-index", () =>
-        this.redis.command.sadd(OFFLINE_PENDING_INDEX, key),
-      );
-      yield* fromPromise("presence.offline-character-index", () =>
-        this.redis.command.sadd(this.offlineCharacterKey(presence), key),
+        this.redis.command.eval(
+          SCHEDULE_OFFLINE,
+          4,
+          key,
+          OFFLINE_PENDING_INDEX,
+          this.offlineCharacterKey(presence),
+          OFFLINE_DUE_INDEX,
+          JSON.stringify(event),
+          key,
+          disconnectedAt + 10_000,
+        ),
       );
     });
   }
@@ -464,110 +552,219 @@ export class PresenceStore {
   }
 
   sweepOffline(): Effect.Effect<void, unknown> {
-    if (!this.publishOffline) return Effect.void;
+    const publishOffline = this.publishOffline;
+
+    if (!publishOffline) return Effect.void;
 
     return Effect.suspend(() => {
       const token = crypto.randomUUID();
 
-      return Effect.acquireUseRelease(
-        fromPromise("presence.offline-lease", () =>
-          this.redis.command.set(
-            OFFLINE_SWEEP_LOCK,
-            token,
-            "PX",
-            OFFLINE_LEASE_MS,
-            "NX",
-          ),
+      // Acquisition remains interruptible during Redis failover. An orphaned
+      // lease expires; cleanup gets a bounded attempt when closing the scope.
+      return fromPromise("presence.offline-lease", () =>
+        this.redis.command.set(
+          OFFLINE_SWEEP_LOCK,
+          token,
+          "PX",
+          OFFLINE_LEASE_MS,
+          "NX",
         ),
-        (acquired) =>
-          acquired === "OK" ? this.drainOffline(token) : Effect.void,
-        (acquired) =>
+      ).pipe(
+        Effect.flatMap((acquired) =>
           acquired === "OK"
-            ? fromPromise("presence.offline-release", () =>
-                this.redis.command.eval(
-                  RELEASE_OFFLINE_LEASE,
-                  1,
-                  OFFLINE_SWEEP_LOCK,
-                  token,
+            ? this.drainOffline(token, publishOffline).pipe(
+                Effect.ensuring(
+                  fromPromise("presence.offline-release", () =>
+                    this.redis.command.eval(
+                      RELEASE_OFFLINE_LEASE,
+                      1,
+                      OFFLINE_SWEEP_LOCK,
+                      token,
+                    ),
+                  ).pipe(
+                    Effect.interruptible,
+                    Effect.timeout("1 second"),
+                    Effect.ignore,
+                  ),
                 ),
-              ).pipe(Effect.ignore)
+              )
             : Effect.void,
+        ),
       );
     });
   }
 
-  private drainOffline(token: string) {
+  private drainOffline(
+    token: string,
+    publishOffline: NonNullable<PresenceStore["publishOffline"]>,
+  ) {
     return Effect.gen({ self: this }, function* () {
       const deadline = performance.now() + 1_000;
+      let legacyComplete = false;
 
       do {
-        const completed = yield* this.sweepOfflineBatch(token);
+        if (!legacyComplete)
+          legacyComplete = yield* this.indexLegacyOffline(token);
+        const completed = yield* this.sweepOfflineBatch(token, publishOffline);
 
-        if (completed === 0) return;
+        if (completed === -1 || (completed === 0 && legacyComplete)) return;
         yield* yieldToEventLoop;
       } while (performance.now() < deadline);
     });
   }
 
-  private readOfflineBatch(index: string, token: string) {
+  private indexLegacyOffline(token: string) {
     return Effect.gen({ self: this }, function* () {
       const raw = yield* fromPromise("presence.offline-batch", () =>
         this.redis.command.eval<string>(
           READ_OFFLINE_BATCH,
           4,
           OFFLINE_SWEEP_LOCK,
-          index,
-          `${index}:cursor`,
-          `${index}:overflow`,
+          OFFLINE_PENDING_INDEX,
+          `${OFFLINE_PENDING_INDEX}:cursor`,
+          `${OFFLINE_PENDING_INDEX}:overflow`,
           token,
           OFFLINE_BATCH_SIZE,
         ),
       );
 
-      const keys = decodeOfflineBatch(raw);
+      const batch = yield* decodeOfflineBatch(raw);
 
+      const pending = yield* this.readOfflineValues(
+        OFFLINE_PENDING_INDEX,
+        batch.keys,
+        token,
+      );
+
+      yield* this.indexOfflineDue(token, pending);
+
+      return batch.complete;
+    });
+  }
+
+  private indexOfflineDue(token: string, pending: readonly OfflineRecord[]) {
+    if (pending.length === 0) return Effect.void;
+
+    const keys = [
+      OFFLINE_SWEEP_LOCK,
+      OFFLINE_DUE_INDEX,
+      ...pending.map(({ key }) => key),
+    ];
+
+    const args = pending.flatMap(({ key, value, event }) => [
+      value,
+      key,
+      event.disconnectedAt + 10_000,
+    ]);
+
+    return fromPromise("presence.offline-index-due", () =>
+      this.redis.command.eval(
+        INDEX_OFFLINE_DUE,
+        keys.length,
+        ...keys,
+        token,
+        ...args,
+      ),
+    );
+  }
+
+  private readOfflineValues(
+    index: string,
+    keys: readonly string[],
+    token: string,
+  ) {
+    return Effect.gen({ self: this }, function* () {
       if (keys.length === 0) return [];
 
-      // Dragonfly scripts may only access declared keys. Capture the bounded
-      // values together before any Organization read; claims compare them again.
+      // Dragonfly scripts may only access declared keys. Capture bounded values
+      // before Organization reads; claims and invalid-record cleanup compare them.
       const values = yield* fromPromise("presence.offline-batch-values", () =>
         this.redis.command.mget([...keys]),
       );
 
-      const pending: Array<readonly [string, string]> = [];
-      const missing: string[] = [];
+      const pending: OfflineRecord[] = [];
 
       for (const [position, key] of keys.entries()) {
         const value = values[position];
+        const event = decodeOffline(value);
 
-        if (value) pending.push([key, value]);
-        else missing.push(key);
+        if (value !== null && value !== undefined && Option.isSome(event)) {
+          pending.push({ key, value, event: event.value });
+        } else {
+          yield* fromPromise("presence.offline-drop-invalid", () =>
+            this.redis.command.eval(
+              DROP_OFFLINE,
+              4,
+              OFFLINE_SWEEP_LOCK,
+              key,
+              index,
+              OFFLINE_DUE_INDEX,
+              token,
+              value ?? "",
+              key,
+            ),
+          );
+        }
       }
-
-      if (missing.length > 0)
-        yield* fromPromise("presence.offline-unindex", () =>
-          this.redis.command.srem(index, ...missing),
-        );
 
       return pending;
     });
   }
 
-  private sweepOfflineBatch(token: string): Effect.Effect<number, unknown> {
+  private readOfflineReady(index: string, token: string) {
+    return Effect.gen({ self: this }, function* () {
+      const pending = index === OFFLINE_PENDING_INDEX;
+
+      const raw = yield* fromPromise("presence.offline-ready", () =>
+        this.redis.command.eval<string>(
+          READ_OFFLINE_READY,
+          2,
+          OFFLINE_SWEEP_LOCK,
+          pending ? OFFLINE_DUE_INDEX : index,
+          token,
+          OFFLINE_LEASE_MS,
+          pending ? "pending" : "outbox",
+          this.now(),
+          OFFLINE_BATCH_SIZE,
+        ),
+      );
+
+      const keys = yield* decodeOfflineKeys(raw);
+
+      const records = yield* this.readOfflineValues(index, keys, token);
+
+      if (!pending) return records;
+      // A rolling-version writer can replace a record without updating its due
+      // score. Repair that score from the captured value before claiming it.
+      const ready: OfflineRecord[] = [];
+      const young: OfflineRecord[] = [];
+
+      for (const record of records) {
+        if (record.event.disconnectedAt + 10_000 <= this.now())
+          ready.push(record);
+        else young.push(record);
+      }
+
+      yield* this.indexOfflineDue(token, young);
+
+      return ready;
+    });
+  }
+
+  private sweepOfflineBatch(
+    token: string,
+    publishOffline: NonNullable<PresenceStore["publishOffline"]>,
+  ): Effect.Effect<number, unknown> {
     return Effect.gen({ self: this }, function* () {
       let completed = 0;
 
-      const pending = yield* this.readOfflineBatch(
+      const pending = yield* this.readOfflineReady(
         OFFLINE_PENDING_INDEX,
         token,
       );
 
-      const groups = Map.groupBy(
-        pending
-          .map(([key, value]) => ({ key, value, event: decodeOffline(value) }))
-          .filter(({ event }) => this.now() - event.disconnectedAt >= 10_000),
-        ({ event }) =>
-          JSON.stringify([...new Set(event.organizationIds)].sort()),
+      const groups = Map.groupBy(pending, ({ event }) =>
+        JSON.stringify([...new Set(event.organizationIds)].sort()),
       );
 
       for (const group of groups.values()) {
@@ -591,6 +788,7 @@ export class PresenceStore {
           OFFLINE_SWEEP_LOCK,
           OFFLINE_PENDING_INDEX,
           OFFLINE_OUTBOX_INDEX,
+          OFFLINE_DUE_INDEX,
         ];
 
         const args: Array<string | number> = [token, OFFLINE_LEASE_MS];
@@ -621,14 +819,15 @@ export class PresenceStore {
           ),
         );
 
-        if (claimed === -1) return 0;
-
+        if (claimed === -1) return -1;
         completed += claimed;
       }
 
-      const outbox = yield* this.readOfflineBatch(OFFLINE_OUTBOX_INDEX, token);
+      const outbox = yield* this.readOfflineReady(OFFLINE_OUTBOX_INDEX, token);
 
-      for (const [key, value] of outbox) {
+      // Capturing outbox values may outlast the lease; check once after that
+      // external read. Every successful acknowledgement renews it thereafter.
+      if (outbox.length > 0) {
         const renewed = yield* fromPromise("presence.offline-renew", () =>
           this.redis.command.eval<number>(
             RENEW_OFFLINE_LEASE,
@@ -639,25 +838,30 @@ export class PresenceStore {
           ),
         );
 
-        if (!renewed) return 0;
+        if (!renewed) return -1;
+      }
 
-        if (this.publishOffline)
-          yield* this.publishOffline(decodeOffline(value)).pipe(
-            Effect.timeout("10 seconds"),
-          );
-        completed++;
-        yield* fromPromise("presence.offline-outbox-complete", () =>
-          this.redis.command.eval(
-            ACK_OFFLINE,
-            3,
-            OFFLINE_SWEEP_LOCK,
-            key,
-            OFFLINE_OUTBOX_INDEX,
-            token,
-            value,
-            key,
-          ),
+      for (const { key, value, event } of outbox) {
+        yield* publishOffline(event).pipe(Effect.timeout("10 seconds"));
+
+        const acknowledged = yield* fromPromise(
+          "presence.offline-outbox-complete",
+          () =>
+            this.redis.command.eval<number>(
+              ACK_OFFLINE,
+              3,
+              OFFLINE_SWEEP_LOCK,
+              key,
+              OFFLINE_OUTBOX_INDEX,
+              token,
+              value,
+              key,
+              OFFLINE_LEASE_MS,
+            ),
         );
+
+        if (acknowledged === -1) return -1;
+        completed += acknowledged;
       }
 
       return completed;
@@ -925,55 +1129,6 @@ export class PresenceStore {
     );
   }
 
-  private writeMetadata(
-    organizationId: string,
-    presence: Basic | Precise,
-    discordId: string,
-  ) {
-    return this.mutateOrganization(
-      organizationId,
-      "presence.write-metadata",
-      () =>
-        this.redis.command.set(
-          this.metadataKey(organizationId, presence.sessionId),
-          JSON.stringify({
-            userId: presence.userId,
-            discordId,
-            presence: withoutLocation(presence),
-          }),
-        ),
-    );
-  }
-
-  private write(
-    organizationId: string,
-    presence: Basic | Precise,
-    discordId: string,
-  ): Effect.Effect<void, unknown> {
-    const key = this.presenceKey(organizationId, presence.sessionId);
-
-    return Effect.all(
-      [
-        this.mutateOrganization(organizationId, "presence.write", () =>
-          this.redis.command.set(
-            key,
-            JSON.stringify(presence),
-            "EX",
-            REDIS_TTL_SECONDS,
-          ),
-        ),
-        this.mutateOrganization(organizationId, "presence.index", () =>
-          this.redis.command.sadd(this.indexKey(organizationId), key),
-        ),
-        fromPromise("presence.register-organization", () =>
-          this.redis.command.sadd("presence:organizations", organizationId),
-        ),
-        this.writeMetadata(organizationId, presence, discordId),
-      ],
-      { concurrency: "unbounded", discard: true },
-    );
-  }
-
   private remove(
     organizationId: string,
     userId: string,
@@ -1066,33 +1221,9 @@ export class PresenceStore {
     organizationId: string,
   ): Effect.Effect<Array<Basic | Precise>, unknown> {
     // Offline decisions and coverage require their own fresh read.
-    return Effect.uninterruptibleMask((restore) =>
-      Effect.suspend(() => {
-        const pending = this.pendingSnapshots.get(organizationId);
-
-        if (pending) return restore(Deferred.await(pending));
-
-        const result = Deferred.makeUnsafe<Array<Basic | Precise>, unknown>();
-        this.pendingSnapshots.set(organizationId, result);
-
-        // Redis reads outlive individual viewers. A disconnect must not cancel
-        // another viewer's read; retain the entry only until the producer settles.
-        const read = this.readOrganization(organizationId).pipe(
-          Effect.timeout("10 seconds"),
-          Effect.ensuring(
-            Effect.sync(() => {
-              if (this.pendingSnapshots.get(organizationId) === result) {
-                this.pendingSnapshots.delete(organizationId);
-              }
-            }),
-          ),
-        );
-
-        return Deferred.complete(result, read).pipe(
-          Effect.forkDetach,
-          Effect.andThen(restore(Deferred.await(result))),
-        );
-      }),
+    return this.pendingSnapshots.run(
+      organizationId,
+      this.readOrganization(organizationId).pipe(Effect.timeout("10 seconds")),
     );
   }
 
@@ -1155,7 +1286,7 @@ export class PresenceStore {
     // Redis commands may settle after their Effect caller is interrupted.
     return fromPromise(operation, () =>
       evaluate().finally(() => {
-        this.pendingSnapshots.delete(organizationId);
+        this.pendingSnapshots.invalidate(organizationId);
       }),
     );
   }

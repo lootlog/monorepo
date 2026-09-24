@@ -781,7 +781,7 @@ describe("realtime Dragonfly integration", () => {
         ): Promise<A> => {
           if (!script.includes("-- presence:offline-claim"))
             return store.command.eval<A>(script, keyCount, ...args);
-          claimSizes.push((keyCount - 3) / 3);
+          claimSizes.push((keyCount - 4) / 3);
           const before = beforeClaim;
           const after = afterClaim;
           beforeClaim = undefined;
@@ -1015,6 +1015,8 @@ describe("realtime Dragonfly integration", () => {
       const command = {
         ...store.command,
         mget: async (keys: string[]) => {
+          const captured = await store.command.mget(keys);
+
           if (keys[0]?.startsWith("presence:offline:"))
             pendingBatchSizes.push(keys.length);
 
@@ -1027,7 +1029,7 @@ describe("realtime Dragonfly integration", () => {
             }
           }
 
-          return store.command.mget(keys);
+          return captured;
         },
       };
 
@@ -1074,6 +1076,7 @@ describe("realtime Dragonfly integration", () => {
         );
       }
 
+      // Legacy replicas only write this set. The new sweep must backfill the due queue.
       await store.command.sadd("presence:offline:pending", ...keys);
       // Force the valid persisted overflow path, independently of Dragonfly's page sizes.
       await runtime.runPromise(
@@ -1089,31 +1092,88 @@ describe("realtime Dragonfly integration", () => {
       await Effect.runPromise(makePresence().sweepOffline());
       expect(organizationReads).toBe(1);
       expect(events).toHaveLength(0);
-      // Emulate lease expiration while the old owner's Redis read is delayed.
-      await store.command.del("presence:offline:sweep-lock");
+      // The old owner captured an offline observation before the reconnect.
+      // Keep the successor's lease held until that stale owner attempts its claim,
+      // so value comparison alone cannot hide a missing lease check.
+      await store.command.set(
+        "presence:offline:sweep-lock",
+        "successor",
+        "PX",
+        30_000,
+      );
+      const reconnected = makeSocket("reconnected").socket;
+      reconnected.data = {
+        ...reconnected.data,
+        userId: "departed-0",
+        character: {
+          world: "classic",
+          characterId: "character-0",
+          accountId: "account-0",
+          name: "Reconnected",
+          lvl: 100,
+          prof: "w",
+          icon: "hero.gif",
+        },
+      };
+      await Effect.runPromise(
+        presence.publish(reconnected, { organizationIds: [] }),
+      );
       pause = false;
-      await Effect.runPromise(makePresence().sweepOffline());
-      const successorDeliveries = events.length;
-      expect(successorDeliveries).toBeGreaterThan(0);
-      expect(successorDeliveries).toBeLessThanOrEqual(250);
       resumeRead.resolve();
       await first;
-      expect(events).toHaveLength(successorDeliveries);
+      expect(events).toHaveLength(0);
+      expect(await store.command.smembers("presence:offline:outbox")).toEqual(
+        [],
+      );
+      expect(
+        await store.command.smembers("presence:offline:pending"),
+      ).toHaveLength(250);
+      expect(await store.command.get("presence:offline:sweep-lock")).toBe(
+        "successor",
+      );
+      await store.command.del("presence:offline:sweep-lock");
 
-      for (let batch = 0; batch < 20 && events.length < 250; batch++) {
+      for (const index of ["pending", "outbox"]) {
+        await store.command.set(
+          `malformed-${index}`,
+          '{"userId":"old-schema"}',
+        );
+        await store.command.sadd(
+          `presence:offline:${index}`,
+          `malformed-${index}`,
+        );
+      }
+
+      for (let batch = 0; batch < 20 && events.length < 249; batch++) {
         await Effect.runPromise(reusedSweep);
       }
 
-      expect(events).toHaveLength(250);
+      expect(events).toHaveLength(249);
+      expect(events.some(({ userId }) => userId === "departed-0")).toBe(false);
       expect(Math.max(...pendingBatchSizes)).toBeLessThanOrEqual(100);
       expect(organizationReads).toBeLessThan(10);
-      expect(new Set(events.map((event) => event.userId)).size).toBe(250);
+      expect(new Set(events.map((event) => event.userId)).size).toBe(249);
       expect(await store.command.smembers("presence:offline:pending")).toEqual(
         [],
       );
       expect(await store.command.smembers("presence:offline:outbox")).toEqual(
         [],
       );
+      expect(await store.command.mget(keys)).toEqual(keys.map(() => null));
+
+      const due = await runtime.runPromise(
+        redis.send(
+          "ZRANGE",
+          `${store.channel.slice(0, -":realtime:federation:v1".length)}:presence:offline:due`,
+          "0",
+          "-1",
+        ),
+      );
+
+      expect(due).toEqual([]);
+      expect(
+        await store.command.mget(["malformed-pending", "malformed-outbox"]),
+      ).toEqual([null, null]);
     } finally {
       await runtime.dispose();
     }

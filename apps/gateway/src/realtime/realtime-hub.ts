@@ -6,6 +6,7 @@ import {
 } from "#src/realtime/chat-message-envelope";
 import {
   eventOrganizationId,
+  findEventGuild,
   prepareSourceEventVisibility,
 } from "#src/realtime/source-event-visibility";
 import {
@@ -492,7 +493,7 @@ export class RealtimeHub {
 
       if (!this.matchesPresenceAudience(socket, message)) continue;
 
-      const guild = this.findEventGuild(socket.data, organizationId);
+      const guild = findEventGuild(socket.data, organizationId);
 
       if (!canReadSource(socket.data, guild)) continue;
 
@@ -516,15 +517,6 @@ export class RealtimeHub {
 
       this.send(socket, encoded);
     }
-  }
-
-  private findEventGuild(
-    session: SessionData,
-    organizationId: string | undefined,
-  ) {
-    return organizationId === undefined
-      ? undefined
-      : session.guilds.find((entry) => entry.guild.id === organizationId);
   }
 
   private encodeChatEvent(

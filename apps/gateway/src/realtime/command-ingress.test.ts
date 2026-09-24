@@ -428,6 +428,7 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
   expect(hub.getLocalSocketsForUser(first.data.userId)).toEqual([]);
   transport.open(excess);
   expect(closes).toEqual([1013]);
+  expect(hub.getLocalSockets()).toEqual([]);
   await target.runNext();
   await target.runNext();
   transport.open(excess);

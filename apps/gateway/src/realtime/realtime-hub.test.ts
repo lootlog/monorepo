@@ -1679,6 +1679,122 @@ test.each(["msgpack", "json"] as const)(
   },
 );
 
+test.each(["msgpack", "json"] as const)(
+  "keeps basic and precise %s presence private for local and remote recipients",
+  async (frameEncoding) => {
+    const bus = new FederationBus();
+    const local = new RealtimeHub(config, new FakeRedisStore(bus));
+    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+    const scope = {
+      topic: "organization.presence",
+      organizationId: "organization-1",
+    } as const;
+
+    const targets = [local, remote].flatMap((hub, index) =>
+      [false, true].map((precise) => {
+        const session: SessionData = {
+          ...makeSession(`presence-${index}-${precise}`),
+          frameEncoding: frameEncoding === "json" ? "json" : undefined,
+        };
+
+        const permissions: Permission[] = [
+          Permission.LOOTLOG_ONLINE_PLAYERS_READ,
+        ];
+
+        const role = {
+          id: "role",
+          permissions,
+          lvlRangeFrom: 0,
+          lvlRangeTo: 500,
+        };
+
+        if (precise)
+          role.permissions.push(Permission.LOOTLOG_PRESENCE_LOCATION_READ);
+        session.guilds = [
+          {
+            guild: { id: scope.organizationId, ownerId: "owner" },
+            roles: [role],
+          },
+        ];
+        const sent: Array<string | Uint8Array> = [];
+
+        const socket = {
+          data: session,
+          getBufferedAmount: () => 0,
+          close: () => {},
+          send: (frame: string | Uint8Array) => sent.push(frame),
+        };
+
+        hub.register(socket);
+        hub.subscribe(socket, scope);
+
+        return { sent, role, precise };
+      }),
+    );
+
+    const presence = {
+      userId: "player",
+      sessionId: "game-session",
+      organizationIds: [scope.organizationId],
+      platform: "game",
+      status: "online",
+      confidence: "verified",
+      isAfk: false,
+      lastSeen: 1,
+    } as const;
+
+    const basic = {
+      v: 1,
+      type: "presence.delta",
+      data: {
+        organizationId: scope.organizationId,
+        revision: 1,
+        changes: [{ action: "upsert", presence }],
+      },
+    } as const;
+
+    const precise = {
+      ...basic,
+      data: {
+        ...basic.data,
+        changes: [
+          {
+            action: "upsert",
+            presence: {
+              ...presence,
+              location: { mapId: 7, map: "Ithan", x: 1, y: 2 },
+            },
+          },
+        ],
+      },
+    } as const;
+
+    await local.publishPresence(scope, basic, precise);
+
+    for (const target of targets) {
+      target.role.permissions = [Permission.LOOTLOG_ONLINE_PLAYERS_READ];
+
+      if (!target.precise)
+        target.role.permissions.push(Permission.LOOTLOG_PRESENCE_LOCATION_READ);
+    }
+
+    await local.publishPresence(scope, basic, precise);
+
+    for (const target of targets) {
+      const frames = target.sent.map((frame) =>
+        Predicate.isString(frame) ? JSON.parse(frame) : decode(frame),
+      );
+
+      expect(frames).toEqual(
+        target.precise ? [precise, basic] : [basic, precise],
+      );
+    }
+  },
+);
+
 test("expired API key sockets cannot receive responses or user-targeted events", async () => {
   const bus = new FederationBus();
   const hub = new RealtimeHub(config, new FakeRedisStore(bus));

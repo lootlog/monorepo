@@ -144,3 +144,26 @@ reconnect after an offline permission change. Check both userscript and extensio
 transports against the same realtime event codec. Unchanged rebalance must cause
 no timer or chat requests, and restricted cached rows must not reappear after an
 older pending response completes.
+
+## Character departure queue
+
+Character departures keep the existing ten-second reconnect grace period. New
+Gateway replicas atomically store each departure in the existing
+`presence:offline:pending` set, its character index, and the additive
+`presence:offline:due` sorted set. The sorted-set score is the departure time plus
+ten seconds, so a sweep reads only due departures in batches of at most 100.
+
+During a rolling upgrade, a bounded scan backfills departures written by older
+replicas that only maintain the pending set. Both indexes remain in use; no Redis
+flush or coordinated client rollout is required. Cancellation and successful
+claims remove the due entry as well as the original pending entry. A stale due
+score from an older writer is checked against the captured departure before a
+claim. Rolling back leaves an unused due index that is reconciled when the new
+Gateway returns; the original records and pending set remain usable.
+
+A 30-second lease coordinates upgraded sweepers. Acquisition is interruptible,
+and shutdown attempts lease release for at most one second; an orphaned lease
+expires. Confirmed publication acknowledges the captured outbox value and renews
+the lease. Lease loss stops the current drain, while a failed publication leaves
+the durable outbox record for retry. Malformed stored departure records are
+removed without terminating the sweep or discarding valid records in the batch.

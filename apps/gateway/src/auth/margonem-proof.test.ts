@@ -142,6 +142,67 @@ describe("Margonem proof verifier", () => {
     await Effect.runPromise(verifier.verify(proofOptions()));
     expect(get).toHaveBeenCalledTimes(2);
   });
+  test("rejects expired cached signing keys throughout a refresh outage", async () => {
+    const pair = generateKeyPairSync("rsa", { modulusLength: 2048 });
+
+    const pem = pair.publicKey
+      .export({ type: "spki", format: "pem" })
+      .toString();
+
+    let unavailable = false;
+
+    const get = mock(() =>
+      Effect.succeed(
+        unavailable ? new Response(null, { status: 503 }) : new Response(pem),
+      ),
+    );
+
+    const verifier = makeMargonemProofVerifier(
+      config,
+      httpClientFromResponses(get),
+    );
+
+    const options = proofOptions();
+
+    const signedAt = (ts: number) => {
+      const validatedString = `${options.accountId}+${options.proof.token}+${ts}`;
+
+      return {
+        ...options,
+        proof: {
+          ...options.proof,
+          ts,
+          validatedString,
+          signatureBase64: sign(
+            "sha256",
+            Buffer.from(validatedString),
+            pair.privateKey,
+          ).toString("base64"),
+        },
+      };
+    };
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* TestClock.setTime(options.proof.ts);
+        expect((yield* verifier.verify(signedAt(options.proof.ts))).valid).toBe(
+          true,
+        );
+        unavailable = true;
+        const expiredAt = options.proof.ts + 12 * 60 * 60 * 1_000;
+        yield* TestClock.setTime(expiredAt);
+
+        for (let attempt = 0; attempt < 8; attempt++) {
+          expect(
+            (yield* verifier.verify(signedAt(expiredAt + attempt * 20_000)))
+              .valid,
+          ).toBe(false);
+          yield* TestClock.adjust(20_000);
+        }
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+  });
+
   test("accepts signing-key rotation after the forced refresh window, including a failed refresh", async () => {
     const oldPair = generateKeyPairSync("rsa", { modulusLength: 2048 });
     const newPair = generateKeyPairSync("rsa", { modulusLength: 2048 });
