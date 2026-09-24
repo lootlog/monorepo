@@ -4,10 +4,12 @@ import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   guildTable,
   itemSnapshotTable,
+  lootCommentTable,
   lootItemTable,
   lootNpcTable,
   lootPlayerTable,
   lootTable,
+  memberTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
@@ -24,7 +26,7 @@ describe("filtered loot reads", () => {
       const { database, run } = boundary;
       const now = new Date("2026-09-16T00:00:00Z");
 
-      const [guild] = await run(
+      const [guild, foreignGuild] = await run(
         database
           .insert(guildTable)
           .values([
@@ -44,7 +46,7 @@ describe("filtered loot reads", () => {
           .returning(),
       );
 
-      if (!guild) throw new Error("Expected Organization");
+      if (!guild || !foreignGuild) throw new Error("Expected Organizations");
 
       const roles = await run(
         database
@@ -128,9 +130,46 @@ describe("filtered loot reads", () => {
       await run(
         database.insert(organizationLootRecordTable).values(
           Array.from({ length: 8 }, (_, index) => ({
+            id: 101 + index,
             lootId: index + 1,
             guildId: index === 6 ? "foreign" : guild.id,
             archivedAt: index === 7 ? now : null,
+            updatedAt: now,
+          })),
+        ),
+      );
+      await run(
+        database.insert(organizationLootRecordTable).values({
+          id: 200,
+          lootId: 1,
+          guildId: foreignGuild.id,
+          updatedAt: now,
+        }),
+      );
+      await run(
+        database.insert(memberTable).values([
+          {
+            id: 1,
+            userId: "reader",
+            guildId: guild.id,
+            name: "Reader",
+            updatedAt: now,
+          },
+          {
+            id: 2,
+            userId: "reader",
+            guildId: foreignGuild.id,
+            name: "Reader",
+            updatedAt: now,
+          },
+        ]),
+      );
+      await run(
+        database.insert(lootCommentTable).values(
+          [101, 101, 200, 200, 200, 108].map((organizationLootRecordId) => ({
+            organizationLootRecordId,
+            memberId: organizationLootRecordId === 200 ? 2 : 1,
+            content: "Organization comment",
             updatedAt: now,
           })),
         ),
@@ -178,6 +217,25 @@ describe("filtered loot reads", () => {
       );
 
       expect(list.map(({ id }) => id)).toEqual([2, 1]);
+      // A shared loot's comments belong to its Organization record. The other
+      // Organization's comments must not inflate this count; no comments is zero.
+      expect(
+        list.map(({ id, commentsCount }) => ({ id, commentsCount })),
+      ).toEqual([
+        { id: 2, commentsCount: 0 },
+        { id: 1, commentsCount: 2 },
+      ]);
+      expect(
+        (await run(query.fetchLootById(guild, permissions, roles, 1)))
+          ?.commentsCount,
+      ).toBe(2);
+      expect(
+        (
+          await run(
+            query.fetchLootById(foreignGuild, [Permission.OWNER], [], 1),
+          )
+        )?.commentsCount,
+      ).toBe(3);
 
       for (const { npcs, expectedIds } of [
         { npcs: [], expectedIds: [6, 5, 4, 3, 2, 1] },

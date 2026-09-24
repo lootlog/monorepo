@@ -1,5 +1,6 @@
 import { isJsonObject, type JsonValue } from "#src/database/json";
 import { toLootVisibilityRoles } from "#src/loots/loot-visibility";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { and, eq, inArray } from "drizzle-orm";
 import { Effect, Schema } from "effect";
 import {
@@ -12,12 +13,7 @@ import {
 } from "@lootlog/schema/notifications";
 import { Permission } from "@lootlog/schema/permissions";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
-import {
-  guildTable,
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-} from "#src/database/drizzle/schema";
+import { guildTable, memberTable } from "#src/database/drizzle/schema";
 
 type LootCreatedEvent = {
   readonly lootId: number;
@@ -132,32 +128,27 @@ export const selectNotificationMemberships = Effect.fn(
       ),
     );
 
-  const memberIds = memberships.map(({ member }) => member.id);
+  const members = yield* hydrateMemberRoles(
+    database,
+    memberships.map(({ member, guildOwnerId }) => ({
+      ...member,
+      guildOwnerId,
+    })),
+  );
 
-  const roleRows =
-    memberIds.length === 0
-      ? []
-      : yield* database
-          .select({ memberId: memberToRoleTable.A, role: roleTable })
-          .from(memberToRoleTable)
-          .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-          .where(inArray(memberToRoleTable.A, memberIds));
-
-  for (const { member, guildOwnerId } of memberships) {
-    const values = result.get(member.userId) ?? [];
+  for (const { userId, guildId, guildOwnerId, roles } of members) {
+    const values = result.get(userId) ?? [];
     values.push({
-      guildId: member.guildId,
-      isGuildOwner: guildOwnerId === member.userId,
-      roles: roleRows
-        .filter(({ memberId }) => memberId === member.id)
-        .map(({ role }) => ({
-          id: role.id,
-          permissions: role.permissions,
-          lvlRangeFrom: role.lvlRangeFrom,
-          lvlRangeTo: role.lvlRangeTo,
-        })),
+      guildId,
+      isGuildOwner: guildOwnerId === userId,
+      roles: roles.map((role) => ({
+        id: role.id,
+        permissions: role.permissions,
+        lvlRangeFrom: role.lvlRangeFrom,
+        lvlRangeTo: role.lvlRangeTo,
+      })),
     });
-    result.set(member.userId, values);
+    result.set(userId, values);
   }
 
   return result;
