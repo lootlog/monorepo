@@ -20,33 +20,45 @@ const decodeCursor = (cursor: string | undefined): number => {
 };
 
 export const battleAnalyticsPaging = {
+  getPage,
   paginate<TRecord>(
     records: TRecord[],
     options: InMemoryPaginationOptions,
   ): InMemoryPaginationResult<TRecord> {
-    const totalRecords = records.length;
-    const size = options.size ?? 20;
-    const startIndex = decodeCursor(options.cursor);
-    const endIndex = startIndex + size;
-    const paginatedRecords = records.slice(startIndex, endIndex);
-    const hasNext = endIndex < totalRecords;
-    const hasPrev = startIndex > 0;
+    const page = getPage(records.length, options);
 
     return {
-      records: paginatedRecords,
-      totalRecords,
-      pagination: {
-        size,
-        hasNext,
-        hasPrev,
-        nextCursor: hasNext ? encodeCursor(endIndex) : undefined,
-        previousCursor: hasPrev
-          ? encodeCursor(Math.max(0, startIndex - size))
-          : undefined,
-        total: options.includeTotal ? totalRecords : undefined,
-      },
+      records: records.slice(
+        page.startIndex,
+        page.startIndex + page.pagination.size,
+      ),
+      pagination: page.pagination,
+      totalRecords: page.totalRecords,
     };
   },
 };
 
 export type BattleAnalyticsPaging = typeof battleAnalyticsPaging;
+
+function getPage(totalRecords: number, options: InMemoryPaginationOptions) {
+  const size = options.size ?? 20;
+  const startIndex = decodeCursor(options.cursor);
+  const endIndex = startIndex + size;
+  const hasNext = endIndex < totalRecords;
+  const hasPrev = startIndex > 0;
+
+  return {
+    startIndex,
+    totalRecords,
+    pagination: {
+      size,
+      hasNext,
+      hasPrev,
+      nextCursor: hasNext ? encodeCursor(endIndex) : undefined,
+      previousCursor: hasPrev
+        ? encodeCursor(Math.max(0, startIndex - size))
+        : undefined,
+      total: options.includeTotal ? totalRecords : undefined,
+    },
+  };
+}

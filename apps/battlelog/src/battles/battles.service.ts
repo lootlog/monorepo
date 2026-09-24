@@ -15,7 +15,10 @@ import {
 import { and, eq, lt } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
-import type { BattleTimelineResponseInput } from "#src/battles/catalog/battle-response";
+import {
+  BattleResponseSchemas,
+  type BattleTimelineResponseInput,
+} from "#src/battles/catalog/battle-response";
 import type { BattleListQuery } from "#src/battles/catalog/query-battles";
 import type { BattleUpdate } from "#src/battles/catalog/update-battle";
 import type { PaginationOptions } from "#src/battles/analytics/pagination";
@@ -71,6 +74,12 @@ const CreateBattleResultCodec = makeJsonCodec(
   Schema.Struct({ battleId: Schema.String }),
 );
 
+const BattleTimelineCodec = makeJsonCodec(BattleResponseSchemas.timeline);
+
+const BATTLE_TIMELINE_CACHE_TTL_SECONDS = 300;
+
+const BATTLE_TIMELINE_MAX_CACHE_BYTES = 1024 * 1024;
+
 const EXTEND_BATTLE_DEDUPLICATION_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("expire", KEYS[1], ARGV[2])
@@ -84,16 +93,6 @@ if redis.call("get", KEYS[1]) == ARGV[1] then
 end
 return 0
 `;
-
-const queryEffect = <A, E>(
-  query: Effect.Effect<A, E> | PromiseLike<A>,
-): Effect.Effect<A, E | unknown> =>
-  Effect.isEffect(query)
-    ? query
-    : Effect.tryPromise({
-        try: () => Promise.resolve(query),
-        catch: (cause) => cause,
-      });
 
 const adapter = <A, E>(
   operation: string,
@@ -166,11 +165,8 @@ export const makeBattles = (
           return { battleId: existingSubmission.id };
         }
 
-        const analysis = battlesModule.analyzeBattle(normalizedData);
-
         if (existingSubmission) {
           return yield* battlesModule.createCanonicalBattle({
-            analysis,
             data: normalizedData,
             semanticFingerprint,
             userId,
@@ -182,7 +178,6 @@ export const makeBattles = (
           semanticFingerprint,
           () =>
             battlesModule.createCanonicalBattle({
-              analysis,
               data: normalizedData,
               semanticFingerprint,
               userId,
@@ -190,7 +185,7 @@ export const makeBattles = (
           (result) =>
             battlesModule.preserveCanonicalBattleDuration(
               result.battleId,
-              analysis.duration,
+              BattleProcessor.calculateBattleDuration(normalizedData.events),
               userId,
             ),
         );
@@ -208,27 +203,17 @@ export const makeBattles = (
     },
 
     createCanonicalBattle({
-      analysis,
       data,
       semanticFingerprint,
       userId,
       existingBattleId,
     }: {
-      analysis: BattleAnalysis;
       data: CreateBattleInput;
       semanticFingerprint: string;
       userId: string;
       existingBattleId?: string;
     }) {
       return Effect.gen(function* () {
-        const rawBattleData = {
-          events: analysis.parsedMoves,
-          sourceEvents: data.events,
-          accountId: data.accountId,
-          characterId: data.characterId,
-          world: data.world,
-        };
-
         const canonicalBattleId =
           existingBattleId ??
           (yield* battlesModule.getRecentBattleIdBySemanticFingerprint(
@@ -239,16 +224,19 @@ export const makeBattles = (
         if (canonicalBattleId) {
           yield* battlesModule.preserveCanonicalBattleDuration(
             canonicalBattleId,
-            analysis.duration,
+            BattleProcessor.calculateBattleDuration(data.events),
             userId,
           );
           yield* battlesModule.storeRawBattleData(
             canonicalBattleId,
-            rawBattleData,
+            data,
+            new BattleProcessor().extractAndParseMoves(data.events),
           );
 
           return { battleId: canonicalBattleId };
         }
+
+        const analysis = battlesModule.analyzeBattle(data);
 
         const battleId = (yield* battlesModule.storeBattleInDatabase(
           data,
@@ -257,7 +245,11 @@ export const makeBattles = (
           semanticFingerprint,
         )).id;
 
-        yield* battlesModule.storeRawBattleData(battleId, rawBattleData);
+        yield* battlesModule.storeRawBattleData(
+          battleId,
+          data,
+          analysis.parsedMoves,
+        );
         yield* battleAnalyticsService.invalidateAnalyticsCache(userId);
 
         return { battleId };
@@ -511,36 +503,6 @@ export const makeBattles = (
       );
     },
 
-    getPublicBattles(query: BattleListQuery) {
-      return Effect.gen(function* () {
-        const filterBuilder =
-          yield* battleListFilterService.buildFilterConditions(query);
-
-        const paginationOptions = battlesModule.buildPaginationOptions(query);
-
-        const result = yield* paginationService.paginateBattles(
-          (table) => and(eq(table.public, true), filterBuilder(table)),
-          paginationOptions,
-        );
-
-        return {
-          battles: inflateBattleWarriorsInBattles(result.data),
-          pagination: result.pagination,
-          meta: {
-            performance: result.performance,
-          },
-        };
-      }).pipe(
-        Effect.mapError((error) => {
-          logger.error("Failed to retrieve public battles:", error);
-
-          return new Error(
-            `Failed to retrieve public battles: ${error instanceof Error ? error.message : "Unknown error"}`,
-          );
-        }),
-      );
-    },
-
     getDashboardBattles(query: BattleListQuery, requestingUserId: string) {
       return Effect.gen(function* () {
         const { userId: _userId, ...filteredQuery } = query;
@@ -612,13 +574,13 @@ export const makeBattles = (
     getBattleTimeline(battleId: string, requestingUserId?: string) {
       return battlesModule
         .getBattleFromDatabase(battleId, requestingUserId)
-        .pipe(Effect.flatMap(battlesModule.buildTimelineResponse));
+        .pipe(Effect.flatMap(battlesModule.getCachedTimelineResponse));
     },
 
     getPublicBattleTimeline(battleId: string) {
       return battlesModule
         .getPublicBattle(battleId)
-        .pipe(Effect.flatMap(battlesModule.buildTimelineResponse));
+        .pipe(Effect.flatMap(battlesModule.getCachedTimelineResponse));
     },
 
     getBattleFromDatabase(battleId: string, requestingUserId?: string) {
@@ -639,9 +601,36 @@ export const makeBattles = (
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
 
-        yield* battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
-
         return inflateBattleWarriorsInBattle(battle);
+      });
+    },
+
+    getCachedTimelineResponse(battle: BattleWithRelations) {
+      return Effect.gen(function* () {
+        const cacheKey = `battle-timeline:v1:${battle.userId}:${battle.id}:${battle.updatedAt.getTime()}`;
+
+        const cached = yield* adapter("Battles_getCachedTimeline", () =>
+          redisService.getJson(cacheKey, BattleTimelineCodec),
+        ).pipe(Effect.catch(() => Effect.succeed(null)));
+
+        if (cached) return cached;
+
+        const response = yield* battlesModule.buildTimelineResponse(battle);
+
+        if (
+          Buffer.byteLength(JSON.stringify(response), "utf8") <=
+          BATTLE_TIMELINE_MAX_CACHE_BYTES
+        ) {
+          yield* adapter("Battles_cacheTimeline", () =>
+            redisService.setJson(
+              cacheKey,
+              response,
+              BATTLE_TIMELINE_CACHE_TTL_SECONDS,
+            ),
+          ).pipe(Effect.catch(() => Effect.void));
+        }
+
+        return response;
       });
     },
 
@@ -846,7 +835,7 @@ export const makeBattles = (
 
     analyzeBattle(dto: CreateBattleInput): BattleAnalysis {
       try {
-        const processor = new BattleProcessor();
+        const processor = new BattleProcessor("statistics");
         const analysis = processor.processBattle(dto);
 
         return analysis;
@@ -941,54 +930,52 @@ export const makeBattles = (
         const battle = yield* adapter("Battles_storeTransaction", () =>
           drizzle.transaction((tx) =>
             Effect.gen(function* () {
-              const [insertedBattle] = yield* queryEffect(
-                tx
-                  .insert(battles)
-                  .values({
-                    userId,
-                    updatedAt: new Date(yield* Clock.currentTimeMillis),
-                    accountId: data.accountId,
-                    characterId: data.characterId,
-                    semanticFingerprint,
-                    ...(data.submissionId && {
-                      submissionId: data.submissionId,
-                    }),
-                    world: data.world,
-                    duration: analysis.duration,
-                    type: analysis.type,
-                    winner: analysis.outcome.winner,
-                    loser: analysis.outcome.loser,
-                    winningTeam: analysis.outcome.winningTeam,
-                    losingTeam: analysis.outcome.losingTeam,
-                    hasFlee: analysis.outcome.hasFlee,
-                    matchmaking: !!analysis.matchmaking,
-                    statistics: analysis.statistics,
-                    ...(analysis.matchmaking && {
-                      difficultyRank: analysis.matchmaking.difficultyRank,
-                      result: analysis.matchmaking.result,
-                      ratingDelta: analysis.matchmaking.ratingDelta,
-                      opponentLvl: analysis.matchmaking.opponentLvl,
-                      opponentOplvl: analysis.matchmaking.opponentOplvl,
-                      opponentRating: analysis.matchmaking.opponentRating,
-                      rating: analysis.matchmaking.rating,
-                      status: analysis.matchmaking.status,
-                      pointsGained: analysis.matchmaking.pointsGained,
-                      placementCur: analysis.matchmaking.placementCur,
-                      placementMax: analysis.matchmaking.placementMax,
-                      dailyStageId: analysis.matchmaking.dailyStageId,
-                      dailyPointsCur: analysis.matchmaking.dailyPointsCur,
-                      dailyPointsMax: analysis.matchmaking.dailyPointsMax,
-                      dailyPointsStep: analysis.matchmaking.dailyPointsStep,
-                      dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
-                      dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
-                      dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
-                    }),
-                  })
-                  .onConflictDoNothing({
-                    target: [battles.userId, battles.submissionId],
-                  })
-                  .returning({ id: battles.id }),
-              );
+              const [insertedBattle] = yield* tx
+                .insert(battles)
+                .values({
+                  userId,
+                  updatedAt: new Date(yield* Clock.currentTimeMillis),
+                  accountId: data.accountId,
+                  characterId: data.characterId,
+                  semanticFingerprint,
+                  ...(data.submissionId && {
+                    submissionId: data.submissionId,
+                  }),
+                  world: data.world,
+                  duration: analysis.duration,
+                  type: analysis.type,
+                  winner: analysis.outcome.winner,
+                  loser: analysis.outcome.loser,
+                  winningTeam: analysis.outcome.winningTeam,
+                  losingTeam: analysis.outcome.losingTeam,
+                  hasFlee: analysis.outcome.hasFlee,
+                  matchmaking: !!analysis.matchmaking,
+                  statistics: analysis.statistics,
+                  ...(analysis.matchmaking && {
+                    difficultyRank: analysis.matchmaking.difficultyRank,
+                    result: analysis.matchmaking.result,
+                    ratingDelta: analysis.matchmaking.ratingDelta,
+                    opponentLvl: analysis.matchmaking.opponentLvl,
+                    opponentOplvl: analysis.matchmaking.opponentOplvl,
+                    opponentRating: analysis.matchmaking.opponentRating,
+                    rating: analysis.matchmaking.rating,
+                    status: analysis.matchmaking.status,
+                    pointsGained: analysis.matchmaking.pointsGained,
+                    placementCur: analysis.matchmaking.placementCur,
+                    placementMax: analysis.matchmaking.placementMax,
+                    dailyStageId: analysis.matchmaking.dailyStageId,
+                    dailyPointsCur: analysis.matchmaking.dailyPointsCur,
+                    dailyPointsMax: analysis.matchmaking.dailyPointsMax,
+                    dailyPointsStep: analysis.matchmaking.dailyPointsStep,
+                    dailyRewardsLast: analysis.matchmaking.dailyRewardsLast,
+                    dailyRewardsCur: analysis.matchmaking.dailyRewardsCur,
+                    dailyRewardsMax: analysis.matchmaking.dailyRewardsMax,
+                  }),
+                })
+                .onConflictDoNothing({
+                  target: [battles.userId, battles.submissionId],
+                })
+                .returning({ id: battles.id });
 
               if (!insertedBattle) return null;
 
@@ -1084,9 +1071,7 @@ export const makeBattles = (
                 }),
               );
 
-              yield* queryEffect(
-                tx.insert(battleWarriors).values(warriorValues),
-              );
+              yield* tx.insert(battleWarriors).values(warriorValues);
 
               return insertedBattle;
             }),
@@ -1123,16 +1108,20 @@ export const makeBattles = (
 
     storeRawBattleData(
       battleId: string,
-      data: Omit<CreateBattleInput, "events"> & {
-        events: ParsedMove[];
-        sourceEvents?: CreateBattleInput["events"];
-      },
+      data: CreateBattleInput,
+      parsedMoves: ParsedMove[],
     ) {
       return Effect.suspend(() => {
         const rawBattleData: RawBattleData = {
           battleId,
           timestamp: new Date().toISOString(),
-          rawData: data,
+          rawData: {
+            events: parsedMoves,
+            sourceEvents: data.events,
+            accountId: data.accountId,
+            characterId: data.characterId,
+            world: data.world,
+          },
         };
 
         return adapter("BattleObjectStorage_upload", () =>
@@ -1188,7 +1177,6 @@ export type Battles = Pick<
   | "getDashboardBattles"
   | "getPublicBattle"
   | "getPublicBattleRaw"
-  | "getPublicBattles"
   | "getPublicBattleTimeline"
   | "getUserCharacters"
   | "getUserWorlds"
