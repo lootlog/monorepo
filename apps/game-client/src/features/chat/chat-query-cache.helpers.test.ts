@@ -71,4 +71,54 @@ describe("chat query cache", () => {
       socketMessage,
     ]);
   });
+
+  it("fetches missed history when an inactive guild receives a live message after reconnect", async () => {
+    const queryClient = new QueryClient();
+
+    const cachedMessage = {
+      ...socketMessage,
+      id: "before-disconnect",
+      message: "Before disconnect",
+    };
+
+    const missedMessage = {
+      ...socketMessage,
+      id: "during-disconnect",
+      message: "During disconnect",
+    };
+
+    const serverHistory = [cachedMessage, missedMessage, socketMessage];
+
+    const fetchHistory = vi
+      .fn<() => Promise<ChatMessage[]>>()
+      .mockResolvedValue(serverHistory);
+
+    queryClient.setQueryData(queryKey, [cachedMessage]);
+    await queryClient.invalidateQueries({
+      queryKey,
+      refetchType: "active",
+    });
+
+    updateChatMessagesCache({
+      guildId,
+      queryClient,
+      updater: (messages) => upsertChatMessage(messages, socketMessage),
+    });
+
+    expect(queryClient.getQueryData(queryKey)).toEqual([
+      cachedMessage,
+      socketMessage,
+    ]);
+    expect(fetchHistory).not.toHaveBeenCalled();
+
+    const messages = await queryClient.fetchQuery({
+      queryKey,
+      queryFn: fetchHistory,
+      staleTime: 5 * 60 * 1000,
+    });
+
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    expect(messages).toEqual(serverHistory);
+    queryClient.clear();
+  });
 });

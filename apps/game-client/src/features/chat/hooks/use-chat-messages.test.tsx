@@ -4,7 +4,6 @@ import {
   renderHook,
   waitFor,
 } from "@testing-library/react";
-import { QueryObserver } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -17,6 +16,7 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { createChatMember, createChatMessage } from "../chat-test-fixtures";
 import { useChatMessagesListener } from "./use-chat-messages";
+import { useChatGuildData } from "./use-chat-guild-data";
 
 const key = (guildId = "guild-1") =>
   getChatControllerGetChatMessagesQueryKey({ guildId });
@@ -119,23 +119,128 @@ describe("useChatMessagesListener", () => {
     expect(cached()).toEqual([]);
   });
 
-  it("refetches active chat histories only after the reconnected session joins", async () => {
-    const fetchHistory = vi
-      .fn<() => Promise<ChatMessage[]>>()
-      .mockResolvedValue([]);
+  it("loads history immediately on the first legacy join without a second delayed request", async () => {
+    vi.useFakeTimers();
+    const history = [message("available-history")];
+    harness.chatHistoryRequest.mockImplementation(() =>
+      Promise.resolve(Response.json(history)),
+    );
 
-    const observer = new QueryObserver(harness.queryClient, {
-      queryKey: key(),
-      queryFn: fetchHistory,
-      staleTime: Infinity,
+    const { result } = renderHook(
+      () => {
+        useChatMessagesListener();
+        useChatMessagesListener();
+
+        return useChatGuildData({
+          currentCharacterNick: "Current Hero",
+          guilds: [{ id: "guild-1", name: "Guild 1" }],
+          selectedGuildId: "guild-1",
+        });
+      },
+      { wrapper: harness.wrapper },
+    );
+
+    harness.open();
+    expect(harness.chatHistoryRequest).not.toHaveBeenCalled();
+    await harness.join();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
+    expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
+    await act(() => vi.advanceTimersByTimeAsync(5_000));
+    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
+    expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
+  });
+
+  it("recovers missed messages once after a policy rejoin without clearing the transcript", async () => {
+    const before = message("before", "guild-1", {
+      timestamp: "2026-09-24T10:00:00.000Z",
     });
 
-    const unsubscribe = observer.subscribe(() => {});
-    mount();
-    expect(fetchHistory).not.toHaveBeenCalled();
-    await harness.join();
-    await waitFor(() => expect(fetchHistory).toHaveBeenCalledOnce());
-    unsubscribe();
+    const missed = message("missed", "guild-1", {
+      timestamp: "2026-09-24T10:01:00.000Z",
+    });
+
+    const live = message("live", "guild-1", {
+      timestamp: "2026-09-24T10:02:00.000Z",
+    });
+
+    harness.queryClient.setQueryData(key(), [before]);
+    const renders: { ids: string[]; loading: boolean }[] = [];
+
+    const { result } = renderHook(
+      () => {
+        useChatMessagesListener();
+        useChatMessagesListener();
+
+        const data = useChatGuildData({
+          currentCharacterNick: "Current Hero",
+          guilds: [
+            { id: "guild-1", name: "Guild 1" },
+            { id: "guild-2", name: "Guild 2" },
+          ],
+          selectedGuildId: "guild-1",
+        });
+
+        renders.push({
+          ids: data.messagesByGuildId["guild-1"]?.map(({ id }) => id) ?? [],
+          loading: data.initialLoading,
+        });
+
+        return data;
+      },
+      { wrapper: harness.wrapper },
+    );
+
+    harness.open();
+
+    const policy = createAccessPolicySnapshot(
+      [
+        {
+          guild: { id: "guild-1", ownerId: "owner" },
+          roles: [
+            {
+              permissions: [Permission.LOOTLOG_CHAT_READ],
+              lvlRangeFrom: 0,
+              lvlRangeTo: 500,
+            },
+          ],
+        },
+      ],
+      "user",
+    );
+
+    await harness.join(["guild-1"], policy);
+    const response = Promise.withResolvers<Response>();
+    harness.chatHistoryRequest.mockReturnValue(response.promise);
+    act(() => harness.wire.close());
+    act(() => {
+      harness.realtime.connect();
+      harness.wire.open();
+    });
+    expect(harness.chatHistoryRequest).not.toHaveBeenCalled();
+    await harness.join(["guild-1"], policy);
+    await waitFor(() =>
+      expect(harness.chatHistoryRequest).toHaveBeenCalledOnce(),
+    );
+    await harness.join(["guild-1"], policy);
+    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
+    expect(result.current.messagesByGuildId["guild-1"]).toEqual([before]);
+    await harness.receive(created(live));
+    flushFrame();
+    await act(async () => {
+      response.resolve(Response.json([before, missed]));
+    });
+    await waitFor(() =>
+      expect(result.current.messagesByGuildId["guild-1"]).toEqual([
+        before,
+        missed,
+        live,
+      ]),
+    );
+    expect(
+      renders.every(({ ids, loading }) => ids.includes("before") && !loading),
+    ).toBe(true);
+    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
   });
 
   it("removes cached chat histories after losing a guild", async () => {
