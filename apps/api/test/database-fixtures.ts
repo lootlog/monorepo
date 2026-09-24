@@ -6,14 +6,14 @@ import { Effect, ManagedRuntime } from "effect";
 import { fileURLToPath } from "node:url";
 import { ApiDatabase } from "../src/database/drizzle/database.js";
 
-export const createDatabaseBoundary = async () => {
+let migratedDatabase: Promise<Blob> | undefined;
+
+const createMigratedDatabase = async () => {
   // Loot search migrations install pg_trgm; PGlite only offers an extension
   // the client was created with.
   const runtime = ManagedRuntime.make(
     PgliteClient.layer({ extensions: { pg_trgm } }),
   );
-
-  const database = await runtime.runPromise(makeWithDefaults());
 
   try {
     const client = await runtime.runPromise(PgliteClient.PgliteClient);
@@ -30,6 +30,25 @@ export const createDatabaseBoundary = async () => {
       await client.pglite.exec(migration.sql.join("\n"));
     }
 
+    // Keep the image private: no test can mutate the database it was built from.
+    return await runtime.runPromise(client.dumpDataDir("none"));
+  } finally {
+    await runtime.dispose();
+  }
+};
+
+export const createDatabaseBoundary = async () => {
+  // Share only the immutable image. Live databases, transactions and disposal
+  // stay independent, including when boundaries are acquired concurrently.
+  const loadDataDir = await (migratedDatabase ??= createMigratedDatabase());
+
+  const runtime = ManagedRuntime.make(
+    PgliteClient.layer({ extensions: { pg_trgm }, loadDataDir }),
+  );
+
+  try {
+    const database = await runtime.runPromise(makeWithDefaults());
+    const client = await runtime.runPromise(PgliteClient.PgliteClient);
     await runtime.runPromise(client.refreshArrayTypes);
 
     return {
