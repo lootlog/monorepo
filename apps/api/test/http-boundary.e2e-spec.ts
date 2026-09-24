@@ -356,10 +356,12 @@ describe("API HTTP boundary", () => {
       ),
     ).toEqual([{ active: true }]);
 
-    // Discord is unreachable here, so only the cached list could answer.
-    const refreshed = await request("/users/@me/guilds?refresh=true");
+    // Discord is unreachable here, so a refresh that skips the cached list fails.
+    const refreshed = await request("/users/@me/guilds/refresh", {
+      method: "POST",
+    });
 
-    expect(refreshed.status).not.toBe(200);
+    expect(refreshed.status).toBe(500);
   });
 
   it("returns watched item snapshots after create, quick-add and retry", async () => {

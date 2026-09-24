@@ -253,12 +253,6 @@ export const UpdateUserGameAccountPreferencesRequest = Schema.Struct({
   ),
 }).annotate({ identifier: "UpdateUserGameAccountPreferencesDto" });
 
-export type CurrentOrganizationsQuery = typeof CurrentOrganizationsQuery.Type;
-
-export const CurrentOrganizationsQuery = Schema.Struct({
-  refresh: Schema.optionalKey(Schema.Boolean),
-});
-
 export type CurrentOrganizationsResponse =
   typeof CurrentOrganizationsResponse.Type;
 

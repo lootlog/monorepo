@@ -9749,10 +9749,6 @@ export type UsersControllerUpdateUserPreferences429 = {
   message: string;
 };
 
-export type UsersControllerGetCurrentUserGuildsParams = {
-refresh?: boolean;
-};
-
 export type UsersControllerGetCurrentUserGuilds401 = {
   message: string;
 };
@@ -9762,6 +9758,18 @@ export type UsersControllerGetCurrentUserGuilds403 = {
 };
 
 export type UsersControllerGetCurrentUserGuilds429 = {
+  message: string;
+};
+
+export type UsersControllerRefreshCurrentUserGuilds401 = {
+  message: string;
+};
+
+export type UsersControllerRefreshCurrentUserGuilds403 = {
+  message: string;
+};
+
+export type UsersControllerRefreshCurrentUserGuilds429 = {
   message: string;
 };
 
@@ -13761,28 +13769,21 @@ export const useUsersControllerUpdateUserPreferences = <TError = ErrorType<Reque
       return useMutation(getUsersControllerUpdateUserPreferencesMutationOptions(options), queryClient);
     }
 
-export const getUsersControllerGetCurrentUserGuildsUrl = (params?: UsersControllerGetCurrentUserGuildsParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getUsersControllerGetCurrentUserGuildsUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/users/@me/guilds?${stringifiedParams}` : `/users/@me/guilds`
+  return `/users/@me/guilds`
 }
 
 /**
- * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes; set refresh to fetch it from Discord again.
+ * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes.
  * @summary Get current user guilds
  */
-export const usersControllerGetCurrentUserGuilds = async (params?: UsersControllerGetCurrentUserGuildsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
+export const usersControllerGetCurrentUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
 
-  return mainFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserGuildsUrl(params),
+  return mainFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserGuildsUrl(),
   {
     ...options,
     method: 'GET'
@@ -13795,23 +13796,23 @@ export const usersControllerGetCurrentUserGuilds = async (params?: UsersControll
 
 
 
-export const getUsersControllerGetCurrentUserGuildsQueryKey = (params?: UsersControllerGetCurrentUserGuildsParams,) => {
+export const getUsersControllerGetCurrentUserGuildsQueryKey = () => {
     return [
-    `/users/@me/guilds`, ...(params ? [params] : [])
+    `/users/@me/guilds`
     ] as const;
     }
 
 
-export const getUsersControllerGetCurrentUserGuildsQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>(params?: UsersControllerGetCurrentUserGuildsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+export const getUsersControllerGetCurrentUserGuildsQueryOptions = <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetCurrentUserGuildsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getUsersControllerGetCurrentUserGuildsQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>> = ({ signal }) => usersControllerGetCurrentUserGuilds(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>> = ({ signal }) => usersControllerGetCurrentUserGuilds({ signal, ...requestOptions });
 
 
 
@@ -13825,7 +13826,7 @@ export type UsersControllerGetCurrentUserGuildsQueryError = ErrorType<RequestVal
 
 
 export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>(
- params: undefined |  UsersControllerGetCurrentUserGuildsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>> & Pick<
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>,
           TError,
@@ -13835,7 +13836,7 @@ export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnTyp
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>(
- params?: UsersControllerGetCurrentUserGuildsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>> & Pick<
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>,
           TError,
@@ -13845,7 +13846,7 @@ export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnTyp
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>(
- params?: UsersControllerGetCurrentUserGuildsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -13853,11 +13854,11 @@ export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnTyp
  */
 
 export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>(
- params?: UsersControllerGetCurrentUserGuildsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(params,options)
+  const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -13868,11 +13869,11 @@ export function useUsersControllerGetCurrentUserGuilds<TData = Awaited<ReturnTyp
  * @summary Get current user guilds
  */
 export const prefetchUsersControllerGetCurrentUserGuildsQuery = async <TData = Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError = ErrorType<RequestValidationError | UsersControllerGetCurrentUserGuilds401 | UsersControllerGetCurrentUserGuilds403 | UsersControllerGetCurrentUserGuilds429>>(
- queryClient: QueryClient, params?: UsersControllerGetCurrentUserGuildsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ queryClient: QueryClient,  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(params,options)
+  const queryOptions = getUsersControllerGetCurrentUserGuildsQueryOptions(options)
 
   await queryClient.prefetchQuery(queryOptions);
 
@@ -13883,10 +13884,10 @@ export const prefetchUsersControllerGetCurrentUserGuildsQuery = async <TData = A
  * @summary Invalidates the {@link useUsersControllerGetCurrentUserGuilds} query
  */
 export const invalidateUsersControllerGetCurrentUserGuilds = async (
- queryClient: QueryClient, params?: UsersControllerGetCurrentUserGuildsParams, options?: InvalidateOptions
+ queryClient: QueryClient,  options?: InvalidateOptions
   ): Promise<QueryClient> => {
 
-  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetCurrentUserGuildsQueryKey(params) }, options);
+  await queryClient.invalidateQueries({ queryKey: getUsersControllerGetCurrentUserGuildsQueryKey() }, options);
 
   return queryClient;
 }
@@ -13896,8 +13897,8 @@ export const invalidateUsersControllerGetCurrentUserGuilds = async (
  */
 export const useSetUsersControllerGetCurrentUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params: UsersControllerGetCurrentUserGuildsParams | undefined,updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined), $exactMatch: boolean = true) => {
-    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>({ exact: $exactMatch, queryKey: getUsersControllerGetCurrentUserGuildsQueryKey(params) }, updater);
+  return (updater: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined | ((old: Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined) => Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>({ exact: $exactMatch, queryKey: getUsersControllerGetCurrentUserGuildsQueryKey() }, updater);
   };
 }
 
@@ -13906,11 +13907,86 @@ export const useSetUsersControllerGetCurrentUserGuildsQueryData = () => {
  */
 export const useGetUsersControllerGetCurrentUserGuildsQueryData = () => {
   const queryClient = useQueryClient();
-  return (params?: UsersControllerGetCurrentUserGuildsParams,) =>
-    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>(getUsersControllerGetCurrentUserGuildsQueryKey(params));
+  return () =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof usersControllerGetCurrentUserGuilds>>>(getUsersControllerGetCurrentUserGuildsQueryKey());
 }
 
 
+
+export const getUsersControllerRefreshCurrentUserGuildsUrl = () => {
+
+
+
+
+  return `/users/@me/guilds/refresh`
+}
+
+/**
+ * Fetch the authenticated user's Discord guilds from Discord again instead of the cached list, and return them like GET /users/@me/guilds
+ * @summary Refresh current user guilds
+ */
+export const usersControllerRefreshCurrentUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
+
+  return mainFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerRefreshCurrentUserGuildsUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerRefreshCurrentUserGuildsMutationKey = () => ['usersControllerRefreshCurrentUserGuilds'] as const;
+
+export const getUsersControllerRefreshCurrentUserGuildsMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerRefreshCurrentUserGuilds401 | UsersControllerRefreshCurrentUserGuilds403 | UsersControllerRefreshCurrentUserGuilds429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, TError,void, TContext> => {
+
+const mutationKey = getUsersControllerRefreshCurrentUserGuildsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, void> = () => {
+
+
+          return  usersControllerRefreshCurrentUserGuilds(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerRefreshCurrentUserGuildsMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>>
+
+    export type UsersControllerRefreshCurrentUserGuildsMutationError = ErrorType<RequestValidationError | UsersControllerRefreshCurrentUserGuilds401 | UsersControllerRefreshCurrentUserGuilds403 | UsersControllerRefreshCurrentUserGuilds429>
+
+
+    /**
+ * @summary Refresh current user guilds
+ */
+export const useUsersControllerRefreshCurrentUserGuilds = <TError = ErrorType<RequestValidationError | UsersControllerRefreshCurrentUserGuilds401 | UsersControllerRefreshCurrentUserGuilds403 | UsersControllerRefreshCurrentUserGuilds429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getUsersControllerRefreshCurrentUserGuildsMutationOptions(options), queryClient);
+    }
 
 export const getUsersControllerGetCurrentUserAccessibleGuildsUrl = () => {
 
