@@ -8,7 +8,7 @@ const CONNECTING = "Łączenie z serwerem…";
 
 const RECONNECTING = "Połączenie przerwane, ponowne łączenie…";
 
-const mountStrip = ({ error = false } = {}) => {
+const mountStrip = ({ error = false, refreshing = false } = {}) => {
   vi.useFakeTimers();
   const gateway = createTimerRealtimeFixture();
 
@@ -18,7 +18,7 @@ const mountStrip = ({ error = false } = {}) => {
         hasData
         error={error}
         errorLabel="Nie udało się odświeżyć"
-        refreshing={false}
+        refreshing={refreshing}
         refreshingLabel="Odświeżanie"
       />
     </SocketProvider>,
@@ -33,6 +33,12 @@ const mountStrip = ({ error = false } = {}) => {
   };
 };
 
+/** Advances time, then lets the strip mount a notice that became due. */
+const advance = (ms: number) => {
+  act(() => vi.advanceTimersByTime(ms));
+  act(() => vi.advanceTimersByTime(0));
+};
+
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -41,10 +47,10 @@ it("never flashes a status while the first connection completes quickly", async 
   const { gateway, cleanup } = mountStrip();
 
   try {
-    act(() => vi.advanceTimersByTime(1000));
+    advance(1000);
     act(() => gateway.wire.open());
     await gateway.join(["guild-1"]);
-    act(() => vi.advanceTimersByTime(5000));
+    advance(5000);
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   } finally {
@@ -56,7 +62,7 @@ it("reports a slow first connection as connecting, not as a lost connection", ()
   const { cleanup } = mountStrip();
 
   try {
-    act(() => vi.advanceTimersByTime(1500));
+    advance(1500);
 
     expect(screen.getByRole("status")).toHaveTextContent(CONNECTING);
     expect(screen.queryByText(RECONNECTING)).not.toBeInTheDocument();
@@ -72,11 +78,11 @@ it("reports a dropped session as reconnecting once the drop lasts", async () => 
     act(() => gateway.wire.open());
     await gateway.join(["guild-1"]);
     act(() => gateway.wire.close());
-    act(() => vi.advanceTimersByTime(999));
+    advance(999);
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(1));
+    advance(1);
 
     expect(screen.getByRole("status")).toHaveTextContent(RECONNECTING);
   } finally {
@@ -88,13 +94,35 @@ it("shows a refresh error at once, ahead of the connection state", () => {
   const { cleanup } = mountStrip({ error: true });
 
   try {
-    act(() => vi.advanceTimersByTime(0));
-    act(() => vi.advanceTimersByTime(1500));
+    advance(1500);
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "Nie udało się odświeżyć",
     );
     expect(screen.queryByText(CONNECTING)).not.toBeInTheDocument();
+  } finally {
+    cleanup();
+  }
+});
+
+it("waits out the drop delay even when another notice is already on screen", async () => {
+  const { gateway, cleanup } = mountStrip({ refreshing: true });
+
+  try {
+    act(() => gateway.wire.open());
+    await gateway.join(["guild-1"]);
+    advance(200);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Odświeżanie");
+
+    act(() => gateway.wire.close());
+    advance(999);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Odświeżanie");
+
+    advance(1);
+
+    expect(screen.getByRole("status")).toHaveTextContent(RECONNECTING);
   } finally {
     cleanup();
   }

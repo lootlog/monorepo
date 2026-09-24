@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AsyncStatusBar } from "@/components/async-status-bar";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useSocket } from "@/contexts/socket-context";
+import { useDelayedVisibility } from "@/hooks/ui/use-delayed-visibility";
 import { useNoticePresence } from "@/hooks/ui/use-notice-presence";
 import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 
@@ -26,17 +27,17 @@ type ConnectionStatusStripProps = {
 type Notice = {
   kind: "error" | "loading" | "warning";
   label: string;
-  /** How long the condition must last before the strip shows it. */
-  enterDelayMs: number;
   retry: boolean;
 };
 
 /**
- * A page load connects while cached data is already on screen, and a dropped
- * connection often recovers within a second; neither is worth a strip.
+ * How long each condition must last before the strip shows it. A page load
+ * connects while cached data is already on screen, and a dropped connection
+ * often recovers within a second; neither is worth a strip.
  */
 const CONNECTION_NOTICE_DELAY_MS = {
   connecting: 1500,
+  online: 0,
   reconnecting: 1000,
   unreachable: 1000,
 } as const;
@@ -51,41 +52,33 @@ const REFRESHING_NOTICE_DELAY_MS = 200;
 
 const resolveNotice = ({
   connection,
+  connectionDue,
   connectionLabel,
   error,
   errorLabel,
-  hasData,
-  refreshing,
+  refreshingDue,
   refreshingLabel,
 }: {
   connection: RealtimeConnectionStatus;
+  connectionDue: boolean;
   connectionLabel: string;
   error: boolean;
   errorLabel: string;
-  hasData: boolean;
-  refreshing: boolean;
+  refreshingDue: boolean;
   refreshingLabel: string;
 }): Notice | null => {
-  if (error) {
-    return { kind: "error", label: errorLabel, enterDelayMs: 0, retry: true };
-  }
+  if (error) return { kind: "error", label: errorLabel, retry: true };
 
-  if (hasData && connection !== "online") {
+  if (connectionDue && connection !== "online") {
     return {
       kind: CONNECTION_NOTICE_KIND[connection],
       label: connectionLabel,
-      enterDelayMs: CONNECTION_NOTICE_DELAY_MS[connection],
       retry: false,
     };
   }
 
-  if (refreshing) {
-    return {
-      kind: "loading",
-      label: refreshingLabel,
-      enterDelayMs: REFRESHING_NOTICE_DELAY_MS,
-      retry: false,
-    };
+  if (refreshingDue) {
+    return { kind: "loading", label: refreshingLabel, retry: false };
   }
 
   return null;
@@ -110,13 +103,25 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
   const { t } = useTranslation("common");
   const { status } = useSocket();
 
+  // Each condition waits out its own delay, so one that takes over from a
+  // notice already on screen cannot skip it.
+  const connectionDue = useDelayedVisibility(
+    hasData && status !== "online",
+    CONNECTION_NOTICE_DELAY_MS[status],
+  );
+
+  const refreshingDue = useDelayedVisibility(
+    refreshing,
+    REFRESHING_NOTICE_DELAY_MS,
+  );
+
   const notice = resolveNotice({
     connection: status,
+    connectionDue,
     connectionLabel: t(`connection.${status}`),
     error,
     errorLabel,
-    hasData,
-    refreshing,
+    refreshingDue,
     refreshingLabel,
   });
 
@@ -130,9 +135,7 @@ export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
     setLastNotice(notice);
   }
 
-  const { mounted, leaving } = useNoticePresence(notice !== null, {
-    enterDelayMs: notice?.enterDelayMs ?? 0,
-  });
+  const { mounted, leaving } = useNoticePresence(notice !== null);
 
   const shownNotice = notice ?? lastNotice;
 
