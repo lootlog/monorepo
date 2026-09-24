@@ -60,7 +60,7 @@
     "partyGathering": "Zbiórki"
   },
   "windowControls": {
-    "changeOpacity": "Zmień przezroczystość",
+    "opacityLevel": "Krycie tła: {{level}}/{{max}}. Kliknij, aby zmienić",
     "unlockWindow": "Odblokuj okno",
     "lockWindow": "Zablokuj okno",
     "closeWindow": "Zamknij okno"

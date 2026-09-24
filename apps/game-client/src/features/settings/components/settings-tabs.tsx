@@ -45,7 +45,6 @@ export const SettingsTabs = () => {
 
   const settingsWidth = useWindowsStore((state) => state.settings.size.width);
   const setSettingsPath = useWindowsStore((state) => state.setSettingsPath);
-  const setOpen = useWindowsStore((state) => state.setOpen);
   const query = useSettingsUiStore((state) => state.query);
   const setQuery = useSettingsUiStore((state) => state.setQuery);
   const clearQuery = useSettingsUiStore((state) => state.clearQuery);
@@ -128,21 +127,20 @@ export const SettingsTabs = () => {
     }
 
     if (event.key !== "Escape") return;
-    event.preventDefault();
 
+    // Escape first clears the search and closes the overlay; once there is
+    // nothing left to dismiss the window frame closes settings.
     if (query) {
+      event.preventDefault();
       clearQuery();
 
       return;
     }
 
     if (overlayOpen) {
+      event.preventDefault();
       setOverlayOpen(false);
-
-      return;
     }
-
-    setOpen("settings", false);
   };
 
   const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

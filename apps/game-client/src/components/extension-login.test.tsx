@@ -95,11 +95,11 @@ describe("extension login window", () => {
     remounted.unmount();
     useWindowsStore.getState().setPosition("extension-login", { x: 10, y: 20 });
     resetExtensionLoginWindow();
-    renderLogin();
+    const next = renderLogin();
     expect(screen.getByRole("region")).toBeInTheDocument();
-    expect(useWindowsStore.getState()["extension-login"].position).toEqual({
-      x: (window.innerWidth - 360) / 2,
-      y: (window.innerHeight - 180) / 2,
+    expect(next.container.querySelector("#ll-extension-login")).toHaveStyle({
+      left: `${Math.round((window.innerWidth - 360) / 2)}px`,
+      top: `${Math.round((window.innerHeight - 180) / 2)}px`,
     });
   });
 
@@ -112,7 +112,7 @@ describe("extension login window", () => {
     screen.getByRole("button", { name: "Odblokuj okno" }).focus();
     await user.keyboard(" ");
     expect(useWindowsStore.getState()["extension-login"].locked).toBe(false);
-    screen.getByRole("button", { name: "Zmień przezroczystość" }).focus();
+    screen.getByRole("button", { name: /^Krycie tła: 4\/5/ }).focus();
     await user.keyboard("{Enter}");
     expect(useWindowsStore.getState()["extension-login"].opacity).toBe(5);
   });

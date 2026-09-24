@@ -106,7 +106,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   } = preferencesQuery;
 
   const updatePreferences = useUpdateUserPreferences();
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
   const { setGuildId, guildId } = useSettingsStore(
     useShallow((state) => ({
@@ -224,7 +224,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
                 variant="ghost"
                 aria-label={t("actions.openSettings")}
                 onClick={() =>
-                  setOpen("settings", true, {
+                  openAndFocus("settings", {
                     activeTab: "general",
                     activeSubsection: "visibility",
                   })

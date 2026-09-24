@@ -10,6 +10,8 @@ const ICON_SIZE = 14;
 
 interface WindowTitleBarProps {
   title: string;
+  /** Names the window dialog through `aria-labelledby`. */
+  titleId: string;
   actions?: React.ReactNode;
   closable: boolean;
   opacity: WindowOpacity;
@@ -27,6 +29,7 @@ interface WindowTitleBarProps {
  */
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   title,
+  titleId,
   actions,
   closable,
   opacity,
@@ -60,7 +63,10 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       >
         {actions}
       </div>
-      <p className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100">
+      <p
+        id={titleId}
+        className="ll:min-w-0 ll:truncate ll:text-center ll:text-xs ll:font-semibold ll:leading-none ll:tracking-wide ll:text-gray-100"
+      >
         {title}
       </p>
       <div
@@ -68,7 +74,10 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         data-ll-draggable="false"
       >
         <WindowActionButton
-          label={t("windowControls.changeOpacity")}
+          label={t("windowControls.opacityLevel", {
+            level: opacity,
+            max: OPACITY_LEVELS.length,
+          })}
           onClick={handleOpacityChange}
         >
           <Blend size={ICON_SIZE} aria-hidden="true" />

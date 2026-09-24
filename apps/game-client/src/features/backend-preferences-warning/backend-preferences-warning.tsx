@@ -33,6 +33,7 @@ export const BackendPreferencesWarning: FC = () => {
   );
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
   const setPosition = useWindowsStore((state) => state.setPosition);
 
   const [dismissed, setDismissed] = useLocalStorage<boolean>(
@@ -66,7 +67,7 @@ export const BackendPreferencesWarning: FC = () => {
   };
 
   const handleOpenSettings = () => {
-    setOpen("settings", true, {
+    openAndFocus("settings", {
       activeTab: "npc-detector" satisfies SettingsTabValue,
     });
     handleClose();

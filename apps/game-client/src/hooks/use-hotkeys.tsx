@@ -123,8 +123,7 @@ export const useHotkeys = ({
     const quickActions = new Map<string, () => void>([
       [
         "create-party-gathering",
-        () =>
-          useWindowsStore.getState().setOpen("create-party-gathering", true),
+        () => useWindowsStore.getState().openAndFocus("create-party-gathering"),
       ],
       ["chat-position", () => onChatPosition?.()],
       ["chat-help", () => onChatHelp?.()],
