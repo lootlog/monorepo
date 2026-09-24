@@ -383,6 +383,14 @@ describe("RealtimeClient", () => {
     respondToLastRequest(first, { sessionId: "initial-presence" });
     await flushMessages();
     await initial;
+    let observerJoin = Promise.resolve<unknown>(undefined);
+    client.subscribeState((state) => {
+      if (state === "connected") observerJoin = client.join(joinData);
+    });
+    client.setReconnectHandler(async () => {
+      await observerJoin;
+      await client.request("presence.publish", { organizationIds: ["org-1"] });
+    });
     first.close();
 
     await vi.advanceTimersByTimeAsync(500);
@@ -539,53 +547,14 @@ describe("RealtimeClient", () => {
   });
 
   it("retries a transient heartbeat rejection on the same socket without replaying startup", async () => {
-    vi.useFakeTimers();
-    const socket = new TestWebSocket();
-
-    const client = new RealtimeClient({
-      url: "https://gateway.example.test",
-      random: () => 0,
-      webSocketFactory: () => socket,
-    });
-
-    client.connect();
-    socket.open();
-    const joined = client.join(joinData);
-    respondToLastRequest(socket);
-    await flushMessages();
-    await joined;
-
-    const published = client.request("presence.publish", {
-      organizationIds: ["org-1"],
-    });
-
-    respondToLastRequest(socket, { sessionId: "session-1" });
-    await flushMessages();
-    await published;
-    await vi.advanceTimersByTimeAsync(25_000);
-    const heartbeat = frameAt(socket, 2);
-
-    if (!("requestId" in heartbeat) || !heartbeat.requestId)
-      throw new Error("Missing heartbeat request");
-    socket.message(
-      encodeRealtimeFrame({
-        v: 1,
-        requestId: heartbeat.requestId,
-        status: "error",
-        error: {
-          code: "COMMAND_REJECTED",
-          message: "command temporarily unavailable",
-          retryable: true,
-        },
-      }),
-    );
-    await flushMessages();
+    const { client, socket, advance } = await heartbeatSession();
+    await rejectHeartbeat(socket, true);
     expect(client.state).toBe("ready");
     expect(socket.closeCodes).toEqual([]);
-    await vi.advanceTimersByTimeAsync(500);
+    await advance(500);
     expect(frameAt(socket, 3)).toMatchObject({
       type: "presence.heartbeat",
-      data: { sessionId: "session-1" },
+      data: { sessionId: "presence-1" },
     });
     respondToLastRequest(socket);
     await flushMessages();
@@ -594,16 +563,106 @@ describe("RealtimeClient", () => {
     client.disconnect();
   });
 
-  it("bounds consecutive retryable failures to one retry before reconnecting", async () => {
+  it("survives several seconds of retryable failures without replaying startup", async () => {
+    const { client, socket, sockets, advance } = await heartbeatSession();
+
+    for (const delay of [500, 1_000, 2_000, 2_500]) {
+      await rejectHeartbeat(socket, true);
+      await advance(delay);
+      expect(socket.closeCodes).toEqual([]);
+    }
+
+    respondToLastRequest(socket);
+    await flushMessages();
+    await advance(25_000);
+    expect(frameAt(socket, socket.sent.length - 1)).toMatchObject({
+      type: "presence.heartbeat",
+      data: { sessionId: "presence-1" },
+    });
+    expect(sockets).toHaveLength(1);
+    expect(
+      socket.sent
+        .map((_, index) => frameAt(socket, index))
+        .filter((frame) => "type" in frame && frame.type === "session.join"),
+    ).toHaveLength(1);
+    client.disconnect();
+  });
+
+  it("bounds retryable failures by the last successful presence refresh", async () => {
     const { client, socket, advance } = await heartbeatSession();
-    await rejectHeartbeat(socket, true);
-    await advance(500);
-    await rejectHeartbeat(socket, true);
-    expect(socket.sent).toHaveLength(4);
+
+    for (const delay of [500, 1_000, 2_000, ...Array<number>(12).fill(2_500)]) {
+      await rejectHeartbeat(socket, true);
+
+      if (socket.closeCodes.length > 0) break;
+      await advance(delay);
+    }
+
     expect(socket.closeCodes).toEqual([4003]);
     expect(client.state).toBe("reconnecting");
     client.disconnect();
   });
+
+  it.each(["retryable", "timeout"] as const)(
+    "keeps fresh presence after an older in-flight heartbeat ends with %s",
+    async (outcome) => {
+      const { client, socket, sockets, advance } = await heartbeatSession();
+
+      for (const delay of [
+        500,
+        1_000,
+        2_000,
+        ...Array<number>(10).fill(2_500),
+      ]) {
+        await rejectHeartbeat(socket, true);
+        await advance(delay);
+      }
+
+      await rejectHeartbeat(socket, true);
+      await advance(1_500);
+
+      const publication = client.request("presence.publish", {
+        organizationIds: ["org-1"],
+      });
+
+      const publish = frameAt(socket, socket.sent.length - 1);
+
+      if (!("requestId" in publish) || !publish.requestId)
+        throw new Error("Missing presence publication");
+
+      await advance(1_000);
+      const sentBeforeRefresh = socket.sent.length;
+
+      await advance(500);
+      // Preserve gateway FIFO: the publication was queued before this heartbeat.
+      socket.message(
+        encodeRealtimeFrame({
+          v: 1,
+          requestId: publish.requestId,
+          status: "success",
+          data: { sessionId: "presence-1" },
+        }),
+      );
+      await flushMessages();
+      await publication;
+      await advance(1_500);
+
+      if (outcome === "retryable") await rejectHeartbeat(socket, true);
+      await advance(2_000);
+      expect(socket.closeCodes).toEqual([]);
+      expect(client.state).toBe("ready");
+      expect(sockets).toHaveLength(1);
+      expect(socket.sent).toHaveLength(sentBeforeRefresh);
+
+      await advance(21_500);
+      expect(socket.sent).toHaveLength(sentBeforeRefresh + 1);
+      expect(frameAt(socket, socket.sent.length - 1)).toMatchObject({
+        type: "presence.heartbeat",
+        data: { sessionId: "presence-1" },
+      });
+      client.disconnect();
+    },
+  );
 
   it("does not retry access denial or an unresponsive heartbeat", async () => {
     const denied = await heartbeatSession();
@@ -620,28 +679,27 @@ describe("RealtimeClient", () => {
     timeout.client.disconnect();
   });
 
-  it("closes a broken transport when sending the heartbeat retry fails", async () => {
-    const { client, socket, advance } = await heartbeatSession();
-    await rejectHeartbeat(socket, true);
-    vi.spyOn(socket, "send").mockImplementation(() => {
-      throw new Error("network unavailable");
-    });
-    await advance(500);
-    expect(socket.closeCodes).toEqual([4006]);
-    expect(client.state).toBe("reconnecting");
-    client.disconnect();
-  });
-
-  it("keeps a retry inside the original heartbeat timeout", async () => {
+  it("gives a retry its normal timeout while presence remains fresh", async () => {
     const { client, socket, advance } = await heartbeatSession();
     await advance(10_000);
     await rejectHeartbeat(socket, true);
     await advance(500);
     expect(socket.sent).toHaveLength(4);
-    await advance(9_499);
+    await advance(19_999);
     expect(socket.closeCodes).toEqual([]);
     await advance(1);
     expect(socket.closeCodes).toEqual([4001]);
+    client.disconnect();
+  });
+
+  it("does not send a retry with too little time left for a response", async () => {
+    const { client, socket, advance } = await heartbeatSession();
+    await rejectHeartbeat(socket, true, 14_000);
+    await advance(14_000);
+    await advance(19_200);
+    await rejectHeartbeat(socket, true);
+    expect(socket.sent).toHaveLength(4);
+    expect(socket.closeCodes).toEqual([4003]);
     client.disconnect();
   });
 
@@ -659,7 +717,7 @@ describe("RealtimeClient", () => {
     suspend(60_000);
     await advance(500);
     expect(socket.sent).toHaveLength(3);
-    expect(socket.closeCodes).toEqual([4001]);
+    expect(socket.closeCodes).toEqual([4003]);
     client.disconnect();
   });
 

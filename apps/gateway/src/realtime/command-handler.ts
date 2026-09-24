@@ -12,7 +12,7 @@ import {
   type ServerEvent,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Function, Option, Schema } from "effect";
+import { Cause, Effect, Exit, Function, Option, Schema } from "effect";
 import type { GuildStore } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
@@ -219,13 +219,10 @@ export class CommandHandler {
           // Legacy fire-and-forget commands cannot receive a correlated error.
           socket.close(1013, "command capacity exceeded");
         }
-      }).pipe(
-        Effect.andThen(recordRealtimeCommand(command.type, "overloaded")),
-      );
+      });
     }
 
-    return this.dispatch(socket, command).pipe(
-      Effect.tap(() => recordRealtimeCommand(command.type, "success")),
+    const dispatch = Effect.suspend(() => this.dispatch(socket, command)).pipe(
       Effect.tap((data) =>
         Effect.sync(() => {
           if (command.requestId)
@@ -237,35 +234,57 @@ export class CommandHandler {
             });
         }),
       ),
+      Effect.onExit((exit) => {
+        if (Exit.isSuccess(exit))
+          return recordRealtimeCommand(command.type, "success");
+
+        if (Cause.hasDies(exit.cause))
+          return recordRealtimeCommand(command.type, "defect");
+
+        if (Cause.hasInterruptsOnly(exit.cause))
+          return recordRealtimeCommand(command.type, "interrupted");
+
+        const error = Option.getOrUndefined(Cause.findErrorOption(exit.cause));
+
+        const retryable =
+          !isCommandFailure(error) || commandFailureDetails(error).retryable;
+
+        return recordRealtimeCommand(
+          command.type,
+          retryable ? "retryable" : "rejected",
+        );
+      }),
+    );
+
+    const traced =
+      command.type === "session.join" || command.type === "presence.publish"
+        ? dispatch.pipe(
+            Effect.withSpan("gateway.command", {
+              attributes: { "rpc.method": command.type },
+            }),
+          )
+        : dispatch;
+
+    return traced.pipe(
       Effect.catch((error) => {
         const failure = isCommandFailure(error)
           ? commandFailureDetails(error)
           : { message: "command temporarily unavailable", retryable: true };
 
-        return recordRealtimeCommand(
-          command.type,
-          failure.retryable ? "retryable" : "rejected",
-        ).pipe(
-          Effect.andThen(
-            Effect.sync(() => {
-              if (command.requestId)
-                this.hub.sendResponse(
-                  socket,
-                  errorResponse(
-                    command.requestId,
-                    "COMMAND_REJECTED",
-                    failure.message,
-                    failure.retryable,
-                  ),
-                );
-            }),
-          ),
-        );
+        return Effect.sync(() => {
+          if (command.requestId)
+            this.hub.sendResponse(
+              socket,
+              errorResponse(
+                command.requestId,
+                "COMMAND_REJECTED",
+                failure.message,
+                failure.retryable,
+              ),
+            );
+        });
       }),
       Effect.asVoid,
-      Effect.withSpan("gateway.command", {
-        attributes: { "rpc.method": command.type },
-      }),
     );
   }
 

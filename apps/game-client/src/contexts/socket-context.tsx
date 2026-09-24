@@ -20,6 +20,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -37,9 +38,22 @@ const SocketContext = createContext<SocketContextValue>({
   joinedGuilds: [],
 });
 
+const subscribeConnection = (listener: () => void) => {
+  const socket = getSocket();
+  socket.on(GatewayEvent.CONNECT, listener);
+  socket.on(GatewayEvent.DISCONNECT, listener);
+
+  return () => {
+    socket.off(GatewayEvent.CONNECT, listener);
+    socket.off(GatewayEvent.DISCONNECT, listener);
+  };
+};
+
+const isConnected = () => getSocket().connected;
+
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const socket = getSocket();
-  const [connected, setConnected] = useState(socket.connected);
+  const connected = useSyncExternalStore(subscribeConnection, isConnected);
   const [joined, setJoined] = useState(false);
   const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
@@ -98,10 +112,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const accessCache = createGameAccessCache(queryClient);
     const releaseChatPolicy = retainChatAccessPolicy(queryClient);
-    const handleConnect = () => setConnected(true);
 
     const handleDisconnect = () => {
-      setConnected(false);
       setJoined(false);
       setJoinedGuilds([]);
     };
@@ -163,7 +175,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setJoinedGuilds(updatedGuildIds);
     };
 
-    socket.on(GatewayEvent.CONNECT, handleConnect);
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
@@ -181,7 +192,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       accessCache.dispose();
       releaseChatPolicy();
-      socket.off(GatewayEvent.CONNECT, handleConnect);
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);

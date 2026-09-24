@@ -64,8 +64,6 @@ export function createPageTransport(
   let disposed = false;
   let wantsConnection = false;
   let connectionRequested = false;
-  let hasJoined = false;
-  let reconnectHandler: (() => Promise<void>) | null = null;
 
   const setState = (next: RealtimeConnectionState) => {
     state = next;
@@ -181,14 +179,11 @@ export function createPageTransport(
   const realtime: GameRealtimeClient = {
     connect,
     disconnect,
-    join: (data) => {
-      hasJoined = true;
-
-      return request({
+    join: (data) =>
+      request({
         type: "command",
         command: { v: 1, type: "session.join", data },
-      });
-    },
+      }),
     request: (type, data) =>
       request({ type: "command", command: { v: 1, type, data } }),
     subscribe: (listener) => {
@@ -214,9 +209,8 @@ export function createPageTransport(
         heartbeatLatencies.delete(listener);
       };
     },
-    setReconnectHandler: (handler) => {
-      reconnectHandler = handler;
-    },
+    // SocketProvider owns startup for extension documents.
+    setReconnectHandler: () => {},
   };
 
   const deliverEvent = (frame: ServerEvent) => {
@@ -251,16 +245,10 @@ export function createPageTransport(
           onClosed();
 
           return;
-        case "state": {
-          const reconnect =
-            message.state === "connected" && hasJoined && reconnectHandler;
-
+        case "state":
           setState(message.state);
 
-          if (reconnect) void reconnect().catch(disconnect);
-
           return;
-        }
 
         case "heartbeat-latency":
           setHeartbeatLatency(message.latencyMs);
