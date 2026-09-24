@@ -16,6 +16,7 @@ import {
   useTimersControllerSearchNpcsWithTimerData,
 } from "@lootlog/client/main";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 const SECONDS_IN_HOUR = 3600;
 
@@ -458,7 +459,24 @@ export function useAddTimerForm({ guildId, onClose }: AddTimerFormProps) {
       timerData.maxSeconds = parseDurationToSeconds(data.maxDuration);
     }
 
-    createManualTimer(timerData, { onSuccess: onClose });
+    // The form stays open on failure so the player can retry. Each
+    // organization's request settles on its own: a rejected one is counted in
+    // the result instead of failing the mutation.
+    const reportFailure = () =>
+      toast.error(t("messages.createFailed", { name: data.name }));
+
+    createManualTimer(timerData, {
+      onSuccess: ({ failureCount }) => {
+        if (failureCount > 0) {
+          reportFailure();
+
+          return;
+        }
+
+        onClose();
+      },
+      onError: reportFailure,
+    });
   };
 
   const [startDate, endDate, watchedNpcType] = useWatch({
