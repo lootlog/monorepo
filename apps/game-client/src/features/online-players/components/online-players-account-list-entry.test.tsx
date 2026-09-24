@@ -15,6 +15,11 @@ import type {
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 
+const getHighlightTint = (container: HTMLElement) =>
+  container
+    .querySelector<HTMLElement>("[style*='--ll-presence-tint']")
+    ?.style.getPropertyValue("--ll-presence-tint");
+
 const createPresence = (
   overrides?: Partial<PlayerPresence>,
 ): PlayerPresence => ({
@@ -104,7 +109,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(screen.getByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
+    expect(screen.getByText("Karka-han")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
 
@@ -124,7 +129,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Torneg • luvia")).toBeVisible();
+    expect(screen.getByText("Torneg")).toBeVisible();
   });
 
   it("shows Margonem verification only for verified presence", () => {
@@ -242,7 +247,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Ithan • luvia")).toBeVisible();
+    expect(screen.getByText("Ithan")).toBeVisible();
   });
 
   it("invites the character to party from the right-side button", () => {
@@ -283,7 +288,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:bg-accent")).not.toBeNull();
+    expect(getHighlightTint(container)).toBe("var(--ll-color-sky-500)");
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -337,9 +342,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
-    expect(container.querySelector(".ll\\:bg-accent")).toBeNull();
-    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
+    expect(getHighlightTint(container)).toBe("var(--ll-color-yellow-500)");
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -370,7 +373,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:bg-green-500\\/15")).not.toBeNull();
+    expect(getHighlightTint(container)).toBe("var(--ll-color-green-500)");
     expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
   });
 
@@ -387,8 +390,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).not.toBeNull();
-    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
+    expect(getHighlightTint(container)).toBe("var(--ll-color-orange-500)");
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -403,8 +405,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
-    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).toBeNull();
+    expect(getHighlightTint(container)).toBe("var(--ll-color-yellow-500)");
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
