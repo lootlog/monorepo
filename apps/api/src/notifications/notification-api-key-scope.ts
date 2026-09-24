@@ -1,20 +1,8 @@
 import { RESERVATION_REMINDER_RULE_NAME } from "./rules/reservation-reminder.js";
-import {
-  and,
-  eq,
-  exists,
-  inArray,
-  isNull,
-  not,
-  or,
-  sql,
-  type SQL,
-} from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
-  lootTable,
-  organizationLootRecordTable,
   notificationJobTable,
   notificationRuleTable,
 } from "#src/database/drizzle/schema";
@@ -24,12 +12,8 @@ import {
   requestScopedIdentity,
 } from "#src/runtime/auth/forward-auth-identity";
 import { PermissionDeniedError } from "#src/shared/http/http-errors";
-import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
-import { Permission } from "@lootlog/schema/permissions";
-import {
-  selectNotificationMemberships,
-  parseNotificationFilters,
-} from "./rules/notification-matching.service.js";
+import { parseNotificationFilters } from "./rules/notification-matching.service.js";
+import { notificationLootSourceCondition } from "./notification-loot-source-visibility.js";
 
 type RuleScope = Pick<
   typeof notificationRuleTable.$inferSelect,
@@ -119,72 +103,30 @@ export const requireNotificationRuleApiKeyScope = (
   });
 
 /** Check original job source scopes before the history limit, including current loot visibility. */
-export const notificationApiKeyJobFilter = (database: ApiDatabaseValue) =>
+export const notificationJobVisibilityFilter = (
+  database: ApiDatabaseValue,
+  ownerDiscordId?: string,
+) =>
   Effect.gen(function* () {
     const guilds = yield* notificationApiKeyOrganizations(database);
 
-    if (!guilds) return undefined;
+    if (!guilds) {
+      if (ownerDiscordId === undefined) return undefined;
+
+      return or(
+        isNull(notificationJobTable.sourceEntityType),
+        ne(notificationJobTable.sourceEntityType, "loot"),
+        yield* notificationLootSourceCondition(database, ownerDiscordId),
+      );
+    }
+
     const identity = yield* requestScopedIdentity;
     const ids = guilds.map((guild) => guild.id);
 
-    const memberships = yield* selectNotificationMemberships(
+    const visibleLoot = yield* notificationLootSourceCondition(
       database,
-      [identity.discordId],
-      ids,
-    );
-
-    const memberByGuild = new Map(
-      (memberships.get(identity.discordId) ?? []).map((member) => [
-        member.guildId,
-        member,
-      ]),
-    );
-
-    const sourceGuildIds = sql`${notificationJobTable.payloadSnapshot}->'guildIds'`;
-
-    const visibleSources: SQL[] = guilds.map((guild) => {
-      const roles = memberByGuild.get(guild.id)?.roles ?? [];
-
-      const permissions =
-        guild.ownerId === identity.discordId
-          ? [Permission.OWNER]
-          : roles.flatMap((role) => role.permissions);
-
-      return (
-        or(
-          not(sql`${sourceGuildIds} ? ${guild.id}`),
-          exists(
-            database
-              .select({ id: lootTable.id })
-              .from(lootTable)
-              .innerJoin(
-                organizationLootRecordTable,
-                eq(organizationLootRecordTable.lootId, lootTable.id),
-              )
-              .where(
-                and(
-                  eq(
-                    sql`${lootTable.id}::text`,
-                    notificationJobTable.sourceEntityId,
-                  ),
-                  eq(organizationLootRecordTable.guildId, guild.id),
-                  isNull(organizationLootRecordTable.archivedAt),
-                  buildLootNpcVisibilityCondition(
-                    lootTable.id,
-                    permissions,
-                    roles,
-                  ),
-                ),
-              ),
-          ),
-        ) ?? sql`false`
-      );
-    });
-
-    const visibleLoot = and(
-      eq(notificationJobTable.sourceEntityType, "loot"),
-      sql`CASE WHEN jsonb_typeof(${sourceGuildIds}) = 'array' THEN jsonb_array_length(${sourceGuildIds}) > 0 AND ${sourceGuildIds} <@ ${JSON.stringify(ids)}::jsonb ELSE FALSE END`,
-      ...visibleSources,
+      identity.discordId,
+      guilds,
     );
 
     const personalMessage = and(

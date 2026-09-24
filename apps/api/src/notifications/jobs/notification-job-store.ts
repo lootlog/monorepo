@@ -138,6 +138,23 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
         Effect.map((rows) => rows.length > 0),
       );
 
+  const blockJob = (jobId: string, reason: string) =>
+    database
+      .update(notificationJobTable)
+      .set({
+        status: "BLOCKED",
+        blockedReason: reason,
+        lastError: reason,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(notificationJobTable.id, jobId),
+          inArray(notificationJobTable.status, ["PENDING", "BLOCKED"]),
+        ),
+      )
+      .pipe(Effect.mapError(failure("notifications.jobStore.block")));
+
   const recordDelivery = (options: NotificationDeliveryUpdate) =>
     database
       .transaction((transaction) =>
@@ -296,6 +313,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
 
   return {
     advanceRule,
+    blockJob,
     claimJob,
     cycleStatuses,
     findJob,

@@ -5,6 +5,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "cn";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import {
+  getJobErrorMessage,
   getJobKindLabel,
   getJobStatusBadgeProps,
   getJobStatusLabel,
@@ -57,7 +58,9 @@ export function NotificationHistoryRow({
           {format(new Date(job.updatedAt), "dd.MM.yyyy HH:mm:ss")}
         </p>
         {job.lastError ? (
-          <p className="text-xs text-destructive">{job.lastError}</p>
+          <p className="text-xs text-destructive">
+            {getJobErrorMessage(job.lastError, t)}
+          </p>
         ) : null}
       </div>
     </div>

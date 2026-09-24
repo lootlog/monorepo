@@ -557,6 +557,9 @@
       "sendsIn": "Wysyłka za {{time}}",
       "sendsNow": "Wysyłka teraz"
     },
+    "jobErrors": {
+      "lootSourceNotVisible": "Łup nie jest już dostępny."
+    },
     "jobDetail": {
       "title": "Szczegóły wysyłki",
       "rule": "Reguła",

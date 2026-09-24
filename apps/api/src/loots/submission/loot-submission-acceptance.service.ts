@@ -36,7 +36,10 @@ import {
   type LootPublication,
 } from "./loot-publication-outbox.js";
 import type { LootShare } from "#src/loots/loot-response.schema";
-import type { LootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
+import type {
+  AcceptedNpcSnapshot,
+  LootSubmissionAcceptancePersistence,
+} from "#src/loots/submission/loot-submission-acceptance.repository";
 
 type CreateLootSubmittedGuild = CreateLootResponse["submittedGuilds"][number];
 
@@ -59,20 +62,6 @@ type AcceptanceOutcome = {
   submittedGuilds: CreateLootSubmittedGuild[];
   rejectedGuilds: CreateLootRejectedGuild[];
 };
-
-type ProcessedNpc = {
-  id: number;
-  name: string;
-  lvl: number;
-  prof: string;
-  icon: string;
-  wt: number;
-  location: string;
-  type: NpcType;
-  margonemType: number;
-};
-
-type LootEventNpc = GuildLootEventNpc & { type: NpcType };
 
 interface LootSubmissionLock {
   readonly withLock: <A, E>(
@@ -226,13 +215,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         );
       }
 
-      const socketNpcs = npcData.mapped.map((npc) => ({
-        lvl: npc.lvl,
-        prof: npc.prof,
-        type: npc.type,
-        wt: npc.wt,
-      }));
-
       const mapPlayersSnapshot =
         options.submission.source === "FIGHT" &&
         primaryNpcType === NpcType.ELITE2 &&
@@ -246,7 +228,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         yield* this.acceptExistingLoot(
           existingLootId,
           outcome.submissionData,
-          socketNpcs,
           mapPlayersSnapshot,
         );
 
@@ -260,12 +241,11 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         primaryNpcType,
         submission: options.submission,
         uniqueId: options.uniqueId,
-        publications: (lootId) =>
+        publications: (lootId, npcs) =>
           this.newLootPublications({
             lootId,
-            npcs: npcData.mapped,
+            npcs,
             outcome,
-            socketNpcs,
             submission: options.submission,
           }),
       });
@@ -353,7 +333,6 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private acceptExistingLoot(
     lootId: number,
     submissions: LootSubmissionData[],
-    socketNpcs: LootEventNpc[],
     mapPlayersSnapshot: MapPlayersSnapshot | null,
   ): Effect.Effect<void, unknown> {
     return Effect.gen({ self: this }, function* () {
@@ -381,8 +360,12 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       yield* this.repository.appendSubmissions(
         lootId,
         newSubmissions,
-        (organizationIds) =>
-          this.createdPublications(lootId, organizationIds, socketNpcs),
+        (organizationIds, npcs) =>
+          this.createdPublications(
+            lootId,
+            organizationIds,
+            this.mapNpcEvents(npcs),
+          ),
         mapPlayersSnapshot === null
           ? undefined
           : {
@@ -400,7 +383,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     primaryNpcType: NpcType;
     submission: CreateLootRequest;
     uniqueId: string;
-    publications: (lootId: number) => LootPublication[];
+    publications: (
+      lootId: number,
+      npcs: AcceptedNpcSnapshot[],
+    ) => LootPublication[];
   }): Effect.Effect<number, unknown> {
     return Effect.gen({ self: this }, function* () {
       const initialAllocation = yield* this.inferInitialAllocation(
@@ -433,9 +419,8 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 
   private newLootPublications(options: {
     lootId: number;
-    npcs: ProcessedNpc[];
+    npcs: AcceptedNpcSnapshot[];
     outcome: AcceptanceOutcome;
-    socketNpcs: LootEventNpc[];
     submission: CreateLootRequest;
   }): LootPublication[] {
     const organizationIds = this.getUniqueOrganizationIds(
@@ -445,7 +430,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     const intents = this.createdPublications(
       options.lootId,
       organizationIds,
-      options.socketNpcs,
+      this.mapNpcEvents(options.npcs),
     );
 
     const rabbit = (
@@ -474,7 +459,19 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
     );
     rabbit(
       RabbitRoutingKey.SEARCH_NPCS_INDEX,
-      options.npcs.map((npc) => ({ ...npc, world: options.submission.world })),
+      options.npcs.map((npc) => ({
+        id: npc.npcId,
+        snapshotHash: npc.snapshotHash ?? undefined,
+        name: npc.name,
+        lvl: npc.lvl,
+        prof: npc.prof ?? "",
+        icon: npc.icon,
+        wt: npc.wt,
+        type: npc.type,
+        margonemType: npc.margonemType,
+        location: options.submission.location,
+        world: options.submission.world,
+      })),
     );
     const items = this.mapItems(options.submission.loots);
 
@@ -499,7 +496,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       guildIds: organizationIds,
       itemIds: items.map((item) => item.id),
       itemNames: items.map((item) => item.name),
-      npcs: options.socketNpcs.map((npc) => ({
+      npcs: options.npcs.map((npc) => ({
         type: npc.type ?? null,
         lvl: npc.lvl ?? null,
       })),
@@ -601,20 +598,13 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
       throw new InvalidRequestError(ErrorKey.NPC_WT_TOO_LOW);
     }
 
-    return {
-      primary,
-      mapped: sorted.map((npc) => ({
-        id: npc.id,
-        name: npc.name,
-        lvl: npc.lvl,
-        prof: getProfByShortname(npc.prof ?? "") ?? "",
-        icon: npc.icon,
-        wt: npc.wt,
-        location: npc.location,
-        type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
-        margonemType: npc.type,
-      })),
-    };
+    return { primary };
+  }
+
+  private mapNpcEvents(npcs: AcceptedNpcSnapshot[]): GuildLootEventNpc[] {
+    return [...npcs]
+      .sort((left, right) => (right.wt ?? 0) - (left.wt ?? 0))
+      .map(({ lvl, prof, type, wt }) => ({ lvl, prof, type, wt }));
   }
 
   private isAcceptedByConfig(
@@ -811,7 +801,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   private createdPublications(
     lootId: number,
     organizationIds: string[],
-    npcs: LootEventNpc[],
+    npcs: GuildLootEventNpc[],
   ): LootPublication[] {
     return organizationIds.flatMap((guildId): LootPublication[] => [
       { organizationIds: [guildId], payload: { kind: "cache" } },

@@ -26,9 +26,17 @@ export interface NotificationDispatchStore {
     values: Parameters<NotificationJobStore["updateJob"]>[1],
   ) => Effect.Effect<unknown, unknown, never>;
   readonly claim: (jobId: string) => Effect.Effect<boolean, unknown, never>;
+  readonly block: (
+    jobId: string,
+    reason: string,
+  ) => Effect.Effect<unknown, unknown, never>;
 }
 
 export interface NotificationDispatchPermissions {
+  readonly canReadLootSource: (
+    jobId: string,
+    discordId: string,
+  ) => Effect.Effect<boolean, unknown, never>;
   readonly hasRequiredGuildPermissions: (
     guildId: string,
   ) => Effect.Effect<boolean, unknown, never>;
@@ -94,15 +102,26 @@ export const makeNotificationJobDispatch = (
   Effect.fn("notifications.jobs.dispatch")(function* (jobId: string) {
     const job = yield* store.find(jobId);
 
-    if (!job) return;
+    if (
+      !job ||
+      (job.status !== NotificationJobStatus.PENDING &&
+        job.status !== NotificationJobStatus.BLOCKED)
+    )
+      return;
+
+    if (
+      job.sourceEntityType === "loot" &&
+      !(yield* permissions.canReadLootSource(job.id, job.ownerId))
+    ) {
+      yield* store.block(job.id, "Loot source is no longer visible");
+
+      return;
+    }
+
     const blockedReason = targetBlockedReason(job.target);
 
     if (blockedReason) {
-      yield* store.update(job.id, {
-        status: NotificationJobStatus.BLOCKED,
-        blockedReason,
-        lastError: blockedReason,
-      });
+      yield* store.block(job.id, blockedReason);
 
       return;
     }
@@ -113,12 +132,7 @@ export const makeNotificationJobDispatch = (
       );
 
       if (!permitted) {
-        const missingPermissions = "Missing Discord bot permissions";
-        yield* store.update(job.id, {
-          status: NotificationJobStatus.BLOCKED,
-          blockedReason: missingPermissions,
-          lastError: missingPermissions,
-        });
+        yield* store.block(job.id, "Missing Discord bot permissions");
 
         return;
       }

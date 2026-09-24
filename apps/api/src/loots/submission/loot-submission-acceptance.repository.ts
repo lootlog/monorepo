@@ -1,3 +1,4 @@
+import { createNpcSnapshotHash } from "@lootlog/database/snapshot-hash";
 import {
   captureLootMapPlayers,
   mapPlayersToSnapshotInputs,
@@ -37,6 +38,8 @@ import type {
   LootSourceEnum as LootSource,
   ProfessionEnum as Profession,
 } from "@lootlog/schema/loot";
+
+export type AcceptedNpcSnapshot = typeof npcSnapshotTable.$inferSelect;
 
 export type PersistedLootSubmission = {
   guildId: string;
@@ -130,7 +133,10 @@ export interface LootSubmissionAcceptancePersistence {
   readonly appendSubmissions: (
     lootId: number,
     submissions: PersistedLootSubmission[],
-    publications: (organizationIds: string[]) => LootPublication[],
+    publications: (
+      organizationIds: string[],
+      npcs: AcceptedNpcSnapshot[],
+    ) => LootPublication[],
     mapPlayersSnapshot?: { guildIds: string[]; players: MapPlayersSnapshot },
   ) => Effect.Effect<
     Array<{ id: number; guildId: string; archivedAt: Date | null }>,
@@ -138,7 +144,10 @@ export interface LootSubmissionAcceptancePersistence {
   >;
   readonly createNewLoot: (
     data: NewLootPersistence,
-    publications: (lootId: number) => LootPublication[],
+    publications: (
+      lootId: number,
+      npcs: AcceptedNpcSnapshot[],
+    ) => LootPublication[],
   ) => Effect.Effect<number, unknown>;
 }
 
@@ -394,14 +403,27 @@ export const makeLootSubmissionAcceptancePersistence = (
             });
         }
 
-        const intents = publications([
-          ...new Set([
-            ...records
-              .filter((record) => record.archivedAt === null)
-              .map((record) => record.guildId),
-            ...snapshotGuildIds,
-          ]),
-        ]);
+        const acceptedNpcs = yield* transaction
+          .select({ npc: npcSnapshotTable })
+          .from(lootNpcTable)
+          .innerJoin(
+            npcSnapshotTable,
+            eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+          )
+          .where(eq(lootNpcTable.lootId, lootId))
+          .orderBy(lootNpcTable.id);
+
+        const intents = publications(
+          [
+            ...new Set([
+              ...records
+                .filter((record) => record.archivedAt === null)
+                .map((record) => record.guildId),
+              ...snapshotGuildIds,
+            ]),
+          ],
+          acceptedNpcs.map(({ npc }) => npc),
+        );
 
         if (intents.length > 0) {
           yield* transaction
@@ -509,24 +531,50 @@ export const makeLootSubmissionAcceptancePersistence = (
           );
         }
 
-        for (const npc of data.npcs) {
+        const acceptedNpcs: AcceptedNpcSnapshot[] = [];
+
+        // Stable key order prevents concurrent observations of overlapping groups
+        // from acquiring their unique-index locks in opposite orders.
+        const observations = data.npcs
+          .map((npc, index) => {
+            const observation = {
+              ...npc,
+              identityNamespace: "legacy",
+              world: data.world,
+            };
+
+            return {
+              index,
+              observation: {
+                ...observation,
+                snapshotHash: createNpcSnapshotHash(observation),
+              },
+            };
+          })
+          .sort((left, right) =>
+            left.observation.snapshotHash.localeCompare(
+              right.observation.snapshotHash,
+            ),
+          );
+
+        for (const { index, observation: npc } of observations) {
           const inserted = yield* transaction
             .insert(npcSnapshotTable)
             .values(npc)
             .onConflictDoNothing({
-              target: [npcSnapshotTable.npcId, npcSnapshotTable.name],
+              target: [npcSnapshotTable.npcId, npcSnapshotTable.snapshotHash],
             })
-            .returning({ id: npcSnapshotTable.id });
+            .returning();
 
           const existing = inserted[0]
             ? inserted
             : yield* transaction
-                .select({ id: npcSnapshotTable.id })
+                .select()
                 .from(npcSnapshotTable)
                 .where(
                   and(
                     eq(npcSnapshotTable.npcId, npc.npcId),
-                    eq(npcSnapshotTable.name, npc.name),
+                    eq(npcSnapshotTable.snapshotHash, npc.snapshotHash),
                   ),
                 )
                 .limit(1);
@@ -539,10 +587,16 @@ export const makeLootSubmissionAcceptancePersistence = (
             );
           }
 
-          yield* transaction.insert(lootNpcTable).values({
-            lootId: loot.id,
-            npcSnapshotId: snapshot.id,
-          });
+          acceptedNpcs[index] = snapshot;
+        }
+
+        if (acceptedNpcs.length > 0) {
+          yield* transaction.insert(lootNpcTable).values(
+            acceptedNpcs.map((snapshot) => ({
+              lootId: loot.id,
+              npcSnapshotId: snapshot.id,
+            })),
+          );
         }
 
         const records = yield* transaction
@@ -592,7 +646,7 @@ export const makeLootSubmissionAcceptancePersistence = (
             };
           }),
         );
-        const intents = publications(loot.id);
+        const intents = publications(loot.id, acceptedNpcs);
 
         if (intents.length > 0) {
           yield* transaction
