@@ -1,11 +1,6 @@
 import { CharacterTile } from "@/components/character-tile";
 import { NpcTile } from "@/components/npc-tile";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { IconButton } from "@/components/ui/icon-button";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { useGameStore } from "@/store/game.store";
@@ -23,7 +18,7 @@ import {
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
 import { format } from "@/utils/local-date";
-import { LoaderCircle, Swords, XIcon } from "lucide-react";
+import { Swords, XIcon } from "lucide-react";
 import { memo, type ReactNode, useEffect, useRef } from "react";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
@@ -175,7 +170,6 @@ const resolveNotificationAppearance = ({
 const resolveNotificationActionState = (
   notification: StoredNotification,
   heroLevel: number,
-  joinLabel: string,
 ) => {
   const isPartyGathering = isPartyGatheringNotification(notification);
 
@@ -188,10 +182,10 @@ const resolveNotificationActionState = (
   const maxLevel = isPartyGathering ? (notification.maxLvl ?? 500) : 500;
 
   return {
-    actionLabel: isPartyGathering ? joinLabel : null,
     isPartyGathering,
     meetsLevelReq: heroLevel >= minLevel && heroLevel <= maxLevel,
-    showJoinAction: Boolean(regularNotification?.isGatheringParty),
+    showJoinAction:
+      isPartyGathering || Boolean(regularNotification?.isGatheringParty),
   };
 };
 
@@ -244,8 +238,8 @@ export const SingleNotification = memo(function SingleNotification({
 
   const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
 
-  const { actionLabel, isPartyGathering, meetsLevelReq, showJoinAction } =
-    resolveNotificationActionState(notification, heroLvl, t("actions.join"));
+  const { isPartyGathering, meetsLevelReq, showJoinAction } =
+    resolveNotificationActionState(notification, heroLvl);
 
   const handleRemoveNotification = () =>
     onRemoveNotification(notification.notificationId);
@@ -419,49 +413,15 @@ export const SingleNotification = memo(function SingleNotification({
           </div>
         </div>
         <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
-          {actionLabel ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  aria-label={t("actions.joinAria")}
-                  className="ll:size-7 ll:px-0"
-                  onClick={handleJoinReadyRoom}
-                  disabled={
-                    isJoiningReadyRoom || (isPartyGathering && !meetsLevelReq)
-                  }
-                >
-                  {isJoiningReadyRoom ? (
-                    <LoaderCircle size={12} className="ll:animate-spin" />
-                  ) : (
-                    <Swords size={12} />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{actionLabel}</TooltipContent>
-            </Tooltip>
-          ) : null}
           {showJoinAction ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  aria-label={t("actions.joinAria")}
-                  className="ll:size-7 ll:px-0"
-                  onClick={handleJoinReadyRoom}
-                  disabled={isJoiningReadyRoom}
-                >
-                  {isJoiningReadyRoom ? (
-                    <LoaderCircle size={12} className="ll:animate-spin" />
-                  ) : (
-                    <Swords size={12} />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t("actions.joinAria")}</TooltipContent>
-            </Tooltip>
+            <IconButton
+              label={t("actions.joinAria")}
+              onClick={handleJoinReadyRoom}
+              loading={isJoiningReadyRoom}
+              disabled={isPartyGathering && !meetsLevelReq}
+            >
+              <Swords aria-hidden />
+            </IconButton>
           ) : null}
           <NotificationMuteMenu
             notification={notification}
@@ -473,20 +433,13 @@ export const SingleNotification = memo(function SingleNotification({
             onOpenChange={handleMuteMenuOpenChange}
             onMuted={handleRemoveNotification}
           />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="xs"
-                variant="destructive"
-                aria-label={t("actions.closeAria")}
-                className="ll:size-7 ll:px-0"
-                onClick={handleRemoveNotification}
-              >
-                <XIcon size={12} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t("actions.closeAria")}</TooltipContent>
-          </Tooltip>
+          <IconButton
+            variant="quiet-destructive"
+            label={t("actions.closeAria")}
+            onClick={handleRemoveNotification}
+          >
+            <XIcon aria-hidden />
+          </IconButton>
         </div>
       </div>
     </div>

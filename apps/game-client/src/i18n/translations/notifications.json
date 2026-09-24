@@ -7,7 +7,6 @@
     "levelRange": "Poziom: {{min}}–{{max}}"
   },
   "actions": {
-    "join": "Zgłoś się",
     "joinAria": "Zgłoś się do zbiórki",
     "closeAria": "Zamknij powiadomienie",
     "muteOptionsAria": "Opcje wyciszenia",

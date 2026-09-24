@@ -8,7 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { CharacterTile } from "@/components/character-tile";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Tile } from "@/components/ui/tile";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
 import { partyReadyRoomControllerRemove } from "@lootlog/client/main";
@@ -77,22 +77,16 @@ export function ReadyRoomParticipantItem({
       </div>
       <div className="ll:flex ll:items-center ll:gap-0.5">
         {!isFriend && !sameClan ? (
-          <Button
-            variant="secondary"
-            size="xs"
-            className="ll:p-0"
-            title={t("actions.addFriend")}
+          <IconButton
+            label={t("actions.addFriend")}
             onClick={() => inviteCharacterToFriends(participant.character.nick)}
           >
-            <UserPlus size={17} className="ll:text-blue-400" />
-          </Button>
+            <UserPlus aria-hidden />
+          </IconButton>
         ) : null}
         {participant.partyPresence === "OUTSIDE" ? (
-          <Button
-            variant="secondary"
-            size="xs"
-            className="ll:p-0"
-            title={t("actions.invite")}
+          <IconButton
+            label={t("actions.invite")}
             disabled={!canInviteParticipants([participant.participantId])}
             onClick={() => {
               void inviteParticipants([participant.participantId]).catch(() => {
@@ -100,19 +94,17 @@ export function ReadyRoomParticipantItem({
               });
             }}
           >
-            <Plus size={17} className="ll:text-green-400" />
-          </Button>
+            <Plus aria-hidden />
+          </IconButton>
         ) : null}
-        <Button
-          variant="secondary"
-          size="xs"
-          className="ll:p-0"
-          title={t("actions.remove")}
-          disabled={isRemoving}
+        <IconButton
+          variant="quiet-destructive"
+          label={t("actions.remove")}
+          loading={isRemoving}
           onClick={() => removeParticipant()}
         >
-          <UserMinus size={17} className="ll:text-red-400" />
-        </Button>
+          <UserMinus aria-hidden />
+        </IconButton>
       </div>
     </Tile>
   );
