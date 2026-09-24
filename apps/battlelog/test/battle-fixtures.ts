@@ -98,7 +98,6 @@ export const unusedBattles = {
   getDashboardBattles: unexpectedOperation,
   getPublicBattle: unexpectedOperation,
   getPublicBattleRaw: unexpectedOperation,
-  getPublicBattles: unexpectedOperation,
   getPublicBattleTimeline: unexpectedOperation,
   getUserCharacters: unexpectedOperation,
   getUserWorlds: unexpectedOperation,
@@ -135,7 +134,6 @@ export const unusedRedisStore = {
   setJson: unexpectedRedisOperation,
   getOrSetJson: unexpectedRedisOperation,
   getOrSetJsonBestEffort: unexpectedRedisOperation,
-  deleteByPattern: unexpectedRedisOperation,
   setNX: unexpectedRedisOperation,
   eval: unexpectedRedisOperation,
   del: unexpectedRedisOperation,
@@ -143,5 +141,6 @@ export const unusedRedisStore = {
   zcard: unexpectedRedisOperation,
   zrange: unexpectedRedisOperation,
   zrem: unexpectedRedisOperation,
-  zremrangebyrank: unexpectedRedisOperation,
+  expire: unexpectedRedisOperation,
+  zremrangebyscore: unexpectedRedisOperation,
 } satisfies RedisStore;

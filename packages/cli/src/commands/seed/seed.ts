@@ -823,13 +823,13 @@ async function seedBattles(count: number) {
     accountId,
   );
 
-  const processor = new BattleProcessor();
-
   let createdCount = 0;
 
   for (const battlePayload of battles) {
     try {
-      const analysis = processor.processBattle(battlePayload);
+      const analysis = new BattleProcessor("statistics").processBattle(
+        battlePayload,
+      );
 
       const totalPH = analysis.warriors.reduce(
         (sum, warrior) => sum + (warrior.ph || 0),

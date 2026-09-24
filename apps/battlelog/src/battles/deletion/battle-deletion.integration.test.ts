@@ -69,9 +69,11 @@ for (const mode of ["single", "user"] as const) {
     let fail = true;
 
     const storage = {
-      deleteBattleData: async (id: string) => {
-        if (fail && id === "one") throw new Error("R2 unavailable");
-        removed.push(id);
+      deleteBattlesData: async (ids: readonly string[]) => {
+        const failed = ids.filter((id) => fail && id === "one");
+        removed.push(...ids.filter((id) => !failed.includes(id)));
+
+        return failed;
       },
     };
 
@@ -152,7 +154,7 @@ it("rolls back database removal if durable cleanup cannot be recorded", async ()
         Effect.gen(function* () {
           const deletion = makeBattleDeletion(
             yield* drizzleDatabaseEffect,
-            { deleteBattleData: async () => {} },
+            { deleteBattlesData: async () => [] },
             { invalidateAnalyticsCache: () => Effect.void },
           );
 
@@ -193,4 +195,61 @@ it("scopes submission uniqueness to the owner and rejects duplicate retries for 
     { id: "other", submissionId: "shared-submission" },
     { id: "two", submissionId: null },
   ]);
+});
+
+it("claims disjoint cleanup batches across workers and invalidates each owner once", async () => {
+  await pool.query(`INSERT INTO battle_object_deletions ("battleId", "userId")
+    SELECT 'pending-' || n, 'owner' FROM generate_series(1, 2000) n`);
+  const seen: string[][] = [];
+  let invalidations = 0;
+  const firstStarted = Promise.withResolvers<void>();
+  const releaseFirst = Promise.withResolvers<void>();
+
+  const storage = {
+    deleteBattlesData: async (ids: readonly string[]) => {
+      seen.push([...ids]);
+
+      if (seen.length === 1) {
+        firstStarted.resolve();
+        await releaseFirst.promise;
+      }
+
+      return [];
+    },
+  };
+
+  const analytics = {
+    invalidateAnalyticsCache: () =>
+      Effect.sync(() => {
+        invalidations += 1;
+      }),
+  };
+
+  const drain = () =>
+    run(
+      Effect.gen(function* () {
+        yield* makeBattleDeletion(
+          yield* drizzleDatabaseEffect,
+          storage,
+          analytics,
+        ).drain;
+      }),
+    );
+
+  const first = drain();
+  await firstStarted.promise;
+
+  try {
+    await drain();
+    expect(seen.map((batch) => batch.length)).toEqual([1000, 1000]);
+    expect(new Set(seen.flat()).size).toBe(2000);
+    expect(invalidations).toBe(2);
+  } finally {
+    releaseFirst.resolve();
+    await first;
+  }
+
+  expect(
+    (await pool.query("SELECT * FROM battle_object_deletions")).rows,
+  ).toEqual([]);
 });

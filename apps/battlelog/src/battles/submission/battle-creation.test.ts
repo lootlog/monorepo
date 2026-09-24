@@ -1,3 +1,4 @@
+import { BattleProcessor } from "@lootlog/battle-processor";
 import { PgliteClient } from "@effect/sql-pglite";
 import { makeWithDefaults } from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
@@ -195,7 +196,6 @@ const createRedisBoundary = ({
 
   const boundary = {
     del: mock(async (key: string) => (values.delete(key) ? 1 : 0)),
-    deleteByPattern: mock(),
     eval: mock(
       async (_script: string, keys: string[], args: Array<string | number>) => {
         const [key] = keys;
@@ -299,17 +299,24 @@ const createTestApplication = ({
 
   const objects = new Map<string, RawBattleData>();
 
+  const readBattleData = mock(async (battleId: string) =>
+    JSON.stringify(objects.get(battleId)),
+  );
+
   const objectStorage = {
     uploadBattleData: mock(async (battleId: string, data: RawBattleData) => {
       await beforeUpload?.();
       objects.set(battleId, data);
     }),
+    readBattleData,
     getBattleData: async <TData>(
       battleId: string,
       decodeJson: (value: string) => TData,
-    ) => decodeJson(JSON.stringify(objects.get(battleId))),
-    deleteBattleData: async (battleId: string) => {
-      objects.delete(battleId);
+    ) => decodeJson(await readBattleData(battleId)),
+    deleteBattlesData: async (battleIds: readonly string[]) => {
+      for (const battleId of battleIds) objects.delete(battleId);
+
+      return [];
     },
   };
 
@@ -346,7 +353,7 @@ const createTestApplication = ({
     battles: battlesService,
   };
 
-  return { app, database, objects, objectStorage };
+  return { app, database, objects, objectStorage, analyticsService };
 };
 
 describe("battle creation deduplication", () => {
@@ -428,6 +435,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("resolves the owner's durable submission after the semantic cache expires", async () => {
+    const processBattle = spyOn(BattleProcessor.prototype, "processBattle");
     const redis = createRedisBoundary();
     const testApplication = createTestApplication({ redis });
     app = testApplication.app;
@@ -448,6 +456,7 @@ describe("battle creation deduplication", () => {
     expect(retry.body).toEqual(first.body);
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
     expect(testApplication.database.getTransactionCount()).toBe(1);
+    expect(processBattle).toHaveBeenCalledTimes(1);
   });
 
   it("prefers a durable submission over a newer equivalent battle in the cache", async () => {
@@ -671,7 +680,9 @@ describe("battle creation deduplication", () => {
     });
 
     await databaseRuntime.runPromise(
-      sharedDatabase.update(battles).set({ public: true }),
+      sharedDatabase
+        .update(battles)
+        .set({ public: true, updatedAt: new Date(0) }),
     );
 
     const response = await app.handler(
@@ -733,6 +744,7 @@ describe("battle creation deduplication", () => {
   });
 
   it("stores one canonical battle for duplicated incremental and compact payloads", async () => {
+    const processBattle = spyOn(BattleProcessor.prototype, "processBattle");
     const testApplication = createTestApplication();
     app = testApplication.app;
 
@@ -762,6 +774,155 @@ describe("battle creation deduplication", () => {
 
     expect(cashtelan.turns).toBe(12);
     expect(await testApplication.database.getStoredBattles()).toHaveLength(1);
+    expect(processBattle).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses computed timelines while checking current visibility and deletion on every read", async () => {
+    const testApplication = createTestApplication();
+    app = testApplication.app;
+
+    const created = await postBattle(app.handler, {
+      ...battleContext,
+      events: [battleEvent],
+    });
+
+    const battleId = created.body.battleId;
+    const path = `/battles/${battleId}/timeline`;
+    const publicPath = `/battles/public/${battleId}/timeline`;
+    await databaseRuntime.runPromise(
+      sharedDatabase
+        .update(battles)
+        .set({ public: true, updatedAt: new Date(0) }),
+    );
+    const processBattle = spyOn(BattleProcessor.prototype, "processBattle");
+
+    const invalidations =
+      testApplication.analyticsService.invalidateAnalyticsCache.mock.calls
+        .length;
+
+    const first = await requestJson(
+      app.handler,
+      "GET",
+      path,
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    const second = await requestJson(
+      app.handler,
+      "GET",
+      publicPath,
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    expect(second.body).toEqual(first.body);
+    expect(first.body.timeline).toHaveLength(moves.length);
+    expect(processBattle).toHaveBeenCalledTimes(1);
+    expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(
+      testApplication.analyticsService.invalidateAnalyticsCache,
+    ).toHaveBeenCalledTimes(invalidations);
+
+    // Keep the cache key unchanged: authorization must protect even a populated cache entry.
+    await databaseRuntime.runPromise(
+      sharedDatabase
+        .update(battles)
+        .set({ public: false, updatedAt: new Date(0) }),
+    );
+    await requestJson(app.handler, "GET", publicPath, Schema.Unknown, 404);
+    await requestJson(
+      app.handler,
+      "GET",
+      path,
+      Schema.Unknown,
+      403,
+      undefined,
+      "user-2",
+    );
+
+    const owner = await requestJson(
+      app.handler,
+      "GET",
+      path,
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    expect(owner.body).toEqual(first.body);
+    expect(processBattle).toHaveBeenCalledTimes(1);
+
+    await databaseRuntime.runPromise(sharedDatabase.delete(battles));
+    await requestJson(app.handler, "GET", path, Schema.Unknown, 404);
+    await requestJson(app.handler, "GET", publicPath, Schema.Unknown, 404);
+    expect(processBattle).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves oversized timelines without admitting them to Redis", async () => {
+    const testApplication = createTestApplication();
+    app = testApplication.app;
+
+    const longMoves = Array.from(
+      { length: 700 },
+      () => "220=100;7533=90;+dmg=100;-dmg=100",
+    );
+
+    const created = await postBattle(app.handler, {
+      ...battleContext,
+      events: [{ ...battleEvent, f: { ...battleEvent.f, m: longMoves } }],
+    });
+
+    const path = `/battles/${created.body.battleId}/timeline`;
+
+    const first = await requestJson(
+      app.handler,
+      "GET",
+      path,
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    const second = await requestJson(
+      app.handler,
+      "GET",
+      path,
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    expect(Buffer.byteLength(JSON.stringify(first.body))).toBeGreaterThan(
+      1024 * 1024,
+    );
+    expect(second.body.timeline).toEqual(first.body.timeline);
+    expect(second.body.timeline).toHaveLength(longMoves.length);
+    expect(testApplication.objectStorage.readBattleData).toHaveBeenCalledTimes(
+      2,
+    );
+  });
+
+  it("serves uncached timelines when Redis is unavailable", async () => {
+    const redis = createRedisBoundary();
+    const testApplication = createTestApplication({ redis });
+    app = testApplication.app;
+
+    const created = await postBattle(app.handler, {
+      ...battleContext,
+      events: [battleEvent],
+    });
+
+    redis.readCachedJson.mockRejectedValue(new Error("Redis unavailable"));
+
+    const result = await requestJson(
+      app.handler,
+      "GET",
+      `/battles/${created.body.battleId}/timeline`,
+      BattleResponseSchemas.timeline,
+      200,
+    );
+
+    expect(result.body.timeline).toHaveLength(moves.length);
   });
 
   it("preserves the incremental duration when a compact replay arrives first", async () => {

@@ -2,6 +2,31 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import { BattleProcessor, type BattlePayload } from "@lootlog/battle-processor";
 import type { CreateBattleInput } from "#src/battles/submission/create-battle";
 
+// Persisted warrior statistics must remain identical when timeline work is skipped.
+const processBattleWithStatisticsParity = (battleData: BattlePayload) => {
+  const detailed = new BattleProcessor().processBattle(battleData);
+
+  const statisticsOnly = new BattleProcessor("statistics").processBattle(
+    battleData,
+  );
+
+  expect(statisticsOnly).toEqual({
+    ...detailed,
+    battleTimeline: [],
+    warriorMechanics: [],
+    actionCoverage: {
+      totalActions: 0,
+      handledActions: 0,
+      unhandledActions: 0,
+      handledPercentage: 100,
+      actions: [],
+      unknown: [],
+    },
+  });
+
+  return detailed;
+};
+
 describe("BattleProcessor", () => {
   let processor: BattleProcessor;
 
@@ -27,7 +52,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       expect(result.duration).toBe(4000);
     });
 
@@ -48,7 +73,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       expect(result.duration).toBe(2500);
     });
 
@@ -175,7 +200,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
 
       expect(result.warriors).toHaveLength(2);
       expect(result.type).toBe("1v1");
@@ -251,7 +276,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
 
       expect(result.matchmaking).toEqual(
         expect.objectContaining({
@@ -302,7 +327,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const warrior1 = result.warriors.find((w) => w.name === "Warrior1");
       const warrior2 = result.warriors.find((w) => w.name === "Warrior2");
       const turn = result.battleTimeline[0];
@@ -355,7 +380,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const warrior1 = result.warriors.find((w) => w.name === "Warrior1");
 
       expect(warrior1?.criticalHits).toBe(2);
@@ -399,7 +424,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const defender = result.warriors.find((w) => w.name === "Defender");
       const attacker = result.warriors.find((w) => w.name === "Attacker");
 
@@ -443,7 +468,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const defender = result.warriors.find((w) => w.name === "Defender");
       const attacker = result.warriors.find((w) => w.name === "Attacker");
 
@@ -491,7 +516,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const mage = result.warriors.find((w) => w.name === "Mage");
 
       expect(mage?.spellsUsed).toBe(2);
@@ -532,7 +557,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const coward = result.warriors.find((w) => w.name === "Coward");
 
       expect(coward?.fled).toBe(true);
@@ -577,7 +602,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
 
       expect(result.statistics.topDamageDealer).toEqual({
         warriorId: "101",
@@ -642,7 +667,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       expect(result.type).toBe("2v2");
     });
   });
@@ -687,7 +712,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const warrior = result.warriors.find((w) => w.name === "Warrior");
 
       expect(warrior?.damageDealt).toBe(750);
@@ -731,7 +756,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const warrior = result.warriors.find((w) => w.name === "Warrior");
 
       expect(warrior?.damageDealt).toBe(1000);
@@ -779,7 +804,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const fighter = result.warriors.find((w) => w.name === "Fighter");
 
       expect(fighter?.normalAttacks).toBe(2);
@@ -824,7 +849,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const mage = result.warriors.find((w) => w.name === "Mage");
 
       const mechanics = result.warriorMechanics.find(
@@ -879,7 +904,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const runner = result.warriors.find((w) => w.name === "Runner");
 
       expect(runner?.steps).toBe(3);
@@ -936,7 +961,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const firstTurn = result.battleTimeline[0];
 
       expect(result.type).toBe("2v2");
@@ -981,7 +1006,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const attacker = result.warriors.find((w) => w.name === "Attacker");
       const defender = result.warriors.find((w) => w.name === "Defender");
 
@@ -1041,7 +1066,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const defender = result.warriors.find((w) => w.name === "Defender");
 
       const defenderMechanics = result.warriorMechanics.find(
@@ -1100,7 +1125,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const turn = result.battleTimeline[0];
       const defender = result.warriors.find((w) => w.name === "Defender");
 
@@ -1155,7 +1180,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const turn = result.battleTimeline[0];
       const attackerDelta = turn?.deltas.byWarrior["1"];
       const defenderDelta = turn?.deltas.byWarrior["2"];
@@ -1217,7 +1242,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const turn = result.battleTimeline[0];
 
       const rageAction = turn?.actions.find(
@@ -1271,7 +1296,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const turn = result.battleTimeline[0];
 
       const reductionAction = turn?.actions.find(
@@ -1328,7 +1353,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const turn = result.battleTimeline[0];
 
       expect(turn?.deltas.byWarrior["1"]?.resourceDelta).toBe(-10);
@@ -1370,7 +1395,7 @@ describe("BattleProcessor", () => {
         ],
       };
 
-      const result = processor.processBattle(battleData);
+      const result = processBattleWithStatisticsParity(battleData);
       const runner = result.warriors.find((w) => w.name === "Runner");
       const flags = result.battleTimeline[0]?.flags ?? [];
 
