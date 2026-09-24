@@ -100,6 +100,7 @@
     "resetFailed": "Nie udało się zresetować timera {{name}}.",
     "deleteEventWindowForbidden": "Nie można usunąć okna eventowego z poziomu timerów.",
     "deleteFailed": "Nie udało się usunąć timera {{name}}.",
+    "createFailed": "Nie udało się dodać timera {{name}}.",
     "resetSuccess": "Zresetowano timer {{name}}.",
     "deleteSuccess": "Usunięto timer {{name}}.",
     "battleLinkCreated": "Walka została dodana",
