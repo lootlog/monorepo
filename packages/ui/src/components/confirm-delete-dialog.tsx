@@ -3,7 +3,6 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -134,7 +133,7 @@ export function ConfirmDeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         {requiresConfirmation && (
-          <AlertDialogBody className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 py-2">
             {confirmLabel && (
               <p className="text-sm text-muted-foreground">{confirmLabel}</p>
             )}
@@ -145,7 +144,7 @@ export function ConfirmDeleteDialog({
               placeholder={confirmText}
               autoComplete="off"
             />
-          </AlertDialogBody>
+          </div>
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isSubmitting}>

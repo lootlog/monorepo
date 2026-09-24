@@ -4,10 +4,7 @@ type AppTopBarProps = {
 
 export const AppTopBar: React.FC<AppTopBarProps> = ({ children }) => {
   return (
-    <div
-      data-slot="app-top-bar"
-      className="z-50 box-border flex h-14 min-h-14 shrink-0 items-center justify-between border-b border-border bg-background px-3"
-    >
+    <div className="z-50 box-border flex h-14 min-h-14 shrink-0 items-center justify-between border-b border-border bg-background px-3">
       {children}
     </div>
   );

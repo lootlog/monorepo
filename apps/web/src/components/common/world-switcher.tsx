@@ -11,6 +11,7 @@ import {
   getGuildsControllerGetWorldsByGuildIdQueryKey,
   useGuildsControllerGetWorldsByGuildId,
 } from "@lootlog/client/main";
+import { ThemeSurfaceOverlay } from "@/themes";
 
 const ALL_WORLDS_SENTINEL = "__ALL__";
 
@@ -108,6 +109,7 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
 
   return (
     <div className="relative">
+      <ThemeSurfaceOverlay subtle rounded="rounded-md" />
       <FilterPopover
         icon={Globe}
         options={options}

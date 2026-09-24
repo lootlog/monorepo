@@ -13,6 +13,7 @@ import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { LOOTS_VIEW_MODE_KEY } from "@/features/guild/loots-list/loots-list-layout";
 import { useTranslation } from "react-i18next";
+import { ThemeInteractiveFrame } from "@/themes";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { cn } from "cn";
 import { getPrimaryModifierKeyLabel } from "@/utils/platform/get-primary-modifier-key-label";
@@ -54,6 +55,7 @@ export const LootFiltersHeader = ({
 }: LootFiltersHeaderProps) => {
   const { t } = useTranslation();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isFilterHovered, setIsFilterHovered] = useState(false);
   const isMobile = useIsMobile();
   const { world } = useGuildContext();
   const { filters } = useLootsFilters();
@@ -117,15 +119,19 @@ export const LootFiltersHeader = ({
             </Button>
           </div>
 
+          {!usesStackedControls && (
+            <div aria-hidden className="relative h-9 w-3 shrink-0">
+              <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
+            </div>
+          )}
+
           {!isMobile && (
             // The controls wrap as one group, so a narrow toolbar never strands
-            // a single button on its own line. With the filters panel open the
-            // group is as wide as the panel, so the search field ends on the
-            // loot cards' right edge with the same 12px gap the panel keeps.
+            // a single button on its own line.
             <div
               className={cn(
                 "flex shrink-0 items-center gap-2",
-                isCompactLayout ? "ml-auto" : "ml-1 w-[319px]",
+                isCompactLayout ? "ml-auto" : "w-[19.5rem]",
               )}
             >
               <div
@@ -143,28 +149,38 @@ export const LootFiltersHeader = ({
                 gridLabel={t("loots.header.gridView")}
               />
 
-              <Button
-                onClick={onToggleFilters}
-                variant={isFiltersOpen ? "default" : "outline"}
-                size="icon"
-                aria-label={t("loots.header.mobileFiltersTitle")}
-                aria-expanded={isFiltersOpen}
-                className="relative size-9 shrink-0"
+              <div
+                onMouseEnter={() => setIsFilterHovered(true)}
+                onMouseLeave={() => setIsFilterHovered(false)}
               >
-                <Filter className="h-4 w-4" />
-                {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
-                {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
-                <AnimatePresence>
-                  {hasActiveFilters && !isFiltersOpen && (
-                    <m.div
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
-                    />
-                  )}
-                </AnimatePresence>
-              </Button>
+                <ThemeInteractiveFrame
+                  isHovered={isFilterHovered}
+                  isActive={isFiltersOpen}
+                >
+                  <Button
+                    onClick={onToggleFilters}
+                    variant={isFiltersOpen ? "default" : "outline"}
+                    size="icon"
+                    aria-label={t("loots.header.mobileFiltersTitle")}
+                    aria-expanded={isFiltersOpen}
+                    className="relative size-9 shrink-0"
+                  >
+                    <Filter className="h-4 w-4" />
+                    {/* The responsive toolbar owns this button; filter changes keep the presence boundary mounted. */}
+                    {/* eslint-disable-next-line react-doctor/motion-animate-presence-must-outlive-child */}
+                    <AnimatePresence>
+                      {hasActiveFilters && !isFiltersOpen && (
+                        <m.div
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.95, opacity: 0 }}
+                          className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+                        />
+                      )}
+                    </AnimatePresence>
+                  </Button>
+                </ThemeInteractiveFrame>
+              </div>
             </div>
           )}
 

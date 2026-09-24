@@ -1,6 +1,5 @@
 import type { UserCurrentGuildResponseDtoOutput as Guild } from "@lootlog/client/main";
 import { cn } from "cn";
-import { railAvatarStateClassName } from "@/components/layout/rail-avatar-state";
 import {
   Avatar,
   AvatarFallback,
@@ -14,6 +13,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import type { FC, MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
+import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import { useTranslation } from "react-i18next";
 import {
   ContextMenu,
@@ -40,6 +40,7 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
   isHidden = false,
   onToggleHidden,
 }) => {
+  const { isRukiaTheme } = useThemeMeta();
   const { t } = useTranslation();
 
   const isActive =
@@ -60,26 +61,22 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
 
   const avatarElement = (
     <Avatar
-      data-slot="rail-avatar"
-      data-active={isActive || undefined}
       className={cn(
         "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
-        isActive && "after:opacity-100",
+        isActive && !isRukiaTheme && "after:opacity-100",
       )}
     >
       <AvatarImage
         src={guild.icon ?? undefined}
         alt={guild.name}
         className={cn(
-          "pointer-events-none select-none",
-          railAvatarStateClassName(isActive),
+          "pointer-events-none select-none transition-opacity",
           isHidden && "opacity-35",
         )}
       />
       <AvatarFallback
         className={cn(
-          "rounded-none font-medium text-white",
-          railAvatarStateClassName(isActive),
+          "rounded-none font-medium text-white transition-opacity",
           isHidden && "opacity-35",
         )}
       >
@@ -101,11 +98,13 @@ export const GuildNavItem: FC<GuildNavItemProps> = ({
                       to="/$guildId"
                       params={{ guildId: guild.vanityUrl ?? guild.id }}
                       draggable={false}
-                      className="group/rail-item isolate block relative"
+                      className="group/guild-item isolate block relative"
                       onClick={handleClick}
                       style={{ pointerEvents: isDragging ? "none" : "auto" }}
                     >
-                      {avatarElement}
+                      <ThemeCircularFrame isActive={isActive}>
+                        {avatarElement}
+                      </ThemeCircularFrame>
                       {isHidden ? (
                         <EyeOff
                           aria-hidden

@@ -1,7 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -47,16 +46,16 @@ export const NotificationTargetDialog = (
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-h-[90vh] sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-lg">
+        <DialogHeader className="border-b bg-muted/30 px-5 py-4">
+          <DialogTitle className="px-0 pt-0 text-base">
             {t(
               isCreateMode
                 ? "settings.notifications.targetDialog.createTitle"
                 : "settings.notifications.targetDialog.editTitle",
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="px-0">
             {t(
               isCreateMode
                 ? "settings.notifications.targetDialog.createDescription"
@@ -68,139 +67,131 @@ export const NotificationTargetDialog = (
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex flex-col gap-5 px-5 py-5"
           >
-            <DialogBody className="flex flex-col gap-5 overflow-y-auto">
-              {isCreateMode ? (
-                <FormField
-                  control={form.control}
-                  name="externalId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                        {t("settings.notifications.fields.channel")}
-                      </FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={
-                          isLoadingChannels || availableChannels.length === 0
-                        }
-                        items={[
-                          {
-                            value: null,
-                            label: (
-                              <>
-                                {t(
-                                  "settings.notifications.placeholders.channel",
-                                )}
-                              </>
-                            ),
-                          },
-                          ...availableChannels.map((channel) => ({
-                            value: channel.channelId,
-                            label: <>{channel.name}</>,
-                          })),
-                        ]}
-                      >
-                        <FormControl
-                          render={
-                            <SelectTrigger className="w-full">
-                              <SelectValue
-                                placeholder={t(
-                                  "settings.notifications.placeholders.channel",
-                                )}
-                              />
-                            </SelectTrigger>
-                          }
-                        />
-                        <SelectContent>
-                          {availableChannels.map((channel) => (
-                            <SelectItem
-                              key={channel.channelId}
-                              value={channel.channelId}
-                            >
-                              {channel.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                      {isLoadingChannels ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Spinner className="size-3.5" />
-                          {t(
-                            "settings.notifications.loading.availableChannels",
-                          )}
-                        </div>
-                      ) : null}
-                      {!isLoadingChannels && availableChannels.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">
-                          {t("settings.notifications.empty.availableChannels")}
-                        </p>
-                      ) : null}
-                    </FormItem>
-                  )}
-                />
-              ) : null}
-
+            {isCreateMode ? (
               <FormField
                 control={form.control}
-                name="displayName"
+                name="externalId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                      {t("settings.notifications.fields.displayName")}
+                      {t("settings.notifications.fields.channel")}
                     </FormLabel>
-                    <FormControl
-                      render=<Input
-                        {...field}
-                        placeholder={t(
-                          "settings.notifications.placeholders.displayName",
-                        )}
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={
+                        isLoadingChannels || availableChannels.length === 0
+                      }
+                      items={[
+                        {
+                          value: null,
+                          label: (
+                            <>
+                              {t("settings.notifications.placeholders.channel")}
+                            </>
+                          ),
+                        },
+                        ...availableChannels.map((channel) => ({
+                          value: channel.channelId,
+                          label: <>{channel.name}</>,
+                        })),
+                      ]}
+                    >
+                      <FormControl
+                        render={
+                          <SelectTrigger className="w-full">
+                            <SelectValue
+                              placeholder={t(
+                                "settings.notifications.placeholders.channel",
+                              )}
+                            />
+                          </SelectTrigger>
+                        }
                       />
-                    />
+                      <SelectContent>
+                        {availableChannels.map((channel) => (
+                          <SelectItem
+                            key={channel.channelId}
+                            value={channel.channelId}
+                          >
+                            {channel.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
+                    {isLoadingChannels ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Spinner className="size-3.5" />
+                        {t("settings.notifications.loading.availableChannels")}
+                      </div>
+                    ) : null}
+                    {!isLoadingChannels && availableChannels.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t("settings.notifications.empty.availableChannels")}
+                      </p>
+                    ) : null}
                   </FormItem>
                 )}
               />
+            ) : null}
 
-              {!isCreateMode ? (
-                <FormField
-                  control={form.control}
-                  name="active"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                      <div className="flex flex-row items-center justify-between border-b border-border/70 py-3">
-                        <div>
-                          <FormLabel className="text-sm font-medium">
-                            {t("settings.notifications.fields.active")}
-                          </FormLabel>
-                          <p className="text-xs text-muted-foreground">
-                            {t(
-                              "settings.notifications.fields.activeDescription",
-                            )}
-                          </p>
-                        </div>
-                        <FormControl
-                          render=<Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        />
-                      </div>
-                      {!field.value && target?.active ? (
-                        <p className="text-xs text-amber-500">
-                          {t(
-                            "settings.notifications.fields.activeDeactivateWarning",
-                          )}
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    {t("settings.notifications.fields.displayName")}
+                  </FormLabel>
+                  <FormControl
+                    render=<Input
+                      {...field}
+                      placeholder={t(
+                        "settings.notifications.placeholders.displayName",
+                      )}
+                    />
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {!isCreateMode ? (
+              <FormField
+                control={form.control}
+                name="active"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-2">
+                    <div className="flex flex-row items-center justify-between border-b border-border/70 py-3">
+                      <div>
+                        <FormLabel className="text-sm font-medium">
+                          {t("settings.notifications.fields.active")}
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          {t("settings.notifications.fields.activeDescription")}
                         </p>
-                      ) : null}
-                    </FormItem>
-                  )}
-                />
-              ) : null}
-            </DialogBody>
+                      </div>
+                      <FormControl
+                        render=<Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      />
+                    </div>
+                    {!field.value && target?.active ? (
+                      <p className="text-xs text-amber-500">
+                        {t(
+                          "settings.notifications.fields.activeDeactivateWarning",
+                        )}
+                      </p>
+                    ) : null}
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <DialogFooter>
               <Button

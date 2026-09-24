@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -99,25 +98,26 @@ export const OpenRespawnWindowDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
               <Timer className="size-4 text-primary" />
             </div>
             <div>
-              <DialogTitle>{t("events.respawn.openWindow")}</DialogTitle>
-              <DialogDescription>{heroName}</DialogDescription>
+              <DialogTitle className="text-base">
+                {t("events.respawn.openWindow")}
+              </DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
+                {heroName}
+              </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            className="flex min-h-0 flex-1 flex-col"
-            onSubmit={form.handleSubmit(handleConfirm)}
-          >
-            <DialogBody className="space-y-4 overflow-y-auto">
+          <form onSubmit={form.handleSubmit(handleConfirm)}>
+            <div className="p-5 space-y-4">
               <FormField
                 control={form.control}
                 name="minTime"
@@ -157,7 +157,7 @@ export const OpenRespawnWindowDialog = ({
                   </FormItem>
                 )}
               />
-            </DialogBody>
+            </div>
 
             <DialogActionFooter
               cancelLabel={t("common.cancel")}

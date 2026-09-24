@@ -303,7 +303,6 @@ export const LootSearchCommand = (
               initial="hidden"
               animate="visible"
               exit="exit"
-              data-illustration="search"
               className="flex h-full flex-col items-center justify-center px-6 py-8 text-center"
             >
               <div className="flex size-11 items-center justify-center rounded-xl border border-border bg-background">

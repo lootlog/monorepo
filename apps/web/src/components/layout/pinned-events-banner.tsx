@@ -33,10 +33,7 @@ export const PinnedEventsBanner: FC<PinnedEventsBannerProps> = ({
   const otherEvents = events.slice(1);
 
   return (
-    <div
-      data-slot="pinned-events"
-      className="px-2 mb-3 pb-3 border-b border-border"
-    >
+    <div className="px-2 mb-3 pb-3 border-b border-border">
       <div className="rounded-lg overflow-hidden bg-gradient-to-r from-yellow-500/20 via-amber-500/15 to-orange-500/20 border border-yellow-500/30 relative">
         {prefersReducedMotion ? null : (
           <m.div

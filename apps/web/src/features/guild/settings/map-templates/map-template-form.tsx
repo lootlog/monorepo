@@ -3,9 +3,7 @@ import type { MapTemplateResponseDtoMapsItem } from "@lootlog/client/main";
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
-  DialogBody,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
@@ -44,16 +42,16 @@ export const MapTemplateForm = (
 
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Icon className="size-4 text-primary" />
           </div>
           <div>
-            <DialogTitle>
+            <DialogTitle className="text-base">
               {t(`settings.mapTemplates.${dialogKey}.title`)}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs mt-0.5">
               {t(`settings.mapTemplates.${dialogKey}.description`)}
             </DialogDescription>
           </div>
@@ -63,10 +61,10 @@ export const MapTemplateForm = (
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex min-h-0 flex-1 flex-col"
+          className="flex flex-col max-h-[calc(90vh-80px)]"
         >
-          <ScrollArea className="min-h-0 flex-1">
-            <DialogBody className="space-y-5">
+          <ScrollArea className="flex-1">
+            <div className="p-5 space-y-5">
               <FormField
                 control={form.control}
                 name="name"
@@ -181,15 +179,16 @@ export const MapTemplateForm = (
                   )}
                 </div>
               </div>
-            </DialogBody>
+            </div>
           </ScrollArea>
 
-          <DialogFooter>
+          <div className="flex gap-2 p-5 border-t shrink-0">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => handleClose(false)}
+              className="flex-1"
             >
               {t("settings.mapTemplates.cancel")}
             </Button>
@@ -198,10 +197,11 @@ export const MapTemplateForm = (
               size="sm"
               loading={isPending}
               icon=<Icon className="size-3.5" />
+              className="flex-1"
             >
               {t("settings.mapTemplates.saveTemplate")}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </Form>
     </>

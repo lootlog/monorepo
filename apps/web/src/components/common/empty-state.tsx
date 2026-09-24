@@ -12,9 +12,6 @@ import { cn } from "cn";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
-/** Themes with their own artwork pick an illustration by this name; other themes ignore it. */
-export type EmptyStateIllustration = "chronicle" | "ledger" | "search";
-
 type EmptyStateProps = {
   icon: LucideIcon;
   title: string;
@@ -22,7 +19,6 @@ type EmptyStateProps = {
   className?: string;
   framed?: boolean;
   action?: ReactNode;
-  illustration?: EmptyStateIllustration;
 };
 
 export const EmptyState = ({
@@ -32,11 +28,9 @@ export const EmptyState = ({
   className,
   framed = false,
   action,
-  illustration,
 }: EmptyStateProps) => {
   const content = (
     <Empty
-      data-illustration={illustration}
       className={cn("min-h-64 border-0 bg-transparent px-6 py-12", className)}
     >
       <EmptyHeader className="animate-content-in">
