@@ -1,7 +1,12 @@
 /* eslint-disable react-doctor/context-provider-value-from-unmemoized-local-literal -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { GatewayContext, type GatewayProviderValue } from "./gateway-context";
 import { mapValues } from "es-toolkit";
-import React, { useEffect, useEffectEvent, useState } from "react";
+import React, {
+  useEffect,
+  useEffectEvent,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useTimersSocket } from "@/features/guild/timers/use-timers-socket";
 import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import { GatewayEvent } from "@/config/gateway";
@@ -19,13 +24,25 @@ type Props = {
   children: React.ReactNode;
 };
 
+const subscribeConnection = (listener: () => void) => {
+  socket.on(GatewayEvent.CONNECT, listener);
+  socket.on(GatewayEvent.DISCONNECT, listener);
+
+  return () => {
+    socket.off(GatewayEvent.CONNECT, listener);
+    socket.off(GatewayEvent.DISCONNECT, listener);
+  };
+};
+
+const isConnected = () => socket.connected;
+
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
   useKillStatsUpdates(socket);
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   useTimersSocket({ socket, guilds });
   const routeGuildId = useGuildId();
-  const [connected, setConnected] = useState(socket.connected);
+  const connected = useSyncExternalStore(subscribeConnection, isConnected);
   const [joined, setJoined] = useState(false);
 
   const [unreadLootIdsByGuild, setUnreadLootIdsByGuild] = useState<
@@ -38,12 +55,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
   const currentGuildId = currentGuild?.id;
 
-  const handleConnect = useEffectEvent(() => {
-    setConnected(true);
-  });
-
   const handleDisconnect = useEffectEvent(() => {
-    setConnected(false);
     setJoined(false);
   });
 
@@ -83,7 +95,6 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   );
 
   useEffect(() => {
-    socket.on(GatewayEvent.CONNECT, handleConnect);
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.LOOTS_CREATE, handleLootCreate);
@@ -93,7 +104,6 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
 
     return () => {
-      socket.off(GatewayEvent.CONNECT, handleConnect);
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.LOOTS_CREATE, handleLootCreate);

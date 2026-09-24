@@ -148,6 +148,8 @@ export class GatewayClient {
   private accessPolicy: AccessPolicySnapshot | undefined;
 
   constructor() {
+    // GatewayProvider owns joins after current user and Organization data are ready.
+    this.realtime.setReconnectHandler(async () => {});
     this.realtime.subscribe((event) => this.handleServerEvent(event));
     this.realtime.subscribeState((state) => {
       const connected =

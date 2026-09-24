@@ -182,9 +182,8 @@ export class AppSocket {
   id: string | undefined;
 
   constructor() {
-    this.realtime.setReconnectHandler(async () => {
-      if (this.lastJoinData) await this.join(this.lastJoinData);
-    });
+    // SocketProvider owns every join with the current character and a fresh proof.
+    this.realtime.setReconnectHandler(async () => {});
     this.unsubscribeEvents = this.realtime.subscribe((event) =>
       this.handleServerEvent(event),
     );

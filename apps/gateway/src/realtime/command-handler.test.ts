@@ -7,7 +7,8 @@ import {
 import { describe, expect, test } from "bun:test";
 import { decode, encode } from "@msgpack/msgpack";
 import { Permission } from "@lootlog/schema/permissions";
-import { Effect, Predicate } from "effect";
+import { Effect, Exit, Metric, Predicate, Tracer } from "effect";
+import { createGatewayWebSocket } from "#src/app";
 import { CommandHandler } from "./command-handler.js";
 import { CommandIngress } from "./command-ingress.js";
 import { canReadSourceEvent } from "./source-event-visibility.js";
@@ -190,6 +191,209 @@ const setup = (
 
   return { handler, guilds, hub, activity, presence };
 };
+
+const captureSpans = () => {
+  const spans: Tracer.Span[] = [];
+
+  const tracer = Tracer.make({
+    span: (options) => {
+      const span = new Tracer.NativeSpan(options);
+      spans.push(span);
+
+      return span;
+    },
+  });
+
+  return { spans, tracer };
+};
+
+test("heartbeat completion metrics include defects and interruptions without creating traces", async () => {
+  const { handler, presence, hub } = setup();
+  const { socket } = makeSocket();
+  socket.data.joined = true;
+  const registry: Metric.MetricRegistry = new Map();
+  const { spans, tracer } = captureSpans();
+
+  const attempts: Array<PresenceStore["heartbeat"]> = [
+    () => Effect.succeed(1_000),
+    () =>
+      Effect.fail(
+        new RealtimeStoreError({
+          operation: "presence.heartbeat",
+          cause: new Error("dependency unavailable"),
+        }),
+      ),
+    () => {
+      throw new TypeError("dispatch defect");
+    },
+    () => Effect.interrupt,
+  ];
+
+  const exits = [];
+
+  for (const heartbeat of attempts) {
+    presence.heartbeat = heartbeat;
+    exits.push(
+      await Effect.runPromiseExit(
+        handler
+          .handle(
+            socket,
+            Buffer.from(
+              encode({
+                v: 1,
+                type: "presence.heartbeat",
+                requestId: "heartbeat",
+                data: { sessionId: socket.data.connectionId },
+              }),
+            ),
+          )
+          .pipe(
+            Effect.provideService(Metric.MetricRegistry, registry),
+            Effect.withTracer(tracer),
+          ),
+      ),
+    );
+  }
+
+  expect(exits.map(Exit.isSuccess)).toEqual([true, true, false, false]);
+  expect(hub.responses).toHaveLength(2);
+  expect(spans).toEqual([]);
+
+  const outcomes = Effect.runSync(
+    Metric.snapshot.pipe(
+      Effect.provideService(Metric.MetricRegistry, registry),
+    ),
+  ).filter(({ id }) => id === "lootlog_gateway_commands_completed_total");
+
+  expect(outcomes.map(({ attributes }) => attributes?.outcome).sort()).toEqual([
+    "defect",
+    "interrupted",
+    "retryable",
+    "success",
+  ]);
+  expect(
+    outcomes.every(({ state }) => "count" in state && state.count === 1),
+  ).toBe(true);
+});
+
+test("session join traces preserve failure status before sending a correlated rejection", async () => {
+  const { handler, guilds, hub } = setup();
+  guilds.guilds = [];
+  const { socket } = makeSocket();
+  const { spans, tracer } = captureSpans();
+
+  await Effect.runPromise(
+    handler
+      .handle(
+        socket,
+        Buffer.from(
+          encode({ v: 1, type: "session.join", requestId: "join", data: {} }),
+        ),
+      )
+      .pipe(Effect.withTracer(tracer)),
+  );
+
+  const command = spans.find(({ name }) => name === "gateway.command");
+  expect(command?.attributes.get("rpc.method")).toBe("session.join");
+
+  if (command?.status._tag !== "Ended")
+    throw new Error("Join span did not finish");
+  expect(Exit.isFailure(command.status.exit)).toBe(true);
+  expect(hub.responses).toMatchObject([
+    { requestId: "join", status: "error", error: { retryable: false } },
+  ]);
+});
+
+test.each([
+  ["binary on JSON", "json", Buffer.from([0]), "1003", "unsupported_frame"],
+  ["text on MessagePack", undefined, "{}", "1003", "unsupported_frame"],
+  ["oversized", "json", "x".repeat(300 * 1_024), "1006", "payload_limit"],
+] as const)(
+  "classifies rejected %s wire frames",
+  async (_name, frameEncoding, frame, closeCode, cause) => {
+    const { handler } = setup();
+    const data = { ...makeSocket().socket.data, frameEncoding };
+    const tasks: Promise<unknown>[] = [];
+
+    const ingress = new CommandIngress(
+      (socket, message) => handler.handle(socket, message),
+      (socket, message) => handler.rejectOverloaded(socket, message),
+      () => Effect.void,
+      (_label, effect) => {
+        tasks.push(Effect.runPromiseExit(effect));
+      },
+    );
+
+    const unexpectedRegistryCommand = () =>
+      Promise.reject(new Error("Unexpected registry command"));
+
+    const federationStore = {
+      ...unusedFederationStore,
+      command: {
+        set: async () => "OK",
+        del: unexpectedRegistryCommand,
+        sadd: unexpectedRegistryCommand,
+        srem: unexpectedRegistryCommand,
+        expire: unexpectedRegistryCommand,
+        smembers: unexpectedRegistryCommand,
+        mget: unexpectedRegistryCommand,
+      },
+    };
+
+    const hub = new RealtimeHub(
+      { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
+      federationStore,
+      () => {},
+    );
+
+    const count = () => {
+      const metric = Effect.runSync(Metric.snapshot).find(
+        ({ id, attributes }) =>
+          id === "lootlog_gateway_connection_lifetime_seconds" &&
+          attributes?.platform === data.platform &&
+          attributes?.joined === "no" &&
+          attributes?.close_code === closeCode &&
+          attributes?.cause === cause,
+      );
+
+      return metric?.type === "Histogram" ? metric.state.count : 0;
+    };
+
+    const before = count();
+
+    const server = Bun.serve<SessionData>({
+      port: 0,
+      fetch(request, server) {
+        if (server.upgrade(request, { data })) return;
+
+        return new Response(null, { status: 400 });
+      },
+      websocket: createGatewayWebSocket({ hub, ingress }),
+    });
+
+    const client = new WebSocket(`ws://localhost:${server.port}`);
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error("Socket did not close")),
+          2_000,
+        );
+
+        client.addEventListener("open", () => client.send(frame));
+        client.addEventListener("close", () => {
+          clearTimeout(timeout);
+          resolve();
+        });
+      });
+      expect(count() - before).toBe(1);
+    } finally {
+      client.close();
+      await server.stop(true);
+      await Promise.all(tasks);
+    }
+  },
+);
 
 describe("presence fetch delivery", () => {
   test.each([undefined, "response"] as const)(
