@@ -170,7 +170,7 @@ describe("OnlinePlayersList", () => {
     ).toHaveClass("ll:animate-spin");
   });
 
-  it("explains a missing gateway session instead of loading forever, then loads once joined", async () => {
+  it("loads during the first gateway connection, explains a failed one instead of loading forever, then loads once joined", async () => {
     vi.useFakeTimers();
 
     const offlineView = renderUi(
@@ -179,6 +179,13 @@ describe("OnlinePlayersList", () => {
     );
 
     act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByRole("status", { busy: true })).toBeVisible();
+    expect(
+      screen.queryByText(
+        "Brak połączenia z serwerem - nie można pobrać graczy online",
+      ),
+    ).toBeNull();
+    act(() => harness.wire.close());
     expect(
       screen.getByText(
         "Brak połączenia z serwerem - nie można pobrać graczy online",

@@ -13,6 +13,10 @@ import {
   getSocket,
   type PermissionsUpdatedPayload,
 } from "@/lib/socket";
+import {
+  resolveRealtimeConnectionStatus,
+  type RealtimeConnectionStatus,
+} from "@/lib/realtime-connection-status";
 import { useGlobalStore } from "@/store/global.store";
 import { useGameStore } from "@/store/game.store";
 import {
@@ -29,6 +33,7 @@ type SocketContextValue = {
   connected: boolean;
   joined: boolean;
   joinedGuilds: string[];
+  status: RealtimeConnectionStatus;
 };
 
 const SocketContext = createContext<SocketContextValue>({
@@ -36,6 +41,7 @@ const SocketContext = createContext<SocketContextValue>({
   connected: false,
   joined: false,
   joinedGuilds: [],
+  status: "connecting",
 });
 
 const subscribeConnection = (listener: () => void) => {
@@ -51,10 +57,22 @@ const subscribeConnection = (listener: () => void) => {
 
 const isConnected = () => getSocket().connected;
 
+const subscribeConnectionState = (listener: () => void) =>
+  getSocket().subscribeConnectionState(listener);
+
+const getConnectionState = () => getSocket().connectionState;
+
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const socket = getSocket();
   const connected = useSyncExternalStore(subscribeConnection, isConnected);
+
+  const connectionState = useSyncExternalStore(
+    subscribeConnectionState,
+    getConnectionState,
+  );
+
   const [joined, setJoined] = useState(false);
+  const [hasBeenOnline, setHasBeenOnline] = useState(false);
   const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
   const setSocketState = useGlobalStore((s) => s.setSocketState);
@@ -130,6 +148,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setJoined(true);
+      setHasBeenOnline(true);
       setJoinedGuilds(data.guildIds ?? []);
 
       // Emit initial presence after successful join
@@ -199,9 +218,18 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [socket]);
 
+  const status = resolveRealtimeConnectionStatus({
+    connected,
+    hasBeenOnline,
+    joined,
+    state: connectionState,
+  });
+
   return (
     // oxlint-disable-next-line react-doctor/jsx-no-constructed-context-values -- Vite React Compiler caches this object by its fields (vite.shared.ts enables compiler: true).
-    <SocketContext.Provider value={{ socket, connected, joined, joinedGuilds }}>
+    <SocketContext.Provider
+      value={{ socket, connected, joined, joinedGuilds, status }}
+    >
       {children}
     </SocketContext.Provider>
   );

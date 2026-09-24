@@ -140,7 +140,6 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     onlinePlayers,
     refreshing,
     retry,
-    stale,
   } = usePlayersPresence(guildId, world ?? defaultWorld);
 
   const { guildsQuery } = useLootlogGuilds();
@@ -351,8 +350,7 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
         <ConnectionStatusStrip
           error={hasLoaded && Boolean(error)}
           errorLabel={t("states.refreshError")}
-          offline={stale}
-          offlineLabel={t("states.offline")}
+          hasData={hasLoaded}
           refreshing={refreshing}
           refreshingLabel={t("states.refreshing")}
           onRetry={retry}

@@ -249,7 +249,6 @@ export const useChatGuildData = ({
     initialLoading,
     refreshing,
     retry: retryFailed,
-    stale: false,
   };
 
   const guildDataById = guildIdsToLoad.reduce<Record<string, ChatGuildData>>(

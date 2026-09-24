@@ -10,7 +10,7 @@ import {
 import { LOOTLOG_APP_URL } from "@/config/app";
 import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
-import { summarizeRealtimeConnection } from "@/lib/realtime-connection-summary";
+import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,16 +19,11 @@ const STATUS_VALUE_CLASS_NAME =
   "ll:min-w-0 ll:flex-1 ll:select-text ll:truncate ll:text-right ll:text-xs ll:text-muted-foreground";
 
 const CONNECTION_DOT_CLASS_NAME = {
-  connected: "ll:bg-green-400",
-  joining: "ll:bg-yellow-400",
-  disconnected: "ll:bg-red-400",
-} as const;
-
-const CONNECTION_LABEL_KEY = {
-  connected: "settings.general.connectionConnected",
-  joining: "settings.general.connectionJoining",
-  disconnected: "settings.general.connectionDisconnected",
-} as const;
+  online: "ll:bg-green-400",
+  connecting: "ll:bg-yellow-400",
+  reconnecting: "ll:bg-red-400",
+  unreachable: "ll:bg-red-400",
+} satisfies Record<RealtimeConnectionStatus, string>;
 
 /**
  * Read-only health of the addon: who is signed in and whether the realtime
@@ -40,13 +35,14 @@ export const AddonStatusSection: FC = () => {
   const { t } = useTranslation();
   const { t: tCommon } = useTranslation("common");
   const session = useSession();
-  const { connected, joined, joinedGuilds } = useSocket();
+  const { joinedGuilds, status: connection } = useSocket();
 
-  const connection = summarizeRealtimeConnection({
-    connected,
-    joined,
-    joinedGuilds,
-  });
+  const connectionLabel =
+    connection === "online"
+      ? t("settings.general.connectionConnected", {
+          count: joinedGuilds.length,
+        })
+      : tCommon(`connection.${connection}`);
 
   const {
     guildsQuery: { data: guilds },
@@ -130,11 +126,7 @@ export const AddonStatusSection: FC = () => {
                 CONNECTION_DOT_CLASS_NAME[connection],
               )}
             />
-            <span className="ll:truncate">
-              {t(CONNECTION_LABEL_KEY[connection], {
-                count: joinedGuilds.length,
-              })}
-            </span>
+            <span className="ll:truncate">{connectionLabel}</span>
           </TooltipTrigger>
           <TooltipContent>
             {joinedGuildNames.length > 0 ? (
@@ -144,7 +136,7 @@ export const AddonStatusSection: FC = () => {
                 ))}
               </div>
             ) : (
-              t(CONNECTION_LABEL_KEY[connection], { count: 0 })
+              connectionLabel
             )}
           </TooltipContent>
         </Tooltip>
