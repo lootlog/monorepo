@@ -66,7 +66,7 @@ export const usePlayersPresence = (
   );
 
   const [requestVersion, setRequestVersion] = useState(0);
-  const { joined, connected, socket } = useSocket();
+  const { joined, connected, socket, status } = useSocket();
   const policy = socket?.getAccessPolicy?.();
 
   const forbidden =
@@ -431,27 +431,29 @@ export const usePlayersPresence = (
   }, [socket, joined, connected, scopeKey]);
 
   const hasScope = Boolean(selectedGuildId && world);
-  const online = connected && joined;
 
   const awaitingFirstSnapshot =
     hasScope &&
     !visiblePresenceResource.loaded &&
     !visiblePresenceResource.error;
 
+  const disconnected =
+    awaitingFirstSnapshot &&
+    (status === "reconnecting" || status === "unreachable");
+
   return {
     accessState: visiblePresenceResource.accessState,
     // The first snapshot is requested only once the gateway session is joined,
-    // so an offline gateway must surface as a state instead of endless loading.
-    disconnected: awaitingFirstSnapshot && !online,
+    // so a failed or lost gateway must surface as a state instead of endless
+    // loading. The first connection of the page is ordinary loading.
+    disconnected,
     error: visiblePresenceResource.error,
     hasLoaded: visiblePresenceResource.loaded,
-    initialLoading: awaitingFirstSnapshot && online,
+    initialLoading: awaitingFirstSnapshot && !disconnected,
     onlinePlayers: visiblePresenceResource.onlinePlayers,
     refreshing:
       visiblePresenceResource.loading && visiblePresenceResource.loaded,
     retry,
     setOnlinePlayers,
-    stale:
-      hasScope && visiblePresenceResource.loaded && (!connected || !joined),
   };
 };

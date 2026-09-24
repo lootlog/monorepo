@@ -44,8 +44,7 @@
     "loading": "Ładowanie timerów",
     "loadError": "Nie udało się załadować timerów",
     "refreshError": "Nie udało się odświeżyć timerów",
-    "refreshing": "Odświeżanie timerów",
-    "offline": "Połączenie przerwane - timery mogą być nieaktualne"
+    "refreshing": "Odświeżanie timerów"
   },
   "contextMenu": {
     "color": "Kolor",

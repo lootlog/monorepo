@@ -2,7 +2,7 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { useTranslation } from "react-i18next";
 
 type Props = {
-  status: { partialError: boolean; offline: boolean; refreshing: boolean };
+  status: { partialError: boolean; hasData: boolean; refreshing: boolean };
   failedGuildCount: number;
   onRetry: () => void;
 };
@@ -22,8 +22,7 @@ export function ChatConnectionStatus({
           ? t("states.partialError", { count: failedGuildCount })
           : t("states.refreshError")
       }
-      offline={status.offline}
-      offlineLabel={t("states.offline")}
+      hasData={status.hasData}
       refreshing={status.refreshing}
       refreshingLabel={t("states.refreshing")}
       onRetry={onRetry}

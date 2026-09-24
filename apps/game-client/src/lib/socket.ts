@@ -22,6 +22,7 @@ import { GatewayEvent } from "@/config/gateway";
 import { useGameStore } from "@/store/game.store";
 import {
   RealtimeRequestError,
+  type RealtimeConnectionState,
   type BasicPresence,
   type PresenceWithLocation,
   type ServerEvent,
@@ -178,6 +179,8 @@ export class AppSocket {
   private lastIsAfk = false;
   private currentAccessPolicy: AccessPolicySnapshot | undefined;
   private wasConnected = false;
+  private connectionStateValue: RealtimeConnectionState = "disconnected";
+  private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
   id: string | undefined;
 
@@ -188,6 +191,10 @@ export class AppSocket {
       this.handleServerEvent(event),
     );
     this.unsubscribeState = this.realtime.subscribeState((state) => {
+      this.connectionStateValue = state;
+
+      for (const listener of this.connectionStateListeners) listener();
+
       const connected =
         state === "connected" || state === "joining" || state === "ready";
 
@@ -203,6 +210,19 @@ export class AppSocket {
 
   get connected(): boolean {
     return this.wasConnected;
+  }
+
+  /** The transport's own reading, which tells a first connect from a retry. */
+  get connectionState(): RealtimeConnectionState {
+    return this.connectionStateValue;
+  }
+
+  subscribeConnectionState(listener: () => void): () => void {
+    this.connectionStateListeners.add(listener);
+
+    return () => {
+      this.connectionStateListeners.delete(listener);
+    };
   }
 
   subscribeHeartbeatLatency(
@@ -232,6 +252,7 @@ export class AppSocket {
     } finally {
       this.unsubscribeEvents();
       this.unsubscribeState();
+      this.connectionStateListeners.clear();
       this.realtime.setReconnectHandler(null);
       this.removeAllListeners();
     }

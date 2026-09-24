@@ -40,7 +40,6 @@ import {
 import { useHiddenNpcTypes } from "@/features/chat/hooks/use-hidden-npc-types";
 import { AsyncContent } from "@/components/async-content";
 import { ChatConnectionStatus } from "./components/chat-connection-status";
-import { useSocket } from "@/contexts/socket-context";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import {
   getChatUnreadSummary,
@@ -70,13 +69,11 @@ type ChatAsyncStateInput = {
   chatInitialError: unknown;
   chatInitialLoading: boolean;
   chatRefreshing: boolean;
-  connected: boolean;
   failedGuildCount: number;
   guildsError: unknown;
   guildsFetching: boolean;
   guildsLoading: boolean;
   hasMessagesResponse: boolean;
-  joined: boolean;
   preferencesError: unknown;
   preferencesLoading: boolean;
   selectedGuildId: string;
@@ -87,13 +84,11 @@ const resolveChatAsyncState = ({
   chatInitialError,
   chatInitialLoading,
   chatRefreshing,
-  connected,
   failedGuildCount,
   guildsError,
   guildsFetching,
   guildsLoading,
   hasMessagesResponse,
-  joined,
   preferencesError,
   preferencesLoading,
   selectedGuildId,
@@ -119,15 +114,11 @@ const resolveChatAsyncState = ({
     ? guildsFetching || (hasMessagesResponse && chatRefreshing)
     : hasMessagesResponse && chatRefreshing;
 
-  const stale = hasMessagesResponse && (!connected || !joined);
-
   return {
     initialError,
     initialLoading,
     partialError,
     refreshing,
-    showOfflineStatus: !partialError && stale,
-    showRefreshingStatus: !partialError && !stale && refreshing,
   };
 };
 
@@ -156,7 +147,6 @@ export const ChatView = ({
   savePosition,
 }: ChatViewProps) => {
   const { t } = useTranslation("chat");
-  const { connected, joined } = useSocket();
 
   const {
     areVisibleGuildsResolved,
@@ -296,28 +286,21 @@ export const ChatView = ({
 
   const positionKey = `${world}:${characterId}:${effectiveSelectedGuildId}:${effectiveFilter}`;
 
-  const {
-    initialError,
-    initialLoading,
-    partialError,
-    showOfflineStatus,
-    showRefreshingStatus,
-  } = resolveChatAsyncState({
-    chatInitialError,
-    chatInitialLoading,
-    chatRefreshing,
-    connected,
-    failedGuildCount: failedGuildIds.length,
-    guildsError,
-    guildsFetching,
-    guildsLoading,
-    hasMessagesResponse,
-    joined,
-    preferencesError: preferences.error,
-    preferencesLoading: preferences.isLoading,
-    selectedGuildId,
-    visibleGuildCount: visibleGuilds?.length,
-  });
+  const { initialError, initialLoading, partialError, refreshing } =
+    resolveChatAsyncState({
+      chatInitialError,
+      chatInitialLoading,
+      chatRefreshing,
+      failedGuildCount: failedGuildIds.length,
+      guildsError,
+      guildsFetching,
+      guildsLoading,
+      hasMessagesResponse,
+      preferencesError: preferences.error,
+      preferencesLoading: preferences.isLoading,
+      selectedGuildId,
+      visibleGuildCount: visibleGuilds?.length,
+    });
 
   const retryChatData = () => {
     if (guildsError) void refetchGuilds();
@@ -414,8 +397,8 @@ export const ChatView = ({
           <ChatConnectionStatus
             status={{
               partialError,
-              offline: showOfflineStatus,
-              refreshing: showRefreshingStatus,
+              hasData: hasMessagesResponse,
+              refreshing,
             }}
             failedGuildCount={failedGuildIds.length}
             onRetry={retryChatData}

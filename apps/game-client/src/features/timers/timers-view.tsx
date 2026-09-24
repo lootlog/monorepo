@@ -6,7 +6,6 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { AddTimerPanel } from "@/features/timers/components/add-timer-panel";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
-import { useSocket } from "@/contexts/socket-context";
 import { useTimerListProjection } from "@/features/timers/hooks/use-timer-list-projection";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useTimers } from "@/hooks/api/use-timers";
@@ -131,14 +130,9 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     refetch: refetchTimers,
   } = useTimers({ world: desiredWorld });
 
-  const { connected, joined } = useSocket();
-
   const hasTimersResponse = timers !== undefined;
   const initialTimersLoading = timersLoading && !hasTimersResponse;
   const timersRefreshError = Boolean(timersError) && hasTimersResponse;
-  // Realtime updates stop while the gateway is down, so a loaded list may
-  // already be behind the server.
-  const timersStale = hasTimersResponse && (!connected || !joined);
   const timersRefreshing = timersFetching && hasTimersResponse;
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
@@ -264,7 +258,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           }}
           refreshError={timersRefreshError}
           refreshing={timersRefreshing}
-          stale={timersStale}
+          hasData={hasTimersResponse}
           overlay={addTimerOverlay}
         />
       </UnderBagTimers>
@@ -324,7 +318,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
           }}
           refreshError={timersRefreshError}
           refreshing={timersRefreshing}
-          stale={timersStale}
+          hasData={hasTimersResponse}
           overlay={addTimerOverlay}
         />
       </div>
