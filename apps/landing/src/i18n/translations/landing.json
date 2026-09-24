@@ -1,7 +1,7 @@
 {
   "seo": {
     "title": "Lootlog – timery respów, łupy i analiza walk w Margonem",
-    "description": "Darmowy dodatek do Margonem dla graczy i klanów. Synchronizuj timery respów, zapisuj łupy, analizuj walki i sprawdzaj aktywność w jednym panelu.",
+    "description": "Darmowy dodatek do Margonem dla graczy i klanów. Wspólne timery respów, historia łupów, analiza walk i statystyki bić w jednym panelu.",
     "socialImageAlt": "Lootlog – timery respów, łupy i analiza walk w Margonem",
     "keywords": [
       "Lootlog",
@@ -19,128 +19,121 @@
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
     "navigationLabel": "Główna nawigacja",
-    "product": "Możliwości",
-    "workflow": "Jak działa",
-    "trust": "O projekcie",
+    "product": "Funkcje",
+    "workflow": "Jak to działa",
+    "trust": "O\u00a0projekcie",
     "faq": "FAQ",
     "goToLootlog": "Przejdź do Lootloga",
     "lootlog": "Lootlog",
     "login": "Zaloguj się",
-    "loginLoading": "Łączenie z Discordem…",
-    "loginError": "Nie udało się rozpocząć logowania przez Discord. Spróbuj ponownie."
+    "loginLoading": "Łączenie z\u00a0Discordem…",
+    "loginError": "Nie udało się rozpocząć logowania przez Discorda. Spróbuj ponownie."
   },
   "hero": {
-    "title": "Mniej pilnowania. Więcej grania.",
-    "description": "Wspólne timery, historia łupów i statystyki walk. Wszystko pod ręką — w grze i w panelu klanu.",
+    "title": "Timery, łupy i\u00a0walki całego klanu.",
+    "description": "Dodatek do Margonem, który w\u00a0trakcie gry zapisuje respy, dropy i\u00a0walki. Cały klan widzi je od razu\u00a0– w\u00a0grze i\u00a0w\u00a0panelu.",
     "installAddon": "Zainstaluj dodatek",
     "openDashboard": "Otwórz Lootloga"
   },
   "faq": {
+    "title": "Częste pytania",
+    "description": "Nie ma tu Twojego pytania? Zapytaj na Discordzie Lootloga.",
+    "discord": "Dołącz do Discorda",
     "q1": "Gdzie znajdę analizę walk?",
-    "a1": "Po zainstalowaniu dodatku obsługiwane logi walk trafiają do Panelu Gracza, gdzie możesz przeglądać przebieg i statystyki starć.",
-    "q2": "Czy dostanę bana?",
-    "a2": "Lootlog nie porusza postacią, nie wybiera działań bojowych i nie gra za użytkownika. Jest nieoficjalnym projektem społecznościowym, a ostateczne decyzje dotyczące dodatków należą do administracji Margonem.",
+    "a1": "W\u00a0Panelu walk w\u00a0aplikacji Lootloga. Po zainstalowaniu dodatku obsługiwane walki trafiają tam same\u00a0– z\u00a0przebiegiem i\u00a0statystykami starć.",
+    "q2": "Czy za Lootloga można dostać bana?",
+    "a2": "Lootlog nie porusza postacią, nie walczy i\u00a0nie gra za Ciebie\u00a0– zapisuje tylko obsługiwane zdarzenia z\u00a0gry. To nieoficjalny projekt społeczności, a\u00a0ostateczne decyzje dotyczące dodatków należą do administracji Margonem.",
     "q3": "Ile kosztuje Lootlog?",
-    "a3": "Nic. Lootlog jest darmowy i rozwijany jako projekt open source.",
+    "a3": "Nic. Lootlog jest darmowy i\u00a0rozwijany jako open source.",
     "q4": "Jak synchronizują się timery?",
-    "a4": "Gdy członek organizacji zabije obsługiwanego przeciwnika, Lootlog aktualizuje timer i udostępnia odliczanie uprawnionym osobom na tym samym serwerze Discord.",
-    "q5": "Czy Lootlog działa na wielu postaciach i światach?",
-    "a5": "Tak. Dane z różnych postaci i światów są dostępne z jednego konta połączonego z Discordem.",
-    "q6": "Gdzie zgłosić błąd lub pomysł?",
-    "a6": "Napisz na Discordzie Lootloga albo utwórz zgłoszenie na GitHubie. Przyjmujemy też pull requesty."
+    "a4": "Gdy ktoś z\u00a0klanu ubije obsługiwanego potwora, Lootlog od razu aktualizuje timer. Odliczanie widzą wszyscy członkowie z\u00a0dostępem do timerów na tym samym serwerze Discord.",
+    "q5": "Czy Lootlog działa na wielu postaciach i\u00a0światach?",
+    "a5": "Tak. Postacie z\u00a0różnych światów są przypisane do jednego konta połączonego z\u00a0Discordem.",
+    "q6": "Gdzie zgłosić błąd albo pomysł?",
+    "a6": "Na Discordzie Lootloga albo w\u00a0zgłoszeniu na GitHubie. Pull requesty też są mile widziane."
   },
   "proof": {
-    "label": "Dowody zamiast obietnic",
-    "title": "Od zdarzenia w grze do danych, z których korzysta cały klan.",
-    "description": "Lootlog zbiera obsługiwane zdarzenia podczas gry i udostępnia je w panelu. Klan może sprawdzić historię łupów, aktywność i statystyki bez szukania informacji na czacie.",
-    "record": "Zapis {{index}}",
+    "title": "Łupy i\u00a0statystyki klanu bez przepisywania z\u00a0czatu.",
+    "description": "Dodatek zapisuje obsługiwane walki i\u00a0łupy w\u00a0trakcie gry. W\u00a0panelu cały klan widzi historię dropów, aktywność członków i\u00a0statystyki bić.",
     "dashboard": {
-      "title": "Łupy trafiają do wspólnego zapisu.",
-      "description": "Po walce Lootlog porządkuje zebrane dane według potwora, świata i czasu. Członkowie klanu mogą przeglądać lootlog i szybko wrócić do potrzebnych informacji.",
-      "decision": "Zobacz zapis łupów klanu",
-      "alt": "Lootlog klanu La Famiglia Gorilla na świecie Luvia z kartami potworów i łupami",
-      "caption": "Łupy · filtry · wspólny zapis"
+      "caption": "Lootlog",
+      "title": "Każdy drop trafia do wspólnego lootloga.",
+      "description": "Łupy są przypisane do potwora, świata i\u00a0czasu. Filtrujesz po potworze, przedmiocie albo graczu i\u00a0od razu widzisz, kto co zdobył."
     },
     "statistics": {
-      "title": "Aktywność klanu bez ręcznego liczenia.",
-      "description": "Liczba bić, ranking członków i najczęściej wybierani przeciwnicy pokazują, jak klan gra w wybranym okresie. Łatwiej porównać aktywność i ustalić kolejne priorytety.",
-      "decision": "Sprawdź statystyki klanu",
-      "alt": "Statystyki bić klanu w Lootlogu z rankingiem członków i najczęściej wybieranymi potworami",
-      "caption": "Klan · aktywność · priorytety"
+      "caption": "Statystyki",
+      "title": "Aktywność klanu bez liczenia w\u00a0arkuszu.",
+      "description": "Liczba bić, ranking członków i\u00a0najczęściej bite potwory w\u00a0wybranym okresie. Łatwo porównać aktywność i\u00a0ustalić, na co idziecie dalej."
     }
   },
   "workflow": {
-    "title": "Od zdarzenia w grze do decyzji klanu.",
-    "description": "Instalujesz dodatek raz i grasz jak zwykle. Lootlog rozpoznaje obsługiwane zdarzenia, synchronizuje dane i pokazuje je w panelu.",
+    "title": "Instalujesz raz, potem po prostu grasz.",
+    "description": "Po walce nie trzeba niczego wpisywać ani klikać. Dodatek rozpoznaje obsługiwane zdarzenia i\u00a0wysyła je do panelu Twojego klanu.",
     "guide": "Zobacz instrukcję instalacji",
     "steps": {
-      "observe": {
-        "state": "W grze",
-        "title": "Graj",
-        "description": "Dodatek rozpoznaje obsługiwane walki, łupy i inne zdarzenia podczas zwykłej gry."
+      "install": {
+        "title": "Instalujesz dodatek",
+        "description": "Logujesz się przez Discorda. Dostęp do danych klanu dostajesz przez jego serwer."
+      },
+      "play": {
+        "title": "Grasz jak zwykle",
+        "description": "Dodatek rozpoznaje obsługiwane walki, łupy i\u00a0ubicia potworów."
       },
       "sync": {
-        "state": "Synchronizacja",
-        "title": "Zapisuj",
-        "description": "Dane trafiają do wspólnego panelu Twojego klanu."
+        "title": "Klan widzi to od razu",
+        "description": "Timery, looty i\u00a0walki pojawiają się u\u00a0wszystkich członków na żywo."
       },
-      "inspect": {
-        "state": "Panel",
-        "title": "Sprawdź",
-        "description": "Filtrujesz lootlog, przeglądasz timery, historię walk i statystyki."
-      },
-      "decide": {
-        "state": "Klan",
-        "title": "Działaj",
-        "description": "Klan ustala kolejne respy i priorytety na podstawie tych samych danych."
+      "plan": {
+        "title": "Planujecie razem",
+        "description": "Na podstawie tych samych danych ustalacie kolejne respy i\u00a0priorytety."
       }
     }
   },
   "trust": {
-    "title": "Sprawdź Lootloga przed instalacją.",
-    "description": "Lootlog jest darmowym projektem open source rozwijanym przez społeczność. Kod i dokumentacja są publiczne, więc możesz dokładnie sprawdzić narzędzie przed instalacją.",
-    "github": "Sprawdź kod na GitHubie",
+    "title": "Otwarty kod, zero opłat.",
+    "description": "Lootlog to darmowy projekt open source rozwijany przez graczy. Kod i\u00a0dokumentacja są publiczne\u00a0– możesz sprawdzić, co robi dodatek, zanim go zainstalujesz.",
+    "github": "Zobacz kod na GitHubie",
     "docs": "Przeczytaj dokumentację",
     "items": {
       "free": {
-        "title": "0 SŁ",
-        "description": "Korzystanie z Lootloga nic nie kosztuje."
+        "title": "0\u00a0SŁ",
+        "description": "Nie płacisz ani za dodatek, ani za panel."
       },
       "openSource": {
         "title": "Open source",
-        "description": "Kod źródłowy jest publiczny i dostępny do samodzielnej weryfikacji."
+        "description": "Kod źródłowy jest na GitHubie. Każdy może go przejrzeć."
       },
       "discordAccount": {
-        "title": "Konto Discord",
-        "description": "Logowanie przez Discord łączy Twoje postacie z dostępem do panelu."
+        "title": "Logowanie przez Discorda",
+        "description": "Bez zakładania osobnego konta i\u00a0pamiętania kolejnego hasła."
       },
       "multiWorld": {
-        "title": "Wiele postaci i światów",
-        "description": "Jedno konto porządkuje dane z różnych postaci oraz światów."
+        "title": "Wiele postaci i\u00a0światów",
+        "description": "Wszystkie postacie z\u00a0różnych światów pod jednym kontem."
       }
     }
   },
   "closingCta": {
-    "title": "Zacznij zbierać dane, których potrzebuje Twój klan.",
-    "description": "Zainstaluj dodatek, połącz konto Discord i przejdź przez krótką konfigurację. Potem graj jak zwykle - Lootlog zacznie porządkować obsługiwane zdarzenia w panelu.",
+    "title": "Zainstaluj dodatek i\u00a0graj dalej.",
+    "description": "Zaloguj się przez Discorda i\u00a0dołącz do lootloga swojego klanu. Resztę dodatek zrobi w\u00a0tle\u00a0– timery, łupy i\u00a0walki zapiszą się same.",
     "install": "Zainstaluj dodatek",
     "guide": "Zobacz instrukcję"
   },
   "footer": {
     "developer": "Dla programistów",
-    "navigationLabel": "Linki w stopce",
+    "navigationLabel": "Linki w\u00a0stopce",
     "docs": "Dokumentacja",
     "discord": "Discord",
     "github": "GitHub",
     "privacy": "Prywatność",
     "terms": "Regulamin",
     "support": "Wesprzyj",
-    "legalNotice": "Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.",
-    "copyright": "Lootlog © {{year}} • Open Source"
+    "legalNotice": "Grafiki wykorzystane na stronie są własnością Garmory sp. z\u00a0o.o.",
+    "copyright": "© {{year}} Lootlog · open source"
   },
   "cookieConsent": {
     "title": "Ustawienia plików cookie",
-    "description": "Używamy plików cookie, aby utrzymać działanie serwisu i zapamiętać wybrane ustawienia.",
+    "description": "Używamy plików cookie, aby utrzymać działanie serwisu i\u00a0zapamiętać wybrane ustawienia.",
     "accept": "Akceptuję",
     "reject": "Odrzuć"
   },
@@ -148,16 +141,12 @@
     "backToHome": "Powrót do strony głównej",
     "lastUpdated": "Data ostatniej aktualizacji: {{date}}"
   },
-  "page": {
-    "faqTitle": "Najważniejsze pytania przed instalacją.",
-    "faqDescription": "Instalacja, bezpieczeństwo, timery, konta i rozwój projektu - bez ogólników."
-  },
   "illustrations": {
-    "example": "Ilustracja działania · przykładowe dane",
+    "example": "Przykładowe dane",
     "timer": "Wspólny timer",
     "opponent": "Piekielny Kościej",
-    "shared": "Ten sam resp. Cały klan.",
-    "loot": "Nowy łup w zapisie",
+    "shared": "Widzi go cały klan",
+    "loot": "Nowy drop w\u00a0lootlogu",
     "ranking": "Aktywność klanu",
     "kills": "{{count}} bić",
     "items": {

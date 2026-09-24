@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { ClosingCta } from "@/src/components/landing/closing-cta";
@@ -8,6 +9,7 @@ import { HeroSection } from "@/src/components/landing/hero-section";
 import { HowItWorks } from "@/src/components/landing/how-it-works";
 import { ProductProof } from "@/src/components/landing/product-proof";
 import { TrustRecord } from "@/src/components/landing/trust-record";
+import { links } from "@/src/config/links";
 
 export function HomeContent() {
   const { t } = useTranslation();
@@ -25,7 +27,7 @@ export function HomeContent() {
         <section
           id="faq"
           aria-labelledby="faq-title"
-          className="bg-[var(--broadcast-ink)] py-16 lg:py-28"
+          className="landing-section bg-[var(--broadcast-ink)]"
         >
           <div className="landing-container grid items-start gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-10 lg:gap-20">
             <div>
@@ -33,11 +35,20 @@ export function HomeContent() {
                 id="faq-title"
                 className="landing-heading-section max-w-xl text-balance text-[var(--broadcast-white)]"
               >
-                {t("landing.page.faqTitle")}
+                {t("landing.faq.title")}
               </h2>
-              <p className="mt-6 max-w-[58ch] text-base leading-7 sm:text-lg sm:leading-8 text-[var(--broadcast-text-muted)]">
-                {t("landing.page.faqDescription")}
+              <p className="landing-lead mt-6 text-[var(--broadcast-text-muted)]">
+                {t("landing.faq.description")}
               </p>
+              <a
+                href={links.discord}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="landing-footer-link mt-3 font-semibold text-[var(--broadcast-white)]"
+              >
+                {t("landing.faq.discord")}
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
             </div>
             <FaqPanel />
           </div>
