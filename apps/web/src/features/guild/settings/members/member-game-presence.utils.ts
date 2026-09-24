@@ -2,23 +2,9 @@ import type { PlayerPresence } from "@/lib/gateway-client";
 import {
   isMemberOnlineOnWeb,
   type MemberWebPresenceByDiscordId,
-} from "@/features/guild/settings/members/member-web-presence.utils";
+} from "@/lib/web-presence";
 
 export type MemberGamePresenceByDiscordId = Map<string, PlayerPresence[]>;
-
-export const mapMemberGamePresenceByDiscordId = (
-  players: Record<string, PlayerPresence[]> | undefined,
-): MemberGamePresenceByDiscordId => {
-  const presenceByDiscordId: MemberGamePresenceByDiscordId = new Map();
-
-  for (const [discordId, presence] of Object.entries(players ?? {})) {
-    if (presence.length > 0) {
-      presenceByDiscordId.set(discordId, presence);
-    }
-  }
-
-  return presenceByDiscordId;
-};
 
 export const isMemberOnlineInGame = (
   presenceByDiscordId: MemberGamePresenceByDiscordId | undefined,

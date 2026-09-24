@@ -3,8 +3,10 @@
 import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetUserPreferencesQueryKey,
+  type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
-import type { RealtimeWebSocket } from "@lootlog/client/realtime";
+import type { RealtimeWebSocket, ServerEvent } from "@lootlog/client/realtime";
+import { configureApiClients } from "@lootlog/client/transport";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -44,6 +46,9 @@ class Wire implements RealtimeWebSocket {
   close() {
     this.readyState = 3;
     this.listeners.get("close")?.({});
+  }
+  deliver(event: ServerEvent) {
+    this.listeners.get("message")?.({ data: encodeRealtimeFrame(event) });
   }
   send(bytes: string | Uint8Array) {
     if (!(bytes instanceof Uint8Array)) throw new Error("Expected MessagePack");
@@ -87,7 +92,10 @@ const wireAt = (index: number) => {
   return wire;
 };
 
-const setup = async (openDuringCommit = false) => {
+const setup = async (
+  openDuringCommit = false,
+  guilds = [{ id: "guild-1", vanityUrl: null }],
+) => {
   vi.stubGlobal("WebSocket", Wire);
 
   const client = new QueryClient({
@@ -123,9 +131,10 @@ const setup = async (openDuringCommit = false) => {
   );
   client.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [{ id: "guild-1", vanityUrl: null }],
+    guilds,
   );
-  socket.connect();
+
+  if (openDuringCommit) socket.connect();
 
   const root = createRootRoute({
     component: () => (
@@ -150,6 +159,8 @@ const setup = async (openDuringCommit = false) => {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+
+  return client;
 };
 
 afterEach(() => {
@@ -207,4 +218,117 @@ it("joins when the transport opens between provider render and passive effects",
       (frame) => "type" in frame && frame.type === "session.join",
     ),
   ).toHaveLength(1);
+});
+
+it("does not open a connection without Organizations and starts when membership arrives", async () => {
+  const client = await setup(false, []);
+  expect(Wire.instances).toHaveLength(0);
+  act(() => {
+    client.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [{ id: "guild-1", vanityUrl: null }],
+    );
+  });
+  await waitFor(() => expect(Wire.instances).toHaveLength(1));
+  act(() => wireAt(0).open());
+  await waitFor(() =>
+    expect(
+      wireAt(0).frames.filter(
+        (frame) => "type" in frame && frame.type === "session.join",
+      ),
+    ).toHaveLength(1),
+  );
+});
+
+it("disconnects after losing the last Organization", async () => {
+  const client = await setup();
+  act(() => wireAt(0).open());
+  await waitFor(() => expect(wireAt(0).frames.length).toBeGreaterThan(0));
+  act(() => {
+    client.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [],
+    );
+  });
+  await waitFor(() => expect(wireAt(0).readyState).toBe(3));
+  expect(socket.connected).toBe(false);
+});
+
+it("refreshes accessible Organizations and disconnects when permissions remove the last one", async () => {
+  const resolveResponse = vi.fn<(response: Response) => void>();
+
+  const response = new Promise<Response>((resolve) => {
+    resolveResponse.mockImplementation(resolve);
+  });
+
+  const fetchGuilds = vi.fn(() => response);
+  onTestFinished(
+    configureApiClients({
+      main: { baseUrl: "https://api.test", fetch: fetchGuilds },
+    }),
+  );
+  const client = await setup();
+  act(() => wireAt(0).open());
+  await waitFor(() => expect(wireAt(0).frames.length).toBeGreaterThan(0));
+
+  act(() =>
+    wireAt(0).deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: [], subscriptionScopes: [] },
+    }),
+  );
+
+  await waitFor(() => expect(fetchGuilds).toHaveBeenCalledTimes(1));
+  await act(async () => resolveResponse(Response.json([])));
+  await waitFor(() =>
+    expect(
+      client.getQueryData(
+        getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      ),
+    ).toEqual([]),
+  );
+  await waitFor(() => expect(socket.connected).toBe(false));
+  expect(wireAt(0).readyState).toBe(3);
+});
+
+it("refreshes full Organization DTOs after permissions change while keeping an authorized connection", async () => {
+  const guild = {
+    id: "guild-1",
+    name: "Current guild",
+    vanityUrl: "current-alias",
+    ownerId: "owner-1",
+    publicStatsCardEnabled: true,
+    hasLootlogAccess: true,
+    isAccessDataStale: false,
+  } satisfies UserCurrentGuildResponseDtoOutput;
+
+  const fetchGuilds = vi.fn(async () => Response.json([guild]));
+  onTestFinished(
+    configureApiClients({
+      main: { baseUrl: "https://api.test", fetch: fetchGuilds },
+    }),
+  );
+  const client = await setup();
+  act(() => wireAt(0).open());
+  await waitFor(() => expect(wireAt(0).frames.length).toBeGreaterThan(0));
+
+  act(() =>
+    wireAt(0).deliver({
+      v: 1,
+      type: "permissions.updated",
+      data: { organizationIds: ["guild-1"], subscriptionScopes: [] },
+    }),
+  );
+
+  await waitFor(() =>
+    expect(
+      client.getQueryData(
+        getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      ),
+    ).toEqual([guild]),
+  );
+  expect(fetchGuilds).toHaveBeenCalledTimes(1);
+  expect(socket.connected).toBe(true);
+  expect(Wire.instances).toHaveLength(1);
 });

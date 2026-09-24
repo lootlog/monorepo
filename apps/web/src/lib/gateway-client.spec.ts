@@ -48,28 +48,22 @@ describe("gateway presence identity", () => {
 
     const client = new GatewayClient();
 
-    for (const [event, field] of [
-      [GatewayEvent.MEMBER_WEB_PRESENCE_FETCH, "sessions"],
-      [GatewayEvent.EVENT_PRESENCE_FETCH, "players"],
-      [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH, "players"],
-    ] as const) {
-      const acknowledgement = vi.fn();
-      client.emit(event, { guildId: "organization-1" }, acknowledgement);
-      await vi.waitFor(() => expect(acknowledgement).toHaveBeenCalledOnce());
-      expect(request).toHaveBeenLastCalledWith("presence.fetch", {
-        organizationId: "organization-1",
-        world: undefined,
-        delivery: "response",
-      });
-      expect(acknowledgement.mock.calls[0]?.[0]).toEqual({
-        status: "success",
-        [field]: {
-          "discord-member": [
-            expect.objectContaining({ sessionId: "session-1" }),
-          ],
-        },
-      });
-    }
+    const response = await client.fetchPresence("organization-1");
+
+    expect(request).toHaveBeenCalledOnce();
+    expect(request).toHaveBeenCalledWith("presence.fetch", {
+      organizationId: "organization-1",
+      delivery: "response",
+    });
+    expect(response).toEqual({
+      status: "success",
+      sessions: {
+        "discord-member": [expect.objectContaining({ sessionId: "session-1" })],
+      },
+      players: {
+        "discord-member": [expect.objectContaining({ sessionId: "session-1" })],
+      },
+    });
   });
 
   it("ignores legacy snapshots and preserves Discord identity through live updates", () => {
