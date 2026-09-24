@@ -191,6 +191,17 @@ it("shows no search results and rejects malformed durations without an HTTP muta
   expect(fixture.posts()).toHaveLength(0);
 });
 
+it("reports a missing name together with the missing respawn times", async () => {
+  const user = userEvent.setup();
+  const fixture = mountForm();
+  await user.click(screen.getByRole("button", { name: "Dodaj" }));
+  expect(await screen.findByText("Nazwa jest wymagana")).toBeVisible();
+  expect(
+    screen.getByText("Podaj czasy respawnu lub niestandardowe daty"),
+  ).toBeVisible();
+  expect(fixture.posts()).toHaveLength(0);
+});
+
 it("rejects levels outside the supported range", async () => {
   const user = userEvent.setup();
   const fixture = mountForm();

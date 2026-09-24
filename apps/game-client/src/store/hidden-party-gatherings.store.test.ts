@@ -147,4 +147,25 @@ describe("hidden party gatherings", () => {
       },
     });
   });
+
+  it.each([
+    null,
+    "corrupt",
+    [],
+    {},
+    { hiddenByScope: "corrupt" },
+    { hiddenByScope: [{ valid: expiresAt }] },
+  ])(
+    "reads the corrupt or missing dismissal map %j as empty",
+    async (state) => {
+      useHiddenPartyGatheringsStore.setState({
+        hiddenByScope: { stale: { kept: expiresAt } },
+      });
+      localStorage.setItem(storageName, JSON.stringify({ version: 0, state }));
+      await useHiddenPartyGatheringsStore.persist.rehydrate();
+      expect(useHiddenPartyGatheringsStore.getState().hiddenByScope).toEqual(
+        {},
+      );
+    },
+  );
 });
