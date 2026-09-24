@@ -1,4 +1,6 @@
+import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { WindowActionButton } from "@/components/draggable-window/window-action-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
@@ -7,6 +9,7 @@ import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { getDetectorNpcSettings } from "@lootlog/schema/account-preferences";
 import { NpcType } from "@/api/npcs.api";
+import { ListX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
@@ -50,10 +53,10 @@ export const NpcDetector = () => {
   const resolvedMaxContentHeight =
     storedMaxContentHeight ?? measuredMaxContentHeight;
 
-  const handleClose = () => {
-    setOpen("npc-detector", false);
-    clearNpcs();
-  };
+  // Closing only hides the window: detections stay until they leave the map,
+  // the map changes or the player clears them, and the next detection
+  // reopens the window with them.
+  const handleClose = () => setOpen("npc-detector", false);
 
   const filteredNpcs = npcs.filter((npc) => {
     const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
@@ -67,13 +70,18 @@ export const NpcDetector = () => {
       isOpen={open && filteredNpcs.length > 0}
       id="npc-detector"
       title={t("window.title")}
-      actions=<WindowMaxHeightAction
-        currentMaxHeight={resolvedMaxContentHeight}
-        isArmed={isMaxHeightAdjustmentArmed}
-        onClick={() =>
-          setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-        }
-      />
+      actions=<>
+        <WindowActionButton label={t("actions.clearAll")} onClick={clearNpcs}>
+          <ListX size={14} aria-hidden="true" />
+        </WindowActionButton>
+        <WindowMaxHeightAction
+          currentMaxHeight={resolvedMaxContentHeight}
+          isArmed={isMaxHeightAdjustmentArmed}
+          onClick={() =>
+            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
+          }
+        />
+      </>
       onClose={handleClose}
       heightMode="auto-up-to-max"
       maxContentHeight={storedMaxContentHeight}
@@ -89,6 +97,7 @@ export const NpcDetector = () => {
       minWidth={242}
     >
       <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
+        <ConnectionStatusStrip hasData={filteredNpcs.length > 0} />
         <NpcsList
           detectorSettings={settings}
           npcTypeColors={npcTypeColors}

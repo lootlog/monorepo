@@ -266,7 +266,6 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         onRemoveNotification={handleRemoveNotification}
         onResumeAutoHide={resumeNotificationAutoHide}
         onUpdateMutes={handleUpdateMutes}
-        showCloseButton={notificationsCount > 1}
       />
     );
   };

@@ -31,6 +31,7 @@ import { SingleNotificationPartyGathering } from "@/features/notifications/compo
 import { useTranslation } from "react-i18next";
 import { getNotificationSettingsKey } from "@/features/notifications/utils/get-notification-settings-key";
 import { getNotificationAutoHideDeadlineMs } from "@/features/notifications/notification-auto-hide";
+import { getCountdownRingEasing } from "@/lib/countdown-ring-easing";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 import type {
   NotificationMutes,
@@ -68,7 +69,6 @@ type SingleNotificationProps = {
   onRemoveNotification: (notificationId: string) => void;
   onResumeAutoHide: (listKey: string) => void;
   onUpdateMutes: (mutes: NotificationMutesPatch) => void;
-  showCloseButton?: boolean;
   npcTypeColors?: NpcTypeColors;
 };
 
@@ -218,7 +218,6 @@ export const SingleNotification = memo(function SingleNotification({
   onRemoveNotification,
   onResumeAutoHide,
   onUpdateMutes,
-  showCloseButton = false,
   npcTypeColors,
 }: SingleNotificationProps) {
   const { t } = useTranslation("notifications");
@@ -322,7 +321,7 @@ export const SingleNotification = memo(function SingleNotification({
       ],
       {
         duration: clampedRemainingMs,
-        easing: "linear",
+        easing: getCountdownRingEasing(clampedRemainingMs),
         fill: "forwards",
       },
     );
@@ -474,22 +473,20 @@ export const SingleNotification = memo(function SingleNotification({
             onOpenChange={handleMuteMenuOpenChange}
             onMuted={handleRemoveNotification}
           />
-          {showCloseButton ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="xs"
-                  variant="destructive"
-                  aria-label={t("actions.closeAria")}
-                  className="ll:size-7 ll:px-0"
-                  onClick={handleRemoveNotification}
-                >
-                  <XIcon size={12} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t("actions.closeAria")}</TooltipContent>
-            </Tooltip>
-          ) : null}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="xs"
+                variant="destructive"
+                aria-label={t("actions.closeAria")}
+                className="ll:size-7 ll:px-0"
+                onClick={handleRemoveNotification}
+              >
+                <XIcon size={12} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("actions.closeAria")}</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>

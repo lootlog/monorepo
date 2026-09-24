@@ -1,4 +1,5 @@
 import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
+import { getCountdownRingEasing } from "@/lib/countdown-ring-easing";
 import { useEffect, useRef, useState } from "react";
 
 const RING_RADIUS = 11;
@@ -72,7 +73,7 @@ export const NpcNotificationCooldown = ({
       ],
       {
         duration: currentRemainingMs,
-        easing: "linear",
+        easing: getCountdownRingEasing(currentRemainingMs),
         fill: "forwards",
       },
     );

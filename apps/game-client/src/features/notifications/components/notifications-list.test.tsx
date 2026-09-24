@@ -218,7 +218,7 @@ describe("NotificationsList", () => {
     expect(screen.getAllByText("hello")).toHaveLength(8);
   });
 
-  it("finishes a CSS exit before manually removing the notification", () => {
+  it("finishes a CSS exit before manually removing only the dismissed notification, down to the last one", () => {
     vi.useFakeTimers();
     useSettingsStore.setState({ animationEffectsEnabled: true });
 
@@ -230,9 +230,11 @@ describe("NotificationsList", () => {
     };
 
     useNotificationsStore.setState({ notifications: [notification, second] });
-    render(<NotificationsList notifications={[notification, second]} />, {
-      wrapper: test.wrapper,
-    });
+
+    const view = render(
+      <NotificationsList notifications={[notification, second]} />,
+      { wrapper: test.wrapper },
+    );
 
     fireEvent.click(
       screen.getAllByRole("button", { name: "Zamknij powiadomienie" })[0],
@@ -248,5 +250,15 @@ describe("NotificationsList", () => {
     });
 
     expect(useNotificationsStore.getState().notifications).toEqual([second]);
+
+    view.rerender(<NotificationsList notifications={[second]} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Zamknij powiadomienie" }),
+    );
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
   });
 });

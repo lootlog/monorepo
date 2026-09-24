@@ -55,7 +55,6 @@ export const NpcsList: FC<NpcsListProps> = ({
   const {
     activeDetectionAnimations,
     clearDetectionAnimation,
-    hasMultipleNpcs,
     latestDetectionAnimationCycle,
     removeNpc,
     setNpcState,
@@ -64,7 +63,6 @@ export const NpcsList: FC<NpcsListProps> = ({
     useShallow((state) => ({
       activeDetectionAnimations: state.activeDetectionAnimations,
       clearDetectionAnimation: state.clearDetectionAnimation,
-      hasMultipleNpcs: state.npcs.length > 1,
       latestDetectionAnimationCycle: state.latestDetectionAnimationCycle,
       removeNpc: state.removeNpc,
       setNpcState: state.setNpcState,
@@ -196,7 +194,10 @@ export const NpcsList: FC<NpcsListProps> = ({
   );
 
   return (
-    <ScrollArea ref={scrollViewportRef} className="ll:w-full ll:h-full">
+    <ScrollArea
+      ref={scrollViewportRef}
+      className="ll:min-h-0 ll:w-full ll:flex-1"
+    >
       <ul
         ref={listContentRef}
         className="ll:relative ll:w-full ll:m-0 ll:p-0 ll:list-none"
@@ -226,7 +227,6 @@ export const NpcsList: FC<NpcsListProps> = ({
                 }
                 detectorSettings={detectorSettings}
                 hasActivePartyGathering={hasActivePartyGathering}
-                hasMultipleNpcs={hasMultipleNpcs}
                 orchestration={orchestration}
                 removeNpc={removeNpc}
                 setNpcState={setNpcState}
@@ -260,7 +260,6 @@ export const NpcsList: FC<NpcsListProps> = ({
               detectionAnimationCycle={null}
               detectorSettings={detectorSettings}
               hasActivePartyGathering={hasActivePartyGathering}
-              hasMultipleNpcs={hasMultipleNpcs}
               orchestration={orchestration}
               removeNpc={removeNpc}
               setNpcState={setNpcState}

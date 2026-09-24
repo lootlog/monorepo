@@ -41,7 +41,6 @@ type NpcListItemProps = {
   detectionAnimationCycle: number | null;
   detectorSettings: DetectorSettings;
   hasActivePartyGathering: boolean;
-  hasMultipleNpcs: boolean;
   orchestration: Pick<
     PartyGatheringOrchestration,
     | "isCreatingNpcPartyGathering"
@@ -106,7 +105,6 @@ export const NpcListItem = ({
   detectionAnimationCycle,
   detectorSettings,
   hasActivePartyGathering,
-  hasMultipleNpcs,
   orchestration,
   removeNpc,
   setNpcState,
@@ -325,17 +323,15 @@ export const NpcListItem = ({
             </Tooltip>
           </>
         )}
-        {hasMultipleNpcs && (
-          <Button
-            size="xs"
-            variant="destructive"
-            aria-label={t("actions.removeNpcAria")}
-            className={ACTION_BUTTON_CLASS_NAME}
-            onClick={() => handleRemoveNpc(npc.id)}
-          >
-            <XIcon size={12} />
-          </Button>
-        )}
+        <Button
+          size="xs"
+          variant="destructive"
+          aria-label={t("actions.removeNpcAria")}
+          className={ACTION_BUTTON_CLASS_NAME}
+          onClick={() => handleRemoveNpc(npc.id)}
+        >
+          <XIcon size={12} />
+        </Button>
       </div>
     </>
   );
