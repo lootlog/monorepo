@@ -303,6 +303,7 @@ export const HeroDetail = () => {
         </div>
       </ScrollArea>
       <MapManageDialog
+        key={hero.id}
         open={mapManageOpen}
         onOpenChange={setMapManageOpen}
         guildId={queryGuildId}

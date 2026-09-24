@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, type ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -22,6 +22,7 @@ interface ManualPointsEditDialogProps {
   description: string;
   currentPoints: number;
   isPending?: boolean;
+  finalFocus?: ComponentProps<typeof DialogContent>["finalFocus"];
   onSubmit: (values: {
     pointsDelta: number;
     comment?: string;
@@ -35,6 +36,7 @@ export const ManualPointsEditDialog = ({
   description,
   currentPoints,
   isPending = false,
+  finalFocus,
   onSubmit,
 }: ManualPointsEditDialogProps) => {
   const { t } = useTranslation();
@@ -88,7 +90,10 @@ export const ManualPointsEditDialog = ({
         if (!isPending) onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="sm:max-w-md gap-0 overflow-hidden p-0">
+      <DialogContent
+        className="sm:max-w-md gap-0 overflow-hidden p-0"
+        finalFocus={finalFocus}
+      >
         <DialogHeader className="gap-2 px-4 pt-4 pb-3">
           <DialogTitle className="px-0 pt-0">{title}</DialogTitle>
           <DialogDescription className="px-0">{description}</DialogDescription>

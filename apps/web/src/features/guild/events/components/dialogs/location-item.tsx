@@ -13,7 +13,7 @@ interface LocationItemProps {
   handleDeleteLocation: (id: string) => void;
   isDeleting: boolean;
   deletionDisabled: boolean;
-  onDragStart: () => void;
+  isReordering: boolean;
   onDragEnd: () => void;
 }
 
@@ -25,7 +25,7 @@ export const LocationItem = ({
   handleDeleteLocation,
   isDeleting,
   deletionDisabled,
-  onDragStart,
+  isReordering,
   onDragEnd,
 }: LocationItemProps) => {
   const { t } = useTranslation();
@@ -34,7 +34,7 @@ export const LocationItem = ({
     <Reorder.Item
       value={location}
       className="flex items-center gap-2 px-2 py-1.5 rounded border bg-muted/30"
-      onDragStart={onDragStart}
+      dragListener={!isReordering}
       onDragEnd={onDragEnd}
     >
       <GripVertical className="size-3 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />

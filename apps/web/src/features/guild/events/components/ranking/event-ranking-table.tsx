@@ -1,6 +1,6 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,8 @@ import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranki
 import { formatDurationHuman } from "../../utils/format-duration";
 import { EventRankingActions } from "./event-ranking-actions";
 import { EventRankingPoints } from "./event-ranking-points";
+import { EventRankingPointsDialog } from "./event-ranking-points-dialog";
+import { getRankingMemberName } from "./get-ranking-member-name";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 
 type EventRankingTableProps = {
@@ -94,6 +96,11 @@ export const EventRankingTable = ({
 }: EventRankingTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [editingRankingId, setEditingRankingId] = useState<string | null>(null);
+
+  const editingRanking = rankings.find(
+    (ranking) => ranking.id === editingRankingId,
+  );
 
   const updateRankingPoints = useUpdateRankingPoints({
     mutation: {
@@ -162,11 +169,7 @@ export const EventRankingTable = ({
       cell: ({ row }) => {
         const ranking = row.original;
 
-        const memberLabel =
-          ranking.member?.name ??
-          t("events.ranking.memberFallback", {
-            memberId: ranking.memberId,
-          });
+        const memberLabel = getRankingMemberName(ranking, t);
 
         const roleCssColor = getCustomRoleCssColor(
           ranking.member?.roles[0]?.color,
@@ -249,9 +252,8 @@ export const EventRankingTable = ({
       ),
       cell: ({ row }) => (
         <EventRankingActions
-          ranking={row.original}
           canEdit={canEdit}
-          onEditPoints={handleEditPoints}
+          onEditPoints={() => setEditingRankingId(row.original.id)}
           isEditPending={updateRankingPoints.isPending}
         />
       ),
@@ -270,6 +272,7 @@ export const EventRankingTable = ({
     features: coreTableFeatures,
     data: sortedRankings,
     columns,
+    getRowId: (ranking) => ranking.id,
   });
 
   const renderRankingLinkCell = (
@@ -282,11 +285,7 @@ export const EventRankingTable = ({
 
     const ranking = cell.row.original;
 
-    const memberLabel =
-      ranking.member?.name ??
-      t("events.ranking.memberFallback", {
-        memberId: ranking.memberId,
-      });
+    const memberLabel = getRankingMemberName(ranking, t);
 
     const isPrimaryLink = cell.column.id === PRIMARY_LINK_COLUMN_ID;
 
@@ -362,12 +361,22 @@ export const EventRankingTable = ({
             )
           }
           getRowProps={(row) => ({
+            id: `event-ranking-row-${row.original.id}`,
             "aria-selected":
               row.original.memberId === currentMemberId || undefined,
           })}
           renderCellContent={renderRankingLinkCell}
         />
       </Table>
+      {canEdit && editingRanking && (
+        <EventRankingPointsDialog
+          key={editingRanking.id}
+          ranking={editingRanking}
+          isPending={updateRankingPoints.isPending}
+          onClose={() => setEditingRankingId(null)}
+          onEditPoints={handleEditPoints}
+        />
+      )}
     </Container>
   );
 };
