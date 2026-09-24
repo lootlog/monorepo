@@ -23,10 +23,15 @@ type TimersGridProps = {
 
 /**
  * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap, so
- * row parity computed here matches the rows the browser lays out.
+ * row parity computed here matches the rows the browser lays out. `auto-fit`
+ * collapses tracks no tile fills, so a short list lays out fewer columns
+ * than fit the width.
  */
-const countGridColumns = (gridWidth: number, minColumnWidth: number) =>
-  Math.max(1, Math.floor(gridWidth / minColumnWidth));
+const countGridColumns = (
+  gridWidth: number,
+  minColumnWidth: number,
+  tileCount: number,
+) => Math.max(1, Math.min(tileCount, Math.floor(gridWidth / minColumnWidth)));
 
 const useGridWidth = () => {
   const gridRef = useRef<HTMLSpanElement>(null);
@@ -96,7 +101,13 @@ export const TimersGrid: FC<TimersGridProps> = ({
 
   const hiddenTimerNames = new Set(hiddenTimers);
   const { gridRef, gridWidth } = useGridWidth();
-  const columnCount = countGridColumns(gridWidth, minColumnWidth);
+
+  const columnCount = countGridColumns(
+    gridWidth,
+    minColumnWidth,
+    timers.length,
+  );
+
   // A stripe marks where each tile starts among its row neighbours; a single
   // column has none, and a run of one colour would read as one long bar.
   const showColorStripe = columnCount > 1;
