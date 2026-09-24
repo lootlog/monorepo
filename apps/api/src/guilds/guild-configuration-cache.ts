@@ -1,7 +1,7 @@
 import { Effect, Predicate } from "effect";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
-import { isOrganizationIdLike } from "./vanity-url.js";
+import { isOrganizationIdLike } from "@lootlog/domain/organization-vanity-url";
 
 const GUILD_CACHE_TTL_SECONDS = 3600;
 
