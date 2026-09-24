@@ -7,6 +7,7 @@ import { getChatControllerGetChatMessagesQueryKey } from "@lootlog/client/main";
 import {
   applyChatAccessPolicy,
   applyLegacyChatAccessChange,
+  refreshChatAfterReconnect,
   retainChatAccessPolicy,
 } from "./chat-access-policy";
 
@@ -70,7 +71,7 @@ const policy = (titanAccess = true, maxLevel = 500) =>
 afterEach(() => vi.useRealTimers());
 
 describe("chat policy reconciliation", () => {
-  it("keeps unchanged rebalance and reconnect silent and preserves cache references", async () => {
+  it("keeps unchanged policy snapshots silent and preserves cache references", async () => {
     vi.useFakeTimers();
     const client = new QueryClient();
     const release = retainChatAccessPolicy(client);
@@ -95,6 +96,188 @@ describe("chat policy reconciliation", () => {
     release();
     client.clear();
   });
+
+  it("bounds catch-up during reconnect bursts without postponing the trailing refresh and stops after cleanup", async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const release = retainChatAccessPolicy(client);
+    const originalRows = [message("one", "before-disconnect")];
+    const finalRows = [...originalRows, message("one", "missed-during-burst")];
+    client.setQueryData(key("one"), originalRows);
+
+    const fetchHistory = vi
+      .fn<() => Promise<ChatMessage[]>>()
+      .mockResolvedValueOnce(originalRows)
+      .mockResolvedValue(finalRows);
+
+    const observer = new QueryObserver(client, {
+      queryKey: key("one"),
+      queryFn: fetchHistory,
+      staleTime: Infinity,
+    });
+
+    const unsubscribe = observer.subscribe(() => {});
+    refreshChatAfterReconnect(client, ["one"]);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    refreshChatAfterReconnect(client, ["one"]);
+    await vi.advanceTimersByTimeAsync(2_000);
+    refreshChatAfterReconnect(client, ["one"]);
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    expect(observer.getCurrentResult().data).toEqual(originalRows);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchHistory).toHaveBeenCalledTimes(2);
+    expect(observer.getCurrentResult().data).toEqual(finalRows);
+
+    refreshChatAfterReconnect(client, ["one"]);
+    unsubscribe();
+    release();
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(fetchHistory).toHaveBeenCalledTimes(2);
+    expect(client.getQueryData(key("one"))).toEqual(finalRows);
+    expect(client.getQueryState(key("one"))?.isInvalidated).toBe(true);
+    client.clear();
+  });
+
+  it("lets a pre-reconnect history request finish and fetches the gap once afterward", async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const release = retainChatAccessPolicy(client);
+    const originalRows = [message("one", "before-disconnect")];
+
+    const finalRows = [
+      ...originalRows,
+      message("one", "missed-during-request"),
+    ];
+
+    client.setQueryData(key("one"), originalRows);
+    const oldResponse = Promise.withResolvers<ChatMessage[]>();
+    const requestSignals: AbortSignal[] = [];
+
+    const fetchHistory = vi
+      .fn<() => Promise<ChatMessage[]>>()
+      .mockReturnValueOnce(oldResponse.promise)
+      .mockResolvedValue(finalRows);
+
+    const observer = new QueryObserver(client, {
+      queryKey: key("one"),
+      queryFn: ({ signal }) => {
+        requestSignals.push(signal);
+
+        return fetchHistory();
+      },
+      staleTime: Infinity,
+    });
+
+    const unsubscribe = observer.subscribe(() => {});
+    const oldRequest = observer.refetch();
+
+    for (let index = 0; index < 5; index++)
+      refreshChatAfterReconnect(client, ["one"]);
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    expect(requestSignals.some((signal) => signal.aborted)).toBe(false);
+    expect(observer.getCurrentResult().data).toEqual(originalRows);
+    await vi.advanceTimersByTimeAsync(2_000);
+    oldResponse.resolve(originalRows);
+    await oldRequest;
+    await vi.advanceTimersByTimeAsync(2_999);
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchHistory).toHaveBeenCalledTimes(2);
+    expect(requestSignals.some((signal) => signal.aborted)).toBe(false);
+    expect(observer.getCurrentResult().data).toEqual(finalRows);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(fetchHistory).toHaveBeenCalledTimes(2);
+    unsubscribe();
+    release();
+    client.clear();
+  });
+
+  it("reuses reconnect catch-up for a pending permission expansion", async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const release = retainChatAccessPolicy(client);
+    applyChatAccessPolicy(client, policy(false));
+    const visible = message("one", "elite", 100, 20);
+    const restored = message("one", "restored-titan");
+    const missed = message("one", "missed-elite", 100, 20);
+    client.setQueryData(key("one"), [visible]);
+
+    const fetchHistory = vi
+      .fn<() => Promise<ChatMessage[]>>()
+      .mockResolvedValue([visible, restored, missed]);
+
+    const observer = new QueryObserver(client, {
+      queryKey: key("one"),
+      queryFn: fetchHistory,
+      staleTime: Infinity,
+    });
+
+    const unsubscribe = observer.subscribe(() => {});
+    applyChatAccessPolicy(client, policy());
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(fetchHistory).not.toHaveBeenCalled();
+    refreshChatAfterReconnect(client, ["one"]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    expect(observer.getCurrentResult().data).toEqual([
+      visible,
+      restored,
+      missed,
+    ]);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(fetchHistory).toHaveBeenCalledOnce();
+    unsubscribe();
+    release();
+    client.clear();
+  });
+
+  it.each(["queued", "running"])(
+    "recovers still-permitted missed messages when policy narrowing interrupts %s reconnect catch-up",
+    async (refreshState) => {
+      vi.useFakeTimers();
+      const client = new QueryClient();
+      const release = retainChatAccessPolicy(client);
+      applyChatAccessPolicy(client, policy());
+      const visible = message("one", "visible-elite", 100, 20);
+      const revoked = message("one", "revoked-titan");
+      const missed = message("one", "missed-elite", 100, 20);
+      client.setQueryData(key("one"), [visible, revoked]);
+      const oldResponse = Promise.withResolvers<ChatMessage[]>();
+
+      const fetchHistory = vi
+        .fn<() => Promise<ChatMessage[]>>()
+        .mockReturnValueOnce(oldResponse.promise)
+        .mockResolvedValue([visible, missed]);
+
+      const observer = new QueryObserver(client, {
+        queryKey: key("one"),
+        queryFn: fetchHistory,
+        staleTime: Infinity,
+      });
+
+      const unsubscribe = observer.subscribe(() => {});
+      refreshChatAfterReconnect(client, ["one"]);
+      expect(fetchHistory).toHaveBeenCalledOnce();
+
+      if (refreshState === "queued") {
+        oldResponse.resolve([visible, revoked]);
+        await vi.advanceTimersByTimeAsync(0);
+        refreshChatAfterReconnect(client, ["one"]);
+      }
+
+      applyChatAccessPolicy(client, policy(false));
+      expect(observer.getCurrentResult().data).toEqual([visible]);
+      oldResponse.resolve([visible, revoked, missed]);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(fetchHistory).toHaveBeenCalledTimes(2);
+      expect(observer.getCurrentResult().data).toEqual([visible, missed]);
+      unsubscribe();
+      release();
+      client.clear();
+    },
+  );
 
   it("removes revoked titans from inactive cache and cancels an older response without affecting other organizations", async () => {
     const client = new QueryClient();

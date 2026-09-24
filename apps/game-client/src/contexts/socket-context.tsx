@@ -2,6 +2,7 @@ import {
   applyChatAccessPolicy,
   applyLegacyChatAccessChange,
   retainChatAccessPolicy,
+  refreshChatAfterReconnect,
 } from "@/features/chat/chat-access-policy";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { reconcileNotificationAccess } from "@/features/notifications/notification-access-policy";
@@ -130,8 +131,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const accessCache = createGameAccessCache(queryClient);
     const releaseChatPolicy = retainChatAccessPolicy(queryClient);
+    let hasJoined = false;
+    let joinedConnection = false;
 
     const handleDisconnect = () => {
+      joinedConnection = false;
       setJoined(false);
       setJoinedGuilds([]);
     };
@@ -150,6 +154,13 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setJoined(true);
       setHasBeenOnline(true);
       setJoinedGuilds(data.guildIds ?? []);
+
+      if (!joinedConnection) {
+        if (hasJoined)
+          refreshChatAfterReconnect(queryClient, data.guildIds ?? []);
+        hasJoined = true;
+        joinedConnection = true;
+      }
 
       // Emit initial presence after successful join
       // This ensures presence is sent even after browser refresh

@@ -18,6 +18,9 @@ type ChatPolicyState = {
   policy?: AccessPolicySnapshot;
   pendingGuilds: Set<string>;
   timer?: ReturnType<typeof setTimeout>;
+  refresh?: Promise<void>;
+  refreshingGuilds?: ReadonlySet<string>;
+  lastRefreshAt?: number;
   listeners: number;
 };
 
@@ -39,30 +42,91 @@ const scheduleRefresh = (
   state: ChatPolicyState,
   immediate = false,
 ) => {
+  if (state.pendingGuilds.size === 0) {
+    clearTimeout(state.timer);
+    state.timer = undefined;
+
+    return;
+  }
+
+  if (state.refresh || (state.timer !== undefined && !immediate)) return;
   clearTimeout(state.timer);
   state.timer = undefined;
-
-  if (state.pendingGuilds.size === 0) return;
 
   const refresh = () => {
     const guildIds = new Set(state.pendingGuilds);
     state.pendingGuilds.clear();
     state.timer = undefined;
-    void queryClient.invalidateQueries(
-      {
-        predicate: (query) => {
-          const guildId = getChatMessagesQueryGuildId(query);
 
-          return guildId !== undefined && guildIds.has(guildId);
-        },
+    const predicate = (query: Query) => {
+      const guildId = getChatMessagesQueryGuildId(query);
+
+      return guildId !== undefined && guildIds.has(guildId);
+    };
+
+    // An older response cannot cover this reconnect. Let it finish, then
+    // reconcile once more instead of repeatedly cancelling HTTP requests.
+    for (const query of queryClient.getQueryCache().findAll({ predicate })) {
+      const guildId = getChatMessagesQueryGuildId(query);
+
+      if (guildId && query.isActive() && query.state.fetchStatus === "fetching")
+        state.pendingGuilds.add(guildId);
+    }
+
+    state.lastRefreshAt = Date.now();
+
+    const request = queryClient.invalidateQueries(
+      {
+        predicate,
         refetchType: "active",
       },
       { cancelRefetch: false },
     );
+
+    state.refresh = request;
+    state.refreshingGuilds = guildIds;
+    void request.then(() => {
+      if (state.refresh !== request) return;
+      state.refresh = undefined;
+      state.refreshingGuilds = undefined;
+
+      if (state.listeners > 0) scheduleRefresh(queryClient, state, true);
+    });
   };
 
-  if (immediate) refresh();
-  else state.timer = setTimeout(refresh, REFRESH_DELAY_MS);
+  const delay = immediate
+    ? Math.max(
+        0,
+        (state.lastRefreshAt ?? -Infinity) + REFRESH_DELAY_MS - Date.now(),
+      )
+    : REFRESH_DELAY_MS;
+
+  if (delay === 0) refresh();
+  else state.timer = setTimeout(refresh, delay);
+};
+
+export const refreshChatAfterReconnect = (
+  queryClient: QueryClient,
+  guildIds: readonly string[],
+) => {
+  const state = getState(queryClient);
+  const accessibleGuilds = new Set(guildIds);
+
+  const predicate = (query: Query) => {
+    const guildId = getChatMessagesQueryGuildId(query);
+
+    return guildId !== undefined && accessibleGuilds.has(guildId);
+  };
+
+  for (const query of queryClient.getQueryCache().findAll({ predicate })) {
+    const guildId = getChatMessagesQueryGuildId(query);
+
+    if (guildId) state.pendingGuilds.add(guildId);
+  }
+
+  // Closed histories remain lazy, but must still catch up when opened.
+  void queryClient.invalidateQueries({ predicate, refetchType: "none" });
+  scheduleRefresh(queryClient, state, true);
 };
 
 export const retainChatAccessPolicy = (queryClient: QueryClient) => {
@@ -75,6 +139,9 @@ export const retainChatAccessPolicy = (queryClient: QueryClient) => {
     if (state.listeners === 0) {
       clearTimeout(state.timer);
       state.timer = undefined;
+      state.refresh = undefined;
+      state.refreshingGuilds = undefined;
+      state.lastRefreshAt = undefined;
 
       if (state.pendingGuilds.size > 0) {
         void queryClient.invalidateQueries({
@@ -109,6 +176,27 @@ export const canReadChatMessage = (
   if (!type || !message.npc) return false;
 
   return canReadPolicyNpc(organization, "chat", { type, lvl: message.npc.lvl });
+};
+
+const retainReadableRefreshes = (
+  state: ChatPolicyState,
+  restrictedGuilds: ReadonlySet<string>,
+  organizations: ReadonlyMap<string, OrganizationAccessPolicy>,
+) => {
+  for (const guildId of restrictedGuilds) {
+    const organization = organizations.get(guildId);
+
+    const needsRefresh =
+      state.pendingGuilds.has(guildId) || state.refreshingGuilds?.has(guildId);
+
+    if (
+      needsRefresh &&
+      organization &&
+      canReadPolicyNpc(organization, "chat", null)
+    )
+      state.pendingGuilds.add(guildId);
+    else state.pendingGuilds.delete(guildId);
+  }
 };
 
 /** One coordinator per cache: several mounted chat listeners must share refresh work. */
@@ -192,7 +280,7 @@ export const applyChatAccessPolicy = (
     },
   );
 
-  for (const guildId of restrictedGuilds) state.pendingGuilds.delete(guildId);
+  retainReadableRefreshes(state, restrictedGuilds, organizations);
 
   for (const change of changes) {
     if (change.expanded && !initial)
