@@ -192,6 +192,78 @@ it("does not submit without whitelisted guilds", () => {
   expect(fixture.requests).toHaveLength(0);
 });
 
+it.each(["missing", "empty"] as const)(
+  "submits while configuration is pending with %s cached data and does not replay",
+  async (cached) => {
+    const fixture = createFixture();
+    queryClient.clear();
+
+    if (cached === "empty") {
+      queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
+    }
+
+    const pending =
+      Promise.withResolvers<Record<string, { catchingGuildIds: string[] }>>();
+
+    const config = queryClient.fetchQuery({
+      queryKey: configKey,
+      queryFn: () => pending.promise,
+      staleTime: 0,
+    });
+
+    fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+    await waitFor(() => expect(fixture.requests).toHaveLength(1));
+    pending.resolve({ "101": { catchingGuildIds: ["guild-1"] } });
+    await config;
+
+    expect(fixture.requests).toHaveLength(1);
+    expect(await fixture.requests[0].json()).toMatchObject({
+      accountId: "202",
+      characterId: "101",
+      respBaseSeconds: 30,
+    });
+  },
+);
+
+it.each(["missing", "empty"] as const)(
+  "submits after a failed configuration fetch with %s cached data",
+  async (cached) => {
+    const fixture = createFixture();
+    queryClient.clear();
+
+    if (cached === "empty") {
+      queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
+    }
+
+    await expect(
+      queryClient.fetchQuery({
+        queryKey: configKey,
+        queryFn: () => Promise.reject(new Error("Configuration unavailable")),
+        retry: false,
+        staleTime: 0,
+      }),
+    ).rejects.toThrow("Configuration unavailable");
+
+    fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+    await waitFor(() => expect(fixture.requests).toHaveLength(1));
+  },
+);
+
+it("submits after the configuration cache is cleared", async () => {
+  const fixture = createFixture();
+  queryClient.clear();
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  await waitFor(() => expect(fixture.requests).toHaveLength(1));
+});
+
+it("does not suppress a timer using an invalidated empty whitelist", async () => {
+  const fixture = createFixture();
+  queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
+  await queryClient.invalidateQueries({ queryKey: configKey });
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  await waitFor(() => expect(fixture.requests).toHaveLength(1));
+});
+
 it("submits distinct respawn effects sharing one event id", async () => {
   const fixture = createFixture();
   fixture.handle({ ev: 77, npcs_del: [{ id: 500, respBaseSeconds: 30 }] });

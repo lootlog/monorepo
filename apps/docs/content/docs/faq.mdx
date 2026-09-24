@@ -61,8 +61,20 @@ Sprawdź kolejno:
 
 ### Wysłanie łupu, timera lub powiadomienia zakończyło się błędem
 
-Otwórz **Ustawienia → Logi** w dodatku i sprawdź szczegóły nieudanej akcji.
+Otwórz **Ustawienia → Diagnostyka → Logi** w dodatku i sprawdź szczegóły nieudanej akcji.
 Błąd walidacji API wskazuje pole, które wymaga poprawy, np. `npc.location`.
+
+Przy chwilowym błędzie sieci lub API dodatek ponawia wysłanie automatycznego
+timera, maksymalnie do trzech prób. Każda próba ma limit 8 sekund. Ponowienia
+mieszczą się w 25 sekundach od rozpoczęcia wysyłania; po dłuższym uśpieniu
+karty nie są wznawiane. Dotyczy to rozszerzenia, userskryptu i instalacji w grze.
+Po wyczerpaniu prób błąd pozostaje w logach. Dodatek nie przechowuje kolejki
+timerów do wysłania po odświeżeniu strony.
+
+Brak pobranej konfiguracji postaci nie blokuje wysłania automatycznego timera.
+API sprawdza wtedy aktualne przypisania i uprawnienia. Jawnie pusta lista
+Lootlogów w poprawnie pobranej konfiguracji nadal wyłącza wysyłanie dla tej
+postaci.
 
 Jeśli dodatek nie może ustalić nazwy mapy, zapisuje komunikat o braku
 lokalizacji i nie wysyła niepełnych danych. Dotyczy to nowego i starego
