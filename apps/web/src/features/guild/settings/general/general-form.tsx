@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
-import { generateSlug } from "@/utils/generate-slug";
+import { normalizeVanityUrl } from "@lootlog/domain/organization-vanity-url";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -33,7 +33,7 @@ import {
 } from "@lootlog/client/main";
 
 import {
-  generalFormSchema,
+  createGeneralFormSchema,
   type GeneralFormValues,
 } from "./general-form.schema";
 import { StatsCardSettingsCard } from "./stats-card-settings-card";
@@ -53,7 +53,7 @@ export const GeneralForm = () => {
   const navigate = useNavigate();
 
   const form = useForm<GeneralFormValues>({
-    resolver: zodResolver(generalFormSchema),
+    resolver: zodResolver(createGeneralFormSchema(t)),
     defaultValues: {
       vanityUrl: guild?.vanityUrl ?? "",
       publicStatsCardEnabled: guild?.publicStatsCardEnabled ?? false,
@@ -139,6 +139,7 @@ export const GeneralForm = () => {
                     <FormItem>
                       <FormControl
                         render=<Input
+                          aria-label={t("settings.general.vanityUrl.title")}
                           placeholder={t(
                             "settings.general.vanityUrl.placeholder",
                           )}
@@ -150,11 +151,11 @@ export const GeneralForm = () => {
                         {t("settings.general.vanityUrl.example")}{" "}
                         <span className="text-foreground font-medium">
                           {window.location.origin}/
-                          {generateSlug(field.value) ||
+                          {normalizeVanityUrl(field.value) ||
                             t("settings.general.vanityUrl.exampleSlug")}
                         </span>
                       </FormDescription>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />

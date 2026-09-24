@@ -16,6 +16,7 @@
     "./npc-permissions": "./src/npc-permissions.ts",
     "./npc-routing": "./src/npc-routing.ts",
     "./npc-type": "./src/npc-type.ts",
+    "./organization-vanity-url": "./src/organization-vanity-url.ts",
     "./profession": "./src/profession.ts",
     "./reservations": "./src/reservations.ts",
     "./scoring": "./src/scoring.ts",
