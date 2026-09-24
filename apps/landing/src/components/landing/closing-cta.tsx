@@ -11,17 +11,17 @@ export function ClosingCta() {
   return (
     <section
       aria-labelledby="closing-cta-title"
-      className="relative isolate overflow-hidden bg-[var(--broadcast-coral)] px-5 py-16 text-[var(--broadcast-ink)] sm:px-8 sm:py-20 lg:py-28"
+      className="landing-section relative isolate overflow-hidden bg-[var(--broadcast-coral)] text-[var(--broadcast-ink)]"
     >
-      <div className="relative z-10 mx-auto max-w-[90rem]">
+      <div className="landing-container relative z-10">
         <h2
           id="closing-cta-title"
-          className="broadcast-display max-w-5xl text-balance text-5xl font-black leading-[0.94] tracking-[-0.04em] sm:text-7xl"
+          className="landing-heading-display max-w-4xl text-balance"
         >
           {t("landing.closingCta.title")}
         </h2>
-        <div className="mt-9 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <p className="max-w-[65ch] text-lg leading-8 text-[var(--broadcast-paper-ink)]">
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <p className="landing-lead text-[var(--broadcast-paper-ink)]">
             {t("landing.closingCta.description")}
           </p>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
