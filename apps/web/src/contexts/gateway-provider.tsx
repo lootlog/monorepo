@@ -11,7 +11,11 @@ import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
-import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
+import {
+  invalidateUsersControllerGetCurrentUserAccessibleGuilds,
+  useUsersControllerGetCurrentUserAccessibleGuilds,
+} from "@lootlog/client/main";
+import { useQueryClient } from "@tanstack/react-query";
 import { LootUnreadProvider } from "./loot-unread-provider";
 
 type GatewayJoinPayload = {
@@ -36,6 +40,7 @@ const isConnected = () => socket.connected;
 
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
   useKillStatsUpdates(socket);
+  const queryClient = useQueryClient();
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   useTimersSocket({ socket, guilds });
@@ -62,13 +67,19 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
   });
 
+  const handlePermissionsUpdated = useEffectEvent(() => {
+    void invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient);
+  });
+
   useEffect(() => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 
     return () => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
+      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
     };
   }, []);
 

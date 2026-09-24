@@ -55,6 +55,12 @@ export function useLiveFeed() {
     };
 
     const refresh = async (revalidateAccess = false) => {
+      if (hasNoGuilds) {
+        dispatch({ type: "clear" });
+
+        return;
+      }
+
       if (accessRefreshTimer !== undefined) return;
       revalidatingAccess ||= revalidateAccess;
       cancel();
@@ -151,9 +157,8 @@ export function useLiveFeed() {
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
 
-    if (hasNoGuilds) dispatch({ type: "clear" });
     // History remains available when the realtime gateway cannot join.
-    else void refresh();
+    void refresh();
 
     return () => {
       disposed = true;

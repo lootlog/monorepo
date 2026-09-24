@@ -422,50 +422,91 @@ describe("RealtimeClient", () => {
     },
   );
 
-  it("keeps delivering events and connection changes after an observer throws", async () => {
-    vi.useFakeTimers();
-    const socket = new TestWebSocket();
-    const states: string[] = [];
-    const events: string[] = [];
+  it.each([false, true])(
+    "reports failed observers and keeps the transport alive when diagnostics throw: %s",
+    async (diagnosticsThrow) => {
+      vi.useFakeTimers();
 
-    const client = new RealtimeClient({
-      url: "https://gateway.example.test",
-      webSocketFactory: () => socket,
-    });
+      const warning = vi.spyOn(console, "warn").mockImplementation(() => {
+        if (diagnosticsThrow) throw new Error("diagnostics failed");
+      });
 
-    client.subscribeState((state) => {
-      if (state !== "disconnected") throw new Error("state observer failed");
-    });
-    client.subscribeState((state) => states.push(state));
-    client.subscribe(() => {
-      throw new Error("event observer failed");
-    });
-    client.subscribe((event) => events.push(event.type));
-    client.connect();
-    socket.open();
-    const joined = client.join(joinData);
-    respondToLastRequest(socket);
-    await joined;
-    socket.message(
-      encodeRealtimeFrame({
-        v: 1,
-        type: "permissions.updated",
-        data: { organizationIds: ["org-1"], subscriptionScopes: [] },
-      }),
-    );
-    await flushMessages();
-    expect(events).toEqual(["permissions.updated"]);
-    expect(states).toEqual([
-      "disconnected",
-      "connecting",
-      "connected",
-      "joining",
-      "ready",
-    ]);
-    expect(socket.closeCodes).toEqual([]);
-    expect(client.state).toBe("ready");
-    client.disconnect();
-  });
+      const stateFailure = new Error("state observer failed");
+      const eventFailure = new Error("event observer failed");
+      const heartbeatFailure = new Error("heartbeat observer failed");
+      const socket = new TestWebSocket();
+      const states: string[] = [];
+      const events: string[] = [];
+      const latencies: Array<number | null> = [];
+
+      const client = new RealtimeClient({
+        url: "https://gateway.example.test",
+        webSocketFactory: () => socket,
+      });
+
+      client.subscribeState((state) => {
+        if (state !== "disconnected") throw stateFailure;
+      });
+      client.subscribeState((state) => states.push(state));
+      client.subscribe(() => {
+        throw eventFailure;
+      });
+      client.subscribe((event) => events.push(event.type));
+      client.subscribeHeartbeatLatency((latency) => {
+        if (latency !== null) throw heartbeatFailure;
+      });
+      client.subscribeHeartbeatLatency((latency) => latencies.push(latency));
+      client.connect();
+      socket.open();
+      const joined = client.join(joinData);
+      respondToLastRequest(socket);
+      await joined;
+      socket.message(
+        encodeRealtimeFrame({
+          v: 1,
+          type: "permissions.updated",
+          data: { organizationIds: ["org-1"], subscriptionScopes: [] },
+        }),
+      );
+      await flushMessages();
+      expect(events).toEqual(["permissions.updated"]);
+      expect(states).toEqual([
+        "disconnected",
+        "connecting",
+        "connected",
+        "joining",
+        "ready",
+      ]);
+      expect(warning).toHaveBeenCalledWith(
+        expect.stringContaining("ready"),
+        stateFailure,
+      );
+      expect(warning).toHaveBeenCalledWith(
+        expect.stringContaining("permissions.updated"),
+        eventFailure,
+      );
+
+      const published = client.request("presence.publish", {
+        organizationIds: ["org-1"],
+      });
+
+      respondToLastRequest(socket, { sessionId: "presence-1" });
+      await published;
+      await vi.advanceTimersByTimeAsync(25_000);
+      respondToLastRequest(socket);
+      await flushMessages();
+      expect(latencies.at(-1)).toEqual(expect.any(Number));
+      expect(warning).toHaveBeenCalledWith(
+        expect.stringContaining("heartbeat"),
+        heartbeatFailure,
+      );
+      await vi.advanceTimersByTimeAsync(25_000);
+      expect(frameAt(socket, 3)).toMatchObject({ type: "presence.heartbeat" });
+      expect(socket.closeCodes).toEqual([]);
+      expect(client.state).toBe("ready");
+      client.disconnect();
+    },
+  );
 
   it("rejoins and restores logical subscriptions after jittered reconnect", async () => {
     vi.useFakeTimers();

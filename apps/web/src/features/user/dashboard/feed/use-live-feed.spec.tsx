@@ -697,13 +697,15 @@ it("clears all visible data immediately when no organizations are authorized", a
 });
 
 it("loads history without a gateway connection and only catches up after a successful join", async () => {
-  gateway = createTestGateway({ joined: false });
+  gateway = createTestGateway({ connected: false });
   mocks.request.mockResolvedValue(feedResponse());
   const { result } = renderFeed();
-  act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(result.current.state.items).toEqual(feedResponse().items);
+  act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
   act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(mocks.request).toHaveBeenCalledTimes(2);
@@ -716,6 +718,30 @@ it("shows an empty feed without waiting for a join when no Organizations are acc
   await act(() => vi.advanceTimersByTimeAsync(0));
   expect(result.current.state.items).toEqual([]);
   expect(mocks.request).not.toHaveBeenCalled();
+});
+
+it("keeps an empty feed healthy on resume during an outage and loads history when an Organization becomes accessible", async () => {
+  mocks.request.mockRejectedValue(new Error("offline"));
+  const { result, queryClient } = renderFeed([]);
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => result.current.setPaused(true));
+  act(() => result.current.setPaused(false));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.isError).toBe(false);
+  expect(result.current.state.isFetching).toBe(false);
+  expect(mocks.request).not.toHaveBeenCalled();
+
+  mocks.request.mockResolvedValue(feedResponse());
+  act(() =>
+    queryClient.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [{ id: feedKill.guild.id }],
+    ),
+  );
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(mocks.request).toHaveBeenCalledTimes(1);
 });
 
 it("clears a scrolled feed when the last accessible Organization is removed", async () => {

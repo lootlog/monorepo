@@ -1,4 +1,5 @@
 import type { ServerEvent } from "@lootlog/protocol/realtime";
+import { reportListenerError } from "./report-listener-error.js";
 
 type Listener = (...arguments_: never[]) => void;
 
@@ -31,8 +32,8 @@ export class RealtimeEventListeners<Event extends string> {
     for (const listener of this.listeners.get(event) ?? []) {
       try {
         Reflect.apply(listener, undefined, [payload]);
-      } catch {
-        // Independent consumers must still receive this event if a peer fails.
+      } catch (error) {
+        reportListenerError({ source: `event ${event}`, error });
       }
     }
   }

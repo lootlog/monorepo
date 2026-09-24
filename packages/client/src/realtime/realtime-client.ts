@@ -14,6 +14,7 @@ import {
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import { Result } from "effect";
+import { reportListenerError } from "./report-listener-error.js";
 
 type CommandType = ClientCommand["type"];
 
@@ -232,8 +233,8 @@ export class RealtimeClient {
     for (const listener of this.heartbeatLatencyListeners) {
       try {
         listener(latencyMs);
-      } catch {
-        // UI observers must not interrupt the presence heartbeat.
+      } catch (error) {
+        reportListenerError({ source: "heartbeat latency", error });
       }
     }
   }
@@ -492,8 +493,8 @@ export class RealtimeClient {
     for (const listener of this.eventListeners) {
       try {
         listener(frame);
-      } catch {
-        // An observer failure must not disconnect a valid transport or starve peers.
+      } catch (error) {
+        reportListenerError({ source: `server event ${frame.type}`, error });
       }
     }
   }
@@ -666,8 +667,8 @@ export class RealtimeClient {
     for (const listener of this.stateListeners) {
       try {
         listener(state);
-      } catch {
-        // Connection observers cannot interrupt joining or reconnect scheduling.
+      } catch (error) {
+        reportListenerError({ source: `connection state ${state}`, error });
       }
     }
   }
