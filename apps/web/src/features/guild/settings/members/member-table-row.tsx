@@ -43,6 +43,7 @@ export function MemberTableRow({
 
   return (
     <TableRow
+      data-member-id={member.id}
       {...getSettingsRowLinkProps(() => openMemberDetails(member))}
       className={cn(
         "relative h-16 cursor-pointer border-b transition-colors",

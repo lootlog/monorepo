@@ -63,7 +63,7 @@ export const EventDetail = () => {
     heroes,
     heroTimers,
     heroStats,
-    setSelectedHero,
+    setSelectedHeroId,
     handleEditHero,
     handleManageMaps,
     handleDeleteHero,
@@ -88,15 +88,19 @@ export const EventDetail = () => {
       />
       {event && (
         <>
-          <HeroManageDialog
-            open={heroDialogOpen}
-            onOpenChange={setHeroDialogOpen}
-            guildId={queryGuildId}
-            eventId={queryEventId}
-            hero={selectedHero}
-          />
+          {heroDialogOpen && (
+            <HeroManageDialog
+              key={selectedHero?.id ?? "new"}
+              open={heroDialogOpen}
+              onOpenChange={setHeroDialogOpen}
+              guildId={queryGuildId}
+              eventId={queryEventId}
+              hero={selectedHero}
+            />
+          )}
           {selectedHero && (
             <MapManageDialog
+              key={selectedHero.id}
               open={mapDialogOpen}
               onOpenChange={setMapDialogOpen}
               guildId={queryGuildId}
@@ -195,7 +199,7 @@ export const EventDetail = () => {
                   eventId={queryEventId}
                   canManage={canManage}
                   onAddHero={() => {
-                    setSelectedHero(null);
+                    setSelectedHeroId(null);
                     setHeroDialogOpen(true);
                   }}
                   onEditHero={handleEditHero}
