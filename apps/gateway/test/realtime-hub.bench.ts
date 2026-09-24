@@ -5,7 +5,9 @@ import type {
   ServerEvent,
   SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Redacted } from "effect";
+import { Effect, Redacted } from "effect";
+import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import { getScopeKey, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
@@ -37,7 +39,6 @@ const config = {
   allowedWebOrigins: new Set<string>(),
   allowedExtensionOrigins: new Set<string>(),
   maxBackpressureBytes: 1_048_576,
-  maxBackpressureStrikes: 3,
 } satisfies GatewayConfiguration;
 
 const redis = { ...unusedFederationStore, publish: () => Promise.resolve() };
@@ -98,11 +99,15 @@ const presenceTopics = [
   "organization.presence",
 ] as const;
 
-for (const scenario of [
+const scenarios = [
   "presence",
   "map.pings.exact",
   "map.pings.wildcard",
-] as const) {
+] as const;
+
+for (const scenario of process.argv.includes("--federation-only")
+  ? []
+  : scenarios) {
   let deliveries = 0;
   // Registry background writes are outside this routing/codec benchmark.
   const hub = new RealtimeHub(config, redis, () => {});
@@ -136,7 +141,6 @@ for (const scenario of [
       guilds: [],
       airTagScopes: [],
       confidence: "reported",
-      backpressureStrikes: 0,
       subscriptions: new Map(
         scopes.map((scope) => [getScopeKey(scope), scope]),
       ),
@@ -214,3 +218,63 @@ for (const scenario of [
     }),
   );
 }
+
+let receive: ((message: FederatedRealtimeMessage) => void) | undefined;
+
+const emptyHub = new RealtimeHub(config, {
+  ...redis,
+  subscribe: (listener) => {
+    receive = listener;
+
+    return Promise.resolve();
+  },
+});
+
+await Effect.runPromise(emptyHub.start());
+
+if (!receive) throw new Error("Federation subscription was not installed");
+
+const absentAudience = {
+  sourceInstanceId: "remote",
+  scope: {
+    topic: "organization.presence",
+    organizationId: "organization-0",
+  },
+  frame: Buffer.from(
+    encodeRealtimeFrame({
+      ...presenceEvent,
+      data: {
+        ...presenceEvent.data,
+        changes: Array.from({ length: 300 }, () => ({
+          action: "upsert" as const,
+          presence,
+        })),
+      },
+    }),
+  ).toString("base64"),
+} satisfies Omit<FederatedRealtimeMessage, "id">;
+
+const federatedPublications = 2_000;
+
+for (let index = 0; index < warmupPublications; index++)
+  receive({ ...absentAudience, id: `warmup-${index}` });
+
+const started = performance.now();
+
+const cpuStarted = process.cpuUsage();
+
+for (let index = 0; index < federatedPublications; index++)
+  receive({ ...absentAudience, id: `publication-${index}` });
+
+const cpu = process.cpuUsage(cpuStarted);
+
+console.log(
+  JSON.stringify({
+    scenario: "federation.no-local-audience",
+    publications: federatedPublications,
+    warmupPublications,
+    frameBytes: Buffer.from(absentAudience.frame, "base64").byteLength,
+    wallMs: Math.round(performance.now() - started),
+    cpuMs: (cpu.user + cpu.system) / 1_000,
+  }),
+);

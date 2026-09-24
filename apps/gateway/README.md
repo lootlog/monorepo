@@ -95,6 +95,23 @@ expires (60 seconds). A retryable error that exhausts this budget closes with
 `4003`; silence closes with `4001`, and a nonretryable rejection with `4002`.
 Game and Web providers restore their session and presence after a reconnect.
 
+Gateway closes a slow consumer with `1013` as soon as its buffered output exceeds
+`WEBSOCKET_MAX_BACKPRESSURE_BYTES` or Bun reports a dropped frame. Queued frames
+remain accepted. A skipped event now interrupts the session so the client can
+reconnect, rejoin, and restore its subscriptions. Refreshing each feature's
+snapshot or missed history remains the client's responsibility; Gateway does not
+replay dropped events. The former `WEBSOCKET_MAX_BACKPRESSURE_STRIKES` setting is ignored
+and can be removed from deployment configuration. The byte threshold and the
+existing reconnect protocol are unchanged; no coordinated client rollout is
+required.
+
+Federated events without local subscription or identity recipients skip frame
+decoding. Events that reach a local audience still pass the same validation and
+recipient authorization. The presence expiry sweep removes empty Organizations
+from its Redis registry atomically with the cardinality check. Heartbeats and
+publications restore both indexes atomically, including after partial eviction;
+pruning does not remove the pending offline queue or shorten its ten-second grace.
+
 ## Realtime access policy updates
 
 Each connection can retain at most 4,096 distinct subscriptions, including its

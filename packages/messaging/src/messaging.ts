@@ -155,7 +155,6 @@ export interface RabbitChannel {
   ) => void;
   readonly prefetch: ConfirmChannel["prefetch"];
   readonly publish: ConfirmChannel["publish"];
-  readonly waitForConfirms: ConfirmChannel["waitForConfirms"];
 }
 
 export interface RabbitMessagingService {
@@ -216,8 +215,8 @@ const makeService = (
 ): RabbitMessagingService => {
   const publish = Effect.fn("RabbitMessaging.publish")(
     (options: PublishOptions) =>
-      Effect.tryPromise({
-        try: async () => {
+      Effect.callback<void, MessagingError>((resume) => {
+        try {
           channel.publish(
             options.exchange ?? RabbitExchange.DEFAULT,
             options.routingKey,
@@ -228,10 +227,14 @@ const makeService = (
               messageId: options.messageId,
               persistent: options.persistent ?? true,
             },
+            (cause: unknown) =>
+              resume(
+                cause ? Effect.fail(error("publish", cause)) : Effect.void,
+              ),
           );
-          await channel.waitForConfirms();
-        },
-        catch: (cause) => error("publish", cause),
+        } catch (cause) {
+          resume(Effect.fail(error("publish", cause)));
+        }
       }),
   );
 

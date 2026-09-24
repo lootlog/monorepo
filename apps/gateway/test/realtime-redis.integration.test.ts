@@ -61,7 +61,6 @@ const makeConfiguration = () =>
       keyPrefix: "lootlog-realtime-integration:test",
     },
     maxBackpressureBytes: 1_048_576,
-    maxBackpressureStrikes: 3,
   }) satisfies GatewayConfiguration;
 
 const guilds = ["organization-1", "organization-2"].map((id) => ({
@@ -106,7 +105,6 @@ const makeSession = (connectionId: string): SessionData => ({
     },
     location: { mapId: 7, map: "Ithan", x: 1, y: 2 },
   },
-  backpressureStrikes: 0,
 });
 
 const makeSocket = (connectionId: string) => {
@@ -972,6 +970,9 @@ describe("realtime Dragonfly integration", () => {
         await store.command.del(`presence:${guild.id}:heartbeat`);
       now += PRESENCE_EXPIRY_MS + 10_000;
       await Effect.runPromise(presence.sweepExpired());
+      expect(await store.command.smembers("presence:organizations")).toEqual(
+        [],
+      );
       await Effect.runPromise(presence.sweepOffline());
       expect(events).toEqual([
         expect.objectContaining({
@@ -982,6 +983,143 @@ describe("realtime Dragonfly integration", () => {
       await runtime.dispose();
     }
   });
+
+  test.each(["before", "after"] as const)(
+    "keeps concurrent publication indexed when it runs %s empty Organization pruning",
+    async (publicationOrder) => {
+      const runtime = ManagedRuntime.make(
+        BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+      );
+
+      try {
+        const redis = await runtime.runPromise(Redis.Redis);
+
+        const store = new RedisGatewayStore(
+          redis,
+          {
+            host: dragonfly.getHost(),
+            port: redisPort,
+            username: "",
+            password: "",
+            keyPrefix: `presence-prune:${crypto.randomUUID()}`,
+          },
+          (effect) => runtime.runPromise(effect),
+          () => {},
+        );
+
+        let now = Date.now();
+        const events: GameCharacterOffline[] = [];
+
+        const hub = {
+          instanceId: crypto.randomUUID(),
+          publishPresence: async () => {},
+          publishToScope: async () => {},
+        };
+
+        const publisher = new PresenceStore(
+          store,
+          hub,
+          () => now,
+          undefined,
+          undefined,
+          (event) => Effect.sync(() => void events.push(event)),
+        );
+
+        const departed = makeSocket("departed").socket;
+        departed.data.character = departed.data.presence?.character;
+        await Effect.runPromise(
+          publisher.publish(departed, { organizationIds: [] }),
+        );
+        await Effect.runPromise(publisher.disconnect(departed.data));
+        const returning = makeSocket("returning").socket;
+        returning.data = {
+          ...returning.data,
+          userId: departed.data.userId,
+          character: departed.data.character,
+        };
+        let published = false;
+
+        const sweepingStore = new PresenceStore(
+          {
+            command: {
+              ...store.command,
+              eval: async <A>(
+                script: string,
+                numberOfKeys: number,
+                ...parameters: ReadonlyArray<string | number>
+              ): Promise<A> => {
+                const publish = async () => {
+                  published = true;
+                  await Effect.runPromise(
+                    publisher.publish(returning, { organizationIds: [] }),
+                  );
+                };
+
+                const pruning =
+                  !published &&
+                  parameters[0] === "presence:index:organization-1" &&
+                  script.includes("-- presence:prune-organization");
+
+                if (pruning && publicationOrder === "before") await publish();
+
+                const result = await store.command.eval<A>(
+                  script,
+                  numberOfKeys,
+                  ...parameters,
+                );
+
+                if (pruning && publicationOrder === "after") await publish();
+
+                return result;
+              },
+            },
+          },
+          hub,
+          () => now,
+        );
+
+        await store.command.sadd("presence:organizations", "empty");
+        await Effect.runPromise(sweepingStore.sweepExpired());
+        expect(published).toBe(true);
+        expect(
+          (await store.command.smembers("presence:organizations")).sort(),
+        ).toEqual(["organization-1", "organization-2"]);
+
+        for (const { guild } of guilds) {
+          expect(
+            await store.command.smembers(`presence:index:${guild.id}`),
+          ).toEqual([`presence:${guild.id}:returning`]);
+          expect(
+            (
+              await Effect.runPromise(
+                publisher.snapshot(returning.data, guild.id),
+              )
+            ).presences.map(({ sessionId }) => sessionId),
+          ).toEqual(["returning"]);
+        }
+
+        now += 10_000;
+        await Effect.runPromise(publisher.sweepOffline());
+        expect(events).toEqual([]);
+        await Effect.runPromise(publisher.disconnect(returning.data));
+        await store.command.del(
+          ...guilds.map(({ guild }) => `presence:sweep-lock:${guild.id}`),
+        );
+        await Effect.runPromise(sweepingStore.sweepExpired());
+        expect(await store.command.smembers("presence:organizations")).toEqual(
+          [],
+        );
+        now += 9_999;
+        await Effect.runPromise(publisher.sweepOffline());
+        expect(events).toEqual([]);
+        now += 1;
+        await Effect.runPromise(publisher.sweepOffline());
+        expect(events).toHaveLength(1);
+      } finally {
+        await runtime.dispose();
+      }
+    },
+  );
 
   test("offline sweeps share bounded Organization work, drain scan overflow, and reject a lease lost during a read", async () => {
     const runtime = ManagedRuntime.make(
