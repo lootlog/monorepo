@@ -45,6 +45,12 @@ class MemoryRedis {
 
     if (_script.includes("-- presence:refresh")) return this.refresh(args);
 
+    if (_script.includes("-- presence:prune-organization")) {
+      if (this.sets.get(args[0]!)?.size) return 0;
+
+      return this.srem(args[1]!, args[2]!);
+    }
+
     if (_script.includes("-- presence:offline-batch"))
       return this.readBatch(args);
 
@@ -348,7 +354,6 @@ const session = (permissions: Permission[]): SessionData => ({
   subscriptions: new Map(),
   airTagScopes: [],
   confidence: "reported",
-  backpressureStrikes: 0,
 });
 
 const socket = (data: SessionData): GatewaySocket => ({

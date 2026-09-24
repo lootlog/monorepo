@@ -346,7 +346,7 @@ const createTestApplication = ({
     battles: battlesService,
   };
 
-  return { app, database, objects, objectStorage };
+  return { app, database, objects, objectStorage, analyticsService };
 };
 
 describe("battle creation deduplication", () => {
@@ -400,6 +400,35 @@ describe("battle creation deduplication", () => {
       "user-1",
       "user-2",
     ]);
+  });
+
+  it("keeps analytics cached when reading an accepted battle and its timeline", async () => {
+    const testApplication = createTestApplication();
+    app = testApplication.app;
+
+    const { body } = await postBattle(app.handler, {
+      ...battleContext,
+      submissionId: "analytics-read-cache",
+      events: [battleEvent],
+    });
+
+    expect(
+      testApplication.analyticsService.invalidateAnalyticsCache,
+    ).toHaveBeenCalledTimes(1);
+
+    const detail = await Effect.runPromise(
+      app.battles.getBattleFromDatabase(body.battleId, "user-1"),
+    );
+
+    const timeline = await Effect.runPromise(
+      app.battles.getBattleTimeline(body.battleId, "user-1"),
+    );
+
+    expect(detail.id).toBe(body.battleId);
+    expect(timeline.timeline.length).toBeGreaterThan(0);
+    expect(
+      testApplication.analyticsService.invalidateAnalyticsCache,
+    ).toHaveBeenCalledTimes(1);
   });
 
   it("rejects changed payloads for an accepted submission without changing its data", async () => {

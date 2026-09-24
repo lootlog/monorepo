@@ -23,7 +23,6 @@ function socket(keyId: string, userId = "u", discordId = "d") {
     subscriptions: new Map(),
     airTagScopes: [],
     confidence: "reported",
-    backpressureStrikes: 0,
     apiKeyAccess: {
       keyId,
       organizationIds: ["123"],

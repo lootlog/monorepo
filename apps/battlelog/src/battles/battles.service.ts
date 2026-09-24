@@ -639,8 +639,6 @@ export const makeBattles = (
             new ResourceNotFoundError(`Battle with ID ${battleId} not found`),
           );
 
-        yield* battleAnalyticsService.invalidateAnalyticsCache(battle.userId);
-
         return inflateBattleWarriorsInBattle(battle);
       });
     },
