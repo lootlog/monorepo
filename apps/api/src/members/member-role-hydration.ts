@@ -1,5 +1,6 @@
 import { desc, eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
+import { groupBy } from "es-toolkit";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import { memberToRoleTable, roleTable } from "#src/database/drizzle/schema";
 
@@ -20,10 +21,10 @@ export const hydrateMemberRoles = Effect.fnUntraced(function* <
     )
     .orderBy(desc(roleTable.position));
 
+  const rolesByMember = groupBy(roles, ({ memberId }) => memberId);
+
   return members.map((member) => ({
     ...member,
-    roles: roles
-      .filter(({ memberId }) => memberId === member.id)
-      .map(({ role }) => role),
+    roles: (rolesByMember[member.id] ?? []).map(({ role }) => role),
   }));
 });
