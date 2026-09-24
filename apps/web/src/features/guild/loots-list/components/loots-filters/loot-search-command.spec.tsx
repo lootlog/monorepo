@@ -6,9 +6,11 @@ import { GuildContextProvider } from "@/contexts/guild-provider";
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
+  renderHook,
   screen,
   waitFor,
 } from "@testing-library/react";
@@ -18,8 +20,101 @@ import { getAllControllerSearchAllQueryKey } from "@lootlog/client/search";
 import { MotionGlobalConfig } from "framer-motion";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LootSearchCommand } from "./loot-search-command";
+import { useLootSearchCommand } from "./use-loot-search-command";
+import { createLoot } from "@/lib/testing/loot";
+import type { PropsWithChildren } from "react";
 
 await initializeTestTranslations();
+
+it("cancels obsolete HID lookups and can fetch again after unmounting", async () => {
+  const RouterWrapper = await createOrganizationTestWrapper("/test-org");
+  vi.stubGlobal("localStorage", new MemoryStorage());
+
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  const requests: Array<{
+    hid: string | null;
+    resolve: (response: Response) => void;
+  }> = [];
+
+  const aborted: Array<string | null> = [];
+
+  const restore = configureApiClients({
+    main: {
+      baseUrl: "https://api.test",
+      fetch: (input, options) => {
+        const hid = new URL(String(input)).searchParams.get("hid");
+
+        return new Promise<Response>((resolve, reject) => {
+          requests.push({ hid, resolve });
+          options?.signal?.addEventListener("abort", () => {
+            aborted.push(hid);
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        });
+      },
+    },
+  });
+
+  const wrapper = ({ children }: PropsWithChildren) => (
+    <RouterWrapper>
+      <NuqsTestingAdapter>
+        <GuildContextProvider>
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        </GuildContextProvider>
+      </NuqsTestingAdapter>
+    </RouterWrapper>
+  );
+
+  const mount = () =>
+    renderHook(
+      () => useLootSearchCommand({ open: true, onOpenChange: () => {} }),
+      { wrapper },
+    );
+
+  const lootResponse = (hid: string) => {
+    const loot = createLoot();
+
+    return Response.json([
+      { ...loot, items: loot.items.map((item) => ({ ...item, hid })) },
+    ]);
+  };
+
+  try {
+    const first = mount();
+    act(() => first.result.current.setSearchQuery("ITEM#old.tempest"));
+    await waitFor(() =>
+      expect(requests.map(({ hid }) => hid)).toEqual(["old"]),
+    );
+
+    act(() => first.result.current.setSearchQuery("ITEM#current.tempest"));
+    await waitFor(() => expect(aborted).toEqual(["old"]));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    requests[1]?.resolve(lootResponse("current"));
+    await waitFor(() =>
+      expect(first.result.current.hidItem?.hid).toBe("current"),
+    );
+    act(() => first.result.current.setSearchQuery("ITEM#pending.tempest"));
+    await waitFor(() => expect(requests).toHaveLength(3));
+    first.unmount();
+    await waitFor(() => expect(aborted).toEqual(["old", "pending"]));
+
+    const second = mount();
+    act(() => second.result.current.setSearchQuery("ITEM#pending.tempest"));
+    await waitFor(() => expect(requests).toHaveLength(4));
+    requests[3]?.resolve(lootResponse("pending"));
+    await waitFor(() =>
+      expect(second.result.current.hidItem?.hid).toBe("pending"),
+    );
+    expect(second.result.current.isHidError).toBe(false);
+  } finally {
+    cleanup();
+    client.clear();
+    restore();
+  }
+});
 
 afterEach(() => {
   cleanup();
