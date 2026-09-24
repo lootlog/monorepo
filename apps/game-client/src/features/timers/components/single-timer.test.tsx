@@ -162,7 +162,7 @@ describe("SingleTimer", () => {
     const tile = view.container.querySelector('[id="10"]');
     expect(tile).toHaveStyle({
       "--ll-timer-accent": "#111111",
-      "--ll-timer-fill": "#222222",
+      "--ll-list-row-fill": "#222222",
     });
     expect(tile?.parentElement).toHaveClass("ll:opacity-50");
     expect(screen.getByText("00:00:10").parentElement).toHaveClass(
