@@ -170,11 +170,18 @@ updates use one federation frame; updates containing location retain disjoint
 basic and precise audiences and publish the two frames concurrently.
 
 Offline sweeps acquire a 30-second renewable lease before reading work. They
-capture at most 100 pending values per batch, then share each Organization read
-within that batch. SSCAN overflow is retained across runs. Batches yield to the
-event loop and keep draining within a one-second work budget, followed by the
-existing one-second sweep interval. The ten-second disconnect grace, reconnect
-cancellation, and atomic pending-to-outbox decision remain intact. Lost owners
+capture at most 100 pending values per batch. Entries with identical Organization
+sets share fresh reads immediately before one atomic group claim. The next group
+rereads its Organizations, including any shared with a previous group. Every
+claim compares the captured pending value before moving it to the outbox, so
+completed reconnect cancellation and newer departures remain protected. Presence
+reads and the claim remain separate Redis operations, as before; grouping removes
+the additional staleness caused by sequential per-character claims, without making
+the whole presence workflow transactional.
+
+SSCAN overflow is retained across runs. Batches yield to the event loop and keep
+draining within a one-second work budget, followed by the existing one-second
+sweep interval. The ten-second disconnect grace remains intact. Lost owners
 cannot decide departures or acknowledge another owner's work. Publication is
 bounded to ten seconds and failures leave the outbox available for retry.
 Consumers must remain idempotent: publication followed by a failed acknowledgment
@@ -199,15 +206,22 @@ A local comparison against `1717850742` on 2026-09-24 produced:
 | Workload                                                        |    Before |  After |
 | --------------------------------------------------------------- | --------: | -----: |
 | Routing resolutions, 2,000 timer publications to 300 recipients |   600,000 |  2,000 |
-| Timer fanout CPU time                                           |    579 ms | 154 ms |
+| Timer fanout CPU time                                           |    396 ms | 126 ms |
 | Redis operations, 600 heartbeats with 3 Organizations           |     9,600 |  2,400 |
+| Heartbeat wall time in local Dragonfly                          |    160 ms | 318 ms |
 | Organization reads, 5,000 due departures and 300 live sessions  |     5,000 |     63 |
 | Presence values read during those departures                    | 1,500,000 | 18,900 |
-| Time to last offline delivery, including sweep cadence          |   22.49 s | 4.49 s |
+| Time to last offline delivery, including sweep cadence          |   13.44 s | 2.82 s |
+| Organization reads, 1,000 departures across overlapping sets    |     1,800 |     80 |
+| Presence values read during those mixed-set departures          |   540,000 | 24,000 |
+| Time to last mixed-set offline delivery                         |    4.20 s | 0.46 s |
 
 These timings describe one synthetic local run, not production capacity. All
-600,000 timer deliveries and all 5,000 departures were accounted for. The offline
-measurement begins after the ten-second grace period; Redis script caches are
-warmed before the heartbeat operation count. Local routing excludes network I/O,
+600,000 timer deliveries and every unique departure in both workloads were
+accounted for. The mixed workload includes overlapping Organization sets and
+equivalent sets in a different order. Offline measurements begin after the
+ten-second grace period; Redis script caches are warmed before the heartbeat
+operation count. Heartbeats reduce network operations and writes, but did not
+improve elapsed time against the local Dragonfly instance in this run. Local routing excludes network I/O,
 and offline publication uses an in-memory sink. WebSocket v1 and HTTP contracts
 are unchanged; this optimization needs no generated-client or database migration.

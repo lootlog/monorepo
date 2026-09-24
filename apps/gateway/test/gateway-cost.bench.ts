@@ -199,80 +199,110 @@ try {
       wallMs: performance.now() - heartbeatStarted,
     }),
   );
-  const departures = 5_000;
-  const sweepNow = Date.now();
-  const pendingKeys: string[] = [];
 
-  for (let index = 0; index < departures; index++) {
-    const key = `presence:offline:benchmark:${index}`;
-    pendingKeys.push(key);
-    await store.command.set(
-      key,
+  for (const workload of [
+    {
+      scenario: "offline-backlog",
+      departures: 5_000,
+      organizationSets: [["organization-1"]],
+    },
+    {
+      scenario: "offline-mixed-organization-backlog",
+      departures: 1_000,
+      organizationSets: [
+        ["organization-1"],
+        ["organization-1", "organization-2"],
+        ["organization-2", "organization-1"],
+        ["organization-3"],
+        ["organization-3", "organization-2", "organization-1"],
+      ],
+    },
+  ]) {
+    const departures = workload.departures;
+    const sweepNow = Date.now();
+    const pendingKeys: string[] = [];
+
+    for (let index = 0; index < departures; index++) {
+      const key = `presence:offline:benchmark:${index}`;
+
+      const departureOrganizations =
+        workload.organizationSets[index % workload.organizationSets.length];
+
+      assert.ok(departureOrganizations);
+      pendingKeys.push(key);
+      await store.command.set(
+        key,
+        JSON.stringify({
+          userId: `departed-${index}`,
+          discordId: `departed-discord-${index}`,
+          characterId: `departed-character-${index}`,
+          world: "classic",
+          organizationIds: departureOrganizations,
+          disconnectedAt: sweepNow - 10_000,
+        }),
+      );
+    }
+
+    await store.command.sadd("presence:offline:pending", ...pendingKeys);
+    let organizationReads = 0;
+    let presenceValuesRead = 0;
+
+    const command = {
+      ...store.command,
+      mget: (keys: string[]) => {
+        if (
+          organizationIds.some((id) => keys[0]?.startsWith(`presence:${id}:`))
+        ) {
+          organizationReads++;
+          presenceValuesRead += keys.length;
+        }
+
+        return store.command.mget(keys);
+      },
+    };
+
+    let offlineDelivered = 0;
+    const departedUsers = new Set<string>();
+    let lastDelivery = 0;
+
+    const offline = new PresenceStore(
+      { command },
+      hub,
+      () => sweepNow,
+      undefined,
+      undefined,
+      (event) =>
+        Effect.sync(() => {
+          offlineDelivered++;
+          departedUsers.add(event.userId);
+          lastDelivery = performance.now();
+        }),
+    );
+
+    const sweepStarted = performance.now();
+    let runs = 0;
+
+    while (offlineDelivered < departures) {
+      if (runs++ > 100) throw new Error("Offline backlog did not drain");
+      await Effect.runPromise(offline.sweepOffline());
+
+      if (offlineDelivered < departures) await Bun.sleep(1_000);
+    }
+
+    assert.equal(departedUsers.size, departures);
+    console.log(
       JSON.stringify({
-        userId: `departed-${index}`,
-        discordId: `departed-discord-${index}`,
-        characterId: `departed-character-${index}`,
-        world: "classic",
-        organizationIds: ["organization-1"],
-        disconnectedAt: sweepNow - 10_000,
+        scenario: workload.scenario,
+        departures,
+        liveOrganizationSessions: connections,
+        delivered: offlineDelivered,
+        organizationReads,
+        presenceValuesRead,
+        sweepRuns: runs,
+        timeToLastDeliveryMs: lastDelivery - sweepStarted,
       }),
     );
   }
-
-  await store.command.sadd("presence:offline:pending", ...pendingKeys);
-  let organizationReads = 0;
-  let presenceValuesRead = 0;
-
-  const command = {
-    ...store.command,
-    mget: (keys: string[]) => {
-      if (keys[0]?.startsWith("presence:organization-1:")) {
-        organizationReads++;
-        presenceValuesRead += keys.length;
-      }
-
-      return store.command.mget(keys);
-    },
-  };
-
-  let offlineDelivered = 0;
-  let lastDelivery = 0;
-
-  const offline = new PresenceStore(
-    { command },
-    hub,
-    () => sweepNow,
-    undefined,
-    undefined,
-    () =>
-      Effect.sync(() => {
-        offlineDelivered++;
-        lastDelivery = performance.now();
-      }),
-  );
-
-  const sweepStarted = performance.now();
-  let runs = 0;
-
-  while (offlineDelivered < departures) {
-    if (runs++ > 100) throw new Error("Offline backlog did not drain");
-    await Effect.runPromise(offline.sweepOffline());
-
-    if (offlineDelivered < departures) await Bun.sleep(1_000);
-  }
-
-  console.log(
-    JSON.stringify({
-      scenario: "offline-backlog",
-      departures,
-      liveOrganizationSessions: connections,
-      delivered: offlineDelivered,
-      organizationReads,
-      presenceValuesRead,
-      sweepRuns: runs,
-      timeToLastDeliveryMs: lastDelivery - sweepStarted,
-    }),
-  );
 } finally {
   await runtime.dispose();
   await container.stop();
