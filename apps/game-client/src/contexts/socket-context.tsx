@@ -156,7 +156,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setJoinedGuilds(data.guildIds ?? []);
 
       if (!joinedConnection) {
-        if (hasJoined)
+        if (hasJoined || !socket.getAccessPolicy())
           refreshChatAfterReconnect(queryClient, data.guildIds ?? []);
         hasJoined = true;
         joinedConnection = true;

@@ -119,6 +119,38 @@ describe("useChatMessagesListener", () => {
     expect(cached()).toEqual([]);
   });
 
+  it("loads history immediately on the first legacy join without a second delayed request", async () => {
+    vi.useFakeTimers();
+    const history = [message("available-history")];
+    harness.chatHistoryRequest.mockImplementation(() =>
+      Promise.resolve(Response.json(history)),
+    );
+
+    const { result } = renderHook(
+      () => {
+        useChatMessagesListener();
+        useChatMessagesListener();
+
+        return useChatGuildData({
+          currentCharacterNick: "Current Hero",
+          guilds: [{ id: "guild-1", name: "Guild 1" }],
+          selectedGuildId: "guild-1",
+        });
+      },
+      { wrapper: harness.wrapper },
+    );
+
+    harness.open();
+    expect(harness.chatHistoryRequest).not.toHaveBeenCalled();
+    await harness.join();
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
+    expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
+    await act(() => vi.advanceTimersByTimeAsync(5_000));
+    expect(harness.chatHistoryRequest).toHaveBeenCalledOnce();
+    expect(result.current.messagesByGuildId["guild-1"]).toEqual(history);
+  });
+
   it("recovers missed messages once after a policy rejoin without clearing the transcript", async () => {
     const before = message("before", "guild-1", {
       timestamp: "2026-09-24T10:00:00.000Z",
