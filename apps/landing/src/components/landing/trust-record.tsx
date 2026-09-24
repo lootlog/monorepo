@@ -22,7 +22,7 @@ export function TrustRecord() {
     <section
       id="trust"
       aria-labelledby="trust-record-title"
-      className="bg-[var(--broadcast-ink-soft)] py-16 text-[var(--broadcast-white)] sm:py-20 lg:py-28"
+      className="landing-section bg-[var(--broadcast-ink-soft)] text-[var(--broadcast-white)]"
     >
       <div className="landing-container grid gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-12 lg:gap-20">
         <div>
@@ -32,7 +32,7 @@ export function TrustRecord() {
           >
             {t("landing.trust.title")}
           </h2>
-          <p className="mt-6 text-base leading-7 text-[var(--broadcast-text-muted)]">
+          <p className="landing-lead mt-6 text-[var(--broadcast-text-muted)]">
             {t("landing.trust.description")}
           </p>
           <div className="mt-8 flex flex-col items-start gap-3">
@@ -61,10 +61,10 @@ export function TrustRecord() {
                 className="mb-5 size-6 text-[var(--broadcast-cyan)]"
                 aria-hidden="true"
               />
-              <h3 className="text-xl font-bold">
+              <h3 className="text-balance text-xl font-bold tracking-[-0.01em]">
                 {t(`landing.trust.items.${key}.title`)}
               </h3>
-              <p className="mt-3 text-sm leading-6 text-[var(--broadcast-text-muted)]">
+              <p className="mt-2 text-pretty text-sm leading-6 text-[var(--broadcast-text-muted)]">
                 {t(`landing.trust.items.${key}.description`)}
               </p>
             </li>

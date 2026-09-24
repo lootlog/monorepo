@@ -11,7 +11,6 @@ export function HeroSection() {
 
   return (
     <section
-      id="product"
       aria-labelledby="landing-hero-title"
       className="relative isolate overflow-hidden bg-[var(--broadcast-ink)]"
     >
@@ -49,11 +48,11 @@ export function HeroSection() {
           </div>
 
           <div className="mt-5 max-w-2xl sm:mt-7">
-            <p className="max-w-[64ch] text-pretty text-base leading-6 text-[var(--broadcast-text-muted)] sm:text-lg sm:leading-8 lg:text-xl">
+            <p className="landing-lead text-[var(--broadcast-text-muted)] max-sm:mx-auto lg:text-xl lg:leading-8">
               {t("landing.hero.description")}
             </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:mt-7 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
                 size="lg"
                 className="landing-action landing-action-solid"
