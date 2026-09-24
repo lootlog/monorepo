@@ -198,10 +198,16 @@ export const headToHeadCalculator = {
       },
     );
 
-    return sortRecords(
-      applyRecordFilters(records, query),
-      query.sortBy ?? "totalBattles",
-      query.sortOrder ?? "desc",
-    );
+    return filterAndSortHeadToHeadRecords(records, query);
   },
 };
+
+export const filterAndSortHeadToHeadRecords = (
+  records: HeadToHeadRecord[],
+  query: BattleStatisticsQuery,
+) =>
+  sortRecords(
+    applyRecordFilters(records, query),
+    query.sortBy ?? "totalBattles",
+    query.sortOrder ?? "desc",
+  );

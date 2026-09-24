@@ -12,14 +12,26 @@ export const makeBattleReadBudget = (
 ) => {
   const semaphore = Semaphore.makeUnsafe(options.concurrency);
 
-  return <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  return <A, E, R>(
+    effect: Effect.Effect<A, E, R>,
+    { consistentSnapshot = false } = {},
+  ) =>
     database
       .transaction((transaction) =>
-        transaction
-          .execute(
+        Effect.gen(function* () {
+          if (consistentSnapshot) {
+            // Effect-native Drizzle has no transaction isolation option.
+            yield* transaction.execute(
+              sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`,
+            );
+          }
+
+          yield* transaction.execute(
             sql`SELECT set_config('statement_timeout', ${`${options.statementTimeoutMs}ms`}, true)`,
-          )
-          .pipe(Effect.andThen(effect)),
+          );
+
+          return yield* effect;
+        }),
       )
       .pipe(semaphore.withPermit, Effect.timeout(options.timeoutMs));
 };

@@ -7,6 +7,7 @@ import type {
   InflatedBattleWithWarriors,
   StoredBattleWithWarriors,
 } from "#src/battles/analytics/battle-analytics.types";
+import { orderBy } from "es-toolkit";
 
 const EMPTY_PLAYER_VS_PLAYER_WARRIOR = {
   name: "",
@@ -36,18 +37,28 @@ export const battleAnalyticsDomain = {
     battle: InflatedBattleWithWarriors,
     characterIds: Set<string>,
   ): InflatedBattleWarrior | undefined {
-    return battle.warriors.find((warrior) =>
-      characterIds.has(warrior.originalId),
-    );
+    return orderBy(
+      battle.warriors.filter((warrior) => characterIds.has(warrior.originalId)),
+      [
+        (warrior) => warrior.originalId === battle.characterId,
+        "originalId",
+        "id",
+      ],
+      ["desc", "asc", "asc"],
+    )[0];
   },
 
   findOpponentWarrior(
     battle: InflatedBattleWithWarriors,
     characterIds: Set<string>,
   ): InflatedBattleWarrior | undefined {
-    return battle.warriors.find(
-      (warrior) => !characterIds.has(warrior.originalId),
-    );
+    return orderBy(
+      battle.warriors.filter(
+        (warrior) => !characterIds.has(warrior.originalId),
+      ),
+      ["originalId", "id"],
+      ["asc", "asc"],
+    )[0];
   },
 
   findWarrior(
