@@ -2,7 +2,10 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
 import { Cause, Clock, Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
+import { SingleFlight } from "#src/platform/single-flight";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
+
+const FORCED_REFRESH_INTERVAL_MS = 60_000;
 
 const KEY_CACHE_TTL_MS = 12 * 60 * 60 * 1_000;
 
@@ -111,14 +114,16 @@ export const makeMargonemProofVerifier = (
   let cachedKey: { readonly pem: string; readonly expiresAt: number } | null =
     null;
 
-  const getKey = Effect.fn("MargonemProofVerifier_getKey")(function* (
-    forceRefresh: boolean,
-  ) {
-    const now = yield* Clock.currentTimeMillis;
+  const pendingKeys = new SingleFlight<
+    string,
+    string,
+    MargonemSigningKeyFailure
+  >();
 
-    if (!forceRefresh && cachedKey && cachedKey.expiresAt > now) {
-      return cachedKey.pem;
-    }
+  let forcedRefreshAfter = 0;
+
+  const fetchKey = Effect.fn("MargonemProofVerifier_fetchKey")(function* () {
+    const now = yield* Clock.currentTimeMillis;
 
     const response = yield* httpClient.get(config.margonemSigningKeyUrl).pipe(
       Effect.timeout("10 seconds"),
@@ -160,6 +165,34 @@ export const makeMargonemProofVerifier = (
     cachedKey = { pem, expiresAt: now + KEY_CACHE_TTL_MS };
 
     return pem;
+  });
+
+  const getKey = Effect.fnUntraced(function* (forceRefresh: boolean) {
+    const now = yield* Clock.currentTimeMillis;
+
+    if (!forceRefresh && cachedKey && cachedKey.expiresAt > now)
+      return cachedKey.pem;
+
+    return yield* pendingKeys.run(
+      "signing-key",
+      Effect.suspend(() => {
+        if (forceRefresh && now < forcedRefreshAfter)
+          return Effect.fail(
+            new MargonemSigningKeyFailure({ reason: "transport" }),
+          );
+
+        if (forceRefresh) forcedRefreshAfter = now + FORCED_REFRESH_INTERVAL_MS;
+
+        return fetchKey().pipe(
+          Effect.timeout("10 seconds"),
+          Effect.mapError((error) =>
+            error instanceof MargonemSigningKeyFailure
+              ? error
+              : new MargonemSigningKeyFailure({ reason: "timeout" }),
+          ),
+        );
+      }),
+    );
   });
 
   const verifyCryptographicSignature = Effect.fn(

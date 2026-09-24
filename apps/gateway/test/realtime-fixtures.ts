@@ -6,13 +6,4 @@ const unexpectedFederationIO = () =>
 export const unusedFederationStore = {
   publish: unexpectedFederationIO,
   subscribe: unexpectedFederationIO,
-  command: {
-    set: unexpectedFederationIO,
-    del: unexpectedFederationIO,
-    sadd: unexpectedFederationIO,
-    srem: unexpectedFederationIO,
-    expire: unexpectedFederationIO,
-    smembers: unexpectedFederationIO,
-    mget: unexpectedFederationIO,
-  },
 } satisfies ConstructorParameters<typeof RealtimeHub>[1];

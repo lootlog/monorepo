@@ -395,23 +395,9 @@ test("queued commands on closed sockets cannot consume reserved disconnect capac
 });
 
 test("WebSocket close removes delivery targets immediately and rejects excess lifecycles before registration", async () => {
-  const writes: string[] = [];
-
   const hub = new RealtimeHub(
     { maxBackpressureBytes: 1024, maxBackpressureStrikes: 3 },
-    {
-      ...unusedFederationStore,
-      command: {
-        ...unusedFederationStore.command,
-        set: async (key) => {
-          writes.push(key);
-
-          return "OK";
-        },
-        sadd: async () => 1,
-        expire: async () => 1,
-      },
-    },
+    unusedFederationStore,
     () => {},
   );
 
@@ -445,7 +431,7 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
   const beforeRejection = Effect.runSync(Metric.snapshot);
   transport.open(excess);
   expect(closes).toEqual([1013]);
-  expect(writes).toEqual(["realtime:connection:first"]);
+  expect(hub.getLocalSockets()).toEqual([]);
   await target.runNext();
   await target.runNext();
   expect(Effect.runSync(Metric.snapshot)).toEqual(beforeRejection);
