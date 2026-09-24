@@ -610,6 +610,281 @@ describe("realtime Dragonfly integration", () => {
     }
   });
 
+  test("offline decisions reread a later Organization group after a reconnect delayed by publication", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    const reconnectPublished = Promise.withResolvers<void>();
+    const resumePublication = Promise.withResolvers<void>();
+    let reconnecting: Promise<unknown> | undefined;
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const prefix = `offline-reconnect-test:${crypto.randomUUID()}`;
+
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: prefix,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      let now = Date.now();
+      let pausePublication = false;
+      const events: GameCharacterOffline[] = [];
+      let afterFirstClaim: (() => Promise<void>) | undefined;
+
+      const command = {
+        ...store.command,
+        eval: async <A>(
+          script: string,
+          keyCount: number,
+          ...args: ReadonlyArray<string | number>
+        ): Promise<A> => {
+          const result = await store.command.eval<A>(script, keyCount, ...args);
+
+          const callback = script.includes("-- presence:offline-claim")
+            ? afterFirstClaim
+            : undefined;
+
+          if (callback) afterFirstClaim = undefined;
+          await callback?.();
+
+          return result;
+        },
+      };
+
+      const presence = new PresenceStore(
+        { command },
+        {
+          instanceId: crypto.randomUUID(),
+          publishPresence: async () => {
+            if (!pausePublication) return;
+            reconnectPublished.resolve();
+            await resumePublication.promise;
+          },
+          publishToScope: async () => {},
+        },
+        () => now,
+        undefined,
+        undefined,
+        (event) =>
+          Effect.sync(() => {
+            events.push(event);
+          }),
+      );
+
+      const first = makeSocket("group-first").socket;
+      const second = makeSocket("group-second").socket;
+      first.data.guilds = first.data.guilds.slice(0, 1);
+
+      for (const socket of [first, second]) {
+        socket.data.character = socket.data.presence?.character;
+        await Effect.runPromise(
+          presence.publish(socket, { organizationIds: [] }),
+        );
+        await Effect.runPromise(presence.disconnect(socket.data));
+      }
+
+      now += 10_000;
+      const pending = await store.command.smembers("presence:offline:pending");
+
+      const firstKey = pending.find((key) =>
+        key.includes('"user-group-first"'),
+      );
+
+      const secondKey = pending.find((key) =>
+        key.includes('"user-group-second"'),
+      );
+
+      if (!firstKey || !secondKey)
+        throw new Error("Missing pending departures");
+      // Both groups overlap organization-1. Its first snapshot must not be reused
+      // after another group's claim waits on network I/O.
+      await runtime.runPromise(
+        redis.send(
+          "RPUSH",
+          `${prefix}:presence:offline:pending:overflow`,
+          firstKey,
+          secondKey,
+        ),
+      );
+      afterFirstClaim = async () => {
+        pausePublication = true;
+        reconnecting = Effect.runPromise(
+          presence.publish(second, { organizationIds: [] }),
+        );
+        await reconnectPublished.promise;
+        expect(
+          await store.command.get("presence:organization-1:group-second"),
+        ).not.toBeNull();
+        // Publication is still blocked, so the final reconnect cancellation has
+        // not removed this exact pending value yet.
+        expect(await store.command.get(secondKey)).not.toBeNull();
+      };
+
+      await Effect.runPromise(presence.sweepOffline());
+      expect(events.map((event) => event.userId)).toEqual([first.data.userId]);
+      expect(await store.command.smembers("presence:offline:pending")).toEqual(
+        [],
+      );
+      expect(await store.command.smembers("presence:offline:outbox")).toEqual(
+        [],
+      );
+    } finally {
+      resumePublication.resolve();
+      await reconnecting;
+      await runtime.dispose();
+    }
+  });
+
+  test("offline grouped claims preserve replacement departures and reconnect cancellation for each character", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          host: dragonfly.getHost(),
+          port: redisPort,
+          username: "",
+          password: "",
+          keyPrefix: `offline-group-test:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      let now = Date.now();
+      const events: GameCharacterOffline[] = [];
+      const claimSizes: number[] = [];
+      let beforeClaim: (() => Promise<void>) | undefined;
+      let afterClaim: (() => Promise<void>) | undefined;
+
+      const command = {
+        ...store.command,
+        eval: async <A>(
+          script: string,
+          keyCount: number,
+          ...args: ReadonlyArray<string | number>
+        ): Promise<A> => {
+          if (!script.includes("-- presence:offline-claim"))
+            return store.command.eval<A>(script, keyCount, ...args);
+          claimSizes.push((keyCount - 3) / 3);
+          const before = beforeClaim;
+          const after = afterClaim;
+          beforeClaim = undefined;
+          afterClaim = undefined;
+          await before?.();
+          const result = await store.command.eval<A>(script, keyCount, ...args);
+          await after?.();
+
+          return result;
+        },
+      };
+
+      const presence = new PresenceStore(
+        { command },
+        {
+          instanceId: crypto.randomUUID(),
+          publishPresence: async () => {},
+          publishToScope: async () => {},
+        },
+        () => now,
+        undefined,
+        undefined,
+        (event) =>
+          Effect.sync(() => {
+            events.push(event);
+          }),
+      );
+
+      const departed = makeSocket("departed").socket;
+      const reconnected = makeSocket("reconnected").socket;
+      const replacement = makeSocket("replacement").socket;
+      replacement.data.guilds = [...replacement.data.guilds].reverse();
+
+      for (const socket of [departed, reconnected, replacement]) {
+        socket.data.character = socket.data.presence?.character;
+        await Effect.runPromise(
+          presence.publish(socket, { organizationIds: [] }),
+        );
+        await Effect.runPromise(presence.disconnect(socket.data));
+      }
+
+      now += 10_000;
+      const pending = await store.command.smembers("presence:offline:pending");
+
+      const replacementKey = pending.find((key) =>
+        key.includes('"user-replacement"'),
+      );
+
+      if (!replacementKey) throw new Error("Missing replacement departure");
+
+      const newerDeparture = JSON.stringify({
+        userId: replacement.data.userId,
+        discordId: replacement.data.discordId,
+        characterId: replacement.data.character?.characterId,
+        world: "classic",
+        organizationIds: ["organization-2", "organization-1"],
+        disconnectedAt: now,
+      });
+
+      beforeClaim = async () => {
+        await Effect.runPromise(
+          presence.publish(reconnected, { organizationIds: [] }),
+        );
+        await store.command.set(replacementKey, newerDeparture);
+      };
+
+      afterClaim = async () => {
+        // The old departure is already durable in the outbox. Returning online
+        // starts a new period and must not erase its accepted publication.
+        await Effect.runPromise(
+          presence.publish(departed, { organizationIds: [] }),
+        );
+      };
+
+      await Effect.runPromise(presence.sweepOffline());
+      expect(claimSizes).toEqual([3]);
+      expect(events.map((event) => event.userId)).toEqual([
+        departed.data.userId,
+      ]);
+      expect(await store.command.get(replacementKey)).toBe(newerDeparture);
+      expect(await store.command.smembers("presence:offline:pending")).toEqual([
+        replacementKey,
+      ]);
+
+      now += 10_000;
+      await Effect.runPromise(presence.disconnect(departed.data));
+      await Effect.runPromise(presence.sweepOffline());
+      expect(events.map((event) => event.userId)).toEqual([
+        departed.data.userId,
+        replacement.data.userId,
+      ]);
+      now += 10_000;
+      await Effect.runPromise(presence.sweepOffline());
+      expect(events.map((event) => event.userId)).toEqual([
+        departed.data.userId,
+        replacement.data.userId,
+        departed.data.userId,
+      ]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
   test("heartbeats repair independently lost indexes and preserve the final observed expiry time", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),

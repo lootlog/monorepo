@@ -80,35 +80,37 @@ class MemoryRedis {
       return 1;
     }
 
-    const [
-      pending,
-      outbox,
-      pendingIndex,
-      characterIndex,
-      outboxIndex,
-      lock,
-      value,
-      pendingMember,
-      outboxMember,
-      publish,
-      token,
-    ] = args;
+    const [lock, pendingIndex, outboxIndex] = args;
+    const values = args.slice(_numberOfKeys);
 
-    if (this.values.get(lock!) !== token) return -1;
+    if (this.values.get(lock!) !== values[0]) return -1;
+    let completed = 0;
 
-    if (this.values.get(pending!) !== value) return 0;
-    this.values.delete(pending!);
-    this.sets.get(pendingIndex!)?.delete(pendingMember!);
-    this.sets.get(characterIndex!)?.delete(pendingMember!);
+    for (let index = 3; index < _numberOfKeys; index += 3) {
+      const [pending, outbox, characterIndex] = args.slice(index, index + 3);
+      const offset = 2 + ((index - 3) / 3) * 4;
 
-    if (publish === "1") {
-      this.values.set(outbox!, value!);
-      const set = this.sets.get(outboxIndex!) ?? new Set<string>();
-      set.add(outboxMember!);
-      this.sets.set(outboxIndex!, set);
+      const [value, pendingMember, outboxMember, publish] = values.slice(
+        offset,
+        offset + 4,
+      );
+
+      if (this.values.get(pending!) !== value) continue;
+      this.values.delete(pending!);
+      this.sets.get(pendingIndex!)?.delete(pendingMember!);
+      this.sets.get(characterIndex!)?.delete(pendingMember!);
+
+      if (publish === "1") {
+        this.values.set(outbox!, value!);
+        const set = this.sets.get(outboxIndex!) ?? new Set<string>();
+        set.add(outboxMember!);
+        this.sets.set(outboxIndex!, set);
+      }
+
+      completed++;
     }
 
-    return 1;
+    return completed;
   }
 
   private readBatch(args: string[]): string {

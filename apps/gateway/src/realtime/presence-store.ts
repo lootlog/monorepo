@@ -114,21 +114,29 @@ end
 return 1
 `;
 
-// The atomic move is the departure decision. A reconnect before it cancels the
-// pending record; a reconnect after it starts a new online period.
+// One fresh Organization snapshot feeds one atomic group decision, with no
+// per-character network waits that could make later decisions use stale data.
+// Completed reconnect cancellation before this move suppresses departure; a
+// reconnect after the move starts a new online period.
 const CLAIM_OFFLINE = `
 -- presence:offline-claim
-if redis.call('GET', KEYS[6]) ~= ARGV[5] then return -1 end
-redis.call('PEXPIRE', KEYS[6], ARGV[6])
-if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
-redis.call('DEL', KEYS[1])
-redis.call('SREM', KEYS[3], ARGV[2])
-redis.call('SREM', KEYS[4], ARGV[2])
-if ARGV[4] == '1' then
-  redis.call('SET', KEYS[2], ARGV[1])
-  redis.call('SADD', KEYS[5], ARGV[3])
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return -1 end
+redis.call('PEXPIRE', KEYS[1], ARGV[2])
+local completed = 0
+for key = 4, #KEYS, 3 do
+  local arg = 3 + ((key - 4) / 3) * 4
+  if redis.call('GET', KEYS[key]) == ARGV[arg] then
+    redis.call('DEL', KEYS[key])
+    redis.call('SREM', KEYS[2], ARGV[arg + 1])
+    redis.call('SREM', KEYS[key + 2], ARGV[arg + 1])
+    if ARGV[arg + 3] == '1' then
+      redis.call('SET', KEYS[key + 1], ARGV[arg])
+      redis.call('SADD', KEYS[3], ARGV[arg + 2])
+    end
+    completed = completed + 1
+  end
 end
-return 1
+return completed
 `;
 
 const decodeOfflineBatch = Schema.decodeUnknownSync(
@@ -554,58 +562,68 @@ export class PresenceStore {
         token,
       );
 
-      const organizations = new Map<string, Array<Basic | Precise>>();
+      const groups = Map.groupBy(
+        pending
+          .map(([key, value]) => ({ key, value, event: decodeOffline(value) }))
+          .filter(({ event }) => this.now() - event.disconnectedAt >= 10_000),
+        ({ event }) =>
+          JSON.stringify([...new Set(event.organizationIds)].sort()),
+      );
 
-      for (const [key, value] of pending) {
-        const event = decodeOffline(value);
+      for (const group of groups.values()) {
+        const first = group[0];
 
-        if (this.now() - event.disconnectedAt < 10_000) continue;
-        let online = false;
+        if (!first) continue;
+        const online = new Set<string>();
 
-        for (const organizationId of event.organizationIds) {
-          let presences = organizations.get(organizationId);
+        // Read each group immediately before its single bounded claim. Never
+        // retain these observations across another group's Redis round trip.
+        for (const organizationId of new Set(first.event.organizationIds)) {
+          const presences = yield* this.readOrganization(organizationId);
 
-          if (!presences) {
-            presences = yield* this.readOrganization(organizationId);
-            organizations.set(organizationId, presences);
+          for (const presence of presences) {
+            if (presence.platform === "game" && presence.character)
+              online.add(this.offlineCharacterKey(presence));
           }
-
-          online ||= presences.some(
-            (presence) =>
-              presence.platform === "game" &&
-              presence.userId === event.userId &&
-              presence.character?.world === event.world &&
-              presence.character.characterId === event.characterId,
-          );
         }
 
-        const outboxKey = `${key}:decided`;
+        const keys = [
+          OFFLINE_SWEEP_LOCK,
+          OFFLINE_PENDING_INDEX,
+          OFFLINE_OUTBOX_INDEX,
+        ];
+
+        const args: Array<string | number> = [token, OFFLINE_LEASE_MS];
+
+        for (const { key, value, event } of group) {
+          const outboxKey = `${key}:decided`;
+
+          const characterKey = this.offlineCharacterKey({
+            userId: event.userId,
+            character: { world: event.world, characterId: event.characterId },
+          });
+
+          keys.push(key, outboxKey, characterKey);
+          args.push(
+            value,
+            key,
+            outboxKey,
+            online.has(characterKey) ? "0" : "1",
+          );
+        }
 
         const claimed = yield* fromPromise("presence.offline-claim", () =>
           this.redis.command.eval<number>(
             CLAIM_OFFLINE,
-            6,
-            key,
-            outboxKey,
-            OFFLINE_PENDING_INDEX,
-            this.offlineCharacterKey({
-              userId: event.userId,
-              character: { world: event.world, characterId: event.characterId },
-            }),
-            OFFLINE_OUTBOX_INDEX,
-            OFFLINE_SWEEP_LOCK,
-            value,
-            key,
-            outboxKey,
-            online ? "0" : "1",
-            token,
-            OFFLINE_LEASE_MS,
+            keys.length,
+            ...keys,
+            ...args,
           ),
         );
 
         if (claimed === -1) return 0;
 
-        if (claimed === 1) completed++;
+        completed += claimed;
       }
 
       const outbox = yield* this.readOfflineBatch(OFFLINE_OUTBOX_INDEX, token);
