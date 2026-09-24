@@ -3,11 +3,7 @@ import type { MouseEvent, ReactNode } from "react";
 import type { MenuItem } from "./types";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import { useWarmRouteChunks } from "@/lib/router/use-warm-route-chunks";
-import {
-  ThemeSidebarBackground,
-  ThemeSidebarFooterDecoration,
-  useThemeMeta,
-} from "@/themes";
+import { ThemeSidebarFooterDecoration, useThemeMeta } from "@/themes";
 
 interface SidebarNavProps {
   items: MenuItem[];
@@ -26,7 +22,7 @@ export const SidebarNav = ({
   footer,
   onItemClick,
 }: SidebarNavProps) => {
-  const { isRukiaTheme, isCatTheme } = useThemeMeta();
+  const { isCatTheme } = useThemeMeta();
 
   useWarmRouteChunks(
     items
@@ -35,10 +31,15 @@ export const SidebarNav = ({
   );
 
   return (
-    <div className="relative flex flex-col w-full gap-1.5 flex-1 overflow-hidden">
-      <ThemeSidebarBackground />
+    <div
+      data-slot="sidebar-nav"
+      className="relative flex flex-col w-full gap-1.5 flex-1 overflow-hidden"
+    >
       {header && (
-        <div className="relative h-14 min-h-14 flex flex-row items-center justify-between border-b mb-2 px-2 font-semibold">
+        <div
+          data-slot="sidebar-nav-header"
+          className="relative h-14 min-h-14 flex flex-row items-center justify-between border-b mb-2 px-2 font-semibold"
+        >
           {header}
         </div>
       )}
@@ -72,7 +73,6 @@ export const SidebarNav = ({
                 label={label}
                 badge={badge}
                 highlight={highlight}
-                isRukiaTheme={isRukiaTheme}
                 isCatTheme={isCatTheme}
                 onItemClick={(e) => {
                   onItemClick?.(item, e);

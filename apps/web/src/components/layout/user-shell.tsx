@@ -7,7 +7,6 @@ import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useMatches, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState, type FC, type ReactNode } from "react";
-import { ThemeInteractiveFrame } from "@/themes";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
 import { useTranslation } from "react-i18next";
 
@@ -19,7 +18,6 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
   const { t } = useTranslation();
   const matches = useMatches();
   const navigate = useNavigate();
-  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
   const [headerActionsElement, setHeaderActionsElement] =
     useState<HTMLElement | null>(null);
@@ -36,25 +34,15 @@ export const UserShell: FC<UserShellProps> = ({ children }) => {
               <div className="flex flex-row items-center gap-2">
                 <SidebarTrigger className="size-8!" />
                 {parentPath && (
-                  <div
-                    onMouseEnter={() => setHoveredButton("back")}
-                    onMouseLeave={() => setHoveredButton(null)}
+                  <Button
+                    aria-label={t("common.actions.back")}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate({ to: parentPath })}
+                    className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
                   >
-                    <ThemeInteractiveFrame
-                      isHovered={hoveredButton === "back"}
-                      isActive={false}
-                    >
-                      <Button
-                        aria-label={t("common.actions.back")}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate({ to: parentPath })}
-                        className="h-8 w-8 p-1 rounded-full hover:bg-muted/50 transition-colors"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                      </Button>
-                    </ThemeInteractiveFrame>
-                  </div>
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
 

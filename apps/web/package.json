@@ -18,6 +18,8 @@
     "doctor": "react-doctor ."
   },
   "dependencies": {
+    "@fontsource-variable/cinzel": "5.3.0",
+    "@fontsource/shippori-mincho": "5.3.0",
     "@hookform/resolvers": "catalog:",
     "@lexical/code": "catalog:",
     "@lexical/code-prism": "catalog:",

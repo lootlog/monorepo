@@ -48,6 +48,9 @@ export function HorizontalMenu({
       if (!active) return;
 
       if (activeChanged || recenter) scheduleReveal(active);
+      // A web font that lands after mount reflows the links without resizing the
+      // list, so the active link itself is what the observer has to watch.
+      resize.observe(active);
       highlight.style.width = `${active.offsetWidth}px`;
       highlight.style.height = `${active.offsetHeight}px`;
       highlight.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
@@ -61,11 +64,11 @@ export function HorizontalMenu({
       scheduleReveal(link);
     };
 
-    list.addEventListener("click", onInteraction);
-    update();
     const resize = new ResizeObserver(() => update(true));
     resize.observe(list);
     resize.observe(viewport);
+    list.addEventListener("click", onInteraction);
+    update();
     const mutation = new MutationObserver(() => update());
     mutation.observe(list, {
       subtree: true,
@@ -83,8 +86,13 @@ export function HorizontalMenu({
   }, []);
 
   return (
-    <nav className={cn("min-w-0 shrink-0", className)} {...props}>
+    <nav
+      data-slot="horizontal-menu"
+      className={cn("min-w-0 shrink-0", className)}
+      {...props}
+    >
       <div
+        data-slot="horizontal-menu-viewport"
         ref={viewportRef}
         className="overflow-x-auto rounded-2xl border border-border bg-card [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
@@ -93,6 +101,7 @@ export function HorizontalMenu({
           className="relative isolate flex w-max min-w-full flex-nowrap gap-1 p-1 [&>li]:shrink-0 [&>li>a]:relative [&>li>a]:z-10 [&>li>a]:whitespace-nowrap [&>li>a]:rounded-[calc(var(--radius-2xl)-5px)] [&>li>a]:px-4 [&>li>a]:py-2"
         >
           <li
+            data-slot="horizontal-menu-highlight"
             ref={highlightRef}
             aria-hidden
             role="presentation"
