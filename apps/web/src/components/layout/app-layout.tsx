@@ -62,7 +62,7 @@ export const AppLayout = () => {
 
   return (
     <div
-      className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground"
+      className="flex min-h-dvh w-full flex-col bg-background text-foreground md:h-dvh md:overflow-hidden"
       data-design-system="signal-v2"
     >
       <a
@@ -75,7 +75,7 @@ export const AppLayout = () => {
         <ThemeAnnouncement />
       </Suspense>
       <SidebarProvider
-        className="relative min-h-0 flex-1 overflow-hidden"
+        className="relative min-h-0 flex-1 md:overflow-hidden"
         style={sidebarStyle}
       >
         <AppSidebar

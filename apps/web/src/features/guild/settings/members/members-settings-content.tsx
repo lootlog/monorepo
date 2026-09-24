@@ -23,6 +23,10 @@ import { useMemberWebPresence } from "@/features/guild/settings/members/use-memb
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
+  getPageScroller,
+  usePageScrollsDocument,
+} from "@/hooks/utils/use-page-scroll";
+import {
   useGuildsControllerGetGuildById,
   useMembersControllerGetGuildMembers,
   useRolesControllerGetGuildRoles,
@@ -36,7 +40,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { FilterX, Users } from "lucide-react";
-import { startTransition, useRef, useState } from "react";
+import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const MembersSettingsContent = () => {
@@ -45,7 +49,10 @@ export const MembersSettingsContent = () => {
   const [statusFilter, setStatusFilter] =
     useState<MemberStatusFilter>(defaultStatusFilter);
 
-  const scrollElementRef = useRef<HTMLDivElement | null>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
+  );
+
   const routeGuildId = useGuildId();
 
   const { data: members } = useMembersControllerGetGuildMembers(
@@ -81,6 +88,12 @@ export const MembersSettingsContent = () => {
   const guildRolePositionById = buildGuildRolePositionById(guildRoles);
 
   const isMobile = useIsMobile();
+  const scrollsDocument = usePageScrollsDocument();
+
+  const scrollToTop = () =>
+    getPageScroller(scrollElement, scrollsDocument)?.scrollTo({
+      top: 0,
+    });
 
   const canManageMembers = Boolean(
     accessPolicy?.allows(Permission.ADMIN) ||
@@ -126,7 +139,7 @@ export const MembersSettingsContent = () => {
                 size="default"
                 value={statusFilter}
                 onValueChange={(filter) => {
-                  scrollElementRef.current?.scrollTo({ top: 0 });
+                  scrollToTop();
                   startTransition(() => setStatusFilter(filter));
                 }}
                 label={t("settings.members.table.status")}
@@ -142,7 +155,7 @@ export const MembersSettingsContent = () => {
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-              <ScrollArea className="h-full flex-1" ref={scrollElementRef}>
+              <ScrollArea className="h-full flex-1" ref={setScrollElement}>
                 <div className="w-full max-w-full min-w-0">
                   {filteredMembers.length > 0 && (
                     <MembersTable
@@ -151,7 +164,7 @@ export const MembersSettingsContent = () => {
                       activityStatsByDiscordIdAndSource={
                         memberActivityStatsByDiscordIdAndSource
                       }
-                      scrollElementRef={scrollElementRef}
+                      scrollElement={scrollElement}
                       isMobile={isMobile}
                       canManageMembers={canManageMembers}
                       memberGamePresenceByDiscordId={
@@ -203,7 +216,7 @@ export const MembersSettingsContent = () => {
         <MembersSettingsFooter
           {...memberStats}
           onProblemsClick={() => {
-            scrollElementRef.current?.scrollTo({ top: 0 });
+            scrollToTop();
             startTransition(() => setStatusFilter("problems"));
           }}
         />

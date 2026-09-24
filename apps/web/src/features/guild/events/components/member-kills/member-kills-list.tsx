@@ -1,6 +1,6 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { AlertCircle, Skull } from "lucide-react";
@@ -16,6 +16,7 @@ import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
+import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
 import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
 import { MemberKillBreakdownRow } from "./member-kill-breakdown-row";
 import { createMemberKillsTableColumns } from "./member-kills-table-columns";
@@ -116,9 +117,10 @@ export const MemberKillsList = ({
     getRowId: (kill) => kill.id,
   });
 
-  useEffect(() => {
-    scrollElement.scrollTo(0, 0);
-  }, [resetKey, scrollElement]);
+  useResetScrollTop({
+    getScrollElement: () => scrollElement,
+    resetKey,
+  });
 
   const loaderRowRef = useInfiniteScrollSentinel<HTMLTableRowElement>({
     fetchNextPage,

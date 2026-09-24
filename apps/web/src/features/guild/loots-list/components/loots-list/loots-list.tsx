@@ -37,8 +37,10 @@ const REFRESHABLE_LIST_CLASS =
   "relative w-full transition-opacity duration-200 motion-reduce:transition-none";
 
 export const LootsList = () => {
+  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+
   const {
-    scrollElementRef,
+    setScrollElement,
     isEmpty,
     isError,
     isFailed,
@@ -141,7 +143,7 @@ export const LootsList = () => {
       <ScrollArea
         id="loots-list"
         className="h-24 flex-1 relative"
-        ref={scrollElementRef}
+        ref={setScrollElement}
         onScroll={resumeReconciliation}
       >
         {isPending ? (
@@ -166,7 +168,9 @@ export const LootsList = () => {
                     LOOTS_LIST_INSET_CLASS,
                     LOOTS_LIST_ROW_GAP_CLASS,
                   )}
-                  style={{ transform: `translateY(${virtualRow.start}px)` }}
+                  style={{
+                    transform: `translateY(${virtualRow.start - gridVirtualizer.options.scrollMargin}px)`,
+                  }}
                 >
                   {isLoaderRow ? (
                     <LootListSentinelRow
@@ -211,7 +215,9 @@ export const LootsList = () => {
                     LOOTS_LIST_INSET_CLASS,
                     LOOTS_LIST_ROW_GAP_CLASS,
                   )}
-                  style={{ transform: `translateY(${virtualItem.start}px)` }}
+                  style={{
+                    transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
+                  }}
                 >
                   {isLoaderRow ? (
                     <LootListSentinelRow

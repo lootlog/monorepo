@@ -130,6 +130,45 @@ describe("EventKillsTable", () => {
     ).toBeNull();
   });
 
+  it("watches the loader row against the screen when the document scrolls the page", () => {
+    const nativeMatchMedia = window.matchMedia.bind(window);
+    vi.stubGlobal("matchMedia", (query: string) => {
+      const result = nativeMatchMedia(query);
+      Object.defineProperty(result, "matches", {
+        value: query === "(max-width: 767px)",
+      });
+
+      return result;
+    });
+
+    const observerOptions = vi.fn();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(
+          _callback: IntersectionObserverCallback,
+          options?: IntersectionObserverInit,
+        ) {
+          observerOptions(options);
+        }
+
+        observe() {}
+
+        disconnect() {}
+      },
+    );
+
+    renderTable(
+      <EventKillsTable {...defaultProps} kills={[createKill()]} hasNextPage />,
+    );
+
+    // The page viewport only grows with the list here, so it would always
+    // contain the loader row and every page would load at once.
+    expect(observerOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ root: null }),
+    );
+  });
+
   it("renders preview rows without infinite-scroll behavior or a terminal row", () => {
     const observer = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
@@ -190,6 +229,8 @@ describe("EventKillsTable", () => {
       />,
     );
 
-    expect(scrollElement.scrollTo).toHaveBeenLastCalledWith(0, 0);
+    expect(scrollElement.scrollTo).toHaveBeenLastCalledWith(
+      expect.objectContaining({ top: 0 }),
+    );
   });
 });
