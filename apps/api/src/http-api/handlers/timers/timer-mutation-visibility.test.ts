@@ -11,10 +11,12 @@ import {
 import {
   guildTable,
   memberTable,
+  memberToRoleTable,
   roleTable,
   timerTable,
   timerHistoryEntryTable,
 } from "#src/database/drizzle/schema";
+import { makeAllTimerList } from "./timer-list.data-layer.js";
 import { makeResetTimer } from "./timer-reset.data-layer.js";
 import { makeDeleteTimer } from "./timer-delete.data-layer.js";
 import { makeRestoreTimer } from "./timer-restore.data-layer.js";
@@ -48,7 +50,7 @@ it.each([
       const database = boundary.database;
       const now = new Date();
       const guild = createGuildFixture();
-      const member = createMemberFixture();
+      const member = createMemberFixture({ globalUserId: "user" });
       await boundary.run(database.insert(guildTable).values(guild));
       await boundary.run(database.insert(memberTable).values(member));
 
@@ -62,6 +64,7 @@ it.each([
             lvlRangeFrom: 1,
             lvlRangeTo: max,
             permissions: [
+              Permission.LOOTLOG_TIMERS_READ,
               read,
               Permission.LOOTLOG_TIMERS_RESET,
               Permission.LOOTLOG_TIMERS_WRITE,
@@ -70,6 +73,10 @@ it.each([
             updatedAt: now,
           })
           .returning(),
+      );
+
+      await boundary.run(
+        database.insert(memberToRoleTable).values({ A: member.id, B: "role" }),
       );
 
       const access = {
@@ -111,6 +118,15 @@ it.each([
           }),
       };
 
+      const list = makeAllTimerList(database);
+
+      const readTimers = () =>
+        boundary.run(
+          list({ userId: "user", discordId: member.userId }, "world"),
+        );
+
+      expect(await readTimers()).toHaveLength(allowed ? 1 : 0);
+
       const reset = makeResetTimer(database, {
         ...ports,
         withLock: (_key, operation) => operation,
@@ -124,12 +140,17 @@ it.each([
       );
 
       expect(resetResult._tag).toBe(allowed ? "Success" : "Failure");
+      const afterReset = await readTimers();
+      expect(afterReset).toHaveLength(allowed ? 1 : 0);
+
+      if (allowed) expect(afterReset[0].wasReset).toBe(true);
 
       const deleteResult = await boundary.run(
         remove(access, "300", "world").pipe(Effect.result),
       );
 
       expect(deleteResult._tag).toBe(allowed ? "Success" : "Failure");
+      expect(await readTimers()).toEqual([]);
 
       let history = await boundary.run(
         database.select().from(timerHistoryEntryTable),
@@ -178,6 +199,7 @@ it.each([
       );
 
       expect(restored._tag).toBe(allowed ? "Success" : "Failure");
+      expect(await readTimers()).toHaveLength(allowed ? 1 : 0);
 
       const [persisted] = await boundary.run(
         database.select().from(timerTable),

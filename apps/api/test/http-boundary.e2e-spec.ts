@@ -470,6 +470,14 @@ describe("API HTTP boundary", () => {
       }),
     ]);
 
+    const allTimersResponse = await request(`/timers?world=${world}`);
+    expect(await allTimersResponse.json()).toEqual([
+      expect.objectContaining({
+        timerKey: created.timerKey,
+        actorCharacter: expectedActor,
+      }),
+    ]);
+
     const deletedResponse = await request(
       `/guilds/${authorizedGuildId}/timers/${encodeURIComponent(created.timerKey)}?world=${world}`,
       { method: "DELETE" },
@@ -483,6 +491,7 @@ describe("API HTTP boundary", () => {
     );
 
     expect(await afterDeleteResponse.json()).toEqual([]);
+    expect(await (await request(`/timers?world=${world}`)).json()).toEqual([]);
   });
 
   it("rejects a cross-Organization mutation and leaves persistence unchanged", async () => {
