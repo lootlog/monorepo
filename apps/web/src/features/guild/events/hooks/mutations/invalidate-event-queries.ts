@@ -64,10 +64,12 @@ export function invalidateEventMapStructureQueries(
   guildId: string,
   eventId: string,
 ) {
-  queryClient.invalidateQueries({
-    queryKey: getListEventMapsQueryKey({ guildId, eventId }),
-  });
-  queryClient.invalidateQueries({
-    queryKey: getShowEventWrappedQueryKey({ guildId, eventId }),
-  });
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: getListEventMapsQueryKey({ guildId, eventId }),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: getShowEventWrappedQueryKey({ guildId, eventId }),
+    }),
+  ]);
 }

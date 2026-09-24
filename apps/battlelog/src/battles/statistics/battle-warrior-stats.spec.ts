@@ -145,6 +145,41 @@ describe("battle warrior stats", () => {
     expect(warrior.spellsUsedMap).toEqual({ Freeze: 4 });
   });
 
+  it("recovers individual corrupt stored metrics without discarding valid JSONB values", () => {
+    const row = createBattleWarriorRow({ isDead: true });
+
+    Object.assign(row.stats, {
+      damageDealt: "corrupt",
+      blockedDamage: null,
+      spellsUsedMap: { Freeze: "corrupt" },
+      isDead: false,
+      turns: 0,
+      activeHealing: 500,
+    });
+    Object.assign(row, { blockedDamage: "corrupt" });
+
+    expect(inflateBattleWarrior(row)).toMatchObject({
+      damageDealt: 100,
+      blockedDamage: 0,
+      spellsUsedMap: { Fireball: 2 },
+      isDead: false,
+      turns: 0,
+      activeHealing: 500,
+    });
+  });
+
+  it("recovers legacy metrics when the stored JSONB payload is not an object", () => {
+    const row = createBattleWarriorRow();
+
+    Object.assign(row, { stats: [900, 800] });
+
+    expect(inflateBattleWarrior(row)).toMatchObject({
+      damageDealt: 100,
+      blockedDamage: 118,
+      spellsUsedMap: { Fireball: 2 },
+    });
+  });
+
   it("keeps hot filter fields from columns", () => {
     const row = createBattleWarriorRow({
       name: "ColumnName",

@@ -1,5 +1,11 @@
-import { and, eq, exists, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, exists, sql, type SQL } from "drizzle-orm";
 import { battleWarriors, battles } from "#src/database/schema";
+
+export const selectedWarriorOrder = (battlesRef: typeof battles) => [
+  desc(eq(battleWarriors.originalId, battlesRef.characterId)),
+  asc(battleWarriors.originalId),
+  asc(battleWarriors.id),
+];
 
 export const warriorExists = (
   battlesRef: typeof battles,

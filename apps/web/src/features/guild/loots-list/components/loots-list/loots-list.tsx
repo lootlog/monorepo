@@ -24,6 +24,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { CircleAlert, PackageOpen, SearchX } from "lucide-react";
 
 import { useLiveLootList } from "./use-live-loot-list";
+import { LootListItemStacksProvider } from "./loot-list-item-stacks-provider";
 
 // The empty states share the world-selection card: a fixed-size card near
 // the top instead of a panel stretched over the whole list.
@@ -62,6 +63,7 @@ export const LootsList = () => {
     world,
     hasActiveFilters,
     clearFilters,
+    queryIdentity,
   } = useLiveLootList();
 
   if (!world) {
@@ -138,7 +140,7 @@ export const LootsList = () => {
     );
   }
 
-  return (
+  const content = (
     <SharedTooltipProvider>
       <ScrollArea
         id="loots-list"
@@ -239,5 +241,11 @@ export const LootsList = () => {
         )}
       </ScrollArea>
     </SharedTooltipProvider>
+  );
+
+  return (
+    <LootListItemStacksProvider key={queryIdentity} loots={allLoots}>
+      {content}
+    </LootListItemStacksProvider>
   );
 };

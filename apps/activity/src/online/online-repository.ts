@@ -1,11 +1,20 @@
 import { ONLINE_HISTORY_RETENTION_DAYS } from "./online-retention.js";
 import { PgClient } from "@effect/sql-pg";
-import { Clock, Context, Effect, Layer } from "effect";
+import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { TaggedError as TaggedErrorClass } from "effect/Schema";
+import { and, count, inArray, lte, sql as drizzleSql } from "drizzle-orm";
+import { ActivityDatabase } from "#src/database/database";
+import { userOnlineIntervals } from "#src/database/schema";
 import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import type {
   UserOnlineQuery,
   UserOnlineResponse,
 } from "#src/http-api/contracts/users/schemas";
+
+export class OnlineIngestRejected extends TaggedErrorClass<OnlineIngestRejected>()(
+  "OnlineIngestRejected",
+  { message: Schema.String },
+) {}
 
 export interface OnlineRepositoryValue {
   readonly ingest: (event: UserOnlineEventV1) => Effect.Effect<void, unknown>;
@@ -24,6 +33,7 @@ export class OnlineRepository extends Context.Service<
     OnlineRepository,
     Effect.gen(function* () {
       const sql = yield* PgClient.PgClient;
+      const db = yield* ActivityDatabase;
 
       const ingest = Effect.fn("OnlineRepository.ingest")(function* (
         event: UserOnlineEventV1,
@@ -32,7 +42,9 @@ export class OnlineRepository extends Context.Service<
 
         if (Date.parse(event.observedAt) > now + 60_000)
           return yield* Effect.fail(
-            new Error("Online observation is in the future"),
+            new OnlineIngestRejected({
+              message: "Online observation is in the future",
+            }),
           );
 
         if (event.type === "collector") {
@@ -54,7 +66,9 @@ export class OnlineRepository extends Context.Service<
           Date.parse(event.endedAt) > Date.parse(event.observedAt)
         ) {
           return yield* Effect.fail(
-            new Error("Invalid online interval ordering"),
+            new OnlineIngestRejected({
+              message: "Invalid online interval ordering",
+            }),
           );
         }
 
@@ -81,7 +95,9 @@ export class OnlineRepository extends Context.Service<
 
             if (!inserted.length)
               return yield* Effect.fail(
-                new Error("Online segment start or world cannot change"),
+                new OnlineIngestRejected({
+                  message: "Online segment start or world cannot change",
+                }),
               );
             yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           VALUES (${event.userId}, ${event.observedAt}::timestamptz)
@@ -212,14 +228,37 @@ export class OnlineRepository extends Context.Service<
 
               if (!current || current.completed) return false;
 
-              const expired = yield* sql<{ count: number }>`
-                WITH removed AS (
-                  DELETE FROM "UserOnlineInterval" WHERE ctid IN (
-                    SELECT ctid FROM "UserOnlineInterval"
-                    WHERE "endedAt" <= ${current.cutoff}::timestamptz
-                    ORDER BY "endedAt" LIMIT 1000 FOR UPDATE
-                  ) RETURNING 1
-                ) SELECT count(*)::int AS count FROM removed`;
+              const retentionCutoff = new Date(current.cutoff);
+
+              // endedAt >= startedAt makes this indexed bound lossless, including
+              // zero-duration intervals exactly at the cutoff. Long intervals
+              // crossing it are retained and trimmed by the next phase.
+              const expiredBatch = db
+                .select({ ctid: drizzleSql<string>`ctid`.as("ctid") })
+                .from(userOnlineIntervals)
+                .where(
+                  and(
+                    lte(userOnlineIntervals.startedAt, retentionCutoff),
+                    lte(userOnlineIntervals.endedAt, retentionCutoff),
+                  ),
+                )
+                .orderBy(userOnlineIntervals.startedAt)
+                .limit(1000)
+                .for("update");
+
+              // PostgreSQL's ctid has no schema column; row locks keep these
+              // physical identifiers stable through this statement.
+              const removed = db.$with("removed").as(
+                db
+                  .delete(userOnlineIntervals)
+                  .where(inArray(drizzleSql`ctid`, expiredBatch))
+                  .returning({ value: drizzleSql`1`.as("value") }),
+              );
+
+              const expired = yield* db
+                .with(removed)
+                .select({ count: count() })
+                .from(removed);
 
               if (expired[0]?.count === 1000) return true;
 
@@ -258,5 +297,5 @@ export class OnlineRepository extends Context.Service<
 
       return OnlineRepository.of({ ingest, find, prune });
     }),
-  );
+  ).pipe(Layer.provide(ActivityDatabase.layer));
 }

@@ -153,6 +153,12 @@ export const useLiveLootList = () => {
 
   const queryIdentity = hashKey(queryKey);
 
+  // Reset before reconciliation checks whether this query can refresh at the top.
+  useResetScrollTop({
+    getScrollElement: () => scrollElement,
+    resetKey: queryIdentity,
+  });
+
   const {
     data: loots,
     fetchNextPage,
@@ -344,6 +350,7 @@ export const useLiveLootList = () => {
   const listVirtualizer = usePageVirtualizer<HTMLDivElement>({
     count: totalCount + 1,
     scrollElement,
+    getItemKey: (index) => allLoots[index]?.id ?? "loots-loader",
     estimateSize: () => 180,
     overscan: 5,
     useAnimationFrameWithResizeObserver: true,
@@ -353,6 +360,8 @@ export const useLiveLootList = () => {
   const gridVirtualizer = usePageVirtualizer<HTMLDivElement>({
     count: gridRows.length + 1,
     scrollElement,
+    getItemKey: (index) =>
+      gridRows[index]?.map((loot) => loot.id).join(":") ?? "loots-loader",
     estimateSize: () => 220,
     overscan: 3,
     useAnimationFrameWithResizeObserver: true,
@@ -380,10 +389,6 @@ export const useLiveLootList = () => {
     itemCount: gridRows.length,
     virtualItems: gridVirtualItems,
   });
-  useResetScrollTop({
-    getScrollElement: () => scrollElement,
-    resetKey: guildId ?? "",
-  });
 
   const resumeReconciliation = () => reconciliationRef.current?.resume();
   useDocumentScrollListener(resumeReconciliation);
@@ -409,6 +414,7 @@ export const useLiveLootList = () => {
   };
 
   return {
+    queryIdentity,
     setScrollElement,
     isEmpty,
     isError,

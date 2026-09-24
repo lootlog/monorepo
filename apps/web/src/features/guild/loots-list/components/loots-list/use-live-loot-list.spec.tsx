@@ -28,7 +28,15 @@ import { useLiveLootList } from "./use-live-loot-list";
 import "@/i18n/config";
 
 function Probe() {
-  const list = useLiveLootList();
+  const {
+    allLoots,
+    isEmpty,
+    isPending,
+    isFailed,
+    setScrollElement,
+    resumeReconciliation,
+  } = useLiveLootList();
+
   const { setFilters } = useLootsFilters();
 
   return (
@@ -36,12 +44,17 @@ function Probe() {
       <button onClick={() => void setFilters({ search: "shield" })}>
         Change filter
       </button>
+      <div
+        ref={setScrollElement}
+        data-testid="loot-scroll"
+        onScroll={resumeReconciliation}
+      />
       <output>
         {JSON.stringify({
-          ids: list.allLoots.map((loot) => loot.id),
-          isEmpty: list.isEmpty,
-          isPending: list.isPending,
-          isFailed: list.isFailed,
+          ids: allLoots.map((loot) => loot.id),
+          isEmpty,
+          isPending,
+          isFailed,
         })}
       </output>
     </>
@@ -117,10 +130,11 @@ async function mount(
   });
 
   const GatewayWrapper = gateway.wrapper;
-  render(
+
+  const renderApp = (world: string) => (
     <GatewayWrapper>
       <QueryClientProvider client={client}>
-        <GuildContext value={{ world: "tempest", setWorld: () => undefined }}>
+        <GuildContext value={{ world, setWorld: () => undefined }}>
           <ThemeContext
             value={{
               theme: "default",
@@ -135,15 +149,60 @@ async function mount(
           </ThemeContext>
         </GuildContext>
       </QueryClientProvider>
-    </GatewayWrapper>,
+    </GatewayWrapper>
   );
+
+  const view = render(renderApp("tempest"));
   await act(async () => {
     await router.load();
     await vi.advanceTimersByTimeAsync(1);
   });
 
-  return { gateway, client, fetch };
+  return {
+    gateway,
+    client,
+    fetch,
+    changeWorld: () => view.rerender(renderApp("katahha")),
+  };
 }
+
+it.each(["filter", "world"])(
+  "changing the %s returns to the top and resumes live reconciliation",
+  async (change) => {
+    const listRequests = vi.fn(async () => Response.json([loot]));
+    const { gateway, changeWorld } = await mount(listRequests);
+    const viewport = screen.getByTestId("loot-scroll");
+
+    await act(async () => {
+      viewport.scrollTop = 800;
+      fireEvent.scroll(viewport);
+      gateway.deliver({
+        v: 1,
+        type: "loot.created",
+        data: { version: 2, guildId: "one", lootId: 2, npcs: [] },
+      });
+      await vi.advanceTimersByTimeAsync(35_000);
+    });
+    expect(listRequests).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      if (change === "filter") {
+        fireEvent.click(screen.getByRole("button", { name: "Change filter" }));
+      } else {
+        changeWorld();
+      }
+
+      await vi.advanceTimersByTimeAsync(250);
+    });
+    expect(viewport.scrollTop).toBe(0);
+    expect(listRequests).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(35_000);
+    });
+    expect(listRequests).toHaveBeenCalledTimes(3);
+  },
+);
 
 it("delivered duplicate, share and reconnect events reconcile once through the filtered server list without detail GETs", async () => {
   const listRequests = vi.fn(async () => Response.json([loot]));

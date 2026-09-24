@@ -1,3 +1,6 @@
+import { userCharacters } from "#src/database/schema";
+import { makeBattleAnalyticsRead } from "../analytics/battle-analytics-read.service.js";
+import { makeBattleCombatProfileRead } from "../analytics/battle-combat-profile-read.service.js";
 import { afterAll, beforeAll, beforeEach, expect, it } from "bun:test";
 import { BunRedis } from "@effect/platform-bun";
 import { PgClient } from "@effect/sql-pg";
@@ -105,10 +108,14 @@ const createServices = () =>
       const cache = makeBattleAnalyticsCache(redis);
       const read = makeBattleReadBudget(database);
 
+      const queryModule = makeBattleAnalyticsQuery(database);
+
       const analytics = makeBattleAnalytics(
-        database,
+        makeBattleAnalyticsRead(database, queryModule),
+        makeBattleCombatProfileRead(database, queryModule),
         cache,
-        makeBattleAnalyticsQuery(database, cache),
+        queryModule,
+        (operation) => read(operation, { consistentSnapshot: true }),
       );
 
       // R2 is the only fake boundary; database, Redis commands and Lua are real.
@@ -122,8 +129,10 @@ const createServices = () =>
           },
           getBattleData: async (id, decode) =>
             decode(JSON.stringify(uploads.get(id))),
-          deleteBattleData: async (id) => {
-            uploads.delete(id);
+          deleteBattlesData: async (ids) => {
+            for (const id of ids) uploads.delete(id);
+
+            return [];
           },
         },
         redis,
@@ -441,7 +450,7 @@ it("reloads corrupted metadata cache and shares invalidation with analytics", as
   await services.redis.set("battle-cache-generation:owner", "test-generation");
 
   const key =
-    "battle-cache:v2:owner:test-generation:battle-characters:list:owner";
+    "battle-cache:v3:owner:test-generation:battle-characters:list:owner";
 
   await services.redis.set(key, "{broken-json", 300);
   expect(
@@ -753,7 +762,7 @@ it("interrupts a coalesced analytics factory and permits a subsequent fill", asy
   expect(Exit.hasInterrupts(await reading)).toBe(true);
   await canceled;
   const generation = await services.redis.get("battle-cache-generation:abort");
-  const key = `battle-cache:v2:abort:${generation}:summary`;
+  const key = `battle-cache:v3:abort:${generation}:summary`;
   expect(await services.redis.get(key)).toBeNull();
   expect(
     await runtime.runPromise(
@@ -1008,3 +1017,58 @@ it("keeps HTTP submissions durable and retry-safe during concurrent catalog read
     await boundary.dispose();
   }
 });
+
+it("does not cache an older snapshot's character list under a newly invalidated generation", async () => {
+  const database = await runtime.runPromise(drizzleDatabaseEffect);
+  const queryModule = makeBattleAnalyticsQuery(database);
+  const budget = makeBattleReadBudget(database);
+  const started = Promise.withResolvers<void>();
+  const resume = Promise.withResolvers<void>();
+  let pause = true;
+
+  const read: typeof budget = (operation) =>
+    budget(
+      Effect.gen(function* () {
+        if (pause) {
+          pause = false;
+          // Establish the database snapshot before the writer commits, then let the
+          // real analytics factory resolve characters after cache invalidation.
+          yield* database
+            .select({ id: userCharacters.id })
+            .from(userCharacters);
+          started.resolve();
+          yield* Effect.promise(() => resume.promise);
+        }
+
+        return yield* operation;
+      }),
+      { consistentSnapshot: true },
+    );
+
+  const analytics = makeBattleAnalytics(
+    makeBattleAnalyticsRead(database, queryModule),
+    makeBattleCombatProfileRead(database, queryModule),
+    services.cache,
+    queryModule,
+    read,
+  );
+
+  const owner = "snapshot-owner";
+  const oldRead = runtime.runPromise(analytics.getBattleAnalytics({}, owner));
+
+  try {
+    await started.promise;
+    await runtime.runPromise(
+      services.battles.createBattle({ data, userId: owner }),
+    );
+    resume.resolve();
+    expect((await oldRead).totalBattles).toBe(0);
+    expect(
+      (await runtime.runPromise(analytics.getBattleAnalytics({}, owner)))
+        .totalBattles,
+    ).toBe(1);
+  } finally {
+    resume.resolve();
+    await oldRead;
+  }
+}, 10_000);

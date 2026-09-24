@@ -1,7 +1,11 @@
-import { warriorExists } from "#src/battles/battle-warrior-query";
+import {
+  selectedWarriorOrder,
+  warriorExists,
+} from "#src/battles/battle-warrior-query";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 import {
   and,
+  asc,
   eq,
   gt,
   gte,
@@ -13,8 +17,7 @@ import {
   desc,
   type SQL,
 } from "drizzle-orm";
-import { Effect, Schema } from "effect";
-import type { BattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
+import { Effect } from "effect";
 import type {
   AnalyticsDateRange,
   DateRangeQuery,
@@ -23,10 +26,6 @@ import type { DrizzleDatabase } from "#src/database/database";
 import { battleWarriors, battles } from "#src/database/schema";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-const decodeCharacterIdsJson = Schema.decodeUnknownSync(
-  Schema.fromJsonString(Schema.mutable(Schema.Array(Schema.String))),
-);
 
 type BattleAnalyticsQueryDatabase = Pick<DrizzleDatabase, "select"> & {
   query: {
@@ -39,9 +38,10 @@ type BattleAnalyticsQueryDatabase = Pick<DrizzleDatabase, "select"> & {
 
 export const makeBattleAnalyticsQuery = (
   drizzle: BattleAnalyticsQueryDatabase,
-  cache: BattleAnalyticsCache,
 ) => {
-  const getCharacterIdsUncached = (
+  // The outer analytics cache owns this result. A nested cache generation can
+  // advance while this lookup still reads an older repeatable-read snapshot.
+  const getCharacterIds = (
     userId: string,
     query: { characterId?: string; world?: string },
   ) =>
@@ -101,17 +101,6 @@ export const makeBattleAnalyticsQuery = (
       ? undefined
       : new Date(Date.now() - days * DAY_MS);
   };
-
-  const getCharacterIds = (
-    userId: string,
-    query: { characterId?: string; world?: string },
-  ) =>
-    cache.getOrSetJson(
-      userId,
-      cache.buildQueryCacheKey("battle-characters", "ids", userId, query),
-      () => getCharacterIdsUncached(userId, query),
-      decodeCharacterIdsJson,
-    );
 
   const getDateRangeFilter = (query: DateRangeQuery): AnalyticsDateRange => {
     if (query.startDate || query.endDate) {
@@ -201,7 +190,7 @@ export const makeBattleAnalyticsQuery = (
     characterIds: string[],
     hasFlee?: boolean,
   ) => {
-    // Select one participant, matching the existing first-user/first-opponent semantics.
+    // Resolve the same participant consistently across summary and detailed analytics.
     const user = drizzle
       .select({ team: battleWarriors.team, ph: battleWarriors.ph })
       .from(battleWarriors)
@@ -211,6 +200,7 @@ export const makeBattleAnalyticsQuery = (
           inArray(battleWarriors.originalId, characterIds),
         ),
       )
+      .orderBy(...selectedWarriorOrder(battles))
       .limit(1)
       .as("analytics_user");
 
@@ -223,6 +213,7 @@ export const makeBattleAnalyticsQuery = (
           notInArray(battleWarriors.originalId, characterIds),
         ),
       )
+      .orderBy(asc(battleWarriors.originalId), asc(battleWarriors.id))
       .limit(1)
       .as("analytics_opponent");
 

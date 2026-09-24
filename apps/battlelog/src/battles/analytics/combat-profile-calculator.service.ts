@@ -2,6 +2,44 @@ import type { CombatProfile } from "#src/battles/analytics/battle-statistics-res
 import { battleAnalyticsDomain as domain } from "#src/battles/analytics/battle-analytics-domain.service";
 import type { InflatedBattleWithWarriors } from "#src/battles/analytics/battle-analytics.types";
 
+export type CombatProfileWarrior = Pick<
+  InflatedBattleWithWarriors["warriors"][number],
+  | "team"
+  | "ph"
+  | "turns"
+  | "turnsLost"
+  | "damageDealtAfterDefensive"
+  | "damageTaken"
+  | "blockedDamage"
+  | "blocks"
+  | "evasions"
+  | "meleeDamage"
+  | "distanceDamage"
+  | "auxiliaryDamage"
+  | "fireDamage"
+  | "frostDamage"
+  | "lightningDamage"
+  | "thirdAttDamage"
+  | "trueDamageDealt"
+  | "rageDamageDealt"
+  | "stigmaDamageDealt"
+  | "spellsUsedMap"
+>;
+
+export type CombatProfileBattle = Pick<
+  InflatedBattleWithWarriors,
+  | "id"
+  | "createdAt"
+  | "hasFlee"
+  | "winningTeam"
+  | "losingTeam"
+  | "ratingDelta"
+  | "duration"
+> & {
+  userWarrior: CombatProfileWarrior;
+  opponents: Array<{ prof: string }>;
+};
+
 type CombatProfileHighlight = CombatProfile["highlights"][number];
 
 export const combatProfileCalculator = (() => {
@@ -9,6 +47,25 @@ export const combatProfileCalculator = (() => {
     battles: InflatedBattleWithWarriors[],
     characterIds: Set<string>,
   ): CombatProfile {
+    const accumulator = createAccumulator();
+
+    for (const battle of battles) {
+      const userWarrior = domain.findUserWarrior(battle, characterIds);
+
+      if (!userWarrior) continue;
+      accumulator.add({
+        ...battle,
+        userWarrior,
+        opponents: battle.warriors.filter(
+          (warrior) => warrior.team !== userWarrior.team,
+        ),
+      });
+    }
+
+    return accumulator.result();
+  }
+
+  function createAccumulator() {
     const damageMix = new Map<string, number>();
     const mitigationMix = new Map<string, number>();
 
@@ -41,19 +98,15 @@ export const combatProfileCalculator = (() => {
     const phTrend: CombatProfile["phTrend"] = [];
     const ratingTrend: CombatProfile["ratingTrend"] = [];
 
-    for (const battle of battles) {
-      const userWarrior = domain.findUserWarrior(battle, characterIds);
+    const add = (battle: CombatProfileBattle): void => {
+      const { userWarrior } = battle;
 
-      if (!userWarrior || battle.hasFlee) {
-        continue;
-      }
+      if (battle.hasFlee) return;
 
       const isWin = userWarrior.team === battle.winningTeam;
       const isLoss = userWarrior.team === battle.losingTeam;
 
-      if (!isWin && !isLoss) {
-        continue;
-      }
+      if (!isWin && !isLoss) return;
 
       totalBattles++;
 
@@ -81,12 +134,7 @@ export const combatProfileCalculator = (() => {
       addBreakdownValue(mitigationMix, "blocks", userWarrior.blocks);
       addBreakdownValue(mitigationMix, "evasions", userWarrior.evasions);
       addSpellUsage(spellUsage, userWarrior.spellsUsedMap);
-      addProfessionMatchups(
-        matchupByProfession,
-        battle,
-        userWarrior.team,
-        isWin,
-      );
+      addProfessionMatchups(matchupByProfession, battle.opponents, isWin);
 
       cumulativePh += userWarrior.ph;
       phTrend.push({
@@ -129,105 +177,88 @@ export const combatProfileCalculator = (() => {
           value: damageTaken,
         });
       }
-    }
-
-    const winRate = totalBattles > 0 ? (wins / totalBattles) * 100 : 0;
-    const avgTurns = totalBattles > 0 ? totalTurns / totalBattles : 0;
-    const avgDuration = totalBattles > 0 ? totalDuration / totalBattles : 0;
-    const damagePerTurn = totalTurns > 0 ? totalDamage / totalTurns : 0;
-    const mitigationBase = totalDamageTaken + totalBlockedDamage;
-
-    const mitigationRate =
-      mitigationBase > 0 ? (totalBlockedDamage / mitigationBase) * 100 : 0;
-
-    const controlRate =
-      totalTurns > 0 ? (totalControlTaken / totalTurns) * 100 : 0;
-
-    const totalSpellCasts = Array.from(spellUsage.values()).reduce(
-      (sum, spell) => sum + spell.casts,
-      0,
-    );
-
-    return {
-      summary: {
-        totalBattles,
-        wins,
-        losses,
-        winRate: domain.roundMetric(winRate),
-        totalPH,
-        totalRatingDelta,
-        avgTurns: domain.roundMetric(avgTurns),
-        avgDuration: Math.round(avgDuration),
-        damagePerTurn: domain.roundMetric(damagePerTurn),
-        mitigationRate: domain.roundMetric(mitigationRate),
-        controlRate: domain.roundMetric(controlRate),
-      },
-      damageMix: getBreakdownEntries(damageMix),
-      mitigationMix: getBreakdownEntries(mitigationMix),
-      spellUsage: Array.from(spellUsage.values())
-        .map((spell) => ({
-          ...spell,
-          share:
-            totalSpellCasts > 0
-              ? domain.roundMetric((spell.casts / totalSpellCasts) * 100)
-              : 0,
-        }))
-        .sort((left, right) => right.casts - left.casts)
-        .slice(0, 12),
-      matchupByProfession: Array.from(matchupByProfession.entries())
-        .map(([prof, stats]) => {
-          const professionTotalBattles = stats.wins + stats.losses;
-
-          return {
-            prof,
-            wins: stats.wins,
-            losses: stats.losses,
-            totalBattles: professionTotalBattles,
-            winRate:
-              professionTotalBattles > 0
-                ? domain.roundMetric(
-                    (stats.wins / professionTotalBattles) * 100,
-                  )
-                : 0,
-          };
-        })
-        .sort((left, right) => right.totalBattles - left.totalBattles),
-      phTrend,
-      ratingTrend,
-      highlights: Array.from(highlights.values())
-        .filter((highlight) => highlight.value > 0)
-        .sort((left, right) => right.value - left.value),
     };
+
+    const result = (): CombatProfile => {
+      const winRate = totalBattles > 0 ? (wins / totalBattles) * 100 : 0;
+      const avgTurns = totalBattles > 0 ? totalTurns / totalBattles : 0;
+      const avgDuration = totalBattles > 0 ? totalDuration / totalBattles : 0;
+      const damagePerTurn = totalTurns > 0 ? totalDamage / totalTurns : 0;
+      const mitigationBase = totalDamageTaken + totalBlockedDamage;
+
+      const mitigationRate =
+        mitigationBase > 0 ? (totalBlockedDamage / mitigationBase) * 100 : 0;
+
+      const controlRate =
+        totalTurns > 0 ? (totalControlTaken / totalTurns) * 100 : 0;
+
+      const totalSpellCasts = Array.from(spellUsage.values()).reduce(
+        (sum, spell) => sum + spell.casts,
+        0,
+      );
+
+      return {
+        summary: {
+          totalBattles,
+          wins,
+          losses,
+          winRate: domain.roundMetric(winRate),
+          totalPH,
+          totalRatingDelta,
+          avgTurns: domain.roundMetric(avgTurns),
+          avgDuration: Math.round(avgDuration),
+          damagePerTurn: domain.roundMetric(damagePerTurn),
+          mitigationRate: domain.roundMetric(mitigationRate),
+          controlRate: domain.roundMetric(controlRate),
+        },
+        damageMix: getBreakdownEntries(damageMix),
+        mitigationMix: getBreakdownEntries(mitigationMix),
+        spellUsage: Array.from(spellUsage.values())
+          .map((spell) => ({
+            ...spell,
+            share:
+              totalSpellCasts > 0
+                ? domain.roundMetric((spell.casts / totalSpellCasts) * 100)
+                : 0,
+          }))
+          .sort((left, right) => right.casts - left.casts)
+          .slice(0, 12),
+        matchupByProfession: Array.from(matchupByProfession.entries())
+          .map(([prof, stats]) => {
+            const professionTotalBattles = stats.wins + stats.losses;
+
+            return {
+              prof,
+              wins: stats.wins,
+              losses: stats.losses,
+              totalBattles: professionTotalBattles,
+              winRate:
+                professionTotalBattles > 0
+                  ? domain.roundMetric(
+                      (stats.wins / professionTotalBattles) * 100,
+                    )
+                  : 0,
+            };
+          })
+          .sort((left, right) => right.totalBattles - left.totalBattles),
+        phTrend,
+        ratingTrend,
+        highlights: Array.from(highlights.values())
+          .filter((highlight) => highlight.value > 0)
+          .sort((left, right) => right.value - left.value),
+      };
+    };
+
+    return { add, result };
   }
 
   function getEmptyProfile(): CombatProfile {
-    return {
-      summary: {
-        totalBattles: 0,
-        wins: 0,
-        losses: 0,
-        winRate: 0,
-        totalPH: 0,
-        totalRatingDelta: 0,
-        avgTurns: 0,
-        avgDuration: 0,
-        damagePerTurn: 0,
-        mitigationRate: 0,
-        controlRate: 0,
-      },
-      damageMix: [],
-      mitigationMix: [],
-      spellUsage: [],
-      matchupByProfession: [],
-      phTrend: [],
-      ratingTrend: [],
-      highlights: [],
-    };
+    return createAccumulator().result();
   }
 
   function addDamageBreakdown(
     damageMix: Map<string, number>,
-    userWarrior: InflatedBattleWithWarriors["warriors"][number],
+    userWarrior: CombatProfileWarrior,
   ): void {
     addBreakdownValue(damageMix, "melee", userWarrior.meleeDamage);
     addBreakdownValue(damageMix, "distance", userWarrior.distanceDamage);
@@ -264,14 +295,9 @@ export const combatProfileCalculator = (() => {
 
   function addProfessionMatchups(
     matchupByProfession: Map<string, { wins: number; losses: number }>,
-    battle: InflatedBattleWithWarriors,
-    userTeam: number,
+    opponents: CombatProfileBattle["opponents"],
     isWin: boolean,
   ): void {
-    const opponents = battle.warriors.filter(
-      (warrior) => warrior.team !== userTeam,
-    );
-
     for (const opponent of opponents) {
       const stats = matchupByProfession.get(opponent.prof) ?? {
         wins: 0,
@@ -330,5 +356,5 @@ export const combatProfileCalculator = (() => {
     }
   }
 
-  return { calculate, getEmptyProfile };
+  return { calculate, createAccumulator, getEmptyProfile };
 })();

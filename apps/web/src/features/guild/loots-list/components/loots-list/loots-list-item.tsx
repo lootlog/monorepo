@@ -11,6 +11,7 @@ import {
 } from "@/features/guild/loots-list/loots-list-layout";
 import { LootPresentation } from "./loot-presentation";
 import { LootHeaderActions } from "./loot-header-actions";
+import { LootItemStackLootIdContext } from "./loot-item-stack-context";
 
 type Props = { loot: Loot; isNew?: boolean; variant?: "card" | "embedded" };
 
@@ -29,16 +30,20 @@ export const LootsListItem = ({ loot, isNew, variant = "card" }: Props) => {
   );
 
   const lootContent = (
-    <LootPresentation
-      loot={loot}
-      headerActions=<LootHeaderActions
-        commentsCount={loot.commentsCount}
-        onOpenDetails={() => openLootDetails(loot.id)}
+    <LootItemStackLootIdContext value={loot.id}>
+      <LootPresentation
+        loot={loot}
+        headerActions=<LootHeaderActions
+          commentsCount={loot.commentsCount}
+          onOpenDetails={() => openLootDetails(loot.id)}
+        />
+        onShowPlayerLoots={(playerName) =>
+          setFilters({ players: [playerName] })
+        }
+        selectedPlayerNames={filters.players}
+        selectedItemNames={filters.itemNames}
       />
-      onShowPlayerLoots={(playerName) => setFilters({ players: [playerName] })}
-      selectedPlayerNames={filters.players}
-      selectedItemNames={filters.itemNames}
-    />
+    </LootItemStackLootIdContext>
   );
 
   return (

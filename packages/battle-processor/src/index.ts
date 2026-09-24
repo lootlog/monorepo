@@ -776,10 +776,13 @@ export class BattleProcessor {
   private lastAttackerId: string | null = null;
   private remainingFollowUpAttacks = 0;
 
+  /** Statistics mode skips timeline diagnostics while preserving persisted combat results. */
+  constructor(private readonly mode: "full" | "statistics" = "full") {}
+
   processBattle(battleData: BattlePayload): BattleAnalysis {
-    const duration = this.calculateBattleDuration(battleData.events);
+    const duration = BattleProcessor.calculateBattleDuration(battleData.events);
     this.initializeBattleWarriors(battleData.events);
-    this.initializeTimelineState();
+    this.initializeTrackingState();
     this.determineBattleType();
     const matchmakingInfo = this.getMatchmakingInfo(battleData.events);
 
@@ -806,7 +809,7 @@ export class BattleProcessor {
 
   processParsedBattle(battleData: ParsedBattlePayload): BattleAnalysis {
     this.initializeWarriorsFromSnapshots(battleData.warriors);
-    this.initializeTimelineState();
+    this.initializeTrackingState();
     this.determineBattleType();
 
     this.calculateBattleStats(battleData.events, {
@@ -862,13 +865,16 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     for (const [moveIndex, move] of moves.entries()) {
-      const teamHpBefore = this.calculateTeamHp();
+      const teamHpBefore =
+        this.mode === "full" ? this.calculateTeamHp() : undefined;
 
       this.processOutcome(move);
 
       if (!move.actions.length) {
         this.updateHpTracking(move);
-        this.recordTimelineTurn(moveIndex, move, teamHpBefore);
+
+        if (teamHpBefore)
+          this.recordTimelineTurn(moveIndex, move, teamHpBefore);
         continue;
       }
 
@@ -892,7 +898,8 @@ export class BattleProcessor {
       this.processTurnTracking(move, tspellAction, skillIdAction);
       this.processActions(move, !!tspellAction, battleMeta);
       this.updateHpTracking(move);
-      this.recordTimelineTurn(moveIndex, move, teamHpBefore);
+
+      if (teamHpBefore) this.recordTimelineTurn(moveIndex, move, teamHpBefore);
     }
   }
 
@@ -916,7 +923,11 @@ export class BattleProcessor {
 
       const skillIdParam = skillIdAction?.param ?? tspellAction.param;
       const skillId = skillIdParam ? Number.parseInt(skillIdParam, 10) : 0;
-      this.trackSpellMechanics(move, tspellAction.param, skillId);
+
+      if (this.mode === "full") {
+        this.trackSpellMechanics(move, tspellAction.param, skillId);
+      }
+
       this.remainingFollowUpAttacks = skillId === 97 || skillId === 239 ? 2 : 1;
       this.lastAttackerId = move.attackerId;
     } else {
@@ -1916,7 +1927,7 @@ export class BattleProcessor {
     }
 
     if (context.actionType === "combo-max") {
-      if (context.attackerId) {
+      if (this.mode === "full" && context.attackerId) {
         this.trackComboMax(context.attackerId, context.value);
       }
 
@@ -2000,9 +2011,12 @@ export class BattleProcessor {
     }
   }
 
-  private initializeTimelineState(): void {
+  private initializeTrackingState(): void {
     for (const [id, warrior] of this.warriors.entries()) {
       this.lastHp.set(id, 100);
+
+      if (this.mode !== "full") continue;
+
       this.timelineHp.set(id, 100);
       this.timelineCumulative.set(id, createEmptyTimelineStats());
       this.warriorMechanics.set(id, {
@@ -2315,7 +2329,7 @@ export class BattleProcessor {
     };
   }
 
-  private calculateBattleDuration(events: BattlePayload["events"]): number {
+  static calculateBattleDuration(events: BattlePayload["events"]): number {
     if (!events.length) {
       throw new Error("No events found in battle data");
     }

@@ -72,7 +72,7 @@ export const makeBattleAnalyticsCache = (redisService: RedisStore) => {
       );
 
       if (generation === undefined) return yield* factory();
-      const versionedKey = `battle-cache:v2:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
+      const versionedKey = `battle-cache:v3:${encodeURIComponent(userId)}:${generation}:${cacheKey}`;
       const context = yield* Effect.context();
       let failure: Cause.Cause<unknown> | undefined;
 

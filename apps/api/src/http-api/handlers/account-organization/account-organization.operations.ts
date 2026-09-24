@@ -455,23 +455,28 @@ export const updateCurrentUserPreferences = Effect.fn(
 });
 
 export const getCurrentUserGuilds = Effect.fn("getCurrentUserGuilds")(
-  function* (accessibleOnly = false) {
+  function* (refresh: boolean) {
     const current = yield* identity;
 
     const value = yield* data((service) =>
-      accessibleOnly
-        ? service.getCurrentUserAccessibleGuilds(current)
-        : service.getCurrentUserGuilds(current),
+      service.getCurrentUserGuilds(current, refresh),
     );
 
-    return yield* decode(
-      accessibleOnly
-        ? CurrentOrganizationsResponse
-        : CurrentOrganizationsResponse,
-      value,
-    );
+    return yield* decode(CurrentOrganizationsResponse, value);
   },
 );
+
+export const getCurrentUserAccessibleGuilds = Effect.fn(
+  "getCurrentUserAccessibleGuilds",
+)(function* () {
+  const current = yield* identity;
+
+  const value = yield* data((service) =>
+    service.getCurrentUserAccessibleGuilds(current),
+  );
+
+  return yield* decode(CurrentOrganizationsResponse, value);
+});
 
 export const getCurrentUserGamePreferences = Effect.fn(
   "getCurrentUserGamePreferences",

@@ -13,6 +13,9 @@ import { useMatchingBackgroundMask } from "@/src/hooks/use-matching-background-m
 import { MenuIcon } from "./menu-icon";
 import { LootlogMark } from "./lootlog-mark";
 
+const navigationLinkClassName =
+  "rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]";
+
 const closeNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
   event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
 };
@@ -64,38 +67,38 @@ export function LandingHeader() {
       <a
         onClick={closeNavigation}
         href="#product"
-        className="rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]"
+        className={navigationLinkClassName}
       >
         {t("landing.header.product")}
       </a>
       <a
         onClick={closeNavigation}
         href="#workflow"
-        className="rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]"
+        className={navigationLinkClassName}
       >
         {t("landing.header.workflow")}
       </a>
       <a
         onClick={closeNavigation}
         href="#trust"
-        className="rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]"
+        className={navigationLinkClassName}
       >
         {t("landing.header.trust")}
       </a>
       <a
         onClick={closeNavigation}
         href="#faq"
-        className="rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]"
+        className={navigationLinkClassName}
       >
         {t("landing.header.faq")}
       </a>
       <a
         onClick={closeNavigation}
         href={links.docs}
-        className="inline-flex items-center gap-1 rounded-md transition-colors hover:text-[var(--broadcast-lime)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--broadcast-lime)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--broadcast-ink)]"
+        className={`inline-flex items-center gap-1 ${navigationLinkClassName}`}
       >
         {t("landing.header.docs")}
-        <ArrowUpRight className="size-3.5" />
+        <ArrowUpRight className="size-3.5" aria-hidden="true" />
       </a>
       <a
         onClick={closeNavigation}

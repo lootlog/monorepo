@@ -9,6 +9,8 @@ import {
   fireEvent,
   render as renderElement,
   screen,
+  waitFor,
+  within,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -57,6 +59,180 @@ describe("EventRankingTable", () => {
     ]);
 
     expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it("preserves a correction while saving and after failure, then closes after a successful retry", async () => {
+    let failRequest = (_reason: Error) => {};
+
+    const pendingRequest = new Promise<Response>((_resolve, reject) => {
+      failRequest = reject;
+    });
+
+    const requests: Request[] = [];
+    mocks.fetch.mockImplementation((input, init) => {
+      requests.push(new Request(input, init));
+
+      return requests.length === 1
+        ? pendingRequest
+        : Promise.resolve(new Response(null, { status: 204 }));
+    });
+
+    renderRankingTable([createRanking({ id: "ranking-1", memberId: 1 })]);
+    fireEvent.click(screen.getByRole("button", { name: "events.points.edit" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+      {
+        target: { value: "12.5" },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+      {
+        target: { value: "Missing participation" },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: "common.save" })
+          .hasAttribute("disabled"),
+      ).toBe(true);
+      expect(requests).toHaveLength(1);
+    });
+    expect(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+    ).toHaveProperty("value", "12.5");
+    expect(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+    ).toHaveProperty("value", "Missing participation");
+
+    await act(async () => {
+      failRequest(new Error("Network unavailable"));
+    });
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: "common.save" })
+          .hasAttribute("disabled"),
+      ).toBe(false);
+    });
+    expect(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+    ).toHaveProperty("value", "12.5");
+    expect(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+    ).toHaveProperty("value", "Missing participation");
+
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "events.points.edit" }),
+    );
+    expect(requests).toHaveLength(2);
+
+    for (const request of requests) {
+      expect(new URL(request.url).pathname).toBe(
+        "/guilds/guild-1/events/event-1/ranking/ranking-1",
+      );
+      expect(await request.json()).toEqual({
+        pointsDelta: 12.5,
+        comment: "Missing participation",
+      });
+    }
+  });
+
+  it("keeps the selected ranking and correction when refreshed points reorder the table", async () => {
+    const ranking = createRanking({
+      id: "ranking-1",
+      memberId: 1,
+      totalPoints: 100,
+    });
+
+    const otherRanking = createRanking({
+      id: "ranking-2",
+      memberId: 2,
+      totalPoints: 50,
+    });
+
+    const { rerenderRankings } = renderRankingTable([ranking, otherRanking]);
+    const selectedRow = screen.getByText("Member 1").closest("tr");
+
+    if (!selectedRow)
+      throw new Error("Expected the selected member's ranking row");
+    fireEvent.click(
+      within(selectedRow).getByRole("button", { name: "events.points.edit" }),
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+      {
+        target: { value: "10" },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+      {
+        target: { value: "Correct member" },
+      },
+    );
+
+    rerenderRankings([ranking, { ...otherRanking, totalPoints: 200 }]);
+
+    expect(
+      screen.getByRole("textbox", { name: "events.points.deltaLabel" }),
+    ).toHaveProperty("value", "10");
+    expect(
+      screen.getByRole("textbox", { name: "events.points.commentLabel" }),
+    ).toHaveProperty("value", "Correct member");
+    fireEvent.click(screen.getByRole("button", { name: "common.save" }));
+    await waitFor(() => expect(mocks.fetch).toHaveBeenCalledOnce());
+    const [input, init] = mocks.fetch.mock.calls[0] ?? [];
+    const request = new Request(input, init);
+    expect(new URL(request.url).pathname).toBe(
+      "/guilds/guild-1/events/event-1/ranking/ranking-1",
+    );
+    expect(await request.json()).toEqual({
+      pointsDelta: 10,
+      comment: "Correct member",
+    });
+  });
+
+  it("returns keyboard focus to the selected ranking's current edit button after a refresh", async () => {
+    const ranking = createRanking({ id: "ranking-1", memberId: 1 });
+
+    const otherRanking = createRanking({
+      id: "ranking-2",
+      memberId: 2,
+      totalPoints: 50,
+    });
+
+    const { rerenderRankings } = renderRankingTable([ranking, otherRanking]);
+
+    const selectedRow = screen.getByText("Member 1").closest("tr");
+
+    if (!selectedRow)
+      throw new Error("Expected the selected member's ranking row");
+
+    const editButton = within(selectedRow).getByRole("button", {
+      name: "events.points.edit",
+    });
+
+    editButton.focus();
+    fireEvent.click(editButton);
+    rerenderRankings([ranking, { ...otherRanking, totalPoints: 200 }]);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    const refreshedRow = screen.getByText("Member 1").closest("tr");
+
+    if (!refreshedRow)
+      throw new Error("Expected the refreshed member's ranking row");
+
+    expect(document.activeElement).toBe(
+      within(refreshedRow).getByRole("button", { name: "events.points.edit" }),
+    );
   });
 
   it("does not enter an update loop after an external rerender", async () => {
@@ -429,18 +605,26 @@ function renderRankingTable(
     },
   });
 
-  return render(
+  const createTable = (currentRankings: EventRanking[]) => (
     <QueryClientProvider client={queryClient}>
       <EventRankingTable
-        rankings={rankings}
+        rankings={currentRankings}
         guildId={options.guildId ?? "guild-1"}
         eventId={options.eventId ?? "event-1"}
         canEdit={options.canEdit ?? true}
         currentMemberId={options.currentMemberId}
         variant={options.variant}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+
+  const view = render(createTable(rankings));
+
+  return {
+    ...view,
+    rerenderRankings: (currentRankings: EventRanking[]) =>
+      view.rerender(createTable(currentRankings)),
+  };
 }
 
 function createRanking({

@@ -147,7 +147,6 @@ const makeSocket = () => {
     subscriptions: new Map(),
     airTagScopes: [],
     confidence: "reported",
-    backpressureStrikes: 0,
   };
 
   return {
@@ -341,7 +340,7 @@ test.each([
     };
 
     const hub = new RealtimeHub(
-      { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
+      { maxBackpressureBytes: 1_024 },
       federationStore,
       () => {},
     );
@@ -689,7 +688,7 @@ describe("CommandHandler session lifecycle", () => {
     "rejects subscription exhaustion through %s commands while allowing unsubscribe",
     async (frameEncoding) => {
       const hub = new RealtimeHub(
-        { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
+        { maxBackpressureBytes: 1_024 },
         unusedFederationStore,
       );
 
@@ -724,11 +723,19 @@ describe("CommandHandler session lifecycle", () => {
           joined: true,
         },
         send: (data) => {
-          if (Predicate.isString(data)) responses.push(JSON.parse(data));
-          else if (data instanceof Uint8Array) responses.push(decode(data));
-          else throw new Error("Unexpected frame encoding");
+          if (Predicate.isString(data)) {
+            responses.push(JSON.parse(data));
 
-          return 0;
+            return Buffer.byteLength(data);
+          }
+
+          if (data instanceof Uint8Array) {
+            responses.push(decode(data));
+
+            return data.byteLength;
+          }
+
+          throw new Error("Unexpected frame encoding");
         },
       };
 

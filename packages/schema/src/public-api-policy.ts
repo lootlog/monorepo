@@ -53,6 +53,14 @@ export const PUBLIC_API_OPERATIONS = [
   },
   {
     service: "main",
+    method: "POST",
+    path: "/users/@me/guilds/refresh",
+    operationId: "UsersController_refreshCurrentUserGuilds",
+    access: "session-only",
+    data: "mixed",
+  },
+  {
+    service: "main",
     method: "GET",
     path: "/users/@me/guilds/accessible",
     operationId: "UsersController_getCurrentUserAccessibleGuilds",

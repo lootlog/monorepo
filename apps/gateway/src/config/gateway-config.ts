@@ -27,7 +27,6 @@ export interface GatewayConfiguration {
   readonly allowedWebOrigins: ReadonlySet<string>;
   readonly allowedExtensionOrigins: ReadonlySet<string>;
   readonly maxBackpressureBytes: number;
-  readonly maxBackpressureStrikes: number;
 }
 
 const splitOrigins = (value: string): ReadonlySet<string> =>
@@ -107,9 +106,6 @@ export const loadGatewayConfiguration = Effect.gen(function* () {
     maxBackpressureBytes: yield* Config.Number(
       "WEBSOCKET_MAX_BACKPRESSURE_BYTES",
     ).pipe(Config.withDefault(1_048_576)),
-    maxBackpressureStrikes: yield* Config.Number(
-      "WEBSOCKET_MAX_BACKPRESSURE_STRIKES",
-    ).pipe(Config.withDefault(3)),
   } satisfies GatewayConfiguration;
 });
 

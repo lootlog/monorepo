@@ -4,12 +4,13 @@ import {
   S3ServiceException,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand,
+  DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import { gzipSync, gunzipSync } from "node:zlib";
 import type { R2Config } from "#src/config/r2.config";
 import { Logger } from "#src/infrastructure/logger";
 import type { RedisStore } from "#src/infrastructure/redis-store";
+import { chunk } from "es-toolkit";
 import { Redacted } from "effect";
 
 const CACHE_PREFIX = "battle:raw";
@@ -17,6 +18,9 @@ const CACHE_PREFIX = "battle:raw";
 const LRU_KEY = "battle:raw:lru";
 
 const MAX_CACHE_SIZE = 1000;
+
+// Keep unusually large raw objects in R2 instead of filling the shared cache.
+const MAX_CACHE_ENTRY_BYTES = 256 * 1024;
 
 const CACHE_TTL = 24 * 60 * 60;
 
@@ -26,11 +30,12 @@ export const makeBattleObjectStorage = (
     | "get"
     | "set"
     | "del"
+    | "expire"
+    | "zremrangebyscore"
     | "zadd"
     | "zcard"
     | "zrange"
     | "zrem"
-    | "zremrangebyrank"
   >,
   config: R2Config,
 ) => {
@@ -93,11 +98,25 @@ export const makeBattleObjectStorage = (
       try {
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
 
-        const cachedData = await redisStore.get(cacheKey);
+        const cachedData = await redisStore.get(cacheKey).catch((error) => {
+          logger.warn("Raw battle cache unavailable", error);
+
+          return null;
+        });
 
         if (cachedData) {
           logger.debug(`Cache hit for battle ${battleId}`);
-          await objectStorage.updateLRU(battleId);
+
+          if (Buffer.byteLength(cachedData, "utf8") <= MAX_CACHE_ENTRY_BYTES) {
+            await objectStorage.updateLRU(battleId);
+          } else {
+            await Promise.all([
+              redisStore.del(cacheKey),
+              redisStore.zrem(LRU_KEY, battleId),
+            ]).catch((error) =>
+              logger.warn("Raw battle cache cleanup failed", error),
+            );
+          }
 
           return decodeJson(cachedData);
         }
@@ -137,9 +156,7 @@ export const makeBattleObjectStorage = (
         const parsedData = decodeJson(decompressedData);
 
         await objectStorage.cacheData(battleId, decompressedData);
-        logger.log(
-          `Battle data retrieved from R2 and cached for battle ${battleId}`,
-        );
+        logger.log(`Battle data retrieved from R2 for battle ${battleId}`);
 
         return parsedData;
       } catch (error) {
@@ -148,28 +165,60 @@ export const makeBattleObjectStorage = (
       }
     },
 
-    async deleteBattleData(battleId: string): Promise<void> {
-      try {
-        const key = `battles/${battleId}.json`;
+    async deleteBattlesData(battleIds: readonly string[]): Promise<string[]> {
+      const failed: string[] = [];
 
-        const command = new DeleteObjectCommand({
-          Bucket: config.bucketName,
-          Key: key,
-        });
+      for (const batch of chunk([...battleIds], 1_000)) {
+        const response = await client.send(
+          new DeleteObjectsCommand({
+            Bucket: config.bucketName,
+            Delete: {
+              Objects: batch.map((id) => ({ Key: `battles/${id}.json` })),
+              Quiet: true,
+            },
+          }),
+          { abortSignal: AbortSignal.timeout(10_000) },
+        );
 
-        await client.send(command);
-        await objectStorage.deleteCachedData(battleId);
-        logger.log(`Battle data deleted successfully for battle ${battleId}`);
-      } catch (error) {
-        logger.error(`Failed to delete battle data for ${battleId}:`, error);
-        throw error;
+        if (response.Errors?.some((error) => !error.Key)) {
+          throw new Error(
+            "R2 returned an unidentified object deletion failure",
+          );
+        }
+
+        const errors = new Set(response.Errors?.map((error) => error.Key));
+
+        const completed = batch.filter(
+          (id) => !errors.has(`battles/${id}.json`),
+        );
+
+        failed.push(...batch.filter((id) => errors.has(`battles/${id}.json`)));
+
+        if (completed.length > 0) {
+          // Redis failure keeps the durable cleanup intent for a safe retry.
+          await Promise.all([
+            redisStore.del(...completed.map((id) => `${CACHE_PREFIX}:${id}`)),
+            redisStore.zrem(LRU_KEY, ...completed),
+          ]);
+        }
       }
+
+      return failed;
     },
 
     async cacheData(battleId: string, data: string): Promise<void> {
       try {
         const cacheKey = `${CACHE_PREFIX}:${battleId}`;
         const timestamp = Date.now();
+
+        if (Buffer.byteLength(data, "utf8") > MAX_CACHE_ENTRY_BYTES) {
+          await Promise.all([
+            redisStore.del(cacheKey),
+            redisStore.zrem(LRU_KEY, battleId),
+          ]);
+
+          return;
+        }
 
         await Promise.all([
           redisStore.set(cacheKey, data, CACHE_TTL),
@@ -185,7 +234,10 @@ export const makeBattleObjectStorage = (
     async updateLRU(battleId: string): Promise<void> {
       try {
         const timestamp = Date.now();
-        await redisStore.zadd(LRU_KEY, timestamp, battleId);
+        await Promise.all([
+          redisStore.expire(`${CACHE_PREFIX}:${battleId}`, CACHE_TTL),
+          redisStore.zadd(LRU_KEY, timestamp, battleId),
+        ]);
       } catch (error) {
         logger.warn(`Failed to update LRU for battle ${battleId}:`, error);
       }
@@ -193,6 +245,11 @@ export const makeBattleObjectStorage = (
 
     async enforceLRULimit(): Promise<void> {
       try {
+        await redisStore.zremrangebyscore(
+          LRU_KEY,
+          "-inf",
+          Date.now() - CACHE_TTL * 1_000,
+        );
         const count = await redisStore.zcard(LRU_KEY);
 
         if (count > MAX_CACHE_SIZE) {
@@ -206,10 +263,12 @@ export const makeBattleObjectStorage = (
 
           if (oldestBattles.length > 0) {
             await Promise.all([
-              ...oldestBattles.map((battleId) =>
-                redisStore.del(`${CACHE_PREFIX}:${battleId}`),
+              redisStore.del(
+                ...oldestBattles.map(
+                  (battleId) => `${CACHE_PREFIX}:${battleId}`,
+                ),
               ),
-              redisStore.zremrangebyrank(LRU_KEY, 0, toRemove - 1),
+              redisStore.zrem(LRU_KEY, ...oldestBattles),
             ]);
 
             logger.log(
@@ -221,23 +280,6 @@ export const makeBattleObjectStorage = (
         logger.warn("Failed to enforce LRU limit:", error);
       }
     },
-
-    async deleteCachedData(battleId: string): Promise<void> {
-      try {
-        const cacheKey = `${CACHE_PREFIX}:${battleId}`;
-        await Promise.all([
-          redisStore.del(cacheKey),
-          redisStore.zrem(LRU_KEY, battleId),
-        ]);
-        logger.debug(`Removed battle ${battleId} from cache`);
-      } catch (error) {
-        logger.warn(
-          `Failed to delete cached data for battle ${battleId}:`,
-          error,
-        );
-        throw error;
-      }
-    },
   };
 
   return objectStorage;
@@ -247,5 +289,5 @@ type BattleObjectStorageModule = ReturnType<typeof makeBattleObjectStorage>;
 
 export type BattleObjectStorage = Pick<
   BattleObjectStorageModule,
-  "deleteBattleData" | "getBattleData" | "uploadBattleData"
+  "deleteBattlesData" | "getBattleData" | "uploadBattleData"
 >;
