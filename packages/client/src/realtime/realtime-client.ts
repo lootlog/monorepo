@@ -3,6 +3,7 @@ import {
   isServerEventFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   REALTIME_PROTOCOL_VERSION,
+  REALTIME_CLIENT_CLOSE_CODES,
   type ClientCommand,
   type ServerEvent,
   type SubscriptionScope,
@@ -62,6 +63,8 @@ interface PendingRequest {
   readonly reject: (error: Error) => void;
   readonly timeout: ReturnType<typeof setTimeout>;
 }
+
+class RealtimeRequestTimeout extends Error {}
 
 export class RealtimeRequestError extends Error {
   constructor(
@@ -259,6 +262,14 @@ export class RealtimeClient {
     type: Type,
     data: CommandData<Type>,
   ): Promise<unknown> {
+    return this.requestWithTimeout(type, data, this.requestTimeoutMs);
+  }
+
+  private requestWithTimeout<Type extends CommandType>(
+    type: Type,
+    data: CommandData<Type>,
+    timeoutMs: number,
+  ): ReturnType<RealtimeClient["request"]> {
     const activeSocket = this.socket;
 
     if (!activeSocket || activeSocket.readyState !== WEBSOCKET_OPEN) {
@@ -270,8 +281,10 @@ export class RealtimeClient {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(requestId);
-        reject(new Error(`Realtime request timed out: ${type}`));
-      }, this.requestTimeoutMs);
+        reject(
+          new RealtimeRequestTimeout(`Realtime request timed out: ${type}`),
+        );
+      }, timeoutMs);
 
       this.pending.set(requestId, { type, resolve, reject, timeout });
 
@@ -318,21 +331,37 @@ export class RealtimeClient {
       if (this.socket !== socket) return;
       this.setState("connected");
 
-      if (this.joinData) {
+      // A connected observer can own startup (including a fresh game proof).
+      // Its synchronous join changes state; do not replay that startup again.
+      if (this.joinData && this.stateValue === "connected") {
         const rejoin =
           this.rejoinHandler ??
           (() => this.performJoin().then(() => undefined));
 
-        void rejoin().catch(() => socket.close(4008, "session rejoin failed"));
+        void rejoin().catch(() =>
+          socket.close(
+            REALTIME_CLIENT_CLOSE_CODES.sessionJoinFailed,
+            "session rejoin failed",
+          ),
+        );
       }
     });
     socket.addEventListener("message", (event) => {
       this.messageChain = this.messageChain
         .then(() => this.handleMessage(event.data))
-        .catch(() => socket.close(4007, "malformed realtime frame"));
+        .catch(() =>
+          socket.close(
+            REALTIME_CLIENT_CLOSE_CODES.malformedFrame,
+            "malformed realtime frame",
+          ),
+        );
     });
     socket.addEventListener("error", () => {
-      if (this.socket === socket) socket.close();
+      if (this.socket === socket)
+        socket.close(
+          REALTIME_CLIENT_CLOSE_CODES.transportError,
+          "transport error",
+        );
     });
     socket.addEventListener("close", () => {
       if (this.socket !== socket) return;
@@ -361,7 +390,11 @@ export class RealtimeClient {
 
       return result;
     } catch (error) {
-      if (this.connected) this.socket?.close(4008, "session join failed");
+      if (this.connected)
+        this.socket?.close(
+          REALTIME_CLIENT_CLOSE_CODES.sessionJoinFailed,
+          "session join failed",
+        );
       throw error;
     }
   }
@@ -439,7 +472,10 @@ export class RealtimeClient {
     );
   }
 
-  private scheduleHeartbeat(): void {
+  private scheduleHeartbeat(
+    delayMs = PRESENCE_HEARTBEAT_INTERVAL_MS,
+    retryDeadline?: number,
+  ): void {
     this.clearHeartbeat();
 
     if (!this.presenceSessionId || !this.connected) {
@@ -454,20 +490,83 @@ export class RealtimeClient {
       if (!sessionId) return;
       const startedAt = performance.now();
       const socket = this.socket;
-      void this.request("presence.heartbeat", { sessionId })
+      const deadline = retryDeadline ?? startedAt + this.requestTimeoutMs;
+
+      if (deadline <= startedAt) {
+        this.setHeartbeatLatency(null);
+        socket?.close(
+          REALTIME_CLIENT_CLOSE_CODES.heartbeatTimeout,
+          "heartbeat timeout",
+        );
+
+        return;
+      }
+
+      void this.requestWithTimeout(
+        "presence.heartbeat",
+        { sessionId },
+        deadline - startedAt,
+      )
         .then(() => {
           if (this.socket !== socket || this.presenceSessionId !== sessionId)
             return;
           this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
           this.scheduleHeartbeat();
         })
-        .catch(() => {
+        .catch((error: Error) => {
           if (this.socket !== socket || this.presenceSessionId !== sessionId)
             return;
           this.setHeartbeatLatency(null);
-          socket?.close();
+
+          // A correlated retryable response proves the transport is alive. Retry once
+          // inside the original heartbeat deadline; silence and access denial still close.
+          if (error instanceof RealtimeRequestError && error.retryable) {
+            const retryDelay = Math.max(
+              500 + Math.round(this.random() * 1_000),
+              error.retryAfterMs ?? 0,
+            );
+
+            if (
+              retryDeadline === undefined &&
+              performance.now() + retryDelay < deadline
+            ) {
+              this.scheduleHeartbeat(retryDelay, deadline);
+
+              return;
+            }
+
+            socket?.close(
+              REALTIME_CLIENT_CLOSE_CODES.heartbeatUnavailable,
+              "heartbeat unavailable",
+            );
+
+            return;
+          }
+
+          if (error instanceof RealtimeRequestTimeout) {
+            socket?.close(
+              REALTIME_CLIENT_CLOSE_CODES.heartbeatTimeout,
+              "heartbeat timeout",
+            );
+
+            return;
+          }
+
+          if (error instanceof RealtimeRequestError) {
+            socket?.close(
+              REALTIME_CLIENT_CLOSE_CODES.heartbeatRejected,
+              "heartbeat rejected",
+            );
+
+            return;
+          }
+
+          socket?.close(
+            REALTIME_CLIENT_CLOSE_CODES.transportError,
+            "transport error",
+          );
         });
-    }, PRESENCE_HEARTBEAT_INTERVAL_MS);
+    }, delayMs);
   }
 
   private rejectPending(error: Error): void {

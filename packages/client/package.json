@@ -24,7 +24,8 @@
     "test": "bun test",
     "client:check": "bun ./scripts/check-openapi-parity.ts && bun ./scripts/check-generated.ts",
     "client:generate": "bun ./scripts/generate.ts",
-    "openapi:parity": "bun ./scripts/check-openapi-parity.ts"
+    "openapi:parity": "bun ./scripts/check-openapi-parity.ts",
+    "perf:reconnect": "bun scripts/reconnect.bench.ts"
   },
   "dependencies": {
     "@lootlog/protocol": "workspace:*",

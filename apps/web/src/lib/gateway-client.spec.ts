@@ -192,3 +192,73 @@ it("delivers complete feed entries without turning them into loot invalidation s
   expect(entryHandler).toHaveBeenCalledWith(entry);
   expect(lootHandler).not.toHaveBeenCalled();
 });
+
+it("lets the provider join once after a deferred reconnect notification", async () => {
+  const { decodeRealtimeFrame, encodeRealtimeFrame } =
+    await import("@lootlog/protocol/realtime/codec");
+
+  const wires: Array<{ open: () => void; close: () => void }> = [];
+  const joins: unknown[] = [];
+
+  class Wire {
+    binaryType: BinaryType = "arraybuffer";
+    readyState = 1;
+    private readonly listeners = new Map<
+      string,
+      (event: { data?: unknown }) => void
+    >();
+    constructor() {
+      wires.push({
+        open: () => this.listeners.get("open")?.({}),
+        close: () => this.close(),
+      });
+    }
+    addEventListener(
+      type: string,
+      listener: (event: { data?: unknown }) => void,
+    ) {
+      this.listeners.set(type, listener);
+    }
+    close() {
+      this.listeners.get("close")?.({});
+    }
+    send(bytes: Uint8Array) {
+      const command = decodeRealtimeFrame(bytes);
+
+      if (!("requestId" in command) || !command.requestId)
+        throw new Error("Expected request");
+
+      if ("type" in command && command.type === "session.join")
+        joins.push(command.data);
+
+      const response = encodeRealtimeFrame({
+        v: 1,
+        requestId: command.requestId,
+        status: "success",
+        data: {},
+      });
+
+      queueMicrotask(() => this.listeners.get("message")?.({ data: response }));
+    }
+  }
+
+  vi.stubGlobal("WebSocket", Wire);
+  const client = new GatewayClient();
+  client.on(GatewayEvent.CONNECT, () =>
+    queueMicrotask(() => client.emit(GatewayEvent.JOIN, {})),
+  );
+
+  try {
+    client.connect();
+    wires[0]?.open();
+    await vi.waitFor(() => expect(joins).toHaveLength(1));
+    wires[0]?.close();
+    client.connect();
+    wires[1]?.open();
+    await Promise.resolve();
+    await vi.waitFor(() => expect(joins).toHaveLength(2));
+  } finally {
+    client.disconnect();
+    vi.unstubAllGlobals();
+  }
+});

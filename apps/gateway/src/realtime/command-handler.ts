@@ -1,3 +1,4 @@
+import { recordRealtimeCommand } from "#src/realtime/connection-metrics";
 import { createHash } from "node:crypto";
 import {
   createAccessPolicySnapshot,
@@ -218,10 +219,13 @@ export class CommandHandler {
           // Legacy fire-and-forget commands cannot receive a correlated error.
           socket.close(1013, "command capacity exceeded");
         }
-      });
+      }).pipe(
+        Effect.andThen(recordRealtimeCommand(command.type, "overloaded")),
+      );
     }
 
     return this.dispatch(socket, command).pipe(
+      Effect.tap(() => recordRealtimeCommand(command.type, "success")),
       Effect.tap((data) =>
         Effect.sync(() => {
           if (command.requestId)
@@ -233,25 +237,35 @@ export class CommandHandler {
             });
         }),
       ),
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          const failure = isCommandFailure(error)
-            ? commandFailureDetails(error)
-            : { message: "command temporarily unavailable", retryable: true };
+      Effect.catch((error) => {
+        const failure = isCommandFailure(error)
+          ? commandFailureDetails(error)
+          : { message: "command temporarily unavailable", retryable: true };
 
-          if (command.requestId)
-            this.hub.sendResponse(
-              socket,
-              errorResponse(
-                command.requestId,
-                "COMMAND_REJECTED",
-                failure.message,
-                failure.retryable,
-              ),
-            );
-        }),
-      ),
+        return recordRealtimeCommand(
+          command.type,
+          failure.retryable ? "retryable" : "rejected",
+        ).pipe(
+          Effect.andThen(
+            Effect.sync(() => {
+              if (command.requestId)
+                this.hub.sendResponse(
+                  socket,
+                  errorResponse(
+                    command.requestId,
+                    "COMMAND_REJECTED",
+                    failure.message,
+                    failure.retryable,
+                  ),
+                );
+            }),
+          ),
+        );
+      }),
       Effect.asVoid,
+      Effect.withSpan("gateway.command", {
+        attributes: { "rpc.method": command.type },
+      }),
     );
   }
 
