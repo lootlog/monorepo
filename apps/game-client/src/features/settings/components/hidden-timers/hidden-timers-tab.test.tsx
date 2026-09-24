@@ -55,7 +55,11 @@ describe("HiddenTimersTab", () => {
 
     expect(useTimersStore.getState().hiddenTimers["guild-1"]).toEqual([]);
     expect(screen.queryByText("Alpha hidden boss")).not.toBeInTheDocument();
-    expect(screen.getByText("Brak ukrytych timerów.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Nie masz ukrytych timerów. Timer ukryjesz prawym przyciskiem myszy w oknie timerów.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("hides the selector when grouping is enabled", () => {

@@ -1,5 +1,4 @@
 import { DebugRuntimeState } from "./debug-runtime-state";
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -315,9 +314,9 @@ export const DebugTab: FC = () => {
       >
         <SettingsPanel className="ll:max-h-32 ll:overflow-y-auto ll:font-mono ll:text-xs">
           {eventLog.length === 0 ? (
-            <SettingsEmptyState className="ll:bg-transparent ll:px-0 ll:py-0">
+            <p className="ll:m-0 ll:text-muted-foreground">
               {t("settings.debug.noEvents")}
-            </SettingsEmptyState>
+            </p>
           ) : (
             eventLog.map((entry) => (
               <div key={entry.id} className="ll:flex ll:items-center ll:gap-2">

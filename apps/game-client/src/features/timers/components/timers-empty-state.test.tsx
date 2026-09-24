@@ -11,7 +11,7 @@ describe("TimersEmptyState", () => {
       <TimersEmptyState areFiltersActive onResetFilters={onResetFilters} />,
     );
 
-    expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
+    expect(screen.getByText("Żaden timer nie pasuje do filtrów")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));
     expect(onResetFilters).toHaveBeenCalledOnce();
@@ -25,12 +25,7 @@ describe("TimersEmptyState", () => {
       />,
     );
 
-    expect(screen.getByText("Brak timerów")).toBeVisible();
-    expect(screen.getByRole("status")).toHaveClass(
-      "ll:h-full",
-      "ll:items-center",
-      "ll:justify-center",
-    );
+    expect(screen.getByText("Nie ma jeszcze timerów")).toBeVisible();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

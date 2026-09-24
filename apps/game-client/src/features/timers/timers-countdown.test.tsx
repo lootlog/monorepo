@@ -65,7 +65,7 @@ it("updates the countdown without remounting the tile and removes it at the expi
   expect(screen.getByText(/\[H\] Tanroth/)).toBe(label);
   act(() => vi.advanceTimersByTime(34_000));
   expect(screen.queryByText(/\[H\] Tanroth/)).not.toBeInTheDocument();
-  expect(screen.getByText("Brak timerów")).toBeVisible();
+  expect(screen.getByText("Nie ma jeszcze timerów")).toBeVisible();
 });
 
 it("moves an always-visible expired timer below active timers at the removal boundary", () => {
