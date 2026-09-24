@@ -160,14 +160,10 @@ export const GuildsSelector: FC = () => {
       : orderedGuilds;
 
   return (
-    <div
-      data-slot="guild-rail"
-      className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden"
-    >
+    <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 pb-2 h-full overflow-hidden">
       <UserNavItem />
       <Separator className="-mt-[1px]" />
-      {/* The rail is too narrow for a scrollbar; it scrolls with the wheel only. */}
-      <ScrollArea className="h-24 flex-1 [&>[data-slot=scroll-area-scrollbar]]:hidden">
+      <ScrollArea className="flex-1 h-24">
         {(guildsQuery.isError && !guilds) ||
         (preferencesQuery.isError && preferencesQuery.data === undefined) ? (
           <div className="flex h-12 items-center justify-center">

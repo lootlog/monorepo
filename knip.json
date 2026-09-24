@@ -93,10 +93,8 @@
   "ignore": ["**/dist/**", "**/build/**", "**/node_modules/**"],
   "ignoreWorkspaces": ["repos/**"],
   "ignoreDependencies": [
-    "@fontsource-variable/cinzel",
     "@fontsource-variable/geist",
     "@fontsource-variable/geist-mono",
-    "@fontsource/shippori-mincho",
     "@lootlog/ui",
     "@tailwindcss/postcss",
     "@types/mdx",

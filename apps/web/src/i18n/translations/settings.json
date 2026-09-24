@@ -981,18 +981,6 @@
     "title": "Wygląd",
     "description": "Dostosuj wygląd aplikacji według swoich preferencji.",
     "themeLabel": "Motyw",
-    "effects": {
-      "title": "Efekty motywu",
-      "levelLabel": "Ilość efektów",
-      "levelDescription": "Zapisywane na tym urządzeniu. Tryb oszczędny zachowuje materiały i ramy motywu, wyłącza tylko ruch.",
-      "levels": {
-        "full": "Pełne",
-        "subtle": "Subtelne",
-        "off": "Bez ruchu"
-      },
-      "pauseUnfocusedLabel": "Wstrzymuj efekty otoczenia, gdy pracuję w innym oknie",
-      "pauseUnfocusedDescription": "Przydatne na drugim monitorze obok gry. Powiadomienia i timery działają dalej."
-    },
     "saveError": "Nie udało się zapisać motywu na koncie. Podgląd pozostaje aktywny. Wybierz motyw ponownie, aby spróbować jeszcze raz.",
     "themes": {
       "default": {
@@ -1035,7 +1023,7 @@
       },
       "rias": {
         "title": "Rias Gremory",
-        "description": "Szkarłatny Dwór"
+        "description": "Crimson-Haired Ruin Princess"
       },
       "cat-pink": {
         "title": "Różowy Kociak 🐱",

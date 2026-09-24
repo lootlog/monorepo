@@ -1,3 +1,4 @@
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
@@ -13,13 +14,11 @@ import { DocumentTitleUpdater } from "@/components/router/document-title-updater
 import { RootRouteError } from "@/components/router/root-route-error";
 import { RootRouteNotFound } from "@/components/router/root-route-not-found";
 import { resolveAppNavigation } from "@/navigation/app-navigation";
-import { ThemeEffectsController, ThemeSpinnerProvider } from "@/themes";
+import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
 import "@/themes/default.css";
 import "@/themes/backgrounds.css";
-import "@/themes/rias/rias.css";
-import "@/themes/rukia/rukia.css";
 import "../scrollbars.css";
 import "@/i18n/config";
 
@@ -31,6 +30,7 @@ const ReactQueryDevtools = lazy(() =>
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     document.documentElement.classList.add("theme-ready");
@@ -43,10 +43,10 @@ function RootComponent() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <ThemeSpinnerProvider>
-            <ThemeEffectsController />
             <NuqsAdapter>
               <GlobalContextProvider>
                 <Outlet />
+                {!prefersReducedMotion && <ThemeRootEffects />}
                 {import.meta.env.DEV ? (
                   <Suspense fallback={null}>
                     <ReactQueryDevtools initialIsOpen={false} />

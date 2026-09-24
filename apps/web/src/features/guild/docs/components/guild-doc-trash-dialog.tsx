@@ -5,7 +5,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -93,15 +92,15 @@ export const GuildDocTrashDialog = ({
         if (!isMutating) onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="max-h-[85vh] sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-border/70 bg-background/95 p-0 shadow-2xl shadow-background/40  sm:max-w-2xl">
+        <DialogHeader className="border-b border-border/70 bg-card px-4 py-3 pr-12">
+          <DialogTitle className="flex items-center gap-2 text-base">
             <span className="rounded-xl bg-destructive/10 p-2">
               <Trash2 className="size-4 text-destructive" />
             </span>
             {t("docs.trash.title")}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             {canManage
               ? t("docs.trash.descriptionAdmin")
               : t("docs.trash.descriptionWriter")}
@@ -109,13 +108,11 @@ export const GuildDocTrashDialog = ({
         </DialogHeader>
 
         <ScrollArea className="min-h-0 flex-1">
-          <DialogBody className="flex flex-col p-0">
+          <div className="flex flex-col gap-2 p-3">
             {trashQuery.isLoading ? (
-              <div className="flex flex-col gap-2 px-(--dialog-inset) py-4">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full rounded-md" />
-                ))}
-              </div>
+              Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-20 w-full rounded-md" />
+              ))
             ) : trashQuery.isError ? (
               <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
                 <FileX2 className="size-10 text-muted-foreground opacity-50" />
@@ -145,7 +142,7 @@ export const GuildDocTrashDialog = ({
                 return (
                   <div
                     key={document.id}
-                    className="flex flex-col gap-3 border-b border-border px-(--dialog-inset) py-3 last:border-b-0 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 border-b border-border/70 p-3 last:border-b-0 transition-colors hover:bg-card sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex min-w-0 items-center gap-2">
@@ -217,7 +214,7 @@ export const GuildDocTrashDialog = ({
                 );
               })
             )}
-          </DialogBody>
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
