@@ -166,7 +166,7 @@ describe("ServerVisibilitySettingsTab", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: "Publikuj obecność w organizacji Alpha",
+        name: "Publikuj obecność w Lootlogu Alpha",
       }),
     ).not.toBeInTheDocument();
     expect(useSettingsStore.getState().presenceOrganizationIdsByCharId).toEqual(

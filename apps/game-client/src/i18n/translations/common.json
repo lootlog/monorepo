@@ -43,8 +43,8 @@
   },
   "async": {
     "loading": "Ładowanie…",
-    "loadingGuilds": "Ładowanie organizacji",
-    "guildsError": "Nie udało się załadować organizacji"
+    "loadingGuilds": "Ładowanie Lootlogów",
+    "guildsError": "Nie udało się załadować Lootlogów"
   },
   "preview": {
     "name": "[T] Tanroth",
@@ -68,12 +68,12 @@
     "closeWindow": "Zamknij okno"
   },
   "guildSwitcher": {
-    "allServers": "Wszystkie organizacje",
+    "allServers": "Wszystkie Lootlogi",
     "unread": "Nieprzeczytane wiadomości",
-    "allHidden": "Wszystkie organizacje są ukryte",
+    "allHidden": "Wszystkie Lootlogi są ukryte",
     "hideInGameClient": "Ukryj w grze",
     "hidden": "Ukryto {{name}} w grze",
-    "hideError": "Nie udało się ukryć organizacji."
+    "hideError": "Nie udało się ukryć Lootloga."
   },
   "characterTooltip": {
     "owner": {
@@ -83,8 +83,8 @@
     "catchingGuilds": {
       "title": "Dodaje łupy i timery do:",
       "loading": "Ładowanie…",
-      "empty": "Brak wspólnych organizacji",
-      "error": "Nie udało się pobrać organizacji",
+      "empty": "Brak wspólnych Lootlogów",
+      "error": "Nie udało się pobrać Lootlogów",
       "unavailable": "Brak informacji o graczu online"
     }
   },

@@ -203,7 +203,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Brak wspólnych organizacji");
+    ).toContain("Brak wspólnych Lootlogów");
   });
 
   it("shows unavailable state while shift is pressed when the owner is missing", () => {
@@ -232,7 +232,7 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Nie udało się pobrać organizacji");
+    ).toContain("Nie udało się pobrać Lootlogów");
   });
 
   it("shows an error state when the presence snapshot fails", () => {
@@ -246,6 +246,6 @@ describe("appendCatchingGuildsTooltipSection", () => {
         currentHtml: "<div>Other</div>",
         kind: "other",
       }),
-    ).toContain("Nie udało się pobrać organizacji");
+    ).toContain("Nie udało się pobrać Lootlogów");
   });
 });

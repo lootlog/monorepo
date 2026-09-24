@@ -37,7 +37,7 @@
     "filteredTitle": "Żaden timer nie pasuje do filtrów",
     "showAll": "Pokaż wszystkie",
     "noneTitle": "Nie ma jeszcze timerów",
-    "noneDescription": "Timer pojawi się, gdy ktoś z organizacji pokona elitę II, herosa lub tytana."
+    "noneDescription": "Timer pojawi się, gdy ktoś z Lootloga pokona elitę II, herosa lub tytana."
   },
   "states": {
     "loading": "Ładowanie timerów",
@@ -50,12 +50,12 @@
     "creating": "Tworzenie timera…",
     "unpin": "Odepnij",
     "pin": "Przypnij",
-    "unpinAll": "Odepnij we wszystkich organizacjach",
-    "pinAll": "Przypnij we wszystkich organizacjach",
+    "unpinAll": "Odepnij we wszystkich Lootlogach",
+    "pinAll": "Przypnij we wszystkich Lootlogach",
     "show": "Pokaż",
     "hide": "Ukryj",
-    "showAll": "Pokaż we wszystkich organizacjach",
-    "hideAll": "Ukryj we wszystkich organizacjach",
+    "showAll": "Pokaż we wszystkich Lootlogach",
+    "hideAll": "Ukryj we wszystkich Lootlogach",
     "showAlways": "Zostaw po wyzerowaniu",
     "hideAlways": "Usuwaj po wyzerowaniu",
     "restart": "Zresetuj timer",
@@ -63,11 +63,11 @@
     "delete": "Usuń timer",
     "deleteConfirm": {
       "title": "Usunąć timer {{name}}?",
-      "description": "Timer zniknie u wszystkich członków organizacji.",
+      "description": "Timer zniknie u wszystkich członków Lootloga.",
       "confirm": "Usuń"
     },
     "loadingPermissions": "Sprawdzanie uprawnień…",
-    "deleteChooseGuild": "Wybierz organizację, z której usunąć timer:"
+    "deleteChooseGuild": "Wybierz Lootlog, z którego usunąć timer:"
   },
   "history": {
     "title": "Historia timera",
@@ -81,7 +81,7 @@
       "action": "Akcja",
       "npc": "Potwór",
       "member": "Użytkownik",
-      "guild": "Organizacja",
+      "guild": "Lootlog",
       "character": "Postać",
       "world": "Świat",
       "min": "Min",

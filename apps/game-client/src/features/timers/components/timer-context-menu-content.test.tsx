@@ -102,9 +102,9 @@ describe("TimerContextMenuContent", () => {
 
   it.each([
     ["Przypnij", "onPin"],
-    ["Przypnij we wszystkich organizacjach", "onPinAll"],
+    ["Przypnij we wszystkich Lootlogach", "onPinAll"],
     ["Ukryj", "onHide"],
-    ["Ukryj we wszystkich organizacjach", "onHideAll"],
+    ["Ukryj we wszystkich Lootlogach", "onHideAll"],
     ["Zostaw po wyzerowaniu", "onToggleAlwaysVisibleExpiredTimer"],
     ["Zresetuj timer", "onReset"],
   ] as const)("invokes the %s action", async (name, callback) => {

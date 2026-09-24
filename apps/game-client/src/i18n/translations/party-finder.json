@@ -26,7 +26,7 @@
     "validation": {
       "minGreaterThanMax": "Minimalny poziom nie może być większy niż maksymalny"
     },
-    "selectGuild": "Wybierz przynajmniej jedną organizację",
+    "selectGuild": "Wybierz przynajmniej jeden Lootlog",
     "descriptionLabel": "Opis (opcjonalny)",
     "descriptionPlaceholder": "Np. szukam heala na tytana",
     "minLvlLabel": "Minimalny poziom",
@@ -49,7 +49,7 @@
   },
   "cancelConfirm": {
     "title": "Anulować zbiórkę?",
-    "description": "Zbiórka zniknie u wszystkich członków organizacji, a zgłoszeni do niej gracze nie dostaną zaproszeń.",
+    "description": "Zbiórka zniknie u wszystkich członków Lootloga, a zgłoszeni do niej gracze nie dostaną zaproszeń.",
     "confirm": "Anuluj zbiórkę"
   }
 }

@@ -23,12 +23,12 @@
   "guildPopover": {
     "lootlogPage": "Strona Lootloga",
     "dashboard": "Dashboard",
-    "emptyGuilds": "Nie należysz do żadnej organizacji."
+    "emptyGuilds": "Nie należysz do żadnego Lootloga."
   },
   "connection": {
     "ping": "{{ping}} ms",
     "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
-    "organizations": "Połączone organizacje",
+    "organizations": "Połączone Lootlogi",
     "reconnect": "Połącz ponownie"
   }
 }

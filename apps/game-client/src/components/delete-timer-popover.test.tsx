@@ -117,7 +117,7 @@ it("keeps the organization chooser open until its target is selected", async () 
 
   await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
   expect(
-    screen.getByText("Wybierz organizację, z której usunąć timer:"),
+    screen.getByText("Wybierz Lootlog, z którego usunąć timer:"),
   ).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Beta" }));
   expect(onDeleteTimer).toHaveBeenCalledWith("guild-2", "timer-2");
