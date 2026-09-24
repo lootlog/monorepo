@@ -88,7 +88,7 @@ w interfejsie nie wyłącza wysyłania obecności.
 ## Okna Lootlog w grze
 
 - Przy pierwszym uruchomieniu pasek szybkiego dostępu, timery i czat stoją jeden
-  pod drugim w prawym górnym rogu mapy, a detektor NPC i powiadomienia pojawiają
+  pod drugim w prawym górnym rogu mapy, a wykrywacz i powiadomienia pojawiają
   się w jej lewym górnym rogu. Nie zasłaniają pasków gry ani siebie nawzajem.
   Okna otwierane na żądanie, na przykład ustawienia, pojawiają się na środku.
 - Okno zostaje tam, gdzie je przeciągniesz. Gdy okno przeglądarki jest mniejsze,
@@ -99,8 +99,14 @@ w interfejsie nie wyłącza wysyłania obecności.
   i odblokowuje je.
 - Okno otwarte przyciskiem, skrótem lub poleceniem przejmuje fokus klawiatury,
   a po zamknięciu oddaje go tam, gdzie był. Okna, które otwierają się same
-  (detektor NPC, powiadomienia), nie przejmują fokusu, więc dalej piszesz
+  (wykrywacz, powiadomienia), nie przejmują fokusu, więc dalej piszesz
   i sterujesz postacią.
+- Zamknięcie wykrywacza lub powiadomień tylko ukrywa okno, a wpisy zostają.
+  Dopóki takie okno jest zamknięte i ma wpisy, na pasku szybkiego dostępu
+  widać jego przycisk z liczbą wpisów, który otwiera je ponownie. Listę
+  opróżnisz przyciskiem **Wyczyść listę wykrytych potworów** lub
+  **Wyczyść wszystkie powiadomienia** na pasku tytułu, a pojedynczy wpis
+  jego przyciskiem zamknięcia.
 - `Escape` zamyka okno Lootlog, w którym jest fokus, i nie trafia wtedy do gry.
 - Przycisk krycia w pasku tytułu przełącza pięć poziomów tła, a podpowiedź
   pokazuje bieżący. Na trzech najjaśniejszych poziomach tekst ma ciemny obrys,
@@ -110,10 +116,15 @@ w interfejsie nie wyłącza wysyłania obecności.
 
 ## Okno ustawień w grze
 
-Obok kropki stanu połączenia na pasku szybkiego dostępu widzisz ping w
-milisekundach (podpowiedź „Opóźnienie połączenia”). To czas odpowiedzi serwera
-Lootlog na ostatni pomiar połączenia.
-Wartość pojawia się po pierwszym pomiarze i znika po utracie połączenia.
+Ikona stanu połączenia na pasku szybkiego dostępu zmienia kształt zależnie od
+stanu: połączono, łączenie lub brak połączenia. Kliknięcie ikony pokazuje stan,
+ping w milisekundach (czas odpowiedzi serwera Lootlog na ostatni pomiar
+połączenia) i połączone organizacje. Ping pojawia się po pierwszym pomiarze
+i znika po utracie połączenia. Gdy połączenia nie ma, przycisk
+**Połącz ponownie** łączy od razu, bez czekania na kolejną próbę.
+Okna z danymi na żywo (czat, timery, gracze online, zbiórka, wykrywacz,
+powiadomienia) pokazują pasek z informacją, gdy połączenie jest zerwane lub
+trwa ponowne łączenie, więc widać, że dane mogą być nieaktualne.
 
 Okno ustawień w kliencie gry otwierasz z paska szybkiego dostępu lub skrótem
 klawiszowym przypisanym do akcji „Ustawienia”. Ustawienia są zapisywane na
