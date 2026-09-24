@@ -82,4 +82,10 @@ both delivery modes.
 
 Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.
 
+If you register `setReconnectHandler`, it replaces the default session restore.
+The handler still runs when a synchronous connection-state observer starts a
+join. Coordinate these callbacks so one owns the join, and use the handler for
+any additional recovery work. Without a custom handler, a synchronous observer's
+join suppresses the default join to avoid duplicate startup requests.
+
 Authorization must be renewed at least every 60 seconds. Deleting the key, losing access, or failing to renew blocks further communication. Do not retry indefinitely when a connection is rejected because of an invalid key.

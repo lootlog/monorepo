@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Effect } from "effect";
+import { Effect, Metric } from "effect";
 import { encode } from "@msgpack/msgpack";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
 import { createGatewayWebSocket } from "#src/app";
@@ -432,6 +432,8 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
     ...socket("excess"),
     close: (code) => {
       closes.push(code ?? 1000);
+      // Bun can deliver close synchronously while the open callback rejects it.
+      transport.close(excess, code);
     },
   };
 
@@ -440,11 +442,14 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
   transport.close(first);
   expect(hub.getLocalSockets()).toEqual([]);
   expect(hub.getLocalSocketsForUser(first.data.userId)).toEqual([]);
+  const beforeRejection = Effect.runSync(Metric.snapshot);
   transport.open(excess);
   expect(closes).toEqual([1013]);
   expect(writes).toEqual(["realtime:connection:first"]);
   await target.runNext();
   await target.runNext();
+  expect(Effect.runSync(Metric.snapshot)).toEqual(beforeRejection);
+  expect(target.ingress.getDiagnostics().rejectedConnections).toBe(1);
   transport.open(excess);
   expect(hub.getLocalSockets()).toEqual([excess]);
 });

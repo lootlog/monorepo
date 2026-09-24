@@ -30,6 +30,15 @@ export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
+// Browser-permitted application codes; reasons are deliberately static and contain no identity.
+export const REALTIME_CLIENT_CLOSE_CODES = {
+  heartbeatTimeout: 4001,
+  heartbeatRejected: 4002,
+  heartbeatUnavailable: 4003,
+  malformedFrame: 4007,
+  sessionJoinFailed: 4008,
+} as const;
+
 export const PRESENCE_HEARTBEAT_INTERVAL_MS = 25_000;
 
 export const PRESENCE_EXPIRY_MS = 60_000;

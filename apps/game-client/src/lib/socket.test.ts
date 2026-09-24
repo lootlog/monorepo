@@ -421,3 +421,104 @@ describe("access policy synchronization", () => {
     }
   });
 });
+
+it("lets the provider rejoin the current world once after reconnect", async () => {
+  const wires: Array<{ open: () => void; close: () => void }> = [];
+  const joinedWorlds: Array<string | undefined> = [];
+
+  const realtime = new RealtimeClient({
+    url: "https://gateway.example.test",
+    webSocketFactory: () => {
+      const listeners = new Map<string, (event: { data?: unknown }) => void>();
+
+      const wire: RealtimeWebSocket = {
+        binaryType: "arraybuffer",
+        readyState: 1,
+        addEventListener: (type, listener) => listeners.set(type, listener),
+        close: () => listeners.get("close")?.({}),
+        send: (bytes) => {
+          if (!(bytes instanceof Uint8Array))
+            throw new Error("Expected binary frame");
+          const frame = decodeRealtimeFrame(bytes);
+
+          if (!("requestId" in frame) || !frame.requestId)
+            throw new Error("Expected request");
+
+          if ("type" in frame && frame.type === "session.join")
+            joinedWorlds.push(frame.data.world);
+
+          const response = encodeRealtimeFrame({
+            v: 1,
+            requestId: frame.requestId,
+            status: "success",
+            data: { connectionId: "fixture", organizationIds: [] },
+          });
+
+          queueMicrotask(() => listeners.get("message")?.({ data: response }));
+        },
+      };
+
+      wires.push({
+        open: () => listeners.get("open")?.({}),
+        close: () => wire.close(),
+      });
+
+      return wire;
+    },
+  });
+
+  const restore = configureGameClientPlatform({
+    fetch: globalThis.fetch,
+    createRealtime: () => realtime,
+  });
+
+  disposeSocket();
+  const facade = getSocket();
+  const { GatewayEvent } = await import("@/config/gateway");
+  let world = "alpha";
+
+  const proof = {
+    userId: "20",
+    characterId: "10",
+    token: "fixture",
+    ts: 1,
+    validatedString: "fixture",
+    signatureBase64: "fixture",
+  };
+
+  const pending: Array<Promise<unknown>> = [];
+  facade.on(GatewayEvent.CONNECT, () =>
+    queueMicrotask(() => {
+      pending.push(
+        facade.join(
+          {
+            world,
+            accountId: "20",
+            characterId: "10",
+            name: "Hero",
+            lvl: 100,
+            prof: "w",
+            icon: "hero.gif",
+          },
+          proof,
+        ),
+      );
+    }),
+  );
+
+  try {
+    facade.connect();
+    wires[0]?.open();
+    await vi.waitFor(() => expect(joinedWorlds).toEqual(["alpha"]));
+    await Promise.all(pending);
+    world = "beta";
+    wires[0]?.close();
+    facade.connect();
+    wires[1]?.open();
+    await vi.waitFor(() => expect(joinedWorlds).toEqual(["alpha", "beta"]));
+    await Promise.all(pending);
+  } finally {
+    disposeSocket();
+    restore();
+  }
+});
