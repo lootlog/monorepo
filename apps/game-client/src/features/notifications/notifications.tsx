@@ -70,7 +70,7 @@ export const Notifications = () => {
         />
       </>
       onClose={handleClose}
-      heightMode="css-auto-up-to-max"
+      heightMode="auto-up-to-max"
       maxContentHeight={resolvedMaxContentHeight}
       isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
       onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
