@@ -1,7 +1,8 @@
 {
   "tooltips": {
     "installAddon": "Zainstaluj dodatek",
-    "createLootlog": "Stwórz nowy lootlog"
+    "createLootlog": "Stwórz nowy lootlog",
+    "refreshServers": "Odśwież listę serwerów"
   },
   "actions": {
     "logout": "Wyloguj się",

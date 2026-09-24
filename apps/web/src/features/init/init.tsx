@@ -7,8 +7,8 @@ import {
   getGuildsControllerGetGuildByIdQueryKey,
   useGuildsControllerGetGuildById,
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
-  invalidateUsersControllerGetCurrentUserGuilds,
 } from "@lootlog/client/main";
+import { refreshCurrentUserGuilds } from "@/lib/current-user-guilds";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
 export const Init: React.FC = () => {
@@ -33,9 +33,10 @@ export const Init: React.FC = () => {
       return;
     }
 
-    void Promise.all([
+    // The API caches the Discord guild list, which may predate the new server.
+    void Promise.allSettled([
       invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient),
-      invalidateUsersControllerGetCurrentUserGuilds(queryClient),
+      refreshCurrentUserGuilds(queryClient),
     ]).then(() => {
       navigate({ to: ROUTES.guild.base(guildData.id) });
     });
