@@ -1,6 +1,9 @@
 import { createTestGateway } from "@/lib/testing/gateway";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getUsersControllerGetUserFeedQueryKey } from "@lootlog/client/main";
+import {
+  getUsersControllerGetUserFeedQueryKey,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+} from "@lootlog/client/main";
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -84,8 +87,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderFeed() {
-  const queryClient = new QueryClient();
+function renderFeed(organizationIds = [feedKill.guild.id]) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity } },
+  });
+
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    organizationIds.map((id) => ({ id })),
+  );
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
 
@@ -132,13 +142,13 @@ it("receives complete live entries without further HTTP requests and refetches o
   expect(result.current.state.items).toEqual(feedResponse(20).items);
   act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
   await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(mocks.request).toHaveBeenCalledTimes(2);
-  expect(result.current.state.items).toEqual(feedResponse().items);
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  expect(result.current.state.items).toEqual(feedResponse(20).items);
   // A kill accepted while session.join is pending must appear in the post-join snapshot.
   mocks.request.mockResolvedValue(feedResponse(21));
   act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
   await act(() => vi.advanceTimersByTimeAsync(0));
-  expect(mocks.request).toHaveBeenCalledTimes(3);
+  expect(mocks.request).toHaveBeenCalledTimes(2);
   expect(result.current.state.items).toEqual(feedResponse(21).items);
 });
 
@@ -514,33 +524,27 @@ it.each([false, true])(
   },
 );
 
-it.each(["refresh", "reconnect"] as const)(
-  "buffers rolling snapshot changes during %s while reading older entries",
-  async (trigger) => {
-    const replacement = {
-      ...feedResponse(),
-      items: [{ ...feedKill, id: "newest" }],
-    };
+it("buffers rolling snapshot changes during manual refresh while reading older entries", async () => {
+  const replacement = {
+    ...feedResponse(),
+    items: [{ ...feedKill, id: "newest" }],
+  };
 
-    mocks.request
-      .mockResolvedValueOnce(feedResponse())
-      .mockResolvedValueOnce(replacement);
-    const { result } = renderFeed();
-    await act(() => vi.advanceTimersByTimeAsync(0));
-    await act(() => vi.advanceTimersByTimeAsync(0));
-    const original = result.current.state.items;
-    act(() => result.current.setAtTop(false));
-    act(() => {
-      if (trigger === "refresh") result.current.refresh();
-      else deliverLifecycleEvent(GatewayEvent.CONNECT);
-    });
-    await act(() => vi.advanceTimersByTimeAsync(0));
-    expect(result.current.state.items).toBe(original);
-    expect(result.current.state.pending).toEqual(replacement.items);
-    act(() => result.current.applyPending());
-    expect(result.current.state.items).toEqual(replacement.items);
-  },
-);
+  mocks.request
+    .mockResolvedValueOnce(feedResponse())
+    .mockResolvedValueOnce(replacement);
+  const { result } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  const original = result.current.state.items;
+  act(() => result.current.setAtTop(false));
+  act(() => result.current.refresh());
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(result.current.state.items).toBe(original);
+  expect(result.current.state.pending).toEqual(replacement.items);
+  act(() => result.current.applyPending());
+  expect(result.current.state.items).toEqual(replacement.items);
+});
 
 it("applies explicit join access revalidation while scrolled", async () => {
   mocks.request
@@ -690,4 +694,42 @@ it("clears all visible data immediately when no organizations are authorized", a
   expect(result.current.state.items).toEqual([]);
   await act(() => vi.advanceTimersByTimeAsync(5000));
   expect(result.current.state.items).toEqual([]);
+});
+
+it("loads history without a gateway connection and only catches up after a successful join", async () => {
+  gateway = createTestGateway({ joined: false });
+  mocks.request.mockResolvedValue(feedResponse());
+  const { result } = renderFeed();
+  act(() => deliverLifecycleEvent(GatewayEvent.CONNECT));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(mocks.request).toHaveBeenCalledTimes(1);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+  act(() => deliverLifecycleEvent(GatewayEvent.JOIN));
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(mocks.request).toHaveBeenCalledTimes(2);
+  expect(result.current.state.items).toEqual(feedResponse().items);
+});
+
+it("shows an empty feed without waiting for a join when no Organizations are accessible", async () => {
+  gateway = createTestGateway({ joined: false });
+  const { result } = renderFeed([]);
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(result.current.state.items).toEqual([]);
+  expect(mocks.request).not.toHaveBeenCalled();
+});
+
+it("clears a scrolled feed when the last accessible Organization is removed", async () => {
+  mocks.request.mockResolvedValue(feedResponse());
+  const { result, queryClient } = renderFeed();
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  act(() => result.current.setAtTop(false));
+  act(() =>
+    queryClient.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [],
+    ),
+  );
+  await act(() => vi.advanceTimersByTimeAsync(0));
+  expect(result.current.state.items).toEqual([]);
+  expect(result.current.state.pending).toBeUndefined();
 });

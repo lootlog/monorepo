@@ -53,3 +53,17 @@ export const applyGamePresenceUpdate = (
 
   return nextPresenceByDiscordId;
 };
+
+export const mapMemberGamePresenceByDiscordId = (
+  players: Record<string, PlayerPresence[]> | undefined,
+): Map<string, PlayerPresence[]> => {
+  const presenceByDiscordId: Map<string, PlayerPresence[]> = new Map();
+
+  for (const [discordId, presence] of Object.entries(players ?? {})) {
+    if (presence.length > 0) {
+      presenceByDiscordId.set(discordId, presence);
+    }
+  }
+
+  return presenceByDiscordId;
+};

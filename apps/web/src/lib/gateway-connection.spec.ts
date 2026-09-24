@@ -102,7 +102,7 @@ it.each([
     expect(socket.protocols).toContain(protocol);
     socket.readyState = 1;
     socket.dispatchEvent(new Event("open"));
-    client.emit(GatewayEvent.JOIN, {});
+    client.emit(GatewayEvent.JOIN);
     await vi.waitFor(() =>
       expect(joined).toHaveBeenCalledWith(
         expect.objectContaining({ status: "success" }),

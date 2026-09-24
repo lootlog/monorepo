@@ -2,6 +2,7 @@ import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  useUsersControllerGetCurrentUserAccessibleGuilds,
   getUsersControllerGetUserFeedQueryOptions,
   getUsersControllerGetUserFeedQueryKey,
   type UserFeedResponseDtoOutput,
@@ -18,6 +19,8 @@ type FeedItem = UserFeedResponseDtoOutput["items"][number];
 
 export function useLiveFeed() {
   const { socket, connected } = useGateway();
+  const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
+  const hasNoGuilds = guilds?.length === 0;
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(liveFeedReducer, initialLiveFeedState);
 
@@ -117,12 +120,8 @@ export function useLiveFeed() {
       }, 5000);
     };
 
-    const handleConnect = () => {
-      // Revalidate in place: a transport reconnect does not revoke access.
-      if (!isPaused) void refresh();
-    };
-
-    const handleJoin = () => {
+    const handleJoin = (payload: { status: "success" | "error" }) => {
+      if (payload.status !== "success") return;
       // Pausing live updates does not pause source-access revalidation.
       void refresh(true);
     };
@@ -149,10 +148,12 @@ export function useLiveFeed() {
       },
     };
     socket.on(GatewayEvent.FEED_ENTRY, onEntry);
-    socket.on(GatewayEvent.CONNECT, handleConnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
-    void refresh();
+
+    if (hasNoGuilds) dispatch({ type: "clear" });
+    // History remains available when the realtime gateway cannot join.
+    else void refresh();
 
     return () => {
       disposed = true;
@@ -160,11 +161,10 @@ export function useLiveFeed() {
       cancel();
       controlsRef.current = undefined;
       socket.off(GatewayEvent.FEED_ENTRY, onEntry);
-      socket.off(GatewayEvent.CONNECT, handleConnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissions);
     };
-  }, [socket, queryClient]);
+  }, [socket, queryClient, hasNoGuilds]);
   useEffect(() => {
     controlsRef.current?.setPaused(paused);
   }, [paused]);

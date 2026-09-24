@@ -117,8 +117,9 @@ wybór także po odświeżeniu strony. Pauza dotyczy wyłącznie feedu.
 Odświeżenie zachowuje widoczną listę do otrzymania odpowiedzi. Wpisy pobrane
 przez HTTP pojawiają się bez animacji. Nowy wpis z WebSocketu najpierw odsuwa pozostałe
 w dół, a następnie się pojawia. Przy ograniczeniu ruchu w systemie pojawia się od razu.
-Historię pobieramy przy wejściu, po ponownym połączeniu i dołączeniu sesji do organizacji
-i przy wznowieniu. Podczas
+Historię pobieramy przy wejściu na dashboard, po dołączeniu sesji do organizacji
+(także po ponownym połączeniu) oraz przy wznowieniu. Pierwsze pobranie działa
+również przy niedostępnym połączeniu na żywo. Podczas
 połączenia kompletne wpisy przychodzą przez WebSocket, bez cyklicznego
 odpytywania historii. Kolejne bicia aktualizują licznik istniejącego wpisu.
 Wpisy organizacji, do których tracisz dostęp, znikają od razu; pozostałe pozostają

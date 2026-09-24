@@ -29,7 +29,11 @@ export class RealtimeEventListeners<Event extends string> {
 
   emit(event: Event, payload?: unknown): void {
     for (const listener of this.listeners.get(event) ?? []) {
-      Reflect.apply(listener, undefined, [payload]);
+      try {
+        Reflect.apply(listener, undefined, [payload]);
+      } catch {
+        // Independent consumers must still receive this event if a peer fails.
+      }
     }
   }
 }

@@ -9,7 +9,7 @@ import { Reorder } from "framer-motion";
 import * as m from "framer-motion/m";
 import { useState, useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skeleton";
-import { useGateway } from "@/hooks/utils/use-gateway";
+import { useLootUnreadCounts } from "@/contexts/loot-unread-context";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
 import {
@@ -32,7 +32,7 @@ export const GuildsSelector: FC = () => {
   const guilds = guildsQuery.data;
   const preferencesQuery = useUserPreferences();
   const hiddenGuildIds = getHiddenGuildIds(preferencesQuery.data);
-  const { lootUnreadCounts } = useGateway();
+  const lootUnreadCounts = useLootUnreadCounts();
   const currentGuildId = useGuildId();
   const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
   const [isDragging, setIsDragging] = useState(false);

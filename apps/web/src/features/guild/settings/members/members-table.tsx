@@ -4,7 +4,7 @@ import type { MemberActivityStatsByDiscordId } from "@/features/guild/settings/m
 import type { isMemberOnlineInGame } from "@/features/guild/settings/members/member-game-presence.utils";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
-import type { MemberWebPresenceByDiscordId } from "@/features/guild/settings/members/member-web-presence.utils";
+import type { MemberWebPresenceByDiscordId } from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";

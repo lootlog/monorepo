@@ -1,13 +1,15 @@
-import { applyGamePresenceUpdate } from "@/lib/game-presence";
+import {
+  applyGamePresenceUpdate,
+  mapMemberGamePresenceByDiscordId,
+} from "@/lib/game-presence";
 import { describe, expect, it } from "vitest";
 import {
   getMemberGameSessionCount,
   isMemberGamePresenceVerified,
   getMemberOnlineSources,
   isMemberOnlineInGame,
-  mapMemberGamePresenceByDiscordId,
 } from "./member-game-presence.utils";
-import { mapMemberWebPresenceByDiscordId } from "./member-web-presence.utils";
+import { mapMemberWebPresenceByDiscordId } from "@/lib/web-presence";
 import type { PlayerPresence } from "@/lib/gateway-client";
 
 const buildPresence = (overrides: Partial<PlayerPresence>): PlayerPresence => ({

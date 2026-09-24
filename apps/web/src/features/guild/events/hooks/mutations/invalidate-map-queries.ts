@@ -5,6 +5,7 @@ import {
   getEventsMonitoringControllerGetMapCoverageGapsQueryKey,
   getListEventMapsQueryKey,
 } from "@lootlog/client/main";
+import { invalidateEventCoordinationQuery } from "./invalidate-event-queries";
 
 const getEventHeroPathPrefix = (guildId: string, eventId: string) =>
   `/guilds/${guildId}/events/${eventId}/heroes/`;
@@ -26,7 +27,8 @@ export function invalidateMapQueries(
   mapId: string,
 ) {
   invalidateEventMapListQuery(queryClient, guildId, eventId);
-  invalidateGapQueries(queryClient, guildId, eventId, mapId);
+
+  return invalidateGapQueries(queryClient, guildId, eventId, mapId);
 }
 
 export function invalidateEventMapListQuery(
@@ -62,4 +64,6 @@ export function invalidateGapQueries(
   queryClient.invalidateQueries({
     predicate: (query) => isHeroGapQuery(query, guildId, eventId),
   });
+
+  return invalidateEventCoordinationQuery(queryClient, guildId, eventId);
 }
