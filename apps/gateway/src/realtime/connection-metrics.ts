@@ -5,9 +5,13 @@ import {
 import { Effect, Metric } from "effect";
 import type { GatewaySocket } from "./session.js";
 
-const opened = Metric.counter("lootlog_gateway_connections_opened_total");
+const opened = Metric.counter("lootlog_gateway_connections_opened_total", {
+  incremental: true,
+});
 
-const closed = Metric.counter("lootlog_gateway_connections_closed_total");
+const closed = Metric.counter("lootlog_gateway_connections_closed_total", {
+  incremental: true,
+});
 
 const lifetime = Metric.histogram(
   "lootlog_gateway_connection_lifetime_seconds",
@@ -16,7 +20,9 @@ const lifetime = Metric.histogram(
   },
 );
 
-const commands = Metric.counter("lootlog_gateway_commands_completed_total");
+const commands = Metric.counter("lootlog_gateway_commands_completed_total", {
+  incremental: true,
+});
 
 const closeClassification = (code: number) => {
   switch (code) {
