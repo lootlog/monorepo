@@ -15,7 +15,8 @@
     "activityLogs": "Logi aktywności"
   },
   "guildsSelector": {
-    "unreadLootsOverflow": "99+"
+    "unreadLootsOverflow": "99+",
+    "refreshError": "Nie udało się odświeżyć listy serwerów."
   },
   "userMenu": {
     "account": "Konto",

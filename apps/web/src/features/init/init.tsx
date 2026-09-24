@@ -9,7 +9,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useGuildsControllerGetGuildById,
   invalidateUsersControllerGetCurrentUserAccessibleGuilds,
-  invalidateUsersControllerGetCurrentUserGuilds,
 } from "@lootlog/client/main";
 import { getApiErrorStatus, shouldRetryQuery } from "@lootlog/client/transport";
 import { Button } from "@lootlog/ui/components/button";
@@ -17,6 +16,7 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { normalizeRouteErrorStatus } from "@/lib/router/route-errors";
 import { isReauthenticationError } from "@/lib/api-reauthentication";
+import { refreshCurrentUserGuilds } from "@/lib/current-user-guilds";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();
@@ -57,9 +57,10 @@ export const Init: React.FC = () => {
 
     let cancelled = false;
 
-    void Promise.all([
+    // The API caches the Discord guild list, which may predate the new server.
+    void Promise.allSettled([
       invalidateUsersControllerGetCurrentUserAccessibleGuilds(queryClient),
-      invalidateUsersControllerGetCurrentUserGuilds(queryClient),
+      refreshCurrentUserGuilds(queryClient),
     ])
       .then(async () => {
         if (!cancelled) await navigate({ to: ROUTES.guild.base(guildData.id) });

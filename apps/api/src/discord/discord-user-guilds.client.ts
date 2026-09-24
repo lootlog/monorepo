@@ -20,20 +20,16 @@ import { ExecutionError, RedlockService } from "#src/redis/redlock";
 import { Schema } from "effect";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 
-const decodeFreshCompleteHandoff = Schema.decodeUnknownSync(
+const decodeCompleteUserGuildsEntry = Schema.decodeUnknownSync(
   Schema.fromJsonString(
-    Schema.Struct({
-      guilds: Schema.Unknown,
-      fresh: Schema.Literal(true),
-      complete: Schema.Literal(true),
-    }),
+    Schema.Struct({ guilds: Schema.Unknown, fetchedAt: Schema.Number }),
   ),
 );
 
 import {
-  getFreshCompleteUserGuildsHandoffKey,
-  getFreshCompleteUserGuildsLockKey,
-  getFreshCompleteUserGuildsRequestKey,
+  getCompleteUserGuildsCacheKey,
+  getCompleteUserGuildsLockKey,
+  getCompleteUserGuildsRequestKey,
   getLegacyUserGuildsCacheKeys,
   getUserGuildsCacheKey,
   getUserGuildsLockKey,
@@ -49,10 +45,18 @@ import {
 import { DiscordRestClientFactory } from "./discord-rest-client.factory.js";
 import { DiscordSyncDiagnosticsService } from "./discord-sync-diagnostics.service.js";
 
-export interface FreshCompleteUserGuildsResult {
+export interface CompleteUserGuildsResult {
   guilds: RESTGetAPICurrentUserGuildsResult;
-  fresh: true;
-  complete: true;
+  /**
+   * Discord returned the list within the last two seconds. A list served from
+   * the long-lived cache may miss a server the user has joined since.
+   */
+  fresh: boolean;
+}
+
+interface CompleteUserGuildsEntry {
+  guilds: RESTGetAPICurrentUserGuildsResult;
+  fetchedAt: number;
 }
 
 export class DiscordUserGuildsClient {
@@ -62,13 +66,14 @@ export class DiscordUserGuildsClient {
   private readonly userGuildsPageLimit = 200;
   private readonly guildsCacheTtlLocal = 10;
   private readonly guildsCacheTtlProd = 300;
-  private readonly freshCompleteGuildsLockTtl = 15000;
-  private readonly freshCompleteGuildsHandoffTtlSeconds = 2;
-  private readonly freshCompleteGuildsHandoffWaitMs = 1500;
-  private readonly freshCompleteGuildsHandoffPollMs = 100;
-  private readonly freshCompleteUserGuildRequests = new Map<
+  private readonly completeGuildsLockTtl = 15000;
+  private readonly completeGuildsCacheTtlSeconds = 15 * 60;
+  private readonly completeGuildsFreshMaxAgeMs = 2000;
+  private readonly completeGuildsWaitMs = 1500;
+  private readonly completeGuildsPollMs = 100;
+  private readonly completeUserGuildRequests = new Map<
     string,
-    Promise<FreshCompleteUserGuildsResult>
+    Promise<CompleteUserGuildsEntry>
   >();
   private readonly isLocal: boolean;
 
@@ -165,33 +170,32 @@ export class DiscordUserGuildsClient {
     }
   }
 
-  async getFreshCompleteUserGuilds(
+  /**
+   * Returns the complete list as Discord reported it within the last two
+   * seconds, sharing one Discord request between concurrent callers.
+   */
+  getFreshCompleteUserGuilds(
     userId: string,
     discordId: string,
-  ): Promise<FreshCompleteUserGuildsResult> {
-    const identity = { userId, discordId };
-    const requestKey = getFreshCompleteUserGuildsRequestKey(identity);
-    const inFlightRequest = this.freshCompleteUserGuildRequests.get(requestKey);
+  ): Promise<CompleteUserGuildsResult> {
+    return this.getCompleteUserGuilds(
+      { userId, discordId },
+      this.completeGuildsFreshMaxAgeMs,
+    );
+  }
 
-    if (inFlightRequest) {
-      return inFlightRequest;
-    }
-
-    const request =
-      this.fetchFreshCompleteUserGuildsWithDistributedSingleFlight(
-        userId,
-        discordId,
-      );
-
-    this.freshCompleteUserGuildRequests.set(requestKey, request);
-
-    try {
-      return await request;
-    } finally {
-      if (this.freshCompleteUserGuildRequests.get(requestKey) === request) {
-        this.freshCompleteUserGuildRequests.delete(requestKey);
-      }
-    }
+  /**
+   * Returns the complete list fetched within the last 15 minutes, asking
+   * Discord only when none is cached.
+   */
+  getCachedCompleteUserGuilds(
+    userId: string,
+    discordId: string,
+  ): Promise<CompleteUserGuildsResult> {
+    return this.getCompleteUserGuilds(
+      { userId, discordId },
+      this.completeGuildsCacheTtlSeconds * 1000,
+    );
   }
 
   async clearUserGuildIdsCache(options: {
@@ -208,18 +212,56 @@ export class DiscordUserGuildsClient {
     ]);
   }
 
-  private async fetchFreshCompleteUserGuilds(
+  private async getCompleteUserGuilds(
+    identity: { userId: string; discordId: string },
+    maxAgeMs: number,
+  ): Promise<CompleteUserGuildsResult> {
+    const entry =
+      (await this.getCompleteUserGuildsEntry(
+        getCompleteUserGuildsCacheKey(identity),
+        maxAgeMs,
+      )) ?? (await this.fetchCompleteUserGuildsOnce(identity, maxAgeMs));
+
+    return {
+      guilds: entry.guilds,
+      fresh: Date.now() - entry.fetchedAt <= this.completeGuildsFreshMaxAgeMs,
+    };
+  }
+
+  private async fetchCompleteUserGuildsOnce(
+    identity: { userId: string; discordId: string },
+    maxAgeMs: number,
+  ): Promise<CompleteUserGuildsEntry> {
+    // A fresh caller must not reuse a lookup that accepts a cached list.
+    const requestKey = `${getCompleteUserGuildsRequestKey(identity)}:${maxAgeMs}`;
+    const inFlightRequest = this.completeUserGuildRequests.get(requestKey);
+
+    if (inFlightRequest) {
+      return inFlightRequest;
+    }
+
+    const request = this.fetchCompleteUserGuildsWithDistributedSingleFlight(
+      identity,
+      maxAgeMs,
+    );
+
+    this.completeUserGuildRequests.set(requestKey, request);
+
+    try {
+      return await request;
+    } finally {
+      if (this.completeUserGuildRequests.get(requestKey) === request) {
+        this.completeUserGuildRequests.delete(requestKey);
+      }
+    }
+  }
+
+  private async fetchCompleteUserGuilds(
     userId: string,
     discordId: string,
-  ): Promise<FreshCompleteUserGuildsResult> {
+  ): Promise<RESTGetAPICurrentUserGuildsResult> {
     try {
-      const guilds = await this.fetchUserGuildsFromDiscord(userId, discordId);
-
-      return {
-        guilds,
-        fresh: true,
-        complete: true,
-      };
+      return await this.fetchUserGuildsFromDiscord(userId, discordId);
     } catch (error: unknown) {
       if (error instanceof AuthenticationRequiredError) {
         this.logger.log({
@@ -243,40 +285,31 @@ export class DiscordUserGuildsClient {
     }
   }
 
-  private async fetchFreshCompleteUserGuildsWithDistributedSingleFlight(
-    userId: string,
-    discordId: string,
-  ): Promise<FreshCompleteUserGuildsResult> {
-    const identity = { userId, discordId };
-    const handoffKey = getFreshCompleteUserGuildsHandoffKey(identity);
-    const lockKey = getFreshCompleteUserGuildsLockKey(identity);
-
-    const cachedHandoff =
-      await this.getFreshCompleteUserGuildsHandoff(handoffKey);
-
-    if (cachedHandoff) {
-      return cachedHandoff;
-    }
-
+  private async fetchCompleteUserGuildsWithDistributedSingleFlight(
+    identity: { userId: string; discordId: string },
+    maxAgeMs: number,
+  ): Promise<CompleteUserGuildsEntry> {
+    const { userId, discordId } = identity;
+    const cacheKey = getCompleteUserGuildsCacheKey(identity);
+    const lockKey = getCompleteUserGuildsLockKey(identity);
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
     try {
-      lock = await this.redlock.acquire(
-        [lockKey],
-        this.freshCompleteGuildsLockTtl,
-      );
+      lock = await this.redlock.acquire([lockKey], this.completeGuildsLockTtl);
     } catch (error) {
       if (error instanceof ExecutionError) {
-        const waitedHandoff =
-          await this.waitForFreshCompleteUserGuildsHandoff(handoffKey);
+        const waitedEntry = await this.waitForCompleteUserGuildsEntry(
+          cacheKey,
+          maxAgeMs,
+        );
 
-        if (waitedHandoff) {
-          return waitedHandoff;
+        if (waitedEntry) {
+          return waitedEntry;
         }
 
         this.logger.log({
           level: "warn",
-          message: "Fresh complete guild lookup is already in progress",
+          message: "Complete guild lookup is already in progress",
           userId,
         });
         throw new DependencyUnavailableError({
@@ -288,24 +321,27 @@ export class DiscordUserGuildsClient {
     }
 
     try {
-      const handoffAfterLock =
-        await this.getFreshCompleteUserGuildsHandoff(handoffKey);
-
-      if (handoffAfterLock) {
-        return handoffAfterLock;
-      }
-
-      const result = await this.fetchFreshCompleteUserGuilds(userId, discordId);
-      await this.redisService.set(
-        handoffKey,
-        JSON.stringify(result),
-        this.freshCompleteGuildsHandoffTtlSeconds,
+      const entryAfterLock = await this.getCompleteUserGuildsEntry(
+        cacheKey,
+        maxAgeMs,
       );
 
-      return result;
+      if (entryAfterLock) {
+        return entryAfterLock;
+      }
+
+      const guilds = await this.fetchCompleteUserGuilds(userId, discordId);
+      const entry = { guilds, fetchedAt: Date.now() };
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(entry),
+        this.completeGuildsCacheTtlSeconds,
+      );
+
+      return entry;
     } finally {
       await this.releaseLock(lock, {
-        action: "getFreshCompleteUserGuilds",
+        action: "getCompleteUserGuilds",
         lockKey,
         userId,
       });
@@ -316,9 +352,10 @@ export class DiscordUserGuildsClient {
     return this.isLocal ? localTtl : prodTtl;
   }
 
-  private async getFreshCompleteUserGuildsHandoff(
+  private async getCompleteUserGuildsEntry(
     key: string,
-  ): Promise<FreshCompleteUserGuildsResult | null> {
+    maxAgeMs: number,
+  ): Promise<CompleteUserGuildsEntry | null> {
     const cached = await this.redisService.get(key);
 
     if (!cached) {
@@ -326,15 +363,17 @@ export class DiscordUserGuildsClient {
     }
 
     try {
-      const parsed = decodeFreshCompleteHandoff(cached);
+      const parsed = decodeCompleteUserGuildsEntry(cached);
 
       if (isApiGuildArray(parsed.guilds)) {
-        return { guilds: parsed.guilds, fresh: true, complete: true };
+        return Date.now() - parsed.fetchedAt <= maxAgeMs
+          ? { guilds: parsed.guilds, fetchedAt: parsed.fetchedAt }
+          : null;
       }
     } catch (error) {
       this.logger.log({
         level: "debug",
-        message: "Failed to parse fresh complete guild handoff cache",
+        message: "Failed to parse complete guild cache",
         key,
         error,
       });
@@ -398,18 +437,21 @@ export class DiscordUserGuildsClient {
     }
   }
 
-  private async waitForFreshCompleteUserGuildsHandoff(
+  private async waitForCompleteUserGuildsEntry(
     key: string,
-    deadline = Date.now() + this.freshCompleteGuildsHandoffWaitMs,
-  ): Promise<FreshCompleteUserGuildsResult | null> {
+    maxAgeMs: number,
+    deadline = Date.now() + this.completeGuildsWaitMs,
+  ): Promise<CompleteUserGuildsEntry | null> {
     if (Date.now() >= deadline) {
       return null;
     }
 
-    await sleep(this.freshCompleteGuildsHandoffPollMs);
-    const handoff = await this.getFreshCompleteUserGuildsHandoff(key);
+    await sleep(this.completeGuildsPollMs);
+    const entry = await this.getCompleteUserGuildsEntry(key, maxAgeMs);
 
-    return handoff ?? this.waitForFreshCompleteUserGuildsHandoff(key, deadline);
+    return (
+      entry ?? this.waitForCompleteUserGuildsEntry(key, maxAgeMs, deadline)
+    );
   }
 
   private async fetchUserGuildsFromDiscord(

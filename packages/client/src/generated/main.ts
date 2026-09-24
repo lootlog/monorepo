@@ -9761,6 +9761,18 @@ export type UsersControllerGetCurrentUserGuilds429 = {
   message: string;
 };
 
+export type UsersControllerRefreshCurrentUserGuilds401 = {
+  message: string;
+};
+
+export type UsersControllerRefreshCurrentUserGuilds403 = {
+  message: string;
+};
+
+export type UsersControllerRefreshCurrentUserGuilds429 = {
+  message: string;
+};
+
 export type UsersControllerGetCurrentUserAccessibleGuilds401 = {
   message: string;
 };
@@ -13766,7 +13778,7 @@ export const getUsersControllerGetCurrentUserGuildsUrl = () => {
 }
 
 /**
- * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
+ * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes.
  * @summary Get current user guilds
  */
 export const usersControllerGetCurrentUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
@@ -13900,6 +13912,81 @@ export const useGetUsersControllerGetCurrentUserGuildsQueryData = () => {
 }
 
 
+
+export const getUsersControllerRefreshCurrentUserGuildsUrl = () => {
+
+
+
+
+  return `/users/@me/guilds/refresh`
+}
+
+/**
+ * Fetch the authenticated user's Discord guilds from Discord again instead of the cached list, and return them like GET /users/@me/guilds
+ * @summary Refresh current user guilds
+ */
+export const usersControllerRefreshCurrentUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
+
+  return mainFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerRefreshCurrentUserGuildsUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersControllerRefreshCurrentUserGuildsMutationKey = () => ['usersControllerRefreshCurrentUserGuilds'] as const;
+
+export const getUsersControllerRefreshCurrentUserGuildsMutationOptions = <TError = ErrorType<RequestValidationError | UsersControllerRefreshCurrentUserGuilds401 | UsersControllerRefreshCurrentUserGuilds403 | UsersControllerRefreshCurrentUserGuilds429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, TError,void, TContext> => {
+
+const mutationKey = getUsersControllerRefreshCurrentUserGuildsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, void> = () => {
+
+
+          return  usersControllerRefreshCurrentUserGuilds(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerRefreshCurrentUserGuildsMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>>
+
+    export type UsersControllerRefreshCurrentUserGuildsMutationError = ErrorType<RequestValidationError | UsersControllerRefreshCurrentUserGuilds401 | UsersControllerRefreshCurrentUserGuilds403 | UsersControllerRefreshCurrentUserGuilds429>
+
+
+    /**
+ * @summary Refresh current user guilds
+ */
+export const useUsersControllerRefreshCurrentUserGuilds = <TError = ErrorType<RequestValidationError | UsersControllerRefreshCurrentUserGuilds401 | UsersControllerRefreshCurrentUserGuilds403 | UsersControllerRefreshCurrentUserGuilds429>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>, TError,void, TContext>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerRefreshCurrentUserGuilds>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getUsersControllerRefreshCurrentUserGuildsMutationOptions(options), queryClient);
+    }
 
 export const getUsersControllerGetCurrentUserAccessibleGuildsUrl = () => {
 

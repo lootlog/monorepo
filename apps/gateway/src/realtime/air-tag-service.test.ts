@@ -29,7 +29,6 @@ const makeSocket = (): GatewaySocket => ({
     subscriptions: new Map(),
     airTagScopes: [],
     confidence: "verified",
-    backpressureStrikes: 0,
     presence: {
       userId: "user-1",
       sessionId: "presence-1",

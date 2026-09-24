@@ -174,6 +174,14 @@ end
 return 1
 `;
 
+// Refresh restores both indexes atomically. Checking cardinality and pruning in
+// one script cannot unindex an Organization that a concurrent refresh revived.
+const PRUNE_ORGANIZATION = `
+-- presence:prune-organization
+if redis.call('SCARD', KEYS[1]) ~= 0 then return 0 end
+return redis.call('SREM', KEYS[2], ARGV[1])
+`;
+
 // One fresh Organization snapshot feeds one atomic group decision, with no
 // per-character network waits that could make later decisions use stale data.
 // Completed reconnect cancellation before this move suppresses departure; a
@@ -957,11 +965,14 @@ export class PresenceStore {
           this.redis.command.smembers(this.indexKey(organizationId)),
         );
 
-        if (keys.length === 0) continue;
+        const values =
+          keys.length === 0
+            ? []
+            : yield* fromPromise("presence.read-organization", () =>
+                this.redis.command.mget(keys),
+              );
 
-        const values = yield* fromPromise("presence.read-organization", () =>
-          this.redis.command.mget(keys),
-        );
+        let hasActivePresence = false;
 
         for (const [index, value] of values.entries()) {
           const key = keys[index];
@@ -978,7 +989,11 @@ export class PresenceStore {
             }
           }
 
-          if (!expired) continue;
+          if (!expired) {
+            hasActivePresence = true;
+            continue;
+          }
+
           const sessionId = key.slice(key.lastIndexOf(":") + 1);
           const metadata = yield* this.readMetadata(organizationId, sessionId);
           const userId = metadata?.userId;
@@ -1004,6 +1019,18 @@ export class PresenceStore {
               () => this.redis.command.srem(this.indexKey(organizationId), key),
             );
         }
+
+        if (hasActivePresence) continue;
+
+        yield* fromPromise("presence.prune-organization", () =>
+          this.redis.command.eval(
+            PRUNE_ORGANIZATION,
+            2,
+            this.indexKey(organizationId),
+            "presence:organizations",
+            organizationId,
+          ),
+        );
       }
     });
   }

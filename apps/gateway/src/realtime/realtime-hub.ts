@@ -104,6 +104,7 @@ export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
+  private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
   private readonly permissionRebalanceListeners = new Set<
@@ -112,10 +113,7 @@ export class RealtimeHub {
   readonly instanceId = crypto.randomUUID();
 
   constructor(
-    private readonly config: Pick<
-      GatewayConfiguration,
-      "maxBackpressureBytes" | "maxBackpressureStrikes"
-    >,
+    private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
     private readonly redis: RealtimeFederationStore,
     private readonly runBackground: BackgroundTaskRunner = unmanagedBackgroundTaskRunner,
   ) {}
@@ -449,6 +447,9 @@ export class RealtimeHub {
     local?: ReturnType<typeof prepareRealtimeFrame>,
   ): void {
     if (!this.remember(message.id)) return;
+    const candidates = this.candidates(message);
+
+    if (candidates.size === 0) return;
     const frame = this.publicationFrame(message, local);
 
     if (!frame) return;
@@ -469,27 +470,14 @@ export class RealtimeHub {
         ? prepareChatMessagePermissions(frame)
         : undefined;
 
-    for (const socket of this.candidates(message)) {
+    for (const socket of candidates) {
       if (!this.matchesRecipient(socket, message)) continue;
 
-      if (socket.data.apiKeyAccess && frame.type === "map-ping.received") {
-        const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
-
-        if (
-          !scopes.length ||
-          !scopes.every(
-            (scope) =>
-              scope.organizationId !== undefined &&
-              socket.data.apiKeyAccess?.organizationIds.includes(
-                scope.organizationId,
-              ) &&
-              socket.data.guilds.some(
-                ({ guild }) => guild.id === scope.organizationId,
-              ),
-          )
-        )
-          continue;
-      }
+      if (
+        frame.type === "map-ping.received" &&
+        !this.matchesMapPingAudience(socket, message)
+      )
+        continue;
 
       if (!this.matchesPresenceAudience(socket, message)) continue;
 
@@ -570,7 +558,7 @@ export class RealtimeHub {
 
   private candidates(
     message: FederatedRealtimeMessage,
-  ): Iterable<GatewaySocket> {
+  ): ReadonlySet<GatewaySocket> {
     const keys: string[] = [];
 
     if (message.userId !== undefined)
@@ -592,7 +580,7 @@ export class RealtimeHub {
       return audience ? [audience] : [];
     });
 
-    if (!first) return [];
+    if (!first) return new Set();
 
     if (others.length === 0) return first;
     const candidates = new Set(first);
@@ -641,6 +629,28 @@ export class RealtimeHub {
     return message.presenceAudience === "precise" ? precise : !precise;
   }
 
+  private matchesMapPingAudience(
+    socket: GatewaySocket,
+    message: FederatedRealtimeMessage,
+  ): boolean {
+    const access = socket.data.apiKeyAccess;
+
+    if (!access) return true;
+    const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
+
+    return (
+      scopes.length > 0 &&
+      scopes.every(
+        (scope) =>
+          scope.organizationId !== undefined &&
+          access.organizationIds.includes(scope.organizationId) &&
+          socket.data.guilds.some(
+            ({ guild }) => guild.id === scope.organizationId,
+          ),
+      )
+    );
+  }
+
   private remember(id: string): boolean {
     if (this.seenEventIds.has(id)) return false;
     this.seenEventIds.add(id);
@@ -665,26 +675,23 @@ export class RealtimeHub {
   }
 
   private send(socket: GatewaySocket, data: string | Uint8Array): boolean {
+    if (this.backpressuredSockets.has(socket)) return false;
+
     if (!hasValidApiKeyLease(socket.data)) {
       socket.close(1008, "API key authorization expired");
 
       return false;
     }
 
-    if (socket.getBufferedAmount() > this.config.maxBackpressureBytes) {
-      socket.data.backpressureStrikes += 1;
-
-      if (
-        socket.data.backpressureStrikes >= this.config.maxBackpressureStrikes
-      ) {
-        socket.close(1013, "backpressure limit exceeded");
-      }
+    if (
+      socket.getBufferedAmount() > this.config.maxBackpressureBytes ||
+      socket.send(data, true) === 0
+    ) {
+      this.backpressuredSockets.add(socket);
+      socket.close(1013, "backpressure limit exceeded");
 
       return false;
     }
-
-    socket.data.backpressureStrikes = 0;
-    socket.send(data, true);
 
     return true;
   }

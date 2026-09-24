@@ -309,8 +309,69 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
+      description: Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes.
       summary: Get current user guilds
+  /users/@me/guilds/refresh:
+    post:
+      tags:
+        - users
+      operationId: UsersController_refreshCurrentUserGuilds
+      parameters: []
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output"
+        "400":
+          description: RequestValidationError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: Fetch the authenticated user's Discord guilds from Discord again instead of the cached list, and return them like GET /users/@me/guilds
+      summary: Refresh current user guilds
   /users/@me/guilds/accessible:
     get:
       tags:

@@ -102,6 +102,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
   constructor(
     private readonly repository: LootSubmissionAcceptancePersistence,
     private readonly lock: LootSubmissionLock,
+    private readonly signalPublications: Effect.Effect<void>,
   ) {}
 
   accept(options: {
@@ -390,6 +391,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
               players: mapPlayersSnapshot,
             },
       );
+      yield* this.signalPublications;
     });
   }
 
@@ -409,7 +411,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         options.primaryNpcType,
       );
 
-      return yield* this.repository.createNewLoot(
+      const lootId = yield* this.repository.createNewLoot(
         {
           mapPlayersSnapshot: options.mapPlayersSnapshot,
           uniqueId: options.uniqueId,
@@ -428,6 +430,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         },
         options.publications,
       );
+
+      yield* this.signalPublications;
+
+      return lootId;
     });
   }
 
@@ -835,5 +841,10 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
 export const makeLootSubmissionAcceptance = (
   repository: LootSubmissionAcceptancePersistence,
   lock: LootSubmissionLock,
+  signalPublications: Effect.Effect<void>,
 ): LootSubmissionAcceptance =>
-  new LootSubmissionAcceptanceImplementation(repository, lock);
+  new LootSubmissionAcceptanceImplementation(
+    repository,
+    lock,
+    signalPublications,
+  );

@@ -414,7 +414,6 @@ export const createGatewayFetch =
           subscriptions: new Map(),
           airTagScopes: [],
           confidence: "reported",
-          backpressureStrikes: 0,
         },
         headers: websocketResponseHeaders(request, frameEncoding),
       });
