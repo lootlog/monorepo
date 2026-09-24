@@ -60,7 +60,7 @@ describe("SettingsTabs", () => {
     expect(tabNames).toEqual([
       "Ogólne",
       "Zakres zbierania",
-      "Organizacje",
+      "Lootlogi",
       "Wygląd",
       "Czat",
       "Timery",

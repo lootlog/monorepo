@@ -139,9 +139,7 @@ describe("GuildSwitcher", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(200));
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Ładowanie organizacji",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Ładowanie Lootlogów");
   });
 
   it("does not write a selection before the character identity is available", () => {
@@ -248,7 +246,7 @@ describe("GuildSwitcher", () => {
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("Wszystkie organizacje są ukryte"),
+      screen.queryByText("Wszystkie Lootlogi są ukryte"),
     ).not.toBeInTheDocument();
   });
 
@@ -262,7 +260,7 @@ describe("GuildSwitcher", () => {
 
     expect(screen.queryByText("*")).not.toBeInTheDocument();
     expect(
-      screen.getByText("Wszystkie organizacje są ukryte"),
+      screen.getByText("Wszystkie Lootlogi są ukryte"),
     ).toBeInTheDocument();
     expect(
       container.querySelector("[data-ll-scroll-area-viewport]"),

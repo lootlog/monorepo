@@ -3,7 +3,7 @@
     "title": "Wykrywacz"
   },
   "actions": {
-    "noMatchingGuilds": "Żadna organizacja nie pasuje do poziomu tego potwora.",
+    "noMatchingGuilds": "Żaden Lootlog nie pasuje do poziomu tego potwora.",
     "openSettingsAria": "Otwórz ustawienia wykrywacza",
     "messageSent": "Wysłano",
     "message": "Komunikat",
