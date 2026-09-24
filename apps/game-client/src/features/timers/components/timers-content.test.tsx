@@ -95,12 +95,12 @@ const mountContent = (
 it("shows delayed loading feedback without falsely presenting an empty timer list", () => {
   vi.useFakeTimers();
   mountContent({ initialLoading: true });
-  expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
+  expect(screen.queryByText("Nie ma jeszcze timerów")).not.toBeInTheDocument();
   act(() => vi.advanceTimersByTime(200));
   expect(screen.getByRole("status").querySelector("svg")).toHaveClass(
     "ll:animate-spin",
   );
-  expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
+  expect(screen.queryByText("Nie ma jeszcze timerów")).not.toBeInTheDocument();
 });
 
 it("lets users retry an initial request failure", async () => {
@@ -109,7 +109,7 @@ it("lets users retry an initial request failure", async () => {
   expect(screen.getByText("Nie udało się załadować timerów")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Spróbuj ponownie" }));
   expect(onRetry).toHaveBeenCalledOnce();
-  expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
+  expect(screen.queryByText("Nie ma jeszcze timerów")).not.toBeInTheDocument();
 });
 
 it("renders real controls and timer tiles while retaining scroll and window drag behavior", async () => {
@@ -147,7 +147,7 @@ it("offers filter recovery in compact mode without the regular toolbar", async (
     isUnderBag: true,
   });
 
-  expect(screen.getByText("Brak pasujących timerów")).toBeVisible();
+  expect(screen.getByText("Żaden timer nie pasuje do filtrów")).toBeVisible();
   expect(screen.queryByPlaceholderText("Szukaj...")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Pokaż wszystkie" }));

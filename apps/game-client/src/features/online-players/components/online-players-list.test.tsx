@@ -310,7 +310,7 @@ describe("OnlinePlayersList", () => {
       target: { value: "werbin" },
     });
     expect(screen.queryByText("Hero (123w)")).not.toBeInTheDocument();
-    expect(screen.getByText("Brak pasujących graczy")).toBeVisible();
+    expect(screen.getByText("Żaden gracz nie pasuje do filtrów")).toBeVisible();
   });
 
   it("clears all filters from the filtered empty state", async () => {
@@ -384,7 +384,7 @@ describe("OnlinePlayersList", () => {
       target: { value: "200" },
     });
     expect(screen.queryByText("(2) Discord User")).not.toBeInTheDocument();
-    expect(screen.getByText("Brak pasujących graczy")).toBeVisible();
+    expect(screen.getByText("Żaden gracz nie pasuje do filtrów")).toBeVisible();
   });
 
   it("hides guild, world and filters controls when filters are hidden", async () => {
@@ -398,19 +398,18 @@ describe("OnlinePlayersList", () => {
     expect(screen.queryByLabelText("Minimalny poziom")).not.toBeInTheDocument();
   });
 
-  it("renders the empty presence state centered in the data viewport", async () => {
+  it("shows the empty presence state when nobody is online", async () => {
     harness.fetchPresence.mockResolvedValue(createPresenceSnapshot([]));
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
     expect(await screen.findByText("Nikt nie jest teraz online")).toBeVisible();
-    expect(
-      screen.getByText("Nikt nie jest teraz online").closest('[role="status"]'),
-    ).toHaveClass("ll:h-full", "ll:items-center", "ll:justify-center");
   });
 
   it("shows no access feedback when online players permission is missing", async () => {
     harness.fetchPresence.mockRejectedValue(new Error("denied"));
     await render(<OnlinePlayersList viewMode="accounts" filtersVisible />);
-    expect(await screen.findByText("Brak dostępu do listy")).toBeVisible();
+    expect(
+      await screen.findByText("Nie widzisz, kto jest online"),
+    ).toBeVisible();
     expect(
       screen.queryByText("Nikt nie jest teraz online"),
     ).not.toBeInTheDocument();

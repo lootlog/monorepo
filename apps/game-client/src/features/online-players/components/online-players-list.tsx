@@ -30,8 +30,6 @@ import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { toolbarStripClassName } from "@/components/ui/toolbar-strip";
 import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { EmptyState } from "@/components/empty-state";
-import { Button } from "@/components/ui/button";
-import { SearchX, ShieldX, UsersRound } from "lucide-react";
 
 type OnlinePlayersListProps = {
   viewMode: OnlinePlayersViewMode;
@@ -247,31 +245,29 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
 
   const filteredEmptyState = (
     <EmptyState
-      action={
-        <Button
-          size="xs"
-          className="ll:h-6 ll:px-2.5"
-          onClick={handleResetFilters}
-          type="button"
-          variant="ghost"
-        >
-          {t("emptyState.clearFilters")}
-        </Button>
-      }
-      icon={SearchX}
+      action={{
+        label: t("emptyState.clearFilters"),
+        onClick: handleResetFilters,
+      }}
       title={t("emptyState.notFoundTitle")}
     />
   );
 
   const noPlayersEmptyState = (
-    <EmptyState icon={UsersRound} title={t("emptyState.noPlayersTitle")} />
+    <EmptyState
+      description={t("emptyState.noPlayersDescription")}
+      title={t("emptyState.noPlayersTitle")}
+    />
   );
 
   let listContent: ReactNode;
 
   if (accessState === "forbidden") {
     listContent = (
-      <EmptyState icon={ShieldX} title={t("emptyState.noAccessTitle")} />
+      <EmptyState
+        description={t("emptyState.noAccessDescription")}
+        title={t("emptyState.noAccessTitle")}
+      />
     );
   } else if (viewMode === "members") {
     const onlinePlayersList = getFilteredMemberEntries(

@@ -67,8 +67,18 @@
     "party": "Grupa"
   },
   "emptyState": {
-    "guildTitle": "Brak wiadomości",
-    "allTitle": "Brak wiadomości"
+    "all": {
+      "title": "Na czacie jeszcze cisza",
+      "description": "Tu trafiają rozmowy i potwory zgłoszone przez członków Lootloga."
+    },
+    "normal": {
+      "title": "Nikt jeszcze nie pisał",
+      "description": "Napisz pierwszą wiadomość."
+    },
+    "reports": {
+      "title": "Brak zgłoszonych potworów",
+      "description": "Gdy ktoś z Lootloga wykryje potwora, zgłoszenie pojawi się tutaj."
+    }
   },
   "states": {
     "loading": "Ładowanie wiadomości",

@@ -257,7 +257,9 @@ export const LogsSettingsTab: FC = () => {
           </div>
         ) : (
           <SettingsEmptyState>
-            {t("settings.logs.emptyState")}
+            {actions.length === 0
+              ? t("settings.logs.noActions")
+              : t("settings.logs.emptyState")}
           </SettingsEmptyState>
         )}
       </SettingsSection>
