@@ -247,6 +247,7 @@ export type UpdateUserPreferencesDtoTheme = typeof UpdateUserPreferencesDtoTheme
 
 export const UpdateUserPreferencesDtoTheme = {
   default: 'default',
+  muted: 'muted',
   cyberpunk: 'cyberpunk',
   pastel: 'pastel',
   fantasy: 'fantasy',
