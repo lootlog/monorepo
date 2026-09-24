@@ -12279,7 +12279,7 @@ export const getUsersControllerGetCurrentUserGuildsUrl = () => {
 }
 
 /**
- * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
+ * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes.
  * @summary Get current user guilds
  */
 export const usersControllerGetCurrentUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {

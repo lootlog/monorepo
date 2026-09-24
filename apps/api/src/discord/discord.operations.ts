@@ -31,6 +31,10 @@ export const makeDiscordOperations = (
       adapter("discord.userGuilds.fresh", () =>
         userGuilds.getFreshCompleteUserGuilds(userId, discordId),
       ),
+    getCachedCompleteUserGuilds: (userId: string, discordId: string) =>
+      adapter("discord.userGuilds.cached", () =>
+        userGuilds.getCachedCompleteUserGuilds(userId, discordId),
+      ),
     clearUserGuildIdsCache: (options: {
       readonly userId: string;
       readonly discordId: string;

@@ -43,9 +43,20 @@ export interface CurrentUserGuildPorts {
     readonly userId: string;
     readonly activeDiscordGuildIds: ReadonlyArray<string>;
   }) => Effect.Effect<unknown, unknown>;
-  readonly freshDiscordGuilds: (
+  /**
+   * Serves the list from a cache unless `refresh` is set. `fresh` is false for
+   * a cached list, which may miss a server the user has joined since.
+   */
+  readonly discordGuilds: (
     identity: AuthenticatedIdentity,
-  ) => Effect.Effect<ReadonlyArray<RESTAPIPartialCurrentUserGuild>, unknown>;
+    options: { readonly refresh: boolean },
+  ) => Effect.Effect<
+    {
+      readonly guilds: ReadonlyArray<RESTAPIPartialCurrentUserGuild>;
+      readonly fresh: boolean;
+    },
+    unknown
+  >;
   readonly queueMember: (options: {
     readonly discordId: string;
     readonly guildId: string;
@@ -125,34 +136,41 @@ export const makeCurrentUserGuilds = (
 
   const operation = Effect.fn("getCurrentUserGuilds")(function* (
     identity: AuthenticatedIdentity,
+    refresh: boolean,
   ) {
     if (yield* requestApiKeyAccess)
       return yield* ports.accessibleFallback(identity);
 
-    const discordGuilds = yield* ports.freshDiscordGuilds(identity).pipe(
-      Effect.map((guilds) => ({ kind: "discord" as const, guilds })),
-      Effect.catch((error) =>
-        fallbackEligible(error)
-          ? ports.accessibleFallback(identity).pipe(
-              Effect.map((guilds) => ({
-                kind: "fallback" as const,
-                guilds: guilds.map((guild) => ({
-                  ...guild,
-                  isAccessDataStale: true,
+    const discordGuilds = yield* ports
+      .discordGuilds(identity, { refresh })
+      .pipe(
+        Effect.map((result) => ({ kind: "discord" as const, ...result })),
+        Effect.catch((error) =>
+          fallbackEligible(error)
+            ? ports.accessibleFallback(identity).pipe(
+                Effect.map((guilds) => ({
+                  kind: "fallback" as const,
+                  guilds: guilds.map((guild) => ({
+                    ...guild,
+                    isAccessDataStale: true,
+                  })),
                 })),
-              })),
-            )
-          : Effect.fail(error),
-      ),
-    );
+              )
+            : Effect.fail(error),
+        ),
+      );
 
     if (discordGuilds.kind === "fallback") return discordGuilds.guilds;
     const apiGuilds = discordGuilds.guilds;
     const discordGuildIds = apiGuilds.map(({ id }) => id);
-    yield* ports.deactivateMissing({
-      ...identity,
-      activeDiscordGuildIds: discordGuildIds,
-    });
+
+    // A cached list can predate a join, so only a fresh one may deactivate.
+    if (discordGuilds.fresh) {
+      yield* ports.deactivateMissing({
+        ...identity,
+        activeDiscordGuildIds: discordGuildIds,
+      });
+    }
 
     if (discordGuildIds.length === 0) return [];
 
@@ -275,8 +293,8 @@ export const makeCurrentUserGuilds = (
     return yield* sort(identity.userId, summaries);
   });
 
-  return (identity: AuthenticatedIdentity) =>
-    operation(identity).pipe(
+  return (identity: AuthenticatedIdentity, refresh = false) =>
+    operation(identity, refresh).pipe(
       Effect.mapError(
         (cause) => new AccountOrganizationOperationError({ cause }),
       ),

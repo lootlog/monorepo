@@ -1096,6 +1096,27 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
           },
         },
       },
+      // Verified by http-boundary.e2e-spec.ts: refresh skips the cached
+      // Discord guild list.
+      "POST /users/@me/guilds/refresh": {
+        operationId: "UsersController_refreshCurrentUserGuilds",
+        parameters: [],
+        security: [{ bearer: [] }],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/UserCurrentGuildResponseDto_Output",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       "GET /users/@me/feed": {
         operationId: "UsersController_getUserFeed",
         parameters: [],

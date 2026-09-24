@@ -245,10 +245,10 @@ export const accountOrganizationOperationsLive = Layer.effect(
             activeDiscordGuildIds: [...options.activeDiscordGuildIds],
             status: MEMBER_LAST_DISCORD_STATUS.GUILD_NOT_IN_DISCORD_LIST,
           }),
-        freshDiscordGuilds: ({ userId, discordId }) =>
-          discord
-            .getFreshCompleteUserGuilds(userId, discordId)
-            .pipe(Effect.map(({ guilds }) => guilds)),
+        discordGuilds: ({ userId, discordId }, { refresh }) =>
+          refresh
+            ? discord.getFreshCompleteUserGuilds(userId, discordId)
+            : discord.getCachedCompleteUserGuilds(userId, discordId),
         queueMember: refresh.queueMemberRefresh,
         refreshMember: refresh.refreshGuildMemberWithinBudget,
       },
