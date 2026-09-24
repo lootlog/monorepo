@@ -1,5 +1,6 @@
 const generatedSourcePattern =
-  /(?:^|\/)apps\/(?:web|game-client)\/src\/lib\/api\/generated\//;
+  /(?:^|\/)packages\/(?:client|sdk)\/src\/generated\//;
+
 const ignoredFilePattern = /(?:^|\/)bun\.lock$/;
 
 const quote = (file) => JSON.stringify(file);
