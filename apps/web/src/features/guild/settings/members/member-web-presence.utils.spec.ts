@@ -4,7 +4,7 @@ import {
   getMemberWebSessionCount,
   isMemberOnlineOnWeb,
   mapMemberWebPresenceByDiscordId,
-} from "./member-web-presence.utils";
+} from "@/lib/web-presence";
 
 describe("member web presence utils", () => {
   it("maps web sessions by Discord ID and skips empty entries", () => {

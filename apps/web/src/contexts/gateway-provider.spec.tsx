@@ -87,7 +87,10 @@ const wireAt = (index: number) => {
   return wire;
 };
 
-const setup = async (openDuringCommit = false) => {
+const setup = async (
+  openDuringCommit = false,
+  guilds = [{ id: "guild-1", vanityUrl: null }],
+) => {
   vi.stubGlobal("WebSocket", Wire);
 
   const client = new QueryClient({
@@ -123,9 +126,10 @@ const setup = async (openDuringCommit = false) => {
   );
   client.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [{ id: "guild-1", vanityUrl: null }],
+    guilds,
   );
-  socket.connect();
+
+  if (openDuringCommit) socket.connect();
 
   const root = createRootRoute({
     component: () => (
@@ -150,6 +154,8 @@ const setup = async (openDuringCommit = false) => {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+
+  return client;
 };
 
 afterEach(() => {
@@ -207,4 +213,38 @@ it("joins when the transport opens between provider render and passive effects",
       (frame) => "type" in frame && frame.type === "session.join",
     ),
   ).toHaveLength(1);
+});
+
+it("does not open a connection without Organizations and starts when membership arrives", async () => {
+  const client = await setup(false, []);
+  expect(Wire.instances).toHaveLength(0);
+  act(() => {
+    client.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [{ id: "guild-1", vanityUrl: null }],
+    );
+  });
+  await waitFor(() => expect(Wire.instances).toHaveLength(1));
+  act(() => wireAt(0).open());
+  await waitFor(() =>
+    expect(
+      wireAt(0).frames.filter(
+        (frame) => "type" in frame && frame.type === "session.join",
+      ),
+    ).toHaveLength(1),
+  );
+});
+
+it("disconnects after losing the last Organization", async () => {
+  const client = await setup();
+  act(() => wireAt(0).open());
+  await waitFor(() => expect(wireAt(0).frames.length).toBeGreaterThan(0));
+  act(() => {
+    client.setQueryData(
+      getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+      [],
+    );
+  });
+  await waitFor(() => expect(wireAt(0).readyState).toBe(3));
+  expect(socket.connected).toBe(false);
 });

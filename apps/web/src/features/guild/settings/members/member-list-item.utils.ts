@@ -8,7 +8,7 @@ import {
 import {
   isMemberOnlineOnWeb,
   type MemberWebPresenceByDiscordId,
-} from "@/features/guild/settings/members/member-web-presence.utils";
+} from "@/lib/web-presence";
 import type { MembersStats } from "@/features/guild/settings/members/members.types";
 
 export type MemberOnlineSource = "web" | "game";

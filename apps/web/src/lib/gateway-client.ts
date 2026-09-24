@@ -64,30 +64,13 @@ type ForbiddenPresence = {
   code: "ONLINE_PLAYERS_ACCESS_DENIED";
 };
 
-export type PlayerPresenceResponse =
-  | { status: "success"; players: Record<string, PlayerPresence[]> }
+export type OrganizationPresenceResponse =
+  | {
+      status: "success";
+      players: Record<string, PlayerPresence[]>;
+      sessions: Record<string, { sessionId: string }[]>;
+    }
   | ForbiddenPresence;
-
-export type WebPresenceResponse =
-  | { status: "success"; sessions: Record<string, { sessionId: string }[]> }
-  | ForbiddenPresence;
-
-type PresenceRequest = { guildId?: string; world?: string };
-
-type EmitArguments =
-  | [event: GatewayEvent.JOIN, payload?: PresenceRequest]
-  | [
-      event:
-        | GatewayEvent.EVENT_PRESENCE_FETCH
-        | GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH,
-      payload?: PresenceRequest,
-      acknowledgement?: (response?: PlayerPresenceResponse) => void,
-    ]
-  | [
-      event: GatewayEvent.MEMBER_WEB_PRESENCE_FETCH,
-      payload?: PresenceRequest,
-      acknowledgement?: (response?: WebPresenceResponse) => void,
-    ];
 
 const groupPresence = <TValue>(
   presences: ReadonlyArray<BasicPresence | PresenceWithLocation>,
@@ -191,45 +174,36 @@ export class GatewayClient {
     this.listeners.clear();
   }
 
-  emit(...[event, payload, acknowledgement]: EmitArguments): this {
+  emit(event: GatewayEvent.JOIN): this {
     if (event === GatewayEvent.JOIN) {
       void this.realtime.join({}).catch(() => undefined);
-
-      return this;
     }
 
-    if (!payload?.guildId) return this;
-    void this.realtime
-      .request("presence.fetch", {
-        organizationId: payload.guildId,
-        world: payload.world,
-        delivery: "response",
-      })
-      .then((response) => {
-        const { presences } = decodePresenceSnapshot(response);
-
-        if (event === GatewayEvent.MEMBER_WEB_PRESENCE_FETCH) {
-          acknowledgement?.({
-            status: "success",
-            sessions: groupPresence(presences, "web-app", (presence) => ({
-              sessionId: presence.sessionId,
-            })),
-          });
-        } else {
-          acknowledgement?.({
-            status: "success",
-            players: groupPresence(presences, "game", toLegacyPlayer),
-          });
-        }
-      })
-      .catch(() =>
-        acknowledgement?.({
-          status: "forbidden",
-          code: "ONLINE_PLAYERS_ACCESS_DENIED",
-        }),
-      );
-
     return this;
+  }
+
+  async fetchPresence(guildId: string): Promise<OrganizationPresenceResponse> {
+    try {
+      const response = await this.realtime.request("presence.fetch", {
+        organizationId: guildId,
+        delivery: "response",
+      });
+
+      const { presences } = decodePresenceSnapshot(response);
+
+      return {
+        status: "success",
+        players: groupPresence(presences, "game", toLegacyPlayer),
+        sessions: groupPresence(presences, "web-app", (presence) => ({
+          sessionId: presence.sessionId,
+        })),
+      };
+    } catch {
+      return {
+        status: "forbidden",
+        code: "ONLINE_PLAYERS_ACCESS_DENIED",
+      };
+    }
   }
 
   private updateAccessPolicy(next: AccessPolicySnapshot | undefined) {

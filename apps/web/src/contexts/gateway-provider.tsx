@@ -1,6 +1,5 @@
 /* eslint-disable react-doctor/context-provider-value-from-unmemoized-local-literal -- Vite React Compiler output caches this provider value and its callbacks by their actual dependencies; verified through the running Vite module transform. */
 import { GatewayContext, type GatewayProviderValue } from "./gateway-context";
-import { mapValues } from "es-toolkit";
 import React, {
   useEffect,
   useEffectEvent,
@@ -12,9 +11,8 @@ import { useKillStatsUpdates } from "@/hooks/utils/use-kill-stats-updates";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useUser } from "@/hooks/api/user/use-user";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useUsersControllerGetCurrentUserAccessibleGuilds } from "@lootlog/client/main";
-import type { GuildLootCreatedEventV2 } from "@lootlog/schema/loot-events";
+import { LootUnreadProvider } from "./loot-unread-provider";
 
 type GatewayJoinPayload = {
   status: "error" | "success";
@@ -41,19 +39,10 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const { user } = useUser();
   const { data: guilds } = useUsersControllerGetCurrentUserAccessibleGuilds();
   useTimersSocket({ socket, guilds });
-  const routeGuildId = useGuildId();
   const connected = useSyncExternalStore(subscribeConnection, isConnected);
   const [joined, setJoined] = useState(false);
 
-  const [unreadLootIdsByGuild, setUnreadLootIdsByGuild] = useState<
-    Record<string, number[]>
-  >({});
-
-  const currentGuild = guilds?.find(
-    (guild) => guild.id === routeGuildId || guild.vanityUrl === routeGuildId,
-  );
-
-  const currentGuildId = currentGuild?.id;
+  const canConnect = Boolean(user && guilds?.length);
 
   const handleDisconnect = useEffectEvent(() => {
     setJoined(false);
@@ -68,84 +57,48 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   });
 
   const emitJoin = useEffectEvent(() => {
-    if (connected && user && guilds) {
-      socket.emit(GatewayEvent.JOIN, {});
+    if (connected && canConnect) {
+      socket.emit(GatewayEvent.JOIN);
     }
   });
-
-  const handleLootCreate = useEffectEvent(
-    (payload: GuildLootCreatedEventV2) => {
-      if (payload.guildId === currentGuildId) {
-        return;
-      }
-
-      setUnreadLootIdsByGuild((prev) => {
-        const unreadLootIds = prev[payload.guildId] ?? [];
-
-        if (unreadLootIds.includes(payload.lootId)) {
-          return prev;
-        }
-
-        return {
-          ...prev,
-          [payload.guildId]: [...unreadLootIds, payload.lootId],
-        };
-      });
-    },
-  );
 
   useEffect(() => {
     socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
     socket.on(GatewayEvent.JOIN, handleJoin);
-    socket.on(GatewayEvent.LOOTS_CREATE, handleLootCreate);
-
-    if (!socket.connected) {
-      socket.connect();
-    }
 
     return () => {
       socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
       socket.off(GatewayEvent.JOIN, handleJoin);
-      socket.off(GatewayEvent.LOOTS_CREATE, handleLootCreate);
     };
   }, []);
 
   useEffect(() => {
-    if (connected && user && guilds && !joined) {
-      emitJoin();
-    }
-  }, [connected, user, guilds, joined]);
+    if (!canConnect) {
+      socket.disconnect();
 
-  useEffect(() => {
-    if (!currentGuildId) {
       return;
     }
 
-    setUnreadLootIdsByGuild((prev) => {
-      if (!prev[currentGuildId]) {
-        return prev;
-      }
+    socket.connect();
 
-      const next = { ...prev };
-      delete next[currentGuildId];
+    return () => socket.disconnect();
+  }, [canConnect]);
 
-      return next;
-    });
-  }, [currentGuildId]);
-
-  const lootUnreadCounts = mapValues(
-    unreadLootIdsByGuild,
-    (lootIds) => lootIds.length,
-  );
+  useEffect(() => {
+    if (connected && canConnect && !joined) {
+      emitJoin();
+    }
+  }, [connected, canConnect, joined]);
 
   const value: GatewayProviderValue = {
     connected,
     socket,
     joined,
-    lootUnreadCounts,
   };
 
   return (
-    <GatewayContext.Provider value={value}>{children}</GatewayContext.Provider>
+    <GatewayContext.Provider value={value}>
+      <LootUnreadProvider>{children}</LootUnreadProvider>
+    </GatewayContext.Provider>
   );
 };

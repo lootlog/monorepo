@@ -10,10 +10,12 @@ import {
 } from "../mutations/invalidate-map-queries";
 import { invalidateRankingQueries } from "../mutations/invalidate-ranking-queries";
 import { invalidateRespawnQueries } from "../mutations/invalidate-respawn-queries";
+import { invalidateEventQueries } from "../mutations/invalidate-event-queries";
 
 interface UseEventSocketOptions {
   eventId?: string;
   guildId?: string;
+  routeGuildId?: string;
 }
 
 type EventPayload = {
@@ -41,25 +43,25 @@ const isMatchingEventPayload = (
 export const useEventSocket = (options?: UseEventSocketOptions) => {
   const queryClient = useQueryClient();
   const { connected, socket } = useGateway();
-  const { guildId, eventId } = options ?? {};
+  const { guildId, routeGuildId, eventId } = options ?? {};
 
   const handleMapStatusUpdate = useEffectEvent(
     (payload: EventMapStatusUpdatePayload) => {
-      if (!isMatchingEventPayload(payload, guildId, eventId)) {
+      if (!routeGuildId || !isMatchingEventPayload(payload, guildId, eventId)) {
         return;
       }
 
       if (payload.reason === "presence") {
         invalidateGapQueries(
           queryClient,
-          payload.guildId,
+          routeGuildId,
           payload.eventId,
           payload.mapId,
         );
       } else {
         invalidateMapQueries(
           queryClient,
-          payload.guildId,
+          routeGuildId,
           payload.eventId,
           payload.mapId,
         );
@@ -68,30 +70,30 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
   );
 
   const handleHeroKilled = useEffectEvent((payload: EventPayload) => {
-    if (!isMatchingEventPayload(payload, guildId, eventId)) {
+    if (!routeGuildId || !isMatchingEventPayload(payload, guildId, eventId)) {
       return;
     }
 
-    invalidateKillQueries(queryClient, payload.guildId, payload.eventId);
+    invalidateKillQueries(queryClient, routeGuildId, payload.eventId);
   });
 
   const handleRankingUpdate = useEffectEvent((payload: EventPayload) => {
-    if (!isMatchingEventPayload(payload, guildId, eventId)) {
+    if (!routeGuildId || !isMatchingEventPayload(payload, guildId, eventId)) {
       return;
     }
 
-    invalidateRankingQueries(queryClient, payload.guildId, payload.eventId);
+    invalidateRankingQueries(queryClient, routeGuildId, payload.eventId);
   });
 
   const handleRespawnWindowChange = useEffectEvent(
     (payload: EventRespawnWindowPayload) => {
-      if (!isMatchingEventPayload(payload, guildId, eventId)) {
+      if (!routeGuildId || !isMatchingEventPayload(payload, guildId, eventId)) {
         return;
       }
 
       invalidateRespawnQueries(
         queryClient,
-        payload.guildId,
+        routeGuildId,
         payload.eventId,
         payload.heroId,
       );
@@ -99,15 +101,25 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
   );
 
   const handlePermissionsUpdated = useEffectEvent(() => {
-    if (!guildId || !eventId) {
+    if (!routeGuildId || !eventId) {
       return;
     }
 
-    invalidateEventMapListQuery(queryClient, guildId, eventId);
+    invalidateEventMapListQuery(queryClient, routeGuildId, eventId);
   });
 
+  const handleJoin = useEffectEvent(
+    (payload: { status: "success" | "error" }) => {
+      if (payload.status !== "success" || !routeGuildId || !eventId) {
+        return;
+      }
+
+      invalidateEventQueries(queryClient, routeGuildId, eventId);
+    },
+  );
+
   useEffect(() => {
-    if (!guildId || !eventId) {
+    if (!guildId || !routeGuildId || !eventId) {
       return;
     }
 
@@ -115,6 +127,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
     socket.on(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
     socket.on(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+    socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(
       GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
       handleRespawnWindowChange,
@@ -129,6 +142,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       socket.off(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
       socket.off(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
       socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
+      socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(
         GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
         handleRespawnWindowChange,
@@ -138,7 +152,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
         handleRespawnWindowChange,
       );
     };
-  }, [eventId, guildId, socket]);
+  }, [eventId, guildId, routeGuildId, socket]);
 
   return { connected };
 };

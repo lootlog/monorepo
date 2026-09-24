@@ -9,6 +9,7 @@ import {
 import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import type { ReservationChangedEventV2 } from "@lootlog/schema/reservation-events";
 import { Permission } from "@lootlog/schema/permissions";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import {
@@ -53,9 +54,12 @@ import { ScheduleHeader } from "./schedule-header";
 import type { ReservationRange } from "./types";
 import { useCompactScheduleLayout } from "./use-compact-schedule-layout";
 
-type ReservationChangedPayload = {
-  spotId?: string;
-};
+type ReservationChangedPayload =
+  | ReservationChangedEventV2
+  | {
+      guildId: string;
+      spotId?: string;
+    };
 
 const resolveSpotName = (
   spots: { id: string; name: string }[] | undefined,
@@ -73,7 +77,7 @@ export function ReservationsSchedule() {
   const { containerRef, isCompact } = useCompactScheduleLayout();
   const isOwner = useIsOwner();
   const { data: accessPolicy } = useGuildPermissions();
-  const { socket, connected } = useGateway();
+  const { socket } = useGateway();
   const queryClient = useQueryClient();
   const findingNearestFreeSlotRef = useRef(false);
   const [date, setDate] = useState(() => new Date());
@@ -101,6 +105,7 @@ export function ReservationsSchedule() {
 
   const guildQuery = useGuildsControllerGetGuildById({ guildId });
   const settings = resolveReservationSettings(guildQuery.data);
+  const organizationId = guildQuery.data?.id;
 
   const reservationsQuery = useListSpotReservations(
     { guildId, spotId },
@@ -153,23 +158,43 @@ export function ReservationsSchedule() {
     : null;
 
   useEffect(() => {
-    if (!connected || !guildId) return;
+    if (!organizationId || !guildId) return;
 
     const refresh = (payload: ReservationChangedPayload) => {
+      const matchesOrganization =
+        "audienceGuildIds" in payload
+          ? payload.audienceGuildIds.includes(organizationId)
+          : payload.guildId === organizationId;
+
+      if (!matchesOrganization) return;
+
       if (payload.spotId && payload.spotId !== spotId) return;
       void invalidateReservationQueries(queryClient, guildId, spotId);
     };
 
+    const rejoin = (payload: {
+      status: "success" | "error";
+      guildIds: string[];
+    }) => {
+      if (
+        payload.status === "success" &&
+        payload.guildIds.includes(organizationId)
+      )
+        void invalidateReservationQueries(queryClient, guildId, spotId);
+    };
+
+    socket.on(GatewayEvent.JOIN, rejoin);
     socket.on(GatewayEvent.RESERVATIONS_CHANGED, refresh);
     socket.on(GatewayEvent.RESERVATIONS_CREATE, refresh);
     socket.on(GatewayEvent.RESERVATIONS_DELETE, refresh);
 
     return () => {
+      socket.off(GatewayEvent.JOIN, rejoin);
       socket.off(GatewayEvent.RESERVATIONS_CHANGED, refresh);
       socket.off(GatewayEvent.RESERVATIONS_CREATE, refresh);
       socket.off(GatewayEvent.RESERVATIONS_DELETE, refresh);
     };
-  }, [connected, guildId, queryClient, socket, spotId]);
+  }, [organizationId, guildId, queryClient, socket, spotId]);
 
   const openDefaultRange = () => {
     const startsAt = ceilDateToReservationStep(new Date(), settings);

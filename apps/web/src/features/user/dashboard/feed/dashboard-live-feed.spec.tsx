@@ -1,5 +1,6 @@
 import { createTestGateway } from "@/lib/testing/gateway";
 import { configureApiClients } from "@lootlog/client/transport";
+import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
 // @vitest-environment happy-dom
 import {
   act,
@@ -109,7 +110,14 @@ it("keeps focused visible rows and scroll position until the reader applies a gr
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity } },
+  });
+
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [{ id: feedKill.guild.id }],
+  );
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
   render(
@@ -178,7 +186,14 @@ it("adds organization copies to one row and preserves that row during an HTTP re
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity } },
+  });
+
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [{ id: feedKill.guild.id }],
+  );
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
   render(
@@ -262,7 +277,14 @@ it("keeps the same focused row throughout debounced permission revalidation", as
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
 
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity } },
+  });
+
+  queryClient.setQueryData(
+    getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
+    [{ id: feedKill.guild.id }],
+  );
   onTestFinished(() => queryClient.clear());
   const GatewayWrapper = gateway.wrapper;
   render(

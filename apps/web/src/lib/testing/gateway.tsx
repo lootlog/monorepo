@@ -8,7 +8,7 @@ import type { PropsWithChildren } from "react";
 import { GatewayClient } from "@/lib/gateway-client";
 import { GatewayContext } from "@/contexts/gateway-context";
 
-export const createTestGateway = () => {
+export const createTestGateway = (options: { joined?: boolean } = {}) => {
   const eventListeners = new Set<(event: ServerEvent) => void>();
   const stateListeners = new Set<(state: RealtimeConnectionState) => void>();
   vi.spyOn(RealtimeClient.prototype, "subscribe").mockImplementation(
@@ -34,7 +34,7 @@ export const createTestGateway = () => {
 
   const wrapper = ({ children }: PropsWithChildren) => (
     <GatewayContext
-      value={{ socket, connected: true, joined: true, lootUnreadCounts: {} }}
+      value={{ socket, connected: true, joined: options.joined ?? true }}
     >
       {children}
     </GatewayContext>

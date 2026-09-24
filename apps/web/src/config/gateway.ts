@@ -21,9 +21,7 @@ export enum GatewayEvent {
   KILLS_CHANGED = "kills-changed",
   LOOTS_CREATE = "loots-create",
   LOOTS_SHARE_UPDATE = "loots-share-update",
-  ONLINE_PLAYERS_PRESENCE_FETCH = "online-players:presence:fetch",
   ONLINE_PLAYERS_PRESENCE_UPDATE = "online-players:presence:update",
-  MEMBER_WEB_PRESENCE_FETCH = "member-web-presence:fetch",
   MEMBER_WEB_PRESENCE_UPDATE = "member-web-presence:update",
   TIMERS_CREATE = "timers-create",
   TIMERS_DELETE = "timers-delete",
@@ -36,7 +34,6 @@ export enum GatewayEvent {
 
   // Event map presence
   EVENT_PRESENCE_UPDATE = "event-presence:update",
-  EVENT_PRESENCE_FETCH = "event-presence:fetch",
 
   // Margo Events (game-specific)
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",

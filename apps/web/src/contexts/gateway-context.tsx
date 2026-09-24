@@ -5,7 +5,6 @@ export type GatewayProviderValue = {
   connected: boolean;
   joined: boolean;
   socket: GatewayClient;
-  lootUnreadCounts: Record<string, number>;
 };
 
 export const GatewayContext = createContext<GatewayProviderValue | undefined>(

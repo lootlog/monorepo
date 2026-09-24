@@ -18,6 +18,7 @@ import { createNativeRuntime } from "@/test/native-runtime";
 import { createRealtimeTest } from "@/test/realtime-test";
 import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useWindowsStore } from "@/store/windows.store";
+import { useGlobalStore } from "@/store/global.store";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 
 vi.stubGlobal("Engine", createNativeRuntime());
@@ -68,7 +69,26 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   );
   const view = render(<AppContent />, { wrapper: test.wrapper });
   test.open();
-  await test.join();
+
+  // AppContent initializes the native character, so acknowledge its provider join.
+  const join = test.wire.frames.findLast(
+    (frame) => "type" in frame && frame.type === "session.join",
+  );
+
+  if (!join || !("requestId" in join) || !join.requestId)
+    throw new Error("Expected the initialized character's join request");
+  const requestId = join.requestId;
+  await act(() =>
+    test.wire.receive({
+      v: 1,
+      requestId,
+      status: "success",
+      data: { connectionId: "test", organizationIds: ["guild-1"] },
+    }),
+  );
+  await waitFor(() =>
+    expect(useGlobalStore.getState().socketState.joined).toBe(true),
+  );
   // Settings hydration imports browser-only settings on first start; wait for
   // that write to settle so a cache refresh does not interrupt the press.
   await waitFor(() =>
