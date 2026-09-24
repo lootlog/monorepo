@@ -302,11 +302,14 @@ export class CommandHandler {
       )
         return;
 
-      const updatedGuilds = yield* guilds.getUserGuilds({
-        discordId,
-        userId,
-      });
+      const updatedGuilds = yield* guilds.getUserGuilds(
+        { discordId, userId },
+        { freshness: "required" },
+      );
 
+      const sideEffects: Array<Effect.Effect<void>> = [];
+
+      // Commit every local socket's authority before yielding to external I/O.
       for (const socket of hub.getLocalSocketsForUser(userId)) {
         if (socket.data.discordId !== discordId) continue;
         const allowedGuilds = scopedGuilds(socket.data, updatedGuilds);
@@ -327,11 +330,6 @@ export class CommandHandler {
           .map(({ organizationId }) => organizationId)
           .filter((id) => !updatedIds.has(id));
 
-        if (removedIds.length > 0 && !socket.data.apiKeyAccess) {
-          yield* activity.publish("DISCONNECT_EVENT", socket.data, removedIds);
-        }
-
-        if (!socket.data.apiKeyAccess) yield* presence.reconcileAccess(socket);
         socket.data.airTagScopes = socket.data.airTagScopes.filter((scope) =>
           canSubscribe(socket.data, scope.subscription),
         );
@@ -348,21 +346,17 @@ export class CommandHandler {
           }
         }
 
-        const replaced = yield* Effect.try(() =>
-          hub.replaceSubscriptions(socket, scopes),
-        ).pipe(
-          Effect.as(true),
-          Effect.catch((cause) => {
-            socket.close(1008, "subscription reconciliation failed");
-
-            return Effect.logWarning(
-              "Subscription reconciliation failed",
-              cause,
-            ).pipe(Effect.as(false));
-          }),
-        );
-
-        if (!replaced) continue;
+        try {
+          hub.replaceSubscriptions(socket, scopes);
+        } catch (cause) {
+          socket.data.subscriptions.clear();
+          socket.data.airTagScopes = [];
+          socket.close(1008, "subscription reconciliation failed");
+          sideEffects.push(
+            Effect.logWarning("Subscription reconciliation failed", cause),
+          );
+          continue;
+        }
 
         const event = {
           v: 1,
@@ -375,13 +369,50 @@ export class CommandHandler {
           },
         } satisfies Event;
 
-        hub.sendEvent(socket, event);
+        try {
+          hub.sendEvent(socket, event);
+        } catch (cause) {
+          socket.close(1013, "permission update delivery failed");
+          sideEffects.push(
+            Effect.logWarning("Permission update delivery failed", cause),
+          );
+        }
+
+        if (!socket.data.apiKeyAccess) {
+          if (removedIds.length > 0) {
+            sideEffects.push(
+              Effect.suspend(() =>
+                activity.publish("DISCONNECT_EVENT", socket.data, removedIds),
+              ).pipe(
+                Effect.catchCause((cause) =>
+                  Effect.logWarning(
+                    "Permission disconnect activity failed",
+                    cause,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          sideEffects.push(
+            Effect.suspend(() => presence.reconcileAccess(socket)).pipe(
+              Effect.catchCause((cause) =>
+                Effect.logWarning(
+                  "Permission presence reconciliation failed",
+                  cause,
+                ),
+              ),
+            ),
+          );
+        }
 
         if (allowedGuilds.length === 0) {
           if (socket.data.apiKeyAccess) socket.data.apiKeyLeaseExpiresAt = 0;
           socket.close(1008, "organization access removed");
         }
       }
+
+      yield* Effect.all(sideEffects, { concurrency: 8, discard: true });
     });
   }
 
@@ -389,12 +420,23 @@ export class CommandHandler {
     discordId: string,
     userId: string,
   ): Effect.Effect<void, unknown> {
-    return this.guilds
-      .invalidate({ discordId, userId })
-      .pipe(
-        Effect.andThen(this.rebalanceUser(discordId, userId)),
-        Effect.andThen(this.hub.publishPermissionRebalance(discordId, userId)),
+    return Effect.gen({ self: this }, function* () {
+      // A failed cache invalidation or publication must not prevent local revocation.
+      // Preserve failures for Rabbit redelivery after attempting every boundary.
+      const results = yield* Effect.forEach(
+        [
+          this.guilds.invalidate({ discordId, userId }),
+          this.hub.publishPermissionRebalance(discordId, userId),
+          this.rebalanceUser(discordId, userId),
+        ],
+        (effect) => Effect.exit(effect),
       );
+
+      for (const result of results) {
+        if (Exit.isFailure(result))
+          return yield* Effect.failCause(result.cause);
+      }
+    });
   }
 
   private dispatch(

@@ -141,6 +141,39 @@ Role identifiers, role order, and redundant overlapping grants do not cause a
 client refresh. Subsequent source-event filtering uses the refreshed roles even
 when no client event is sent.
 
+Permission refreshes require a current API response. A lookup failure leaves the
+session's policy unchanged and propagates to the caller for retry; it never emits
+an empty policy or reports that the user has no Organizations. Cold or invalidated
+`session.join` lookups return a retryable `COMMAND_REJECTED` response, so Web and
+Game clients reconnect without clearing their retained data.
+
+After a confirmed policy change, Gateway replaces subscriptions and air-tag scopes
+for every local connection before awaiting activity or presence I/O. Failed
+cleanup is logged without blocking other connections or the policy event.
+Delivery also checks current Organization membership and topic access, so stale
+routing entries cannot authorize a protected event.
+
+Invalidation preserves the cached projection with a new revision. Invalidated
+entries cannot authorize a join or serve as outage fallbacks, and an HTTP request
+started before invalidation cannot overwrite the newer revision. Ordinary cache
+reads may use an uninvalidated projection for at most five minutes during an API
+outage. Cache storage must be available to verify and commit the revision. Cache reads,
+writes, invalidation, and control publication each have a ten-second deadline.
+
+Permission control publication is attempted before the local refresh, even when
+cache invalidation fails; Rabbit failures remain eligible for redelivery after
+all three operations are attempted. Receiving instances retry failed refreshes
+three times with 250 ms, 500 ms and 1 s delays, then detach affected connections
+and close them with 1013 so clients reconnect. API-key permission refresh failures
+also close only the affected user's connections with 1013 without extending stale
+leases. Confirmed key revocation and key authorization expiry still use 1008.
+
+These changes do not add Redis Pub/Sub replay or detect a missed control message
+during subscriber disconnection. Federation health, recovery after subscriber
+loss, and production replica rollout remain tracked in LOO-59. Deploy all Gateway
+instances together: older cache writers do not preserve invalidation revisions.
+No HTTP or realtime wire schema changes or client release is required.
+
 The realtime v1 events retain `organizationIds` and `subscriptionScopes` and add
 these optional fields:
 

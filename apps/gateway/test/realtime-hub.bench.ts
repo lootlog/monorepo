@@ -132,7 +132,12 @@ for (const scenario of [
       discordId: `discord-${index}`,
       platform: "game",
       joined: true,
-      guilds: [],
+      guilds: [
+        {
+          guild: { id: organizationId, ownerId: `discord-${index}` },
+          roles: [],
+        },
+      ],
       airTagScopes: [],
       confidence: "reported",
       subscriptions: new Map(

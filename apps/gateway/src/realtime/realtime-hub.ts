@@ -20,7 +20,7 @@ import {
   isServerEventFrame,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Result } from "effect";
+import { Effect, Result, Schedule } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -36,7 +36,10 @@ import {
   type GatewaySocket,
   type SessionData,
 } from "#src/realtime/session";
-import { canReadPreciseLocation } from "#src/realtime/subscription-policy";
+import {
+  canReadPreciseLocation,
+  canSubscribe,
+} from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 
 type Scope = typeof SubscriptionScope.Type;
@@ -51,6 +54,11 @@ const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
+
+const permissionRebalanceRetry = Schedule.max([
+  Schedule.exponential("250 millis"),
+  Schedule.recurs(3),
+]);
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -216,6 +224,10 @@ export class RealtimeHub {
   sendEvent(socket: GatewaySocket, event: Event): boolean {
     if (!canReadApiKeyEvent(socket.data, event)) return false;
 
+    if (event.type === "map-ping.received") return false;
+
+    if (!this.canReadOrganization(socket.data, event)) return false;
+
     return this.sendFrame(socket, event);
   }
 
@@ -306,7 +318,7 @@ export class RealtimeHub {
           control: { type: "permissions.rebalance", discordId, userId },
         }),
       catch: (cause) => cause,
-    });
+    }).pipe(Effect.timeout("10 seconds"));
   }
 
   async publishPresence(
@@ -404,11 +416,28 @@ export class RealtimeHub {
 
     if (message.control) {
       if (!this.remember(message.id)) return;
+      const { discordId, userId } = message.control;
 
       for (const listener of this.permissionRebalanceListeners) {
         this.runBackground(
           "permissions.rebalance",
-          listener(message.control.discordId, message.control.userId),
+          Effect.suspend(() => listener(discordId, userId)).pipe(
+            Effect.retry(permissionRebalanceRetry),
+            Effect.catch((error) =>
+              Effect.gen({ self: this }, function* () {
+                yield* Effect.logError(
+                  "Permission rebalance retries exhausted; reconnecting affected sockets",
+                  error,
+                );
+
+                for (const socket of this.getLocalSocketsForUser(userId)) {
+                  if (socket.data.discordId !== discordId) continue;
+                  this.detach(socket);
+                  socket.close(1013, "authorization temporarily unavailable");
+                }
+              }),
+            ),
+          ),
         );
       }
 
@@ -465,6 +494,8 @@ export class RealtimeHub {
 
     const organizationId = eventOrganizationId(frame);
 
+    const canReadScope = this.prepareScopeVisibility(message, frame);
+
     const chatPermissions =
       frame.type === "chat.created"
         ? prepareChatMessagePermissions(frame)
@@ -473,15 +504,13 @@ export class RealtimeHub {
     for (const socket of candidates) {
       if (!this.matchesRecipient(socket, message)) continue;
 
-      if (
-        frame.type === "map-ping.received" &&
-        !this.matchesMapPingAudience(socket, message)
-      )
-        continue;
+      if (!canReadScope(socket)) continue;
 
       if (!this.matchesPresenceAudience(socket, message)) continue;
 
       const guild = findEventGuild(socket.data, organizationId);
+
+      if (!this.canReadOrganization(socket.data, frame, guild)) continue;
 
       if (!canReadSource(socket.data, guild)) continue;
 
@@ -505,6 +534,69 @@ export class RealtimeHub {
 
       this.send(socket, encoded);
     }
+  }
+
+  private canReadOrganization(
+    session: SessionData,
+    event: Event,
+    guild = findEventGuild(session, eventOrganizationId(event)),
+  ): boolean {
+    if (event.type === "reservation.changed")
+      return event.data.audienceGuildIds.some((organizationId) =>
+        session.guilds.some((entry) => entry.guild.id === organizationId),
+      );
+
+    return eventOrganizationId(event) === undefined || guild !== undefined;
+  }
+
+  private prepareScopeVisibility(
+    message: FederatedRealtimeMessage,
+    frame: Event,
+  ): (socket: GatewaySocket) => boolean {
+    const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
+
+    // A ping carries no Organization in its payload, so only routing scopes can authorize it.
+    if (frame.type === "map-ping.received" && scopes.length === 0)
+      return () => false;
+    const organizationId = eventOrganizationId(frame);
+
+    const scopeAudiences = scopes.map((scope) => ({
+      scope: {
+        ...scope,
+        organizationId: scope.organizationId ?? organizationId,
+      },
+      audiences: matchingScopeAudienceKeys(scope).flatMap((key) => {
+        const audience = this.audiences.get(key);
+
+        return audience ? [audience] : [];
+      }),
+    }));
+
+    return (socket) => {
+      if (
+        scopeAudiences.length > 0 &&
+        !scopeAudiences.some(
+          ({ scope, audiences }) =>
+            canSubscribe(socket.data, scope) &&
+            audiences.some((audience) => audience.has(socket)),
+        )
+      )
+        return false;
+
+      if (socket.data.apiKeyAccess && frame.type === "map-ping.received")
+        return scopes.every(
+          (scope) =>
+            scope.organizationId !== undefined &&
+            socket.data.apiKeyAccess?.organizationIds.includes(
+              scope.organizationId,
+            ) &&
+            socket.data.guilds.some(
+              ({ guild }) => guild.id === scope.organizationId,
+            ),
+        );
+
+      return true;
+    };
   }
 
   private encodeChatEvent(
@@ -627,28 +719,6 @@ export class RealtimeHub {
     const precise = canReadPreciseLocation(socket.data, message.organizationId);
 
     return message.presenceAudience === "precise" ? precise : !precise;
-  }
-
-  private matchesMapPingAudience(
-    socket: GatewaySocket,
-    message: FederatedRealtimeMessage,
-  ): boolean {
-    const access = socket.data.apiKeyAccess;
-
-    if (!access) return true;
-    const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
-
-    return (
-      scopes.length > 0 &&
-      scopes.every(
-        (scope) =>
-          scope.organizationId !== undefined &&
-          access.organizationIds.includes(scope.organizationId) &&
-          socket.data.guilds.some(
-            ({ guild }) => guild.id === scope.organizationId,
-          ),
-      )
-    );
   }
 
   private remember(id: string): boolean {
