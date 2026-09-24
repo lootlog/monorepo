@@ -1,8 +1,10 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { verify as verifySignatureValue } from "node:crypto";
-import { Cause, Clock, Effect, Option, Schema } from "effect";
+import { Cause, Clock, Deferred, Effect, Option, Schema } from "effect";
 import type { HttpClient as HttpClientValue } from "effect/unstable/http/HttpClient";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
+
+const FORCED_REFRESH_INTERVAL_MS = 60_000;
 
 const KEY_CACHE_TTL_MS = 12 * 60 * 60 * 1_000;
 
@@ -111,14 +113,14 @@ export const makeMargonemProofVerifier = (
   let cachedKey: { readonly pem: string; readonly expiresAt: number } | null =
     null;
 
-  const getKey = Effect.fn("MargonemProofVerifier_getKey")(function* (
-    forceRefresh: boolean,
-  ) {
-    const now = yield* Clock.currentTimeMillis;
+  let pendingKey:
+    | Deferred.Deferred<string, MargonemSigningKeyFailure>
+    | undefined;
 
-    if (!forceRefresh && cachedKey && cachedKey.expiresAt > now) {
-      return cachedKey.pem;
-    }
+  let forcedRefreshAfter = 0;
+
+  const fetchKey = Effect.fn("MargonemProofVerifier_fetchKey")(function* () {
+    const now = yield* Clock.currentTimeMillis;
 
     const response = yield* httpClient.get(config.margonemSigningKeyUrl).pipe(
       Effect.timeout("10 seconds"),
@@ -161,6 +163,48 @@ export const makeMargonemProofVerifier = (
 
     return pem;
   });
+
+  const getKey = (forceRefresh: boolean) =>
+    Effect.uninterruptibleMask((restore) =>
+      Effect.gen(function* () {
+        const now = yield* Clock.currentTimeMillis;
+
+        if (!forceRefresh && cachedKey && cachedKey.expiresAt > now)
+          return cachedKey.pem;
+
+        if (pendingKey) return yield* restore(Deferred.await(pendingKey));
+
+        if (forceRefresh && now < forcedRefreshAfter) {
+          if (cachedKey) return cachedKey.pem;
+
+          return yield* new MargonemSigningKeyFailure({ reason: "transport" });
+        }
+
+        if (forceRefresh) forcedRefreshAfter = now + FORCED_REFRESH_INTERVAL_MS;
+        const result = Deferred.makeUnsafe<string, MargonemSigningKeyFailure>();
+        pendingKey = result;
+
+        // One bounded producer serves all joins, including when a waiting socket closes.
+        const fetch = fetchKey().pipe(
+          Effect.timeout("10 seconds"),
+          Effect.mapError((error) =>
+            error instanceof MargonemSigningKeyFailure
+              ? error
+              : new MargonemSigningKeyFailure({ reason: "timeout" }),
+          ),
+          Effect.ensuring(
+            Effect.sync(() => {
+              if (pendingKey === result) pendingKey = undefined;
+            }),
+          ),
+        );
+
+        return yield* Deferred.complete(result, fetch).pipe(
+          Effect.forkDetach,
+          Effect.andThen(restore(Deferred.await(result))),
+        );
+      }),
+    );
 
   const verifyCryptographicSignature = Effect.fn(
     "MargonemProofVerifier_verifySignature",

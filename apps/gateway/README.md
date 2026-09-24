@@ -144,3 +144,70 @@ reconnect after an offline permission change. Check both userscript and extensio
 transports against the same realtime event codec. Unchanged rebalance must cause
 no timer or chat requests, and restricted cached rows must not reappear after an
 older pending response completes.
+
+## Gateway cost and recovery
+
+Broadcasts prepare source visibility once before checking recipients. Permissions,
+level ranges, API-key scope, and chat deletion capability still use each live
+session's current policy. Binary commands are decoded directly from Bun's Buffer.
+The Redis connection registry has no readers and is removed; local audience
+indexes continue to own routing. Its old keys expire without a cache flush.
+
+A game heartbeat uses one atomic Redis script per Organization. It writes the
+presence and its durable metadata, checks both membership indexes, and restores
+missing memberships. Metadata must retain the latest `lastSeen`: expiry cleanup
+uses it after the presence key's TTL has elapsed. Heartbeats still invalidate
+in-flight snapshots when the Redis mutation settles. Full Redis loss and either
+index disappearing independently are repaired by the next heartbeat.
+
+For `G` Organizations, gateway Redis operations per heartbeat decrease from
+`4G + 4` to `G + 1`, including the unchanged online-history observation. This is
+a count of gateway operations, not every command executed inside Lua. Excluding
+online history, the steady heartbeat now performs `2G` SETs and `2G` SISMEMBER
+reads; it only adds SADD writes when repairing indexes. Previously it performed
+`4G + 3` writes, including the unused connection registry. Location-free presence
+updates use one federation frame; updates containing location retain disjoint
+basic and precise audiences and publish the two frames concurrently.
+
+Offline sweeps acquire a 30-second renewable lease before reading work. They
+capture at most 100 pending values per batch, then share each Organization read
+within that batch. SSCAN overflow is retained across runs. Batches yield to the
+event loop and keep draining within a one-second work budget, followed by the
+existing one-second sweep interval. The ten-second disconnect grace, reconnect
+cancellation, and atomic pending-to-outbox decision remain intact. Lost owners
+cannot decide departures or acknowledge another owner's work. Publication is
+bounded to ten seconds and failures leave the outbox available for retry.
+Consumers must remain idempotent: publication followed by a failed acknowledgment
+can still be redelivered. Rolling deployments retain the stored format; all
+replicas must run the new version before sweep sharing reduces replica work.
+
+Signing-key requests share one bounded fetch across concurrent joins, including
+when one waiting socket closes. Bad signatures can force at most one refresh
+per minute per gateway instance, including failed refresh attempts. Existing
+cached keys still verify normally; a newly rotated key may need the remaining
+refresh window before acceptance. Proof shape, signature checks, account binding,
+and timestamp validity are unchanged.
+
+Run `bun run --cwd apps/gateway perf:cost` with Docker available to reproduce the
+synthetic benchmark. It starts an isolated Dragonfly container and uses production
+gateway code, without an application or external player data. To compare another
+revision, copy `test/gateway-cost.bench.ts` unchanged into that checkout and run it
+with `bun --conditions=development apps/gateway/test/gateway-cost.bench.ts`.
+
+A local comparison against `1717850742` on 2026-09-24 produced:
+
+| Workload                                                        |    Before |  After |
+| --------------------------------------------------------------- | --------: | -----: |
+| Routing resolutions, 2,000 timer publications to 300 recipients |   600,000 |  2,000 |
+| Timer fanout CPU time                                           |    579 ms | 154 ms |
+| Redis operations, 600 heartbeats with 3 Organizations           |     9,600 |  2,400 |
+| Organization reads, 5,000 due departures and 300 live sessions  |     5,000 |     63 |
+| Presence values read during those departures                    | 1,500,000 | 18,900 |
+| Time to last offline delivery, including sweep cadence          |   22.49 s | 4.49 s |
+
+These timings describe one synthetic local run, not production capacity. All
+600,000 timer deliveries and all 5,000 departures were accounted for. The offline
+measurement begins after the ten-second grace period; Redis script caches are
+warmed before the heartbeat operation count. Local routing excludes network I/O,
+and offline publication uses an in-memory sink. WebSocket v1 and HTTP contracts
+are unchanged; this optimization needs no generated-client or database migration.

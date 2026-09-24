@@ -8,6 +8,7 @@ import {
   type PublishedPresence,
   type ServerEvent,
 } from "@lootlog/protocol/realtime";
+import { yieldToEventLoop } from "#src/platform/background-tasks";
 import type { RedisGatewayStore } from "#src/platform/redis-store";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -49,9 +50,76 @@ const OFFLINE_PENDING_INDEX = "presence:offline:pending";
 
 const OFFLINE_OUTBOX_INDEX = "presence:offline:outbox";
 
+const OFFLINE_SWEEP_LOCK = "presence:offline:sweep-lock";
+
+const OFFLINE_BATCH_SIZE = 100;
+
+const OFFLINE_LEASE_MS = 30_000;
+
+// Keep the cursor in Redis so competing replicas continue the same fair scan.
+// Values are captured before reading Organizations; later departures must never
+// be decided from this batch's earlier positive online observations.
+const READ_OFFLINE_BATCH = `
+-- presence:offline-batch
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return '[]' end
+local members = redis.call('LRANGE', KEYS[4], 0, tonumber(ARGV[2]) - 1)
+if #members > 0 then
+  redis.call('LTRIM', KEYS[4], #members, -1)
+else
+  local cursor = redis.call('GET', KEYS[3]) or '0'
+  local page = redis.call('SSCAN', KEYS[2], cursor, 'COUNT', ARGV[2])
+  redis.call('SET', KEYS[3], page[1])
+  members = page[2]
+end
+local result = {}
+for index, member in ipairs(members) do
+  if index > tonumber(ARGV[2]) then redis.call('RPUSH', KEYS[4], member)
+  else table.insert(result, member) end
+end
+if #result == 0 then return '[]' end
+return cjson.encode(result)
+`;
+
+const RELEASE_OFFLINE_LEASE = `
+-- presence:offline-release
+if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end
+return 0
+`;
+
+const RENEW_OFFLINE_LEASE = `
+-- presence:offline-renew
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+return redis.call('PEXPIRE', KEYS[1], ARGV[2])
+`;
+
+const ACK_OFFLINE = `
+-- presence:offline-ack
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+if redis.call('GET', KEYS[2]) ~= ARGV[2] then return 0 end
+redis.call('DEL', KEYS[2])
+redis.call('SREM', KEYS[3], ARGV[3])
+return 1
+`;
+
+const REFRESH_PRESENCE = `
+-- presence:refresh
+redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
+redis.call('SET', KEYS[2], ARGV[3])
+if redis.call('SISMEMBER', KEYS[3], ARGV[4]) == 0 then
+  redis.call('SADD', KEYS[3], ARGV[4])
+end
+if redis.call('SISMEMBER', KEYS[4], ARGV[5]) == 0 then
+  redis.call('SADD', KEYS[4], ARGV[5])
+end
+return 1
+`;
+
 // The atomic move is the departure decision. A reconnect before it cancels the
 // pending record; a reconnect after it starts a new online period.
 const CLAIM_OFFLINE = `
+-- presence:offline-claim
+if redis.call('GET', KEYS[6]) ~= ARGV[5] then return -1 end
+redis.call('PEXPIRE', KEYS[6], ARGV[6])
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
 redis.call('DEL', KEYS[1])
 redis.call('SREM', KEYS[3], ARGV[2])
@@ -62,6 +130,10 @@ if ARGV[4] == '1' then
 end
 return 1
 `;
+
+const decodeOfflineBatch = Schema.decodeUnknownSync(
+  Schema.fromJsonString(Schema.Array(Schema.String)),
+);
 
 const decodeOffline = Schema.decodeUnknownSync(
   Schema.fromJsonString(GameCharacterOffline),
@@ -126,7 +198,7 @@ export class PresenceStore {
     },
     private readonly hub: Pick<
       RealtimeHub,
-      "instanceId" | "publishPresence" | "publishToScope" | "refreshRegistry"
+      "instanceId" | "publishPresence" | "publishToScope"
     >,
     private readonly now: () => number = Date.now,
     private readonly coverage?: Pick<CoveragePublisher, "publish">,
@@ -236,12 +308,9 @@ export class PresenceStore {
       socket.data.presence = presence;
 
       for (const organizationId of presence.organizationIds) {
-        yield* this.write(organizationId, presence, socket.data.discordId);
+        yield* this.refresh(organizationId, presence, socket.data.discordId);
       }
 
-      yield* fromPromise("presence.refresh-registry", () =>
-        this.hub.refreshRegistry(socket.data),
-      );
       yield* (
         this.onlineHistory?.observe(socket.data, presence.lastSeen) ??
           Effect.void
@@ -387,32 +456,120 @@ export class PresenceStore {
   }
 
   sweepOffline(): Effect.Effect<void, unknown> {
-    return Effect.gen({ self: this }, function* () {
-      if (!this.publishOffline) return;
+    if (!this.publishOffline) return Effect.void;
 
-      const keys = yield* fromPromise("presence.offline-pending", () =>
-        this.redis.command.smembers(OFFLINE_PENDING_INDEX),
+    return Effect.suspend(() => {
+      const token = crypto.randomUUID();
+
+      return Effect.acquireUseRelease(
+        fromPromise("presence.offline-lease", () =>
+          this.redis.command.set(
+            OFFLINE_SWEEP_LOCK,
+            token,
+            "PX",
+            OFFLINE_LEASE_MS,
+            "NX",
+          ),
+        ),
+        (acquired) =>
+          acquired === "OK" ? this.drainOffline(token) : Effect.void,
+        (acquired) =>
+          acquired === "OK"
+            ? fromPromise("presence.offline-release", () =>
+                this.redis.command.eval(
+                  RELEASE_OFFLINE_LEASE,
+                  1,
+                  OFFLINE_SWEEP_LOCK,
+                  token,
+                ),
+              ).pipe(Effect.ignore)
+            : Effect.void,
+      );
+    });
+  }
+
+  private drainOffline(token: string) {
+    return Effect.gen({ self: this }, function* () {
+      const deadline = performance.now() + 1_000;
+
+      do {
+        const completed = yield* this.sweepOfflineBatch(token);
+
+        if (completed === 0) return;
+        yield* yieldToEventLoop;
+      } while (performance.now() < deadline);
+    });
+  }
+
+  private readOfflineBatch(index: string, token: string) {
+    return Effect.gen({ self: this }, function* () {
+      const raw = yield* fromPromise("presence.offline-batch", () =>
+        this.redis.command.eval<string>(
+          READ_OFFLINE_BATCH,
+          4,
+          OFFLINE_SWEEP_LOCK,
+          index,
+          `${index}:cursor`,
+          `${index}:overflow`,
+          token,
+          OFFLINE_BATCH_SIZE,
+        ),
       );
 
-      for (const key of keys) {
-        const value = yield* fromPromise("presence.offline-read", () =>
-          this.redis.command.get(key),
+      const keys = decodeOfflineBatch(raw);
+
+      if (keys.length === 0) return [];
+
+      // Dragonfly scripts may only access declared keys. Capture the bounded
+      // values together before any Organization read; claims compare them again.
+      const values = yield* fromPromise("presence.offline-batch-values", () =>
+        this.redis.command.mget([...keys]),
+      );
+
+      const pending: Array<readonly [string, string]> = [];
+      const missing: string[] = [];
+
+      for (const [position, key] of keys.entries()) {
+        const value = values[position];
+
+        if (value) pending.push([key, value]);
+        else missing.push(key);
+      }
+
+      if (missing.length > 0)
+        yield* fromPromise("presence.offline-unindex", () =>
+          this.redis.command.srem(index, ...missing),
         );
 
-        if (!value) {
-          yield* fromPromise("presence.offline-unindex", () =>
-            this.redis.command.srem(OFFLINE_PENDING_INDEX, key),
-          );
-          continue;
-        }
+      return pending;
+    });
+  }
 
+  private sweepOfflineBatch(token: string): Effect.Effect<number, unknown> {
+    return Effect.gen({ self: this }, function* () {
+      let completed = 0;
+
+      const pending = yield* this.readOfflineBatch(
+        OFFLINE_PENDING_INDEX,
+        token,
+      );
+
+      const organizations = new Map<string, Array<Basic | Precise>>();
+
+      for (const [key, value] of pending) {
         const event = decodeOffline(value);
 
         if (this.now() - event.disconnectedAt < 10_000) continue;
         let online = false;
 
         for (const organizationId of event.organizationIds) {
-          const presences = yield* this.readOrganization(organizationId);
+          let presences = organizations.get(organizationId);
+
+          if (!presences) {
+            presences = yield* this.readOrganization(organizationId);
+            organizations.set(organizationId, presences);
+          }
+
           online ||= presences.some(
             (presence) =>
               presence.platform === "game" &&
@@ -423,10 +580,11 @@ export class PresenceStore {
         }
 
         const outboxKey = `${key}:decided`;
-        yield* fromPromise("presence.offline-claim", () =>
-          this.redis.command.eval(
+
+        const claimed = yield* fromPromise("presence.offline-claim", () =>
+          this.redis.command.eval<number>(
             CLAIM_OFFLINE,
-            5,
+            6,
             key,
             outboxKey,
             OFFLINE_PENDING_INDEX,
@@ -435,34 +593,56 @@ export class PresenceStore {
               character: { world: event.world, characterId: event.characterId },
             }),
             OFFLINE_OUTBOX_INDEX,
+            OFFLINE_SWEEP_LOCK,
             value,
             key,
             outboxKey,
             online ? "0" : "1",
+            token,
+            OFFLINE_LEASE_MS,
+          ),
+        );
+
+        if (claimed === -1) return 0;
+
+        if (claimed === 1) completed++;
+      }
+
+      const outbox = yield* this.readOfflineBatch(OFFLINE_OUTBOX_INDEX, token);
+
+      for (const [key, value] of outbox) {
+        const renewed = yield* fromPromise("presence.offline-renew", () =>
+          this.redis.command.eval<number>(
+            RENEW_OFFLINE_LEASE,
+            1,
+            OFFLINE_SWEEP_LOCK,
+            token,
+            OFFLINE_LEASE_MS,
+          ),
+        );
+
+        if (!renewed) return 0;
+
+        if (this.publishOffline)
+          yield* this.publishOffline(decodeOffline(value)).pipe(
+            Effect.timeout("10 seconds"),
+          );
+        completed++;
+        yield* fromPromise("presence.offline-outbox-complete", () =>
+          this.redis.command.eval(
+            ACK_OFFLINE,
+            3,
+            OFFLINE_SWEEP_LOCK,
+            key,
+            OFFLINE_OUTBOX_INDEX,
+            token,
+            value,
+            key,
           ),
         );
       }
 
-      const outboxKeys = yield* fromPromise("presence.offline-outbox", () =>
-        this.redis.command.smembers(OFFLINE_OUTBOX_INDEX),
-      );
-
-      for (const key of outboxKeys) {
-        const value = yield* fromPromise("presence.offline-outbox-read", () =>
-          this.redis.command.get(key),
-        );
-
-        if (value) {
-          yield* this.publishOffline(decodeOffline(value));
-          yield* fromPromise("presence.offline-outbox-complete", () =>
-            this.redis.command.del(key),
-          );
-        }
-
-        yield* fromPromise("presence.offline-outbox-unindex", () =>
-          this.redis.command.srem(OFFLINE_OUTBOX_INDEX, key),
-        );
-      }
+      return completed;
     });
   }
 
@@ -697,6 +877,56 @@ export class PresenceStore {
     });
   }
 
+  private refresh(
+    organizationId: string,
+    presence: Basic | Precise,
+    discordId: string,
+  ) {
+    const key = this.presenceKey(organizationId, presence.sessionId);
+
+    // Metadata lastSeen survives TTL expiry; both indexes recover independently
+    // after partial eviction as well as after complete Redis loss.
+    return this.mutateOrganization(organizationId, "presence.refresh", () =>
+      this.redis.command.eval(
+        REFRESH_PRESENCE,
+        4,
+        key,
+        this.metadataKey(organizationId, presence.sessionId),
+        this.indexKey(organizationId),
+        "presence:organizations",
+        JSON.stringify(presence),
+        REDIS_TTL_SECONDS,
+        JSON.stringify({
+          userId: presence.userId,
+          discordId,
+          presence: withoutLocation(presence),
+        }),
+        key,
+        organizationId,
+      ),
+    );
+  }
+
+  private writeMetadata(
+    organizationId: string,
+    presence: Basic | Precise,
+    discordId: string,
+  ) {
+    return this.mutateOrganization(
+      organizationId,
+      "presence.write-metadata",
+      () =>
+        this.redis.command.set(
+          this.metadataKey(organizationId, presence.sessionId),
+          JSON.stringify({
+            userId: presence.userId,
+            discordId,
+            presence: withoutLocation(presence),
+          }),
+        ),
+    );
+  }
+
   private write(
     organizationId: string,
     presence: Basic | Precise,
@@ -720,16 +950,7 @@ export class PresenceStore {
         fromPromise("presence.register-organization", () =>
           this.redis.command.sadd("presence:organizations", organizationId),
         ),
-        this.mutateOrganization(organizationId, "presence.write-metadata", () =>
-          this.redis.command.set(
-            this.metadataKey(organizationId, presence.sessionId),
-            JSON.stringify({
-              userId: presence.userId,
-              discordId,
-              presence: withoutLocation(presence),
-            }),
-          ),
-        ),
+        this.writeMetadata(organizationId, presence, discordId),
       ],
       { concurrency: "unbounded", discard: true },
     );
@@ -808,11 +1029,16 @@ export class PresenceStore {
           },
         }) satisfies Event;
 
+      const basicEvent = makeEvent(withoutLocation(presence));
+
+      const preciseEvent =
+        "location" in presence ? makeEvent(presence) : basicEvent;
+
       yield* fromPromise("presence.publish-upsert", () =>
         this.hub.publishPresence(
           { topic: "organization.presence", organizationId },
-          makeEvent(withoutLocation(presence)),
-          makeEvent(presence),
+          basicEvent,
+          preciseEvent,
         ),
       );
     });
