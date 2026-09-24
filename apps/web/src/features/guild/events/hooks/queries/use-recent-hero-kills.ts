@@ -34,11 +34,12 @@ export const useRecentHeroKills = ({
           { guildId, eventId },
           baseParams,
         ),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (heroId) {
         const response = await eventsRankingControllerGetHeroKillHistory(
           { guildId, eventId, heroId },
           baseParams,
+          { signal },
         );
 
         return response.data;
@@ -47,6 +48,7 @@ export const useRecentHeroKills = ({
       const response = await eventsRankingControllerGetEventKillHistory(
         { guildId, eventId },
         baseParams,
+        { signal },
       );
 
       return response.data;

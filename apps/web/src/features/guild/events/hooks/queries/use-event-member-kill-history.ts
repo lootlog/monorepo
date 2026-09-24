@@ -54,13 +54,14 @@ export const useEventMemberKillHistory = ({
       { guildId, eventId, memberId },
       baseParams,
     ),
-    fetchPage: (cursor) =>
+    fetchPage: (cursor, signal) =>
       eventsRankingControllerGetMemberKillHistory(
         { guildId, eventId, memberId },
         {
           ...baseParams,
           cursor,
         },
+        { signal },
       ),
     enabled: !!guildId && !!eventId && !!memberId,
   });

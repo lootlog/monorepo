@@ -83,7 +83,7 @@ export const useLootSearchCommand = ({
           hidLootQueryParams,
         )
       : ["loot-search", "hid-item"],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!guildId || !hidLootQueryParams) {
         return null;
       }
@@ -93,6 +93,7 @@ export const useLootSearchCommand = ({
           guildId,
         },
         hidLootQueryParams,
+        { signal },
       );
 
       const firstLoot = response[0];

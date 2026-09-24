@@ -21,14 +21,18 @@ export const getMemberActivityStatsQueryKey = (guildId: string) => [
 
 const activityApiClient = createApiClient("activity");
 
-export const fetchMemberActivityStats = (guildId: string) =>
+export const fetchMemberActivityStats = (
+  guildId: string,
+  signal?: AbortSignal,
+) =>
   activityApiClient.get<MemberActivityStats[]>(
     `/guilds/${guildId}/member-activity-stats`,
+    { signal },
   );
 
 export const memberActivityStatsQueryOptions = (guildId: string | undefined) =>
   queryOptions({
     queryKey: getMemberActivityStatsQueryKey(guildId ?? ""),
-    queryFn: () => fetchMemberActivityStats(guildId ?? ""),
+    queryFn: ({ signal }) => fetchMemberActivityStats(guildId ?? "", signal),
     enabled: Boolean(guildId),
   });
