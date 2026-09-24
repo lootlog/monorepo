@@ -33,7 +33,8 @@ export const useEventLoots = ({
       { guildId },
       params,
     ),
-    queryFn: () => lootsControllerFetchLootsByGuildId({ guildId }, params),
+    queryFn: ({ signal }) =>
+      lootsControllerFetchLootsByGuildId({ guildId }, params, { signal }),
     enabled: !!guildId && !!world && npcNames.length > 0,
     staleTime: EVENT_LIVE_QUERY_STALE_TIME_MS,
   });
