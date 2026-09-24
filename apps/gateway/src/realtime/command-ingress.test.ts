@@ -445,11 +445,11 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
   const beforeRejection = Effect.runSync(Metric.snapshot);
   transport.open(excess);
   expect(closes).toEqual([1013]);
-  expect(Effect.runSync(Metric.snapshot)).toEqual(beforeRejection);
-  expect(target.ingress.getDiagnostics().rejectedConnections).toBe(1);
   expect(writes).toEqual(["realtime:connection:first"]);
   await target.runNext();
   await target.runNext();
+  expect(Effect.runSync(Metric.snapshot)).toEqual(beforeRejection);
+  expect(target.ingress.getDiagnostics().rejectedConnections).toBe(1);
   transport.open(excess);
   expect(hub.getLocalSockets()).toEqual([excess]);
 });
