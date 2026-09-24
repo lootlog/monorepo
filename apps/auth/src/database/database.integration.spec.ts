@@ -2,7 +2,7 @@ import { HttpClient, HttpClientResponse } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { ApiKeyService } from "#src/auth/api-key-service";
 import { AppConfig } from "#src/config/env";
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import { PgClient } from "@effect/sql-pg";
 import { makeAuthPostgresLayer, PostgresPool } from "./postgres.js";
 import {
@@ -10,6 +10,7 @@ import {
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
 import { eq } from "drizzle-orm";
+import { createLocalJWKSet, jwtVerify, SignJWT } from "jose";
 import {
   GenericContainer,
   Wait,
@@ -20,7 +21,14 @@ import {
   createAuthRedisConnection,
 } from "#src/auth/storage/auth-redis-storage";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Effect, Layer, Logger, ManagedRuntime, Redacted } from "effect";
+import {
+  Effect,
+  Layer,
+  Logger,
+  ManagedRuntime,
+  Redacted,
+  Schema,
+} from "effect";
 import {
   createLootlogAuth,
   BetterAuthRuntime,
@@ -60,14 +68,24 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
     );
 
     const pool = await runtime.runPromise(PostgresPool);
+    const signJwt = spyOn(SignJWT.prototype, "sign");
 
     try {
       const client = await runtime.runPromise(PgClient.PgClient);
       const db = await runtime.runPromise(AuthDatabase);
       await runtime.runPromise(runAuthMigrations(db, client));
 
+      const jwksQueries: string[] = [];
+
       const options = {
-        database: drizzle({ client: pool }),
+        database: drizzle({
+          client: pool,
+          logger: {
+            logQuery(query) {
+              if (query.includes('"jwks"')) jwksQueries.push(query);
+            },
+          },
+        }),
         config: {
           environment: "local",
           port: 4000,
@@ -170,15 +188,132 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         ).rows,
       ).toEqual([{ issuer: null }]);
 
-      const session = await internalAdapter.createSession(user.id);
-      expect(
-        await auth.api.getSession({
-          headers: new Headers({ authorization: `Bearer ${session.token}` }),
-        }),
-      ).toMatchObject({
+      const previousExpiry = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000);
+
+      const session = await internalAdapter.createSession(
+        user.id,
+        false,
+        { expiresAt: previousExpiry },
+        true,
+      );
+
+      const bearerHeaders = new Headers({
+        authorization: `Bearer ${session.token}`,
+      });
+
+      const sessionResult = await auth.api.getSession({
+        headers: bearerHeaders,
+        returnHeaders: true,
+      });
+
+      expect(sessionResult.response).toMatchObject({
         user: { id: user.id, name: "Effect update", discordId: "discord-test" },
         session: { userId: user.id },
       });
+      expect(
+        sessionResult.response?.session.expiresAt.getTime(),
+      ).toBeGreaterThan(previousExpiry.getTime());
+      expect(
+        (await internalAdapter.findSession(session.token))?.session.expiresAt,
+      ).toEqual(sessionResult.response?.session.expiresAt);
+      expect(sessionResult.headers.get("set-auth-jwt")).toBeNull();
+      expect(jwksQueries).toHaveLength(0);
+      expect(signJwt).not.toHaveBeenCalled();
+
+      const cookieHeaders = new Headers({
+        cookie: sessionResult.headers
+          .getSetCookie()
+          .map((cookie) => cookie.split(";")[0])
+          .join("; "),
+      });
+
+      const { authCookies } = await auth.$context;
+      expect(cookieHeaders.get("cookie")).toContain(
+        authCookies.sessionToken.name,
+      );
+      expect(cookieHeaders.get("cookie")).toContain(
+        authCookies.sessionData.name,
+      );
+
+      // Exercise the raw endpoint and cookie cache as well as the server API hook.
+      const cachedSession = await auth.handler(
+        new Request(`${auth.options.baseURL}/get-session`, {
+          headers: cookieHeaders,
+        }),
+      );
+
+      expect(cachedSession.status).toBe(200);
+      expect(await cachedSession.json()).toMatchObject({
+        user: { id: user.id, discordId: "discord-test" },
+        session: { userId: user.id },
+      });
+      expect(cachedSession.headers.get("set-auth-jwt")).toBeNull();
+      expect(jwksQueries).toHaveLength(0);
+      expect(signJwt).not.toHaveBeenCalled();
+
+      const tokenResponse = await auth.handler(
+        new Request(`${auth.options.baseURL}/token`, {
+          headers: cookieHeaders,
+        }),
+      );
+
+      expect(tokenResponse.status).toBe(200);
+
+      const { token } = Schema.decodeUnknownSync(
+        Schema.Struct({ token: Schema.String }),
+      )(await tokenResponse.json());
+
+      expect(signJwt).toHaveBeenCalledTimes(1);
+      expect(jwksQueries.length).toBeGreaterThan(0);
+
+      const { payload } = await jwtVerify(
+        token,
+        createLocalJWKSet(await auth.api.getJwks()),
+        { issuer: options.config.appUrl, audience: options.config.appUrl },
+      );
+
+      expect(payload).toMatchObject({
+        sub: user.id,
+        id: user.id,
+        email: user.email,
+        role: "user",
+        discordId: "discord-test",
+      });
+      expect(payload.exp).toBe((payload.iat ?? 0) + 3600);
+
+      jwksQueries.length = 0;
+      expect(
+        await auth.api.getSession({ headers: bearerHeaders }),
+      ).toMatchObject({
+        user: { id: user.id, discordId: "discord-test" },
+        session: { userId: user.id },
+      });
+      expect(jwksQueries).toHaveLength(0);
+      expect(signJwt).toHaveBeenCalledTimes(1);
+
+      const signedOut = await auth.api.signOut({
+        headers: cookieHeaders,
+        returnHeaders: true,
+      });
+
+      expect(signedOut.response.success).toBe(true);
+      expect(signedOut.headers.getSetCookie()).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining(`${authCookies.sessionToken.name}=;`),
+          expect.stringContaining(`${authCookies.sessionData.name}=;`),
+        ]),
+      );
+      expect(await internalAdapter.findSession(session.token)).toBeNull();
+      expect(await auth.api.getSession({ headers: bearerHeaders })).toBeNull();
+
+      const revokedTokenResponse = await auth.handler(
+        new Request(`${auth.options.baseURL}/token`, {
+          headers: bearerHeaders,
+        }),
+      );
+
+      expect(revokedTokenResponse.status).toBe(401);
+      expect(signJwt).toHaveBeenCalledTimes(1);
 
       await expect(
         adapter.transaction(async (tx) => {
@@ -545,6 +680,7 @@ describe("Better Auth and Effect PostgreSQL interoperability", () => {
         await keysRuntime.dispose();
       }
     } finally {
+      signJwt.mockRestore();
       await runtime.dispose();
       expect(pool.ended).toBe(true);
       expect(pool.totalCount).toBe(0);
