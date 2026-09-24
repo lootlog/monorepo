@@ -179,7 +179,7 @@ export class CommandHandler {
       }
 
       try {
-        decoded = decode(new Uint8Array(input));
+        decoded = decode(input);
       } catch {
         return Effect.sync(() =>
           socket.close(1007, "malformed realtime frame"),

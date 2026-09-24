@@ -1,10 +1,14 @@
 import { canReadApiKeyEvent } from "#src/realtime/api-key-event-visibility";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import {
-  chatMessagePermissions,
+  prepareChatMessagePermissions,
   withChatMessagePermissions,
 } from "#src/realtime/chat-message-envelope";
-import { canReadSourceEvent } from "#src/realtime/source-event-visibility";
+import {
+  eventOrganizationId,
+  findEventGuild,
+  prepareSourceEventVisibility,
+} from "#src/realtime/source-event-visibility";
 import {
   encodeRealtimeFrame,
   prepareRealtimeFrame,
@@ -16,7 +20,7 @@ import {
   isServerEventFrame,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Result, Schema } from "effect";
+import { Effect, Result } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -47,17 +51,6 @@ const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
-
-const ConnectionRegistration = Schema.Struct({
-  connectionId: Schema.String,
-  instanceId: Schema.String,
-  userId: Schema.String,
-  discordId: Schema.String,
-});
-
-const decodeConnectionRegistration = Schema.decodeUnknownSync(
-  Schema.fromJsonString(ConnectionRegistration),
-);
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -105,20 +98,11 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   return keys.map((key) => JSON.stringify(key));
 };
 
-type RealtimeFederationStore = Pick<
-  RedisGatewayStore,
-  "publish" | "subscribe"
-> & {
-  command: Pick<
-    RedisGatewayStore["command"],
-    "set" | "del" | "sadd" | "srem" | "expire" | "smembers" | "mget"
-  >;
-};
+type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
 
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
-  private readonly registrations = new WeakMap<SessionData, Promise<void>>();
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
@@ -156,21 +140,6 @@ export class RealtimeHub {
 
     for (const key of this.audienceKeys(socket.data))
       this.addAudience(key, socket);
-    const registration = this.refreshRegistry(socket.data);
-    this.registrations.set(
-      socket.data,
-      registration.then(
-        () => undefined,
-        () => undefined,
-      ),
-    );
-    this.runBackground(
-      "registry.register",
-      Effect.tryPromise({
-        try: () => registration,
-        catch: (cause) => cause,
-      }),
-    );
   }
 
   detach(socket: GatewaySocket): void {
@@ -179,23 +148,6 @@ export class RealtimeHub {
 
     for (const key of this.audienceKeys(socket.data))
       this.removeAudience(key, socket);
-  }
-
-  async cleanupRegistry(session: SessionData): Promise<void> {
-    await this.registrations.get(session);
-    this.registrations.delete(session);
-
-    const removals = await Promise.allSettled([
-      this.redis.command.del(this.connectionKey(session.connectionId)),
-      this.redis.command.srem(
-        this.userConnectionsKey(session.userId),
-        session.connectionId,
-      ),
-    ]);
-
-    for (const removal of removals) {
-      if (removal.status === "rejected") throw removal.reason;
-    }
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -257,59 +209,6 @@ export class RealtimeHub {
     socket.data.subscriptions.clear();
 
     for (const scope of replacements.values()) this.subscribe(socket, scope);
-  }
-
-  async refreshRegistry(session: SessionData): Promise<void> {
-    const userConnectionsKey = this.userConnectionsKey(session.userId);
-
-    const writes = await Promise.allSettled([
-      this.redis.command.set(
-        this.connectionKey(session.connectionId),
-        JSON.stringify({
-          connectionId: session.connectionId,
-          instanceId: this.instanceId,
-          userId: session.userId,
-          discordId: session.discordId,
-        }),
-        "EX",
-        60,
-      ),
-      this.redis.command.sadd(userConnectionsKey, session.connectionId),
-      this.redis.command.expire(userConnectionsKey, 120),
-    ]);
-
-    for (const write of writes) {
-      if (write.status === "rejected") throw write.reason;
-    }
-  }
-
-  async lookupUserConnections(userId: string): Promise<
-    ReadonlyArray<{
-      readonly connectionId: string;
-      readonly instanceId: string;
-      readonly userId: string;
-      readonly discordId: string;
-    }>
-  > {
-    const connectionIds = await this.redis.command.smembers(
-      this.userConnectionsKey(userId),
-    );
-
-    if (connectionIds.length === 0) return [];
-
-    const values = await this.redis.command.mget(
-      connectionIds.map((id) => this.connectionKey(id)),
-    );
-
-    return values.flatMap((value) => {
-      if (!value) return [];
-
-      try {
-        return [decodeConnectionRegistration(value)];
-      } catch {
-        return [];
-      }
-    });
   }
 
   sendResponse(socket: GatewaySocket, response: Response): boolean {
@@ -420,6 +319,13 @@ export class RealtimeHub {
     const organizationId = scope.organizationId;
 
     if (!organizationId) return;
+
+    if (basicEvent === preciseEvent) {
+      await this.publishToScope(scope, basicEvent);
+
+      return;
+    }
+
     const scopeKey = getScopeKey(scope);
 
     const messages = [
@@ -439,10 +345,12 @@ export class RealtimeHub {
       }),
     ];
 
-    for (const { message, prepared } of messages) {
-      this.deliver(message, prepared);
-      await this.redis.publish(message);
-    }
+    await Promise.all(
+      messages.map(async ({ message, prepared }) => {
+        this.deliver(message, prepared);
+        await this.redis.publish(message);
+      }),
+    );
   }
 
   getLocalSockets(): ReadonlyArray<GatewaySocket> {
@@ -451,14 +359,6 @@ export class RealtimeHub {
 
   getLocalSocketsForUser(userId: string): ReadonlyArray<GatewaySocket> {
     return [...(this.audiences.get(JSON.stringify(["user", userId])) ?? [])];
-  }
-
-  private connectionKey(connectionId: string): string {
-    return `realtime:connection:${connectionId}`;
-  }
-
-  private userConnectionsKey(userId: string): string {
-    return `realtime:user:${userId}:connections`;
   }
 
   private createFederatedMessage(options: {
@@ -557,6 +457,18 @@ export class RealtimeHub {
     let binaryFrame = local?.bytes;
     const chatFrames = new Map<string, string | Uint8Array>();
 
+    const canReadSource = prepareSourceEventVisibility(
+      frame,
+      message.sourceNpcs,
+    );
+
+    const organizationId = eventOrganizationId(frame);
+
+    const chatPermissions =
+      frame.type === "chat.created"
+        ? prepareChatMessagePermissions(frame)
+        : undefined;
+
     for (const socket of this.candidates(message)) {
       if (!this.matchesRecipient(socket, message)) continue;
 
@@ -581,10 +493,20 @@ export class RealtimeHub {
 
       if (!this.matchesPresenceAudience(socket, message)) continue;
 
-      if (!canReadSourceEvent(socket.data, frame, message.sourceNpcs)) continue;
+      const guild = findEventGuild(socket.data, organizationId);
 
-      if (frame.type === "chat.created") {
-        this.send(socket, this.encodeChatEvent(socket.data, frame, chatFrames));
+      if (!canReadSource(socket.data, guild)) continue;
+
+      if (frame.type === "chat.created" && chatPermissions) {
+        this.send(
+          socket,
+          this.encodeChatEvent(
+            socket.data,
+            frame,
+            chatFrames,
+            chatPermissions(socket.data, guild),
+          ),
+        );
         continue;
       }
 
@@ -601,8 +523,8 @@ export class RealtimeHub {
     session: SessionData,
     event: Extract<Event, { type: "chat.created" }>,
     frames: Map<string, string | Uint8Array>,
+    permissions: { canDelete: boolean },
   ): string | Uint8Array {
-    const permissions = chatMessagePermissions(session, event);
     const key = `${session.frameEncoding}:${permissions.canDelete}`;
     let encoded = frames.get(key);
 
@@ -672,7 +594,7 @@ export class RealtimeHub {
 
     if (!first) return [];
 
-    if (others.length === 0) return [...first];
+    if (others.length === 0) return first;
     const candidates = new Set(first);
 
     for (const audience of others) {
