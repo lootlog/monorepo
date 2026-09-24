@@ -14,6 +14,7 @@ import { makeLootAllocationOperations } from "#src/loots/allocation/loot-allocat
 import { makeLootPersistence } from "#src/loots/loot-persistence";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { makeLootPublicationDispatcher } from "#src/loots/submission/loot-publication-outbox";
+import { makeLootPublicationWorker } from "#src/loots/submission/loot-publication-worker";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
 import {
   makeLootsOperations,
@@ -32,9 +33,7 @@ import { ApiRedis } from "#src/runtime/infrastructure/api-redis";
 interface RecordsServicesValue {
   readonly layer: ReturnType<typeof recordsDataLayer>;
   readonly loots: LootsOperations;
-  readonly dispatchLootPublications: ReturnType<
-    typeof makeLootPublicationDispatcher
-  >;
+  readonly runLootPublications: Effect.Effect<never>;
 }
 
 export class RecordsServices extends Context.Service<
@@ -70,6 +69,10 @@ export const recordsServicesLive = Layer.effect(
         ),
     );
 
+    const lootPublications = yield* makeLootPublicationWorker(
+      dispatchLootPublications(),
+    );
+
     const acceptance = makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),
       {
@@ -98,6 +101,7 @@ export const recordsServicesLive = Layer.effect(
               Effect.tryPromise(() => heldLock.release()).pipe(Effect.ignore),
           ),
       },
+      lootPublications.signal,
     );
 
     const loots = makeLootsOperations({
@@ -124,7 +128,7 @@ export const recordsServicesLive = Layer.effect(
     };
 
     return {
-      dispatchLootPublications,
+      runLootPublications: lootPublications.run,
       loots,
       layer: recordsDataLayer({
         userFeed: makeUserFeed(database),
