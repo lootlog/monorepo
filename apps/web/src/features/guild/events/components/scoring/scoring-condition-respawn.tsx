@@ -6,10 +6,10 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { ScoringNumberInput } from "./scoring-number-input";
 
 interface ScoringConditionRespawnProps {
   control: Control<ScoringRulesFormValues>;
@@ -56,16 +56,12 @@ export const ScoringConditionRespawn = ({
             {t("events.scoring.conditionLabel.value")}
           </Label>
           <div className="flex items-center gap-1">
-            <Input
-              type="number"
-              min={0}
+            <ScoringNumberInput
+              control={control}
+              register={register}
+              name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
+              label={t("events.scoring.conditionLabel.value")}
               max={100}
-              step={0.01}
-              className="h-8 text-[12px] font-mono"
-              {...register(
-                `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`,
-                { valueAsNumber: true },
-              )}
             />
             <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">
               %

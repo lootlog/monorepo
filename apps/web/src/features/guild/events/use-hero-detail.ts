@@ -460,8 +460,14 @@ export const useHeroDetail = () => {
     setPendingAssignmentCount((count) => count + 1);
 
     try {
-      if (!assignmentAllowed) {
-        const assignmentErrorCandidate = assignmentDisabledMessage;
+      const availability = getHeroAssignmentAvailability(event, heroTimer);
+
+      if (!availability.allowed) {
+        const assignmentErrorCandidate = getAssignmentDisabledMessage(
+          availability.reason,
+          t,
+        );
+
         const assignmentErrorFallback = t("events.maps.assignError");
         toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
 
@@ -515,8 +521,14 @@ export const useHeroDetail = () => {
     setPendingAssignmentCount((count) => count + 1);
 
     try {
-      if (!assignmentAllowed) {
-        const assignmentErrorCandidate = assignmentDisabledMessage;
+      const availability = getHeroAssignmentAvailability(event, heroTimer);
+
+      if (!availability.allowed) {
+        const assignmentErrorCandidate = getAssignmentDisabledMessage(
+          availability.reason,
+          t,
+        );
+
         const assignmentErrorFallback = t("events.maps.assignError");
         toast.error(assignmentErrorCandidate ?? assignmentErrorFallback);
 

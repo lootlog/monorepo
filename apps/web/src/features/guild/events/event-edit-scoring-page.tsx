@@ -33,6 +33,7 @@ import {
 
 import { invalidateEventDetailQueries } from "./hooks/mutations/invalidate-event-queries";
 import { invalidateKillQueries } from "./hooks/mutations/invalidate-kill-queries";
+import { hasValidScoringNumbers } from "./utils/scoring-number-validation";
 
 interface EventScoringFormData {
   scoringMode: EventScoringMode;
@@ -221,11 +222,21 @@ const EventEditScoringForm = ({
                   <Settings className="size-3" />
                   {t("events.scoring.title")}
                 </Label>
-                <ScoringRulesEditor
-                  value={form.watch("scoringRules")}
-                  onChange={(value) =>
-                    form.setValue("scoringRules", value, { shouldDirty: true })
-                  }
+                <Controller
+                  control={form.control}
+                  name="scoringRules"
+                  rules={{
+                    validate: (value) =>
+                      hasValidScoringNumbers(value) ||
+                      t("events.scoring.validation.invalidRules"),
+                  }}
+                  render={({ field, fieldState }) => (
+                    <ScoringRulesEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={fieldState.error?.message}
+                    />
+                  )}
                 />
               </div>
             </SectionCardContent>

@@ -24,6 +24,7 @@ export type ScoringRulesFormValues = {
 interface ScoringRulesEditorProps {
   value: EventScoringRules;
   onChange: (value: EventScoringRules) => void;
+  error?: string;
 }
 
 const defaultRule = () => ({
@@ -37,6 +38,7 @@ const defaultRule = () => ({
 export const ScoringRulesEditor = ({
   value,
   onChange,
+  error,
 }: ScoringRulesEditorProps) => {
   const { t } = useTranslation();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
@@ -79,7 +81,10 @@ export const ScoringRulesEditor = ({
 
   return (
     <div className="space-y-4 rounded-lg">
-      <ScoringGlobalSettings register={scopedRegister} />
+      <ScoringGlobalSettings
+        control={scopedControl}
+        register={scopedRegister}
+      />
 
       <Separator className="opacity-50" />
 
@@ -135,6 +140,12 @@ export const ScoringRulesEditor = ({
         type="hidden"
         {...scopedRegister("scoringRules.version", { value: 1 })}
       />
+
+      {error && (
+        <p role="alert" className="text-destructive text-sm">
+          {error}
+        </p>
+      )}
 
       {currentRules && (
         <ScoringSimulatorDialog
