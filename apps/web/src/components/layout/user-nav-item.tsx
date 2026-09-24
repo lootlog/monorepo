@@ -6,13 +6,13 @@ import {
 import { useSession } from "@/hooks/auth/use-session";
 import { ROUTES } from "@/config/routes";
 import { cn } from "cn";
-import { railAvatarStateClassName } from "@/components/layout/rail-avatar-state";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Link, useLocation } from "@tanstack/react-router";
+import { ThemeCircularFrame, useThemeMeta } from "@/themes";
 import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -26,26 +26,19 @@ export const UserNavItem = () => {
   const { t } = useTranslation();
   const { data } = useSession();
   const { pathname } = useLocation();
+  const { isRukiaTheme } = useThemeMeta();
 
   const isActive = pathname.startsWith("/@me");
 
   const avatarElement = (
     <Avatar
-      data-slot="rail-avatar"
-      data-active={isActive || undefined}
       className={cn(
         "size-11 rounded-xl after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-2 after:ring-inset after:ring-primary after:opacity-0 after:transition-opacity after:duration-200 motion-reduce:after:transition-none",
-        isActive && "after:opacity-100",
+        isActive && !isRukiaTheme && "after:opacity-100",
       )}
     >
-      <AvatarImage
-        src={data?.user.image ?? ""}
-        alt=""
-        className={railAvatarStateClassName(isActive)}
-      />
-      <AvatarFallback
-        className={cn("rounded-none", railAvatarStateClassName(isActive))}
-      >
+      <AvatarImage src={data?.user.image ?? ""} alt="" />
+      <AvatarFallback className="rounded-none">
         {data?.user?.name[0] || ""}
       </AvatarFallback>
     </Avatar>
@@ -55,14 +48,16 @@ export const UserNavItem = () => {
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="relative flex h-10 w-full items-center justify-center">
+          <div className="relative h-10 flex items-center justify-center">
             <Link
               to={ROUTES.user.dashboard}
               aria-label={t("common.routeErrors.actions.goToDashboard")}
-              className="group/rail-item isolate relative block"
+              className="block"
               onClick={handleClick}
             >
-              {avatarElement}
+              <ThemeCircularFrame isActive={isActive}>
+                {avatarElement}
+              </ThemeCircularFrame>
             </Link>
           </div>
         }

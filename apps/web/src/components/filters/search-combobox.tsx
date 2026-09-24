@@ -14,6 +14,7 @@ import {
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { cn } from "cn";
 import { FilterChipButton } from "@/components/common/filter-chip-button";
+import { ThemeInteractiveFrame } from "@/themes";
 
 export type SearchComboboxOption = {
   value: string;
@@ -100,6 +101,7 @@ export const SearchCombobox = ({
 }: SearchComboboxProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const trimmedSearch = searchValue.trim();
   const meetsMinimumLength = trimmedSearch.length >= minimumSearchLength;
@@ -146,24 +148,31 @@ export const SearchCombobox = ({
         onValueChange={(nextValues) => onSelectedChange(nextValues)}
         itemToStringLabel={(value) => labels.get(value) ?? value}
       >
-        <ComboboxTrigger
-          render={<Button variant="outline" />}
-          aria-label={placeholder}
-          className="h-9 w-full justify-between gap-2 px-3 font-normal hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground data-popup-open:border-ring"
+        <div
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          <Icon
-            className="size-4 shrink-0 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate text-left",
-              !hasSelection && "text-muted-foreground",
-            )}
-          >
-            {triggerLabel}
-          </span>
-        </ComboboxTrigger>
+          <ThemeInteractiveFrame isHovered={isHovered} isActive={hasSelection}>
+            <ComboboxTrigger
+              render={<Button variant="outline" />}
+              aria-label={placeholder}
+              className="h-9 w-full justify-between gap-2 px-3 font-normal hover:border-foreground/20 hover:bg-foreground/[0.04] hover:text-foreground data-popup-open:border-ring"
+            >
+              <Icon
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <span
+                className={cn(
+                  "min-w-0 flex-1 truncate text-left",
+                  !hasSelection && "text-muted-foreground",
+                )}
+              >
+                {triggerLabel}
+              </span>
+            </ComboboxTrigger>
+          </ThemeInteractiveFrame>
+        </div>
         <ComboboxContent
           className="w-(--anchor-width) min-w-72 max-w-[min(24rem,calc(100vw-2rem))] border-border"
           align="start"

@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import type { MyReservationsResponseDtoItemsItem } from "@lootlog/client/main";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -57,10 +56,10 @@ export function EditMyReservationDialog({
   return (
     <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md" aria-describedby={undefined}>
-        <DialogHeader>
+        <DialogHeader className="border-b pb-3">
           <DialogTitle>{t("reservations.my.editDialogTitle")}</DialogTitle>
         </DialogHeader>
-        <DialogBody>{form}</DialogBody>
+        <div className="px-4 pb-4 pt-4">{form}</div>
       </DialogContent>
     </Dialog>
   );

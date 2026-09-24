@@ -1,11 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { AnimatePresence } from "framer-motion";
@@ -156,14 +153,16 @@ export const EventSummaryDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none sm:h-[calc(100dvh-2rem)] sm:max-h-[900px] sm:w-[calc(100vw-2rem)] sm:max-w-6xl"
+        className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border-border bg-card p-0 shadow-xl sm:h-[calc(100dvh-2rem)] sm:max-h-[900px] sm:w-[calc(100vw-2rem)] sm:max-w-6xl"
         showCloseButton={false}
       >
-        <DialogHeader className="pr-(--dialog-inset)">
+        <header className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4 pr-1">
             <div className="min-w-0">
-              <DialogTitle>{t("events.summaryDialog.title")}</DialogTitle>
-              <DialogDescription className="truncate">
+              <DialogTitle className="px-0 pt-0 text-base">
+                {t("events.summaryDialog.title")}
+              </DialogTitle>
+              <DialogDescription className="mt-1 truncate px-0 text-xs">
                 {eventName}
               </DialogDescription>
             </div>
@@ -188,22 +187,20 @@ export const EventSummaryDialog = ({
               />
             </div>
           ) : null}
-        </DialogHeader>
+        </header>
 
-        <DialogBody className="flex flex-col overflow-hidden bg-background p-0">
-          <main
-            ref={stageRef}
-            className="relative min-h-0 flex-1 overflow-hidden"
-          >
-            {renderStage()}
-            <p className="sr-only" aria-live="polite" aria-atomic="true">
-              {activeSlideLabel}
-            </p>
-          </main>
-        </DialogBody>
+        <main
+          ref={stageRef}
+          className="relative min-h-0 flex-1 overflow-hidden bg-background"
+        >
+          {renderStage()}
+          <p className="sr-only" aria-live="polite" aria-atomic="true">
+            {activeSlideLabel}
+          </p>
+        </main>
 
         {deck?.mode === "presentation" && activeSlide ? (
-          <DialogFooter className="flex-row items-center justify-between sm:justify-between">
+          <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-6">
             <Button
               type="button"
               variant="outline"
@@ -237,7 +234,7 @@ export const EventSummaryDialog = ({
                 <ArrowRight className="size-4" />
               </Button>
             )}
-          </DialogFooter>
+          </footer>
         ) : null}
       </DialogContent>
     </Dialog>

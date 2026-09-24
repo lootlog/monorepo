@@ -22,12 +22,18 @@ const modes = [
     icon: Zap,
     titleKey: "events.scoring.modeSimpleTitle",
     descKey: "events.scoring.modeSimpleDescription",
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    activeRing: "ring-blue-500/30 border-blue-500",
   },
   {
     value: "ADVANCED" as const,
     icon: Settings,
     titleKey: "events.scoring.modeAdvancedTitle",
     descKey: "events.scoring.modeAdvancedDescription",
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
+    activeRing: "ring-amber-500/30 border-amber-500",
   },
 ];
 
@@ -54,7 +60,7 @@ export const ScoringModeSelector = ({
               className={cn(
                 "items-center rounded-lg border bg-card p-3 transition-all",
                 isActive
-                  ? "border-primary ring-1 ring-primary/30"
+                  ? `ring-1 ${mode.activeRing}`
                   : "border-border bg-card opacity-70 hover:opacity-90",
               )}
             >
@@ -62,8 +68,8 @@ export const ScoringModeSelector = ({
                 value={mode.value}
                 aria-label={t(mode.titleKey)}
               />
-              <div className="rounded-xl bg-primary/10 p-2">
-                <Icon className="size-4 text-primary" />
+              <div className={cn("rounded-xl p-2", mode.bgColor)}>
+                <Icon className={cn("size-4", mode.color)} />
               </div>
               <FieldContent>
                 <FieldTitle>{t(mode.titleKey)}</FieldTitle>

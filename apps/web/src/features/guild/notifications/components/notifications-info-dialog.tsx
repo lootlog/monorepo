@@ -3,7 +3,6 @@ import { CalendarClock, Hash, ListChecks, Gauge, Clock3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -50,11 +49,11 @@ export const NotificationsInfoDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader className="pb-4 px-1">
           <DialogTitle>{t("settings.notifications.info.title")}</DialogTitle>
         </DialogHeader>
-        <DialogBody className="flex flex-col gap-4 overflow-y-auto">
+        <div className="flex flex-col gap-4 px-5 pt-2 pb-5">
           {sections.map((section) => (
             <section key={section.title}>
               <SectionCardHeader
@@ -64,7 +63,7 @@ export const NotificationsInfoDialog = ({
               />
             </section>
           ))}
-        </DialogBody>
+        </div>
       </DialogContent>
     </Dialog>
   );

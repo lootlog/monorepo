@@ -4,13 +4,6 @@ import * as React from "react";
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 
 import { cn } from "cn";
-import {
-  DIALOG_BODY_CLASS,
-  DIALOG_DESCRIPTION_CLASS,
-  DIALOG_FOOTER_CLASS,
-  DIALOG_HEADER_CLASS,
-  DIALOG_TITLE_CLASS,
-} from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
@@ -55,7 +48,7 @@ function AlertDialogContent({
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         className={cn(
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex w-full max-w-[calc(100%-2rem)] max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden rounded-lg border p-0 shadow-lg [--dialog-inset:1.25rem] duration-200 sm:max-w-lg",
+          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
           className,
         )}
         {...props}
@@ -71,17 +64,7 @@ function AlertDialogHeader({
   return (
     <div
       data-slot="alert-dialog-header"
-      className={cn(DIALOG_HEADER_CLASS, "pr-(--dialog-inset)", className)}
-      {...props}
-    />
-  );
-}
-
-function AlertDialogBody({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="alert-dialog-body"
-      className={cn(DIALOG_BODY_CLASS, className)}
+      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
       {...props}
     />
   );
@@ -94,7 +77,10 @@ function AlertDialogFooter({
   return (
     <div
       data-slot="alert-dialog-footer"
-      className={cn(DIALOG_FOOTER_CLASS, className)}
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className,
+      )}
       {...props}
     />
   );
@@ -107,7 +93,7 @@ function AlertDialogTitle({
   return (
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
-      className={cn(DIALOG_TITLE_CLASS, className)}
+      className={cn("text-lg font-semibold", className)}
       {...props}
     />
   );
@@ -120,7 +106,7 @@ function AlertDialogDescription({
   return (
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
-      className={cn(DIALOG_DESCRIPTION_CLASS, className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );
@@ -155,7 +141,6 @@ function AlertDialogCancel({
 
 export {
   AlertDialog,
-  AlertDialogBody,
   AlertDialogPortal,
   AlertDialogOverlay,
   AlertDialogTrigger,

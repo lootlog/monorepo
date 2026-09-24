@@ -267,10 +267,6 @@ find it unchanged on the next.
   look through its variants and props, and only to match an existing pattern; a
   utility class can silently lose to the primitive's own selector.
 - A card that navigates from its header uses `ChevronLink`.
-- Never mark an active, selected, or hovered control with a left edge bar,
-  stripe, or inset border (no `border-left`, `inset Npx 0 0` shadows, or
-  left-anchored pseudo-elements). Show state through the control's own fill,
-  ring, or text color instead.
 - When a pattern changes, migrate every page in the affected family in the same
   change.
 - Verify against the reference by measurement: compare computed size, color,

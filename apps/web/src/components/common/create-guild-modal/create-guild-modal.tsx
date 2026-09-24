@@ -1,7 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -66,51 +65,43 @@ export const CreateGuildModal: FC = () => {
             {t("ui.modals.createLootlog.description")}
           </DialogDescription>
         </DialogHeader>
-        <DialogBody className="flex flex-col p-0">
-          <div className="border-b border-border px-(--dialog-inset) py-4">
-            <SearchInput
-              placeholder={t("ui.modals.createLootlog.searchPlaceholder")}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-            />
-          </div>
-          <ScrollArea className="min-h-80 max-h-80">
-            <div className="flex flex-col">
-              {filteredGuilds?.map((guild, index) => {
-                const avatarSrc = getGuildIconById(
-                  guild.id,
-                  guild.icon ?? null,
-                );
+        <div className="p-4 border-b">
+          <SearchInput
+            placeholder={t("ui.modals.createLootlog.searchPlaceholder")}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+        </div>
+        <ScrollArea className="min-h-80 max-h-80">
+          <div className="flex flex-col">
+            {filteredGuilds?.map((guild, index) => {
+              const avatarSrc = getGuildIconById(guild.id, guild.icon ?? null);
 
-                return (
-                  <div
-                    key={guild.id}
-                    className={cn(
-                      "px-(--dialog-inset) py-4 flex flex-row justify-between items-center border-b",
-                      {
-                        "border-none": index === filteredGuilds.length - 1,
-                      },
-                    )}
-                  >
-                    <div className="flex flex-row gap-4 items-center">
-                      <Avatar>
-                        <AvatarImage src={avatarSrc} />
-                        <AvatarFallback>{guild.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <p className="text-md font-semibold">{guild.name}</p>
-                    </div>
-                    <Button
-                      onClick={() => handleAddToGuild(guild.id)}
-                      size="sm"
-                    >
-                      {t("ui.actions.add")}
-                    </Button>
+              return (
+                <div
+                  key={guild.id}
+                  className={cn(
+                    "p-4 px-4 flex flex-row justify-between items-center border-b",
+                    {
+                      "border-none": index === filteredGuilds.length - 1,
+                    },
+                  )}
+                >
+                  <div className="flex flex-row gap-4 items-center">
+                    <Avatar>
+                      <AvatarImage src={avatarSrc} />
+                      <AvatarFallback>{guild.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <p className="text-md font-semibold">{guild.name}</p>
                   </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </DialogBody>
+                  <Button onClick={() => handleAddToGuild(guild.id)} size="sm">
+                    {t("ui.actions.add")}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

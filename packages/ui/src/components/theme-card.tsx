@@ -23,7 +23,6 @@ export const ThemeCard: FC<ThemeCardProps> = ({
 }) => {
   return (
     <button
-      data-slot="theme-card"
       type="button"
       onClick={onClick}
       aria-pressed={isActive}

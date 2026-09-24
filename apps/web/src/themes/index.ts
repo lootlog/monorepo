@@ -1,7 +1,12 @@
 export {
+  ThemeCircularFrame,
   ThemeEmptyStateIcon,
+  ThemeInteractiveFrame,
+  ThemeRootEffects,
+  ThemeSidebarBackground,
   ThemeSidebarFooterDecoration,
   ThemeSpinnerProvider,
+  ThemeSurfaceOverlay,
   useThemedKey,
 } from "./adapters";
 
@@ -22,12 +27,3 @@ export {
 } from "./resolver";
 
 export { useThemeMeta } from "./use-theme-meta";
-
-export { ThemeEffectsController } from "./effects/theme-effects-controller";
-
-export { useThemeEffects } from "./effects/use-theme-effects";
-
-export {
-  THEME_EFFECTS_LEVELS,
-  type ThemeEffectsLevel,
-} from "./effects/theme-effects";

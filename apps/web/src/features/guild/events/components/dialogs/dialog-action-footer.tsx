@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Button } from "@lootlog/ui/components/button";
-import { DialogFooter } from "@lootlog/ui/components/dialog";
 
 type DialogActionFooterProps = {
   cancelLabel: string;
@@ -25,12 +24,14 @@ export const DialogActionFooter = ({
   onCancel,
   onConfirm,
 }: DialogActionFooterProps) => (
-  <DialogFooter>
+  <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
     <Button
       type="button"
       variant="outline"
+      size="sm"
       onClick={onCancel}
       disabled={isPending}
+      className="flex-1"
     >
       {cancelLabel}
     </Button>
@@ -39,11 +40,13 @@ export const DialogActionFooter = ({
       form={confirmForm}
       loading={isPending}
       variant={confirmVariant}
+      size="sm"
       disabled={isPending}
       icon={confirmIcon}
       onClick={onConfirm}
+      className="flex-1"
     >
       {confirmLabel}
     </Button>
-  </DialogFooter>
+  </div>
 );

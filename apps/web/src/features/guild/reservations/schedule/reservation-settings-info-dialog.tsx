@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import type { ReservationSettings } from "@lootlog/domain/reservations";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -94,8 +93,8 @@ export const ReservationSettingsInfoDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] sm:max-w-xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+        <DialogHeader className="pb-4 px-1">
           <DialogTitle>
             {t("reservations.schedule.infoDialog.title")}
           </DialogTitle>
@@ -103,7 +102,7 @@ export const ReservationSettingsInfoDialog = ({
             {t("reservations.schedule.infoDialog.description")}
           </DialogDescription>
         </DialogHeader>
-        <DialogBody className="flex flex-col gap-4 overflow-y-auto">
+        <div className="flex flex-col gap-4 px-5 pt-2 pb-5">
           {sections.map((section) => (
             <section key={section.title}>
               <SectionCardHeader
@@ -136,7 +135,7 @@ export const ReservationSettingsInfoDialog = ({
               ))}
             </ul>
           </div>
-        </DialogBody>
+        </div>
       </DialogContent>
     </Dialog>
   );
