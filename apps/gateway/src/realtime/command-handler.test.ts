@@ -324,15 +324,25 @@ test.each([
       },
     );
 
+    const unexpectedRegistryCommand = () =>
+      Promise.reject(new Error("Unexpected registry command"));
+
+    const federationStore = {
+      ...unusedFederationStore,
+      command: {
+        set: async () => "OK",
+        del: unexpectedRegistryCommand,
+        sadd: unexpectedRegistryCommand,
+        srem: unexpectedRegistryCommand,
+        expire: unexpectedRegistryCommand,
+        smembers: unexpectedRegistryCommand,
+        mget: unexpectedRegistryCommand,
+      },
+    };
+
     const hub = new RealtimeHub(
       { maxBackpressureBytes: 1_024, maxBackpressureStrikes: 3 },
-      {
-        ...unusedFederationStore,
-        command: {
-          ...unusedFederationStore.command,
-          set: async () => "OK",
-        },
-      },
+      federationStore,
       () => {},
     );
 
