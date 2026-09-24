@@ -12,7 +12,7 @@ import { getSocket } from "@/lib/socket";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
 import { ConnectionStatus } from "./connection-status";
 
-it("shows gateway memberships and heartbeat latency, clearing them on disconnect", async () => {
+it("shows connecting, then memberships and heartbeat latency, and a dropped connection as reconnecting", async () => {
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
 
@@ -37,19 +37,17 @@ it("shows gateway memberships and heartbeat latency, clearing them on disconnect
   );
 
   try {
-    const disconnected = screen.getByRole("button", {
-      name: "Nie połączono z żadnym serwerem",
+    const connecting = screen.getByRole("button", {
+      name: "Łączenie z serwerem…",
     });
 
-    await user.hover(disconnected);
-    expect(
-      await screen.findByText("Nie połączono z żadnym serwerem"),
-    ).toBeVisible();
+    await user.hover(connecting);
+    expect(await screen.findByText("Łączenie z serwerem…")).toBeVisible();
     act(() => gateway.wire.open());
     await gateway.join(["guild-2", "guild-1"]);
 
     const connected = screen.getByRole("button", {
-      name: "Połączono z serwerami:",
+      name: "Połączono z serwerem",
     });
 
     await user.unhover(connected);
@@ -124,7 +122,9 @@ it("shows gateway memberships and heartbeat latency, clearing them on disconnect
     act(() => getSocket().disconnect());
     expect(screen.queryByText("42 ms")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Nie połączono z żadnym serwerem" }),
+      screen.getByRole("button", {
+        name: "Połączenie przerwane, ponowne łączenie…",
+      }),
     ).toBeInTheDocument();
   } finally {
     view.unmount();

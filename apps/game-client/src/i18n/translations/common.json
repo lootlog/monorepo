@@ -97,5 +97,11 @@
   "states": {
     "unknown": "Nieznana",
     "unknownNeutral": "Nieznane"
+  },
+  "connection": {
+    "online": "Połączono z serwerem",
+    "connecting": "Łączenie z serwerem…",
+    "reconnecting": "Połączenie przerwane, ponowne łączenie…",
+    "unreachable": "Nie można połączyć z serwerem, ponawianie…"
   }
 }

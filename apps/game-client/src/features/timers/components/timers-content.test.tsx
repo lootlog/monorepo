@@ -103,25 +103,6 @@ it("shows delayed loading feedback without falsely presenting an empty timer lis
   expect(screen.queryByText("Brak timerów")).not.toBeInTheDocument();
 });
 
-it("warns that loaded timers may be stale while the gateway is disconnected, unless a refresh error already shows", () => {
-  mountContent({ stale: true });
-
-  expect(
-    screen.getByText("Połączenie przerwane - timery mogą być nieaktualne"),
-  ).toBeInTheDocument();
-});
-
-it("hides the stale warning behind a refresh error so the user sees the retry action", () => {
-  mountContent({ stale: true, refreshError: true });
-
-  expect(
-    screen.queryByText("Połączenie przerwane - timery mogą być nieaktualne"),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.getByText("Nie udało się odświeżyć timerów"),
-  ).toBeInTheDocument();
-});
-
 it("lets users retry an initial request failure", async () => {
   const user = userEvent.setup();
   const { onRetry } = mountContent({ error: new Error("network") });

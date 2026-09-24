@@ -13,7 +13,13 @@ import type {
   showCharacterEquipment,
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
+import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
+
+const getHighlightFill = (container: HTMLElement) =>
+  container
+    .querySelector<HTMLElement>("[style*='--ll-list-row-fill']")
+    ?.style.getPropertyValue("--ll-list-row-fill");
 
 const createPresence = (
   overrides?: Partial<PlayerPresence>,
@@ -104,7 +110,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(screen.getByText("Hero (123w)")).toBeVisible();
-    expect(screen.getByText("Karka-han • luvia")).toBeVisible();
+    expect(screen.getByText("Karka-han")).toBeVisible();
     expect(screen.queryByText("Discord User")).not.toBeInTheDocument();
   });
 
@@ -124,7 +130,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Torneg • luvia")).toBeVisible();
+    expect(screen.getByText("Torneg")).toBeVisible();
   });
 
   it("shows Margonem verification only for verified presence", () => {
@@ -145,12 +151,21 @@ describe("OnlinePlayersAccountListEntry", () => {
     expect(screen.getByLabelText("Zweryfikowane konto Margonem")).toBeVisible();
   });
 
-  it("shows discord member name in a tooltip", async () => {
+  it("shows the player details and relation in a tooltip", async () => {
     const user = userEvent.setup();
+    setTestRuntimeGame({
+      hero: { clan: { id: 15191, name: "Karhu", rank: 100 } },
+    });
+    const player = createPresence().player;
 
     const { container } = render(
       <OnlinePlayersAccountListEntry
-        presence={createPresence()}
+        presence={createPresence({
+          isAfk: true,
+          player: player
+            ? { ...player, location: { map: "Karka-han", x: 12, y: 34 } }
+            : undefined,
+        })}
         guildMember={{ id: 1, userId: "discord-1", name: "Discord User" }}
       />,
     );
@@ -161,7 +176,12 @@ describe("OnlinePlayersAccountListEntry", () => {
 
     const tooltip = await screen.findByRole("tooltip");
 
+    expect(tooltip).toHaveTextContent("Wojownik, poziom 123");
     expect(tooltip).toHaveTextContent("Discord User");
+    expect(tooltip).toHaveTextContent("Karhu");
+    expect(tooltip).toHaveTextContent("Karka-han (12, 34)");
+    expect(tooltip).toHaveTextContent("AFK");
+    expect(tooltip).toHaveTextContent("Twój klan");
     expectTooltipAboveWindows(tooltip);
   });
 
@@ -242,7 +262,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByText("Ithan • luvia")).toBeVisible();
+    expect(screen.getByText("Ithan")).toBeVisible();
   });
 
   it("invites the character to party from the right-side button", () => {
@@ -283,7 +303,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:bg-accent")).not.toBeNull();
+    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.sky.fill);
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -337,9 +357,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
-    expect(container.querySelector(".ll\\:bg-accent")).toBeNull();
-    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
+    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
     expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
   });
 
@@ -370,7 +388,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(container.querySelector(".ll\\:bg-green-500\\/15")).not.toBeNull();
+    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.green.fill);
     expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
   });
 
@@ -387,8 +405,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).not.toBeNull();
-    expect(container.querySelector(".ll\\:bg-green-500\\/15")).toBeNull();
+    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.orange.fill);
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -403,8 +420,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(container.querySelector(".ll\\:bg-yellow-500\\/15")).not.toBeNull();
-    expect(container.querySelector(".ll\\:bg-orange-500\\/15")).toBeNull();
+    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
