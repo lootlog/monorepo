@@ -10,7 +10,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toolbarStripLightDividerClassName } from "@/components/ui/toolbar-strip";
-import { NPC_NAMES } from "@/constants/margonem";
 
 export const NPC_TYPE_FILTER_OPTIONS = [
   NpcType.ELITE2,
@@ -97,7 +96,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
                 onClick={() => toggle(type)}
                 onContextMenu={(event) => selectOnly(event, type)}
               >
-                <span>{NPC_NAMES[type].longname}</span>
+                <span>{t(`common:npcTypes.${type.toLowerCase()}`)}</span>
                 {isSelected ? (
                   <Check size={ICON_SIZE} aria-hidden="true" />
                 ) : null}

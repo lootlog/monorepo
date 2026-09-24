@@ -75,7 +75,7 @@ describe("ChatAppearanceSettingsForm", () => {
     );
 
     expect(
-      screen.queryByRole("switch", { name: "Lootlog" }),
+      screen.queryByRole("switch", { name: "Organizacja" }),
     ).not.toBeInTheDocument();
 
     act(() => useSettingsStore.setState({ allowWorldSelection: true }));
@@ -85,7 +85,9 @@ describe("ChatAppearanceSettingsForm", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByRole("switch", { name: "Lootlog" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: "Organizacja" }),
+    ).toBeInTheDocument();
   });
 
   it("applies a preset from the preset radio group", async () => {

@@ -155,7 +155,7 @@ describe("NotificationsSettingsTab", () => {
     );
     render();
 
-    const picker = screen.getByRole("group", { name: "Lootlogi" });
+    const picker = screen.getByRole("group", { name: "Organizacje" });
     const [alpha, beta] = within(picker).getAllByRole("button");
 
     if (!alpha || !beta) throw new Error("no guild tile");
@@ -180,7 +180,7 @@ describe("NotificationsSettingsTab", () => {
     });
     render();
 
-    const picker = screen.getByRole("group", { name: "Lootlogi" });
+    const picker = screen.getByRole("group", { name: "Organizacje" });
 
     expect(
       within(picker)

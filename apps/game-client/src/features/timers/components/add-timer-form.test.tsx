@@ -43,8 +43,8 @@ const mountForm = (
 
 const fillDurations = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
-  await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
-  await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+  await user.type(screen.getByLabelText("Minimalny czas (maks. 300 h)"), "1m");
+  await user.type(screen.getByLabelText("Maksymalny czas (maks. 300 h)"), "2m");
 };
 
 const submit = async (
@@ -127,17 +127,17 @@ it("selects an autocomplete NPC and submits custom spawn dates", async () => {
   const user = userEvent.setup();
   const fixture = mountForm("guild-1", [npc]);
   await selectNpc(user);
-  expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue(
+  expect(screen.getByLabelText("Minimalny czas (maks. 300 h)")).toHaveValue(
     "0h 1m 20s",
   );
-  expect(screen.getByLabelText("Maksymalny czas (max 300h)")).toHaveValue(
+  expect(screen.getByLabelText("Maksymalny czas (maks. 300 h)")).toHaveValue(
     "0h 2m 0s",
   );
   expect(screen.getByLabelText("Poziom")).toHaveValue(120);
   await user.click(
-    screen.getByRole("switch", { name: "Niestandardowe daty spawnu" }),
+    screen.getByRole("switch", { name: "Własne daty odrodzenia" }),
   );
-  expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue("");
+  expect(screen.getByLabelText("Minimalny czas (maks. 300 h)")).toHaveValue("");
   fireEvent.change(screen.getByLabelText("Data startu"), {
     target: { value: "2026-04-22T10:00" },
   });
@@ -180,10 +180,10 @@ it("shows no search results and rejects malformed durations without an HTTP muta
   expect(await screen.findByText("Nie znaleziono potwora")).toBeVisible();
   await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
   await user.type(
-    screen.getByLabelText("Minimalny czas (max 300h)"),
+    screen.getByLabelText("Minimalny czas (maks. 300 h)"),
     "1h garbage",
   );
-  await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "1m");
+  await user.type(screen.getByLabelText("Maksymalny czas (maks. 300 h)"), "1m");
   await user.click(screen.getByRole("button", { name: "Dodaj" }));
   expect(
     await screen.findByText("Czas musi być większy niż 0 sekund"),

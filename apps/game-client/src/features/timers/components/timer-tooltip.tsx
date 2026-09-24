@@ -1,6 +1,6 @@
 import type { Timer } from "@/api/timers.api";
 import { format } from "@/utils/local-date";
-import { ClockArrowDown, ClockArrowUp } from "lucide-react";
+import { ClockArrowDown, ClockArrowUp, RotateCcw } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -64,7 +64,8 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
       )}
 
       {timer.wasReset && (
-        <div className="ll:font-semibold ll:text-orange-400">
+        <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-orange-400">
+          <RotateCcw size={14} aria-hidden="true" />
           {t("tooltip.reset")}
         </div>
       )}

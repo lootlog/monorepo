@@ -1,9 +1,9 @@
 {
   "window": {
-    "title": "Online"
+    "title": "Gracze online"
   },
   "search": {
-    "placeholder": "Szukaj..."
+    "placeholder": "Szukaj gracza…"
   },
   "filters": {
     "minLvlLabel": "Minimalny poziom",
@@ -24,8 +24,8 @@
     "showFilters": "Pokaż filtry",
     "showMembersView": "Pokaż widok członków",
     "showAccountsView": "Pokaż widok lokacji",
-    "inviteParty": "Zaproś do drużyny",
-    "doubleClickInviteParty": "Kliknij dwukrotnie, aby zaprosić do drużyny"
+    "inviteParty": "Zaproś do grupy",
+    "doubleClickInviteParty": "Kliknij dwukrotnie, aby zaprosić do grupy"
   },
   "contextMenu": {
     "addFriend": "Dodaj do znajomych",
@@ -46,16 +46,16 @@
     "notFoundTitle": "Żaden gracz nie pasuje do filtrów",
     "clearFilters": "Wyczyść filtry",
     "noPlayersTitle": "Nikt nie jest teraz online",
-    "noPlayersDescription": "Widać tu członków Lootloga, którzy grają z dodatkiem.",
+    "noPlayersDescription": "Widać tu członków organizacji, którzy grają z dodatkiem.",
     "noAccessTitle": "Nie widzisz, kto jest online",
-    "noAccessDescription": "Twoja rola w tym Lootlogu nie ma uprawnienia do listy graczy online."
+    "noAccessDescription": "Twoja rola w tej organizacji nie ma uprawnienia do listy graczy online."
   },
   "states": {
     "loading": "Ładowanie graczy online",
     "loadError": "Nie udało się załadować graczy online",
     "refreshError": "Nie udało się odświeżyć graczy online",
     "refreshing": "Odświeżanie graczy online",
-    "disconnected": "Brak połączenia z serwerem - nie można pobrać graczy online"
+    "disconnected": "Brak połączenia z serwerem – nie można pobrać graczy online"
   },
   "tooltip": {
     "levelAndProfession": "{{profession}}, poziom {{level}}",
@@ -65,7 +65,7 @@
     "status": {
       "self": "To Ty",
       "afk": "AFK",
-      "party": "W Twojej drużynie",
+      "party": "W Twojej grupie",
       "clan": "Twój klan",
       "friend": "Znajomy"
     }

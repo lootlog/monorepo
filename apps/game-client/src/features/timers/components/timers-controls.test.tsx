@@ -44,7 +44,7 @@ describe("timers controls", () => {
   it("updates actual search, clamped level ranges, npc types, and color filters", async () => {
     const user = userEvent.setup();
     render(<TimersFilters filtersKey="guild-1" />);
-    fireEvent.change(screen.getByPlaceholderText("Szukaj..."), {
+    fireEvent.change(screen.getByPlaceholderText("Szukaj…"), {
       target: { value: "tan" },
     });
     expect(useTimersStore.getState().timerFiltersSearchText).toBe("tan");
@@ -59,7 +59,7 @@ describe("timers controls", () => {
       maxLvl: 500,
     });
     await user.click(screen.getByRole("button", { name: "Typy potworów" }));
-    await user.click(await screen.findByRole("button", { name: "heros" }));
+    await user.click(await screen.findByRole("button", { name: "Heros" }));
     expect(
       useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
     ).toEqual([]);
@@ -88,7 +88,7 @@ describe("timers controls", () => {
     });
     render(<TimersFilters filtersKey="guild-1" />);
     await user.click(screen.getByRole("button", { name: "Typy potworów" }));
-    const button = await screen.findByRole("button", { name: "elita II" });
+    const button = await screen.findByRole("button", { name: "Elita II" });
     const event = createEvent.contextMenu(button);
     fireEvent(button, event);
     expect(event.defaultPrevented).toBe(true);

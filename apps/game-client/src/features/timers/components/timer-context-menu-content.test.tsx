@@ -83,7 +83,7 @@ const renderMenu = async (props: MenuProps) => {
 describe("TimerContextMenuContent", () => {
   it("shows a pending placeholder instead of timer actions", async () => {
     await renderMenu(createProps({ isPending: true }));
-    expect(screen.getByText("Tworzenie timera...")).toBeVisible();
+    expect(screen.getByText("Tworzenie timera…")).toBeVisible();
     expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 
@@ -100,11 +100,11 @@ describe("TimerContextMenuContent", () => {
 
   it.each([
     ["Przypnij", "onPin"],
-    ["Przypnij wszędzie", "onPinAll"],
+    ["Przypnij we wszystkich organizacjach", "onPinAll"],
     ["Ukryj", "onHide"],
-    ["Ukryj wszędzie", "onHideAll"],
-    ["Pokaż zawsze", "onToggleAlwaysVisibleExpiredTimer"],
-    ["Odliczaj od początku", "onReset"],
+    ["Ukryj we wszystkich organizacjach", "onHideAll"],
+    ["Zostaw po wyzerowaniu", "onToggleAlwaysVisibleExpiredTimer"],
+    ["Zresetuj timer", "onReset"],
   ] as const)("invokes the %s action", async (name, callback) => {
     const props = createProps();
     await renderMenu(props);
@@ -138,7 +138,7 @@ describe("TimerContextMenuContent", () => {
       screen.queryByRole("menuitem", { name: "Historia" }),
     ).not.toBeInTheDocument();
     await user.click(
-      screen.getByRole("menuitem", { name: "Nie pokazuj zawsze" }),
+      screen.getByRole("menuitem", { name: "Usuwaj po wyzerowaniu" }),
     );
     expect(props.onToggleAlwaysVisibleExpiredTimer).toHaveBeenCalledOnce();
     await openMenu();
@@ -163,7 +163,7 @@ describe("TimerContextMenuContent", () => {
       screen.queryByRole("menuitem", { name: "Historia" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("menuitem", { name: "Pokaż zawsze" }),
+      screen.queryByRole("menuitem", { name: "Zostaw po wyzerowaniu" }),
     ).not.toBeInTheDocument();
   });
 });

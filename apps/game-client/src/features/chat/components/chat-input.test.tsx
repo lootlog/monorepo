@@ -170,7 +170,7 @@ const createSentMessageResponse = (): ChatMessageResponseDtoOutput => ({
 
 describe("ChatInput", () => {
   const getEditor = () => {
-    return screen.getByRole("textbox", { name: "Wiadomość..." });
+    return screen.getByRole("textbox", { name: "Wiadomość…" });
   };
 
   afterEach(() => {
@@ -631,10 +631,10 @@ describe("ChatInput", () => {
 
     const editor = getEditor();
     await user.click(editor);
-    expect(screen.getByText("Wiadomość...")).toBeInTheDocument();
+    expect(screen.getByText("Wiadomość…")).toBeInTheDocument();
 
     await user.paste("abc");
-    expect(screen.queryByText("Wiadomość...")).not.toBeInTheDocument();
+    expect(screen.queryByText("Wiadomość…")).not.toBeInTheDocument();
 
     setPlainEditorSelection({
       editor,
@@ -650,7 +650,7 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(editor.textContent).toBe("");
     });
-    expect(screen.getByText("Wiadomość...")).toBeInTheDocument();
+    expect(screen.getByText("Wiadomość…")).toBeInTheDocument();
   });
 
   it("shows slash command suggestions and inserts the selected command", async () => {
@@ -661,7 +661,7 @@ describe("ChatInput", () => {
     await user.click(editor);
     await user.paste("/g");
 
-    expect(screen.getByText("Szukaj grupy")).toBeInTheDocument();
+    expect(screen.getByText("Utwórz zbiórkę")).toBeInTheDocument();
     expect(
       screen.queryByRole("option", { name: "@Raid Team" }),
     ).not.toBeInTheDocument();

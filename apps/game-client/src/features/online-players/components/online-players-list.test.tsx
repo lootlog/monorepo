@@ -182,13 +182,13 @@ describe("OnlinePlayersList", () => {
     expect(screen.getByRole("status", { busy: true })).toBeVisible();
     expect(
       screen.queryByText(
-        "Brak połączenia z serwerem - nie można pobrać graczy online",
+        "Brak połączenia z serwerem – nie można pobrać graczy online",
       ),
     ).toBeNull();
     act(() => harness.wire.close());
     expect(
       screen.getByText(
-        "Brak połączenia z serwerem - nie można pobrać graczy online",
+        "Brak połączenia z serwerem – nie można pobrać graczy online",
       ),
     ).toBeVisible();
     expect(

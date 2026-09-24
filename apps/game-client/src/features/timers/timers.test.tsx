@@ -79,11 +79,11 @@ it("adds a manual timer from an overlay inside the timers window", async () => {
   );
   await user.type(within(panel).getByLabelText("Nazwa"), "Tanroth");
   await user.type(
-    within(panel).getByLabelText("Minimalny czas (max 300h)"),
+    within(panel).getByLabelText("Minimalny czas (maks. 300 h)"),
     "1m",
   );
   await user.type(
-    within(panel).getByLabelText("Maksymalny czas (max 300h)"),
+    within(panel).getByLabelText("Maksymalny czas (maks. 300 h)"),
     "2m",
   );
   await user.click(within(panel).getByRole("button", { name: "Dodaj" }));
