@@ -1,4 +1,5 @@
 import * as npcRouting from "@lootlog/domain/npc-routing";
+import * as realtimeCodec from "@lootlog/protocol/realtime/codec";
 import { createRabbitDelivery } from "../../test/rabbit-fixtures.js";
 import { Permission } from "@lootlog/schema/permissions";
 import { describe, expect, spyOn, test } from "bun:test";
@@ -39,7 +40,6 @@ class FakeRedisStore {
 
 const config = {
   maxBackpressureBytes: 1_024,
-  maxBackpressureStrikes: 3,
 };
 
 const makeSession = (connectionId: string): SessionData => ({
@@ -52,7 +52,6 @@ const makeSession = (connectionId: string): SessionData => ({
   subscriptions: new Map(),
   airTagScopes: [],
   confidence: "reported",
-  backpressureStrikes: 0,
 });
 
 const makeSocket = (data: SessionData, bufferedAmount = 0) => {
@@ -1230,7 +1229,7 @@ describe("RealtimeHub federation", () => {
       decodeRealtimeFrame(targets[0]?.sent[0] ?? new Uint8Array()),
     ).toEqual(event);
     expect(targets[2]?.sent).toEqual([]);
-    expect(targets[2]?.socket.data.backpressureStrikes).toBe(1);
+    expect(targets[2]?.closes).toEqual([1013]);
     expect(targets[3]?.sent).toEqual([]);
   });
 
@@ -1315,7 +1314,7 @@ describe("RealtimeHub federation", () => {
     ).toHaveProperty("type", "chat.cleared");
   });
 
-  test("closes a persistently slow consumer with bounded backpressure", async () => {
+  test("closes on the first dropped event and never resumes a session with a delivery gap", async () => {
     const bus = new FederationBus();
 
     const hub = new RealtimeHub(
@@ -1331,6 +1330,8 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const target = makeSocket(makeSession("slow"), 10);
+    let bufferedAmount = 10;
+    target.socket.getBufferedAmount = () => bufferedAmount;
     target.socket.data.subscriptions.set(getScopeKey(scope), scope);
     hub.register(target.socket);
 
@@ -1341,9 +1342,83 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     await hub.publishToScope(scope, event);
+    expect(target.closes).toEqual([1013]);
+    bufferedAmount = 0;
     await hub.publishToScope(scope, event);
     await hub.publishToScope(scope, event);
     expect(target.sent).toHaveLength(0);
+    expect(target.closes).toEqual([1013]);
+  });
+
+  test("skips federation decoding without a local audience and validates frames once recipients subscribe", async () => {
+    const bus = new FederationBus();
+    const redis = new FakeRedisStore(bus);
+    const hub = new RealtimeHub(config, redis);
+    await Effect.runPromise(hub.start());
+    const target = makeSocket(makeSession("target"));
+    hub.register(target.socket);
+
+    const scope = {
+      topic: "organization.chat",
+      organizationId: "organization-1",
+    } as const;
+
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: scope.organizationId, payload: {} },
+    } as const;
+
+    const message = {
+      id: "no-audience",
+      sourceInstanceId: "remote",
+      scope,
+      frame: Buffer.from(encode(event)).toString("base64"),
+    };
+
+    const decodeFrame = spyOn(realtimeCodec, "tryDecodeRealtimeFrame");
+
+    try {
+      await redis.publish(message);
+      expect(decodeFrame).not.toHaveBeenCalled();
+      expect(target.sent).toEqual([]);
+      hub.subscribe(target.socket, scope);
+      // Already observed publications must not be replayed after joining.
+      await redis.publish(message);
+      expect(target.sent).toEqual([]);
+      await redis.publish({ ...message, id: "subscribed" });
+      expect(decodeFrame).toHaveBeenCalledTimes(1);
+      expect(target.sent.map(decodeRealtimeFrame)).toEqual([event]);
+      await redis.publish({ ...message, id: "malformed", frame: "AA==" });
+      expect(target.sent).toHaveLength(1);
+    } finally {
+      decodeFrame.mockRestore();
+    }
+  });
+
+  test("accepts queued frames but closes a session when Bun drops a frame below the buffer threshold", () => {
+    const hub = new RealtimeHub(
+      config,
+      new FakeRedisStore(new FederationBus()),
+    );
+
+    const target = makeSocket(makeSession("transport-backpressure"));
+    let result = -1;
+    target.socket.send = () => result;
+
+    const event = {
+      v: 1,
+      type: "chat.cleared",
+      data: { organizationId: "organization-1", payload: {} },
+    } as const;
+
+    expect(hub.sendEvent(target.socket, event)).toBe(true);
+    expect(target.closes).toEqual([]);
+    result = 0;
+    expect(hub.sendEvent(target.socket, event)).toBe(false);
+    expect(target.closes).toEqual([1013]);
+    result = 100;
+    expect(hub.sendEvent(target.socket, event)).toBe(false);
     expect(target.closes).toEqual([1013]);
   });
 });

@@ -47,6 +47,19 @@ import {
 
 const DEDUP_TTL_SECONDS = 30;
 
+const publishTimerEvents = Effect.fnUntraced(function* (
+  realtime: Effect.Effect<unknown, unknown>,
+  notifications: Effect.Effect<unknown, unknown>,
+) {
+  // Wait for both confirms even when one delivery fails.
+  const results = yield* Effect.all([realtime, notifications], {
+    concurrency: 2,
+    mode: "result",
+  });
+
+  for (const result of results) yield* Effect.fromResult(result);
+});
+
 const RELEASE_DEDUP_LOCK_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
@@ -525,20 +538,21 @@ export const makeAutoTimer = (
               },
             };
 
-            yield* ports.publish(
-              RabbitRoutingKey.GUILDS_TIMERS_DELETE,
-              deletion,
-            );
-            yield* ports.publish(
-              RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
-              deletion,
+            yield* publishTimerEvents(
+              ports.publish(RabbitRoutingKey.GUILDS_TIMERS_DELETE, deletion),
+              ports.publish(
+                RabbitRoutingKey.NOTIFICATIONS_TIMER_DELETED,
+                deletion,
+              ),
             );
           }
 
-          yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-          yield* ports.publish(
-            RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-            response,
+          yield* publishTimerEvents(
+            ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response),
+            ports.publish(
+              RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+              response,
+            ),
           );
           yield* ports
             .enqueueEventHeroCheck({
@@ -642,11 +656,17 @@ export const makeAutoTimer = (
 
     const submittedGuilds: Array<{ guildId: string; guildName: string }> = [];
 
-    for (const { guild } of targets) {
-      const result = yield* Effect.result(
-        writeGuildTimer(identity, guild.id, payload),
-      );
+    const outcomes = yield* Effect.forEach(
+      targets,
+      ({ guild }) =>
+        writeGuildTimer(identity, guild.id, payload).pipe(
+          Effect.result,
+          Effect.map((result) => ({ guild, result })),
+        ),
+      { concurrency: 3 },
+    );
 
+    for (const { guild, result } of outcomes) {
       if (Result.isSuccess(result)) {
         submittedGuilds.push({ guildId: guild.id, guildName: guild.name });
       } else {

@@ -1,6 +1,10 @@
 import { migrationClient } from "@lootlog/database/migration";
 import { TestClock } from "effect/testing";
-import { RabbitMessaging, type RabbitDelivery } from "@lootlog/messaging";
+import {
+  MessagingError,
+  RabbitMessaging,
+  type RabbitDelivery,
+} from "@lootlog/messaging";
 import {
   signActivityEvent,
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -441,7 +445,7 @@ describe("durable private online history", () => {
     expect(recovered.status).toBe("fresh");
   });
 
-  it("accepts signed broker redeliveries and retains invalid signatures in the DLQ", async () => {
+  it("retains invalid signed events in the DLQ without blocking later checkpoints", async () => {
     const payload = checkpoint(
       "signed",
       "a",
@@ -456,12 +460,25 @@ describe("durable private online history", () => {
       | undefined;
 
     const published: string[] = [];
+    const rejectedEvents: unknown[] = [];
+    let failDlq = false;
 
     const rabbit = RabbitMessaging.of({
       publish: (options) =>
-        Effect.sync(() => {
-          published.push(options.routingKey);
-        }),
+        failDlq
+          ? Effect.fail(
+              new MessagingError({
+                operation: "publish",
+                message: "Broker confirm failed",
+                cause: new Error("Broker unavailable"),
+              }),
+            )
+          : Effect.sync(() => {
+              published.push(options.routingKey);
+              rejectedEvents.push(
+                JSON.parse(new TextDecoder().decode(options.content)),
+              );
+            }),
       ack: () => Effect.void,
       nack: () => Effect.void,
       consume: (options, handler) => {
@@ -474,9 +491,9 @@ describe("durable private online history", () => {
       },
     });
 
-    const delivery = (signature: string): RabbitDelivery => {
+    const delivery = (signature: string, event = payload): RabbitDelivery => {
       const raw: RabbitDelivery["raw"] = {
-        content: Buffer.from(JSON.stringify(payload)),
+        content: Buffer.from(JSON.stringify(event)),
         fields: {
           consumerTag: "online",
           deliveryTag: 1,
@@ -538,10 +555,45 @@ describe("durable private online history", () => {
         yield* consumeHandler(delivery("invalid"));
         yield* consumeHandler(delivery(signActivityEvent(payload, secret)));
         yield* consumeHandler(delivery(signActivityEvent(payload, secret)));
+
+        const invalidInterval = { ...payload, endedAt: "2026-09-01T07:00:00Z" };
+        yield* consumeHandler(
+          delivery(signActivityEvent(invalidInterval, secret), invalidInterval),
+        );
+
+        const changedStart = { ...payload, startedAt: "2026-09-01T08:30:00Z" };
+        failDlq = true;
+
+        const rejection = yield* consumeHandler(
+          delivery(signActivityEvent(changedStart, secret), changedStart),
+        ).pipe(Effect.flip);
+
+        expect(rejection).toBeInstanceOf(Error);
+        failDlq = false;
+        yield* consumeHandler(
+          delivery(signActivityEvent(changedStart, secret), changedStart),
+        );
+
+        const later = {
+          ...payload,
+          endedAt: "2026-09-01T10:00:00Z",
+          observedAt: "2026-09-01T10:00:00Z",
+        };
+
+        yield* consumeHandler(
+          delivery(signActivityEvent(later, secret), later),
+        );
       }).pipe(Effect.scoped),
     );
     expect(published).toEqual([
       RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
+      RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
+      RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
+    ]);
+    expect(rejectedEvents).toEqual([
+      payload,
+      { ...payload, endedAt: "2026-09-01T07:00:00Z" },
+      { ...payload, startedAt: "2026-09-01T08:30:00Z" },
     ]);
 
     const result = await run(
@@ -555,7 +607,7 @@ describe("durable private online history", () => {
       }),
     );
 
-    expect(result.days[0]?.onlineSeconds).toBe(3600);
+    expect(result.days[0]?.onlineSeconds).toBe(7200);
   });
 
   it("cleans every batch while preserving retained history and tracking", async () => {

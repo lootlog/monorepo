@@ -72,6 +72,19 @@ with Vite on port 3004. You can also open
 `http://localhost:3004/developer/` directly. After changing Traefik routing, run
 `docker compose restart traefik` if the old routes remain active.
 
+Production builds default to `/` for the dedicated portal domain. To build for a
+different mount path, pass `BASE_PATH` through Turbo:
+
+```bash
+BASE_PATH=/developer/ bunx turbo run build --filter=@lootlog/developer --env-mode=strict
+```
+
+The Developer build hashes `BASE_PATH` and receives it in strict environment mode,
+so builds for different paths use separate cache entries. The deployment's proxy
+and static asset routing must match the chosen path; this variable does not
+configure either of them. Omitting it preserves the build default `/` and the
+local Vite default `/developer/`.
+
 ## Make a change
 
 - Follow the root `AGENTS.md` and effective Oxlint configuration.

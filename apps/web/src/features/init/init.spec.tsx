@@ -5,6 +5,7 @@ import {
   getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
   getUsersControllerGetCurrentUserGuildsQueryKey,
   type GuildResponseDtoOutput,
+  type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
 import {
   configureApiClients,
@@ -53,13 +54,49 @@ const guild = {
   reservationActiveLimitPerSpot: 1,
 } satisfies GuildResponseDtoOutput;
 
+const refreshedGuilds = [
+  {
+    id: guild.id,
+    name: guild.name,
+    ownerId: guild.ownerId,
+    publicStatsCardEnabled: false,
+    hasLootlogAccess: true,
+    isAccessDataStale: false,
+  },
+] satisfies UserCurrentGuildResponseDtoOutput[];
+
 const renderInit = async (
-  fetch: NonNullable<ApiServiceConfig["fetch"]>,
-  initialEntry = "/init?guild_id=guild-1",
-  stringifySearch = defaultStringifySearch,
+  fetchGuild: NonNullable<ApiServiceConfig["fetch"]>,
+  {
+    initialEntry = "/init?guild_id=guild-1",
+    stringifySearch = defaultStringifySearch,
+    refreshGuilds = async () => Response.json(refreshedGuilds),
+  }: {
+    initialEntry?: string;
+    stringifySearch?: typeof defaultStringifySearch;
+    refreshGuilds?: NonNullable<ApiServiceConfig["fetch"]>;
+  } = {},
 ) => {
+  const apiFetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>(
+    async (input, init) => {
+      const path = new URL(input instanceof Request ? input.url : input)
+        .pathname;
+
+      if (path === "/users/@me/guilds/refresh" && init?.method === "POST") {
+        return refreshGuilds(input, init);
+      }
+
+      if (path === "/guilds/guild-1") return fetchGuild(input, init);
+
+      throw new Error(`Unexpected request: ${init?.method} ${path}`);
+    },
+  );
+
   const restoreClient = configureApiClients({
-    main: { baseUrl: "https://api.test", fetch },
+    main: {
+      baseUrl: "https://api.test",
+      fetch: apiFetch,
+    },
   });
 
   onTestFinished(restoreClient);
@@ -110,7 +147,7 @@ const renderInit = async (
     </QueryClientProvider>,
   );
 
-  return { router, queryClient };
+  return { router, queryClient, apiFetch };
 };
 
 it.each([
@@ -122,7 +159,7 @@ it.each([
   "allows leaving %s without requesting an unspecified organization",
   async (initialEntry) => {
     const fetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
-    const { router } = await renderInit(fetch, initialEntry);
+    const { router, apiFetch } = await renderInit(fetch, { initialEntry });
 
     fireEvent.click(
       await screen.findByRole("button", {
@@ -131,7 +168,7 @@ it.each([
     );
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/@me"));
-    expect(fetch).not.toHaveBeenCalled();
+    expect(apiFetch).not.toHaveBeenCalled();
   },
 );
 
@@ -161,10 +198,10 @@ it.each([404, 503])(
     );
     expect(fetch).toHaveBeenCalledTimes(4);
     expect(
-      queryClient.getQueryState(
+      queryClient.getQueryData(
         getUsersControllerGetCurrentUserGuildsQueryKey(),
-      )?.isInvalidated,
-    ).toBe(true);
+      ),
+    ).toEqual(refreshedGuilds);
     expect(
       queryClient.getQueryState(
         getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
@@ -194,12 +231,14 @@ it("recovers from failed organization navigation without fetching installation a
     .fn<NonNullable<ApiServiceConfig["fetch"]>>()
     .mockImplementation(async () => Response.json(guild));
 
-  const { router } = await renderInit(fetch, undefined, (search) => {
-    if (rejectNavigation && Object.keys(search).length === 0) {
-      throw new Error("Navigation search could not be serialized");
-    }
+  const { router } = await renderInit(fetch, {
+    stringifySearch: (search) => {
+      if (rejectNavigation && Object.keys(search).length === 0) {
+        throw new Error("Navigation search could not be serialized");
+      }
 
-    return defaultStringifySearch(search);
+      return defaultStringifySearch(search);
+    },
   });
 
   const retry = await screen.findByRole("button", {
@@ -212,6 +251,28 @@ it("recovers from failed organization navigation without fetching installation a
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/guild-1"));
   expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+it("opens the initialized organization even when refreshing the Discord server list fails", async () => {
+  const fetchGuild = vi
+    .fn<NonNullable<ApiServiceConfig["fetch"]>>()
+    .mockImplementation(async () => Response.json(guild));
+
+  const refreshGuilds = vi
+    .fn<NonNullable<ApiServiceConfig["fetch"]>>()
+    .mockImplementation(async () =>
+      Response.json({ message: "Unavailable" }, { status: 503 }),
+    );
+
+  const { router, queryClient } = await renderInit(fetchGuild, {
+    refreshGuilds,
+  });
+
+  await waitFor(() => expect(router.state.location.pathname).toBe("/guild-1"));
+  expect(refreshGuilds).toHaveBeenCalledTimes(1);
+  expect(
+    queryClient.getQueryData(getUsersControllerGetCurrentUserGuildsQueryKey()),
+  ).toEqual([]);
 });
 
 it("lets an expired session return to sign-in without retrying unauthorized requests", async () => {
@@ -258,7 +319,7 @@ it("lets a forbidden organization return to the dashboard without automatic retr
 it("offers an exit when initialization is paused while offline", async () => {
   onlineManager.setOnline(false);
   const fetch = vi.fn<NonNullable<ApiServiceConfig["fetch"]>>();
-  const { router } = await renderInit(fetch);
+  const { router, apiFetch } = await renderInit(fetch);
 
   fireEvent.click(
     await screen.findByRole("button", {
@@ -267,5 +328,5 @@ it("offers an exit when initialization is paused while offline", async () => {
   );
 
   await waitFor(() => expect(router.state.location.pathname).toBe("/@me"));
-  expect(fetch).not.toHaveBeenCalled();
+  expect(apiFetch).not.toHaveBeenCalled();
 });

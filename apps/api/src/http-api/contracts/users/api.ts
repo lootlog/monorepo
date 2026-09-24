@@ -69,7 +69,19 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
     .annotate(OpenApi.Summary, "Get current user guilds")
     .annotate(
       OpenApi.Description,
-      "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status",
+      "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes.",
+    ),
+  HttpApiEndpoint.post(
+    "UsersControllerRefreshCurrentUserGuilds",
+    "/users/@me/guilds/refresh",
+    { success: CurrentOrganizationsResponse },
+  )
+    .middleware(BearerSecurityMiddleware)
+    .annotate(OpenApi.Identifier, "UsersController_refreshCurrentUserGuilds")
+    .annotate(OpenApi.Summary, "Refresh current user guilds")
+    .annotate(
+      OpenApi.Description,
+      "Fetch the authenticated user's Discord guilds from Discord again instead of the cached list, and return them like GET /users/@me/guilds",
     ),
   HttpApiEndpoint.get(
     "UsersControllerGetCurrentUserAccessibleGuilds",

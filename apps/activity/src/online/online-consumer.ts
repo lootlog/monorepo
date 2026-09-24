@@ -1,4 +1,4 @@
-import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitMessaging, type RabbitDelivery } from "@lootlog/messaging";
 import { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import {
   ACTIVITY_EVENT_SIGNATURE_HEADER,
@@ -21,7 +21,7 @@ import {
   Schedule,
 } from "effect";
 import { ActivityConfig } from "#src/config/activity-config";
-import { OnlineRepository } from "./online-repository.js";
+import { OnlineIngestRejected, OnlineRepository } from "./online-repository.js";
 
 export const onlineQueues = [
   {
@@ -51,6 +51,19 @@ export const OnlineConsumer = Layer.effectDiscard(
     const rabbit = yield* RabbitMessaging;
     const repository = yield* OnlineRepository;
     const config = yield* ActivityConfig;
+
+    const rejectEvent = (delivery: RabbitDelivery, message: string) =>
+      rabbit.publish({
+        exchange: RabbitExchange.DEAD_LETTER,
+        routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
+        content: delivery.content,
+        headers: {
+          ...delivery.properties.headers,
+          "x-error-type": "permanent",
+          "x-validation-error": message,
+        },
+      });
+
     yield* rabbit.consume(
       {
         queue: "activity-user-online-checkpoint-v1",
@@ -89,25 +102,25 @@ export const OnlineConsumer = Layer.effectDiscard(
 
           if (Result.isFailure(parsed)) {
             // Ack only after confirmed DLQ publication; do not consume and discard its evidence.
-            yield* rabbit.publish({
-              exchange: RabbitExchange.DEAD_LETTER,
-              routingKey: RabbitRoutingKey.USERS_ONLINE_CHECKPOINT_V1_DLQ,
-              content: delivery.content,
-              headers: {
-                ...delivery.properties.headers,
-                "x-error-type": "permanent",
-                "x-validation-error": "Invalid signed online event",
-              },
-            });
+            yield* rejectEvent(delivery, "Invalid signed online event");
 
             return;
           }
 
-          // Hold this delivery unacked so health cannot overtake a failed checkpoint.
-          // The single active consumer preserves ordering across replicas.
-          yield* repository
-            .ingest(parsed.success)
-            .pipe(Effect.retry(Schedule.spaced("5 seconds")));
+          // Transient failures retain ordering: health cannot overtake a pending
+          // checkpoint. Invalid intervals cannot recover and must release the queue.
+          yield* repository.ingest(parsed.success).pipe(
+            Effect.retry({
+              schedule: Schedule.spaced("5 seconds"),
+              while: (error) => !(error instanceof OnlineIngestRejected),
+            }),
+            Effect.catch((error) => {
+              if (!(error instanceof OnlineIngestRejected))
+                return Effect.fail(error);
+
+              return rejectEvent(delivery, error.message);
+            }),
+          );
         }),
     );
     yield* repository.prune().pipe(
