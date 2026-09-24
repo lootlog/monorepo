@@ -11,6 +11,8 @@ import {
 } from "@lootlog/protocol/rabbit/topology";
 import { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ActivityConfig } from "#src/config/activity-config";
+import { ActivityDatabase } from "#src/database/database";
+import { userOnlineIntervals } from "#src/database/schema";
 import { OnlineConsumer } from "./online-consumer.js";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
@@ -111,6 +113,19 @@ describe("durable private online history", () => {
         );
 
         yield* Effect.tryPromise(() => client.query(retentionMigration));
+
+        const checkpointIndexesMigration = yield* Effect.promise(() =>
+          Bun.file(
+            new URL(
+              "../../drizzle/migrations/20260924221924_online_checkpoint_indexes/migration.sql",
+              import.meta.url,
+            ),
+          ).text(),
+        );
+
+        yield* Effect.tryPromise(() =>
+          client.query(checkpointIndexesMigration),
+        );
       }).pipe(Effect.scoped, Effect.provide(database)),
     );
   }, 60_000);
@@ -550,22 +565,55 @@ describe("durable private online history", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         const sql = yield* PgClient.PgClient;
+        const db = yield* ActivityDatabase;
         yield* sql`DELETE FROM "UserOnlineRetention"`;
         yield* sql`INSERT INTO "UserOnlineInterval" ("userId", "sessionId", "segmentId", "world", "startedAt", "endedAt", "observedAt")
           SELECT 'batch-' || kind, n::text, n::text, 'luvia', ${cutoff}::timestamptz - interval '1 hour',
             ${cutoff}::timestamptz + CASE WHEN kind = 'expired' THEN interval '0 hours' ELSE interval '1 hour' END,
             ${cutoff}::timestamptz + interval '1 hour'
           FROM generate_series(1, 2001) n CROSS JOIN (VALUES ('expired'), ('retained')) kinds(kind)`;
+        yield* db.insert(userOnlineIntervals).values([
+          {
+            userId: "batch-expired",
+            sessionId: "cutoff",
+            segmentId: "cutoff",
+            world: "luvia",
+            startedAt: new Date(cutoff),
+            endedAt: new Date(cutoff),
+            observedAt: new Date(cutoff),
+          },
+          {
+            userId: "batch-retained",
+            sessionId: "long",
+            segmentId: "long",
+            world: "luvia",
+            startedAt: new Date(Date.parse(cutoff) - 7 * 86_400_000),
+            endedAt: new Date(Date.parse(cutoff) + 7200_000),
+            observedAt: new Date(Date.parse(cutoff) + 7200_000),
+          },
+        ]);
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt")
           SELECT 'batch-tracking-' || n, ${cutoff}::timestamptz FROM generate_series(1, 2001) n`;
         yield* sql`INSERT INTO "UserOnlineTracking" ("userId", "lastObservedAt") VALUES ('batch-fresh', ${now}::timestamptz)`;
-      }).pipe(Effect.provide(database)),
+      }).pipe(Effect.provide(ActivityDatabase.layer), Effect.provide(database)),
     );
-    await runAt(
+
+    const history = await runAt(
       now,
       Effect.gen(function* () {
         const repo = yield* OnlineRepository;
+        yield* repo.ingest({
+          version: 1,
+          type: "collector",
+          status: "healthy",
+          observedAt: "2025-10-25T00:00:00Z",
+        });
         yield* repo.prune();
+
+        return yield* repo.find("batch-retained", {
+          from: cutoff.slice(0, 10),
+          to: cutoff.slice(0, 10),
+        });
       }),
     );
 
@@ -577,10 +625,12 @@ describe("durable private online history", () => {
           userId: string;
           count: number;
           trimmed: boolean;
+          latestEnd: string;
           worlds: boolean;
         }>`
           SELECT "userId", count(*)::integer AS count,
-            bool_and("startedAt" = ${cutoff}::timestamptz AND "endedAt" = ${cutoff}::timestamptz + interval '1 hour') AS trimmed,
+            bool_and("startedAt" = ${cutoff}::timestamptz) AS trimmed,
+            max("endedAt")::text AS "latestEnd",
             bool_and(world = 'luvia') AS worlds
           FROM "UserOnlineInterval" WHERE "userId" IN ('batch-expired', 'batch-retained') GROUP BY "userId"`;
 
@@ -593,9 +643,24 @@ describe("durable private online history", () => {
     );
 
     expect(result.intervals).toEqual([
-      { userId: "batch-retained", count: 2001, trimmed: true, worlds: true },
+      {
+        userId: "batch-retained",
+        count: 2002,
+        trimmed: true,
+        latestEnd: "2026-05-17 14:00:00+00",
+        worlds: true,
+      },
     ]);
     expect(result.tracking).toEqual([{ userId: "batch-fresh" }]);
+    expect(history.days).toEqual([
+      {
+        date: "2026-05-17",
+        onlineSeconds: 7200,
+        partial: true,
+        worlds: ["luvia"],
+        worldsComplete: true,
+      },
+    ]);
   });
 
   it("coordinates concurrent replicas and does not repeat a completed hourly window", async () => {

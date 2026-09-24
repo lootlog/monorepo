@@ -1,6 +1,9 @@
 import { ONLINE_HISTORY_RETENTION_DAYS } from "./online-retention.js";
 import { PgClient } from "@effect/sql-pg";
 import { Clock, Context, Effect, Layer } from "effect";
+import { and, count, inArray, lte, sql as drizzleSql } from "drizzle-orm";
+import { ActivityDatabase } from "#src/database/database";
+import { userOnlineIntervals } from "#src/database/schema";
 import type { UserOnlineEventV1 } from "@lootlog/protocol/rabbit/events";
 import type {
   UserOnlineQuery,
@@ -24,6 +27,7 @@ export class OnlineRepository extends Context.Service<
     OnlineRepository,
     Effect.gen(function* () {
       const sql = yield* PgClient.PgClient;
+      const db = yield* ActivityDatabase;
 
       const ingest = Effect.fn("OnlineRepository.ingest")(function* (
         event: UserOnlineEventV1,
@@ -212,14 +216,37 @@ export class OnlineRepository extends Context.Service<
 
               if (!current || current.completed) return false;
 
-              const expired = yield* sql<{ count: number }>`
-                WITH removed AS (
-                  DELETE FROM "UserOnlineInterval" WHERE ctid IN (
-                    SELECT ctid FROM "UserOnlineInterval"
-                    WHERE "endedAt" <= ${current.cutoff}::timestamptz
-                    ORDER BY "endedAt" LIMIT 1000 FOR UPDATE
-                  ) RETURNING 1
-                ) SELECT count(*)::int AS count FROM removed`;
+              const retentionCutoff = new Date(current.cutoff);
+
+              // endedAt >= startedAt makes this indexed bound lossless, including
+              // zero-duration intervals exactly at the cutoff. Long intervals
+              // crossing it are retained and trimmed by the next phase.
+              const expiredBatch = db
+                .select({ ctid: drizzleSql<string>`ctid`.as("ctid") })
+                .from(userOnlineIntervals)
+                .where(
+                  and(
+                    lte(userOnlineIntervals.startedAt, retentionCutoff),
+                    lte(userOnlineIntervals.endedAt, retentionCutoff),
+                  ),
+                )
+                .orderBy(userOnlineIntervals.startedAt)
+                .limit(1000)
+                .for("update");
+
+              // PostgreSQL's ctid has no schema column; row locks keep these
+              // physical identifiers stable through this statement.
+              const removed = db.$with("removed").as(
+                db
+                  .delete(userOnlineIntervals)
+                  .where(inArray(drizzleSql`ctid`, expiredBatch))
+                  .returning({ value: drizzleSql`1`.as("value") }),
+              );
+
+              const expired = yield* db
+                .with(removed)
+                .select({ count: count() })
+                .from(removed);
 
               if (expired[0]?.count === 1000) return true;
 
@@ -258,5 +285,5 @@ export class OnlineRepository extends Context.Service<
 
       return OnlineRepository.of({ ingest, find, prune });
     }),
-  );
+  ).pipe(Layer.provide(ActivityDatabase.layer));
 }

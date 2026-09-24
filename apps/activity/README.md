@@ -28,6 +28,14 @@ The first journaled release moves the four previously untracked SQL files into t
 
 Keep migration SQL and names immutable after this release. The snapshot in the last historical directory captures the current schema for subsequent `db:generate` runs. Review generated SQL for TimescaleDB requirements, which the TypeScript schema does not describe.
 
+### Online checkpoint indexes
+
+Deploy the Activity retention query from LOO-153 before applying `20260924221924_online_checkpoint_indexes`. The query works with both index layouts and uses the existing `startedAt` index to find expired intervals. The migration removes the two B-tree indexes containing `endedAt`; ordinary cumulative checkpoints can then use PostgreSQL heap-only tuple (HOT) updates when their page has space. Per-user history reads use the leading `userId` of the primary key. Checkpoint cadence, acknowledgement after commit, and the 112-day retention window stay the same.
+
+The migration uses transactional index drops with a two-second lock timeout. A busy table fails the migration without recording it or partially removing indexes; retry the migration after the conflicting transaction finishes. Do not put `DROP INDEX CONCURRENTLY` in the transactional Drizzle runner. Watch checkpoint queue depth, write latency and online-history read latency during rollout.
+
+Application rollback preserves data and query results with either layout, but the old retention query loses its `endedAt` access path. Before rolling back Activity, restore `UserOnlineInterval_endedAt_idx` on `("endedAt")` and `UserOnlineInterval_userId_endedAt_idx` on `("userId", "endedAt")` using `CREATE INDEX CONCURRENTLY` outside a transaction. Index restoration can use additional disk and CPU; inspect and remove an invalid index before retrying a failed concurrent build. If the optimized Activity version is deployed again, remove the restored indexes after deployment; the journaled migration will not run twice.
+
 ## Migration and rollout
 
 1. Deploy migrations `drizzle/migrations/20260906084000_user_online_history/migration.sql` and `drizzle/migrations/20260906084001_online_history_16_week_retention/migration.sql` using `bun run --cwd apps/activity db:migrate:deploy` in the approved deployment environment. The migration command uses the Drizzle journal and executes only pending SQL files. The second migration physically deletes expired online history and trims crossing intervals; this retention reduction is irreversible. Existing seven-day Timescale activity retention remains unchanged.
