@@ -3,7 +3,7 @@ import {
   isMemberOnlineInGame,
 } from "@/features/guild/settings/members/member-game-presence.utils";
 import { getMemberOnlineSources } from "@/features/guild/settings/members/member-list-item.utils";
-import { isMemberOnlineOnWeb } from "@/features/guild/settings/members/member-web-presence.utils";
+import { isMemberOnlineOnWeb } from "@/lib/web-presence";
 import type { GuildMember } from "@/features/guild/settings/members/members.types";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 

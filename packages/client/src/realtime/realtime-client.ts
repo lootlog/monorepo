@@ -14,6 +14,7 @@ import {
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import { Result } from "effect";
+import { reportListenerError } from "./report-listener-error.js";
 
 type CommandType = ClientCommand["type"];
 
@@ -151,6 +152,11 @@ export class RealtimeClient {
   private socket: RealtimeWebSocket | null = null;
   private stateValue: RealtimeConnectionState = "disconnected";
   private joinData: CommandData<"session.join"> | null = null;
+  private joinAttempt: {
+    readonly socket: RealtimeWebSocket;
+    readonly key: string;
+    readonly promise: Promise<unknown>;
+  } | null = null;
   private reconnectAttempt = 0;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -227,8 +233,8 @@ export class RealtimeClient {
     for (const listener of this.heartbeatLatencyListeners) {
       try {
         listener(latencyMs);
-      } catch {
-        // UI observers must not interrupt the presence heartbeat.
+      } catch (error) {
+        reportListenerError({ source: "heartbeat latency", error });
       }
     }
   }
@@ -381,28 +387,72 @@ export class RealtimeClient {
     });
   }
 
-  private async performJoin(): Promise<unknown> {
-    if (!this.joinData || !this.connected) return undefined;
+  private performJoin(data = this.joinData): Promise<unknown> {
+    const socket = this.socket;
+
+    if (!data || !socket || !this.connected) return Promise.resolve(undefined);
+    const key = JSON.stringify(data);
+    const pending = this.joinAttempt;
+
+    if (pending?.socket === socket) {
+      if (pending.key === key) return pending.promise;
+
+      // The game client can replace an unverified session with a proof-bearing
+      // join. Serialize that update instead of discarding its new credentials.
+      return pending.promise.then(() => {
+        if (this.socket !== socket || !this.connected)
+          throw new Error("Realtime connection changed before queued join");
+
+        return this.performJoin(data);
+      });
+    }
+
+    const promise = this.restoreSession(
+      socket,
+      this.request("session.join", data),
+    );
+
+    this.joinAttempt = { socket, key, promise };
     this.setState("joining");
 
+    return promise;
+  }
+
+  private async restoreSession(
+    socket: RealtimeWebSocket,
+    joined: Promise<unknown>,
+  ): ReturnType<RealtimeClient["join"]> {
     try {
-      const result = await this.request("session.join", this.joinData);
+      const result = await joined;
+
+      if (this.socket !== socket) return result;
       await Promise.all(
         [...this.subscriptions.values()].map((scope) =>
           this.request("subscription.subscribe", scope),
         ),
       );
+
+      if (this.socket !== socket) return result;
       this.reconnectAttempt = 0;
       this.setState("ready");
 
       return result;
     } catch (error) {
-      if (this.connected)
-        this.socket?.close(
+      if (this.socket === socket) {
+        if (error instanceof RealtimeRequestError && !error.retryable) {
+          this.manuallyClosed = true;
+          this.clearReconnect();
+        }
+
+        socket.close(
           REALTIME_CLIENT_CLOSE_CODES.sessionJoinFailed,
           "session join failed",
         );
+      }
+
       throw error;
+    } finally {
+      if (this.joinAttempt?.socket === socket) this.joinAttempt = null;
     }
   }
 
@@ -440,7 +490,13 @@ export class RealtimeClient {
 
     if (!isServerEventFrame(frame)) return;
 
-    for (const listener of this.eventListeners) listener(frame);
+    for (const listener of this.eventListeners) {
+      try {
+        listener(frame);
+      } catch (error) {
+        reportListenerError({ source: `server event ${frame.type}`, error });
+      }
+    }
   }
 
   private encodeFrame(frame: ClientCommand): string | Uint8Array<ArrayBuffer> {
@@ -608,7 +664,13 @@ export class RealtimeClient {
 
     if (state === "disconnected") this.setHeartbeatLatency(null);
 
-    for (const listener of this.stateListeners) listener(state);
+    for (const listener of this.stateListeners) {
+      try {
+        listener(state);
+      } catch (error) {
+        reportListenerError({ source: `connection state ${state}`, error });
+      }
+    }
   }
 
   private clearReconnect(): void {

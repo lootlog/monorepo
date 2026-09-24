@@ -3,7 +3,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { BasicPresence } from "@lootlog/client/realtime";
 import { createTestGateway } from "@/lib/testing/gateway";
-import { isMemberOnlineOnWeb } from "./member-web-presence.utils";
+import { isMemberOnlineOnWeb } from "@/lib/web-presence";
 import { useMemberWebPresence } from "./use-member-web-presence";
 
 const presence: BasicPresence = {

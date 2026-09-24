@@ -1,4 +1,5 @@
 import type { ServerEvent } from "@lootlog/protocol/realtime";
+import { reportListenerError } from "./report-listener-error.js";
 
 type Listener = (...arguments_: never[]) => void;
 
@@ -29,7 +30,11 @@ export class RealtimeEventListeners<Event extends string> {
 
   emit(event: Event, payload?: unknown): void {
     for (const listener of this.listeners.get(event) ?? []) {
-      Reflect.apply(listener, undefined, [payload]);
+      try {
+        Reflect.apply(listener, undefined, [payload]);
+      } catch (error) {
+        reportListenerError({ source: `event ${event}`, error });
+      }
     }
   }
 }

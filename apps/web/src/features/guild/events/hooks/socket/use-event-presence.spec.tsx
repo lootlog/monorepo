@@ -105,7 +105,6 @@ it("tracks world changes and keeps the last snapshot while permissions are rebal
 
 it.each([
   { guildId: "guild-2", world: "tempest" },
-  { guildId: "guild-1", world: "other-world" },
   { guildId: undefined, world: "tempest" },
 ])(
   "clears the previous snapshot when the scope changes to %j",

@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
-import { GatewayContext } from "@/contexts/gateway-context";
-import { GatewayClient } from "@/lib/gateway-client";
+import { createTestGateway } from "@/lib/testing/gateway";
+import { getListSpotReservationsQueryKey } from "@lootlog/client/main";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createMemoryHistory,
@@ -81,12 +81,14 @@ afterEach(() => {
   restoreClient();
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 const renderSchedule = async (
   availability: (request: Request) => Promise<Response>,
   calendarItems: ReturnType<typeof interval>[] = [],
   laterCalendar?: (request: Request) => Promise<Response>,
+  routeGuildId = "guild-1",
 ) => {
   client = new QueryClient({
     defaultOptions: {
@@ -133,7 +135,7 @@ const renderSchedule = async (
         return Response.json({ items: calendarItems });
       }
 
-      if (url.pathname === "/guilds/guild-1")
+      if (url.pathname === `/guilds/${routeGuildId}`)
         return Response.json({
           id: "guild-1",
           name: "Organization",
@@ -177,30 +179,26 @@ const renderSchedule = async (
       ]),
     ]),
     history: createMemoryHistory({
-      initialEntries: ["/guild-1/reservations/driady"],
+      initialEntries: [`/${routeGuildId}/reservations/driady`],
     }),
   });
 
   await router.load();
+  const gateway = createTestGateway();
+  gateway.request.mockResolvedValue(undefined);
+  const GatewayWrapper = gateway.wrapper;
   render(
     <QueryClientProvider client={client}>
-      <GatewayContext
-        value={{
-          socket: new GatewayClient(),
-          connected: false,
-          joined: false,
-          lootUnreadCounts: {},
-        }}
-      >
+      <GatewayWrapper>
         <RouterProvider router={router} />
         <Toaster />
-      </GatewayContext>
+      </GatewayWrapper>
     </QueryClientProvider>,
   );
   await screen.findByRole("heading", { name: "Driady" });
   await waitFor(() => expect(requests.length).toBeGreaterThan(0));
 
-  return { requests, writes };
+  return { requests, writes, gateway };
 };
 
 const action = () =>
@@ -345,3 +343,102 @@ describe("ReservationsSchedule nearest free slot", () => {
     );
   });
 });
+
+it.each(["guild-1", "organization-alias"])(
+  "reconciles only authorized calendar changes and rejoin on %s",
+  async (routeGuildId) => {
+    let revision = 1;
+
+    const response = () =>
+      Response.json({
+        items: [
+          interval(
+            new Date(2026, 0, 1, 13),
+            new Date(2026, 0, 1, 14),
+            true,
+            revision,
+          ),
+        ],
+      });
+
+    const { requests, gateway } = await renderSchedule(
+      async () => response(),
+      [interval(new Date(2026, 0, 1, 13), new Date(2026, 0, 1, 14))],
+      async () => response(),
+      routeGuildId,
+    );
+
+    const initialRequests = requests.length;
+
+    const changed = (
+      audienceGuildIds: string[],
+      spotId: string | null = null,
+    ) =>
+      gateway.deliver({
+        v: 1,
+        type: "reservation.changed",
+        data: {
+          version: 2,
+          action: "sharing-changed",
+          sourceGuildId: "partner",
+          audienceGuildIds,
+          reservationId: null,
+          spotId,
+        },
+      });
+
+    act(() => {
+      changed(["other"]);
+      changed(["guild-1"], "other-spot");
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(requests).toHaveLength(initialRequests);
+
+    revision = 2;
+    act(() => changed(["guild-1", "partner"]));
+
+    const latestIds = () =>
+      client
+        .getQueriesData<{ items: { id: number }[] }>({
+          queryKey: getListSpotReservationsQueryKey({
+            guildId: routeGuildId,
+            spotId: "driady",
+          }),
+        })
+        .flatMap(([, data]) => data?.items.map(({ id }) => id) ?? []);
+
+    await waitFor(() => expect(latestIds()).toEqual([2]));
+    expect(requests).toHaveLength(initialRequests + 1);
+
+    revision = 3;
+    act(() =>
+      gateway.deliver({
+        v: 1,
+        type: "reservation.created",
+        data: {
+          organizationId: "guild-1",
+          payload: { guildId: "guild-1", spotId: "driady" },
+        },
+      }),
+    );
+    await waitFor(() => expect(latestIds()).toEqual([3]));
+
+    revision = 4;
+    act(() => {
+      gateway.setConnectionState("disconnected");
+      gateway.setConnectionState("connected");
+      gateway.deliver({
+        v: 1,
+        type: "session.joined",
+        data: {
+          connectionId: "reconnected",
+          organizationIds: ["guild-1"],
+          subscriptionScopes: [],
+        },
+      });
+    });
+    await waitFor(() => expect(latestIds()).toEqual([4]));
+  },
+);

@@ -13,7 +13,6 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import {
   getEventsMonitoringControllerGetCoordinationQueryKey,
-  invalidateEventsMonitoringControllerGetCoordination,
   useEventsAssignmentControllerSelfAssignMember,
   useEventsMonitoringControllerCloseRespawnWindow,
   useEventsMonitoringControllerGetCoordination,
@@ -74,20 +73,12 @@ export const EventCoordinationPage = () => {
   const selfAssign = useEventsAssignmentControllerSelfAssignMember({
     mutation: {
       onSuccess: async (_data, variables) => {
-        await Promise.all([
-          invalidateEventsMonitoringControllerGetCoordination(queryClient, {
-            guildId: variables.pathParams.guildId,
-            eventId: variables.pathParams.eventId,
-          }),
-          Promise.resolve(
-            invalidateMapQueries(
-              queryClient,
-              variables.pathParams.guildId,
-              variables.pathParams.eventId,
-              variables.pathParams.mapId,
-            ),
-          ),
-        ]);
+        await invalidateMapQueries(
+          queryClient,
+          variables.pathParams.guildId,
+          variables.pathParams.eventId,
+          variables.pathParams.mapId,
+        );
       },
       onSettled: () => {
         setAssigningMapId(null);
@@ -99,24 +90,17 @@ export const EventCoordinationPage = () => {
     mutation: {
       onSuccess: async (_data, variables) => {
         await Promise.all([
-          invalidateEventsMonitoringControllerGetCoordination(queryClient, {
-            guildId: variables.pathParams.guildId,
-            eventId: variables.pathParams.eventId,
-          }),
-          Promise.resolve(
-            invalidateRespawnQueries(
-              queryClient,
-              variables.pathParams.guildId,
-              variables.pathParams.eventId,
-              variables.pathParams.heroId,
-            ),
+          invalidateRespawnQueries(
+            queryClient,
+            variables.pathParams.guildId,
+            variables.pathParams.eventId,
+            variables.pathParams.heroId,
           ),
-          Promise.resolve(
-            invalidateKillQueries(
-              queryClient,
-              variables.pathParams.guildId,
-              variables.pathParams.eventId,
-            ),
+          invalidateKillQueries(
+            queryClient,
+            variables.pathParams.guildId,
+            variables.pathParams.eventId,
+            { invalidateCoordination: false },
           ),
         ]);
       },
