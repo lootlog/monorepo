@@ -1,6 +1,5 @@
 import { MemberPresenceBadges } from "./member-presence-badges";
 import { PermissionCategoryTooltip } from "@/features/guild/settings/components/permission-category-tooltip";
-import { MemberDeactivationButton } from "@/features/guild/settings/members/components/member-deactivation-button";
 import { MemberDiscordSyncIndicator } from "@/features/guild/settings/members/components/member-discord-sync-indicator";
 import { MemberSyncButton } from "@/features/guild/settings/members/components/member-sync-button";
 import { MemberStatusBadge } from "@/features/guild/settings/members/member-status-badge";
@@ -36,6 +35,7 @@ import {
   Gamepad2,
   MoreHorizontal,
   MousePointerClick,
+  UserX,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getActivePermissionCategories } from "../roles/active-permission-categories";
@@ -54,6 +54,7 @@ type ColumnsProps = Pick<
   "guildId" | "guildOwnerId" | "canManageMembers"
 > & {
   openMemberDetails: (member: GuildMember) => void;
+  onDeactivateMember: (member: GuildMember) => void;
 };
 
 export function useMembersTableColumns({
@@ -61,6 +62,7 @@ export function useMembersTableColumns({
   guildOwnerId,
   canManageMembers,
   openMemberDetails,
+  onDeactivateMember,
 }: ColumnsProps) {
   const { t } = useTranslation();
 
@@ -289,11 +291,16 @@ export function useMembersTableColumns({
                   className="w-full justify-start"
                 />
                 {canManageMembers && (
-                  <MemberDeactivationButton
-                    member={member}
+                  <Button
+                    size="sm"
+                    variant="destructive"
                     className="w-full justify-start"
-                    onDeactivated={() => undefined}
-                  />
+                    disabled={!member.active}
+                    onClick={() => onDeactivateMember(member)}
+                  >
+                    <UserX className="size-4" />
+                    {t("settings.members.deactivate")}
+                  </Button>
                 )}
               </div>
             </DropdownMenuContent>

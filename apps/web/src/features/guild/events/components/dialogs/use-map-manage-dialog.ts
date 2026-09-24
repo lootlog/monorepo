@@ -14,6 +14,7 @@ import {
 } from "@lootlog/client/main";
 import { getApiErrorStatus } from "@lootlog/client/transport";
 import { useQueryClient } from "@tanstack/react-query";
+import { sortBy } from "es-toolkit";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -53,7 +54,7 @@ export function useMapManageDialog({
   const queryClient = useQueryClient();
 
   const invalidateMapQueries = () => {
-    invalidateEventMapStructureQueries(queryClient, guildId, eventId);
+    return invalidateEventMapStructureQueries(queryClient, guildId, eventId);
   };
 
   const addMap = useEventsAssignmentControllerAddMap({
@@ -125,18 +126,17 @@ export function useMapManageDialog({
 
   const heroLocations = getHeroLocations(hero);
 
-  const [localLocations, setLocalLocations] =
-    useState<LocationData[]>(heroLocations);
-
-  const [isDragging, setIsDragging] = useState(false);
+  const [reorderedLocationIds, setReorderedLocationIds] = useState<
+    string[] | null
+  >(null);
 
   const handleReorder = (newOrder: LocationData[]) => {
-    setLocalLocations(newOrder);
+    if (reorderLocations.isPending) return;
+    setReorderedLocationIds(newOrder.map((location) => location.id));
   };
 
   const handleDragEnd = () => {
-    setIsDragging(false);
-    const locationIds = localLocations.map((loc) => loc.id);
+    if (!reorderedLocationIds || reorderLocations.isPending) return;
     reorderLocations.mutate(
       {
         pathParams: {
@@ -144,29 +144,26 @@ export function useMapManageDialog({
           eventId,
           heroId: hero.id,
         },
-        data: { locationIds },
+        data: { locationIds: reorderedLocationIds },
       },
       {
         onError: () => {
-          setLocalLocations(heroLocations);
           toast.error(t("events.locations.errors.updateFailed"));
         },
+        onSettled: () => setReorderedLocationIds(null),
       },
     );
   };
 
-  const heroLocationsKey = heroLocations
-    .map((location) => location.id)
-    .join(":");
+  const locationOrder = new Map(
+    reorderedLocationIds?.map((id, index) => [id, index]),
+  );
 
-  const localLocationsKey = localLocations
-    .map((location) => location.id)
-    .join(":");
-
-  const displayedLocations =
-    isDragging || localLocationsKey !== heroLocationsKey
-      ? localLocations
-      : heroLocations;
+  const displayedLocations = reorderedLocationIds
+    ? sortBy(heroLocations, [
+        (location) => locationOrder.get(location.id) ?? locationOrder.size,
+      ])
+    : heroLocations;
 
   const allMapsFromLocations = heroLocations.flatMap(
     (location) => location.maps,
@@ -379,7 +376,7 @@ export function useMapManageDialog({
     handleUpdateLocation,
     handleDeleteLocation,
     deleteLocation,
-    setIsDragging,
+    isReordering: reorderLocations.isPending,
     handleDragEnd,
     heroLocations,
     handleDeleteMap,

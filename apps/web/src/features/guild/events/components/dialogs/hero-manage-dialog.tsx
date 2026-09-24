@@ -1,7 +1,6 @@
 import { DialogActionFooter } from "./dialog-action-footer";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -67,28 +66,12 @@ export const HeroManageDialog = ({
   const isEditing = !!hero;
   const isPending = addHero.isPending || updateHero.isPending;
 
-  const { register, handleSubmit, reset } = useForm<FormData>({
+  const { register, handleSubmit } = useForm<FormData>({
     defaultValues: {
-      npcId: "",
-      npcName: "",
+      npcId: hero?.npcId?.toString() ?? "",
+      npcName: hero?.npcName ?? "",
     },
   });
-
-  useEffect(() => {
-    if (open) {
-      if (hero) {
-        reset({
-          npcId: hero.npcId?.toString() ?? "",
-          npcName: hero.npcName,
-        });
-      } else {
-        reset({
-          npcId: "",
-          npcName: "",
-        });
-      }
-    }
-  }, [open, hero, reset]);
 
   const onSubmit = async (data: FormData) => {
     try {

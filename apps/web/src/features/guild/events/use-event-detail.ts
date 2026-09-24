@@ -340,11 +340,19 @@ export const useEventDetail = () => {
   const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
 
-  const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
-    null,
-  );
+  const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
 
   const heroes = getEventHeroes(event, eventMaps);
+
+  const selectedHero =
+    heroes.find((hero) => hero.id === selectedHeroId) ?? null;
+
+  if (selectedHeroId !== null && !selectedHero) {
+    setSelectedHeroId(null);
+    setHeroDialogOpen(false);
+    setMapDialogOpen(false);
+  }
+
   const { scoringMode, scoringRules } = getEventScoring(event);
   const eventDateRangeLabel = getEventDateRangeLabel(event, t);
   const { canManage, canDeleteEvent } = getEventAccess(accessPolicy);
@@ -357,20 +365,12 @@ export const useEventDetail = () => {
   } = getEventStatusView(event, currentTimestamp, eventIsPinned, t);
 
   const handleEditHero = (hero: EventHeroNpc) => {
-    setSelectedHero({
-      ...hero,
-      locations: hero.locations ?? [],
-      maps: hero.maps ?? [],
-    });
+    setSelectedHeroId(hero.id);
     setHeroDialogOpen(true);
   };
 
   const handleManageMaps = (hero: EventHeroNpc) => {
-    setSelectedHero({
-      ...hero,
-      locations: hero.locations ?? [],
-      maps: hero.maps ?? [],
-    });
+    setSelectedHeroId(hero.id);
     setMapDialogOpen(true);
   };
 
@@ -454,7 +454,7 @@ export const useEventDetail = () => {
     heroes,
     heroTimers,
     heroStats,
-    setSelectedHero,
+    setSelectedHeroId,
     handleEditHero,
     handleManageMaps,
     handleDeleteHero,
