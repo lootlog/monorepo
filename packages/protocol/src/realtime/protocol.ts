@@ -35,7 +35,6 @@ export const REALTIME_CLIENT_CLOSE_CODES = {
   heartbeatTimeout: 4001,
   heartbeatRejected: 4002,
   heartbeatUnavailable: 4003,
-  transportError: 4006,
   malformedFrame: 4007,
   sessionJoinFailed: 4008,
 } as const;

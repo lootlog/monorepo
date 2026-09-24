@@ -2,6 +2,7 @@ import {
   decodeRealtimeFrame,
   isServerEventFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
+  PRESENCE_EXPIRY_MS,
   REALTIME_PROTOCOL_VERSION,
   REALTIME_CLIENT_CLOSE_CODES,
   type ClientCommand,
@@ -59,6 +60,7 @@ export interface RealtimeClientOptions {
 
 interface PendingRequest {
   readonly type: CommandType;
+  readonly startedAt: number;
   readonly resolve: (data: unknown) => void;
   readonly reject: (error: Error) => void;
   readonly timeout: ReturnType<typeof setTimeout>;
@@ -100,6 +102,8 @@ const nativeWebSocketFactory: RealtimeWebSocketFactory = (url, protocols) =>
   new WebSocket(url, protocols);
 
 const WEBSOCKET_OPEN = 1;
+
+const MIN_HEARTBEAT_RETRY_BUDGET_MS = 2_000;
 
 const scopeKey = (scope: SubscriptionScope): string =>
   JSON.stringify([
@@ -151,6 +155,7 @@ export class RealtimeClient {
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
   private presenceSessionId: string | null = null;
+  private presenceRefreshedAt = 0;
   private manuallyClosed = false;
   private messageChain = Promise.resolve();
   private rejoinHandler: (() => Promise<void>) | null = null;
@@ -286,7 +291,13 @@ export class RealtimeClient {
         );
       }, timeoutMs);
 
-      this.pending.set(requestId, { type, resolve, reject, timeout });
+      this.pending.set(requestId, {
+        type,
+        startedAt: performance.now(),
+        resolve,
+        reject,
+        timeout,
+      });
 
       try {
         // SAFETY: the command discriminator and payload are coupled by CommandData<Type>.
@@ -331,9 +342,12 @@ export class RealtimeClient {
       if (this.socket !== socket) return;
       this.setState("connected");
 
-      // A connected observer can own startup (including a fresh game proof).
-      // Its synchronous join changes state; do not replay that startup again.
-      if (this.joinData && this.stateValue === "connected") {
+      // A synchronous observer suppresses only the default join. Explicit restore
+      // handlers can also refresh HTTP data or publish presence and must still run.
+      if (
+        this.joinData &&
+        (this.rejoinHandler || this.stateValue === "connected")
+      ) {
         const rejoin =
           this.rejoinHandler ??
           (() => this.performJoin().then(() => undefined));
@@ -354,13 +368,6 @@ export class RealtimeClient {
             REALTIME_CLIENT_CLOSE_CODES.malformedFrame,
             "malformed realtime frame",
           ),
-        );
-    });
-    socket.addEventListener("error", () => {
-      if (this.socket === socket)
-        socket.close(
-          REALTIME_CLIENT_CLOSE_CODES.transportError,
-          "transport error",
         );
     });
     socket.addEventListener("close", () => {
@@ -412,6 +419,7 @@ export class RealtimeClient {
       if (frame.status === "success") {
         if (pending.type === "presence.publish") {
           this.presenceSessionId = getPresenceSessionId(frame.data);
+          this.presenceRefreshedAt = pending.startedAt;
           this.scheduleHeartbeat();
         }
 
@@ -474,7 +482,7 @@ export class RealtimeClient {
 
   private scheduleHeartbeat(
     delayMs = PRESENCE_HEARTBEAT_INTERVAL_MS,
-    retryDeadline?: number,
+    retryAttempt = 0,
   ): void {
     this.clearHeartbeat();
 
@@ -490,13 +498,18 @@ export class RealtimeClient {
       if (!sessionId) return;
       const startedAt = performance.now();
       const socket = this.socket;
-      const deadline = retryDeadline ?? startedAt + this.requestTimeoutMs;
+      const refreshedAt = this.presenceRefreshedAt;
+      const expiry = refreshedAt + PRESENCE_EXPIRY_MS;
+      const remaining = expiry - startedAt;
 
-      if (deadline <= startedAt) {
+      if (
+        remaining <= 0 ||
+        (retryAttempt > 0 && remaining < MIN_HEARTBEAT_RETRY_BUDGET_MS)
+      ) {
         this.setHeartbeatLatency(null);
         socket?.close(
-          REALTIME_CLIENT_CLOSE_CODES.heartbeatTimeout,
-          "heartbeat timeout",
+          REALTIME_CLIENT_CLOSE_CODES.heartbeatUnavailable,
+          "heartbeat unavailable",
         );
 
         return;
@@ -505,32 +518,46 @@ export class RealtimeClient {
       void this.requestWithTimeout(
         "presence.heartbeat",
         { sessionId },
-        deadline - startedAt,
+        Math.min(this.requestTimeoutMs, remaining),
       )
         .then(() => {
-          if (this.socket !== socket || this.presenceSessionId !== sessionId)
+          if (
+            this.socket !== socket ||
+            this.presenceSessionId !== sessionId ||
+            this.presenceRefreshedAt !== refreshedAt
+          )
             return;
+          this.presenceRefreshedAt = startedAt;
           this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
           this.scheduleHeartbeat();
         })
         .catch((error: Error) => {
-          if (this.socket !== socket || this.presenceSessionId !== sessionId)
+          // A publication can refresh this same session while its heartbeat is
+          // in flight. Keep the publication's heartbeat schedule and lifetime.
+          if (
+            this.socket !== socket ||
+            this.presenceSessionId !== sessionId ||
+            this.presenceRefreshedAt !== refreshedAt
+          )
             return;
           this.setHeartbeatLatency(null);
 
-          // A correlated retryable response proves the transport is alive. Retry once
-          // inside the original heartbeat deadline; silence and access denial still close.
+          // Correlated retryable responses prove the transport is alive. Back off
+          // on the same session while its last successful refresh is still valid.
           if (error instanceof RealtimeRequestError && error.retryable) {
             const retryDelay = Math.max(
-              500 + Math.round(this.random() * 1_000),
+              Math.round(
+                Math.min(5_000, 1_000 * 2 ** retryAttempt) *
+                  (0.5 + this.random()),
+              ),
               error.retryAfterMs ?? 0,
             );
 
             if (
-              retryDeadline === undefined &&
-              performance.now() + retryDelay < deadline
+              expiry - performance.now() - retryDelay >=
+              MIN_HEARTBEAT_RETRY_BUDGET_MS
             ) {
-              this.scheduleHeartbeat(retryDelay, deadline);
+              this.scheduleHeartbeat(retryDelay, retryAttempt + 1);
 
               return;
             }
@@ -561,10 +588,7 @@ export class RealtimeClient {
             return;
           }
 
-          socket?.close(
-            REALTIME_CLIENT_CLOSE_CODES.transportError,
-            "transport error",
-          );
+          socket?.close();
         });
     }, delayMs);
   }
