@@ -83,4 +83,59 @@ describe("SignIn OAuth recovery", () => {
       provider: "discord",
     });
   });
+
+  it.each([429, 503])(
+    "allows another sign-in attempt after HTTP %i without an authenticated layout",
+    async (status) => {
+      signInFetch.mockResolvedValueOnce(
+        Response.json(
+          { code: "SIGN_IN_FAILED", message: "Internal authentication error" },
+          { status },
+        ),
+      );
+      await renderSignIn();
+      const button = screen.getByRole("button", { name: "auth.signin.submit" });
+
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        expect(screen.getByRole("alert").textContent).toBe(
+          "auth.signin.failed",
+        );
+        expect(button.hasAttribute("disabled")).toBe(false);
+      });
+      fireEvent.click(button);
+      await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(2));
+    },
+  );
+
+  it("allows another sign-in attempt after a network failure", async () => {
+    signInFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    await renderSignIn();
+    const button = screen.getByRole("button", { name: "auth.signin.submit" });
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toBe("auth.signin.failed");
+      expect(button.hasAttribute("disabled")).toBe(false);
+    });
+    fireEvent.click(button);
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(2));
+  });
+
+  it("does not start another OAuth flow after a successful response while redirecting", async () => {
+    signInFetch.mockResolvedValueOnce(
+      Response.json({ url: "/oauth", redirect: false }),
+    );
+    await renderSignIn();
+    const button = screen.getByRole("button", { name: "auth.signin.submit" });
+
+    fireEvent.click(button);
+    await waitFor(() => expect(signInFetch).toHaveBeenCalledTimes(1));
+    fireEvent.click(button);
+
+    expect(button.hasAttribute("disabled")).toBe(true);
+    expect(signInFetch).toHaveBeenCalledTimes(1);
+  });
 });
