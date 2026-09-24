@@ -18,6 +18,7 @@ import { ThemeRootEffects, ThemeSpinnerProvider } from "@/themes";
 
 import "@lootlog/ui/globals.css";
 import "@/themes/default.css";
+import "@/themes/muted.css";
 import "@/themes/backgrounds.css";
 import "../scrollbars.css";
 import "@/i18n/config";

@@ -1,5 +1,6 @@
 export const THEME_IDS = [
   "default",
+  "muted",
   "cyberpunk",
   "pastel",
   "fantasy",
@@ -22,6 +23,7 @@ export const THEME_IDS = [
 
 export const THEME_CLASS_IDS = [
   "default",
+  "muted",
   "cyberpunk",
   "pastel",
   "fantasy",
@@ -75,6 +77,13 @@ export const THEME_CATALOG: ThemePreview[] = [
     colors: ["#C8F135", "#273321", "#07111F"],
     backgroundImage:
       "data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='300' fill='%2307111f'/%3E%3Cpath d='M-24 218h116c28 0 28-46 56-46h104c28 0 28-66 56-66h116' fill='none' stroke='%23c8f135' stroke-width='12' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='218' r='18' fill='%2307111f' stroke='%23f7f8f2' stroke-width='8'/%3E%3Ccircle cx='252' cy='172' r='12' fill='%23273321'/%3E%3Ccircle cx='308' cy='106' r='7' fill='%23ffbd3f'/%3E%3C/svg%3E",
+  },
+  {
+    name: "muted",
+    family: "standard",
+    colors: ["#A3C69C", "#1F261D", "#0B0C0E"],
+    backgroundImage:
+      "data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='400' height='300' fill='%230b0c0e'/%3E%3Cpath d='M-24 218h116c28 0 28-46 56-46h104c28 0 28-66 56-66h116' fill='none' stroke='%23a3c69c' stroke-width='12' stroke-linecap='round'/%3E%3Ccircle cx='92' cy='218' r='18' fill='%230b0c0e' stroke='%23d6d7d9' stroke-width='8'/%3E%3Ccircle cx='252' cy='172' r='12' fill='%231f261d'/%3E%3Ccircle cx='308' cy='106' r='7' fill='%23d6b98a'/%3E%3C/svg%3E",
   },
   {
     name: "cyberpunk",
