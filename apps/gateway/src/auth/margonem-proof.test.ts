@@ -143,8 +143,8 @@ describe("Margonem proof verifier", () => {
     expect(get).toHaveBeenCalledTimes(2);
   });
   test("accepts signing-key rotation after the forced refresh window, including a failed refresh", async () => {
-    const oldPair = generateKeyPairSync("rsa", { modulusLength: 1024 });
-    const newPair = generateKeyPairSync("rsa", { modulusLength: 1024 });
+    const oldPair = generateKeyPairSync("rsa", { modulusLength: 2048 });
+    const newPair = generateKeyPairSync("rsa", { modulusLength: 2048 });
 
     let currentPem = oldPair.publicKey
       .export({ type: "spki", format: "pem" })
