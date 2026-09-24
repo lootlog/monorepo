@@ -10,28 +10,49 @@ export type TimerColorPaint = {
   hoverFill?: string;
 };
 
-const TILE_FILL_ALPHA_HEX = "59";
+const TILE_FILL_ALPHA_HEX = "4d";
 
 const paint = (hex: string): TimerColorPaint => ({
   accent: hex,
   fill: `${hex}${TILE_FILL_ALPHA_HEX}`,
 });
 
+/**
+ * Built-in colours share one OKLCH lightness and chroma band (yellow and lime
+ * sit a little lighter, blue and purple darker to stay apart from sky and
+ * violet), so no colour outshines the others behind white text.
+ */
 export const TIMERS_COLORS = {
-  red: paint("#ef4444"),
-  orange: paint("#f97316"),
-  yellow: paint("#eab308"),
-  lime: paint("#84cc16"),
-  green: paint("#22c55e"),
-  teal: paint("#14b8a6"),
-  sky: paint("#0ea5e9"),
-  blue: paint("#3730a3"),
-  violet: paint("#a78bfa"),
-  purple: paint("#9333ea"),
-  pink: paint("#ec4899"),
+  red: paint("#d86e67"),
+  orange: paint("#e28d57"),
+  yellow: paint("#deb95c"),
+  lime: paint("#9fc769"),
+  green: paint("#66b679"),
+  teal: paint("#52b5a7"),
+  sky: paint("#5da8d5"),
+  blue: paint("#5f71be"),
+  violet: paint("#a797e3"),
+  purple: paint("#8d60c2"),
+  pink: paint("#d5749e"),
   // "Bez koloru": a faint stripe keeps columns readable, no fill.
   white: { accent: "#9ca3af66", fill: "#9ca3af00" },
 } satisfies Record<string, TimerColorPaint>;
+
+/** The legacy appearance keeps the vivid colours it was designed with. */
+const LEGACY_ACCENTS = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  lime: "#84cc16",
+  green: "#22c55e",
+  teal: "#14b8a6",
+  sky: "#0ea5e9",
+  blue: "#3730a3",
+  violet: "#a78bfa",
+  purple: "#9333ea",
+  pink: "#ec4899",
+  white: "#9ca3af",
+} satisfies Record<keyof typeof TIMERS_COLORS, string>;
 
 export const isTimerColor = (
   color: string,
@@ -42,10 +63,9 @@ export const getTimerColor = (
   legacyAppearance = false,
 ): TimerColorPaint | undefined => {
   if (!isTimerColor(color)) return undefined;
-  const current = TIMERS_COLORS[color];
 
-  if (!legacyAppearance) return current;
-  const accent = current.accent.slice(0, 7);
+  if (!legacyAppearance) return TIMERS_COLORS[color];
+  const accent = LEGACY_ACCENTS[color];
 
   return { accent, fill: `${accent}33`, hoverFill: `${accent}66` };
 };
@@ -73,10 +93,6 @@ const legacyHoverFill = (color: string): string => {
 
   return `#${rgb}${expanded.slice(6)}`;
 };
-
-/** "Bez koloru" leaves the row background to the list, not to the colour. */
-export const isUnpaintedTimerColor = (paint: TimerColorPaint): boolean =>
-  paint.fill === TIMERS_COLORS.white.fill;
 
 type StoredTimerColor = {
   backgroundColor: string;
