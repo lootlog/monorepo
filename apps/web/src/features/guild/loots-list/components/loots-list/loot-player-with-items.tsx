@@ -41,6 +41,7 @@ export const LootPlayerWithItems = ({
       )}
     />
     <ItemStack
+      playerId={player.id}
       renderItem={renderItem}
       items={items}
       watchContext={watchContext}

@@ -15,6 +15,8 @@ import {
 } from "#src/battles/deletion/delete-user-battles.processor";
 import { makeBattleAnalyticsCache } from "#src/battles/analytics/battle-analytics-cache.service";
 import { makeBattleAnalyticsQuery } from "#src/battles/analytics/battle-analytics-query.service";
+import { makeBattleAnalyticsRead } from "#src/battles/analytics/battle-analytics-read.service";
+import { makeBattleCombatProfileRead } from "#src/battles/analytics/battle-combat-profile-read.service";
 import { makeBattleAnalytics } from "#src/battles/analytics/battle-analytics.service";
 import { makeBattleListFilter } from "#src/battles/catalog/battle-list-filter.service";
 import { makeBattleMetadata } from "#src/battles/catalog/battle-metadata.service";
@@ -61,15 +63,18 @@ export class BattlelogApplication extends Context.Service<
       const redis = makeRedisStore(redisClient, runRedis);
 
       const cacheService = makeBattleAnalyticsCache(redis);
-      const queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
-
-      const analyticsService = makeBattleAnalytics(
-        drizzle,
-        cacheService,
-        queryService,
-      );
+      const queryService = makeBattleAnalyticsQuery(drizzle);
 
       const read = makeBattleReadBudget(drizzle);
+
+      const analyticsService = makeBattleAnalytics(
+        makeBattleAnalyticsRead(drizzle, queryService),
+        makeBattleCombatProfileRead(drizzle, queryService),
+        cacheService,
+        queryService,
+        (effect) => read(effect, { consistentSnapshot: true }),
+      );
+
       const metadataService = makeBattleMetadata(drizzle, redis, read);
 
       const battlesService = makeBattles(

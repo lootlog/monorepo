@@ -13,7 +13,7 @@ import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistenc
 import type { MapPlayersSnapshot } from "#src/contracts/loots/map-players-snapshot";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { createHash, randomInt, randomUUID } from "node:crypto";
-import { and, count, eq, inArray, sql } from "drizzle-orm";
+import { and, arrayOverlaps, count, eq, inArray, sql } from "drizzle-orm";
 import { Effect, ManagedRuntime, Schema } from "effect";
 import { MessagingError, type PublishOptions } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -133,12 +133,13 @@ describe("durable loot publications", () => {
     return { id, request: { discordId: id, submission } };
   };
 
-  const acceptance = () =>
+  const acceptance = (signalPublications: Effect.Effect<void> = Effect.void) =>
     makeLootSubmissionAcceptance(
       makeLootSubmissionAcceptancePersistence(database),
       {
         withLock: (_resource, _ttl, _options, effect) => effect,
       },
+      signalPublications,
     );
 
   const pending = (lootId: number) =>
@@ -876,6 +877,11 @@ describe("durable loot publications", () => {
 
   it("rolls back the durable loot when persisting its publication intent fails", async () => {
     const { request } = await seed();
+    let signals = 0;
+
+    const signal = Effect.sync(() => {
+      signals += 1;
+    });
 
     const before = await runtime.runPromise(
       database.select({ value: count() }).from(lootTable),
@@ -894,10 +900,11 @@ describe("durable loot publications", () => {
 
     try {
       const result = await runtime.runPromise(
-        Effect.exit(acceptance().accept(request)),
+        Effect.exit(acceptance(signal).accept(request)),
       );
 
       expect(result._tag).toBe("Failure");
+      expect(signals).toBe(0);
       expect(
         await runtime.runPromise(
           database.select({ value: count() }).from(lootTable),
@@ -913,6 +920,50 @@ describe("durable loot publications", () => {
         database.execute(sql`DROP FUNCTION reject_test_loot_publication()`),
       );
     }
+  });
+
+  it("signals committed new and appended Organization publications before acceptance returns", async () => {
+    const first = await seed();
+    const second = await seed();
+    const observations: string[][] = [];
+
+    const signal = database
+      .select({ organizationIds: lootPublicationOutboxTable.organizationIds })
+      .from(lootPublicationOutboxTable)
+      .where(
+        arrayOverlaps(lootPublicationOutboxTable.organizationIds, [
+          first.id,
+          second.id,
+        ]),
+      )
+      .pipe(
+        Effect.tap((rows) =>
+          Effect.sync(() => {
+            observations.push([
+              ...new Set(rows.flatMap((row) => row.organizationIds)),
+            ]);
+          }),
+        ),
+        Effect.asVoid,
+        Effect.orDie,
+      );
+
+    const accepted = await runtime.runPromise(
+      acceptance(signal).accept(first.request),
+    );
+
+    snapshotTestLootIds.push(accepted.id);
+    expect(observations).toEqual([[first.id]]);
+    await runtime.runPromise(acceptance(signal).accept(first.request));
+    expect(observations).toEqual([[first.id]]);
+
+    await runtime.runPromise(
+      acceptance(signal).accept({
+        discordId: second.id,
+        submission: first.request.submission,
+      }),
+    );
+    expect(observations[1]?.sort()).toEqual([first.id, second.id].sort());
   });
 
   it("reuses the pending notification job when queueing failed after its database commit", async () => {

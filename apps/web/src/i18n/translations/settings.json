@@ -412,7 +412,7 @@
     "deactivatePending": "Dezaktywowanie...",
     "deactivateSuccess": "Członek został dezaktywowany",
     "deactivateError": "Nie udało się dezaktywować członka",
-    "deactivateConfirmTitle": "Dezaktywować członka?",
+    "deactivateConfirmTitle": "Dezaktywować członka {{name}}?",
     "deactivateConfirmDescription": "Członek zostanie lokalnie oznaczony jako nieaktywny, a jego role zostaną wyczyszczone do czasu kolejnego odświeżenia z Discorda.",
     "reactivateHint": "Ponowna aktywacja nastąpi po odświeżeniu członka.",
     "syncProblemHint": "Sprawdź synchronizację Discorda albo odśwież uprawnienia członka."

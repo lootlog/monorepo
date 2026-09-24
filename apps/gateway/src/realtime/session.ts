@@ -43,7 +43,6 @@ export interface SessionData extends AuthenticatedIdentity {
       readonly y?: number;
     };
   };
-  backpressureStrikes: number;
 }
 
 export type GatewaySocket = Pick<

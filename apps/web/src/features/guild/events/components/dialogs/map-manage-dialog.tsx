@@ -50,7 +50,7 @@ export const MapManageDialog = ({
     handleUpdateLocation,
     handleDeleteLocation,
     deleteLocation,
-    setIsDragging,
+    isReordering,
     handleDragEnd,
     heroLocations,
     handleDeleteMap,
@@ -139,9 +139,7 @@ export const MapManageDialog = ({
                           location.id
                       }
                       deletionDisabled={deleteLocation.isPending}
-                      onDragStart={() => {
-                        setIsDragging(true);
-                      }}
+                      isReordering={isReordering}
                       onDragEnd={handleDragEnd}
                     />
                   ))}

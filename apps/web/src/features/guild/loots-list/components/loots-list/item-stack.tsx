@@ -1,13 +1,14 @@
 import { WatchableItemTile } from "@/components/tiles/watchable-item-tile";
 import { ItemImage } from "@lootlog/ui/components/item-image";
 import type { WatchedItemScope } from "@/features/user/notifications/types/watched-item-scope";
-import { ItemRarity, type Item } from "@/lib/loots/loot-types";
+import { ItemRarity, type Item, type Loot } from "@/lib/loots/loot-types";
 import { cn } from "cn";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState, type ReactNode, type FC } from "react";
+import type { ReactNode, FC } from "react";
 import { ItemStackBadge } from "@/features/guild/loots-list/components/loots-list/item-stack-badge";
 import { ItemStackExpanded } from "@/features/guild/loots-list/components/loots-list/item-stack-expanded";
 import { Check } from "lucide-react";
+import { useItemStackExpansion } from "./use-item-stack-expansion";
 
 const RARITY_PRIORITY: Record<ItemRarity, number> = {
   [ItemRarity.LEGENDARY]: 4,
@@ -25,6 +26,7 @@ const sortByRarity = (items: Item[]): Item[] =>
   );
 
 type Props = {
+  playerId: Loot["players"][number]["id"];
   items: Item[];
   watchContext: WatchedItemScope;
   selectedItemNames: string[];
@@ -32,43 +34,25 @@ type Props = {
 };
 
 export const ItemStack: FC<Props> = ({
+  playerId,
   items,
   watchContext,
   selectedItemNames,
   renderItem,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-  const stackRef = useRef<HTMLDivElement>(null);
+  const { stackRef, anchorRect, isExpanded, toggleExpansion } =
+    useItemStackExpansion(playerId);
 
-  useEffect(() => {
-    if (!isExpanded) return;
+  const firstItem = items[0];
 
-    const handleClickOutside = (e: PointerEvent) => {
-      if (
-        stackRef.current &&
-        (!(e.target instanceof Node) || !stackRef.current.contains(e.target))
-      ) {
-        setIsExpanded(false);
-      }
-    };
+  if (!firstItem) return null;
 
-    document.addEventListener("pointerdown", handleClickOutside);
-
-    return () =>
-      document.removeEventListener("pointerdown", handleClickOutside);
-  }, [isExpanded]);
-
-  if (items.length === 0) return null;
-
-  if (items.length === 1 && items[0] && renderItem) {
-    return renderItem(items[0]);
-  }
-
-  if (items.length === 1 && items[0]) {
-    return (
+  if (items.length === 1) {
+    return renderItem ? (
+      renderItem(firstItem)
+    ) : (
       <WatchableItemTile
-        item={items[0]}
+        item={firstItem}
         watchContext={watchContext}
         selectedItemNames={selectedItemNames}
       />
@@ -76,11 +60,7 @@ export const ItemStack: FC<Props> = ({
   }
 
   const sorted = sortByRarity(items);
-  const topItem = sorted[0];
-
-  if (!topItem) {
-    return null;
-  }
+  const topItem = sorted[0] ?? firstItem;
 
   const remainingCount = sorted.length - 1;
   const hasItemFilter = selectedItemNames.length > 0;
@@ -90,11 +70,7 @@ export const ItemStack: FC<Props> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!isExpanded && stackRef.current) {
-      setAnchorRect(stackRef.current.getBoundingClientRect());
-    }
-
-    setIsExpanded((prev) => !prev);
+    toggleExpansion();
   };
 
   return (

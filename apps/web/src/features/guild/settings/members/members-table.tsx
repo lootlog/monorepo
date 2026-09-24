@@ -25,9 +25,11 @@ import {
 } from "@lootlog/ui/components/table";
 import { useNavigate } from "@tanstack/react-router";
 import { useTable } from "@tanstack/react-table";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getMemberDisplayData } from "./member-display-data";
 import { MemberTableRow } from "./member-table-row";
+import { MemberDeactivationDialog } from "./components/member-deactivation-dialog";
 import {
   type MemberTableRowData,
   useMembersTableColumns,
@@ -65,6 +67,12 @@ export const MembersTable = ({
 
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const tableRef = useRef<HTMLTableElement>(null);
+
+  const [deactivationTarget, setDeactivationTarget] = useState<{
+    guildId: string;
+    member: GuildMember;
+  } | null>(null);
 
   const openMemberDetails = (member: GuildMember) => {
     navigate({
@@ -78,6 +86,7 @@ export const MembersTable = ({
     guildOwnerId,
     canManageMembers,
     openMemberDetails,
+    onDeactivateMember: (member) => setDeactivationTarget({ guildId, member }),
   });
 
   const tableData = isMobile
@@ -105,6 +114,7 @@ export const MembersTable = ({
   const rowVirtualizer = usePageVirtualizer<HTMLElement>({
     count: members.length,
     scrollElement,
+    getItemKey: (index) => members[index]?.id ?? `member-${index}`,
     estimateSize: () => rowEstimateSize,
     overscan: 8,
   });
@@ -200,55 +210,69 @@ export const MembersTable = ({
   }
 
   return (
-    <Table className="min-w-[994px] table-fixed">
-      <colgroup>
-        <col className="w-[360px]" />
-        <col className="w-[130px]" />
-        <col className="w-[160px]" />
-        <col className="w-[150px]" />
-        <col className="w-[130px]" />
-        <col className="w-16" />
-      </colgroup>
-      <TanStackTableHeader
-        table={table}
-        className="sticky top-0 z-10 bg-background"
-        rowClassName="border-b-1! border-border"
-        getHeadClassName={(header) =>
-          RIGHT_ALIGNED_COLUMN_IDS.has(header.column.id) ? "text-right" : ""
-        }
-      />
-      <TableBody>
-        {topPadding > 0 && (
-          <TableRow className="border-b-0 hover:bg-transparent">
-            <TableCell
-              colSpan={columns.length}
-              style={{ height: topPadding }}
-            />
-          </TableRow>
-        )}
-        {virtualRows.map((virtualRow) => {
-          const row = rows[virtualRow.index];
+    <>
+      <Table ref={tableRef} tabIndex={-1} className="min-w-[994px] table-fixed">
+        <colgroup>
+          <col className="w-[360px]" />
+          <col className="w-[130px]" />
+          <col className="w-[160px]" />
+          <col className="w-[150px]" />
+          <col className="w-[130px]" />
+          <col className="w-16" />
+        </colgroup>
+        <TanStackTableHeader
+          table={table}
+          className="sticky top-0 z-10 bg-background"
+          rowClassName="border-b-1! border-border"
+          getHeadClassName={(header) =>
+            RIGHT_ALIGNED_COLUMN_IDS.has(header.column.id) ? "text-right" : ""
+          }
+        />
+        <TableBody>
+          {topPadding > 0 && (
+            <TableRow className="border-b-0 hover:bg-transparent">
+              <TableCell
+                colSpan={columns.length}
+                style={{ height: topPadding }}
+              />
+            </TableRow>
+          )}
+          {virtualRows.map((virtualRow) => {
+            const row = rows[virtualRow.index];
 
-          if (!row) return null;
+            if (!row) return null;
 
-          return (
-            <MemberTableRow
-              key={virtualRow.key}
-              row={row}
-              isLastMember={virtualRow.index === rows.length - 1}
-              openMemberDetails={openMemberDetails}
-            />
-          );
-        })}
-        {bottomPadding > 0 && (
-          <TableRow className="border-b-0 hover:bg-transparent">
-            <TableCell
-              colSpan={columns.length}
-              style={{ height: bottomPadding }}
-            />
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+            return (
+              <MemberTableRow
+                key={virtualRow.key}
+                row={row}
+                isLastMember={virtualRow.index === rows.length - 1}
+                openMemberDetails={openMemberDetails}
+              />
+            );
+          })}
+          {bottomPadding > 0 && (
+            <TableRow className="border-b-0 hover:bg-transparent">
+              <TableCell
+                colSpan={columns.length}
+                style={{ height: bottomPadding }}
+              />
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      {canManageMembers && deactivationTarget && (
+        <MemberDeactivationDialog
+          guildId={deactivationTarget.guildId}
+          member={deactivationTarget.member}
+          onClose={() => setDeactivationTarget(null)}
+          finalFocus={() =>
+            tableRef.current?.querySelector<HTMLElement>(
+              `[data-member-id="${deactivationTarget.member.id}"]`,
+            ) ?? tableRef.current
+          }
+        />
+      )}
+    </>
   );
 };

@@ -196,3 +196,62 @@ for (const connection of ["postgres", "pgbouncer"] as const) {
     }
   }, 15_000);
 }
+
+test("keeps paged analytics on one snapshot while concurrent writes commit", async () => {
+  const runtime = ManagedRuntime.make(
+    makePostgresLayer({
+      url: Redacted.make(postgres.getConnectionUri()),
+      maxConnections: 1,
+    }),
+  );
+
+  const writer = new pg.Pool({ connectionString: postgres.getConnectionUri() });
+
+  try {
+    await writer.query(
+      "CREATE TABLE analytics_snapshot_probe (value integer NOT NULL)",
+    );
+    await writer.query("INSERT INTO analytics_snapshot_probe VALUES (1)");
+    const database = await runtime.runPromise(drizzleDatabaseEffect);
+    const client = await runtime.runPromise(PgClient.PgClient);
+    const read = makeBattleReadBudget(database);
+
+    const values = await runtime.runPromise(
+      read(
+        Effect.gen(function* () {
+          const before = yield* client<{
+            value: number;
+          }>`SELECT value FROM analytics_snapshot_probe`;
+
+          yield* Effect.promise(() =>
+            writer.query("UPDATE analytics_snapshot_probe SET value = 2"),
+          );
+
+          const after = yield* client<{
+            value: number;
+          }>`SELECT value FROM analytics_snapshot_probe`;
+
+          return { before, after };
+        }),
+        { consistentSnapshot: true },
+      ),
+    );
+
+    expect(values).toEqual({ before: [{ value: 1 }], after: [{ value: 1 }] });
+    expect(
+      await runtime.runPromise(
+        client<{ value: number }>`SELECT value FROM analytics_snapshot_probe`,
+      ),
+    ).toEqual([{ value: 2 }]);
+    expect(
+      await runtime.runPromise(
+        client<{
+          isolation: string;
+        }>`SELECT current_setting('transaction_isolation') AS isolation`,
+      ),
+    ).toEqual([{ isolation: "read committed" }]);
+  } finally {
+    await runtime.dispose();
+    await writer.end();
+  }
+});

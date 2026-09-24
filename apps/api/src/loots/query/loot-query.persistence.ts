@@ -208,18 +208,6 @@ export const makeLootQueryPersistence = (
       .where(inArray(lootTable.id, [...ids]))
       .orderBy(desc(lootTable.id));
 
-  const selectRecords = (guildId: string, ids: ReadonlyArray<number>) =>
-    database
-      .select()
-      .from(organizationLootRecordTable)
-      .where(
-        and(
-          eq(organizationLootRecordTable.guildId, guildId),
-          isNull(organizationLootRecordTable.archivedAt),
-          inArray(organizationLootRecordTable.lootId, [...ids]),
-        ),
-      );
-
   const selectItems = (ids: ReadonlyArray<number>) =>
     database
       .select({
@@ -328,7 +316,7 @@ export const makeLootQueryPersistence = (
   const selectCommentCounts = (guildId: string, ids: ReadonlyArray<number>) =>
     database
       .select({
-        recordId: organizationLootRecordTable.id,
+        lootId: organizationLootRecordTable.lootId,
         count: count(lootCommentTable.id),
       })
       .from(organizationLootRecordTable)
@@ -342,10 +330,11 @@ export const makeLootQueryPersistence = (
       .where(
         and(
           eq(organizationLootRecordTable.guildId, guildId),
+          isNull(organizationLootRecordTable.archivedAt),
           inArray(organizationLootRecordTable.lootId, [...ids]),
         ),
       )
-      .groupBy(organizationLootRecordTable.id);
+      .groupBy(organizationLootRecordTable.lootId);
 
   const hydrate = (guildId: string, lootIds: ReadonlyArray<number>) => {
     if (lootIds.length === 0) return Effect.succeed([]);
@@ -355,7 +344,6 @@ export const makeLootQueryPersistence = (
       Effect.all(
         [
           selectLoots(lootIds),
-          selectRecords(guildId, lootIds),
           selectItems(lootIds),
           selectPlayers(lootIds),
           selectNpcs(lootIds),
@@ -368,7 +356,6 @@ export const makeLootQueryPersistence = (
         Effect.map(
           ([
             loots,
-            records,
             items,
             players,
             npcs,
@@ -397,13 +384,9 @@ export const makeLootQueryPersistence = (
             const npcsByLoot = byLoot(npcs);
             const submissionsByLoot = byLoot(submissions);
 
-            const recordsByLoot = new Map(
-              records.map((record) => [record.lootId, record] as const),
-            );
-
-            const commentsByRecord = new Map(
+            const commentsByLoot = new Map(
               commentCounts.map(
-                (entry) => [entry.recordId, entry.count] as const,
+                (entry) => [entry.lootId, entry.count] as const,
               ),
             );
 
@@ -423,8 +406,7 @@ export const makeLootQueryPersistence = (
                 ({ lootId: _lootId, ...npc }) => npc,
               ),
               submissions: submissionsByLoot.get(loot.id) ?? [],
-              commentsCount:
-                commentsByRecord.get(recordsByLoot.get(loot.id)?.id ?? -1) ?? 0,
+              commentsCount: commentsByLoot.get(loot.id) ?? 0,
             }));
           },
         ),

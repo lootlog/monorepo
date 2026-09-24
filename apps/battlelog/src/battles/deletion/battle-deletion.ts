@@ -1,5 +1,5 @@
-import { asc, eq, lte } from "drizzle-orm";
-import { Clock, Effect } from "effect";
+import { asc, eq, inArray, lte } from "drizzle-orm";
+import { Clock, Effect, Result } from "effect";
 import { chunk } from "es-toolkit";
 import type { DrizzleDatabase } from "#src/database/database";
 import {
@@ -17,49 +17,63 @@ export const makeBattleDeletion = (
     DrizzleDatabase,
     "select" | "delete" | "update" | "transaction"
   >,
-  objects: Pick<BattleObjectStorage, "deleteBattleData">,
+  objects: Pick<BattleObjectStorage, "deleteBattlesData">,
   analytics: Pick<BattleAnalytics, "invalidateAnalyticsCache">,
 ) => {
-  const drain = Effect.gen(function* () {
-    const now = new Date(yield* Clock.currentTimeMillis);
+  const drain = database
+    .transaction((transaction) =>
+      Effect.gen(function* () {
+        const now = new Date(yield* Clock.currentTimeMillis);
 
-    const pending = yield* database
-      .select()
-      .from(battleObjectDeletions)
-      .where(lte(battleObjectDeletions.retryAt, now))
-      .orderBy(asc(battleObjectDeletions.retryAt))
-      .limit(100);
+        const pending = yield* transaction
+          .select()
+          .from(battleObjectDeletions)
+          .where(lte(battleObjectDeletions.retryAt, now))
+          .orderBy(asc(battleObjectDeletions.retryAt))
+          .limit(1_000)
+          .for("update", { skipLocked: true });
 
-    yield* Effect.forEach(
-      pending,
-      (item) =>
-        Effect.gen(function* () {
-          yield* analytics.invalidateAnalyticsCache(item.userId);
-          yield* Effect.tryPromise(() =>
-            objects.deleteBattleData(item.battleId),
+        if (pending.length === 0) return;
+
+        const ids = pending.map((item) => item.battleId);
+
+        for (const userId of new Set(pending.map((item) => item.userId))) {
+          yield* analytics.invalidateAnalyticsCache(userId);
+        }
+
+        const deleted = yield* Effect.result(
+          Effect.tryPromise(() => objects.deleteBattlesData(ids)),
+        );
+
+        const retry = Result.isFailure(deleted) ? ids : deleted.success;
+
+        if (Result.isFailure(deleted)) {
+          yield* Effect.logWarning(
+            "Battle object deletion remains pending",
+            deleted.failure,
           );
-          yield* database
-            .delete(battleObjectDeletions)
-            .where(eq(battleObjectDeletions.battleId, item.battleId));
-        }).pipe(
-          Effect.catch((error) =>
-            Effect.gen(function* () {
-              yield* database
-                .update(battleObjectDeletions)
-                .set({
-                  retryAt: new Date((yield* Clock.currentTimeMillis) + 60_000),
-                })
-                .where(eq(battleObjectDeletions.battleId, item.battleId));
-              yield* Effect.logWarning(
-                "Battle object deletion remains pending",
-                error,
-              ).pipe(Effect.annotateLogs({ battleId: item.battleId }));
-            }),
-          ),
-        ),
-      { concurrency: 4, discard: true },
-    );
-  }).pipe(Effect.withSpan("BattleDeletion.drain"));
+        } else {
+          const failed = new Set(retry);
+          const completed = ids.filter((id) => !failed.has(id));
+
+          if (completed.length > 0) {
+            yield* transaction
+              .delete(battleObjectDeletions)
+              .where(inArray(battleObjectDeletions.battleId, completed));
+          }
+        }
+
+        if (retry.length > 0) {
+          yield* transaction
+            .update(battleObjectDeletions)
+            .set({
+              retryAt: new Date((yield* Clock.currentTimeMillis) + 60_000),
+            })
+            .where(inArray(battleObjectDeletions.battleId, retry));
+        }
+      }),
+    )
+    .pipe(Effect.withSpan("BattleDeletion.drain"));
 
   const deleteBattle = Effect.fn("BattleDeletion.deleteBattle")(function* (
     battleId: string,

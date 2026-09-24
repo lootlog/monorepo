@@ -37,21 +37,17 @@ export const makeBattleListFilter = (drizzle: BattleListFilterDatabase) => {
     characterIds: string[],
     resultColumn: "winningTeam" | "losingTeam",
   ): void => {
-    for (const characterId of characterIds) {
-      for (const team of [1, 2]) {
-        resultConditions.push(
-          and(
-            warriorExists(
-              battlesRef,
-              eq(battleWarriors.originalId, characterId),
-              eq(battleWarriors.team, team),
-            ),
-            eq(battlesRef[resultColumn], team),
-            eq(battlesRef.hasFlee, false),
-          ),
-        );
-      }
-    }
+    resultConditions.push(
+      and(
+        warriorExists(
+          battlesRef,
+          inArray(battleWarriors.originalId, characterIds),
+          eq(battleWarriors.team, battlesRef[resultColumn]),
+        ),
+        inArray(battlesRef[resultColumn], [1, 2]),
+        eq(battlesRef.hasFlee, false),
+      ),
+    );
   };
 
   const appendResultConditions = (

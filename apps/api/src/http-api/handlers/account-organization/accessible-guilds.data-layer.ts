@@ -1,16 +1,12 @@
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
+import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { Permission } from "@lootlog/schema/permissions";
 import type { RuntimeEnvironment } from "@lootlog/schema/runtime-environment";
 import { ApiDatabase } from "#src/database/drizzle/database";
-import {
-  memberTable,
-  memberToRoleTable,
-  roleTable,
-  userSettingsTable,
-} from "#src/database/drizzle/schema";
+import { memberTable, userSettingsTable } from "#src/database/drizzle/schema";
 import { getMemberCacheSoftTtl } from "#src/members/member-cache";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
 import {
@@ -131,31 +127,10 @@ export const makeAccessibleGuilds = (
         ),
       );
 
-    const roles =
-      members.length === 0
-        ? []
-        : yield* database
-            .select({ memberId: memberToRoleTable.A, role: roleTable })
-            .from(memberToRoleTable)
-            .innerJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-            .where(
-              inArray(
-                memberToRoleTable.A,
-                members.map(({ id }) => id),
-              ),
-            )
-            .orderBy(desc(roleTable.position));
+    const membersWithRoles = yield* hydrateMemberRoles(database, members);
 
     const memberByGuild = new Map(
-      members.map((member) => [
-        member.guildId,
-        {
-          ...member,
-          roles: roles
-            .filter(({ memberId }) => memberId === member.id)
-            .map(({ role }) => role),
-        },
-      ]),
+      membersWithRoles.map((member) => [member.guildId, member]),
     );
 
     const staleThreshold =

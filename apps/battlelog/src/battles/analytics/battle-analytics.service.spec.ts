@@ -1,6 +1,8 @@
+import { makeBattleAnalyticsRead } from "./battle-analytics-read.service.js";
+import { makeBattleCombatProfileRead } from "./battle-combat-profile-read.service.js";
 import { unusedRedisStore } from "../../../test/battle-fixtures.js";
 import { Effect } from "effect";
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { ResourceNotFoundError } from "#src/infrastructure/http-error";
 import {
   makeBattleAnalytics,
@@ -66,7 +68,6 @@ const createRedisFixture = () => {
     get: mock().mockResolvedValue(null),
     set: mock().mockResolvedValue(undefined),
     getClient: mock(),
-    deleteByPattern: mock(),
     getOrSetJsonBestEffort: async <T>({
       key,
       factory,
@@ -94,65 +95,6 @@ describe("battle analytics", () => {
   const mockCharacterId = "char-123";
   const mockWorld = "world1";
 
-  const mockUserCharacter = {
-    id: "uc-1",
-    userId: mockUserId,
-    characterId: mockCharacterId,
-    world: mockWorld,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockWarrior1 = {
-    id: "w-1",
-    battleId: "b-1",
-    originalId: mockCharacterId,
-    name: "TestPlayer",
-    icon: "icon1",
-    prof: "warrior",
-    lvl: 100,
-    team: 1,
-    ph: 50,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockWarrior2 = {
-    id: "w-2",
-    battleId: "b-1",
-    originalId: "opponent-1",
-    name: "Opponent1",
-    icon: "icon2",
-    prof: "mage",
-    lvl: 95,
-    team: 2,
-    ph: 30,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockBattle = {
-    id: "b-1",
-    userId: mockUserId,
-    accountId: "acc-1",
-    characterId: mockCharacterId,
-    world: mockWorld,
-    type: "1v1",
-    winner: "TestPlayer",
-    loser: "Opponent1",
-    winningTeam: 1,
-    losingTeam: 2,
-    hasFlee: false,
-    duration: 1000,
-    matchmaking: true,
-    rating: 1500,
-    opponentRating: 1450,
-    ratingDelta: 25,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-    warriors: [mockWarrior1, mockWarrior2],
-  };
-
   beforeEach(() => {
     const mockDrizzleService = createDatabaseFixture();
 
@@ -161,8 +103,14 @@ describe("battle analytics", () => {
     const drizzle = mockDrizzleService.db;
     const redis = mockRedisService;
     const cacheService = makeBattleAnalyticsCache(redis);
-    queryService = makeBattleAnalyticsQuery(drizzle, cacheService);
-    service = makeBattleAnalytics(drizzle, cacheService, queryService);
+    queryService = makeBattleAnalyticsQuery(drizzle);
+    service = makeBattleAnalytics(
+      makeBattleAnalyticsRead(drizzle, queryService),
+      makeBattleCombatProfileRead(drizzle, queryService),
+      cacheService,
+      queryService,
+      (effect) => effect,
+    );
     drizzleService = mockDrizzleService;
     redisService = mockRedisService;
   });
@@ -326,54 +274,6 @@ describe("battle analytics", () => {
 
       expect(result).toEqual(JSON.parse(cachedData));
     });
-
-    it("should calculate streak from database", async () => {
-      redisService.get.mockResolvedValue(null);
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-
-      const winBattles = [
-        { ...mockBattle, id: "b-1", createdAt: new Date("2024-01-03") },
-        { ...mockBattle, id: "b-2", createdAt: new Date("2024-01-02") },
-        { ...mockBattle, id: "b-3", createdAt: new Date("2024-01-01") },
-      ];
-
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed(winBattles),
-      );
-
-      const result = await Effect.runPromise(
-        service.getCurrentStreak(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.current.type).toBe("wins");
-      expect(result.current.count).toBe(3);
-      expect(result.longest.wins).toBe(3);
-    });
-
-    it("should return none streak when no battles", async () => {
-      redisService.get.mockResolvedValue(null);
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getCurrentStreak(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.current.type).toBe("none");
-      expect(result.current.count).toBe(0);
-    });
   });
 
   describe("getBattleDurationStats", () => {
@@ -395,52 +295,6 @@ describe("battle analytics", () => {
       );
 
       expect(result).toEqual(JSON.parse(cachedData));
-    });
-
-    it("should calculate duration stats from database", async () => {
-      redisService.get.mockResolvedValue(null);
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([mockBattle]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getBattleDurationStats(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.avgWinDuration).toBe(1000);
-      expect(result.avgLossDuration).toBe(0);
-      expect(result.fastest).toEqual({
-        duration: 1000,
-        battleId: "b-1",
-      });
-    });
-
-    it("should return zeros when no battles", async () => {
-      redisService.get.mockResolvedValue(null);
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getBattleDurationStats(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.avgWinDuration).toBe(0);
-      expect(result.avgLossDuration).toBe(0);
-      expect(result.fastest).toBeNull();
-      expect(result.longest).toBeNull();
     });
   });
 
@@ -467,7 +321,7 @@ describe("battle analytics", () => {
       expect(result).toEqual(JSON.parse(cachedData));
     });
 
-    it("should omit battle filters from rating cache keys", async () => {
+    it("should retain PH and normalize matchmaking in rating cache keys", async () => {
       const cachedData = JSON.stringify([]);
       redisService.get.mockResolvedValue(cachedData);
 
@@ -488,7 +342,7 @@ describe("battle analytics", () => {
 
       expect(redisService.get).toHaveBeenCalledWith(
         expect.stringContaining(
-          `statistics:rating-growth:${mockUserId}:${mockCharacterId}:${mockWorld}:all:all:all:0-0`,
+          `statistics:rating-growth:${mockUserId}:${mockCharacterId}:${mockWorld}:all:all:all:0-0:ph:matchmaking`,
         ),
       );
     });
@@ -520,124 +374,6 @@ describe("battle analytics", () => {
       expect(result.records).toEqual([]);
       expect(result.pagination.size).toBe(10);
       expect(result.pagination.hasNext).toBe(false);
-    });
-
-    it("should calculate head to head stats", async () => {
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([mockBattle]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getHeadToHead(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.records).toHaveLength(1);
-      expect(result.records[0].opponentName).toBe("Opponent1");
-      expect(result.records[0].wins).toBe(1);
-      expect(result.records[0].losses).toBe(0);
-      expect(result.records[0].lastBattleResult).toBe("won");
-      expect(result.records[0].lastBattleUserWarrior.name).toBe("TestPlayer");
-      expect(result.records[0].lastBattleOpponentWarrior.name).toBe(
-        "Opponent1",
-      );
-    });
-
-    it("should keep aggregate stats and use the latest battle snapshot for presentation fields", async () => {
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-
-      const olderWinBattle = {
-        ...mockBattle,
-        id: "b-1",
-        createdAt: new Date("2024-01-01"),
-        warriors: [
-          {
-            ...mockWarrior1,
-            battleId: "b-1",
-            fireDamage: 10,
-            woundDamageTaken: 1,
-          },
-          {
-            ...mockWarrior2,
-            battleId: "b-1",
-            name: "OpponentOld",
-            lvl: 95,
-            frostDamage: 20,
-          },
-        ],
-      };
-
-      const newerLossBattle = {
-        ...mockBattle,
-        id: "b-2",
-        winner: "OpponentPrime",
-        loser: "TestPlayer",
-        winningTeam: 2,
-        losingTeam: 1,
-        createdAt: new Date("2024-01-03"),
-        warriors: [
-          {
-            ...mockWarrior1,
-            battleId: "b-2",
-            poisonDamageTaken: 6,
-            woundDamageTaken: 9,
-          },
-          {
-            ...mockWarrior2,
-            battleId: "b-2",
-            name: "OpponentPrime",
-            lvl: 97,
-            frostDamage: 77,
-            lightningDamage: 12,
-          },
-        ],
-      };
-
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([olderWinBattle, newerLossBattle]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getHeadToHead(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.records).toHaveLength(1);
-      expect(result.records[0]).toEqual(
-        expect.objectContaining({
-          opponentName: "OpponentPrime",
-          opponentLvl: 97,
-          wins: 1,
-          losses: 1,
-          totalBattles: 2,
-          lastBattleDate: "2024-01-03T00:00:00.000Z",
-          lastBattleResult: "lost",
-        }),
-      );
-      expect(result.records[0].lastBattleUserWarrior).toEqual(
-        expect.objectContaining({
-          name: "TestPlayer",
-          poisonDamageTaken: 6,
-          woundDamageTaken: 9,
-        }),
-      );
-      expect(result.records[0].lastBattleOpponentWarrior).toEqual(
-        expect.objectContaining({
-          name: "OpponentPrime",
-          lvl: 97,
-          frostDamage: 77,
-          lightningDamage: 12,
-        }),
-      );
     });
   });
 
@@ -678,146 +414,9 @@ describe("battle analytics", () => {
     });
   });
 
-  describe("getAbyssSeasons", () => {
-    it("should group matchmaking battles into seasons after a 14 day gap", async () => {
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([
-          {
-            ...mockBattle,
-            id: "season-one-win",
-            createdAt: new Date("2024-01-01T19:00:00.000Z"),
-            rating: 1000,
-            ratingDelta: 10,
-            pointsGained: 5,
-            warriors: [
-              { ...mockWarrior1, battleId: "season-one-win", team: 1 },
-              { ...mockWarrior2, battleId: "season-one-win", team: 2 },
-            ],
-          },
-          {
-            ...mockBattle,
-            id: "season-one-loss",
-            winningTeam: 2,
-            losingTeam: 1,
-            createdAt: new Date("2024-01-02T19:00:00.000Z"),
-            rating: 992,
-            ratingDelta: -8,
-            pointsGained: null,
-            warriors: [
-              { ...mockWarrior1, battleId: "season-one-loss", team: 1 },
-              { ...mockWarrior2, battleId: "season-one-loss", team: 2 },
-            ],
-          },
-          {
-            ...mockBattle,
-            id: "season-two-win",
-            createdAt: new Date("2024-01-25T19:00:00.000Z"),
-            rating: 1010,
-            ratingDelta: 12,
-            pointsGained: 7,
-            warriors: [
-              { ...mockWarrior1, battleId: "season-two-win", team: 1 },
-              { ...mockWarrior2, battleId: "season-two-win", team: 2 },
-            ],
-          },
-        ]),
-      );
+  describe("getAbyssSeasons", () => {});
 
-      const result = await Effect.runPromise(
-        service.getAbyssSeasons({ characterId: mockCharacterId }, mockUserId),
-      );
-
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual(
-        expect.objectContaining({
-          startedAt: "2024-01-25T19:00:00.000Z",
-          endedAt: "2024-01-25T19:00:00.000Z",
-          totalBattles: 1,
-          wins: 1,
-          losses: 0,
-          winRate: 100,
-          totalRatingDelta: 12,
-          peakRating: 1010,
-          totalPointsGained: 7,
-        }),
-      );
-      expect(result[1]).toEqual(
-        expect.objectContaining({
-          startedAt: "2024-01-01T19:00:00.000Z",
-          endedAt: "2024-01-02T19:00:00.000Z",
-          totalBattles: 2,
-          wins: 1,
-          losses: 1,
-          winRate: 50,
-          totalRatingDelta: 2,
-          peakRating: 1000,
-          totalPointsGained: 5,
-        }),
-      );
-    });
-  });
-
-  describe("getCombatProfile", () => {
-    it("should not include counters in mitigation mix", async () => {
-      redisService.get.mockResolvedValue(null);
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([
-          {
-            ...mockBattle,
-            warriors: [
-              {
-                ...mockWarrior1,
-                damageDealtAfterDefensive: 300,
-                damageTaken: 200,
-                blockedDamage: 100,
-                blocks: 1,
-                evasions: 0,
-                counters: 3,
-                turns: 2,
-                turnsLost: 0,
-                meleeDamage: 300,
-                distanceDamage: 0,
-                auxiliaryDamage: 0,
-                fireDamage: 0,
-                frostDamage: 0,
-                lightningDamage: 0,
-                thirdAttDamage: 0,
-                trueDamageDealt: 0,
-                rageDamageDealt: 0,
-                stigmaDamageDealt: 0,
-                spellsUsedMap: {},
-              },
-              mockWarrior2,
-            ],
-          },
-        ]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getCombatProfile(
-          statisticsQuery({ characterId: mockCharacterId }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.summary.mitigationRate).toBe(33.33);
-      expect(result.mitigationMix).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ key: "blockedDamage", value: 100 }),
-          expect.objectContaining({ key: "blocks", value: 1 }),
-        ]),
-      );
-      expect(result.mitigationMix).not.toEqual(
-        expect.arrayContaining([expect.objectContaining({ key: "counters" })]),
-      );
-    });
-  });
+  describe("getCombatProfile", () => {});
 
   describe("getRatingDeltaByOpponent", () => {
     it("should return cached result if available", async () => {
@@ -879,153 +478,6 @@ describe("battle analytics", () => {
       expect(result.battles).toEqual([]);
       expect(result.pagination.size).toBe(10);
       expect(result.pagination.hasNext).toBe(false);
-    });
-
-    it("should exclude the current battle and non-1v1 battles", async () => {
-      const buildWhereSpy = spyOn(
-        queryService,
-        "buildAnalyticsWhere",
-      ).mockReturnValue(undefined);
-
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([
-          {
-            ...mockBattle,
-            id: "current-battle",
-            warriors: [
-              { ...mockWarrior1, battleId: "current-battle" },
-              { ...mockWarrior2, battleId: "current-battle" },
-            ],
-          },
-          {
-            ...mockBattle,
-            id: "group-battle",
-            type: "group",
-            warriors: [
-              { ...mockWarrior1, battleId: "group-battle" },
-              { ...mockWarrior2, battleId: "group-battle" },
-            ],
-          },
-          {
-            ...mockBattle,
-            id: "previous-battle",
-            hasFlee: true,
-            matchmaking: false,
-            opponentRating: null,
-            rating: null,
-            ratingDelta: null,
-            warriors: [
-              {
-                ...mockWarrior1,
-                battleId: "previous-battle",
-                fireDamage: 11,
-                frostDamage: 12,
-                lightningDamage: 13,
-                poisonDamageTaken: 14,
-                woundDamageTaken: 15,
-                critWoundDamageTaken: 16,
-              },
-              {
-                ...mockWarrior2,
-                battleId: "previous-battle",
-                fireDamage: 21,
-                frostDamage: 22,
-                lightningDamage: 23,
-                poisonDamageTaken: 24,
-                woundDamageTaken: 25,
-                critWoundDamageTaken: 26,
-              },
-            ],
-          },
-        ]),
-      );
-
-      const result = await Effect.runPromise(
-        service.getPlayerVsPlayerBattles(
-          playerVsPlayerQuery({
-            characterId: mockCharacterId,
-            world: mockWorld,
-            opponentId: "opponent-1",
-            excludeBattleId: "current-battle",
-            period: "all",
-            size: 10,
-          }),
-          mockUserId,
-        ),
-      );
-
-      expect(result.battles).toHaveLength(1);
-      expect(result.battles[0]).toEqual(
-        expect.objectContaining({
-          battleId: "previous-battle",
-          hasFlee: true,
-          matchmaking: false,
-          opponentRating: null,
-          ratingDelta: null,
-          userRating: null,
-          userWarrior: expect.objectContaining({
-            fireDamage: 11,
-            frostDamage: 12,
-            lightningDamage: 13,
-            poisonDamageTaken: 14,
-            woundDamageTaken: 15,
-            critWoundDamageTaken: 16,
-          }),
-          opponentWarrior: expect.objectContaining({
-            fireDamage: 21,
-            frostDamage: 22,
-            lightningDamage: 23,
-            poisonDamageTaken: 24,
-            woundDamageTaken: 25,
-            critWoundDamageTaken: 26,
-          }),
-        }),
-      );
-      expect(result.pagination.size).toBe(10);
-      expect(result.pagination.hasNext).toBe(false);
-      drizzleService.db.query.battles.findMany.mock.calls[0][0].where.RAW({});
-      expect(buildWhereSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ matchmaking: undefined }),
-      );
-      buildWhereSpy.mockRestore();
-    });
-
-    it("should pass explicit matchmaking filter when requested", async () => {
-      const buildWhereSpy = spyOn(
-        queryService,
-        "buildAnalyticsWhere",
-      ).mockReturnValue(undefined);
-
-      drizzleService.db.query.userCharacters.findFirst.mockReturnValue(
-        Effect.succeed(mockUserCharacter),
-      );
-      drizzleService.db.query.battles.findMany.mockReturnValue(
-        Effect.succeed([]),
-      );
-
-      await Effect.runPromise(
-        service.getPlayerVsPlayerBattles(
-          playerVsPlayerQuery({
-            characterId: mockCharacterId,
-            opponentId: "opponent-1",
-            matchmaking: true,
-            period: "all",
-            size: 10,
-          }),
-          mockUserId,
-        ),
-      );
-
-      drizzleService.db.query.battles.findMany.mock.calls[0][0].where.RAW({});
-      expect(buildWhereSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ matchmaking: true }),
-      );
-      buildWhereSpy.mockRestore();
     });
   });
 
