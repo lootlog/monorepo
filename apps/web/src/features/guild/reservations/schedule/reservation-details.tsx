@@ -15,10 +15,8 @@ import {
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
@@ -104,8 +102,8 @@ export function ReservationDetails({
     spot: displayedReservation.spotName,
   });
 
-  const details = (
-    <>
+  const content = (
+    <div className="space-y-4 px-4 pb-4">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar className="size-12 shrink-0 border border-border">
           <AvatarImage
@@ -168,11 +166,11 @@ export function ReservationDetails({
           </div>
         )}
       </dl>
-    </>
+    </div>
   );
 
-  const actions = (
-    <>
+  const footer = (
+    <footer className="flex flex-col-reverse gap-2 border-t px-4 py-3 sm:flex-row sm:justify-end">
       <Button
         type="button"
         variant="outline"
@@ -201,7 +199,7 @@ export function ReservationDetails({
           {t("reservations.details.cancel")}
         </Button>
       )}
-    </>
+    </footer>
   );
 
   if (isMobile) {
@@ -217,10 +215,8 @@ export function ReservationDetails({
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <div className="space-y-4 px-4 pb-4">{details}</div>
-          <footer className="flex flex-col-reverse gap-2 border-t px-4 py-3 sm:flex-row sm:justify-end">
-            {actions}
-          </footer>
+          {content}
+          {footer}
         </DrawerContent>
       </Drawer>
     );
@@ -234,12 +230,12 @@ export function ReservationDetails({
       }}
     >
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="pb-4">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogBody className="space-y-4">{details}</DialogBody>
-        <DialogFooter>{actions}</DialogFooter>
+        {content}
+        {footer}
       </DialogContent>
     </Dialog>
   );

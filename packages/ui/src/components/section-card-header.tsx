@@ -20,7 +20,6 @@ export const SectionCardHeader = ({
   className,
 }: SectionCardHeaderProps) => (
   <header
-    data-slot="section-card-header"
     className={cn(
       "flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border/70 px-3 py-2",
       className,

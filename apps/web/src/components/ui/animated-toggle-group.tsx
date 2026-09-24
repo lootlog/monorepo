@@ -53,7 +53,6 @@ export function AnimatedToggleGroup<Value extends string>({
       {selectedIndex >= 0 && (
         <span
           aria-hidden
-          data-slot="toggle-group-thumb"
           className={cn(
             "pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-[inherit] bg-primary",
             !isStatic &&

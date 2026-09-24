@@ -157,13 +157,13 @@ export const THEME_CATALOG: ThemePreview[] = [
   {
     name: "rukia",
     family: "rukia",
-    colors: ["#D2DBEF", "#2E3358", "#101426"],
+    colors: ["#65C6E4", "#22243C", "#000407"],
     backgroundImage: "/themes/rukia-preview.webp",
   },
   {
     name: "rias",
     family: "rias",
-    colors: ["#C1122F", "#2A1218", "#0C0709"],
+    colors: ["#FF828F", "#2F182D", "#0D0207"],
     backgroundImage: "/themes/rias-preview.webp",
   },
   {

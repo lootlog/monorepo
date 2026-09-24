@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -89,73 +88,71 @@ export const ManualPointsEditDialog = ({
         if (!isPending) onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+      <DialogContent className="sm:max-w-md gap-0 overflow-hidden p-0">
+        <DialogHeader className="gap-2 px-4 pt-4 pb-3">
+          <DialogTitle className="px-0 pt-0">{title}</DialogTitle>
+          <DialogDescription className="px-0">{description}</DialogDescription>
         </DialogHeader>
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
-          <DialogBody className="space-y-4 overflow-y-auto">
-            <div className="space-y-2">
-              <Label
-                htmlFor={pointsInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                {t("events.points.deltaLabel")}
-              </Label>
-              <Input
-                id={pointsInputId}
-                type="text"
-                inputMode="decimal"
-                value={pointsDeltaValue}
-                onChange={(event) => setPointsDeltaValue(event.target.value)}
-                placeholder={t("events.points.deltaPlaceholder")}
-                autoFocus
-              />
+        <form className="space-y-4 px-4 pb-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label
+              htmlFor={pointsInputId}
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              {t("events.points.deltaLabel")}
+            </Label>
+            <Input
+              id={pointsInputId}
+              type="text"
+              inputMode="decimal"
+              value={pointsDeltaValue}
+              onChange={(event) => setPointsDeltaValue(event.target.value)}
+              placeholder={t("events.points.deltaPlaceholder")}
+              autoFocus
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t("events.points.currentValueLabel")}
+              </p>
+              <p className="font-semibold">{formatPoints(currentPoints)}</p>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div className="px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t("events.points.currentValueLabel")}
-                </p>
-                <p className="font-semibold">{formatPoints(currentPoints)}</p>
-              </div>
-              <div className="px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t("events.points.deltaPreviewLabel")}
-                </p>
-                <p className="font-semibold">
-                  {parsedPointsDelta === null
-                    ? t("events.points.previewUnavailable")
-                    : formatSignedPoints(parsedPointsDelta)}
-                </p>
-              </div>
-              <div className="px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t("events.points.resultValueLabel")}
-                </p>
-                <p className="font-semibold text-primary">
-                  {formatPoints(nextPoints)}
-                </p>
-              </div>
+            <div className="px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t("events.points.deltaPreviewLabel")}
+              </p>
+              <p className="font-semibold">
+                {parsedPointsDelta === null
+                  ? t("events.points.previewUnavailable")
+                  : formatSignedPoints(parsedPointsDelta)}
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label
-                htmlFor={commentInputId}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                {t("events.points.commentLabel")}
-              </Label>
-              <Textarea
-                id={commentInputId}
-                value={commentValue}
-                onChange={(event) => setCommentValue(event.target.value)}
-                placeholder={t("events.points.commentPlaceholder")}
-                maxLength={500}
-                rows={4}
-              />
+            <div className="px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t("events.points.resultValueLabel")}
+              </p>
+              <p className="font-semibold text-primary">
+                {formatPoints(nextPoints)}
+              </p>
             </div>
-          </DialogBody>
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor={commentInputId}
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              {t("events.points.commentLabel")}
+            </Label>
+            <Textarea
+              id={commentInputId}
+              value={commentValue}
+              onChange={(event) => setCommentValue(event.target.value)}
+              placeholder={t("events.points.commentPlaceholder")}
+              maxLength={500}
+              rows={4}
+            />
+          </div>
           <DialogFooter>
             <Button
               type="button"

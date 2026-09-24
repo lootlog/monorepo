@@ -21,9 +21,7 @@ import {
 } from "@lootlog/ui/components/command";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
@@ -229,14 +227,14 @@ export const NotificationTemplateEditor = (
       <Dialog open={isPreviewVisible} onOpenChange={setIsPreviewVisible}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base">
               {t("settings.notifications.templateEditor.previewLabel")}
             </DialogTitle>
-            <DialogDescription>
+            <p className="text-xs text-muted-foreground">
               {t("settings.notifications.templateEditor.previewDescription")}
-            </DialogDescription>
+            </p>
           </DialogHeader>
-          <DialogBody className="space-y-3 overflow-y-auto">
+          <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
               {t("settings.notifications.templateEditor.previewNotice")}
             </p>
@@ -250,7 +248,7 @@ export const NotificationTemplateEditor = (
                 </ReactMarkdown>
               </div>
             </div>
-          </DialogBody>
+          </div>
         </DialogContent>
       </Dialog>
 

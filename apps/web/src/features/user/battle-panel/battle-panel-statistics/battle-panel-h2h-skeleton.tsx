@@ -44,7 +44,7 @@ export const BattlePanelH2hSkeleton = () => {
           </SectionCard>
         </div>
 
-        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden py-3 pr-3 md:flex">
+        <div className="hidden h-full w-[320px] shrink-0 flex-col overflow-hidden bg-background py-3 pr-3 md:flex">
           <SectionCard className="flex min-h-0 flex-1 flex-col gap-0 border-border bg-filters-sidebar p-0">
             <div className="space-y-4 p-4">
               {Array.from({ length: 5 }).map((_, index) => (

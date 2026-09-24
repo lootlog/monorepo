@@ -86,7 +86,6 @@
   "feedPaused": "Aktualizacje wstrzymane",
   "feedError": "Nie udało się odświeżyć zdarzeń.",
   "feedNew": "Nowe zdarzenia",
-  "feedEmptyTitle": "Kronika jest pusta",
   "feedEmpty": "Brak nowych zdarzeń z ostatnich 24 godzin.",
   "feedMoreItems": "+{{count}} kolejnych",
   "recentBattles": {

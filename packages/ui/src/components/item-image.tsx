@@ -23,8 +23,6 @@ export const ItemImage: FC<ItemImageProps> = ({
   return (
     <div className={cn("relative", className)}>
       <div
-        data-slot="item-image"
-        data-rarity={rarity}
         className={cn(
           "relative box-content h-8 w-8 cursor-pointer rounded-md border-2 bg-cover bg-center",
           {

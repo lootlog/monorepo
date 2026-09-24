@@ -4,12 +4,7 @@ import { Info } from "lucide-react";
 
 import { Button } from "@lootlog/ui/components/button";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import {
-  DialogBody,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@lootlog/ui/components/dialog";
+import { DialogHeader, DialogTitle } from "@lootlog/ui/components/dialog";
 import {
   Form,
   FormControl,
@@ -58,7 +53,7 @@ export const WatchFormDialogContent = ({
 
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="px-1 pb-4">
         <DialogTitle>
           {t("settings.userNotifications.watchForm.title")}
         </DialogTitle>
@@ -66,235 +61,228 @@ export const WatchFormDialogContent = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleCreateWatchedItem)}
-          className="flex min-h-0 flex-1 flex-col"
+          className="flex flex-col gap-4 p-4"
         >
-          <DialogBody className="flex flex-col gap-4 overflow-y-auto">
-            <div className="space-y-3">
-              <FormField
-                control={form.control}
-                name="guildIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      {t("settings.userNotifications.fields.guilds")}
-                    </FormLabel>
-                    <FormControl
-                      render=<MultiSelect
-                        options={guildOptions}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        onClose={field.onChange}
-                        placeholder={t(
-                          "settings.userNotifications.placeholders.guilds",
-                        )}
-                        searchPlaceholder={t(
-                          "settings.userNotifications.placeholders.searchGuilds",
-                        )}
-                        emptyMessage={t(
-                          "settings.userNotifications.empty.guilds",
-                        )}
-                        commandSearch
-                      />
+          <div className="space-y-3">
+            <FormField
+              control={form.control}
+              name="guildIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {t("settings.userNotifications.fields.guilds")}
+                  </FormLabel>
+                  <FormControl
+                    render=<MultiSelect
+                      options={guildOptions}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onClose={field.onChange}
+                      placeholder={t(
+                        "settings.userNotifications.placeholders.guilds",
+                      )}
+                      searchPlaceholder={t(
+                        "settings.userNotifications.placeholders.searchGuilds",
+                      )}
+                      emptyMessage={t(
+                        "settings.userNotifications.empty.guilds",
+                      )}
+                      commandSearch
                     />
-                  </FormItem>
-                )}
-              />
+                  />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="world"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      {t("settings.notifications.fields.world")}
-                    </FormLabel>
-                    <FormControl
-                      render=<WorldSwitcher
-                        worlds={worldOptions}
-                        value={field.value || null}
-                        onValueChange={handleWorldChange}
-                        width="w-full"
-                      />
+            <FormField
+              control={form.control}
+              name="world"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {t("settings.notifications.fields.world")}
+                  </FormLabel>
+                  <FormControl
+                    render=<WorldSwitcher
+                      worlds={worldOptions}
+                      value={field.value || null}
+                      onValueChange={handleWorldChange}
+                      width="w-full"
                     />
-                  </FormItem>
-                )}
-              />
-
-              {isManualEntry ? (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="manualItemId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                          {t("settings.userNotifications.manualEntry.itemId")}
-                        </FormLabel>
-                        <FormControl
-                          render=<Input
-                            {...field}
-                            disabled={!selectedWorld}
-                            placeholder={t(
-                              "settings.userNotifications.manualEntry.itemIdPlaceholder",
-                            )}
-                          />
-                        />
-                        {form.formState.errors.manualItemId ? (
-                          <p className="text-sm text-destructive">
-                            {t(
-                              `settings.userNotifications.validation.${form.formState.errors.manualItemId.message}`,
-                            )}
-                          </p>
-                        ) : null}
-                      </FormItem>
-                    )}
                   />
+                </FormItem>
+              )}
+            />
 
-                  <FormField
-                    control={form.control}
-                    name="manualItemName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                          {t("settings.userNotifications.manualEntry.itemName")}
-                        </FormLabel>
-                        <FormControl
-                          render=<Input
-                            {...field}
-                            disabled={!selectedWorld}
-                            placeholder={t(
-                              "settings.userNotifications.manualEntry.itemNamePlaceholder",
-                            )}
-                          />
-                        />
-                        {form.formState.errors.manualItemName ? (
-                          <p className="text-sm text-destructive">
-                            {t(
-                              `settings.userNotifications.validation.${form.formState.errors.manualItemName.message}`,
-                            )}
-                          </p>
-                        ) : null}
-                      </FormItem>
-                    )}
-                  />
-                </>
-              ) : (
+            {isManualEntry ? (
+              <>
                 <FormField
                   control={form.control}
-                  name="item"
+                  name="manualItemId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        {t("settings.userNotifications.fields.item")}
+                        {t("settings.userNotifications.manualEntry.itemId")}
                       </FormLabel>
                       <FormControl
-                        render=<WatchedItemSelector
+                        render=<Input
+                          {...field}
                           disabled={!selectedWorld}
-                          loading={isItemsLoading}
-                          errorMessage={
-                            itemSearchQuery.isError
-                              ? t("common.searchUnavailable")
-                              : undefined
-                          }
-                          items={itemSearchResults}
-                          searchValue={itemSearchValue}
-                          selectedItem={field.value}
                           placeholder={t(
-                            "settings.userNotifications.placeholders.item",
+                            "settings.userNotifications.manualEntry.itemIdPlaceholder",
                           )}
-                          searchPlaceholder={t(
-                            "settings.userNotifications.placeholders.searchItems",
-                          )}
-                          emptyMessage={t(
-                            "settings.userNotifications.empty.items",
-                          )}
-                          loadingMessage={t(
-                            "settings.userNotifications.loading.items",
-                          )}
-                          disabledMessage={t(
-                            "settings.userNotifications.validation.worldRequired",
-                          )}
-                          onSearchChange={setItemSearchValue}
-                          onSelect={field.onChange}
                         />
                       />
-                      {form.formState.errors.item ? (
+                      {form.formState.errors.manualItemId ? (
                         <p className="text-sm text-destructive">
                           {t(
-                            `settings.userNotifications.validation.${form.formState.errors.item.message}`,
+                            `settings.userNotifications.validation.${form.formState.errors.manualItemId.message}`,
                           )}
                         </p>
                       ) : null}
                     </FormItem>
                   )}
                 />
-              )}
 
+                <FormField
+                  control={form.control}
+                  name="manualItemName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {t("settings.userNotifications.manualEntry.itemName")}
+                      </FormLabel>
+                      <FormControl
+                        render=<Input
+                          {...field}
+                          disabled={!selectedWorld}
+                          placeholder={t(
+                            "settings.userNotifications.manualEntry.itemNamePlaceholder",
+                          )}
+                        />
+                      />
+                      {form.formState.errors.manualItemName ? (
+                        <p className="text-sm text-destructive">
+                          {t(
+                            `settings.userNotifications.validation.${form.formState.errors.manualItemName.message}`,
+                          )}
+                        </p>
+                      ) : null}
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
               <FormField
                 control={form.control}
-                name="manualEntry"
+                name="item"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
+                  <FormItem>
+                    <FormLabel className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      {t("settings.userNotifications.fields.item")}
+                    </FormLabel>
                     <FormControl
-                      render=<Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                      render=<WatchedItemSelector
+                        disabled={!selectedWorld}
+                        loading={isItemsLoading}
+                        errorMessage={
+                          itemSearchQuery.isError
+                            ? t("common.searchUnavailable")
+                            : undefined
+                        }
+                        items={itemSearchResults}
+                        searchValue={itemSearchValue}
+                        selectedItem={field.value}
+                        placeholder={t(
+                          "settings.userNotifications.placeholders.item",
+                        )}
+                        searchPlaceholder={t(
+                          "settings.userNotifications.placeholders.searchItems",
+                        )}
+                        emptyMessage={t(
+                          "settings.userNotifications.empty.items",
+                        )}
+                        loadingMessage={t(
+                          "settings.userNotifications.loading.items",
+                        )}
+                        disabledMessage={t(
+                          "settings.userNotifications.validation.worldRequired",
+                        )}
+                        onSearchChange={setItemSearchValue}
+                        onSelect={field.onChange}
                       />
                     />
-                    <FormLabel className="!mt-0 text-xs text-muted-foreground">
-                      {t("settings.userNotifications.manualEntry.checkbox")}
-                    </FormLabel>
+                    {form.formState.errors.item ? (
+                      <p className="text-sm text-destructive">
+                        {t(
+                          `settings.userNotifications.validation.${form.formState.errors.item.message}`,
+                        )}
+                      </p>
+                    ) : null}
                   </FormItem>
                 )}
               />
+            )}
 
-              {isManualEntry ? (
-                <div className="flex items-start gap-2 rounded-md bg-blue-500/10 px-3 py-2">
-                  <Info className="mt-0.5 size-3.5 shrink-0 text-blue-500" />
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    {t("settings.userNotifications.manualEntry.hint")}
-                  </p>
-                </div>
-              ) : null}
-            </div>
+            <FormField
+              control={form.control}
+              name="manualEntry"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2">
+                  <FormControl
+                    render=<Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  />
+                  <FormLabel className="!mt-0 text-xs text-muted-foreground">
+                    {t("settings.userNotifications.manualEntry.checkbox")}
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
 
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">
-                {t("settings.userNotifications.watchForm.footer")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.userNotifications.watchForm.limitStatus", {
-                  count: watchedItemsCount,
+            {isManualEntry ? (
+              <div className="flex items-start gap-2 rounded-md bg-blue-500/10 px-3 py-2">
+                <Info className="mt-0.5 size-3.5 shrink-0 text-blue-500" />
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t("settings.userNotifications.manualEntry.hint")}
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {t("settings.userNotifications.watchForm.footer")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.userNotifications.watchForm.limitStatus", {
+                count: watchedItemsCount,
+                limit: USER_WATCHED_ITEMS_LIMIT,
+              })}
+            </p>
+            {isWatchedItemLimitReached ? (
+              <p className="text-xs text-destructive">
+                {t("settings.userNotifications.validation.watchLimitReached", {
                   limit: USER_WATCHED_ITEMS_LIMIT,
                 })}
               </p>
-              {isWatchedItemLimitReached ? (
-                <p className="text-xs text-destructive">
-                  {t(
-                    "settings.userNotifications.validation.watchLimitReached",
-                    {
-                      limit: USER_WATCHED_ITEMS_LIMIT,
-                    },
-                  )}
-                </p>
-              ) : null}
-            </div>
-          </DialogBody>
+            ) : null}
+          </div>
 
-          <DialogFooter>
-            <Button
-              type="submit"
-              size="sm"
-              loading={createWatchedItem.isPending}
-              disabled={
-                createWatchedItem.isPending ||
-                !hasActiveDm ||
-                isWatchedItemLimitReached
-              }
-            >
-              {t("settings.userNotifications.actions.addWatch")}
-            </Button>
-          </DialogFooter>
+          <Button
+            type="submit"
+            size="sm"
+            loading={createWatchedItem.isPending}
+            disabled={
+              createWatchedItem.isPending ||
+              !hasActiveDm ||
+              isWatchedItemLimitReached
+            }
+          >
+            {t("settings.userNotifications.actions.addWatch")}
+          </Button>
         </form>
       </Form>
     </>
