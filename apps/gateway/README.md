@@ -61,6 +61,40 @@ Record the browser and observed blocked-cookie reason; do not replace this flow
 with another token or claim the browser path passed without observing it. Do not
 include cookie values or private handshake headers in reports or committed tests.
 
+## Realtime connection diagnostics
+
+`lootlog_gateway_connections_opened_total` counts admitted sockets. Connection
+capacity rejections are counted only by the existing runtime gauge
+`lootlog_gateway_connections_rejected_total`, which samples the process's
+cumulative admission rejection count.
+
+`lootlog_gateway_connection_lifetime_seconds` records each admitted socket's
+lifetime once when it closes. Its histogram count is the closed-connection count
+(`lootlog_gateway_connection_lifetime_seconds_count` in Prometheus); there is no
+separate closed counter. Buckets include 24 hours and infinity, and the unit is
+seconds. Fixed labels identify the platform, joined state, close code and cause.
+Encoding mismatches use `1003 / unsupported_frame`. Bun reports oversized frames
+as `1006` with its fixed `Received too big message` reason, classified as
+`payload_limit`; other 1006 closes are `abnormal`. Browser transport loss normally
+appears as an abnormal close. Arbitrary close reasons and session identifiers
+never become labels.
+
+`lootlog_gateway_commands_completed_total` counts decoded, admitted commands by
+type and outcome: `success`, `retryable`, `rejected`, `defect`, or `interrupted`.
+Here `rejected` means a nonretryable command failure, such as denied access.
+Admission overloads are counted only by the existing runtime gauge
+`lootlog_gateway_commands_rejected_total`; they are not command completions.
+Both event counters are monotonic. Command traces cover `session.join` and
+`presence.publish`, including their failure exits; high-frequency commands such
+as heartbeats use the completion metric without creating a root trace.
+
+Presence-capable clients keep the current socket after a correlated retryable
+heartbeat error. Retries use exponential backoff with jitter and must leave at
+least two seconds for a response before the last successful presence refresh
+expires (60 seconds). A retryable error that exhausts this budget closes with
+`4003`; silence closes with `4001`, and a nonretryable rejection with `4002`.
+Game and Web providers restore their session and presence after a reconnect.
+
 ## Realtime access policy updates
 
 Each connection can retain at most 4,096 distinct subscriptions, including its
@@ -144,37 +178,3 @@ reconnect after an offline permission change. Check both userscript and extensio
 transports against the same realtime event codec. Unchanged rebalance must cause
 no timer or chat requests, and restricted cached rows must not reappear after an
 older pending response completes.
-
-## Realtime connection diagnostics
-
-`lootlog_gateway_connections_opened_total` counts admitted sockets. Connection
-capacity rejections are counted only by the existing runtime gauge
-`lootlog_gateway_connections_rejected_total`, which samples the process's
-cumulative admission rejection count.
-
-`lootlog_gateway_connection_lifetime_seconds` records each admitted socket's
-lifetime once when it closes. Its histogram count is the closed-connection count
-(`lootlog_gateway_connection_lifetime_seconds_count` in Prometheus); there is no
-separate closed counter. Buckets include 24 hours and infinity, and the unit is
-seconds. Fixed labels identify the platform, joined state, close code and cause.
-Encoding mismatches use `1003 / unsupported_frame`. Bun reports oversized frames
-as `1006` with its fixed `Received too big message` reason, classified as
-`payload_limit`; other 1006 closes are `abnormal`. Browser transport loss normally
-appears as an abnormal close. Arbitrary close reasons and session identifiers
-never become labels.
-
-`lootlog_gateway_commands_completed_total` counts decoded, admitted commands by
-type and outcome: `success`, `retryable`, `rejected`, `defect`, or `interrupted`.
-Here `rejected` means a nonretryable command failure, such as denied access.
-Admission overloads are counted only by the existing runtime gauge
-`lootlog_gateway_commands_rejected_total`; they are not command completions.
-Both event counters are monotonic. Command traces cover `session.join` and
-`presence.publish`, including their failure exits; high-frequency commands such
-as heartbeats use the completion metric without creating a root trace.
-
-Presence-capable clients keep the current socket after a correlated retryable
-heartbeat error. Retries use exponential backoff with jitter and must leave at
-least two seconds for a response before the last successful presence refresh
-expires (60 seconds). A retryable error that exhausts this budget closes with
-`4003`; silence closes with `4001`, and a nonretryable rejection with `4002`.
-Game and Web providers restore their session and presence after a reconnect.
