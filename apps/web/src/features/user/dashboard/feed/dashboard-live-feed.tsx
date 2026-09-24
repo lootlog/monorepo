@@ -2,10 +2,11 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { ArrowUp, Pause, Play, Radio } from "lucide-react";
+import { ArrowUp, BookMarked, Pause, Play, Radio } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { LiveFeedSkeleton } from "./live-feed-skeleton";
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useMinuteTimestamp } from "@/hooks/utils/use-minute-timestamp";
@@ -130,9 +131,13 @@ export function DashboardLiveFeed() {
           ) : (
             <>
               {items.length === 0 && !state.isError && (
-                <p className="flex flex-1 items-center justify-center px-3 py-8 text-center text-sm text-muted-foreground">
-                  {t("statistics.feedEmpty")}
-                </p>
+                <EmptyState
+                  icon={BookMarked}
+                  illustration="chronicle"
+                  title={t("statistics.feedEmptyTitle")}
+                  description={t("statistics.feedEmpty")}
+                  className="flex-1"
+                />
               )}
               <ol
                 aria-label={t("statistics.feedTitle")}

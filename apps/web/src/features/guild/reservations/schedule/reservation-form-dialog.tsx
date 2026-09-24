@@ -1,6 +1,7 @@
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -70,7 +71,7 @@ export function ReservationFormDialog({
         <DialogHeader>
           <DialogTitle>{t("reservations.schedule.dialog.title")}</DialogTitle>
         </DialogHeader>
-        <div className="px-4 pb-4 pt-4">{form}</div>
+        <DialogBody>{form}</DialogBody>
       </DialogContent>
     </Dialog>
   );

@@ -74,6 +74,8 @@
     .rias
   )
   .app-content-frame {
+  /* The filters panel sits over the wallpaper character; text contrast is carried by the 78% veil. */
+  --filters-sidebar: color-mix(in srgb, var(--sidebar) 42%, transparent);
   background-image:
     linear-gradient(
       color-mix(in srgb, var(--background) 78%, transparent),

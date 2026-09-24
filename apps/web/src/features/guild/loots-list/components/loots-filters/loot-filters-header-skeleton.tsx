@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import { FilterBar } from "@/components/common/filter-bar";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 
@@ -17,12 +18,12 @@ export const LootFiltersHeaderSkeleton = ({
       <Skeleton className="h-9 w-[42%] min-w-28 shrink-0 rounded-xl" />
     ) : (
       <>
-        {!isCompactLayout && (
-          <div aria-hidden className="relative h-9 w-3 shrink-0">
-            <div className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 bg-border" />
-          </div>
-        )}
-        <div className="flex w-[19.5rem] shrink-0 items-center gap-2">
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-2",
+            isCompactLayout ? "ml-auto" : "ml-1 w-[319px]",
+          )}
+        >
           <Skeleton className="h-9 min-w-0 flex-1 rounded-xl" />
           <Skeleton className="h-9 w-[4.5rem] shrink-0 rounded-xl" />
           <Skeleton className="size-9 shrink-0 rounded-xl" />

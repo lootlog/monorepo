@@ -1,5 +1,6 @@
 import type { ComponentType, FC, ReactNode } from "react";
 import {
+  DIALOG_HEADER_CLASS,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -84,15 +85,17 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
 
   return (
     <>
+      {/* The same header box as every dialog; the drawer carries its own close button inside it. */}
       <header
+        data-slot="dialog-header"
         className={cn(
-          "shrink-0 border-b border-border px-3 py-3 text-left sm:px-4",
-          closeButton ? "pr-3" : "pr-12 sm:pr-14",
+          DIALOG_HEADER_CLASS,
+          closeButton && "pr-(--dialog-inset)",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="min-w-0 flex-1 basis-56">
-            <Title className="px-0 pt-0 text-base leading-tight">
+            <Title>
               <LootNpcs npcs={loot.npcs} size="lg" />
             </Title>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -127,7 +130,11 @@ const LootDetailsContent: FC<LootDetailsContentProps> = ({
           </div>
         </div>
       </header>
-      <ScrollArea className="min-h-0 flex-1" orientation="vertical">
+      {/* The sections follow the host's gutter: the dialog's inset, or the drawer's. */}
+      <ScrollArea
+        className="min-h-0 flex-1 [--loot-inset:var(--dialog-inset)]"
+        orientation="vertical"
+      >
         <LootPlayersSection loot={loot} onShowPlayerLoots={onShowPlayerLoots} />
         <LootItemIds loot={loot} />
         <LootComments lootId={loot.id} />
@@ -241,7 +248,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
         open={isOpen}
         onOpenChange={(open) => !open && closeLootDetails()}
       >
-        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0">
+        <DrawerContent className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden border-border bg-background p-0 [--dialog-inset:1rem]">
           {renderContent(
             DrawerTitle,
             <DrawerClose
@@ -266,7 +273,7 @@ export const LootDetailsDialog: FC<LootDetailsDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeLootDetails()}>
       <DialogContent
         // A fixed height keeps the dialog still while comments are added.
-        className="flex h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col overflow-hidden rounded-2xl border-border bg-background p-0 sm:max-w-3xl"
+        className="h-[min(85dvh,52rem)] w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] sm:max-w-3xl"
         aria-describedby={undefined}
         initialFocus={false}
       >

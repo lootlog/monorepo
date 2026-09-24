@@ -1,6 +1,7 @@
 import { TextLink } from "@lootlog/ui/components/text-link";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -31,7 +32,7 @@ export const InstallAddonModal: FC = () => {
             {t("ui.modals.installAddon.description")}
           </DialogDescription>
         </DialogHeader>
-        <div className="p-4">
+        <DialogBody>
           <TextLink
             href={ADDON_INSTALL_URL}
             target="_blank"
@@ -41,7 +42,7 @@ export const InstallAddonModal: FC = () => {
           >
             {t("ui.actions.installAddon")}
           </TextLink>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

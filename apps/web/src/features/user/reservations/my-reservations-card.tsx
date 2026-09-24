@@ -9,6 +9,7 @@ import {
   type MyReservationsResponseDtoItemsItem,
 } from "@lootlog/client/main";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
 import { ROUTES } from "@/config/routes";
@@ -79,9 +80,13 @@ export function MyReservationsCard() {
               ))}
             </ul>
           ) : (
-            <p className="flex flex-1 items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">
-              {t("reservations.my.emptyUpcoming")}
-            </p>
+            <EmptyState
+              icon={CalendarDays}
+              illustration="ledger"
+              title={t("reservations.my.emptyUpcomingTitle")}
+              description={t("reservations.my.emptyUpcoming")}
+              className="min-h-48 py-8"
+            />
           )}
         </StatisticsQueryState>
       </SectionCardContent>
