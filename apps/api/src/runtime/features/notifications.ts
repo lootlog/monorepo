@@ -14,6 +14,7 @@ import {
   type NotificationGuildTargets,
 } from "#src/notifications/targets/notification-guild-targets";
 import { makeNotificationJobDispatch } from "#src/notifications/jobs/notification-job-dispatch";
+import { canDispatchLootNotification } from "#src/notifications/notification-loot-source-visibility";
 import { makeNotificationJobOperations } from "#src/notifications/jobs/notification-job-operations";
 import {
   makeNotificationJobRebuild,
@@ -132,9 +133,12 @@ export const notificationsServicesLive = Layer.effect(
         find: jobsStore.findJobWithRelations,
         update: jobsStore.updateJob,
         claim: jobsStore.claimJob,
+        block: jobsStore.blockJob,
       },
       {
         hasRequiredGuildPermissions: guildSync.hasRequiredGuildPermissions,
+        canReadLootSource: (jobId, discordId) =>
+          canDispatchLootNotification(database, jobId, discordId),
       },
       {
         publish: (payload) =>

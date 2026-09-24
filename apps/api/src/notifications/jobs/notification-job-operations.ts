@@ -1,4 +1,4 @@
-import { notificationApiKeyJobFilter } from "../notification-api-key-scope.js";
+import { notificationJobVisibilityFilter } from "../notification-api-key-scope.js";
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
@@ -60,7 +60,10 @@ export const makeNotificationJobOperations = (
     history: boolean,
   ) =>
     Effect.gen(function* () {
-      const scopeFilter = yield* notificationApiKeyJobFilter(database);
+      const scopeFilter = yield* notificationJobVisibilityFilter(
+        database,
+        ownerType === NotificationOwnerType.USER ? ownerId : undefined,
+      );
 
       const query = selectNotificationJobsWithRelations(database)
         .where(

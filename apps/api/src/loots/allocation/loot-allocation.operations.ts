@@ -1,13 +1,12 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { createHash } from "node:crypto";
 import { Clock, Effect, Schema } from "effect";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import type {
   GuildLootEventNpc,
   GuildLootShareUpdatedEventV2,
 } from "@lootlog/schema/loot-events";
 import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
-import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
+import type { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { stableJsonStringify } from "@lootlog/schema/stable-json";
 import {
   RabbitExchange,
@@ -107,13 +106,7 @@ const socketNpcs = (
   npcs.map(({ npcSnapshot }) => ({
     lvl: npcSnapshot.lvl,
     prof: npcSnapshot.prof,
-    type:
-      npcSnapshot.type ??
-      getNpcTypeByWt(
-        NpcType,
-        npcSnapshot.wt ?? 0,
-        npcSnapshot.prof ?? undefined,
-      ),
+    type: npcSnapshot.type,
     wt: npcSnapshot.wt,
   }));
 
