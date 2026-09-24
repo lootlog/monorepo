@@ -7,6 +7,7 @@ import { LootlogApi } from "../../lootlog-api.js";
 import {
   deleteCurrentAccountHttpResponse,
   getCurrentUserGamePreferences,
+  getCurrentUserAccessibleGuilds,
   getCurrentUserGuilds,
   getCurrentUserPreferences,
   toAccountOrganizationHttpResponse,
@@ -31,11 +32,13 @@ export const UsersHandlers = HttpApiBuilder.group(
           updateCurrentUserPreferences(payload),
         ),
       )
-      .handle("UsersControllerGetCurrentUserGuilds", () =>
-        toAccountOrganizationHttpResponse(getCurrentUserGuilds()),
+      .handle("UsersControllerGetCurrentUserGuilds", ({ query }) =>
+        toAccountOrganizationHttpResponse(
+          getCurrentUserGuilds(query.refresh ?? false),
+        ),
       )
       .handle("UsersControllerGetCurrentUserAccessibleGuilds", () =>
-        toAccountOrganizationHttpResponse(getCurrentUserGuilds(true)),
+        toAccountOrganizationHttpResponse(getCurrentUserAccessibleGuilds()),
       )
       .handle("UsersControllerGetUserGameAccountPreferences", ({ params }) =>
         toAccountOrganizationHttpResponse(

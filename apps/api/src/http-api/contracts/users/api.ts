@@ -9,6 +9,7 @@ import {
 import { BearerSecurityMiddleware, HttpErrorResponse } from "../shared.js";
 import { StatusOk } from "#src/contracts/shared";
 import {
+  CurrentOrganizationsQuery,
   CurrentOrganizationsResponse,
   UserGameAccountPreferencesResponse,
   GameAccountPreferencesPath,
@@ -62,14 +63,14 @@ export class UsersGroup extends HttpApiGroup.make("users").add(
   HttpApiEndpoint.get(
     "UsersControllerGetCurrentUserGuilds",
     "/users/@me/guilds",
-    { success: CurrentOrganizationsResponse },
+    { query: CurrentOrganizationsQuery, success: CurrentOrganizationsResponse },
   )
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "UsersController_getCurrentUserGuilds")
     .annotate(OpenApi.Summary, "Get current user guilds")
     .annotate(
       OpenApi.Description,
-      "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status",
+      "Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes; set refresh to fetch it from Discord again.",
     ),
   HttpApiEndpoint.get(
     "UsersControllerGetCurrentUserAccessibleGuilds",

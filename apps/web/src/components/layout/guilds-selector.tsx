@@ -1,6 +1,7 @@
 import { orderGuilds } from "@lootlog/domain/guild-preferences";
 import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { GuildNavItem } from "@/components/layout/guild-nav-item";
+import { GuildsRefreshButton } from "@/components/layout/guilds-refresh-button";
 import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -12,6 +13,8 @@ import { GuildsSelectorSkeleton } from "@/components/layout/guilds-selector-skel
 import { useLootUnreadCounts } from "@/contexts/loot-unread-context";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useUsersControllerGetCurrentUserGuilds } from "@lootlog/client/main";
+import { useQueryClient } from "@tanstack/react-query";
+import { refreshCurrentUserGuilds } from "@/lib/current-user-guilds";
 import {
   useUpdateUserPreferences,
   useUserPreferences,
@@ -28,6 +31,7 @@ const getHiddenGuildIds = (
 
 export const GuildsSelector: FC = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const guildsQuery = useUsersControllerGetCurrentUserGuilds();
   const guilds = guildsQuery.data;
   const preferencesQuery = useUserPreferences();
@@ -154,6 +158,14 @@ export const GuildsSelector: FC = () => {
     );
   };
 
+  const refreshGuilds = async () => {
+    try {
+      await refreshCurrentUserGuilds(queryClient);
+    } catch {
+      toast.error(t("layout.guildsSelector.refreshError"));
+    }
+  };
+
   const guildList =
     isDragging || (pendingOrderKey && pendingOrderKey !== orderedGuildsKey)
       ? (localGuilds ?? orderedGuilds)
@@ -185,56 +197,64 @@ export const GuildsSelector: FC = () => {
           preferencesQuery.data === undefined ? (
           <GuildsSelectorSkeleton />
         ) : (
-          <Reorder.Group
-            axis="y"
-            values={guildList}
-            onReorder={handleReorder}
-            className="flex flex-col gap-0.5 pt-1 pb-2"
-            as="div"
-          >
-            {guildList.map((guild, index) => (
-              <Reorder.Item
-                key={guild.id}
-                value={guild}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                className="w-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-                whileDrag={{
-                  scale: 1.1,
-                  zIndex: 50,
-                  transition: { type: "spring", stiffness: 300, damping: 30 },
-                }}
-                dragListener
-                dragControls={undefined}
-              >
-                <m.div
-                  className="w-full"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{
-                    duration: 0.2,
-                    delay: index * 0.03,
-                    ease: "easeOut",
+          <>
+            <Reorder.Group
+              axis="y"
+              values={guildList}
+              onReorder={handleReorder}
+              className="flex flex-col gap-0.5 pt-1 pb-2"
+              as="div"
+            >
+              {guildList.map((guild, index) => (
+                <Reorder.Item
+                  key={guild.id}
+                  value={guild}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  className="w-full flex items-center justify-center cursor-grab active:cursor-grabbing"
+                  whileDrag={{
+                    scale: 1.1,
+                    zIndex: 50,
+                    transition: { type: "spring", stiffness: 300, damping: 30 },
                   }}
+                  dragListener
+                  dragControls={undefined}
                 >
-                  <GuildNavItem
-                    guild={guild}
-                    isDragging={isDragging}
-                    currentGuildId={currentGuildId}
-                    unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
-                    isHidden={hiddenGuildIds.has(guild.id)}
-                    onToggleHidden={() =>
-                      toggleGuildVisibility(
-                        guild.id,
-                        guild.name,
-                        hiddenGuildIds.has(guild.id),
-                      )
-                    }
-                  />
-                </m.div>
-              </Reorder.Item>
-            ))}
-          </Reorder.Group>
+                  <m.div
+                    className="w-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{
+                      duration: 0.2,
+                      delay: index * 0.03,
+                      ease: "easeOut",
+                    }}
+                  >
+                    <GuildNavItem
+                      guild={guild}
+                      isDragging={isDragging}
+                      currentGuildId={currentGuildId}
+                      unreadLootsCount={lootUnreadCounts[guild.id] ?? 0}
+                      isHidden={hiddenGuildIds.has(guild.id)}
+                      onToggleHidden={() =>
+                        toggleGuildVisibility(
+                          guild.id,
+                          guild.name,
+                          hiddenGuildIds.has(guild.id),
+                        )
+                      }
+                    />
+                  </m.div>
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
+            <div className="flex justify-center pb-2">
+              <GuildsRefreshButton
+                isRefreshing={guildsQuery.isFetching}
+                onRefresh={() => void refreshGuilds()}
+              />
+            </div>
+          </>
         )}
       </ScrollArea>
       <Separator />

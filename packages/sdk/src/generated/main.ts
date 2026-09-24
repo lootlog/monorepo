@@ -8947,6 +8947,10 @@ export type UsersControllerUpdateUserPreferences429 = {
   message: string;
 };
 
+export type UsersControllerGetCurrentUserGuildsParams = {
+refresh?: boolean;
+};
+
 export type UsersControllerGetCurrentUserGuilds401 = {
   message: string;
 };
@@ -12270,21 +12274,28 @@ return mainFetch<UserPreferencesResponseDtoOutput>(getUsersControllerUpdateUserP
 
 
 
-export const getUsersControllerGetCurrentUserGuildsUrl = () => {
+export const getUsersControllerGetCurrentUserGuildsUrl = (params?: UsersControllerGetCurrentUserGuildsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/users/@me/guilds`
+  return stringifiedParams.length > 0 ? `/users/@me/guilds?${stringifiedParams}` : `/users/@me/guilds`
 }
 
 /**
- * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status
+ * Retrieve the authenticated user's Discord guilds that also exist in Lootlog, together with Lootlog access status. The Discord guild list is cached for up to 15 minutes; set refresh to fetch it from Discord again.
  * @summary Get current user guilds
  */
-export const usersControllerGetCurrentUserGuilds = async ( options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
+export const usersControllerGetCurrentUserGuilds = async (params?: UsersControllerGetCurrentUserGuildsParams, options?: Parameters<typeof mainFetch>[1]): Promise<UserCurrentGuildResponseDtoOutput[]> => {
 
-  return mainFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserGuildsUrl(),
+  return mainFetch<UserCurrentGuildResponseDtoOutput[]>(getUsersControllerGetCurrentUserGuildsUrl(params),
   {
     ...options,
     method: 'GET'
