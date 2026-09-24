@@ -2,12 +2,16 @@ import {
   useState,
   useEffect,
   useEffectEvent,
-  useLayoutEffect,
   useRef,
   type FC,
   type RefObject,
 } from "react";
-import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
+import { defaultRangeExtractor } from "@tanstack/react-virtual";
+import {
+  getPageScroller,
+  usePageScrollsDocument,
+  usePageVirtualizer,
+} from "@/hooks/utils/use-page-scroll";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
 import type {
@@ -52,9 +56,11 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   onTurnSelect,
   onVisibleTurnsChange,
 }) => {
+  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+
   const listRef = useRef<HTMLUListElement>(null);
-  const [scrollMargin, setScrollMargin] = useState(0);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const scrollsDocument = usePageScrollsDocument();
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
@@ -64,12 +70,12 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     setScrollElement(scrollViewportRef.current);
   }, [scrollViewportRef]);
 
-  const virtualizer = useVirtualizer({
+  const virtualizer = usePageVirtualizer<HTMLLIElement>({
     count: events?.length ?? 0,
-    getScrollElement: () => scrollElement,
+    scrollElement,
+    listRef,
     estimateSize: () => 72,
     overscan: 8,
-    scrollMargin,
     useAnimationFrameWithResizeObserver: true,
     rangeExtractor: (range) => {
       const indexes = defaultRangeExtractor(range);
@@ -87,37 +93,6 @@ export const BattleLogList: FC<BattleLogListProps> = ({
     },
   });
 
-  useLayoutEffect(() => {
-    const viewport = scrollElement;
-    const list = listRef.current;
-
-    if (!viewport || !list) return;
-
-    const updateMargin = () => {
-      setScrollMargin(
-        list.getBoundingClientRect().top -
-          viewport.getBoundingClientRect().top +
-          viewport.scrollTop,
-      );
-    };
-
-    updateMargin();
-    const observer = new ResizeObserver(updateMargin);
-    observer.observe(viewport);
-
-    // The wrapping detail content also changes when a timeline or overview loads.
-    if (list.parentElement) observer.observe(list.parentElement);
-
-    if (viewport.firstElementChild)
-      observer.observe(viewport.firstElementChild);
-    window.addEventListener("resize", updateMargin);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateMargin);
-    };
-  }, [scrollElement]);
-
   const warriorsMap = new Map(
     warriors.map((warrior) => [warrior.originalId, warrior]),
   );
@@ -125,6 +100,7 @@ export const BattleLogList: FC<BattleLogListProps> = ({
   const searchMatchedTurnsSet = new Set(searchMatchedTurns);
 
   const virtualItems = virtualizer.getVirtualItems();
+  const { scrollMargin } = virtualizer.options;
 
   const visibleRangeKey = virtualItems
     .map((item) => `${item.index}:${item.size}`)
@@ -160,9 +136,9 @@ export const BattleLogList: FC<BattleLogListProps> = ({
       return;
     }
 
-    const viewport = scrollElement;
+    const scroller = getPageScroller(scrollElement, scrollsDocument);
 
-    if (!viewport) return;
+    if (!scroller) return;
     let frame = 0;
     let stableFrames = 0;
     let attempts = 0;
@@ -179,32 +155,34 @@ export const BattleLogList: FC<BattleLogListProps> = ({
       );
 
       if (row) {
-        const viewportRect = viewport.getBoundingClientRect();
+        const band = scroller.getVisibleBand();
         const stickyRect = stickyContentRef?.current?.getBoundingClientRect();
 
         // Content pinned over the top of the scroller hides rows, so align below it.
         const visibleTop =
           stickyRect &&
-          stickyRect.bottom > viewportRect.top &&
-          stickyRect.top < viewportRect.bottom
-            ? Math.max(viewportRect.top, stickyRect.bottom)
-            : viewportRect.top;
+          stickyRect.bottom > band.top &&
+          stickyRect.top < band.bottom
+            ? Math.max(band.top, stickyRect.bottom)
+            : band.top;
+
+        const scrollTop = scroller.getScrollTop();
 
         const target = Math.max(
           0,
           Math.min(
-            viewport.scrollHeight - viewport.clientHeight,
-            viewport.scrollTop +
+            scroller.getMaxScrollTop(),
+            scrollTop +
               row.getBoundingClientRect().top -
               visibleTop -
               BATTLE_LOG_SCROLL_OFFSET_PX,
           ),
         );
 
-        const settled = Math.abs(viewport.scrollTop - target) <= 1;
+        const settled = Math.abs(scrollTop - target) <= 1;
         stableFrames = settled ? stableFrames + 1 : 0;
 
-        if (!settled) viewport.scrollTo({ top: target, behavior: "instant" });
+        if (!settled) scroller.scrollTo({ top: target, behavior: "instant" });
 
         if (stableFrames >= 3) {
           finished = true;
@@ -232,20 +210,24 @@ export const BattleLogList: FC<BattleLogListProps> = ({
       notifyScrollCancel(requestedTurn);
     };
 
-    viewport.addEventListener("wheel", cancelFromUserInput, { passive: true });
-    viewport.addEventListener("touchstart", cancelFromUserInput, {
+    const { eventTarget } = scroller;
+    eventTarget.addEventListener("wheel", cancelFromUserInput, {
+      passive: true,
+    });
+    eventTarget.addEventListener("touchstart", cancelFromUserInput, {
       passive: true,
     });
 
     return () => {
       cancelAnimationFrame(frame);
-      viewport.removeEventListener("wheel", cancelFromUserInput);
-      viewport.removeEventListener("touchstart", cancelFromUserInput);
+      eventTarget.removeEventListener("wheel", cancelFromUserInput);
+      eventTarget.removeEventListener("touchstart", cancelFromUserInput);
     };
   }, [
     requestedTurn,
     scrollToSelectedTurnRequestId,
     scrollElement,
+    scrollsDocument,
     scrollMargin,
     events?.length,
     virtualizer,

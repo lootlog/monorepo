@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { useRef } from "react";
+import { useState } from "react";
 import {
   getMembersControllerGetGuildMembersQueryKey,
   useMembersControllerGetGuildMembers,
@@ -44,20 +44,20 @@ const members: MemberResponseDto[] = ["Alice", "Bob", "Carol"].map(
 );
 
 function MemberList({ table }: { table: boolean }) {
-  const viewport = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
 
   const { data = [] } = useMembersControllerGetGuildMembers({
     guildId: "guild-1",
   });
 
   return (
-    <div ref={viewport}>
+    <div ref={setViewport}>
       {table ? (
         <MembersTable
           members={data}
           guildOwnerId="owner"
           activityStatsByDiscordIdAndSource={new Map()}
-          scrollElementRef={viewport}
+          scrollElement={viewport}
           isMobile={false}
           canManageMembers
           memberGamePresenceByDiscordId={undefined}

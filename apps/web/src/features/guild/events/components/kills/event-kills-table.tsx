@@ -1,6 +1,5 @@
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
 import { AlertCircle, Skull } from "lucide-react";
@@ -19,6 +18,7 @@ import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { createEventKillsTableColumns } from "./event-kills-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
+import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
 
 type EventKillsTableBaseProps = {
   eventId: string;
@@ -101,11 +101,11 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
     data: kills,
   });
 
-  useEffect(() => {
-    if (!isPreview) {
-      scrollElement?.scrollTo(0, 0);
-    }
-  }, [isPreview, resetKey, scrollElement]);
+  useResetScrollTop({
+    enabled: !isPreview,
+    getScrollElement: () => scrollElement,
+    resetKey,
+  });
 
   const loaderRowRef = useInfiniteScrollSentinel<HTMLTableRowElement>({
     enabled: !hasError,
