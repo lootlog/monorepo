@@ -987,6 +987,10 @@
         "title": "Default v2",
         "description": "Ciemny system sygnałów Lootloga"
       },
+      "muted": {
+        "title": "Stonowany",
+        "description": "Czerń bez jaskrawych kolorów"
+      },
       "cyberpunk": { "title": "Cyberpunk", "description": "Neon" },
       "pastel": { "title": "Pastel", "description": "Miękkie kolory" },
       "fantasy": {
@@ -1043,9 +1047,10 @@
       }
     },
     "announcement": {
-      "newTheme": "Nowy motyw!",
-      "catThemeDescription": "Wypróbuj koci motyw - Różowy Kociak! 🐾",
-      "tryIt": "Wypróbuj"
+      "newTheme": "Nowy motyw: {{title}}",
+      "description": "Czarne tła i przygaszone kolory, bez jaskrawych akcentów.",
+      "tryIt": "Wypróbuj",
+      "dismiss": "Ukryj ogłoszenie"
     }
   }
 }
