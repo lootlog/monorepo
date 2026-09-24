@@ -93,6 +93,28 @@ it("submits actual mapped PvP events with stable identity and clears finished st
   expect(useBattleStore.getState().lastBattleHash).toMatch(/^[a-f0-9]{64}$/);
 });
 
+it("stops capturing once an NPC joins and never submits that battle", async () => {
+  const fixture = createBattleTest();
+  const processor = new BattleEventProcessor();
+  await processor.handle(pvpStart());
+  expect(useBattleStore.getState().getCaptureSnapshot().events).toHaveLength(1);
+
+  await processor.handle({
+    f: { m: ["npc-joins"], w: { "-100": createBattleWarrior(-100) } },
+  });
+  await processor.handle({ f: { m: ["later-turn"] } });
+
+  expect(useBattleStore.getState().getCaptureSnapshot()).toMatchObject({
+    bytes: 0,
+    events: [],
+    turns: [],
+  });
+
+  await processor.handle(end);
+  expect(fixture.battles()).toHaveLength(0);
+  expect(fixture.kills()).toHaveLength(1);
+});
+
 it("does not submit a one-team battle", async () => {
   const fixture = createBattleTest();
   const processor = new BattleEventProcessor();
