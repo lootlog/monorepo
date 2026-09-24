@@ -153,37 +153,6 @@ export const makeRedisStore = (
       }
     },
 
-    async deleteByPattern(pattern: string, batchSize = 500): Promise<number> {
-      const prefixedPattern = prefixKey(pattern);
-      let cursor = "0";
-      let deletedCount = 0;
-
-      do {
-        const [nextCursor, keys] = await run(
-          redis.send<[string, string[]]>(
-            "SCAN",
-            cursor,
-            "MATCH",
-            prefixedPattern,
-            "COUNT",
-            "500",
-          ),
-        );
-
-        cursor = nextCursor;
-
-        for (let index = 0; index < keys.length; index += batchSize) {
-          const batch = keys.slice(index, index + batchSize);
-
-          if (batch.length > 0) {
-            deletedCount += await run(redis.send<number>("DEL", ...batch));
-          }
-        }
-      } while (cursor !== "0");
-
-      return deletedCount;
-    },
-
     async setNX(
       key: string,
       value: string,
@@ -224,6 +193,25 @@ export const makeRedisStore = (
       return run(redis.send("DEL", ...keys.map(prefixKey)));
     },
 
+    expire(key: string, ttlSeconds: number): Promise<number> {
+      return run(redis.send("EXPIRE", prefixKey(key), String(ttlSeconds)));
+    },
+
+    zremrangebyscore(
+      key: string,
+      min: number | "-inf",
+      max: number,
+    ): Promise<number> {
+      return run(
+        redis.send(
+          "ZREMRANGEBYSCORE",
+          prefixKey(key),
+          String(min),
+          String(max),
+        ),
+      );
+    },
+
     zadd(key: string, score: number, member: string): Promise<number> {
       return run(redis.send("ZADD", prefixKey(key), String(score), member));
     },
@@ -240,17 +228,6 @@ export const makeRedisStore = (
 
     zrem(key: string, ...members: string[]): Promise<number> {
       return run(redis.send("ZREM", prefixKey(key), ...members));
-    },
-
-    zremrangebyrank(key: string, start: number, stop: number): Promise<number> {
-      return run(
-        redis.send(
-          "ZREMRANGEBYRANK",
-          prefixKey(key),
-          String(start),
-          String(stop),
-        ),
-      );
     },
   };
 

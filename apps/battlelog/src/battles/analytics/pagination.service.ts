@@ -172,6 +172,7 @@ export const makeBattlePagination = (
       const reverseOrder = options.sortOrder === "asc" ? "desc" : "asc";
 
       const previousWindow = yield* drizzle.query.battles.findMany({
+        columns: { id: true, createdAt: true },
         where: {
           RAW: (table: typeof battles) => {
             const base = whereBuilder(table);
