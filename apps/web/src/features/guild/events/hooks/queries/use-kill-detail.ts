@@ -51,13 +51,11 @@ export const useKillDetail = ({
       heroId,
       killId,
     }),
-    queryFn: async () => {
-      const response = await eventsRankingControllerGetKillDetail({
-        guildId,
-        eventId,
-        heroId,
-        killId,
-      });
+    queryFn: async ({ signal }) => {
+      const response = await eventsRankingControllerGetKillDetail(
+        { guildId, eventId, heroId, killId },
+        { signal },
+      );
 
       return {
         ...response,

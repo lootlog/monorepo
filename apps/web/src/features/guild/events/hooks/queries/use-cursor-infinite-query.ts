@@ -10,7 +10,10 @@ type CursorPage = {
 
 type UseCursorInfiniteQueryOptions<TPage extends CursorPage> = {
   enabled: boolean;
-  fetchPage: (cursor: string | undefined) => Promise<TPage>;
+  fetchPage: (
+    cursor: string | undefined,
+    signal: AbortSignal,
+  ) => Promise<TPage>;
   queryKey: QueryKey;
 };
 
@@ -27,7 +30,7 @@ export function useCursorInfiniteQuery<TPage extends CursorPage>({
     string | undefined
   >({
     queryKey,
-    queryFn: ({ pageParam }) => fetchPage(pageParam),
+    queryFn: ({ pageParam, signal }) => fetchPage(pageParam, signal),
     enabled,
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

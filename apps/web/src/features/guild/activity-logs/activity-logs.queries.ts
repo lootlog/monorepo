@@ -75,13 +75,20 @@ export const activityLogsInfiniteQueryOptions = ({
       { guildId: guildId ?? "" },
       baseParams,
     ),
-    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+    queryFn: ({
+      pageParam,
+      signal,
+    }: {
+      pageParam: string | undefined;
+      signal: AbortSignal;
+    }) =>
       activitiesControllerFindByGuild(
         { guildId: guildId ?? "" },
         {
           ...baseParams,
           cursor: pageParam,
         },
+        { signal },
       ),
     enabled: Boolean(guildId),
     initialPageParam: undefined,

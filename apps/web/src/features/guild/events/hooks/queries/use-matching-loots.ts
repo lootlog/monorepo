@@ -55,7 +55,8 @@ export const useMatchingLoots = ({
       { guildId },
       params,
     ),
-    queryFn: () => lootsControllerFetchLootsByGuildId({ guildId }, params),
+    queryFn: ({ signal }) =>
+      lootsControllerFetchLootsByGuildId({ guildId }, params, { signal }),
     enabled: enabled && isValidParams,
   });
 };
