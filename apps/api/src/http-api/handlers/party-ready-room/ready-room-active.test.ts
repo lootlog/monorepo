@@ -1,5 +1,5 @@
 import { SchemaErrorResponseLive } from "#src/http-api/schema-error-response";
-import { expect, it } from "bun:test";
+import { expect, it, spyOn } from "bun:test";
 import { eq } from "drizzle-orm";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer, Schema } from "effect";
@@ -21,7 +21,10 @@ import {
   EXIT_READY_ROOM_PARTICIPANT_SCRIPT,
   TERMINATE_READY_ROOM_SCRIPT,
 } from "#src/messaging/ready-room/ready-room-redis-scripts";
-import { ForwardAuthIdentity } from "#src/runtime/auth/forward-auth-identity";
+import {
+  ForwardAuthIdentity,
+  type ForwardAuthIdentityValue,
+} from "#src/runtime/auth/forward-auth-identity";
 import type { ReadyRoomAggregate } from "#src/messaging/ready-room/ready-room.types";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
 import {
@@ -39,7 +42,12 @@ import type { ReadyRoomRedis } from "./ready-room.repository.js";
 
 it("lets senders discover and cancel their own NPC gatherings outside read filters without leaking hidden Organizations", async () => {
   const databaseBoundary = await createDatabaseBoundary();
-  const caller = { userId: "user", discordId: "owner" };
+
+  let caller: ForwardAuthIdentityValue = {
+    userId: "user",
+    discordId: "owner",
+  };
+
   const clock = () => Date.parse("2026-09-09T10:00:00Z");
 
   const base: ReadyRoomAggregate = {
@@ -127,6 +135,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
   ];
 
   let closeDatabaseOnCommit = false;
+  let emptyIndex = false;
   const gatheringEvents: unknown[] = [];
   const cancellationEvents: unknown[] = [];
 
@@ -173,7 +182,9 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
           : Effect.succeed(["COMMITTED"]);
       }
 
-      return Effect.succeed(rooms.map((room) => room.notificationId));
+      return Effect.succeed(
+        emptyIndex ? [] : rooms.map((room) => room.notificationId),
+      );
     },
   };
 
@@ -194,7 +205,9 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       },
       clock,
     ),
-    Layer.succeed(ReadyRoomAuthorization, { identity: Effect.succeed(caller) }),
+    Layer.succeed(ReadyRoomAuthorization, {
+      identity: Effect.sync(() => caller),
+    }),
   ).pipe(Layer.provide(Layer.succeed(ApiDatabase, databaseBoundary.database)));
 
   const boundary = HttpRouter.toWebHandler(
@@ -215,6 +228,15 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     ),
     { disableLogger: true },
   );
+
+  const unsafe = databaseBoundary.database.$client.unsafe.bind(
+    databaseBoundary.database.$client,
+  );
+
+  const querySpy = spyOn(
+    databaseBoundary.database.$client,
+    "unsafe",
+  ).mockImplementation((...args) => unsafe(...args));
 
   try {
     await databaseBoundary.run(
@@ -252,6 +274,29 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         .values({ A: 1, B: "sender" }),
     );
 
+    emptyIndex = true;
+
+    for (const path of [
+      "/messaging/party-gathering/active?world=experimental",
+      "/messaging/party-gathering",
+    ]) {
+      querySpy.mockClear();
+
+      const empty = await boundary.handler(
+        new Request(`http://api.test${path}`, {
+          headers: { authorization: "Bearer test" },
+        }),
+      );
+
+      expect(empty.status).toBe(200);
+      expect(await empty.json()).toEqual([]);
+      // Empty indexes still authorize the caller, but need no source-role query.
+      expect(querySpy).toHaveBeenCalledTimes(1);
+    }
+
+    emptyIndex = false;
+    querySpy.mockClear();
+
     const response = await boundary.handler(
       new Request(
         "http://api.test/messaging/party-gathering/active?world=experimental",
@@ -260,6 +305,8 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     );
 
     expect(response.status).toBe(200);
+
+    expect(querySpy).toHaveBeenCalledTimes(2);
 
     const summary = {
       notificationId: "minimal",
@@ -306,6 +353,29 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
         npc: { name: "Training NPC", location: "Map", lvl: 0, type: "TITAN" },
       },
     ]);
+
+    caller = {
+      ...caller,
+      apiKey: {
+        keyId: "visible-only",
+        organizationIds: ["visible"],
+        mode: "read",
+        personalData: false,
+        expiresAt: null,
+      },
+    };
+    querySpy.mockClear();
+
+    const scopedList = await boundary.handler(
+      new Request("http://api.test/messaging/party-gathering", {
+        headers: { authorization: "Bearer test" },
+      }),
+    );
+
+    expect(scopedList.status).toBe(200);
+    expect(await scopedList.json()).toEqual([]);
+    expect(querySpy).toHaveBeenCalledTimes(2);
+    caller = { userId: "user", discordId: "owner" };
 
     const emptyObservation = await boundary.handler(
       new Request(
@@ -435,6 +505,8 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       ]),
     );
 
+    querySpy.mockClear();
+
     const list = await boundary.handler(
       new Request("http://api.test/messaging/party-gathering", {
         headers: { authorization: "Bearer test" },
@@ -442,6 +514,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
     );
 
     expect(list.status).toBe(200);
+    expect(querySpy).toHaveBeenCalledTimes(2);
     expect(await list.json()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -579,6 +652,7 @@ it("lets senders discover and cancel their own NPC gatherings outside read filte
       expect.objectContaining({ partyMemberCount: 1, revision: 3 }),
     );
   } finally {
+    querySpy.mockRestore();
     await boundary.dispose();
     await databaseBoundary.dispose();
   }

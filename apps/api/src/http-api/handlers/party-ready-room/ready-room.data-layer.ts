@@ -837,13 +837,15 @@ export const makeReadyRoomDataLayer = (
         active: (identity, guildIds, world) =>
           operation(
             Effect.gen(function* () {
+              const rooms = yield* repository.findActive(guildIds, world);
+
+              if (rooms.length === 0) return [];
+
               const visibleGuilds = yield* readyRoomSourceVisibility(
                 database,
                 identity.discordId,
                 guildIds,
               );
-
-              const rooms = yield* repository.findActive(guildIds, world);
 
               return rooms
                 .flatMap((room) => {
@@ -911,48 +913,50 @@ export const makeReadyRoomDataLayer = (
             Effect.gen(function* () {
               const apiKey = yield* requestApiKeyAccess;
 
+              const aggregates = yield* repository.findForUser(
+                identity.discordId,
+              );
+
+              if (aggregates.length === 0) return [];
+
               const visibleSources = yield* readyRoomSourceVisibility(
                 database,
                 identity.discordId,
                 guildIds,
               );
 
-              return yield* repository.findForUser(identity.discordId).pipe(
-                Effect.map((aggregates) =>
-                  [
-                    ...new Map(
-                      aggregates.map((item) => [item.notificationId, item]),
-                    ).values(),
-                  ].flatMap((aggregate) => {
-                    const live =
-                      aggregate.status === "ACTIVE" &&
-                      Date.parse(aggregate.expiresAt) > clock();
+              return [
+                ...new Map(
+                  aggregates.map((item) => [item.notificationId, item]),
+                ).values(),
+              ].flatMap((aggregate) => {
+                const live =
+                  aggregate.status === "ACTIVE" &&
+                  Date.parse(aggregate.expiresAt) > clock();
 
-                    const sharesGuild = guildIds.some((id) =>
-                      aggregate.guildIds.includes(id),
-                    );
+                const sharesGuild = guildIds.some((id) =>
+                  aggregate.guildIds.includes(id),
+                );
 
-                    if (!live || !sharesGuild) return [];
+                if (!live || !sharesGuild) return [];
 
-                    if (aggregate.npc && visibleSources(aggregate).length === 0)
-                      return [];
+                if (aggregate.npc && visibleSources(aggregate).length === 0)
+                  return [];
 
-                    if (
-                      apiKey &&
-                      !aggregate.guildIds.every((id) => guildIds.includes(id))
-                    )
-                      return [];
+                if (
+                  apiKey &&
+                  !aggregate.guildIds.every((id) => guildIds.includes(id))
+                )
+                  return [];
 
-                    const projection = createReadyRoomProjection(
-                      aggregate,
-                      identity.discordId,
-                      aggregate.npc ? visibleSources(aggregate) : guildIds,
-                    );
+                const projection = createReadyRoomProjection(
+                  aggregate,
+                  identity.discordId,
+                  aggregate.npc ? visibleSources(aggregate) : guildIds,
+                );
 
-                    return projection ? [projection] : [];
-                  }),
-                ),
-              );
+                return projection ? [projection] : [];
+              });
             }),
           ),
         get: (identity, notificationId, guildIds) =>
