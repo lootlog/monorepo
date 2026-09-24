@@ -13,6 +13,25 @@ adoption markers may remain in existing databases but are no longer read or
 written. An existing database without a Drizzle journal must be restored with
 its migration history before using this runner.
 
+## Test databases
+
+`test/database-fixtures.ts` runs the complete migration history in a private
+PGlite instance on its first use in each test process. It stores an uncompressed
+data-directory image in memory and closes that instance. Each
+`createDatabaseBoundary()` call restores its own database from this image, with
+`pg_trgm` and custom enum-array decoding enabled.
+
+Tests can commit transactions, change constraints and close their database
+without affecting another boundary. The image is never persisted or generated
+ahead of the test run: a broken migration still fails fixture initialization.
+Concurrent callers share image preparation, not a live database.
+
+From `apps/api`, run `bun run test` for the API suite, including the fixture's
+data, schema and concurrent-boundary isolation checks. The 30-second test timeout
+remains until CI measurements establish a safe lower budget for the first cold
+initialization under runner contention; faster restores alone do not establish
+that budget.
+
 ## Durable loot publications
 
 Apply `20260904193330_loot_publication_outbox` before deploying the API that
