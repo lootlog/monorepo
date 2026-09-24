@@ -6,7 +6,6 @@ import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
 import { StandaloneShell } from "@/components/layout/standalone-shell";
 import { UserShell } from "@/components/layout/user-shell";
 import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
-import { Toaster } from "@lootlog/ui/components/sonner";
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Outlet, useLocation, useMatches } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -104,7 +103,6 @@ export const AppLayout = () => {
           </GuildShell>
         )}
       </SidebarProvider>
-      <Toaster />
       <GlobalModals />
     </div>
   );

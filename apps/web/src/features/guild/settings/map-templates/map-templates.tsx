@@ -145,6 +145,9 @@ export const MapTemplatesSettings = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={t("settings.mapTemplates.editTemplate", {
+                            name: template.name,
+                          })}
                           className="size-8"
                           onClick={(e) => handleEdit(template, e)}
                         >
@@ -161,6 +164,12 @@ export const MapTemplatesSettings = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label={t(
+                                "settings.mapTemplates.deleteTemplate",
+                                {
+                                  name: template.name,
+                                },
+                              )}
                               className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={(e) => e.stopPropagation()}
                             >

@@ -885,28 +885,40 @@
     "refreshing": "Odświeżanie...",
     "syncStatus": "Status synchronizacji Discorda",
     "syncStatusDescription": "Ten widok pokazuje aktualny stan połączenia bota z serwerem i kanałami.",
+    "syncUnknown": {
+      "title": "Uprawnienia bota nie są jeszcze potwierdzone",
+      "description": "Brak aktualnego wyniku synchronizacji z Discordem. Odśwież status, aby sprawdzić uprawnienia bota.",
+      "loading": "Trwa sprawdzanie stanu synchronizacji z Discordem.",
+      "error": "Nie udało się sprawdzić stanu synchronizacji z Discordem. Spróbuj ponownie."
+    },
+    "statuses": {
+      "UNKNOWN": "Brak danych",
+      "SYNCED": "Zsynchronizowano",
+      "SYNCING": "Synchronizowanie",
+      "STALE": "Dane nieaktualne",
+      "FAILED": "Błąd synchronizacji",
+      "NOT_FOUND": "Bot nie ma dostępu do serwera"
+    },
     "channelCounts": "{{selectable}} z {{total}} kanałów jest dostępnych do wyboru",
     "fields": {
       "status": "Status",
       "channels": "Kanały",
       "permissions": "Uprawnienia",
       "lastAttempt": "Ostatnia próba synchronizacji",
-      "lastSuccess": "Ostatni udany sync",
+      "lastSuccess": "Ostatnia udana synchronizacja",
       "lastError": "Ostatni błąd"
     },
     "permissions": {
       "ok": "Kompletne",
-      "missing": "Brakujące"
+      "missing": "Brakujące",
+      "unknown": "Niepotwierdzone"
     },
     "permissionSection": {
       "title": "Wymagane uprawnienia",
       "description": "Bot potrzebuje tych uprawnień, żeby synchronizować kanały i wysyłać powiadomienia."
     },
     "reinstall": {
-      "title": "Bot wymaga reinstallu",
-      "description": "Discord nie przyznał jeszcze wszystkich wymaganych uprawnień. Przeinstaluj bota na serwerze, żeby odblokować konfigurację powiadomień.",
-      "button": "Przeinstaluj bota",
-      "notNeeded": "Bot ma komplet wymaganych uprawnień. Reinstall nie jest potrzebny."
+      "notNeeded": "Bot ma komplet wymaganych uprawnień. Nie trzeba dodawać go ponownie."
     },
     "activity": {
       "title": "Aktywność synchronizacji"
@@ -918,6 +930,8 @@
     "title": "Szablony map",
     "description": "Zarządzaj szablonami list mapek",
     "newTemplate": "Nowy szablon",
+    "editTemplate": "Edytuj szablon {{name}}",
+    "deleteTemplate": "Usuń szablon {{name}}",
     "cancel": "Anuluj",
     "templateName": "Nazwa szablonu",
     "templateNamePlaceholder": "np. Mrozy",

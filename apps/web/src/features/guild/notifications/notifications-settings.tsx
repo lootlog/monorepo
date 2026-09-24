@@ -1,16 +1,14 @@
-import { SectionCard } from "@/components/common/section-card/section-card";
-import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
-import { SectionCardContent } from "@/components/common/section-card/section-card-content";
+import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
+import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { NotificationSettingsSkeleton } from "./notification-settings-skeleton";
 import { useState } from "react";
-import { BellRing, Info, ShieldAlert } from "lucide-react";
+import { BellRing, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -30,12 +28,8 @@ import {
   useNotificationsGuildControllerGetGuildRules,
   useNotificationsGuildControllerGetGuildTargets,
   type NotificationTargetResponseDto,
-  getGuildsControllerGetGuildDiscordSyncStatusQueryKey,
-  useGuildsControllerGetGuildDiscordSyncStatus,
 } from "@lootlog/client/main";
-import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
 import { isSupportedGuildNotificationTrigger } from "./utils/notification-settings.utils";
 
 const getResolvedGuildId = (guildId: string | undefined) => guildId ?? "";
@@ -46,19 +40,7 @@ export const NotificationsSettings = () => {
   const hasGuildId = Boolean(guildId);
   const resolvedGuildId = getResolvedGuildId(guildId);
 
-  const { data: syncState } = useGuildsControllerGetGuildDiscordSyncStatus(
-    {
-      guildId: resolvedGuildId,
-    },
-    {
-      query: {
-        enabled: hasGuildId,
-        queryKey: getGuildsControllerGetGuildDiscordSyncStatusQueryKey({
-          guildId: resolvedGuildId,
-        }),
-      },
-    },
-  );
+  const sync = useGuildDiscordSync();
 
   const targetsQuery = useNotificationsGuildControllerGetGuildTargets(
     { guildId: resolvedGuildId },
@@ -114,9 +96,7 @@ export const NotificationsSettings = () => {
     NotificationTargetResponseDto | undefined
   >();
 
-  const missingPermissions = syncState?.missingPermissions ?? [];
-  const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(syncState);
-  const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
+  const hasRequiredPermissions = sync.permissionStatus === "ok";
   const targets = targetsQuery.data ?? [];
   const notificationLimits = rulesQuery.data?.limits;
 
@@ -161,40 +141,7 @@ export const NotificationsSettings = () => {
               }
             />
 
-            {!hasRequiredPermissions ? (
-              <SectionCard>
-                <SectionCardHeader
-                  title={t("settings.notifications.permissionsBlocked.title")}
-                  icon={ShieldAlert}
-                  description={t(
-                    "settings.notifications.permissionsBlocked.description",
-                  )}
-                  actions={
-                    <div className="flex items-start gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {missingPermissions.map((permission) => (
-                            <Badge key={permission} variant="secondary">
-                              {permission}
-                            </Badge>
-                          ))}
-                        </div>
-                        <Button
-                          size="sm"
-                          className="mt-4"
-                          onClick={() => window.location.assign(installUrl)}
-                        >
-                          {t(
-                            "settings.notifications.permissionsBlocked.reinstall",
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  }
-                />
-                <SectionCardContent className="flex flex-col gap-3" />
-              </SectionCard>
-            ) : null}
+            <GuildDiscordSyncNotice sync={sync} />
 
             {isLoading ? (
               <NotificationSettingsSkeleton showActions={false} />

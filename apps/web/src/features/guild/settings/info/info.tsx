@@ -1,102 +1,69 @@
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCardContent } from "@/components/common/section-card/section-card-content";
-import { useGuildId } from "@/hooks/context/use-guild-id";
-import { hasConfirmedGuildDiscordPermissions } from "@/features/guild/settings/utils/has-confirmed-guild-discord-permissions";
-import { buildDiscordBotInstallUrl } from "@/utils/build-discord-bot-install-url";
+import { GuildDiscordSyncNotice } from "@/components/common/guild-discord-sync-notice";
+import { useGuildDiscordSync } from "@/hooks/api/use-guild-discord-sync";
 import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { format } from "date-fns";
-import { RefreshCcw, ShieldAlert, ShieldCheck } from "lucide-react";
+import { RefreshCcw, Info, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  invalidateGuildsControllerGetGuildDiscordSyncStatus,
-  useGuildsControllerGetGuildDiscordSyncStatus,
-  useGuildsControllerRefreshGuildDiscordSync,
-  invalidateNotificationsGuildControllerGetAvailableGuildTargets,
-} from "@lootlog/client/main";
-
-type GuildSyncPresentationData = {
-  channelCount?: number;
-  lastAttemptAt?: string | null;
-  lastError?: string | null;
-  lastSuccessAt?: string | null;
-  missingPermissions?: string[];
-  requiredPermissions?: string[];
-  selectableChannelCount?: number;
-  status?: string;
-};
+import type { DiscordGuildSyncStateResponseDto } from "@lootlog/client/main";
 
 const getGuildSyncPresentation = (
-  data: GuildSyncPresentationData | undefined,
+  data: DiscordGuildSyncStateResponseDto | undefined,
   notAvailable: string,
   noErrors: string,
+  syncError: string,
 ) => ({
   channelCount: data?.channelCount ?? 0,
   lastAttempt: data?.lastAttemptAt
     ? format(new Date(data.lastAttemptAt), "dd.MM.yyyy HH:mm:ss")
     : notAvailable,
-  lastError: data?.lastError ?? noErrors,
+  lastError: data?.lastError ? syncError : noErrors,
   lastSuccess: data?.lastSuccessAt
     ? format(new Date(data.lastSuccessAt), "dd.MM.yyyy HH:mm:ss")
     : notAvailable,
-  missingPermissions: data?.missingPermissions ?? [],
   requiredPermissions: data?.requiredPermissions ?? [],
   selectableChannelCount: data?.selectableChannelCount ?? 0,
-  status: data?.status ?? "UNKNOWN",
 });
 
 export const InfoSettings = () => {
   const { t } = useTranslation();
-  const guildId = useGuildId();
-  const queryClient = useQueryClient();
+  const sync = useGuildDiscordSync();
 
-  const { data, isLoading } = useGuildsControllerGetGuildDiscordSyncStatus({
-    guildId: guildId ?? "",
-  });
+  const {
+    guildId,
+    query,
+    isRefreshing,
+    isRefreshError,
+    permissionStatus,
+    refresh,
+  } = sync;
 
-  const refreshMutation = useGuildsControllerRefreshGuildDiscordSync({
-    mutation: {
-      onSuccess: async (_, variables) => {
-        const currentGuildId = variables?.pathParams.guildId;
+  const { data, isLoading } = query;
+  const hasRequiredPermissions = permissionStatus === "ok";
+  let status = data?.status ?? "UNKNOWN";
 
-        if (!currentGuildId) {
-          return;
-        }
+  if (query.isError || isRefreshError) status = "FAILED";
 
-        await Promise.all([
-          invalidateGuildsControllerGetGuildDiscordSyncStatus(queryClient, {
-            guildId: currentGuildId,
-          }),
-          invalidateNotificationsGuildControllerGetAvailableGuildTargets(
-            queryClient,
-            { guildId: currentGuildId },
-          ),
-        ]);
-      },
-    },
-  });
-
-  const installUrl = guildId ? buildDiscordBotInstallUrl(guildId) : "#";
-  const hasRequiredPermissions = hasConfirmedGuildDiscordPermissions(data);
+  if (isRefreshing) status = "SYNCING";
 
   const {
     channelCount,
     lastAttempt,
     lastError,
     lastSuccess,
-    missingPermissions,
     requiredPermissions,
     selectableChannelCount,
-    status,
   } = getGuildSyncPresentation(
     data,
     t("settings.guildInfo.notAvailable"),
     t("settings.guildInfo.noErrors"),
+    t("settings.guildInfo.syncUnknown.error"),
   );
 
   return (
@@ -104,6 +71,7 @@ export const InfoSettings = () => {
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 pb-3 flex flex-col gap-4">
           <h1 className="sr-only">{t("settings.guildInfo.title")}</h1>
+          <GuildDiscordSyncNotice sync={sync} />
 
           {isLoading ? (
             <>
@@ -144,35 +112,20 @@ export const InfoSettings = () => {
               <SectionCard>
                 <SectionCardHeader
                   title={t("settings.guildInfo.syncStatus")}
-                  icon={ShieldCheck}
+                  icon={hasRequiredPermissions ? ShieldCheck : Info}
                   description={t("settings.guildInfo.syncStatusDescription")}
                   actions={
-                    <div className="flex flex-wrap items-center gap-3">
+                    hasRequiredPermissions ? (
                       <Button
                         size="sm"
-                        onClick={() =>
-                          guildId &&
-                          refreshMutation.mutate({ pathParams: { guildId } })
-                        }
-                        loading={refreshMutation.isPending}
-                        icon=<RefreshCcw className="size-3.5" />
+                        onClick={refresh}
+                        disabled={!guildId || query.isFetching}
+                        loading={isRefreshing}
+                        icon={<RefreshCcw className="size-3.5" />}
                       >
                         {t("settings.guildInfo.refresh")}
                       </Button>
-                      <div
-                        className={`rounded-xl p-2.5  ${
-                          hasRequiredPermissions
-                            ? "bg-green-500/10"
-                            : "bg-amber-500/10"
-                        }`}
-                      >
-                        {hasRequiredPermissions ? (
-                          <ShieldCheck className="size-4 text-green-500" />
-                        ) : (
-                          <ShieldAlert className="size-4 text-amber-500" />
-                        )}
-                      </div>
-                    </div>
+                    ) : undefined
                   }
                 />
                 <SectionCardContent className="flex flex-col gap-3">
@@ -182,7 +135,9 @@ export const InfoSettings = () => {
                         {t("settings.guildInfo.fields.status")}
                       </p>
                       <div className="mt-2">
-                        <Badge variant="outline">{status}</Badge>
+                        <Badge variant="outline">
+                          {t(`settings.guildInfo.statuses.${status}`)}
+                        </Badge>
                       </div>
                     </div>
                     <div className="border-b border-border/70 py-3 last:border-b-0">
@@ -190,10 +145,12 @@ export const InfoSettings = () => {
                         {t("settings.guildInfo.fields.channels")}
                       </p>
                       <p className="mt-2 text-sm font-medium">
-                        {t("settings.guildInfo.channelCounts", {
-                          total: channelCount,
-                          selectable: selectableChannelCount,
-                        })}
+                        {data
+                          ? t("settings.guildInfo.channelCounts", {
+                              total: channelCount,
+                              selectable: selectableChannelCount,
+                            })
+                          : t("settings.guildInfo.notAvailable")}
                       </p>
                     </div>
                     <div className="border-b border-border/70 py-3 last:border-b-0">
@@ -206,9 +163,9 @@ export const InfoSettings = () => {
                             hasRequiredPermissions ? "default" : "outline"
                           }
                         >
-                          {hasRequiredPermissions
-                            ? t("settings.guildInfo.permissions.ok")
-                            : t("settings.guildInfo.permissions.missing")}
+                          {t(
+                            `settings.guildInfo.permissions.${permissionStatus}`,
+                          )}
                         </Badge>
                       </div>
                     </div>
@@ -233,42 +190,11 @@ export const InfoSettings = () => {
                     ))}
                   </div>
 
-                  {!hasRequiredPermissions ? (
-                    <>
-                      {missingPermissions.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {missingPermissions.map((permission) => (
-                            <Badge
-                              key={permission}
-                              variant="outline"
-                              className="border-amber-500/40 text-amber-500"
-                            >
-                              {permission}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-                      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-                        <p className="text-sm font-medium">
-                          {t("settings.guildInfo.reinstall.title")}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {t("settings.guildInfo.reinstall.description")}
-                        </p>
-                        <Button
-                          size="sm"
-                          className="mt-4"
-                          onClick={() => window.location.assign(installUrl)}
-                        >
-                          {t("settings.guildInfo.reinstall.button")}
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
+                  {hasRequiredPermissions ? (
                     <p className="text-sm text-muted-foreground">
                       {t("settings.guildInfo.reinstall.notNeeded")}
                     </p>
-                  )}
+                  ) : null}
                 </SectionCardContent>
               </SectionCard>
 
@@ -296,7 +222,9 @@ export const InfoSettings = () => {
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       {t("settings.guildInfo.fields.lastError")}
                     </p>
-                    <p className="mt-2 text-sm font-medium">{lastError}</p>
+                    <p className="mt-2 text-sm font-medium">
+                      {data ? lastError : t("settings.guildInfo.notAvailable")}
+                    </p>
                   </div>
                 </SectionCardContent>
               </SectionCard>
