@@ -100,6 +100,14 @@ it("bounds mounted rows for five hundred NPCs and mounts rows reached by scrolli
   expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
 });
 
+it("lets the only detection be removed from the list", () => {
+  mountNpcs([createNpc(1)]);
+
+  fireEvent.click(screen.getByRole("button", { name: "Usuń potwora z listy" }));
+
+  expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+});
+
 it("does not replay entry animation when virtualization remounts an existing row", () => {
   const { viewport } = mountNpcs(
     Array.from({ length: 500 }, (_, id) => createNpc(id)),

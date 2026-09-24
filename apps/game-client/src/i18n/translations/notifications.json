@@ -12,7 +12,8 @@
     "closeAria": "Zamknij powiadomienie",
     "muteOptionsAria": "Opcje wyciszenia",
     "mutePlayer": "Nie otrzymuj powiadomień od tego gracza",
-    "muteNpc": "Nie otrzymuj powiadomień o tym potworze"
+    "muteNpc": "Nie otrzymuj powiadomień o tym potworze",
+    "clearAll": "Wyczyść wszystkie powiadomienia"
   },
   "states": {
     "unknownSender": "Nieznany"
