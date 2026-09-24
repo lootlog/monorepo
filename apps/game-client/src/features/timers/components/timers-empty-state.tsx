@@ -1,6 +1,4 @@
 import { EmptyState } from "@/components/empty-state";
-import { Button } from "@/components/ui/button";
-import { Clock3, SearchX } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -18,22 +16,16 @@ export const TimersEmptyState: FC<TimersEmptyStateProps> = ({
   if (areFiltersActive) {
     return (
       <EmptyState
-        action={
-          <Button
-            size="xs"
-            className="ll:h-6 ll:px-2.5"
-            onClick={onResetFilters}
-            type="button"
-            variant="ghost"
-          >
-            {t("emptyState.showAll")}
-          </Button>
-        }
-        icon={SearchX}
+        action={{ label: t("emptyState.showAll"), onClick: onResetFilters }}
         title={t("emptyState.filteredTitle")}
       />
     );
   }
 
-  return <EmptyState icon={Clock3} title={t("emptyState.noneTitle")} />;
+  return (
+    <EmptyState
+      description={t("emptyState.noneDescription")}
+      title={t("emptyState.noneTitle")}
+    />
+  );
 };

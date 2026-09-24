@@ -36,9 +36,10 @@
     "reset": "⟳ Timer został zresetowany"
   },
   "emptyState": {
-    "filteredTitle": "Brak pasujących timerów",
+    "filteredTitle": "Żaden timer nie pasuje do filtrów",
     "showAll": "Pokaż wszystkie",
-    "noneTitle": "Brak timerów"
+    "noneTitle": "Nie ma jeszcze timerów",
+    "noneDescription": "Timer pojawi się, gdy ktoś z Lootloga pokona elitę II, herosa lub tytana."
   },
   "states": {
     "loading": "Ładowanie timerów",
@@ -69,7 +70,7 @@
     "title": "Historia timera",
     "globalTitle": "Historia timerów",
     "loading": "Ładowanie historii...",
-    "empty": "Brak historii",
+    "empty": "Ten timer nie ma jeszcze historii.",
     "restore": "Przywróć timer",
     "restoreSuccess": "Przywrócono timer.",
     "restoreFailed": "Nie udało się przywrócić timera.",

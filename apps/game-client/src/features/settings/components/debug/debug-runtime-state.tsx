@@ -3,7 +3,6 @@ import { getRuntimeZoomFactor } from "@/lib/margonem-runtime/adapters/legacy-ui-
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
-import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { useTranslation } from "react-i18next";
@@ -55,9 +54,9 @@ export function DebugRuntimeState() {
       <SettingsSection title={t("settings.debug.partyStateTitle")}>
         <SettingsPanel className="ll:font-mono ll:text-xs">
           {partyMembers.length === 0 ? (
-            <SettingsEmptyState className="ll:bg-transparent ll:px-0 ll:py-0">
+            <p className="ll:m-0 ll:text-muted-foreground">
               {t("settings.debug.noPartyMembers")}
-            </SettingsEmptyState>
+            </p>
           ) : (
             partyMembers.map((member) => (
               <div

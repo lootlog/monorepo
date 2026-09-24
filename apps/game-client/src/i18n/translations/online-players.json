@@ -43,10 +43,12 @@
     "unknown": "Nieznany użytkownik Discord"
   },
   "emptyState": {
-    "notFoundTitle": "Brak pasujących graczy",
+    "notFoundTitle": "Żaden gracz nie pasuje do filtrów",
     "clearFilters": "Wyczyść filtry",
     "noPlayersTitle": "Nikt nie jest teraz online",
-    "noAccessTitle": "Brak dostępu do listy"
+    "noPlayersDescription": "Widać tu członków Lootloga, którzy grają z dodatkiem.",
+    "noAccessTitle": "Nie widzisz, kto jest online",
+    "noAccessDescription": "Twoja rola w tym Lootlogu nie ma uprawnienia do listy graczy online."
   },
   "states": {
     "loading": "Ładowanie graczy online",

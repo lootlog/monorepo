@@ -13,7 +13,7 @@
   "guildPopover": {
     "lootlogPage": "Strona Lootloga",
     "dashboard": "Dashboard",
-    "emptyGuilds": "Nie masz żadnych gildii"
+    "emptyGuilds": "Nie należysz do żadnego Lootloga."
   },
   "connection": {
     "ping": "{{ping}} ms",
