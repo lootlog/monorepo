@@ -51,7 +51,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
     allowsHorizontalResize,
     allowsVerticalResize,
     isAdjustingMaxHeight,
-    cssMaxContentHeight,
+    contentMaxHeight,
     previewBoundaryOffset,
     previewShadeOffset,
     style,
@@ -157,7 +157,7 @@ export function DraggableWindowFrame(props: DraggableWindowFrameProps) {
             "ll:flex-1 ll:overflow-hidden ll:cursor-auto ll:relative",
             contentClassName,
           )}
-          style={{ maxHeight: cssMaxContentHeight }}
+          style={{ maxHeight: contentMaxHeight }}
           onPointerDown={
             draggableContent
               ? onPointerDown
