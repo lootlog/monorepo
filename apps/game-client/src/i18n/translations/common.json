@@ -31,7 +31,8 @@
     "extensionTitle": "Logowanie do Lootloga",
     "extensionError": "Nie udało się sprawdzić sesji Lootloga. Spróbuj ponownie.",
     "signIn": "Zaloguj się w Lootlogu",
-    "notLoggedIn": "Nie jesteś zalogowany. Zaloguj się, aby uruchomić dodatek."
+    "notLoggedIn": "Nie jesteś zalogowany. Zaloguj się, aby uruchomić dodatek.",
+    "openLogin": "Zaloguj się do Lootloga"
   },
   "errors": {
     "missingLocation": "Nie wysłano danych: nie udało się odczytać nazwy mapy z gry.",

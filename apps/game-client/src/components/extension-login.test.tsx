@@ -75,7 +75,7 @@ describe("extension login window", () => {
     );
   });
 
-  it("closes by keyboard, stays dismissed across remounts and resets position on the next runtime", async () => {
+  it("closes by keyboard, stays dismissed across remounts with a way back, and resets position on the next runtime", async () => {
     const user = userEvent.setup();
     const view = renderLogin();
     const close = screen.getByRole("button", { name: "Zamknij okno" });
@@ -85,6 +85,13 @@ describe("extension login window", () => {
     view.unmount();
     const remounted = renderLogin();
     expect(screen.queryByRole("region")).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Zaloguj się do Lootloga" }),
+    );
+    expect(screen.getByRole("region")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Zaloguj się do Lootloga" }),
+    ).toBeNull();
     remounted.unmount();
     useWindowsStore.getState().setPosition("extension-login", { x: 10, y: 20 });
     resetExtensionLoginWindow();

@@ -1,6 +1,6 @@
 import { createTimerRealtimeFixture } from "@/features/timers/timer-realtime-fixtures";
 import { createTimerGuildFixture } from "@/features/timers/timer-fixtures";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
@@ -12,7 +12,7 @@ import { getSocket } from "@/lib/socket";
 import { createTimerHttpFixture } from "@/features/timers/timer-http-fixtures";
 import { ConnectionStatus } from "./connection-status";
 
-it("shows connecting, then memberships and heartbeat latency, and a dropped connection as reconnecting", async () => {
+it("shows connecting, then memberships and heartbeat latency, and lets a dropped connection reconnect on demand", async () => {
   const user = userEvent.setup();
   const fixture = createTimerHttpFixture();
 
@@ -37,23 +37,20 @@ it("shows connecting, then memberships and heartbeat latency, and a dropped conn
   );
 
   try {
-    const connecting = screen.getByRole("button", {
-      name: "Łączenie z serwerem…",
-    });
-
-    await user.hover(connecting);
-    expect(await screen.findByText("Łączenie z serwerem…")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Łączenie z serwerem…" }),
+    ).toBeVisible();
     act(() => gateway.wire.open());
     await gateway.join(["guild-2", "guild-1"]);
 
-    const connected = screen.getByRole("button", {
-      name: "Połączono z serwerem",
-    });
-
-    await user.unhover(connected);
-    await user.hover(connected);
+    await user.click(
+      screen.getByRole("button", { name: "Połączono z serwerem" }),
+    );
     expect(await screen.findByText("Beta")).toBeVisible();
     expect(screen.getByText("Alpha")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Połącz ponownie" }),
+    ).not.toBeInTheDocument();
     vi.useFakeTimers();
     let now = 1_000;
     vi.spyOn(performance, "now").mockImplementation(() => now);
@@ -119,13 +116,19 @@ it("shows connecting, then memberships and heartbeat latency, and a dropped conn
       screen.getByRole("button", { name: /Opóźnienie połączenia: 42 ms/ }),
     ).toBeVisible();
     expect(screen.getByText("42 ms")).toBeVisible();
-    act(() => getSocket().disconnect());
+    act(() => gateway.wire.close());
     expect(screen.queryByText("42 ms")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: "Połączenie przerwane, ponowne łączenie…",
       }),
     ).toBeInTheDocument();
+
+    // The retry backoff is still pending under fake timers, so only the
+    // action can open the next connection now.
+    fireEvent.click(screen.getByRole("button", { name: "Połącz ponownie" }));
+    act(() => gateway.wire.open());
+    expect(getSocket().connected).toBe(true);
   } finally {
     view.unmount();
     gateway.cleanup();

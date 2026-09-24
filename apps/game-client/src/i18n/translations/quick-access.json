@@ -17,6 +17,8 @@
   },
   "connection": {
     "ping": "{{ping}} ms",
-    "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms"
+    "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
+    "organizations": "Połączone organizacje",
+    "reconnect": "Połącz ponownie"
   }
 }
