@@ -26,6 +26,12 @@ import { createLootListReconciliation } from "./loot-list-reconciliation";
 
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
+import {
+  getPageScroller,
+  useDocumentScrollListener,
+  usePageScrollsDocument,
+  usePageVirtualizer,
+} from "@/hooks/utils/use-page-scroll";
 import { useThemedKey } from "@/themes";
 import type {
   GuildLootCreatedEventV2,
@@ -38,8 +44,7 @@ import {
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const LOOTS_PAGE_LIMIT = 20;
@@ -117,6 +122,8 @@ const useStableLootCollections = (pages: Loot[][] | undefined) => {
 };
 
 export const useLiveLootList = () => {
+  "use no memo"; // Reads a virtualizer that mutates in place; see usePageVirtualizer.
+
   const { t } = useTranslation();
   const themedKey = useThemedKey();
   const guildId = useGuildId();
@@ -130,7 +137,9 @@ export const useLiveLootList = () => {
     typeof createLootListReconciliation
   > | null>(null);
 
-  const scrollElementRef = useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
+  );
 
   const currentGuildId = getCurrentGuildId(guilds, guildId);
   const lootQueryParams = getLootQueryParams(filters, world);
@@ -214,6 +223,14 @@ export const useLiveLootList = () => {
     },
   );
 
+  const scrollsDocument = usePageScrollsDocument();
+
+  const isScrolledToTop = useEffectEvent(
+    () =>
+      (getPageScroller(scrollElement, scrollsDocument)?.getScrollTop() ?? 0) <
+      1,
+  );
+
   useEffect(() => {
     if (!guildId || !world) return;
 
@@ -221,7 +238,7 @@ export const useLiveLootList = () => {
       canRefresh: () =>
         connected &&
         document.visibilityState === "visible" &&
-        (scrollElementRef.current?.scrollTop ?? 0) < 1,
+        isScrolledToTop(),
       // Reconciliation happens only at the top; scrolling follows fresh cursors.
       refresh: () => reconcileActiveLootLists(queryClient, guildId),
     });
@@ -324,18 +341,18 @@ export const useLiveLootList = () => {
   const { allLoots, gridRows } = useStableLootCollections(getLootPages(loots));
   const totalCount = allLoots.length;
 
-  const listVirtualizer = useVirtualizer({
+  const listVirtualizer = usePageVirtualizer<HTMLDivElement>({
     count: totalCount + 1,
-    getScrollElement: () => scrollElementRef.current,
+    scrollElement,
     estimateSize: () => 180,
     overscan: 5,
     useAnimationFrameWithResizeObserver: true,
     enabled: viewMode === "list",
   });
 
-  const gridVirtualizer = useVirtualizer({
+  const gridVirtualizer = usePageVirtualizer<HTMLDivElement>({
     count: gridRows.length + 1,
-    getScrollElement: () => scrollElementRef.current,
+    scrollElement,
     estimateSize: () => 220,
     overscan: 3,
     useAnimationFrameWithResizeObserver: true,
@@ -364,9 +381,12 @@ export const useLiveLootList = () => {
     virtualItems: gridVirtualItems,
   });
   useResetScrollTop({
+    getScrollElement: () => scrollElement,
     resetKey: guildId ?? "",
-    scrollElementRef,
   });
+
+  const resumeReconciliation = () => reconciliationRef.current?.resume();
+  useDocumentScrollListener(resumeReconciliation);
 
   const hasLoots = hasInitialLoots(loots);
 
@@ -389,7 +409,7 @@ export const useLiveLootList = () => {
   };
 
   return {
-    scrollElementRef,
+    setScrollElement,
     isEmpty,
     isError,
     isFailed,
@@ -403,7 +423,7 @@ export const useLiveLootList = () => {
     hasNextPage,
     t,
     themedKey,
-    resumeReconciliation: () => reconciliationRef.current?.resume(),
+    resumeReconciliation,
     virtualizer,
     virtualItems,
     totalCount,
