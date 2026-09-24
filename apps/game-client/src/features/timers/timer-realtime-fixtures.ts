@@ -1,3 +1,4 @@
+import { stubMargonemAccountFetch } from "@/test/margonem-account-fetch";
 import { act } from "@testing-library/react";
 import { RealtimeClient } from "@lootlog/client/realtime";
 import { vi } from "vitest";
@@ -9,6 +10,8 @@ import type { AccessPolicySnapshot } from "@lootlog/protocol/realtime/access-pol
 export const createTimerRealtimeFixture = () => {
   disposeSocket();
   const wire = new RealtimeWire();
+
+  const externalFetch = stubMargonemAccountFetch();
 
   const realtime = new RealtimeClient({
     url: "https://gateway.example.test",
@@ -44,19 +47,34 @@ export const createTimerRealtimeFixture = () => {
       },
     );
 
-    await vi.waitFor(() => expectJoinRequest());
-    const request = expectJoinRequest();
-    const requestId = request.requestId;
+    await acknowledgeJoin(organizationIds, accessPolicy);
+    await pending;
+  };
 
-    if (!requestId) throw new Error("Expected session join request id");
-    await act(async () => {
-      wire.receive({
-        v: 1,
-        requestId,
-        status: "success",
-        data: { connectionId: "connection-1", organizationIds, accessPolicy },
-      });
-      await pending;
+  const acknowledgedRequests = new Set<string>();
+
+  const acknowledgeJoin = async (
+    organizationIds: string[],
+    accessPolicy?: AccessPolicySnapshot,
+  ) => {
+    await vi.waitFor(() => expectJoinRequest());
+    await act(() => {
+      for (const frame of wire.frames) {
+        if (
+          !("type" in frame) ||
+          frame.type !== "session.join" ||
+          !frame.requestId ||
+          acknowledgedRequests.has(frame.requestId)
+        )
+          continue;
+        acknowledgedRequests.add(frame.requestId);
+        wire.receive({
+          v: 1,
+          requestId: frame.requestId,
+          status: "success",
+          data: { connectionId: "connection-1", organizationIds, accessPolicy },
+        });
+      }
     });
   };
 
@@ -65,7 +83,11 @@ export const createTimerRealtimeFixture = () => {
       (frame) => "type" in frame && frame.type === "session.join",
     );
 
-    if (!request || !("requestId" in request))
+    if (
+      !request ||
+      !("requestId" in request) ||
+      acknowledgedRequests.has(request.requestId ?? "")
+    )
       throw new Error("Expected session join request");
 
     return request;
@@ -84,10 +106,12 @@ export const createTimerRealtimeFixture = () => {
   return {
     wire,
     join,
+    acknowledgeJoin,
     receive,
     cleanup: () => {
       disposeSocket();
       restorePlatform();
+      externalFetch.mockRestore();
     },
   };
 };
