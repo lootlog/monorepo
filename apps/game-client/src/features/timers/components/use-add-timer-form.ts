@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Schema } from "effect";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
@@ -49,23 +49,42 @@ type TimerFormValidationData = {
   lvl?: string;
   maxDuration?: string;
   minDuration?: string;
+  name: string;
   startDate?: string;
 };
+
+type TimerFormIssues = Array<Schema.FilterIssue>;
 
 const hasText = (value?: string): value is string =>
   value !== undefined && value.length > 0;
 
 const addValidationIssue = (
-  context: z.RefinementCtx,
+  issues: TimerFormIssues,
   message: string,
   path: keyof TimerFormValidationData,
 ) => {
-  context.addIssue({ code: "custom", message, path: [path] });
+  issues.push({ path: [path], issue: message });
+};
+
+const validateTimerName = (
+  { name }: TimerFormValidationData,
+  issues: TimerFormIssues,
+  t: TimerFormTranslation,
+) => {
+  if (name.length < 1) {
+    addValidationIssue(issues, t("addForm.validation.nameRequired"), "name");
+  } else if (name.length > MAX_NPC_NAME_LENGTH) {
+    addValidationIssue(
+      issues,
+      t("addForm.validation.nameMax", { max: MAX_NPC_NAME_LENGTH }),
+      "name",
+    );
+  }
 };
 
 const validateTimerLevel = (
   data: TimerFormValidationData,
-  context: z.RefinementCtx,
+  issues: TimerFormIssues,
   t: TimerFormTranslation,
 ) => {
   if (!hasText(data.lvl)) {
@@ -83,7 +102,7 @@ const validateTimerLevel = (
   }
 
   addValidationIssue(
-    context,
+    issues,
     t("addForm.validation.lvlRange", {
       min: MIN_NPC_LEVEL,
       max: MAX_NPC_LEVEL,
@@ -94,20 +113,20 @@ const validateTimerLevel = (
 
 const validateTimerDurations = (
   data: TimerFormValidationData,
-  context: z.RefinementCtx,
+  issues: TimerFormIssues,
   t: TimerFormTranslation,
 ) => {
   const { minDuration, maxDuration } = data;
 
   if (!hasText(minDuration)) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.minDurationRequired"),
       "minDuration",
     );
   } else if (parseDurationToSeconds(minDuration) <= 0) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.durationGreaterThanZero"),
       "minDuration",
     );
@@ -115,7 +134,7 @@ const validateTimerDurations = (
 
   if (!hasText(maxDuration)) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.maxDurationRequired"),
       "maxDuration",
     );
@@ -127,7 +146,7 @@ const validateTimerDurations = (
 
   if (maxSeconds <= 0) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.durationGreaterThanZero"),
       "maxDuration",
     );
@@ -138,7 +157,7 @@ const validateTimerDurations = (
     maxSeconds < parseDurationToSeconds(minDuration)
   ) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.maxDurationMin"),
       "maxDuration",
     );
@@ -147,14 +166,14 @@ const validateTimerDurations = (
 
 const validateTimerDates = (
   data: TimerFormValidationData,
-  context: z.RefinementCtx,
+  issues: TimerFormIssues,
   t: TimerFormTranslation,
 ) => {
   const { startDate, endDate } = data;
 
   if (!hasText(startDate)) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.startDateRequired"),
       "startDate",
     );
@@ -162,7 +181,7 @@ const validateTimerDates = (
 
   if (!hasText(endDate)) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.endDateRequired"),
       "endDate",
     );
@@ -174,7 +193,7 @@ const validateTimerDates = (
     new Date(endDate) <= new Date(startDate)
   ) {
     addValidationIssue(
-      context,
+      issues,
       t("addForm.validation.endDateAfterStart"),
       "endDate",
     );
@@ -189,61 +208,62 @@ const formatSecondsToHHMMSS = (seconds: number): string => {
   return `${h}h ${m}m ${s}s`;
 };
 
-const createFormSchema = (t: TimerFormTranslation) =>
-  z
-    .object({
-      name: z
-        .string()
-        .min(1, t("addForm.validation.nameRequired"))
-        .max(
-          MAX_NPC_NAME_LENGTH,
-          t("addForm.validation.nameMax", { max: MAX_NPC_NAME_LENGTH }),
-        ),
-      minDuration: z.string().optional(),
-      maxDuration: z.string().optional(),
-      lvl: z.string().optional(),
-      type: z
-        .enum([
-          CreateManualTimerDtoType.ELITE2,
-          CreateManualTimerDtoType.ELITE3,
-          CreateManualTimerDtoType.HERO,
-          CreateManualTimerDtoType.TITAN,
-        ])
-        .or(z.literal(""))
-        .optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-      const hasMinDuration = hasText(data.minDuration);
-      const hasMaxDuration = hasText(data.maxDuration);
-      const hasStartDate = hasText(data.startDate);
-      const hasEndDate = hasText(data.endDate);
-      const usingDurations = hasMinDuration || hasMaxDuration;
-      const usingDates = hasStartDate || hasEndDate;
+const FormSchema = Schema.Struct({
+  name: Schema.String,
+  minDuration: Schema.optional(Schema.String),
+  maxDuration: Schema.optional(Schema.String),
+  lvl: Schema.optional(Schema.String),
+  type: Schema.optional(Schema.Literals([...MANUAL_TIMER_NPC_TYPES, ""])),
+  startDate: Schema.optional(Schema.String),
+  endDate: Schema.optional(Schema.String),
+});
 
-      validateTimerLevel(data, ctx, t);
+const validateTimerForm = (
+  data: TimerFormValidationData,
+  t: TimerFormTranslation,
+): TimerFormIssues => {
+  const issues: TimerFormIssues = [];
+  const hasMinDuration = hasText(data.minDuration);
+  const hasMaxDuration = hasText(data.maxDuration);
+  const hasStartDate = hasText(data.startDate);
+  const hasEndDate = hasText(data.endDate);
+  const usingDurations = hasMinDuration || hasMaxDuration;
+  const usingDates = hasStartDate || hasEndDate;
 
-      if (!usingDurations && !usingDates) {
-        addValidationIssue(
-          ctx,
-          t("addForm.validation.provideRespawnOrDates"),
-          "minDuration",
-        );
+  validateTimerName(data, issues, t);
+  validateTimerLevel(data, issues, t);
 
-        return;
-      }
+  if (!usingDurations && !usingDates) {
+    addValidationIssue(
+      issues,
+      t("addForm.validation.provideRespawnOrDates"),
+      "minDuration",
+    );
 
-      if (usingDurations) {
-        validateTimerDurations(data, ctx, t);
-      }
+    return issues;
+  }
 
-      if (usingDates) {
-        validateTimerDates(data, ctx, t);
-      }
-    });
+  if (usingDurations) {
+    validateTimerDurations(data, issues, t);
+  }
 
-type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
+  if (usingDates) {
+    validateTimerDates(data, issues, t);
+  }
+
+  return issues;
+};
+
+// Every rule runs in one form-level check so a missing name is reported
+// together with the respawn fields instead of hiding them.
+const createFormResolver = (t: TimerFormTranslation) =>
+  standardSchemaResolver(
+    Schema.toStandardSchemaV1(
+      FormSchema.check(Schema.makeFilter((data) => validateTimerForm(data, t))),
+    ),
+  );
+
+type FormValues = typeof FormSchema.Type;
 
 export type AddTimerFormProps = {
   /**
@@ -330,7 +350,7 @@ export function useAddTimerForm({ guildId, onClose }: AddTimerFormProps) {
     control,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(createFormSchema(t)),
+    resolver: createFormResolver(t),
     defaultValues: {
       name: "",
       minDuration: "",

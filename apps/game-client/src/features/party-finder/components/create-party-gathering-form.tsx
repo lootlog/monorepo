@@ -4,38 +4,43 @@ import { Input } from "@/components/ui/input";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import * as z from "zod";
+import { Schema } from "effect";
 import { useGameStore } from "@/store/game.store";
 
-const createFormSchema = (t: TFunction<"partyFinder">) =>
-  z
-    .object({
-      description: z.string().max(200).optional(),
-      minLvl: z.coerce.number().min(1).max(500).optional().or(z.literal("")),
-      maxLvl: z.coerce.number().min(1).max(500).optional().or(z.literal("")),
-    })
-    .refine(
-      (data) => {
-        if (data.minLvl && data.maxLvl) {
-          return Number(data.minLvl) <= Number(data.maxLvl);
-        }
+/** An empty level input stays `""`; anything else must be a level in range. */
+const LevelInput = Schema.Union([
+  Schema.Literal(""),
+  Schema.FiniteFromString.check(Schema.isBetween({ minimum: 1, maximum: 500 })),
+]);
 
-        return true;
-      },
-      {
-        message: t("form.validation.minGreaterThanMax"),
-        path: ["minLvl"],
-      },
-    );
+const FormSchema = Schema.Struct({
+  description: Schema.optional(Schema.String.check(Schema.isMaxLength(200))),
+  minLvl: Schema.optional(LevelInput),
+  maxLvl: Schema.optional(LevelInput),
+});
 
-type FormSchema = ReturnType<typeof createFormSchema>;
+const createFormResolver = (t: TFunction<"partyFinder">) =>
+  standardSchemaResolver(
+    Schema.toStandardSchemaV1(
+      FormSchema.check(
+        Schema.makeFilter(({ minLvl, maxLvl }) =>
+          !minLvl || !maxLvl || minLvl <= maxLvl
+            ? undefined
+            : {
+                path: ["minLvl"],
+                issue: t("form.validation.minGreaterThanMax"),
+              },
+        ),
+      ),
+    ),
+  );
 
-type FormData = z.output<FormSchema>;
+type FormData = typeof FormSchema.Type;
 
 export const CreatePartyGatheringForm = () => {
   const formId = useId();
@@ -50,8 +55,8 @@ export const CreatePartyGatheringForm = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<z.input<FormSchema>, undefined, FormData>({
-    resolver: zodResolver(createFormSchema(t)),
+  } = useForm<typeof FormSchema.Encoded, undefined, FormData>({
+    resolver: createFormResolver(t),
     defaultValues: {
       description: "",
       minLvl: "",

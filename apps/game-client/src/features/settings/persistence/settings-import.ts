@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import { storageKey } from "@/lib/storage-key";
 import { isObjectRecord } from "@lootlog/schema/records";
 import type { SettingsCatalogValue } from "@lootlog/domain/settings-documents";
@@ -21,7 +21,7 @@ const IMPORT_VERSION = 1;
 
 // Preserve the wire serializer's treatment of undefined legacy properties.
 const decodeLegacyTimerJson = (value: string) =>
-  z.json().parse(JSON.parse(value));
+  Schema.decodeUnknownSync(Schema.Json)(JSON.parse(value));
 
 export type SettingsImportState = {
   version: number;

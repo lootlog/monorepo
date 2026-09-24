@@ -197,7 +197,7 @@ it("reports a missing name together with the missing respawn times", async () =>
   await user.click(screen.getByRole("button", { name: "Dodaj" }));
   expect(await screen.findByText("Nazwa jest wymagana")).toBeVisible();
   expect(
-    screen.getByText("Podaj czasy respawnu lub niestandardowe daty"),
+    screen.getByText("Podaj czas odrodzenia albo własne daty odrodzenia"),
   ).toBeVisible();
   expect(fixture.posts()).toHaveLength(0);
 });
