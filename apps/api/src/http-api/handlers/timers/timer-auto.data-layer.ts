@@ -270,11 +270,9 @@ const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
 
   const dedupSince = new Date(startedAt.getTime() - DEDUP_TTL_SECONDS * 1000);
 
-  // The transaction can commit before Redis records its result. Anchor the
-  // fallback to the automatic write; reset/delete updatedAt values must not
-  // suppress a later kill. History also covers restoring an earlier window.
-  if (timer.windowOpenedAt && timer.windowOpenedAt >= dedupSince) return timer;
-
+  // The transaction can commit before Redis records its result. Only the
+  // CREATE history written by an automatic submission identifies it: event
+  // respawn windows, resets, deletes, and restores also move the timer row.
   const recentCreates = yield* database
     .select({ id: timerHistoryEntryTable.id })
     .from(timerHistoryEntryTable)

@@ -15,6 +15,8 @@ import {
 import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { useGameStore } from "@/store/game.store";
+import { useLogsStore } from "@/store/logs.store";
+import { authClient } from "@/lib/auth-client";
 import { NpcsDeleteProcessor } from "./npcs-delete-processor";
 
 const trackedNpc = (id = 500) => ({
@@ -103,6 +105,7 @@ const createFixture = () => {
 
 beforeEach(() => {
   queryClient.clear();
+  useLogsStore.getState().clearActions();
   useNpcDetectorStore.setState({
     npcs: [trackedNpc()],
     activeDetectionAnimations: { 500: 1 },
@@ -189,41 +192,77 @@ it("does not submit without whitelisted guilds", () => {
   const fixture = createFixture();
   queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-  expect(fixture.requests).toHaveLength(0);
+  // A submission logs its action synchronously, before sending a request.
+  expect(useLogsStore.getState().actions).toEqual([]);
 });
 
-it.each(["missing", "empty"] as const)(
-  "submits while configuration is pending with %s cached data and does not replay",
-  async (cached) => {
-    const fixture = createFixture();
-    queryClient.clear();
+it("does not submit when the loaded configuration has no entry for the character", () => {
+  const fixture = createFixture();
+  queryClient.setQueryData(configKey, { "999": { catchingGuildIds: ["g"] } });
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  expect(useLogsStore.getState().actions).toEqual([]);
+});
 
-    if (cached === "empty") {
-      queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
+it("does not submit without a signed-in session", () => {
+  const fixture = createFixture();
+  queryClient.clear();
+  const session = authClient.$store.atoms.session;
+  const previous: unknown = session.value;
+  onTestFinished(() => session.set(previous));
+  session.set({ ...session.value, data: null, error: null, isPending: false });
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  expect(useLogsStore.getState().actions).toEqual([]);
+});
+
+it.each(["refetching", "invalidated"] as const)(
+  "keeps an explicitly empty whitelist while its configuration is %s",
+  async (state) => {
+    const fixture = createFixture();
+    queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
+
+    if (state === "invalidated") {
+      await queryClient.invalidateQueries({ queryKey: configKey });
+    } else {
+      // Clearing the cache after the test cancels this refetch.
+      queryClient
+        .fetchQuery({
+          queryKey: configKey,
+          queryFn: () => new Promise<never>(() => {}),
+          staleTime: 0,
+        })
+        .catch(() => undefined);
     }
 
-    const pending =
-      Promise.withResolvers<Record<string, { catchingGuildIds: string[] }>>();
-
-    const config = queryClient.fetchQuery({
-      queryKey: configKey,
-      queryFn: () => pending.promise,
-      staleTime: 0,
-    });
-
     fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-    await waitFor(() => expect(fixture.requests).toHaveLength(1));
-    pending.resolve({ "101": { catchingGuildIds: ["guild-1"] } });
-    await config;
-
-    expect(fixture.requests).toHaveLength(1);
-    expect(await fixture.requests[0].json()).toMatchObject({
-      accountId: "202",
-      characterId: "101",
-      respBaseSeconds: 30,
-    });
+    expect(useLogsStore.getState().actions).toEqual([]);
   },
 );
+
+it("submits while configuration is pending and does not replay", async () => {
+  const fixture = createFixture();
+  queryClient.clear();
+
+  const pending =
+    Promise.withResolvers<Record<string, { catchingGuildIds: string[] }>>();
+
+  const config = queryClient.fetchQuery({
+    queryKey: configKey,
+    queryFn: () => pending.promise,
+    staleTime: 0,
+  });
+
+  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
+  await waitFor(() => expect(fixture.requests).toHaveLength(1));
+  pending.resolve({ "101": { catchingGuildIds: ["guild-1"] } });
+  await config;
+
+  expect(fixture.requests).toHaveLength(1);
+  expect(await fixture.requests[0].json()).toMatchObject({
+    accountId: "202",
+    characterId: "101",
+    respBaseSeconds: 30,
+  });
+});
 
 it.each(["missing", "empty"] as const)(
   "submits after a failed configuration fetch with %s cached data",
@@ -252,14 +291,6 @@ it.each(["missing", "empty"] as const)(
 it("submits after the configuration cache is cleared", async () => {
   const fixture = createFixture();
   queryClient.clear();
-  fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
-  await waitFor(() => expect(fixture.requests).toHaveLength(1));
-});
-
-it("does not suppress a timer using an invalidated empty whitelist", async () => {
-  const fixture = createFixture();
-  queryClient.setQueryData(configKey, { "101": { catchingGuildIds: [] } });
-  await queryClient.invalidateQueries({ queryKey: configKey });
   fixture.handle({ npcs_del: [{ id: 500, respBaseSeconds: 30 }] });
   await waitFor(() => expect(fixture.requests).toHaveLength(1));
 });

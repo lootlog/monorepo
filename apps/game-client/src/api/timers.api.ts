@@ -14,7 +14,10 @@ import {
 } from "@/lib/api/generated-helpers";
 import type { GuildMember } from "@/types/guild-member";
 import { requireLocation } from "./require-location";
-import { GAME_EVENT_RETRY_OPTIONS } from "./retry-policy";
+import {
+  AUTO_TIMER_REQUEST_TIMEOUT_MS,
+  AUTO_TIMER_RETRY_OPTIONS,
+} from "./retry-policy";
 import {
   getAggregateActionStatus,
   getErrorMessage,
@@ -64,7 +67,7 @@ export function createAutoTimer(
   return runSingleLoggedAction({
     actionType: "create_timer",
     actionPayload: timer,
-    retry: GAME_EVENT_RETRY_OPTIONS,
+    retry: AUTO_TIMER_RETRY_OPTIONS,
     request: {
       method: "POST",
       endpoint: "/timers/auto",
@@ -73,7 +76,9 @@ export function createAutoTimer(
     execute: () => {
       requireLocation(payload.npc.location);
 
-      return timersControllerCreateAutoTimer(payload);
+      return timersControllerCreateAutoTimer(payload, {
+        apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS },
+      });
     },
   });
 }

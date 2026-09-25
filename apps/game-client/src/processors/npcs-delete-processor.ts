@@ -7,6 +7,7 @@ import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
 import { queryClient } from "@/lib/query-client";
+import { isSignedOut } from "@/lib/auth-client";
 import { createAutoTimer } from "@/api";
 import {
   getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
@@ -42,7 +43,7 @@ export class NpcsDeleteProcessor {
     const getTimerContext = () => {
       if (timerContext) return timerContext;
 
-      if (!game) return null;
+      if (!game || isSignedOut()) return null;
 
       const accountId = game.hero.accountId;
       const characterId = game.hero.characterId;
@@ -58,17 +59,17 @@ export class NpcsDeleteProcessor {
           lootlogCharacterConfigQueryKey,
         );
 
-      const characterConfig =
-        configQuery?.status === "success" &&
-        configQuery.fetchStatus === "idle" &&
-        !configQuery.isInvalidated
-          ? configQuery.data?.[characterId]
+      // A loaded configuration without this character matches the server's
+      // empty whitelist. A pending or failed load leaves the check to the server.
+      const catchingGuildIds =
+        configQuery?.status === "success"
+          ? (configQuery.data?.[characterId]?.catchingGuildIds ?? [])
           : undefined;
 
       timerContext = {
         accountId,
         characterId,
-        catchingGuildIds: characterConfig?.catchingGuildIds,
+        catchingGuildIds,
         mapId: map.id,
         mapName: map.name,
       };
@@ -99,8 +100,6 @@ export class NpcsDeleteProcessor {
 
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.name;
 
-      // Only an explicit empty whitelist can suppress a submission. When the
-      // cache is unavailable, the API still checks the current whitelist.
       if (context.catchingGuildIds?.length === 0) {
         return;
       }

@@ -8,7 +8,6 @@ import {
   onTestFinished,
   vi,
 } from "vitest";
-import { GAME_API_REQUEST_TIMEOUT_MS } from "@/lib/configure-api-clients";
 import { useLogsStore } from "@/store/logs.store";
 import { createAutoTimer, normalizeTimerResponse } from "./timers.api";
 
@@ -47,7 +46,6 @@ beforeEach(() => {
       main: {
         baseUrl: "https://api.example.test",
         fetch: http,
-        timeoutMs: GAME_API_REQUEST_TIMEOUT_MS,
       },
     }),
   );
@@ -119,10 +117,13 @@ it("stops after three failed attempts and retains the final failure", async () =
   });
 });
 
-it("times out hung submissions and finishes retries within server deduplication", async () => {
+it("times out hung submissions and finishes three attempts within server deduplication despite late timers", async () => {
   const signals: AbortSignal[] = [];
   http.mockImplementation((input, init) => {
     signals.push(new Request(input, init).signal);
+    // Browser timers fire late; exact fake timers would hide a budget that
+    // leaves no room for the third attempt.
+    vi.setSystemTime(Date.now() + 100);
 
     return new Promise(() => undefined);
   });
@@ -156,10 +157,10 @@ it("does not resend a failed timer after tab suspension outlives server deduplic
   expect(useLogsStore.getState().actions[0]?.status).toBe("error");
 });
 
-it("reserves a complete request timeout before retrying a slow failure", async () => {
+it("does not start a retry after the latest attempt start", async () => {
   http.mockImplementation(async () => {
     // Simulate a suspended browser delivering the failed request late.
-    vi.setSystemTime(Date.now() + 18_000);
+    vi.setSystemTime(Date.now() + 20_000);
     throw new TypeError("Network unavailable");
   });
   await expect(createAutoTimer(timer)).rejects.toThrow("Network unavailable");

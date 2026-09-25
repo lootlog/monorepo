@@ -67,10 +67,8 @@ export type LoggedActionRetryOptions = {
   maxAttempts: number;
   retryableStatuses: readonly number[];
   getDelayMs: (attempt: number, cause: unknown) => number;
-  budget?: {
-    maxElapsedMs: number;
-    attemptTimeoutMs: number;
-  };
+  /** Milliseconds after the first attempt when no further attempt may start. */
+  latestAttemptStartMs?: number;
 };
 
 type RunSingleLoggedActionInput<TResponse> = {
@@ -496,8 +494,8 @@ const runLoggedRequestWithRetry = <TResponse>({
   const startedAt = Date.now();
   const startedAtMonotonic = performance.now();
 
-  const hasRetryBudget = (delayMs: number): boolean => {
-    if (!retry?.budget) return true;
+  const canStartAttemptAfter = (delayMs: number): boolean => {
+    if (retry?.latestAttemptStartMs === undefined) return true;
 
     // Wall time includes suspension on platforms whose monotonic clock pauses;
     // the monotonic clock also prevents clock corrections extending retries.
@@ -506,10 +504,7 @@ const runLoggedRequestWithRetry = <TResponse>({
       performance.now() - startedAtMonotonic,
     );
 
-    return (
-      elapsed + delayMs + retry.budget.attemptTimeoutMs <=
-      retry.budget.maxElapsedMs
-    );
+    return elapsed + delayMs <= retry.latestAttemptStartMs;
   };
 
   const runAttempt = async (attempt: number): Promise<TResponse> => {
@@ -533,11 +528,11 @@ const runLoggedRequestWithRetry = <TResponse>({
 
       const delayMs = retry.getDelayMs(attempt, error);
 
-      if (!hasRetryBudget(delayMs)) throw error;
+      if (!canStartAttemptAfter(delayMs)) throw error;
 
       await delayRetry(delayMs);
 
-      if (!hasRetryBudget(0)) throw error;
+      if (!canStartAttemptAfter(0)) throw error;
 
       return runAttempt(attempt + 1);
     }
