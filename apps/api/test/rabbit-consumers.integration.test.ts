@@ -7,10 +7,13 @@ import {
 import { Deferred, Effect, Schema } from "effect";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { Queue } from "#src/rabbitmq/queue";
-import { makeRabbitConsumer } from "#src/runtime/background/rabbit-consumer";
 import {
+  makeRabbitConsumer,
+  orderedHandlerRetry,
+} from "#src/runtime/background/rabbit-consumer";
+import {
+  apiRabbitFailurePolicies,
   apiRabbitQueues,
-  apiRabbitRetry,
 } from "#src/runtime/infrastructure/api-rabbit";
 
 let broker: StartedTestContainer;
@@ -176,14 +179,15 @@ test("API backlog shares handler capacity across queues while ordered failures r
   }
 }, 60_000);
 
-test("a poison delivery cannot block the next fact on a retrying queue", async () => {
+test("presence facts retry in place, in order, then dead-letter without blocking the queue", async () => {
   const topology: ReadonlyArray<string> = [
     Queue.GAME_CHARACTER_OFFLINE,
-    Queue.GAME_CHARACTER_OFFLINE_RETRY,
     Queue.GAME_CHARACTER_OFFLINE_DLQ,
   ];
 
-  const handled: string[] = [];
+  const attempts: string[] = [];
+  let publishedAt = 0;
+  let nextHandledAt = 0;
 
   const offline = (characterId: string) =>
     new TextEncoder().encode(
@@ -208,20 +212,32 @@ test("a poison delivery cannot block the next fact on a retrying queue", async (
         RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
         ({ characterId }) =>
           Effect.gen(function* () {
-            handled.push(characterId);
+            attempts.push(characterId);
 
-            if (characterId === "failing") {
-              return yield* Effect.fail("temporary database failure");
+            const failed =
+              characterId === "permanent" ||
+              (characterId === "transient" &&
+                attempts.filter((id) => id === "transient").length === 1);
+
+            if (failed) {
+              return yield* Effect.fail("database unavailable");
             }
 
-            yield* Deferred.succeed(nextHandled, undefined);
+            if (characterId === "next") {
+              nextHandledAt = Date.now();
+              yield* Deferred.succeed(nextHandled, undefined);
+            }
           }),
-        apiRabbitRetry.characterOffline,
+        apiRabbitFailurePolicies.characterOffline,
+        orderedHandlerRetry,
       );
+
+      publishedAt = Date.now();
 
       for (const content of [
         new TextEncoder().encode('{"characterId":'),
-        offline("failing"),
+        offline("transient"),
+        offline("permanent"),
         offline("next"),
       ]) {
         yield* messaging.publish({
@@ -236,18 +252,14 @@ test("a poison delivery cannot block the next fact on a retrying queue", async (
         (yield* readQueues).map((queue) => [queue.name, queue]),
       );
 
-      const main = queues.get(Queue.GAME_CHARACTER_OFFLINE);
-      const retry = queues.get(Queue.GAME_CHARACTER_OFFLINE_RETRY);
-
-      // The undecodable payload skips retries; the failed fact waits for one.
-      expect(queues.get(Queue.GAME_CHARACTER_OFFLINE_DLQ)).toMatchObject({
-        messages_ready: 1,
+      expect(queues.get(Queue.GAME_CHARACTER_OFFLINE)).toMatchObject({
+        messages_ready: 0,
+        messages_unacknowledged: 0,
       });
-      expect(
-        (main?.messages_ready ?? 0) +
-          (main?.messages_unacknowledged ?? 0) +
-          (retry?.messages_ready ?? 0),
-      ).toBe(1);
+      // The undecodable payload and the exhausted fact, nothing else.
+      expect(queues.get(Queue.GAME_CHARACTER_OFFLINE_DLQ)).toMatchObject({
+        messages_ready: 2,
+      });
     }).pipe(
       Effect.provide(
         RabbitMessaging.layer({
@@ -261,5 +273,17 @@ test("a poison delivery cannot block the next fact on a retrying queue", async (
     ),
   );
 
-  expect(handled.slice(0, 2)).toEqual(["failing", "next"]);
+  // Each fact settles before the next one starts: the transient failure
+  // recovers first, and the permanent one stops after three retries.
+  expect(attempts).toEqual([
+    "transient",
+    "transient",
+    "permanent",
+    "permanent",
+    "permanent",
+    "permanent",
+    "next",
+  ]);
+  // The 1.75 s of backoff delays, not blocks, the rest of the queue.
+  expect(nextHandledAt - publishedAt).toBeLessThan(5_000);
 }, 60_000);
