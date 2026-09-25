@@ -60,8 +60,9 @@ export const useGuildDiscordSync = () => {
     refreshMutation.mutate({ pathParams: { guildId } });
   };
 
+  // Keep the last confirmed status while a refresh runs so its controls stay mounted.
   const permissionStatus = getGuildDiscordPermissionStatus(
-    query.isError || isRefreshError || isRefreshing ? undefined : query.data,
+    query.isError || isRefreshError ? undefined : query.data,
   );
 
   return {
