@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { WarningWindowActions } from "@/components/warning-window/warning-window-actions";
 import { storageKey } from "@/lib/storage-key";
@@ -8,8 +8,6 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useLayoutEffect, type FC } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTranslation } from "react-i18next";
-
-const dismissedSchema = z.boolean();
 
 const STORAGE_KEY = storageKey("ll:backend-preferences-warning-dismissed");
 
@@ -33,12 +31,13 @@ export const BackendPreferencesWarning: FC = () => {
   );
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
   const setPosition = useWindowsStore((state) => state.setPosition);
 
   const [dismissed, setDismissed] = useLocalStorage<boolean>(
     STORAGE_KEY,
     false,
-    dismissedSchema,
+    Schema.Boolean,
   );
 
   const centerX = Math.round((window.innerWidth - WINDOW_WIDTH) / 2);
@@ -66,7 +65,7 @@ export const BackendPreferencesWarning: FC = () => {
   };
 
   const handleOpenSettings = () => {
-    setOpen("settings", true, {
+    openAndFocus("settings", {
       activeTab: "npc-detector" satisfies SettingsTabValue,
     });
     handleClose();

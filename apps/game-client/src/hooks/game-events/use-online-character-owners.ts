@@ -23,15 +23,43 @@ function getCurrentWorld(): string | undefined {
   return useGameStore.getState().game?.world;
 }
 
+// Owners survive Shift releases for the same Organization, world and
+// connection. Within this window a new press reuses them; after it the press
+// shows them while it refetches.
+const OWNERS_FRESH_MS = 30_000;
+
+type OwnersHydration = {
+  guildId: string;
+  loadedAt: number | null;
+  pending: boolean;
+  socket: NonNullable<ReturnType<typeof useSocket>["socket"]>;
+  world: string;
+};
+
+// A request is unnecessary while one is in flight or owners loaded recently.
+function needsOwnersRequest(hydration: OwnersHydration | null): boolean {
+  if (hydration?.pending) return false;
+
+  const loadedAt = hydration?.loadedAt ?? null;
+
+  return (
+    loadedAt === null ||
+    Date.now() - loadedAt >= OWNERS_FRESH_MS ||
+    useOnlineCharacterOwnersStore.getState().status !== "success"
+  );
+}
+
 function hydrateOnlineCharacterOwners({
   guildId,
-  guildMembersByUserId,
+  guildMembersByUserIdRef,
+  onSettled,
   requestIdRef,
   socket,
   world,
 }: {
   guildId: string;
-  guildMembersByUserId: GuildMembersByUserId;
+  guildMembersByUserIdRef: { current: GuildMembersByUserId };
+  onSettled: (loaded: boolean) => void;
   requestIdRef: { current: number };
   socket: Parameters<typeof requestServerPresence>[0];
   world: string;
@@ -45,12 +73,14 @@ function hydrateOnlineCharacterOwners({
 
       if (!response) {
         useOnlineCharacterOwnersStore.getState().setError();
+        onSettled(false);
 
         return;
       }
 
       if (response.status === "forbidden") {
         useOnlineCharacterOwnersStore.getState().setForbidden();
+        onSettled(false);
 
         return;
       }
@@ -59,12 +89,14 @@ function hydrateOnlineCharacterOwners({
         .getState()
         .setPresenceResponse(
           normalizePresenceResponse(response.players),
-          guildMembersByUserId,
+          guildMembersByUserIdRef.current,
         );
+      onSettled(true);
     })
     .catch(() => {
       if (requestIdRef.current === currentRequestId) {
         useOnlineCharacterOwnersStore.getState().setError();
+        onSettled(false);
       }
     });
 }
@@ -101,8 +133,7 @@ export function useOnlineCharacterOwners(): void {
   const selectedGuildIdRef = useRef(selectedGuildId);
   const selectedWorldRef = useRef(selectedWorld);
   const requestIdRef = useRef(0);
-  const activeHydrationKeyRef = useRef<string | null>(null);
-  const activeHydrationSocketRef = useRef(socket);
+  const hydrationRef = useRef<OwnersHydration | null>(null);
 
   useEffect(() => {
     guildMembersByUserIdRef.current = guildMembersByUserId;
@@ -119,6 +150,24 @@ export function useOnlineCharacterOwners(): void {
   }, [selectedGuildId, selectedWorld]);
 
   useEffect(() => {
+    const cached = hydrationRef.current;
+
+    // Cached owners belong to one Organization, world and connection. Drop
+    // them as soon as any of these changes, even while Shift is released.
+    const cacheUsable =
+      cached !== null &&
+      joined &&
+      connected &&
+      cached.socket === socket &&
+      cached.guildId === selectedGuildId &&
+      (!active || cached.world === selectedWorld);
+
+    if (!cacheUsable) {
+      requestIdRef.current += 1;
+      hydrationRef.current = null;
+      useOnlineCharacterOwnersStore.getState().clearOwners();
+    }
+
     if (
       !joined ||
       !connected ||
@@ -128,29 +177,30 @@ export function useOnlineCharacterOwners(): void {
       selectedGuildId === "all" ||
       !selectedWorld
     ) {
-      requestIdRef.current += 1;
-      activeHydrationKeyRef.current = null;
-      activeHydrationSocketRef.current = socket;
-      useOnlineCharacterOwnersStore.getState().clearOwners();
-
       return;
     }
 
-    const hydrationKey = `${selectedGuildId}\u0000${selectedWorld}`;
+    const current = hydrationRef.current;
 
-    if (
-      activeHydrationKeyRef.current === hydrationKey &&
-      activeHydrationSocketRef.current === socket
-    ) {
-      return;
-    }
+    if (!needsOwnersRequest(current)) return;
 
-    activeHydrationKeyRef.current = hydrationKey;
-    activeHydrationSocketRef.current = socket;
-    useOnlineCharacterOwnersStore.getState().clearOwners();
+    const hydration: OwnersHydration = current ?? {
+      guildId: selectedGuildId,
+      loadedAt: null,
+      pending: false,
+      socket,
+      world: selectedWorld,
+    };
+
+    hydration.pending = true;
+    hydrationRef.current = hydration;
     hydrateOnlineCharacterOwners({
       guildId: selectedGuildId,
-      guildMembersByUserId: guildMembersByUserIdRef.current,
+      guildMembersByUserIdRef,
+      onSettled: (loaded) => {
+        hydration.pending = false;
+        hydration.loadedAt = loaded ? Date.now() : null;
+      },
       requestIdRef,
       socket,
       world: selectedWorld,
@@ -160,7 +210,7 @@ export function useOnlineCharacterOwners(): void {
   useEffect(
     () => () => {
       requestIdRef.current += 1;
-      activeHydrationKeyRef.current = null;
+      hydrationRef.current = null;
     },
     [],
   );

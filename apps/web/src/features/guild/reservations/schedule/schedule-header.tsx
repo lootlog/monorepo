@@ -175,7 +175,9 @@ export function ScheduleHeader({
     <>
       <header
         className={cn(
-          "shrink-0 border-b bg-background",
+          // Below `md` the document scrolls the schedule, so the day navigation
+          // pins under the app bar.
+          "shrink-0 border-b bg-background max-md:sticky max-md:top-14 max-md:z-30",
           compactValue(
             isCompact,
             "flex items-center gap-1 px-2 py-1",
@@ -261,10 +263,11 @@ export function ScheduleHeader({
         {!isCompact && actionToolbar}
       </header>
 
+      {/* Below `md` the document scrolls the schedule, so the dock pins to the screen. */}
       {isCompact && (
         <div
           data-slot="schedule-action-dock"
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:fixed"
         >
           {actionToolbar}
         </div>

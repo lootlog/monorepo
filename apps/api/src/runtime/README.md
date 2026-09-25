@@ -37,4 +37,12 @@ automatic-timer retries in the Game client.
 
 RabbitMQ consumers in this API replica share five handler slots. Each queue uses
 prefetch one, bounding waiting deliveries and retaining sequential processing
-within that queue. BullMQ workers retain their separate concurrency settings.
+within that queue. A failed delivery never returns to the head of its queue.
+Presence facts (character offline and coverage) carry no sequence, so their
+handler retries in place three times over 1.75 seconds, keeping later facts
+behind it, and then dead-letters. The backoff does not hold a handler slot.
+Other queues with a retry route move a failed delivery to a delayed retry queue
+and dead-letter it after three retries; the remaining queues reject it. A
+payload that does not decode skips all retries and goes straight to the
+dead-letter queue. One poison message therefore cannot hold a queue's only
+delivery slot. BullMQ workers retain their separate concurrency settings.

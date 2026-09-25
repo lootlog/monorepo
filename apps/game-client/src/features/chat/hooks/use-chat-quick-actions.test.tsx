@@ -191,7 +191,7 @@ it("creates a gathering in the current chat organization instead of the command 
   expect(
     screen.queryByRole("button", { name: "Ustawienia" }),
   ).not.toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Party finder" }));
+  await user.click(screen.getByRole("button", { name: "Utwórz zbiórkę" }));
   await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
   const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
   expect(body.guildIds).toEqual(["a"]);
@@ -208,7 +208,7 @@ it("disables gathering creation without a chat organization even when commands h
   useChatStore.getState().setSelectedInputGuildIds(["b"]);
   render(<ChatQuickActionStrip />, { wrapper });
   await user.click(screen.getByRole("button", { name: "Szybkie akcje" }));
-  const create = screen.getByRole("button", { name: "Party finder" });
+  const create = screen.getByRole("button", { name: "Utwórz zbiórkę" });
   expect(create).toBeDisabled();
   await user.click(create);
   expect(request).not.toHaveBeenCalled();

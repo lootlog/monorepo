@@ -1,4 +1,5 @@
 import { isApiError } from "@lootlog/client/transport";
+import { throttle } from "es-toolkit";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { partyReadyRoomControllerActive } from "@lootlog/client/main";
@@ -9,6 +10,11 @@ import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { useSession } from "@/hooks/auth/use-session";
 
 export const ACTIVE_GATHERINGS_QUERY_KEY = ["active-party-gatherings"];
+
+// Chat edits and participant updates arrive in bursts. Coalesce them into at
+// most one refetch per window instead of cancelling and restarting the request
+// for each; the trailing edge fires after the last update, so none is missed.
+const RECONCILE_THROTTLE_MS = 500;
 
 export function useActivePartyGatherings() {
   const [now, setNow] = useState(Date.now);
@@ -35,17 +41,22 @@ export function useActivePartyGatherings() {
   useEffect(() => {
     if (!connected || !joined || !socket) return;
 
-    const reconcile = () => {
+    const invalidate = () => {
       void queryClient.invalidateQueries({
         queryKey: ACTIVE_GATHERINGS_QUERY_KEY,
       });
     };
 
+    const reconcile = throttle(invalidate, RECONCILE_THROTTLE_MS, {
+      edges: ["trailing"],
+    });
+
     const permissionsChanged = () => {
+      reconcile.cancel();
       void queryClient.resetQueries({ queryKey: ACTIVE_GATHERINGS_QUERY_KEY });
     };
 
-    reconcile();
+    invalidate();
 
     const events = [
       GatewayEvent.CHAT_MESSAGE_UPDATE,
@@ -73,6 +84,7 @@ export function useActivePartyGatherings() {
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, permissionsChanged);
 
     return () => {
+      reconcile.cancel();
       socket.off(GatewayEvent.NOTIFICATION, newGathering);
       socket.off(GatewayEvent.CHAT_MESSAGE, newGathering);
 

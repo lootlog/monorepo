@@ -16,11 +16,11 @@
     "showInChat": "Pokaż w czacie",
     "visibleInChat": "Widoczna w czacie",
     "options": "Opcje zbiórki",
-    "more": "+{{count}} pozostałe zbiórki",
+    "more": "Pozostałe zbiórki: {{count}}",
     "collapse": "Zwiń pozostałe",
     "noDescription": "Brak opisu",
-    "title": "Party finder",
-    "ownTitle": "Party finder",
+    "title": "Utwórz zbiórkę",
+    "ownTitle": "Twoja zbiórka",
     "counts": "({{inParty}}/10)",
     "partyMemberCount": "W grupie: {{count}}/10",
     "partyMemberCountUnknown": "Liczba osób w grupie niedostępna",
@@ -85,10 +85,10 @@
     "loadError": "Nie udało się załadować wiadomości",
     "refreshing": "Odświeżanie wiadomości",
     "refreshError": "Nie udało się odświeżyć danych czatu",
-    "partialError_one": "Nie udało się załadować wiadomości z jednego serwera",
-    "partialError_few": "Nie udało się załadować wiadomości z {{count}} serwerów",
-    "partialError_many": "Nie udało się załadować wiadomości z {{count}} serwerów",
-    "partialError_other": "Nie udało się załadować wiadomości z {{count}} serwerów"
+    "partialError_one": "Nie udało się załadować wiadomości z jednego Lootloga",
+    "partialError_few": "Nie udało się załadować wiadomości z {{count}} Lootlogów",
+    "partialError_many": "Nie udało się załadować wiadomości z {{count}} Lootlogów",
+    "partialError_other": "Nie udało się załadować wiadomości z {{count}} Lootloga"
   },
   "dateDividers": {
     "today": "Dzisiaj",
@@ -96,13 +96,12 @@
   },
   "input": {
     "suggestionKeyboardHint": "↑ ↓ wybór · Enter zatwierdź · Esc zamknij",
-    "placeholder": "Wiadomość...",
+    "placeholder": "Wiadomość…",
     "pending": "Wysyłanie wiadomości",
     "clearChatConfirm": {
       "title": "Wyczyścić czat?",
-      "description": "Ta operacja usunie historię czatu dla wszystkich członków gildii.",
-      "confirm": "Wyczyść",
-      "cancel": "Anuluj"
+      "description": "Ta operacja usunie historię czatu dla wszystkich członków Lootloga.",
+      "confirm": "Wyczyść"
     },
     "commandSuggestions": {
       "title": "Wybierz komendę",
@@ -110,14 +109,14 @@
     },
     "mentionSuggestions": {
       "title": "Wspomnij osobę lub rolę",
-      "loading": "Ładowanie mentionów...",
-      "noResults": "Brak pasujących mentionów"
+      "loading": "Ładowanie podpowiedzi…",
+      "noResults": "Brak pasujących osób i ról"
     }
   },
   "actions": {
     "hideFilters": "Ukryj filtry",
     "showFilters": "Pokaż filtry",
-    "openSettings": "Ustawienia chatu"
+    "openSettings": "Ustawienia czatu"
   },
   "reply": {
     "replyingTo": "Odpowiedź"
@@ -128,19 +127,25 @@
     "reply": "Odpowiedz",
     "delete": "Usuń",
     "deleting": "Usuwanie wiadomości",
+    "deleteConfirm": {
+      "title": "Usunąć wiadomość?",
+      "description": "Wiadomość zniknie u wszystkich członków Lootloga."
+    },
     "showEquipment": "Pokaż ekwipunek",
-    "inviteFriends": "Zaproś do przyjaciół",
-    "inviteParty": "Zaproś do drużyny",
+    "inviteFriends": "Dodaj do znajomych",
+    "inviteParty": "Zaproś do grupy",
     "showProfile": "Pokaż profil",
     "hideNpcType": "Ukryj wiadomości: {{npcType}}"
   },
   "errors": {
     "rateLimited": "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
-    "sendFailed": "Nie udało się wysłać wiadomości na czat"
+    "sendFailed": "Nie udało się wysłać wiadomości na czat",
+    "clearFailed": "Nie udało się wyczyścić czatu. Spróbuj ponownie.",
+    "deleteFailed": "Nie udało się usunąć wiadomości. Spróbuj ponownie."
   },
   "quickActions": {
     "menu": "Szybkie akcje",
-    "selectOrganization": "Wybierz organizację u góry czatu",
+    "selectOrganization": "Wybierz Lootlog u góry czatu",
     "help": "Pomoc",
     "position": "Pozycja",
     "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
@@ -158,7 +163,7 @@
         "description": "Wysyła prośbę o pomoc z Twoją pozycją."
       },
       "create-party-gathering": {
-        "label": "Utwórz grupę (Party finder)"
+        "label": "Utwórz zbiórkę"
       },
       "join-party-gathering": {
         "label": "Zgłoś się do zbiórki",

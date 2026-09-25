@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   Tooltip,
   TooltipContent,
@@ -118,10 +118,9 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
               )}
             </span>
             {entry.canRestore && (
-              <Button
-                size="xs"
-                aria-label={t("history.restore")}
-                className="ll:size-6 ll:p-0 ll:shrink-0"
+              <IconButton
+                label={t("history.restore")}
+                className="ll:shrink-0"
                 disabled={restorePending}
                 onClick={(event) => {
                   event.preventDefault();
@@ -133,13 +132,9 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
                   event.stopPropagation();
                   setTooltipOpen(false);
                 }}
-                tabIndex={-1}
-                title={t("history.restore")}
-                type="button"
-                variant="menu"
               >
-                <RotateCcw className="ll:h-3 ll:w-3" />
-              </Button>
+                <RotateCcw aria-hidden="true" />
+              </IconButton>
             )}
             <span className="ll:ml-auto ll:shrink-0 ll:text-[10px] ll:text-muted-foreground">
               {format(new Date(entry.createdAt), "HH:mm:ss")}

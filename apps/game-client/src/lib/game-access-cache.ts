@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import type { QueryClient, Query } from "@tanstack/react-query";
 import {
   getGuildsControllerGetGuildPermissionsQueryKey,
@@ -14,9 +14,9 @@ import {
 import { Permission } from "@lootlog/schema/permissions";
 import type { PermissionsUpdatedPayload } from "@/lib/socket";
 
-const queryPathSchema = z.string();
+const isQueryPath = Schema.is(Schema.String);
 
-const guildQueryParamsSchema = z.object({ guildId: z.string() });
+const isGuildQueryParams = Schema.is(Schema.Struct({ guildId: Schema.String }));
 
 type TimerRecord = { guildId: string; npc: { type: string; lvl: number } };
 
@@ -26,17 +26,11 @@ const timerScope = (query: Query): string | null | undefined => {
   if (path === "/timers") return null;
 
   if (path === "/timers/history") {
-    const parsedParams = guildQueryParamsSchema.safeParse(params);
-
-    if (parsedParams.success) return parsedParams.data.guildId;
+    if (isGuildQueryParams(params)) return params.guildId;
   }
 
-  const parsedPath = queryPathSchema.safeParse(path);
-
-  if (parsedPath.success)
-    return /^\/guilds\/([^/]+)\/timers\/[^/]+\/history$/.exec(
-      parsedPath.data,
-    )?.[1];
+  if (isQueryPath(path))
+    return /^\/guilds\/([^/]+)\/timers\/[^/]+\/history$/.exec(path)?.[1];
 
   return undefined;
 };
@@ -142,10 +136,10 @@ const reconcileOrganizations = (
       changedIds.add(organization.organizationId);
 
     for (const query of queryClient.getQueryCache().getAll()) {
-      const path = queryPathSchema.safeParse(query.queryKey[0]);
+      const path = query.queryKey[0];
 
-      const id = path.success
-        ? /^\/guilds\/([^/]+)\/permissions$/.exec(path.data)?.[1]
+      const id = isQueryPath(path)
+        ? /^\/guilds\/([^/]+)\/permissions$/.exec(path)?.[1]
         : undefined;
 
       if (id) changedIds.add(id);

@@ -35,7 +35,7 @@ const mount = () =>
   );
 
 const submit = (message: string) => {
-  const textarea = screen.getByPlaceholderText("Wiadomość...");
+  const textarea = screen.getByPlaceholderText("Wiadomość…");
   fireEvent.change(textarea, { target: { value: message } });
   const form = textarea.closest("form");
 

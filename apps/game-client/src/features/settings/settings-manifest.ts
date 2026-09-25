@@ -114,7 +114,7 @@ const MANIFEST = [
           {
             id: "catching-range",
             labelKey: "settings.catching.form.collectionRangeTitle",
-            aliases: ["łupy", "lootlog", "zbieranie"],
+            aliases: ["łupy", "lootlog", "organizacje", "zbieranie"],
             settingKeys: ["gameData.lootlog"],
           },
         ],

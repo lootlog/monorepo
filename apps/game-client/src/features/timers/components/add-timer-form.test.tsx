@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { expect, it, onTestFinished, vi } from "vitest";
 import type { SearchTimersNpcResponseDtoOutput } from "@lootlog/client/main";
+import { toast } from "sonner";
 import { createAddTimerFixture } from "../add-timer-fixtures";
 import { AddTimerForm } from "./add-timer-form";
 
@@ -23,8 +24,9 @@ const npc: SearchTimersNpcResponseDtoOutput = {
 const mountForm = (
   guildId: string | undefined = "guild-1",
   npcResults: SearchTimersNpcResponseDtoOutput[] = [],
+  createStatus?: number,
 ) => {
-  const fixture = createAddTimerFixture({ npcResults });
+  const fixture = createAddTimerFixture({ npcResults, createStatus });
   const onClose = vi.fn();
 
   const view = render(
@@ -43,8 +45,8 @@ const mountForm = (
 
 const fillDurations = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
-  await user.type(screen.getByLabelText("Minimalny czas (max 300h)"), "1m");
-  await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "2m");
+  await user.type(screen.getByLabelText("Minimalny czas (maks. 300 h)"), "1m");
+  await user.type(screen.getByLabelText("Maksymalny czas (maks. 300 h)"), "2m");
 };
 
 const submit = async (
@@ -80,6 +82,22 @@ it("submits durations to the window's guild and closes on success", async () => 
   });
   expect(fixture.posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
   await waitFor(() => expect(fixture.onClose).toHaveBeenCalledOnce());
+});
+
+it("keeps the form open and reports a timer the server did not create", async () => {
+  const toastError = vi.spyOn(toast, "error").mockImplementation(() => "");
+  onTestFinished(() => toastError.mockRestore());
+  const user = userEvent.setup();
+  const fixture = mountForm("guild-1", [], 500);
+  await fillDurations(user);
+  await submit(user, fixture);
+  await waitFor(() =>
+    expect(toastError).toHaveBeenCalledWith(
+      "Nie udało się dodać timera Tanroth.",
+    ),
+  );
+  expect(fixture.onClose).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("Nazwa")).toHaveValue("Tanroth");
 });
 
 it("closes without a request from the cancel button", async () => {
@@ -127,17 +145,17 @@ it("selects an autocomplete NPC and submits custom spawn dates", async () => {
   const user = userEvent.setup();
   const fixture = mountForm("guild-1", [npc]);
   await selectNpc(user);
-  expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue(
+  expect(screen.getByLabelText("Minimalny czas (maks. 300 h)")).toHaveValue(
     "0h 1m 20s",
   );
-  expect(screen.getByLabelText("Maksymalny czas (max 300h)")).toHaveValue(
+  expect(screen.getByLabelText("Maksymalny czas (maks. 300 h)")).toHaveValue(
     "0h 2m 0s",
   );
   expect(screen.getByLabelText("Poziom")).toHaveValue(120);
   await user.click(
-    screen.getByRole("switch", { name: "Niestandardowe daty spawnu" }),
+    screen.getByRole("switch", { name: "Własne daty odrodzenia" }),
   );
-  expect(screen.getByLabelText("Minimalny czas (max 300h)")).toHaveValue("");
+  expect(screen.getByLabelText("Minimalny czas (maks. 300 h)")).toHaveValue("");
   fireEvent.change(screen.getByLabelText("Data startu"), {
     target: { value: "2026-04-22T10:00" },
   });
@@ -180,13 +198,24 @@ it("shows no search results and rejects malformed durations without an HTTP muta
   expect(await screen.findByText("Nie znaleziono potwora")).toBeVisible();
   await user.type(screen.getByLabelText("Nazwa"), "Tanroth");
   await user.type(
-    screen.getByLabelText("Minimalny czas (max 300h)"),
+    screen.getByLabelText("Minimalny czas (maks. 300 h)"),
     "1h garbage",
   );
-  await user.type(screen.getByLabelText("Maksymalny czas (max 300h)"), "1m");
+  await user.type(screen.getByLabelText("Maksymalny czas (maks. 300 h)"), "1m");
   await user.click(screen.getByRole("button", { name: "Dodaj" }));
   expect(
     await screen.findByText("Czas musi być większy niż 0 sekund"),
+  ).toBeVisible();
+  expect(fixture.posts()).toHaveLength(0);
+});
+
+it("reports a missing name together with the missing respawn times", async () => {
+  const user = userEvent.setup();
+  const fixture = mountForm();
+  await user.click(screen.getByRole("button", { name: "Dodaj" }));
+  expect(await screen.findByText("Nazwa jest wymagana")).toBeVisible();
+  expect(
+    screen.getByText("Podaj czas odrodzenia albo własne daty odrodzenia"),
   ).toBeVisible();
   expect(fixture.posts()).toHaveLength(0);
 });

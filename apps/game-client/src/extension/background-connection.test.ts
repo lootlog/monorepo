@@ -12,7 +12,8 @@ import { createBackgroundConnection } from "./background-connection";
 import {
   decodeMessage,
   encodeMessage,
-  ExtensionMessageSchema,
+  decodeExtensionMessage,
+  type ExtensionMessage,
   type ExtensionRequest,
 } from "./protocol";
 
@@ -81,10 +82,10 @@ function setup() {
     webSocketFactory: factory,
   });
 
-  const messages: ReturnType<typeof ExtensionMessageSchema.parse>[] = [];
+  const messages: ExtensionMessage[] = [];
 
   const connection = createBackgroundConnection(realtime, (raw) =>
-    messages.push(ExtensionMessageSchema.parse(decodeMessage(raw))),
+    messages.push(decodeExtensionMessage(decodeMessage(raw))),
   );
 
   cleanups.push(() => connection.dispose());

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ChatMessage } from "./chat-message";
@@ -52,6 +58,35 @@ describe("chat message actions", () => {
       expect(writeText).toHaveBeenCalledWith(createChatMessage().message);
     },
   );
+
+  it("deletes a message only after the confirmation is accepted", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    render(
+      <ChatMessage
+        all={false}
+        guildName="Guild"
+        message={createChatMessage({ canDelete: true })}
+        onDelete={onDelete}
+      />,
+      { wrapper: createChatTestWrapper().wrapper },
+    );
+
+    fireEvent.contextMenu(screen.getByText("Hello"));
+    await user.click(await screen.findByRole("menuitem", { name: "Usuń" }));
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("menuitem", { name: "Usuń" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Usuń",
+      }),
+    );
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
 
   it("opens the original reply with keyboard and clears independently", async () => {
     const user = userEvent.setup();

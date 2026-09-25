@@ -12,8 +12,8 @@ export const RootRouteNotFound = () => {
       <RouteErrorState
         status={404}
         primaryAction={
-          <Button onClick={() => void navigate({ to: "/init" })}>
-            {t("common.routeErrors.actions.goToInit")}
+          <Button onClick={() => void navigate({ to: "/@me" })}>
+            {t("common.routeErrors.actions.goToDashboard")}
           </Button>
         }
       />

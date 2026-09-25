@@ -50,9 +50,11 @@ describe("HotkeysSettingsTab", () => {
     const user = userEvent.setup();
     render(<HotkeysSettingsTab />);
 
-    expect(chatRow().queryByRole("button", { name: "Reset" })).toBeNull();
+    expect(
+      chatRow().queryByRole("button", { name: "Przywróć domyślny" }),
+    ).toBeNull();
     await user.click(
-      chatRow().getByRole("button", { name: "Zmień skrót: Chat" }),
+      chatRow().getByRole("button", { name: "Zmień skrót: Czat" }),
     );
     expect(
       chatRow().getByText(i18n.t("settings.hotkeys.capture")),
@@ -69,10 +71,14 @@ describe("HotkeysSettingsTab", () => {
     });
     expect(keyCaps(chatRow())).toBe("Ctrl + K");
 
-    await user.click(chatRow().getByRole("button", { name: "Reset" }));
+    await user.click(
+      chatRow().getByRole("button", { name: "Przywróć domyślny" }),
+    );
 
     expect(keyCaps(chatRow())).toBe("Shift + C");
-    expect(chatRow().queryByRole("button", { name: "Reset" })).toBeNull();
+    expect(
+      chatRow().queryByRole("button", { name: "Przywróć domyślny" }),
+    ).toBeNull();
   });
 
   it("rejects a binding already used by another action", async () => {
@@ -80,7 +86,7 @@ describe("HotkeysSettingsTab", () => {
     render(<HotkeysSettingsTab />);
 
     await user.click(
-      chatRow().getByRole("button", { name: "Zmień skrót: Chat" }),
+      chatRow().getByRole("button", { name: "Zmień skrót: Czat" }),
     );
     fireEvent.keyDown(window, { key: "S", shiftKey: true });
 
@@ -107,6 +113,8 @@ describe("HotkeysSettingsTab", () => {
     await user.click(screen.getByRole("button", { name: "Przywróć" }));
 
     expect(keyCaps(chatRow())).toBe("Shift + C");
-    expect(chatRow().queryByRole("button", { name: "Reset" })).toBeNull();
+    expect(
+      chatRow().queryByRole("button", { name: "Przywróć domyślny" }),
+    ).toBeNull();
   });
 });
