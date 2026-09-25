@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import {
   timersControllerDeleteTimer,
   timersControllerResetTimer,
@@ -144,12 +145,10 @@ export const useTimerActions = (
         );
       },
       onSuccess: () => {
-        showRuntimeMessage(
-          t("messages.resetSuccess", { name: timer.npc.name }),
-        );
+        toast.success(t("messages.resetSuccess", { name: timer.npc.name }));
       },
       onError: (error) => {
-        showRuntimeMessage(getResetTimerErrorMessage(error));
+        toast.error(getResetTimerErrorMessage(error));
       },
     });
 
@@ -168,10 +167,10 @@ export const useTimerActions = (
         { world: deleteWorld },
       ),
     onSuccess: () => {
-      showRuntimeMessage(t("messages.deleteSuccess", { name: timer.npc.name }));
+      toast.success(t("messages.deleteSuccess", { name: timer.npc.name }));
     },
     onError: (error) => {
-      showRuntimeMessage(getDeleteTimerErrorMessage(error));
+      toast.error(getDeleteTimerErrorMessage(error));
     },
   });
 
@@ -204,5 +203,3 @@ export const useTimerActions = (
     handleDeleteTimer,
   };
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

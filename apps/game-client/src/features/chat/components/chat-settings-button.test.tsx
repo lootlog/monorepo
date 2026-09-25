@@ -13,7 +13,7 @@ describe("ChatSettingsButton", () => {
     const user = userEvent.setup();
     render(<ChatSettingsButton />);
 
-    await user.click(screen.getByRole("button", { name: "Ustawienia chatu" }));
+    await user.click(screen.getByRole("button", { name: "Ustawienia czatu" }));
 
     expect(useWindowsStore.getState().settings).toMatchObject({
       open: true,

@@ -10,6 +10,7 @@ import {
 } from "@/store/windows.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { LOOTLOG_APP_URL } from "@/config/app";
+import { resolveDefaultWindowPosition } from "@/components/draggable-window/window-default-placement";
 
 const renderLogin = () =>
   render(
@@ -75,7 +76,7 @@ describe("extension login window", () => {
     );
   });
 
-  it("closes by keyboard, stays dismissed across remounts and resets position on the next runtime", async () => {
+  it("closes by keyboard, stays dismissed across remounts with a way back, and resets position on the next runtime", async () => {
     const user = userEvent.setup();
     const view = renderLogin();
     const close = screen.getByRole("button", { name: "Zamknij okno" });
@@ -85,14 +86,51 @@ describe("extension login window", () => {
     view.unmount();
     const remounted = renderLogin();
     expect(screen.queryByRole("region")).toBeNull();
+
+    // The launcher takes the quick access bar's place, even before the player
+    // has ever moved that bar.
+    const launcher = screen.getByRole("button", {
+      name: "Zaloguj się do Lootloga",
+    });
+
+    const quickAccessPosition = resolveDefaultWindowPosition(
+      "quick-access",
+      (id) => useWindowsStore.getState()[id].size,
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+
+    expect(launcher).toHaveStyle({
+      left: `${quickAccessPosition.x}px`,
+      top: `${quickAccessPosition.y}px`,
+    });
+
+    // Reopening is the player's own action, so focus moves in and Escape
+    // closes the window instead of reaching the game.
+    await user.click(launcher);
+    expect(screen.getByRole("region")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Zaloguj się do Lootloga" }),
+    ).toBeNull();
+    await waitFor(() =>
+      expect(
+        remounted.container
+          .querySelector("#ll-extension-login")
+          ?.contains(document.activeElement),
+      ).toBe(true),
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("region")).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Zaloguj się do Lootloga" }),
+    );
     remounted.unmount();
     useWindowsStore.getState().setPosition("extension-login", { x: 10, y: 20 });
     resetExtensionLoginWindow();
-    renderLogin();
+    const next = renderLogin();
     expect(screen.getByRole("region")).toBeInTheDocument();
-    expect(useWindowsStore.getState()["extension-login"].position).toEqual({
-      x: (window.innerWidth - 360) / 2,
-      y: (window.innerHeight - 180) / 2,
+    expect(next.container.querySelector("#ll-extension-login")).toHaveStyle({
+      left: `${Math.round((window.innerWidth - 360) / 2)}px`,
+      top: `${Math.round((window.innerHeight - 180) / 2)}px`,
     });
   });
 
@@ -105,7 +143,7 @@ describe("extension login window", () => {
     screen.getByRole("button", { name: "Odblokuj okno" }).focus();
     await user.keyboard(" ");
     expect(useWindowsStore.getState()["extension-login"].locked).toBe(false);
-    screen.getByRole("button", { name: "Zmień przezroczystość" }).focus();
+    screen.getByRole("button", { name: /^Krycie tła: 4\/5/ }).focus();
     await user.keyboard("{Enter}");
     expect(useWindowsStore.getState()["extension-login"].opacity).toBe(5);
   });

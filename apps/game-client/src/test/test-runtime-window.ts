@@ -12,7 +12,6 @@ export type TestRuntimeWindow = Window & {
   Engine?: TestRuntimeEngine;
   _g?: (command: string, ...args: unknown[]) => unknown;
   getCookie?: (name: string) => string | null | undefined;
-  message?: (text: string) => void;
 };
 
 export const testRuntimeWindow: TestRuntimeWindow = window;

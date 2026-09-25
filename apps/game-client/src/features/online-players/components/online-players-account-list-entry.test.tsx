@@ -241,7 +241,7 @@ describe("OnlinePlayersAccountListEntry", () => {
     await user.hover(tile);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Kliknij dwukrotnie, aby zaprosić do drużyny",
+      "Kliknij dwukrotnie, aby zaprosić do grupy",
     );
   });
 
@@ -268,7 +268,7 @@ describe("OnlinePlayersAccountListEntry", () => {
   it("invites the character to party from the right-side button", () => {
     render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
 
-    fireEvent.click(screen.getByTitle("Zaproś do drużyny"));
+    fireEvent.click(screen.getByRole("button", { name: "Zaproś do grupy" }));
 
     expect(inviteToPartySpy).toHaveBeenCalledWith("party&a=inv&id=10");
   });
@@ -304,7 +304,9 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(getHighlightFill(container)).toBe(TIMERS_COLORS.sky.fill);
-    expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Zaproś do grupy" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not invite party members on tile double click", () => {
@@ -358,7 +360,9 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
-    expect(screen.queryByTitle("Zaproś do drużyny")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Zaproś do grupy" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not invite the current player on tile double click", () => {
@@ -389,7 +393,9 @@ describe("OnlinePlayersAccountListEntry", () => {
     );
 
     expect(getHighlightFill(container)).toBe(TIMERS_COLORS.green.fill);
-    expect(screen.getByTitle("Zaproś do drużyny")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Zaproś do grupy" }),
+    ).toBeVisible();
   });
 
   it("highlights afk players with orange and shows warning icon", () => {
@@ -449,6 +455,22 @@ describe("OnlinePlayersAccountListEntry", () => {
         account: 20,
       });
     });
+  });
+
+  it("opens the context menu from the keyboard and the more actions button", async () => {
+    const user = userEvent.setup();
+    render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
+
+    await user.tab();
+    await user.keyboard("{Shift>}{F10}{/Shift}");
+    expect(await screen.findByText("Pokaż profil")).toBeVisible();
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByText("Pokaż profil")).not.toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: "Więcej akcji" }));
+    fireEvent.click(await screen.findByText("Pokaż ekwipunek"));
+    await waitFor(() => expect(showEquipmentSpy).toHaveBeenCalledOnce());
   });
 
   it("adds the character to friends from the context menu", async () => {

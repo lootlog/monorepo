@@ -12,18 +12,12 @@ import {
 } from "vitest";
 import { useTimersStore } from "@/store/timers.store";
 import { useGameStore } from "@/store/game.store";
-import {
-  setTestRuntimeGame,
-  testRuntimeWindow,
-} from "@/test/test-runtime-window";
+import { toast } from "sonner";
+import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { createTimerFixture } from "../timer-fixtures";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { useTimerActions } from "./use-timer-actions";
-
-const message = vi.fn<(text: string) => void>();
-
-const originalMessage = testRuntimeWindow.message;
 
 beforeEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
@@ -36,14 +30,14 @@ beforeEach(() => {
       level: 300,
     },
   });
-  testRuntimeWindow.message = message;
-  message.mockClear();
+  vi.spyOn(toast, "success").mockImplementation(() => "success");
+  vi.spyOn(toast, "error").mockImplementation(() => "error");
 });
 
 afterEach(() => {
   useTimersStore.setState(useTimersStore.getInitialState(), true);
   useGameStore.getState().clearGame();
-  testRuntimeWindow.message = originalMessage;
+  vi.restoreAllMocks();
 });
 
 const mountActions = (
@@ -171,7 +165,7 @@ describe("useTimerActions", () => {
           lvl: 300,
         },
       });
-      expect(message).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         getFixedT("timers")("messages.resetSuccess", { name: "Tanroth" }),
       );
     },
@@ -186,7 +180,7 @@ describe("useTimerActions", () => {
     );
 
     await act(() => result.current.handleRestartTimer());
-    expect(message).toHaveBeenCalledWith(
+    expect(toast.error).toHaveBeenCalledWith(
       getFixedT("timers")("messages.resetEventWindowForbidden"),
     );
   });
@@ -205,7 +199,7 @@ describe("useTimerActions", () => {
 
     act(() => result.current.handleDeleteTimer("guild-1", "timer-1"));
     await waitFor(() =>
-      expect(message).toHaveBeenCalledWith(
+      expect(toast.success).toHaveBeenCalledWith(
         getFixedT("timers")("messages.deleteSuccess", { name: "Tanroth" }),
       ),
     );
@@ -217,7 +211,7 @@ describe("useTimerActions", () => {
     reject = true;
     act(() => result.current.handleDeleteTimer("guild-1", "timer-1"));
     await waitFor(() =>
-      expect(message).toHaveBeenCalledWith(
+      expect(toast.error).toHaveBeenCalledWith(
         getFixedT("timers")("messages.deleteEventWindowForbidden"),
       ),
     );

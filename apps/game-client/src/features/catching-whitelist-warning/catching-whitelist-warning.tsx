@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import { type FC, useEffect, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
@@ -12,7 +12,7 @@ import {
   useUserLootlogConfigControllerGetUserLootlogConfigByAccountId,
 } from "@lootlog/client/main";
 
-const dismissedCharactersSchema = z.record(z.string(), z.boolean());
+const dismissedCharactersSchema = Schema.Record(Schema.String, Schema.Boolean);
 
 const STORAGE_KEY = storageKey("ll:catching-whitelist-warning-dismissed");
 
@@ -34,6 +34,7 @@ export const CatchingWhitelistWarning: FC = () => {
   );
 
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
   const { data: lootlogCharactersConfig, isSuccess } =
     useUserLootlogConfigControllerGetUserLootlogConfigByAccountId(
@@ -103,7 +104,7 @@ export const CatchingWhitelistWarning: FC = () => {
   };
 
   const handleOpenSettings = () => {
-    setOpen("settings", true);
+    openAndFocus("settings");
     handleClose();
   };
 

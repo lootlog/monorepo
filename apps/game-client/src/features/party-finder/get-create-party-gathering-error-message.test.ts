@@ -22,7 +22,7 @@ describe("getCreatePartyGatheringErrorMessage", () => {
 
   it("returns the forbidden message for 403 responses", () => {
     expect(getCreatePartyGatheringErrorMessage(createApiError(403))).toBe(
-      "Brak uprawnień do wysyłania ogłoszeń",
+      "Brak uprawnień do tworzenia zbiórek",
     );
   });
 
@@ -45,7 +45,7 @@ describe("getCreatePartyGatheringErrorMessage", () => {
       getCreatePartyGatheringErrorMessage(
         createApiError(409, { code: "ACTIVE_GATHERING_EXISTS" }),
       ),
-    ).toBe("Masz już aktywną zbiórkę grupy");
+    ).toBe("Masz już aktywną zbiórkę");
   });
 
   it("explains an active gathering detected locally", () => {
@@ -53,7 +53,7 @@ describe("getCreatePartyGatheringErrorMessage", () => {
       getCreatePartyGatheringErrorMessage(
         new ActivePartyGatheringError("room-1"),
       ),
-    ).toBe("Masz już aktywną zbiórkę grupy");
+    ).toBe("Masz już aktywną zbiórkę");
   });
 
   it("explains a character occupied by another room", () => {
@@ -61,12 +61,12 @@ describe("getCreatePartyGatheringErrorMessage", () => {
       getCreatePartyGatheringErrorMessage(
         createApiError(409, { code: "ALREADY_JOINED_ELSEWHERE" }),
       ),
-    ).toBe("Ta postać jest już w innym Ready Roomie");
+    ).toBe("Ta postać jest już zgłoszona do innej zbiórki");
   });
 
   it("falls back to the default message for non-API errors", () => {
     expect(getCreatePartyGatheringErrorMessage(new Error("boom"))).toBe(
-      "Nie udało się utworzyć ogłoszenia",
+      "Nie udało się utworzyć zbiórki",
     );
   });
 });

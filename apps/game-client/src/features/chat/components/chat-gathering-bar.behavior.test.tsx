@@ -159,7 +159,7 @@ const openGatheringMenu = async (index = 0) => {
 
 const expandGatherings = () => {
   const button = screen.queryByRole("button", {
-    name: /^\+\d+ pozostałe zbiórki$/,
+    name: /^Pozostałe zbiórki: \d+$/,
   });
 
   if (button) fireEvent.click(button);
@@ -634,20 +634,20 @@ it("hides a frozen hovered target and makes the next visible gathering the hotke
   expect(screen.queryByRole("button", { name: "Zgłoś się" })).toBeNull();
   act(() => window.dispatchEvent(new Event("lootlog:join-visible-gathering")));
   expect(harness.mutation).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole("textbox", { name: "Wiadomość..." })).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Wiadomość…" })).toBeVisible();
 });
 
 it("restores hidden gatherings through their floating menu and keeps new IDs and other characters visible", async () => {
   const user = userEvent.setup();
   const gathering = createGathering({ description: "Original gathering" });
   const harness = await setup([gathering]);
-  const editor = screen.getByRole("textbox", { name: "Wiadomość..." });
+  const editor = screen.getByRole("textbox", { name: "Wiadomość…" });
   await user.click(editor);
   await user.paste("Keep this draft");
   await openGatheringMenu();
   await user.click(screen.getByRole("button", { name: "Ukryj zbiórkę" }));
   expect(screen.queryByRole("button", { name: "Zgłoś się" })).toBeNull();
-  expect(screen.getByRole("textbox", { name: "Wiadomość..." })).toBe(editor);
+  expect(screen.getByRole("textbox", { name: "Wiadomość…" })).toBe(editor);
   expect(editor).toHaveTextContent("Keep this draft");
 
   act(() =>
@@ -812,7 +812,7 @@ it("joins the selected organizer from the visible list and enables other signups
 it("preserves the editor focus, draft and caret while gatherings appear, change and disappear", async () => {
   const user = userEvent.setup();
   const harness = await setup();
-  const editor = screen.getByRole("textbox", { name: "Wiadomość..." });
+  const editor = screen.getByRole("textbox", { name: "Wiadomość…" });
   await user.click(editor);
   await user.paste("Keep this draft");
   const textNode = editor.querySelector("[data-lexical-text]")?.firstChild;
@@ -843,7 +843,7 @@ it("preserves the editor focus, draft and caret while gatherings appear, change 
   await waitFor(() =>
     expect(screen.queryByRole("button", { name: "Zgłoś się" })).toBeNull(),
   );
-  expect(screen.getByRole("textbox", { name: "Wiadomość..." })).toBe(editor);
+  expect(screen.getByRole("textbox", { name: "Wiadomość…" })).toBe(editor);
   expect(editor).toHaveFocus();
   expect(editor).toHaveTextContent("Keep this draft");
   expect(selection.focusNode).toBe(textNode);

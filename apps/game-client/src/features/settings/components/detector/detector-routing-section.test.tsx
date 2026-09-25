@@ -97,8 +97,8 @@ describe("DetectorRoutingSection", () => {
 
     expect(screen.queryByRole("button", { expanded: false })).toBeNull();
     expect(screen.getAllByLabelText("Nazwa reguły")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Od levela")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Do levela")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Poziom od")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Poziom do")).toHaveLength(2);
     expect(screen.getByLabelText("Lootlogi: Bossy hero")).toBeInTheDocument();
     expect(screen.getByLabelText("Lootlogi: Reguła 2")).toBeInTheDocument();
   });
@@ -108,7 +108,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const maxLevel = screen.getAllByLabelText("Do levela")[0];
+    const maxLevel = screen.getAllByLabelText("Poziom do")[0];
     await user.clear(maxLevel);
     await user.type(maxLevel, "9999");
     expect(harness.request).not.toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe("DetectorRoutingSection", () => {
 
     render();
 
-    const minLevel = screen.getAllByLabelText("Od levela")[0];
+    const minLevel = screen.getAllByLabelText("Poziom od")[0];
     await user.clear(minLevel);
     await user.type(minLevel, "100");
     await user.tab();
@@ -221,7 +221,7 @@ describe("DetectorRoutingSection", () => {
 
     expect(screen.getByLabelText("Lootlogi: Reguła 3")).toBeInTheDocument();
     expect(
-      screen.getByText("Nic nie wysyła – zaznacz Lootloga"),
+      screen.getByText("Nic nie wysyła – zaznacz Lootlog"),
     ).toBeInTheDocument();
 
     await user.click(

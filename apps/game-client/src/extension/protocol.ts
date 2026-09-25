@@ -1,7 +1,4 @@
-import { z } from "zod";
-
-// Extension CSP forbids even Zod's caught dynamic-code capability probe.
-z.config({ jitless: true });
+import { Schema } from "effect";
 
 export const EXTENSION_CHANNEL = "lootlog.extension.v1";
 
@@ -11,46 +8,64 @@ export const MAX_PENDING_REQUESTS = 64;
 
 export const REQUEST_TIMEOUT_MS = 30_000;
 
-const SerializedMessageSchema = z.string().max(MAX_MESSAGE_LENGTH);
+const isSerializedMessage = Schema.is(
+  Schema.String.check(Schema.isMaxLength(MAX_MESSAGE_LENGTH)),
+);
 
-const id = z.string().min(1).max(80);
+const maxLength = (length: number) =>
+  Schema.String.check(Schema.isMaxLength(length));
 
-export const ExtensionRequestSchema = z.discriminatedUnion("type", [
-  z.strictObject({
-    type: z.literal("http"),
+const id = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(80));
+
+const ExtensionRequestSchema = Schema.Union([
+  Schema.Struct({
+    type: Schema.Literal("http"),
     id,
-    request: z.strictObject({
-      url: z.string().max(8192),
-      method: z.string().max(10),
-      headers: z.record(z.string().max(100), z.string().max(8192)),
-      body: z.string().optional(),
+    request: Schema.Struct({
+      url: maxLength(8192),
+      method: maxLength(10),
+      headers: Schema.Record(maxLength(100), maxLength(8192)),
+      body: Schema.optional(Schema.String),
     }),
   }),
-  z.strictObject({ type: z.literal("cancel"), id }),
-  z.strictObject({ type: z.literal("connect"), id }),
-  z.strictObject({ type: z.literal("disconnect"), id }),
-  z.strictObject({ type: z.literal("release"), id }),
-  z.strictObject({ type: z.literal("command"), id, command: z.unknown() }),
+  Schema.Struct({ type: Schema.Literal("cancel"), id }),
+  Schema.Struct({ type: Schema.Literal("connect"), id }),
+  Schema.Struct({ type: Schema.Literal("disconnect"), id }),
+  Schema.Struct({ type: Schema.Literal("release"), id }),
+  Schema.Struct({
+    type: Schema.Literal("command"),
+    id,
+    command: Schema.Unknown,
+  }),
 ]);
 
-export type ExtensionRequest = z.infer<typeof ExtensionRequestSchema>;
+export type ExtensionRequest = typeof ExtensionRequestSchema.Type;
 
-export const ExtensionMessageSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("ready") }),
-  z.object({ type: z.literal("reset") }),
-  z.object({ type: z.literal("closed") }),
-  z.object({ type: z.literal("result"), id, data: z.unknown() }),
-  z.object({
-    type: z.literal("error"),
+/**
+ * Requests cross from the page into the extension, so unknown keys (and
+ * header names over the key limit) are rejected rather than stripped.
+ */
+export const decodeExtensionRequest = Schema.decodeUnknownSync(
+  ExtensionRequestSchema,
+  { onExcessProperty: "error" },
+);
+
+const ExtensionMessageSchema = Schema.Union([
+  Schema.Struct({ type: Schema.Literal("ready") }),
+  Schema.Struct({ type: Schema.Literal("reset") }),
+  Schema.Struct({ type: Schema.Literal("closed") }),
+  Schema.Struct({ type: Schema.Literal("result"), id, data: Schema.Unknown }),
+  Schema.Struct({
+    type: Schema.Literal("error"),
     id,
-    message: z.string(),
-    code: z.string().optional(),
-    retryable: z.boolean().optional(),
-    retryAfterMs: z.number().optional(),
+    message: Schema.String,
+    code: Schema.optional(Schema.String),
+    retryable: Schema.optional(Schema.Boolean),
+    retryAfterMs: Schema.optional(Schema.Finite),
   }),
-  z.object({
-    type: z.literal("state"),
-    state: z.enum([
+  Schema.Struct({
+    type: Schema.Literal("state"),
+    state: Schema.Literals([
       "disconnected",
       "connecting",
       "connected",
@@ -59,21 +74,25 @@ export const ExtensionMessageSchema = z.discriminatedUnion("type", [
       "reconnecting",
     ]),
   }),
-  z.object({
-    type: z.literal("heartbeat-latency"),
-    latencyMs: z.number().finite().nonnegative().nullable(),
+  Schema.Struct({
+    type: Schema.Literal("heartbeat-latency"),
+    latencyMs: Schema.NullOr(
+      Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0)),
+    ),
   }),
-  z.object({ type: z.literal("event"), event: z.unknown() }),
+  Schema.Struct({ type: Schema.Literal("event"), event: Schema.Unknown }),
 ]);
 
-export type ExtensionMessage = z.infer<typeof ExtensionMessageSchema>;
+export type ExtensionMessage = typeof ExtensionMessageSchema.Type;
+
+export const decodeExtensionMessage = Schema.decodeUnknownSync(
+  ExtensionMessageSchema,
+);
 
 export function decodeMessage(value: unknown): unknown {
-  const parsed = SerializedMessageSchema.safeParse(value);
+  if (!isSerializedMessage(value)) throw new Error("Invalid extension message");
 
-  if (!parsed.success) throw new Error("Invalid extension message");
-
-  return JSON.parse(parsed.data);
+  return JSON.parse(value);
 }
 
 export function encodeMessage(

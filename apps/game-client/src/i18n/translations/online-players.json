@@ -1,13 +1,11 @@
 {
   "window": {
-    "title": "Online"
+    "title": "Gracze online"
   },
   "search": {
-    "placeholder": "Szukaj..."
+    "placeholder": "Szukaj gracza…"
   },
   "filters": {
-    "minLvlLabel": "Minimalny poziom",
-    "maxLvlLabel": "Maksymalny poziom",
     "professionLabel": "Profesja",
     "allProfessions": "Wszystkie"
   },
@@ -24,8 +22,8 @@
     "showFilters": "Pokaż filtry",
     "showMembersView": "Pokaż widok członków",
     "showAccountsView": "Pokaż widok lokacji",
-    "inviteParty": "Zaproś do drużyny",
-    "doubleClickInviteParty": "Kliknij dwukrotnie, aby zaprosić do drużyny"
+    "inviteParty": "Zaproś do grupy",
+    "doubleClickInviteParty": "Kliknij dwukrotnie, aby zaprosić do grupy"
   },
   "contextMenu": {
     "addFriend": "Dodaj do znajomych",
@@ -55,7 +53,7 @@
     "loadError": "Nie udało się załadować graczy online",
     "refreshError": "Nie udało się odświeżyć graczy online",
     "refreshing": "Odświeżanie graczy online",
-    "disconnected": "Brak połączenia z serwerem - nie można pobrać graczy online"
+    "disconnected": "Brak połączenia z serwerem – nie można pobrać graczy online"
   },
   "tooltip": {
     "levelAndProfession": "{{profession}}, poziom {{level}}",
@@ -65,7 +63,7 @@
     "status": {
       "self": "To Ty",
       "afk": "AFK",
-      "party": "W Twojej drużynie",
+      "party": "W Twojej grupie",
       "clan": "Twój klan",
       "friend": "Znajomy"
     }

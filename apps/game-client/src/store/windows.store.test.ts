@@ -19,7 +19,7 @@ describe("windows store", () => {
       JSON.stringify({
         version: 14,
         state: {
-          "create-notification": {
+          "party-finder": {
             size: { width: 420 },
             position: { x: 35, y: 50 },
             opacity: 2,
@@ -48,10 +48,10 @@ describe("windows store", () => {
     );
     await useWindowsStore.persist.rehydrate();
     const state = useWindowsStore.getState();
-    expect(state["create-notification"]).toMatchObject({
-      open: initial["create-notification"].open,
+    expect(state["party-finder"]).toMatchObject({
+      open: initial["party-finder"].open,
       position: { x: 35, y: 50 },
-      size: { width: 420, height: initial["create-notification"].size.height },
+      size: { width: 420, height: initial["party-finder"].size.height },
       opacity: 2,
       addonFlag: "keep",
     });
@@ -81,8 +81,104 @@ describe("windows store", () => {
     );
 
     expect(saved).toHaveProperty("state.addonPreferences", { enabled: true });
-    expect(saved).toHaveProperty("state.create-notification.addonFlag", "keep");
+    expect(saved).toHaveProperty("state.party-finder.addonFlag", "keep");
     expect(saved).not.toHaveProperty("state.setOpen");
+  });
+
+  it("repairs each invalid saved window field from defaults and keeps valid neighbours", async () => {
+    const initial = useWindowsStore.getInitialState();
+
+    const npc = {
+      icon: "npc.gif",
+      id: 7,
+      tpl: 70,
+      x: 1,
+      y: 2,
+      nick: "Tanroth",
+      prof: "w",
+      type: 3,
+      wt: 80,
+      lvl: 120,
+      grp: "not a number",
+      addonNpcFlag: true,
+    };
+
+    localStorage.setItem(
+      storageKey("ll-windows-state"),
+      JSON.stringify({
+        version: 19,
+        state: {
+          chat: "corrupt",
+          timers: [initial.timers],
+          notifications: {
+            open: "yes",
+            locked: true,
+            opacity: 7,
+            autofocus: 1,
+            maxContentHeight: 250,
+            position: { x: "left", y: 20, addonAnchor: "top" },
+            size: [300, 200],
+            addonFlag: "keep",
+          },
+          "npc-detector": { opacity: 3, position: null, size: { width: 280 } },
+          settings: {
+            open: true,
+            state: { activeTab: "retired", activeSubsection: 5, addon: 1 },
+          },
+          "create-notification": { state: { npc, npcs: "addon" } },
+        },
+      }),
+    );
+    await useWindowsStore.persist.rehydrate();
+    const state = useWindowsStore.getState();
+
+    expect(state.chat).toStrictEqual(initial.chat);
+    expect(state.timers).toStrictEqual(initial.timers);
+    expect(state.notifications).toStrictEqual({
+      ...initial.notifications,
+      locked: true,
+      autofocus: undefined,
+      maxContentHeight: 250,
+      position: {
+        x: initial.notifications.position.x,
+        y: 20,
+        addonAnchor: "top",
+      },
+      addonFlag: "keep",
+    });
+    expect(state["npc-detector"]).toStrictEqual({
+      ...initial["npc-detector"],
+      autofocus: undefined,
+      maxContentHeight: undefined,
+      opacity: 3,
+      size: { ...initial["npc-detector"].size, width: 280 },
+    });
+    expect(state.settings.open).toBe(true);
+    expect(state.settings.state).toStrictEqual({
+      activeTab: undefined,
+      activeSubsection: undefined,
+      addon: 1,
+    });
+    expect(state).not.toHaveProperty("create-notification");
+  });
+
+  it("keeps the unhydrated defaults when a saved window payload is not an object", async () => {
+    const initial = useWindowsStore.getInitialState();
+
+    localStorage.setItem(
+      storageKey("ll-windows-state"),
+      JSON.stringify({
+        version: 19,
+        state: {
+          chat: { open: false, locked: true },
+          settings: { open: true, state: ["diagnostics"] },
+        },
+      }),
+    );
+    await useWindowsStore.persist.rehydrate();
+
+    expect(useWindowsStore.getState().chat).toStrictEqual(initial.chat);
+    expect(useWindowsStore.getState().settings).toStrictEqual(initial.settings);
   });
 
   it("uses the new settings default size", () => {
@@ -179,6 +275,32 @@ describe("windows store", () => {
     expect(persisted).toHaveProperty("state");
     expect(persisted).not.toHaveProperty("state.currentWindowFocus");
     expect(persisted).not.toHaveProperty("state.windowFocusHistory");
+  });
+
+  it("asks only player-opened windows to take focus and never persists the request", () => {
+    const button = document.createElement("button");
+    document.body.append(button);
+    button.focus();
+
+    useWindowsStore.getState().setOpen("npc-detector", true);
+    expect(useWindowsStore.getState().focusRequest).toBeUndefined();
+
+    useWindowsStore.getState().toggleOpen("online-players");
+    expect(useWindowsStore.getState().focusRequest).toEqual({
+      windowId: "online-players",
+      returnFocusTo: button,
+    });
+
+    const saved = localStorage.getItem(storageKey("ll-windows-state")) ?? "";
+    expect(saved).not.toContain("focusRequest");
+
+    useWindowsStore.getState().toggleOpen("online-players");
+    expect(useWindowsStore.getState().focusRequest).toBeUndefined();
+
+    useWindowsStore.getState().openAndFocus("settings");
+    useWindowsStore.getState().setOpen("settings", false);
+    expect(useWindowsStore.getState().focusRequest).toBeUndefined();
+    button.remove();
   });
 
   it("preserves the active settings tab while closing and reopening", () => {
@@ -573,6 +695,36 @@ describe("migrateWindowsState", () => {
     );
 
     expect(migrated).not.toHaveProperty("add-timer");
+  });
+
+  it("drops the never-rendered notification creation window and keeps the others", async () => {
+    localStorage.setItem(
+      storageKey("ll-windows-state"),
+      JSON.stringify({
+        version: 19,
+        state: {
+          "create-notification": {
+            position: { x: 35, y: 50 },
+            size: { width: 242, height: 300 },
+            opacity: 2,
+          },
+          timers: {
+            position: { x: 120, y: 80 },
+            hasDefinedPosition: true,
+          },
+        },
+      }),
+    );
+
+    await useWindowsStore.persist.rehydrate();
+
+    expect(useWindowsStore.getState()).not.toHaveProperty(
+      "create-notification",
+    );
+    expect(useWindowsStore.getState().timers).toMatchObject({
+      position: { x: 120, y: 80 },
+      hasDefinedPosition: true,
+    });
   });
 
   it("removes old online players feature state from persisted windows", () => {

@@ -420,6 +420,29 @@ describe("timers.store", () => {
     ]);
   });
 
+  it("does not rewrite stored settings while typing a search", () => {
+    const setItem = vi.spyOn(window.localStorage, "setItem");
+    const store = useTimersStore.getState();
+
+    const timerWrites = () =>
+      setItem.mock.calls.filter(([key]) => key === TIMERS_STORAGE_KEY);
+
+    store.setTimerFiltersSearchText("t");
+    setItem.mockClear();
+    store.setTimerFiltersSearchText("ta");
+    store.setTimerFiltersSearchText("tan");
+
+    expect(timerWrites()).toHaveLength(0);
+
+    store.setTimersSortOrder("desc");
+
+    expect(timerWrites()).toHaveLength(1);
+    expect(
+      JSON.parse(window.localStorage.getItem(TIMERS_STORAGE_KEY) ?? "null")
+        .state.timersSortOrder,
+    ).toBe("desc");
+  });
+
   it("persists only the partialized timer state", () => {
     const store = useTimersStore.getState();
     store.setGeneralConfig({

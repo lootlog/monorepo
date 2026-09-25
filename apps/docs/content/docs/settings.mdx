@@ -52,7 +52,7 @@ pokazuje samo tło wiersza. Timery pozostawione na liście po upływie ustawione
 czasu do ukrycia zachowują swój kolor, ale są ciemniejsze.
 
 W dodatku do gry w **Ustawienia → Timery → Wygląd** możesz włączyć
-**Wygląd legacy**. Opcja jest domyślnie wyłączona. Przywraca poprzednie kolory,
+**Poprzedni wygląd**. Opcja jest domyślnie wyłączona. Przywraca poprzednie kolory,
 obramowania, odstępy, wypełnienia i kolorowanie tekstu timerów,
 bez naprzemiennie jaśniejszych rzędów i przyciemniania wygasłych kafelków.
 Działa od razu w oknie timerów i pod torbą, także w trybie kompaktowym. Wybór
@@ -67,12 +67,13 @@ częstą przyczyną braku wpisów w oczekiwanym panelu.
 
 ### Lootlogi: widoczność i kolejność
 
+W grze każda organizacja, do której należysz, nazywa się Lootlogiem.
 Zakładka **Lootlogi** w oknie ustawień w grze pokazuje wszystkie Lootlogi, do
 których masz dostęp, jeden pod drugim. Kliknięcie kafelka włącza lub wyłącza
 jego widoczność: ukryte Lootlogi znikają z przełączników w grze, ale
 powiadomienia i przetwarzanie w tle działają dalej.
 
-Uchwyt przed kafelkiem pozwala przeciągnąć Lootloga w górę lub w dół i tak
+Uchwyt przed kafelkiem pozwala przeciągnąć Lootlog w górę lub w dół i tak
 ustawić kolejność, w jakiej Lootlogi pojawiają się w przełącznikach w grze. Ten
 sam uchwyt obsługują strzałki góra/dół oraz Home/End na klawiaturze. Kolejność
 zmienisz tylko przy pustym wyszukiwaniu i filtrze „Wszystkie”. Kolejność i
@@ -82,14 +83,48 @@ widoczność są zapisywane na koncie Lootlog.
 
 Publikowanie obecności w grze jest tymczasowo zawsze włączone dla wszystkich
 organizacji, do których masz dostęp. Przełączniki publikowania są ukryte, a
-wcześniej zapisany wybór organizacji nie ogranicza publikacji. Ukrycie serwera
+wcześniej zapisany wybór organizacji nie ogranicza publikacji. Ukrycie organizacji
 w interfejsie nie wyłącza wysyłania obecności.
+
+## Okna Lootlog w grze
+
+- Przy pierwszym uruchomieniu pasek szybkiego dostępu, timery i czat stoją jeden
+  pod drugim w prawym górnym rogu mapy, a wykrywacz i powiadomienia pojawiają
+  się w jej lewym górnym rogu. Nie zasłaniają pasków gry ani siebie nawzajem.
+  Okna otwierane na żądanie, na przykład ustawienia, pojawiają się na środku.
+- Okno zostaje tam, gdzie je przeciągniesz. Gdy okno przeglądarki jest mniejsze,
+  Lootlog pokazuje okno przy krawędzi ekranu, także zablokowane, a po
+  powiększeniu przeglądarki okno wraca na zapisane miejsce.
+- Przycisk **Przywróć** w sekcji **Okna** (kategoria **Ogólne**) ustawia okna
+  z powrotem w domyślnych miejscach i rozmiarach, przywraca domyślne krycie
+  i odblokowuje je.
+- Okno otwarte przyciskiem, skrótem lub poleceniem przejmuje fokus klawiatury,
+  a po zamknięciu oddaje go tam, gdzie był. Okna, które otwierają się same
+  (wykrywacz, powiadomienia), nie przejmują fokusu, więc dalej piszesz
+  i sterujesz postacią.
+- Zamknięcie wykrywacza lub powiadomień tylko ukrywa okno, a wpisy zostają.
+  Dopóki takie okno jest zamknięte i ma wpisy, na pasku szybkiego dostępu
+  widać jego przycisk z liczbą wpisów, który otwiera je ponownie. Listę
+  opróżnisz przyciskiem **Wyczyść listę wykrytych potworów** lub
+  **Wyczyść wszystkie powiadomienia** na pasku tytułu, a pojedynczy wpis
+  jego przyciskiem zamknięcia.
+- `Escape` zamyka okno Lootlog, w którym jest fokus, i nie trafia wtedy do gry.
+- Przycisk krycia w pasku tytułu przełącza pięć poziomów tła, a podpowiedź
+  pokazuje bieżący. Na trzech najjaśniejszych poziomach tekst ma ciemny obrys,
+  żeby był czytelny na każdym tle gry.
+- Uchwyt w prawym dolnym rogu zmienia rozmiar okna. Na uchwycie strzałki
+  zmieniają rozmiar o 1 piksel, a z `Shift` o 10 pikseli.
 
 ## Okno ustawień w grze
 
-Obok kropki stanu połączenia na pasku szybkiego dostępu widzisz ping w
-milisekundach. To czas odpowiedzi serwera Lootlog na ostatni heartbeat.
-Wartość pojawia się po pierwszym pomiarze i znika po utracie połączenia.
+Ikona stanu połączenia na pasku szybkiego dostępu zmienia kształt zależnie od
+stanu: połączono, łączenie lub brak połączenia. Kliknięcie ikony pokazuje stan,
+ping w milisekundach (czas odpowiedzi serwera Lootlog na ostatni pomiar
+połączenia) i połączone Lootlogi. Ping pojawia się po pierwszym pomiarze
+i znika po utracie połączenia. Gdy połączenia nie ma, przycisk
+**Połącz ponownie** łączy od razu, bez czekania na kolejną próbę.
+Czat, timery i gracze online pokazują pasek z informacją, gdy połączenie jest
+zerwane lub trwa ponowne łączenie, więc widać, że dane mogą być nieaktualne.
 
 Okno ustawień w kliencie gry otwierasz z paska szybkiego dostępu lub skrótem
 klawiszowym przypisanym do akcji „Ustawienia”. Ustawienia są zapisywane na
@@ -126,7 +161,7 @@ i suwak z odczytem, który zapisuje wartość po puszczeniu.
   wcześniej różne typy miały różne Lootlogi, po aktualizacji wybór obejmuje
   ich sumę.
 - **Powiadomienia → Wykrywacz** ma pod tabelą sekcję **Gdzie wysyłać
-  powiadomienia** z regułami wysyłki na Lootlogi. Każda reguła jest zawsze
+  powiadomienia** z regułami wysyłki do Lootlogów. Każda reguła jest zawsze
   rozwinięta: ustawiasz zakres poziomu potwora, świat (puste
   = każdy świat, przycisk wstawia świat, na którym grasz) i Lootlogi. Stopka
   reguły opisuje słowami, co reguła wyśle; gdy nie zaznaczysz żadnego
@@ -135,7 +170,7 @@ i suwak z odczytem, który zapisuje wartość po puszczeniu.
   sekcja ma własne pole wyszukiwania nad listą, a wyciszenie usuwasz ikoną
   kosza przy wpisie. Wyciszenia działają obecnie na powiadomienia.
 - **Diagnostyka → Logi** prezentuje akcje jako tabelę z filtrami w pasku nad
-  nią; kliknięcie wiersza rozwija payload, szczegóły i żądania API.
+  nią; kliknięcie wiersza rozwija dane akcji, szczegóły i żądania API.
 - **Sterowanie → Skróty klawiszowe** pokazują skrót jako klawisz; ikona
   przywracania pojawia się tylko przy zmienionych skrótach, a „Przywróć
   domyślne” jest w pasku nad listą.

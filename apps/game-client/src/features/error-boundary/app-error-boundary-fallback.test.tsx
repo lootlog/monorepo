@@ -112,7 +112,7 @@ describe("AppErrorBoundaryFallback", () => {
       "Typ błędu: CopyError",
     );
     expect(mockClipboardWriteText.mock.calls[0][0]).toContain(
-      "Wiadomość: Copy this failure",
+      "Treść błędu: Copy this failure",
     );
     expect(
       screen.getByRole("button", { name: "Skopiowano" }),

@@ -1,15 +1,13 @@
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
-import { useCurrentGameAccountDetectorSettings } from "@/hooks/use-current-game-account-detector-settings";
+import { useDetectorWindowNpcs } from "@/features/npc-detector/hooks/use-detector-window-npcs";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
-import { getDetectorNpcSettings } from "@lootlog/schema/account-preferences";
-import { NpcType } from "@/api/npcs.api";
+import { ListX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useShallow } from "zustand/react/shallow";
 import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
 
 export const NpcDetector = () => {
@@ -31,70 +29,55 @@ export const NpcDetector = () => {
     (state) => state.setMaxContentHeight,
   );
 
-  const { npcs, clearNpcs } = useNpcDetectorStore(
-    useShallow((state) => ({
-      npcs: state.npcs,
-      clearNpcs: state.clearNpcs,
-    })),
-  );
-
-  const { settings } = useCurrentGameAccountDetectorSettings();
+  const clearNpcs = useNpcDetectorStore((state) => state.clearNpcs);
+  const { npcs: filteredNpcs, settings } = useDetectorWindowNpcs();
 
   const [isMaxHeightAdjustmentArmed, setIsMaxHeightAdjustmentArmed] =
     useState(false);
 
-  const [measuredMaxContentHeight, setMeasuredMaxContentHeight] = useState(
-    storedMaxContentHeight ?? defaultWindowHeight,
-  );
-
   const resolvedMaxContentHeight =
-    storedMaxContentHeight ?? measuredMaxContentHeight;
+    storedMaxContentHeight ?? defaultWindowHeight;
 
-  const handleClose = () => {
-    setOpen("npc-detector", false);
-    clearNpcs();
-  };
-
-  const filteredNpcs = npcs.filter((npc) => {
-    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
-    const settingsByNpcType = getDetectorNpcSettings(settings, npcType);
-
-    return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
-  });
+  // Closing only hides the window: detections stay until they leave the map,
+  // the map changes or the player clears them, and the next detection
+  // reopens the window with them.
+  const handleClose = () => setOpen("npc-detector", false);
 
   return (
     <DraggableWindow
       isOpen={open && filteredNpcs.length > 0}
       id="npc-detector"
       title={t("window.title")}
-      actions=<WindowMaxHeightAction
-        currentMaxHeight={resolvedMaxContentHeight}
-        isArmed={isMaxHeightAdjustmentArmed}
-        onClick={() =>
-          setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-        }
-      />
+      actions=<>
+        <IconButton label={t("actions.clearAll")} onClick={clearNpcs}>
+          <ListX size={14} aria-hidden="true" />
+        </IconButton>
+        <WindowMaxHeightAction
+          currentMaxHeight={resolvedMaxContentHeight}
+          isArmed={isMaxHeightAdjustmentArmed}
+          onClick={() =>
+            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
+          }
+        />
+      </>
       onClose={handleClose}
       heightMode="auto-up-to-max"
-      maxContentHeight={storedMaxContentHeight}
+      maxContentHeight={resolvedMaxContentHeight}
       isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
       onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}
       onMaxContentHeightChange={(nextMaxContentHeight) =>
         setMaxContentHeight("npc-detector", nextMaxContentHeight)
       }
-      onResolvedMaxContentHeightChange={setMeasuredMaxContentHeight}
       resizable
       minHeight={82}
       maxHeight={600}
       minWidth={242}
     >
-      <div className="ll:flex ll:flex-col ll:h-full ll:w-full ll:overflow-hidden">
-        <NpcsList
-          detectorSettings={settings}
-          npcTypeColors={npcTypeColors}
-          npcs={filteredNpcs}
-        />
-      </div>
+      <NpcsList
+        detectorSettings={settings}
+        npcTypeColors={npcTypeColors}
+        npcs={filteredNpcs}
+      />
     </DraggableWindow>
   );
 };

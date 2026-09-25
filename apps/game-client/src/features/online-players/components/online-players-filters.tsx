@@ -1,5 +1,8 @@
+import {
+  LevelRangeFilter,
+  type LevelRange,
+} from "@/components/level-range-filter";
 import { SearchInput } from "@/components/ui/search-input";
-import { Input } from "@/components/ui/input";
 import {
   toolbarStripLightClassName,
   toolbarStripLightDividerClassName,
@@ -21,15 +24,14 @@ import {
   type OnlinePlayersFiltersValue,
   type ProfessionFilterValue,
 } from "@/features/online-players/online-players-list.helpers";
-import type { ChangeEventHandler, FC } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 type OnlinePlayersFiltersProps = {
   searchQuery: string;
   filters: OnlinePlayersFiltersValue;
-  onSearchChange: ChangeEventHandler<HTMLInputElement>;
-  onMinLvlChange: ChangeEventHandler<HTMLInputElement>;
-  onMaxLvlChange: ChangeEventHandler<HTMLInputElement>;
+  onSearchChange: (searchQuery: string) => void;
+  onLevelRangeChange: (range: LevelRange) => void;
   onProfessionChange: (profession: ProfessionFilterValue) => void;
 };
 
@@ -37,11 +39,11 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
   searchQuery,
   filters,
   onSearchChange,
-  onMinLvlChange,
-  onMaxLvlChange,
+  onLevelRangeChange,
   onProfessionChange,
 }) => {
   const { t } = useTranslation("onlinePlayers");
+  const { t: tCommon } = useTranslation("common");
 
   return (
     <div className={toolbarStripLightClassName}>
@@ -51,35 +53,15 @@ export const OnlinePlayersFilters: FC<OnlinePlayersFiltersProps> = ({
           variant="borderless"
           placeholder={t("search.placeholder")}
           value={searchQuery}
-          onChange={onSearchChange}
+          onChange={(event) => onSearchChange(event.target.value)}
+          onClear={() => onSearchChange("")}
+          clearLabel={tCommon("actions.clearSearch")}
         />
-        <Input
-          aria-label={t("filters.minLvlLabel")}
-          value={filters.minLvl.toString()}
-          onChange={onMinLvlChange}
-          className={cn(
-            toolbarStripLightDividerClassName,
-            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
-          )}
-          variant="borderless"
-          max={MAX_ONLINE_PLAYER_LEVEL}
+        <LevelRangeFilter
+          value={filters}
           min={MIN_ONLINE_PLAYER_LEVEL}
-          type="number"
-          inputMode="numeric"
-        />
-        <Input
-          aria-label={t("filters.maxLvlLabel")}
-          value={filters.maxLvl.toString()}
-          onChange={onMaxLvlChange}
-          className={cn(
-            toolbarStripLightDividerClassName,
-            "ll:w-8 ll:shrink-0 input-no-spinner ll:px-0.5 ll:text-center",
-          )}
-          variant="borderless"
           max={MAX_ONLINE_PLAYER_LEVEL}
-          min={MIN_ONLINE_PLAYER_LEVEL}
-          type="number"
-          inputMode="numeric"
+          onChange={onLevelRangeChange}
         />
         <Select
           value={filters.selectedProfession}

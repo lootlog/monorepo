@@ -110,6 +110,50 @@ it("discovers gatherings without chat messages and preserves visible state durin
       ]),
     );
 
+    const requestsBeforeBurst = request.mock.calls.length;
+
+    const participantUpdate = {
+      v: 1 as const,
+      type: "party-gathering.updated" as const,
+      data: {
+        organizationId: "guild-1",
+        payload: {
+          notificationId: "generic",
+          guildId: "guild-1",
+          discordId: "organizer-discord",
+          world: "luvia",
+          createdAt: room.createdAt,
+          character: {
+            nick: "Organizer",
+            lvl: 100,
+            prof: "w",
+            characterId: "2",
+            accountId: "2",
+            icon: "hero.gif",
+          },
+        },
+      },
+    };
+
+    request.mockImplementation(async () =>
+      Response.json([room, { ...genericRoom, applicantCount: 5 }]),
+    );
+    await harness.receive(
+      ...Array.from({ length: 5 }, () => participantUpdate),
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600);
+    });
+    await waitFor(() =>
+      expect(
+        result.current.data.find((entry) => entry.notificationId === "generic")
+          ?.applicantCount,
+      ).toBe(5),
+    );
+    expect(request.mock.calls.length - requestsBeforeBurst).toBeLessThanOrEqual(
+      2,
+    );
+
     const npc = {
       id: 1,
       name: "Titan",

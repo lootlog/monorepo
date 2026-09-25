@@ -5,9 +5,9 @@ import { useWindowsStore } from "@/store/windows.store";
 import { MessageType } from "@/api/chat.api";
 import { useGameStore } from "@/store/game.store";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm, useWatch } from "react-hook-form";
-import * as z from "zod";
+import { Schema } from "effect";
 import { CommandActions } from "./components/command-actions";
 import {
   CommandSuggestions,
@@ -24,11 +24,16 @@ import {
 import { useShallow } from "zustand/react/shallow";
 import { useRef, useState } from "react";
 
-const FormSchema = z.object({
-  message: z.string().min(1).max(CHAT_INPUT_MAX_LENGTH),
+const FormSchema = Schema.Struct({
+  message: Schema.String.check(
+    Schema.isMinLength(1),
+    Schema.isMaxLength(CHAT_INPUT_MAX_LENGTH),
+  ),
 });
 
-type FormData = z.infer<typeof FormSchema>;
+type FormData = typeof FormSchema.Type;
+
+const resolver = standardSchemaResolver(Schema.toStandardSchemaV1(FormSchema));
 
 export const CommandWindow = () => {
   const reportSendError = useChatSendError();
@@ -66,7 +71,7 @@ export const CommandWindow = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { control, setValue, handleSubmit } = useForm<FormData>({
-    resolver: zodResolver(FormSchema),
+    resolver,
     defaultValues: {
       message: "",
     },
@@ -194,9 +199,10 @@ export const CommandWindow = () => {
                 onKeyDown={(e) => {
                   if (suggestions.handleKeyDown(e)) return;
 
+                  // The window frame closes the palette on Escape; the
+                  // unsent draft goes with it.
                   if (e.key === "Escape") {
                     setValue("message", "");
-                    setOpen("command", false);
 
                     return;
                   }

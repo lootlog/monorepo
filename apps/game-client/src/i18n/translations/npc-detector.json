@@ -3,15 +3,16 @@
     "title": "Wykrywacz"
   },
   "actions": {
-    "noMatchingGuilds": "Brak pasujących serwerów dla poziomu tego potwora.",
+    "noMatchingGuilds": "Żaden Lootlog nie pasuje do poziomu tego potwora.",
     "openSettingsAria": "Otwórz ustawienia wykrywacza",
     "messageSent": "Wysłano",
     "message": "Komunikat",
     "messageFailed": "Nie udało się wysłać komunikatu",
-    "gatheringParty": "Zbieranie grupy...",
-    "alreadyGatheringParty": "Już zbierasz grupę",
-    "gatherParty": "Zbierz grupę",
-    "removeNpcAria": "Usuń NPC z listy",
-    "gatherPartyFailed": "Nie udało się rozpocząć zbierania grupy"
+    "gatheringParty": "Tworzenie zbiórki…",
+    "alreadyGatheringParty": "Masz już aktywną zbiórkę",
+    "gatherParty": "Utwórz zbiórkę",
+    "removeNpcAria": "Usuń potwora z listy",
+    "gatherPartyFailed": "Nie udało się utworzyć zbiórki",
+    "clearAll": "Wyczyść listę wykrytych potworów"
   }
 }

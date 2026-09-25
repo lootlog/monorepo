@@ -10,7 +10,7 @@ import {
 } from "@lootlog/client/main";
 
 import { History } from "lucide-react";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TimerHistoryList } from "./timer-history-list";
@@ -58,13 +58,9 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <WindowActionButton
-          label={historyLabel}
-          active={open}
-          onClick={() => setOpen((value) => !value)}
-        >
+        <IconButton label={historyLabel}>
           <History size={ICON_SIZE} aria-hidden="true" />
-        </WindowActionButton>
+        </IconButton>
       </PopoverTrigger>
       <PopoverContent className="ll:w-80 ll:p-1" align="start" side="bottom">
         <TimerHistoryList

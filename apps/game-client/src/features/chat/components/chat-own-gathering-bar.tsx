@@ -21,7 +21,7 @@ export function ChatOwnGatheringBar({
   summary?: ActivePartyGatheringSummary;
 }) {
   const { t } = useTranslation("chat");
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
   const cancellation = useCancelPartyGathering();
   const withdrawal = useReadyRoomWithdrawal(room);
   const [inviteFailed, setInviteFailed] = useState(false);
@@ -83,7 +83,7 @@ export function ChatOwnGatheringBar({
               size="xs"
               variant="menu"
               className="ll:w-full ll:justify-start ll:gap-2"
-              onClick={() => setOpen("party-finder", true)}
+              onClick={() => openAndFocus("party-finder")}
             >
               <Settings2 size={16} aria-hidden />
               {t("gatherings.manage")}
