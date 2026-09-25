@@ -81,6 +81,13 @@
     }
   },
   "roles": {
+    "levelRangeFrom": "Poziom od",
+    "levelRangeTo": "Poziom do",
+    "validation": {
+      "required": "Podaj poziom.",
+      "invalidLevel": "Podaj liczbę całkowitą od 0 do 500.",
+      "levelOrder": "Poziom końcowy nie może być niższy od początkowego."
+    },
     "title": "Ustawienia ról",
     "description": "Zarządzaj uprawnieniami dla ról Discord",
     "searchPlaceholder": "Szukaj roli...",

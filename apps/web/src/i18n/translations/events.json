@@ -563,6 +563,12 @@
     "endDateMustBeAfterStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia"
   },
   "scoring": {
+    "validation": {
+      "finiteNumber": "Wpisz poprawną liczbę.",
+      "nonNegative": "Wartość nie może być ujemna.",
+      "percentage": "Wpisz wartość od 0 do 100.",
+      "invalidRules": "Popraw błędne wartości punktacji."
+    },
     "title": "Punktacja",
     "description": "Jak przyznawać punkty za kille",
     "addThreshold": "Dodaj próg",
@@ -655,6 +661,10 @@
       "coverage": "Porównanie",
       "action": "Co zrobić",
       "points": "Ile punktów"
+    },
+    "fieldLabel": {
+      "conditionValue": "Reguła {{rule}}, warunek {{condition}}: wartość",
+      "actionPoints": "Reguła {{rule}}: ile punktów"
     },
     "factorHint": {
       "trackingDurationPercentage": "Jaki % czasu respawnu gracz obstawiał herosa",

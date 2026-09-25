@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { formatDurationCompact } from "../../utils/format-duration";
 
-const formatTimeRemaining = (targetDate: Date): string => {
-  const now = new Date();
-  const diffMs = targetDate.getTime() - now.getTime();
+const formatTimeRemaining = (targetTime: number): string => {
+  const diffMs = targetTime - Date.now();
 
   if (diffMs <= 0) return "0:00";
 
@@ -12,12 +11,16 @@ const formatTimeRemaining = (targetDate: Date): string => {
 
 export const useAssignmentCountdown = (
   assignmentDisabled: boolean,
-  assignmentEnabledAt?: Date | null,
+  assignmentEnabledAt?: number | null,
 ) => {
   const [isEnabled, setIsEnabled] = useState(!assignmentDisabled);
 
   const [formattedTime, setFormattedTime] = useState<string | null>(() => {
-    if (!assignmentDisabled || !assignmentEnabledAt) {
+    if (
+      !assignmentDisabled ||
+      assignmentEnabledAt === null ||
+      assignmentEnabledAt === undefined
+    ) {
       return null;
     }
 
@@ -32,7 +35,7 @@ export const useAssignmentCountdown = (
       return;
     }
 
-    if (!assignmentEnabledAt) {
+    if (assignmentEnabledAt === null || assignmentEnabledAt === undefined) {
       setIsEnabled(false);
       setFormattedTime(null);
 
@@ -41,8 +44,7 @@ export const useAssignmentCountdown = (
 
     const updateCountdown = () => {
       const now = Date.now();
-      const targetTime = assignmentEnabledAt.getTime();
-      const diff = targetTime - now;
+      const diff = assignmentEnabledAt - now;
 
       if (diff <= 0) {
         setIsEnabled(true);

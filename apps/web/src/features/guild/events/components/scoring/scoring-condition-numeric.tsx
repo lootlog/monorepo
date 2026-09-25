@@ -6,11 +6,11 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { EVENT_SCORING_NUMERIC_FACTORS } from "@lootlog/domain/scoring";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { ScoringNumberInput } from "./scoring-number-input";
 
 interface ScoringConditionNumericProps {
   control: Control<ScoringRulesFormValues>;
@@ -64,14 +64,14 @@ export const ScoringConditionNumeric = ({
         <Label className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">
           {t("events.scoring.conditionLabel.value")}
         </Label>
-        <Input
-          type="number"
-          step={0.01}
-          className="h-8 text-[12px] font-mono"
-          {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`,
-            { valueAsNumber: true },
-          )}
+        <ScoringNumberInput
+          control={control}
+          register={register}
+          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
+          label={t("events.scoring.fieldLabel.conditionValue", {
+            rule: ruleIndex + 1,
+            condition: conditionIndex + 1,
+          })}
         />
       </div>
     </div>

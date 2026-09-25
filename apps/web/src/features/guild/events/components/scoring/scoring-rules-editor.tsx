@@ -1,5 +1,12 @@
 import { makeRuleId } from "../../utils/scoring-rule-templates";
-import { useEffect, useEffectEvent, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 import { isEqual } from "es-toolkit";
 import { useFieldArray, useWatch, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -24,6 +31,8 @@ export type ScoringRulesFormValues = {
 interface ScoringRulesEditorProps {
   value: EventScoringRules;
   onChange: (value: EventScoringRules) => void;
+  error?: string;
+  ref?: Ref<{ focus: () => void }>;
 }
 
 const defaultRule = () => ({
@@ -37,9 +46,19 @@ const defaultRule = () => ({
 export const ScoringRulesEditor = ({
   value,
   onChange,
+  error,
+  ref,
 }: ScoringRulesEditorProps) => {
   const { t } = useTranslation();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () =>
+      containerRef.current
+        ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        ?.focus(),
+  }));
 
   const form = useForm<ScoringRulesFormValues>({
     defaultValues: { scoringRules: value },
@@ -78,8 +97,11 @@ export const ScoringRulesEditor = ({
   });
 
   return (
-    <div className="space-y-4 rounded-lg">
-      <ScoringGlobalSettings register={scopedRegister} />
+    <div ref={containerRef} className="space-y-4 rounded-lg">
+      <ScoringGlobalSettings
+        control={scopedControl}
+        register={scopedRegister}
+      />
 
       <Separator className="opacity-50" />
 
@@ -135,6 +157,12 @@ export const ScoringRulesEditor = ({
         type="hidden"
         {...scopedRegister("scoringRules.version", { value: 1 })}
       />
+
+      {error && (
+        <p role="alert" className="text-destructive text-sm">
+          {error}
+        </p>
+      )}
 
       {currentRules && (
         <ScoringSimulatorDialog

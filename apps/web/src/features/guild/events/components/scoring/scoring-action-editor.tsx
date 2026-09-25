@@ -5,7 +5,6 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import {
   Select,
@@ -18,6 +17,7 @@ import { EVENT_SCORING_ACTION_TYPES } from "@lootlog/domain/scoring";
 import { getScoringActionTypeLabel } from "../../utils/scoring-rule-labels";
 
 import type { ScoringRulesFormValues } from "./scoring-rules-editor";
+import { ScoringNumberInput } from "./scoring-number-input";
 
 interface ScoringActionEditorProps {
   control: Control<ScoringRulesFormValues>;
@@ -78,13 +78,12 @@ export const ScoringActionEditor = ({
             {t("events.scoring.conditionLabel.points")}
           </Label>
           <div className="flex items-center gap-1">
-            <Input
-              type="number"
-              min={0}
-              step={0.01}
-              className="h-8 text-[12px] font-mono"
-              {...register(`scoringRules.rules.${ruleIndex}.action.points`, {
-                valueAsNumber: true,
+            <ScoringNumberInput
+              control={control}
+              register={register}
+              name={`scoringRules.rules.${ruleIndex}.action.points`}
+              label={t("events.scoring.fieldLabel.actionPoints", {
+                rule: ruleIndex + 1,
               })}
             />
             <span className="text-[11px] text-muted-foreground/50 shrink-0">
