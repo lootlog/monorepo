@@ -5,7 +5,10 @@ import {
   RabbitRoutingKey,
 } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "#src/rabbitmq/queue";
-import { apiRabbitQueues } from "#src/runtime/infrastructure/api-rabbit";
+import {
+  apiRabbitQueues,
+  apiRabbitRetry,
+} from "#src/runtime/infrastructure/api-rabbit";
 
 describe("API RabbitMQ topology", () => {
   test("declares every queue exactly once", () => {
@@ -49,5 +52,22 @@ describe("API RabbitMQ topology", () => {
       exchange: RabbitExchange.DEAD_LETTER,
       routingKey: RabbitRoutingKey.GUILDS_CREATE_DLQ,
     });
+  });
+
+  test("binds a queue for every retry and dead-letter route a consumer uses", () => {
+    const unbound = Object.values(apiRabbitRetry)
+      .flatMap((policy) => [
+        [RabbitExchange.RETRY, policy.retryRoutingKey],
+        [RabbitExchange.DEAD_LETTER, policy.deadLetterRoutingKey],
+      ])
+      .filter(
+        ([exchange, routingKey]) =>
+          !apiRabbitQueues.some(
+            (queue) =>
+              queue.exchange === exchange && queue.routingKey === routingKey,
+          ),
+      );
+
+    expect(unbound).toEqual([]);
   });
 });

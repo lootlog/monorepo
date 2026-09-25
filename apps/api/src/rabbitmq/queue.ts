@@ -21,4 +21,14 @@ export enum Queue {
   GUILDS_DELETE_ROLE_RETRY = "backend-guilds-delete-role.retry",
   // events
   PRESENCE_COVERAGE_CHECK = "backend-presence-coverage-check",
+  PRESENCE_COVERAGE_CHECK_DLQ = "backend-presence-coverage-check.dlq",
+  PRESENCE_COVERAGE_CHECK_RETRY = "backend-presence-coverage-check.retry",
+  // game
+  GAME_CHARACTER_OFFLINE = "backend-game-character-offline",
+  GAME_CHARACTER_OFFLINE_DLQ = "backend-game-character-offline.dlq",
+  GAME_CHARACTER_OFFLINE_RETRY = "backend-game-character-offline.retry",
+  // notifications
+  NOTIFICATIONS_LOOT_CREATED = "backend-notifications-loot-created",
+  NOTIFICATIONS_LOOT_CREATED_DLQ = "backend-notifications-loot-created.dlq",
+  NOTIFICATIONS_LOOT_CREATED_RETRY = "backend-notifications-loot-created.retry",
 }
