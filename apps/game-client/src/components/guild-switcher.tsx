@@ -1,12 +1,7 @@
 import { cn } from "cn";
 import { useUpdateUserPreferences } from "@/hooks/api/use-user-preferences";
 import { useSettingsStore } from "@/store/settings.store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AvatarFallback } from "@/components/ui/avatar";
 import { type FC, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,7 +13,7 @@ import { useShallow } from "zustand/react/shallow";
 import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { useWindowsStore } from "@/store/windows.store";
 import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { GuildSwitcherItem } from "@/components/guild-switcher-item";
 import { toast } from "sonner";
 
@@ -106,7 +101,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   } = preferencesQuery;
 
   const updatePreferences = useUpdateUserPreferences();
-  const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
 
   const { setGuildId, guildId } = useSettingsStore(
     useShallow((state) => ({
@@ -216,28 +211,17 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
           <span className="ll:min-w-0 ll:flex-1 ll:truncate ll:text-[11px] ll:text-gray-300">
             {t("guildSwitcher.allHidden")}
           </span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="xs"
-                type="button"
-                variant="ghost"
-                aria-label={t("actions.openSettings")}
-                onClick={() =>
-                  setOpen("settings", true, {
-                    activeTab: "general",
-                    activeSubsection: "visibility",
-                  })
-                }
-                className="ll:size-6 ll:shrink-0 ll:bg-transparent ll:text-gray-400 hover:ll:bg-white/5 hover:ll:text-gray-200"
-              >
-                <Settings className="ll:size-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="ll:font-semibold">{t("actions.openSettings")}</p>
-            </TooltipContent>
-          </Tooltip>
+          <IconButton
+            label={t("actions.openSettings")}
+            onClick={() =>
+              openAndFocus("settings", {
+                activeTab: "general",
+                activeSubsection: "visibility",
+              })
+            }
+          >
+            <Settings aria-hidden />
+          </IconButton>
         </div>
       </TooltipProvider>
     );

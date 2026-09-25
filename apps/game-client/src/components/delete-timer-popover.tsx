@@ -16,6 +16,7 @@ import {
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
+import { DeleteTimerMenuItem } from "@/features/timers/components/delete-timer-menu-item";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
@@ -91,13 +92,10 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     const guild = guildsWithPermissions[0];
 
     return (
-      <ContextMenuItem
-        className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
-        onClick={() => onDeleteTimer(guild.guildId, guild.timerKey)}
-      >
-        <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
-        {t("contextMenu.delete")}
-      </ContextMenuItem>
+      <DeleteTimerMenuItem
+        timerName={timer.npc.name}
+        onDelete={() => onDeleteTimer(guild.guildId, guild.timerKey)}
+      />
     );
   }
 

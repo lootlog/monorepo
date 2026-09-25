@@ -8,13 +8,16 @@ import { createTimerHttpFixture } from "./timer-http-fixtures";
 
 export const createAddTimerFixture = ({
   npcResults = [],
+  createStatus = 200,
 }: {
   npcResults?: SearchTimersNpcResponseDtoOutput[];
+  /** HTTP status the timer creation request answers with. */
+  createStatus?: number;
 } = {}) => {
   const fixture = createTimerHttpFixture((request) =>
-    Response.json(
-      request.method === "POST" ? createTimerFixture() : npcResults,
-    ),
+    request.method === "POST"
+      ? Response.json(createTimerFixture(), { status: createStatus })
+      : Response.json(npcResults),
   );
 
   setTestRuntimeGame();

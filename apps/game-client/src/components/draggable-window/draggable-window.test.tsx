@@ -8,6 +8,7 @@ import {
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { useSettingsStore } from "@/store/settings.store";
 import { useWindowsStore } from "@/store/windows.store";
 
 const resizeObserverCallbacks: Array<() => void> = [];
@@ -18,9 +19,27 @@ const mutationObserverCallbacks: Array<() => void> = [];
 
 const initialWindowInnerWidth = window.innerWidth;
 
+const initialWindowInnerHeight = window.innerHeight;
+
+const resizeViewport = async (width: number, height: number) => {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(window, "innerHeight", {
+    configurable: true,
+    value: height,
+  });
+  await act(() => {
+    window.dispatchEvent(new Event("resize"));
+  });
+};
+
 class ResizeObserverMock {
-  constructor(private readonly callback: () => void) {
-    resizeObserverCallbacks.push(callback);
+  constructor(callback: ResizeObserverCallback) {
+    resizeObserverCallbacks.push(() => {
+      callback([], this);
+    });
   }
 
   observe(target: Element) {
@@ -57,12 +76,6 @@ const triggerResizeObservers = async () => {
   });
 };
 
-const triggerMutationObservers = async () => {
-  await act(() => {
-    mutationObserverCallbacks.forEach((callback) => callback());
-  });
-};
-
 const flushAnimationFrame = async () => {
   await act(async () => {
     await new Promise<void>((resolve) => {
@@ -70,41 +83,6 @@ const flushAnimationFrame = async () => {
     });
   });
 };
-
-const triggerResizeObserverCycles = async (remainingCycles: number) => {
-  if (remainingCycles === 0) return;
-
-  await triggerResizeObservers();
-  await flushAnimationFrame();
-  await triggerResizeObserverCycles(remainingCycles - 1);
-};
-
-const mockElementRenderedHeight = (element: HTMLElement, height: number) => {
-  Object.defineProperty(element, "getBoundingClientRect", {
-    configurable: true,
-    value: () => ({
-      width: 0,
-      height,
-      top: 0,
-      right: 0,
-      bottom: height,
-      left: 0,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    }),
-  });
-};
-
-const createScrollAreaChildren = () => (
-  <div className="ll:flex ll:h-full ll:w-full ll:flex-col ll:overflow-hidden">
-    <div data-ll-scroll-area-viewport="">
-      <div>
-        <div>Treść</div>
-      </div>
-    </div>
-  </div>
-);
 
 const getWindowElements = (
   container: HTMLElement,
@@ -150,40 +128,6 @@ const getWindowElements = (
   };
 };
 
-const getNestedScrollAreaElements = (container: HTMLElement) => {
-  const { windowElement, windowBody, titleBarElement, contentElement } =
-    getWindowElements(container, { requireResizeHandle: false });
-
-  const viewportElement = container.querySelector(
-    "[data-ll-scroll-area-viewport]",
-  );
-
-  const viewportContent = viewportElement?.firstElementChild;
-  const measuredContentElement = viewportContent?.firstElementChild;
-
-  if (!(viewportElement instanceof HTMLDivElement)) {
-    throw new Error("Expected scroll area viewport");
-  }
-
-  if (!(viewportContent instanceof HTMLDivElement)) {
-    throw new Error("Expected scroll area viewport content");
-  }
-
-  if (!(measuredContentElement instanceof HTMLDivElement)) {
-    throw new Error("Expected measured scroll area content");
-  }
-
-  return {
-    windowElement,
-    windowBody,
-    titleBarElement,
-    contentElement,
-    viewportElement,
-    viewportContent,
-    measuredContentElement,
-  };
-};
-
 const getMaxHeightPreviewOverlay = (container: HTMLElement) => {
   return container.querySelector("[data-ll-max-height-preview]");
 };
@@ -212,6 +156,10 @@ describe("DraggableWindow", () => {
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
       value: initialWindowInnerWidth,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: initialWindowInnerHeight,
     });
   });
 
@@ -376,57 +324,7 @@ describe("DraggableWindow", () => {
     ).toBeNull();
   });
 
-  it("caps auto height using the provided content limit", async () => {
-    const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-        maxContentHeight={80}
-      >
-        <div>Treść</div>
-      </DraggableWindow>,
-    );
-
-    const { windowElement, windowBody, titleBarElement, contentElement } =
-      getWindowElements(container, { requireResizeHandle: false });
-
-    const contentRoot = contentElement.firstElementChild;
-
-    if (!(contentRoot instanceof HTMLDivElement)) {
-      throw new Error("Expected draggable window content root");
-    }
-
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      value: 150,
-    });
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      value: 100,
-    });
-    Object.defineProperty(contentRoot, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("130px");
-    });
-  });
-
-  it("uses CSS auto height without content observers", () => {
+  it("sizes auto height with CSS up to the content limit without content observers", () => {
     const { container } = render(
       <DraggableWindow
         isOpen
@@ -434,7 +332,7 @@ describe("DraggableWindow", () => {
         title="Powiadomienia"
         minWidth={242}
         minHeight={64}
-        heightMode="css-auto-up-to-max"
+        heightMode="auto-up-to-max"
         maxContentHeight={180}
       >
         <div>Treść</div>
@@ -445,7 +343,8 @@ describe("DraggableWindow", () => {
 
     expect(windowElement.style.height).toBe("auto");
     expect(contentElement.style.maxHeight).toBe("180px");
-    expect(resizeObserverCallbacks).toHaveLength(0);
+    // Only the frame's own size is observed, for placement and clamping.
+    expect(resizeObserverObservedElements).toEqual([windowElement]);
     expect(mutationObserverCallbacks).toHaveLength(0);
   });
 
@@ -579,6 +478,7 @@ describe("DraggableWindow", () => {
     expect(previewOverlay.children[2]).toHaveStyle({ top: "79px" });
 
     fireEvent.mouseMove(document, { buttons: 1, clientX: 140, clientY: 140 });
+    await flushAnimationFrame();
 
     expect(getMaxHeightPreviewOverlay(container)).not.toBeNull();
     expect(windowElement.style.height).toBe("170px");
@@ -595,476 +495,181 @@ describe("DraggableWindow", () => {
     expect(handleArmedChange).toHaveBeenCalledWith(false);
   });
 
-  it("measures nested scroll area content and grows with a larger max content height", async () => {
-    const { container, rerender } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-        maxContentHeight={80}
-      >
-        {createScrollAreaChildren()}
-      </DraggableWindow>,
-    );
-
-    const {
-      windowElement,
-      windowBody,
-      titleBarElement,
-      contentElement,
-      viewportElement,
-      viewportContent,
-      measuredContentElement,
-    } = getNestedScrollAreaElements(container);
-
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      value: 150,
-    });
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      value: 100,
-    });
-    Object.defineProperty(measuredContentElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportContent, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    mockElementRenderedHeight(viewportContent, 160);
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("130px");
-    });
-
-    expect(resizeObserverObservedElements).toEqual(
-      expect.arrayContaining([viewportElement, viewportContent]),
-    );
-
-    rerender(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-        maxContentHeight={180}
-      >
-        {createScrollAreaChildren()}
-      </DraggableWindow>,
-    );
-
-    const rerenderedElements = getNestedScrollAreaElements(container);
-
-    Object.defineProperty(rerenderedElements.windowBody, "offsetHeight", {
-      configurable: true,
-      value: 150,
-    });
-    Object.defineProperty(rerenderedElements.titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(rerenderedElements.contentElement, "clientHeight", {
-      configurable: true,
-      value: 100,
-    });
-    Object.defineProperty(
-      rerenderedElements.measuredContentElement,
-      "scrollHeight",
-      {
-        configurable: true,
-        value: 160,
+  it("shows a locked window on-screen in a smaller viewport and restores its saved position without rewriting it", async () => {
+    await resizeViewport(1600, 1000);
+    useWindowsStore.setState((state) => ({
+      timers: {
+        ...state.timers,
+        position: { x: 900, y: 600 },
+        hasDefinedPosition: true,
+        size: { width: 242, height: 240 },
+        locked: true,
       },
-    );
-    Object.defineProperty(rerenderedElements.viewportContent, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(rerenderedElements.viewportElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    mockElementRenderedHeight(rerenderedElements.viewportContent, 160);
+    }));
 
-    await triggerMutationObservers();
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("210px");
-    });
-  });
-
-  it("does not undershoot nested scroll area height when rendered content uses fractional pixels", async () => {
     const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-        maxContentHeight={180}
-      >
-        {createScrollAreaChildren()}
-      </DraggableWindow>,
-    );
-
-    const {
-      windowElement,
-      windowBody,
-      titleBarElement,
-      contentElement,
-      viewportElement,
-      viewportContent,
-      measuredContentElement,
-    } = getNestedScrollAreaElements(container);
-
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      value: 150,
-    });
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      value: 100,
-    });
-    Object.defineProperty(measuredContentElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportContent, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    mockElementRenderedHeight(viewportContent, 159.2);
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("210px");
-    });
-  });
-
-  it("keeps auto height stable when scroll content mirrors the viewport with fractional pixels", async () => {
-    const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={82}
-        heightMode="auto-up-to-max"
-        maxContentHeight={272}
-      >
-        {createScrollAreaChildren()}
-      </DraggableWindow>,
-    );
-
-    const {
-      windowElement,
-      titleBarElement,
-      contentElement,
-      viewportElement,
-      viewportContent,
-      measuredContentElement,
-    } = getNestedScrollAreaElements(container);
-
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 28,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      get: () =>
-        Math.max(0, Number.parseFloat(windowElement.style.height) - 28),
-    });
-    Object.defineProperty(viewportElement, "scrollHeight", {
-      configurable: true,
-      get: () => contentElement.clientHeight,
-    });
-    Object.defineProperty(viewportContent, "scrollHeight", {
-      configurable: true,
-      get: () => contentElement.clientHeight,
-    });
-    Object.defineProperty(measuredContentElement, "scrollHeight", {
-      configurable: true,
-      value: 54,
-    });
-    mockElementRenderedHeight(measuredContentElement, 54);
-    Object.defineProperty(viewportContent, "getBoundingClientRect", {
-      configurable: true,
-      value: () => {
-        const height = contentElement.clientHeight + 0.6;
-
-        return {
-          width: 0,
-          height,
-          top: 0,
-          right: 0,
-          bottom: height,
-          left: 0,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        };
-      },
-    });
-
-    await triggerResizeObserverCycles(8);
-
-    expect(windowElement.style.height).toBe("82px");
-  });
-
-  it("does not undershoot nested scroll area height while the window opening scale transform is active", async () => {
-    const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-        maxContentHeight={180}
-      >
-        {createScrollAreaChildren()}
-      </DraggableWindow>,
-    );
-
-    const {
-      windowElement,
-      windowBody,
-      titleBarElement,
-      contentElement,
-      viewportElement,
-      viewportContent,
-      measuredContentElement,
-    } = getNestedScrollAreaElements(container);
-
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      value: 150,
-    });
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      value: 100,
-    });
-    Object.defineProperty(measuredContentElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportContent, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportElement, "scrollHeight", {
-      configurable: true,
-      value: 160,
-    });
-    mockElementRenderedHeight(viewportContent, 158);
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("210px");
-    });
-  });
-
-  it("shrinks with the content when nested scroll area content gets smaller", async () => {
-    const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        resizable={false}
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-        maxContentHeight={180}
-      >
-        {createScrollAreaChildren()}
-      </DraggableWindow>,
-    );
-
-    const {
-      windowElement,
-      windowBody,
-      titleBarElement,
-      contentElement,
-      viewportElement,
-      viewportContent,
-      measuredContentElement,
-    } = getNestedScrollAreaElements(container);
-
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      value: 150,
-    });
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      value: 100,
-    });
-    Object.defineProperty(measuredContentElement, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportContent, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportElement, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 160,
-    });
-    mockElementRenderedHeight(viewportContent, 160);
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("210px");
-    });
-
-    Object.defineProperty(measuredContentElement, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 60,
-    });
-    Object.defineProperty(viewportContent, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 160,
-    });
-    Object.defineProperty(viewportElement, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 160,
-    });
-    mockElementRenderedHeight(viewportContent, 60);
-
-    await triggerResizeObservers();
-    await flushAnimationFrame();
-
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("110px");
-    });
-  });
-
-  it("does not overshoot height when content growth temporarily lags behind the window body resize", async () => {
-    const { container } = render(
-      <DraggableWindow
-        isOpen
-        id="notifications"
-        title="Powiadomienia"
-        minWidth={242}
-        minHeight={88}
-        heightMode="auto-up-to-max"
-      >
+      <DraggableWindow isOpen id="timers" title="Timery">
         <div>Treść</div>
       </DraggableWindow>,
     );
 
-    const { windowElement, windowBody, titleBarElement, contentElement } =
-      getWindowElements(container, {
-        requireResizeHandle: false,
+    const windowElement = container.querySelector("#ll-timers");
+
+    expect(windowElement).toHaveStyle({ left: "900px", top: "600px" });
+
+    await resizeViewport(800, 600);
+
+    await waitFor(() => {
+      expect(windowElement).toHaveStyle({ left: "558px", top: "360px" });
+    });
+    expect(useWindowsStore.getState().timers.position).toEqual({
+      x: 900,
+      y: 600,
+    });
+
+    await resizeViewport(1600, 1000);
+
+    await waitFor(() => {
+      expect(windowElement).toHaveStyle({ left: "900px", top: "600px" });
+    });
+  });
+
+  it("keeps a window on-screen when only the visual viewport shrinks", async () => {
+    await resizeViewport(1600, 1000);
+
+    // Pinch zoom and on-screen keyboards resize the visual viewport without a
+    // window resize event.
+    const visualViewport = Object.assign(new EventTarget(), {
+      width: 1600,
+      height: 1000,
+    });
+
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: visualViewport,
+    });
+
+    try {
+      useWindowsStore.setState((state) => ({
+        timers: {
+          ...state.timers,
+          position: { x: 900, y: 600 },
+          hasDefinedPosition: true,
+          size: { width: 242, height: 240 },
+        },
+      }));
+
+      const { container } = render(
+        <DraggableWindow isOpen id="timers" title="Timery">
+          <div>Treść</div>
+        </DraggableWindow>,
+      );
+
+      const windowElement = container.querySelector("#ll-timers");
+
+      expect(windowElement).toHaveStyle({ left: "900px", top: "600px" });
+
+      visualViewport.width = 800;
+      visualViewport.height = 600;
+      await act(() => {
+        visualViewport.dispatchEvent(new Event("resize"));
       });
 
-    const contentRoot = contentElement.firstElementChild;
-
-    if (!(contentRoot instanceof HTMLDivElement)) {
-      throw new Error("Expected draggable window content root");
+      await waitFor(() => {
+        expect(windowElement).toHaveStyle({ left: "558px", top: "360px" });
+      });
+    } finally {
+      Reflect.deleteProperty(window, "visualViewport");
     }
+  });
 
-    Object.defineProperty(titleBarElement, "offsetHeight", {
-      configurable: true,
-      value: 50,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      writable: true,
-      value: 60,
-    });
-    Object.defineProperty(contentRoot, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 60,
-    });
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      writable: true,
-      value: 110,
-    });
+  it("closes on Escape only while focus is inside the window and keeps the key from the game", () => {
+    const onClose = vi.fn<() => void>();
+    const gameKeyDown = vi.fn<(event: KeyboardEvent) => void>();
+    document.addEventListener("keydown", gameKeyDown);
+    const outside = document.createElement("button");
+    document.body.append(outside);
 
-    await triggerResizeObservers();
+    try {
+      render(
+        <DraggableWindow
+          isOpen
+          id="notifications"
+          title="Powiadomienia"
+          onClose={onClose}
+        >
+          <button type="button">Wewnątrz</button>
+        </DraggableWindow>,
+      );
 
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("110px");
-    });
+      fireEvent.keyDown(outside, { key: "Escape" });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(gameKeyDown).toHaveBeenCalledOnce();
 
-    Object.defineProperty(contentRoot, "scrollHeight", {
-      configurable: true,
-      writable: true,
-      value: 80,
-    });
-    Object.defineProperty(windowBody, "offsetHeight", {
-      configurable: true,
-      writable: true,
-      value: 180,
-    });
-    Object.defineProperty(contentElement, "clientHeight", {
-      configurable: true,
-      writable: true,
-      value: 60,
-    });
+      fireEvent.keyDown(screen.getByRole("button", { name: "Wewnątrz" }), {
+        key: "Escape",
+      });
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(gameKeyDown).toHaveBeenCalledOnce();
+    } finally {
+      document.removeEventListener("keydown", gameKeyDown);
+      outside.remove();
+    }
+  });
 
-    await triggerResizeObservers();
+  it("takes focus only when the player opens it and returns focus on close", async () => {
+    useSettingsStore.setState({ animationEffectsEnabled: false });
+    useWindowsStore.setState((state) => ({
+      timers: { ...state.timers, open: false },
+      "npc-detector": { ...state["npc-detector"], open: false },
+      focusRequest: undefined,
+    }));
 
-    await waitFor(() => {
-      expect(windowElement.style.height).toBe("130px");
-    });
+    const StoreWindow = ({ id }: { id: "timers" | "npc-detector" }) => {
+      const open = useWindowsStore((state) => state[id].open);
+
+      return (
+        <DraggableWindow
+          isOpen={open}
+          id={id}
+          title={id}
+          onClose={() => useWindowsStore.getState().setOpen(id, false)}
+        >
+          <div>Treść</div>
+        </DraggableWindow>
+      );
+    };
+
+    const chatInput = document.createElement("input");
+    document.body.append(chatInput);
+
+    try {
+      render(
+        <>
+          <StoreWindow id="timers" />
+          <StoreWindow id="npc-detector" />
+        </>,
+      );
+
+      chatInput.focus();
+      await act(() => {
+        useWindowsStore.getState().setOpen("npc-detector", true);
+      });
+      expect(document.querySelector("#ll-npc-detector")).toBeInTheDocument();
+      expect(chatInput).toHaveFocus();
+
+      await act(() => {
+        useWindowsStore.getState().toggleOpen("timers");
+      });
+      expect(document.querySelector("#ll-timers")).toHaveFocus();
+
+      await act(() => {
+        useWindowsStore.getState().toggleOpen("timers");
+      });
+      expect(document.querySelector("#ll-timers")).toBeNull();
+      expect(chatInput).toHaveFocus();
+    } finally {
+      chatInput.remove();
+    }
   });
 });

@@ -8,7 +8,8 @@
   "actions": {
     "resizeWindow": "Zmień rozmiar okna strzałkami; Shift zmienia rozmiar o 10 pikseli",
     "remove": "Usuń",
-    "reset": "Reset",
+    "cancel": "Anuluj",
+    "reset": "Przywróć domyślny",
     "restore": "Przywróć",
     "clear": "Wyczyść",
     "add": "Dodaj",
@@ -16,12 +17,14 @@
     "openSettings": "Otwórz ustawienia",
     "undo": "Cofnij",
     "copyAction": "Kopiuj akcję",
-    "copyRequest": "Kopiuj request",
+    "copyRequest": "Kopiuj żądanie",
     "exportJson": "Eksportuj JSON",
     "playSound": "Odtwórz dźwięk",
     "mute": "Wycisz",
     "unmute": "Włącz dźwięk",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "moreActions": "Więcej akcji"
   },
   "auth": {
     "extensionChecking": "Sprawdzanie sesji…",
@@ -30,7 +33,8 @@
     "extensionTitle": "Logowanie do Lootloga",
     "extensionError": "Nie udało się sprawdzić sesji Lootloga. Spróbuj ponownie.",
     "signIn": "Zaloguj się w Lootlogu",
-    "notLoggedIn": "Nie jesteś zalogowany, zaloguj się, aby załadować dodatek"
+    "notLoggedIn": "Nie jesteś zalogowany. Zaloguj się, aby uruchomić dodatek.",
+    "openLogin": "Zaloguj się do Lootloga"
   },
   "errors": {
     "missingLocation": "Nie wysłano danych: nie udało się odczytać nazwy mapy z gry.",
@@ -38,9 +42,9 @@
     "unknown": "Nieznany błąd"
   },
   "async": {
-    "loading": "Ładowanie...",
-    "loadingGuilds": "Ładowanie serwerów",
-    "guildsError": "Nie udało się załadować serwerów"
+    "loading": "Ładowanie…",
+    "loadingGuilds": "Ładowanie Lootlogów",
+    "guildsError": "Nie udało się załadować Lootlogów"
   },
   "preview": {
     "name": "[T] Tanroth",
@@ -48,28 +52,28 @@
   },
   "npcTypes": {
     "elite": "Elita",
-    "elite2": "Elita 2",
-    "elite3": "Elita 3",
+    "elite2": "Elita II",
+    "elite3": "Elita III",
     "hero": "Heros",
     "event_hero": "Heros eventowy",
     "colossus": "Kolos",
     "titan": "Tytan",
     "message": "Komunikaty",
-    "partyGathering": "Grupa"
+    "partyGathering": "Zbiórki"
   },
   "windowControls": {
-    "changeOpacity": "Zmień przezroczystość",
+    "opacityLevel": "Krycie tła: {{level}}/{{max}}. Kliknij, aby zmienić",
     "unlockWindow": "Odblokuj okno",
     "lockWindow": "Zablokuj okno",
     "closeWindow": "Zamknij okno"
   },
   "guildSwitcher": {
-    "allServers": "Wszystkie serwery",
+    "allServers": "Wszystkie Lootlogi",
     "unread": "Nieprzeczytane wiadomości",
-    "allHidden": "Wszystkie serwery są ukryte",
+    "allHidden": "Wszystkie Lootlogi są ukryte",
     "hideInGameClient": "Ukryj w grze",
     "hidden": "Ukryto {{name}} w grze",
-    "hideError": "Nie udało się ukryć serwera."
+    "hideError": "Nie udało się ukryć Lootloga."
   },
   "characterTooltip": {
     "owner": {
@@ -77,18 +81,18 @@
       "unavailable": "Brak informacji o graczu online"
     },
     "catchingGuilds": {
-      "title": "Dodaje łupy i timery na:",
-      "loading": "Ładowanie...",
-      "empty": "Brak wspólnych serwerów Lootloga",
-      "error": "Nie udało się pobrać serwerów",
+      "title": "Dodaje łupy i timery do:",
+      "loading": "Ładowanie…",
+      "empty": "Brak wspólnych Lootlogów",
+      "error": "Nie udało się pobrać Lootlogów",
       "unavailable": "Brak informacji o graczu online"
     }
   },
   "worldSelector": {
     "recent": "Ostatnio używane",
     "allWorlds": "Wszystkie światy",
-    "placeholder": "Wybierz świat...",
-    "searchPlaceholder": "Szukaj świata...",
+    "placeholder": "Wybierz świat…",
+    "searchPlaceholder": "Szukaj świata…",
     "empty": "Nie znaleziono światów."
   },
   "autocomplete": {
@@ -103,5 +107,9 @@
     "connecting": "Łączenie z serwerem…",
     "reconnecting": "Połączenie przerwane, ponowne łączenie…",
     "unreachable": "Nie można połączyć z serwerem, ponawianie…"
+  },
+  "filters": {
+    "minLevel": "Poziom od",
+    "maxLevel": "Poziom do"
   }
 }

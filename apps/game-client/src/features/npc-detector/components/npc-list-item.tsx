@@ -1,11 +1,7 @@
+import { toast } from "sonner";
 import { NpcTile } from "@/components/npc-tile";
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { NpcType } from "@/api/npcs.api";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "cn";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import {
@@ -17,7 +13,7 @@ import type {
   GameNpcWithLocation,
   NpcDetectorState,
 } from "@/store/npc-detector.store";
-import { AlertTriangle, Loader2, Megaphone, Users, XIcon } from "lucide-react";
+import { AlertTriangle, Megaphone, Users, XIcon } from "lucide-react";
 import {
   getBackgroundColor,
   getBorderColor,
@@ -32,15 +28,12 @@ import type { PartyGatheringOrchestration } from "@/features/party-finder/hooks/
 import { NpcNotificationCooldown } from "@/features/npc-detector/components/npc-notification-cooldown";
 import { NPC_NOTIFICATION_COOLDOWN_MS } from "@/features/npc-detector/hooks/use-npc-list-lifecycle";
 
-const ACTION_BUTTON_CLASS_NAME = "ll:size-7 ll:px-0";
-
 type NpcListItemProps = {
   animationEffectsEnabled: boolean;
   npc: GameNpcWithLocation;
   detectionAnimationCycle: number | null;
   detectorSettings: DetectorSettings;
   hasActivePartyGathering: boolean;
-  hasMultipleNpcs: boolean;
   orchestration: Pick<
     PartyGatheringOrchestration,
     | "isCreatingNpcPartyGathering"
@@ -105,7 +98,6 @@ export const NpcListItem = ({
   detectionAnimationCycle,
   detectorSettings,
   hasActivePartyGathering,
-  hasMultipleNpcs,
   orchestration,
   removeNpc,
   setNpcState,
@@ -144,7 +136,7 @@ export const NpcListItem = ({
 
   const handleSendNotification = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      showRuntimeMessage(t("actions.noMatchingGuilds"));
+      toast.error(t("actions.noMatchingGuilds"));
 
       return;
     }
@@ -167,13 +159,13 @@ export const NpcListItem = ({
         setOpen("party-finder", true);
     } catch (error) {
       console.warn("Failed to send notification:", error);
-      showRuntimeMessage(t("actions.messageFailed"));
+      toast.error(t("actions.messageFailed"));
     }
   };
 
   const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (resolvedGuildIds.length === 0) {
-      showRuntimeMessage(t("actions.noMatchingGuilds"));
+      toast.error(t("actions.noMatchingGuilds"));
 
       return;
     }
@@ -193,7 +185,7 @@ export const NpcListItem = ({
       });
     } catch (error) {
       console.warn("Failed to gather party:", error);
-      showRuntimeMessage(t("actions.gatherPartyFailed"));
+      toast.error(t("actions.gatherPartyFailed"));
     }
   };
 
@@ -246,95 +238,61 @@ export const NpcListItem = ({
       </div>
       <div className="ll:relative ll:flex ll:items-center ll:gap-1 ll:shrink-0">
         {resolvedGuildIds.length === 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="xs"
-                variant="ghost"
-                className={`${ACTION_BUTTON_CLASS_NAME} ll:border-yellow-500/40 ll:hover:bg-yellow-500/10`}
-                onClick={handleOpenDetectorSettings}
-                aria-label={t("actions.openSettingsAria")}
-              >
-                <AlertTriangle
-                  className="ll:stroke-yellow-500 ll:opacity-80"
-                  size={12}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t("actions.noMatchingGuilds")}</TooltipContent>
-          </Tooltip>
+          <IconButton
+            label={t("actions.openSettingsAria")}
+            tooltip={t("actions.noMatchingGuilds")}
+            onClick={handleOpenDetectorSettings}
+          >
+            <AlertTriangle aria-hidden className="ll:stroke-yellow-500" />
+          </IconButton>
         )}
         {resolvedGuildIds.length > 0 && (
           <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  className={`ll:relative ${ACTION_BUTTON_CLASS_NAME}`}
-                  disabled={
-                    isSendingNpcNotification || npc.notificationSentAt !== null
-                  }
-                  onClick={() => void handleSendNotification(npc)}
-                >
-                  {npc.notificationSentAt !== null ? (
-                    <NpcNotificationCooldown
-                      key={npc.notificationSentAt}
-                      animationEffectsEnabled={animationEffectsEnabled}
-                      endsAt={
-                        npc.notificationSentAt + NPC_NOTIFICATION_COOLDOWN_MS
-                      }
-                    />
-                  ) : (
-                    <Megaphone size={12} />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {npc.notificationSentAt !== null
+            <IconButton
+              label={
+                npc.notificationSentAt !== null
                   ? t("actions.messageSent")
-                  : t("actions.message")}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  className={ACTION_BUTTON_CLASS_NAME}
-                  disabled={
-                    isCreatingNpcPartyGathering || hasActivePartyGathering
-                  }
-                  onClick={() => void handleGatherParty(npc)}
-                >
-                  {isCreatingNpcPartyGathering ? (
-                    <Loader2 size={12} className="ll:animate-spin" />
-                  ) : (
-                    <Users size={12} />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isCreatingNpcPartyGathering
+                  : t("actions.message")
+              }
+              className="ll:relative"
+              disabled={
+                isSendingNpcNotification || npc.notificationSentAt !== null
+              }
+              onClick={() => void handleSendNotification(npc)}
+            >
+              {npc.notificationSentAt !== null ? (
+                <NpcNotificationCooldown
+                  key={npc.notificationSentAt}
+                  animationEffectsEnabled={animationEffectsEnabled}
+                  endsAt={npc.notificationSentAt + NPC_NOTIFICATION_COOLDOWN_MS}
+                />
+              ) : (
+                <Megaphone aria-hidden />
+              )}
+            </IconButton>
+            <IconButton
+              label={
+                isCreatingNpcPartyGathering
                   ? t("actions.gatheringParty")
                   : hasActivePartyGathering
                     ? t("actions.alreadyGatheringParty")
-                    : t("actions.gatherParty")}
-              </TooltipContent>
-            </Tooltip>
+                    : t("actions.gatherParty")
+              }
+              loading={isCreatingNpcPartyGathering}
+              disabled={hasActivePartyGathering}
+              onClick={() => void handleGatherParty(npc)}
+            >
+              <Users aria-hidden />
+            </IconButton>
           </>
         )}
-        {hasMultipleNpcs && (
-          <Button
-            size="xs"
-            variant="destructive"
-            aria-label={t("actions.removeNpcAria")}
-            className={ACTION_BUTTON_CLASS_NAME}
-            onClick={() => handleRemoveNpc(npc.id)}
-          >
-            <XIcon size={12} />
-          </Button>
-        )}
+        <IconButton
+          variant="quiet-destructive"
+          label={t("actions.removeNpcAria")}
+          onClick={() => handleRemoveNpc(npc.id)}
+        >
+          <XIcon aria-hidden />
+        </IconButton>
       </div>
     </>
   );
@@ -359,5 +317,3 @@ export const NpcListItem = ({
     </div>
   );
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

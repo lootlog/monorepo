@@ -5,53 +5,32 @@ import {
   useRef,
   useState,
 } from "react";
-import { getRuntimeUiScale } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";
-
-type Position = { x: number; y: number };
+import {
+  clampToViewport,
+  measureWindowViewport,
+  type WindowPosition,
+  type WindowViewport,
+} from "./window-viewport";
 
 /**
- * Viewport bounds in the game's scaled coordinate space. Reading
- * `visualViewport` or `innerWidth` forces the host document to lay out, so a
- * drag session measures once on pointer down and only re-measures when the
- * visual viewport itself resizes (pinch zoom), never per pointer move.
+ * A drag session measures the viewport once on pointer down and only
+ * re-measures when the visual viewport itself resizes (pinch zoom), never per
+ * pointer move.
  */
-type DragViewport = {
-  scale: number;
-  width: number;
-  height: number;
-};
-
 type DragInfo = {
   offsetX: number;
   offsetY: number;
   width: number;
   height: number;
-  viewport: DragViewport;
+  viewport: WindowViewport;
 };
-
-const DEFAULT_STATE: Position = { x: 0, y: 0 };
-
-const DEFAULT_DRAG_VIEWPORT: DragViewport = { scale: 1, width: 0, height: 0 };
 
 const DEFAULT_DRAG_INFO: DragInfo = {
   offsetX: 0,
   offsetY: 0,
   width: 0,
   height: 0,
-  viewport: DEFAULT_DRAG_VIEWPORT,
-};
-
-// The scale is fixed for the whole session: the pointer offsets captured on
-// pointer down are expressed in it, so a pinch zoom mid-drag only refreshes
-// the bounds.
-const measureDragViewport = (
-  scale: number = getRuntimeUiScale(),
-): DragViewport => {
-  return {
-    scale,
-    width: (window.visualViewport?.width ?? window.innerWidth) * scale,
-    height: (window.visualViewport?.height ?? window.innerHeight) * scale,
-  };
+  viewport: { scale: 1, width: 0, height: 0 },
 };
 
 let dragSessionCounter = 0;
@@ -66,113 +45,79 @@ const getNextDragSessionId = () => {
 
 type UseDragConfig = {
   ref: React.RefObject<HTMLDivElement | null>;
-  calculateFor?: "topLeft" | "bottomRight";
-  defaultState?: Position;
-  onDragStop: (position: Position) => void;
+  /** Where the element is displayed; a drag starts from and moves relative to it. */
+  position: WindowPosition;
+  /** Receives the dropped position, only when the drag actually moved the element. */
+  onDragStop: (position: WindowPosition) => void;
   isLocked?: boolean;
 };
 
+/**
+ * Moves an element with a coalesced transform while the pointer is down and
+ * reports the dropped position once. The caller owns the resting position.
+ */
 export const useDrag = ({
   ref,
-  calculateFor = "topLeft",
-  defaultState = DEFAULT_STATE,
+  position,
   onDragStop,
   isLocked = false,
 }: UseDragConfig) => {
-  const [finalPosition, setFinalPosition] = useState(defaultState);
   const [isDragging, setIsDragging] = useState(false);
   const activePointerIdRef = useRef<number | null>(null);
   const dragInfoRef = useRef<DragInfo>(DEFAULT_DRAG_INFO);
   const dragSessionRef = useRef<number | null>(null);
-  const finalPositionRef = useRef(defaultState);
-  const dragOriginPositionRef = useRef(defaultState);
+  const positionRef = useRef(position);
+  const dragOriginPositionRef = useRef(position);
+  const draggedPositionRef = useRef<WindowPosition | null>(null);
   const isDraggingRef = useRef(false);
   const hasDragStylesRef = useRef(false);
-  const pendingPositionRef = useRef<Position | null>(null);
   const positionFrameRef = useRef<number | null>(null);
-  const calculateForRef = useRef(calculateFor);
   const isLockedRef = useRef(isLocked);
   const onDragStopRef = useRef(onDragStop);
 
   useEffect(() => {
-    calculateForRef.current = calculateFor;
+    positionRef.current = position;
     isLockedRef.current = isLocked;
     onDragStopRef.current = onDragStop;
-  }, [calculateFor, isLocked, onDragStop]);
+  }, [position, isLocked, onDragStop]);
 
-  const queuePosition = (
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-    viewport: DragViewport,
-  ) => {
-    const {
-      scale,
-      width: scaledViewportWidth,
-      height: scaledViewportHeight,
-    } = viewport;
+  const queuePosition = (x: number, y: number) => {
+    const { width, height, viewport } = dragInfoRef.current;
+    const { scale } = viewport;
 
-    const scaledWidth = width * scale;
-    const scaledHeight = height * scale;
-    let nextPosition: Position;
+    const nextPosition = clampToViewport(
+      { x, y },
+      { width: width * scale, height: height * scale },
+      viewport,
+    );
 
-    if (calculateForRef.current === "bottomRight") {
-      nextPosition = {
-        x: Math.max(
-          Math.min(
-            scaledViewportWidth - scaledWidth,
-            scaledViewportWidth - (x + scaledWidth),
-          ),
-          0,
-        ),
-        y: Math.max(
-          Math.min(
-            scaledViewportHeight - scaledHeight,
-            scaledViewportHeight - (y + scaledHeight),
-          ),
-          0,
-        ),
-      };
-    } else {
-      nextPosition = {
-        x: Math.min(Math.max(0, x), scaledViewportWidth - scaledWidth),
-        y: Math.min(Math.max(0, y), scaledViewportHeight - scaledHeight),
-      };
-    }
+    const currentPosition =
+      draggedPositionRef.current ?? dragOriginPositionRef.current;
 
     if (
-      nextPosition.x === finalPositionRef.current.x &&
-      nextPosition.y === finalPositionRef.current.y
+      nextPosition.x === currentPosition.x &&
+      nextPosition.y === currentPosition.y
     ) {
       return;
     }
 
-    finalPositionRef.current = nextPosition;
-    pendingPositionRef.current = nextPosition;
+    draggedPositionRef.current = nextPosition;
 
     if (positionFrameRef.current !== null) return;
 
     positionFrameRef.current = window.requestAnimationFrame(() => {
       positionFrameRef.current = null;
-      const pendingPosition = pendingPositionRef.current;
-      pendingPositionRef.current = null;
+      const draggedPosition = draggedPositionRef.current;
+      const draggableElement = ref.current;
 
-      if (!pendingPosition) return;
-
-      if (isDraggingRef.current) {
-        const draggableElement = ref.current;
-
-        if (!draggableElement) return;
-        const dragOriginPosition = dragOriginPositionRef.current;
-        const translateX = pendingPosition.x - dragOriginPosition.x;
-        const translateY = pendingPosition.y - dragOriginPosition.y;
-        draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
-
+      if (!isDraggingRef.current || !draggedPosition || !draggableElement) {
         return;
       }
 
-      setFinalPosition(pendingPosition);
+      const dragOriginPosition = dragOriginPositionRef.current;
+      const translateX = draggedPosition.x - dragOriginPosition.x;
+      const translateY = draggedPosition.y - dragOriginPosition.y;
+      draggableElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
     });
   };
 
@@ -203,14 +148,15 @@ export const useDrag = ({
       positionFrameRef.current = null;
     }
 
-    const stoppedPosition =
-      pendingPositionRef.current ?? finalPositionRef.current;
-
-    pendingPositionRef.current = null;
-    finalPositionRef.current = stoppedPosition;
-    setFinalPosition(stoppedPosition);
-    onDragStopRef.current(stoppedPosition);
+    const draggedPosition = draggedPositionRef.current;
+    draggedPositionRef.current = null;
     setIsDragging(false);
+
+    // A press without movement is not a placement: it must not turn a default
+    // position into a saved one.
+    if (draggedPosition) {
+      onDragStopRef.current(draggedPosition);
+    }
   };
 
   const finishDragRef = useRef(finishDrag);
@@ -219,24 +165,26 @@ export const useDrag = ({
     finishDragRef.current = finishDrag;
   });
 
-  const startDrag = (x: number, y: number, viewport: DragViewport) => {
+  const startDrag = (x: number, y: number, viewport: WindowViewport) => {
     if (isLockedRef.current) return false;
     const draggableElement = ref.current;
 
     if (!draggableElement) return false;
     const { width, height } = draggableElement.getBoundingClientRect();
     const sessionId = getNextDragSessionId();
+    const origin = positionRef.current;
 
     activeDragSessionId = sessionId;
     dragSessionRef.current = sessionId;
     dragInfoRef.current = {
-      offsetX: x - finalPositionRef.current.x,
-      offsetY: y - finalPositionRef.current.y,
+      offsetX: x - origin.x,
+      offsetY: y - origin.y,
       width,
       height,
       viewport,
     };
-    dragOriginPositionRef.current = finalPositionRef.current;
+    dragOriginPositionRef.current = origin;
+    draggedPositionRef.current = null;
     isDraggingRef.current = true;
     draggableElement.style.willChange = "transform";
     hasDragStylesRef.current = true;
@@ -258,7 +206,7 @@ export const useDrag = ({
 
     if (evt.target.closest("[data-ll-draggable='false']")) return;
 
-    const viewport = measureDragViewport();
+    const viewport = measureWindowViewport();
     const scale = evt.pointerType === "touch" ? viewport.scale : 1;
 
     if (!startDrag(evt.clientX * scale, evt.clientY * scale, viewport)) return;
@@ -295,6 +243,8 @@ export const useDrag = ({
     [ref],
   );
 
+  // The dropped position reaches the caller's state in the same render that
+  // ends the drag, so the transform is removed exactly when `left`/`top` move.
   useLayoutEffect(() => {
     if (isDragging || !hasDragStylesRef.current) return;
     const draggableElement = ref.current;
@@ -304,54 +254,7 @@ export const useDrag = ({
     draggableElement.style.transform = "";
     draggableElement.style.willChange = "";
     hasDragStylesRef.current = false;
-  }, [finalPosition, isDragging, ref]);
-
-  useEffect(() => {
-    if (isLocked) return;
-    let timeoutId: number | undefined;
-
-    const handleResize = () => {
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
-      }
-
-      timeoutId = window.setTimeout(() => {
-        if (isLockedRef.current) return;
-        const draggableElement = ref.current;
-
-        if (!draggableElement) return;
-        const { width, height } = draggableElement.getBoundingClientRect();
-        const previousPosition = finalPositionRef.current;
-
-        const x = Math.min(
-          Math.max(0, previousPosition.x),
-          window.innerWidth - width,
-        );
-
-        const y = Math.min(
-          Math.max(0, previousPosition.y),
-          window.innerHeight - height,
-        );
-
-        if (x === previousPosition.x && y === previousPosition.y) return;
-
-        const nextPosition = { x, y };
-        finalPositionRef.current = nextPosition;
-        setFinalPosition(nextPosition);
-        onDragStopRef.current(nextPosition);
-      }, 100);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [ref, isLocked]);
+  }, [position, isDragging, ref]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -379,21 +282,18 @@ export const useDrag = ({
       }
 
       evt.preventDefault();
-      const { offsetX, offsetY, width, height, viewport } = dragInfoRef.current;
+      const { offsetX, offsetY, viewport } = dragInfoRef.current;
       const scale = evt.pointerType === "touch" ? viewport.scale : 1;
       queuePositionRef.current(
-        width,
-        height,
         evt.clientX * scale - offsetX,
         evt.clientY * scale - offsetY,
-        viewport,
       );
     };
 
     const handleViewportResize = () => {
       dragInfoRef.current = {
         ...dragInfoRef.current,
-        viewport: measureDragViewport(dragInfoRef.current.viewport.scale),
+        viewport: measureWindowViewport(dragInfoRef.current.viewport.scale),
       };
     };
 
@@ -441,31 +341,8 @@ export const useDrag = ({
     };
   }, [isDragging, isLocked, ref]);
 
-  const recalculate = (width?: number, height?: number) => {
-    const draggableElement = ref.current;
-
-    if (!draggableElement) return;
-
-    const {
-      top,
-      left,
-      width: renderedWidth,
-      height: renderedHeight,
-    } = draggableElement.getBoundingClientRect();
-
-    queuePositionRef.current(
-      width ?? renderedWidth,
-      height ?? renderedHeight,
-      left,
-      top,
-      measureDragViewport(),
-    );
-  };
-
   return {
-    position: finalPosition,
     handlePointerDown,
-    recalculate,
     isDragging,
     cancelDrag: () => finishDragRef.current(),
   };

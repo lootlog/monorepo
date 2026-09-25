@@ -1,5 +1,5 @@
 import { isObjectRecord } from "@lootlog/schema/records";
-import { z } from "zod";
+import { Option, Schema } from "effect";
 import { useGameStore } from "@/store/game.store";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -7,6 +7,10 @@ import { storageKey } from "@/lib/storage-key";
 import type { MessageType } from "@/api/chat.api";
 
 const STORAGE_KEY = storageKey("ll:chat:state");
+
+const decodeLegacySelectedGuild = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.String),
+);
 
 export type ChatFilter = "all" | "normal" | "npc" | "party" | "reports";
 
@@ -169,14 +173,13 @@ export const getSelectedChatGuildId = (
 
   // Preserve the existing per-character selector preference on first use.
   try {
-    return z
-      .string()
-      .parse(
-        JSON.parse(
-          localStorage.getItem(storageKey(`ll:chat:selected-guild:${key}`)) ??
-            '""',
-        ),
-      );
+    return Option.getOrElse(
+      decodeLegacySelectedGuild(
+        localStorage.getItem(storageKey(`ll:chat:selected-guild:${key}`)) ??
+          '""',
+      ),
+      () => "",
+    );
   } catch {
     return "";
   }

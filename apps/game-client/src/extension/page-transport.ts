@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { Schema } from "effect";
 import {
   RealtimeRequestError,
   type RealtimeConnectionState,
@@ -11,7 +11,7 @@ import type {
 } from "@/lib/game-client-platform";
 import {
   EXTENSION_CHANNEL,
-  ExtensionMessageSchema,
+  decodeExtensionMessage,
   encodeMessage,
   decodeMessage,
   MAX_PENDING_REQUESTS,
@@ -19,12 +19,14 @@ import {
   type ExtensionRequest,
 } from "./protocol";
 
-const HttpResponseSchema = z.object({
-  status: z.number().int().min(200).max(599),
-  statusText: z.string(),
-  headers: z.record(z.string(), z.string()),
-  body: z.string(),
-});
+const decodeHttpResponse = Schema.decodeUnknownSync(
+  Schema.Struct({
+    status: Schema.Int.check(Schema.isBetween({ minimum: 200, maximum: 599 })),
+    statusText: Schema.String,
+    headers: Schema.Record(Schema.String, Schema.String),
+    body: Schema.String,
+  }),
+);
 
 type Pending = {
   resolve: (data: unknown) => void;
@@ -227,7 +229,7 @@ export function createPageTransport(
     if (disposed) return;
 
     try {
-      const message = ExtensionMessageSchema.parse(decodeMessage(event.data));
+      const message = decodeExtensionMessage(decodeMessage(event.data));
 
       switch (message.type) {
         case "ready":
@@ -324,6 +326,9 @@ export function createPageTransport(
       )
         return globalThis.fetch(input, init);
 
+      const hasBody =
+        nativeRequest.method !== "GET" && nativeRequest.method !== "HEAD";
+
       const httpRequest: Extract<
         ExtensionRequest,
         { type: "http" }
@@ -331,18 +336,15 @@ export function createPageTransport(
         url: nativeRequest.url,
         method: nativeRequest.method,
         headers: Object.fromEntries(nativeRequest.headers.entries()),
+        ...(hasBody && { body: await nativeRequest.text() }),
       };
-
-      if (nativeRequest.method !== "GET" && nativeRequest.method !== "HEAD") {
-        httpRequest.body = await nativeRequest.text();
-      }
 
       const data = await request(
         { type: "http", request: httpRequest },
         nativeRequest.signal,
       );
 
-      const response = HttpResponseSchema.parse(data);
+      const response = decodeHttpResponse(data);
 
       return new Response(
         [204, 205, 304].includes(response.status) ||

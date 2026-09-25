@@ -137,7 +137,7 @@ describe("SoundsSettingsTab", () => {
     const input = screen.getByRole("textbox", { name: "Komunikaty" });
     await user.type(input, "not a url");
 
-    expect(screen.getByText("Nieprawidłowy URL")).toBeInTheDocument();
+    expect(screen.getByText("Nieprawidłowy adres URL")).toBeInTheDocument();
     expect(input).toHaveAttribute("aria-invalid", "true");
     await new Promise((resolve) => setTimeout(resolve, 350));
     expect(patchRequest).not.toHaveBeenCalled();

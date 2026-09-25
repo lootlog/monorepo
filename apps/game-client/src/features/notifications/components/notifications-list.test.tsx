@@ -26,6 +26,7 @@ import {
   type StoredNotification,
   useNotificationsStore,
 } from "@/store/notifications.store";
+import { toast } from "sonner";
 import { NotificationsList } from "./notifications-list";
 
 let test: ReturnType<typeof createNotificationTest>;
@@ -71,7 +72,7 @@ describe("NotificationsList", () => {
     vi.useRealTimers();
   });
 
-  it("opens chat with the joined gathering after applying from a notification", async () => {
+  const renderGatheringNotification = (applyResponse: () => Response) => {
     const room = createChatReadyRoom({ world: "luvia" });
 
     const gathering: StoredNotification = {
@@ -89,7 +90,7 @@ describe("NotificationsList", () => {
     useWindowsStore.getState().setOpen("party-finder", false);
     useWindowsStore.getState().setOpen("chat", false);
     useNotificationsStore.setState({ notifications: [gathering] });
-    const apply = vi.fn<typeof fetch>(async () => Response.json(room));
+    const apply = vi.fn<typeof fetch>(async () => applyResponse());
 
     const restoreApi = configureApiClients({
       main: {
@@ -117,7 +118,17 @@ describe("NotificationsList", () => {
       wrapper: test.wrapper,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Idę" }));
+    return { apply, gathering, room };
+  };
+
+  it("opens chat with the joined gathering after applying from a notification", async () => {
+    const { apply, room } = renderGatheringNotification(() =>
+      Response.json(createChatReadyRoom({ world: "luvia" })),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Zgłoś się do zbiórki" }),
+    );
 
     await waitFor(() =>
       expect(useWindowsStore.getState().chat.open).toBe(true),
@@ -131,6 +142,24 @@ describe("NotificationsList", () => {
     ).toEqual(room);
     expect(useNotificationsStore.getState().notifications).toEqual([]);
     expect(apply).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a rejected application and keeps the notification", async () => {
+    const toastError = vi.spyOn(toast, "error");
+    onTestFinished(() => toastError.mockRestore());
+
+    const { apply, gathering } = renderGatheringNotification(() =>
+      Response.json({ code: "ALREADY_JOINED_ELSEWHERE" }, { status: 409 }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Zgłoś się do zbiórki" }),
+    );
+
+    await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(useWindowsStore.getState().chat.open).toBe(false);
+    expect(useNotificationsStore.getState().notifications).toEqual([gathering]);
   });
 
   it("uses a CSS-only entry animation without whole-list layout animation", () => {
@@ -189,7 +218,7 @@ describe("NotificationsList", () => {
     expect(screen.getAllByText("hello")).toHaveLength(8);
   });
 
-  it("finishes a CSS exit before manually removing the notification", () => {
+  it("finishes a CSS exit before manually removing only the dismissed notification, down to the last one", () => {
     vi.useFakeTimers();
     useSettingsStore.setState({ animationEffectsEnabled: true });
 
@@ -201,9 +230,11 @@ describe("NotificationsList", () => {
     };
 
     useNotificationsStore.setState({ notifications: [notification, second] });
-    render(<NotificationsList notifications={[notification, second]} />, {
-      wrapper: test.wrapper,
-    });
+
+    const view = render(
+      <NotificationsList notifications={[notification, second]} />,
+      { wrapper: test.wrapper },
+    );
 
     fireEvent.click(
       screen.getAllByRole("button", { name: "Zamknij powiadomienie" })[0],
@@ -219,5 +250,15 @@ describe("NotificationsList", () => {
     });
 
     expect(useNotificationsStore.getState().notifications).toEqual([second]);
+
+    view.rerender(<NotificationsList notifications={[second]} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Zamknij powiadomienie" }),
+    );
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
+    expect(useNotificationsStore.getState().notifications).toEqual([]);
   });
 });

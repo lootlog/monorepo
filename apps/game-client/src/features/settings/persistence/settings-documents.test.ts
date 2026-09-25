@@ -1,8 +1,9 @@
+import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
 import { createSettingsDocuments } from "@/test/settings-documents-fixtures";
 import {
-  guildSettingsDocumentsSchema,
-  settingsDocumentsSchema,
+  decodeGuildSettingsDocuments,
+  decodeSettingsDocuments,
 } from "./settings-documents";
 
 describe("settings response validation", () => {
@@ -11,9 +12,9 @@ describe("settings response validation", () => {
       "general.allowWorldSelection": true,
     });
 
-    expect(settingsDocumentsSchema.parse(documents)).toEqual(documents);
+    expect(decodeSettingsDocuments(documents)).toEqual(documents);
     expect(
-      guildSettingsDocumentsSchema.parse({ guilds: { guild: documents } }),
+      decodeGuildSettingsDocuments({ guilds: { guild: documents } }),
     ).toEqual({ guilds: { guild: documents } });
 
     const resolution = documents.domains.general;
@@ -25,11 +26,11 @@ describe("settings response validation", () => {
       { sources: { allowWorldSelection: { type: "USER", id: "" } } },
       { effective: { allowWorldSelection: undefined } },
     ]) {
-      expect(
-        settingsDocumentsSchema.safeParse({
+      expect(() =>
+        decodeSettingsDocuments({
           domains: { general: { ...resolution, ...invalid } },
-        }).success,
-      ).toBe(false);
+        }),
+      ).toThrow(Schema.SchemaError);
     }
   });
 });

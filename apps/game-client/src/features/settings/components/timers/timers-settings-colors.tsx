@@ -1,5 +1,5 @@
 import type { CustomTimerColor } from "@lootlog/schema/timer-settings";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { SettingsList } from "@/components/settings/settings-list";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
@@ -281,9 +281,9 @@ export const TimersSettingsColors: FC = () => {
             onOpenChange={(open) => setOpenPopover(open ? "add" : null)}
           >
             <PopoverTrigger asChild>
-              <SettingsIconButton label={t("settings.timers.colors.addTitle")}>
+              <IconButton label={t("settings.timers.colors.addTitle")}>
                 <Plus />
-              </SettingsIconButton>
+              </IconButton>
             </PopoverTrigger>
             <PopoverContent
               role="dialog"

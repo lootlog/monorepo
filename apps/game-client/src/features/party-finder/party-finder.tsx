@@ -1,3 +1,8 @@
+import { useState } from "react";
+import { Lock } from "lucide-react";
+import { cn } from "cn";
+import { toast } from "sonner";
+import { ConfirmPopover } from "@/components/confirm-popover";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
@@ -10,14 +15,18 @@ import { ReadyRoomParticipantsList } from "@/features/party-finder/components/re
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
+const PARTY_SIZE_LIMIT = 10;
+
 export const PartyFinder = () => {
-  const { t } = useTranslation("partyFinder");
+  const { t } = useTranslation(["partyFinder", "chat"]);
   const open = useWindowsStore((state) => state["party-finder"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
   const readyRoom = useOwnedReadyRoom();
   const partyMembers = usePartyStore((s) => s.members);
+  const partyFull = partyMembers.length >= PARTY_SIZE_LIMIT;
 
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
@@ -57,9 +66,16 @@ export const PartyFinder = () => {
               {t("header.party")}
             </span>
             <span
-              className={`ll:text-[11px] ll:font-semibold ${partyMembers.length >= 10 ? "ll:text-red-400" : "ll:text-green-400"}`}
+              className={cn(
+                "ll:inline-flex ll:items-center ll:gap-1 ll:text-[11px] ll:font-semibold ll:tabular-nums",
+                partyFull ? "ll:text-red-400" : "ll:text-green-400",
+              )}
             >
-              {partyMembers.length}/10
+              {partyFull ? (
+                <Lock aria-hidden="true" className="ll:size-3" />
+              ) : null}
+              {partyMembers.length}/{PARTY_SIZE_LIMIT}
+              {partyFull ? <span>{t("header.partyFull")}</span> : null}
             </span>
           </div>
         ) : (
@@ -73,30 +89,43 @@ export const PartyFinder = () => {
         <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
           {isOrganizerCharacter ? (
             <Button
-              variant="secondary"
               size="xs"
+              className="ll:w-full"
               onClick={() => {
-                void inviteParticipants().catch((cause: unknown) => {
-                  console.warn("Failed to resolve party invitations", cause);
+                void inviteParticipants().catch(() => {
+                  toast.error(t("gatherings.inviteFailed", { ns: "chat" }));
                 });
               }}
               disabled={!hasInvitableParticipants || !canInviteParticipants()}
-              className="ll:w-full ll:border-green-500 ll:text-green-400 ll:hover:bg-green-600/20"
             >
               {t("actions.inviteAll")}
             </Button>
           ) : null}
-          <Button
-            variant="secondary"
-            size="xs"
-            onClick={() => cancelPartyGathering()}
-            disabled={isCancelling}
-            className="ll:w-full ll:border-red-500 ll:bg-red-600/20 ll:text-red-300 ll:hover:bg-red-600/40"
-          >
-            {isCancelling
-              ? t("actions.ending")
-              : t("actions.cancelPartyGathering")}
-          </Button>
+          <ConfirmPopover
+            open={cancelConfirmOpen}
+            onOpenChange={setCancelConfirmOpen}
+            title={t("cancelConfirm.title")}
+            description={t("cancelConfirm.description")}
+            confirmLabel={t("cancelConfirm.confirm")}
+            pending={isCancelling}
+            onConfirm={() =>
+              cancelPartyGathering(undefined, {
+                onSettled: () => setCancelConfirmOpen(false),
+              })
+            }
+            trigger={
+              <Button
+                variant="destructive"
+                size="xs"
+                className="ll:w-full"
+                disabled={isCancelling}
+              >
+                {isCancelling
+                  ? t("actions.ending")
+                  : t("actions.cancelPartyGathering")}
+              </Button>
+            }
+          />
         </div>
       </div>
     </DraggableWindow>

@@ -7,8 +7,8 @@ import {
 } from "@lootlog/client/main";
 import { useQuery } from "@tanstack/react-query";
 import {
-  settingsDocumentsSchema,
-  guildSettingsDocumentsSchema,
+  decodeSettingsDocuments,
+  decodeGuildSettingsDocuments,
   getGuildTimersDocumentsParams,
   getGuildTimersDocumentsQueryKey,
   getSettingsDocumentsParams,
@@ -39,7 +39,7 @@ export const useSettingsDocuments = () => {
 
   return useQuery({
     queryFn: async ({ signal }) =>
-      settingsDocumentsSchema.parse(
+      decodeSettingsDocuments(
         await settingsDocumentsControllerGetPreferences(params, { signal }),
       ),
     queryKey: getSettingsDocumentsControllerGetPreferencesQueryKey(params),
@@ -59,7 +59,7 @@ export const useGuildTimersDocuments = (guildIds: readonly string[]) => {
   return useQuery({
     queryKey: getGuildTimersDocumentsQueryKey(guildIds),
     queryFn: async ({ signal }): Promise<GuildSettingsDocuments> =>
-      guildSettingsDocumentsSchema.parse(
+      decodeGuildSettingsDocuments(
         await settingsDocumentsControllerGetGuildPreferences(params, {
           signal,
         }),

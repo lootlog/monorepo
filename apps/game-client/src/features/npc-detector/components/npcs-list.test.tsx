@@ -100,6 +100,14 @@ it("bounds mounted rows for five hundred NPCs and mounts rows reached by scrolli
   expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
 });
 
+it("lets the only detection be removed from the list", () => {
+  mountNpcs([createNpc(1)]);
+
+  fireEvent.click(screen.getByRole("button", { name: "Usuń potwora z listy" }));
+
+  expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+});
+
 it("does not replay entry animation when virtualization remounts an existing row", () => {
   const { viewport } = mountNpcs(
     Array.from({ length: 500 }, (_, id) => createNpc(id)),
@@ -242,7 +250,8 @@ it("commits a notification cooldown once per second, not on a polling clock", ()
     },
   );
 
-  const cooldownButton = screen.getByRole("button", { name: "5" });
+  const cooldownButton = screen.getByRole("button", { name: "Wysłano" });
+  expect(cooldownButton).toHaveTextContent("5");
   updateCommits = 0;
 
   for (let second = 0; second < 4; second += 1) {
@@ -279,8 +288,10 @@ it("restarts the countdown when the same NPC is notified again mid-cooldown", ()
     },
   );
 
+  const cooldownButton = screen.getByRole("button", { name: "Wysłano" });
+
   act(() => vi.advanceTimersByTime(3000));
-  expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+  expect(cooldownButton).toHaveTextContent("2");
 
   act(() =>
     useNpcDetectorStore
@@ -288,7 +299,9 @@ it("restarts the countdown when the same NPC is notified again mid-cooldown", ()
       .setNpcStates([{ npcId: 1, npc: { notificationSentAt: Date.now() } }]),
   );
 
-  expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Wysłano" })).toHaveTextContent(
+    "5",
+  );
 
   act(() => vi.advanceTimersByTime(5000));
   expect(

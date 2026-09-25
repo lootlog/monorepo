@@ -12,10 +12,10 @@ import {
   Pin,
   PinOff,
   RotateCcw,
-  Trash2,
 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { DeleteTimerMenuItem } from "./delete-timer-menu-item";
 import { TimerColorPicker } from "./timer-color-picker";
 import { TimerHistoryPopover } from "./timer-history-popover";
 
@@ -172,13 +172,10 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
       ) : (
         canDelete && (
-          <ContextMenuItem
-            className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
-            onClick={() => onDelete(timer.guildId, timer.timerKey)}
-          >
-            <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
-            {t("contextMenu.delete")}
-          </ContextMenuItem>
+          <DeleteTimerMenuItem
+            timerName={timer.npc.name}
+            onDelete={() => onDelete(timer.guildId, timer.timerKey)}
+          />
         )
       )}
     </>

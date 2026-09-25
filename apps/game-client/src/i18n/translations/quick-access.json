@@ -3,12 +3,22 @@
     "title": "Lootlog"
   },
   "buttons": {
-    "partyFinder": "Party finder",
+    "partyFinder": "Utwórz zbiórkę",
     "timers": "Timery",
     "onlinePlayers": "Gracze online",
-    "chat": "Chat",
+    "chat": "Czat",
     "command": "Konsola",
     "settings": "Ustawienia"
+  },
+  "reopen": {
+    "npcDetector_one": "Pokaż wykrywacz: {{count}} wykryty potwór",
+    "npcDetector_few": "Pokaż wykrywacz: {{count}} wykryte potwory",
+    "npcDetector_many": "Pokaż wykrywacz: {{count}} wykrytych potworów",
+    "npcDetector_other": "Pokaż wykrywacz: {{count}} wykrytego potwora",
+    "notifications_one": "Pokaż powiadomienia: {{count}} powiadomienie",
+    "notifications_few": "Pokaż powiadomienia: {{count}} powiadomienia",
+    "notifications_many": "Pokaż powiadomienia: {{count}} powiadomień",
+    "notifications_other": "Pokaż powiadomienia: {{count}} powiadomienia"
   },
   "guildPopover": {
     "lootlogPage": "Strona Lootloga",
@@ -17,6 +27,8 @@
   },
   "connection": {
     "ping": "{{ping}} ms",
-    "heartbeatPing": "Ping heartbeat: {{ping}} ms"
+    "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
+    "organizations": "Połączone Lootlogi",
+    "reconnect": "Połącz ponownie"
   }
 }

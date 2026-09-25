@@ -1,15 +1,8 @@
 import { useTimersStore } from "@/store/timers.store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "cn";
-import { Check } from "lucide-react";
+import { ColorSwatchToggle } from "@/components/ui/color-swatch-toggle";
 import { useTranslation } from "react-i18next";
 import type { FC } from "react";
-import { TIMERS_COLORS, getTimerColor } from "../constants/timer-colors";
-import { getDefaultColorName } from "../utils/get-default-color-name";
+import { getTimerColorOptions } from "../utils/get-timer-color-options";
 
 type CustomColor = {
   id: string;
@@ -46,30 +39,13 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
     (state) => state.displayConfig.legacyAppearance,
   );
 
-  const hiddenColorIds = new Set(hiddenDefaultColors);
-
-  const colors = [
-    ...Object.entries(TIMERS_COLORS).flatMap(([id]) =>
-      hiddenColorIds.has(id)
-        ? []
-        : [
-            {
-              id,
-              name:
-                defaultColorNames[id] ??
-                getDefaultColorName(id, legacyAppearance),
-              swatchColor:
-                overriddenDefaultColors[id]?.borderColor ??
-                getTimerColor(id, legacyAppearance)?.accent,
-            },
-          ],
-    ),
-    ...Object.values(customColors).map((color) => ({
-      id: color.id,
-      name: color.name,
-      swatchColor: color.borderColor,
-    })),
-  ];
+  const colors = getTimerColorOptions({
+    customColors,
+    defaultColorNames,
+    overriddenDefaultColors,
+    hiddenDefaultColors,
+    legacyAppearance,
+  });
 
   if (colors.length === 0) return null;
 
@@ -77,35 +53,17 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
     <div
       role="group"
       aria-label={t("contextMenu.color")}
-      className="ll:w-full ll:border-0 ll:border-b ll:border-gray-400/40 ll:p-1.5"
+      className="ll:w-full ll:border-0 ll:border-b ll:border-gray-400/40 ll:p-1"
     >
-      <div className="ll:grid ll:grid-cols-7 ll:gap-1">
+      <div className="ll:grid ll:grid-cols-7 ll:justify-items-center ll:gap-0.5">
         {colors.map((color) => (
-          <Tooltip key={color.id}>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label={color.name}
-                aria-pressed={selectedColor === color.id}
-                className={cn(
-                  "ll:relative ll:flex ll:aspect-square ll:w-full ll:items-center ll:justify-center ll:p-0 ll:appearance-none ll:rounded-sm ll:border ll-custom-cursor-pointer ll:ring-offset-1 ll:ring-offset-popover ll:hover:outline ll:hover:outline-1 ll:hover:outline-offset-1 ll:hover:outline-foreground/60 ll:focus-visible:outline ll:focus-visible:outline-2 ll:focus-visible:outline-offset-1 ll:focus-visible:outline-foreground",
-                  selectedColor === color.id && "ll:ring-1 ll:ring-foreground",
-                )}
-                style={{
-                  backgroundColor: color.swatchColor,
-                  borderColor: color.swatchColor,
-                }}
-                onClick={() => onColorChange(color.id)}
-              >
-                {selectedColor === color.id && (
-                  <span className="ll:flex ll:size-3 ll:items-center ll:justify-center ll:rounded-full ll:bg-black/80 ll:text-white">
-                    <Check aria-hidden="true" size={10} strokeWidth={3} />
-                  </span>
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{color.name}</TooltipContent>
-          </Tooltip>
+          <ColorSwatchToggle
+            key={color.id}
+            color={color.swatchColor}
+            label={color.name}
+            selected={selectedColor === color.id}
+            onClick={() => onColorChange(color.id)}
+          />
         ))}
       </div>
     </div>

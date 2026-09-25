@@ -22,6 +22,7 @@ let harness: ReturnType<typeof createGuildPreferencesTest>;
 
 const render = () => renderUi(<SettingsTabs />, { wrapper: harness.wrapper });
 
+import { Settings } from "@/features/settings/settings";
 import { SettingsTabs } from "./settings-tabs";
 
 describe("SettingsTabs", () => {
@@ -61,7 +62,7 @@ describe("SettingsTabs", () => {
       "Zakres zbierania",
       "Lootlogi",
       "Wygląd",
-      "Chat",
+      "Czat",
       "Timery",
       "Powiadomienia",
       "Wykrywacz",
@@ -140,7 +141,7 @@ describe("SettingsTabs", () => {
       screen.queryByRole("tablist", { name: "Sekcje ustawień" }),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "Chat" }));
+    await user.click(screen.getByRole("tab", { name: "Czat" }));
 
     const subsections = within(
       screen.getByRole("tablist", { name: "Sekcje ustawień" }),
@@ -204,7 +205,10 @@ describe("SettingsTabs keyboard and start view", () => {
 
   it("focuses search with Ctrl+F only while focus is inside the window and closes on Escape", async () => {
     const user = userEvent.setup();
-    render();
+    useWindowsStore.setState((state) => ({
+      settings: { ...state.settings, open: true },
+    }));
+    renderUi(<Settings />, { wrapper: harness.wrapper });
 
     const outside = document.createElement("button");
     document.body.append(outside);

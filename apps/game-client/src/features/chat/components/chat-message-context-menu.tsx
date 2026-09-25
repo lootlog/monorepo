@@ -1,4 +1,5 @@
 import { copyChatText } from "../chat-copy-text";
+import { ConfirmPopover } from "@/components/confirm-popover";
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -21,7 +22,7 @@ import {
   Users,
   UserRound,
 } from "lucide-react";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export type ChatMessageContextMenuProps = {
@@ -51,6 +52,7 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
   const { characterData } = message;
   const isCurrentCharacter = characterData.nick === heroName;
   const isNewInterface = gameInterface === "ni";
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
     <ContextMenuContent className="ll:w-44 ll:flex ll:flex-col">
@@ -85,14 +87,32 @@ export const ChatMessageContextMenu: FC<ChatMessageContextMenuProps> = ({
         </ContextMenuItem>
       )}
       {canDelete && (
-        <ContextMenuItem disabled={isDeleting} onClick={onDelete}>
-          <Trash2
-            aria-hidden="true"
-            strokeWidth={1.5}
-            className="ll:mr-2 ll:size-3.5 ll:shrink-0"
-          />
-          {t("contextMenu.delete")}
-        </ContextMenuItem>
+        <ConfirmPopover
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          side="right"
+          title={t("contextMenu.deleteConfirm.title")}
+          description={t("contextMenu.deleteConfirm.description")}
+          confirmLabel={t("contextMenu.delete")}
+          onConfirm={() => {
+            setDeleteConfirmOpen(false);
+            onDelete();
+          }}
+          trigger={
+            <ContextMenuItem
+              disabled={isDeleting}
+              // Keeps the menu open while the confirmation is shown.
+              onSelect={(event) => event.preventDefault()}
+            >
+              <Trash2
+                aria-hidden="true"
+                strokeWidth={1.5}
+                className="ll:mr-2 ll:size-3.5 ll:shrink-0"
+              />
+              {t("contextMenu.delete")}
+            </ContextMenuItem>
+          }
+        />
       )}
       {isNewInterface && (
         <ContextMenuItem

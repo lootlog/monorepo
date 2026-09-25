@@ -1,9 +1,9 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
-import { z } from "zod";
+import { Schema } from "effect";
 import { useLocalStorage } from "./use-local-storage";
 
-const stringSchema = z.string();
+const stringSchema = Schema.String;
 
 afterEach(() => localStorage.clear());
 

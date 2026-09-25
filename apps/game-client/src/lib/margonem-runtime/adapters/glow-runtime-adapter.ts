@@ -106,11 +106,16 @@ function isNativeOtherGlowDrawable(drawable: unknown): boolean {
   );
 }
 
+type TintedMaskSource = (
+  color: string,
+  width: number,
+  height: number,
+) => HTMLCanvasElement | null;
+
 class LootlogOtherGlow {
   private color: string;
   private drawMask: HTMLCanvasElement | null = null;
-  private mask: HTMLImageElement | null = null;
-  private maskLoaded = false;
+  private readonly getTintedMask: TintedMaskSource;
   private rx = 0;
   private ry = 0;
 
@@ -119,12 +124,16 @@ class LootlogOtherGlow {
   fh = 52;
   master: RuntimeOther;
 
-  constructor(master: RuntimeOther, color: string) {
+  constructor(
+    master: RuntimeOther,
+    color: string,
+    getTintedMask: TintedMaskSource,
+  ) {
     this.master = master;
     this.color = color;
+    this.getTintedMask = getTintedMask;
     this.d = { id: String(master.d.id) };
     this.update();
-    this.createImage();
   }
 
   getColor(): string {
@@ -147,6 +156,15 @@ class LootlogOtherGlow {
     this.ry = this.master.ry ?? this.master.d.y ?? 0;
     this.d.x = this.master.d.x;
     this.d.y = this.master.d.y;
+
+    const fw = (this.master.fw ?? 32) + 4;
+    const fh = (this.master.fh ?? 48) + 4;
+
+    if (fw === this.fw && fh === this.fh) return;
+
+    this.fw = fw;
+    this.fh = fh;
+    this.drawMask = null;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -155,7 +173,13 @@ class LootlogOtherGlow {
     const runtimeWindow = getRuntimeWindow();
     const engine = runtimeWindow.Engine;
 
-    if (!this.maskLoaded || !this.createMaskColor() || !engine?.map) return;
+    if (!engine?.map) return;
+
+    this.drawMask ??= this.getTintedMask(this.color, this.fw, this.fh);
+
+    const drawMask = this.drawMask;
+
+    if (!drawMask) return;
 
     const mapOffset = engine.map.offset ?? [0, 0];
     const mapShift = engine.mapShift?.getShift?.() ?? [0, 0];
@@ -172,10 +196,6 @@ class LootlogOtherGlow {
         ? top + (this.master.waterTopModify ?? 0)
         : top,
     );
-
-    const drawMask = this.drawMask;
-
-    if (!drawMask) return;
 
     const clipImage = engine.map.clipObject?.(
       left,
@@ -202,62 +222,16 @@ class LootlogOtherGlow {
       clipImage.height,
     );
   }
-
-  private createImage(): void {
-    const imgLoader = getRuntimeWindow().Engine?.imgLoader;
-
-    const beforeOnload = (image: HTMLImageElement) => {
-      this.fw = (this.master.fw ?? 32) + 4;
-      this.fh = (this.master.fh ?? 48) + 4;
-      this.mask = image;
-    };
-
-    const afterOnload = (image: HTMLImageElement) => {
-      this.mask = image;
-      this.maskLoaded = true;
-      this.drawMask = null;
-    };
-
-    if (imgLoader?.onload) {
-      imgLoader.onload(MASK_PATH, false, beforeOnload, afterOnload);
-
-      return;
-    }
-
-    const image = new Image();
-    image.onload = () => {
-      beforeOnload(image);
-      afterOnload(image);
-    };
-
-    image.src = MASK_PATH;
-  }
-
-  private createMaskColor(): HTMLCanvasElement | null {
-    if (this.drawMask || !this.mask) {
-      return this.drawMask;
-    }
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    if (!context) return null;
-
-    canvas.width = this.fw;
-    canvas.height = this.fh;
-    context.drawImage(this.mask, 0, 0, this.fw, this.fh);
-    context.globalCompositeOperation = "source-in";
-    context.fillStyle = this.color;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    this.drawMask = canvas;
-
-    return this.drawMask;
-  }
 }
 
 class LootlogOtherGlowManager {
   private cleanupDrawableListPatch: (() => void) | null = null;
   private readonly glowsByCharacterId = new Map<string, LootlogOtherGlow>();
+  // One mask request and one tinted canvas per (color, size) serve every glow
+  // and survive Shift releases; only cleanup() releases them.
+  private mask: HTMLImageElement | null = null;
+  private maskRequested = false;
+  private readonly tintedMasks = new Map<string, HTMLCanvasElement>();
   private nativeGlowSuppressed = false;
   private originalGetDrawableList: OriginalGetDrawableList | null = null;
   private readonly originalOtherUpdates = new WeakMap<
@@ -272,17 +246,35 @@ class LootlogOtherGlowManager {
 
     if (!others?.getDrawableList) return;
 
-    this.originalGetDrawableList = others.getDrawableList;
-    others.getDrawableList = () => {
-      const baseDrawableList = this.getBaseDrawableList(others);
+    if (!this.mask) this.maskRequested = false;
 
-      if (this.glowsByCharacterId.size === 0) {
-        return baseDrawableList;
+    this.originalGetDrawableList = others.getDrawableList;
+    // Engine calls this every rendered frame; build at most one array per call.
+    others.getDrawableList = () => {
+      const drawables = this.originalGetDrawableList?.call(others) ?? [];
+
+      if (!this.nativeGlowSuppressed && this.glowsByCharacterId.size === 0) {
+        return drawables;
       }
 
-      this.updateGlows();
+      const combined: unknown[] = [];
 
-      return [...baseDrawableList, ...this.glowsByCharacterId.values()];
+      for (let index = 0; index < drawables.length; index += 1) {
+        const drawable = drawables[index];
+
+        if (this.nativeGlowSuppressed && isNativeOtherGlowDrawable(drawable)) {
+          continue;
+        }
+
+        combined.push(drawable);
+      }
+
+      for (const glow of this.glowsByCharacterId.values()) {
+        glow.update();
+        combined.push(glow);
+      }
+
+      return combined;
     };
 
     this.cleanupDrawableListPatch = () => {
@@ -329,9 +321,10 @@ class LootlogOtherGlowManager {
     }
 
     this.patchOtherUpdate(runtimeOther);
+    this.requestMask();
     this.glowsByCharacterId.set(
       characterId,
-      new LootlogOtherGlow(runtimeOther, color),
+      new LootlogOtherGlow(runtimeOther, color, this.getTintedMask),
     );
   }
 
@@ -352,10 +345,18 @@ class LootlogOtherGlowManager {
     this.glowsByCharacterId.clear();
   }
 
-  cleanup(): void {
+  // Shift released: stop drawing and restore the game, keep shared masks.
+  uninstall(): void {
     this.nativeGlowSuppressed = false;
     this.clear();
     this.cleanupDrawableListPatch?.();
+  }
+
+  cleanup(): void {
+    this.uninstall();
+    this.mask = null;
+    this.maskRequested = false;
+    this.tintedMasks.clear();
   }
 
   getGlowColor(characterId: string): string | undefined {
@@ -385,23 +386,54 @@ class LootlogOtherGlowManager {
     return this.nativeGlowSuppressed;
   }
 
-  private getBaseDrawableList(others: {
-    getDrawableList?: () => unknown[];
-  }): unknown[] {
-    const drawables = this.originalGetDrawableList?.call(others) ?? [];
+  private requestMask(): void {
+    if (this.maskRequested) return;
 
-    if (!this.nativeGlowSuppressed) {
-      return drawables;
+    this.maskRequested = true;
+
+    const setMask = (image: HTMLImageElement) => {
+      this.mask = image;
+      this.tintedMasks.clear();
+    };
+
+    const imgLoader = getRuntimeWindow().Engine?.imgLoader;
+
+    if (imgLoader?.onload) {
+      imgLoader.onload(MASK_PATH, false, () => undefined, setMask);
+
+      return;
     }
 
-    return drawables.filter((drawable) => !isNativeOtherGlowDrawable(drawable));
+    const image = new Image();
+    image.onload = () => setMask(image);
+    image.src = MASK_PATH;
   }
 
-  private updateGlows(): void {
-    for (const glow of this.glowsByCharacterId.values()) {
-      glow.update();
-    }
-  }
+  private readonly getTintedMask: TintedMaskSource = (color, width, height) => {
+    const mask = this.mask;
+
+    if (!mask) return null;
+
+    const key = `${color}|${width}|${height}`;
+    const cached = this.tintedMasks.get(key);
+
+    if (cached) return cached;
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (!context) return null;
+
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(mask, 0, 0, width, height);
+    context.globalCompositeOperation = "source-in";
+    context.fillStyle = color;
+    context.fillRect(0, 0, width, height);
+    this.tintedMasks.set(key, canvas);
+
+    return canvas;
+  };
 
   private patchOtherUpdate(other: RuntimeOther): void {
     if (this.originalOtherUpdates.has(other) || !other.update) return;

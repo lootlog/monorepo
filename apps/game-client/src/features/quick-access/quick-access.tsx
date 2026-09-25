@@ -3,6 +3,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toolbarStripDividerClassName } from "@/components/ui/toolbar-strip";
 import { ConnectionStatus } from "@/features/quick-access/components/connection-status";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { NotificationsReopenButton } from "@/features/quick-access/components/notifications-reopen-button";
+import { NpcDetectorReopenButton } from "@/features/quick-access/components/npc-detector-reopen-button";
 import {
   QuickAccessWindowButton,
   type QuickAccessWindowButtonProps,
@@ -18,7 +20,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const ICON_SIZE = 16;
+const ICON_CLASS_NAME = "ll:size-4";
 
 /**
  * Lootlog's "start bar": one tile per window, lit while that window is open.
@@ -30,41 +32,51 @@ export const QuickAccess = () => {
   const open = useWindowsStore((state) => state["quick-access"].open);
   const setOpen = useWindowsStore((state) => state.setOpen);
 
+  // The detector and notifications have no toggle: they open on their own
+  // with new entries. While closed with entries left, a tile leads back.
+  const npcDetectorOpen = useWindowsStore(
+    (state) => state["npc-detector"].open,
+  );
+
+  const notificationsOpen = useWindowsStore(
+    (state) => state.notifications.open,
+  );
+
   const buttons: QuickAccessWindowButtonProps[] = [
     {
       windowId: "create-party-gathering",
       label: t("buttons.partyFinder"),
-      icon: <Swords size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Swords aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "create-party-gathering",
     },
     {
       windowId: "timers",
       label: t("buttons.timers"),
-      icon: <Timer size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Timer aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-timers",
     },
     {
       windowId: "online-players",
       label: t("buttons.onlinePlayers"),
-      icon: <Users size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Users aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-online-players",
     },
     {
       windowId: "chat",
       label: t("buttons.chat"),
-      icon: <MessagesSquare size={ICON_SIZE} aria-hidden="true" />,
+      icon: <MessagesSquare aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-chat",
     },
     {
       windowId: "command",
       label: t("buttons.command"),
-      icon: <Terminal size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Terminal aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-command",
     },
     {
       windowId: "settings",
       label: t("buttons.settings"),
-      icon: <Settings size={ICON_SIZE} aria-hidden="true" />,
+      icon: <Settings aria-hidden="true" className={ICON_CLASS_NAME} />,
       hotkeyAction: "toggle-settings",
     },
   ];
@@ -89,6 +101,8 @@ export const QuickAccess = () => {
           {buttons.map((button) => (
             <QuickAccessWindowButton key={button.windowId} {...button} />
           ))}
+          {npcDetectorOpen ? null : <NpcDetectorReopenButton />}
+          {notificationsOpen ? null : <NotificationsReopenButton />}
           <div
             aria-hidden="true"
             className={`${toolbarStripDividerClassName} ll:mx-1 ll:h-4`}
