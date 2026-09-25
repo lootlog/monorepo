@@ -19,6 +19,7 @@ import {
   FiberSet,
   Layer,
   Metric,
+  Option,
   Schedule,
   Schema,
   Semaphore,
@@ -42,6 +43,18 @@ export class MessagingError extends TaggedErrorClass<MessagingError>()(
     cause: Schema.Defect(),
   },
 ) {}
+
+/**
+ * Fails a delivery that can never succeed, such as a payload that does not
+ * decode. Retry and dead-letter policies send it straight to the dead-letter
+ * queue; nack and requeue policies reject it without requeueing.
+ */
+export class UnprocessableDelivery extends TaggedErrorClass<UnprocessableDelivery>()(
+  "UnprocessableDelivery",
+  { cause: Schema.Defect() },
+) {}
+
+const isUnprocessableDelivery = Schema.is(UnprocessableDelivery);
 
 class RabbitConnectionFailure extends Context.Service<
   RabbitConnectionFailure,
@@ -256,19 +269,22 @@ const makeService = (
   const routeFailure = (
     delivery: RabbitDelivery,
     policy: FailurePolicy,
+    unprocessable: boolean,
   ): Effect.Effect<void, MessagingError> => {
     if (policy.strategy === "nack") {
       return nack(delivery, { requeue: false });
     }
 
     if (policy.strategy === "requeue") {
-      return nack(delivery, { requeue: true });
+      return nack(delivery, { requeue: !unprocessable });
     }
 
     const currentRetryCount = readRetryCount(delivery.raw);
 
     const shouldRetry =
-      policy.strategy === "retry" && currentRetryCount < policy.maxRetries;
+      policy.strategy === "retry" &&
+      !unprocessable &&
+      currentRetryCount < policy.maxRetries;
 
     const exchange = shouldRetry
       ? RabbitExchange.RETRY
@@ -365,7 +381,14 @@ const makeService = (
                     onFailure: (cause) =>
                       Cause.hasInterruptsOnly(cause)
                         ? Effect.interrupt
-                        : routeFailure(delivery, options.failurePolicy),
+                        : routeFailure(
+                            delivery,
+                            options.failurePolicy,
+                            Option.exists(
+                              Cause.findErrorOption(cause),
+                              isUnprocessableDelivery,
+                            ),
+                          ),
                     onSuccess: () => ack(delivery),
                   }),
                   Effect.catch((error) =>
