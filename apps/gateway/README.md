@@ -151,21 +151,29 @@ After a confirmed policy change, Gateway replaces subscriptions and air-tag scop
 for every local connection before awaiting activity or presence I/O. Failed
 cleanup is logged without blocking other connections or the policy event.
 Delivery also checks current Organization membership and topic access, so stale
-routing entries cannot authorize a protected event.
+routing entries cannot authorize a protected event. Ready-room removals are the
+exception: they carry only the room identity and still reach former members.
 
-Invalidation preserves the cached projection with a new revision. Invalidated
-entries cannot authorize a join or serve as outage fallbacks, and an HTTP request
-started before invalidation cannot overwrite the newer revision. Ordinary cache
-reads may use an uninvalidated projection for at most five minutes during an API
-outage. Cache storage must be available to verify and commit the revision. Cache reads,
-writes, invalidation, and control publication each have a ten-second deadline.
+Invalidation replaces the cached projection with a new revision marker.
+Invalidated entries cannot authorize a join or serve as outage fallbacks, and an
+HTTP request started before invalidation cannot overwrite the newer revision.
+Ordinary cache reads may use an uninvalidated projection for at most two minutes
+during an API outage; that is also the cache retention. Cache storage must be
+available to verify and commit the revision. Cache reads, writes, invalidation,
+and control publication each have a ten-second deadline.
 
-Permission control publication is attempted before the local refresh, even when
-cache invalidation fails; Rabbit failures remain eligible for redelivery after
-all three operations are attempted. Receiving instances retry failed refreshes
-three times with 250 ms, 500 ms and 1 s delays, then detach affected connections
-and close them with 1013 so clients reconnect. API-key permission refresh failures
-also close only the affected user's connections with 1013 without extending stale
+A `guilds.members.remove` fact removes its Organization from the consuming
+instance's connections before any dependency I/O. Every membership fact then
+invalidates the cache and runs control publication and the local refresh
+concurrently, even when invalidation fails. Failed invalidation or publication
+leaves the Rabbit message eligible for redelivery.
+
+The local refresh and every received control use the same policy: retryable
+failures are retried three times with 250 ms, 500 ms and 1 s delays within a
+30-second deadline. If authority still cannot be confirmed, Gateway detaches the
+affected connections and closes them with 1013; their next `session.join` reads
+the invalidated cache and fails closed. API-key permission refresh failures also
+close only the affected user's connections with 1013 without extending stale
 leases. Confirmed key revocation and key authorization expiry still use 1008.
 
 These changes do not add Redis Pub/Sub replay or detect a missed control message

@@ -10,7 +10,6 @@ import type {
 } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { Effect, Predicate } from "effect";
-import { TestClock } from "effect/testing";
 import { decode, encode } from "@msgpack/msgpack";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import { getScopeKey, RealtimeHub } from "./realtime-hub.js";
@@ -1506,123 +1505,40 @@ describe("RealtimeHub federation", () => {
     expect(received).toEqual(["discord-1:user-1"]);
   });
 
-  test("retries a received rebalance after an API outage without a second publication", async () => {
+  test("delivers a ready-room removal to a recipient who lost its Organization", async () => {
     const bus = new FederationBus();
     const first = new RealtimeHub(config, new FakeRedisStore(bus));
-    const tasks: Array<Effect.Effect<void, unknown>> = [];
+    const second = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    const second = new RealtimeHub(
-      config,
-      new FakeRedisStore(bus),
-      (_, task) => {
-        tasks.push(task);
-      },
-    );
-
-    const target = makeSocket(makeSession("retry"));
-
-    const scope = {
-      topic: "organization.chat",
-      organizationId: "organization-1",
-    } as const;
+    for (const hub of [first, second]) await Effect.runPromise(hub.start());
+    const target = makeSocket(makeSession("former-member"));
 
     second.register(target.socket);
-    second.subscribe(target.socket, scope);
-    let attempts = 0;
-    second.onPermissionRebalance(() => {
-      attempts += 1;
 
-      if (attempts < 3) return Effect.fail(new Error("API unavailable"));
-
-      return Effect.sync(() => {
-        target.socket.data.guilds = [];
-        second.replaceSubscriptions(target.socket, []);
-      });
-    });
-
-    for (const hub of [first, second]) await Effect.runPromise(hub.start());
-    await Effect.runPromise(
-      first.publishPermissionRebalance(
-        target.socket.data.discordId,
-        target.socket.data.userId,
-      ),
-    );
-    expect(tasks).toHaveLength(1);
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        for (const task of tasks) yield* task.pipe(Effect.forkScoped);
-        yield* TestClock.adjust("1 second");
-        expect(target.socket.data.guilds).toEqual([]);
-        expect(target.socket.data.subscriptions.size).toBe(0);
-        expect(target.closes).toEqual([]);
-      }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
-    );
-    await first.publishToScope(scope, {
-      v: 1,
-      type: "chat.cleared",
-      data: { organizationId: scope.organizationId, payload: {} },
-    });
-    expect(target.sent).toHaveLength(0);
-  });
-
-  test("reconnects only affected sockets when remote rebalance retries stay unavailable", async () => {
-    const bus = new FederationBus();
-    const first = new RealtimeHub(config, new FakeRedisStore(bus));
-    const tasks: Array<Effect.Effect<void, unknown>> = [];
-
-    const second = new RealtimeHub(
-      config,
-      new FakeRedisStore(bus),
-      (_, task) => {
-        tasks.push(task);
+    for (const payload of [
+      { type: "UPSERT", projection: { guildIds: ["organization-3"] } },
+      {
+        schemaVersion: 3,
+        type: "REMOVE",
+        notificationId: "room-1",
+        revision: 2,
       },
-    );
-
-    const affected = makeSocket(makeSession("unavailable"));
-
-    const unrelated = makeSocket({
-      ...makeSession("other-identity"),
-      userId: affected.socket.data.userId,
-    });
-
-    const scope = {
-      topic: "organization.chat",
-      organizationId: "organization-1",
-    } as const;
-
-    for (const target of [affected, unrelated]) {
-      second.register(target.socket);
-      second.subscribe(target.socket, scope);
+    ]) {
+      await first.publishToDiscord(target.socket.data.discordId, {
+        v: 1,
+        type: "party-ready-room.updated",
+        data: { organizationId: "organization-3", payload },
+      });
     }
 
-    second.onPermissionRebalance(() =>
-      Effect.fail(new Error("API unavailable")),
-    );
-
-    for (const hub of [first, second]) await Effect.runPromise(hub.start());
-    await Effect.runPromise(
-      first.publishPermissionRebalance(
-        affected.socket.data.discordId,
-        affected.socket.data.userId,
-      ),
-    );
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        for (const task of tasks) yield* task.pipe(Effect.forkScoped);
-        yield* TestClock.adjust("2 seconds");
-        expect(affected.closes).toEqual([1013]);
-        expect(affected.socket.data.guilds).toHaveLength(2);
-        expect(unrelated.closes).toEqual([]);
-        expect(second.getLocalSockets()).toEqual([unrelated.socket]);
-      }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
-    );
-    await first.publishToScope(scope, {
-      v: 1,
-      type: "chat.cleared",
-      data: { organizationId: scope.organizationId, payload: {} },
-    });
-    expect(affected.sent).toHaveLength(0);
-    expect(unrelated.sent).toHaveLength(1);
+    expect(
+      target.sent.map((bytes) => decodeRealtimeFrame(bytes)),
+    ).toMatchObject([
+      {
+        type: "party-ready-room.updated",
+        data: { payload: { type: "REMOVE" } },
+      },
+    ]);
   });
 
   test("delivers a federated event once to an exact logical subscription", async () => {

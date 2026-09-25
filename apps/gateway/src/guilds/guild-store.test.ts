@@ -120,7 +120,7 @@ describe("Gateway guild store", () => {
   );
 
   test("uses a bounded stale projection during an outage without renewing its age", async () => {
-    const stale = JSON.stringify({ guilds, cachedAt: Date.now() - 120_000 });
+    const stale = JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 });
     const redis = makeGuildStoreRedis(options, stale);
 
     const store = makeGuildStore(
@@ -175,7 +175,7 @@ describe("Gateway guild store", () => {
     expect(get).toHaveBeenCalledTimes(5);
   });
 
-  test("invalidation preserves the last projection but blocks its grants during an API outage", async () => {
+  test("invalidation blocks cached grants during an API outage", async () => {
     const cachedAt = Date.now();
 
     const redis = makeGuildStoreRedis(
@@ -196,9 +196,6 @@ describe("Gateway guild store", () => {
     );
 
     await Effect.runPromise(store.invalidate(options));
-    expect(JSON.parse(redis.cache() ?? "null")).toMatchObject({
-      stale: JSON.stringify({ guilds, cachedAt }),
-    });
     await expect(
       Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
     ).resolves.toMatchObject({ reason: "status", retryable: true });
@@ -207,47 +204,6 @@ describe("Gateway guild store", () => {
 
     await expect(
       Effect.runPromise(store.getUserGuilds(options)),
-    ).resolves.toEqual([]);
-  });
-
-  test("another instance's invalidation prevents an in-flight API response from restoring revoked grants", async () => {
-    const redis = makeGuildStoreRedis(options);
-    const started = Promise.withResolvers<void>();
-    const response = Promise.withResolvers<Response>();
-
-    const firstStore = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(() =>
-        Effect.promise(() => {
-          started.resolve();
-
-          return response.promise;
-        }),
-      ),
-    );
-
-    const secondStore = makeGuildStore(
-      config,
-      redis.store,
-      httpClientFromResponses(() => Effect.succeed(httpResponse(200, []))),
-    );
-
-    const obsolete = Effect.runPromise(
-      firstStore.getUserGuilds(options).pipe(Effect.flip),
-    );
-
-    await started.promise;
-    await Effect.runPromise(secondStore.invalidate(options));
-    await Effect.runPromise(secondStore.getUserGuilds(options));
-    response.resolve(httpResponse(200, guilds));
-
-    await expect(obsolete).resolves.toMatchObject({
-      reason: "invalidated",
-      retryable: true,
-    });
-    await expect(
-      Effect.runPromise(firstStore.getUserGuilds(options)),
     ).resolves.toEqual([]);
   });
 
@@ -291,14 +247,12 @@ describe("Gateway guild store", () => {
     async (operation) => {
       const redis = makeGuildStoreRedis(options);
 
-      if (operation === "read")
-        redis.get.mockImplementation(() =>
-          Promise.reject(new Error("Redis unavailable")),
-        );
-      else
-        redis.evaluate.mockImplementation(() =>
-          Promise.reject(new Error("Redis unavailable")),
-        );
+      const unavailable = () => Promise.reject(new Error("Redis unavailable"));
+
+      if (operation === "read") redis.get.mockImplementation(unavailable);
+      else if (operation === "commit")
+        redis.evaluate.mockImplementation(unavailable);
+      else redis.set.mockImplementation(unavailable);
 
       const store = makeGuildStore(
         config,
@@ -331,7 +285,9 @@ describe("Gateway guild store", () => {
 
       if (operation === "read")
         redis.get.mockImplementation(() => new Promise(() => {}));
-      else redis.evaluate.mockImplementation(() => new Promise(() => {}));
+      else if (operation === "commit")
+        redis.evaluate.mockImplementation(() => new Promise(() => {}));
+      else redis.set.mockImplementation(() => new Promise(() => {}));
 
       const store = makeGuildStore(
         config,

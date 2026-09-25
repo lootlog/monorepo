@@ -166,7 +166,7 @@ describe("realtime Dragonfly integration", () => {
     await dragonfly?.stop();
   });
 
-  test("guild cache invalidation preserves its last projection while denying stale permissions across stores", async () => {
+  test("guild cache invalidation denies stale permissions across stores", async () => {
     const runtime = ManagedRuntime.make(
       BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
     );
@@ -225,19 +225,11 @@ describe("realtime Dragonfly integration", () => {
             redis.send("TTL", `${keyPrefix}:${cacheKey}`),
           ),
         ),
-      ).toBeGreaterThan(295);
-      const original = await firstRedis.command.get(cacheKey);
+      ).toBeGreaterThan(115);
 
       available = false;
 
       await Effect.runPromise(remote.invalidate(options));
-      await Effect.runPromise(remote.invalidate(options));
-      expect(
-        JSON.parse((await firstRedis.command.get(cacheKey)) ?? "null"),
-      ).toMatchObject({
-        stale: original,
-        invalidated: true,
-      });
       await expect(
         Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
       ).resolves.toMatchObject({
@@ -251,6 +243,53 @@ describe("realtime Dragonfly integration", () => {
       await expect(
         Effect.runPromise(store.getUserGuilds(options)),
       ).resolves.toEqual([]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("a revisioned guild projection that no longer decodes is replaced by a fresh response", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const configuration = makeConfiguration();
+
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          ...configuration.redis,
+          password: "",
+          keyPrefix: `guild-cache-schema:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      const options = { discordId: "discord-schema", userId: "user-schema" };
+      const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
+
+      await store.command.set(
+        cacheKey,
+        JSON.stringify({ guilds: [{}], cachedAt: 0, revision: "revision-1" }),
+        "EX",
+        120,
+      );
+
+      const guildStore = makeGuildStore(
+        configuration,
+        store,
+        httpClientFromResponses(() => Effect.succeed(Response.json(guilds))),
+      );
+
+      await expect(
+        Effect.runPromise(guildStore.getUserGuilds(options)),
+      ).resolves.toEqual(guilds);
+      expect(
+        JSON.parse((await store.command.get(cacheKey)) ?? "null"),
+      ).toMatchObject({ guilds, revision: "revision-1" });
     } finally {
       await runtime.dispose();
     }
@@ -290,9 +329,9 @@ describe("realtime Dragonfly integration", () => {
         if (cacheState === "populated") {
           await firstRedis.command.set(
             cacheKey,
-            JSON.stringify({ guilds, cachedAt: Date.now() - 120_000 }),
+            JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 }),
             "EX",
-            300,
+            120,
           );
         }
 
