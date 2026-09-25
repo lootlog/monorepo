@@ -1,73 +1,86 @@
-import { z } from "zod";
-import { NpcType } from "@/api/npcs.api";
+import { Effect, Option, Schema } from "effect";
+import { NpcTypeSchema } from "@lootlog/schema/npc-type";
+import {
+  looseStruct,
+  optionalOrUndefined,
+  withFallback,
+} from "@/lib/stored-value-schema";
 
-const generalConfig = z.looseObject({
-  removeTimerAfterMs: z.number().optional(),
-  timersGrouping: z.boolean().optional(),
-  timersUnderBag: z.boolean().optional(),
-  countdownMode: z.enum(["min", "max"]).optional(),
-  compactView: z.boolean().optional(),
+const generalConfig = looseStruct({
+  removeTimerAfterMs: Schema.optional(Schema.Finite),
+  timersGrouping: Schema.optional(Schema.Boolean),
+  timersUnderBag: Schema.optional(Schema.Boolean),
+  countdownMode: Schema.optional(Schema.Literals(["min", "max"])),
+  compactView: Schema.optional(Schema.Boolean),
 });
 
-const displayConfig = z.looseObject({
-  legacyAppearance: z.boolean().default(false).catch(false),
-  showType: z.boolean().optional(),
-  showLevel: z.boolean().optional(),
-  fontSize: z.number().optional(),
-  minColumnWidth: z.number().optional(),
-  singleTimerDisplayMode: z.enum(["column", "row"]).optional(),
+const displayConfig = looseStruct({
+  // Missing, undefined, and invalid flags all read as the modern appearance.
+  legacyAppearance: Schema.Boolean.pipe(
+    withFallback(false),
+    Schema.withDecodingDefaultType(Effect.succeed(false)),
+  ),
+  showType: Schema.optional(Schema.Boolean),
+  showLevel: Schema.optional(Schema.Boolean),
+  fontSize: Schema.optional(Schema.Finite),
+  minColumnWidth: Schema.optional(Schema.Finite),
+  singleTimerDisplayMode: Schema.optional(Schema.Literals(["column", "row"])),
 });
 
-const stringLists = z.record(z.string(), z.array(z.string()));
+const stringList = Schema.mutable(Schema.Array(Schema.String));
 
-const color = z.object({
-  borderColor: z.string(),
-  backgroundColor: z.string(),
-});
+const stringLists = Schema.Record(Schema.String, stringList);
 
-const persistedTimerSettings = z.object({
-  updatedAt: z.number().optional().catch(undefined),
-  generalConfig: generalConfig.optional().catch(undefined),
-  displayConfig: displayConfig.optional().catch(undefined),
-  hiddenTimers: stringLists.optional().catch(undefined),
-  pinnedTimers: stringLists.optional().catch(undefined),
-  alwaysVisibleExpiredTimers: stringLists.optional().catch(undefined),
-  timersColors: z
-    .record(z.string(), z.string().optional())
-    .optional()
-    .catch(undefined),
-  customColors: z
-    .record(z.string(), color.extend({ id: z.string(), name: z.string() }))
-    .optional()
-    .catch(undefined),
-  defaultColorNames: z
-    .record(z.string(), z.string())
-    .optional()
-    .catch(undefined),
-  overriddenDefaultColors: z
-    .record(z.string(), color)
-    .optional()
-    .catch(undefined),
-  hiddenDefaultColors: z.array(z.string()).optional().catch(undefined),
-  timersFilters: z
-    .record(
-      z.string(),
-      z.object({
-        minLvl: z.number(),
-        maxLvl: z.number(),
-        selectedNpcTypes: z.array(z.enum(NpcType)),
-        selectedColors: z.array(z.string()),
+const colorFields = {
+  borderColor: Schema.String,
+  backgroundColor: Schema.String,
+};
+
+const persistedTimerSettings = Schema.Struct({
+  updatedAt: optionalOrUndefined(Schema.Finite),
+  generalConfig: optionalOrUndefined(generalConfig),
+  displayConfig: optionalOrUndefined(displayConfig),
+  hiddenTimers: optionalOrUndefined(stringLists),
+  pinnedTimers: optionalOrUndefined(stringLists),
+  alwaysVisibleExpiredTimers: optionalOrUndefined(stringLists),
+  timersColors: optionalOrUndefined(
+    Schema.Record(Schema.String, Schema.UndefinedOr(Schema.String)),
+  ),
+  customColors: optionalOrUndefined(
+    Schema.Record(
+      Schema.String,
+      Schema.Struct({ ...colorFields, id: Schema.String, name: Schema.String }),
+    ),
+  ),
+  defaultColorNames: optionalOrUndefined(
+    Schema.Record(Schema.String, Schema.String),
+  ),
+  overriddenDefaultColors: optionalOrUndefined(
+    Schema.Record(Schema.String, Schema.Struct(colorFields)),
+  ),
+  hiddenDefaultColors: optionalOrUndefined(stringList),
+  timersFilters: optionalOrUndefined(
+    Schema.Record(
+      Schema.String,
+      Schema.Struct({
+        minLvl: Schema.Finite,
+        maxLvl: Schema.Finite,
+        selectedNpcTypes: Schema.mutable(Schema.Array(NpcTypeSchema)),
+        selectedColors: stringList,
       }),
-    )
-    .optional()
-    .catch(undefined),
-  timerFiltersEnabled: z.boolean().optional().catch(undefined),
-  colorFiltersEnabled: z.boolean().optional().catch(undefined),
-  timersSortOrder: z.enum(["asc", "desc"]).optional().catch(undefined),
+    ),
+  ),
+  timerFiltersEnabled: optionalOrUndefined(Schema.Boolean),
+  colorFiltersEnabled: optionalOrUndefined(Schema.Boolean),
+  timersSortOrder: optionalOrUndefined(Schema.Literals(["asc", "desc"])),
 });
+
+const decodePersistedTimerSettings = Schema.decodeUnknownOption(
+  persistedTimerSettings,
+);
 
 export const decodeTimerSettings = (value: unknown) => {
-  const result = persistedTimerSettings.safeParse(value);
+  const decoded = decodePersistedTimerSettings(value);
 
-  return result.success ? result.data : {};
+  return Option.isSome(decoded) ? decoded.value : {};
 };

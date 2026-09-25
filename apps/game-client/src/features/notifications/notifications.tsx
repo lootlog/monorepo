@@ -1,10 +1,12 @@
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
+import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NotificationsList } from "@/features/notifications/components/notifications-list";
 import { useNotifications } from "@/features/notifications/hooks/use-notifications";
 import { useVisibleNotifications } from "@/features/notifications/hooks/use-visible-notifications";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { ListX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
@@ -44,25 +46,30 @@ export const Notifications = () => {
       autoCleanup: true,
     });
 
-  const handleClose = () => {
-    setOpen("notifications", false);
-    clearNotifications();
-  };
+  // Closing only hides the window: notifications stay until they auto-hide,
+  // are dismissed or cleared, and the next notification reopens the window
+  // with them.
+  const handleClose = () => setOpen("notifications", false);
 
   return (
     <DraggableWindow
       isOpen={open && filteredNotifications.length > 0}
       id="notifications"
       title={t("window.title")}
-      actions=<WindowMaxHeightAction
-        currentMaxHeight={resolvedMaxContentHeight}
-        isArmed={isMaxHeightAdjustmentArmed}
-        onClick={() =>
-          setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-        }
-      />
+      actions=<>
+        <IconButton label={t("actions.clearAll")} onClick={clearNotifications}>
+          <ListX size={14} aria-hidden="true" />
+        </IconButton>
+        <WindowMaxHeightAction
+          currentMaxHeight={resolvedMaxContentHeight}
+          isArmed={isMaxHeightAdjustmentArmed}
+          onClick={() =>
+            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
+          }
+        />
+      </>
       onClose={handleClose}
-      heightMode="css-auto-up-to-max"
+      heightMode="auto-up-to-max"
       maxContentHeight={resolvedMaxContentHeight}
       isMaxHeightAdjustmentArmed={isMaxHeightAdjustmentArmed}
       onMaxHeightAdjustmentArmedChange={setIsMaxHeightAdjustmentArmed}

@@ -49,7 +49,7 @@ export const PublicBattle = () => {
   }
 
   return (
-    <div className="h-dvh min-h-0 overflow-hidden bg-background">
+    <div className="min-h-dvh bg-background md:h-dvh md:min-h-0 md:overflow-hidden">
       <BattleDetailView
         battle={battle}
         battleId={battleId}

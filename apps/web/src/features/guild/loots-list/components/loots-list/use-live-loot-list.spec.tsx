@@ -33,7 +33,7 @@ function Probe() {
     isEmpty,
     isPending,
     isFailed,
-    scrollElementRef,
+    setScrollElement,
     resumeReconciliation,
   } = useLiveLootList();
 
@@ -45,7 +45,7 @@ function Probe() {
         Change filter
       </button>
       <div
-        ref={scrollElementRef}
+        ref={setScrollElement}
         data-testid="loot-scroll"
         onScroll={resumeReconciliation}
       />

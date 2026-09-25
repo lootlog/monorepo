@@ -1,10 +1,37 @@
 /* Paint on the content frame so the application shell cannot hide the wallpaper. */
 .app-content-frame {
+  --app-wallpaper: var(--theme-background-image, none);
+  --app-wallpaper-position: center;
   background-color: var(--background);
-  background-image: var(--theme-background-image, none);
-  background-position: center;
+  background-image: var(--app-wallpaper);
+  background-position: var(--app-wallpaper-position);
   background-size: cover;
   background-repeat: no-repeat;
+}
+
+/*
+ * Below `md` the document scrolls, so the frame is as tall as the page. A
+ * fixed layer keeps the wallpaper at screen size instead of stretching it;
+ * iOS does not support `background-attachment: fixed`.
+ */
+@media (max-width: 767px) {
+  .app-content-frame {
+    isolation: isolate;
+    background-image: none;
+  }
+
+  .app-content-frame::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--background);
+    background-image: var(--app-wallpaper);
+    background-position: var(--app-wallpaper-position);
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
 }
 
 .cyberpunk {
@@ -74,15 +101,13 @@
     .rias
   )
   .app-content-frame {
-  background-image:
+  --app-wallpaper:
     linear-gradient(
       color-mix(in srgb, var(--background) 78%, transparent),
       color-mix(in srgb, var(--background) 78%, transparent)
     ),
     var(--theme-background-image);
-  background-position:
-    center,
-    65% center;
+  --app-wallpaper-position: center, 65% center;
 }
 
 @media (max-width: 767px) {
@@ -97,9 +122,7 @@
       .rias
     )
     .app-content-frame {
-    background-position:
-      center,
-      75% center;
+    --app-wallpaper-position: center, 75% center;
   }
 }
 

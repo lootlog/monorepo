@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useCurrentGameAccountPreferences } from "@/features/settings/persistence/use-game-account-preferences";
@@ -207,7 +208,7 @@ export const useMapPings = () => {
           })
         : t("mapPings.temporarilyUnavailable");
 
-    showRuntimeMessage(message);
+    toast.warning(message);
   };
 
   const resolveTrigger = (
@@ -339,5 +340,3 @@ export const useMapPings = () => {
     onMapPingStart,
   };
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

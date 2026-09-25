@@ -4,7 +4,7 @@ import { createPageTransport } from "./page-transport";
 import {
   decodeMessage,
   encodeMessage,
-  ExtensionRequestSchema,
+  decodeExtensionRequest,
   type ExtensionMessage,
   type ExtensionRequest,
 } from "./protocol";
@@ -21,7 +21,7 @@ function setup() {
   const waiters: Array<(request: ExtensionRequest) => void> = [];
   const queue: ExtensionRequest[] = [];
   channel.port2.onmessage = (event: MessageEvent<unknown>) => {
-    const request = ExtensionRequestSchema.parse(decodeMessage(event.data));
+    const request = decodeExtensionRequest(decodeMessage(event.data));
     received.push(request);
     const waiter = waiters.shift();
 

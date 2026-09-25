@@ -96,7 +96,7 @@ it("renders guild metadata and hidden state and applies each organization's real
     await screen.findByRole("menuitem", { name: "Usuń timer" }),
   ).toBeVisible();
   expect(
-    screen.queryByRole("menuitem", { name: "Odliczaj od początku" }),
+    screen.queryByRole("menuitem", { name: "Zresetuj timer" }),
   ).not.toBeInTheDocument();
   await user.keyboard("{Escape}");
   await user.pointer({
@@ -104,7 +104,7 @@ it("renders guild metadata and hidden state and applies each organization's real
     target: screen.getByText(/Furruk/),
   });
   expect(
-    await screen.findByRole("menuitem", { name: "Odliczaj od początku" }),
+    await screen.findByRole("menuitem", { name: "Zresetuj timer" }),
   ).toBeVisible();
   expect(
     screen.queryByRole("menuitem", { name: "Usuń timer" }),

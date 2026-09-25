@@ -144,6 +144,8 @@ export class BattleEventProcessor {
   private readonly recentBattleReplayKeys = new Map<string, number>();
   private observedTeams = new Set<number>();
   private hasMultipleTeams = false;
+  // NPC battles are never submitted, so their packets are not worth capturing.
+  private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
   private battleGeneration = 0;
   private finalizingGeneration: number | null = null;
@@ -175,7 +177,7 @@ export class BattleEventProcessor {
       return;
     }
 
-    if (battlePanelStore.isBattleCollectionEnabled) {
+    if (battlePanelStore.isBattleCollectionEnabled && !this.hasNpcWarrior) {
       battleStore.addEvent(event);
     }
 
@@ -253,6 +255,7 @@ export class BattleEventProcessor {
     battleStore.clearEvents();
     this.observedTeams.clear();
     this.hasMultipleTeams = false;
+    this.hasNpcWarrior = false;
     this.hasWarnedCaptureOverflow = false;
   }
 
@@ -272,8 +275,23 @@ export class BattleEventProcessor {
       params.ingress,
     );
     this.observeBattleTeams(params.battleData.w);
+    this.observeNpcWarriors(params.battleData.w);
 
     return warriors;
+  }
+
+  private observeNpcWarriors(warriors: NonNullable<BattleData["w"]>): void {
+    if (this.hasNpcWarrior) return;
+
+    for (const key in warriors) {
+      if (!key.startsWith("-")) continue;
+      this.hasNpcWarrior = true;
+      // Release what was captured before the NPC joined; the battle can no
+      // longer produce a submission.
+      useBattleStore.getState().clearEvents();
+
+      return;
+    }
   }
 
   private observeBattleTeams(warriors: NonNullable<BattleData["w"]>): void {
@@ -375,6 +393,12 @@ export class BattleEventProcessor {
       return { intent: null, lastBattleHash: params.lastBattleHash };
     }
 
+    // Only multi-team battles without NPCs are submitted; decide that before
+    // hashing and mapping the capture.
+    if (params.hasNpcInBattle || !this.hasMultipleTeams) {
+      return { intent: null, lastBattleHash: params.lastBattleHash };
+    }
+
     const game = params.ingress?.game ?? useGameStore.getState().game;
 
     if (!game) return { intent: null, lastBattleHash: params.lastBattleHash };
@@ -388,9 +412,7 @@ export class BattleEventProcessor {
 
     const events = mapBattleEventsToPayload(params.capture.events);
 
-    if (!events || params.hasNpcInBattle || !this.hasMultipleTeams) {
-      return { intent: null, lastBattleHash: battleHash };
-    }
+    if (!events) return { intent: null, lastBattleHash: battleHash };
 
     const submissionId = await createSHA256Hash(
       JSON.stringify({

@@ -263,7 +263,7 @@ export function ReservationsSchedule() {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full min-h-0 flex-col overflow-hidden"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden max-md:overflow-clip"
     >
       <ScheduleHeader
         spotName={spotName}

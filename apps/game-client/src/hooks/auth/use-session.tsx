@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { getFixedT } from "@/i18n/get-fixed-t";
 
@@ -9,10 +10,8 @@ export const useSession = () => {
 
   if (!session.data && !session.isPending && !messageSent) {
     messageSent = true;
-    showRuntimeMessage(t("auth.notLoggedIn"));
+    toast.warning(t("auth.notLoggedIn"));
   }
 
   return session;
 };
-
-import { showRuntimeMessage } from "@/lib/margonem-runtime/adapters/legacy-ui-runtime-adapter";

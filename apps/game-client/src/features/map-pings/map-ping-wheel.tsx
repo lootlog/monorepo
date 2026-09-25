@@ -173,7 +173,7 @@ export const MapPingWheel = () => {
           stroke="rgba(255, 255, 255, 0.35)"
         />
       </svg>
-      <div className="ll:absolute ll:left-1/2 ll:top-1/2 ll:flex ll:h-12 ll:w-12 ll:-translate-x-1/2 ll:-translate-y-1/2 ll:items-center ll:justify-center ll:px-1 ll:text-center ll:text-[8px] ll:font-bold ll:leading-tight ll:text-white">
+      <div className="ll:absolute ll:left-1/2 ll:top-1/2 ll:flex ll:h-12 ll:w-12 ll:-translate-x-1/2 ll:-translate-y-1/2 ll:items-center ll:justify-center ll:px-1 ll:text-center ll:text-[10px] ll:font-bold ll:leading-tight ll:text-white">
         {selectedLabel}
       </div>
     </div>

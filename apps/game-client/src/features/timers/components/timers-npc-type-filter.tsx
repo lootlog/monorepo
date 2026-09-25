@@ -1,5 +1,5 @@
 import { Check, ChevronDown } from "lucide-react";
-import { useState, type FC, type MouseEvent } from "react";
+import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { NpcType } from "@/api/npcs.api";
@@ -10,7 +10,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toolbarStripLightDividerClassName } from "@/components/ui/toolbar-strip";
-import { NPC_NAMES } from "@/constants/margonem";
 
 export const NPC_TYPE_FILTER_OPTIONS = [
   NpcType.ELITE2,
@@ -28,8 +27,8 @@ const ICON_SIZE = 12;
 
 /**
  * One strip cell that opens the monster type checklist, so the filter row
- * does not show a second row of tiles under the guild switcher. Right-click
- * on an entry keeps only that type, like the old inline toggles did.
+ * does not show a second row of tiles under the guild switcher. Each entry's
+ * "only" button (or a right-click on the entry) keeps only that type.
  */
 export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
   selectedNpcTypes,
@@ -47,10 +46,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
     );
   };
 
-  const selectOnly = (event: MouseEvent<HTMLButtonElement>, type: NpcType) => {
-    event.preventDefault();
-    onChange([type]);
-  };
+  const selectOnly = (type: NpcType) => onChange([type]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -74,7 +70,7 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="ll-action-menu ll:w-40 ll:overflow-hidden ll:p-0"
+        className="ll-action-menu ll:w-44 ll:overflow-hidden ll:p-0"
       >
         <div
           role="group"
@@ -83,31 +79,42 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
         >
           {NPC_TYPE_FILTER_OPTIONS.map((type) => {
             const isSelected = selected.has(type);
+            const name = t(`common:npcTypes.${type.toLowerCase()}`);
 
             return (
-              <Button
-                key={type}
-                size="xs"
-                variant="menu"
-                aria-pressed={isSelected}
-                className={cn(
-                  "ll:w-full ll:justify-between ll:capitalize",
-                  !isSelected && "ll:text-muted-foreground",
-                )}
-                onClick={() => toggle(type)}
-                onContextMenu={(event) => selectOnly(event, type)}
-              >
-                <span>{NPC_NAMES[type].longname}</span>
-                {isSelected ? (
-                  <Check size={ICON_SIZE} aria-hidden="true" />
-                ) : null}
-              </Button>
+              <div key={type} className="ll:flex ll:items-stretch">
+                <Button
+                  size="xs"
+                  variant="menu"
+                  aria-pressed={isSelected}
+                  className={cn(
+                    "ll:min-w-0 ll:flex-1 ll:justify-between ll:capitalize",
+                    !isSelected && "ll:text-muted-foreground",
+                  )}
+                  onClick={() => toggle(type)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    selectOnly(type);
+                  }}
+                >
+                  <span>{name}</span>
+                  {isSelected ? (
+                    <Check size={ICON_SIZE} aria-hidden="true" />
+                  ) : null}
+                </Button>
+                <Button
+                  size="xs"
+                  variant="menu"
+                  aria-label={t("filters.npcTypesOnlyLabel", { type: name })}
+                  className="ll:shrink-0 ll:px-2 ll:text-[11px] ll:font-medium ll:text-muted-foreground ll:hover:text-foreground"
+                  onClick={() => selectOnly(type)}
+                >
+                  {t("filters.npcTypesOnly")}
+                </Button>
+              </div>
             );
           })}
         </div>
-        <p className="ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:px-2 ll:py-1 ll:text-[10px] ll:text-muted-foreground">
-          {t("filters.npcTypesOnlyHint")}
-        </p>
       </PopoverContent>
     </Popover>
   );

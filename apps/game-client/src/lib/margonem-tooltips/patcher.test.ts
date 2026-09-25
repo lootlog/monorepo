@@ -480,6 +480,45 @@ describe("installCharacterTooltipTransforms", () => {
     cleanup();
   });
 
+  it("removes the appended section from every other patched while shift was held", () => {
+    const hero = createCharacter("Hero");
+    const hovered = createCharacter("Hovered");
+    const idle = createCharacter("Idle");
+    const departed = createCharacter("Departed");
+
+    setRuntime(hero, { 1: hovered, 2: idle, 3: departed });
+    seedRuntimeOthers({ 1: hovered, 2: idle, 3: departed });
+
+    characterTooltipTransforms.register(({ currentHtml }) => {
+      if (!useCharacterTooltipCatchingGuildsStore.getState().isShiftPressed) {
+        return currentHtml;
+      }
+
+      return `${currentHtml}<span>shift</span>`;
+    });
+
+    const cleanup = installCharacterTooltipTransforms();
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(true);
+    patchOtherCharacterTooltips([hovered, idle, departed]);
+    expect(idle.tip?.[0]).toBe("<div>Idle</div><span>shift</span>");
+
+    // A player who leaves the map while Shift is held is no longer drawn.
+    seedRuntimeOthers({ 1: hovered, 2: idle });
+    const departedUpdateTip = vi.fn<() => void>();
+
+    departed.updateTip = departedUpdateTip;
+
+    useCharacterTooltipCatchingGuildsStore.getState().setShiftPressed(false);
+    refreshActiveOtherCanvasTooltip();
+
+    expect(hovered.tip?.[0]).toBe("<div>Hovered</div>");
+    expect(idle.tip?.[0]).toBe("<div>Idle</div>");
+    expect(departedUpdateTip).not.toHaveBeenCalled();
+
+    cleanup();
+  });
+
   it("leaves a hovered tooltip untouched when shift was never pressed", () => {
     const hero = createCharacter("Hero");
     const other = createCharacter("Other");

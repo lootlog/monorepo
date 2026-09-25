@@ -5,7 +5,7 @@ import {
 } from "@lootlog/client/realtime";
 import { executeExtensionHttp } from "./http";
 import {
-  ExtensionRequestSchema,
+  decodeExtensionRequest,
   encodeMessage,
   decodeMessage,
   MAX_PENDING_REQUESTS,
@@ -42,10 +42,7 @@ export function createBackgroundConnection(
   return {
     async receive(raw: unknown): Promise<void> {
       if (disposed) return;
-      const parsed = ExtensionRequestSchema.safeParse(decodeMessage(raw));
-
-      if (!parsed.success) throw new Error("Invalid extension request");
-      const message = parsed.data;
+      const message = decodeExtensionRequest(decodeMessage(raw));
 
       if (message.type === "cancel") {
         pending.get(message.id)?.abort();
@@ -105,13 +102,12 @@ export function createBackgroundConnection(
               error instanceof Error
                 ? error.message
                 : "Extension request failed",
+            ...(error instanceof RealtimeRequestError && {
+              code: error.code,
+              retryable: error.retryable,
+              retryAfterMs: error.retryAfterMs,
+            }),
           };
-
-          if (error instanceof RealtimeRequestError) {
-            response.code = error.code;
-            response.retryable = error.retryable;
-            response.retryAfterMs = error.retryAfterMs;
-          }
 
           send(response);
         }

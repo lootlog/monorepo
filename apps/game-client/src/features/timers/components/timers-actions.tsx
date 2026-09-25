@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { WindowActionButton } from "@/components/draggable-window/window-action-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 
 type TimersActionsProps = {
@@ -102,13 +102,9 @@ export const TimersActions: FC<TimersActionsProps> = ({
     <>
       <Popover open={optionsOpen} onOpenChange={setOptionsOpen}>
         <PopoverTrigger asChild>
-          <WindowActionButton
-            label={t("toolbar.options")}
-            active={optionsOpen}
-            onClick={() => setOptionsOpen((open) => !open)}
-          >
+          <IconButton label={t("toolbar.options")}>
             <SlidersHorizontal size={ICON_SIZE} aria-hidden="true" />
-          </WindowActionButton>
+          </IconButton>
         </PopoverTrigger>
         <PopoverContent
           align="start"
@@ -135,13 +131,13 @@ export const TimersActions: FC<TimersActionsProps> = ({
       {!isGrouping && guildId && world && (
         <GlobalTimerHistoryPopover guildId={guildId} world={world} />
       )}
-      <WindowActionButton
+      <IconButton
         label={t("toolbar.addTimer")}
         active={addTimerOpen}
         onClick={onAddTimer}
       >
         <Plus size={ICON_SIZE} aria-hidden="true" />
-      </WindowActionButton>
+      </IconButton>
     </>
   );
 };

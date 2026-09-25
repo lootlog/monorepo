@@ -9,7 +9,11 @@ import type {
 
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
-import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  openContextMenuOnKeyDown,
+} from "@/components/ui/context-menu";
 import { useGameStore } from "@/store/game.store";
 import {
   getChatMessageBody,
@@ -105,25 +109,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
       <ContextMenuTrigger
         asChild
         tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.target !== event.currentTarget) return;
-
-          if (
-            event.key !== "ContextMenu" &&
-            !(event.shiftKey && event.key === "F10")
-          )
-            return;
-          event.preventDefault();
-          const rect = event.currentTarget.getBoundingClientRect();
-          event.currentTarget.dispatchEvent(
-            new MouseEvent("contextmenu", {
-              bubbles: true,
-              cancelable: true,
-              clientX: rect.left,
-              clientY: rect.top,
-            }),
-          );
-        }}
+        onKeyDown={openContextMenuOnKeyDown}
       >
         <ChatPlayerMessageView
           all={all}

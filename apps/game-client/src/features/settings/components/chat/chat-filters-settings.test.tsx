@@ -48,7 +48,7 @@ describe("ChatFiltersSettings", () => {
     expect(screen.getByRole("switch", { name: "Tytan" })).not.toBeChecked();
     expect(screen.getByRole("switch", { name: "Heros" })).toBeChecked();
 
-    await user.click(screen.getByRole("switch", { name: "Elita 2" }));
+    await user.click(screen.getByRole("switch", { name: "Elita II" }));
 
     await waitFor(() => {
       expect(patchRequest.mock.calls[0]?.[1]?.body).toBe(

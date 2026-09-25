@@ -1,5 +1,5 @@
 import { SettingsColorRow } from "@/components/settings/settings-color-row";
-import { SettingsIconButton } from "@/components/settings/settings-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { RotateCcw, Trash2 } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,21 +78,21 @@ export const TimerColorListItem: FC<TimerColorListItemProps> = ({
       preview={preview}
     >
       {isDefault ? (
-        <SettingsIconButton
+        <IconButton
           label={`${t("settings.timers.colors.resetColorTitle")}: ${data.name}`}
           disabled={!isModified}
           onClick={onReset}
         >
           <RotateCcw />
-        </SettingsIconButton>
+        </IconButton>
       ) : (
-        <SettingsIconButton
+        <IconButton
           label={`${t("settings.timers.colors.deleteColorTitle")}: ${data.name}`}
-          variant="destructive"
+          variant="quiet-destructive"
           onClick={onDelete}
         >
           <Trash2 />
-        </SettingsIconButton>
+        </IconButton>
       )}
     </SettingsColorRow>
   );

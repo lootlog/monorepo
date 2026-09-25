@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Popover, PopoverContent } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   appendMutedNpc,
   appendMutedPlayer,
@@ -84,36 +80,25 @@ export const NotificationMuteMenu: FC<NotificationMuteMenuProps> = ({
   };
 
   const muteButton = (
-    <Button
-      size="xs"
+    <IconButton
       ref={muteButtonRef}
-      variant="ghost"
       aria-expanded={open}
       aria-haspopup="menu"
-      aria-label={t("actions.muteOptionsAria")}
+      label={t("actions.muteOptionsAria")}
       disabled={isDisabled}
-      className="ll:size-7 ll:px-0"
       onClick={() => handleOpenChange(!open)}
     >
-      <BellOff size={12} />
-    </Button>
+      <BellOff aria-hidden />
+    </IconButton>
   );
 
   if (!open) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{muteButton}</TooltipTrigger>
-        <TooltipContent>{t("actions.muteOptionsAria")}</TooltipContent>
-      </Tooltip>
-    );
+    return muteButton;
   }
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <Tooltip>
-        <TooltipTrigger asChild>{muteButton}</TooltipTrigger>
-        <TooltipContent>{t("actions.muteOptionsAria")}</TooltipContent>
-      </Tooltip>
+      {muteButton}
       <PopoverContent
         anchor={muteButtonRef}
         align="end"

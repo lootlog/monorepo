@@ -21,7 +21,7 @@ export const RootRouteError = ({ error, reset }: ErrorComponentProps) => {
   const actionLabel =
     normalizedStatus === 401
       ? t("common.routeErrors.actions.goToSignIn")
-      : t("common.routeErrors.actions.goToInit");
+      : t("common.routeErrors.actions.goToDashboard");
 
   const handleRetry = useRouteErrorRetry(reset);
 
@@ -32,14 +32,14 @@ export const RootRouteError = ({ error, reset }: ErrorComponentProps) => {
       return;
     }
 
-    void navigate({ to: "/init" });
+    void navigate({ to: "/@me" });
   };
 
   return (
     <div className="flex min-h-dvh bg-background">
       <RouteErrorState
         status={normalizedStatus}
-        description={getRouteErrorMessage(error)}
+        details={getRouteErrorMessage(error)}
         primaryAction=<RouteRetryButton onRetry={handleRetry} />
         secondaryAction={
           <Button variant="outline" onClick={handleNavigate}>

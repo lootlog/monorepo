@@ -25,7 +25,8 @@ type ActivityLogsTableProps = {
   isMobile: boolean;
   memberNameByDiscordId: Map<string, string>;
   virtualRows: VirtualItem[];
-  totalSize: number;
+  /** Spacer heights standing in for the rows outside the rendered range. */
+  padding: { top: number; bottom: number };
 };
 
 // The mobile list is not a table, so it builds no row model.
@@ -36,7 +37,7 @@ export const ActivityLogsTable = ({
   isMobile,
   memberNameByDiscordId,
   virtualRows,
-  totalSize,
+  padding,
 }: ActivityLogsTableProps) => {
   const { t } = useTranslation();
   const columns = useActivityLogsTableColumns({ memberNameByDiscordId });
@@ -49,12 +50,7 @@ export const ActivityLogsTable = ({
   });
 
   const rows = table.getRowModel().rows;
-  const topPadding = virtualRows[0]?.start ?? 0;
-
-  const bottomPadding =
-    virtualRows.length > 0
-      ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0)
-      : 0;
+  const { top: topPadding, bottom: bottomPadding } = padding;
 
   if (isMobile) {
     return (

@@ -3,8 +3,8 @@ import { defineContentScript } from "wxt/utils/define-content-script";
 import { browser } from "wxt/browser";
 import {
   EXTENSION_CHANNEL,
-  ExtensionRequestSchema,
-  ExtensionMessageSchema,
+  decodeExtensionRequest,
+  decodeExtensionMessage,
   decodeMessage,
   encodeMessage,
 } from "@/extension/protocol";
@@ -53,9 +53,7 @@ export default defineContentScript({
             ) {
               if (stopped || background !== port) return;
 
-              const parsed = ExtensionMessageSchema.parse(
-                decodeMessage(message),
-              );
+              const parsed = decodeExtensionMessage(decodeMessage(message));
 
               page.postMessage(encodeMessage(parsed));
 
@@ -81,9 +79,7 @@ export default defineContentScript({
           if (stopped) return;
 
           try {
-            const request = ExtensionRequestSchema.parse(
-              decodeMessage(message.data),
-            );
+            const request = decodeExtensionRequest(decodeMessage(message.data));
 
             if (request.type === "release") {
               cleanup?.();
