@@ -225,13 +225,19 @@ const canReadEventHeroSource = (
   );
 };
 
+// A removal carries only the room identity, so it must reach former members too.
+export const isReadyRoomRemoval = (event: Event): boolean =>
+  event.type === "party-ready-room.updated" &&
+  Predicate.isObject(event.data.payload) &&
+  event.data.payload.type === "REMOVE";
+
 const isUnscopedReadyRoomUpdate = (event: Event): boolean => {
   if (event.type !== "party-ready-room.updated") return false;
   const payload = event.data.payload;
 
   if (!Predicate.isObject(payload)) return false;
 
-  if (payload.type === "REMOVE") return true;
+  if (isReadyRoomRemoval(event)) return true;
 
   return (
     Predicate.isObject(payload.projection) &&

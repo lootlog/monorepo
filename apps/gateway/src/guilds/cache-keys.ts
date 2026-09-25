@@ -4,8 +4,8 @@ const CACHE_KEYS = {
 
 export const CACHE_TTL = {
   USER_GUILDS: 60,
-  /** Maximum age for stale cache fallback (5 minutes) */
-  MAX_STALE_CACHE_AGE: 300,
+  /** Retention and maximum age for stale cache fallback (2 minutes) */
+  MAX_STALE_CACHE_AGE: 120,
 } as const;
 
 export function getUserGuildsCacheKey(

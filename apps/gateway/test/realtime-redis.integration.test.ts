@@ -35,6 +35,9 @@ import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
+import { makeGuildStore } from "#src/guilds/guild-store";
+import { getUserGuildsCacheKey } from "#src/guilds/cache-keys";
+import { httpClientFromResponses } from "./http-fixtures.js";
 
 let dragonfly: StartedTestContainer;
 
@@ -162,6 +165,218 @@ describe("realtime Dragonfly integration", () => {
   afterAll(async () => {
     await dragonfly?.stop();
   });
+
+  test("guild cache invalidation denies stale permissions across stores", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const configuration = makeConfiguration();
+      const keyPrefix = `guild-cache:${crypto.randomUUID()}`;
+
+      const makeStore = () =>
+        new RedisGatewayStore(
+          redis,
+          { ...configuration.redis, password: "", keyPrefix },
+          (effect) => runtime.runPromise(effect),
+          () => {},
+        );
+
+      const firstRedis = makeStore();
+      const secondRedis = makeStore();
+      const options = { discordId: "discord-cache", userId: "user-cache" };
+      const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
+
+      const lastGuilds = [
+        {
+          guild: { id: "organization-1", ownerId: "owner-1" },
+          roles: [],
+        },
+      ];
+
+      let available = true;
+
+      const store = makeGuildStore(
+        configuration,
+        firstRedis,
+        httpClientFromResponses(() =>
+          Effect.succeed(
+            available
+              ? Response.json(lastGuilds)
+              : Response.json({}, { status: 503 }),
+          ),
+        ),
+      );
+
+      const remote = makeGuildStore(
+        configuration,
+        secondRedis,
+        httpClientFromResponses(() => Effect.succeed(Response.json([]))),
+      );
+
+      await expect(
+        Effect.runPromise(store.getUserGuilds(options)),
+      ).resolves.toEqual(lastGuilds);
+      expect(
+        Number(
+          await runtime.runPromise(
+            redis.send("TTL", `${keyPrefix}:${cacheKey}`),
+          ),
+        ),
+      ).toBeGreaterThan(115);
+
+      available = false;
+
+      await Effect.runPromise(remote.invalidate(options));
+      await expect(
+        Effect.runPromise(store.getUserGuilds(options).pipe(Effect.flip)),
+      ).resolves.toMatchObject({
+        reason: "status",
+        retryable: true,
+      });
+
+      await expect(
+        Effect.runPromise(remote.getUserGuilds(options)),
+      ).resolves.toEqual([]);
+      await expect(
+        Effect.runPromise(store.getUserGuilds(options)),
+      ).resolves.toEqual([]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("a revisioned guild projection that no longer decodes is replaced by a fresh response", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const redis = await runtime.runPromise(Redis.Redis);
+      const configuration = makeConfiguration();
+
+      const store = new RedisGatewayStore(
+        redis,
+        {
+          ...configuration.redis,
+          password: "",
+          keyPrefix: `guild-cache-schema:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      const options = { discordId: "discord-schema", userId: "user-schema" };
+      const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
+
+      await store.command.set(
+        cacheKey,
+        JSON.stringify({ guilds: [{}], cachedAt: 0, revision: "revision-1" }),
+        "EX",
+        120,
+      );
+
+      const guildStore = makeGuildStore(
+        configuration,
+        store,
+        httpClientFromResponses(() => Effect.succeed(Response.json(guilds))),
+      );
+
+      await expect(
+        Effect.runPromise(guildStore.getUserGuilds(options)),
+      ).resolves.toEqual(guilds);
+      expect(
+        JSON.parse((await store.command.get(cacheKey)) ?? "null"),
+      ).toMatchObject({ guilds, revision: "revision-1" });
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test.each(["empty", "populated"])(
+    "in-flight permission fetch cannot undo another gateway's invalidation of a %s cache",
+    async (cacheState) => {
+      const runtime = ManagedRuntime.make(
+        BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+      );
+
+      const response = Promise.withResolvers<Response>();
+
+      try {
+        const redis = await runtime.runPromise(Redis.Redis);
+        const configuration = makeConfiguration();
+        const keyPrefix = `guild-cache-race:${crypto.randomUUID()}`;
+
+        const makeStore = () =>
+          new RedisGatewayStore(
+            redis,
+            { ...configuration.redis, password: "", keyPrefix },
+            (effect) => runtime.runPromise(effect),
+            () => {},
+          );
+
+        const firstRedis = makeStore();
+        const secondRedis = makeStore();
+        const options = { discordId: "discord-race", userId: "user-race" };
+
+        const cacheKey = getUserGuildsCacheKey(
+          options.discordId,
+          options.userId,
+        );
+
+        if (cacheState === "populated") {
+          await firstRedis.command.set(
+            cacheKey,
+            JSON.stringify({ guilds, cachedAt: Date.now() - 90_000 }),
+            "EX",
+            120,
+          );
+        }
+
+        const started = Promise.withResolvers<void>();
+
+        const firstStore = makeGuildStore(
+          configuration,
+          firstRedis,
+          httpClientFromResponses(() =>
+            Effect.promise(() => {
+              started.resolve();
+
+              return response.promise;
+            }),
+          ),
+        );
+
+        const secondStore = makeGuildStore(
+          configuration,
+          secondRedis,
+          httpClientFromResponses(() => Effect.succeed(Response.json([]))),
+        );
+
+        const obsolete = Effect.runPromise(
+          firstStore.getUserGuilds(options).pipe(Effect.flip),
+        );
+
+        await started.promise;
+        await Effect.runPromise(secondStore.invalidate(options));
+        await Effect.runPromise(secondStore.getUserGuilds(options));
+        response.resolve(Response.json(guilds));
+
+        await expect(obsolete).resolves.toMatchObject({
+          reason: "invalidated",
+          retryable: true,
+        });
+        await expect(
+          Effect.runPromise(firstStore.getUserGuilds(options)),
+        ).resolves.toEqual([]);
+      } finally {
+        response.resolve(Response.json([]));
+        await runtime.dispose();
+      }
+    },
+  );
 
   test.each([
     { refreshExpiryOnReject: false, includeTimestamp: false },
