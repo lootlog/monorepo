@@ -9,7 +9,16 @@ import {
   type CanonicalRabbitEvent,
   type CanonicalRabbitEventRoutingKey,
 } from "@lootlog/protocol/rabbit/events";
-import { Effect, Semaphore } from "effect";
+import { Effect, Schedule, Semaphore } from "effect";
+
+/**
+ * Retries a failed handler before the delivery is settled, so later messages
+ * in the queue stay behind it: 3 retries after 250 ms, 500 ms and 1 s.
+ */
+export const orderedHandlerRetry = Schedule.max([
+  Schedule.exponential("250 millis"),
+  Schedule.recurs(3),
+]);
 
 export const makeRabbitConsumer = Effect.fnUntraced(function* (
   rabbit: RabbitMessagingService,
@@ -26,6 +35,7 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
       delivery: RabbitDelivery,
     ) => Effect.Effect<unknown, unknown> | Promise<void> | void,
     failurePolicy: FailurePolicy = { strategy: "nack" },
+    inPlaceRetry?: Schedule.Schedule<unknown, unknown>,
   ) =>
     Effect.acquireRelease(
       rabbit.consume({ queue, prefetch: 1, failurePolicy }, (delivery) =>
@@ -44,16 +54,22 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
             ),
           ),
           Effect.flatMap((payload) => {
-            const result = handler(payload, delivery);
+            const attempt = Effect.suspend(() => {
+              const result = handler(payload, delivery);
 
-            return Effect.isEffect(result)
-              ? result.pipe(Effect.asVoid)
-              : Effect.tryPromise({
-                  try: () => Promise.resolve(result),
-                  catch: (cause) => cause,
-                });
+              return Effect.isEffect(result)
+                ? result.pipe(Effect.asVoid)
+                : Effect.tryPromise({
+                    try: () => Promise.resolve(result),
+                    catch: (cause) => cause,
+                  });
+            }).pipe(handlerSlots.withPermits(1));
+
+            // The backoff runs outside the handler slot, leaving it to other queues.
+            return inPlaceRetry
+              ? attempt.pipe(Effect.retry(inPlaceRetry))
+              : attempt;
           }),
-          handlerSlots.withPermits(1),
         ),
       ),
       ({ cancel }) => cancel.pipe(Effect.ignore),

@@ -20,18 +20,8 @@ const retried = (
     deadLetterRoutingKey: retryRoutingKey,
   });
 
-// Presence facts describe current state, so a failed one waits only briefly
-// before its retry to limit how long a newer fact can overtake it.
-const PRESENCE_RETRY_TTL_MS = 5_000;
-
 export const apiRabbitQueues = [
   queue(Queue.GAME_CHARACTER_OFFLINE, RabbitRoutingKey.GAME_CHARACTER_OFFLINE),
-  makeRetryQueue({
-    name: Queue.GAME_CHARACTER_OFFLINE_RETRY,
-    retryRoutingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE_RETRY,
-    destinationRoutingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
-    messageTtl: PRESENCE_RETRY_TTL_MS,
-  }),
   queue(
     Queue.GAME_CHARACTER_OFFLINE_DLQ,
     RabbitRoutingKey.GAME_CHARACTER_OFFLINE_DLQ,
@@ -139,12 +129,6 @@ export const apiRabbitQueues = [
     Queue.PRESENCE_COVERAGE_CHECK,
     RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
   ),
-  makeRetryQueue({
-    name: Queue.PRESENCE_COVERAGE_CHECK_RETRY,
-    retryRoutingKey: RabbitRoutingKey.PRESENCE_COVERAGE_CHECK_RETRY,
-    destinationRoutingKey: RabbitRoutingKey.PRESENCE_COVERAGE_CHECK,
-    messageTtl: PRESENCE_RETRY_TTL_MS,
-  }),
   queue(
     Queue.PRESENCE_COVERAGE_CHECK_DLQ,
     RabbitRoutingKey.PRESENCE_COVERAGE_CHECK_DLQ,
@@ -194,7 +178,7 @@ const rabbitRetryPolicy = (
 
 // Each retry and dead-letter routing key needs a queue declared above: the
 // broker silently drops a message published to an unbound routing key.
-export const apiRabbitRetry = {
+export const apiRabbitFailurePolicies = {
   guildCreate: rabbitRetryPolicy(
     RabbitRoutingKey.GUILDS_CREATE_RETRY,
     RabbitRoutingKey.GUILDS_CREATE_DLQ,
@@ -219,19 +203,21 @@ export const apiRabbitRetry = {
     RabbitRoutingKey.GUILDS_DELETE_ROLE_RETRY,
     RabbitRoutingKey.GUILDS_DELETE_ROLE_DLQ,
   ),
-  characterOffline: rabbitRetryPolicy(
-    RabbitRoutingKey.GAME_CHARACTER_OFFLINE_RETRY,
-    RabbitRoutingKey.GAME_CHARACTER_OFFLINE_DLQ,
-  ),
-  presenceCoverage: rabbitRetryPolicy(
-    RabbitRoutingKey.PRESENCE_COVERAGE_CHECK_RETRY,
-    RabbitRoutingKey.PRESENCE_COVERAGE_CHECK_DLQ,
-  ),
+  // Presence facts carry no sequence, so a delayed retry could overwrite a
+  // newer fact. Their consumers retry in place, then dead-letter.
+  characterOffline: {
+    strategy: "dead-letter",
+    deadLetterRoutingKey: RabbitRoutingKey.GAME_CHARACTER_OFFLINE_DLQ,
+  },
+  presenceCoverage: {
+    strategy: "dead-letter",
+    deadLetterRoutingKey: RabbitRoutingKey.PRESENCE_COVERAGE_CHECK_DLQ,
+  },
   lootCreated: rabbitRetryPolicy(
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED_RETRY,
     RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED_DLQ,
   ),
-} as const;
+} as const satisfies Record<string, FailurePolicy>;
 
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 

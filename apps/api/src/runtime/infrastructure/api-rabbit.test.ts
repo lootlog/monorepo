@@ -6,8 +6,8 @@ import {
 } from "@lootlog/protocol/rabbit/topology";
 import { Queue } from "#src/rabbitmq/queue";
 import {
+  apiRabbitFailurePolicies,
   apiRabbitQueues,
-  apiRabbitRetry,
 } from "#src/runtime/infrastructure/api-rabbit";
 
 describe("API RabbitMQ topology", () => {
@@ -55,9 +55,11 @@ describe("API RabbitMQ topology", () => {
   });
 
   test("binds a queue for every retry and dead-letter route a consumer uses", () => {
-    const unbound = Object.values(apiRabbitRetry)
+    const unbound = Object.values(apiRabbitFailurePolicies)
       .flatMap((policy) => [
-        [RabbitExchange.RETRY, policy.retryRoutingKey],
+        ...(policy.strategy === "retry"
+          ? [[RabbitExchange.RETRY, policy.retryRoutingKey]]
+          : []),
         [RabbitExchange.DEAD_LETTER, policy.deadLetterRoutingKey],
       ])
       .filter(
