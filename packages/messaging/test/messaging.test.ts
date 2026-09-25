@@ -4,6 +4,7 @@ import type { ConsumeMessage, Options } from "amqplib";
 import { Deferred, Effect, Fiber } from "effect";
 import {
   RabbitMessaging,
+  UnprocessableDelivery,
   type RabbitChannel,
   type RabbitDelivery,
 } from "../src/messaging.ts";
@@ -272,6 +273,58 @@ describe("RabbitMessaging", () => {
     expect(publish.mock.calls[1]?.[0]).toBe("dlx");
     expect(publish.mock.calls[1]?.[1]).toBe("guilds.loots.create.dlq");
     expect(ack).toHaveBeenCalledTimes(2);
+  });
+
+  test("dead-letters an unprocessable delivery without retrying it", async () => {
+    const { channel, ack, publish, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: {
+              strategy: "retry",
+              maxRetries: 3,
+              retryRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_RETRY,
+              deadLetterRoutingKey: RabbitRoutingKey.GUILDS_LOOTS_CREATE_DLQ,
+            },
+          },
+          () => new UnprocessableDelivery({ cause: "invalid payload" }),
+        );
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish.mock.calls[0]?.[0]).toBe("dlx");
+    expect(publish.mock.calls[0]?.[1]).toBe("guilds.loots.create.dlq");
+    expect(ack).toHaveBeenCalledTimes(1);
+  });
+
+  test("rejects an unprocessable delivery instead of requeueing it", async () => {
+    const { channel, nack, dispatch } = makeChannel();
+
+    await runWithChannel(
+      channel,
+      Effect.gen(function* () {
+        const messaging = yield* RabbitMessaging;
+        yield* messaging.consume(
+          {
+            queue: "test-queue",
+            failurePolicy: { strategy: "requeue" },
+          },
+          () => new UnprocessableDelivery({ cause: "invalid payload" }),
+        );
+        dispatch(makeMessage());
+        yield* Effect.sleep(1);
+      }),
+    );
+
+    expect(nack).toHaveBeenCalledWith(expect.anything(), false, false);
   });
 
   test("interrupts in-flight deliveries when the consumer is cancelled", async () => {
