@@ -3,12 +3,10 @@ import { Lock } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
 import { ConfirmPopover } from "@/components/confirm-popover";
-import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useWindowsStore } from "@/store/windows.store";
-import { useReadyRooms } from "@/features/party-finder/hooks/use-ready-rooms";
-import { selectOwnedReadyRoom } from "@/features/party-finder/ready-room-cache";
+import { useOwnedReadyRoom } from "@/features/party-finder/hooks/use-ready-rooms";
 import { usePartyStore } from "@/store/party.store";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,8 +24,7 @@ export const PartyFinder = () => {
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
   const currentCharacterIdentity = getCurrentReadyRoomCharacterIdentity();
-  const readyRoomsQuery = useReadyRooms(selectOwnedReadyRoom);
-  const readyRoom = readyRoomsQuery.data ?? null;
+  const readyRoom = useOwnedReadyRoom();
   const partyMembers = usePartyStore((s) => s.members);
   const partyFull = partyMembers.length >= PARTY_SIZE_LIMIT;
 
@@ -86,14 +83,6 @@ export const PartyFinder = () => {
             {readyRoom.organizerCharacter.nick} · {readyRoom.world}
           </div>
         )}
-        <ConnectionStatusStrip
-          error={readyRoomsQuery.isError}
-          errorLabel={t("states.refreshError")}
-          hasData
-          refreshing={readyRoomsQuery.isFetching}
-          refreshingLabel={t("states.refreshing")}
-          onRetry={() => void readyRoomsQuery.refetch()}
-        />
         <ScrollArea className="ll:flex-1">
           <ReadyRoomParticipantsList room={readyRoom} />
         </ScrollArea>

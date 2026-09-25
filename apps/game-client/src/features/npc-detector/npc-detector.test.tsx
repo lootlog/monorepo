@@ -62,19 +62,3 @@ it("keeps detections when the window closes and empties it only on clear", () =>
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
   expect(screen.queryByText("Heros 1")).not.toBeInTheDocument();
 });
-
-it("marks detections as not shared while the connection is down", async () => {
-  render(<NpcDetector />, { wrapper: test.wrapper });
-  test.open();
-  await test.join();
-  vi.useFakeTimers();
-
-  act(() => test.wire.close());
-  act(() => vi.advanceTimersByTime(1000));
-  act(() => vi.advanceTimersByTime(0));
-
-  expect(
-    screen.getByText("Połączenie przerwane, ponowne łączenie…"),
-  ).toBeVisible();
-  expect(screen.getByText("Heros 1")).toBeVisible();
-});

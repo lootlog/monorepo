@@ -1,4 +1,3 @@
-import { ConnectionStatusStrip } from "@/components/connection-status-strip";
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
 import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
@@ -82,19 +81,11 @@ export const Notifications = () => {
       maxHeight={600}
       minWidth={242}
     >
-      {/* A grid, not a flex column: the list's scroll viewport needs the
-          definite height of its grid area to stay within the window's max
-          height while the status strip takes its row. */}
-      <div className="ll:grid ll:max-h-[inherit] ll:grid-rows-[auto_minmax(0,1fr)]">
-        <ConnectionStatusStrip hasData={filteredNotifications.length > 0} />
-        <div className="ll:row-start-2 ll:min-h-0">
-          <NotificationsList
-            npcTypeColors={npcTypeColors}
-            notifications={filteredNotifications}
-            settings={settings}
-          />
-        </div>
-      </div>
+      <NotificationsList
+        npcTypeColors={npcTypeColors}
+        notifications={filteredNotifications}
+        settings={settings}
+      />
     </DraggableWindow>
   );
 };
