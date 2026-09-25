@@ -25,27 +25,16 @@ const CachedGuildDataJson = Schema.fromJsonString(
     Schema.Struct({
       revision: Schema.String,
       invalidated: Schema.Literal(true),
-      stale: Schema.optional(Schema.String),
     }),
   ]),
 );
 
-// Keep the last projection, but never use it to authorize after invalidation.
-// The revision also fences HTTP requests started on another gateway instance.
-const invalidateGuildsScript = `
-local raw = redis.call("GET", KEYS[1])
-local stale = raw or nil
-if raw then
-  local valid, decoded = pcall(cjson.decode, raw)
-  if valid and type(decoded) == "table" and decoded.invalidated == true then
-    stale = decoded.stale
-  end
-end
-local invalidated = { revision = ARGV[1], invalidated = true, stale = stale }
-redis.call("SET", KEYS[1], cjson.encode(invalidated), "EX", ARGV[2])
-return 1
-`;
+// Matches the Lua revision check even when the cached projection no longer decodes.
+const CachedRevisionJson = Schema.fromJsonString(
+  Schema.Struct({ revision: Schema.optional(Schema.String) }),
+);
 
+// The revision fences HTTP requests started on another gateway instance.
 const cacheGuildsScript = `
 local raw = redis.call("GET", KEYS[1])
 local revision = ""
@@ -115,7 +104,7 @@ const cacheCommand = <A>(command: () => Promise<A>) =>
 export const makeGuildStore = (
   config: Pick<GatewayConfiguration, "apiUrl">,
   redis: {
-    command: Pick<RedisGatewayStore["command"], "get"> & {
+    command: Pick<RedisGatewayStore["command"], "get" | "set"> & {
       eval(
         ...args: Parameters<RedisGatewayStore["command"]["eval"]>
       ): Promise<RedisScriptReply>;
@@ -146,13 +135,17 @@ export const makeGuildStore = (
 
   const readCache = (key: string) =>
     cacheCommand(() => redis.command.get(key)).pipe(
-      Effect.map((value) => {
-        if (!value) return null;
-
-        const decoded = Schema.decodeUnknownOption(CachedGuildDataJson)(value);
-
-        return Option.getOrNull(decoded);
-      }),
+      Effect.map((value) => ({
+        entry: value
+          ? Option.getOrNull(
+              Schema.decodeUnknownOption(CachedGuildDataJson)(value),
+            )
+          : null,
+        revision:
+          Option.getOrUndefined(
+            Schema.decodeUnknownOption(CachedRevisionJson)(value),
+          )?.revision ?? "",
+      })),
     );
 
   const loadUserGuilds = Effect.fn("GuildStore_getUserGuilds")(function* (
@@ -160,7 +153,7 @@ export const makeGuildStore = (
     readOptions?: { readonly freshness: "required" },
   ) {
     const cacheKey = getUserGuildsCacheKey(options.discordId, options.userId);
-    const cached = yield* readCache(cacheKey);
+    const { entry: cached, revision } = yield* readCache(cacheKey);
     const now = yield* Clock.currentTimeMillis;
 
     if (
@@ -178,7 +171,7 @@ export const makeGuildStore = (
       if (readOptions?.freshness === "required")
         return yield* Effect.fail(result.failure);
 
-      const fallback = yield* readCache(cacheKey);
+      const { entry: fallback } = yield* readCache(cacheKey);
       const fallbackAt = yield* Clock.currentTimeMillis;
 
       if (
@@ -193,7 +186,6 @@ export const makeGuildStore = (
     }
 
     const cachedAt = yield* Clock.currentTimeMillis;
-    const revision = cached?.revision ?? "";
 
     const committed = yield* cacheCommand(() =>
       redis.command.eval(
@@ -221,11 +213,10 @@ export const makeGuildStore = (
       ),
     invalidate: (options) =>
       cacheCommand(() =>
-        redis.command.eval(
-          invalidateGuildsScript,
-          1,
+        redis.command.set(
           getUserGuildsCacheKey(options.discordId, options.userId),
-          crypto.randomUUID(),
+          JSON.stringify({ revision: crypto.randomUUID(), invalidated: true }),
+          "EX",
           CACHE_TTL.MAX_STALE_CACHE_AGE,
         ),
       ).pipe(

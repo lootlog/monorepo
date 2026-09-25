@@ -31,6 +31,7 @@ import type { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import { unusedFederationStore } from "../../test/realtime-fixtures.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
+import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { UserGuildData } from "#src/guilds/guild";
 
 const guild = (
@@ -93,6 +94,13 @@ class FakeHub {
   }
   getLocalSocketsForUser(userId: string): GatewaySocket[] {
     return this.sockets.filter((socket) => socket.data.userId === userId);
+  }
+  reconnectUser(discordId: string, userId: string): void {
+    for (const socket of this.getLocalSocketsForUser(userId)) {
+      if (socket.data.discordId !== discordId) continue;
+      this.sockets.splice(this.sockets.indexOf(socket), 1);
+      socket.close(1013, "authorization temporarily unavailable");
+    }
   }
 }
 
@@ -1401,7 +1409,7 @@ describe("CommandHandler session lifecycle", () => {
     expect(target.closes).toEqual([1008]);
   });
 
-  test.each(["invalidation", "publication", "local"])(
+  test.each(["invalidation", "publication"])(
     "attempts remote and local revocation despite a %s failure and preserves the Rabbit retry",
     async (failure) => {
       const remote = setup();
@@ -1418,12 +1426,7 @@ describe("CommandHandler session lifecycle", () => {
                 new GuildStoreFailure({ reason: "cache", retryable: true }),
               )
             : Effect.void,
-        getUserGuilds: () =>
-          failure === "local"
-            ? Effect.fail(
-                new GuildStoreFailure({ reason: "transport", retryable: true }),
-              )
-            : Effect.succeed([]),
+        getUserGuilds: () => Effect.succeed([]),
       });
 
       const localTarget = makeSocket();
@@ -1442,18 +1445,160 @@ describe("CommandHandler session lifecycle", () => {
       );
 
       expect(Exit.isFailure(result)).toBe(true);
-
-      if (failure !== "local")
-        expect(localTarget.socket.data.guilds).toEqual([]);
+      expect(localTarget.socket.data.guilds).toEqual([]);
 
       if (failure !== "publication")
         expect(remoteTarget.socket.data.guilds).toEqual([]);
+    },
+  );
 
-      if (failure === "local") {
-        expect(localTarget.closes).toEqual([]);
-        expect(local.hub.events).toEqual([]);
-        expect(localTarget.socket.data.guilds).toHaveLength(1);
-      }
+  const unavailablePermissions = (retryable = true) => {
+    let lookups = 0;
+
+    const store: GuildStore = {
+      invalidate: () => Effect.void,
+      getUserGuilds: () => {
+        lookups += 1;
+
+        return Effect.fail(
+          new GuildStoreFailure({ reason: "transport", retryable }),
+        );
+      },
+    };
+
+    return { store, lookups: () => lookups };
+  };
+
+  const secondGuild: UserGuildData = {
+    ...guild(),
+    guild: { id: "organization-2", ownerId: "owner" },
+  };
+
+  test("reconnects local sockets when their permission refresh stays unavailable without failing Rabbit delivery", async () => {
+    const hub = new RealtimeHub(
+      { maxBackpressureBytes: 1_024 },
+      { ...unusedFederationStore, publish: async () => {} },
+    );
+
+    const permissions = unavailablePermissions();
+    const { handler } = setup(permissions.store, undefined, hub);
+    const affected = makeSocket();
+    const unrelated = makeSocket();
+    affected.socket.data.joined = true;
+    affected.socket.data.guilds = [guild()];
+    unrelated.socket.data = {
+      ...unrelated.socket.data,
+      connectionId: "connection-2",
+      discordId: "discord-2",
+      joined: true,
+      guilds: [guild()],
+    };
+
+    for (const target of [affected, unrelated]) hub.register(target.socket);
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const rebalance = yield* Effect.exit(
+          handler.rebalanceAcrossInstances("discord-1", "user-1"),
+        ).pipe(Effect.forkChild);
+
+        yield* TestClock.adjust("30 seconds");
+
+        return yield* Fiber.join(rebalance);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+
+    expect(Exit.isSuccess(result)).toBe(true);
+    expect(permissions.lookups()).toBe(4);
+    expect(affected.closes).toEqual([1013]);
+    expect(unrelated.closes).toEqual([]);
+    expect(hub.getLocalSockets()).toEqual([unrelated.socket]);
+  });
+
+  test("a confirmed membership removal revokes the Organization before the permission refresh", async () => {
+    const { handler, hub } = setup(unavailablePermissions().store);
+    const target = makeSocket();
+    target.socket.data.joined = true;
+    target.socket.data.guilds = [guild(), secondGuild];
+    hub.sockets.push(target.socket);
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const rebalance = yield* handler
+          .rebalanceAcrossInstances("discord-1", "user-1", "organization-1")
+          .pipe(Effect.forkChild);
+
+        yield* Effect.yieldNow;
+        expect(
+          target.socket.data.guilds.map(({ guild: entry }) => entry.id),
+        ).toEqual(["organization-2"]);
+        expect(
+          [...target.socket.data.subscriptions.values()].some(
+            (scope) => scope.organizationId === "organization-1",
+          ),
+        ).toBe(false);
+        expect(hub.events).toMatchObject([{ type: "permissions.updated" }]);
+        expect(target.closes).toEqual([]);
+
+        yield* TestClock.adjust("30 seconds");
+        yield* Fiber.join(rebalance);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+
+    expect(target.closes).toEqual([1013]);
+  });
+
+  test.each([
+    { retryable: true, lookups: 4 },
+    { retryable: false, lookups: 1 },
+  ])(
+    "a received rebalance retries only retryable failures before reconnecting ($retryable)",
+    async ({ retryable, lookups }) => {
+      let receive: (message: FederatedRealtimeMessage) => void = () => {};
+
+      const tasks: Array<Effect.Effect<void, unknown>> = [];
+
+      const hub = new RealtimeHub(
+        { maxBackpressureBytes: 1_024 },
+        {
+          ...unusedFederationStore,
+          subscribe: async (listener) => {
+            receive = listener;
+          },
+        },
+        (_, task) => {
+          tasks.push(task);
+        },
+      );
+
+      const permissions = unavailablePermissions(retryable);
+      setup(permissions.store, undefined, hub);
+      await Effect.runPromise(hub.start());
+      const target = makeSocket();
+      target.socket.data.joined = true;
+      target.socket.data.guilds = [guild()];
+      hub.register(target.socket);
+
+      receive({
+        id: "control-1",
+        sourceInstanceId: "another-instance",
+        control: {
+          type: "permissions.rebalance",
+          discordId: "discord-1",
+          userId: "user-1",
+        },
+      });
+
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          for (const task of tasks) yield* task.pipe(Effect.forkScoped);
+          yield* TestClock.adjust("30 seconds");
+        }).pipe(Effect.scoped, Effect.provide(TestClock.layer())),
+      );
+
+      expect(permissions.lookups()).toBe(lookups);
+      expect(target.closes).toEqual([1013]);
+      expect(hub.getLocalSockets()).toEqual([]);
     },
   );
 

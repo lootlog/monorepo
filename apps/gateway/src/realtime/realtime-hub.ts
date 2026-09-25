@@ -20,7 +20,7 @@ import {
   isServerEventFrame,
   type SubscriptionScope,
 } from "@lootlog/protocol/realtime";
-import { Effect, Result, Schedule } from "effect";
+import { Effect, Result } from "effect";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
   type BackgroundTaskRunner,
@@ -41,6 +41,7 @@ import {
   canSubscribe,
 } from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
+import { isReadyRoomRemoval } from "#src/realtime/npc-event-visibility";
 
 type Scope = typeof SubscriptionScope.Type;
 
@@ -54,11 +55,6 @@ const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
-
-const permissionRebalanceRetry = Schedule.max([
-  Schedule.exponential("250 millis"),
-  Schedule.recurs(3),
-]);
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -371,6 +367,14 @@ export class RealtimeHub {
     return [...(this.audiences.get(JSON.stringify(["user", userId])) ?? [])];
   }
 
+  reconnectUser(discordId: string, userId: string): void {
+    for (const socket of this.getLocalSocketsForUser(userId)) {
+      if (socket.data.discordId !== discordId) continue;
+      this.detach(socket);
+      socket.close(1013, "authorization temporarily unavailable");
+    }
+  }
+
   private createFederatedMessage(options: {
     readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
     readonly id?: string;
@@ -416,28 +420,11 @@ export class RealtimeHub {
 
     if (message.control) {
       if (!this.remember(message.id)) return;
-      const { discordId, userId } = message.control;
 
       for (const listener of this.permissionRebalanceListeners) {
         this.runBackground(
           "permissions.rebalance",
-          Effect.suspend(() => listener(discordId, userId)).pipe(
-            Effect.retry(permissionRebalanceRetry),
-            Effect.catch((error) =>
-              Effect.gen({ self: this }, function* () {
-                yield* Effect.logError(
-                  "Permission rebalance retries exhausted; reconnecting affected sockets",
-                  error,
-                );
-
-                for (const socket of this.getLocalSocketsForUser(userId)) {
-                  if (socket.data.discordId !== discordId) continue;
-                  this.detach(socket);
-                  socket.close(1013, "authorization temporarily unavailable");
-                }
-              }),
-            ),
-          ),
+          listener(message.control.discordId, message.control.userId),
         );
       }
 
@@ -541,6 +528,8 @@ export class RealtimeHub {
     event: Event,
     guild = findEventGuild(session, eventOrganizationId(event)),
   ): boolean {
+    if (isReadyRoomRemoval(event)) return true;
+
     if (event.type === "reservation.changed")
       return event.data.audienceGuildIds.some((organizationId) =>
         session.guilds.some((entry) => entry.guild.id === organizationId),
