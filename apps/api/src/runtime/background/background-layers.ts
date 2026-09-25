@@ -1,11 +1,8 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
 import { Effect, FiberSet, Layer } from "effect";
-import { RabbitMessaging, type FailurePolicy } from "@lootlog/messaging";
-import {
-  RabbitRoutingKey,
-  type RabbitRoutingKeyName,
-} from "@lootlog/protocol/rabbit/topology";
+import { RabbitMessaging } from "@lootlog/messaging";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
 import { Worker } from "bullmq";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -27,6 +24,7 @@ import { makeTimersCleanup } from "#src/timers/timers-cleanup";
 import { makeReservationsCleanup } from "#src/reservations/reservations-cleanup";
 import { applicationLogger } from "#src/shared/application-logger";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
+import { apiRabbitRetry } from "#src/runtime/infrastructure/api-rabbit";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
 import { forkCronTask } from "#src/runtime/background/cron";
 import { makeRabbitConsumer } from "#src/runtime/background/rabbit-consumer";
@@ -35,16 +33,6 @@ import { RecordsServices } from "#src/runtime/features/records";
 import { NotificationsServices } from "#src/runtime/features/notifications";
 import { GuildDiscordSync } from "#src/runtime/features/organizations";
 import { MemberServices } from "#src/runtime/features/members";
-
-const rabbitRetryPolicy = (
-  retryRoutingKey: RabbitRoutingKeyName,
-  deadLetterRoutingKey: RabbitRoutingKeyName,
-): FailurePolicy => ({
-  strategy: "retry",
-  maxRetries: 3,
-  retryRoutingKey,
-  deadLetterRoutingKey,
-});
 
 export const RabbitConsumers = Layer.effectDiscard(
   Effect.gen(function* () {
@@ -84,68 +72,41 @@ export const RabbitConsumers = Layer.effectDiscard(
 
     const consume = yield* makeRabbitConsumer(rabbit);
 
-    const retry = {
-      guildCreate: rabbitRetryPolicy(
-        RabbitRoutingKey.GUILDS_CREATE_RETRY,
-        RabbitRoutingKey.GUILDS_CREATE_DLQ,
-      ),
-      guildUpdate: rabbitRetryPolicy(
-        RabbitRoutingKey.GUILDS_UPDATE_RETRY,
-        RabbitRoutingKey.GUILDS_UPDATE_DLQ,
-      ),
-      guildDelete: rabbitRetryPolicy(
-        RabbitRoutingKey.GUILDS_DELETE_RETRY,
-        RabbitRoutingKey.GUILDS_DELETE_DLQ,
-      ),
-      roleCreate: rabbitRetryPolicy(
-        RabbitRoutingKey.GUILDS_CREATE_ROLE_RETRY,
-        RabbitRoutingKey.GUILDS_CREATE_ROLE_DLQ,
-      ),
-      roleUpdate: rabbitRetryPolicy(
-        RabbitRoutingKey.GUILDS_UPDATE_ROLE_RETRY,
-        RabbitRoutingKey.GUILDS_UPDATE_ROLE_DLQ,
-      ),
-      roleDelete: rabbitRetryPolicy(
-        RabbitRoutingKey.GUILDS_DELETE_ROLE_RETRY,
-        RabbitRoutingKey.GUILDS_DELETE_ROLE_DLQ,
-      ),
-    } as const;
-
     yield* consume(
       ApiQueue.GUILDS_CREATE,
       RabbitRoutingKey.GUILDS_CREATE,
       (data) => guildLifecycle.createGuild(data),
-      retry.guildCreate,
+      apiRabbitRetry.guildCreate,
     );
     yield* consume(
       ApiQueue.GUILDS_UPDATE,
       RabbitRoutingKey.GUILDS_UPDATE,
       (data) => guildLifecycle.updateGuild(data),
-      retry.guildUpdate,
+      apiRabbitRetry.guildUpdate,
     );
     yield* consume(
       ApiQueue.GUILDS_DELETE,
       RabbitRoutingKey.GUILDS_DELETE,
       (data) => guildLifecycle.deleteGuild(data),
-      retry.guildDelete,
+      apiRabbitRetry.guildDelete,
     );
     yield* consume(
       ApiQueue.GUILDS_CREATE_ROLE,
       RabbitRoutingKey.GUILDS_CREATE_ROLE,
       (data) => guildLifecycle.upsertRole(data),
-      retry.roleCreate,
+      apiRabbitRetry.roleCreate,
     );
     yield* consume(
       ApiQueue.GUILDS_UPDATE_ROLE,
       RabbitRoutingKey.GUILDS_UPDATE_ROLE,
       (data) => guildLifecycle.upsertRole(data),
-      retry.roleUpdate,
+      apiRabbitRetry.roleUpdate,
     );
     yield* consume(
       ApiQueue.GUILDS_DELETE_ROLE,
       RabbitRoutingKey.GUILDS_DELETE_ROLE,
       (data) => guildLifecycle.deleteRole(data),
-      retry.roleDelete,
+      apiRabbitRetry.roleDelete,
     );
 
     yield* consume(
@@ -175,10 +136,10 @@ export const RabbitConsumers = Layer.effectDiscard(
     );
 
     yield* consume(
-      "backend-game-character-offline",
+      ApiQueue.GAME_CHARACTER_OFFLINE,
       RabbitRoutingKey.GAME_CHARACTER_OFFLINE,
       (event) => readyRooms.characterOffline(event),
-      { strategy: "requeue" },
+      apiRabbitRetry.characterOffline,
     );
 
     yield* consume(
@@ -192,7 +153,7 @@ export const RabbitConsumers = Layer.effectDiscard(
           hasPlayer,
           isAfk ?? false,
         ),
-      { strategy: "requeue" },
+      apiRabbitRetry.presenceCoverage,
     );
 
     yield* consume(
@@ -206,13 +167,10 @@ export const RabbitConsumers = Layer.effectDiscard(
       (data) => notificationEvents.handleTimerDeleted(data),
     );
     yield* consume(
-      "backend-notifications-loot-created",
+      ApiQueue.NOTIFICATIONS_LOOT_CREATED,
       RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
-      (data) =>
-        notificationEvents
-          .handleLootCreated(data)
-          .pipe(Effect.tapError(() => Effect.sleep("1 second"))),
-      { strategy: "requeue" },
+      (data) => notificationEvents.handleLootCreated(data),
+      apiRabbitRetry.lootCreated,
     );
     yield* consume(
       "backend-notifications-delivery-result",

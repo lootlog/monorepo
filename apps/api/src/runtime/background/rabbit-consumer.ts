@@ -1,7 +1,8 @@
-import type {
-  FailurePolicy,
-  RabbitDelivery,
-  RabbitMessagingService,
+import {
+  UnprocessableDelivery,
+  type FailurePolicy,
+  type RabbitDelivery,
+  type RabbitMessagingService,
 } from "@lootlog/messaging";
 import {
   decodeRabbitEventJson,
@@ -34,8 +35,14 @@ export const makeRabbitConsumer = Effect.fnUntraced(function* (
               routingKey,
               new TextDecoder().decode(delivery.content),
             ),
-          catch: (cause) => cause,
+          // A payload that does not decode now will never decode on retry.
+          catch: (cause) => new UnprocessableDelivery({ cause }),
         }).pipe(
+          Effect.tapError(() =>
+            Effect.logError("RabbitMQ delivery payload is invalid").pipe(
+              Effect.annotateLogs({ queue, routingKey }),
+            ),
+          ),
           Effect.flatMap((payload) => {
             const result = handler(payload, delivery);
 
