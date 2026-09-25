@@ -3,7 +3,7 @@ import { createApiClient } from "@lootlog/client/transport";
 import { createPageTransport } from "@/extension/page-transport";
 import {
   decodeMessage,
-  ExtensionRequestSchema,
+  decodeExtensionRequest,
   type ExtensionRequest,
 } from "@/extension/protocol";
 import { AUTO_TIMER_REQUEST_TIMEOUT_MS } from "@/api/retry-policy";
@@ -75,7 +75,7 @@ describe("game API request deadlines", () => {
     const channel = new MessageChannel();
     const messages: ExtensionRequest[] = [];
     channel.port2.onmessage = (event: MessageEvent<unknown>) => {
-      messages.push(ExtensionRequestSchema.parse(decodeMessage(event.data)));
+      messages.push(decodeExtensionRequest(decodeMessage(event.data)));
     };
 
     channel.port2.start();
