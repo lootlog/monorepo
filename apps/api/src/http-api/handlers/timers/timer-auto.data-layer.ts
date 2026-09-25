@@ -2,7 +2,7 @@ import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, gt, gte, inArray, isNull, lte, or } from "drizzle-orm";
-import { Clock, Effect, Result, Schema } from "effect";
+import { Clock, Effect, Predicate, Result, Schema } from "effect";
 import { partition } from "es-toolkit";
 import { decodeJsonUnknown } from "#src/shared/schema/json";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
@@ -261,6 +261,35 @@ const badRequest = (message: ErrorKey, rejectedGuilds: unknown[]) =>
     rejectedGuilds,
   });
 
+const findRecentlyCreatedTimer = Effect.fnUntraced(function* (
+  database: Pick<typeof ApiDatabase.Service, "select">,
+  timer: typeof timerTable.$inferSelect | null,
+  startedAt: Date,
+) {
+  if (!timer) return null;
+
+  const dedupSince = new Date(startedAt.getTime() - DEDUP_TTL_SECONDS * 1000);
+
+  // The transaction can commit before Redis records its result. Only the
+  // CREATE history written by an automatic submission identifies it: event
+  // respawn windows, resets, deletes, and restores also move the timer row.
+  const recentCreates = yield* database
+    .select({ id: timerHistoryEntryTable.id })
+    .from(timerHistoryEntryTable)
+    .where(
+      and(
+        eq(timerHistoryEntryTable.guildId, timer.guildId),
+        eq(timerHistoryEntryTable.world, timer.world),
+        eq(timerHistoryEntryTable.timerKey, timer.timerKey),
+        eq(timerHistoryEntryTable.action, TimerHistoryAction.CREATE),
+        gte(timerHistoryEntryTable.createdAt, dedupSince),
+      ),
+    )
+    .limit(1);
+
+  return recentCreates.length > 0 ? timer : null;
+});
+
 export const makeAutoTimer = (
   database: typeof ApiDatabase.Service,
   ports: AutoTimerPorts,
@@ -312,12 +341,6 @@ export const makeAutoTimer = (
               }),
             );
 
-          const actorCharacter = yield* upsertActorCharacter(
-            transaction,
-            payload.world,
-            payload.actorCharacter,
-          );
-
           const existingRows = yield* transaction
             .select()
             .from(timerTable)
@@ -331,6 +354,23 @@ export const makeAutoTimer = (
             .limit(1);
 
           let previousTimer = existingRows[0] ?? null;
+
+          const completedTimer = yield* findRecentlyCreatedTimer(
+            transaction,
+            previousTimer,
+            startedAt,
+          );
+
+          if (completedTimer) {
+            return { _tag: "Duplicate" as const, projection: completedTimer };
+          }
+
+          const actorCharacter = yield* upsertActorCharacter(
+            transaction,
+            payload.world,
+            payload.actorCharacter,
+          );
+
           let migratedSyntheticNpcId: number | null = null;
           let migratedSyntheticTimerKey: string | null = null;
 
@@ -448,6 +488,7 @@ export const makeAutoTimer = (
           }
 
           return {
+            _tag: "Created" as const,
             projection: { ...timer, member, actorCharacter },
             previousTimer,
             migratedSyntheticNpcId,
@@ -469,7 +510,6 @@ export const makeAutoTimer = (
       if (cached) return yield* projectionFromCache(cached);
       const token = randomUUID();
       let acquired = yield* ports.setNx(dedupLockKey, token, DEDUP_TTL_SECONDS);
-      const waitedForOwner = !acquired;
 
       if (!acquired) {
         for (let attempt = 0; attempt < 100; attempt += 1) {
@@ -498,27 +538,11 @@ export const makeAutoTimer = (
           if (cachedAfterLock)
             return yield* projectionFromCache(cachedAfterLock);
 
-          if (waitedForOwner) {
-            const completedRows = yield* database
-              .select()
-              .from(timerTable)
-              .where(
-                and(
-                  eq(timerTable.guildId, guildId),
-                  eq(timerTable.world, payload.world),
-                  eq(timerTable.timerKey, timerKey),
-                  gte(timerTable.updatedAt, startedAt),
-                ),
-              )
-              .limit(1);
-
-            const completed = completedRows[0];
-
-            if (completed) return mapTimerResponse(completed);
-          }
-
           const result = yield* persist;
           const response = mapTimerResponse(result.projection);
+
+          if (Predicate.isTagged(result, "Duplicate")) return response;
+
           yield* ports.set(
             dedupKey,
             JSON.stringify(result.projection),
