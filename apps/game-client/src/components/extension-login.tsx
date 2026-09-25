@@ -12,6 +12,7 @@ export function ExtensionLogin() {
   const open = useWindowsStore((state) => state["extension-login"].open);
   const size = useWindowsStore((state) => state["extension-login"].size);
   const setOpen = useWindowsStore((state) => state.setOpen);
+  const openAndFocus = useWindowsStore((state) => state.openAndFocus);
   const checking = session.isPending || session.isRefetching;
 
   if (session.data) return null;
@@ -73,7 +74,7 @@ export function ExtensionLogin() {
       </DraggableWindow>
       {open ? null : (
         <ExtensionLoginLauncher
-          onOpen={() => setOpen("extension-login", true)}
+          onOpen={() => openAndFocus("extension-login")}
         />
       )}
     </>

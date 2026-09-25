@@ -10,6 +10,7 @@ import {
 } from "@/store/windows.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { LOOTLOG_APP_URL } from "@/config/app";
+import { resolveDefaultWindowPosition } from "@/components/draggable-window/window-default-placement";
 
 const renderLogin = () =>
   render(
@@ -85,13 +86,43 @@ describe("extension login window", () => {
     view.unmount();
     const remounted = renderLogin();
     expect(screen.queryByRole("region")).toBeNull();
-    await user.click(
-      screen.getByRole("button", { name: "Zaloguj się do Lootloga" }),
+
+    // The launcher takes the quick access bar's place, even before the player
+    // has ever moved that bar.
+    const launcher = screen.getByRole("button", {
+      name: "Zaloguj się do Lootloga",
+    });
+
+    const quickAccessPosition = resolveDefaultWindowPosition(
+      "quick-access",
+      (id) => useWindowsStore.getState()[id].size,
+      { width: window.innerWidth, height: window.innerHeight },
     );
+
+    expect(launcher).toHaveStyle({
+      left: `${quickAccessPosition.x}px`,
+      top: `${quickAccessPosition.y}px`,
+    });
+
+    // Reopening is the player's own action, so focus moves in and Escape
+    // closes the window instead of reaching the game.
+    await user.click(launcher);
     expect(screen.getByRole("region")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Zaloguj się do Lootloga" }),
     ).toBeNull();
+    await waitFor(() =>
+      expect(
+        remounted.container
+          .querySelector("#ll-extension-login")
+          ?.contains(document.activeElement),
+      ).toBe(true),
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("region")).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Zaloguj się do Lootloga" }),
+    );
     remounted.unmount();
     useWindowsStore.getState().setPosition("extension-login", { x: 10, y: 20 });
     resetExtensionLoginWindow();
