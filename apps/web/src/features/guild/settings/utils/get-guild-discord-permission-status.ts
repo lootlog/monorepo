@@ -5,8 +5,13 @@ export const getGuildDiscordPermissionStatus = (
 ): "unknown" | "ok" | "missing" => {
   if (syncState?.status === "NOT_FOUND") return "missing";
 
-  // Unavailable and stale snapshots contain placeholder permission values.
-  if (syncState?.status !== "SYNCED") return "unknown";
+  // A stale snapshot keeps the permissions of its last successful sync, which
+  // the API still enforces. Snapshots that never synced carry placeholders.
+  const isConfirmed =
+    syncState?.status === "SYNCED" ||
+    (syncState?.status === "STALE" && syncState.lastSuccessAt !== null);
+
+  if (!isConfirmed) return "unknown";
 
   return syncState.hasRequiredPermissions ? "ok" : "missing";
 };

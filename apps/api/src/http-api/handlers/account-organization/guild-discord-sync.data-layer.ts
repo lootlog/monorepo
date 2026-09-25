@@ -339,12 +339,9 @@ export const makeGuildDiscordSyncData = (
       (yield* Clock.currentTimeMillis) - current.updatedAt.getTime() >
         ports.staleAfterMs;
 
+    // Age alone is not an error; keep only an error Discord actually reported.
     return stale
-      ? {
-          ...current,
-          status: DiscordGuildSyncStatus.STALE,
-          lastError: current.lastError ?? "Discord sync status is stale",
-        }
+      ? { ...current, status: DiscordGuildSyncStatus.STALE }
       : current;
   });
 
