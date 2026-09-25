@@ -27,12 +27,13 @@ the existing 30-second deduplication cache can return its stored timer on retry
 without retrying publication.
 
 If the timer commits but writing its Redis result fails, the next automatic
-submission checks the persisted window and CREATE history under the timer lock.
-For the same Organization, world, and timer key, acceptance within 30 seconds
-returns the existing timer without moving its spawn window or adding history.
-Reset timestamps do not extend this window. This is bounded deduplication, not
-a durable request identity: clients must not replay old submissions. Deploy this
-guard before enabling automatic-timer retries in the Game client.
+submission checks the timer's CREATE history under the timer lock. For the same
+Organization, world, and timer key, acceptance within 30 seconds returns the
+existing timer without moving its spawn window or adding history. Resets,
+restores, and event respawn windows write no CREATE history and do not extend
+this window. This is bounded deduplication, not a durable request identity:
+clients must not replay old submissions. Deploy this guard before enabling
+automatic-timer retries in the Game client.
 
 RabbitMQ consumers in this API replica share five handler slots. Each queue uses
 prefetch one, bounding waiting deliveries and retaining sequential processing

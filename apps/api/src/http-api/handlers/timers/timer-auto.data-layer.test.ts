@@ -375,6 +375,99 @@ it.each([false, true])(
   },
 );
 
+it("writes a kill within the dedup window of an event respawn window that has no CREATE history", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const { database } = boundary;
+    const guild = createGuildFixture();
+
+    const member = createMemberFixture({
+      userId: guild.ownerId,
+      globalUserId: "user",
+    });
+
+    const now = new Date();
+    await boundary.run(database.insert(guildTable).values(guild));
+    await boundary.run(database.insert(memberTable).values(member));
+    await boundary.run(
+      database.insert(userCharactersLootlogSettingsTable).values({
+        userId: member.userId,
+        accountId: "1",
+        characterId: "2",
+        catchingGuildIds: [guild.id],
+        updatedAt: now,
+      }),
+    );
+    await boundary.run(
+      database.insert(timerTable).values({
+        guildId: guild.id,
+        world: "world",
+        npcId: 300,
+        timerKey: buildTimerKey(300, "Hero"),
+        createdById: member.id,
+        npc: { id: 300, name: "Hero", lvl: 100, type: "hero" },
+        minSpawnTime: now,
+        maxSpawnTime: new Date(now.getTime() + 60_000),
+        windowOpenedAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    const publications: string[] = [];
+
+    const create = makeAutoTimer(database, {
+      get: () => Effect.succeed(null),
+      set: () => Effect.void,
+      setNx: () => Effect.succeed(true),
+      releaseDedup: () => Effect.void,
+      invalidateList: () => Effect.void,
+      enqueueEventHeroCheck: () => Effect.void,
+      withLock: (_key, operation) => operation,
+      publish: (routingKey) =>
+        Effect.sync(() => {
+          publications.push(routingKey);
+        }),
+    });
+
+    await boundary.run(
+      create(
+        { discordId: member.userId, userId: "user" },
+        {
+          respBaseSeconds: 60,
+          world: "world",
+          npc: {
+            id: 300,
+            name: "Hero",
+            location: "Map",
+            lvl: 100,
+            wt: 85,
+            icon: "hero.png",
+            type: 2,
+          },
+          accountId: "1",
+          characterId: "2",
+        },
+      ),
+    );
+
+    expect(
+      await boundary.run(database.select().from(timerHistoryEntryTable)),
+    ).toMatchObject([{ action: TimerHistoryAction.CREATE }]);
+    expect(
+      (await boundary.run(database.select().from(timerTable))).map(
+        ({ latestRespBaseSeconds }) => latestRespBaseSeconds,
+      ),
+    ).toEqual([60]);
+    expect(publications).toEqual([
+      RabbitRoutingKey.GUILDS_TIMERS_UPDATE,
+      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
+    ]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
 it.each([false, true])(
   "retries a committed timer after a Redis failure without duplicating history, and accepts the next kill after the dedup window (restored window: %s)",
   async (restoredWindow) => {

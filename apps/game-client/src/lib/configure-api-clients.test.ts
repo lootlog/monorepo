@@ -6,10 +6,8 @@ import {
   ExtensionRequestSchema,
   type ExtensionRequest,
 } from "@/extension/protocol";
-import {
-  configureGameApiClients,
-  GAME_API_REQUEST_TIMEOUT_MS,
-} from "./configure-api-clients";
+import { AUTO_TIMER_REQUEST_TIMEOUT_MS } from "@/api/retry-policy";
+import { configureGameApiClients } from "./configure-api-clients";
 import { configureGameClientPlatform } from "./game-client-platform";
 
 afterEach(() => {
@@ -18,7 +16,7 @@ afterEach(() => {
 });
 
 describe("game API request deadlines", () => {
-  it("aborts stalled native HTTP used by the userscript and in-game addon", async () => {
+  it("aborts a stalled bounded request over native HTTP used by the userscript and in-game addon", async () => {
     vi.useFakeTimers();
 
     const fetcher = vi
@@ -29,10 +27,14 @@ describe("game API request deadlines", () => {
 
     try {
       const request = createApiClient("main")
-        .post("/timers/auto", {})
+        .post(
+          "/timers/auto",
+          {},
+          { apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS } },
+        )
         .catch((error: Error) => error);
 
-      await vi.advanceTimersByTimeAsync(GAME_API_REQUEST_TIMEOUT_MS);
+      await vi.advanceTimersByTimeAsync(AUTO_TIMER_REQUEST_TIMEOUT_MS);
       expect(await request).toMatchObject({
         cause: expect.objectContaining({ name: "TimeoutError" }),
       });
@@ -42,7 +44,33 @@ describe("game API request deadlines", () => {
     }
   });
 
-  it("cancels stalled extension HTTP through the page bridge at the same deadline", async () => {
+  it("leaves requests without their own deadline, such as battle uploads, unbounded", async () => {
+    vi.useFakeTimers();
+
+    const fetcher = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => new Promise(() => {}));
+
+    const restore = configureGameApiClients();
+
+    try {
+      let settled = false;
+
+      void createApiClient("battlelog")
+        .post("/battles", {})
+        .finally(() => {
+          settled = true;
+        });
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(settled).toBe(false);
+      expect(fetcher.mock.calls[0]?.[1]?.signal?.aborted).not.toBe(true);
+    } finally {
+      restore();
+    }
+  });
+
+  it("cancels a stalled bounded request through the extension page bridge", async () => {
     vi.useFakeTimers();
     const channel = new MessageChannel();
     const messages: ExtensionRequest[] = [];
@@ -57,11 +85,15 @@ describe("game API request deadlines", () => {
 
     try {
       const request = createApiClient("main")
-        .post("/timers/auto", {})
+        .post(
+          "/timers/auto",
+          {},
+          { apiClient: { timeoutMs: AUTO_TIMER_REQUEST_TIMEOUT_MS } },
+        )
         .catch((error: Error) => error);
 
       await vi.waitFor(() => expect(messages).toHaveLength(1));
-      await vi.advanceTimersByTimeAsync(GAME_API_REQUEST_TIMEOUT_MS);
+      await vi.advanceTimersByTimeAsync(AUTO_TIMER_REQUEST_TIMEOUT_MS);
       expect(await request).toMatchObject({
         cause: expect.objectContaining({ name: "TimeoutError" }),
       });
