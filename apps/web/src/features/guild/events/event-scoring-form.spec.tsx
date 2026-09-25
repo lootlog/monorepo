@@ -129,7 +129,7 @@ it.each(["create", "edit"] as const)(
     fireEvent.click(await screen.findByRole("button", { name: /Base 25%/ }));
 
     const threshold = screen.getByRole("spinbutton", {
-      name: "events.scoring.conditionLabel.value",
+      name: "events.scoring.fieldLabel.conditionValue",
     });
 
     fireEvent.change(threshold, { target: { value: "" } });
@@ -154,6 +154,7 @@ it.each(["create", "edit"] as const)(
 
     submit();
     await screen.findByText("events.scoring.validation.invalidRules");
+    expect(document.activeElement).toBe(threshold);
     expect(requests).toHaveLength(0);
 
     fireEvent.change(threshold, { target: { value: "30" } });

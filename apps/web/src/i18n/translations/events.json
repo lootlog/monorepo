@@ -662,6 +662,10 @@
       "action": "Co zrobić",
       "points": "Ile punktów"
     },
+    "fieldLabel": {
+      "conditionValue": "Reguła {{rule}}, warunek {{condition}}: wartość",
+      "actionPoints": "Reguła {{rule}}: ile punktów"
+    },
     "factorHint": {
       "trackingDurationPercentage": "Jaki % czasu respawnu gracz obstawiał herosa",
       "trackingDurationSeconds": "Ile sekund gracz był na mapie w trakcie respawnu",

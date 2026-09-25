@@ -17501,9 +17501,13 @@ components:
               - LOOTLOG_DOCS_READ
               - LOOTLOG_DOCS_WRITE
         lvlRangeFrom:
-          type: number
+          type: integer
+          minimum: 0
+          maximum: 500
         lvlRangeTo:
-          type: number
+          type: integer
+          minimum: 0
+          maximum: 500
       required:
         - permissions
         - lvlRangeFrom

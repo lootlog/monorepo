@@ -68,7 +68,10 @@ export const ScoringConditionNumeric = ({
           control={control}
           register={register}
           name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
-          label={t("events.scoring.conditionLabel.value")}
+          label={t("events.scoring.fieldLabel.conditionValue", {
+            rule: ruleIndex + 1,
+            condition: conditionIndex + 1,
+          })}
         />
       </div>
     </div>

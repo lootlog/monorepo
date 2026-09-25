@@ -23,11 +23,36 @@ export const RoleResponse = MemberRole.annotate({
 export type UpdateRolePermissionsRequest =
   typeof UpdateRolePermissionsRequest.Type;
 
+const RoleLevel = Schema.Number.check(
+  Schema.isInt().annotate({ expected: "an integer" }),
+)
+  .check(
+    Schema.isGreaterThanOrEqualTo(0).annotate({
+      expected: "a value greater than or equal to 0",
+    }),
+  )
+  .check(
+    Schema.isLessThanOrEqualTo(500).annotate({
+      expected: "a value less than or equal to 500",
+    }),
+  );
+
 export const UpdateRolePermissionsRequest = Schema.Struct({
   permissions: Schema.Array(CapabilitySchema),
-  lvlRangeFrom: FiniteNumber,
-  lvlRangeTo: FiniteNumber,
-}).annotate({ identifier: "UpdateRolePermissionsDto" });
+  lvlRangeFrom: RoleLevel,
+  lvlRangeTo: RoleLevel,
+})
+  .check(
+    Schema.makeFilter((data) =>
+      data.lvlRangeFrom <= data.lvlRangeTo
+        ? undefined
+        : {
+            path: ["lvlRangeTo"],
+            issue: "lvlRangeTo must not be less than lvlRangeFrom",
+          },
+    ),
+  )
+  .annotate({ identifier: "UpdateRolePermissionsDto" });
 
 export type RoleOrganizationPath = typeof RoleOrganizationPath.Type;
 

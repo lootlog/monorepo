@@ -235,6 +235,7 @@ const EventEditScoringForm = ({
                       value={field.value}
                       onChange={field.onChange}
                       error={fieldState.error?.message}
+                      ref={field.ref}
                     />
                   )}
                 />

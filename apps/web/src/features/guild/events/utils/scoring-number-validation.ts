@@ -1,25 +1,26 @@
 import type { EventScoringRules } from "@lootlog/domain/scoring";
+import { z } from "zod";
 
-export function getScoringNumberError(value: number, maximum?: number) {
-  if (!Number.isFinite(value)) {
-    return "events.scoring.validation.finiteNumber";
-  }
+export function scoringNumberSchema(maximum?: number) {
+  const rangeError =
+    maximum === undefined
+      ? "events.scoring.validation.nonNegative"
+      : "events.scoring.validation.percentage";
 
-  if (maximum !== undefined && (value < 0 || value > maximum)) {
-    return "events.scoring.validation.percentage";
-  }
+  const schema = z
+    .number({ error: "events.scoring.validation.finiteNumber" })
+    .min(0, rangeError);
 
-  if (value < 0) {
-    return "events.scoring.validation.nonNegative";
-  }
-
-  return undefined;
+  return maximum === undefined ? schema : schema.max(maximum, rangeError);
 }
+
+const isValidScoringNumber = (value: number, maximum?: number) =>
+  scoringNumberSchema(maximum).safeParse(value).success;
 
 export function hasValidScoringNumbers(scoringRules: EventScoringRules) {
   if (
-    getScoringNumberError(scoringRules.hardCapPoints) ||
-    getScoringNumberError(scoringRules.minTrackingPercentForBonuses, 100)
+    !isValidScoringNumber(scoringRules.hardCapPoints) ||
+    !isValidScoringNumber(scoringRules.minTrackingPercentForBonuses, 100)
   ) {
     return false;
   }
@@ -27,14 +28,14 @@ export function hasValidScoringNumbers(scoringRules: EventScoringRules) {
   return scoringRules.rules.every(
     (rule) =>
       (rule.action.type === "ZERO_BASE" ||
-        !getScoringNumberError(rule.action.points)) &&
+        isValidScoringNumber(rule.action.points)) &&
       rule.conditions.every((condition) => {
         if (condition.type === "NUMERIC") {
-          return !getScoringNumberError(condition.value);
+          return isValidScoringNumber(condition.value);
         }
 
         if (condition.type === "RESPAWN_WINDOW_COVERAGE") {
-          return !getScoringNumberError(condition.value, 100);
+          return isValidScoringNumber(condition.value, 100);
         }
 
         return true;

@@ -17,6 +17,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMembersControllerGetGuildMembers } from "@lootlog/client/main";
 import { SearchInput } from "@/components/ui/search-input";
+import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 
 interface MemberAssignmentModalProps {
   open: boolean;
@@ -31,6 +32,7 @@ interface MemberAssignmentModalProps {
   onAssign: (memberId: number) => void | Promise<void>;
   onUnassign: (memberId: number) => void | Promise<void>;
   disabled?: boolean;
+  enabledAt?: number | null;
   disabledMessage?: string | null;
 }
 
@@ -41,11 +43,14 @@ export const MemberAssignmentModal = ({
   assignedMembers,
   onAssign,
   onUnassign,
-  disabled,
+  disabled = false,
+  enabledAt,
   disabledMessage,
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const { isEnabled } = useAssignmentCountdown(disabled, enabledAt);
+  const isAssignDisabled = !isEnabled;
 
   const [pendingAction, setPendingAction] = useState<{
     kind: "assign" | "unassign";
@@ -169,7 +174,7 @@ export const MemberAssignmentModal = ({
             </div>
 
             <div className="space-y-2">
-              {disabled && disabledMessage && (
+              {isAssignDisabled && disabledMessage && (
                 <div className="flex items-start gap-2 rounded-lg border border-orange-500/20 bg-orange-500/10 p-3">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-orange-500" />
                   <p className="text-xs text-muted-foreground">
@@ -216,14 +221,18 @@ export const MemberAssignmentModal = ({
                           }
                           key={member.id}
                           onClick={() =>
-                            !isAssigned && !disabled && handleAssign(member.id)
+                            !isAssigned &&
+                            !isAssignDisabled &&
+                            handleAssign(member.id)
                           }
                           disabled={
-                            isAssigned || disabled || Boolean(pendingAction)
+                            isAssigned ||
+                            isAssignDisabled ||
+                            Boolean(pendingAction)
                           }
                           className={cn(
                             "h-auto w-full justify-start rounded-none flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
-                            isAssigned || disabled
+                            isAssigned || isAssignDisabled
                               ? "opacity-50 cursor-default bg-muted/30"
                               : "hover:bg-muted/50 cursor-pointer",
                           )}
