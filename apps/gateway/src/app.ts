@@ -206,10 +206,7 @@ class GatewayApplication extends Context.Service<
         config,
         httpClient,
         () => hub.getLocalSockets(),
-        (discordId, userId) =>
-          guilds
-            .invalidate({ discordId, userId })
-            .pipe(Effect.andThen(commands.rebalanceUser(discordId, userId))),
+        (discordId, userId) => commands.rebalanceUser(discordId, userId),
       )
         .run()
         .pipe(Effect.forkScoped);

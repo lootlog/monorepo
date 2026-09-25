@@ -220,7 +220,60 @@ test("failed, timed out or expired refreshes never extend authority", async () =
         yield* Fiber.join(renewal);
       }).pipe(Effect.provide(TestClock.layer())),
     );
-    expect(target.closes).toEqual([1008]);
+    expect(target.closes).toEqual([outcome === "expired" ? 1008 : 1013]);
     expect(target.socket.data.apiKeyLeaseExpiresAt).toBe(0);
   }
 });
+
+test.each(["failure", "defect", "timeout"] as const)(
+  "permission refresh %s suspends only the affected user's keys and preserves successful renewals",
+  async (outcome) => {
+    const unavailable = [socket("first"), socket("second")];
+    const healthy = socket("healthy", "healthy-user", "healthy-discord");
+    const targets = [...unavailable, healthy];
+
+    const leases = new ApiKeyLeases(
+      config,
+      httpClientFromResponses(() =>
+        Effect.succeed(
+          Response.json({
+            keys: targets.map(({ socket: { data } }) => ({
+              keyId: data.apiKeyAccess?.keyId,
+              valid: true,
+              userId: data.userId,
+              discordId: data.discordId,
+              access: data.apiKeyAccess,
+            })),
+          }),
+        ),
+      ),
+      () => targets.map((target) => target.socket),
+      (_discordId, userId) => {
+        if (userId === "healthy-user") return Effect.void;
+
+        if (outcome === "failure") return Effect.fail(new Error("unavailable"));
+
+        if (outcome === "defect") return Effect.die(new Error("unavailable"));
+
+        return Effect.never;
+      },
+      () => 30_000,
+    );
+
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const renewal = yield* leases.renew().pipe(Effect.forkChild);
+        yield* TestClock.adjust("16 seconds");
+        yield* Fiber.join(renewal);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+
+    for (const target of unavailable) {
+      expect(target.closes).toEqual([1013]);
+      expect(target.socket.data.apiKeyLeaseExpiresAt).toBe(0);
+    }
+
+    expect(healthy.closes).toEqual([]);
+    expect(healthy.socket.data.apiKeyLeaseExpiresAt).toBe(90_000);
+  },
+);

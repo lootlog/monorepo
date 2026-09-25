@@ -394,6 +394,9 @@ export class RabbitBridge {
       return this.commands.rebalanceAcrossInstances(
         payload.discordId,
         payload.userId,
+        routingKey === RabbitRoutingKey.GUILDS_MEMBERS_REMOVE
+          ? payload.guildId
+          : undefined,
       );
     }
 
