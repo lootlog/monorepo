@@ -204,6 +204,19 @@ describe.each([
     expect(getReinstallButton()).toBeNull();
   });
 
+  it("keeps permissions unknown after a failed Discord read of a previously synced server", async () => {
+    await renderSettings(Component, async () =>
+      Response.json({
+        ...missingPermissions,
+        status: "STALE",
+        lastError: "fetchChannels: Discord unavailable",
+      }),
+    );
+
+    await screen.findByRole("alert");
+    expect(getReinstallButton()).toBeNull();
+  });
+
   it("stops trusting cached permissions after a background status request fails", async () => {
     const getSync = vi
       .fn<() => Promise<Response>>()
