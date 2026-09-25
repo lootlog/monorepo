@@ -193,6 +193,17 @@ describe.each([
     },
   );
 
+  it("trusts the last successful sync after the snapshot becomes stale", async () => {
+    const { client } = await renderSettings(Component, async () =>
+      Response.json({ ...confirmedPermissions, status: "STALE" }),
+    );
+
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(getReinstallButton()).toBeNull();
+  });
+
   it("stops trusting cached permissions after a background status request fails", async () => {
     const getSync = vi
       .fn<() => Promise<Response>>()
@@ -373,4 +384,33 @@ it("enables notification configuration only while Discord permissions are confir
   await screen.findByRole("alert");
   expect(addTargetButtons.every((button) => button.disabled)).toBe(true);
   expect(getReinstallButton()).toBeNull();
+});
+
+it("keeps the Organization info refresh action mounted while a refresh runs", async () => {
+  let finishRefresh: ((value: Response) => void) | undefined;
+
+  const refresh = new Promise<Response>((resolve) => {
+    finishRefresh = resolve;
+  });
+
+  const { client } = await renderSettings(
+    InfoSettings,
+    async () => Response.json(confirmedPermissions),
+    () => refresh,
+  );
+
+  await waitFor(() => expect(client.isFetching()).toBe(0));
+
+  const refreshButton = screen.getByRole("button", {
+    name: "settings.guildInfo.refresh",
+  });
+
+  fireEvent.click(refreshButton);
+  await waitFor(() => expect(client.isMutating()).toBe(1));
+  expect(refreshButton.isConnected).toBe(true);
+  expect(screen.queryByRole("status")).toBeNull();
+
+  finishRefresh?.(Response.json(confirmedPermissions));
+  await waitFor(() => expect(client.isMutating()).toBe(0));
+  expect(refreshButton.isConnected).toBe(true);
 });
