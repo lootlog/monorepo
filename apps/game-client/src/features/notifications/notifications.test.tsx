@@ -71,21 +71,3 @@ it("keeps notifications when the window closes and empties it only on clear", ()
   expect(useNotificationsStore.getState().notifications).toEqual([]);
   expect(screen.queryByText("Pierwsza")).not.toBeInTheDocument();
 });
-
-it("marks the notifications as not current while the connection is down", async () => {
-  render(<Notifications />, { wrapper: test.wrapper });
-  test.open();
-  // Joining without an access policy clears notifications, so they arrive after it.
-  await test.join();
-  act(seedOpenWindow);
-  vi.useFakeTimers();
-
-  act(() => test.wire.close());
-  act(() => vi.advanceTimersByTime(1000));
-  act(() => vi.advanceTimersByTime(0));
-
-  expect(
-    screen.getByText("Połączenie przerwane, ponowne łączenie…"),
-  ).toBeVisible();
-  expect(screen.getByText("Pierwsza")).toBeVisible();
-});

@@ -10,20 +10,17 @@ import type { RealtimeConnectionStatus } from "@/lib/realtime-connection-status"
 
 type ConnectionStatusStripProps = {
   className?: string;
-  /**
-   * A refresh of already loaded data failed; shows `errorLabel` with retry.
-   * Windows whose data arrives only over the realtime gateway omit it.
-   */
-  error?: boolean;
-  errorLabel?: string;
+  /** A refresh of already loaded data failed; shows `errorLabel` with retry. */
+  error: boolean;
+  errorLabel: string;
   /**
    * Data is on screen and stays current only through the realtime gateway,
    * so its connection state is worth showing.
    */
   hasData: boolean;
   /** Loaded data is being refreshed. */
-  refreshing?: boolean;
-  refreshingLabel?: string;
+  refreshing: boolean;
+  refreshingLabel: string;
   onRetry?: () => void;
 };
 
@@ -96,11 +93,11 @@ const resolveNotice = ({
  */
 export const ConnectionStatusStrip: FC<ConnectionStatusStripProps> = ({
   className,
-  error = false,
-  errorLabel = "",
+  error,
+  errorLabel,
   hasData,
-  refreshing = false,
-  refreshingLabel = "",
+  refreshing,
+  refreshingLabel,
   onRetry,
 }) => {
   const { t } = useTranslation("common");

@@ -7,10 +7,6 @@
     "party": "Grupa:",
     "partyFull": "pełna"
   },
-  "states": {
-    "refreshError": "Nie udało się odświeżyć zbiórki",
-    "refreshing": "Odświeżanie zbiórki"
-  },
   "actions": {
     "inviteAll": "Zaproś wszystkich",
     "ending": "Anulowanie…",
