@@ -42,7 +42,11 @@ function ParentForm({
         name="scoringRules"
         rules={{ validate: hasValidScoringNumbers }}
         render={({ field }) => (
-          <ScoringRulesEditor value={field.value} onChange={field.onChange} />
+          <ScoringRulesEditor
+            value={field.value}
+            onChange={field.onChange}
+            ref={field.ref}
+          />
         )}
       />
       <button type="submit">Save</button>
@@ -152,12 +156,12 @@ it.each([
     fireEvent.click(screen.getByRole("button", { name: /Penalty/ }));
 
     const threshold = screen.getByRole("spinbutton", {
-      name: "events.scoring.conditionLabel.value",
+      name: "events.scoring.fieldLabel.conditionValue",
     });
 
     fireEvent.change(threshold, { target: { value: "" } });
     fireEvent.submit(screen.getByRole("form"));
-    await screen.findByRole("alert");
+    await waitFor(() => expect(document.activeElement).toBe(threshold));
     expect(onSave).not.toHaveBeenCalled();
 
     fireEvent.change(threshold, { target: { value: "25" } });
@@ -193,12 +197,12 @@ it.each(["SET_BASE", "ADD_BONUS"] as const)(
     fireEvent.click(screen.getByRole("button", { name: /Award/ }));
 
     const points = screen.getByRole("spinbutton", {
-      name: "events.scoring.conditionLabel.points",
+      name: "events.scoring.fieldLabel.actionPoints",
     });
 
     fireEvent.change(points, { target: { value: "" } });
     fireEvent.submit(screen.getByRole("form"));
-    await screen.findByRole("alert");
+    await waitFor(() => expect(document.activeElement).toBe(points));
     expect(onSave).not.toHaveBeenCalled();
 
     fireEvent.change(points, { target: { value: "0.75" } });
@@ -227,7 +231,7 @@ it.each([
 
     fireEvent.change(input, { target: { value } });
     fireEvent.submit(screen.getByRole("form"));
-    await screen.findByRole("alert");
+    await waitFor(() => expect(document.activeElement).toBe(input));
     expect(onSave).not.toHaveBeenCalled();
 
     fireEvent.change(input, { target: { value: "0" } });

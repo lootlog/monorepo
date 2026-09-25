@@ -3,7 +3,7 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
-## Unreleased — Notification schedule updates
+## Unreleased — Notification schedules and role level ranges
 
 Notification rule create and update requests accept `scheduledUntil: null`.
 For a recurring rule, `null` removes the end date; omitting the field preserves
@@ -12,9 +12,14 @@ Send only fields relevant to the selected schedule type. For daily and weekly
 schedules, omit `scheduledAt` to calculate the next occurrence from the selected
 time, weekday and timezone when the schedule changes.
 
-Deploy the API before clients begin sending `null`. Existing requests remain
+Role update requests reject `lvlRangeFrom` and `lvlRangeTo` values that are not
+integers from 0 to 500, and ranges where `lvlRangeTo` is lower than
+`lvlRangeFrom`, with `400 Bad Request`. A role saved earlier with a reversed range
+must receive a corrected range on its next update.
+
+Deploy the API before clients begin sending `null`. Existing valid requests remain
 compatible, and no database migration is required. Generated SDK types include
-this change for the next SDK release.
+these changes for the next SDK release.
 
 ## 2026-09-17 — SDK 0.1.1
 

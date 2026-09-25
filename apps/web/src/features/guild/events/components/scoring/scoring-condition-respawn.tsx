@@ -60,7 +60,10 @@ export const ScoringConditionRespawn = ({
               control={control}
               register={register}
               name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
-              label={t("events.scoring.conditionLabel.value")}
+              label={t("events.scoring.fieldLabel.conditionValue", {
+                rule: ruleIndex + 1,
+                condition: conditionIndex + 1,
+              })}
               max={100}
             />
             <span className="text-[11px] text-muted-foreground/50 shrink-0 font-mono">

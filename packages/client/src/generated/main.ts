@@ -1328,7 +1328,15 @@ export const UpdateRolePermissionsDtoPermissionsItem = {
 
 export interface UpdateRolePermissionsDto {
   permissions: UpdateRolePermissionsDtoPermissionsItem[];
+  /**
+     * @minimum 0
+     * @maximum 500
+     */
   lvlRangeFrom: number;
+  /**
+     * @minimum 0
+     * @maximum 500
+     */
   lvlRangeTo: number;
 }
 

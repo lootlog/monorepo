@@ -85,7 +85,27 @@ const getEmptyRuleFormValues = (): RuleFormValues => ({
   enabled: true,
 });
 
-const getScheduledMessagePayload = (values: RuleFormValues) => {
+const getScheduledUntilPayload = (
+  values: RuleFormValues,
+  isRecurring: boolean,
+  savedScheduledUntil: string | null | undefined,
+) => {
+  if (!isRecurring) return undefined;
+
+  const scheduledUntil = parseDateTimeLocalInputToIsoString(
+    values.scheduledUntil,
+    GUILD_NOTIFICATION_TIMEZONE,
+  );
+
+  if (scheduledUntil) return scheduledUntil;
+
+  return savedScheduledUntil ? null : undefined;
+};
+
+const getScheduledMessagePayload = (
+  values: RuleFormValues,
+  savedScheduledUntil: string | null | undefined,
+) => {
   const visibleFields = getNotificationFieldVisibility(
     values.triggerType,
     values.scheduleIntervalType ?? NotificationScheduleIntervalType.ONCE,
@@ -111,12 +131,11 @@ const getScheduledMessagePayload = (values: RuleFormValues) => {
       visibleFields.showWeekdayField && values.scheduleWeekday !== ""
         ? Number(values.scheduleWeekday)
         : undefined,
-    scheduledUntil: visibleFields.isRecurring
-      ? (parseDateTimeLocalInputToIsoString(
-          values.scheduledUntil,
-          GUILD_NOTIFICATION_TIMEZONE,
-        ) ?? null)
-      : null,
+    scheduledUntil: getScheduledUntilPayload(
+      values,
+      visibleFields.isRecurring,
+      savedScheduledUntil,
+    ),
     scheduleTimezone: GUILD_NOTIFICATION_TIMEZONE,
   };
 };
@@ -316,19 +335,31 @@ export const useNotificationRuleForm = () => {
     defaultValues: getEmptyRuleFormValues(),
   });
 
-  const initializedDraft = useRef<string | undefined>(undefined);
+  const initializedDraft = useRef<
+    { identity: string; rule: typeof rule } | undefined
+  >(undefined);
 
   useEffect(() => {
+    const initialized = initializedDraft.current;
+
     if (
-      initializedDraft.current === draftIdentity ||
+      (initialized?.identity === draftIdentity && initialized.rule === rule) ||
       (ruleId !== undefined && !rule)
     ) {
       return;
     }
 
-    initializedDraft.current = draftIdentity;
-    form.reset(getRuleFormDefaultValues(rule));
-    setFormResetKey((prev) => prev + 1);
+    initializedDraft.current = { identity: draftIdentity, rule };
+
+    // A refetch of the same rule refreshes untouched fields and keeps edits.
+    const isRefetch = initialized?.identity === draftIdentity;
+
+    const keepsContentDraft =
+      isRefetch && form.getFieldState("contentTemplate").isDirty;
+
+    form.reset(getRuleFormDefaultValues(rule), { keepDirtyValues: isRefetch });
+
+    if (!keepsContentDraft) setFormResetKey((prev) => prev + 1);
   }, [draftIdentity, form, rule, ruleId]);
 
   const mergedTargets = mergeGuildNotificationTargets(targets, extraTargets);
@@ -475,7 +506,7 @@ export const useNotificationRuleForm = () => {
       values.triggerType === NotificationTriggerType.SCHEDULED_MESSAGE
         ? {
             ...basePayload,
-            ...getScheduledMessagePayload(values),
+            ...getScheduledMessagePayload(values, rule?.scheduledUntil),
           }
         : (() => {
             const npcFilterPayload = buildNotificationRuleNpcFilterPayload(

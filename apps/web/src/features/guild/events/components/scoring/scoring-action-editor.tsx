@@ -82,7 +82,9 @@ export const ScoringActionEditor = ({
               control={control}
               register={register}
               name={`scoringRules.rules.${ruleIndex}.action.points`}
-              label={t("events.scoring.conditionLabel.points")}
+              label={t("events.scoring.fieldLabel.actionPoints", {
+                rule: ruleIndex + 1,
+              })}
             />
             <span className="text-[11px] text-muted-foreground/50 shrink-0">
               pkt

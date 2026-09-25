@@ -144,14 +144,13 @@ const renderEditedRule = async (
 it.each([
   {
     interval: "DAILY" as const,
-    schedule: { scheduleTimeOfDay: "18:30", scheduledUntil: null },
+    schedule: { scheduleTimeOfDay: "18:30" },
   },
   {
     interval: "WEEKLY" as const,
     schedule: {
       scheduleTimeOfDay: "18:30",
       scheduleWeekday: 3,
-      scheduledUntil: null,
     },
   },
   {
@@ -159,12 +158,11 @@ it.each([
     schedule: {
       scheduledAt: "2099-09-02T10:00:00.000Z",
       scheduleIntervalValue: 2,
-      scheduledUntil: null,
     },
   },
   {
     interval: "ONCE" as const,
-    schedule: { scheduledAt: "2099-09-02T10:00:00.000Z", scheduledUntil: null },
+    schedule: { scheduledAt: "2099-09-02T10:00:00.000Z" },
   },
 ])(
   "submits only visible schedule values for $interval",
@@ -223,7 +221,7 @@ it("sends an explicit clear when a saved recurring end date is removed", async (
   expect(await requests[0]?.json()).toMatchObject({ scheduledUntil: null });
 });
 
-it("preserves a draft across rule refetches and initializes a different rule", async () => {
+it("preserves edited fields and refreshes untouched fields across rule refetches", async () => {
   const { result, client, router, rules } = await renderEditedRule();
 
   act(() => {
@@ -239,7 +237,16 @@ it("preserves a draft across rule refetches and initializes a different rule", a
       getNotificationsGuildControllerGetGuildRulesQueryKey({
         guildId: "test-org",
       }),
-      { items: [{ ...scheduledRule, name: "Changed remotely" }, rules[1]] },
+      {
+        items: [
+          {
+            ...scheduledRule,
+            name: "Changed remotely",
+            scheduledAt: "2099-09-03T10:00:00.000Z",
+          },
+          rules[1],
+        ],
+      },
     );
   });
 
@@ -249,6 +256,7 @@ it("preserves a draft across rule refetches and initializes a different rule", a
   expect(result.current.form.getValues()).toMatchObject({
     name: "Unsaved name",
     contentTemplate: "Unsaved content",
+    scheduledAt: "2099-09-03T12:00",
   });
   expect(result.current.npcSearch).toBe("smok");
 

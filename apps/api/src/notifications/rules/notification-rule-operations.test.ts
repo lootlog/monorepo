@@ -33,14 +33,15 @@ test("preserves an omitted end date and persists an explicitly cleared end date"
 
     const decode = Schema.decodeUnknownSync(UpdateNotificationRuleRequest);
 
+    const beforeUpdate = Date.now();
     await boundary.run(
       rules.updateUser("user-1", 7, decode({ name: "Edited message" })),
     );
-    expect(
-      (await boundary.run(rules.listUser("user-1")))[0]?.scheduledUntil,
-    ).toEqual(endDate);
+    const [edited] = await boundary.run(rules.listUser("user-1"));
 
-    const beforeUpdate = Date.now();
+    expect(edited?.scheduledUntil).toEqual(endDate);
+    expect(edited?.scheduledAt?.getTime()).toBeGreaterThan(beforeUpdate);
+
     await boundary.run(
       rules.updateUser("user-1", 7, decode({ scheduledUntil: null })),
     );
@@ -53,7 +54,7 @@ test("preserves an omitted end date and persists an explicitly cleared end date"
     );
 
     expect(stored?.scheduledUntil).toBeNull();
-    expect(stored?.scheduledAt?.getTime()).toBeGreaterThan(beforeUpdate);
+    expect(stored?.scheduledAt).toEqual(edited?.scheduledAt);
     expect(
       (await boundary.run(rules.listUser("user-1")))[0]?.scheduledUntil,
     ).toBeNull();

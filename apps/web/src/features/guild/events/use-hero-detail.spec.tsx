@@ -21,6 +21,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
+import { MemberAssignmentModal } from "./components/dialogs/member-assignment-modal";
 import { MapCard } from "./components/maps/map-card";
 import { STATUS_STYLES } from "./components/maps/map-status";
 import { useHeroDetail } from "./use-hero-detail";
@@ -97,6 +98,11 @@ it.each(["self", "manager"] as const)(
 
             if (path.endsWith("/timers")) return Response.json([timer]);
 
+            if (path.endsWith("/members"))
+              return Response.json([
+                { id: 7, name: "Gracz", avatar: null, userId: "user-7" },
+              ]);
+
             return Response.json([]);
           },
         },
@@ -127,10 +133,17 @@ it.each(["self", "manager"] as const)(
             <button onClick={() => detail.handleManageClick(map.id)}>
               Select member
             </button>
-            {detail.assignmentOpen && (
-              <button onClick={() => void detail.handleAssignFromModal(7)}>
-                Assign member
-              </button>
+            {detail.selectedMap && (
+              <MemberAssignmentModal
+                open={detail.assignmentOpen}
+                onOpenChange={detail.setAssignmentOpen}
+                mapName={detail.selectedMap.mapName}
+                assignedMembers={detail.selectedMap.assignedMembers}
+                onAssign={detail.handleAssignFromModal}
+                onUnassign={detail.handleUnassignFromModal}
+                disabled={!detail.assignmentAllowed}
+                enabledAt={detail.assignmentEnabledAt}
+              />
             )}
           </>
         );
@@ -162,17 +175,20 @@ it.each(["self", "manager"] as const)(
     if (mode === "manager")
       fireEvent.click(screen.getByRole("button", { name: "Select member" }));
 
+    const assignControl =
+      mode === "self"
+        ? selfAssign
+        : await screen.findByRole("button", { name: /Gracz/ });
+
+    expect(assignControl.hasAttribute("disabled")).toBe(true);
+
     vi.setSystemTime(new Date("2026-09-25T12:55:00Z"));
     await waitFor(
-      () => expect(selfAssign.hasAttribute("disabled")).toBe(false),
+      () => expect(assignControl.hasAttribute("disabled")).toBe(false),
       { timeout: 2000 },
     );
     await act(async () => {
-      fireEvent.click(
-        mode === "self"
-          ? selfAssign
-          : screen.getByRole("button", { name: "Assign member" }),
-      );
+      fireEvent.click(assignControl);
     });
     await waitFor(() => expect(assignments).toHaveLength(1));
     const assignment = assignments[0];
