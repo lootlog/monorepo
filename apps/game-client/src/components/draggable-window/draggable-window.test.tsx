@@ -534,6 +534,55 @@ describe("DraggableWindow", () => {
     });
   });
 
+  it("keeps a window on-screen when only the visual viewport shrinks", async () => {
+    await resizeViewport(1600, 1000);
+
+    // Pinch zoom and on-screen keyboards resize the visual viewport without a
+    // window resize event.
+    const visualViewport = Object.assign(new EventTarget(), {
+      width: 1600,
+      height: 1000,
+    });
+
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: visualViewport,
+    });
+
+    try {
+      useWindowsStore.setState((state) => ({
+        timers: {
+          ...state.timers,
+          position: { x: 900, y: 600 },
+          hasDefinedPosition: true,
+          size: { width: 242, height: 240 },
+        },
+      }));
+
+      const { container } = render(
+        <DraggableWindow isOpen id="timers" title="Timery">
+          <div>Treść</div>
+        </DraggableWindow>,
+      );
+
+      const windowElement = container.querySelector("#ll-timers");
+
+      expect(windowElement).toHaveStyle({ left: "900px", top: "600px" });
+
+      visualViewport.width = 800;
+      visualViewport.height = 600;
+      await act(() => {
+        visualViewport.dispatchEvent(new Event("resize"));
+      });
+
+      await waitFor(() => {
+        expect(windowElement).toHaveStyle({ left: "558px", top: "360px" });
+      });
+    } finally {
+      Reflect.deleteProperty(window, "visualViewport");
+    }
+  });
+
   it("closes on Escape only while focus is inside the window and keeps the key from the game", () => {
     const onClose = vi.fn<() => void>();
     const gameKeyDown = vi.fn<(event: KeyboardEvent) => void>();

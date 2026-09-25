@@ -62,6 +62,9 @@ const handleWindowResize = () => {
 const subscribe = (listener: () => void) => {
   if (listeners.size === 0) {
     window.addEventListener("resize", handleWindowResize);
+    // Pinch zoom and on-screen keyboards resize only the visual viewport,
+    // which the snapshot is measured from.
+    window.visualViewport?.addEventListener("resize", handleWindowResize);
   }
 
   listeners.add(listener);
@@ -72,6 +75,7 @@ const subscribe = (listener: () => void) => {
     if (listeners.size > 0) return;
 
     window.removeEventListener("resize", handleWindowResize);
+    window.visualViewport?.removeEventListener("resize", handleWindowResize);
     window.clearTimeout(resizeTimeoutId);
     resizeTimeoutId = undefined;
     // Nothing tracks resizes while unsubscribed, so the next reader re-measures.

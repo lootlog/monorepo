@@ -1,10 +1,6 @@
 import { useDrag } from "@/hooks/ui/use-drag";
 import type { WindowAnimationPhase } from "@/hooks/ui/use-window-presence";
-import {
-  clampToViewport,
-  useWindowViewport,
-  type WindowSize,
-} from "@/hooks/ui/window-viewport";
+import type { WindowSize } from "@/hooks/ui/window-viewport";
 import {
   useWindowsStore,
   sanitizeMaxContentHeight,
@@ -13,7 +9,7 @@ import {
 } from "@/store/windows.store";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { resolveDefaultWindowPosition } from "./window-default-placement";
+import { useWindowDisplayPosition } from "./use-window-display-position";
 import { cancelWindowResizeSession } from "./window-resize-session";
 
 export type DraggableWindowFrameProps = {
@@ -594,7 +590,6 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
   }, [animationPhase, onWindowAnimationEnd]);
 
   const draggableRef = useRef<HTMLDivElement>(null);
-  const viewport = useWindowViewport();
 
   // Auto-sized windows only know their size after layout; the observer keeps
   // placement and clamping on the size the player actually sees.
@@ -627,24 +622,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     return () => observer.disconnect();
   }, []);
 
-  // Only a drag or another explicit action saves a position. Until then the
-  // window sits at its viewport-relative default, and whatever is saved is
-  // clamped for display only, so a briefly smaller browser never rewrites it
-  // and a locked window can never be stranded off-screen.
-  const savedPosition = useWindowsStore(
-    useShallow((state) =>
-      state[id].hasDefinedPosition
-        ? state[id].position
-        : resolveDefaultWindowPosition(
-            id,
-            (windowId) =>
-              windowId === id ? renderedSize : state[windowId].size,
-            viewport,
-          ),
-    ),
-  );
-
-  const position = clampToViewport(savedPosition, renderedSize, viewport);
+  const position = useWindowDisplayPosition(id, renderedSize);
 
   const onDragStop = (droppedPosition: { x: number; y: number }) => {
     setPositionInStore(id, droppedPosition);
