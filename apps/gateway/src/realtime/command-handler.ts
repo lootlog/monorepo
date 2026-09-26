@@ -555,7 +555,7 @@ export class CommandHandler {
           Effect.map((lastSeen) => ({ lastSeen })),
         );
       case "connection.ping":
-        return Effect.void;
+        return Effect.succeed({});
       case "presence.publish":
         return requireJoined.pipe(
           Effect.andThen(this.presence.publish(socket, command.data)),
