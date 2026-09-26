@@ -7,16 +7,9 @@ type ListRowProps = {
   /** Row background. Rows without a colour let the window show through. */
   fill?: string;
   id?: string;
-  /**
-   * Every other row gets a faint light veil, so neighbouring rows of one
-   * colour stay apart while keeping their hue.
-   */
-  isAlternateRow?: boolean;
   onDoubleClick?: () => void;
   style?: CSSProperties;
 };
-
-const ALTERNATE_ROW_VEIL = "white 6%";
 
 /** Mixes an overlay such as `black 40%` into a colour, keeping its alpha. */
 export const veilColor = (color: string, overlay: string) =>
@@ -31,7 +24,6 @@ export const ListRow: FC<ListRowProps> = ({
   className,
   fill = "transparent",
   id,
-  isAlternateRow = false,
   onDoubleClick,
   style,
 }) => (
@@ -46,9 +38,7 @@ export const ListRow: FC<ListRowProps> = ({
     // "--ll-list-row-fill" is consumed by this element's own classes.
     style={
       {
-        "--ll-list-row-fill": isAlternateRow
-          ? veilColor(fill, ALTERNATE_ROW_VEIL)
-          : fill,
+        "--ll-list-row-fill": fill,
         ...style,
       } as CSSProperties
     }
