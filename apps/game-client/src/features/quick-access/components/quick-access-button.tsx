@@ -30,6 +30,7 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   ...buttonProps
 }) => (
   <IconButton
+    variant="taskbar"
     label={label}
     tooltip={
       <div className="ll:flex ll:items-center ll:gap-2">
