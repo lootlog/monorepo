@@ -85,6 +85,30 @@ describe("useHotkeys", () => {
     expect(useWindowsStore.getState()["quick-access"].open).toBe(true);
   });
 
+  it("keeps a handled hotkey from the game's key listener but passes other keys", () => {
+    const gameKeyDown = vi.fn<(event: KeyboardEvent) => void>();
+    document.addEventListener("keydown", gameKeyDown);
+    onTestFinished(() => document.removeEventListener("keydown", gameKeyDown));
+    renderHook(() => useHotkeys());
+
+    act(() => {
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "S",
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "S", bubbles: true }),
+      );
+    });
+
+    expect(useWindowsStore.getState().command.open).toBe(true);
+    expect(gameKeyDown).toHaveBeenCalledOnce();
+    expect(gameKeyDown.mock.calls[0]?.[0].shiftKey).toBe(false);
+  });
+
   it("keeps persisted binding precedence when legacy bindings overlap", () => {
     const binding = { key: "X", shift: false, ctrl: false, alt: false };
     useHotkeysStore.setState(
