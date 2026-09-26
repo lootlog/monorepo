@@ -32,7 +32,7 @@ export const ChatWindowActions = ({
     : t("integration.attach");
 
   return (
-    <div className="ll:flex ll:shrink-0 ll:items-center">
+    <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-0.5">
       <ChatSettingsButton />
       <IconButton
         label={filterLabel}
