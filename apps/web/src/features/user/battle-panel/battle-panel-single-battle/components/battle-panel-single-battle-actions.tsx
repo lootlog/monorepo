@@ -1,14 +1,10 @@
+import { createBattleVisibilityInvalidations } from "../../battle-visibility-queries";
 import type { Battle } from "@/lib/api/battlelog-types";
 import { ROUTES } from "@/config/routes";
 import { useBattleSharing } from "../hooks/use-battle-sharing";
 import {
-  invalidateBattlesControllerGetBattle,
   invalidateBattlesControllerGetBattleRawData,
-  invalidateBattlesControllerGetDashboardBattles,
   useBattlesControllerDeleteBattle,
-  invalidatePublicBattlesControllerGetPublicBattle,
-  invalidatePublicBattlesControllerGetPublicBattleRaw,
-  invalidatePublicBattlesControllerGetPublicBattleTimeline,
 } from "@lootlog/client/battlelog";
 
 import { Button } from "@lootlog/ui/components/button";
@@ -83,25 +79,10 @@ export const BattlePanelSingleBattleActions: FC<
 
       try {
         await Promise.allSettled([
-          invalidateBattlesControllerGetDashboardBattles(queryClient),
-          invalidateBattlesControllerGetBattle(queryClient, {
-            battleId: battle.id,
-          }),
+          ...createBattleVisibilityInvalidations(queryClient, [battle.id]),
           invalidateBattlesControllerGetBattleRawData(queryClient, {
             battleId: battle.id,
           }),
-          invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
-            battleId: battle.id,
-          }),
-          invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
-            battleId: battle.id,
-          }),
-          invalidatePublicBattlesControllerGetPublicBattleTimeline(
-            queryClient,
-            {
-              battleId: battle.id,
-            },
-          ),
         ]);
         await navigate({ to: ROUTES.user.battlePanel.base });
       } catch {
