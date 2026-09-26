@@ -129,6 +129,10 @@ export const isAirTagSubscriptionAcknowledgement = Schema.is(
 export const isAirTagObservationAcknowledgement =
   Schema.is(AirTagObservationAck);
 
+export const hasRealtimeCapabilities = Schema.is(
+  Schema.Struct({ capabilities: Schema.Array(Schema.NonEmptyString) }),
+);
+
 export const isPresenceFetchResult = Schema.is(
   Schema.Struct({
     presences: Schema.optional(PresenceSnapshot.fields.presences),

@@ -28,6 +28,10 @@ export const REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY =
 
 export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 
+// Listed in `session.joined` capabilities. Older gateways close the socket on an
+// unknown command, so clients send `connection.ping` only when it is listed.
+export const REALTIME_PING_CAPABILITY = "connection.ping";
+
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
 // Browser-permitted application codes; reasons are deliberately static and contain no identity.
@@ -193,6 +197,9 @@ const HeartbeatCommand = command(
 
 const PresencePublishCommand = command("presence.publish", PublishedPresence);
 
+// Answered without I/O, so the round trip measures only the connection.
+const PingCommand = command("connection.ping", Schema.Struct({}));
+
 const PresenceFetchCommand = command(
   "presence.fetch",
   Schema.Struct({
@@ -267,6 +274,7 @@ export { MapPingAckSchema };
 export const ClientCommand = Schema.Union([
   SessionJoinCommand,
   HeartbeatCommand,
+  PingCommand,
   PresencePublishCommand,
   PresenceFetchCommand,
   SubscribeCommand,
@@ -332,6 +340,7 @@ export const ServerEvent = Schema.Union([
       organizationIds: Schema.Array(Schema.NonEmptyString),
       subscriptionScopes: Schema.Array(SubscriptionScope),
       accessPolicy: Schema.optional(AccessPolicySnapshot),
+      capabilities: Schema.optional(Schema.Array(Schema.NonEmptyString)),
     }),
   ),
   serverEvent(

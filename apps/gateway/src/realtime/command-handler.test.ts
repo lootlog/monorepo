@@ -935,6 +935,54 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
+  test("advertises connection.ping on join and answers it for game and API key sockets", async () => {
+    const { handler, hub, presence } = setup();
+    const game = makeSocket().socket;
+    const integration = makeSocket().socket;
+    integration.data.apiKeyAccess = {
+      keyId: "k",
+      organizationIds: ["organization-1"],
+      mode: "read",
+      personalData: false,
+      expiresAt: null,
+    };
+    integration.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+
+    await Effect.runPromise(
+      handler.handle(
+        game,
+        Buffer.from(
+          encode({ v: 1, type: "session.join", requestId: "join", data: {} }),
+        ),
+      ),
+    );
+    expect(hub.responses[0]).toMatchObject({
+      data: { capabilities: ["connection.ping"] },
+    });
+
+    for (const [socket, requestId] of [
+      [game, "game-ping"],
+      [integration, "integration-ping"],
+    ] as const)
+      await Effect.runPromise(
+        handler.handle(
+          socket,
+          Buffer.from(
+            encode({ v: 1, type: "connection.ping", requestId, data: {} }),
+          ),
+        ),
+      );
+    expect(hub.responses.slice(1)).toEqual([
+      expect.objectContaining({ requestId: "game-ping", status: "success" }),
+      expect.objectContaining({
+        requestId: "integration-ping",
+        status: "success",
+      }),
+    ]);
+    // FakePresence dies on a heartbeat, so success also proves no presence I/O.
+    expect(presence.reconciled).toEqual([]);
+  });
+
   test.each(["local", "remote"])(
     "rebalances with the active socket on %s preserve refreshed shared permissions for reconnects",
     async (activeInstance) => {

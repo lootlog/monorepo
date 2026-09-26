@@ -16,7 +16,6 @@
     "emptyGuilds": "Nie należysz do żadnego Lootloga."
   },
   "connection": {
-    "ping": "{{ping}} ms",
     "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
     "organizations": "Połączone Lootlogi",
     "reconnect": "Połącz ponownie"

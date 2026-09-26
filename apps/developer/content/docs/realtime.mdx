@@ -78,6 +78,20 @@ same collection twice. Deploying the gateway first enables the bandwidth saving
 as soon as clients opt in. The existing permission and location filters apply to
 both delivery modes.
 
+## Connection latency
+
+`session.joined` and the `session.join` response may list `capabilities`. When
+the list contains `connection.ping`, the gateway answers a `connection.ping`
+command with an empty `data` object immediately, without touching presence or
+other state. Send it only when the capability is listed: older gateways close
+the connection on an unknown command.
+
+The SDK's `probeLatency()` sends one ping when the gateway supports it and the
+client is `ready`, and reports the round trip through
+`subscribeHeartbeatLatency`. Without the capability, that subscription keeps
+reporting the presence heartbeat, which runs every 25 seconds. Probe only while
+the latency is on screen instead of on a fixed fast interval.
+
 ## Disconnection
 
 Mark data as stale when the connection is lost. The SDK restores subscriptions after reconnecting; fetch the current state over HTTP at that point. Do not assume you will receive every event from the outage.

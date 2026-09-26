@@ -72,7 +72,12 @@ export const createTimerRealtimeFixture = () => {
           v: 1,
           requestId: frame.requestId,
           status: "success",
-          data: { connectionId: "connection-1", organizationIds, accessPolicy },
+          data: {
+            connectionId: "connection-1",
+            organizationIds,
+            accessPolicy,
+            capabilities: ["connection.ping"],
+          },
         });
       }
     });
