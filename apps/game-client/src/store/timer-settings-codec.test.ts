@@ -34,6 +34,9 @@ const storedSettings = {
   defaultColorNames: { red: "Czerwony" },
   overriddenDefaultColors: { red: { ...color, extra: true } },
   hiddenDefaultColors: ["blue"],
+  customLists: {
+    "list-1": { id: "list-1", name: "E2", npcNames: ["Tanroth"], extra: 1 },
+  },
   timersFilters: {
     guild: {
       minLvl: 1,
@@ -65,12 +68,17 @@ describe("decodeTimerSettings", () => {
       defaultColorNames: storedSettings.defaultColorNames,
       overriddenDefaultColors: { red: color },
       hiddenDefaultColors: ["blue"],
+      customLists: {
+        "list-1": { id: "list-1", name: "E2", npcNames: ["Tanroth"] },
+      },
       timersFilters: {
         guild: {
           minLvl: 1,
           maxLvl: 300,
           selectedNpcTypes: ["HERO", "TITAN"],
           selectedColors: ["red"],
+          // Filters stored before timer lists existed keep decoding.
+          selectedLists: [],
         },
       },
       timerFiltersEnabled: true,
@@ -141,6 +149,9 @@ describe("decodeTimerSettings", () => {
       defaultColorNames: storedSettings.defaultColorNames,
       overriddenDefaultColors: { red: color },
       hiddenDefaultColors: undefined,
+      customLists: {
+        "list-1": { id: "list-1", name: "E2", npcNames: ["Tanroth"] },
+      },
       timersFilters: undefined,
       timerFiltersEnabled: undefined,
       colorFiltersEnabled: false,

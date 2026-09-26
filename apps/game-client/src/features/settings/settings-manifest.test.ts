@@ -58,6 +58,7 @@ describe("settings manifest persistence references", () => {
       "timer-behavior",
       "timer-appearance",
       "timer-colors",
+      "timer-lists",
       "hidden-timers",
     ]);
     expect(subsectionsOf("notifications")).toEqual(["notification-rules"]);

@@ -27,6 +27,7 @@
     "npcColors": "Kolory NPC",
     "timerAppearance": "Wygląd",
     "timerColors": "Kolory",
+    "timerLists": "Listy",
     "timerBehavior": "Działanie",
     "catching": "Zakres zbierania",
     "notificationRules": "Reguły",
@@ -417,6 +418,17 @@
       "addButton": "Dodaj",
       "hiddenCount": "Ukryte ({{count}})",
       "restoreColorTitle": "Przywróć kolor"
+    },
+    "lists": {
+      "title": "Twoje listy",
+      "description": "Własne listy timerów do szybkiego filtrowania. Jeden timer może być na kilku listach.",
+      "emptyState": "Nie masz jeszcze list. Utwórz listę tutaj albo dodaj timer do nowej listy prawym przyciskiem myszy w oknie timerów.",
+      "addTitle": "Utwórz listę",
+      "renameTitle": "Zmień nazwę listy",
+      "renameButton": "Zapisz",
+      "deleteTitle": "Usuń listę",
+      "removeTimerTitle": "Usuń z listy",
+      "emptyList": "Lista jest pusta. Timer dodasz prawym przyciskiem myszy w oknie timerów."
     }
   },
   "catching": {
