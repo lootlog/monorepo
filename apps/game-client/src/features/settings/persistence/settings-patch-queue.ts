@@ -1,8 +1,8 @@
 import {
   collectLeafPaths,
-  isSettingsRecord,
   pathsOverlap,
   setPath,
+  unsetPath,
 } from "@lootlog/domain/settings-paths";
 import { groupBy, isEqual } from "es-toolkit";
 import type { QueryKey } from "@tanstack/react-query";
@@ -48,73 +48,55 @@ export type SettingsPatchQueue = {
 const operationKey = (operation: SettingsOperation) =>
   `${operation.domain}:${operation.scope.type}:${operation.scope.id}`;
 
-const mergeSet = (
-  current: SettingsOperation["set"],
-  incoming: SettingsOperation["set"],
-): SettingsOperation["set"] => {
-  const merged = structuredClone(current);
-
-  for (const { path, value } of collectLeafPaths(incoming)) {
-    setPath(merged, path, value);
-  }
-
-  return merged;
-};
-
-const removePath = (set: SettingsOperation["set"], path: string) => {
-  const [head, ...rest] = path.split(".");
-
-  if (!head || !(head in set)) return;
-
-  if (rest.length === 0) {
-    delete set[head];
-
-    return;
-  }
-
-  const nested = set[head];
-
-  if (isSettingsRecord(nested)) removePath(nested, rest.join("."));
-};
-
 const mergeOperations = (
   current: SettingsOperation,
   incoming: SettingsOperation,
-): SettingsOperation => {
-  const set = mergeSet(current.set, incoming.set);
+): SettingsOperation | undefined => {
+  const currentPaths = [
+    ...collectLeafPaths(current.set).map(({ path }) => path),
+    ...current.unset,
+  ];
 
-  for (const path of incoming.unset) removePath(set, path);
+  const incomingEntries = collectLeafPaths(incoming.set);
 
-  const unset = [
-    ...current.unset.filter(
-      (path) =>
-        !incoming.unset.includes(path) &&
-        !Object.keys(incoming.set).some(
-          (key) => path === key || path.startsWith(`${key}.`),
-        ),
-    ),
+  const incomingPaths = [
+    ...incomingEntries.map(({ path }) => path),
     ...incoming.unset,
   ];
 
-  return { domain: current.domain, scope: current.scope, set, unset };
-};
+  // An ancestor reset followed by a child write cannot be expressed in one
+  // patch without restoring old siblings or creating a set/unset conflict.
+  if (
+    currentPaths.some((currentPath) =>
+      incomingPaths.some(
+        (incomingPath) =>
+          currentPath !== incomingPath &&
+          pathsOverlap(currentPath, incomingPath),
+      ),
+    )
+  ) {
+    return undefined;
+  }
 
-const requiresSeparateOperation = (
-  current: SettingsOperation,
-  incoming: SettingsOperation,
-) => {
-  const incomingPaths = collectLeafPaths(incoming.set);
+  const set = structuredClone(current.set);
+  const unset = new Set(current.unset);
 
-  // An empty map clears persisted children. Merging a later child write into
-  // it would erase the reset, so these operations must reach the API in order.
-  return collectLeafPaths(current.set).some(
-    ({ path, value }) =>
-      isSettingsRecord(value) &&
-      (incomingPaths.some((incomingPath) =>
-        incomingPath.path.startsWith(`${path}.`),
-      ) ||
-        incoming.unset.some((unset) => pathsOverlap(path, unset))),
-  );
+  for (const { path, value } of incomingEntries) {
+    setPath(set, path, value);
+    unset.delete(path);
+  }
+
+  for (const path of incoming.unset) {
+    unsetPath(set, path);
+    unset.add(path);
+  }
+
+  return {
+    domain: current.domain,
+    scope: current.scope,
+    set,
+    unset: [...unset],
+  };
 };
 
 const sameQueryKey = (left: QueryKey, right: QueryKey) => isEqual(left, right);
@@ -132,27 +114,30 @@ const groupIntoBatches = (patches: QueuedSettingsPatch[]) => {
 
   const grouped = Object.values(batches);
 
-  if (userOnly.length > 0) {
-    if (grouped[0]) grouped[0].unshift(...userOnly);
-    else grouped.push(userOnly);
-  }
+  const [firstBatch, ...otherBatches] = grouped;
 
-  return grouped.flatMap((patches) => {
+  const scopedBatches = firstBatch
+    ? [[...userOnly, ...firstBatch], ...otherBatches]
+    : [userOnly];
+
+  return scopedBatches.flatMap((patches) => {
     const batches: QueuedSettingsPatch[][] = [];
     let batch: QueuedSettingsPatch[] = [];
-    const keys = new Set<string>();
+    const documentKeys = new Set<string>();
 
     for (const patch of patches) {
       const key = operationKey(patch.operation);
 
-      if (keys.has(key)) {
+      // The API accepts a document only once per request. Keep dependent
+      // patches in separate requests so the server applies them in order.
+      if (documentKeys.has(key)) {
         batches.push(batch);
         batch = [];
-        keys.clear();
+        documentKeys.clear();
       }
 
       batch.push(patch);
-      keys.add(key);
+      documentKeys.add(key);
     }
 
     if (batch.length > 0) batches.push(batch);
@@ -191,25 +176,23 @@ export const createSettingsPatchQueue = <TResponse>(
     return keys;
   };
 
-  const appendPatch = (
-    patches: QueuedSettingsPatch[],
-    patch: QueuedSettingsPatch,
+  const mergePatches = (
+    current: QueuedSettingsPatch[] = [],
+    incoming: QueuedSettingsPatch,
   ): QueuedSettingsPatch[] => {
-    const existing = patches.at(-1);
+    const latest = current.at(-1);
 
-    if (
-      !existing ||
-      requiresSeparateOperation(existing.operation, patch.operation)
-    ) {
-      return [...patches, patch];
-    }
+    const operation =
+      latest && mergeOperations(latest.operation, incoming.operation);
+
+    if (!latest || !operation) return [...current, incoming];
 
     return [
-      ...patches.slice(0, -1),
+      ...current.slice(0, -1),
       {
-        operation: mergeOperations(existing.operation, patch.operation),
-        queryKeys: collectQueryKeys([existing, patch]),
-        afterSave: patch.afterSave ?? existing.afterSave,
+        operation,
+        queryKeys: collectQueryKeys([latest, incoming]),
+        afterSave: incoming.afterSave ?? latest.afterSave,
       },
     ];
   };
@@ -240,16 +223,16 @@ export const createSettingsPatchQueue = <TResponse>(
       const batches = groupIntoBatches(patches);
 
       for (const [index, batch] of batches.entries()) {
-        // Batches must reach the server in order: each one carries a merged
-        // state for its scopes and later batches may depend on earlier ones.
         const operations = batch.map((patch) => patch.operation);
 
+        // Batches must reach the server in order: each one carries a merged
+        // state for its scopes and later batches may depend on earlier ones.
         // eslint-disable-next-line no-await-in-loop
         const response = await config.send(operations);
 
         if (config.applyServerDocuments?.(response, operations)) {
-          for (const remainingBatch of batches.slice(index + 1)) {
-            for (const patch of remainingBatch) config.applyOptimistic(patch);
+          for (const patch of batches.slice(index + 1).flat()) {
+            config.applyOptimistic(patch);
           }
 
           reapplyPending();
@@ -271,7 +254,7 @@ export const createSettingsPatchQueue = <TResponse>(
 
       for (const patch of failedPatches) {
         const key = operationKey(patch.operation);
-        retained.set(key, appendPatch(retained.get(key) ?? [], patch));
+        retained.set(key, mergePatches(retained.get(key), patch));
       }
 
       config.onError?.(error);
@@ -308,10 +291,10 @@ export const createSettingsPatchQueue = <TResponse>(
   return {
     enqueue: (patch) => {
       const key = operationKey(patch.operation);
-      const existing = pending.get(key) ?? retained.get(key) ?? [];
+      const existing = pending.get(key) ?? retained.get(key);
       retained.delete(key);
       config.applyOptimistic(patch);
-      pending.set(key, appendPatch(existing, patch));
+      pending.set(key, mergePatches(existing, patch));
       config.onStatus("saving");
       schedule();
     },
