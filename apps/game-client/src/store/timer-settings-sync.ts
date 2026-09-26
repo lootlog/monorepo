@@ -14,22 +14,6 @@ const APPEARANCE_FIELDS = [
   "hiddenDefaultColors",
 ] as const;
 
-/**
- * Record-valued appearance fields. The server applies `set` per leaf path, so
- * a key dropped from one of these maps must be sent as an `unset` path or the
- * stored entry survives the save.
- */
-const APPEARANCE_MAP_FIELDS = [
-  "customColors",
-  "defaultColorNames",
-  "overriddenDefaultColors",
-] as const;
-
-type AppearanceMapField = (typeof APPEARANCE_MAP_FIELDS)[number];
-
-const isAppearanceMapField = (field: string): field is AppearanceMapField =>
-  APPEARANCE_MAP_FIELDS.some((mapField) => mapField === field);
-
 /** Timer settings stored in the `timers` domain at user scope. */
 const BEHAVIOR_FIELDS = [
   "generalConfig",
@@ -37,7 +21,45 @@ const BEHAVIOR_FIELDS = [
   "timerFiltersEnabled",
   "colorFiltersEnabled",
   "timersSortOrder",
+  "customLists",
 ] as const;
+
+/**
+ * Record-valued fields, with the document path they are stored under. The
+ * server applies `set` per leaf path, so a key dropped from one of these maps
+ * must be sent as an `unset` path or the stored entry survives the save.
+ */
+const MAP_FIELD_PATHS = {
+  customColors: "timers.customColors",
+  defaultColorNames: "timers.defaultColorNames",
+  overriddenDefaultColors: "timers.overriddenDefaultColors",
+  customLists: "customLists",
+} as const;
+
+type MapField = keyof typeof MAP_FIELD_PATHS;
+
+const isMapField = (field: string): field is MapField =>
+  Object.hasOwn(MAP_FIELD_PATHS, field);
+
+/**
+ * `unset` paths for the keys of `previous[field]` missing from the payload.
+ * An emptied map is written whole instead, which already drops every key.
+ */
+const collectRemovedKeys = (
+  field: string,
+  payload: UpdateTimerSettingsPayload,
+  previous: Pick<UpdateTimerSettingsPayload, MapField>,
+) => {
+  if (!isMapField(field)) return [];
+
+  const value = payload[field];
+
+  if (value === undefined || Object.keys(value).length === 0) return [];
+
+  return Object.keys(previous[field] ?? {})
+    .filter((key) => !(key in value))
+    .map((key) => `${MAP_FIELD_PATHS[field]}.${key}`);
+};
 
 /** Settings key used by the timers feature when timers are grouped across guilds. */
 export const GLOBAL_TIMER_SETTINGS_KEY = "global";
@@ -53,17 +75,18 @@ export const invalidateTimerLists = () =>
 
 /**
  * Writes a timers store payload to the settings documents. Cleared timer
- * colors and entries removed from the colour maps (compared with `previous`)
+ * colors and entries removed from the record fields (compared with `previous`)
  * become `unset` paths so the server removes them instead of keeping a stale
  * value; an emptied map is written whole.
  */
 export const syncTimerSettings = (
   payload: UpdateTimerSettingsPayload,
-  previous: Pick<UpdateTimerSettingsPayload, AppearanceMapField> = {},
+  previous: Pick<UpdateTimerSettingsPayload, MapField> = {},
 ) => {
   const appearance: SettingsOperation["set"] = {};
   const unsetAppearance: string[] = [];
   const behavior: SettingsOperation["set"] = {};
+  const unsetBehavior: string[] = [];
 
   for (const field of APPEARANCE_FIELDS) {
     if (field === "timersColors") {
@@ -88,17 +111,17 @@ export const syncTimerSettings = (
 
     if (value === undefined) continue;
 
-    if (isAppearanceMapField(field) && Object.keys(value).length > 0) {
-      for (const key of Object.keys(previous[field] ?? {})) {
-        if (!(key in value)) unsetAppearance.push(`timers.${field}.${key}`);
-      }
-    }
-
+    unsetAppearance.push(...collectRemovedKeys(field, payload, previous));
     appearance[field] = value;
   }
 
   for (const field of BEHAVIOR_FIELDS) {
-    if (payload[field] !== undefined) behavior[field] = payload[field];
+    const value = payload[field];
+
+    if (value === undefined) continue;
+
+    unsetBehavior.push(...collectRemovedKeys(field, payload, previous));
+    behavior[field] = value;
   }
 
   if (Object.keys(appearance).length > 0 || unsetAppearance.length > 0) {
@@ -113,6 +136,7 @@ export const syncTimerSettings = (
     enqueueSettingsPatch({
       domain: "timers",
       set: behavior,
+      unset: unsetBehavior,
       afterSave: invalidateTimerLists,
     });
   }

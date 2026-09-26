@@ -4,8 +4,10 @@ import { SearchInput } from "@/components/ui/search-input";
 import {
   toolbarStripBleedClassName,
   toolbarStripLightClassName,
+  toolbarStripLightSubRowClassName,
   toolbarStripRowClassName,
 } from "@/components/ui/toolbar-strip";
+import { TimersListFilter } from "./timers-list-filter";
 import { TimersNpcTypeFilter } from "./timers-npc-type-filter";
 import { cn } from "cn";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
@@ -35,6 +37,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     overriddenDefaultColors,
     hiddenDefaultColors,
     colorFiltersEnabled,
+    customLists,
     displayConfig: { legacyAppearance },
   } = useTimersStore();
 
@@ -48,6 +51,8 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     hiddenDefaultColors,
     legacyAppearance,
   });
+
+  const lists = Object.values(customLists);
 
   const handleToggleColor = (colorId: string) => {
     setTimersFilters(filtersKey, {
@@ -92,8 +97,17 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           }
         />
       </div>
+      {lists.length > 0 && (
+        <TimersListFilter
+          lists={lists}
+          selectedLists={filters.selectedLists}
+          onChange={(selectedLists) =>
+            setTimersFilters(filtersKey, { ...filters, selectedLists })
+          }
+        />
+      )}
       {colorFiltersEnabled && (
-        <div className="ll:flex ll:flex-row ll:flex-wrap ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/25 ll:p-0.5">
+        <div className={toolbarStripLightSubRowClassName}>
           {colors.map((color) => (
             <ColorSwatchToggle
               key={color.id}

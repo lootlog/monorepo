@@ -327,6 +327,7 @@ export const SETTINGS_CATALOG = {
       alwaysVisibleExpiredTimers: field({}, guildScopes, Predicate.isObject),
       timerFiltersEnabled: field(true, guildScopes, isBoolean),
       colorFiltersEnabled: field(false, guildScopes, isBoolean),
+      customLists: field({}, guildScopes, Predicate.isObject),
       timersSortOrder: field("asc", guildScopes, isOneOf(["asc", "desc"])),
       syncEnabled: field(true, guildScopes, isBoolean),
       hiddenTimers: field<string[]>([], guildScopes, isStringArray),
