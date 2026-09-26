@@ -244,8 +244,10 @@ export const useBattlePings = () => {
       context.heroId,
     );
 
-    // A solo fight has nobody to tell; the local mark is the whole effect.
-    if (recipientCharacterIds.length === 0) {
+    // A solo fight has nobody to tell, and a gateway that does not route
+    // battle pings would close the socket on the command; the local mark is
+    // then the whole effect.
+    if (recipientCharacterIds.length === 0 || !socket.supportsBattlePings()) {
       return;
     }
 

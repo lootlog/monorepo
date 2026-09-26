@@ -6,11 +6,13 @@ import { readSettingsValue } from "@/features/settings/persistence/settings-snap
 import { playSound } from "@/lib/sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
+import { useNpcsStore } from "@/store/npcs.store";
 import { normalizePings } from "@lootlog/domain/account-preferences";
 import {
   isMapPingType,
   type MapPingAck,
   type MapPingEvent,
+  type MapPingSendPayload,
   type MapPingType,
 } from "@lootlog/schema/map-ping";
 import { useEffect, useRef } from "react";
@@ -146,7 +148,9 @@ export const useMapPings = () => {
         return;
       }
 
-      const presentation = getPingPresentation(event.type);
+      const presentation = getPingPresentation(
+        event.npcId === undefined ? event.type : "attack",
+      );
 
       if (mapPingController.addRemote(event, t(presentation.translationKey))) {
         playSound("pings", "mapPing", {
@@ -182,6 +186,31 @@ export const useMapPings = () => {
       return null;
     }
 
+    const origin = { x: pointer.x, y: pointer.y };
+
+    const npc = mapPingController.resolveNpc(
+      pointer.target,
+      pointer.x,
+      pointer.y,
+    );
+
+    if (npc && mapPingController.isTileValid(npc.tile)) {
+      const details = useNpcsStore.getState().getNpc(npc.id);
+
+      return {
+        menu: {
+          ...MAP_PING_MENU,
+          centre: "attack",
+          quick: "attack",
+          title: details
+            ? `${details.name} (${details.level}${details.profession})`
+            : null,
+        },
+        origin,
+        target: { kind: "map", mapId, npcId: npc.id, tile: npc.tile },
+      };
+    }
+
     const tile = mapPingController.resolveTile(
       pointer.target,
       pointer.x,
@@ -189,18 +218,16 @@ export const useMapPings = () => {
     );
 
     return tile
-      ? {
-          menu: MAP_PING_MENU,
-          origin: { x: pointer.x, y: pointer.y },
-          target: { kind: "map", mapId, tile },
-        }
+      ? { menu: MAP_PING_MENU, origin, target: { kind: "map", mapId, tile } }
       : null;
   };
 
+  /** `npcId` marks that monster; old clients still see a tile ping. */
   const send = (
     mapId: number,
     tile: { x: number; y: number },
     type: MapPingType,
+    npcId?: number,
   ) => {
     const game = useGameStore.getState().game;
 
@@ -215,7 +242,9 @@ export const useMapPings = () => {
       return;
     }
 
-    const presentation = getPingPresentation(type);
+    const presentation = getPingPresentation(
+      npcId === undefined ? type : "attack",
+    );
 
     const localPingId = mapPingController.addOptimistic(
       tile,
@@ -223,17 +252,29 @@ export const useMapPings = () => {
       game.hero.name,
       type,
       t(presentation.translationKey),
+      npcId,
     );
 
     playSound("pings", "mapPing", {
       playbackRate: presentation.playbackRate,
       preservesPitch: false,
     });
+
+    const payload: MapPingSendPayload = {
+      expectedMapId: mapId,
+      type,
+      x: tile.x,
+      y: tile.y,
+    };
+
+    // The wire schema rejects an explicit `undefined`.
+    if (npcId !== undefined) payload.npcId = npcId;
+
     socket
       .timeout(ACK_TIMEOUT_MS)
       .emit(
         GatewayEvent.MAP_PING_SEND,
-        { expectedMapId: mapId, type, x: tile.x, y: tile.y },
+        payload,
         (error: Error | null, acknowledgement?: MapPingAck) => {
           if (error || !acknowledgement) {
             return;

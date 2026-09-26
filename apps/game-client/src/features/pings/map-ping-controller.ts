@@ -39,6 +39,8 @@ const getIconPath = (icon: PingIconName) => {
 type ActiveMapPing = {
   id: string;
   mapId: number;
+  /** Set when the ping marks a monster rather than a tile. */
+  npcId?: number;
   x: number;
   y: number;
   senderName: string;
@@ -46,6 +48,20 @@ type ActiveMapPing = {
   type: MapPingType;
   typeLabel: string;
 };
+
+/** An attack ping on an NPC stays up longer: the team needs time to reach it. */
+const NPC_PING_DURATION_MS = 8_000;
+
+const getPingStyle = (ping: ActiveMapPing) =>
+  ping.npcId === undefined
+    ? {
+        durationMs: getPingPresentation(ping.type).durationMs,
+        presentation: getPingPresentation(ping.type),
+      }
+    : {
+        durationMs: NPC_PING_DURATION_MS,
+        presentation: getPingPresentation("attack"),
+      };
 
 type MainMapGeometry = {
   offset: readonly [number, number];
@@ -192,12 +208,14 @@ export class MapPingController {
     senderName: string,
     type: MapPingType,
     typeLabel: string,
+    npcId?: number,
   ) {
     const id = `local-${crypto.randomUUID()}`;
     this.retainCapacityFor(id);
     this.activePings.set(id, {
       id,
       mapId,
+      npcId,
       x: tile.x,
       y: tile.y,
       senderName,
@@ -220,6 +238,7 @@ export class MapPingController {
     this.activePings.set(event.pingId, {
       id: event.pingId,
       mapId: event.mapId,
+      npcId: event.npcId,
       x: event.x,
       y: event.y,
       senderName: event.sender.name,
@@ -293,6 +312,21 @@ export class MapPingController {
     });
   }
 
+  /** The attackable NPC drawn under a point on the main map, if any. */
+  resolveNpc(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
+    const offset = this.renderer.getMapGeometry()?.offset;
+    const point = getCanvasPoint(canvas, clientX, clientY);
+
+    if (canvas.id !== MAIN_MAP_CANVAS_ID || !offset || !point) {
+      return null;
+    }
+
+    return this.renderer.findAttackableNpcAt(
+      point.x + offset[0],
+      point.y + offset[1],
+    );
+  }
+
   isTileValid(tile: MapTile) {
     const size = this.renderer.getMapGeometry()?.size;
 
@@ -330,9 +364,36 @@ export class MapPingController {
         continue;
       }
 
+      const npc =
+        ping.npcId === undefined
+          ? null
+          : this.renderer.getNpcBounds(ping.npcId);
+
+      if (npc) {
+        // Ring the monster's feet and float the badge above its name label.
+        const x = (npc.left + npc.right) / 2 - offset[0];
+        const radius = Math.min(24, (npc.right - npc.left) / 2) / 1.3;
+
+        this.drawMarker(context, ping, {
+          badgeAnchorY: npc.top - offset[1] - 14,
+          baseRadius: radius,
+          groundY: npc.bottom - offset[1] - radius * 0.6,
+          showSender: true,
+          x,
+        });
+        continue;
+      }
+
+      // An NPC out of view falls back to its tile.
       const x = getMapCanvasCoordinate(ping.x, tileSize, offset[0]);
       const y = getMapCanvasCoordinate(ping.y, tileSize, offset[1]);
-      this.drawMarker(context, ping, x, y, 13, true);
+      this.drawMarker(context, ping, {
+        badgeAnchorY: y,
+        baseRadius: 13,
+        groundY: y,
+        showSender: true,
+        x,
+      });
     }
   }
 
@@ -362,22 +423,34 @@ export class MapPingController {
 
       const x = getMiniMapCanvasCoordinate(ping.x, normalSize, margin.left);
       const y = getMiniMapCanvasCoordinate(ping.y, normalSize, margin.top);
-      this.drawMarker(context, ping, x, y, radius, false);
+      this.drawMarker(context, ping, {
+        badgeAnchorY: y,
+        baseRadius: radius,
+        groundY: y,
+        showSender: false,
+        x,
+      });
     }
   }
 
   private drawMarker(
     context: CanvasRenderingContext2D,
     ping: ActiveMapPing,
-    x: number,
-    y: number,
-    baseRadius: number,
-    showSender: boolean,
+    placement: {
+      /** The badge floats above this point. */
+      badgeAnchorY: number;
+      baseRadius: number;
+      /** Centre of the ground ellipse. */
+      groundY: number;
+      showSender: boolean;
+      x: number;
+    },
   ) {
+    const { badgeAnchorY, baseRadius, groundY: y, showSender, x } = placement;
     const elapsed = this.now() - ping.startedAt;
-    const presentation = getPingPresentation(ping.type);
+    const { durationMs, presentation } = getPingStyle(ping);
     const tone = PING_TONES[presentation.tone];
-    const progress = Math.min(1, elapsed / presentation.durationMs);
+    const progress = Math.min(1, elapsed / durationMs);
 
     context.save();
     // Hold full strength for most of the lifetime, then fade out.
@@ -422,7 +495,11 @@ export class MapPingController {
     const badgeRadius = 13;
 
     const badgeY =
-      y - 22 - badgeRadius - drop * 30 + Math.sin(elapsed / 190) * 1.5;
+      badgeAnchorY -
+      22 -
+      badgeRadius -
+      drop * 30 +
+      Math.sin(elapsed / 190) * 1.5;
 
     context.beginPath();
     context.arc(x, badgeY, badgeRadius + 1, 0, Math.PI * 2);
@@ -511,7 +588,7 @@ export class MapPingController {
     const now = this.now();
 
     for (const [id, ping] of this.activePings) {
-      const durationMs = getPingPresentation(ping.type).durationMs;
+      const { durationMs } = getPingStyle(ping);
 
       if (now - ping.startedAt >= durationMs) {
         this.activePings.delete(id);
@@ -543,8 +620,7 @@ export class MapPingController {
     let nearestExpiryAt = Number.POSITIVE_INFINITY;
 
     for (const ping of this.activePings.values()) {
-      const expiresAt =
-        ping.startedAt + getPingPresentation(ping.type).durationMs;
+      const expiresAt = ping.startedAt + getPingStyle(ping).durationMs;
 
       nearestExpiryAt = Math.min(nearestExpiryAt, expiresAt);
     }
