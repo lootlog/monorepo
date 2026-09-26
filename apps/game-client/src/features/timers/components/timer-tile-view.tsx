@@ -13,7 +13,6 @@ export type TimerTileViewProps = {
   hasPassedRedThreshold?: boolean;
   isExpired?: boolean;
   id?: string;
-  isAlternateRow?: boolean;
   isMinSpawnTime?: boolean;
   isPending?: boolean;
   label: string;
@@ -64,7 +63,6 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   hasPassedRedThreshold = false,
   isExpired = false,
   id,
-  isAlternateRow = false,
   isMinSpawnTime = false,
   isPending = false,
   label,
@@ -132,7 +130,6 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     <ListRow
       id={id}
       fill={isExpired ? veilColor(paint.fill, EXPIRED_VEIL) : paint.fill}
-      isAlternateRow={isAlternateRow}
       className={cn("ll:h-full ll:py-[4px]", textColorClassName, TEXT_OUTLINE, {
         "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
           showColorStripe,

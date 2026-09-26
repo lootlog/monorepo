@@ -38,7 +38,6 @@ import { useTranslation } from "react-i18next";
 type OnlinePlayersAccountListEntryProps = {
   presence: PlayerPresence;
   guildMember?: MemberSummaryResponseDtoOutput;
-  isAlternateRow?: boolean;
 };
 
 /** Your own row and AFK players keep their colour over any relation. */
@@ -107,7 +106,7 @@ const resolveOnlinePlayerActionState = ({
 
 export const OnlinePlayersAccountListEntry: FC<
   OnlinePlayersAccountListEntryProps
-> = ({ presence, guildMember, isAlternateRow = false }) => {
+> = ({ presence, guildMember }) => {
   const { t } = useTranslation("onlinePlayers");
   const character = getPresenceCharacter(presence);
 
@@ -186,7 +185,6 @@ export const OnlinePlayersAccountListEntry: FC<
               <ListRow
                 className="ll:justify-between ll:py-0.5"
                 fill={getHighlightFill(relation, presence.isAfk)}
-                isAlternateRow={isAlternateRow}
                 onDoubleClick={handleDoubleClick}
               >
                 <span className="ll:flex ll:min-w-0 ll:items-start ll:gap-1">
