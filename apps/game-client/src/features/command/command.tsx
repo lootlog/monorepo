@@ -1,228 +1,31 @@
-import { useChatSendError } from "@/features/chat/hooks/use-chat-send-error";
-import { CHAT_INPUT_MAX_LENGTH } from "@/features/chat/chat.constants";
-import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { useWindowsStore } from "@/store/windows.store";
-import { MessageType } from "@/api/chat.api";
-import { useGameStore } from "@/store/game.store";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useForm, useWatch } from "react-hook-form";
-import { Schema } from "effect";
-import { CommandActions } from "./components/command-actions";
-import {
-  CommandSuggestions,
-  useCommandSuggestions,
-} from "./components/command-suggestions";
-import { useChatStore } from "@/store/chat.store";
-import { GuildMultiSelector } from "@/components/guild-multi-selector";
-import { usePartyCommand } from "./hooks/use-party-command";
 import { useTranslation } from "react-i18next";
-import {
-  NotificationChatPublishError,
-  useNotificationChatOrchestration,
-} from "@/features/chat/hooks/use-notification-chat-orchestration";
-import { useShallow } from "zustand/react/shallow";
-import { useRef, useState } from "react";
+import { useWindowsStore } from "@/store/windows.store";
+import { clearCommandDraft } from "./command-draft";
+import { CommandComposer } from "./components/command-composer";
+import { CommandOverlay } from "./components/command-overlay";
 
-const FormSchema = Schema.Struct({
-  message: Schema.String.check(
-    Schema.isMinLength(1),
-    Schema.isMaxLength(CHAT_INPUT_MAX_LENGTH),
-  ),
-});
-
-type FormData = typeof FormSchema.Type;
-
-const resolver = standardSchemaResolver(Schema.toStandardSchemaV1(FormSchema));
-
+/**
+ * The console: the chat composer summoned by a hotkey for one quick message,
+ * notification (`!`) or gathering (`/grp`) to a chosen Lootlog. Its draft
+ * lives in the chat store, so a stray click that closes it loses nothing.
+ */
 export const CommandWindow = () => {
-  const reportSendError = useChatSendError();
   const { t } = useTranslation("command");
-
-  const { selectedInputGuildIds, setSelectedInputGuildIds } = useChatStore(
-    useShallow((state) => ({
-      selectedInputGuildIds: state.selectedInputGuildIds,
-      setSelectedInputGuildIds: state.setSelectedInputGuildIds,
-    })),
-  );
-
-  const characterId = useGameStore(
-    (state) => state.game?.hero.characterId ?? "",
-  );
-
-  const accountId = useGameStore((state) => state.game?.hero.accountId ?? "");
-  const heroName = useGameStore((state) => state.game?.hero.name ?? "");
-  const heroLevel = useGameStore((state) => state.game?.hero.level ?? 0);
-
-  const heroProfession = useGameStore(
-    (state) => state.game?.hero.profession ?? "",
-  );
-
-  const heroIcon = useGameStore((state) => state.game?.hero.icon ?? "");
-  const world = useGameStore((state) => state.game?.world ?? "unknown");
-
   const open = useWindowsStore((state) => state.command.open);
-  const autofocus = useWindowsStore((state) => state.command.autofocus);
   const setOpen = useWindowsStore((state) => state.setOpen);
-  const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
-  const { startNotificationMessage } = useNotificationChatOrchestration();
-  const { handlePartyCommand } = usePartyCommand();
-  const submissionInProgressRef = useRef(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { control, setValue, handleSubmit } = useForm<FormData>({
-    resolver,
-    defaultValues: {
-      message: "",
-    },
-  });
-
-  const messageValue = useWatch({ control, name: "message" });
-
-  const suggestions = useCommandSuggestions({
-    inputValue: messageValue,
-    onSelect: (prefix) => setValue("message", prefix),
-  });
-
-  const onSubmit = async (data: FormData) => {
-    if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
-
-    if (submissionInProgressRef.current) return;
-
-    submissionInProgressRef.current = true;
-    setIsSubmitting(true);
-
-    try {
-      if (data.message.startsWith("/grp")) {
-        const description =
-          data.message.slice("/grp".length).trim() || undefined;
-
-        await handlePartyCommand(description, selectedInputGuildIds);
-        setValue("message", "");
-        setOpen("command", false);
-
-        return;
-      }
-
-      const isNotification = data.message.startsWith("!");
-      const message = isNotification ? data.message.slice(1) : data.message;
-
-      if (isNotification) {
-        await startNotificationMessage({
-          guildIds: selectedInputGuildIds,
-          world,
-          message,
-          sendChatMessage: (resolvedGuildIds) =>
-            sendChatMessageAsync({
-              guildIds: resolvedGuildIds,
-              message,
-              type: MessageType.NOTIFICATION,
-              characterData: {
-                nick: heroName,
-                id: Number(characterId),
-                acc: Number(accountId),
-                lvl: heroLevel,
-                prof: heroProfession,
-                icon: heroIcon,
-              },
-            }),
-        });
-      } else {
-        await sendChatMessageAsync({
-          guildIds: selectedInputGuildIds,
-          message: data.message,
-          type: MessageType.NORMAL,
-          characterData: {
-            nick: heroName,
-            id: Number(characterId),
-            acc: Number(accountId),
-            lvl: heroLevel,
-            prof: heroProfession,
-            icon: heroIcon,
-          },
-        });
-      }
-
-      setValue("message", "");
-      setOpen("command", false);
-    } catch (error) {
-      reportSendError(error);
-
-      if (error instanceof NotificationChatPublishError) {
-        setValue("message", "");
-        setOpen("command", false);
-      }
-    } finally {
-      submissionInProgressRef.current = false;
-      setIsSubmitting(false);
-    }
-  };
+  const close = () => setOpen("command", false);
 
   return (
-    <DraggableWindow
-      isOpen={open}
-      id="command"
-      title={t("window.title")}
-      onClose={() => setOpen("command", false)}
-      minHeight={116}
-      minWidth={242}
-      actions=<CommandActions />
-      contentClassName="ll:overflow-visible"
+    <CommandOverlay
+      open={open}
+      label={t("window.title")}
+      onDismiss={close}
+      onEscape={() => {
+        clearCommandDraft();
+        close();
+      }}
     >
-      <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-        <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
-          <GuildMultiSelector
-            value={selectedInputGuildIds}
-            onChange={setSelectedInputGuildIds}
-          />
-        </div>
-        <div className="ll:flex ll:flex-col ll:flex-1 ll:pb-1 ll:mt-1">
-          <div className="ll:relative ll:flex ll:flex-1">
-            <CommandSuggestions
-              onSelect={(prefix) => setValue("message", prefix)}
-              filtered={suggestions.filtered}
-              isOpen={suggestions.isOpen}
-              selectedIndex={suggestions.selectedIndex}
-            />
-            <form
-              onSubmit={(event) => {
-                void handleSubmit(onSubmit)(event);
-              }}
-              className="ll:flex ll:flex-1"
-            >
-              <textarea
-                spellCheck={false}
-                data-slot="input"
-                onMouseDown={(evt) => evt.stopPropagation()}
-                autoCorrect="off"
-                autoCapitalize="off"
-                onKeyDown={(e) => {
-                  if (suggestions.handleKeyDown(e)) return;
-
-                  // The window frame closes the palette on Escape; the
-                  // unsent draft goes with it.
-                  if (e.key === "Escape") {
-                    setValue("message", "");
-
-                    return;
-                  }
-
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    e.currentTarget.form?.requestSubmit();
-                  }
-                }}
-                placeholder={t("input.placeholder")}
-                autoFocus={autofocus}
-                disabled={isSubmitting}
-                value={messageValue}
-                onChange={(e) => setValue("message", e.target.value)}
-                className="ll:h-full ll:w-full ll:overflow-hidden ll:resize-none ll:outline-none ll:rounded-sm ll:border ll:border-gray-400 ll:bg-transparent ll:px-1 ll:py-1 ll:text-xs ll:text-white ll:placeholder:text-muted-foreground ll:transition-[color,box-shadow] ll:disabled:pointer-events-none ll:disabled:opacity-50"
-              />
-            </form>
-          </div>
-        </div>
-      </div>
-    </DraggableWindow>
+      <CommandComposer onClose={close} />
+    </CommandOverlay>
   );
 };

@@ -31,6 +31,7 @@ export const QuickAccessWindowButton: FC<QuickAccessWindowButtonProps> = ({
       icon={icon}
       active={open}
       binding={binding}
+      data-ll-window-toggle={windowId}
       onClick={() => toggleOpen(windowId)}
     />
   );

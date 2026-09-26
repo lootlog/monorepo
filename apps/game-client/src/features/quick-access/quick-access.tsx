@@ -11,10 +11,10 @@ import {
 } from "@/features/quick-access/components/quick-access-window-button";
 import { useWindowsStore } from "@/store/windows.store";
 import {
+  MessageSquareText,
   MessagesSquare,
   Settings,
   Swords,
-  Terminal,
   Timer,
   Users,
 } from "lucide-react";
@@ -66,7 +66,9 @@ export const QuickAccess = () => {
     {
       windowId: "command",
       label: t("buttons.command"),
-      icon: <Terminal aria-hidden="true" className={ICON_CLASS_NAME} />,
+      icon: (
+        <MessageSquareText aria-hidden="true" className={ICON_CLASS_NAME} />
+      ),
       hotkeyAction: "toggle-command",
     },
     {

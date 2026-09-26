@@ -65,7 +65,7 @@ const getHighlightFill = (relation: OnlinePlayerRelation, isAfk: boolean) => {
 
   if (isAfk) return TIMERS_COLORS.orange.fill;
 
-  if (relation === "party") return TIMERS_COLORS.sky.fill;
+  if (relation === "party") return TIMERS_COLORS.purple.fill;
 
   if (relation === "clan") return TIMERS_COLORS.green.fill;
 

@@ -234,7 +234,7 @@
     },
     "actions": {
       "toggle-command": {
-        "label": "Konsola"
+        "label": "Szybki czat"
       },
       "toggle-chat": {
         "label": "Czat"

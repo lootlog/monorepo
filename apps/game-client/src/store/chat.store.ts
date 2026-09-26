@@ -29,8 +29,9 @@ interface ChatState {
   toggleIntegratedMode: () => void;
   isNotificationEnabled: boolean;
   toggleNotificationEnabled: () => void;
-  selectedInputGuildIds: string[];
-  setSelectedInputGuildIds: (guildIds: string[]) => void;
+  /** The Lootlog the console sends to; unset follows the character's Lootlog. */
+  commandGuildId: string | null;
+  setCommandGuildId: (guildId: string) => void;
   chatFilter: ChatFilter;
   setChatFilter: (filter: ChatFilter) => void;
   filtersVisible: boolean;
@@ -62,12 +63,8 @@ export const useChatStore = create<ChatState>()(
           isNotificationEnabled: !state.isNotificationEnabled,
         }));
       },
-      selectedInputGuildIds: [],
-      setSelectedInputGuildIds: (guildIds) => {
-        set(() => ({
-          selectedInputGuildIds: guildIds,
-        }));
-      },
+      commandGuildId: null,
+      setCommandGuildId: (guildId) => set({ commandGuildId: guildId }),
       chatFilter: "all",
       setChatFilter: (filter) => {
         set(() => ({ chatFilter: filter }));
@@ -142,7 +139,7 @@ export const useChatStore = create<ChatState>()(
         selectedGuildByCharacter: state.selectedGuildByCharacter,
         isIntegratedMode: state.isIntegratedMode,
         isNotificationEnabled: state.isNotificationEnabled,
-        selectedInputGuildIds: state.selectedInputGuildIds,
+        commandGuildId: state.commandGuildId,
         chatFilter: state.chatFilter,
         filtersVisible: state.filtersVisible,
       }),

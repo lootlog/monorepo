@@ -2,14 +2,7 @@ import { SettingsEmptyState } from "@/components/settings/settings-empty-state";
 import { SettingsRow } from "@/components/settings/settings-row";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { SettingsTabLayout } from "@/components/settings/settings-tab-layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { GuildSelect } from "@/components/guild-select";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
 import { useTimersStore } from "@/store/timers.store";
 import { useState } from "react";
@@ -50,33 +43,12 @@ export const HiddenTimersTab = () => {
               description={t("settings.hiddenTimers.ungroupedDescription")}
               control="wide"
             >
-              <Select
+              <GuildSelect
+                id="hidden-timers-guild"
+                guilds={guilds}
                 value={selectedGuildId}
                 onValueChange={setRequestedGuildId}
-              >
-                <SelectTrigger id="hidden-timers-guild" size="sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {guilds.map((guild) => (
-                    <SelectItem key={guild.id} value={guild.id}>
-                      <span className="ll:inline-flex ll:min-w-0 ll:items-center ll:gap-1.5">
-                        <Avatar className="ll:size-4 ll:shrink-0 ll:rounded-sm ll:bg-black/20">
-                          <AvatarImage
-                            src={guild.icon ?? undefined}
-                            alt=""
-                            className="ll:h-full ll:w-full ll:object-cover"
-                          />
-                          <AvatarFallback className="ll:flex ll:h-full ll:w-full ll:items-center ll:justify-center ll:rounded-sm ll:bg-black/20 ll:text-[9px] ll:font-semibold ll:text-foreground">
-                            {guild.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="ll:truncate">{guild.name}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </SettingsRow>
           ) : (
             <SettingsEmptyState>

@@ -77,7 +77,7 @@ type WindowContentMeasurements = {
  * element still exists, otherwise to the page so the game gets keys again.
  * Focus the player already moved elsewhere is left alone.
  */
-const releaseWindowFocus = (
+export const releaseWindowFocus = (
   element: HTMLElement,
   returnFocusTo: HTMLElement | null,
 ) => {

@@ -112,6 +112,10 @@
       "title": "Wspomnij osobę lub rolę",
       "loading": "Ładowanie podpowiedzi…",
       "noResults": "Brak pasujących osób i ról"
+    },
+    "commandHints": {
+      "notification": "treść powiadomienia",
+      "party": "opis zbiórki (opcjonalnie)"
     }
   },
   "actions": {
