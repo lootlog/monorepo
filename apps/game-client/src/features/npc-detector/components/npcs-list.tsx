@@ -55,6 +55,7 @@ export const NpcsList: FC<NpcsListProps> = ({
   const {
     activeDetectionAnimations,
     clearDetectionAnimation,
+    hasMultipleNpcs,
     latestDetectionAnimationCycle,
     removeNpc,
     setNpcState,
@@ -63,6 +64,7 @@ export const NpcsList: FC<NpcsListProps> = ({
     useShallow((state) => ({
       activeDetectionAnimations: state.activeDetectionAnimations,
       clearDetectionAnimation: state.clearDetectionAnimation,
+      hasMultipleNpcs: state.npcs.length > 1,
       latestDetectionAnimationCycle: state.latestDetectionAnimationCycle,
       removeNpc: state.removeNpc,
       setNpcState: state.setNpcState,
@@ -227,6 +229,7 @@ export const NpcsList: FC<NpcsListProps> = ({
                 }
                 detectorSettings={detectorSettings}
                 hasActivePartyGathering={hasActivePartyGathering}
+                hasMultipleNpcs={hasMultipleNpcs}
                 orchestration={orchestration}
                 removeNpc={removeNpc}
                 setNpcState={setNpcState}
@@ -260,6 +263,7 @@ export const NpcsList: FC<NpcsListProps> = ({
               detectionAnimationCycle={null}
               detectorSettings={detectorSettings}
               hasActivePartyGathering={hasActivePartyGathering}
+              hasMultipleNpcs={hasMultipleNpcs}
               orchestration={orchestration}
               removeNpc={removeNpc}
               setNpcState={setNpcState}

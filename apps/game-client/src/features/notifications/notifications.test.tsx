@@ -52,22 +52,13 @@ afterEach(() => {
   });
 });
 
-it("keeps notifications when the window closes and empties it only on clear", () => {
+it("clears notifications when the window closes", () => {
   seedOpenWindow();
   render(<Notifications />, { wrapper: test.wrapper });
 
   fireEvent.click(screen.getByRole("button", { name: "Zamknij okno" }));
-  expect(screen.queryByText("Pierwsza")).not.toBeInTheDocument();
-  expect(useNotificationsStore.getState().notifications).toHaveLength(2);
 
-  // The next presented notification reopens the window.
-  act(() => useWindowsStore.getState().setOpen("notifications", true));
-  expect(screen.getByText("Pierwsza")).toBeVisible();
-  expect(screen.getByText("Druga")).toBeVisible();
-
-  fireEvent.click(
-    screen.getByRole("button", { name: "Wyczyść wszystkie powiadomienia" }),
-  );
   expect(useNotificationsStore.getState().notifications).toEqual([]);
+  act(() => useWindowsStore.getState().setOpen("notifications", true));
   expect(screen.queryByText("Pierwsza")).not.toBeInTheDocument();
 });

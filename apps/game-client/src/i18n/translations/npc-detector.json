@@ -12,7 +12,6 @@
     "alreadyGatheringParty": "Masz już aktywną zbiórkę",
     "gatherParty": "Utwórz zbiórkę",
     "removeNpcAria": "Usuń potwora z listy",
-    "gatherPartyFailed": "Nie udało się utworzyć zbiórki",
-    "clearAll": "Wyczyść listę wykrytych potworów"
+    "gatherPartyFailed": "Nie udało się utworzyć zbiórki"
   }
 }

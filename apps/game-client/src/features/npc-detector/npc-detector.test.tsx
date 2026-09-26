@@ -44,21 +44,12 @@ afterEach(() => {
   });
 });
 
-it("keeps detections when the window closes and empties it only on clear", () => {
+it("clears detections when the window closes", () => {
   render(<NpcDetector />, { wrapper: test.wrapper });
 
   fireEvent.click(screen.getByRole("button", { name: "Zamknij okno" }));
-  expect(screen.queryByText("Heros 1")).not.toBeInTheDocument();
-  expect(useNpcDetectorStore.getState().npcs).toHaveLength(2);
 
-  // The next detection reopens the window.
-  act(() => useWindowsStore.getState().setOpen("npc-detector", true));
-  expect(screen.getByText("Heros 1")).toBeVisible();
-  expect(screen.getByText("Heros 2")).toBeVisible();
-
-  fireEvent.click(
-    screen.getByRole("button", { name: "Wyczyść listę wykrytych potworów" }),
-  );
   expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+  act(() => useWindowsStore.getState().setOpen("npc-detector", true));
   expect(screen.queryByText("Heros 1")).not.toBeInTheDocument();
 });
