@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useFriendsStore } from "./friends.store";
 import { usePartyStore } from "./party.store";
+import {
+  MARGONEM_RELATION,
+  useSocialRelationsStore,
+} from "./social-relations.store";
 
 describe("runtime membership stores", () => {
   beforeEach(() => {
-    useFriendsStore.getState().clearFriends();
+    useSocialRelationsStore.setState({ characters: {}, clans: {} });
     usePartyStore.getState().clearParty();
   });
 
@@ -34,27 +37,23 @@ describe("runtime membership stores", () => {
     unsubscribe();
   });
 
-  it("does not publish a semantically identical friends list", () => {
-    const friends = [
-      {
-        characterId: "2",
-        icon: "friend.gif",
-        level: 300,
-        location: "Map",
-        name: "Friend",
-        profession: "m",
-        status: "online",
-      },
-    ] as const;
+  it("does not publish when players met on the map confirm known relations", () => {
+    const scopes = { character: "hero", clan: "hero-clan" };
 
-    useFriendsStore.getState().replaceFriends(friends, 25);
-    const currentFriends = useFriendsStore.getState().friends;
-    const subscriber = vi.fn<Parameters<typeof useFriendsStore.subscribe>[0]>();
-    const unsubscribe = useFriendsStore.subscribe(subscriber);
+    const observations = [
+      { characterId: "2", relation: MARGONEM_RELATION.FRIEND },
+      { characterId: "3", clanId: 7, relation: MARGONEM_RELATION.CLAN_ALLY },
+    ];
 
-    useFriendsStore.getState().replaceFriends([{ ...friends[0] }], 25);
+    useSocialRelationsStore.getState().observePlayers(scopes, observations);
 
-    expect(useFriendsStore.getState().friends).toBe(currentFriends);
+    const subscriber =
+      vi.fn<Parameters<typeof useSocialRelationsStore.subscribe>[0]>();
+
+    const unsubscribe = useSocialRelationsStore.subscribe(subscriber);
+
+    useSocialRelationsStore.getState().observePlayers(scopes, observations);
+
     expect(subscriber).not.toHaveBeenCalled();
     unsubscribe();
   });

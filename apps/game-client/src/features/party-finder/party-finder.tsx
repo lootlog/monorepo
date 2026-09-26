@@ -13,6 +13,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { ReadyRoomParticipantsList } from "@/features/party-finder/components/ready-room-participants-list";
 import { useReadyRoomInvitations } from "@/features/party-finder/hooks/use-ready-room-invitations";
+import { selectParticipantsOutsideParty } from "@/features/party-finder/ready-room-cache";
+import { ReadyRoomExpiry } from "@/features/party-finder/components/ready-room-expiry";
 import { getCurrentReadyRoomCharacterIdentity } from "@/features/party-finder/ready-room-character-identity";
 
 const PARTY_SIZE_LIMIT = 10;
@@ -41,13 +43,9 @@ export const PartyFinder = () => {
     currentCharacterIdentity.characterId ===
       readyRoom.organizerCharacter.characterId;
 
-  const hasInvitableParticipants =
-    isOrganizerCharacter &&
-    Object.values(readyRoom.participants).some(
-      (participant) => participant.partyPresence === "OUTSIDE",
-    );
-
   if (!readyRoom) return null;
+
+  const waitingCount = selectParticipantsOutsideParty(readyRoom).length;
 
   return (
     <DraggableWindow
@@ -56,49 +54,51 @@ export const PartyFinder = () => {
       title={t("window.title")}
       onClose={() => setOpen("party-finder", false)}
       variant="default"
+      contentClassName="ll:-mx-1 ll:-mb-1"
       minHeight={108}
       minWidth={242}
     >
       <div className="ll:flex ll:flex-col ll:h-full">
-        {isOrganizerCharacter ? (
-          <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-center ll:gap-1 ll:py-1.5 ll:border-b ll:border-gray-700">
-            <span className="ll:text-[11px] ll:text-gray-300">
-              {t("header.party")}
+        <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-between ll:gap-2 ll:px-[6px] ll:py-1 ll:text-[11px] ll:border-b ll:border-white/10">
+          {isOrganizerCharacter ? (
+            <span className="ll:flex ll:items-center ll:gap-1">
+              <span className="ll:text-white/65">{t("header.party")}</span>
+              <span
+                className={cn(
+                  "ll:inline-flex ll:items-center ll:gap-1 ll:font-semibold ll:tabular-nums",
+                  partyFull ? "ll:text-red-400" : "ll:text-green-400",
+                )}
+              >
+                {partyFull ? (
+                  <Lock aria-hidden="true" className="ll:size-3" />
+                ) : null}
+                {partyMembers.length}/{PARTY_SIZE_LIMIT}
+                {partyFull ? <span>{t("header.partyFull")}</span> : null}
+              </span>
             </span>
-            <span
-              className={cn(
-                "ll:inline-flex ll:items-center ll:gap-1 ll:text-[11px] ll:font-semibold ll:tabular-nums",
-                partyFull ? "ll:text-red-400" : "ll:text-green-400",
-              )}
-            >
-              {partyFull ? (
-                <Lock aria-hidden="true" className="ll:size-3" />
-              ) : null}
-              {partyMembers.length}/{PARTY_SIZE_LIMIT}
-              {partyFull ? <span>{t("header.partyFull")}</span> : null}
+          ) : (
+            <span className="ll:min-w-0 ll:truncate ll:font-semibold ll:text-white">
+              {readyRoom.organizerCharacter.nick} · {readyRoom.world}
             </span>
-          </div>
-        ) : (
-          <div className="ll:p-2 ll:text-xs">
-            {readyRoom.organizerCharacter.nick} · {readyRoom.world}
-          </div>
-        )}
+          )}
+          <ReadyRoomExpiry expiresAt={readyRoom.expiresAt} />
+        </div>
         <ScrollArea className="ll:flex-1">
           <ReadyRoomParticipantsList room={readyRoom} />
         </ScrollArea>
-        <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
+        <div className="ll:shrink-0 ll:flex ll:gap-1 ll:px-[6px] ll:py-1.5 ll:border-t ll:border-white/10">
           {isOrganizerCharacter ? (
             <Button
               size="xs"
-              className="ll:w-full"
+              className="ll:min-w-0 ll:flex-1"
               onClick={() => {
                 void inviteParticipants().catch(() => {
                   toast.error(t("gatherings.inviteFailed", { ns: "chat" }));
                 });
               }}
-              disabled={!hasInvitableParticipants || !canInviteParticipants()}
+              disabled={waitingCount === 0 || !canInviteParticipants()}
             >
-              {t("actions.inviteAll")}
+              {t("actions.inviteAll", { count: waitingCount })}
             </Button>
           ) : null}
           <ConfirmPopover
@@ -117,7 +117,7 @@ export const PartyFinder = () => {
               <Button
                 variant="destructive"
                 size="xs"
-                className="ll:w-full"
+                className={isOrganizerCharacter ? undefined : "ll:flex-1"}
                 disabled={isCancelling}
               >
                 {isCancelling

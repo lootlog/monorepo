@@ -1,17 +1,26 @@
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { BadgeCheck } from "lucide-react";
 import type { FC } from "react";
+import type { PlayerRelation } from "@/lib/player-relation";
 import { useTranslation } from "react-i18next";
-
-export type OnlinePlayerRelation = "self" | "party" | "clan" | undefined;
 
 type OnlinePlayerTooltipProps = {
   canInviteToParty: boolean;
-  isFriend: boolean;
   locationName: string;
   memberName: string;
   presence: PlayerPresence;
-  relation: OnlinePlayerRelation;
+  relations: readonly PlayerRelation[];
+};
+
+/** Text colours of the relation statuses, matching the row fills. */
+const RELATION_TEXT_CLASSES: Record<PlayerRelation, string> = {
+  self: "ll:text-yellow-300",
+  party: "ll:text-purple-300",
+  clan: "ll:text-green-300",
+  enemy: "ll:text-red-300",
+  "clan-enemy": "ll:text-red-300",
+  friend: "ll:text-sky-300",
+  "clan-ally": "ll:text-lime-300",
 };
 
 const formatCoordinates = (location?: { x?: number; y?: number }) =>
@@ -26,40 +35,31 @@ const formatCoordinates = (location?: { x?: number; y?: number }) =>
  */
 export const OnlinePlayerTooltip: FC<OnlinePlayerTooltipProps> = ({
   canInviteToParty,
-  isFriend,
   locationName,
   memberName,
   presence,
-  relation,
+  relations,
 }) => {
   const { t } = useTranslation("onlinePlayers");
   const { player } = presence;
 
+  const [firstRelation, ...otherRelations] = relations;
+
   const statuses = [
-    relation === "self" && (
-      <span key="self" className="ll:text-yellow-300">
-        {t("tooltip.status.self")}
-      </span>
-    ),
-    presence.isAfk && (
-      <span key="afk" className="ll:text-orange-300">
-        {t("tooltip.status.afk")}
-      </span>
-    ),
-    relation === "party" && (
-      <span key="party" className="ll:text-purple-300">
-        {t("tooltip.status.party")}
-      </span>
-    ),
-    relation === "clan" && (
-      <span key="clan" className="ll:text-green-300">
-        {t("tooltip.status.clan")}
-      </span>
-    ),
-    isFriend && relation !== "self" && (
-      <span key="friend">{t("tooltip.status.friend")}</span>
-    ),
-  ].filter(Boolean);
+    ...(firstRelation === "self" ? [firstRelation] : []),
+    ...(presence.isAfk ? (["afk"] as const) : []),
+    ...(firstRelation && firstRelation !== "self" ? [firstRelation] : []),
+    ...otherRelations,
+  ].map((status) => (
+    <span
+      key={status}
+      className={
+        status === "afk" ? "ll:text-orange-300" : RELATION_TEXT_CLASSES[status]
+      }
+    >
+      {t(`tooltip.status.${status}`)}
+    </span>
+  ));
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-2 ll:py-0.5">

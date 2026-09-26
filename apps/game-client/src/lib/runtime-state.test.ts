@@ -2,7 +2,6 @@ import { seedRuntimeOthers } from "@/test/runtime-other-fixtures";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useChatStore } from "@/store/chat.store";
-import { useFriendsStore } from "@/store/friends.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
@@ -75,7 +74,6 @@ describe("resetTransientRuntimeState", () => {
         },
       },
     });
-    useFriendsStore.setState({ friendsMax: 50 });
     useNotificationsStore.setState({
       notifications: [
         {
@@ -130,7 +128,6 @@ describe("resetTransientRuntimeState", () => {
     expect(useNpcDetectorStore.getState().npcs).toEqual([]);
     expect(useOthersStore.getState().othersById).toEqual({});
     expect(useNpcsStore.getState().npcsById).toEqual({});
-    expect(useFriendsStore.getState().friendsMax).toBe(0);
     expect(useNotificationsStore.getState().notifications).toEqual([]);
     expect(useChatStore.getState().replyDraft).toBeNull();
     expect(readSeededReadyRoomCache(queryClient).roomVersions).toEqual({});

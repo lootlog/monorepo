@@ -74,6 +74,15 @@ export function selectOwnedReadyRoom(
   );
 }
 
+/** Applicants the organizer still has to invite into the party. */
+export function selectParticipantsOutsideParty(
+  projection: PartyReadyRoomProjection,
+): PartyReadyRoomParticipant[] {
+  return Object.values(projection.participants).filter(
+    (participant) => participant.partyPresence === "OUTSIDE",
+  );
+}
+
 export function selectReadyRoomParticipantForCharacter(
   projection: PartyReadyRoomProjection,
   identity: ReadyRoomCharacterIdentity | null,
