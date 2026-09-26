@@ -1,48 +1,94 @@
-import { useSyncExternalStore, type CSSProperties } from "react";
+import { useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  PING_WHEEL_DEAD_ZONE_PX,
-  PING_WHEEL_RING_RADIUS_PX,
+  PING_WHEEL_INNER_RADIUS_PX,
+  PING_WHEEL_OUTER_RADIUS_PX,
   getPingRingAngle,
   pingInteractionController,
 } from "./ping-interaction-controller";
-import { PingIcon } from "./ping-icon";
 import { PingPill } from "./ping-pill";
 import {
+  PING_ICONS,
   PING_TONES,
   getPingPresentation,
-  type PingType,
 } from "./ping-presentation";
 
-const RING_TILE_PX = 34;
+const OUTER = PING_WHEEL_OUTER_RADIUS_PX;
 
-const CENTRE_TILE_PX = 30;
+const INNER = PING_WHEEL_INNER_RADIUS_PX;
 
-const tileStyle = (
-  type: PingType,
-  size: number,
-  x: number,
-  y: number,
-  selected: boolean,
-): CSSProperties => {
-  const tone = PING_TONES[getPingPresentation(type).tone];
+/** Room for the frame around the ring. */
+const FRAME = 3;
+
+const CENTER = OUTER + FRAME;
+
+const SIZE = CENTER * 2;
+
+const ICON_PX = 20;
+
+/** Gap between wedges, in degrees on each side. */
+const WEDGE_GAP_DEG = 1.5;
+
+const pointAt = (radius: number, angleFromTop: number) => {
+  const radians = ((angleFromTop - 90) * Math.PI) / 180;
 
   return {
-    background: tone.fill,
-    boxShadow: [
-      "0 0 0 1px #150f0d inset",
-      `0 0 0 1px ${selected ? "#eddb5e" : tone.border}`,
-      "0 0 0 2px #150f0d",
-      selected ? `0 0 10px ${tone.border}` : "0 2px 6px rgba(0, 0, 0, 0.6)",
-    ].join(", "),
-    height: size,
-    left: x,
-    opacity: selected ? 1 : 0.85,
-    top: y,
-    transform: `translate(-50%, -50%) scale(${selected ? 1.22 : 1})`,
-    width: size,
+    x: CENTER + Math.cos(radians) * radius,
+    y: CENTER + Math.sin(radians) * radius,
   };
 };
+
+const circlePath = (radius: number) =>
+  `M${CENTER - radius} ${CENTER}a${radius} ${radius} 0 1 0 ${radius * 2} 0a${radius} ${radius} 0 1 0 ${-radius * 2} 0`;
+
+const wedgePath = (index: number, count: number) => {
+  // A single option fills the whole ring.
+  if (count === 1) {
+    return `${circlePath(OUTER)}${circlePath(INNER)}`;
+  }
+
+  const step = 360 / count;
+  const middle = getPingRingAngle(index, count);
+  const start = middle - step / 2 + WEDGE_GAP_DEG;
+  const end = middle + step / 2 - WEDGE_GAP_DEG;
+  const largeArc = end - start > 180 ? 1 : 0;
+  const outerStart = pointAt(OUTER, start);
+  const outerEnd = pointAt(OUTER, end);
+  const innerEnd = pointAt(INNER, end);
+  const innerStart = pointAt(INNER, start);
+
+  return [
+    `M${outerStart.x} ${outerStart.y}`,
+    `A${OUTER} ${OUTER} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y}`,
+    `L${innerEnd.x} ${innerEnd.y}`,
+    `A${INNER} ${INNER} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y}`,
+    "Z",
+  ].join("");
+};
+
+type WheelIconProps = {
+  color: string;
+  icon: keyof typeof PING_ICONS;
+  opacity: number;
+  x: number;
+  y: number;
+};
+
+const iconTransform = ({ x, y }: { x: number; y: number }) =>
+  `translate(${x - ICON_PX / 2} ${y - ICON_PX / 2}) scale(${ICON_PX / 24})`;
+
+const wheelIcon = ({ color, icon, opacity, x, y }: WheelIconProps) => (
+  <path
+    d={PING_ICONS[icon]}
+    fill="none"
+    opacity={opacity}
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={2.4}
+    transform={iconTransform({ x, y })}
+  />
+);
 
 export const PingWheel = () => {
   const snapshot = useSyncExternalStore(
@@ -56,121 +102,108 @@ export const PingWheel = () => {
     return null;
   }
 
-  const { menu, pointer, selectedType, visualCenter } = snapshot;
+  const { menu, selectedType, visualCenter } = snapshot;
 
   const selectedLabel = selectedType
     ? t(getPingPresentation(selectedType).translationKey)
-    : t("wheel.cancelHint");
+    : null;
 
-  const guideX = pointer.x - visualCenter.x;
-  const guideY = pointer.y - visualCenter.y;
-  const guideLength = Math.hypot(guideX, guideY);
-  const guideScale = Math.min(1, PING_WHEEL_RING_RADIUS_PX / guideLength);
-
-  const tiles = [
-    ...(menu.centre
-      ? [{ size: CENTRE_TILE_PX, type: menu.centre, x: 0, y: 0 }]
-      : []),
-    ...menu.ring.map((type, index) => {
-      const radians =
-        ((getPingRingAngle(index, menu.ring.length) - 90) * Math.PI) / 180;
-
-      return {
-        size: RING_TILE_PX,
-        type,
-        x: Math.cos(radians) * PING_WHEEL_RING_RADIUS_PX,
-        y: Math.sin(radians) * PING_WHEEL_RING_RADIUS_PX,
-      };
-    }),
-  ];
+  const idleLabel = menu.title ?? t("wheel.cancelHint");
+  const centre = menu.centre ? getPingPresentation(menu.centre) : null;
+  const centreSelected = menu.centre !== null && selectedType === menu.centre;
 
   return (
     <div
-      aria-label={t("wheel.ariaLabel", { selection: selectedLabel })}
+      aria-label={t("wheel.ariaLabel", {
+        selection: selectedLabel ?? t("wheel.cancelHint"),
+      })}
       aria-live="polite"
-      className="ll:fixed ll:h-0 ll:w-0 ll:select-none"
+      className="ll:fixed ll:select-none ll:animate-in ll:fade-in-0 ll:zoom-in-95 ll:duration-100 ll:motion-reduce:animate-none"
       role="status"
       style={{
-        left: visualCenter.x,
+        height: SIZE,
+        left: visualCenter.x - CENTER,
         pointerEvents: "none",
-        top: visualCenter.y,
+        top: visualCenter.y - CENTER,
+        width: SIZE,
         zIndex: 2_147_483_000,
       }}
     >
-      {guideLength > PING_WHEEL_DEAD_ZONE_PX ? (
-        <svg
-          aria-hidden="true"
-          className="ll:absolute ll:left-0 ll:top-0 ll:overflow-visible"
-          height="1"
-          width="1"
-        >
-          <line
-            opacity={0.8}
-            stroke="#cac094"
-            strokeDasharray="3 3"
-            strokeWidth={2}
-            x1={0}
-            x2={guideX * guideScale}
-            y1={0}
-            y2={guideY * guideScale}
-          />
-        </svg>
-      ) : null}
-      {menu.centre ? null : (
-        <div
-          className="ll:absolute ll:h-2 ll:w-2 ll:rounded-full"
-          style={{
-            background: "#cac094",
-            boxShadow: "0 0 0 2px #150f0d",
-            left: -4,
-            top: -4,
-          }}
+      <svg
+        aria-hidden="true"
+        className="ll:h-full ll:w-full ll:overflow-visible"
+        style={{ filter: "drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6))" }}
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+      >
+        {/* The game's popup-menu frame: dark fill inside a light hairline. */}
+        <path
+          d={circlePath(OUTER + FRAME)}
+          fill="#3f3b3d"
+          stroke="#150f0d"
+          strokeWidth={2}
         />
-      )}
-      {tiles.map(({ size, type, x, y }) => {
-        const selected = type === selectedType;
-        const presentation = getPingPresentation(type);
+        <path
+          d={circlePath(OUTER + FRAME - 1)}
+          fill="none"
+          stroke="#b6bbc1b0"
+        />
+        {menu.ring.map((type, index) => {
+          const presentation = getPingPresentation(type);
+          const tone = PING_TONES[presentation.tone];
+          const selected = type === selectedType;
 
-        return (
-          <div
-            className="ll:absolute ll:grid ll:place-items-center ll:rounded-[4px] ll:transition-transform ll:duration-75 ll:motion-reduce:transition-none"
-            data-selected={selected ? "true" : "false"}
-            data-testid={`ping-option-${type}`}
-            key={type}
-            style={tileStyle(type, size, x, y, selected)}
-          >
-            <PingIcon
-              color={selected ? "#ffffff" : "#cac094"}
-              name={presentation.icon}
-              size={18}
-            />
-            {selected ? (
-              <PingPill
-                style={{
-                  bottom: "calc(100% + 6px)",
-                  left: "50%",
-                  position: "absolute",
-                  transform: "translateX(-50%) scale(0.82)",
-                }}
-              >
-                {t(presentation.translationKey)}
-              </PingPill>
-            ) : null}
-          </div>
-        );
-      })}
-      {menu.title ? (
-        <PingPill
-          style={{
-            left: 0,
-            position: "absolute",
-            top: PING_WHEEL_RING_RADIUS_PX + RING_TILE_PX / 2 + 8,
-            transform: "translateX(-50%)",
-          }}
-        >
-          <span style={{ color: "#bebebe" }}>{menu.title}</span>
-        </PingPill>
-      ) : null}
+          const iconPoint = pointAt(
+            (OUTER + INNER) / 2,
+            getPingRingAngle(index, menu.ring.length),
+          );
+
+          return (
+            <g key={type}>
+              <path
+                d={wedgePath(index, menu.ring.length)}
+                fill={tone.fill}
+                fillOpacity={selected ? 1 : 0.78}
+                fillRule="evenodd"
+                stroke={selected ? "#eddb5e" : tone.border}
+                strokeWidth={selected ? 1.6 : 1}
+              />
+              {wheelIcon({
+                color: selected ? "#ffffff" : "#cac094",
+                icon: presentation.icon,
+                opacity: selectedType === null || selected ? 1 : 0.6,
+                ...iconPoint,
+              })}
+            </g>
+          );
+        })}
+        <path
+          d={circlePath(INNER - 3)}
+          fill={centre ? PING_TONES[centre.tone].fill : "#1c1a1e"}
+          stroke={centreSelected ? "#eddb5e" : "#150f0d"}
+          strokeWidth={centreSelected ? 1.6 : 1}
+        />
+        {centre ? (
+          wheelIcon({
+            color: centreSelected ? "#ffffff" : "#cac094",
+            icon: centre.icon,
+            opacity: selectedType === null || centreSelected ? 1 : 0.6,
+            x: CENTER,
+            y: CENTER,
+          })
+        ) : (
+          <circle cx={CENTER} cy={CENTER} fill="#cac094" r={3} />
+        )}
+      </svg>
+      <PingPill
+        style={{
+          left: "50%",
+          position: "absolute",
+          top: "100%",
+          transform: "translate(-50%, 4px)",
+        }}
+      >
+        {selectedLabel ?? <span style={{ color: "#bebebe" }}>{idleLabel}</span>}
+      </PingPill>
     </div>
   );
 };
