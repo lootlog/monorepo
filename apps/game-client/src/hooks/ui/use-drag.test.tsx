@@ -370,6 +370,36 @@ describe("useDrag", () => {
     expect(result.current.isDragging).toBe(true);
   });
 
+  it("starts a drag from an icon inside the drag area", () => {
+    const element = document.createElement("div");
+    const ref: RefObject<HTMLDivElement | null> = { current: element };
+
+    const { result } = renderHook(() =>
+      useDrag({ ref, position: ORIGIN, onDragStop: vi.fn() }),
+    );
+
+    const { getByTestId } = render(
+      <div onPointerDown={result.current.handlePointerDown}>
+        <svg data-testid="grip-icon">
+          <path d="M0 0h1" />
+        </svg>
+      </div>,
+    );
+
+    act(() => {
+      fireEvent.pointerDown(getByTestId("grip-icon"), {
+        button: 0,
+        clientX: 10,
+        clientY: 10,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "mouse",
+      });
+    });
+
+    expect(result.current.isDragging).toBe(true);
+  });
+
   it("ignores another pointer and ends the session on pointer cancel without saving an unmoved position", () => {
     const element = document.createElement("div");
     vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
