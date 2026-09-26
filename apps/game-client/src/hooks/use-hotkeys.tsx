@@ -71,13 +71,16 @@ const hotkeyScopes = new Map<string, HotkeyActionConfig["scope"]>(
   HOTKEY_ACTIONS.map(({ action, scope }) => [action, scope]),
 );
 
-export const useHotkeys = ({
-  onChatHelp,
-  onChatPosition,
-  onPingCancel,
-  onPingEnd,
-  onPingStart,
-}: UseHotkeysOptions = {}) => {
+export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
+  // Callers pass fresh callbacks on every render. The listeners read the
+  // latest ones through a ref, so a re-render mid-press does not reinstall
+  // them and cancel a held ping.
+  const handlersRef = useRef(handlers);
+
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
+
   const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
   const activePingIdentityRef = useRef<PingPressIdentity | null>(null);
@@ -115,7 +118,7 @@ export const useHotkeys = ({
       }
 
       activePingIdentityRef.current = null;
-      onPingCancel?.();
+      handlersRef.current.onPingCancel?.();
 
       return true;
     };
@@ -125,8 +128,8 @@ export const useHotkeys = ({
         "create-party-gathering",
         () => useWindowsStore.getState().openAndFocus("create-party-gathering"),
       ],
-      ["chat-position", () => onChatPosition?.()],
-      ["chat-help", () => onChatHelp?.()],
+      ["chat-position", () => handlersRef.current.onChatPosition?.()],
+      ["chat-help", () => handlersRef.current.onChatHelp?.()],
       [
         "join-party-gathering",
         () => window.dispatchEvent(new Event("lootlog:join-visible-gathering")),
@@ -169,7 +172,7 @@ export const useHotkeys = ({
             return activePingIdentityRef.current !== null;
           }
 
-          const handled = onPingStart?.(event) ?? false;
+          const handled = handlersRef.current.onPingStart?.(event) ?? false;
 
           if (handled) {
             activePingIdentityRef.current = createPingPressIdentity(event);
@@ -225,7 +228,7 @@ export const useHotkeys = ({
       }
 
       activePingIdentityRef.current = null;
-      onPingEnd?.(event);
+      handlersRef.current.onPingEnd?.(event);
       event.preventDefault();
     };
 
@@ -267,7 +270,7 @@ export const useHotkeys = ({
       }
 
       activePingIdentityRef.current = null;
-      onPingEnd?.(event);
+      handlersRef.current.onPingEnd?.(event);
       event.preventDefault();
       rememberHandledMouse(event);
     };
@@ -307,15 +310,7 @@ export const useHotkeys = ({
         handledMouseTimeoutRef.current = null;
       }
     };
-  }, [
-    bindings,
-    onChatHelp,
-    onChatPosition,
-    onPingCancel,
-    onPingEnd,
-    onPingStart,
-    toggleOpen,
-  ]);
+  }, [bindings, toggleOpen]);
 
   return null;
 };
