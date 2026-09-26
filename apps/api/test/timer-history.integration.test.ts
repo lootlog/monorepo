@@ -6,6 +6,7 @@ import {
 } from "@lootlog/messaging";
 import { Permission } from "@lootlog/schema/permissions";
 import { Effect, Layer, ManagedRuntime, Schema } from "effect";
+import { and, eq } from "drizzle-orm";
 import { FetchHttpClient, HttpRouter } from "effect/unstable/http";
 import {
   TimerHistoryListResponse,
@@ -17,6 +18,8 @@ import {
   type ApiDatabaseValue,
 } from "#src/database/drizzle/database";
 import {
+  eventHeroNpcTable,
+  eventTable,
   guildTable,
   memberTable,
   memberToRoleTable,
@@ -110,6 +113,20 @@ it("serves history and restores deleted or reset timers through HTTP without rep
         name: "Timer history organization",
         ownerId: "different-owner",
         updatedAt: now,
+      });
+      yield* database.insert(eventTable).values({
+        id: guildId,
+        guildId,
+        world,
+        name: "Scheduled timer event",
+        startsAt: new Date(now.getTime() + 3_600_000),
+        updatedAt: now,
+      });
+      yield* database.insert(eventHeroNpcTable).values({
+        id: guildId,
+        eventId: guildId,
+        npcId: npc.id,
+        npcName: npc.name,
       });
       yield* database.insert(roleTable).values({
         id: guildId,
@@ -309,6 +326,20 @@ it("serves history and restores deleted or reset timers through HTTP without rep
   expect(resetTimer.maxSpawnTime).not.toBe(maxSpawnTime.toISOString());
   expect(resetTimer).not.toHaveProperty("actorCharacter");
 
+  await databaseRuntime.runPromise(
+    database
+      .update(timerHistoryEntryTable)
+      .set({ createdAt: new Date(now.getTime() - 60_000) })
+      .where(
+        and(
+          eq(timerHistoryEntryTable.guildId, guildId),
+          eq(timerHistoryEntryTable.world, world),
+          eq(timerHistoryEntryTable.timerKey, timerKey),
+          eq(timerHistoryEntryTable.action, "RESET"),
+        ),
+      ),
+  );
+
   const resetHistories = await readHistories(1);
 
   for (const history of resetHistories) {
@@ -347,6 +378,47 @@ it("serves history and restores deleted or reset timers through HTTP without rep
 
   expect(unauthorizedRollback.status).toBe(403);
   expect(publishedMessages).toHaveLength(publishedBeforeUnauthorizedRollback);
+
+  await databaseRuntime.runPromise(
+    database
+      .update(eventTable)
+      .set({ startsAt: new Date(now.getTime() - 120_000) })
+      .where(eq(eventTable.id, guildId)),
+  );
+
+  const activeEventHistories = await readHistories(1);
+
+  for (const history of activeEventHistories) {
+    expect(history[0]).toMatchObject({
+      id: resetEntry.id,
+      action: "RESET",
+      canRestore: false,
+    });
+  }
+
+  const eventRollback = await request(rollbackPath, { method: "POST" });
+  expect(eventRollback.status).toBe(400);
+  expect(publishedMessages).toHaveLength(publishedBeforeUnauthorizedRollback);
+  expect(await readHistories(1)).toEqual(activeEventHistories);
+
+  const [eventTimer] = await databaseRuntime.runPromise(
+    database.select().from(timerTable).where(eq(timerTable.guildId, guildId)),
+  );
+
+  expect(eventTimer?.minSpawnTime.toISOString()).toBe(resetTimer.minSpawnTime);
+  expect(eventTimer?.maxSpawnTime.toISOString()).toBe(resetTimer.maxSpawnTime);
+  expect(eventTimer?.wasReset).toBe(true);
+
+  await databaseRuntime.runPromise(
+    database
+      .update(eventTable)
+      .set({ endsAt: new Date(now.getTime() - 60_000) })
+      .where(eq(eventTable.id, guildId)),
+  );
+
+  for (const history of await readHistories(1)) {
+    expect(history[0]?.canRestore).toBe(true);
+  }
 
   const rollback = await request(rollbackPath, { method: "POST" });
   expect(rollback.status).toBe(201);

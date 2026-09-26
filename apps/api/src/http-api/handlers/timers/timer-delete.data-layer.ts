@@ -99,7 +99,7 @@ export const makeDeleteTimer = (
           transaction,
           access.guild.id,
           world,
-          timer,
+          [timer],
           now,
         );
 
