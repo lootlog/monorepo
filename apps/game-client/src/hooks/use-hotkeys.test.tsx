@@ -236,6 +236,34 @@ describe("useHotkeys", () => {
     expect(onMapPingEnd).toHaveBeenCalledOnce();
   });
 
+  it("finishes a keyboard map ping when a focused editor stops the release", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "X",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    const onMapPingStart = vi.fn<() => boolean>(() => true);
+    const onMapPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    renderHook(() => useHotkeys({ onMapPingStart, onMapPingEnd }));
+    const editor = document.createElement("div");
+    editor.addEventListener("keyup", (event) => event.stopPropagation());
+    document.body.append(editor);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyX", key: "x" }),
+      );
+      editor.dispatchEvent(
+        new KeyboardEvent("keyup", { code: "KeyX", key: "x", bubbles: true }),
+      );
+    });
+
+    expect(onMapPingEnd).toHaveBeenCalledOnce();
+    editor.remove();
+  });
+
   it("ignores key repeat and cancels an active ping with Escape", () => {
     useHotkeysStore.getState().setBinding("map-ping", {
       type: "keyboard",
