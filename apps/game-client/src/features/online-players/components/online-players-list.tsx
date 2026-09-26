@@ -244,12 +244,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     listContent =
       onlinePlayersList.length > 0 ? (
         <ScrollArea className="ll:h-full ll:w-full">
-          {onlinePlayersList.map(([discordId, presences], index) => (
+          {onlinePlayersList.map(([discordId, presences]) => (
             <OnlinePlayersListEntry
               key={discordId}
               presences={presences}
               guildMember={guildMembers?.[discordId]}
-              isAlternateRow={index % 2 === 1}
             />
           ))}
         </ScrollArea>
@@ -269,12 +268,11 @@ export const OnlinePlayersList: FC<OnlinePlayersListProps> = ({
     listContent =
       onlineAccountsList.length > 0 ? (
         <ScrollArea className="ll:h-full ll:w-full">
-          {onlineAccountsList.map(({ discordId, presence }, index) => (
+          {onlineAccountsList.map(({ discordId, presence }) => (
             <OnlinePlayersAccountListEntry
               key={`${presence.player?.accountId}-${presence.player?.characterId}`}
               presence={presence}
               guildMember={guildMembers?.[discordId]}
-              isAlternateRow={index % 2 === 1}
             />
           ))}
         </ScrollArea>

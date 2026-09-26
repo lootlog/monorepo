@@ -29,7 +29,6 @@ import { inviteCharacterToFriends } from "@/lib/margonem-runtime/adapters/charac
 type ReadyRoomParticipantItemProps = {
   room: PartyReadyRoomOrganizerProjection;
   participant: PartyReadyRoomParticipant;
-  isAlternateRow: boolean;
 };
 
 /**
@@ -40,7 +39,6 @@ type ReadyRoomParticipantItemProps = {
 export function ReadyRoomParticipantItem({
   room,
   participant,
-  isAlternateRow,
 }: ReadyRoomParticipantItemProps) {
   const { t } = useTranslation(["partyFinder", "chat"]);
   const { applyUpdate } = useReadyRoomsCache();
@@ -95,7 +93,6 @@ export function ReadyRoomParticipantItem({
           <ListRow
             className={cn("ll:justify-between", isRemoving && "ll:opacity-50")}
             fill={relation ? PLAYER_RELATION_FILLS[relation] : undefined}
-            isAlternateRow={isAlternateRow}
             onDoubleClick={invite}
           >
             <span className="ll:flex ll:min-w-0 ll:items-center ll:gap-0.5">

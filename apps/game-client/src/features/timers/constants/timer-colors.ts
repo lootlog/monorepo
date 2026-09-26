@@ -10,7 +10,7 @@ export type TimerColorPaint = {
   hoverFill?: string;
 };
 
-const TILE_FILL_ALPHA_HEX = "4d";
+const TILE_FILL_ALPHA_HEX = "59";
 
 const paint = (hex: string): TimerColorPaint => ({
   accent: hex,

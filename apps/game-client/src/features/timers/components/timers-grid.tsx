@@ -124,9 +124,8 @@ export const TimersGrid: FC<TimersGridProps> = ({
           gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
         }}
       >
-        {timers.map((timer, index) => {
+        {timers.map((timer) => {
           const isHidden = hiddenTimerNames.has(timer.npc.name);
-          const isAlternateRow = Math.floor(index / columnCount) % 2 === 1;
 
           return (
             <SingleTimer
@@ -137,7 +136,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
               timer={timer}
               settingsKey={settingsKey}
               isHidden={isHidden}
-              isAlternateRow={!legacyAppearance && isAlternateRow}
               showColorStripe={showColorStripe}
             />
           );

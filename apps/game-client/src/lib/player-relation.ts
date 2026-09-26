@@ -50,13 +50,24 @@ export const resolvePlayerRelations = ({
   return relations;
 };
 
-/** Row fills per relation, from the timer palette so every list paints alike. */
+/**
+ * Player rows sit in long lists read at a glance, so they take the timer hues
+ * a little quieter than timer tiles do.
+ */
+const PLAYER_ROW_FILL_ALPHA_HEX = "40";
+
+const playerRowFill = (color: keyof typeof TIMERS_COLORS) =>
+  `${TIMERS_COLORS[color].accent}${PLAYER_ROW_FILL_ALPHA_HEX}`;
+
+/** Row fills per relation, from the timer hues so every list paints alike. */
 export const PLAYER_RELATION_FILLS: Record<PlayerRelation, string> = {
-  self: TIMERS_COLORS.yellow.fill,
-  party: TIMERS_COLORS.purple.fill,
-  clan: TIMERS_COLORS.green.fill,
-  enemy: TIMERS_COLORS.red.fill,
-  "clan-enemy": TIMERS_COLORS.red.fill,
-  friend: TIMERS_COLORS.sky.fill,
-  "clan-ally": TIMERS_COLORS.lime.fill,
+  self: playerRowFill("yellow"),
+  party: playerRowFill("purple"),
+  clan: playerRowFill("green"),
+  enemy: playerRowFill("red"),
+  "clan-enemy": playerRowFill("red"),
+  friend: playerRowFill("sky"),
+  "clan-ally": playerRowFill("lime"),
 };
+
+export const PLAYER_AFK_FILL = playerRowFill("orange");
