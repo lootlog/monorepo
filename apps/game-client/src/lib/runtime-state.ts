@@ -4,7 +4,6 @@ import { characterTooltipCatchingGuildsCoordinator } from "@/lib/character-toolt
 import { characterTooltipTransforms } from "@/lib/margonem-tooltips/registry";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
 import { useChatStore } from "@/store/chat.store";
-import { useFriendsStore } from "@/store/friends.store";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
@@ -43,7 +42,6 @@ export function resetTransientRuntimeState(): void {
   });
   useDialogStore.getState().clearNpcContext();
   useLootStore.getState().setLastLootId(null);
-  useFriendsStore.setState({ friends: [], friendsMax: 0 });
 
   useChatStore.setState({
     draftsByGuild: {},
