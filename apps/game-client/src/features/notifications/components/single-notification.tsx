@@ -64,6 +64,7 @@ type SingleNotificationProps = {
   onRemoveNotification: (notificationId: string) => void;
   onResumeAutoHide: (listKey: string) => void;
   onUpdateMutes: (mutes: NotificationMutesPatch) => void;
+  showCloseButton?: boolean;
   npcTypeColors?: NpcTypeColors;
 };
 
@@ -212,6 +213,7 @@ export const SingleNotification = memo(function SingleNotification({
   onRemoveNotification,
   onResumeAutoHide,
   onUpdateMutes,
+  showCloseButton = false,
   npcTypeColors,
 }: SingleNotificationProps) {
   const { t } = useTranslation("notifications");
@@ -433,13 +435,15 @@ export const SingleNotification = memo(function SingleNotification({
             onOpenChange={handleMuteMenuOpenChange}
             onMuted={handleRemoveNotification}
           />
-          <IconButton
-            variant="quiet-destructive"
-            label={t("actions.closeAria")}
-            onClick={handleRemoveNotification}
-          >
-            <XIcon aria-hidden />
-          </IconButton>
+          {showCloseButton ? (
+            <IconButton
+              variant="quiet-destructive"
+              label={t("actions.closeAria")}
+              onClick={handleRemoveNotification}
+            >
+              <XIcon aria-hidden />
+            </IconButton>
+          ) : null}
         </div>
       </div>
     </div>
