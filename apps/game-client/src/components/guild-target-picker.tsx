@@ -2,8 +2,8 @@ import { ChevronDown } from "lucide-react";
 import { useState, type ComponentProps, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
 import { ChecklistMenu } from "@/components/checklist-menu";
+import { GuildsLoadStatus } from "@/components/guilds-load-status";
 import { GuildAvatar } from "@/components/guild-avatar";
 import {
   Popover,
@@ -43,29 +43,13 @@ export const GuildTargetPicker: FC<GuildTargetPickerProps> = ({
   const [open, setOpen] = useState(false);
 
   const {
-    guildsQuery: { data: guilds, error, refetch },
+    areVisibleGuildsResolved,
+    guildsQuery: { data: guilds },
     visibleGuilds,
   } = useLootlogGuilds();
 
-  if (!guilds) {
-    return error ? (
-      <AsyncStatusIndicator
-        active
-        kind="error"
-        label={t("async.guildsError")}
-        onRetry={() => void refetch()}
-        retryLabel={t("actions.retry")}
-        className={className}
-      />
-    ) : (
-      <AsyncStatusIndicator
-        active
-        delay
-        kind="loading"
-        label={t("async.loadingGuilds")}
-        className={className}
-      />
-    );
+  if (!areVisibleGuildsResolved || !guilds) {
+    return <GuildsLoadStatus className={className} />;
   }
 
   const selected = new Set(value);

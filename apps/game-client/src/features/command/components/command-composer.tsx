@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { AsyncStatusIndicator } from "@/components/async-status-indicator";
+import { GuildsLoadStatus } from "@/components/guilds-load-status";
 import { GuildSelect } from "@/components/guild-select";
 import { Kbd } from "@/components/ui/kbd";
 import { ChatComposeField } from "@/features/chat/components/chat-compose-field";
@@ -37,7 +37,8 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   );
 
   const {
-    guildsQuery: { data: guilds, error, refetch },
+    areVisibleGuildsResolved,
+    guildsQuery: { data: guilds },
     visibleGuilds,
   } = useLootlogGuilds();
 
@@ -90,23 +91,8 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
     />
   );
 
-  if (!guilds) {
-    guildField = error ? (
-      <AsyncStatusIndicator
-        active
-        kind="error"
-        label={tCommon("async.guildsError")}
-        onRetry={() => void refetch()}
-        retryLabel={tCommon("actions.retry")}
-      />
-    ) : (
-      <AsyncStatusIndicator
-        active
-        delay
-        kind="loading"
-        label={tCommon("async.loadingGuilds")}
-      />
-    );
+  if (!areVisibleGuildsResolved || !guilds) {
+    guildField = <GuildsLoadStatus />;
   } else if (!hasTarget) {
     guildField = (
       <span className="ll:px-1.5 ll:text-xs ll:text-muted-foreground">

@@ -32,6 +32,8 @@ const notificationRequest = vi.fn<typeof fetch>();
 
 const chatRequest = vi.fn<typeof fetch>();
 
+const preferencesRequest = vi.fn<typeof fetch>();
+
 let queryClient: QueryClient;
 
 let restoreApi: () => void;
@@ -124,6 +126,9 @@ beforeEach(() => {
       Response.json(sentMessage(requestPath(input).split("/")[2] ?? "")),
     );
   notificationRequest.mockReset();
+  preferencesRequest
+    .mockReset()
+    .mockReturnValue(Promise.withResolvers<Response>().promise);
   restoreApi = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
@@ -137,6 +142,9 @@ beforeEach(() => {
 
         if (pathname.endsWith("/chat-messages"))
           return chatRequest(input, init);
+
+        if (pathname === "/users/@me/preferences")
+          return preferencesRequest(input, init);
         throw new Error(`Unexpected HTTP request: ${pathname}`);
       },
     },
@@ -249,5 +257,25 @@ describe("CommandWindow", () => {
     expect(useWindowsStore.getState().command.open).toBe(false);
     expect(getDraft()).toBe("");
     expect(chatRequest).not.toHaveBeenCalled();
+  });
+  it("keeps Quick chat open when a Lootlog is picked with the mouse", async () => {
+    mount();
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("combobox", { name: "Lootlog, do którego wysyłasz" }),
+    );
+    await user.click(await screen.findByRole("option", { name: "Beta" }));
+    expect(useChatStore.getState().commandGuildId).toBe("guild-2");
+    expect(useWindowsStore.getState().command.open).toBe(true);
+  });
+  it("does not target any Lootlog before the preferences that hide some have loaded", () => {
+    queryClient.removeQueries({
+      queryKey: getUsersControllerGetUserPreferencesQueryKey(),
+    });
+    mount();
+    expect(
+      screen.getByRole("textbox", { name: "Wybierz Lootlog, aby pisać…" }),
+    ).toHaveAttribute("tabindex", "-1");
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 });

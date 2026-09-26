@@ -518,6 +518,11 @@ const mergePersistedWindows = (
     merged[id] = parsePersistedWindow(raw[id], current[id]);
   }
 
+  // Quick chat is summoned for one entry: a reload, including one that
+  // restores an older payload with the console open, must not reopen it and
+  // pull focus away from the game.
+  merged.command = { ...merged.command, open: false };
+
   merged.settings = {
     ...parsePersistedWindow(raw.settings, current.settings),
     state: {
@@ -963,9 +968,7 @@ export const useWindowsStore = create<WindowsState>()(
           ...persisted
         } = state;
 
-        // The console is summoned for one line; a reload must not reopen it
-        // and pull focus away from the game.
-        return { ...persisted, command: { ...persisted.command, open: false } };
+        return persisted;
       },
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),
