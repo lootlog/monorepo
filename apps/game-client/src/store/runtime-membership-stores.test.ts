@@ -37,7 +37,7 @@ describe("runtime membership stores", () => {
     unsubscribe();
   });
 
-  it("does not publish when players met on the map confirm known relations", () => {
+  it("does not publish or persist when players met on the map confirm known relations", () => {
     const scopes = { character: "hero", clan: "hero-clan" };
 
     const observations = [
@@ -51,10 +51,13 @@ describe("runtime membership stores", () => {
       vi.fn<Parameters<typeof useSocialRelationsStore.subscribe>[0]>();
 
     const unsubscribe = useSocialRelationsStore.subscribe(subscriber);
+    const storageWrite = vi.spyOn(Storage.prototype, "setItem");
 
     useSocialRelationsStore.getState().observePlayers(scopes, observations);
 
     expect(subscriber).not.toHaveBeenCalled();
+    expect(storageWrite).not.toHaveBeenCalled();
+    storageWrite.mockRestore();
     unsubscribe();
   });
 });

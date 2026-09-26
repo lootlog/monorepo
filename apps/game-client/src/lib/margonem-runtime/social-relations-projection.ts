@@ -7,6 +7,7 @@ import type {
 import { Option, Schema } from "effect";
 import { chunk } from "es-toolkit";
 import { useGameStore } from "@/store/game.store";
+import { runtimeOtherHandles } from "./runtime-other-handles";
 import {
   getSocialScopes,
   useSocialRelationsStore,
@@ -69,7 +70,14 @@ const observe = (observations: readonly PlayerRelationObservation[]) => {
   useSocialRelationsStore.getState().observePlayers(scopes, observations);
 };
 
-/** Learns from the relation each player on the map arrives with. */
+const getHandleData = (handle: OtherHandle) =>
+  "d" in handle ? handle.d : handle;
+
+/**
+ * Learns from the relation each player on the map arrives with. A later
+ * update may carry only the relation; the game has already merged it into
+ * the player's handle, which still knows the clan.
+ */
 export function observeOtherEntries(
   others: Readonly<Record<string, OtherEntry>>,
 ): void {
@@ -78,7 +86,18 @@ export function observeOtherEntries(
   for (const [characterId, entry] of Object.entries(others)) {
     const observation = toObservation(characterId, entry);
 
-    if (observation) observations.push(observation);
+    if (!observation) continue;
+
+    const handle =
+      observation.clanId === undefined
+        ? runtimeOtherHandles.get(characterId)
+        : undefined;
+
+    const clanId = handle
+      ? toObservation(characterId, getHandleData(handle))?.clanId
+      : observation.clanId;
+
+    observations.push({ ...observation, clanId });
   }
 
   observe(observations);
@@ -91,10 +110,7 @@ export function observeOtherHandles(
   const observations: PlayerRelationObservation[] = [];
 
   for (const [characterId, handle] of Object.entries(handles)) {
-    const observation = toObservation(
-      characterId,
-      "d" in handle ? handle.d : handle,
-    );
+    const observation = toObservation(characterId, getHandleData(handle));
 
     if (observation) observations.push(observation);
   }

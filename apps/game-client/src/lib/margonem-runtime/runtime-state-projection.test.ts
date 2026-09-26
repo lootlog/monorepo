@@ -679,6 +679,41 @@ describe("RuntimeStateProjection", () => {
       expect(relationsOf("elsewhere", 30)).toEqual([]);
     });
 
+    it("takes the clan from the merged player when an update carries only the relation", () => {
+      const adapter = createAdapter();
+      adapter.getStateSnapshot.mockReturnValue({
+        game: clanGame,
+        npcs: [],
+        others: {},
+        party: [],
+      });
+
+      const handle = {
+        d: {
+          account: 3,
+          icon: "met.gif",
+          id: "77",
+          lvl: 100,
+          nick: "Met",
+          prof: "m",
+          relation: 1,
+          clan: { id: 30, name: "Other" },
+        },
+      };
+
+      adapter.getOtherHandle.mockReturnValue(handle);
+      const projection = new RuntimeStateProjection({ adapter });
+      projection.bootstrap();
+      projection.apply(createEnvelope({ other: { "77": otherCreate(1, 30) } }));
+
+      // Other.js merges the update into the handle before Lootlog observes it.
+      handle.d.relation = 5;
+      const relationUpdate = { x: 1, y: 1, dir: 0, relation: 5 };
+      projection.apply(createEnvelope({ other: { "77": relationUpdate } }));
+
+      expect(relationsOf("elsewhere", 30)).toEqual(["clan-ally"]);
+    });
+
     it("replaces allied clans from diplomacy without dropping enemy clans", () => {
       const projection = startProjection();
 

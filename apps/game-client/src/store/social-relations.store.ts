@@ -198,41 +198,43 @@ const decodePersistedSocialRelations = Schema.decodeUnknownOption(
  */
 export const useSocialRelationsStore = create<SocialRelationsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       characters: {},
       clans: {},
-      observePlayers: (scopes, observations) =>
-        set((state) => {
-          const currentSocial =
-            state.characters[scopes.character] ?? EMPTY_CHARACTER_SOCIAL;
+      // The persist middleware writes storage after every set, even one that
+      // keeps the state, so observations that confirm what is known skip it.
+      observePlayers: (scopes, observations) => {
+        const state = get();
 
-          const currentDiplomacy = scopes.clan
-            ? (state.clans[scopes.clan] ?? EMPTY_CLAN_DIPLOMACY)
-            : EMPTY_CLAN_DIPLOMACY;
+        const currentSocial =
+          state.characters[scopes.character] ?? EMPTY_CHARACTER_SOCIAL;
 
-          let social = currentSocial;
-          let diplomacy = currentDiplomacy;
+        const currentDiplomacy = scopes.clan
+          ? (state.clans[scopes.clan] ?? EMPTY_CLAN_DIPLOMACY)
+          : EMPTY_CLAN_DIPLOMACY;
 
-          for (const observation of observations) {
-            social = observeCharacter(social, observation);
+        let social = currentSocial;
+        let diplomacy = currentDiplomacy;
 
-            if (scopes.clan) diplomacy = observeClan(diplomacy, observation);
-          }
+        for (const observation of observations) {
+          social = observeCharacter(social, observation);
 
-          if (social === currentSocial && diplomacy === currentDiplomacy)
-            return state;
+          if (scopes.clan) diplomacy = observeClan(diplomacy, observation);
+        }
 
-          return {
-            characters:
-              social === currentSocial
-                ? state.characters
-                : { ...state.characters, [scopes.character]: social },
-            clans:
-              scopes.clan && diplomacy !== currentDiplomacy
-                ? { ...state.clans, [scopes.clan]: diplomacy }
-                : state.clans,
-          };
-        }),
+        if (social === currentSocial && diplomacy === currentDiplomacy) return;
+
+        set({
+          characters:
+            social === currentSocial
+              ? state.characters
+              : { ...state.characters, [scopes.character]: social },
+          clans:
+            scopes.clan && diplomacy !== currentDiplomacy
+              ? { ...state.clans, [scopes.clan]: diplomacy }
+              : state.clans,
+        });
+      },
       replaceCharacterList: (characterScope, list, characterIds) =>
         set((state) => {
           const social =
