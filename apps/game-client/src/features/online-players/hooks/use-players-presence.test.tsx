@@ -504,7 +504,15 @@ describe("usePlayersPresence", () => {
       permissionEvent(policy([Permission.LOOTLOG_ONLINE_PLAYERS_READ])),
     );
     act(() => frame?.(16));
-    expect(result.current.onlinePlayers).toEqual({});
+    expect(result.current.onlinePlayers["discord-1"]?.[0]?.player?.name).toBe(
+      "Hero",
+    );
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.mapName,
+    ).toBeUndefined();
+    expect(
+      result.current.onlinePlayers["discord-1"]?.[0]?.player?.location,
+    ).toBeUndefined();
     await harness.receive(delta(createOnlinePresence()));
     act(() => frame?.(24));
     expect(result.current.onlinePlayers["discord-1"]?.[0]?.player?.name).toBe(

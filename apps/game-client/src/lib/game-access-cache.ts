@@ -20,7 +20,9 @@ const isGuildQueryParams = Schema.is(Schema.Struct({ guildId: Schema.String }));
 
 type TimerRecord = { guildId: string; npc: { type: string; lvl: number } };
 
-const timerScope = (query: Query): string | null | undefined => {
+export const getTimerQueryGuildId = (
+  query: Query,
+): string | null | undefined => {
   const [path, params] = query.queryKey;
 
   if (path === "/timers") return null;
@@ -65,7 +67,7 @@ const reconcileTimers = (
   );
 
   for (const query of queryClient.getQueryCache().getAll()) {
-    const scope = timerScope(query);
+    const scope = getTimerQueryGuildId(query);
 
     if (scope === undefined) continue;
 
@@ -235,7 +237,7 @@ export const createGameAccessCache = (queryClient: QueryClient) => {
         currentPolicy = undefined;
 
         for (const query of queryClient.getQueryCache().getAll()) {
-          if (timerScope(query) === undefined) continue;
+          if (getTimerQueryGuildId(query) === undefined) continue;
           void queryClient.cancelQueries({
             queryKey: query.queryKey,
             exact: true,

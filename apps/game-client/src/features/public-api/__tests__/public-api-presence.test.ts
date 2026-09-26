@@ -83,11 +83,12 @@ const listener = () =>
 describe("Public API presence over the realtime transport", () => {
   let harness: ReturnType<typeof createOnlinePlayersTest>;
   let teardown: () => void;
-  beforeEach(() => {
+  beforeEach(async () => {
     harness = createOnlinePlayersTest();
     teardown = bootstrapPublicApi(harness.queryClient);
     getSocket().connect();
     harness.open();
+    await harness.join();
     useGlobalStore.getState().setSocketState({
       connected: true,
       joined: true,
@@ -136,6 +137,30 @@ describe("Public API presence over the realtime transport", () => {
       player: { lvl: 123 },
     });
     expect(harness.fetchPresence).toHaveBeenCalledWith("guild-1", "alpha");
+  });
+  it("waits for the complete first snapshot before publishing buffered live changes", async () => {
+    const pending =
+      Promise.withResolvers<ReturnType<typeof createPresenceSnapshot>>();
+
+    harness.fetchPresence.mockReturnValue(pending.promise);
+    const received = listener();
+    getApi().subscribe("online-players:changed", received);
+    const result = getApi().getOnlinePlayers(scope);
+    await vi.waitFor(() =>
+      expect(harness.fetchPresence).toHaveBeenCalledOnce(),
+    );
+    await harness.receive(
+      delta([createOnlinePresence({ location: { map: "Ithan" } })]),
+    );
+    expect(received).not.toHaveBeenCalled();
+    pending.resolve(createPresenceSnapshot());
+    await result;
+    expect(received).toHaveBeenCalledOnce();
+    expect(received).toHaveBeenCalledWith({
+      ...scope,
+      status: "success",
+      players: { "discord-1": [expect.objectContaining({ mapName: "Ithan" })] },
+    });
   });
   it("returns an empty successful snapshot", async () => {
     harness.fetchPresence.mockResolvedValue(createPresenceSnapshot([]));
@@ -349,6 +374,7 @@ describe("Public API presence over the realtime transport", () => {
       createPresenceSnapshot([createOnlinePresence({ isAfk: true })]),
     );
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
+    await harness.join(["guild-1"], policy(fullPermissions));
     await vi.waitFor(() => expect(received).toHaveBeenCalledOnce());
     expect(received).toHaveBeenCalledWith(
       expect.objectContaining({ status: "success" }),

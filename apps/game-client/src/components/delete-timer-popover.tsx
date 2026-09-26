@@ -16,19 +16,21 @@ import {
 
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
-import { DeleteTimerMenuItem } from "@/features/timers/components/delete-timer-menu-item";
+import { TimerActionConfirmation } from "@/features/timers/components/timer-action-confirmation";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
 
 type DeleteTimerPopoverProps = {
   timer: TimerWithTimeLeft;
-  onDeleteTimer: (guildId: string, timerKey: string) => void;
+  onDeleteTimer: (guildId: string, timerKey: string) => Promise<boolean>;
+  pending: boolean;
 };
 
 export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   timer,
   onDeleteTimer,
+  pending,
 }) => {
   const { t } = useTranslation("timers");
   const [open, setOpen] = useState(false);
@@ -92,9 +94,15 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     const guild = guildsWithPermissions[0];
 
     return (
-      <DeleteTimerMenuItem
+      <TimerActionConfirmation
+        action="delete"
         timerName={timer.npc.name}
-        onDelete={() => onDeleteTimer(guild.guildId, guild.timerKey)}
+        scopeLabel={
+          guilds?.find((entry) => entry.id === guild.guildId)?.name ??
+          guild.guildId
+        }
+        pending={pending}
+        onConfirm={() => onDeleteTimer(guild.guildId, guild.timerKey)}
       />
     );
   }
@@ -103,6 +111,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
     <Popover open={open} onOpenChange={preservePopoverOnMenuPress(setOpen)}>
       <PopoverTrigger asChild>
         <ContextMenuItem
+          disabled={pending}
           className="ll:text-red-300 ll:hover:bg-red-500/20 ll:data-[highlighted]:bg-red-500/20 ll:focus-visible:bg-red-500/20"
           onSelect={(e) => {
             e.preventDefault();
@@ -127,19 +136,26 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
             const guildData = guilds?.find((g) => g.id === guild.guildId);
 
             return (
-              <Button
-                size="xs"
-                type="button"
+              <TimerActionConfirmation
                 key={guild.guildId}
-                variant="menu"
-                className="ll:justify-start ll:text-left ll:text-red-300 ll:hover:bg-red-500/20"
-                onClick={() => {
-                  onDeleteTimer(guild.guildId, guild.timerKey);
-                  setOpen(false);
-                }}
-              >
-                {guildData?.name ?? guild.guildId}
-              </Button>
+                action="delete"
+                timerName={timer.npc.name}
+                scopeLabel={guildData?.name ?? guild.guildId}
+                pending={pending}
+                onConfirm={() => onDeleteTimer(guild.guildId, guild.timerKey)}
+                onConfirmed={() => setOpen(false)}
+                trigger={
+                  <Button
+                    size="xs"
+                    type="button"
+                    variant="menu"
+                    disabled={pending}
+                    className="ll:justify-start ll:text-left ll:text-red-300 ll:hover:bg-red-500/20"
+                  >
+                    {guildData?.name ?? guild.guildId}
+                  </Button>
+                }
+              />
             );
           })}
         </div>

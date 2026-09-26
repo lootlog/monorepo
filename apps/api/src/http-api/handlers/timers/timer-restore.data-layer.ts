@@ -1,5 +1,6 @@
 import { canViewTimer } from "./timer-selection.js";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { getTimerRestoreSnapshot } from "./timer-restore-snapshot.js";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
@@ -69,14 +70,9 @@ export const makeRestoreTimer = (
           );
         }
 
-        if (
-          entry.action !== TimerHistoryAction.DELETE ||
-          entry.timerCreatedById === null ||
-          entry.minSpawnTime === null ||
-          entry.maxSpawnTime === null ||
-          entry.latestRespBaseSeconds === null ||
-          entry.latestRespawnRandomness === null
-        ) {
+        const snapshot = getTimerRestoreSnapshot(entry);
+
+        if (!snapshot) {
           return yield* Effect.fail(
             new InvalidRequestError({
               message: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
@@ -115,20 +111,10 @@ export const makeRestoreTimer = (
         const restoredRows = yield* transaction
           .insert(timerTable)
           .values({
-            createdById: entry.timerCreatedById,
+            ...snapshot,
             guildId: access.guild.id,
-            npcId: entry.npcId,
             timerKey: entry.timerKey,
             world: entry.world,
-            minSpawnTime: entry.minSpawnTime,
-            maxSpawnTime: entry.maxSpawnTime,
-            latestRespBaseSeconds: entry.latestRespBaseSeconds,
-            latestRespawnRandomness: entry.latestRespawnRandomness,
-            wasReset: entry.wasReset ?? false,
-            npc: entry.npc,
-            windowOpenedAt: entry.windowOpenedAt,
-            actorCharacterSnapshotId: entry.timerActorCharacterSnapshotId,
-            actorCharacterLvl: entry.timerActorCharacterLvl,
             deletedAt: null,
             createdAt: now,
             updatedAt: now,
@@ -136,28 +122,19 @@ export const makeRestoreTimer = (
           .onConflictDoUpdate({
             target: [timerTable.guildId, timerTable.world, timerTable.timerKey],
             set: {
-              createdById: entry.timerCreatedById,
-              npcId: entry.npcId,
-              minSpawnTime: entry.minSpawnTime,
-              maxSpawnTime: entry.maxSpawnTime,
-              latestRespBaseSeconds: entry.latestRespBaseSeconds,
-              latestRespawnRandomness: entry.latestRespawnRandomness,
-              wasReset: entry.wasReset ?? false,
-              npc: entry.npc,
-              windowOpenedAt: entry.windowOpenedAt,
-              actorCharacterSnapshotId: entry.timerActorCharacterSnapshotId,
-              actorCharacterLvl: entry.timerActorCharacterLvl,
+              ...snapshot,
               deletedAt: null,
               updatedAt: now,
             },
+            setWhere: isNotNull(timerTable.deletedAt),
           })
           .returning();
 
         const restored = restoredRows[0];
 
         if (!restored)
-          return yield* Effect.die(
-            new TimersInvariantViolation({ code: "RESTORE_NO_ROW" }),
+          return yield* Effect.fail(
+            new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),
           );
 
         const actors = yield* transaction
@@ -185,8 +162,8 @@ export const makeRestoreTimer = (
           npc: entry.npc,
           action: TimerHistoryAction.RESTORE,
           actorMemberId: actor.id,
-          minSpawnTime: entry.minSpawnTime,
-          maxSpawnTime: entry.maxSpawnTime,
+          minSpawnTime: restored.minSpawnTime,
+          maxSpawnTime: restored.maxSpawnTime,
           latestRespBaseSeconds: restored.latestRespBaseSeconds,
           latestRespawnRandomness: restored.latestRespawnRandomness,
           wasReset: restored.wasReset,
