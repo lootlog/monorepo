@@ -117,6 +117,5 @@ export {
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
-  openContextMenuFrom,
   openContextMenuOnKeyDown,
 };
