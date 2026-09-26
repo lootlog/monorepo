@@ -1,6 +1,8 @@
 import { and, desc, eq } from "drizzle-orm";
+import { Capability } from "@lootlog/domain/access-policy";
 import { Effect } from "effect";
 import { canViewTimer } from "./timer-selection.js";
+import { getTimerRestoreSnapshot } from "./timer-restore-snapshot.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   guildTable,
@@ -10,7 +12,6 @@ import {
   timerTable,
 } from "#src/database/drizzle/schema";
 import { ErrorKey } from "#src/timers/error-key";
-import { TimerHistoryAction } from "#src/timers/timers.types";
 import { isLegacyNpcIdIdentifier } from "#src/timers/timer-key";
 import { InvalidRequestError } from "#src/shared/http/http-errors";
 import type { TimersGuildAccess } from "./timers.handlers.js";
@@ -74,6 +75,7 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
           guildName: guildTable.name,
           actorMember: memberTable,
           actorCharacter: playerSnapshotTable,
+          currentTimer: timerTable,
         })
         .from(timerHistoryEntryTable)
         .innerJoin(
@@ -91,12 +93,20 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             timerHistoryEntryTable.actorCharacterSnapshotId,
           ),
         )
+        .leftJoin(
+          timerTable,
+          and(
+            eq(timerTable.guildId, timerHistoryEntryTable.guildId),
+            eq(timerTable.world, timerHistoryEntryTable.world),
+            eq(timerTable.timerKey, timerHistoryEntryTable.timerKey),
+          ),
+        )
         .where(condition)
         .orderBy(desc(timerHistoryEntryTable.createdAt))
         .limit(limit);
 
       return rows.flatMap(
-        ({ entry, guildName, actorMember, actorCharacter }) => {
+        ({ entry, guildName, actorMember, actorCharacter, currentTimer }) => {
           if (!canViewTimer(access, entry)) {
             return [];
           }
@@ -118,7 +128,12 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
               ),
               minSpawnTime: entry.minSpawnTime,
               maxSpawnTime: entry.maxSpawnTime,
-              canRestore: entry.action === TimerHistoryAction.DELETE,
+              canRestore:
+                access.accessPolicy.allows(Capability.LOOTLOG_TIMERS_WRITE) &&
+                getTimerRestoreSnapshot(entry) !== undefined &&
+                (currentTimer === null ||
+                  (currentTimer.deletedAt !== null &&
+                    canViewTimer(access, currentTimer))),
               createdAt: entry.createdAt,
             },
           ];

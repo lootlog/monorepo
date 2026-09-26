@@ -20,6 +20,7 @@ import { makeAllTimerList } from "./timer-list.data-layer.js";
 import { makeResetTimer } from "./timer-reset.data-layer.js";
 import { makeDeleteTimer } from "./timer-delete.data-layer.js";
 import { makeRestoreTimer } from "./timer-restore.data-layer.js";
+import { makeTimerHistory } from "./timer-history.data-layer.js";
 
 it.each([
   {
@@ -155,6 +156,7 @@ it.each([
 
       const remove = makeDeleteTimer(database, ports);
       const restore = makeRestoreTimer(database, ports);
+      const timerHistory = makeTimerHistory(database);
 
       const resetResult = await boundary.run(
         reset(access, "300", { world: "world" }).pipe(Effect.result),
@@ -221,6 +223,16 @@ it.each([
 
       if (!deletion) throw new Error("Deletion fixture missing");
 
+      const availableHistory = await boundary.run(
+        timerHistory.getHistory(access, timer.world, timer.timerKey),
+      );
+
+      expect(
+        availableHistory.find((entry) => entry.id === deletion.id),
+      ).toEqual(
+        allowed ? expect.objectContaining({ canRestore: true }) : undefined,
+      );
+
       const restored = await boundary.run(
         restore(access, deletion.id).pipe(Effect.result),
       );
@@ -234,6 +246,18 @@ it.each([
 
       expect(persisted?.deletedAt).toEqual(allowed ? null : now);
       expect(publications).toHaveLength(allowed ? 6 : 0);
+
+      if (allowed) {
+        expect(persisted).toMatchObject({
+          minSpawnTime: deletion.minSpawnTime,
+          maxSpawnTime: deletion.maxSpawnTime,
+        });
+        expect(
+          (
+            await boundary.run(timerHistory.getRecentHistory(access, "world"))
+          ).find((entry) => entry.id === deletion.id),
+        ).toMatchObject({ canRestore: false });
+      }
 
       if (allowed && read !== Permission.ADMIN) {
         // The same timer key can acquire a different NPC level after this history entry.
@@ -259,6 +283,13 @@ it.each([
             (await boundary.run(database.select().from(timerTable)))[0],
           ).toEqual(hiddenCurrent);
           expect(publications).toHaveLength(6);
+          expect(
+            (
+              await boundary.run(
+                timerHistory.getHistory(access, timer.world, timer.timerKey),
+              )
+            ).find((entry) => entry.id === deletion.id),
+          ).toMatchObject({ canRestore: false });
         }
       }
     } finally {
@@ -266,3 +297,162 @@ it.each([
     }
   },
 );
+
+it("only offers recovery for a complete deletion in its organization and world, with write access", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    const database = boundary.database;
+    const now = new Date();
+    const guild = createGuildFixture();
+    const otherGuild = createGuildFixture({ id: "guild-2" });
+    const member = createMemberFixture();
+    const otherMember = createMemberFixture({ id: 2, guildId: otherGuild.id });
+    await boundary.run(database.insert(guildTable).values([guild, otherGuild]));
+    await boundary.run(
+      database.insert(memberTable).values([member, otherMember]),
+    );
+
+    const access = {
+      guild,
+      userId: "user",
+      discordId: member.userId,
+      roles: [],
+      accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+    };
+
+    const snapshot = {
+      guildId: guild.id,
+      world: "world",
+      timerKey: "300:hero",
+      npcId: 300,
+      npc: { id: 300, name: "Hero", lvl: 300, type: "HERO" },
+      createdById: member.id,
+      minSpawnTime: new Date(now.getTime() - 120_000),
+      maxSpawnTime: new Date(now.getTime() - 60_000),
+      latestRespBaseSeconds: 60,
+      latestRespawnRandomness: 10,
+      updatedAt: now,
+    };
+
+    await boundary.run(
+      database.insert(timerTable).values([
+        { ...snapshot, deletedAt: now },
+        { ...snapshot, world: "other-world" },
+        { ...snapshot, guildId: otherGuild.id, createdById: otherMember.id },
+      ]),
+    );
+
+    const [deletion] = await boundary.run(
+      database
+        .insert(timerHistoryEntryTable)
+        .values({
+          ...snapshot,
+          action: "DELETE",
+          actorMemberId: member.id,
+          timerCreatedById: member.id,
+        })
+        .returning(),
+    );
+
+    if (!deletion) throw new Error("Deletion fixture missing");
+
+    const history = makeTimerHistory(database);
+
+    const readHistory = () =>
+      boundary.run(history.getRecentHistory(access, snapshot.world));
+
+    expect(await readHistory()).toMatchObject([
+      { id: deletion.id, canRestore: true },
+    ]);
+
+    const roles = await boundary.run(
+      database
+        .insert(roleTable)
+        .values({
+          id: "reader",
+          name: "Reader",
+          guildId: guild.id,
+          permissions: [
+            Permission.LOOTLOG_TIMERS_READ,
+            Permission.LOOTLOG_TIMERS_HEROES_READ,
+          ],
+          lvlRangeFrom: 1,
+          lvlRangeTo: 500,
+          updatedAt: now,
+        })
+        .returning(),
+    );
+
+    expect(
+      await boundary.run(
+        history.getRecentHistory(
+          {
+            ...access,
+            roles,
+            accessPolicy: createAccessPolicy({
+              capabilities: roles.flatMap((role) => role.permissions),
+            }),
+          },
+          snapshot.world,
+        ),
+      ),
+    ).toMatchObject([{ id: deletion.id, canRestore: false }]);
+
+    await boundary.run(
+      database
+        .update(timerHistoryEntryTable)
+        .set({
+          latestRespBaseSeconds: null,
+        })
+        .where(eq(timerHistoryEntryTable.id, deletion.id)),
+    );
+    expect(await readHistory()).toMatchObject([
+      { id: deletion.id, canRestore: false },
+    ]);
+
+    const publications: string[] = [];
+
+    const restore = makeRestoreTimer(database, {
+      invalidateList: () => Effect.void,
+      publish: (key) =>
+        Effect.sync(() => {
+          publications.push(key);
+        }),
+    });
+
+    const incomplete = await boundary.run(
+      restore(access, deletion.id).pipe(Effect.result),
+    );
+
+    expect(incomplete).toMatchObject({
+      failure: {
+        response: { message: "TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED" },
+      },
+    });
+    expect(publications).toEqual([]);
+
+    await boundary.run(
+      database
+        .update(timerHistoryEntryTable)
+        .set({
+          latestRespBaseSeconds: snapshot.latestRespBaseSeconds,
+        })
+        .where(eq(timerHistoryEntryTable.id, deletion.id)),
+    );
+    const restored = await boundary.run(restore(access, deletion.id));
+    expect(restored).toMatchObject({
+      guildId: snapshot.guildId,
+      world: snapshot.world,
+      minSpawnTime: snapshot.minSpawnTime,
+      maxSpawnTime: snapshot.maxSpawnTime,
+      deletedAt: null,
+    });
+    expect(publications).toHaveLength(2);
+    expect(
+      (await readHistory()).find((entry) => entry.id === deletion.id),
+    ).toMatchObject({ canRestore: false });
+  } finally {
+    await boundary.dispose();
+  }
+});

@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { Timer } from "@/api/timers.api";
 import { queryKeys } from "@/features/public-api/query-keys";
+import { invalidateTimerHistory } from "@/features/timers/utils/invalidate-timer-history";
 import {
   upsertTimerInCollection,
   removeTimerFromCollection,
@@ -35,12 +36,14 @@ export const useTimersCache = () => {
     updateTimerCache(timer.world, (old) =>
       upsertTimerInCollection(old, { ...timer, isPending: false }),
     );
+    void invalidateTimerHistory(queryClient, timer);
   };
 
   const removeTimer = (timer: TimerIdentity) => {
     updateTimerCache(timer.world, (old) =>
       removeTimerFromCollection(old, timer),
     );
+    void invalidateTimerHistory(queryClient, timer);
   };
 
   return { upsertTimer, removeTimer };

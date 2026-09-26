@@ -4,12 +4,15 @@ import {
   timersControllerResetTimer,
 } from "@lootlog/client/main";
 import { getApiErrorStringField } from "@lootlog/client/transport";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { buildCurrentTimerActorCharacterPayload } from "@/lib/api/generated-helpers";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimersStore } from "@/store/timers.store";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useShallow } from "zustand/react/shallow";
+import { getTimerResetScopes } from "../utils/get-timer-reset-scopes";
+import { invalidateTimerHistory } from "../utils/invalidate-timer-history";
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
@@ -19,6 +22,13 @@ export const useTimerActions = (
   timersGrouping = false,
 ) => {
   const t = getFixedT("timers");
+  const queryClient = useQueryClient();
+  const actionInFlight = useRef(false);
+
+  const failedResetScopes = useRef<{
+    identity: string;
+    scopes: ReturnType<typeof getTimerResetScopes>;
+  } | null>(null);
 
   const {
     hideTimer,
@@ -120,39 +130,74 @@ export const useTimerActions = (
 
   const { mutateAsync: restartTimer, isPending: isRestartingTimer } =
     useMutation({
-      mutationFn: (resetWorld: string) => {
+      mutationFn: async (resetWorld: string) => {
         const actorCharacter = buildCurrentTimerActorCharacterPayload();
+        const originalScopes = getTimerResetScopes(timer, timersGrouping);
+
+        const scopeIdentities = originalScopes
+          .map(({ guildId, timerIdentifier }) =>
+            JSON.stringify([guildId, timerIdentifier]),
+          )
+          .sort();
+
+        const identity = JSON.stringify([resetWorld, scopeIdentities]);
 
         const scopes =
-          timersGrouping && timer.mergedGuildIds
-            ? timer.mergedGuildIds.flatMap(({ guildId, timerKey }) =>
-                timerKey ? [{ guildId, timerIdentifier: timerKey }] : [],
-              )
-            : [
-                {
-                  guildId: timer.guildId,
-                  timerIdentifier: timer.timerKey,
-                },
-              ];
+          failedResetScopes.current?.identity === identity
+            ? failedResetScopes.current.scopes
+            : originalScopes;
 
-        return Promise.all(
-          scopes.map((scope) =>
-            timersControllerResetTimer(scope, {
+        const results = await Promise.allSettled(
+          scopes.map(async (scope) => {
+            const result = await timersControllerResetTimer(scope, {
               world: resetWorld,
               actorCharacter,
-            }),
-          ),
+            });
+
+            void invalidateTimerHistory(queryClient, {
+              guildId: scope.guildId,
+              world: resetWorld,
+              timerKey: scope.timerIdentifier,
+            });
+
+            return result;
+          }),
         );
+
+        const failedScopes = scopes.filter(
+          (_scope, index) => results[index]?.status === "rejected",
+        );
+
+        failedResetScopes.current =
+          failedScopes.length > 0 ? { identity, scopes: failedScopes } : null;
+
+        return results;
       },
-      onSuccess: () => {
-        toast.success(t("messages.resetSuccess", { name: timer.npc.name }));
+      onSuccess: (results) => {
+        const failures = results.filter(
+          (result) => result.status === "rejected",
+        );
+
+        if (failures.length === 0) {
+          toast.success(t("messages.resetSuccess", { name: timer.npc.name }));
+        } else if (failures.length === results.length) {
+          toast.error(getResetTimerErrorMessage(failures[0]?.reason));
+        } else {
+          toast.error(
+            t("messages.resetPartialFailure", {
+              name: timer.npc.name,
+              succeeded: results.length - failures.length,
+              failed: failures.length,
+            }),
+          );
+        }
       },
       onError: (error) => {
         toast.error(getResetTimerErrorMessage(error));
       },
     });
 
-  const { mutate: deleteTimer, isPending: isDeletingTimer } = useMutation({
+  const { mutateAsync: deleteTimer, isPending: isDeletingTimer } = useMutation({
     mutationFn: ({
       guildId,
       timerKey,
@@ -166,7 +211,12 @@ export const useTimerActions = (
         { guildId, timerIdentifier: timerKey },
         { world: deleteWorld },
       ),
-    onSuccess: () => {
+    onSuccess: (_result, { guildId, timerKey, deleteWorld }) => {
+      void invalidateTimerHistory(queryClient, {
+        guildId,
+        timerKey,
+        world: deleteWorld,
+      });
       toast.success(t("messages.deleteSuccess", { name: timer.npc.name }));
     },
     onError: (error) => {
@@ -174,18 +224,38 @@ export const useTimerActions = (
     },
   });
 
-  const handleRestartTimer = async () => {
-    if (!world) return;
-    await restartTimer(world).catch(() => undefined);
+  const handleRestartTimer = () => {
+    if (!world || actionInFlight.current) return Promise.resolve(false);
+    actionInFlight.current = true;
+
+    return restartTimer(world)
+      .then(
+        (results) =>
+          results.length > 0 &&
+          results.every((result) => result.status === "fulfilled"),
+      )
+      .catch(() => false)
+      .finally(() => {
+        actionInFlight.current = false;
+      });
   };
 
   const handleDeleteTimer = (guildId: string, timerKey: string) => {
-    if (!world) return;
+    if (!world || actionInFlight.current) return Promise.resolve(false);
+    actionInFlight.current = true;
 
-    deleteTimer({ guildId, timerKey, deleteWorld: world });
+    return deleteTimer({ guildId, timerKey, deleteWorld: world })
+      .then(() => true)
+      .catch(() => false)
+      .finally(() => {
+        actionInFlight.current = false;
+      });
   };
 
   return {
+    beginRestartAttempt: () => {
+      failedResetScopes.current = null;
+    },
     isRestartingTimer,
     isDeletingTimer,
     isPinned,

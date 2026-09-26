@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { getGuildsControllerGetGuildPermissionsQueryKey } from "@lootlog/client/main";
@@ -25,6 +25,8 @@ const createProps = (overrides: Partial<MenuProps> = {}): MenuProps => ({
   isHidden: false,
   canDelete: true,
   canReset: true,
+  actionPending: false,
+  guildNamesById: { "guild-1": "Alpha", "guild-2": "Beta" },
   timersGrouping: false,
   selectedColor: "red",
   customColors: {},
@@ -41,8 +43,9 @@ const createProps = (overrides: Partial<MenuProps> = {}): MenuProps => ({
   onShow: action(),
   onShowAll: action(),
   onToggleAlwaysVisibleExpiredTimer: action(),
-  onReset: action(),
-  onDelete: vi.fn<MenuProps["onDelete"]>(),
+  onReset: vi.fn<MenuProps["onReset"]>().mockResolvedValue(true),
+  onResetBegin: action(),
+  onDelete: vi.fn<MenuProps["onDelete"]>().mockResolvedValue(true),
   ...overrides,
 });
 
@@ -106,12 +109,53 @@ describe("TimerContextMenuContent", () => {
     ["Ukryj", "onHide"],
     ["Ukryj we wszystkich Lootlogach", "onHideAll"],
     ["Zostaw po wyzerowaniu", "onToggleAlwaysVisibleExpiredTimer"],
-    ["Zresetuj timer", "onReset"],
   ] as const)("invokes the %s action", async (name, callback) => {
     const props = createProps();
     await renderMenu(props);
     await userEvent.click(screen.getByRole("menuitem", { name }));
     expect(props[callback]).toHaveBeenCalledOnce();
+  });
+
+  it("requires confirmation before resetting and allows retry after a failure", async () => {
+    const user = userEvent.setup();
+
+    const onReset = vi
+      .fn<MenuProps["onReset"]>()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
+    await renderMenu(createProps({ onReset }));
+    await user.click(screen.getByRole("menuitem", { name: "Zresetuj timer" }));
+    expect(onReset).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Anuluj" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(onReset).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("menuitem", { name: "Zresetuj timer" }));
+    await user.click(screen.getByRole("button", { name: "Zresetuj" }));
+    expect(screen.getByRole("alertdialog")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Zresetuj" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(onReset).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not submit a second reset while the first confirmation is running", async () => {
+    const user = userEvent.setup();
+    const request = Promise.withResolvers<boolean>();
+
+    const onReset = vi
+      .fn<MenuProps["onReset"]>()
+      .mockReturnValue(request.promise);
+
+    await renderMenu(createProps({ onReset }));
+    await user.click(screen.getByRole("menuitem", { name: "Zresetuj timer" }));
+    await user.dblClick(screen.getByRole("button", { name: "Zresetuj" }));
+    expect(onReset).toHaveBeenCalledOnce();
+    request.resolve(true);
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
   });
 
   it("offers grouped deletion per organization and can reverse persistent visibility", async () => {
@@ -146,6 +190,8 @@ describe("TimerContextMenuContent", () => {
     await openMenu();
     await user.click(screen.getByRole("menuitem", { name: "Usuń timer" }));
     await user.click(await screen.findByRole("button", { name: "guild-2" }));
+    expect(props.onDelete).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Usuń" }));
     expect(props.onDelete).toHaveBeenCalledWith("guild-2", "timer-2");
   });
 

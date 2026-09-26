@@ -21,9 +21,10 @@ import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import { TimerLiveTile } from "./timer-live-tile";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
-import { useGameStore } from "@/store/game.store";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 import { useShallow } from "zustand/react/shallow";
+import { useTranslation } from "react-i18next";
+import { TimerMapPresenceIndicator } from "./timer-map-presence-indicator";
 
 type SingleTimerProps = {
   guildIds: string[];
@@ -44,7 +45,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   isHidden = false,
   showColorStripe = true,
 }) => {
-  const world = useGameStore((state) => state.game?.world ?? "unknown");
+  const world = timer.world;
+  const { t } = useTranslation("timers");
 
   const {
     customColors,
@@ -81,6 +83,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     handleToggleAlwaysVisibleExpiredTimer,
     handleRestartTimer,
     handleDeleteTimer,
+    isRestartingTimer,
+    isDeletingTimer,
+    beginRestartAttempt,
   } = useTimerActions(timer, settingsKey, world, guildIds, timersGrouping);
 
   const {
@@ -125,6 +130,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 countdownMode={countdownMode}
                 timer={timer}
               />
+              <TimerMapPresenceIndicator
+                timer={timer}
+                label={t("tooltip.mapOccupied")}
+              />
             </div>
           </ContextMenuTrigger>
         </TooltipTrigger>
@@ -137,6 +146,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             isHidden={isHidden}
             canDelete={canDelete}
             canReset={canReset}
+            actionPending={isRestartingTimer || isDeletingTimer}
+            guildNamesById={guildNamesById}
             timersGrouping={timersGrouping}
             selectedColor={selectedColor}
             customColors={customColors}
@@ -156,6 +167,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               handleToggleAlwaysVisibleExpiredTimer
             }
             onReset={handleRestartTimer}
+            onResetBegin={beginRestartAttempt}
             onDelete={handleDeleteTimer}
           />
         </ContextMenuContent>

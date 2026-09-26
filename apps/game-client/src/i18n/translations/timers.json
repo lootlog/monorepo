@@ -31,7 +31,8 @@
     "addedAt": "Dodano:",
     "min": "Min:",
     "max": "Max:",
-    "reset": "Timer został zresetowany"
+    "reset": "Timer został zresetowany",
+    "mapOccupied": "Ktoś z Lootloga jest na tej mapie"
   },
   "emptyState": {
     "filteredTitle": "Żaden timer nie pasuje do filtrów",
@@ -63,8 +64,13 @@
     "delete": "Usuń timer",
     "deleteConfirm": {
       "title": "Usunąć timer {{name}}?",
-      "description": "Timer zniknie u wszystkich członków Lootloga.",
+      "description": "Timer zniknie u wszystkich członków Lootloga: {{guilds}}.",
       "confirm": "Usuń"
+    },
+    "resetConfirm": {
+      "title": "Zresetować timer {{name}}?",
+      "description": "Czas odrodzenia zostanie przeliczony od teraz w Lootlogach: {{guilds}}.",
+      "confirm": "Zresetuj"
     },
     "loadingPermissions": "Sprawdzanie uprawnień…",
     "deleteChooseGuild": "Wybierz Lootlog, z którego usunąć timer:"
@@ -98,6 +104,7 @@
   "messages": {
     "resetEventWindowForbidden": "Nie można zresetować okna eventowego z poziomu timerów.",
     "resetFailed": "Nie udało się zresetować timera {{name}}.",
+    "resetPartialFailure": "Timer {{name}} zresetowano w {{succeeded}} Lootlogach. Nie udało się zresetować go w {{failed}}.",
     "deleteEventWindowForbidden": "Nie można usunąć okna eventowego z poziomu timerów.",
     "deleteFailed": "Nie udało się usunąć timera {{name}}.",
     "createFailed": "Nie udało się dodać timera {{name}}.",

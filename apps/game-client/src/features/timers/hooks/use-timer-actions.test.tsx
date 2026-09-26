@@ -15,7 +15,11 @@ import { useGameStore } from "@/store/game.store";
 import { toast } from "sonner";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { getFixedT } from "@/i18n/get-fixed-t";
-import { createTimerFixture } from "../timer-fixtures";
+import {
+  createTimerFixture,
+  createTimerHistoryFixture,
+} from "../timer-fixtures";
+import { getTimersControllerGetRecentTimerHistoryQueryOptions } from "@lootlog/client/main";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { useTimerActions } from "./use-timer-actions";
 
@@ -42,7 +46,7 @@ afterEach(() => {
 
 const mountActions = (
   grouped = false,
-  respond?: (request: Request) => Response,
+  respond?: (request: Request) => Response | Promise<Response>,
 ) => {
   const fixture = createTimerHttpFixture(
     respond ??
@@ -91,7 +95,7 @@ const mountActions = (
     fixture.cleanup();
   });
 
-  return { ...fixture, result: hook.result };
+  return { ...fixture, queryClient, result: hook.result };
 };
 
 describe("useTimerActions", () => {
@@ -185,8 +189,141 @@ describe("useTimerActions", () => {
     );
   });
 
-  it("deletes by timer identity and maps subsequent HTTP failure", async () => {
+  it.each(["retry", "new-confirmation"] as const)(
+    "waits for every grouped reset, refreshes only successes and preserves the intended scopes on %s",
+    async (nextAction) => {
+      const firstReset = Promise.withResolvers<Response>();
+      const secondReset = Promise.withResolvers<Response>();
+      const completedGuilds = new Set<string>();
+      let recovering = false;
+
+      const { result, queryClient, requests } = mountActions(
+        true,
+        (request) => {
+          const url = new URL(request.url);
+
+          if (request.method === "GET") {
+            const guildId = url.searchParams.get("guildId") ?? "";
+
+            return Response.json([
+              createTimerHistoryFixture({
+                guildId,
+                action: completedGuilds.has(guildId) ? "RESET" : "CREATE",
+                canRestore: false,
+              }),
+            ]);
+          }
+
+          if (recovering) {
+            const guildId = url.pathname.includes("/guild-1/")
+              ? "guild-1"
+              : "guild-2";
+
+            completedGuilds.add(guildId);
+
+            return Response.json(
+              createTimerFixture({ guildId, wasReset: true }),
+            );
+          }
+
+          if (url.pathname.includes("/guild-1/")) return firstReset.promise;
+
+          return secondReset.promise;
+        },
+      );
+
+      const histories = ["guild-1", "guild-2"].map((guildId) =>
+        getTimersControllerGetRecentTimerHistoryQueryOptions(
+          { guildId, world: "luvia", limit: 10 },
+          { query: { staleTime: 30_000 } },
+        ),
+      );
+
+      await Promise.all(
+        histories.map((options) => queryClient.fetchQuery(options)),
+      );
+
+      let reset = Promise.resolve(false);
+
+      act(() => {
+        reset = result.current.handleRestartTimer();
+      });
+      await waitFor(() => expect(requests).toHaveLength(4));
+      await act(async () => {
+        expect(await result.current.handleRestartTimer()).toBe(false);
+        expect(
+          await result.current.handleDeleteTimer("guild-1", "timer-1"),
+        ).toBe(false);
+      });
+      expect(requests).toHaveLength(4);
+      completedGuilds.add("guild-1");
+      await act(async () => {
+        firstReset.resolve(
+          Response.json(createTimerFixture({ wasReset: true })),
+        );
+        await firstReset.promise;
+      });
+      await waitFor(() =>
+        expect(
+          queryClient.getQueryState(histories[0].queryKey)?.isInvalidated,
+        ).toBe(true),
+      );
+      expect(result.current.isRestartingTimer).toBe(true);
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(await queryClient.fetchQuery(histories[0])).toMatchObject([
+        { action: "RESET" },
+      ]);
+      expect(await queryClient.fetchQuery(histories[1])).toMatchObject([
+        { action: "CREATE" },
+      ]);
+      expect(requests).toHaveLength(5);
+      await act(async () => {
+        secondReset.resolve(
+          Response.json(
+            { message: "temporarily unavailable" },
+            { status: 503 },
+          ),
+        );
+        expect(await reset).toBe(false);
+      });
+      await waitFor(() => expect(result.current.isRestartingTimer).toBe(false));
+      expect(toast.error).toHaveBeenCalledWith(
+        getFixedT("timers")("messages.resetPartialFailure", {
+          name: "Tanroth",
+          succeeded: 1,
+          failed: 1,
+        }),
+      );
+      expect(toast.success).not.toHaveBeenCalled();
+      recovering = true;
+      await act(async () => {
+        if (nextAction === "new-confirmation")
+          result.current.beginRestartAttempt();
+        expect(await result.current.handleRestartTimer()).toBe(true);
+      });
+      expect(
+        requests
+          .filter((request) => request.method !== "GET")
+          .map((request) => new URL(request.url).pathname),
+      ).toEqual([
+        "/guilds/guild-1/timers/timer-1/reset",
+        "/guilds/guild-2/timers/timer-2/reset",
+        ...(nextAction === "new-confirmation"
+          ? ["/guilds/guild-1/timers/timer-1/reset"]
+          : []),
+        "/guilds/guild-2/timers/timer-2/reset",
+      ]);
+      expect(await queryClient.fetchQuery(histories[1])).toMatchObject([
+        { action: "RESET" },
+      ]);
+      expect(toast.success).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("deletes once while confirmation is pending and maps a subsequent HTTP failure", async () => {
     let reject = false;
+    const deletion = Promise.withResolvers<Response>();
 
     const { result, requests } = mountActions(false, () =>
       reject
@@ -194,10 +331,24 @@ describe("useTimerActions", () => {
             { message: "EVENT_TIMER_MUST_USE_EVENT_CLOSE" },
             { status: 400 },
           )
-        : new Response(null, { status: 204 }),
+        : deletion.promise,
     );
 
-    act(() => result.current.handleDeleteTimer("guild-1", "timer-1"));
+    let deleted = Promise.resolve(false);
+
+    act(() => {
+      deleted = result.current.handleDeleteTimer("guild-1", "timer-1");
+    });
+    await waitFor(() => expect(requests).toHaveLength(1));
+    await act(async () => {
+      expect(await result.current.handleDeleteTimer("guild-1", "timer-1")).toBe(
+        false,
+      );
+      expect(await result.current.handleRestartTimer()).toBe(false);
+      deletion.resolve(new Response(null, { status: 204 }));
+      expect(await deleted).toBe(true);
+    });
+    expect(requests).toHaveLength(1);
     await waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith(
         getFixedT("timers")("messages.deleteSuccess", { name: "Tanroth" }),
@@ -209,7 +360,9 @@ describe("useTimerActions", () => {
     );
     expect(new URL(requests[0].url).searchParams.get("world")).toBe("luvia");
     reject = true;
-    act(() => result.current.handleDeleteTimer("guild-1", "timer-1"));
+    await act(async () => {
+      await result.current.handleDeleteTimer("guild-1", "timer-1");
+    });
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
         getFixedT("timers")("messages.deleteEventWindowForbidden"),

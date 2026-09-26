@@ -9,6 +9,7 @@ import { bootstrapPublicApi } from "../index";
 import type { ApiEventMap } from "@lootlog/game-client-api";
 import { useGlobalStore } from "@/store/global.store";
 import { getSocket } from "@/lib/socket";
+import { getPlayersPresenceSource } from "@/lib/players-presence-source";
 import {
   createOnlinePlayersTest,
   createOnlinePresence,
@@ -83,11 +84,12 @@ const listener = () =>
 describe("Public API presence over the realtime transport", () => {
   let harness: ReturnType<typeof createOnlinePlayersTest>;
   let teardown: () => void;
-  beforeEach(() => {
+  beforeEach(async () => {
     harness = createOnlinePlayersTest();
     teardown = bootstrapPublicApi(harness.queryClient);
     getSocket().connect();
     harness.open();
+    await harness.join();
     useGlobalStore.getState().setSocketState({
       connected: true,
       joined: true,
@@ -136,6 +138,30 @@ describe("Public API presence over the realtime transport", () => {
       player: { lvl: 123 },
     });
     expect(harness.fetchPresence).toHaveBeenCalledWith("guild-1", "alpha");
+  });
+  it("waits for the complete first snapshot before publishing buffered live changes", async () => {
+    const pending =
+      Promise.withResolvers<ReturnType<typeof createPresenceSnapshot>>();
+
+    harness.fetchPresence.mockReturnValue(pending.promise);
+    const received = listener();
+    getApi().subscribe("online-players:changed", received);
+    const result = getApi().getOnlinePlayers(scope);
+    await vi.waitFor(() =>
+      expect(harness.fetchPresence).toHaveBeenCalledOnce(),
+    );
+    await harness.receive(
+      delta([createOnlinePresence({ location: { map: "Ithan" } })]),
+    );
+    expect(received).not.toHaveBeenCalled();
+    pending.resolve(createPresenceSnapshot());
+    await result;
+    expect(received).toHaveBeenCalledOnce();
+    expect(received).toHaveBeenCalledWith({
+      ...scope,
+      status: "success",
+      players: { "discord-1": [expect.objectContaining({ mapName: "Ithan" })] },
+    });
   });
   it("returns an empty successful snapshot", async () => {
     harness.fetchPresence.mockResolvedValue(createPresenceSnapshot([]));
@@ -190,6 +216,64 @@ describe("Public API presence over the realtime transport", () => {
     ]);
     expect(harness.fetchPresence).toHaveBeenCalledTimes(2);
   });
+  it.each([
+    {
+      outcome: "success",
+      expected: {
+        status: "success",
+        players: {
+          "discord-1": [expect.objectContaining({ mapName: "Ithan" })],
+        },
+      },
+    },
+    {
+      outcome: "timeout",
+      expected: expect.stringMatching(/timeout|timed out/i),
+    },
+  ])(
+    "keeps occupied maps live while a same-connection public fetch ends with $outcome",
+    async ({ outcome, expected }) => {
+      await harness.join(["guild-1"], policy(fullPermissions));
+      const source = getPlayersPresenceSource(getSocket(), "guild-1", "alpha");
+      const release = source.retain();
+      await source.refresh();
+      const changed = vi.fn();
+      const unsubscribe = source.subscribeMap("Karka-han", changed);
+      expect(source.isMapOccupied("Karka-han")).toBe(true);
+
+      const pending =
+        Promise.withResolvers<ReturnType<typeof createPresenceSnapshot>>();
+
+      harness.fetchPresence.mockReturnValue(pending.promise);
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      const refresh = getApi()
+        .getOnlinePlayers(scope)
+        .catch((error) => (error instanceof Error ? error.message : error));
+
+      expect(source.isMapOccupied("Karka-han")).toBe(true);
+      expect(changed).not.toHaveBeenCalled();
+      await harness.receive(
+        delta([createOnlinePresence({ location: { map: "Ithan" } })]),
+      );
+      expect(source.isMapOccupied("Karka-han")).toBe(false);
+      expect(source.isMapOccupied("Ithan")).toBe(true);
+
+      if (outcome === "timeout") {
+        await vi.advanceTimersByTimeAsync(10000);
+      } else {
+        pending.resolve(createPresenceSnapshot());
+      }
+
+      expect(await refresh).toEqual(expected);
+      expect(source.isMapOccupied("Ithan")).toBe(true);
+      await harness.receive(delta([createOnlinePresence()]));
+      expect(source.isMapOccupied("Ithan")).toBe(false);
+      expect(source.isMapOccupied("Karka-han")).toBe(true);
+      unsubscribe();
+      release();
+    },
+  );
   it("publishes a full scope snapshot for a matching live update", async () => {
     const { received } = await prime();
     await harness.receive(
@@ -349,6 +433,7 @@ describe("Public API presence over the realtime transport", () => {
       createPresenceSnapshot([createOnlinePresence({ isAfk: true })]),
     );
     useGlobalStore.getState().setSocketState({ connected: true, joined: true });
+    await harness.join(["guild-1"], policy(fullPermissions));
     await vi.waitFor(() => expect(received).toHaveBeenCalledOnce());
     expect(received).toHaveBeenCalledWith(
       expect.objectContaining({ status: "success" }),

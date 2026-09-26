@@ -40,7 +40,10 @@ const setup = async (permissions: Permission[][] | null) => {
       data,
     ),
   );
-  const onDeleteTimer = vi.fn<(guildId: string, timerKey: string) => void>();
+
+  const onDeleteTimer = vi
+    .fn<(guildId: string, timerKey: string) => Promise<boolean>>()
+    .mockResolvedValue(true);
 
   const timer = {
     ...createTimerFixture(),
@@ -57,7 +60,11 @@ const setup = async (permissions: Permission[][] | null) => {
       <ContextMenu>
         <ContextMenuTrigger>Timer</ContextMenuTrigger>
         <ContextMenuContent>
-          <DeleteTimerPopover timer={timer} onDeleteTimer={onDeleteTimer} />
+          <DeleteTimerPopover
+            timer={timer}
+            onDeleteTimer={onDeleteTimer}
+            pending={false}
+          />
         </ContextMenuContent>
       </ContextMenu>
     </QueryClientProvider>,
@@ -120,5 +127,10 @@ it("keeps the organization chooser open until its target is selected", async () 
     screen.getByText("Wybierz Lootlog, z którego usunąć timer:"),
   ).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Beta" }));
+  expect(onDeleteTimer).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Anuluj" }));
+  expect(onDeleteTimer).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Beta" }));
+  await user.click(screen.getByRole("button", { name: "Usuń" }));
   expect(onDeleteTimer).toHaveBeenCalledWith("guild-2", "timer-2");
 });

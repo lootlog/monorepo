@@ -1,11 +1,18 @@
 import { act, render, waitFor } from "@testing-library/react";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, QueryObserver } from "@tanstack/react-query";
 import { expect, it } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { getSocket } from "@/lib/socket";
 import { SocketProvider } from "@/contexts/socket-context";
 import { queryKeys } from "@/features/public-api/query-keys";
-import { createTimerFixture } from "../timer-fixtures";
+import {
+  createTimerFixture,
+  createTimerHistoryFixture,
+} from "../timer-fixtures";
+import {
+  getTimersControllerGetRecentTimerHistoryQueryOptions,
+  getTimersControllerGetTimerHistoryQueryOptions,
+} from "@lootlog/client/main";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
@@ -162,5 +169,77 @@ it("refreshes an active timer snapshot after a socket reconnect with unchanged p
     gateway.cleanup();
     fixture.cleanup();
     useGlobalStore.setState({ gameState: { gameInitialized: false } });
+  }
+});
+
+it("recovers missed history changes on reconnect without fetching closed histories or other organizations", async () => {
+  let history = createTimerHistoryFixture();
+  const fixture = createTimerHttpFixture(() => Response.json([history]));
+  const gateway = createTimerRealtimeFixture();
+
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <SocketProvider>
+        <TimerListener />
+      </SocketProvider>
+    </QueryClientProvider>,
+  );
+
+  const active = getTimersControllerGetRecentTimerHistoryQueryOptions(
+    { guildId: "guild-1", world: "luvia", limit: 10 },
+    { query: { staleTime: 30_000 } },
+  );
+
+  const closed = getTimersControllerGetTimerHistoryQueryOptions(
+    { guildId: "guild-1", timerIdentifier: history.timerKey },
+    { world: "zemyna", limit: 5 },
+    { query: { staleTime: 30_000 } },
+  );
+
+  const unrelated = getTimersControllerGetRecentTimerHistoryQueryOptions(
+    { guildId: "guild-2", world: "luvia", limit: 10 },
+    { query: { staleTime: 30_000 } },
+  );
+
+  let unsubscribe = () => {};
+
+  try {
+    act(() => gateway.wire.open());
+    await gateway.join(["guild-1"]);
+    await Promise.all([
+      fixture.queryClient.fetchQuery(active),
+      fixture.queryClient.fetchQuery(closed),
+      fixture.queryClient.fetchQuery(unrelated),
+    ]);
+    const observer = new QueryObserver(fixture.queryClient, active);
+    unsubscribe = observer.subscribe(() => {});
+    expect(fixture.requests).toHaveLength(3);
+    act(() => getSocket().disconnect());
+    history = { ...history, canRestore: false };
+    act(() => {
+      getSocket().connect();
+      gateway.wire.open();
+    });
+    await gateway.join(["guild-1"]);
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryData(active.queryKey)).toMatchObject([
+        { canRestore: false },
+      ]),
+    );
+    expect(fixture.requests).toHaveLength(4);
+    expect(
+      fixture.queryClient.getQueryState(closed.queryKey)?.isInvalidated,
+    ).toBe(true);
+    expect(
+      fixture.queryClient.getQueryState(unrelated.queryKey)?.isInvalidated,
+    ).toBe(false);
+    const reopened = await fixture.queryClient.fetchQuery(closed);
+    expect(reopened).toMatchObject([{ canRestore: false }]);
+    expect(fixture.requests).toHaveLength(5);
+  } finally {
+    unsubscribe();
+    view.unmount();
+    gateway.cleanup();
+    fixture.cleanup();
   }
 });
