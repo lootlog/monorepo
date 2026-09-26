@@ -2,7 +2,10 @@ import { isString } from "es-toolkit";
 import type { SettingsOperation } from "@/features/settings/persistence/settings-documents";
 import { enqueueSettingsPatch } from "@/features/settings/persistence/settings-patch-client";
 import { queryClient } from "@/lib/query-client";
-import type { UpdateTimerSettingsPayload } from "@lootlog/schema/timer-settings";
+import type {
+  CustomTimerList,
+  UpdateTimerSettingsPayload,
+} from "@lootlog/schema/timer-settings";
 
 /** Timer settings whose documents live under `appearance.timers.*`. */
 const APPEARANCE_FIELDS = [
@@ -141,3 +144,17 @@ export const syncGuildTimerList = (
     guildId: settingsKey,
   });
 };
+
+/**
+ * Writes one timer list, or removes it when `list` is undefined. Only that
+ * list's paths are sent: the server merges per leaf path, so a device holding
+ * a stale copy of another list cannot overwrite it or bring it back.
+ * Within one list the last write wins: `npcNames` is a single leaf because
+ * monster names can contain dots and cannot serve as path keys.
+ */
+export const syncCustomList = (id: string, list: CustomTimerList | undefined) =>
+  enqueueSettingsPatch(
+    list
+      ? { domain: "timers", set: { customLists: { [id]: list } } }
+      : { domain: "timers", unset: [`customLists.${id}`] },
+  );

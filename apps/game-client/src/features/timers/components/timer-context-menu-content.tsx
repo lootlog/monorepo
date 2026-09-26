@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { TimerActionConfirmation } from "./timer-action-confirmation";
 import { TimerColorPicker } from "./timer-color-picker";
 import { TimerHistoryPopover } from "./timer-history-popover";
+import { TimerListsPopover } from "./timer-lists-popover";
 import { getTimerResetScopes } from "../utils/get-timer-reset-scopes";
 
 type CustomColor = {
@@ -119,6 +120,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         hiddenDefaultColors={hiddenDefaultColors}
         onColorChange={onColorChange}
       />
+      <TimerListsPopover npcName={timer.npc.name} />
       <ContextMenuItem
         onClick={onPin}
         data-active={isPinned}
