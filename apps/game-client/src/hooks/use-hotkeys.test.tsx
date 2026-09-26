@@ -270,6 +270,30 @@ describe("useHotkeys", () => {
     expect(onPingCancel).toHaveBeenCalledOnce();
   });
 
+  it("keeps a held ping open when the caller re-renders with new callbacks", () => {
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingCancel = vi.fn<() => void>();
+    const firstEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    const latestEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+
+    const view = renderHook(
+      ({ onPingEnd }) => useHotkeys({ onPingStart, onPingCancel, onPingEnd }),
+      { initialProps: { onPingEnd: firstEnd } },
+    );
+
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mousedown", { button: 1 }));
+    });
+    view.rerender({ onPingEnd: latestEnd });
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mouseup", { button: 1 }));
+    });
+
+    expect(onPingCancel).not.toHaveBeenCalled();
+    expect(firstEnd).not.toHaveBeenCalled();
+    expect(latestEnd).toHaveBeenCalledOnce();
+  });
+
   it("enqueues every explicit rapid invite-all hotkey activation", async () => {
     disposeReadyRoomInvitationCoordinator();
     onTestFinished(disposeReadyRoomInvitationCoordinator);
