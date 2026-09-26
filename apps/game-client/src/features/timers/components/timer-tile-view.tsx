@@ -23,10 +23,8 @@ export type TimerTileViewProps = {
 const EXPIRED_VEIL = "black 40%";
 
 /**
- * The whole tile text follows the spawn window: amber once the minimum
+ * The whole tile text follows the spawn window: orange once the minimum
  * spawn time passes, red after the maximum, and a dimmed red once expired.
- * Light tints keep the text readable on every tile colour, and amber stays
- * apart from the light red on the warm fills.
  */
 const resolveTextColor = (
   legacyAppearance: boolean,
@@ -42,11 +40,11 @@ const resolveTextColor = (
     return "ll:text-white";
   }
 
-  if (isExpired) return "ll:text-red-300/70";
+  if (isExpired) return "ll:text-red-400/70";
 
-  if (hasPassedRedThreshold) return "ll:text-red-300";
+  if (hasPassedRedThreshold) return "ll:text-red-400";
 
-  if (isMinSpawnTime) return "ll:text-amber-300";
+  if (isMinSpawnTime) return "ll:text-orange-300";
 
   return "ll:text-white";
 };
