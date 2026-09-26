@@ -23,7 +23,6 @@ import {
   PLAYER_RELATION_FILLS,
   type PlayerRelation,
 } from "@/lib/player-relation";
-import { VerifiedMargonemAccountIcon } from "@/features/online-players/components/verified-margonem-account-icon";
 import type { MemberSummaryResponseDtoOutput } from "@lootlog/client/main";
 import { useGameStore } from "@/store/game.store";
 import {
@@ -203,11 +202,6 @@ export const OnlinePlayersAccountListEntry: FC<
                       level={character.lvl}
                       profession={character.prof}
                       clanName={player?.clan?.name}
-                      suffix={
-                        presence.margonemAccountVerified ? (
-                          <VerifiedMargonemAccountIcon className="ll:shrink-0" />
-                        ) : null
-                      }
                     />
                     <span className="ll:truncate ll:text-[10px] ll:font-normal ll:text-white/65">
                       {visibleLocationName}
