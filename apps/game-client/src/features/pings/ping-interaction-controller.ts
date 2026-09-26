@@ -16,9 +16,6 @@ export const PING_WHEEL_INNER_RADIUS_PX = 26;
  */
 export const PING_WHEEL_DEAD_ZONE_PX = PING_WHEEL_INNER_RADIUS_PX - 3;
 
-/** Moving the pointer this far from the centre cancels the selection. */
-export const PING_WHEEL_CANCEL_RADIUS_PX = 100;
-
 /** Half the wheel's footprint, including the label below it. */
 const PING_WHEEL_EXTENT_PX = 108;
 
@@ -139,8 +136,9 @@ export const clampPingWheelCenter = (
 };
 
 /**
- * Resolves the option under the pointer, measured from the centre the player
- * sees, so a clamped wheel near a screen edge still selects what it shows.
+ * Resolves the option in the pointer's direction, measured from the centre
+ * the player sees, so a clamped wheel near a screen edge still selects what
+ * it shows. Only the direction counts: the pointer may leave the ring.
  */
 export const resolvePingSelection = (
   menu: PingMenu,
@@ -155,7 +153,7 @@ export const resolvePingSelection = (
     return menu.centre;
   }
 
-  if (distance > PING_WHEEL_CANCEL_RADIUS_PX || menu.ring.length === 0) {
+  if (menu.ring.length === 0) {
     return null;
   }
 

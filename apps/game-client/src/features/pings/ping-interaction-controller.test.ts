@@ -1,6 +1,5 @@
 import {
   PING_HOLD_DELAY_MS,
-  PING_WHEEL_CANCEL_RADIUS_PX,
   PingInteractionController,
   type PingMenu,
   type PingPressIdentity,
@@ -69,7 +68,7 @@ describe("PingInteractionController", () => {
     expect(controller.complete(mouseIdentity())?.type).toBe("enemy");
   });
 
-  it("sends the centre option when released in the dead zone and cancels far away", () => {
+  it("sends the centre option in the dead zone and keeps the direction far outside the ring", () => {
     const controller = new PingInteractionController({ getViewport: viewport });
     start(controller);
     vi.advanceTimersByTime(PING_HOLD_DELAY_MS);
@@ -77,11 +76,8 @@ describe("PingInteractionController", () => {
     controller.updatePointer({ x: 305, y: 303 });
     expect(controller.getSnapshot()?.selectedType).toBe("attention");
 
-    controller.updatePointer({
-      x: 300,
-      y: 300 + PING_WHEEL_CANCEL_RADIUS_PX + 1,
-    });
-    expect(controller.complete(mouseIdentity())).toBeNull();
+    controller.updatePointer({ x: 300, y: 700 });
+    expect(controller.complete(mouseIdentity())?.type).toBe("regroup");
   });
 
   it("leaves the battle wheel centre empty so a release there cancels", () => {
