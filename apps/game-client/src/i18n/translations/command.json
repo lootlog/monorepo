@@ -1,12 +1,13 @@
 {
   "window": {
-    "title": "Konsola"
+    "title": "Szybki czat"
   },
-  "actions": {
-    "infoTooltip": "! = powiadomienie, /grp = utwórz zbiórkę"
+  "target": {
+    "label": "Lootlog, do którego wysyłasz"
   },
-  "input": {
-    "placeholder": "Wiadomość…"
+  "modes": {
+    "notification": "Powiadomienie",
+    "party": "Zbiórka"
   },
   "suggestions": {
     "partySearchLabel": "Utwórz zbiórkę",

@@ -518,6 +518,11 @@ const mergePersistedWindows = (
     merged[id] = parsePersistedWindow(raw[id], current[id]);
   }
 
+  // Quick chat is summoned for one entry: a reload, including one that
+  // restores an older payload with the console open, must not reopen it and
+  // pull focus away from the game.
+  merged.command = { ...merged.command, open: false };
+
   merged.settings = {
     ...parsePersistedWindow(raw.settings, current.settings),
     state: {

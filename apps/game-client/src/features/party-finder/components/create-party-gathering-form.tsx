@@ -1,7 +1,8 @@
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GuildMultiSelector } from "@/components/guild-multi-selector";
+import { GuildTargetPicker } from "@/components/guild-target-picker";
+import { useGuildTargets } from "@/hooks/use-guild-targets";
 import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { usePartyGatheringOrchestration } from "@/features/party-finder/hooks/use-party-gathering-orchestration";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -46,6 +47,7 @@ export const CreatePartyGatheringForm = () => {
   const formId = useId();
   const { t } = useTranslation("partyFinder");
   const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
+  const targetGuildIds = useGuildTargets(selectedGuildIds);
 
   const { isCreatingPartyGathering, startPartyGathering } =
     usePartyGatheringOrchestration();
@@ -65,7 +67,7 @@ export const CreatePartyGatheringForm = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    if (selectedGuildIds.length === 0) {
+    if (targetGuildIds.length === 0) {
       toast.error(t("form.selectGuild"));
 
       return;
@@ -75,7 +77,7 @@ export const CreatePartyGatheringForm = () => {
 
     try {
       await startPartyGathering({
-        guildIds: selectedGuildIds,
+        guildIds: targetGuildIds,
         world,
         description: data.description || undefined,
         minLvl: data.minLvl ? Number(data.minLvl) : undefined,
@@ -93,9 +95,10 @@ export const CreatePartyGatheringForm = () => {
       onSubmit={handleSubmit(onSubmit)}
       className="ll:flex ll:flex-col ll:gap-2 ll:p-1"
     >
-      <GuildMultiSelector
-        value={selectedGuildIds}
+      <GuildTargetPicker
+        value={targetGuildIds}
         onChange={setSelectedGuildIds}
+        className="ll:w-full"
       />
 
       <div>

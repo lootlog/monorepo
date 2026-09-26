@@ -32,12 +32,10 @@ describe("organization composer state", () => {
 
     localStorage.setItem(key, JSON.stringify("old-organization"));
     expect(getSelectedChatGuildId()).toBe("old-organization");
-    useChatStore.getState().setSelectedInputGuildIds(["command-target"]);
+    useChatStore.getState().setCommandGuildId("command-target");
     useChatStore.getState().setReplyDraft(reply("reply-organization"));
     expect(getSelectedChatGuildId()).toBe("reply-organization");
-    expect(useChatStore.getState().selectedInputGuildIds).toEqual([
-      "command-target",
-    ]);
+    expect(useChatStore.getState().commandGuildId).toBe("command-target");
     localStorage.removeItem(key);
   });
   it("ignores a prior per-character selector that is not a stored string", () => {
@@ -83,14 +81,14 @@ it("migrates the saved filter once while retaining preferences, then persists la
       state: {
         chatFilter: "normal",
         isNotificationEnabled: false,
-        selectedInputGuildIds: ["a"],
+        commandGuildId: "a",
       },
     }),
   );
   await useChatStore.persist.rehydrate();
   expect(useChatStore.getState().chatFilter).toBe("all");
   expect(useChatStore.getState().isNotificationEnabled).toBe(false);
-  expect(useChatStore.getState().selectedInputGuildIds).toEqual(["a"]);
+  expect(useChatStore.getState().commandGuildId).toBe("a");
   useChatStore.getState().setDraft("a", "Keep this draft");
   useChatStore.getState().setChatFilter("reports");
   await useChatStore.persist.rehydrate();
