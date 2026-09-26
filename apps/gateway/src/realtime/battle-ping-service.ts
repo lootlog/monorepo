@@ -1,9 +1,10 @@
 import {
-  isMapPingType,
-  type MapPingAck,
-  type MapPingEvent,
-  type MapPingSendPayload,
-} from "@lootlog/schema/map-ping";
+  BattlePingSendPayloadSchema,
+  type BattlePingEvent,
+  type BattlePingSendPayload,
+} from "@lootlog/schema/battle-ping";
+import type { MapPingAck } from "@lootlog/schema/map-ping";
+import { Schema } from "effect";
 import { Logger } from "#src/platform/logger";
 import {
   consumePingRateLimit,
@@ -14,12 +15,14 @@ import {
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket } from "#src/realtime/session";
 
-const RATE_LIMIT = 5;
+const RATE_LIMIT = 8;
 
-const RATE_LIMIT_WINDOW_MS = 15_000;
+const RATE_LIMIT_WINDOW_MS = 10_000;
 
-export class MapPingService {
-  private readonly logger = new Logger(MapPingService.name);
+const isBattlePingSendPayload = Schema.is(BattlePingSendPayloadSchema);
+
+export class BattlePingService {
+  private readonly logger = new Logger(BattlePingService.name);
 
   constructor(
     private readonly redis: PingScriptStore,
@@ -28,24 +31,30 @@ export class MapPingService {
 
   async send(
     socket: GatewaySocket,
-    payload: MapPingSendPayload,
+    payload: BattlePingSendPayload,
   ): Promise<MapPingAck> {
-    if (!this.hasValidPayload(payload)) {
+    if (!isBattlePingSendPayload(payload))
       return { status: "rejected", code: "invalid-payload" };
-    }
 
-    const context = getPingSender(socket, payload.expectedMapId);
+    const sender = getPingSender(socket, payload.expectedMapId);
 
-    if (!context) return { status: "rejected", code: "invalid-context" };
+    if (!sender) return { status: "rejected", code: "invalid-context" };
 
-    const scopes = getPingScopes(socket, context);
+    const recipientCharacterIds = payload.recipientCharacterIds.filter(
+      (characterId) => characterId !== sender.characterId,
+    );
+
+    if (recipientCharacterIds.length === 0)
+      return { status: "rejected", code: "invalid-payload" };
+
+    const scopes = getPingScopes(socket, sender);
 
     if (scopes.length === 0) return { status: "rejected", code: "forbidden" };
 
     const pingId = crypto.randomUUID();
 
     const rateLimit = await consumePingRateLimit(this.redis, this.logger, {
-      key: `map-ping:rate:${socket.data.userId}`,
+      key: `battle-ping:rate:${socket.data.userId}`,
       windowMs: RATE_LIMIT_WINDOW_MS,
       limit: RATE_LIMIT,
       pingId,
@@ -55,50 +64,37 @@ export class MapPingService {
       return { status: "rejected", code: "temporarily-unavailable" };
     const [accepted, createdAt, retryAfterMs] = rateLimit;
 
-    if (accepted !== 1) {
+    if (accepted !== 1)
       return { status: "rejected", code: "rate-limited", retryAfterMs };
-    }
 
-    const event: MapPingEvent = {
+    const event: BattlePingEvent = {
       pingId,
-      world: context.world,
-      mapId: context.mapId,
+      world: sender.world,
+      mapId: sender.mapId,
       type: payload.type,
-      x: payload.x,
-      y: payload.y,
-      sender: { characterId: context.characterId, name: context.name },
+      warriorId: payload.warriorId,
+      sender: { characterId: sender.characterId, name: sender.name },
       createdAt,
     };
 
     try {
       await this.hub.publishToScopes(
         scopes,
-        { v: 1, type: "map-ping.received", data: event },
+        { v: 1, type: "battle-ping.received", data: event },
         {
           excludeConnectionId: socket.data.connectionId,
           recipientPlatform: "game",
-          recipientWorld: context.world,
-          recipientMapId: context.mapId,
+          recipientWorld: sender.world,
+          recipientMapId: sender.mapId,
+          recipientCharacterIds,
         },
       );
     } catch (error) {
-      this.logger.warn("Failed to route map ping", error);
+      this.logger.warn("Failed to route battle ping", error);
 
       return { status: "rejected", code: "temporarily-unavailable" };
     }
 
     return { status: "accepted", pingId };
-  }
-
-  private hasValidPayload(payload: MapPingSendPayload): boolean {
-    return (
-      isMapPingType(payload.type) &&
-      [payload.x, payload.y].every(
-        (coordinate) =>
-          Number.isInteger(coordinate) &&
-          coordinate >= 0 &&
-          coordinate <= 65_535,
-      )
-    );
   }
 }

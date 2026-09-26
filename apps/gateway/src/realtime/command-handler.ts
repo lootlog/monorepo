@@ -26,6 +26,7 @@ import type { GuildStore, GuildStoreFailure } from "#src/guilds/guild-store";
 import type { MargonemProofVerifier } from "#src/auth/margonem-proof";
 import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
+import type { BattlePingService } from "#src/realtime/battle-ping-service";
 import type { MapPingService } from "#src/realtime/map-ping-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import { getScopeKey, type RealtimeHub } from "#src/realtime/realtime-hub";
@@ -109,7 +110,11 @@ const invalidLegacyPayloadResponse = Function.compose(
     Schema.Struct({
       v: Schema.Literal(1),
       requestId: Schema.NonEmptyString,
-      type: Schema.Literals(["map-ping.send", "air-tag.observation"]),
+      type: Schema.Literals([
+        "map-ping.send",
+        "battle-ping.send",
+        "air-tag.observation",
+      ]),
     }),
   ),
   Option.match({
@@ -145,6 +150,7 @@ export class CommandHandler {
     >,
     private readonly activity: Pick<ActivityPublisher, "publish">,
     private readonly mapPings: Pick<MapPingService, "send">,
+    private readonly battlePings: Pick<BattlePingService, "send">,
     private readonly airTags: Pick<
       AirTagService,
       "updateSubscription" | "publishObservations"
@@ -629,6 +635,12 @@ export class CommandHandler {
         return requireJoined.pipe(
           Effect.andThen(
             fromPromise(() => this.mapPings.send(socket, command.data)),
+          ),
+        );
+      case "battle-ping.send":
+        return requireJoined.pipe(
+          Effect.andThen(
+            fromPromise(() => this.battlePings.send(socket, command.data)),
           ),
         );
       case "air-tag.subscription":

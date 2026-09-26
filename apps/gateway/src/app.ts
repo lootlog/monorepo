@@ -45,6 +45,7 @@ import { CommandHandler } from "#src/realtime/command-handler";
 import { CommandIngress } from "#src/realtime/command-ingress";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
+import { BattlePingService } from "#src/realtime/battle-ping-service";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -149,6 +150,7 @@ class GatewayApplication extends Context.Service<
       yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
+      const battlePings = new BattlePingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
       const guilds = makeGuildStore(config, redis, httpClient);
 
@@ -159,6 +161,7 @@ class GatewayApplication extends Context.Service<
         hub,
         activity,
         mapPings,
+        battlePings,
         airTags,
       );
 

@@ -196,6 +196,7 @@ const setup = (
     realtimeHub ?? hub,
     activity,
     { send: () => Promise.reject(new Error("Unexpected map ping")) },
+    { send: () => Promise.reject(new Error("Unexpected battle ping")) },
     {
       updateSubscription,
       publishObservations: () =>
@@ -766,6 +767,7 @@ describe("CommandHandler session lifecycle", () => {
         hub,
         activity,
         { send: () => Promise.reject(new Error("Unexpected map ping")) },
+        { send: () => Promise.reject(new Error("Unexpected battle ping")) },
         {
           updateSubscription: () =>
             Promise.reject(new Error("Unexpected air tag subscription")),
@@ -1344,6 +1346,7 @@ describe("CommandHandler session lifecycle", () => {
             await gate.promise;
           }).pipe(Effect.andThen(Effect.die("Rabbit unavailable"))),
       },
+      { send: () => Promise.reject(new Error("unused")) },
       { send: () => Promise.reject(new Error("unused")) },
       {
         updateSubscription: () => Promise.reject(new Error("unused")),
