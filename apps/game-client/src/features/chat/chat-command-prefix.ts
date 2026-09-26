@@ -1,46 +1,42 @@
-export type ChatCommandPrefixKind = "notification" | "party";
+export type ChatCommandMode = "notification" | "party";
+
+/** What the composer shows in place of a hidden prefix while nothing follows it. */
+export type ChatCommandHints = Record<ChatCommandMode, string>;
 
 /** Colour keys (`getTextColor`) shared with notification messages and gathering alerts. */
 export const CHAT_COMMAND_COLOR_KEYS = {
   notification: "message",
   party: "party-gathering",
-} satisfies Record<ChatCommandPrefixKind, string>;
+} satisfies Record<ChatCommandMode, string>;
+
+/** The prefixes the mode buttons write in front of the typed text. */
+export const CHAT_COMMAND_PREFIXES = {
+  notification: "!",
+  party: "/grp ",
+} satisfies Record<ChatCommandMode, string>;
 
 export type ChatCommandPrefix = {
-  kind: ChatCommandPrefixKind;
-  /** The prefix as typed, including the space that ends `/grp`. */
+  mode: ChatCommandMode;
+  /** The prefix as it starts the entry. */
   text: string;
-  /** Whether anything follows the prefix yet. */
-  hasArgument: boolean;
 };
 
-const PARTY_PREFIX = /^\/grp(?: |$)/u;
+// `/grp` switches as soon as it is typed, as `getChatSubmitAction` reads it;
+// the space that usually follows belongs to the prefix, not the description.
+const PARTY_PREFIX = /^\/grp ?/u;
 
 /**
- * The command prefix the composer draws as a chip. It matches what
- * `getChatSubmitAction` sends, limited to a complete `/grp` word so a
- * half-typed or longer word stays plain text.
+ * The prefix the composer hides; its icon, text colour and placeholder show
+ * the mode instead.
  */
 export const getChatCommandPrefix = (
   message: string,
 ): ChatCommandPrefix | null => {
+  if (message.startsWith(CHAT_COMMAND_PREFIXES.notification)) {
+    return { mode: "notification", text: CHAT_COMMAND_PREFIXES.notification };
+  }
+
   const party = PARTY_PREFIX.exec(message);
 
-  if (party) {
-    return {
-      kind: "party",
-      text: party[0],
-      hasArgument: message.length > party[0].length,
-    };
-  }
-
-  if (message.startsWith("!")) {
-    return {
-      kind: "notification",
-      text: "!",
-      hasArgument: message.length > 1,
-    };
-  }
-
-  return null;
+  return party ? { mode: "party", text: party[0] } : null;
 };

@@ -665,6 +665,11 @@ export function useChatInputController({
       return;
     }
 
+    // The `!` alone only switches the mode; there is nothing to send yet.
+    if (submitAction.kind === "notification" && !submitAction.message.trim()) {
+      return;
+    }
+
     if (submissionInProgressRef.current) {
       return;
     }
