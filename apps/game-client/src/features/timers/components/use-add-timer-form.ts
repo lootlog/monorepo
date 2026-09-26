@@ -6,7 +6,6 @@ import type { CreateManualTimerOptions } from "@/api/timers.api";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
-import { useGameStore } from "@/store/game.store";
 import { useDebounce } from "@lootlog/ui/hooks/use-debounce";
 import {
   CreateManualTimerDtoType,
@@ -272,6 +271,7 @@ export type AddTimerFormProps = {
    * one (no Lootlog yet, or the "all" chat scope) the form cannot submit.
    */
   guildId?: string;
+  world: string;
   onClose: () => void;
 };
 
@@ -300,16 +300,19 @@ const shouldShowNoNpcResults = ({
 const getSelectedNpcType = (npcType: FormValues["type"]) =>
   npcType || EMPTY_NPC_TYPE_VALUE;
 
-const getNpcSearchParams = (world: string | undefined, search: string) => ({
+const getNpcSearchParams = (world: string, search: string) => ({
   limit: 10,
   search,
-  world: world ?? "",
+  world,
 });
 
-export function useAddTimerForm({ guildId, onClose }: AddTimerFormProps) {
+export function useAddTimerForm({
+  guildId,
+  world,
+  onClose,
+}: AddTimerFormProps) {
   const { t } = useTranslation("timers");
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
-  const world = useGameStore((state) => state.game?.world ?? "unknown");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);

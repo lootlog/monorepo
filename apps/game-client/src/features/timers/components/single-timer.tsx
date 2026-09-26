@@ -45,7 +45,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   isHidden = false,
   showColorStripe = true,
 }) => {
-  const world = timer.world;
   const { t } = useTranslation("timers");
 
   const {
@@ -86,7 +85,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     isRestartingTimer,
     isDeletingTimer,
     beginRestartAttempt,
-  } = useTimerActions(timer, settingsKey, world, guildIds, timersGrouping);
+  } = useTimerActions(timer, settingsKey, guildIds, timersGrouping);
 
   const {
     isPending,
