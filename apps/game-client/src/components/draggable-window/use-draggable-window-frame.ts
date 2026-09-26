@@ -725,6 +725,14 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     setCurrentWindowFocus(id);
     setIsResizing(true);
 
+    // Default placements derive from the window's own size (centered, or
+    // anchored to the map's right edge), so resizing an unplaced window would
+    // move its top-left corner with the handle. Resizing places it where it
+    // is drawn now, like a drag.
+    if (!useWindowsStore.getState()[id].hasDefinedPosition) {
+      setPositionInStore(id, position);
+    }
+
     if (!isAutoHeightMode || !isMaxHeightAdjustmentArmed) return;
 
     const windowBody = windowBodyRef.current;

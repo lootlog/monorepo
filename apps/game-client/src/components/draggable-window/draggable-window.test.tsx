@@ -495,6 +495,45 @@ describe("DraggableWindow", () => {
     expect(handleArmedChange).toHaveBeenCalledWith(false);
   });
 
+  it("keeps an unplaced centered window's top-left corner in place while it is resized", async () => {
+    await resizeViewport(1600, 1000);
+    useWindowsStore.setState((state) => ({
+      "online-players": {
+        ...state["online-players"],
+        hasDefinedPosition: false,
+        size: { width: 400, height: 300 },
+      },
+    }));
+
+    const { container } = render(
+      <DraggableWindow isOpen id="online-players" title="Gracze online">
+        <div>Treść</div>
+      </DraggableWindow>,
+    );
+
+    const windowElement = container.querySelector("#ll-online-players");
+
+    const resizeHandle = container.querySelector(
+      "[data-ll-window-resize-handle]",
+    );
+
+    if (!(resizeHandle instanceof HTMLButtonElement)) {
+      throw new Error("Expected resize handle");
+    }
+
+    expect(windowElement).toHaveStyle({ left: "600px", top: "350px" });
+
+    fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+    fireEvent.mouseMove(document, { buttons: 1, clientX: 100, clientY: 20 });
+    fireEvent.mouseUp(document);
+
+    // The centered default would follow the new size; the window stays put.
+    expect(useWindowsStore.getState()["online-players"]).toMatchObject({
+      hasDefinedPosition: true,
+      position: { x: 600, y: 350 },
+    });
+  });
+
   it("shows a locked window on-screen in a smaller viewport and restores its saved position without rewriting it", async () => {
     await resizeViewport(1600, 1000);
     useWindowsStore.setState((state) => ({
