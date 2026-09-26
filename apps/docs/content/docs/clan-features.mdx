@@ -62,6 +62,11 @@ zarezerwowaną; organizacja pozostaje zawsze dostępna pod swoim identyfikatorem
 Czat zapewnia wspólny kanał komunikacji, a powiadomienia mogą przenosić
 istotne zdarzenia do wybranych odbiorców lub kanałów Discord.
 
+Jeśli chwilowa awaria uniemożliwi przekazanie powiadomienia do wysyłki na
+Discord, Lootlog ponawia próbę. Po wyczerpaniu prób powiadomienie trafia do
+historii ze statusem błędu i jego przyczyną. Błąd jednego wykonania reguły
+cyklicznej nie zatrzymuje kolejnych terminów.
+
 W regule zaplanowanej wiadomości zmiana terminu jednorazowego na harmonogram
 cykliczny wyznacza najbliższe wykonanie według nowego harmonogramu. Ukryta data
 z poprzedniego trybu nie opóźnia wysyłki. Wyczyść datę końca i zapisz regułę,
