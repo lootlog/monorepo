@@ -55,7 +55,6 @@ export const NpcsList: FC<NpcsListProps> = ({
   const {
     activeDetectionAnimations,
     clearDetectionAnimation,
-    hasMultipleNpcs,
     latestDetectionAnimationCycle,
     removeNpc,
     setNpcState,
@@ -64,7 +63,6 @@ export const NpcsList: FC<NpcsListProps> = ({
     useShallow((state) => ({
       activeDetectionAnimations: state.activeDetectionAnimations,
       clearDetectionAnimation: state.clearDetectionAnimation,
-      hasMultipleNpcs: state.npcs.length > 1,
       latestDetectionAnimationCycle: state.latestDetectionAnimationCycle,
       removeNpc: state.removeNpc,
       setNpcState: state.setNpcState,
@@ -136,6 +134,11 @@ export const NpcsList: FC<NpcsListProps> = ({
   }, [animationEffectsEnabled, latestDetectionAnimationCycle]);
 
   const itemCount = npcs?.length ?? 0;
+
+  // Counts the rows the window shows, not every stored detection: the last
+  // visible row is dismissed through the window's close button, which also
+  // clears detections the window's routing hides.
+  const hasMultipleNpcs = itemCount > 1;
   const viewportHeight = viewport.height || NPC_LIST_FALLBACK_HEIGHT_PX;
 
   const firstVisibleIndex =
