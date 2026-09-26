@@ -238,13 +238,17 @@ export class PlayersPresenceSource {
 
     const requestId = ++this.requestId;
     const connectionId = this.socket.id;
-    this.snapshotConnectionId = undefined;
+
+    const isCurrent =
+      this.snapshot.isCurrent && this.snapshotConnectionId === connectionId;
+
+    if (!isCurrent) this.snapshotConnectionId = undefined;
     this.snapshotUpdates = new Map();
     this.snapshot = {
       ...this.snapshot,
       error: null,
       refreshing: true,
-      isCurrent: false,
+      isCurrent,
     };
     this.notify(true);
 
@@ -300,7 +304,6 @@ export class PlayersPresenceSource {
             ...this.snapshot,
             error,
             refreshing: false,
-            isCurrent: false,
           };
           this.notify(true);
         }
