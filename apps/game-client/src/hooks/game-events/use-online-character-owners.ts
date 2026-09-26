@@ -1,14 +1,9 @@
-import { GatewayEvent } from "@/config/gateway";
 import { useSocket } from "@/contexts/socket-context";
 import { useGuildMembersSummary } from "@/hooks/api/guild-members-summary-query";
 import { useGameStore } from "@/store/game.store";
 import { mapGuildMembersByUserId } from "@/lib/api/generated-helpers";
-import {
-  normalizePresence,
-  normalizePresenceResponse,
-  requestServerPresence,
-  type PlayerPresenceUpdatePayload,
-} from "@/lib/online-players-presence";
+import { getPlayersPresenceSource } from "@/lib/players-presence-source";
+import type { AppSocket } from "@/lib/socket";
 import { isConcreteLootlogGuildId } from "@/lib/selected-lootlog-guild";
 import { useSelectedLootlogGuildId } from "@/hooks/use-selected-lootlog-guild";
 import { useCharacterTooltipCatchingGuildsStore } from "@/store/character-tooltip-catching-guilds.store";
@@ -61,24 +56,33 @@ function hydrateOnlineCharacterOwners({
   guildMembersByUserIdRef: { current: GuildMembersByUserId };
   onSettled: (loaded: boolean) => void;
   requestIdRef: { current: number };
-  socket: Parameters<typeof requestServerPresence>[0];
+  socket: AppSocket;
   world: string;
 }): void {
   const currentRequestId = ++requestIdRef.current;
   useOnlineCharacterOwnersStore.getState().setLoading();
 
-  void requestServerPresence(socket, guildId, world)
+  const source = getPlayersPresenceSource(socket, guildId, world);
+  const snapshot = source.getSnapshot();
+
+  const fresh =
+    snapshot.isCurrent &&
+    source.loadedAt !== null &&
+    Date.now() - source.loadedAt < OWNERS_FRESH_MS;
+
+  const request = fresh ? Promise.resolve(snapshot) : source.refresh();
+  void request
     .then((response) => {
       if (requestIdRef.current !== currentRequestId) return;
 
-      if (!response) {
+      if (response.error) {
         useOnlineCharacterOwnersStore.getState().setError();
         onSettled(false);
 
         return;
       }
 
-      if (response.status === "forbidden") {
+      if (response.accessState === "forbidden") {
         useOnlineCharacterOwnersStore.getState().setForbidden();
         onSettled(false);
 
@@ -88,7 +92,7 @@ function hydrateOnlineCharacterOwners({
       useOnlineCharacterOwnersStore
         .getState()
         .setPresenceResponse(
-          normalizePresenceResponse(response.players),
+          response.onlinePlayers,
           guildMembersByUserIdRef.current,
         );
       onSettled(true);
@@ -130,8 +134,6 @@ export function useOnlineCharacterOwners(): void {
   );
 
   const guildMembersByUserIdRef = useRef(guildMembersByUserId);
-  const selectedGuildIdRef = useRef(selectedGuildId);
-  const selectedWorldRef = useRef(selectedWorld);
   const requestIdRef = useRef(0);
   const hydrationRef = useRef<OwnersHydration | null>(null);
 
@@ -143,11 +145,6 @@ export function useOnlineCharacterOwners(): void {
       .getState()
       .setGuildMembers(guildMembersByUserId);
   }, [active, guildMembersByUserId]);
-
-  useEffect(() => {
-    selectedGuildIdRef.current = selectedGuildId;
-    selectedWorldRef.current = selectedWorld;
-  }, [selectedGuildId, selectedWorld]);
 
   useEffect(() => {
     const cached = hydrationRef.current;
@@ -216,41 +213,45 @@ export function useOnlineCharacterOwners(): void {
   );
 
   useEffect(() => {
-    if (!active || !socket || !connected || !joined) return;
+    if (
+      !active ||
+      !socket ||
+      !connected ||
+      !joined ||
+      !selectedGuildId ||
+      !selectedWorld
+    )
+      return;
 
-    const handleOnlinePlayersPresenceUpdate = (
-      data: PlayerPresenceUpdatePayload,
-    ) => {
-      const normalizedPresence = normalizePresence(data);
-
-      if (
-        normalizedPresence.guildId !== selectedGuildIdRef.current ||
-        normalizedPresence.player?.world !== selectedWorldRef.current
-      ) {
-        return;
-      }
-
-      const store = useOnlineCharacterOwnersStore.getState();
-
-      if (normalizedPresence.status === "offline") {
-        store.removePresence(normalizedPresence);
-
-        return;
-      }
-
-      store.upsertPresence(normalizedPresence, guildMembersByUserIdRef.current);
-    };
-
-    socket.on(
-      GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-      handleOnlinePlayersPresenceUpdate,
+    const source = getPlayersPresenceSource(
+      socket,
+      selectedGuildId,
+      selectedWorld,
     );
 
-    return () => {
-      socket.off(
-        GatewayEvent.ONLINE_PLAYERS_PRESENCE_UPDATE,
-        handleOnlinePlayersPresenceUpdate,
-      );
-    };
-  }, [active, connected, joined, socket]);
+    return source.subscribeChanges((presence) => {
+      const store = useOnlineCharacterOwnersStore.getState();
+
+      if (!presence) {
+        const snapshot = source.getSnapshot();
+
+        if (snapshot.accessState === "forbidden") store.setForbidden();
+        else if (
+          snapshot.hasLoaded &&
+          !snapshot.refreshing &&
+          !snapshot.error
+        ) {
+          store.setPresenceResponse(
+            snapshot.onlinePlayers,
+            guildMembersByUserIdRef.current,
+          );
+        }
+
+        return;
+      }
+
+      if (presence.status === "offline") store.removePresence(presence);
+      else store.upsertPresence(presence, guildMembersByUserIdRef.current);
+    }, false);
+  }, [active, connected, joined, socket, selectedGuildId, selectedWorld]);
 }
