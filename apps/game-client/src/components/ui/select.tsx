@@ -155,6 +155,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
       >
         <BaseSelect.Popup
           ref={ref}
+          data-slot="select-content"
           className={cn(
             selectPopupClassName,
             position === "popper" &&

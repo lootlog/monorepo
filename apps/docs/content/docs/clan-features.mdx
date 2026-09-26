@@ -134,9 +134,29 @@ skrótów klawiszowych. Domyślnie **Alt+P** wysyła pozycję, a **Alt+H** wzywa
 Skrót **Utwórz zbiórkę** jest domyślnie nieprzypisany. Po przypisaniu
 otwiera okno **Nowa zbiórka** z formularzem; nie działa podczas pisania.
 Wpis zaczynający się od `!` już podczas pisania przyjmuje kolor powiadomienia.
+Prefiksy `!` i `/grp` są wyróżnione jako znacznik, obok którego do czasu wpisania treści
+widać podpowiedź; Backspace usuwa cały znacznik naraz. Ikona po lewej stronie pola pokazuje,
+co wyśle Enter: wiadomość, powiadomienie (dzwonek w kolorze powiadomień) albo zbiórkę
+(fioletowe miecze).
 **Pozycja** od razu wysyła wpis w formacie `Postać(230w), Ithan (1, 2)`, zachowując szkic. **Pomoc**
 od razu wysyła powiadomienie do organizacji wybranej u góry czatu. Gdy aktualne
 dane gry są dostępne, wiadomość zawiera liczbę wykrytych wrogich postaci.
+
+### Szybki czat
+
+**Szybki czat** (domyślnie **Shift+S** albo przycisk w pasku szybkiego dostępu) otwiera u góry
+ekranu pole czatu do szybkiego wysyłania bez otwierania okna czatu. Działa jak pole czatu:
+Enter wysyła wiadomość, `!` wysyła powiadomienie, `/grp opis` tworzy zbiórkę, a `@` podpowiada
+osoby i role. Przyciski **Powiadomienie** i **Zbiórka** pod polem wstawiają albo usuwają
+ten prefiks.
+
+Lista pod polem wybiera jedną organizację, do której trafia wpis. Z klawiatury przejdź do niej
+klawiszem Tab, otwórz ją Enterem i wybierz strzałkami; po wyborze kursor wraca do pola.
+Wybór jest zapamiętywany; bez niego Szybki czat wysyła do organizacji wybranej dla postaci.
+Szybki czat nie dołącza cytatu przygotowanego w oknie czatu.
+
+Escape zamyka Szybki czat i czyści wpis. Kliknięcie poza nią zamyka ją, ale zachowuje
+niewysłany tekst.
 
 ### Zbiórki
 

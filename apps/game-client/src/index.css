@@ -201,20 +201,36 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-#lootlog-root [data-ll-draggable-window] > .ll-window-preparing {
+/* Ghost argument hint after a composer command chip (ChatCommandNode) while
+   nothing follows it; outside the chip so its background stays tight. */
+#lootlog-root .ll-chat-command-hint:last-child::after {
+  content: attr(data-chat-command-hint);
+  position: absolute;
+  left: 100%;
+  padding-left: 6px;
+  color: var(--ll-color-gray-500);
+  font-weight: 400;
+  white-space: pre;
+  pointer-events: none;
+}
+
+#lootlog-root [data-ll-draggable-window] > .ll-window-preparing,
+#lootlog-root [data-ll-command-overlay] > .ll-window-preparing {
   opacity: 0;
   transform: translate3d(0, 10px, 0) scale(0.94);
   transform-origin: center;
   will-change: opacity, transform;
 }
 
-#lootlog-root [data-ll-draggable-window] > .ll-window-enter {
+#lootlog-root [data-ll-draggable-window] > .ll-window-enter,
+#lootlog-root [data-ll-command-overlay] > .ll-window-enter {
   animation: ll-window-enter 190ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
   transform-origin: center;
   will-change: opacity, transform;
 }
 
-#lootlog-root [data-ll-draggable-window] > .ll-window-exit {
+#lootlog-root [data-ll-draggable-window] > .ll-window-exit,
+#lootlog-root [data-ll-command-overlay] > .ll-window-exit {
   animation: ll-window-exit 130ms cubic-bezier(0.4, 0, 1, 1) both !important;
   transform-origin: center;
   will-change: opacity, transform;

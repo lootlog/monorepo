@@ -303,7 +303,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.sky.fill);
+    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.purple.fill);
     expect(
       screen.queryByRole("button", { name: "Zaproś do grupy" }),
     ).not.toBeInTheDocument();

@@ -100,19 +100,3 @@ export const SettingsGuildPickerItem: FC<SettingsGuildPickerItemProps> = ({
     }
   />
 );
-
-export const toggleAvailableGuild = (
-  guilds: readonly Pick<Guild, "id">[],
-  selectedGuildIds: readonly string[],
-  guildId: string,
-): string[] => {
-  const nextGuildIds = selectedGuildIds.includes(guildId)
-    ? selectedGuildIds.filter((id) => id !== guildId)
-    : [...selectedGuildIds, guildId];
-
-  const nextGuildIdSet = new Set(nextGuildIds);
-
-  return guilds.flatMap((guild) =>
-    nextGuildIdSet.has(guild.id) ? [guild.id] : [],
-  );
-};

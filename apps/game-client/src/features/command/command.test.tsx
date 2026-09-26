@@ -6,13 +6,22 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { configureApiClients } from "@lootlog/client/transport";
-import { getUsersControllerGetCurrentUserAccessibleGuildsQueryKey } from "@lootlog/client/main";
+import {
+  getGuildsControllerGetGuildPermissionsQueryKey,
+  getUsersControllerGetCurrentUserAccessibleGuildsQueryKey,
+  getUsersControllerGetUserPreferencesQueryKey,
+  type ChatMessageResponseDtoOutput,
+} from "@lootlog/client/main";
+import { CHAT_APPEARANCE_READABLE_PRESET } from "@lootlog/schema/chat-appearance";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatStore } from "@/store/chat.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { createTestGuild } from "@/test/guild-preferences-test";
+import { COMMAND_DRAFT_KEY } from "./command-draft";
 import { CommandWindow } from "./command";
 
 vi.mock("sonner", () => ({
@@ -22,6 +31,8 @@ vi.mock("sonner", () => ({
 const notificationRequest = vi.fn<typeof fetch>();
 
 const chatRequest = vi.fn<typeof fetch>();
+
+const preferencesRequest = vi.fn<typeof fetch>();
 
 let queryClient: QueryClient;
 
@@ -34,16 +45,39 @@ const mount = () =>
     </QueryClientProvider>,
   );
 
-const submit = (message: string) => {
-  const textarea = screen.getByPlaceholderText("Wiadomość…");
-  fireEvent.change(textarea, { target: { value: message } });
-  const form = textarea.closest("form");
+const getEditor = () => screen.getByRole("textbox", { name: "Wiadomość…" });
 
-  if (!form) throw new Error("Expected command form");
-  fireEvent.submit(form);
+const getDraft = () =>
+  useChatStore.getState().draftsByGuild[COMMAND_DRAFT_KEY] ?? "";
 
-  return { textarea, form };
+const type = async (text: string) => {
+  const user = userEvent.setup();
+  await user.click(getEditor());
+  await user.paste(text);
+
+  return user;
 };
+
+const sentMessage = (guildId: string): ChatMessageResponseDtoOutput => ({
+  id: `message-${guildId}`,
+  guildId,
+  message: "hello",
+  senderId: "user-1",
+  timestamp: "2026-01-01T10:00:00.000Z",
+  type: "NORMAL",
+  characterData: {
+    nick: "Hero",
+    id: 123,
+    acc: 456,
+    lvl: 200,
+    prof: "w",
+    icon: "hero.gif",
+  },
+  canDelete: false,
+});
+
+const requestPath = (request: Parameters<typeof fetch>[0]) =>
+  new URL(request instanceof Request ? request.url : String(request)).pathname;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -58,7 +92,6 @@ beforeEach(() => {
       icon: "hero.gif",
     },
   });
-  useChatStore.setState({ selectedInputGuildIds: ["guild-1"] });
   useWindowsStore.setState(useWindowsStore.getInitialState(), true);
   useWindowsStore.getState().setOpen("command", true);
   queryClient = new QueryClient({
@@ -69,10 +102,33 @@ beforeEach(() => {
   });
   queryClient.setQueryData(
     getUsersControllerGetCurrentUserAccessibleGuildsQueryKey(),
-    [],
+    [createTestGuild("guild-1", "Alpha"), createTestGuild("guild-2", "Beta")],
   );
-  chatRequest.mockReset().mockResolvedValue(Response.json([]));
+  queryClient.setQueryData(getUsersControllerGetUserPreferencesQueryKey(), {
+    userId: "user",
+    guildsOrder: [],
+    hiddenGuildIds: [],
+    theme: "default",
+    chatAppearance: CHAT_APPEARANCE_READABLE_PRESET,
+    mutes: { players: [], npcs: [] },
+  });
+
+  for (const guildId of ["guild-1", "guild-2"]) {
+    queryClient.setQueryData(
+      getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
+      [],
+    );
+  }
+
+  chatRequest
+    .mockReset()
+    .mockImplementation(async (input) =>
+      Response.json(sentMessage(requestPath(input).split("/")[2] ?? "")),
+    );
   notificationRequest.mockReset();
+  preferencesRequest
+    .mockReset()
+    .mockReturnValue(Promise.withResolvers<Response>().promise);
   restoreApi = configureApiClients({
     main: {
       baseUrl: "https://api.example.test",
@@ -86,6 +142,9 @@ beforeEach(() => {
 
         if (pathname.endsWith("/chat-messages"))
           return chatRequest(input, init);
+
+        if (pathname === "/users/@me/preferences")
+          return preferencesRequest(input, init);
         throw new Error(`Unexpected HTTP request: ${pathname}`);
       },
     },
@@ -101,14 +160,49 @@ afterEach(() => {
 });
 
 describe("CommandWindow", () => {
-  it("ignores repeated submits and unlocks after a successful notification", async () => {
+  it("sends only to the chosen Lootlog and closes", async () => {
+    useChatStore.getState().setCommandGuildId("guild-2");
+    mount();
+    const user = await type("hello");
+    await user.keyboard("{Enter}");
+    await waitFor(() =>
+      expect(useWindowsStore.getState().command.open).toBe(false),
+    );
+    expect(
+      chatRequest.mock.calls.map(([request]) => requestPath(request)),
+    ).toEqual(["/guilds/guild-2/chat-messages"]);
+    expect(getDraft()).toBe("");
+  });
+  it("does not attach or clear the chat's pending reply", async () => {
+    const reply = {
+      guildId: "guild-1",
+      messageId: "message-0",
+      senderNick: "Raider",
+      message: "boss?",
+      type: "NORMAL",
+    } as const;
+
+    useChatStore.getState().setReplyDraft(reply);
+    mount();
+    const user = await type("hello");
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(chatRequest).toHaveBeenCalledOnce());
+    const body = JSON.parse(String(chatRequest.mock.calls[0]?.[1]?.body));
+    expect(body).not.toHaveProperty("replyTo");
+    expect(useChatStore.getState().replyDraftsByGuild["guild-1"]).toEqual(
+      reply,
+    );
+  });
+  it("ignores repeated submits and closes after a successful notification", async () => {
     const deferred = Promise.withResolvers<Response>();
     notificationRequest.mockReturnValue(deferred.promise);
     mount();
-    const { textarea, form } = submit("!alarm");
-    fireEvent.submit(form);
+    await type("!alarm");
+    const editor = getEditor();
+    fireEvent.keyDown(editor, { key: "Enter" });
+    fireEvent.keyDown(editor, { key: "Enter" });
     await waitFor(() => expect(notificationRequest).toHaveBeenCalledOnce());
-    await waitFor(() => expect(textarea).toBeDisabled());
+    expect(editor).toHaveAttribute("tabindex", "-1");
     act(() =>
       deferred.resolve(
         Response.json({
@@ -121,48 +215,67 @@ describe("CommandWindow", () => {
       expect(useWindowsStore.getState().command.open).toBe(false),
     );
     expect(chatRequest).toHaveBeenCalledOnce();
-    expect(textarea).toHaveValue("");
+    expect(getDraft()).toBe("");
   });
-  it("unlocks and preserves the notification message after an error", async () => {
-    const deferred = Promise.withResolvers<Response>();
-    notificationRequest.mockReturnValue(deferred.promise);
-    mount();
-    const { textarea } = submit("!alarm");
-    await waitFor(() => expect(textarea).toBeDisabled());
-    act(() =>
-      deferred.resolve(
-        Response.json({ message: "unavailable" }, { status: 503 }),
-      ),
+  it("keeps the console and the notification draft after an error", async () => {
+    notificationRequest.mockResolvedValue(
+      Response.json({ message: "unavailable" }, { status: 503 }),
     );
-    await waitFor(() => expect(textarea).not.toBeDisabled());
-    expect(textarea).toHaveValue("!alarm");
+    mount();
+    const user = await type("!alarm");
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(getDraft()).toBe("!alarm");
     expect(useWindowsStore.getState().command.open).toBe(true);
     expect(chatRequest).not.toHaveBeenCalled();
-  });
-  it("unlocks an ordinary message after its own request", async () => {
-    const deferred = Promise.withResolvers<Response>();
-    chatRequest.mockReturnValue(deferred.promise);
-    mount();
-    const { textarea } = submit("hello");
-    await waitFor(() => expect(textarea).toBeDisabled());
-    expect(notificationRequest).not.toHaveBeenCalled();
-    act(() => deferred.resolve(Response.json([])));
-    await waitFor(() =>
-      expect(useWindowsStore.getState().command.open).toBe(false),
-    );
   });
   it("shows only the translated rate-limit error for a 429 response", async () => {
     notificationRequest.mockResolvedValue(
       Response.json({ retryAfterMs: 1000 }, { status: 429 }),
     );
     mount();
-    const { textarea } = submit("!alarm");
+    const user = await type("!alarm");
+    await user.keyboard("{Enter}");
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
         "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
       ),
     );
     expect(toast.error).toHaveBeenCalledTimes(1);
-    expect(textarea).toHaveValue("!alarm");
+    expect(getDraft()).toBe("!alarm");
+  });
+  it("keeps the draft after a stray click outside but drops it on Escape", async () => {
+    mount();
+    await type("boss na 2");
+    fireEvent.pointerDown(document.body);
+    expect(useWindowsStore.getState().command.open).toBe(false);
+    expect(getDraft()).toBe("boss na 2");
+    act(() => useWindowsStore.getState().setOpen("command", true));
+    const user = userEvent.setup();
+    await user.click(getEditor());
+    await user.keyboard("{Escape}");
+    expect(useWindowsStore.getState().command.open).toBe(false);
+    expect(getDraft()).toBe("");
+    expect(chatRequest).not.toHaveBeenCalled();
+  });
+  it("keeps Quick chat open when a Lootlog is picked with the mouse", async () => {
+    mount();
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("combobox", { name: "Lootlog, do którego wysyłasz" }),
+    );
+    await user.click(await screen.findByRole("option", { name: "Beta" }));
+    expect(useChatStore.getState().commandGuildId).toBe("guild-2");
+    expect(useWindowsStore.getState().command.open).toBe(true);
+  });
+  it("does not target any Lootlog before the preferences that hide some have loaded", () => {
+    queryClient.removeQueries({
+      queryKey: getUsersControllerGetUserPreferencesQueryKey(),
+    });
+    mount();
+    expect(
+      screen.getByRole("textbox", { name: "Wybierz Lootlog, aby pisać…" }),
+    ).toHaveAttribute("tabindex", "-1");
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 });

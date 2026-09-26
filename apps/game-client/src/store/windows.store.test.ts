@@ -180,6 +180,23 @@ describe("windows store", () => {
     expect(useWindowsStore.getState().settings).toStrictEqual(initial.settings);
   });
 
+  it("never restores Quick chat open, even from a payload saved with the console open", async () => {
+    localStorage.setItem(
+      storageKey("ll-windows-state"),
+      JSON.stringify({
+        version: 20,
+        state: {
+          command: { open: true },
+          chat: { open: true },
+        },
+      }),
+    );
+    await useWindowsStore.persist.rehydrate();
+
+    expect(useWindowsStore.getState().command.open).toBe(false);
+    expect(useWindowsStore.getState().chat.open).toBe(true);
+  });
+
   it("uses the new settings default size", () => {
     expect(useWindowsStore.getState().settings.size).toEqual({
       width: 820,

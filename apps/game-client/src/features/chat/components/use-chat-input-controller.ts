@@ -65,6 +65,22 @@ export type ChatInputProps = {
   autofocus?: boolean;
 };
 
+/**
+ * The console reuses the chat composer outside the chat window: it keeps its
+ * own draft, leaves the chat's replies and focus requests alone, and closes
+ * once an entry has gone through.
+ */
+export type ChatComposerOptions = ChatInputProps & {
+  /** Draft slot in the chat store; the chat keeps one per guild. */
+  draftKey?: string;
+  /** Replies and compose-focus requests belong to the chat window. */
+  handlesReplies?: boolean;
+  /** Escape with no suggestion list open. */
+  onEscape?: () => void;
+  /** An entry was sent, a gathering started or the chat cleared. */
+  onSubmitted?: () => void;
+};
+
 type TabCompletionSession = {
   insertedLabel: string;
   mention: ActiveChatMention;
@@ -206,20 +222,30 @@ export function useChatInputController({
   variant = "default",
   selectedGuildId,
   autofocus,
-}: ChatInputProps) {
+  draftKey = selectedGuildId ?? "",
+  handlesReplies = true,
+  onEscape,
+  onSubmitted,
+}: ChatComposerOptions) {
   const { t } = useTranslation("chat");
   const { t: tCommand } = useTranslation("command");
   const queryClient = useQueryClient();
   const reportSendError = useChatSendError();
 
-  const replyDraft = useChatStore(
-    (state) => state.replyDraftsByGuild[selectedGuildId ?? ""],
+  const replyDraft = useChatStore((state) =>
+    handlesReplies
+      ? state.replyDraftsByGuild[selectedGuildId ?? ""]
+      : undefined,
   );
 
-  const focusRequest = useChatStore((state) => state.focusRequest);
+  const focusRequest = useChatStore((state) =>
+    handlesReplies ? state.focusRequest : null,
+  );
 
-  const clearReplyDraft = () =>
-    useChatStore.getState().clearReplyDraft(selectedGuildId);
+  const clearReplyDraft = () => {
+    if (handlesReplies)
+      useChatStore.getState().clearReplyDraft(selectedGuildId);
+  };
 
   const editorRef = useRef<ChatInputEditorHandle>(null);
   const currentGuildRef = useRef(selectedGuildId);
@@ -245,11 +271,11 @@ export function useChatInputController({
   const { handlePartyCommand } = usePartyCommand();
 
   const messageValue = useChatStore(
-    (state) => state.draftsByGuild[selectedGuildId ?? ""] ?? "",
+    (state) => state.draftsByGuild[draftKey] ?? "",
   );
 
   const setMessageValue = (message: string) =>
-    useChatStore.getState().setDraft(selectedGuildId ?? "", message);
+    useChatStore.getState().setDraft(draftKey, message);
 
   const [caretIndex, setCaretIndex] = useState(0);
   const [requestedMentionIndex, setRequestedMentionIndex] = useState(-1);
@@ -427,13 +453,12 @@ export function useChatInputController({
 
     const frame = requestAnimationFrame(() =>
       editorRef.current?.focus(
-        useChatStore.getState().draftsByGuild[selectedGuildId ?? ""]?.length ??
-          0,
+        useChatStore.getState().draftsByGuild[draftKey]?.length ?? 0,
       ),
     );
 
     return () => cancelAnimationFrame(frame);
-  }, [focusRequest, selectedGuildId]);
+  }, [draftKey, focusRequest, selectedGuildId]);
 
   const focusEditorCaret = (nextCaretIndex: number) => {
     if (currentGuildRef.current !== selectedGuildId) return;
@@ -573,6 +598,18 @@ export function useChatInputController({
     editorRef.current?.setValue("", 0);
   };
 
+  const completeSubmission = () => {
+    resetInputState();
+
+    if (onSubmitted) {
+      onSubmitted();
+
+      return;
+    }
+
+    focusEditorCaret(0);
+  };
+
   const handleClearChatConfirm = async () => {
     if (!selectedGuildId) {
       return;
@@ -590,8 +627,7 @@ export function useChatInputController({
         queryClient,
         updater: [],
       });
-      resetInputState();
-      focusEditorCaret(0);
+      completeSubmission();
     } catch {
       toast.error(t("errors.clearFailed"));
       focusEditorCaret(caretIndex);
@@ -624,8 +660,7 @@ export function useChatInputController({
 
     if (submitAction.kind === "party") {
       handlePartyCommand(submitAction.description, [selectedGuildId]);
-      resetInputState();
-      focusEditorCaret(0);
+      completeSubmission();
 
       return;
     }
@@ -673,16 +708,15 @@ export function useChatInputController({
         updater: (old: ChatMessageResponseDtoOutput[] | undefined) =>
           upsertChatMessage(old, response),
       });
-      resetInputState();
-      focusEditorCaret(0);
+      completeSubmission();
     } catch (error) {
       reportSendError(error);
 
       if (error instanceof NotificationChatPublishError) {
-        resetInputState();
+        completeSubmission();
+      } else {
+        focusEditorCaret(currentCaretIndex);
       }
-
-      focusEditorCaret(currentCaretIndex);
     } finally {
       submissionInProgressRef.current = false;
       setIsSubmitting(false);
@@ -698,6 +732,11 @@ export function useChatInputController({
       if (event.key === "Enter") {
         event.preventDefault();
         void handleSubmit();
+      }
+
+      if (event.key === "Escape" && onEscape) {
+        event.preventDefault();
+        onEscape();
       }
 
       return;
@@ -779,6 +818,13 @@ export function useChatInputController({
     }
   };
 
+  /** Replaces the whole entry and puts the caret at its end. */
+  const replaceMessage = (nextMessage: string) =>
+    applySelectedMessageValue({
+      nextCaretIndex: nextMessage.length,
+      nextMessage,
+    });
+
   return {
     t,
     replyDraft,
@@ -808,6 +854,7 @@ export function useChatInputController({
     handleSuggestionSelect,
     handleClearChatConfirm,
     handleInputKeyDown,
+    replaceMessage,
     variant,
     selectedGuildId,
     autofocus,
