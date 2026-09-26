@@ -14,13 +14,13 @@ type OnlinePlayerTooltipProps = {
 
 /** Text colours of the relation statuses, matching the row fills. */
 const RELATION_TEXT_CLASSES: Record<PlayerRelation, string> = {
-  self: "ll:text-yellow-300",
+  self: "ll:text-teal-300",
   party: "ll:text-purple-300",
   clan: "ll:text-green-300",
   enemy: "ll:text-red-300",
   "clan-enemy": "ll:text-red-300",
   friend: "ll:text-sky-300",
-  "clan-ally": "ll:text-lime-300",
+  "clan-ally": "ll:text-yellow-300",
 };
 
 const formatCoordinates = (location?: { x?: number; y?: number }) =>

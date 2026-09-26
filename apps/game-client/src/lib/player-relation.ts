@@ -61,13 +61,13 @@ const playerRowFill = (color: keyof typeof TIMERS_COLORS) =>
 
 /** Row fills per relation, from the timer hues so every list paints alike. */
 export const PLAYER_RELATION_FILLS: Record<PlayerRelation, string> = {
-  self: playerRowFill("yellow"),
+  self: playerRowFill("teal"),
   party: playerRowFill("purple"),
   clan: playerRowFill("green"),
   enemy: playerRowFill("red"),
   "clan-enemy": playerRowFill("red"),
   friend: playerRowFill("sky"),
-  "clan-ally": playerRowFill("lime"),
+  "clan-ally": playerRowFill("yellow"),
 };
 
 export const PLAYER_AFK_FILL = playerRowFill("orange");
