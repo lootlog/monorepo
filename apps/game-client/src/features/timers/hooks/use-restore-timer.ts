@@ -23,10 +23,23 @@ export const useRestoreTimer = (onRestored: () => void) => {
       {
         onSuccess: (timer) => {
           upsertTimer(normalizeTimerResponse(timer));
-          toast.success(t("history.restoreSuccess"));
+          toast.success(
+            t(
+              entry.action === "RESET"
+                ? "history.undoResetSuccess"
+                : "history.restoreSuccess",
+            ),
+          );
           onRestored();
         },
-        onError: () => toast.error(t("history.restoreFailed")),
+        onError: () =>
+          toast.error(
+            t(
+              entry.action === "RESET"
+                ? "history.undoResetFailed"
+                : "history.restoreFailed",
+            ),
+          ),
       },
     );
   };

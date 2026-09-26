@@ -5,8 +5,13 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
   type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
-import type { RealtimeWebSocket, ServerEvent } from "@lootlog/client/realtime";
+import type { RealtimeWebSocket } from "@lootlog/client/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
+import {
+  REALTIME_JSON_SUBPROTOCOL,
+  decodeRealtimeFrame as parseRealtimeFrame,
+  type RealtimeFrame,
+} from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
@@ -33,7 +38,9 @@ class Wire implements RealtimeWebSocket {
   static instances: Wire[] = [];
   readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
   private readonly listeners = new Map<string, Listener>();
-  constructor() {
+  private readonly readable: boolean;
+  constructor(_url: string, protocols: string[]) {
+    this.readable = protocols.includes(REALTIME_JSON_SUBPROTOCOL);
     Wire.instances.push(this);
   }
   addEventListener(type: string, listener: Listener) {
@@ -47,38 +54,39 @@ class Wire implements RealtimeWebSocket {
     this.readyState = 3;
     this.listeners.get("close")?.({});
   }
-  deliver(event: ServerEvent) {
-    this.listeners.get("message")?.({ data: encodeRealtimeFrame(event) });
+  deliver(frame: RealtimeFrame) {
+    this.listeners.get("message")?.({
+      data: this.readable ? JSON.stringify(frame) : encodeRealtimeFrame(frame),
+    });
   }
   send(bytes: string | Uint8Array) {
-    if (!(bytes instanceof Uint8Array)) throw new Error("Expected MessagePack");
-    const command = decodeRealtimeFrame(bytes);
+    const command =
+      bytes instanceof Uint8Array
+        ? decodeRealtimeFrame(bytes)
+        : parseRealtimeFrame(JSON.parse(bytes));
+
     this.frames.push(command);
 
     if (!("requestId" in command) || !command.requestId)
       throw new Error("Expected request");
     const requestId = command.requestId;
     queueMicrotask(() => {
-      this.listeners.get("message")?.({
-        data: encodeRealtimeFrame({
-          v: 1,
-          requestId,
-          status: "success",
-          data: { sessionId: "presence-1" },
-        }),
+      this.deliver({
+        v: 1,
+        requestId,
+        status: "success",
+        data: { sessionId: "presence-1" },
       });
 
       if ("type" in command && command.type === "session.join")
-        this.listeners.get("message")?.({
-          data: encodeRealtimeFrame({
-            v: 1,
-            type: "session.joined",
-            data: {
-              connectionId: "connection-1",
-              organizationIds: ["guild-1"],
-              subscriptionScopes: [],
-            },
-          }),
+        this.deliver({
+          v: 1,
+          type: "session.joined",
+          data: {
+            connectionId: "connection-1",
+            organizationIds: ["guild-1"],
+            subscriptionScopes: [],
+          },
         });
     });
   }
