@@ -55,7 +55,8 @@ export function createAutoTimer(
     characterId: timer.characterId,
     accountId: timer.accountId,
     actorCharacter:
-      timer.actorCharacter ?? buildCurrentTimerActorCharacterPayload(),
+      timer.actorCharacter ??
+      buildCurrentTimerActorCharacterPayload(timer.world),
     ...(timer.customMinSpawnTime && {
       customMinSpawnTime: timer.customMinSpawnTime.toISOString(),
     }),
@@ -149,7 +150,8 @@ export async function createManualTimer({
           type: rest.type,
         }),
         actorCharacter:
-          rest.actorCharacter ?? buildCurrentTimerActorCharacterPayload(),
+          rest.actorCharacter ??
+          buildCurrentTimerActorCharacterPayload(rest.world),
         world: rest.world,
         ...(rest.customMinSpawnTime && {
           customMinSpawnTime: rest.customMinSpawnTime.toISOString(),

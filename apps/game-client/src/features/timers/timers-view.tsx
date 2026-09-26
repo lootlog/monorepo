@@ -195,6 +195,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
   const addTimerOverlay = addTimerOpen ? (
     <AddTimerPanel
       guildId={guildId}
+      world={desiredWorld}
       onClose={() => setAddTimerOpen(false)}
       className={isUnderBag ? undefined : "ll:rounded-b-md"}
     />
