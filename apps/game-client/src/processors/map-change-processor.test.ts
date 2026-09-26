@@ -19,8 +19,8 @@ import { MapChangeProcessor } from "./map-change-processor";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import { createAirTagTest } from "@/features/air-tags/air-tag-test";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
-import { mapPingController } from "@/features/map-pings/map-ping-controller";
-import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { mapPingController } from "@/features/pings/map-ping-controller";
+import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
 
 const createMapChangeEvent = (id: number, name: string): GameEvent => ({
   town: {
@@ -65,15 +65,15 @@ const ping = {
 };
 
 const beginPing = () =>
-  mapPingInteractionController.begin({
+  pingInteractionController.begin({
     identity: { kind: "mouse", button: 1 },
-    mapId: 12,
+    menu: { centre: "attention", quick: "attention", ring: [], title: null },
     origin: { x: 100, y: 100 },
-    tile: { x: 1, y: 2 },
+    target: { kind: "map", mapId: 12, tile: { x: 1, y: 2 } },
   });
 
 const completePing = () =>
-  mapPingInteractionController.complete({ kind: "mouse", button: 1 });
+  pingInteractionController.complete({ kind: "mouse", button: 1 });
 
 describe("MapChangeProcessor", () => {
   let processor: MapChangeProcessor;
@@ -90,7 +90,7 @@ describe("MapChangeProcessor", () => {
   afterEach(() => {
     airTagRuntime.shutdown();
     mapPingController.clear();
-    mapPingInteractionController.cancel();
+    pingInteractionController.cancel();
   });
   it("ignores events without town data", () => {
     processor.handle({});
@@ -321,7 +321,7 @@ describe("MapChangeProcessor", () => {
     mapPingController.addRemote(ping, "Uwaga");
     processor.handle(createMapChangeEvent(12, "Torneg"));
     expect(test.wire.frames).toHaveLength(1);
-    expect(completePing()).toMatchObject({ mapId: 12 });
+    expect(completePing()).toMatchObject({ target: { mapId: 12 } });
     expect(mapPingController.addRemote(ping, "Uwaga")).toBe(false);
   });
   it("clears transient pings and sends presence on another map", () => {

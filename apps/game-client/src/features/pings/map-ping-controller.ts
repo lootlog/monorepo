@@ -7,9 +7,11 @@ import {
   type RuntimeDrawable,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import {
-  getMapPingPresentation,
-  type MapPingSymbol,
-} from "./map-ping-presentation";
+  PING_ICONS,
+  PING_TONES,
+  getPingPresentation,
+  type PingIconName,
+} from "./ping-presentation";
 
 const MAIN_MAP_CANVAS_ID = "GAME_CANVAS";
 
@@ -20,6 +22,19 @@ const MAX_NETWORK_COORDINATE = 65_535;
 const MAX_ACTIVE_MAP_PINGS = 256;
 
 export type MapTile = { x: number; y: number };
+
+const iconPaths = new Map<PingIconName, Path2D>();
+
+const getIconPath = (icon: PingIconName) => {
+  let path = iconPaths.get(icon);
+
+  if (!path) {
+    path = new Path2D(PING_ICONS[icon]);
+    iconPaths.set(icon, path);
+  }
+
+  return path;
+};
 
 type ActiveMapPing = {
   id: string;
@@ -360,98 +375,143 @@ export class MapPingController {
     showSender: boolean,
   ) {
     const elapsed = this.now() - ping.startedAt;
-    const presentation = getMapPingPresentation(ping.type);
+    const presentation = getPingPresentation(ping.type);
+    const tone = PING_TONES[presentation.tone];
     const progress = Math.min(1, elapsed / presentation.durationMs);
-    const pulse = 1 + Math.sin(elapsed / 120) * 0.18;
 
     context.save();
-    context.globalAlpha = 1 - progress;
-    context.strokeStyle = presentation.color;
-    context.fillStyle = presentation.color;
+    // Hold full strength for most of the lifetime, then fade out.
+    context.globalAlpha = Math.min(1, (1 - progress) / 0.3);
     context.lineWidth = 2;
+    context.strokeStyle = tone.glow;
+    context.shadowColor = tone.glow;
+    context.shadowBlur = 8;
+
+    const radiusX = baseRadius * 1.3;
+    const radiusY = baseRadius * 0.6;
     context.beginPath();
-    context.arc(x, y, baseRadius * pulse, 0, Math.PI * 2);
+    context.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
     context.stroke();
-    this.drawSymbol(
-      context,
-      presentation.symbol,
+
+    const pulse = (elapsed % 1_000) / 1_000;
+    context.globalAlpha *= 1 - pulse;
+    context.beginPath();
+    context.ellipse(
       x,
       y,
-      Math.max(4, baseRadius * 0.55),
+      radiusX * (0.6 + pulse * 0.9),
+      radiusY * (0.6 + pulse * 0.9),
+      0,
+      0,
+      Math.PI * 2,
     );
+    context.stroke();
+    context.restore();
 
-    if (showSender) {
-      context.textAlign = "center";
-      context.textBaseline = "bottom";
-      context.lineWidth = 3;
-      context.strokeStyle = "rgba(0, 0, 0, 0.85)";
-      context.font = "bold 10px Arial";
-      context.strokeText(ping.typeLabel, x, y - baseRadius - 17);
-      context.fillStyle = presentation.color;
-      context.fillText(ping.typeLabel, x, y - baseRadius - 17);
-      context.font = "bold 11px Arial";
-      context.strokeText(ping.senderName, x, y - baseRadius - 4);
-      context.fillStyle = "#ffffff";
-      context.fillText(ping.senderName, x, y - baseRadius - 4);
+    if (!showSender) {
+      this.drawIcon(context, presentation.icon, x, y, baseRadius * 1.1);
+
+      return;
     }
 
+    context.save();
+    context.globalAlpha = Math.min(1, (1 - progress) / 0.3);
+
+    // The badge drops onto the tile, then bobs gently.
+    const drop = Math.max(0, 1 - elapsed / 260);
+    const badgeRadius = 13;
+
+    const badgeY =
+      y - 22 - badgeRadius - drop * 30 + Math.sin(elapsed / 190) * 1.5;
+
+    context.beginPath();
+    context.arc(x, badgeY, badgeRadius + 1, 0, Math.PI * 2);
+    context.fillStyle = "#150f0d";
+    context.fill();
+    context.beginPath();
+    context.arc(x, badgeY, badgeRadius, 0, Math.PI * 2);
+    context.fillStyle = tone.fill;
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = tone.border;
+    context.stroke();
+    this.drawIcon(context, presentation.icon, x, badgeY, 15);
+
+    this.drawPlate(context, ping, tone.glow, x, badgeY - badgeRadius - 6);
     context.restore();
   }
 
-  private drawSymbol(
+  private drawIcon(
     context: CanvasRenderingContext2D,
-    symbol: MapPingSymbol,
+    icon: PingIconName,
     x: number,
     y: number,
     size: number,
   ) {
+    const scale = size / 24;
+
     context.save();
+    context.translate(x - size / 2, y - size / 2);
+    context.scale(scale, scale);
     context.strokeStyle = "#ffffff";
-    context.fillStyle = "#ffffff";
     context.lineCap = "round";
-    context.lineWidth = Math.max(1.5, size * 0.22);
-
-    if (symbol === "exclamation") {
-      context.font = `bold ${Math.max(10, size * 2)}px Arial`;
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillText("!", x, y + 1);
-    } else if (symbol === "crosshair") {
-      const radius = size * 0.62;
-      context.beginPath();
-      context.arc(x, y, radius, 0, Math.PI * 2);
-      context.moveTo(x - size, y);
-      context.lineTo(x - radius * 0.45, y);
-      context.moveTo(x + radius * 0.45, y);
-      context.lineTo(x + size, y);
-      context.moveTo(x, y - size);
-      context.lineTo(x, y - radius * 0.45);
-      context.moveTo(x, y + radius * 0.45);
-      context.lineTo(x, y + size);
-      context.stroke();
-    } else if (symbol === "regroup") {
-      context.beginPath();
-      context.arc(x, y, size * 0.72, 0, Math.PI * 2);
-      context.arc(x, y, size * 0.3, 0, Math.PI * 2);
-      context.stroke();
-    } else {
-      const extent = size * 0.72;
-      context.beginPath();
-      context.moveTo(x - extent, y - extent);
-      context.lineTo(x + extent, y + extent);
-      context.moveTo(x + extent, y - extent);
-      context.lineTo(x - extent, y + extent);
-      context.stroke();
-    }
-
+    context.lineJoin = "round";
+    context.lineWidth = 2.6;
+    context.stroke(getIconPath(icon));
     context.restore();
+  }
+
+  /** The game's popup-menu plate: "sender · type" with a triple border. */
+  private drawPlate(
+    context: CanvasRenderingContext2D,
+    ping: ActiveMapPing,
+    accent: string,
+    x: number,
+    bottom: number,
+  ) {
+    const separator = " · ";
+    context.font = "bold 11px Arimo, Arial, sans-serif";
+    context.textBaseline = "middle";
+
+    const senderWidth = context.measureText(ping.senderName).width;
+    const separatorWidth = context.measureText(separator).width;
+    const labelWidth = context.measureText(ping.typeLabel).width;
+    const width = senderWidth + separatorWidth + labelWidth + 12;
+    const height = 18;
+    const left = Math.round(x - width / 2);
+    const top = Math.round(bottom - height);
+
+    context.fillStyle = "#150f0d";
+    context.beginPath();
+    context.roundRect(left - 2, top - 2, width + 4, height + 4, 5);
+    context.fill();
+    context.fillStyle = "#b6bbc1b0";
+    context.beginPath();
+    context.roundRect(left - 1, top - 1, width + 2, height + 2, 5);
+    context.fill();
+    context.fillStyle = "#3f3b3d";
+    context.beginPath();
+    context.roundRect(left, top, width, height, 4);
+    context.fill();
+
+    const textY = top + height / 2 + 0.5;
+    let textX = left + 6;
+    context.textAlign = "left";
+    context.fillStyle = "#ffffff";
+    context.fillText(ping.senderName, textX, textY);
+    textX += senderWidth;
+    context.fillStyle = "#bebebe";
+    context.fillText(separator, textX, textY);
+    textX += separatorWidth;
+    context.fillStyle = accent;
+    context.fillText(ping.typeLabel, textX, textY);
   }
 
   private pruneExpired() {
     const now = this.now();
 
     for (const [id, ping] of this.activePings) {
-      const durationMs = getMapPingPresentation(ping.type).durationMs;
+      const durationMs = getPingPresentation(ping.type).durationMs;
 
       if (now - ping.startedAt >= durationMs) {
         this.activePings.delete(id);
@@ -484,7 +544,7 @@ export class MapPingController {
 
     for (const ping of this.activePings.values()) {
       const expiresAt =
-        ping.startedAt + getMapPingPresentation(ping.type).durationMs;
+        ping.startedAt + getPingPresentation(ping.type).durationMs;
 
       nearestExpiryAt = Math.min(nearestExpiryAt, expiresAt);
     }

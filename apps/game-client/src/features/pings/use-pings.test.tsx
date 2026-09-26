@@ -19,12 +19,14 @@ import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGameStore } from "@/store/game.store";
 import { disposeSoundPlayback } from "@/lib/sound-playback";
-import { useMapPings } from "./use-map-pings";
-import { mapPingController } from "./map-ping-controller";
 import {
-  mapPingInteractionController,
-  MAP_PING_HOLD_DELAY_MS,
-} from "./map-ping-interaction-controller";
+  useBattleStore,
+  type BattleWarriorsWithAccountId,
+} from "@/store/game-store/battle.store";
+import { usePings } from "./use-pings";
+import { mapPingController } from "./map-ping-controller";
+import { battlePingStore } from "./battle-ping-store";
+import { pingInteractionController } from "./ping-interaction-controller";
 
 const preferences = (
   enabled: boolean,
@@ -66,7 +68,10 @@ const setup = async ({
 
   seedSettingsDocuments(
     test.queryClient,
-    createSettingsDocuments(accountPreferenceValues(preferences(enabled))),
+    createSettingsDocuments({
+      ...accountPreferenceValues(preferences(enabled)),
+      "gameData.battlePings": { enabled },
+    }),
   );
   useGlobalStore.setState({ gameState: { gameInitialized: joined } });
 
@@ -99,7 +104,7 @@ const setup = async ({
   vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(
     new DOMRect(0, 0, 640, 640),
   );
-  const view = renderHook(() => useMapPings(), { wrapper: test.wrapper });
+  const view = renderHook(() => usePings(), { wrapper: test.wrapper });
 
   if (connected) {
     test.open();
@@ -164,10 +169,8 @@ const setup = async ({
   const tap = () => {
     let started = false;
     act(() => {
-      started = view.result.current.onMapPingStart(event());
-      view.result.current.onMapPingEnd(
-        new MouseEvent("mouseup", { button: 1 }),
-      );
+      started = view.result.current.onPingStart(event());
+      view.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
     });
 
     return started;
@@ -179,10 +182,10 @@ const setup = async ({
     );
 
   const setEnabled = (value: boolean) =>
-    seedSettingsDocumentValues(
-      test.queryClient,
-      accountPreferenceValues(preferences(value)),
-    );
+    seedSettingsDocumentValues(test.queryClient, {
+      ...accountPreferenceValues(preferences(value)),
+      "gameData.battlePings": { enabled: value },
+    });
 
   return {
     ...test,
@@ -200,14 +203,17 @@ const setup = async ({
 
 afterEach(() => {
   mapPingController.unregister();
-  mapPingInteractionController.cancel();
+  pingInteractionController.cancel();
+  battlePingStore.clear();
+  useBattleStore.setState({ battleState: "idle", battleWarriors: {} });
+  document.querySelector(".battle-window")?.remove();
   disposeSoundPlayback();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   document.querySelector("#GAME_CANVAS")?.remove();
 });
 
-describe("useMapPings", () => {
+describe("usePings on the map", () => {
   it("plays one immediate local sound and sends the resolved map coordinates", async () => {
     const test = await setup();
     expect(test.tap()).toBe(true);
@@ -226,22 +232,16 @@ describe("useMapPings", () => {
   it("propagates a held contextual selection to sound and gateway", async () => {
     const test = await setup();
     act(() => {
-      test.result.current.onMapPingStart(test.event());
-    });
-    await new Promise<void>((resolve) =>
-      setTimeout(resolve, MAP_PING_HOLD_DELAY_MS + 10),
-    );
-    act(() => {
+      test.result.current.onPingStart(test.event());
+      // Flicking up selects the top ring option without waiting for the hold.
       test.canvas.dispatchEvent(
         new MouseEvent("mousemove", {
           bubbles: true,
-          clientX: 480,
-          clientY: 272,
+          clientX: 400,
+          clientY: 222,
         }),
       );
-      test.result.current.onMapPingEnd(
-        new MouseEvent("mouseup", { button: 1 }),
-      );
+      test.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
     });
     expect(test.pingRequests()).toEqual([
       expect.objectContaining({
@@ -286,7 +286,7 @@ describe("useMapPings", () => {
   });
   it("ignores a trigger outside a map surface", async () => {
     const test = await setup();
-    expect(test.result.current.onMapPingStart(test.event(true))).toBe(false);
+    expect(test.result.current.onPingStart(test.event(true))).toBe(false);
     expect(test.play).not.toHaveBeenCalled();
     expect(test.pingRequests()).toHaveLength(0);
   });
@@ -346,5 +346,150 @@ describe("useMapPings", () => {
     await act(() => test.wire.receiveBytes(bytes));
     expect(test.play).not.toHaveBeenCalled();
     expect(test.addDraw).not.toHaveBeenCalled();
+  });
+});
+
+const warrior = (
+  id: number,
+  team: number,
+  prof: string,
+  hpp = 100,
+): BattleWarriorsWithAccountId[string] => ({
+  hpp,
+  icon: "",
+  id,
+  lvl: 300,
+  name: `Warrior ${id}`,
+  originalId: id,
+  prof,
+  team,
+  type: 0,
+  wt: 0,
+});
+
+const startBattle = () => {
+  useBattleStore.setState({
+    battleState: "in-battle",
+    battleWarriors: {
+      "1": warrior(1, 1, "w"),
+      "2": warrior(2, 1, "m"),
+      "-5": warrior(-5, 2, ""),
+      "7": warrior(7, 2, "t"),
+    },
+  });
+
+  const battleWindow = document.createElement("div");
+  battleWindow.className = "battle-window";
+
+  for (const id of [1, 2, -5, 7]) {
+    const element = document.createElement("div");
+    element.className = `one-warrior other-id-battle-${id}`;
+    battleWindow.append(element);
+  }
+
+  document.body.append(battleWindow);
+
+  return (id: number) => {
+    const element = battleWindow.querySelector(`.other-id-battle-${id}`);
+
+    if (!element) throw new Error(`Missing warrior ${id}`);
+
+    return element;
+  };
+};
+
+const remoteBattlePing = (
+  senderCharacterId: string,
+  type: "attack" | "heal",
+  warriorId: number,
+) => ({
+  v: 1 as const,
+  type: "battle-ping.received" as const,
+  data: {
+    pingId: `battle-${senderCharacterId}-${type}`,
+    world: "luvia",
+    mapId: 42,
+    type,
+    warriorId,
+    sender: { characterId: senderCharacterId, name: "Leczek" },
+    createdAt: Date.now(),
+  },
+});
+
+describe("usePings in battle", () => {
+  it("marks the attack target locally and tells only the other characters on the hero's team", async () => {
+    const test = await setup();
+    const warriorElement = startBattle();
+
+    act(() => {
+      const press = new MouseEvent("mousedown", {
+        button: 1,
+        clientX: 200,
+        clientY: 200,
+      });
+
+      warriorElement(-5).dispatchEvent(press);
+      test.result.current.onPingStart(press);
+      test.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
+    });
+
+    expect(battlePingStore.getSnapshot().target).toEqual({
+      senderName: "Current Hero",
+      warriorId: -5,
+    });
+    expect(
+      test.wire.frames.filter(
+        (frame) => "type" in frame && frame.type === "battle-ping.send",
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        data: {
+          expectedMapId: 42,
+          recipientCharacterIds: ["2"],
+          type: "attack",
+          warriorId: -5,
+        },
+      }),
+    ]);
+  });
+
+  it("shows a teammate's request for the hero and ignores pings from the other team", async () => {
+    const test = await setup();
+    startBattle();
+
+    await test.receive(
+      remoteBattlePing("7", "attack", 2),
+      remoteBattlePing("2", "heal", 1),
+    );
+
+    const { marks, target } = battlePingStore.getSnapshot();
+    expect(target).toBeNull();
+    expect(marks.get(1)).toMatchObject({ forMe: true, type: "heal" });
+    expect(test.play).toHaveBeenCalledOnce();
+    expect(test.play.mock.instances[0]).toMatchObject({ playbackRate: 1.5 });
+  });
+
+  it("drops the target once it dies and every ping when the battle ends", async () => {
+    const test = await setup();
+    startBattle();
+
+    await test.receive(
+      remoteBattlePing("2", "attack", -5),
+      remoteBattlePing("2", "heal", 1),
+    );
+    expect(battlePingStore.getSnapshot().target?.warriorId).toBe(-5);
+
+    act(() => {
+      useBattleStore.getState().updateBattleWarriors({
+        "-5": warrior(-5, 2, "", 0),
+      });
+    });
+    expect(battlePingStore.getSnapshot().target).toBeNull();
+    expect(battlePingStore.getSnapshot().marks.size).toBe(1);
+
+    act(() => {
+      useBattleStore.getState().endBattle();
+    });
+    expect(battlePingStore.getSnapshot().marks.size).toBe(0);
   });
 });

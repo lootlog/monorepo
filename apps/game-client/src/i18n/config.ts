@@ -10,6 +10,7 @@ import notifications from "./translations/notifications.json";
 import npcDetector from "./translations/npc-detector.json";
 import onlinePlayers from "./translations/online-players.json";
 import partyFinder from "./translations/party-finder.json";
+import pings from "./translations/pings.json";
 import quickAccess from "./translations/quick-access.json";
 import settings from "./translations/settings.json";
 import timers from "./translations/timers.json";
@@ -29,6 +30,7 @@ i18n.use(initReactI18next).init({
         npcDetector,
         notifications,
         partyFinder,
+        pings,
         settings,
         timers,
       },
@@ -43,6 +45,7 @@ i18n.use(initReactI18next).init({
       npcDetector,
       notifications,
       partyFinder,
+      pings,
       settings,
       timers,
     },

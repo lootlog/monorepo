@@ -25,38 +25,21 @@ export const ExperimentalSettingsTab: FC = () => {
     <SettingsTabLayout>
       <SettingsSection title={t("settings.experimental.sectionTitle")}>
         {gameInterface === "ni" ? (
-          <>
-            <SettingsRow
-              controlId="map-pings"
-              htmlFor="map-pings"
-              label={t("settings.experimental.mapPingsLabel")}
-              description={t("settings.experimental.mapPingsDescription")}
-            >
-              <Switch
-                checked={accountPreferences?.pings.enabled ?? false}
-                disabled={controlsDisabled}
-                onCheckedChange={(enabled) => {
-                  updateAccountPreferences.mutate({ pings: { enabled } });
-                }}
-                id="map-pings"
-              />
-            </SettingsRow>
-            <SettingsRow
-              controlId="air-tags"
-              htmlFor="air-tags"
-              label={t("settings.experimental.airTagsLabel")}
-              description={t("settings.experimental.airTagsDescription")}
-            >
-              <Switch
-                checked={accountPreferences?.airTags?.enabled ?? false}
-                disabled={controlsDisabled}
-                onCheckedChange={(enabled) => {
-                  updateAccountPreferences.mutate({ airTags: { enabled } });
-                }}
-                id="air-tags"
-              />
-            </SettingsRow>
-          </>
+          <SettingsRow
+            controlId="air-tags"
+            htmlFor="air-tags"
+            label={t("settings.experimental.airTagsLabel")}
+            description={t("settings.experimental.airTagsDescription")}
+          >
+            <Switch
+              checked={accountPreferences?.airTags?.enabled ?? false}
+              disabled={controlsDisabled}
+              onCheckedChange={(enabled) => {
+                updateAccountPreferences.mutate({ airTags: { enabled } });
+              }}
+              id="air-tags"
+            />
+          </SettingsRow>
         ) : (
           <SettingsEmptyState>
             {t("settings.experimental.newInterfaceOnly")}
