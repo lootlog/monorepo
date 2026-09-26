@@ -19,6 +19,7 @@ const NULLABLE_JSON_SCHEMA_NAMES = [
   "SoundSettingsResponseDto__schema0",
   "EventMutationResponseDto__schema0",
   "EventOverviewResponseDto__schema0",
+  "KillHistoryBonusBreakdown",
   "EventKillHistoryResponseDto__schema0",
   "EventMemberKillHistoryResponseDto__schema0",
   "KillDetailResponseDto__schema0",

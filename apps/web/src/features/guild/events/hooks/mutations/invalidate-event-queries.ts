@@ -8,6 +8,26 @@ import {
   getShowEventWrappedQueryKey,
 } from "@lootlog/client/main";
 
+export function resetEventPolicyQueries(queryClient: QueryClient) {
+  const filters = {
+    predicate: (query: { queryKey: readonly unknown[] }) => {
+      const path = z.string().safeParse(query.queryKey[0]).data;
+
+      return (
+        path !== undefined &&
+        /^\/guilds\/[^/]+\/(?:events(?:\/|$)|permissions$|loots(?:\/|$))/.test(
+          path,
+        )
+      );
+    },
+  };
+
+  void queryClient.cancelQueries(filters);
+  queryClient.removeQueries({ ...filters, type: "inactive" });
+
+  return queryClient.resetQueries({ ...filters, type: "active" });
+}
+
 export function invalidateEventQueries(
   queryClient: QueryClient,
   guildId: string,

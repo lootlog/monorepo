@@ -68,5 +68,6 @@ export const useKillDetail = ({
       } satisfies KillDetailResponse;
     },
     enabled: !!guildId && !!eventId && !!heroId && !!killId,
+    placeholderData: undefined,
   });
 };

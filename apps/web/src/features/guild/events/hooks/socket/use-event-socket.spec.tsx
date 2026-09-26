@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
 
-import { act, cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import {
   QueryClient,
   QueryClientProvider,
   QueryObserver,
+  InfiniteQueryObserver,
+  type InfiniteData,
 } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
@@ -144,9 +146,64 @@ describe("useEventSocket", () => {
     },
   );
 
-  it("invalidates route-scoped maps after socket rooms are rebalanced", () => {
+  it("clears restricted histories and prevents a canceled request from restoring old pages", async () => {
     const { gateway, queryClient } = setup();
-    queryClient.setQueryData(mapsKey, { heroNpcs: [] });
+
+    const historyKey = [
+      "/guilds/guild-alias/events/event-1/kill-history",
+      { limit: "20" },
+    ];
+
+    const timelineKey = [
+      "/guilds/guild-alias/events/event-1/heroes/hero-1/kills/kill-1/timeline",
+    ];
+
+    const otherEventKey = ["/guilds/guild-alias/events/event-2/kill-history"];
+    const unrelatedKey = ["/users/@me/preferences"];
+
+    type Page = { data: string[]; nextCursor: string | null };
+
+    const requests: Array<{ cursor: string | undefined; signal: AbortSignal }> =
+      [];
+
+    const resolveStale = vi.fn<(value: Page) => void>();
+    const resolveCurrent = vi.fn<(value: Page) => void>();
+
+    queryClient.setQueryData(historyKey, {
+      pages: [
+        { data: ["restricted"], nextCursor: "older-page" },
+        { data: ["older restricted"], nextCursor: null },
+      ],
+      pageParams: [undefined, "older-page"],
+    });
+
+    for (const key of [mapsKey, timelineKey, otherEventKey, unrelatedKey])
+      queryClient.setQueryData(key, { private: true });
+
+    const observer = new InfiniteQueryObserver<
+      Page,
+      Error,
+      InfiniteData<Page>,
+      typeof historyKey,
+      string | undefined
+    >(queryClient, {
+      queryKey: historyKey,
+      initialPageParam: undefined,
+      getNextPageParam: (page: Page) => page.nextCursor ?? undefined,
+      queryFn: ({ pageParam, signal }) => {
+        requests.push({ cursor: pageParam, signal });
+
+        return new Promise<Page>((resolve) => {
+          if (requests.length === 1) resolveStale.mockImplementation(resolve);
+          else resolveCurrent.mockImplementation(resolve);
+        });
+      },
+    });
+
+    onTestFinished(observer.subscribe(() => {}));
+
+    void queryClient.invalidateQueries({ queryKey: historyKey });
+    await waitFor(() => expect(requests).toHaveLength(1));
 
     act(() =>
       gateway.deliver({
@@ -156,7 +213,26 @@ describe("useEventSocket", () => {
       }),
     );
 
-    expect(queryClient.getQueryState(mapsKey)?.isInvalidated).toBe(true);
+    expect(requests[0]?.signal.aborted).toBe(true);
+    expect(queryClient.getQueryData(historyKey)).toBeUndefined();
+    expect(queryClient.getQueryData(mapsKey)).toBeUndefined();
+    expect(queryClient.getQueryData(timelineKey)).toBeUndefined();
+    expect(queryClient.getQueryData(otherEventKey)).toBeUndefined();
+    expect(queryClient.getQueryData(unrelatedKey)).toEqual({ private: true });
+
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(requests[1]?.cursor).toBeUndefined();
+    await act(async () =>
+      resolveCurrent({ data: ["visible"], nextCursor: null }),
+    );
+    await act(async () =>
+      resolveStale({ data: ["restricted"], nextCursor: "older-page" }),
+    );
+
+    expect(queryClient.getQueryData(historyKey)).toEqual({
+      pages: [{ data: ["visible"], nextCursor: null }],
+      pageParams: [undefined],
+    });
   });
 
   it("reconciles only the current event after a successful session join", () => {
@@ -169,6 +245,7 @@ describe("useEventSocket", () => {
       "/maps",
       "/ranking",
       "/kills",
+      "/kill-history",
       "/timers",
       "/heroes/hero-1/active-gaps",
       "/heroes/hero-1/respawn-config",

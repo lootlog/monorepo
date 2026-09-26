@@ -1263,6 +1263,14 @@ export const PUBLIC_API_OPERATIONS = [
   {
     service: "main",
     method: "GET",
+    path: "/guilds/{guildId}/events/{eventId}/kill-history",
+    operationId: "listEventKillHistory",
+    access: "read",
+    data: "organization",
+  },
+  {
+    service: "main",
+    method: "GET",
     path: "/guilds/{guildId}/events/{eventId}/kills",
     operationId: "EventsRankingController_getEventKillHistory",
     access: "read",
