@@ -23,8 +23,7 @@
     "mute": "Wycisz",
     "unmute": "Włącz dźwięk",
     "retry": "Spróbuj ponownie",
-    "clearSearch": "Wyczyść wyszukiwanie",
-    "moreActions": "Więcej akcji"
+    "clearSearch": "Wyczyść wyszukiwanie"
   },
   "auth": {
     "extensionChecking": "Sprawdzanie sesji…",

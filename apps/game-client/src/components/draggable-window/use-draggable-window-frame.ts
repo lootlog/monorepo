@@ -34,6 +34,11 @@ export type DraggableWindowFrameProps = {
   closable?: boolean;
   disableTitle?: boolean;
   draggableContent?: boolean;
+  /**
+   * Sizes the window to its content, with a thinner frame and no resize
+   * handle, and keeps the stored size for when it expands again.
+   */
+  collapsed?: boolean;
   contentClassName?: string;
   animationPhase: WindowAnimationPhase;
   onWindowAnimationEnd: () => void;
@@ -299,6 +304,7 @@ const resolveDraggableWindowFrameProps = (
   closable: props.closable ?? true,
   disableTitle: props.disableTitle ?? false,
   draggableContent: props.draggableContent ?? false,
+  collapsed: props.collapsed ?? false,
   dynamicHeight: props.dynamicHeight ?? false,
   heightMode: props.heightMode ?? "fixed",
   isMaxHeightAdjustmentArmed: props.isMaxHeightAdjustmentArmed ?? false,
@@ -455,6 +461,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     closable,
     disableTitle,
     draggableContent,
+    collapsed,
     contentClassName,
     animationPhase,
     onWindowAnimationEnd,
@@ -536,7 +543,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     isResizing,
     minHeight,
     previewMaxContentHeight: activePreviewMaxContentHeight,
-    resizable,
+    resizable: resizable && !collapsed,
     widthMode,
   });
 
@@ -725,6 +732,14 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     setCurrentWindowFocus(id);
     setIsResizing(true);
 
+    // Default placements derive from the window's own size (centered, or
+    // anchored to the map's right edge), so resizing an unplaced window would
+    // move its top-left corner with the handle. Resizing places it where it
+    // is drawn now, like a drag.
+    if (!useWindowsStore.getState()[id].hasDefinedPosition) {
+      setPositionInStore(id, position);
+    }
+
     if (!isAutoHeightMode || !isMaxHeightAdjustmentArmed) return;
 
     const windowBody = windowBodyRef.current;
@@ -793,9 +808,16 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
   };
 
   useEffect(() => {
-    if (isResizing) return;
+    if (isResizing || collapsed) return;
     setSizeInStore(id, { height: localSize.height, width: effectiveWidth });
-  }, [effectiveWidth, localSize.height, isResizing, id, setSizeInStore]);
+  }, [
+    collapsed,
+    effectiveWidth,
+    localSize.height,
+    isResizing,
+    id,
+    setSizeInStore,
+  ]);
 
   useLayoutEffect(() => {
     if (!isAutoWidthMode) {
@@ -936,6 +958,7 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     closable,
     disableTitle,
     draggableContent,
+    collapsed,
     contentClassName,
     animationPhase,
     onWindowAnimationEnd,
@@ -950,7 +973,9 @@ export function useDraggableWindowFrame(props: DraggableWindowFrameProps) {
     contentMaxHeight,
     previewBoundaryOffset,
     previewShadeOffset,
-    style,
+    style: collapsed
+      ? { width: "max-content" as const, height: "auto" as const }
+      : style,
     draggableRef,
     position,
     isDragging,

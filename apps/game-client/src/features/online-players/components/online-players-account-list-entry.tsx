@@ -6,7 +6,6 @@ import {
   ContextMenuTrigger,
   openContextMenuOnKeyDown,
 } from "@/components/ui/context-menu";
-import { ContextMenuMoreButton } from "@/components/ui/context-menu-more-button";
 import { IconButton } from "@/components/ui/icon-button";
 import { ListRow } from "@/components/list-row";
 import {
@@ -232,7 +231,7 @@ export const OnlinePlayersAccountListEntry: FC<
           onKeyDown={openContextMenuOnKeyDown}
         >
           <TooltipTrigger asChild>
-            <span className="ll:group/player ll:block ll:w-full ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
+            <span className="ll:block ll:w-full ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring">
               <ListRow
                 className="ll:justify-between ll:py-0.5"
                 fill={getHighlightFill(relation, presence.isAfk)}
@@ -261,9 +260,6 @@ export const OnlinePlayersAccountListEntry: FC<
                   </span>
                 </span>
                 <span className="ll:flex ll:shrink-0 ll:items-center">
-                  {hasContextActions ? (
-                    <ContextMenuMoreButton className="ll:opacity-0 ll:group-hover/player:opacity-100 ll:group-focus-within/player:opacity-100" />
-                  ) : null}
                   {canInviteToParty ? (
                     <IconButton
                       label={t("actions.inviteParty")}

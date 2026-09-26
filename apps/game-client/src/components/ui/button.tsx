@@ -6,9 +6,11 @@ import { Spinner } from "@/components/ui/spinner";
 
 /**
  * shadcn button variants on the game client's compact scale. `menu` is the
- * left-aligned item used inside popover menus; `quiet` is the icon-only action
- * of title bars, toolbars and list rows, lit while its toggle is pressed or
- * its popup is expanded.
+ * left-aligned item used inside popover menus. `quiet` is the icon-only action
+ * of title bars, toolbars and list rows: a dimmed icon at rest, a plate only
+ * on hover or while its popup is open, and a blue icon while its toggle is on.
+ * `taskbar` is the quick access tile, whose pressed state means "this window
+ * is open" and keeps the plate with an underline.
  *
  * An icon at either edge of a labelled button pulls into the padding with a
  * negative margin instead of a `:has(> svg)` padding rule: the game client
@@ -31,8 +33,11 @@ const buttonVariants = cva(
           "ll:text-foreground ll:hover:bg-accent/50 ll:hover:text-accent-foreground",
         link: "ll:text-primary ll:underline-offset-4 ll:hover:underline",
         quiet:
+          "ll:text-gray-400 ll:hover:bg-white/8 ll:hover:text-gray-100 ll:aria-expanded:bg-white/10 ll:aria-expanded:text-white ll:aria-pressed:text-blue-400 ll:aria-pressed:hover:text-blue-300",
+        "quiet-destructive":
+          "ll:text-gray-400 ll:hover:bg-destructive/15 ll:hover:text-destructive",
+        taskbar:
           "ll:text-gray-300 ll:hover:bg-white/10 ll:hover:text-white ll:aria-expanded:bg-white/15 ll:aria-expanded:text-white ll:aria-pressed:bg-white/15 ll:aria-pressed:text-white ll:aria-pressed:shadow-[inset_0_-2px_0_var(--ll-color-blue-400)]",
-        "quiet-destructive": "ll:text-destructive ll:hover:bg-destructive/10",
         menu: "ll:h-auto ll:min-h-7 ll:justify-start ll:px-2 ll:py-1.5 ll:text-xs ll:font-semibold ll:text-popover-foreground ll:hover:bg-muted ll:focus-visible:bg-muted ll:disabled:text-muted-foreground",
       },
       size: {

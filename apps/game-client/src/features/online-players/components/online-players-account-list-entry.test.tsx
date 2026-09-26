@@ -457,18 +457,12 @@ describe("OnlinePlayersAccountListEntry", () => {
     });
   });
 
-  it("opens the context menu from the keyboard and the more actions button", async () => {
+  it("opens the context menu from the keyboard", async () => {
     const user = userEvent.setup();
     render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
 
     await user.tab();
     await user.keyboard("{Shift>}{F10}{/Shift}");
-    expect(await screen.findByText("Pokaż profil")).toBeVisible();
-    await user.keyboard("{Escape}");
-    await waitFor(() =>
-      expect(screen.queryByText("Pokaż profil")).not.toBeInTheDocument(),
-    );
-    await user.click(screen.getByRole("button", { name: "Więcej akcji" }));
     fireEvent.click(await screen.findByText("Pokaż ekwipunek"));
     await waitFor(() => expect(showEquipmentSpy).toHaveBeenCalledOnce());
   });

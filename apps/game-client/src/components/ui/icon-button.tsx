@@ -21,7 +21,7 @@ type IconButtonProps = Omit<
    * their `aria-expanded` lights the button the same way.
    */
   active?: boolean;
-  variant?: "quiet" | "quiet-destructive";
+  variant?: "quiet" | "quiet-destructive" | "taskbar";
 };
 
 /**

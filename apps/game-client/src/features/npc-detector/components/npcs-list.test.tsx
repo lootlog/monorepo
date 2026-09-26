@@ -100,12 +100,30 @@ it("bounds mounted rows for five hundred NPCs and mounts rows reached by scrolli
   expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
 });
 
-it("lets the only detection be removed from the list", () => {
-  mountNpcs([createNpc(1)]);
+it("leaves the only shown detection to the window's close button when routing hides the others", () => {
+  useNpcDetectorStore.setState({ npcs: [createNpc(1), createNpc(2)] });
+  const queryClient = new QueryClient();
 
-  fireEvent.click(screen.getByRole("button", { name: "Usuń potwora z listy" }));
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <NpcsList
+        detectorSettings={defaultDetectorSettings}
+        npcs={[createNpc(1)]}
+      />
+    </QueryClientProvider>,
+  );
 
-  expect(useNpcDetectorStore.getState().npcs).toEqual([]);
+  onTestFinished(() => {
+    view.unmount();
+    queryClient.clear();
+  });
+
+  // Removing it would empty the window while it stays open with hidden
+  // detections still stored.
+  expect(screen.getByText("NPC 1")).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Usuń potwora z listy" }),
+  ).not.toBeInTheDocument();
 });
 
 it("does not replay entry animation when virtualization remounts an existing row", () => {
