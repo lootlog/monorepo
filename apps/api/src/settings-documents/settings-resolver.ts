@@ -31,7 +31,7 @@ interface ApplySettingsPatchInput {
 }
 
 const getFieldDefinition = (domain: SettingsDomain, path: string) => {
-  const fields: Readonly<Record<string, SettingsFieldDefinition>> =
+  const fields: Readonly<Record<string, SettingsFieldDefinition | undefined>> =
     SETTINGS_CATALOG[domain].fields;
 
   const exactDefinition = fields[path];
@@ -48,8 +48,12 @@ const getFieldDefinition = (domain: SettingsDomain, path: string) => {
     return undefined;
   }
 
+  const definition = fields[ancestorPath];
+
+  if (!definition) return undefined;
+
   return {
-    definition: fields[ancestorPath],
+    definition,
     fieldPath: ancestorPath,
   };
 };
