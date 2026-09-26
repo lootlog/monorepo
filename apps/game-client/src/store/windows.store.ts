@@ -80,7 +80,6 @@ interface WindowData {
   size: WindowSizeState;
   opacity: WindowOpacity;
   locked: boolean;
-  autofocus?: boolean;
   maxContentHeight?: number;
   /** Shrunk to its collapsed content; `size` keeps the expanded size. */
   collapsed?: boolean;
@@ -144,8 +143,7 @@ interface WindowsState {
   setLocked: (window: WindowId, locked: boolean) => void;
   setCollapsed: (window: WindowId, collapsed: boolean) => void;
   /** A player action: opening this way also moves keyboard focus into the window. */
-  toggleOpen: (window: WindowId, autofocus?: boolean) => void;
-  setAutofocus: (window: WindowId, autofocus: boolean) => void;
+  toggleOpen: (window: WindowId) => void;
   setSettingsActiveTab: (activeTab?: SettingsTabValue) => void;
   /**
    * Restores every window's default geometry, opacity and lock while keeping
@@ -449,7 +447,6 @@ const windowSchema = looseStruct({
   hasDefinedPosition: optionalBoolean,
   locked: optionalBoolean,
   opacity: optionalOrUndefined(Schema.Literals([1, 2, 3, 4, 5])),
-  autofocus: optionalBoolean,
   maxContentHeight: optionalNumber,
   collapsed: optionalBoolean,
   position: optionalOrUndefined(
@@ -478,7 +475,6 @@ const parsePersistedWindow = (
     hasDefinedPosition: data.hasDefinedPosition ?? defaults.hasDefinedPosition,
     locked: data.locked ?? defaults.locked,
     opacity: data.opacity ?? defaults.opacity,
-    autofocus: data.autofocus ?? defaults.autofocus,
     maxContentHeight: data.maxContentHeight ?? defaults.maxContentHeight,
     collapsed: data.collapsed ?? defaults.collapsed,
     position: {
@@ -579,7 +575,6 @@ export const useWindowsStore = create<WindowsState>()(
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
         locked: false,
-        autofocus: false,
       },
       command: {
         open: false,
@@ -588,7 +583,6 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
-        autofocus: false,
       },
       "online-players": {
         open: false,
@@ -829,12 +823,6 @@ export const useWindowsStore = create<WindowsState>()(
             ? state
             : { [key]: { ...state[key], collapsed } },
         ),
-      setAutofocus: (key: WindowId, autofocus: boolean) =>
-        set((state) =>
-          state[key].autofocus === autofocus
-            ? state
-            : { [key]: { ...state[key], autofocus } },
-        ),
       setSettingsActiveTab: (activeTab) =>
         set((state) => {
           const nextPath = resolveSettingsPath(activeTab);
@@ -925,7 +913,7 @@ export const useWindowsStore = create<WindowsState>()(
             },
           },
         })),
-      toggleOpen: (key: WindowId, autofocus?: boolean) => {
+      toggleOpen: (key: WindowId) => {
         const curr = get()[key].open;
         const focusRequest = curr ? undefined : createFocusRequest(key);
         set((state) => {
@@ -937,7 +925,6 @@ export const useWindowsStore = create<WindowsState>()(
             [key]: {
               ...state[key],
               open: !curr,
-              autofocus,
             },
             currentWindowFocus: !curr ? key : undefined,
             windowFocusHistory: newHistory,
@@ -970,7 +957,6 @@ export const useWindowsStore = create<WindowsState>()(
           setLocked: _setLocked,
           setCollapsed: _setCollapsed,
           toggleOpen: _toggleOpen,
-          setAutofocus: _setAutofocus,
           setSettingsActiveTab: _setSettingsActiveTab,
           resetWindowLayout: _resetWindowLayout,
           setSettingsPath: _setSettingsPath,

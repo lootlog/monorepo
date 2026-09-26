@@ -114,7 +114,6 @@ describe("windows store", () => {
             open: "yes",
             locked: true,
             opacity: 7,
-            autofocus: 1,
             maxContentHeight: 250,
             position: { x: "left", y: 20, addonAnchor: "top" },
             size: [300, 200],
@@ -137,7 +136,6 @@ describe("windows store", () => {
     expect(state.notifications).toStrictEqual({
       ...initial.notifications,
       locked: true,
-      autofocus: undefined,
       collapsed: undefined,
       maxContentHeight: 250,
       position: {
@@ -149,7 +147,6 @@ describe("windows store", () => {
     });
     expect(state["npc-detector"]).toStrictEqual({
       ...initial["npc-detector"],
-      autofocus: undefined,
       collapsed: undefined,
       maxContentHeight: undefined,
       opacity: 3,
@@ -240,7 +237,7 @@ describe("windows store", () => {
     unsubscribe();
   });
 
-  it("does not publish unchanged focus, position, opacity, lock, or autofocus", () => {
+  it("does not publish unchanged focus, position, opacity, or lock", () => {
     useWindowsStore.getState().setCurrentWindowFocus("chat");
     useWindowsStore
       .getState()
@@ -256,9 +253,6 @@ describe("windows store", () => {
       .setPosition("chat", { ...currentWindow.position });
     useWindowsStore.getState().setOpacity("chat", currentWindow.opacity);
     useWindowsStore.getState().setLocked("chat", currentWindow.locked);
-    useWindowsStore
-      .getState()
-      .setAutofocus("chat", currentWindow.autofocus ?? false);
 
     expect(useWindowsStore.getState()).toBe(stateBefore);
     expect(listener).not.toHaveBeenCalled();
