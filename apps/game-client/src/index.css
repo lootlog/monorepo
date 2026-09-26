@@ -201,19 +201,6 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   }
 }
 
-/* Ghost argument hint after a composer command chip (ChatCommandNode) while
-   nothing follows it; outside the chip so its background stays tight. */
-#lootlog-root .ll-chat-command-hint:last-child::after {
-  content: attr(data-chat-command-hint);
-  position: absolute;
-  left: 100%;
-  padding-left: 6px;
-  color: var(--ll-color-gray-500);
-  font-weight: 400;
-  white-space: pre;
-  pointer-events: none;
-}
-
 #lootlog-root [data-ll-draggable-window] > .ll-window-preparing,
 #lootlog-root [data-ll-command-overlay] > .ll-window-preparing {
   opacity: 0;

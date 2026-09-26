@@ -1,11 +1,11 @@
+import { CHAT_COMMAND_PREFIXES } from "@/features/chat/chat-command-prefix";
 import { getChatSubmitAction } from "@/features/chat/chat-submit.helpers";
 
 export type CommandMode = "message" | "notification" | "party";
 
 const MODE_PREFIXES = {
   message: "",
-  notification: "!",
-  party: "/grp ",
+  ...CHAT_COMMAND_PREFIXES,
 } satisfies Record<CommandMode, string>;
 
 /** What Enter does with this text; the typed prefix decides, as in the chat. */

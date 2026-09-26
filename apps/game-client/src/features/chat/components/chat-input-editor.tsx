@@ -1,5 +1,9 @@
 import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { getChatSubmitAction } from "@/features/chat/chat-submit.helpers";
+import {
+  CHAT_COMMAND_COLOR_KEYS,
+  getChatCommandPrefix,
+  type ChatCommandHints,
+} from "@/features/chat/chat-command-prefix";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -9,12 +13,8 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { ChatInputConstraintsPlugin } from "@/features/chat/components/chat-input-constraints-plugin";
 import { ChatInputEditorPlugin } from "@/features/chat/components/chat-input-editor-plugin";
-import {
-  ChatInputTokensPlugin,
-  type ChatCommandHints,
-} from "@/features/chat/components/chat-input-tokens-plugin";
+import { ChatInputTokensPlugin } from "@/features/chat/components/chat-input-tokens-plugin";
 import { ChatMentionNode } from "@/features/chat/chat-mention-node";
-import { ChatCommandNode } from "@/features/chat/chat-command-node";
 import {
   focusChatInputEditor,
   setChatInputEditorValue,
@@ -32,9 +32,13 @@ import type { LexicalEditor } from "lexical";
 type ChatInputEditorProps = {
   autoFocus?: boolean;
   caretIndex: number;
-  /** Ghost text shown after a command chip until the player types its argument. */
+  /** Replace the placeholder while a hidden prefix sets the mode. */
   commandHints?: ChatCommandHints;
   disabled?: boolean;
+  /**
+   * The whole entry. A leading `!` or `/grp ` is kept here and in `onChange`,
+   * but the editor hides it; carets count it too.
+   */
   message: string;
   mentionContext?: ChatMentionContext;
   placeholder: string;
@@ -58,7 +62,7 @@ export type ChatInputEditorHandle = {
 
 const initialConfig = {
   namespace: "LootlogChatInput",
-  nodes: [ChatMentionNode, ChatCommandNode],
+  nodes: [ChatMentionNode],
   onError: (error: Error) => {
     throw error;
   },
@@ -85,6 +89,12 @@ export const ChatInputEditor = forwardRef<
   ref,
 ) {
   const lexicalEditorRef = useRef<LexicalEditor>(null);
+  const commandPrefix = getChatCommandPrefix(message);
+  const hiddenPrefix = commandPrefix?.text ?? "";
+  const commandHint = commandPrefix && commandHints?.[commandPrefix.mode];
+
+  const toEditorCaret = (entryCaretIndex: number, prefix = hiddenPrefix) =>
+    Math.max(0, entryCaretIndex - prefix.length);
 
   useImperativeHandle(ref, () => ({
     focus: (nextCaretIndex) => {
@@ -92,19 +102,20 @@ export const ChatInputEditor = forwardRef<
 
       if (editor) {
         focusChatInputEditor({
-          caretIndex: nextCaretIndex,
+          caretIndex: toEditorCaret(nextCaretIndex),
           editor,
         });
       }
     },
     setValue: (nextMessage, nextCaretIndex) => {
       const editor = lexicalEditorRef.current;
+      const nextPrefix = getChatCommandPrefix(nextMessage)?.text ?? "";
 
       if (editor) {
         setChatInputEditorValue({
-          caretIndex: nextCaretIndex,
+          caretIndex: toEditorCaret(nextCaretIndex, nextPrefix),
           editor,
-          message: nextMessage,
+          message: nextMessage.slice(nextPrefix.length),
         });
       }
     },
@@ -120,18 +131,18 @@ export const ChatInputEditor = forwardRef<
           contentEditable=<ContentEditable
             role="textbox"
             aria-label={placeholder}
+            aria-description={commandHint || undefined}
             aria-multiline={false}
             spellCheck={false}
             tabIndex={disabled ? -1 : 0}
             data-slot="chat-input"
             style={{
-              color:
-                getChatSubmitAction({
-                  canClearChat: false,
-                  messageValue: message,
-                }).kind === "notification"
-                  ? getTextColor("message", true)
-                  : undefined,
+              color: commandPrefix
+                ? getTextColor(
+                    CHAT_COMMAND_COLOR_KEYS[commandPrefix.mode],
+                    true,
+                  )
+                : undefined,
             }}
             className={cn(
               "ll:block ll:content-center ll:h-full ll:w-full ll:min-w-0 ll:overflow-x-auto ll:overflow-y-hidden ll:px-1 ll:py-0 ll:text-white ll:caret-white ll:cursor-text ll:outline-none ll:whitespace-pre ll:[&>p]:m-0",
@@ -165,23 +176,34 @@ export const ChatInputEditor = forwardRef<
               TEXT_SIZE_CLASS_NAMES[size],
             )}
           >
-            {placeholder}
+            {commandHint || placeholder}
           </span>
         />
         <HistoryPlugin />
         <EditorRefPlugin editorRef={lexicalEditorRef} />
         <ChatInputConstraintsPlugin />
-        <ChatInputTokensPlugin
-          commandHints={commandHints}
-          mentionContext={mentionContext}
-        />
+        <ChatInputTokensPlugin mentionContext={mentionContext} />
         {autoFocus && <AutoFocusPlugin defaultSelection="rootEnd" />}
         <ChatInputEditorPlugin
-          caretIndex={caretIndex}
+          caretIndex={toEditorCaret(caretIndex)}
           disabled={disabled}
-          message={message}
-          onChange={onChange}
-          onCaretChange={onCaretChange}
+          hiddenPrefix={hiddenPrefix}
+          message={message.slice(hiddenPrefix.length)}
+          onChange={(nextText, nextCaretIndex) => {
+            onChange(
+              `${hiddenPrefix}${nextText}`,
+              nextCaretIndex + hiddenPrefix.length,
+            );
+          }}
+          onCaretChange={(nextCaretIndex) => {
+            onCaretChange(nextCaretIndex + hiddenPrefix.length);
+          }}
+          // Backspace at the start leaves the mode, keeping the text.
+          onBackspaceAtStart={
+            hiddenPrefix
+              ? () => onChange(message.slice(hiddenPrefix.length), 0)
+              : undefined
+          }
         />
       </div>
     </LexicalComposer>

@@ -1,6 +1,6 @@
 import { ConfirmPopover } from "@/components/confirm-popover";
 import { ChatInputEditor } from "@/features/chat/components/chat-input-editor";
-import type { ChatCommandHints } from "@/features/chat/components/chat-input-tokens-plugin";
+import type { ChatCommandHints } from "@/features/chat/chat-command-prefix";
 import type { useChatInputController } from "./use-chat-input-controller";
 import { cn } from "cn";
 import { Loader2 } from "lucide-react";
@@ -16,7 +16,7 @@ type ChatComposeFieldProps = {
 
 /**
  * The editable part of a chat composer, shared by the chat window and the
- * console: the editor with its command chip and mentions, the sending
+ * console: the editor with its hidden command prefix and mentions, the sending
  * spinner and the `/clr` confirmation.
  */
 export function ChatComposeField({
