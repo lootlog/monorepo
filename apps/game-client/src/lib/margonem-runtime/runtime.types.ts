@@ -71,18 +71,7 @@ export type RuntimePartyMember = Readonly<{
   profession: string | null;
 }>;
 
-export type RuntimeFriend = Readonly<{
-  characterId: string;
-  icon: string;
-  level: number;
-  location: string;
-  name: string;
-  profession: string;
-  status: string;
-}>;
-
 export type RuntimeStateSnapshot = Readonly<{
-  friends: readonly RuntimeFriend[];
   game: RuntimeGameSnapshot;
   npcs: readonly RuntimeNpc[];
   others: Readonly<Record<string, RuntimeOther>>;

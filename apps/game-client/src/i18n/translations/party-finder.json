@@ -5,10 +5,12 @@
   },
   "header": {
     "party": "Grupa:",
-    "partyFull": "pełna"
+    "partyFull": "pełna",
+    "expiresIn": "wygasa za {{minutes}} min",
+    "expiring": "wygasa…"
   },
   "actions": {
-    "inviteAll": "Zaproś wszystkich",
+    "inviteAll": "Zaproś wszystkich ({{count}})",
     "ending": "Anulowanie…",
     "cancelPartyGathering": "Anuluj zbiórkę",
     "remove": "Usuń ze zbiórki",
@@ -16,7 +18,8 @@
     "addFriend": "Dodaj do znajomych"
   },
   "list": {
-    "waiting": "Oczekiwanie na zgłoszenia…"
+    "waiting": "Oczekiwanie na zgłoszenia…",
+    "allInParty": "Zgłoszeni gracze są już w grupie."
   },
   "form": {
     "validation": {

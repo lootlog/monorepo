@@ -49,6 +49,10 @@ export type GameEvent = {
   friends_max?: number;
   enemies?: string[];
   enemies_max?: number;
+  /** The hero's clan's allies, flattened `[id, name, power, members]` rows. */
+  clan_fr?: (number | string)[];
+  /** The hero's clan's enemies, flattened six-field rows led by the clan id. */
+  clan_en?: (number | string)[];
 
   matchmaking_state?: number;
   matchmaking_search?: {
