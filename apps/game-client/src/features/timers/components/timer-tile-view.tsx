@@ -13,7 +13,6 @@ export type TimerTileViewProps = {
   hasPassedRedThreshold?: boolean;
   isExpired?: boolean;
   id?: string;
-  isAlternateRow?: boolean;
   isMinSpawnTime?: boolean;
   isPending?: boolean;
   label: string;
@@ -24,8 +23,10 @@ export type TimerTileViewProps = {
 const EXPIRED_VEIL = "black 40%";
 
 /**
- * The whole tile text follows the spawn window: orange once the minimum
+ * The whole tile text follows the spawn window: amber once the minimum
  * spawn time passes, red after the maximum, and a dimmed red once expired.
+ * Light tints keep the text readable on every tile colour, and amber stays
+ * apart from the light red on the warm fills.
  */
 const resolveTextColor = (
   legacyAppearance: boolean,
@@ -41,14 +42,17 @@ const resolveTextColor = (
     return "ll:text-white";
   }
 
-  if (isExpired) return "ll:text-red-400/70";
+  if (isExpired) return "ll:text-red-300/70";
 
-  if (hasPassedRedThreshold) return "ll:text-red-400";
+  if (hasPassedRedThreshold) return "ll:text-red-300";
 
-  if (isMinSpawnTime) return "ll:text-orange-300";
+  if (isMinSpawnTime) return "ll:text-amber-300";
 
   return "ll:text-white";
 };
+
+/** Separates the text from a tile fill of the same hue. */
+const TEXT_OUTLINE = "ll:[text-shadow:0_1px_2px_rgb(0_0_0/0.7)]";
 
 export const TimerTileView: FC<TimerTileViewProps> = ({
   paint,
@@ -59,7 +63,6 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   hasPassedRedThreshold = false,
   isExpired = false,
   id,
-  isAlternateRow = false,
   isMinSpawnTime = false,
   isPending = false,
   label,
@@ -127,8 +130,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     <ListRow
       id={id}
       fill={isExpired ? veilColor(paint.fill, EXPIRED_VEIL) : paint.fill}
-      isAlternateRow={isAlternateRow}
-      className={cn("ll:h-full ll:py-[4px]", textColorClassName, {
+      className={cn("ll:h-full ll:py-[4px]", textColorClassName, TEXT_OUTLINE, {
         "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
           showColorStripe,
         "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
