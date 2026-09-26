@@ -128,10 +128,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
                 countdownMode={countdownMode}
                 timer={timer}
-              />
-              <TimerMapPresenceIndicator
-                timer={timer}
-                label={t("tooltip.mapOccupied")}
+                timeAdornment=<TimerMapPresenceIndicator
+                  timer={timer}
+                  label={t("tooltip.mapOccupied")}
+                />
               />
             </div>
           </ContextMenuTrigger>
