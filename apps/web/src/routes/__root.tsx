@@ -66,8 +66,8 @@ function RootComponent() {
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  beforeLoad: ({ context, preload }) => ({
-    isInitialNavigation: context.initialNavigation.consume(preload),
+  beforeLoad: ({ context, preload, location }) => ({
+    isInitialNavigation: context.initialNavigation.isInitial(preload, location),
   }),
   head: ({ matches }) => ({
     meta: [{ title: resolveAppNavigation({ matches }).documentTitle }],

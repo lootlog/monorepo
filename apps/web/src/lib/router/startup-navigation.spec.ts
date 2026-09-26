@@ -275,6 +275,8 @@ const createNavigation = ({
     path: "battles/$battleId",
   });
 
+  const initialNavigation = createInitialNavigation();
+
   const router = createRouter({
     routeTree: root.addChildren([
       authenticated.addChildren([
@@ -286,11 +288,13 @@ const createNavigation = ({
       invite,
       battle,
     ]),
-    context: { queryClient, initialNavigation: createInitialNavigation() },
+    context: { queryClient, initialNavigation },
     history: createMemoryHistory({ initialEntries: [initialEntry] }),
     defaultPendingMs: 0,
     defaultPendingMinMs: 0,
   });
+
+  onTestFinished(initialNavigation.track(router));
 
   const requestCount = (path: string) =>
     apiFetch.mock.calls.filter(([input]) => {
@@ -330,6 +334,62 @@ it("keeps organization choices separate when another account uses the same brows
   await firstAccountReturns.router.load();
   expect(firstAccountReturns.router.state.location.pathname).toBe("/42");
   expect(getLastOrganization("user-2")).toBe("43");
+});
+
+it("restores the saved organization when the initial session lookup succeeds on retry", async () => {
+  rememberOrganization("user-1", "42");
+
+  const { router } = createNavigation();
+  authFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+  await router.load();
+  expect(router.state.matches.some((match) => match.status === "error")).toBe(
+    true,
+  );
+  expect(router.state.location.pathname).toBe("/@me");
+
+  await router.invalidate();
+  expect(router.state.location.pathname).toBe("/42");
+});
+
+it("does not restore the saved organization when leaving a failed initial page for the dashboard", async () => {
+  rememberOrganization("user-1", "42");
+
+  const { router, requestCount } = createNavigation({
+    initialEntry: "/43/timers",
+  });
+
+  authFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+  await router.load();
+  expect(router.state.matches.some((match) => match.status === "error")).toBe(
+    true,
+  );
+
+  await router.navigate({ href: "/@me" });
+  expect(router.state.location.pathname).toBe("/@me");
+  expect(requestCount("/guilds/42")).toBe(0);
+});
+
+it("keeps the dashboard after its completed startup fallback is revalidated", async () => {
+  rememberOrganization("user-1", "42");
+  let unavailable = true;
+
+  const { router, requestCount } = createNavigation({
+    organizationResponse: (path) =>
+      path === "/guilds/42" && unavailable
+        ? Response.json({ message: "Unavailable" }, { status: 503 })
+        : undefined,
+  });
+
+  await router.load();
+  expect(router.state.location.pathname).toBe("/@me");
+
+  unavailable = false;
+  await router.invalidate();
+  expect(router.state.location.pathname).toBe("/@me");
+  expect(requestCount("/guilds/42")).toBe(1);
+  expect(getLastOrganization("user-1")).toBe("42");
 });
 
 it("persists the canonical organization ID when visiting a vanity URL", async () => {
