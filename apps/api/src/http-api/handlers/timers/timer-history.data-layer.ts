@@ -1,9 +1,16 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, lte, sql } from "drizzle-orm";
 import { Capability } from "@lootlog/domain/access-policy";
 import { Effect } from "effect";
 import { canViewTimer } from "./timer-selection.js";
-import { getTimerRestoreSnapshot } from "./timer-restore-snapshot.js";
+import {
+  getTimerRestoreSnapshot,
+  getTimerResetRollbackSnapshot,
+} from "./timer-restore-snapshot.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
+import {
+  TimerHistoryAction,
+  type TimerHistoryEntry,
+} from "#src/timers/timers.types";
 import {
   guildTable,
   memberTable,
@@ -21,6 +28,10 @@ import {
   mapTimerMember,
   mapTimerNpc,
 } from "#src/timers/timer-projection";
+
+type TimerHistoryAssociations = {
+  actorCharacter?: NonNullable<ReturnType<typeof mapTimerCharacter>>;
+};
 
 export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
   const read = (
@@ -102,8 +113,78 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
           ),
         )
         .where(condition)
-        .orderBy(desc(timerHistoryEntryTable.createdAt))
+        .orderBy(
+          ...(timerKey
+            ? [desc(timerHistoryEntryTable.id)]
+            : [
+                desc(timerHistoryEntryTable.createdAt),
+                desc(timerHistoryEntryTable.id),
+              ]),
+        )
         .limit(limit);
+
+      const canWrite = access.accessPolicy.allows(
+        Capability.LOOTLOG_TIMERS_WRITE,
+      );
+
+      const rollbackTimerKeys = canWrite
+        ? [
+            ...new Set(
+              rows
+                .filter(
+                  ({ entry }) =>
+                    entry.action === TimerHistoryAction.RESET &&
+                    canViewTimer(access, entry),
+                )
+                .map(({ entry }) => entry.timerKey),
+            ),
+          ]
+        : [];
+
+      const rollbackHistory = new Map<
+        string,
+        {
+          latest?: TimerHistoryEntry;
+          previous?: TimerHistoryEntry;
+        }
+      >();
+
+      if (rollbackTimerKeys.length > 0) {
+        const rankedHistory = database.$with("timer_rollback_history").as(
+          database
+            .select({
+              ...getTableColumns(timerHistoryEntryTable),
+              position: sql<number>`row_number() over (
+              partition by ${timerHistoryEntryTable.timerKey}
+              order by ${timerHistoryEntryTable.id} desc
+            )`
+                .mapWith(Number)
+                .as("position"),
+            })
+            .from(timerHistoryEntryTable)
+            .where(
+              and(
+                eq(timerHistoryEntryTable.guildId, access.guild.id),
+                eq(timerHistoryEntryTable.world, world),
+                inArray(timerHistoryEntryTable.timerKey, rollbackTimerKeys),
+              ),
+            ),
+        );
+
+        const snapshots = yield* database
+          .with(rankedHistory)
+          .select()
+          .from(rankedHistory)
+          .where(lte(rankedHistory.position, 2));
+
+        for (const snapshot of snapshots) {
+          const history = rollbackHistory.get(snapshot.timerKey) ?? {};
+
+          if (snapshot.position === 1) history.latest = snapshot;
+          else history.previous = snapshot;
+          rollbackHistory.set(snapshot.timerKey, history);
+        }
+      }
 
       return rows.flatMap(
         ({ entry, guildName, actorMember, actorCharacter, currentTimer }) => {
@@ -111,8 +192,38 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             return [];
           }
 
+          const character = mapTimerCharacter(
+            actorCharacter,
+            entry.actorCharacterLvl,
+          );
+
+          const associations: TimerHistoryAssociations = {};
+
+          if (character !== undefined) associations.actorCharacter = character;
+
+          const rollback = rollbackHistory.get(entry.timerKey);
+
+          const canUndoReset =
+            currentTimer !== null &&
+            canViewTimer(access, currentTimer) &&
+            rollback?.previous !== undefined &&
+            canViewTimer(access, rollback.previous) &&
+            getTimerResetRollbackSnapshot(
+              entry,
+              currentTimer,
+              rollback.latest,
+              rollback.previous,
+            ) !== undefined;
+
+          const canRestoreDeleted =
+            getTimerRestoreSnapshot(entry) !== undefined &&
+            (currentTimer === null ||
+              (currentTimer.deletedAt !== null &&
+                canViewTimer(access, currentTimer)));
+
           return [
             {
+              ...associations,
               id: entry.id,
               guildId: entry.guildId,
               guildName,
@@ -122,18 +233,9 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
               npc: mapTimerNpc(entry.npc),
               action: entry.action,
               member: mapTimerMember(actorMember),
-              actorCharacter: mapTimerCharacter(
-                actorCharacter,
-                entry.actorCharacterLvl,
-              ),
               minSpawnTime: entry.minSpawnTime,
               maxSpawnTime: entry.maxSpawnTime,
-              canRestore:
-                access.accessPolicy.allows(Capability.LOOTLOG_TIMERS_WRITE) &&
-                getTimerRestoreSnapshot(entry) !== undefined &&
-                (currentTimer === null ||
-                  (currentTimer.deletedAt !== null &&
-                    canViewTimer(access, currentTimer))),
+              canRestore: canWrite && (canRestoreDeleted || canUndoReset),
               createdAt: entry.createdAt,
             },
           ];

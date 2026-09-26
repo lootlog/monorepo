@@ -30,7 +30,13 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
   const { restoreTimer: handleRestore, isPending: restorePending } =
     useRestoreTimer(() => setOpen(false));
 
-  const { data: history = [], isLoading } = useTimersControllerGetTimerHistory(
+  const {
+    data: history = [],
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useTimersControllerGetTimerHistory(
     {
       guildId: timer.guildId,
       timerIdentifier: timer.timerKey,
@@ -73,6 +79,9 @@ export const TimerHistoryPopover: FC<TimerHistoryPopoverProps> = ({
         <TimerHistoryList
           history={history}
           isLoading={isLoading}
+          isError={isError}
+          isFetching={isFetching}
+          onRetry={() => void refetch()}
           onRestore={handleRestore}
           restorePending={restorePending}
           title={`${t("history.title")}${timer.npc?.name ? ` - ${timer.npc.name}` : ""}`}
