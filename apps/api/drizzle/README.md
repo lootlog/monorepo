@@ -217,3 +217,129 @@ GIN entry per inserted player snapshot; the copy received at most about 30,000
 loots per day during the sampled week. The migrator runs inside a transaction,
 so this is a plain `CREATE INDEX` holding a `SHARE` lock on `PlayerSnapshot`
 while it builds.
+
+## Immutable NPC observations
+
+`NpcSnapshot` records the attributes accepted with a loot submission. Lists,
+details, statistics, feed entries, allocation, and derived delivery use that
+observation for NPC display and source visibility. A later observation does not
+change the level used to authorize an earlier loot. For example, observations
+of the same NPC id and name at levels 183 and 210 use separate revisions: a
+role capped at 190 can satisfy the level condition for the first, but not the
+second. Other Organization access checks still apply.
+
+Allocation mutations require current loot write access and visibility of the
+persisted source loot. Queued and retried loot notifications recheck that source
+before dispatch; ordinary user notification history also uses current source
+visibility. Revoking access can therefore block pending delivery and hide a
+history entry without changing the accepted loot or its NPC observation.
+
+`createNpcSnapshotHash` in `packages/database/src/snapshot-hash.ts` identifies a
+revision by its identity namespace, world, supplied NPC id, name, derived NPC
+type, level, icon, profession, weight, and Margonem type. Missing and null
+optional attributes are equivalent; empty strings and zero remain distinct
+values. The name participates in revision identity, so a rename creates a new
+revision. Returning to an identical observation reuses its existing revision.
+This model has no mutable latest-NPC record for a delayed submission to regress.
+Retrying an already accepted loot keeps its original snapshot associations.
+
+The current namespace is `legacy`. Deployed clients overload `id`: normal
+battle loot may supply a template id, while fallback and dialog loot may supply
+a runtime id. The namespace records this uncertainty; it does not assert that
+equal numbers identify the same template or establish a mapping between runtime
+and template ids. World separates new observations across worlds without
+claiming a game-version identifier. Explicit runtime/template identity and
+game-version provenance remain the work of
+[LOO-33](https://linear.app/lootlog/issue/LOO-33) and
+[LOO-35](https://linear.app/lootlog/issue/LOO-35).
+
+`20260924232451_npc_observation_revisions` adds `identityNamespace` with default
+`legacy`, nullable `world` and `snapshotHash`, and replaces `NpcSnapshot_npcId_name_key` with
+`NpcSnapshot_npcId_snapshotHash_key`. Existing rows retain their attributes and
+`LootNpc` associations; their world and hash stay null because the migration
+cannot recover the original observation or identity provenance. New submissions
+use hashed revisions, including when their attributes match an unhashed legacy
+row. The API acceptance writer and CLI seed writer share the revision function.
+The existing name and type/level indexes remain available to readers.
+
+NPC search publications carry the optional `snapshotHash`. The search consumer
+stores each hashed observation under a separate document id, so delayed or
+retried delivery cannot replace another revision. It preserves an accepted NPC
+type; classification from weight remains a fallback for legacy type values.
+Events without a hash continue to write their existing catalog document. The
+search rebuild script retains hashed revisions and selects one legacy snapshot
+per legacy document id; running that script does not recover missing history.
+
+Public NPC search remains a catalog of suggestions with the existing NPC ids.
+Every indexed document carries an internal `catalogKey` for its id, Margonem
+type, and world. Search uses Meilisearch's
+[`distinct` parameter](https://www.meilisearch.com/docs/reference/api/search/search-with-post)
+to group those documents before the requested hit limit. A large revision
+history for one NPC cannot consume the slots for other catalog identities,
+including requests that resolve several selected NPC ids. The existing
+name/type collapse still applies after catalog grouping. Search ranking chooses
+the displayed suggestion; it is not a current-level authority or a source of
+loot access decisions. Neither hash order nor the highest observed level
+establishes chronology. Catalog identity changes and saved notification
+selection remain separate work under LOO-33 and LOO-37.
+
+Deploy this change with a coordinated writer transition:
+
+1. Stop routing new loot writes to the old API revision and let in-flight
+   requests finish. Stop old seed/import jobs that write `NpcSnapshot`, then
+   stop old search instances so their consumers cannot write documents without
+   catalog grouping metadata during the transition. Retain queued publications.
+2. Apply the migration with `bun run db:migrate:deploy`. The migrator runs in a
+   transaction; schedule the unique-index replacement for a window that allows
+   the required table locks.
+3. From `apps/search`, run `bun run backfill:npc-catalog` with the existing
+   `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY`. Each run updates at most 10,000
+   documents in acknowledged batches of 500. Repeat until its JSON result says
+   `complete: true`. The command adds only missing `catalogKey` values, preserves
+   every existing document and attribute, and safely resumes after interruption.
+   Complete this step before enabling the new search queries; legacy documents
+   without the grouping field cannot participate in the same distinct group.
+4. Deploy the new search service before the new API publisher. Its startup
+   settings make `catalogKey` and `id` filterable, and it accepts both hashed and
+   older events. Its index writes and the updated rebuild script include the
+   grouping field. Run that rebuild script only after the database migration.
+5. Start only API and seed/import revisions that target the new snapshot key,
+   then resume ingestion. Old writers use `ON CONFLICT (npcId, name)` and cannot
+   run after the old unique index is removed.
+6. Verify that new loots reference rows with non-null world and hash, and that
+   different levels under one id and name coexist without changing earlier
+   links. Check a restricted role through the list, detail, and derived views.
+
+The HTTP payload is unchanged, so existing userscripts and browser extensions
+continue to submit through the same API. Snapshot hashing adds no game-client
+work. During rollback, retain a writer compatible with the new schema and reuse
+a compatible immutable image and a hash-aware search consumer. Do not restore
+the old unique index once multiple revisions share an id and name. Do not delete
+new revisions or relink accepted loots to make an older writer fit.
+
+This migration prevents new snapshot collisions. It does not correct historical
+levels, reconstruct lost request data, remap overloaded ids, or repair historical
+NPC attributes in search projections and saved notification filters. Those
+changes require independent evidence and the auditable repair tracked in
+[LOO-38](https://linear.app/lootlog/issue/LOO-38).
+
+### Margonem source evidence
+
+The inspected external source snapshot is identified by bundle filename
+`main.min1781609507010.js`. Paths below are relative to its extracted
+`src/js/Margonem` directory; the filename does not establish a verified build
+date, origin, or coverage of every deployed NI/SI version.
+
+- `core/characters/NpcManager.js:166-192` indexes instances by `npcData.id`;
+  lines 231-246 clone template data by `data.tpl` and skip the template's `id`.
+  `core/Communication.js:602` contains an example with runtime id `313103` and
+  template id `257636`.
+- `core/characters/NpcTplManager.js:13-26` replaces template contents under an
+  existing id. `core/Updateable.js:3-13` applies supplied fields to an instance,
+  and `core/characters/NpcManager.js:252-261` resolves its current icon.
+
+These implementations support retaining observed content separately from
+identity. They do not establish historical runtime/template mappings. Lootlog's
+bridge already keeps runtime `id` and `templateId` separately in
+`apps/game-client/src/lib/margonem-runtime/runtime-adapter.ts`; this snapshot
+migration leaves that boundary and the existing client transport unchanged.

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { Permission } from "@lootlog/schema/permissions";
+import { Effect } from "effect";
+import { eq } from "drizzle-orm";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   guildTable,
@@ -8,8 +10,10 @@ import {
   lootItemTable,
   lootNpcTable,
   lootPlayerTable,
+  lootSubmissionTable,
   lootTable,
   memberTable,
+  memberToRoleTable,
   npcSnapshotTable,
   organizationLootRecordTable,
   playerSnapshotTable,
@@ -17,8 +21,273 @@ import {
 } from "#src/database/drizzle/schema";
 import { makeLootQueryPersistence } from "#src/loots/query/loot-query.persistence";
 import { makeLootQueryOperations } from "#src/loots/query/loot-query.operations";
+import { makeLootAllocationPersistence } from "#src/loots/allocation/loot-allocation-persistence";
+import { buildLootNpcVisibilityCondition } from "#src/loots/loot-visibility";
+import { buildLootStatsQueries } from "#src/loots/query/loot-stats-query";
+import { makeUserFeed } from "#src/feed/user-feed";
 
 describe("filtered loot reads", () => {
+  it("uses each kill's retained NPC level across reads, search, feed, statistics and allocation", async () => {
+    const boundary = await createDatabaseBoundary();
+
+    try {
+      const { database, run } = boundary;
+      const now = new Date();
+
+      const permissions = [
+        Permission.LOOTLOG_ACCESS,
+        Permission.LOOTLOG_LOOTS_READ,
+        Permission.LOOTLOG_LOOTS_WRITE,
+      ];
+
+      const [guild] = await run(
+        database
+          .insert(guildTable)
+          .values({
+            id: "revisions",
+            name: "Revisions",
+            ownerId: "owner",
+            updatedAt: now,
+          })
+          .returning(),
+      );
+
+      const roles = await run(
+        database
+          .insert(roleTable)
+          .values({
+            id: "reader",
+            guildId: "revisions",
+            name: "Reader",
+            permissions,
+            lvlRangeFrom: 0,
+            lvlRangeTo: 190,
+            updatedAt: now,
+          })
+          .returning(),
+      );
+
+      if (!guild) throw new Error("Expected Organization");
+      await run(
+        database.insert(memberTable).values({
+          id: 1,
+          guildId: guild.id,
+          userId: "reader-discord",
+          globalUserId: "reader-user",
+          name: "Reader",
+          updatedAt: now,
+        }),
+      );
+      await run(
+        database.insert(memberToRoleTable).values({ A: 1, B: "reader" }),
+      );
+      await run(
+        database.insert(npcSnapshotTable).values([
+          {
+            id: 1,
+            npcId: 52950,
+            name: "Czempion Furboli",
+            lvl: 183,
+            type: "ELITE2",
+            snapshotHash: "observed-183",
+          },
+          {
+            id: 2,
+            npcId: 52950,
+            name: "Czempion Furboli",
+            lvl: 210,
+            type: "ELITE2",
+            snapshotHash: "observed-210",
+          },
+        ]),
+      );
+      await run(
+        database.insert(itemSnapshotTable).values({
+          id: 1,
+          itemId: 1,
+          statsHash: "legendary",
+          name: "Reward",
+          icon: "reward.gif",
+          statRaw: "lvl=100;rarity=legendary",
+          statsSnapshot: {},
+          lvl: 100,
+          rarity: "LEGENDARY",
+        }),
+      );
+
+      for (const id of [1, 2]) {
+        await run(
+          database.insert(lootTable).values({
+            id,
+            uniqueId: `revision-${id}`,
+            world: "test",
+            location: "map",
+            source: "FIGHT",
+            updatedAt: now,
+          }),
+        );
+        await run(
+          database.insert(organizationLootRecordTable).values({
+            id,
+            lootId: id,
+            guildId: guild.id,
+            updatedAt: now,
+          }),
+        );
+        await run(
+          database.insert(lootSubmissionTable).values({
+            organizationLootRecordId: id,
+            memberId: 1,
+            updatedAt: now,
+          }),
+        );
+        await run(
+          database
+            .insert(lootNpcTable)
+            .values({ lootId: id, npcSnapshotId: id }),
+        );
+        await run(
+          database
+            .insert(lootItemTable)
+            .values({ lootId: id, itemSnapshotId: 1, hid: `reward-${id}` }),
+        );
+      }
+
+      const query = makeLootQueryOperations(makeLootQueryPersistence(database));
+
+      const list = await run(
+        query.fetchLootsByGuildId(guild, permissions, roles, {}),
+      );
+
+      expect(list.map(({ id }) => id)).toEqual([1]);
+      expect(list[0]?.npcs[0]?.lvl).toBe(183);
+      expect(
+        await run(query.fetchLootById(guild, permissions, roles, 2)),
+      ).toBeNull();
+      expect(
+        (await run(query.fetchLootById(guild, [Permission.OWNER], [], 2)))
+          ?.npcs[0]?.lvl,
+      ).toBe(210);
+      expect(
+        (
+          await run(
+            query.fetchLootsByGuildId(guild, [Permission.OWNER], [], {
+              npcLevelMin: 200,
+            }),
+          )
+        ).map(({ id }) => id),
+      ).toEqual([2]);
+      expect(
+        (
+          await run(
+            query.fetchLootsByGuildId(guild, permissions, roles, {
+              search: "Czempion",
+            }),
+          )
+        ).map(({ id }) => id),
+      ).toEqual([1]);
+      expect(
+        await run(
+          query.resolveLootItemByHid(guild, permissions, roles, {
+            hid: "reward-2",
+          }),
+        ),
+      ).toBeNull();
+
+      const feed = await run(makeUserFeed(database)("reader-discord"));
+      expect(feed.items).toHaveLength(1);
+      expect(feed.items[0]).toMatchObject({
+        type: "loot",
+        lootId: 1,
+        npc: { lvl: 183 },
+      });
+
+      const stats = await run(
+        Effect.all(
+          buildLootStatsQueries(database, {
+            guildId: guild.id,
+            dateFrom: null,
+            truncUnit: "day",
+            visibility: buildLootNpcVisibilityCondition(
+              lootTable.id,
+              permissions,
+              roles,
+            ),
+          }),
+        ),
+      );
+
+      expect(stats.overview[0]).toMatchObject({
+        total_loots: 1,
+        total_items: 1,
+      });
+      expect(stats.topNpcs).toEqual([expect.objectContaining({ lvl: 183 })]);
+
+      const allocation = makeLootAllocationPersistence(database);
+
+      const options = {
+        actorUserId: "reader-user",
+        lootId: 2,
+        submissionCutoff: new Date(now.getTime() - 60_000),
+      };
+
+      expect(
+        await run(allocation.findAuthorizedLoot({ ...options, lootId: 1 })),
+      ).toMatchObject({ id: 1 });
+      expect(await run(allocation.findAuthorizedLoot(options))).toBeNull();
+      expect(
+        await run(allocation.findAuthorizedAllocationState(options)),
+      ).toBeNull();
+      expect(
+        await run(
+          allocation.compareAndSetChatAllocation({ ...options, lootShare: {} }),
+        ),
+      ).toBe(false);
+
+      await run(
+        database
+          .update(roleTable)
+          .set({ lvlRangeTo: 250 })
+          .where(eq(roleTable.id, "reader")),
+      );
+      expect(await run(allocation.findAuthorizedLoot(options))).toMatchObject({
+        id: 2,
+      });
+      // Revocation after the initial read must still prevent the durable update.
+      await run(
+        database
+          .update(roleTable)
+          .set({ lvlRangeTo: 190 })
+          .where(eq(roleTable.id, "reader")),
+      );
+      expect(
+        await run(
+          allocation.compareAndSetChatAllocation({ ...options, lootShare: {} }),
+        ),
+      ).toBe(false);
+      await run(
+        database
+          .update(organizationLootRecordTable)
+          .set({ archivedAt: now })
+          .where(eq(organizationLootRecordTable.id, 1)),
+      );
+      expect(
+        await run(allocation.findAuthorizedLoot({ ...options, lootId: 1 })),
+      ).toBeNull();
+      expect(
+        await run(
+          allocation.compareAndSetChatAllocation({
+            ...options,
+            lootId: 1,
+            lootShare: {},
+          }),
+        ),
+      ).toBe(false);
+    } finally {
+      await boundary.dispose();
+    }
+  });
+
   it("preserves independent relation matches, visibility and pagination across lists and details", async () => {
     const boundary = await createDatabaseBoundary();
 

@@ -12,6 +12,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import type { NotificationJobsResponseDto } from "@lootlog/client/main";
 import {
+  getJobErrorMessage,
   getJobKindLabel,
   getJobStatusBadgeProps,
   getJobStatusLabel,
@@ -209,7 +210,7 @@ export const NotificationJobDetailDialog = ({
                   {t("settings.notifications.jobDetail.blockedReason")}
                 </p>
                 <p className="mt-1.5 text-sm text-amber-500">
-                  {job.blockedReason}
+                  {getJobErrorMessage(job.blockedReason, t)}
                 </p>
               </div>
             ) : null}
@@ -219,7 +220,7 @@ export const NotificationJobDetailDialog = ({
                   {t("settings.notifications.jobDetail.lastError")}
                 </p>
                 <p className="mt-1.5 text-sm text-destructive">
-                  {job.lastError}
+                  {getJobErrorMessage(job.lastError, t)}
                 </p>
               </div>
             ) : null}

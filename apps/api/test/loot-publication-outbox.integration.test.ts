@@ -27,6 +27,8 @@ import {
   userCharactersLootlogSettingsTable,
   lootTable,
   lootPlayerTable,
+  lootNpcTable,
+  npcSnapshotTable,
   lootMapPlayerTable,
   playerSnapshotTable,
   organizationLootRecordTable,
@@ -42,7 +44,10 @@ import {
 import { NotificationJobKind } from "#src/notifications/notification-enums";
 import { makeLootSubmissionAcceptancePersistence } from "#src/loots/submission/loot-submission-acceptance.repository";
 import { makeLootSubmissionAcceptance } from "#src/loots/submission/loot-submission-acceptance.service";
-import { makeLootPublicationDispatcher } from "#src/loots/submission/loot-publication-outbox";
+import {
+  LootPublicationPayload,
+  makeLootPublicationDispatcher,
+} from "#src/loots/submission/loot-publication-outbox";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { makeLootsOperations } from "#src/loots/loots.operations";
 import { makeLootPersistence } from "#src/loots/loot-persistence";
@@ -150,6 +155,24 @@ describe("durable loot publications", () => {
         .where(eq(lootPublicationOutboxTable.lootId, lootId)),
     );
 
+  const npcSnapshots = (lootId: number) =>
+    runtime.runPromise(
+      database
+        .select({ npc: npcSnapshotTable })
+        .from(lootNpcTable)
+        .innerJoin(
+          npcSnapshotTable,
+          eq(npcSnapshotTable.id, lootNpcTable.npcSnapshotId),
+        )
+        .where(eq(lootNpcTable.lootId, lootId))
+        .orderBy(lootNpcTable.id),
+    );
+
+  const publications = async (lootId: number) =>
+    (await pending(lootId)).map(({ payload }) =>
+      Schema.decodeUnknownSync(LootPublicationPayload)(payload),
+    );
+
   const mapPlayerLinks = (guildId: string, lootId: number) =>
     runtime.runPromise(
       database
@@ -241,6 +264,317 @@ describe("durable loot publications", () => {
       Schema.encodeSync(Schema.Array(RuntimeLootResponse))(loots),
     );
   };
+
+  it("retains level revisions and reuses identical NPC observations without rewriting earlier loots", async () => {
+    const { id, request } = await seed();
+    const npcName = `Versioned hero ${randomUUID()}`;
+    const lootIds: number[] = [];
+
+    for (const lvl of [183, 210, 210]) {
+      const result = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            loots: request.submission.loots.map((item) => ({
+              ...item,
+              hid: randomUUID(),
+            })),
+            npcs: request.submission.npcs.map((npc) => ({
+              ...npc,
+              name: npcName,
+              lvl,
+            })),
+          },
+        }),
+      );
+
+      lootIds.push(result.id);
+      snapshotTestLootIds.push(result.id);
+
+      const saved = await npcSnapshots(result.id);
+      expect(saved).toHaveLength(1);
+      expect(saved[0]?.npc).toMatchObject({ name: npcName, lvl });
+      expect((await lootRecord(id, result.id))?.npcs).toMatchObject([
+        { name: npcName, lvl },
+      ]);
+
+      const intents = await publications(result.id);
+
+      const created = intents.find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+      );
+
+      const notification = intents.find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.NOTIFICATIONS_LOOT_CREATED,
+      );
+
+      const search = intents.find(
+        (intent) =>
+          intent.kind === "rabbit" &&
+          intent.routingKey === RabbitRoutingKey.SEARCH_NPCS_INDEX,
+      );
+
+      const snapshot = saved[0]?.npc;
+
+      if (!snapshot) throw new Error("Expected accepted NPC snapshot");
+
+      expect(created).toMatchObject({
+        data: { npcs: [{ lvl, type: "HERO", prof: "WARRIOR", wt: 85 }] },
+      });
+      expect(notification).toMatchObject({
+        data: { npcs: [{ lvl, type: "HERO" }] },
+      });
+      expect(search).toMatchObject({
+        data: [
+          {
+            id: snapshot.npcId,
+            snapshotHash: snapshot.snapshotHash,
+            name: snapshot.name,
+            lvl: snapshot.lvl,
+            type: snapshot.type,
+            prof: snapshot.prof,
+            icon: snapshot.icon,
+            wt: snapshot.wt,
+            margonemType: snapshot.margonemType,
+            world: snapshot.world,
+          },
+        ],
+      });
+    }
+
+    const saved = await Promise.all(lootIds.map(npcSnapshots));
+    expect(saved[0]?.[0]?.npc.id).not.toBe(saved[1]?.[0]?.npc.id);
+    expect(saved[1]?.[0]?.npc.id).toBe(saved[2]?.[0]?.npc.id);
+    expect(saved.map((npcs) => npcs[0]?.npc.lvl)).toEqual([183, 210, 210]);
+    expect(
+      (await lootList(id)).map((loot) => loot.npcs[0]?.lvl).sort(),
+    ).toEqual([183, 210, 210]);
+  });
+
+  it.each([
+    ["name", { name: "Renamed hero" }, { name: "Renamed hero" }],
+    ["icon", { icon: "revised.png" }, { icon: "revised.png" }],
+    ["profession", { prof: "m" }, { prof: "MAGE" }],
+    ["weight", { wt: 86 }, { wt: 86 }],
+    ["Margonem type", { type: 3 }, { margonemType: 3 }],
+    ["NPC classification", { wt: 25 }, { type: "ELITE2", wt: 25 }],
+  ] satisfies Array<
+    [
+      string,
+      Partial<CreateLootRequest["npcs"][number]>,
+      Partial<typeof npcSnapshotTable.$inferSelect>,
+    ]
+  >)(
+    "keeps a separate NPC revision when %s changes",
+    async (_attribute, observedChange, persistedChange) => {
+      const { id, request } = await seed();
+      await runtime.runPromise(
+        database.insert(lootlogConfigNpcTable).values({
+          lootlogConfigId: id,
+          npcType: "ELITE2",
+          allowedRarities: ["HEROIC"],
+          updatedAt: new Date(),
+        }),
+      );
+      request.submission = {
+        ...request.submission,
+        world: `npc-revisions-${id}`,
+      };
+      const first = await runtime.runPromise(acceptance().accept(request));
+      snapshotTestLootIds.push(first.id);
+      const before = await npcSnapshots(first.id);
+
+      const second = await runtime.runPromise(
+        acceptance().accept({
+          ...request,
+          submission: {
+            ...request.submission,
+            loots: request.submission.loots.map((item) => ({
+              ...item,
+              hid: randomUUID(),
+            })),
+            npcs: request.submission.npcs.map((npc) => ({
+              ...npc,
+              ...observedChange,
+            })),
+          },
+        }),
+      );
+
+      snapshotTestLootIds.push(second.id);
+      const after = await npcSnapshots(second.id);
+
+      expect(after).toHaveLength(1);
+      expect(after[0]?.npc).toMatchObject(persistedChange);
+      expect(after[0]?.npc.id).not.toBe(before[0]?.npc.id);
+      expect(await npcSnapshots(first.id)).toEqual(before);
+    },
+  );
+
+  it("preserves an ambiguous legacy NPC row while accepting a new observed revision", async () => {
+    const { id, request } = await seed();
+    const name = `Legacy hero ${id}`;
+
+    const [legacy] = await runtime.runPromise(
+      database
+        .insert(npcSnapshotTable)
+        .values({
+          npcId: 8234568,
+          name,
+          type: "HERO",
+          lvl: 183,
+          icon: "legacy.png",
+          prof: "WARRIOR",
+          wt: 85,
+          margonemType: 2,
+        })
+        .returning(),
+    );
+
+    if (!legacy) throw new Error("Expected legacy NPC snapshot");
+
+    const result = await runtime.runPromise(
+      acceptance().accept({
+        ...request,
+        submission: {
+          ...request.submission,
+          npcs: request.submission.npcs.map((npc) => ({
+            ...npc,
+            name,
+            lvl: 210,
+          })),
+        },
+      }),
+    );
+
+    snapshotTestLootIds.push(result.id);
+
+    const saved = await npcSnapshots(result.id);
+    expect(saved[0]?.npc).toMatchObject({ name, lvl: 210, icon: "npc.png" });
+    expect(saved[0]?.npc.id).not.toBe(legacy.id);
+    expect(
+      await runtime.runPromise(
+        database
+          .select()
+          .from(npcSnapshotTable)
+          .where(eq(npcSnapshotTable.id, legacy.id)),
+      ),
+    ).toEqual([legacy]);
+  });
+
+  it("reuses concurrent NPC revisions while retaining each loot's submitted roster order", async () => {
+    const { id, request } = await seed();
+    const primary = request.submission.npcs[0];
+
+    if (!primary) throw new Error("Expected seeded NPC observation");
+
+    const observations = [
+      primary,
+      { ...primary, id: primary.id + 1, name: "Second observed hero", wt: 86 },
+    ];
+
+    const rosters = [observations, observations.toReversed(), observations];
+
+    const accepted = await Promise.all(
+      rosters.map((npcs) =>
+        runtime.runPromise(
+          acceptance().accept({
+            ...request,
+            submission: {
+              ...request.submission,
+              npcs,
+              world: `concurrent-npc-${id}`,
+              loots: request.submission.loots.map((item) => ({
+                ...item,
+                hid: randomUUID(),
+              })),
+            },
+          }),
+        ),
+      ),
+    );
+
+    snapshotTestLootIds.push(...accepted.map((loot) => loot.id));
+    expect(new Set(accepted.map((loot) => loot.id)).size).toBe(3);
+
+    const linked = await Promise.all(
+      accepted.map((loot) => npcSnapshots(loot.id)),
+    );
+
+    expect(linked.every((npcs) => npcs.length === 2)).toBe(true);
+    expect(
+      new Set(linked.flatMap((npcs) => npcs.map(({ npc }) => npc.id))).size,
+    ).toBe(2);
+    expect(linked.map((npcs) => npcs.map(({ npc }) => npc.npcId))).toEqual(
+      rosters.map((npcs) => npcs.map((npc) => npc.id)),
+    );
+
+    const returned = await Promise.all(
+      accepted.map((loot) => lootRecord(id, loot.id)),
+    );
+
+    expect(returned.map((loot) => loot?.npcs.map((npc) => npc.id))).toEqual(
+      rosters.map((npcs) => npcs.map((npc) => npc.id)),
+    );
+  });
+
+  it("publishes persisted NPC visibility when another Organization retries a loot with changed NPC data", async () => {
+    const first = await seed();
+    const second = await seed();
+    first.request.submission = {
+      ...first.request.submission,
+      npcs: first.request.submission.npcs.map((npc) => ({
+        ...npc,
+        name: `Retry hero ${first.id}`,
+        lvl: 183,
+      })),
+    };
+
+    const accepted = await runtime.runPromise(
+      acceptance().accept(first.request),
+    );
+
+    snapshotTestLootIds.push(accepted.id);
+    second.request.submission = {
+      ...first.request.submission,
+      npcs: first.request.submission.npcs.map((npc) => ({
+        ...npc,
+        lvl: 210,
+        prof: "m",
+        wt: 86,
+      })),
+    };
+
+    const appended = await runtime.runPromise(
+      acceptance().accept(second.request),
+    );
+
+    expect(appended.id).toBe(accepted.id);
+    expect((await lootRecord(second.id, accepted.id))?.npcs).toMatchObject([
+      { lvl: 183, prof: "WARRIOR", type: "HERO", wt: 85 },
+    ]);
+
+    const created = (await publications(accepted.id)).filter(
+      (intent) =>
+        intent.kind === "rabbit" &&
+        intent.routingKey === RabbitRoutingKey.GUILDS_LOOTS_CREATE,
+    );
+
+    expect(created).toHaveLength(2);
+
+    for (const publication of created) {
+      expect(publication).toMatchObject({
+        data: {
+          npcs: [{ lvl: 183, prof: "WARRIOR", type: "HERO", wt: 85 }],
+        },
+      });
+    }
+  });
 
   it("persists map players for legendary elite2 and keeps Organization observations isolated", async () => {
     const first = await seed(true);

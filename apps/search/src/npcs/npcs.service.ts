@@ -21,8 +21,7 @@ type RawNpcHit = Omit<NpcHit, "margonemType" | "prof" | "type"> & {
   type?: NpcHit["type"] | number | string | null;
 };
 
-const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
-  const prof = npc.prof ?? "";
+const resolveMargonemType = (npc: Pick<RawNpcHit, "margonemType" | "type">) => {
   let margonemType = 0;
 
   if (Predicate.isNumber(npc.margonemType)) {
@@ -31,24 +30,52 @@ const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
     margonemType = npc.type;
   }
 
+  return margonemType;
+};
+
+const normalizeNpcHit = (npc: RawNpcHit): NpcHit => {
+  const prof = npc.prof ?? "";
+  const margonemType = resolveMargonemType(npc);
+
   const type = Schema.is(NpcTypeSchema)(npc.type)
     ? npc.type
     : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, margonemType);
 
-  return { ...npc, prof, margonemType, type };
+  return {
+    id: npc.id,
+    name: npc.name,
+    icon: npc.icon,
+    lvl: npc.lvl,
+    wt: npc.wt,
+    world: npc.world,
+    prof,
+    margonemType,
+    type,
+  };
 };
 
 type IndexNpc = IndexNpcsCommand["npcs"][number];
+
+export const npcCatalogKey = (
+  npc: Pick<RawNpcHit, "id" | "margonemType" | "type" | "world">,
+) => `${npc.id}_${resolveMargonemType(npc)}_${npc.world}`;
 
 /** The stored shape of one NPC; the seed script and the consumer share it. */
 export const toNpcDocument = (npc: IndexNpc) => {
   const prof = npc.prof ?? "";
 
+  const type = Schema.is(NpcTypeSchema)(npc.type)
+    ? npc.type
+    : getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType);
+
   return {
     ...npc,
     prof,
-    type: getNpcTypeByWt(NpcTypeEnum, npc.wt, prof, npc.margonemType),
-    uid: `${npc.id}_${npc.margonemType}_${npc.world}`,
+    type,
+    catalogKey: npcCatalogKey(npc),
+    uid: npc.snapshotHash
+      ? `${npcCatalogKey(npc)}_${npc.snapshotHash}`
+      : npcCatalogKey(npc),
   };
 };
 
@@ -80,6 +107,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
 
     const query: SearchParams = {
       limit,
+      distinct: "catalogKey",
       attributesToSearchOn: ["name"],
       ...(filters.length > 0 && { filter: filters.join(" AND ") }),
     };
@@ -88,7 +116,7 @@ export const makeNpcsModule = (meilisearch: Meilisearch, logger: AppLogger) => {
       index.search(searchTerm, query),
     ).pipe(
       Effect.map((response) => {
-        const hits = response.hits.map(normalizeNpcHit);
+        const hits = uniqBy(response.hits.map(normalizeNpcHit), npcCatalogKey);
 
         return ids && ids.length > 0
           ? hits

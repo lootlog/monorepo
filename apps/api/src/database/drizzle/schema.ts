@@ -708,6 +708,10 @@ export const npcSnapshotTable = pgTable(
   {
     id: serial("id").notNull().primaryKey(),
     npcId: integer("npcId").notNull(),
+    // Deployed clients use an overloaded ID; do not infer runtime/template identity.
+    identityNamespace: text("identityNamespace").default("legacy").notNull(),
+    world: text("world"),
+    snapshotHash: text("snapshotHash"),
     name: text("name").notNull(),
     type: npcTypeEnum("type"),
     lvl: integer("lvl"),
@@ -720,7 +724,10 @@ export const npcSnapshotTable = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("NpcSnapshot_npcId_name_key").on(table["npcId"], table["name"]),
+    uniqueIndex("NpcSnapshot_npcId_snapshotHash_key").on(
+      table.npcId,
+      table.snapshotHash,
+    ),
     index("NpcSnapshot_name_idx").on(table["name"]),
     index("NpcSnapshot_type_lvl_idx").on(table["type"], table["lvl"]),
   ],
