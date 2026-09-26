@@ -972,12 +972,12 @@ describe("CommandHandler session lifecycle", () => {
           ),
         ),
       );
-    expect(hub.responses.slice(1)).toEqual([
-      expect.objectContaining({ requestId: "game-ping", status: "success" }),
-      expect.objectContaining({
-        requestId: "integration-ping",
-        status: "success",
-      }),
+    // Compare the serialized frames: an undefined `data` would vanish on the wire.
+    expect(
+      hub.responses.slice(1).map((r) => JSON.parse(JSON.stringify(r))),
+    ).toEqual([
+      { v: 1, requestId: "game-ping", status: "success", data: {} },
+      { v: 1, requestId: "integration-ping", status: "success", data: {} },
     ]);
     // FakePresence dies on a heartbeat, so success also proves no presence I/O.
     expect(presence.reconciled).toEqual([]);
