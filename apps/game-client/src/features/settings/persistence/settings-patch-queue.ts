@@ -153,6 +153,17 @@ export const createSettingsPatchQueue = <TResponse>(
     return keys;
   };
 
+  const mergePatches = (
+    current: QueuedSettingsPatch | undefined,
+    incoming: QueuedSettingsPatch,
+  ): QueuedSettingsPatch => ({
+    operation: current
+      ? mergeOperations(current.operation, incoming.operation)
+      : incoming.operation,
+    queryKeys: collectQueryKeys(current ? [current, incoming] : [incoming]),
+    afterSave: incoming.afterSave ?? current?.afterSave,
+  });
+
   /** Re-lays the patches queued after `documents` were produced on top. */
   const reapplyPending = () => {
     for (const patch of pending.values()) config.applyOptimistic(patch);
@@ -190,32 +201,24 @@ export const createSettingsPatchQueue = <TResponse>(
         }
       }
 
-      retained = new Map();
-
       for (const patch of patches) patch.afterSave?.();
 
       if (pending.size === 0) {
         if (!cacheMatchesServer) await reconcile(collectQueryKeys(patches));
-        config.onStatus(pending.size === 0 ? "saved" : "saving");
+
+        if (pending.size > 0) config.onStatus("saving");
+        else config.onStatus(retained.size > 0 ? "error" : "saved");
       }
     } catch (error) {
-      for (const patch of patches) {
+      const failedPatches = [...patches, ...takePending()];
+
+      for (const patch of failedPatches) {
         const key = operationKey(patch.operation);
-        const existing = retained.get(key);
-        retained.set(
-          key,
-          existing
-            ? {
-                ...existing,
-                operation: mergeOperations(existing.operation, patch.operation),
-              }
-            : patch,
-        );
+        retained.set(key, mergePatches(retained.get(key), patch));
       }
 
-      pending.clear();
       config.onError?.(error);
-      await reconcile(collectQueryKeys(patches));
+      await reconcile(collectQueryKeys(failedPatches));
       config.onStatus("error");
     }
   };
@@ -251,13 +254,7 @@ export const createSettingsPatchQueue = <TResponse>(
       const existing = pending.get(key) ?? retained.get(key);
       retained.delete(key);
       config.applyOptimistic(patch);
-      pending.set(key, {
-        operation: existing
-          ? mergeOperations(existing.operation, patch.operation)
-          : patch.operation,
-        queryKeys: collectQueryKeys(existing ? [existing, patch] : [patch]),
-        afterSave: patch.afterSave ?? existing?.afterSave,
-      });
+      pending.set(key, mergePatches(existing, patch));
       config.onStatus("saving");
       schedule();
     },
