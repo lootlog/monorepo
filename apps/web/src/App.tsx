@@ -86,12 +86,14 @@ const stringifySearch = (
   return serializedSearch ? `?${serializedSearch}` : "";
 };
 
+const initialNavigation = createInitialNavigation();
+
 const router = createRouter({
   routeTree,
   context: {
     queryClient,
     session: undefined,
-    initialNavigation: createInitialNavigation(),
+    initialNavigation,
   },
   parseSearch,
   stringifySearch,
@@ -107,6 +109,8 @@ const router = createRouter({
   defaultPendingMinMs: 0,
   scrollRestoration: true,
 });
+
+initialNavigation.track(router);
 
 declare module "@tanstack/react-router" {
   interface Register {
