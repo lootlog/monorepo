@@ -8,6 +8,7 @@ import {
   getTimerMembers,
   getMembersWithGuilds,
 } from "../utils/timer-helpers";
+import { useTimerMapPresence } from "./timer-map-presence-provider";
 
 type TimerTooltipProps = {
   guildNamesById: Record<string, string>;
@@ -21,6 +22,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   timer,
 }) => {
   const { t } = useTranslation("timers");
+  const mapOccupied = useTimerMapPresence(timer);
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
 
@@ -68,6 +70,10 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
           <RotateCcw size={14} aria-hidden="true" />
           {t("tooltip.reset")}
         </div>
+      )}
+
+      {mapOccupied && (
+        <div className="ll:text-emerald-400">{t("tooltip.mapOccupied")}</div>
       )}
 
       {timer.updatedAt && (

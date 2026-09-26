@@ -56,7 +56,7 @@ const getMergedGuildEntry = (timer: Timer) => ({
   timerKey: timer.timerKey,
 });
 
-const getTimerGroupingKey = (timer: Timer): string => {
+export const getTimerGroupingKey = (timer: Timer): string => {
   if (isManualTimer(timer)) {
     return `manual_${timer.npc.name}_${timer.world}_${timer.npc.margonemType}`;
   }
