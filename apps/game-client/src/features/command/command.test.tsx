@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureApiClients } from "@lootlog/client/transport";
@@ -257,6 +258,39 @@ describe("CommandWindow", () => {
     expect(useWindowsStore.getState().command.open).toBe(false);
     expect(getDraft()).toBe("");
     expect(chatRequest).not.toHaveBeenCalled();
+  });
+  it("switches the mode from the mode menu and closes only the menu on Escape", async () => {
+    mount();
+    const user = await type("boss na 2");
+
+    await user.click(screen.getByRole("button", { name: "Tryb: Wiadomość" }));
+    const menu = await screen.findByRole("group", { name: "Tryb wysyłania" });
+    await user.click(
+      within(menu).getByRole("button", { name: /^Powiadomienie/ }),
+    );
+
+    expect(getDraft()).toBe("!boss na 2");
+    expect(useWindowsStore.getState().command.open).toBe(true);
+    await waitFor(() => expect(getEditor()).toHaveFocus());
+
+    await user.click(
+      screen.getByRole("button", { name: "Tryb: Powiadomienie" }),
+    );
+    expect(
+      within(
+        await screen.findByRole("group", { name: "Tryb wysyłania" }),
+      ).getByRole("button", { name: /^Powiadomienie/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("group", { name: "Tryb wysyłania" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(useWindowsStore.getState().command.open).toBe(true);
+    expect(getDraft()).toBe("!boss na 2");
+    expect(notificationRequest).not.toHaveBeenCalled();
   });
   it("keeps Quick chat open when a Lootlog is picked with the mouse", async () => {
     mount();
