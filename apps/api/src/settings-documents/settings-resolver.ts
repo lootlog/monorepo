@@ -14,7 +14,6 @@ import {
   collectLeafPaths,
   decodeSettingsRecord,
   getPath,
-  hasPath,
   pathsOverlap,
   setPath,
   unsetPath,
@@ -82,10 +81,7 @@ export const resolveSettingsDomain = (
     sources[path] = "DEFAULT";
 
     for (const layer of migratedLayers) {
-      if (
-        !fieldDefinition.scopes.includes(layer.scope.type) ||
-        !hasPath(layer.overrides, path)
-      ) {
+      if (!fieldDefinition.scopes.includes(layer.scope.type)) {
         continue;
       }
 

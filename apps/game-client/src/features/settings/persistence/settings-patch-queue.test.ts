@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SettingsJsonRecord } from "@lootlog/domain/settings-paths";
-import { applySettingsPatch } from "../../../../../api/src/settings-documents/settings-resolver";
+import {
+  decodeSettingsRecord,
+  getPath,
+  type SettingsJsonRecord,
+} from "@lootlog/domain/settings-paths";
+import {
+  applySettingsPatch,
+  resolveSettingsDomain,
+} from "../../../../../api/src/settings-documents/settings-resolver";
 import {
   createSettingsPatchQueue,
   type SettingsPatchQueueConfig,
@@ -104,34 +111,187 @@ describe("settings patch queue", () => {
     expect(statuses.at(-1)).toBe("saved");
   });
 
-  it("drops a pending set path when a later write unsets it", async () => {
-    const { queue, send } = createHarness();
+  describe.each([false, true])(
+    "ordered edits after failed save: %s",
+    (retry) => {
+      const resetRed = { unset: ["timers.defaultColorNames.red"] };
 
+      const renameRed = {
+        set: { timers: { defaultColorNames: { red: "Fire" } } },
+      };
+
+      const renameBlue = {
+        set: { timers: { defaultColorNames: { blue: "Ocean" } } },
+      };
+
+      const resetNames = { unset: ["timers.defaultColorNames"] };
+      const clearNames = { set: { timers: { defaultColorNames: {} } } };
+
+      it.each([
+        {
+          name: "keeps a color reset when another color is renamed",
+          edits: [resetRed, renameBlue],
+          expected: { blue: "Ocean", green: "Green" },
+        },
+        {
+          name: "keeps a renamed color when another color is reset",
+          edits: [renameBlue, resetRed],
+          expected: { blue: "Ocean", green: "Green" },
+        },
+        {
+          name: "lets a new name replace an earlier reset",
+          edits: [resetRed, renameRed],
+          expected: { red: "Fire", blue: "Blue", green: "Green" },
+        },
+        {
+          name: "resets a color after renaming it without an invalid empty parent",
+          edits: [renameRed, resetRed],
+          expected: { blue: "Blue", green: "Green" },
+        },
+        {
+          name: "does not restore old names after resetting the map and renaming a color",
+          edits: [resetNames, renameBlue, renameRed],
+          expected: { blue: "Ocean", red: "Fire" },
+        },
+        {
+          name: "resets the whole map after renaming a color",
+          edits: [renameBlue, resetNames],
+          expected: {},
+        },
+        {
+          name: "keeps an empty-map replacement before a later color rename",
+          edits: [clearNames, renameBlue],
+          expected: { blue: "Ocean" },
+        },
+        {
+          name: "clears the map after renaming a color",
+          edits: [renameBlue, clearNames],
+          expected: {},
+        },
+      ])("$name", async ({ edits, expected }) => {
+        const initial: SettingsJsonRecord = {
+          timers: {
+            defaultColorNames: { red: "Red", blue: "Blue", green: "Green" },
+          },
+        };
+
+        const operations = edits.map((edit) =>
+          operation({ domain: "appearance", ...edit }),
+        );
+
+        const sequential = applyOperations(initial, operations);
+
+        let stored = structuredClone(initial);
+
+        const { queue, send, statuses } = createHarness(async (batch) => {
+          // The API rejects duplicate documents within a single request.
+          expect(
+            new Set(
+              batch.map(
+                (patch) =>
+                  `${patch.domain}:${patch.scope.type}:${patch.scope.id}`,
+              ),
+            ).size,
+          ).toBe(batch.length);
+
+          stored = applyOperations(stored, batch);
+        });
+
+        if (retry) send.mockRejectedValueOnce(new Error("offline"));
+
+        for (const [index, patch] of operations.entries()) {
+          queue.enqueue({ operation: patch, queryKeys: [] });
+
+          if (retry && index === 0) {
+            // Finish the failed save before editing its retained patch.
+            // eslint-disable-next-line no-await-in-loop
+            await queue.flush();
+          }
+        }
+
+        await queue.flush();
+
+        expect(statuses.at(-1)).toBe("saved");
+        expect(stored).toEqual(sequential);
+        expect(
+          getPath(
+            decodeSettingsRecord(
+              resolveSettingsDomain("appearance", [
+                { scope: userScope, overrides: stored },
+              ]).effective,
+            ),
+            "timers.defaultColorNames",
+          ),
+        ).toEqual(expected);
+      });
+    },
+  );
+
+  it("keeps later edits visible during a split save and retries after a partial failure", async () => {
+    let stored: SettingsJsonRecord = {
+      timers: { defaultColorNames: { red: "Red", blue: "Blue" } },
+    };
+
+    let cached = structuredClone(stored);
+    let requestCount = 0;
+    const secondRequest = Promise.withResolvers<void>();
+    const secondResponse = Promise.withResolvers<void>();
+
+    const { queue, applyOptimistic, statuses } = createHarness(
+      async (batch) => {
+        requestCount++;
+
+        if (requestCount === 2) {
+          secondRequest.resolve();
+          await secondResponse.promise;
+        }
+
+        stored = applyOperations(stored, batch);
+
+        return structuredClone(stored);
+      },
+      (response) => {
+        cached = decodeSettingsRecord(response);
+
+        return true;
+      },
+    );
+
+    applyOptimistic.mockImplementation(
+      ({ operation }: { operation: SettingsOperation }) => {
+        cached = applyOperations(cached, [operation]);
+      },
+    );
     queue.enqueue({
       operation: operation({
         domain: "appearance",
-        set: { timers: { timersColors: { Tanroth: "red" } } },
+        unset: ["timers.defaultColorNames"],
       }),
       queryKeys: [],
     });
     queue.enqueue({
       operation: operation({
         domain: "appearance",
-        unset: ["timers.timersColors.Tanroth"],
+        set: { timers: { defaultColorNames: { blue: "Ocean" } } },
       }),
       queryKeys: [],
     });
-    await vi.advanceTimersByTimeAsync(300);
+    const saving = queue.flush();
+    await secondRequest.promise;
 
-    expect(sentOperations(send)).toEqual([
-      [
-        operation({
-          domain: "appearance",
-          set: { timers: { timersColors: {} } },
-          unset: ["timers.timersColors.Tanroth"],
-        }),
-      ],
-    ]);
+    const expected = { timers: { defaultColorNames: { blue: "Ocean" } } };
+    expect(cached).toEqual(expected);
+    secondResponse.reject(new Error("offline"));
+    await saving;
+
+    expect(statuses.at(-1)).toBe("error");
+    expect(queue.hasPending()).toBe(true);
+    await queue.retry();
+
+    expect(statuses.at(-1)).toBe("saved");
+    expect(queue.hasPending()).toBe(false);
+    expect(stored).toEqual(expected);
+    expect(cached).toEqual(expected);
   });
 
   it.each<{
