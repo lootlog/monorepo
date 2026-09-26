@@ -54,7 +54,7 @@ export const getChatSubmitAction = ({
   if (messageValue.startsWith("!")) {
     return {
       kind: "notification",
-      message: messageValue.length > 1 ? messageValue.slice(1) : messageValue,
+      message: messageValue.slice(1),
     };
   }
 
