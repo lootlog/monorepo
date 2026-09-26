@@ -165,7 +165,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       guildId: guildId ?? "",
       isGrouping: generalConfig.timersGrouping,
     },
-    enabled: isUnderBag || isOpen,
+    enabled: isOpen,
     filters: {
       maxLvl: filters.maxLvl,
       minLvl: filters.minLvl,

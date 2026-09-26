@@ -184,6 +184,27 @@ it("retries a failed world request and displays the recovered timer", async () =
   await waitFor(() => expect(fixture.queryClient.isFetching()).toBe(0));
 });
 
+it("shows and hides the under-bag panel with the timers open state", () => {
+  const fixture = mountTimers(() => {
+    useWindowsStore.getState().setOpen("timers", false);
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, timersUnderBag: true },
+    }));
+  });
+
+  expect(
+    within(fixture.gameColumn).queryByText(/\[H\] Tanroth/),
+  ).not.toBeInTheDocument();
+
+  act(() => useWindowsStore.getState().toggleOpen("timers"));
+  expect(within(fixture.gameColumn).getByText(/\[H\] Tanroth/)).toBeVisible();
+
+  act(() => useWindowsStore.getState().toggleOpen("timers"));
+  expect(
+    within(fixture.gameColumn).queryByText(/\[H\] Tanroth/),
+  ).not.toBeInTheDocument();
+});
+
 it("uses the game world under the NI bag when world selection is disabled", () => {
   const fixture = mountTimers((value) => {
     setTestRuntimeGame({ interface: "ni", world: "luvia" });

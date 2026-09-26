@@ -18,8 +18,10 @@ export const Timers = () => {
   const isUnderBag = timersUnderBag && gameInterface === "ni";
   const { shouldRender: shouldRenderTimersView } = useWindowPresence(open);
 
+  // Under the bag the panel replaces the window, so the same open state, tile
+  // and hotkey show and hide it.
   if (isUnderBag) {
-    return <TimersView isOpen isUnderBag />;
+    return open ? <TimersView isOpen isUnderBag /> : null;
   }
 
   if (!shouldRenderTimersView) {
