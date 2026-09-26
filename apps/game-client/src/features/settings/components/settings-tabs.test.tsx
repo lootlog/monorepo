@@ -46,7 +46,7 @@ describe("SettingsTabs", () => {
     }));
   });
 
-  it("renders fifteen domain tabs in order and opens the selected domain", async () => {
+  it("renders sixteen domain tabs in order and opens the selected domain", async () => {
     const user = userEvent.setup();
     render();
 
@@ -68,6 +68,7 @@ describe("SettingsTabs", () => {
       "Wykrywacz",
       "Wyciszenia",
       "Panel walk",
+      "Pingi",
       "Dźwięki",
       "Sterowanie",
       "Eksperymentalne",

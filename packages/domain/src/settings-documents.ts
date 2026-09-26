@@ -14,6 +14,7 @@ import {
 import { NpcTypeSchema, type NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type {
   AirTagPreferences,
+  BattlePingPreferences,
   DetectorSettings,
   MapPingPreferences,
   NotificationsSettings,
@@ -338,6 +339,11 @@ export const SETTINGS_CATALOG = {
     migrations: [],
     fields: {
       pings: field<Partial<MapPingPreferences>>(
+        {},
+        accountScopes,
+        isEnabledFlagRecord,
+      ),
+      battlePings: field<Partial<BattlePingPreferences>>(
         {},
         accountScopes,
         isEnabledFlagRecord,

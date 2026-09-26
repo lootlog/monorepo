@@ -18,7 +18,6 @@ describe("ExperimentalSettingsTab", () => {
   it("explains that the features need the new interface on the old one", () => {
     const { container } = render();
 
-    expect(container.querySelector("#map-pings")).not.toBeInTheDocument();
     expect(container.querySelector("#air-tags")).not.toBeInTheDocument();
     expect(
       screen.getByText(
@@ -27,11 +26,10 @@ describe("ExperimentalSettingsTab", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows map ping settings on the new interface", () => {
+  it("shows air tag settings on the new interface", () => {
     setTestRuntimeGame({ interface: "ni" });
     const { container } = render();
 
-    expect(container.querySelector("#map-pings")).toBeInTheDocument();
     expect(container.querySelector("#air-tags")).toBeInTheDocument();
   });
 });
