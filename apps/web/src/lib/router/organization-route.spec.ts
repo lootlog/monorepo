@@ -9,6 +9,7 @@ import {
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
 import type { RouterContext } from "@/App";
+import { createInitialNavigation } from "@/lib/router/initial-navigation";
 import { Route } from "../../routes/_authenticated/$guildId";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -63,7 +64,7 @@ it("finishes organization navigation with an error after bounded lookup retries"
 
   const router = createRouter({
     routeTree: root.addChildren([route]),
-    context: { queryClient },
+    context: { queryClient, initialNavigation: createInitialNavigation() },
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
 

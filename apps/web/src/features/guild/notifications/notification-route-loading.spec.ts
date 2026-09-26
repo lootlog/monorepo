@@ -11,6 +11,7 @@ import {
 import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
 import type { RouterContext } from "@/App";
+import { createInitialNavigation } from "@/lib/router/initial-navigation";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -74,7 +75,7 @@ it.each([
 
       const router = createRouter({
         routeTree: root.addChildren([route]),
-        context: { queryClient },
+        context: { queryClient, initialNavigation: createInitialNavigation() },
         history: createMemoryHistory({ initialEntries: ["/"] }),
       });
 
