@@ -115,9 +115,10 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     expect(
       screen.getByRole("button", { name: /Opóźnienie połączenia: 42 ms/ }),
     ).toBeVisible();
-    expect(screen.getByText("42 ms")).toBeVisible();
     act(() => gateway.wire.close());
-    expect(screen.queryByText("42 ms")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Opóźnienie połączenia/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: "Połączenie przerwane, ponowne łączenie…",
@@ -134,6 +135,66 @@ it("shows connecting, then memberships and heartbeat latency, and lets a dropped
     gateway.cleanup();
     fixture.cleanup();
     useGameStore.setState(previousGameState);
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  }
+});
+
+it("probes the latency only while the popover shows it", async () => {
+  const fixture = createTimerHttpFixture();
+  const gateway = createTimerRealtimeFixture();
+
+  const pings = () =>
+    gateway.wire.frames.filter(
+      (frame) => "type" in frame && frame.type === "connection.ping",
+    );
+
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <SocketProvider>
+        <ConnectionStatus />
+      </SocketProvider>
+    </QueryClientProvider>,
+  );
+
+  try {
+    act(() => gateway.wire.open());
+    await gateway.join(["guild-1"]);
+    vi.useFakeTimers();
+    let now = 1_000;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+
+    const answerLastPing = async (latencyMs: number) => {
+      const ping = pings().at(-1);
+
+      if (!ping || !("requestId" in ping) || !ping.requestId)
+        throw new Error("Expected a latency probe");
+      const requestId = ping.requestId;
+      now += latencyMs;
+      await act(async () => {
+        gateway.wire.receive({ v: 1, requestId, status: "success", data: {} });
+        await vi.advanceTimersByTimeAsync(0);
+      });
+    };
+
+    // Heartbeats alone keep the latency fresh while nothing shows it.
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    expect(pings()).toHaveLength(0);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Połączono z serwerem" }),
+    );
+    await answerLastPing(17);
+    expect(
+      screen.getByRole("button", { name: /Opóźnienie połączenia: 17 ms/ }),
+    ).toBeVisible();
+
+    await act(() => vi.advanceTimersByTimeAsync(2_000));
+    expect(pings()).toHaveLength(2);
+  } finally {
+    view.unmount();
+    gateway.cleanup();
+    fixture.cleanup();
     vi.restoreAllMocks();
     vi.useRealTimers();
   }

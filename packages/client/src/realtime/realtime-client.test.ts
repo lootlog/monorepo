@@ -508,6 +508,59 @@ describe("RealtimeClient", () => {
     },
   );
 
+  it("probes latency only while the joined gateway advertises connection.ping", async () => {
+    vi.useFakeTimers();
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const sockets: TestWebSocket[] = [];
+    const latencies: Array<number | null> = [];
+
+    const client = new RealtimeClient({
+      url: "https://gateway.example.test",
+      random: () => 0,
+      webSocketFactory: () => {
+        const socket = new TestWebSocket();
+        sockets.push(socket);
+
+        return socket;
+      },
+    });
+
+    client.subscribeHeartbeatLatency((latency) => latencies.push(latency));
+    client.connect();
+    const current = socketAt(sockets, 0);
+    current.open();
+    const joined = client.join(joinData);
+    respondToLastRequest(current, { capabilities: ["connection.ping"] });
+    await flushMessages();
+    await joined;
+
+    client.probeLatency();
+    client.probeLatency();
+    expect(current.sent).toHaveLength(2);
+    expect(frameAt(current, 1)).toMatchObject({
+      type: "connection.ping",
+      data: {},
+    });
+    now += 30;
+    respondToLastRequest(current);
+    await flushMessages();
+    expect(latencies.at(-1)).toBe(30);
+
+    // A gateway rollback must not receive a command it closes the socket for.
+    current.close(4000);
+    await vi.advanceTimersByTimeAsync(1_000);
+    const rolledBack = socketAt(sockets, 1);
+    rolledBack.open();
+    respondToLastRequest(rolledBack, { organizationIds: ["org-1"] });
+    await flushMessages();
+    expect(client.state).toBe("ready");
+
+    client.probeLatency();
+    expect(rolledBack.sent).toHaveLength(1);
+    client.disconnect();
+  });
+
   it("rejoins and restores logical subscriptions after jittered reconnect", async () => {
     vi.useFakeTimers();
     const sockets: TestWebSocket[] = [];

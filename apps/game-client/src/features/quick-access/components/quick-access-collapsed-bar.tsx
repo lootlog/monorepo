@@ -21,7 +21,7 @@ export const QuickAccessCollapsedBar: FC = () => {
           <GripVertical className="ll:size-4" />
         </span>
       )}
-      <ConnectionStatus showPing={false} />
+      <ConnectionStatus />
       <QuickAccessCollapseButton collapsed />
     </div>
   );

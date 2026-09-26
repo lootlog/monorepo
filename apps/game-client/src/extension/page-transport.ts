@@ -211,6 +211,10 @@ export function createPageTransport(
         heartbeatLatencies.delete(listener);
       };
     },
+    probeLatency: () => {
+      if (state !== "ready") return;
+      void request({ type: "probe-latency" }).catch(() => {});
+    },
     // SocketProvider owns startup for extension documents.
     setReconnectHandler: () => {},
   };

@@ -22,6 +22,7 @@ type IconButtonProps = Omit<
    */
   active?: boolean;
   variant?: "quiet" | "quiet-destructive" | "taskbar";
+  onTooltipOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -36,9 +37,10 @@ export const IconButton = ({
   children,
   active,
   variant = "quiet",
+  onTooltipOpenChange,
   ...props
 }: IconButtonProps) => (
-  <Tooltip>
+  <Tooltip onOpenChange={(open) => onTooltipOpenChange?.(open)}>
     <TooltipTrigger asChild>
       <Button
         type="button"
