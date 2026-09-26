@@ -1,10 +1,8 @@
 import { createsOther } from "./runtime-event-parser";
-import { useFriendsStore } from "@/store/friends.store";
 import { useGameStore } from "@/store/game.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
-import { parseFriendsListFromEvent } from "@/utils/game/events/parse-friends-list-from-event";
 import type {
   GameEvent,
   OtherCreate,
@@ -15,6 +13,11 @@ import {
   type MargonemRuntimeAdapter,
 } from "./runtime-adapter";
 import { runtimeOtherHandles } from "./runtime-other-handles";
+import {
+  applySocialLists,
+  observeOtherEntries,
+  observeOtherHandles,
+} from "./social-relations-projection";
 import type {
   RuntimeEventEnvelope,
   RuntimeGameSnapshot,
@@ -214,7 +217,7 @@ export class RuntimeStateProjection {
       runtimeOtherHandles.replace(otherHandles);
       useOthersStore.getState().replaceOthers(snapshot.others);
       usePartyStore.getState().replaceParty(snapshot.party);
-      useFriendsStore.getState().replaceFriends(snapshot.friends, 0);
+      observeOtherHandles(otherHandles);
 
       return true;
     } catch {
@@ -315,6 +318,8 @@ export class RuntimeStateProjection {
       this.applyOthers(event.other ?? {}, mapChanged);
     }
 
+    if (event.other) observeOtherEntries(event.other);
+
     if (event.npcs || event.npcs_del || mapChanged) {
       this.applyNpcs(event, mapChanged);
     }
@@ -323,9 +328,7 @@ export class RuntimeStateProjection {
       usePartyStore.getState().replaceParty(normalizeParty(event.party));
     }
 
-    if (event.friends !== undefined || event.friends_max !== undefined) {
-      this.applyFriends(event);
-    }
+    applySocialLists(event);
   }
 
   cleanup(): void {
@@ -519,31 +522,10 @@ export class RuntimeStateProjection {
     return this.icons.get(getOptionalProperty(icon, "id") ?? -1);
   }
 
-  private applyFriends(event: GameEvent): void {
-    const current = useFriendsStore.getState();
-
-    const friends = event.friends
-      ? parseFriendsListFromEvent(event.friends).map((friend) =>
-          Object.freeze({
-            characterId: friend.characterId,
-            icon: friend.icon,
-            level: Number(friend.lvl),
-            location: friend.location,
-            name: friend.nick,
-            profession: friend.prof,
-            status: friend.status,
-          }),
-        )
-      : current.friends;
-
-    current.replaceFriends(friends, event.friends_max ?? current.friendsMax);
-  }
-
   private clearStores(): void {
     useGameStore.getState().clearGame();
     useNpcsStore.getState().clearNpcs();
     usePartyStore.getState().clearParty();
-    useFriendsStore.getState().clearFriends();
     runtimeOtherHandles.clear();
     useOthersStore.getState().clearOthers();
   }

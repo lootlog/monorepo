@@ -6,7 +6,6 @@ import { mapPingController } from "@/features/map-pings/map-ping-controller";
 import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
-import { useFriendsStore } from "@/store/friends.store";
 import { useBattleStore } from "@/store/game-store/battle.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 import { useLootStore } from "@/store/game-store/loot.store";
@@ -19,6 +18,7 @@ import {
 } from "./margonem-runtime/margonem-runtime-bridge";
 import { runtimeEventPipeline } from "./margonem-runtime/runtime-event-pipeline";
 import { useGameStore } from "@/store/game.store";
+import { useSocialRelationsStore } from "@/store/social-relations.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 
@@ -264,7 +264,7 @@ function resetPipelineState(): void {
   });
   useBattlePanelStore.setState({ isBattleCollectionEnabled: true });
   useDialogStore.getState().clearNpcContext();
-  useFriendsStore.setState({ friends: [], friendsMax: 0 });
+  useSocialRelationsStore.setState({ characters: {}, clans: {} });
   useGlobalStore.setState({
     socketState: { connected: false, joined: false, joinedGuilds: [] },
   });
@@ -341,8 +341,7 @@ function replayAndSnapshot(payload: unknown) {
       mapPingClears: effects.clearMapPings.mock.calls.length,
       otherObservations: effects.observeOtherPlayers.mock.calls,
     },
-    friends: useFriendsStore.getState().friends,
-    friendsMax: useFriendsStore.getState().friendsMax,
+    friends: useSocialRelationsStore.getState().characters,
     lastLootId: useLootStore.getState().lastLootId,
     party: usePartyStore.getState().members,
     result,
@@ -391,18 +390,9 @@ describe("game event pipeline golden replay", () => {
         mapPingClears: 1,
         otherObservations: [[{}]],
       },
-      friends: [
-        {
-          characterId: "55",
-          icon: "friend.gif",
-          level: 300,
-          location: "Nithal",
-          name: "Friend",
-          profession: "m",
-          status: "online",
-        },
-      ],
-      friendsMax: 25,
+      friends: {
+        '["luvia","67890","12345"]': { enemies: {}, friends: { "55": true } },
+      },
       lastLootId: null,
       party: [
         {

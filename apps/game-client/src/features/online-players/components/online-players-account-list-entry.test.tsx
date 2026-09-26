@@ -8,7 +8,11 @@ import {
   testRuntimeWindow,
 } from "@/test/test-runtime-window";
 import { usePartyStore } from "@/store/party.store";
-import { useFriendsStore } from "@/store/friends.store";
+import { useGameStore } from "@/store/game.store";
+import {
+  getSocialScopes,
+  useSocialRelationsStore,
+} from "@/store/social-relations.store";
 import type {
   showCharacterEquipment,
   showCharacterProfile,
@@ -98,7 +102,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       interface: "ni",
     });
     usePartyStore.getState().clearParty();
-    useFriendsStore.getState().clearFriends();
+    useSocialRelationsStore.setState({ characters: {}, clans: {} });
   });
 
   it("renders player name and location from player location", () => {
@@ -493,20 +497,18 @@ describe("OnlinePlayersAccountListEntry", () => {
   });
 
   it("hides add friend context action for existing friends", async () => {
-    useFriendsStore.getState().replaceFriends(
-      [
-        {
-          characterId: "10",
-          icon: "hero.gif",
-          level: 123,
-          location: "Ithan",
-          name: "Hero",
-          profession: "w",
-          status: "online",
-        },
-      ],
-      10,
-    );
+    const game = useGameStore.getState().game;
+
+    const scopes = getSocialScopes({
+      accountId: game?.hero.accountId,
+      characterId: game?.hero.characterId,
+      world: game?.world,
+    });
+
+    if (!scopes) throw new Error("Expected a test hero");
+    useSocialRelationsStore
+      .getState()
+      .replaceCharacterList(scopes.character, "friends", ["10"]);
 
     render(<OnlinePlayersAccountListEntry presence={createPresence()} />);
 

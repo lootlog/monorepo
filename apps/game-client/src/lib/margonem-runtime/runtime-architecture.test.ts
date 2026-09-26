@@ -74,7 +74,7 @@ describe("runtime architecture", () => {
       "npcs.store.ts",
       "others.store.ts",
       "party.store.ts",
-      "friends.store.ts",
+      "social-relations.store.ts",
     ];
 
     for (const store of stores) {

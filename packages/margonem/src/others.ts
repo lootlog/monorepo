@@ -9,6 +9,9 @@ export type GameOther = {
   nick: string;
   x?: number;
   y?: number;
+  /** Margonem's `SocietyData.RELATION` of this player to the hero. */
+  relation?: number;
+  clan?: { id: number; name: string };
 };
 
 export type Other = CharacterTooltipOwner & {

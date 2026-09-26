@@ -196,7 +196,6 @@ abstract class BaseRuntimeAdapter implements MargonemRuntimeAdapter {
 
   getStateSnapshot(): RuntimeStateSnapshot {
     return Object.freeze({
-      friends: Object.freeze([]),
       game: this.getGameSnapshot(),
       npcs: this.getAllNpcs(),
       others: this.getAllOthers(),

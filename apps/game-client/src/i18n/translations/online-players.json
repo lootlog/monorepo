@@ -65,7 +65,10 @@
       "afk": "AFK",
       "party": "W Twojej grupie",
       "clan": "Twój klan",
-      "friend": "Znajomy"
+      "friend": "Znajomy",
+      "enemy": "Wróg",
+      "clan-enemy": "Wrogi klan",
+      "clan-ally": "Sojuszniczy klan"
     }
   }
 }
