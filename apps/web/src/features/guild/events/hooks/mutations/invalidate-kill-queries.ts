@@ -24,7 +24,10 @@ const isEventKillQuery = (query: Query, guildId: string, eventId: string) => {
     return false;
   }
 
-  if (path === getEventKillsPath(guildId, eventId)) {
+  if (
+    path === getEventKillsPath(guildId, eventId) ||
+    path === `/guilds/${guildId}/events/${eventId}/kill-history`
+  ) {
     return true;
   }
 

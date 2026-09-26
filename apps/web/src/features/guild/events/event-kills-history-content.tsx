@@ -92,6 +92,9 @@ export const EventKillsHistoryContent = ({
     isFetchingNextPage,
     isLoading: killsLoading,
     isError: killsHasError,
+    isFetchNextPageError,
+    isFetching,
+    refetch,
   } = useEventKillHistory({
     guildId: routeIds.guildId,
     eventId: routeIds.eventId,
@@ -180,6 +183,10 @@ export const EventKillsHistoryContent = ({
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             fetchNextPage={fetchNextPage}
+            onRetry={() =>
+              void (isFetchNextPageError ? fetchNextPage() : refetch())
+            }
+            isRetrying={isFetching}
           />
         </div>
       </ScrollArea>

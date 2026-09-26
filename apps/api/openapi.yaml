@@ -11805,11 +11805,11 @@ paths:
                 additionalProperties: false
       description: Get kill counts and stats for all heroes in an event
       summary: Get event hero stats
-  /guilds/{guildId}/events/{eventId}/kills:
+  /guilds/{guildId}/events/{eventId}/kill-history:
     get:
       tags:
         - events
-      operationId: EventsRankingController_getEventKillHistory
+      operationId: listEventKillHistory
       parameters:
         - name: eventId
           in: path
@@ -11825,32 +11825,46 @@ paths:
           in: query
           schema:
             type: string
+            pattern: ^(?:[1-9]\d?|100)$
+            description: Page size from 1 to 100. Defaults to 20.
           required: false
         - name: cursor
           in: query
           schema:
             type: string
+            minLength: 1
+            maxLength: 4096
+            description: Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged.
           required: false
         - name: heroId
           in: query
           schema:
             type: string
+            minLength: 1
+          required: false
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            pattern: ^[1-9]\d*$
           required: false
       security:
         - bearer: []
       responses:
         "200":
-          description: EventKillHistoryResponseDto
+          description: KillHistoryResponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventKillHistoryResponseDto"
+                $ref: "#/components/schemas/KillHistoryResponse"
         "400":
-          description: RequestValidationError
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RequestValidationError"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11893,8 +11907,101 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Get paginated kill history for all heroes in an event, with participant point details
+      description: Read visible kills in descending (killedAt, id) order. Filter by hero or member. Cursors are opaque and scoped to the Organization, event and filters. Continuation reads current data, not a frozen snapshot. Full participants and map data are available from kill detail and timeline endpoints.
+      summary: List event kill history summaries
+  /guilds/{guildId}/events/{eventId}/kills:
+    get:
+      tags:
+        - events
+      operationId: EventsRankingController_getEventKillHistory
+      parameters:
+        - name: eventId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: guildId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: limit
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: heroId
+          in: query
+          schema:
+            type: string
+          required: false
+      security:
+        - bearer: []
+      responses:
+        "200":
+          description: EventKillHistoryResponseDto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventKillHistoryResponseDto"
+        "400":
+          description: HttpErrorResponse | RequestValidationError
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
+        "401":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+        "404":
+          description: HttpErrorResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpErrorResponse"
+        "429":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+                additionalProperties: false
+      description: "Deprecated: use listEventKillHistory for lightweight summaries. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100."
       summary: Get event kill history
+      deprecated: true
   /guilds/{guildId}/events/{eventId}/members/{memberId}/kills:
     get:
       tags:
@@ -11941,11 +12048,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventMemberKillHistoryResponseDto"
         "400":
-          description: RequestValidationError
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RequestValidationError"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -11988,8 +12097,9 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Get paginated kill history for a specific member in an event, with detailed point breakdown per kill
+      description: "Deprecated: use listEventKillHistory with memberId. This endpoint retains its full response and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100."
       summary: Get member kill history
+      deprecated: true
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills:
     get:
       tags:
@@ -12031,11 +12141,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventKillHistoryResponseDto"
         "400":
-          description: RequestValidationError
+          description: HttpErrorResponse | RequestValidationError
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RequestValidationError"
+                anyOf:
+                  - $ref: "#/components/schemas/HttpErrorResponse"
+                  - $ref: "#/components/schemas/RequestValidationError"
         "401":
           description: Error
           content:
@@ -12078,8 +12190,9 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Get paginated kill history for a specific hero, with participant point details
+      description: "Deprecated: use listEventKillHistory with heroId. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100."
       summary: Get hero kill history
+      deprecated: true
   /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}:
     get:
       tags:
@@ -26987,6 +27100,228 @@ components:
         - npcProf
         - killCount
       additionalProperties: false
+    KillHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        heroNpcId:
+          type: string
+        killedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        minSpawnTimeAtKill:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        maxSpawnTimeAtKill:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        isManualClose:
+          type: boolean
+        heroNpc:
+          type: object
+          properties:
+            id:
+              type: string
+            npcId:
+              nullable: true
+              type: number
+            npcName:
+              type: string
+            npcIcon:
+              nullable: true
+              type: string
+            npcLvl:
+              nullable: true
+              type: number
+          required:
+            - id
+            - npcId
+            - npcName
+            - npcIcon
+            - npcLvl
+          additionalProperties: false
+        participantCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Number of recorded participants with a point record, including participants marked absent.
+      required:
+        - id
+        - heroNpcId
+        - killedAt
+        - minSpawnTimeAtKill
+        - maxSpawnTimeAtKill
+        - isManualClose
+        - heroNpc
+        - participantCount
+      additionalProperties: false
+    KillHistoryEventResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - event
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/KillHistoryEntry"
+        nextCursor:
+          nullable: true
+          type: string
+      required:
+        - kind
+        - data
+        - nextCursor
+      additionalProperties: false
+    KillHistoryBonusBreakdown:
+      anyOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            $ref: "#/components/schemas/KillHistoryBonusBreakdown"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/KillHistoryBonusBreakdown"
+      nullable: true
+    KillHistoryMemberPoint:
+      type: object
+      properties:
+        points:
+          type: number
+        basePoints:
+          type: number
+        manualAdjustmentPoints:
+          nullable: true
+          type: number
+        bonusBreakdown:
+          $ref: "#/components/schemas/KillHistoryBonusBreakdown"
+        trackingDurationSeconds:
+          nullable: true
+          type: number
+        trackingDurationPercentage:
+          nullable: true
+          type: number
+      required:
+        - points
+        - basePoints
+        - manualAdjustmentPoints
+        - bonusBreakdown
+        - trackingDurationSeconds
+        - trackingDurationPercentage
+      additionalProperties: false
+    KillHistoryMemberEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        heroNpcId:
+          type: string
+        killedAt:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        minSpawnTimeAtKill:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        maxSpawnTimeAtKill:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+        isManualClose:
+          type: boolean
+        heroNpc:
+          type: object
+          properties:
+            id:
+              type: string
+            npcId:
+              nullable: true
+              type: number
+            npcName:
+              type: string
+            npcIcon:
+              nullable: true
+              type: string
+            npcLvl:
+              nullable: true
+              type: number
+          required:
+            - id
+            - npcId
+            - npcName
+            - npcIcon
+            - npcLvl
+          additionalProperties: false
+        participantCount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          description: Number of recorded participants with a point record, including participants marked absent.
+        memberPoint:
+          $ref: "#/components/schemas/KillHistoryMemberPoint"
+      required:
+        - id
+        - heroNpcId
+        - killedAt
+        - minSpawnTimeAtKill
+        - maxSpawnTimeAtKill
+        - isManualClose
+        - heroNpc
+        - participantCount
+        - memberPoint
+      additionalProperties: false
+    KillHistoryMemberResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+            - member
+        member:
+          type: object
+          properties:
+            id:
+              type: integer
+              minimum: 1
+              maximum: 9007199254740991
+            name:
+              type: string
+            avatar:
+              nullable: true
+              type: string
+            userId:
+              type: string
+          required:
+            - id
+            - name
+            - avatar
+            - userId
+          additionalProperties: false
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/KillHistoryMemberEntry"
+        nextCursor:
+          nullable: true
+          type: string
+      required:
+        - kind
+        - member
+        - data
+        - nextCursor
+      additionalProperties: false
+    KillHistoryResponse:
+      anyOf:
+        - $ref: "#/components/schemas/KillHistoryEventResponse"
+        - $ref: "#/components/schemas/KillHistoryMemberResponse"
     EventKillHistoryResponseDto__schema0:
       anyOf:
         - type: string

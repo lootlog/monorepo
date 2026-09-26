@@ -4,13 +4,15 @@ import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { invalidateKillQueries } from "../mutations/invalidate-kill-queries";
 import {
-  invalidateEventMapListQuery,
   invalidateMapQueries,
   invalidateGapQueries,
 } from "../mutations/invalidate-map-queries";
 import { invalidateRankingQueries } from "../mutations/invalidate-ranking-queries";
 import { invalidateRespawnQueries } from "../mutations/invalidate-respawn-queries";
-import { invalidateEventQueries } from "../mutations/invalidate-event-queries";
+import {
+  invalidateEventQueries,
+  resetEventPolicyQueries,
+} from "../mutations/invalidate-event-queries";
 
 interface UseEventSocketOptions {
   eventId?: string;
@@ -105,7 +107,7 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       return;
     }
 
-    invalidateEventMapListQuery(queryClient, routeGuildId, eventId);
+    void resetEventPolicyQueries(queryClient);
   });
 
   const handleJoin = useEffectEvent(

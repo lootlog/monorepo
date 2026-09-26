@@ -2005,12 +2005,16 @@ export const eventHeroKillTable = pgTable(
     isManualClose: boolean("isManualClose").default(false).notNull(),
   },
   (table) => [
-    index("EventHeroKill_heroNpcId_idx").on(table["heroNpcId"]),
-    index("EventHeroKill_heroNpcId_killedAt_idx").on(
+    // Match ORDER BY DESC's null ordering so PostgreSQL can seek without sorting.
+    index("EventHeroKill_heroNpcId_killedAt_id_idx").on(
       table["heroNpcId"],
-      table["killedAt"],
+      table["killedAt"].desc().nullsFirst(),
+      table["id"].desc().nullsFirst(),
     ),
-    index("EventHeroKill_killedAt_idx").on(table["killedAt"]),
+    index("EventHeroKill_killedAt_id_idx").on(
+      table["killedAt"].desc().nullsFirst(),
+      table["id"].desc().nullsFirst(),
+    ),
     foreignKey({
       columns: [table["heroNpcId"]],
       foreignColumns: [eventHeroNpcTable["id"]],
@@ -2064,7 +2068,10 @@ export const eventKillPointTable = pgTable(
       table["killId"],
       table["memberId"],
     ),
-    index("EventKillPoint_memberId_idx").on(table["memberId"]),
+    index("EventKillPoint_memberId_killId_idx").on(
+      table["memberId"],
+      table["killId"],
+    ),
     index("EventKillPoint_memberId_confirmationDeadlineAt_confirmedAt_idx").on(
       table["memberId"],
       table["confirmationDeadlineAt"],

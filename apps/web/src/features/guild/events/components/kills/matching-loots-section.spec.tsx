@@ -15,6 +15,8 @@ describe("MatchingLootsSection", () => {
   it("renders matching loots as embedded rows inside one shared card", async () => {
     render(
       <MatchingLootsSection
+        hasError={false}
+        onRetry={() => {}}
         loots={[createLoot(1), createLoot(2)]}
         isLoading={false}
         guildId="guild-one"
@@ -55,6 +57,8 @@ describe("MatchingLootsSection", () => {
   it("keeps loading and empty states inside the shared card", async () => {
     const { rerender } = render(
       <MatchingLootsSection
+        hasError={false}
+        onRetry={() => {}}
         loots={[]}
         isLoading
         guildId="guild-one"
@@ -72,6 +76,8 @@ describe("MatchingLootsSection", () => {
 
     rerender(
       <MatchingLootsSection
+        hasError={false}
+        onRetry={() => {}}
         loots={[]}
         isLoading={false}
         guildId="guild-one"

@@ -30,6 +30,12 @@ const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}/permissions",
 ]);
 
+const LEGACY_KILL_HISTORY_OPERATIONS = [
+  "GET /guilds/{guildId}/events/{eventId}/kills",
+  "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
+  "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
+];
+
 const ORGANIZATION_NOT_FOUND_OPERATIONS = new Set([
   "GET /guilds/{guildId}/members",
   "GET /guilds/{guildId}/members/references",
@@ -311,13 +317,15 @@ const API_ERROR_RESPONSE_MIGRATIONS = [
       "PATCH /guilds/{guildId}/events/{eventId}/ranking/{rankingId}",
       "GET /guilds/{guildId}/events/{eventId}/timers",
       "GET /guilds/{guildId}/events/{eventId}/hero-stats",
-      "GET /guilds/{guildId}/events/{eventId}/kills",
-      "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
-      "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
       "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}",
       "PATCH /guilds/{guildId}/events/{eventId}/kills/{killId}/points/{killPointId}",
       "GET /guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills/{killId}/timeline",
     ],
+  },
+  {
+    restore: ["404"],
+    add: ["400"],
+    operations: LEGACY_KILL_HISTORY_OPERATIONS,
   },
   {
     restore: ["404"],
@@ -845,6 +853,27 @@ const normalizeServiceAuthentication = (
   return normalized;
 };
 
+const normalizeLegacyKillHistoryDeprecation = (
+  service: string,
+  operationKey: string,
+  operation: JsonValue,
+): JsonValue => {
+  if (
+    service !== "api" ||
+    !LEGACY_KILL_HISTORY_OPERATIONS.includes(operationKey)
+  )
+    return operation;
+
+  // Verified by http-boundary.e2e-spec.ts: the UUID list contracts remain
+  // available, with explicit invalid-cursor errors and a replacement endpoint.
+  if (!isJsonObject(operation) || operation["deprecated"] !== true)
+    throw new Error(`${operationKey} must remain deprecated`);
+
+  const { deprecated: _deprecated, ...withoutDeprecation } = operation;
+
+  return withoutDeprecation;
+};
+
 export const normalizeAllowedChanges = (
   service: string,
   operationKey: string,
@@ -855,6 +884,12 @@ export const normalizeAllowedChanges = (
     service,
     operationKey,
     operation,
+  );
+
+  normalized = normalizeLegacyKillHistoryDeprecation(
+    service,
+    operationKey,
+    normalized,
   );
 
   if (service === "auth" && operationKey === "GET /auth/verify") {
@@ -981,6 +1016,67 @@ const differencePaths = (
   return differences;
 };
 
+// Verified against PostgreSQL by http-boundary.e2e-spec.ts.
+const KILL_HISTORY_ADDITION: JsonValue = {
+  operationId: "listEventKillHistory",
+  parameters: [
+    ...["eventId", "guildId"].map((name) => ({
+      name,
+      in: "path",
+      required: true,
+      schema: { type: "string" },
+    })),
+    {
+      name: "cursor",
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1, maxLength: 4096 },
+    },
+    {
+      name: "heroId",
+      in: "query",
+      required: false,
+      schema: { type: "string", minLength: 1 },
+    },
+    {
+      name: "limit",
+      in: "query",
+      required: false,
+      schema: { type: "string", pattern: "^(?:[1-9]\\d?|100)$" },
+    },
+    {
+      name: "memberId",
+      in: "query",
+      required: false,
+      schema: { type: "string", pattern: "^[1-9]\\d*$" },
+    },
+  ],
+  security: [{ bearer: [] }],
+  responses: {
+    "200": {
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/KillHistoryResponse" },
+        },
+      },
+    },
+    "400": {
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+        },
+      },
+    },
+    "404": {
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/HttpErrorResponse" },
+        },
+      },
+    },
+  },
+};
+
 // Intentional private additions verified against real persistence and authorization tests:
 // activity/src/online/online-repository.integration.test.ts;
 // api/test/kill-analytics.integration.test.ts, user-feed.integration.test.ts and records.operations.test.ts.
@@ -1026,6 +1122,8 @@ const PERSONAL_ANALYTICS_ADDITIONS = new Map<
       },
     },
     api: {
+      "GET /guilds/{guildId}/events/{eventId}/kill-history":
+        KILL_HISTORY_ADDITION,
       // Verified by ready-room-visibility.test.ts and ready-room-cas.integration.test.ts.
       "GET /messaging/party-gathering/active": {
         operationId: "PartyReadyRoomController_active",
