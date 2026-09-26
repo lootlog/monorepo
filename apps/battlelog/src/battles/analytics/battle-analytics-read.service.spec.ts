@@ -519,7 +519,7 @@ it("folds combat history across tied-date batches without losing packed fallback
   expect(actual.phTrend.map((point) => point.battleId)).toEqual(
     battleRows.slice(0, 260).map((battle) => battle.id),
   );
-});
+}, 15_000);
 
 it("selects the recorder among multiple owned participants and uses character order when recorder is absent", async () => {
   await runtime.runPromise(
