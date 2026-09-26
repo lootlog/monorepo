@@ -1,5 +1,6 @@
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
+import { REALTIME_BATTLE_PING_CAPABILITY } from "@lootlog/protocol/realtime";
 import {
   accountPreferenceValues,
   createSettingsDocuments,
@@ -43,6 +44,12 @@ const preferences = (
   hasStoredPreferences: true,
 });
 
+const monster = {
+  collider: { box: [384, 240, 416, 320] as const },
+  d: { id: 91, type: 2, x: 12, y: 9 },
+  ry: 9,
+};
+
 const remotePing = () => ({
   v: 1 as const,
   type: "map-ping.received" as const,
@@ -63,6 +70,7 @@ const setup = async ({
   connected = true,
   joined = true,
   oldInterface = false,
+  npcUnderCursor = false,
 } = {}) => {
   const test = createRealtimeTest();
 
@@ -95,6 +103,12 @@ const setup = async ({
   vi.stubGlobal("Engine", {
     apiData: { CALL_DRAW_ADD_TO_RENDERER: "call_draw_add_to_renderer" },
     map: { d: { id: 42 }, offset: [0, 0], size: { x: 100, y: 100 } },
+    // A 32×80 monster standing on tile (12, 9); the press lands on its body.
+    npcs: {
+      check: () => (npcUnderCursor ? { "91": monster } : {}),
+      getById: (id: number) =>
+        npcUnderCursor && id === 91 ? monster : undefined,
+    },
   });
   const canvas = document.createElement("canvas");
   canvas.id = "GAME_CANVAS";
@@ -130,7 +144,11 @@ const setup = async ({
           v: 1,
           requestId: request.requestId,
           status: "success",
-          data: { connectionId: "test", organizationIds: ["guild-1"] },
+          data: {
+            connectionId: "test",
+            organizationIds: ["guild-1"],
+            capabilities: [REALTIME_BATTLE_PING_CAPABILITY],
+          },
         });
       });
     }
@@ -253,6 +271,17 @@ describe("usePings on the map", () => {
       preservesPitch: false,
     });
   });
+  it("attacks the monster under the cursor with a tap and names it for other clients", async () => {
+    const test = await setup({ npcUnderCursor: true });
+
+    expect(test.tap()).toBe(true);
+    expect(test.pingRequests()).toEqual([
+      expect.objectContaining({
+        data: { expectedMapId: 42, npcId: 91, type: "enemy", x: 12, y: 9 },
+      }),
+    ]);
+  });
+
   it("uses the latest cached preference before the query rerenders", async () => {
     const test = await setup({ enabled: false });
     test.setEnabled(true);

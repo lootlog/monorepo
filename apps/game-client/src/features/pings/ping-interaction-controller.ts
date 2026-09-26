@@ -31,7 +31,7 @@ export type PingPressIdentity =
   | { kind: "mouse"; button: number };
 
 export type PingTarget =
-  | { kind: "map"; mapId: number; tile: MapTile }
+  | { kind: "map"; mapId: number; npcId?: number; tile: MapTile }
   | { kind: "battle"; warriorId: number };
 
 export type PingMenu = {

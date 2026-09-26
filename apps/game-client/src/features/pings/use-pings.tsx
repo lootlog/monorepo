@@ -92,7 +92,10 @@ export const usePings = () => {
 
     const { target, type } = submission;
 
-    if (target.kind === "map" && isMapPingType(type)) {
+    if (target.kind === "map" && type === "attack" && target.npcId) {
+      // Attacking a monster travels as an enemy ping that names the NPC.
+      mapPings.send(target.mapId, target.tile, "enemy", target.npcId);
+    } else if (target.kind === "map" && isMapPingType(type)) {
       mapPings.send(target.mapId, target.tile, type);
     } else if (target.kind === "battle" && isBattlePingType(type)) {
       battlePings.send(target.warriorId, type);
