@@ -30,11 +30,18 @@ const categories = Array.from(groupedActions);
 
 export const HotkeysSettingsTab = () => {
   const gameInterface = useGameStore((state) => state.game?.interface);
-  const { bindings, setBinding, resetBinding, resetAll } = useHotkeysStore();
 
-  const [capturingAction, setCapturingAction] = useState<HotkeyAction | null>(
-    null,
-  );
+  const {
+    bindings,
+    setBinding,
+    resetBinding,
+    resetAll,
+    recordingAction: capturingAction,
+    setRecordingAction: setCapturingAction,
+  } = useHotkeysStore();
+
+  // Leaving the tab mid-recording must not leave every hotkey disabled.
+  useEffect(() => () => setCapturingAction(null), [setCapturingAction]);
 
   const [captureError, setCaptureError] = useState<string | null>(null);
 
@@ -108,7 +115,7 @@ export const HotkeysSettingsTab = () => {
         capture: true,
       });
     };
-  }, [capturingAction, setBinding, t]);
+  }, [capturingAction, setBinding, setCapturingAction, t]);
 
   return (
     <SettingsTabLayout>

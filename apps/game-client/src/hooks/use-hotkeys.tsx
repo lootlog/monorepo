@@ -185,9 +185,24 @@ export const useHotkeys = ({
       return false;
     };
 
+    // Margonem reads keys from a bubbling document listener and ignores
+    // modifiers, so Shift+S would also walk the hero south. This listener runs
+    // in the window capture phase and keeps a key it handles from the game.
+    const consumeKey = (event: KeyboardEvent) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    // The settings recorder listens later in the same capture phase; while it
+    // records, the key is the new binding, not a hotkey.
+    const isRecordingBinding = () =>
+      useHotkeysStore.getState().recordingAction !== null;
+
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isRecordingBinding()) return;
+
       if (event.key === "Escape" && cancelActiveMapPing()) {
-        event.preventDefault();
+        consumeKey(event);
 
         return;
       }
@@ -195,7 +210,7 @@ export const useHotkeys = ({
       if (isEditableElementActive()) return;
 
       if (executeAction(event)) {
-        event.preventDefault();
+        consumeKey(event);
       }
     };
 
@@ -219,6 +234,8 @@ export const useHotkeys = ({
     };
 
     const handleMouseDown = (event: MouseEvent) => {
+      if (isRecordingBinding()) return;
+
       const matchingAction = Object.entries(bindings).find(
         ([action, binding]) =>
           binding.type === "mouse" &&
@@ -276,7 +293,7 @@ export const useHotkeys = ({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true);
     window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
@@ -285,7 +302,7 @@ export const useHotkeys = ({
 
     return () => {
       cancelActiveMapPing();
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
