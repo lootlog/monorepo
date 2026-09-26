@@ -261,6 +261,143 @@ describe("settings patch queue", () => {
     expect(queue.hasPending()).toBe(false);
   });
 
+  it("retries newer edits and other documents queued while a failed request was in flight", async () => {
+    let failSend: (error: Error) => void = () => {};
+
+    const { queue, send, reconcile, statuses } = createHarness();
+
+    send.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          failSend = reject;
+        }),
+    );
+
+    queue.enqueue({
+      operation: operation({
+        set: { timersVolume: 0.1, notificationsVolume: 0.3 },
+      }),
+      queryKeys: [["/preferences", { characterId: "first" }]],
+    });
+    const saving = queue.flush();
+
+    queue.enqueue({
+      operation: operation({
+        set: { timersVolume: 0.9, detectorVolume: 0.7 },
+      }),
+      queryKeys: [["/preferences", { characterId: "second" }]],
+    });
+    queue.enqueue({
+      operation: operation({
+        domain: "timers",
+        scope: { type: "GUILD", id: "guild-1" },
+        set: { hiddenTimers: ["Tanroth"] },
+      }),
+      queryKeys: [["/guild-preferences"]],
+    });
+
+    failSend(new Error("offline"));
+    await saving;
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(statuses.at(-1)).toBe("error");
+    expect(queue.hasPending()).toBe(true);
+
+    await queue.retry();
+
+    expect(sentOperations(send)[1]).toEqual([
+      operation({
+        set: {
+          timersVolume: 0.9,
+          notificationsVolume: 0.3,
+          detectorVolume: 0.7,
+        },
+      }),
+      operation({
+        domain: "timers",
+        scope: { type: "GUILD", id: "guild-1" },
+        set: { hiddenTimers: ["Tanroth"] },
+      }),
+    ]);
+    expect(reconcile).toHaveBeenNthCalledWith(1, [
+      ["/preferences", { characterId: "first" }],
+      ["/preferences", { characterId: "second" }],
+      ["/guild-preferences"],
+    ]);
+    expect(reconcile).toHaveBeenLastCalledWith([
+      ["/preferences", { characterId: "first" }],
+      ["/preferences", { characterId: "second" }],
+      ["/guild-preferences"],
+    ]);
+    expect(statuses.at(-1)).toBe("saved");
+    expect(queue.hasPending()).toBe(false);
+  });
+
+  it.each([
+    {
+      earlier: operation({ set: { detectorVolume: 0.1 } }),
+      later: operation({ unset: ["detectorVolume"] }),
+    },
+    {
+      earlier: operation({ unset: ["detectorVolume"] }),
+      later: operation({ set: { detectorVolume: 0.9 } }),
+    },
+  ])(
+    "preserves the latest reset or value when retrying a failed save",
+    async ({ earlier, later }) => {
+      let failSend: (error: Error) => void = () => {};
+
+      const { queue, send } = createHarness();
+
+      send.mockImplementationOnce(
+        () =>
+          new Promise((_, reject) => {
+            failSend = reject;
+          }),
+      );
+
+      queue.enqueue({ operation: earlier, queryKeys: [] });
+      const saving = queue.flush();
+      queue.enqueue({ operation: later, queryKeys: [] });
+      failSend(new Error("offline"));
+      await saving;
+      await queue.retry();
+
+      expect(sentOperations(send)[1]).toEqual([later]);
+    },
+  );
+
+  it("keeps an unrelated failed document available for retry after another document saves", async () => {
+    const { queue, send, statuses } = createHarness();
+    const failedOperation = operation({ set: { detectorVolume: 0.7 } });
+    send.mockRejectedValueOnce(new Error("offline"));
+
+    queue.enqueue({
+      operation: failedOperation,
+      queryKeys: [["/preferences"]],
+    });
+    await queue.flush();
+
+    queue.enqueue({
+      operation: operation({
+        domain: "timers",
+        set: { timersSortOrder: "desc" },
+      }),
+      queryKeys: [["/preferences"]],
+    });
+    await queue.flush();
+
+    expect(queue.hasPending()).toBe(true);
+    expect(statuses.at(-1)).toBe("error");
+
+    await queue.retry();
+
+    expect(sentOperations(send)[2]).toEqual([failedOperation]);
+    expect(statuses.at(-1)).toBe("saved");
+    expect(queue.hasPending()).toBe(false);
+  });
+
   it("sends writes queued during an in-flight request afterwards instead of dropping them", async () => {
     const resolvers: Array<() => void> = [];
 

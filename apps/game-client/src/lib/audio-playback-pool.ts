@@ -1,9 +1,6 @@
-const DEFAULT_CHANNEL = "regular";
-
 const DEFAULT_MAX_CACHED_AUDIO = 16;
 
 export type AudioPlaybackRequest = {
-  channel?: string;
   playbackRate?: number;
   preservesPitch?: boolean;
   url: string;
@@ -42,38 +39,34 @@ export const createAudioPlaybackPool = (
     options.maxCachedAudio ?? DEFAULT_MAX_CACHED_AUDIO,
   );
 
-  const audioByCacheKey = new Map<string, CachedAudio>();
-  const activeAudioByCacheKey = new Map<string, HTMLAudioElement>();
+  const audioByUrl = new Map<string, CachedAudio>();
+  const activeAudioByUrl = new Map<string, HTMLAudioElement>();
 
-  const getCacheKey = (channel: string, url: string) =>
-    `${channel}\u0000${url}`;
+  const removeCachedAudio = (url: string, cachedAudio: CachedAudio) => {
+    audioByUrl.delete(url);
 
-  const removeCachedAudio = (cacheKey: string, cachedAudio: CachedAudio) => {
-    audioByCacheKey.delete(cacheKey);
-
-    if (activeAudioByCacheKey.get(cacheKey) === cachedAudio.audio) {
-      activeAudioByCacheKey.delete(cacheKey);
+    if (activeAudioByUrl.get(url) === cachedAudio.audio) {
+      activeAudioByUrl.delete(url);
     }
 
     releaseAudio(cachedAudio.audio);
   };
 
   const enforceCacheLimit = () => {
-    while (audioByCacheKey.size > maxCachedAudio) {
-      const oldestEntry = audioByCacheKey.entries().next().value;
+    while (audioByUrl.size > maxCachedAudio) {
+      const oldestEntry = audioByUrl.entries().next().value;
 
       if (!oldestEntry) return;
       removeCachedAudio(oldestEntry[0], oldestEntry[1]);
     }
   };
 
-  const getOrCreateAudio = (url: string, channel: string) => {
-    const cacheKey = getCacheKey(channel, url);
-    const cachedAudio = audioByCacheKey.get(cacheKey);
+  const getOrCreateAudio = (url: string) => {
+    const cachedAudio = audioByUrl.get(url);
 
     if (cachedAudio) {
-      audioByCacheKey.delete(cacheKey);
-      audioByCacheKey.set(cacheKey, cachedAudio);
+      audioByUrl.delete(url);
+      audioByUrl.set(url, cachedAudio);
 
       return cachedAudio.audio;
     }
@@ -81,40 +74,43 @@ export const createAudioPlaybackPool = (
     const audio = new Audio(url);
     audio.preload = "auto";
     audio.load();
-    audioByCacheKey.set(cacheKey, { audio });
+    audioByUrl.set(url, { audio });
     enforceCacheLimit();
 
     return audio;
   };
 
-  const preload = (url: string, channel = DEFAULT_CHANNEL) => {
-    getOrCreateAudio(url, channel);
+  const preload = (url: string) => {
+    getOrCreateAudio(url);
   };
 
   const play = ({
-    channel = DEFAULT_CHANNEL,
     playbackRate = 1,
     preservesPitch = true,
     url,
     volume,
   }: AudioPlaybackRequest) => {
-    const cacheKey = getCacheKey(channel, url);
-    const activeAudio = activeAudioByCacheKey.get(cacheKey);
+    const activeAudio = activeAudioByUrl.get(url);
 
     if (activeAudio) {
       activeAudio.pause();
       resetPlaybackPosition(activeAudio);
     }
 
-    const audio = getOrCreateAudio(url, channel);
+    const audio = getOrCreateAudio(url);
+
+    if (audio.error) {
+      audio.load();
+    }
+
     resetPlaybackPosition(audio);
     audio.volume = volume;
     audio.playbackRate = playbackRate;
     audio.preservesPitch = preservesPitch;
-    activeAudioByCacheKey.set(cacheKey, audio);
+    activeAudioByUrl.set(url, audio);
     audio.onended = () => {
-      if (activeAudioByCacheKey.get(cacheKey) === audio) {
-        activeAudioByCacheKey.delete(cacheKey);
+      if (activeAudioByUrl.get(url) === audio) {
+        activeAudioByUrl.delete(url);
       }
     };
 
@@ -122,12 +118,12 @@ export const createAudioPlaybackPool = (
   };
 
   const dispose = () => {
-    for (const cachedAudio of audioByCacheKey.values()) {
+    for (const cachedAudio of audioByUrl.values()) {
       releaseAudio(cachedAudio.audio);
     }
 
-    audioByCacheKey.clear();
-    activeAudioByCacheKey.clear();
+    audioByUrl.clear();
+    activeAudioByUrl.clear();
   };
 
   return { dispose, play, preload };
