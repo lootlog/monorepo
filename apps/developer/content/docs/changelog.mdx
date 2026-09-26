@@ -3,6 +3,18 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased — Realtime latency probe
+
+The realtime v1 `session.joined` event and `session.join` response add an
+optional `capabilities` list. Gateways that list `connection.ping` accept the
+`connection.ping` command and answer it without side effects, including on
+integration connections. The SDK realtime client adds `probeLatency()`, which
+reports through `subscribeHeartbeatLatency`.
+
+Deploy the gateway before relying on the probe. Clients send the command only
+when the capability is listed, so clients connected to older gateways keep the
+heartbeat measurement. No migration is required.
+
 ## Unreleased — Notification schedules and role level ranges
 
 Notification rule create and update requests accept `scheduledUntil: null`.

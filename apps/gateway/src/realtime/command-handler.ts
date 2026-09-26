@@ -7,6 +7,7 @@ import {
 import { decode } from "@msgpack/msgpack";
 import {
   decodeClientCommand,
+  REALTIME_PING_CAPABILITY,
   type ClientCommand,
   type Response,
   type ServerEvent,
@@ -526,6 +527,7 @@ export class CommandHandler {
       socket.data.apiKeyAccess &&
       ![
         "session.join",
+        "connection.ping",
         "presence.fetch",
         "subscription.subscribe",
         "subscription.unsubscribe",
@@ -552,6 +554,8 @@ export class CommandHandler {
           ),
           Effect.map((lastSeen) => ({ lastSeen })),
         );
+      case "connection.ping":
+        return Effect.void;
       case "presence.publish":
         return requireJoined.pipe(
           Effect.andThen(this.presence.publish(socket, command.data)),
@@ -746,6 +750,7 @@ export class CommandHandler {
           accessPolicy: sessionAccessPolicy(socket.data),
           organizationIds: organizationIds(socket.data),
           subscriptionScopes: scopes,
+          capabilities: [REALTIME_PING_CAPABILITY],
         },
       } satisfies Event;
 

@@ -3,6 +3,7 @@ import {
   isServerEventFrame,
   PRESENCE_HEARTBEAT_INTERVAL_MS,
   PRESENCE_EXPIRY_MS,
+  REALTIME_PING_CAPABILITY,
   REALTIME_PROTOCOL_VERSION,
   REALTIME_CLIENT_CLOSE_CODES,
   type ClientCommand,
@@ -11,6 +12,7 @@ import {
 } from "@lootlog/protocol/realtime";
 import {
   encodeRealtimeFrame,
+  hasRealtimeCapabilities,
   tryDecodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
 import { Result } from "effect";
@@ -162,6 +164,8 @@ export class RealtimeClient {
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
   private presenceSessionId: string | null = null;
   private presenceRefreshedAt = 0;
+  private pingSupported = false;
+  private latencyProbeInFlight = false;
   private manuallyClosed = false;
   private messageChain = Promise.resolve();
   private rejoinHandler: (() => Promise<void>) | null = null;
@@ -196,6 +200,7 @@ export class RealtimeClient {
     this.manuallyClosed = true;
     this.clearReconnect();
     this.clearHeartbeat();
+    this.pingSupported = false;
     this.rejectPending(new Error("Realtime client disconnected"));
     const activeSocket = this.socket;
     this.socket = null;
@@ -225,6 +230,32 @@ export class RealtimeClient {
     listener(this.heartbeatLatencyMs);
 
     return () => this.heartbeatLatencyListeners.delete(listener);
+  }
+
+  /**
+   * Measures the round trip now instead of at the next heartbeat. A gateway
+   * that does not advertise `connection.ping` keeps the heartbeat measurement.
+   */
+  probeLatency(): void {
+    if (
+      !this.pingSupported ||
+      this.stateValue !== "ready" ||
+      this.latencyProbeInFlight
+    )
+      return;
+    const socket = this.socket;
+    const startedAt = performance.now();
+    this.latencyProbeInFlight = true;
+    void this.request("connection.ping", {})
+      .then(() => {
+        if (this.socket === socket)
+          this.setHeartbeatLatency(Math.round(performance.now() - startedAt));
+      })
+      // Heartbeats own liveness; a lost probe leaves the last measurement.
+      .catch(() => {})
+      .finally(() => {
+        this.latencyProbeInFlight = false;
+      });
   }
 
   private setHeartbeatLatency(latencyMs: number | null): void {
@@ -380,6 +411,7 @@ export class RealtimeClient {
       if (this.socket !== socket) return;
       this.socket = null;
       this.clearHeartbeat();
+      this.pingSupported = false;
       this.rejectPending(new Error("Realtime connection closed"));
       this.setState("disconnected");
 
@@ -426,6 +458,9 @@ export class RealtimeClient {
       const result = await joined;
 
       if (this.socket !== socket) return result;
+      this.pingSupported =
+        hasRealtimeCapabilities(result) &&
+        result.capabilities.includes(REALTIME_PING_CAPABILITY);
       await Promise.all(
         [...this.subscriptions.values()].map((scope) =>
           this.request("subscription.subscribe", scope),

@@ -32,6 +32,7 @@ const ExtensionRequestSchema = Schema.Union([
   Schema.Struct({ type: Schema.Literal("connect"), id }),
   Schema.Struct({ type: Schema.Literal("disconnect"), id }),
   Schema.Struct({ type: Schema.Literal("release"), id }),
+  Schema.Struct({ type: Schema.Literal("probe-latency"), id }),
   Schema.Struct({
     type: Schema.Literal("command"),
     id,

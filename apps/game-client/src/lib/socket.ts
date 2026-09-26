@@ -231,6 +231,10 @@ export class AppSocket {
     return this.realtime.subscribeHeartbeatLatency(listener);
   }
 
+  probeLatency(): void {
+    this.realtime.probeLatency();
+  }
+
   getAccessPolicy(): AccessPolicySnapshot | undefined {
     return this.currentAccessPolicy;
   }
