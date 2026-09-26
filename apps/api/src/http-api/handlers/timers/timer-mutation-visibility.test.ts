@@ -12,6 +12,7 @@ import {
   guildTable,
   memberTable,
   memberToRoleTable,
+  playerSnapshotTable,
   roleTable,
   timerTable,
   timerHistoryEntryTable,
@@ -59,8 +60,29 @@ it.each([
       const now = new Date();
       const guild = createGuildFixture();
       const member = createMemberFixture({ globalUserId: "user" });
+      const previousMember = createMemberFixture({ id: 2, userId: "previous" });
       await boundary.run(database.insert(guildTable).values(guild));
-      await boundary.run(database.insert(memberTable).values(member));
+      await boundary.run(
+        database.insert(memberTable).values([member, previousMember]),
+      );
+
+      const previousActor = {
+        id: 100,
+        world: "world",
+        accountId: 10,
+        characterId: 20,
+        snapshotHash: "previous-actor",
+        name: "Previous character",
+      };
+
+      await boundary.run(
+        database
+          .insert(playerSnapshotTable)
+          .values([
+            previousActor,
+            { ...previousActor, id: 101, world: "other-world" },
+          ]),
+      );
 
       const roles = await boundary.run(
         database
@@ -102,7 +124,9 @@ it.each([
           .insert(timerTable)
           .values({
             guildId: guild.id,
-            createdById: member.id,
+            createdById: previousMember.id,
+            actorCharacterSnapshotId: previousActor.id,
+            actorCharacterLvl: 300,
             npcId: 300,
             timerKey: "300:hero",
             world: "world",
@@ -117,7 +141,12 @@ it.each([
 
       if (!timer) throw new Error("Timer fixture missing");
 
-      const otherWorldTimer = { ...timer, world: "other-world" };
+      const otherWorldTimer = {
+        ...timer,
+        world: "other-world",
+        actorCharacterSnapshotId: 101,
+      };
+
       await boundary.run(database.insert(timerTable).values(otherWorldTimer));
 
       const timerCondition = and(
@@ -184,6 +213,10 @@ it.each([
       expect(resetResult._tag).toBe(allowed ? "Success" : "Failure");
       const afterReset = await readTimers();
       expect(afterReset).toHaveLength(visibleCount);
+      afterReset.forEach((listedTimer) => {
+        expect(listedTimer.member?.id).toBe(member.id);
+        expect(listedTimer).not.toHaveProperty("actorCharacter");
+      });
       expect(await readOtherWorldTimer()).toEqual([otherWorldTimer]);
 
       if (allowed) {
@@ -191,7 +224,12 @@ it.each([
           database.select().from(timerTable).where(timerCondition),
         );
 
-        expect(persistedReset?.wasReset).toBe(true);
+        expect(persistedReset).toMatchObject({
+          wasReset: true,
+          createdById: member.id,
+          actorCharacterSnapshotId: null,
+          actorCharacterLvl: null,
+        });
       }
 
       const deleteResult = await boundary.run(
