@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import type { CSSProperties, FC } from "react";
+import type { CSSProperties, FC, ReactNode } from "react";
 import { ListRow, veilColor } from "@/components/list-row";
 import type { TimerColorPaint } from "@/features/timers/constants/timer-colors";
 
@@ -17,6 +17,8 @@ export type TimerTileViewProps = {
   isPending?: boolean;
   label: string;
   timeLabel: string;
+  /** Rendered inline before the time, such as the map presence icon. */
+  timeAdornment?: ReactNode;
 };
 
 /** An expired tile keeps its colour, darkened. */
@@ -65,6 +67,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
   isPending = false,
   label,
   timeLabel,
+  timeAdornment,
 }) => {
   const textColorClassName = resolveTextColor(
     legacyAppearance,
@@ -89,6 +92,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
           "ll:tabular-nums": !legacyAppearance,
         })}
       >
+        {timeAdornment}
         {timeLabel}
       </span>
     </>
