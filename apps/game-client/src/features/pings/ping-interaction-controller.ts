@@ -4,17 +4,23 @@ import type { PingType } from "./ping-presentation";
 /** A press shorter than this sends the menu's quick ping. */
 export const PING_HOLD_DELAY_MS = 120;
 
-/** Inside this radius the centre option is selected, or nothing. */
-export const PING_WHEEL_DEAD_ZONE_PX = 18;
+/** Outer edge of the option ring. */
+export const PING_WHEEL_OUTER_RADIUS_PX = 78;
 
-/** Distance from the wheel centre to each ring tile. */
-export const PING_WHEEL_RING_RADIUS_PX = 52;
+/** Inner edge of the option ring; the centre option sits inside it. */
+export const PING_WHEEL_INNER_RADIUS_PX = 26;
+
+/**
+ * Inside this radius the centre option is selected, or nothing. It matches the
+ * drawn centre circle, so what the player sees is what a release sends.
+ */
+export const PING_WHEEL_DEAD_ZONE_PX = PING_WHEEL_INNER_RADIUS_PX - 3;
 
 /** Moving the pointer this far from the centre cancels the selection. */
 export const PING_WHEEL_CANCEL_RADIUS_PX = 100;
 
-/** Half the wheel's footprint, including the selected tile's label. */
-const PING_WHEEL_EXTENT_PX = 84;
+/** Half the wheel's footprint, including the label below it. */
+const PING_WHEEL_EXTENT_PX = 108;
 
 const PING_WHEEL_MARGIN_PX = 8;
 
