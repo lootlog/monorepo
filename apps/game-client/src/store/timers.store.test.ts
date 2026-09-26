@@ -359,42 +359,41 @@ describe("timers.store", () => {
     });
   });
 
-  it("syncs timer lists and unsets a deleted list so it cannot come back", () => {
-    vi.spyOn(crypto, "randomUUID")
-      .mockReturnValueOnce("0-0-0-0-e2")
-      .mockReturnValueOnce("0-0-0-0-heroes");
+  it("writes only the edited timer list so a stale copy of another list cannot restore it", () => {
+    const e2 = { id: "e2", name: "E2", npcNames: ["Kic"] };
+    const heroes = { id: "heroes", name: "Herosi", npcNames: ["Tanroth"] };
+
+    // Another device may already have deleted "heroes"; this device still
+    // holds it and must not write it back while editing "e2".
+    useTimersStore.setState({ customLists: { e2, heroes } });
 
     const store = useTimersStore.getState();
-    const e2 = store.addCustomList("E2", ["Kic"]);
-    const heroes = store.addCustomList("Herosi");
-    store.setTimerListMembership(heroes, "Tanroth", true);
-    store.setTimerListMembership(heroes, "Kic", true);
-    store.setTimerListMembership(e2, "Kic", false);
-    store.renameCustomList(heroes, "Herosi 100+");
-    store.deleteCustomList(e2);
+    store.renameCustomList("e2", "E2 event");
+    store.setTimerListMembership("e2", "Tanroth", true);
     vi.advanceTimersByTime(500);
 
-    const lastWrite = {
-      [heroes]: {
-        id: heroes,
-        name: "Herosi 100+",
-        npcNames: ["Tanroth", "Kic"],
-      },
+    const renamed = { ...e2, name: "E2 event", npcNames: ["Kic", "Tanroth"] };
+
+    const lastWrite = () => {
+      const operation = patchesFor("timers").at(-1);
+
+      return { set: operation?.set, unset: operation?.unset };
     };
 
-    expect(useTimersStore.getState().customLists).toEqual(lastWrite);
-    expect(patchesFor("timers").at(-1)).toMatchObject({
-      set: { customLists: lastWrite },
-      unset: [`customLists.${e2}`],
+    expect(lastWrite()).toEqual({
+      set: { customLists: { e2: renamed } },
+      unset: [],
     });
 
-    store.deleteCustomList(heroes);
+    store.setTimerListMembership("heroes", "Kic", true);
+    store.deleteCustomList("heroes");
     vi.advanceTimersByTime(500);
 
-    // An emptied map is written whole, which already drops every list.
-    expect(patchesFor("timers").at(-1)).toMatchObject({
-      set: { customLists: {} },
-      unset: [],
+    expect(useTimersStore.getState().customLists).toEqual({ e2: renamed });
+    // An edit followed by a delete in one save window sends only the delete.
+    expect(lastWrite()).toEqual({
+      set: {},
+      unset: ["customLists.heroes"],
     });
   });
 

@@ -17,7 +17,11 @@ import {
 } from "zustand/middleware";
 import { shallow } from "zustand/vanilla/shallow";
 import { storageKey } from "@/lib/storage-key";
-import { syncGuildTimerList, syncTimerSettings } from "./timer-settings-sync";
+import {
+  syncCustomList,
+  syncGuildTimerList,
+  syncTimerSettings,
+} from "./timer-settings-sync";
 
 export const TIMERS_STORAGE_KEY = storageKey("ll-timers-state");
 
@@ -181,6 +185,16 @@ export const useTimersStore = create<TimersState>()(
           [field]: { ...get()[field], [guildId]: next },
         }));
         syncGuildTimerList(guildId, field, next);
+      };
+
+      const setCustomList = (id: string, list: CustomTimerList | undefined) => {
+        const customLists = { ...get().customLists };
+
+        if (list) customLists[id] = list;
+        else delete customLists[id];
+
+        setWithTimestamp(() => ({ customLists }));
+        syncCustomList(id, list);
       };
 
       return {
@@ -405,27 +419,16 @@ export const useTimersStore = create<TimersState>()(
         },
         addCustomList: (name: string, npcNames: string[] = []) => {
           const id = crypto.randomUUID();
-
-          setGlobalSettings({
-            customLists: { ...get().customLists, [id]: { id, name, npcNames } },
-          });
+          setCustomList(id, { id, name, npcNames });
 
           return id;
         },
         renameCustomList: (id: string, name: string) => {
           const list = get().customLists[id];
 
-          if (!list) return;
-
-          setGlobalSettings({
-            customLists: { ...get().customLists, [id]: { ...list, name } },
-          });
+          if (list) setCustomList(id, { ...list, name });
         },
-        deleteCustomList: (id: string) => {
-          const customLists = { ...get().customLists };
-          delete customLists[id];
-          setGlobalSettings({ customLists });
-        },
+        deleteCustomList: (id: string) => setCustomList(id, undefined),
         setTimerListMembership: (
           listId: string,
           npcName: string,
@@ -435,15 +438,11 @@ export const useTimersStore = create<TimersState>()(
 
           if (!list || list.npcNames.includes(npcName) === member) return;
 
-          const npcNames = member
-            ? [...list.npcNames, npcName]
-            : list.npcNames.filter((name) => name !== npcName);
-
-          setGlobalSettings({
-            customLists: {
-              ...get().customLists,
-              [listId]: { ...list, npcNames },
-            },
+          setCustomList(listId, {
+            ...list,
+            npcNames: member
+              ? [...list.npcNames, npcName]
+              : list.npcNames.filter((name) => name !== npcName),
           });
         },
       };
