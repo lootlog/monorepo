@@ -4,14 +4,6 @@ import {
   $isChatMentionNode,
 } from "@/features/chat/chat-mention-node";
 import {
-  $createChatCommandNode,
-  $isChatCommandNode,
-} from "@/features/chat/chat-command-node";
-import {
-  getChatCommandPrefix,
-  type ChatCommandPrefixKind,
-} from "@/features/chat/chat-command-prefix";
-import {
   $getChatInputSelectionOffsets,
   $selectChatInputRange,
 } from "@/features/chat/chat-input-editor.helpers";
@@ -29,71 +21,11 @@ import {
 } from "lexical";
 import { useEffect, type FC } from "react";
 
-export type ChatCommandHints = Record<ChatCommandPrefixKind, string>;
-
 type ChatInputTokensPluginProps = {
-  commandHints?: ChatCommandHints;
   mentionContext?: ChatMentionContext;
 };
 
-type ChatInputToken =
-  | {
-      type: "command";
-      kind: ChatCommandPrefixKind;
-      hint: string | null;
-      text: string;
-    }
-  | { type: "text"; segment: ChatMentionSegment };
-
-/**
- * Splits the message into the command chip, resolved mentions and plain text.
- * Mentions are found in the whole message, exactly as the chat renders it,
- * and the prefix is then cut from the leading plain text.
- */
-const getChatInputTokens = (
-  message: string,
-  mentionContext?: ChatMentionContext,
-  commandHints?: ChatCommandHints,
-): ChatInputToken[] => {
-  const prefix = getChatCommandPrefix(message);
-  const segments = getChatMentionSegments(message, mentionContext);
-
-  if (!prefix) {
-    return segments.map((segment) => ({ type: "text", segment }));
-  }
-
-  const tokens: ChatInputToken[] = [
-    {
-      type: "command",
-      kind: prefix.kind,
-      hint: prefix.hasArgument ? null : (commandHints?.[prefix.kind] ?? null),
-      text: prefix.text,
-    },
-  ];
-
-  let prefixLeft = prefix.text.length;
-
-  for (const segment of segments) {
-    const cut = segment.isMention
-      ? 0
-      : Math.min(prefixLeft, segment.text.length);
-
-    prefixLeft -= cut;
-    const text = segment.text.slice(cut);
-
-    if (text) tokens.push({ type: "text", segment: { ...segment, text } });
-  }
-
-  return tokens;
-};
-
-const getTokenSignature = (token: ChatInputToken) => {
-  if (token.type === "command") {
-    return ["command", token.text, token.kind, token.hint].join(":");
-  }
-
-  const { segment } = token;
-
+const getSegmentSignature = (segment: ChatMentionSegment) => {
   if (!segment.isMention) return null;
 
   return [
@@ -104,13 +36,13 @@ const getTokenSignature = (token: ChatInputToken) => {
   ].join(":");
 };
 
+/** Mentions are found in the whole text, exactly as the chat renders it. */
 const getExpectedSignature = (
   message: string,
   mentionContext?: ChatMentionContext,
-  commandHints?: ChatCommandHints,
 ) => {
-  return getChatInputTokens(message, mentionContext, commandHints)
-    .flatMap((token) => getTokenSignature(token) ?? [])
+  return getChatMentionSegments(message, mentionContext)
+    .flatMap((segment) => getSegmentSignature(segment) ?? [])
     .join("|");
 };
 
@@ -118,19 +50,6 @@ const getCurrentSignature = () => {
   return $getRoot()
     .getAllTextNodes()
     .flatMap((node) => {
-      if ($isChatCommandNode(node)) {
-        const serializedNode = node.exportJSON();
-
-        return [
-          [
-            "command",
-            node.getTextContent(),
-            serializedNode.kind,
-            serializedNode.hint,
-          ].join(":"),
-        ];
-      }
-
       if (!$isChatMentionNode(node)) return [];
       const serializedNode = node.exportJSON();
 
@@ -146,10 +65,7 @@ const getCurrentSignature = () => {
     .join("|");
 };
 
-const rebuildTokenNodes = (
-  mentionContext?: ChatMentionContext,
-  commandHints?: ChatCommandHints,
-) => {
+const rebuildTokenNodes = (mentionContext?: ChatMentionContext) => {
   const root = $getRoot();
   const message = root.getTextContent();
   const selection = $getSelection();
@@ -160,24 +76,7 @@ const rebuildTokenNodes = (
 
   const paragraph = $createParagraphNode();
 
-  for (const token of getChatInputTokens(
-    message,
-    mentionContext,
-    commandHints,
-  )) {
-    if (token.type === "command") {
-      paragraph.append(
-        $createChatCommandNode({
-          hint: token.hint,
-          kind: token.kind,
-          text: token.text,
-        }),
-      );
-      continue;
-    }
-
-    const { segment } = token;
-
+  for (const segment of getChatMentionSegments(message, mentionContext)) {
     if (
       segment.isMention &&
       segment.kind &&
@@ -206,9 +105,8 @@ const rebuildTokenNodes = (
   $selectChatInputRange(selectionOffsets[0], selectionOffsets[1]);
 };
 
-/** Keeps the editor's atomic nodes (command chip, mentions) in step with its text. */
+/** Keeps the editor's atomic mention nodes in step with its text. */
 export const ChatInputTokensPlugin: FC<ChatInputTokensPluginProps> = ({
-  commandHints,
   mentionContext,
 }) => {
   const [editor] = useLexicalComposerContext();
@@ -220,13 +118,13 @@ export const ChatInputTokensPlugin: FC<ChatInputTokensPluginProps> = ({
 
         return (
           getCurrentSignature() !==
-          getExpectedSignature(message, mentionContext, commandHints)
+          getExpectedSignature(message, mentionContext)
         );
       });
 
       if (shouldRebuild) {
         editor.update(() => {
-          rebuildTokenNodes(mentionContext, commandHints);
+          rebuildTokenNodes(mentionContext);
         });
       }
     };
@@ -234,7 +132,7 @@ export const ChatInputTokensPlugin: FC<ChatInputTokensPluginProps> = ({
     reconcileTokens();
 
     return editor.registerUpdateListener(reconcileTokens);
-  }, [commandHints, editor, mentionContext]);
+  }, [editor, mentionContext]);
 
   return null;
 };

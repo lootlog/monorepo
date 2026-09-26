@@ -22,7 +22,7 @@ type CommandComposerProps = {
 
 /**
  * The chat composer bound to one Lootlog of the player's choice: mentions,
- * command suggestions and the `/grp`/`!` chips behave exactly as in the chat,
+ * command suggestions and the hidden `!`/`/grp` prefixes behave as in the chat,
  * and a successful entry closes the console.
  */
 export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {

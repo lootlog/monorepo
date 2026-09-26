@@ -668,7 +668,26 @@ describe("ChatInput", () => {
 
     await user.keyboard("{Enter}");
 
-    expect(editor.textContent).toBe("/grp ");
+    await waitFor(() => {
+      expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/grp ");
+    });
+    expect(editor.textContent).toBe("");
+  });
+
+  it("hides /grp as soon as it is typed, with the space after it", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("/grp");
+
+    expect(editor.textContent).toBe("");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+    await user.paste(" hydra");
+
+    expect(editor.textContent).toBe("hydra");
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/grp hydra");
   });
 
   it("does not show command suggestions for bang notifications", async () => {
@@ -725,7 +744,81 @@ describe("ChatInput", () => {
         "Wysyłasz zbyt szybko. Spróbuj ponownie za chwilę.",
       ),
     );
-    expect(editor.textContent).toBe("!alarm");
+    expect(editor.textContent).toBe("alarm");
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("!alarm");
+  });
+
+  it("hides the notification prefix and sends the text after it", async () => {
+    notificationRequest.mockResolvedValue(
+      Response.json({ guildIds: ["guild-1"], notificationId: "n-1" }),
+    );
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("!alarm");
+
+    expect(editor.textContent).toBe("alarm");
+    expect(document.getSelection()?.focusOffset).toBe("alarm".length);
+
+    fireEvent.keyDown(editor, { key: "Enter" });
+
+    await waitFor(() => expect(notificationRequest).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(
+      String(notificationRequest.mock.calls[0]?.[1]?.body),
+    );
+
+    expect(body.message).toBe("alarm");
+  });
+
+  it("leaves the notification with Backspace at the start and keeps the text", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("!alarm");
+
+    const textNode = editor.querySelector("[data-lexical-text]")?.firstChild;
+    const selection = document.getSelection();
+
+    if (!(textNode instanceof Text) || !selection)
+      throw new Error("Expected text selection");
+    selection.setBaseAndExtent(textNode, 0, textNode, 0);
+    fireEvent(document, new Event("selectionchange"));
+    fireEvent.keyDown(editor, { key: "Backspace" });
+
+    await waitFor(() => {
+      expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("alarm");
+    });
+  });
+
+  it("does not bring the hidden prefix back as text on undo", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("!alarm");
+    await waitFor(() => expect(editor.textContent).toBe("alarm"));
+
+    await user.keyboard("{Control>}z{/Control}");
+
+    expect(editor.textContent).toBe("alarm");
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("!alarm");
+  });
+
+  it("does not send a notification without text", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("! ");
+    fireEvent.keyDown(editor, { key: "Enter" });
+
+    await Promise.resolve();
+    expect(notificationRequest).not.toHaveBeenCalled();
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("! ");
   });
 
   it("shows the clear chat command only for admin or owner permissions", async () => {
