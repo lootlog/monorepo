@@ -5,7 +5,6 @@ import {
   ContextMenuTrigger,
   openContextMenuOnKeyDown,
 } from "@/components/ui/context-menu";
-import { ContextMenuMoreButton } from "@/components/ui/context-menu-more-button";
 import {
   Tooltip,
   TooltipContent,
@@ -104,7 +103,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           <ContextMenuTrigger
             tabIndex={0}
             onKeyDown={openContextMenuOnKeyDown}
-            className="ll:group/timer ll:relative ll:h-full ll:rounded-[2px] ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
+            className="ll:h-full ll:rounded-[2px] ll:outline-none ll:focus-visible:outline-2 ll:focus-visible:-outline-offset-2 ll:focus-visible:outline-ring"
           >
             <div
               className={cn("ll:relative ll:h-full", {
@@ -130,7 +129,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 timer={timer}
               />
             </div>
-            <ContextMenuMoreButton className="ll:absolute ll:left-0 ll:top-1/2 ll:z-20 ll:-translate-y-1/2 ll:bg-black/75 ll:opacity-0 ll:group-hover/timer:opacity-100 ll:group-focus-within/timer:opacity-100" />
           </ContextMenuTrigger>
         </TooltipTrigger>
 

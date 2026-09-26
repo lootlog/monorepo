@@ -138,6 +138,7 @@ describe("windows store", () => {
       ...initial.notifications,
       locked: true,
       autofocus: undefined,
+      collapsed: undefined,
       maxContentHeight: 250,
       position: {
         x: initial.notifications.position.x,
@@ -149,6 +150,7 @@ describe("windows store", () => {
     expect(state["npc-detector"]).toStrictEqual({
       ...initial["npc-detector"],
       autofocus: undefined,
+      collapsed: undefined,
       maxContentHeight: undefined,
       opacity: 3,
       size: { ...initial["npc-detector"].size, width: 280 },
@@ -354,6 +356,7 @@ describe("windows store", () => {
         maxContentHeight: 300,
       },
     }));
+    useWindowsStore.getState().setCollapsed("quick-access", true);
 
     useWindowsStore.getState().resetWindowLayout();
 
@@ -375,6 +378,7 @@ describe("windows store", () => {
       locked: false,
     });
     expect(timers.maxContentHeight).toBeUndefined();
+    expect(useWindowsStore.getState()["quick-access"].collapsed).toBeFalsy();
   });
 });
 

@@ -198,7 +198,9 @@ export const useDrag = ({
 
     if (!evt.isPrimary || evt.button !== 0) return;
 
-    if (!(evt.target instanceof HTMLElement)) return;
+    // An icon is an SVG element, not an HTMLElement; pressing one inside a
+    // drag area must still start the drag.
+    if (!(evt.target instanceof Element)) return;
 
     if (evt.target.getAttribute("data-state") === "input") return;
 

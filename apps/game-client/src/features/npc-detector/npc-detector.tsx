@@ -1,11 +1,9 @@
 import { DraggableWindow } from "@/components/draggable-window/draggable-window";
-import { IconButton } from "@/components/ui/icon-button";
 import { WindowMaxHeightAction } from "@/components/draggable-window/window-max-height-action";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { useDetectorWindowNpcs } from "@/features/npc-detector/hooks/use-detector-window-npcs";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { ListX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNpcTypeColors } from "@/features/settings/persistence/use-appearance-settings";
@@ -38,28 +36,23 @@ export const NpcDetector = () => {
   const resolvedMaxContentHeight =
     storedMaxContentHeight ?? defaultWindowHeight;
 
-  // Closing only hides the window: detections stay until they leave the map,
-  // the map changes or the player clears them, and the next detection
-  // reopens the window with them.
-  const handleClose = () => setOpen("npc-detector", false);
+  const handleClose = () => {
+    setOpen("npc-detector", false);
+    clearNpcs();
+  };
 
   return (
     <DraggableWindow
       isOpen={open && filteredNpcs.length > 0}
       id="npc-detector"
       title={t("window.title")}
-      actions=<>
-        <IconButton label={t("actions.clearAll")} onClick={clearNpcs}>
-          <ListX size={14} aria-hidden="true" />
-        </IconButton>
-        <WindowMaxHeightAction
-          currentMaxHeight={resolvedMaxContentHeight}
-          isArmed={isMaxHeightAdjustmentArmed}
-          onClick={() =>
-            setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
-          }
-        />
-      </>
+      actions=<WindowMaxHeightAction
+        currentMaxHeight={resolvedMaxContentHeight}
+        isArmed={isMaxHeightAdjustmentArmed}
+        onClick={() =>
+          setIsMaxHeightAdjustmentArmed((currentValue) => !currentValue)
+        }
+      />
       onClose={handleClose}
       heightMode="auto-up-to-max"
       maxContentHeight={resolvedMaxContentHeight}
