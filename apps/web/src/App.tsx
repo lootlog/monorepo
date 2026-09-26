@@ -11,10 +11,12 @@ import { AppErrorBoundary } from "@/components/router/app-error-boundary";
 import { RouteErrorState } from "@/components/router/route-error-state";
 import { RouteRetryButton } from "@/components/router/route-retry-button";
 import { ROUTES } from "@/config/routes";
+import { createInitialNavigation } from "@/lib/router/initial-navigation";
 
 export interface RouterContext {
   queryClient: QueryClient;
   session?: SessionData | null;
+  initialNavigation: ReturnType<typeof createInitialNavigation>;
 }
 
 const parseSearchValue = (values: string[]) => {
@@ -89,6 +91,7 @@ const router = createRouter({
   context: {
     queryClient,
     session: undefined,
+    initialNavigation: createInitialNavigation(),
   },
   parseSearch,
   stringifySearch,
