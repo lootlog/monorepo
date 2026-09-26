@@ -18,10 +18,8 @@ import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
 import { EventReadError } from "./components/shared/event-read-error";
-import {
-  getKillDetailErrorKind,
-  KillDetailLoadError,
-} from "./components/kills/kill-detail-load-error";
+import { KillDetailLoadError } from "./components/kills/kill-detail-load-error";
+import { getKillDetailErrorKind } from "./utils/kill-detail-error";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {

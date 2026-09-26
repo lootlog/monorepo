@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import type { AccessPolicyChange } from "@lootlog/protocol/realtime/access-policy";
 import { z } from "zod";
 import {
   getEventsMonitoringControllerGetCoordinationQueryKey,
@@ -8,7 +9,10 @@ import {
   getShowEventWrappedQueryKey,
 } from "@lootlog/client/main";
 
-export function resetEventPolicyQueries(queryClient: QueryClient) {
+export function reconcileEventPolicyQueries(
+  queryClient: QueryClient,
+  changes?: readonly AccessPolicyChange[],
+) {
   const filters = {
     predicate: (query: { queryKey: readonly unknown[] }) => {
       const path = z.string().safeParse(query.queryKey[0]).data;
@@ -22,29 +26,22 @@ export function resetEventPolicyQueries(queryClient: QueryClient) {
     },
   };
 
+  const restricted =
+    !changes ||
+    changes.some(
+      (change) =>
+        change.restricted &&
+        change.areas.some((area) =>
+          ["events", "organization", "loots"].includes(area),
+        ),
+    );
+
+  if (!restricted) return queryClient.invalidateQueries(filters);
+
   void queryClient.cancelQueries(filters);
   queryClient.removeQueries({ ...filters, type: "inactive" });
 
   return queryClient.resetQueries({ ...filters, type: "active" });
-}
-
-export function invalidateEventQueries(
-  queryClient: QueryClient,
-  guildId: string,
-  eventId: string,
-) {
-  const eventPath = `/guilds/${guildId}/events/${eventId}`;
-
-  return queryClient.invalidateQueries({
-    predicate: (query) => {
-      const path = z.string().safeParse(query.queryKey[0]).data;
-
-      return (
-        path !== undefined &&
-        (path === eventPath || path.startsWith(`${eventPath}/`))
-      );
-    },
-  });
 }
 
 export function invalidateEventCoordinationQuery(

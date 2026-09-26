@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
+import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { createDatabaseBoundary } from "../../../test/database-fixtures.js";
 import {
   createGuildFixture,
@@ -15,6 +16,7 @@ import {
   eventMapAssignmentHistoryTable,
   eventMapTable,
   eventPresenceLogTable,
+  eventRankingTable,
   eventRespawnWindowSummaryTable,
   eventTable,
   guildTable,
@@ -26,7 +28,9 @@ import { makeEventAccess } from "#src/events/event-access";
 import { makeEventEmitter } from "#src/events/event-emitter";
 import { makeEventPointsStore } from "#src/events/kills/event-points.repository";
 import { makeEventPoints } from "#src/events/kills/event-points.service";
+import { makeEventPointEdits } from "#src/events/kills/event-point-edits";
 import type { RedisGetOrSetJsonBestEffortOptions } from "#src/redis/redis.service";
+import { applicationLogger } from "#src/shared/application-logger";
 import { makeEventKillHistory } from "./event-kill-history.js";
 
 const time = (value: string) => new Date(`2026-09-27T${value}:00.000Z`);
@@ -67,13 +71,22 @@ const context = (maximum = 100) => ({
 const fixture = async () => {
   const boundary = await createDatabaseBoundary();
   const database = boundary.database;
-  // Redis is the external boundary; the real cache owner still chooses keys and codecs.
-  const entries = new Map<string, string>();
 
-  const readCache = makeEventReadCache({
-    invalidateScopes: async () => {
-      entries.clear();
+  // Redis is the external boundary; the real cache owner still chooses keys and codecs.
+  const entries = new Map<
+    string,
+    { value: string; scopes: readonly string[] }
+  >();
+
+  const redis = {
+    invalidateScopes: async (...scopes: string[]) => {
+      for (const [key, entry] of entries) {
+        if (entry.scopes.some((scope) => scopes.includes(scope))) {
+          entries.delete(key);
+        }
+      }
     },
+    deleteByPattern: () => Promise.resolve(0),
     getOrSetJsonEffect<T, E>(
       options: Omit<RedisGetOrSetJsonBestEffortOptions<T>, "factory"> & {
         factory: Effect.Effect<T, E>;
@@ -82,14 +95,19 @@ const fixture = async () => {
       return Effect.gen(function* () {
         const cached = entries.get(options.key);
 
-        if (cached !== undefined) return options.codec.parse(cached);
+        if (cached !== undefined) return options.codec.parse(cached.value);
         const value = yield* options.factory;
-        entries.set(options.key, options.codec.stringify(value));
+        entries.set(options.key, {
+          value: options.codec.stringify(value),
+          scopes: options.scopes ?? [],
+        });
 
         return value;
       });
     },
-  });
+  };
+
+  const readCache = makeEventReadCache(redis);
 
   const points = makeEventPoints(
     makeEventPointsStore(database),
@@ -204,7 +222,7 @@ const fixture = async () => {
       }),
     );
 
-    return { ...boundary, history, readCache };
+    return { ...boundary, history, readCache, redis };
   } catch (cause) {
     await boundary.dispose();
     throw cause;
@@ -212,6 +230,92 @@ const fixture = async () => {
 };
 
 describe("kill history database reads", () => {
+  it("refreshes cached member points and publishes edits excluded from ranking", async () => {
+    const f = await fixture();
+
+    try {
+      await f.run(
+        f.database
+          .update(eventKillPointTable)
+          .set({ confirmationDeadlineAt: time("11:00"), confirmedAt: null })
+          .where(eq(eventKillPointTable.id, "point-0")),
+      );
+      await f.run(
+        f.database.insert(eventRankingTable).values({
+          id: "ranking-2",
+          eventId: "event-1",
+          memberId: 2,
+          heroNpcName: "Low",
+          totalPoints: 100,
+          updatedAt: time("00:00"),
+        }),
+      );
+
+      const before = await f.run(
+        f.history.list(context(), { memberId: "2", limit: "1" }),
+      );
+
+      expect(before).toMatchObject({
+        kind: "member",
+        data: [{ id: orderedIds[0], memberPoint: { points: 7.25 } }],
+      });
+
+      const published: {
+        routingKey: string;
+        payload: { guildId: string; eventId: string };
+      }[] = [];
+
+      const edits = makeEventPointEdits(
+        f.database,
+        f.redis,
+        {
+          publish: (routingKey, payload) =>
+            Effect.sync(() => {
+              published.push({ routingKey, payload });
+            }),
+        },
+        applicationLogger,
+      );
+
+      const updated = await f.run(
+        edits.updateKillPoint(
+          { id: "guild-1" },
+          "event-1",
+          orderedIds[0],
+          "point-0",
+          { pointsDelta: 3 },
+          "user-1",
+        ),
+      );
+
+      expect(updated?.points).toBe(10.25);
+      expect(
+        await f.run(f.history.list(context(), { memberId: "2", limit: "1" })),
+      ).toMatchObject({
+        kind: "member",
+        data: [
+          {
+            id: orderedIds[0],
+            memberPoint: { points: 10.25, manualAdjustmentPoints: 5 },
+          },
+        ],
+      });
+      expect(published).toEqual([
+        {
+          routingKey: RabbitRoutingKey.EVENT_RANKING_UPDATE,
+          payload: { guildId: "guild-1", eventId: "event-1" },
+        },
+      ]);
+      expect(
+        await f.run(f.database.select().from(eventRankingTable)),
+      ).toMatchObject([
+        { id: "ranking-2", totalPoints: 100, pointsModified: false },
+      ]);
+    } finally {
+      await f.dispose();
+    }
+  });
+
   it("visits every scoped kill once despite unordered UUIDs and equal timestamps", async () => {
     const f = await fixture();
 

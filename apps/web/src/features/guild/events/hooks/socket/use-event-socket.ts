@@ -7,12 +7,7 @@ import {
   invalidateMapQueries,
   invalidateGapQueries,
 } from "../mutations/invalidate-map-queries";
-import { invalidateRankingQueries } from "../mutations/invalidate-ranking-queries";
 import { invalidateRespawnQueries } from "../mutations/invalidate-respawn-queries";
-import {
-  invalidateEventQueries,
-  resetEventPolicyQueries,
-} from "../mutations/invalidate-event-queries";
 
 interface UseEventSocketOptions {
   eventId?: string;
@@ -84,7 +79,9 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       return;
     }
 
-    invalidateRankingQueries(queryClient, routeGuildId, payload.eventId);
+    invalidateKillQueries(queryClient, routeGuildId, payload.eventId, {
+      invalidateCoordination: false,
+    });
   });
 
   const handleRespawnWindowChange = useEffectEvent(
@@ -102,24 +99,6 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
     },
   );
 
-  const handlePermissionsUpdated = useEffectEvent(() => {
-    if (!routeGuildId || !eventId) {
-      return;
-    }
-
-    void resetEventPolicyQueries(queryClient);
-  });
-
-  const handleJoin = useEffectEvent(
-    (payload: { status: "success" | "error" }) => {
-      if (payload.status !== "success" || !routeGuildId || !eventId) {
-        return;
-      }
-
-      invalidateEventQueries(queryClient, routeGuildId, eventId);
-    },
-  );
-
   useEffect(() => {
     if (!guildId || !routeGuildId || !eventId) {
       return;
@@ -128,8 +107,6 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
     socket.on(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
     socket.on(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
     socket.on(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-    socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(
       GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
       handleRespawnWindowChange,
@@ -143,8 +120,6 @@ export const useEventSocket = (options?: UseEventSocketOptions) => {
       socket.off(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
       socket.off(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
       socket.off(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
-      socket.off(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
-      socket.off(GatewayEvent.JOIN, handleJoin);
       socket.off(
         GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED,
         handleRespawnWindowChange,
