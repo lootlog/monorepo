@@ -47,7 +47,7 @@ const normalizeComment = (comment?: string | null) => {
 
 export const makeEventPointEdits = (
   database: typeof ApiDatabase.Service,
-  redis: RedisService,
+  redis: Pick<RedisService, "invalidateScopes" | "deleteByPattern">,
   publisher: EventRankingPublisher,
   logger: Logger,
 ) => {
@@ -286,8 +286,7 @@ export const makeEventPointEdits = (
           ),
         );
 
-        if (isKillPointCountedInRanking(row.point))
-          yield* afterEdit(guild.id, eventId);
+        yield* afterEdit(guild.id, eventId);
 
         return updated;
       }).pipe(Effect.withSpan("EventsRankingController_updateKillPoint")),

@@ -1,9 +1,9 @@
-import { getApiErrorStatus } from "@lootlog/client/transport";
 import { Button } from "@lootlog/ui/components/button";
 import { Link } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EventReadError } from "../shared/event-read-error";
+import { getKillDetailErrorKind } from "../../utils/kill-detail-error";
 
 type KillDetailLoadErrorProps = {
   error: Error | null;
@@ -13,16 +13,6 @@ type KillDetailLoadErrorProps = {
   onRetry: () => void;
   isRetrying: boolean;
 };
-
-export function getKillDetailErrorKind(error: Error | null) {
-  const status = getApiErrorStatus(error);
-
-  if (status === 404) return "not-found";
-
-  if (status === 401 || status === 403) return "access-denied";
-
-  return "failure";
-}
 
 export const KillDetailLoadError = ({
   error,
