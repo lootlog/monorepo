@@ -72,14 +72,7 @@ const mountActions = (
   });
 
   const hook = renderHook(
-    () =>
-      useTimerActions(
-        timer,
-        "guild-1",
-        "luvia",
-        ["guild-1", "guild-2"],
-        grouped,
-      ),
+    () => useTimerActions(timer, "guild-1", ["guild-1", "guild-2"], grouped),
     {
       wrapper: ({ children }: { children: ReactNode }) => (
         <QueryClientProvider client={queryClient}>

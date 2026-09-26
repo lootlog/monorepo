@@ -172,13 +172,6 @@ export const makeResetTimer = (
             actor,
           );
 
-          const actorUpdate = actor
-            ? {
-                actorCharacterSnapshotId: actorCharacter?.id ?? null,
-                actorCharacterLvl: actor.lvl ?? null,
-              }
-            : {};
-
           const updatedRows = yield* transaction
             .update(timerTable)
             .set({
@@ -188,7 +181,8 @@ export const makeResetTimer = (
               wasReset: true,
               deletedAt: null,
               updatedAt: now,
-              ...actorUpdate,
+              actorCharacterSnapshotId: actorCharacter?.id ?? null,
+              actorCharacterLvl: actor?.lvl ?? null,
             })
             .where(
               and(
