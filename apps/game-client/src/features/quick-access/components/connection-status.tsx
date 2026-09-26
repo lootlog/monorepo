@@ -27,12 +27,19 @@ const STATUS_ICON = {
   { Icon: typeof Wifi; className: string }
 >;
 
+type ConnectionStatusProps = {
+  /** Shows the latency next to the icon; the collapsed bar keeps only the icon. */
+  showPing?: boolean;
+};
+
 /**
  * Gateway connection state for the quick access title bar. The popover names
  * the state, lists the joined organizations and, while the connection is
  * down, lets the player retry now instead of waiting for the next backoff.
  */
-export const ConnectionStatus: FC = () => {
+export const ConnectionStatus: FC<ConnectionStatusProps> = ({
+  showPing = true,
+}) => {
   const { t } = useTranslation("quickAccess");
   const { t: tCommon } = useTranslation("common");
   const { socket, joinedGuilds, status } = useSocket();
@@ -79,7 +86,7 @@ export const ConnectionStatus: FC = () => {
             aria-hidden="true"
             className={cn("ll:shrink-0", iconClassName)}
           />
-          {pingLabel ? (
+          {showPing && pingLabel ? (
             <span className="ll:text-[10px] ll:tabular-nums" aria-hidden="true">
               {t("connection.ping", { ping: heartbeatLatencyMs })}
             </span>

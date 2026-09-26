@@ -82,6 +82,8 @@ interface WindowData {
   locked: boolean;
   autofocus?: boolean;
   maxContentHeight?: number;
+  /** Shrunk to its collapsed content; `size` keeps the expanded size. */
+  collapsed?: boolean;
 }
 
 export type WindowFocusRequest = {
@@ -140,6 +142,7 @@ interface WindowsState {
   setMaxContentHeight: (window: WindowId, height: number) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
+  setCollapsed: (window: WindowId, collapsed: boolean) => void;
   /** A player action: opening this way also moves keyboard focus into the window. */
   toggleOpen: (window: WindowId, autofocus?: boolean) => void;
   setAutofocus: (window: WindowId, autofocus: boolean) => void;
@@ -448,6 +451,7 @@ const windowSchema = looseStruct({
   opacity: optionalOrUndefined(Schema.Literals([1, 2, 3, 4, 5])),
   autofocus: optionalBoolean,
   maxContentHeight: optionalNumber,
+  collapsed: optionalBoolean,
   position: optionalOrUndefined(
     looseStruct({ x: optionalNumber, y: optionalNumber }),
   ),
@@ -476,6 +480,7 @@ const parsePersistedWindow = (
     opacity: data.opacity ?? defaults.opacity,
     autofocus: data.autofocus ?? defaults.autofocus,
     maxContentHeight: data.maxContentHeight ?? defaults.maxContentHeight,
+    collapsed: data.collapsed ?? defaults.collapsed,
     position: {
       ...defaults.position,
       ...data.position,
@@ -818,6 +823,12 @@ export const useWindowsStore = create<WindowsState>()(
             ? state
             : { [key]: { ...state[key], locked } },
         ),
+      setCollapsed: (key: WindowId, collapsed: boolean) =>
+        set((state) =>
+          (state[key].collapsed ?? false) === collapsed
+            ? state
+            : { [key]: { ...state[key], collapsed } },
+        ),
       setAutofocus: (key: WindowId, autofocus: boolean) =>
         set((state) =>
           state[key].autofocus === autofocus
@@ -861,6 +872,7 @@ export const useWindowsStore = create<WindowsState>()(
             opacity: fallback.opacity,
             locked: fallback.locked,
             maxContentHeight: undefined,
+            collapsed: fallback.collapsed,
           });
 
           return {
@@ -956,6 +968,7 @@ export const useWindowsStore = create<WindowsState>()(
           setMaxContentHeight: _setMaxContentHeight,
           setOpacity: _setOpacity,
           setLocked: _setLocked,
+          setCollapsed: _setCollapsed,
           toggleOpen: _toggleOpen,
           setAutofocus: _setAutofocus,
           setSettingsActiveTab: _setSettingsActiveTab,
