@@ -8,6 +8,20 @@ import type {
 
 const DEFAULT_ROUTE_PREFETCH_STALE_TIME = 60_000;
 
+export const fetchRouteQueryData = <
+  TQueryFnData,
+  TError,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  queryClient: QueryClient,
+  options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+) =>
+  queryClient.fetchQuery({
+    staleTime: DEFAULT_ROUTE_PREFETCH_STALE_TIME,
+    ...options,
+  });
+
 export const ensureRouteQueryData = <
   TQueryFnData,
   TError,

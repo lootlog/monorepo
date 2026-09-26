@@ -14,6 +14,7 @@ import { configureApiClients } from "@lootlog/client/transport";
 import { afterEach, expect, it, vi } from "vitest";
 import { loadBattlePanelStatistics } from "./battle-panel-route-loader";
 import type { RouterContext } from "@/App";
+import { createInitialNavigation } from "@/lib/router/initial-navigation";
 
 const makeRouter = (queryClient: QueryClient) => {
   const root = createRootRouteWithContext<RouterContext>()({});
@@ -30,7 +31,7 @@ const makeRouter = (queryClient: QueryClient) => {
   return createRouter({
     routeTree: root.addChildren([route]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
-    context: { queryClient },
+    context: { queryClient, initialNavigation: createInitialNavigation() },
     parseSearch: (search) => Object.fromEntries(new URLSearchParams(search)),
     stringifySearch: (search) =>
       `?${new URLSearchParams(Object.entries(search).map(([key, value]) => [key, String(value)]))}`,
