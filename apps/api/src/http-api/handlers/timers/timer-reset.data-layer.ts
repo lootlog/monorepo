@@ -118,7 +118,8 @@ export const makeResetTimer = (
                 eq(timerTable.timerKey, resolved.timerKey),
               ),
             )
-            .limit(1);
+            .limit(1)
+            .for("update");
 
           const current = currentRows[0];
 
@@ -239,10 +240,7 @@ export const makeResetTimer = (
                   eq(timerHistoryEntryTable.timerKey, updated.timerKey),
                 ),
               )
-              .orderBy(
-                desc(timerHistoryEntryTable.createdAt),
-                desc(timerHistoryEntryTable.id),
-              )
+              .orderBy(desc(timerHistoryEntryTable.id))
               .offset(5);
 
             if (stale.length > 0) {
