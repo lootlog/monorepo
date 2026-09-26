@@ -63,6 +63,9 @@ class FakeHub {
   unsubscribe(): void {
     throw new Error("Unexpected unsubscribe");
   }
+  setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
+    socket.data.presence = presence;
+  }
   publishPermissionRebalance(): Effect.Effect<void, unknown> {
     return Effect.void;
   }
