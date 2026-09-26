@@ -793,6 +793,80 @@ describe("ChatInput", () => {
     });
   });
 
+  it("switches the mode from the mode menu, keeping the text and marking the current mode", async () => {
+    const user = userEvent.setup();
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("alarm");
+
+    await user.click(screen.getByRole("button", { name: "Tryb: Wiadomość" }));
+    await user.click(
+      await screen.findByRole("button", { name: /^Powiadomienie/ }),
+    );
+
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("!alarm");
+    expect(editor.textContent).toBe("alarm");
+    await waitFor(() => expect(editor).toHaveFocus());
+    expect(
+      screen.queryByRole("group", { name: "Tryb wysyłania" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Tryb: Powiadomienie" }),
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /^Powiadomienie/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /^Wiadomość/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    await user.click(screen.getByRole("button", { name: /^Zbiórka/ }));
+
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/grp alarm");
+  });
+
+  it("operates the mode menu from the keyboard without keys reaching the game", async () => {
+    const user = userEvent.setup();
+    const windowKeyDownHandler = vi.fn<(event: KeyboardEvent) => void>();
+    window.addEventListener("keydown", windowKeyDownHandler);
+    render(<ChatInput selectedGuildId="guild-1" />);
+    const editor = getEditor();
+    await user.click(editor);
+    await user.paste("alarm");
+
+    screen.getByRole("button", { name: "Tryb: Wiadomość" }).focus();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^Wiadomość/ })).toHaveFocus(),
+    );
+
+    await user.keyboard("{ArrowDown}{ArrowDown}{Enter}");
+
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/grp alarm");
+    await waitFor(() => expect(editor).toHaveFocus());
+
+    screen.getByRole("button", { name: "Tryb: Zbiórka" }).focus();
+    await user.keyboard("{Enter}");
+    await screen.findByRole("group", { name: "Tryb wysyłania" });
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("group", { name: "Tryb wysyłania" }),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(editor).toHaveFocus());
+    expect(useChatStore.getState().draftsByGuild["guild-1"]).toBe("/grp alarm");
+    expect(windowKeyDownHandler).not.toHaveBeenCalled();
+
+    window.removeEventListener("keydown", windowKeyDownHandler);
+  });
+
   it("does not bring the hidden prefix back as text on undo", async () => {
     const user = userEvent.setup();
     render(<ChatInput selectedGuildId="guild-1" />);
