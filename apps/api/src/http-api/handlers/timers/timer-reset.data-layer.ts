@@ -92,7 +92,7 @@ export const makeResetTimer = (
       database,
       access.guild.id,
       payload.world,
-      resolved,
+      [resolved],
       now,
     );
 

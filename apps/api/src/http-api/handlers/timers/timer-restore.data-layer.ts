@@ -1,4 +1,4 @@
-import { canViewTimer } from "./timer-selection.js";
+import { canViewTimer, findActiveTimerEventHeroes } from "./timer-selection.js";
 import {
   getTimerRestoreSnapshot,
   getTimerResetRollbackSnapshot,
@@ -171,6 +171,22 @@ export const makeRestoreTimer = (
         }
 
         const now = new Date(yield* Clock.currentTimeMillis);
+
+        const activeEventHeroes = yield* findActiveTimerEventHeroes(
+          transaction,
+          access.guild.id,
+          entry.world,
+          [snapshot, ...existingRows],
+          now,
+        );
+
+        if (activeEventHeroes.length > 0) {
+          return yield* Effect.fail(
+            new InvalidRequestError({
+              message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+            }),
+          );
+        }
 
         const restoredRows = yield* rollbackReset
           ? transaction

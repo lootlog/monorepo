@@ -18632,7 +18632,7 @@ export const getTimersControllerRestoreTimerFromHistoryUrl = ({ guildId, history
 }
 
 /**
- * Restore a deleted timer from a DELETE history entry, or undo the latest RESET using its previous saved state. Reset rollback rejects later timer changes.
+ * Restore a deleted timer from a DELETE history entry, or undo the latest RESET using its previous saved state. Reset rollback rejects later timer changes. Timers owned by an active event cannot be restored.
  * @summary Restore timer from history
  */
 export const timersControllerRestoreTimerFromHistory = async ({ guildId, historyEntryId }: TimersControllerRestoreTimerFromHistoryPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<TimerResponseDto> => {
