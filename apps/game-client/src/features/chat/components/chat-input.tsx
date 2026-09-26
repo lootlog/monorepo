@@ -1,7 +1,7 @@
 import { inputVariantClasses } from "@/components/ui/input";
 import { ChatQuickActionStrip } from "./chat-quick-action-strip";
 import { ChatComposeField } from "@/features/chat/components/chat-compose-field";
-import { ChatComposeModeIcon } from "@/features/chat/components/chat-compose-mode-icon";
+import { ChatComposeModeMenu } from "@/features/chat/components/chat-compose-mode-menu";
 import { ChatReplyPreview } from "@/features/chat/components/chat-reply-preview";
 import { ChatMentionSuggestions } from "@/features/chat/components/chat-mention-suggestions";
 import { cn } from "cn";
@@ -43,9 +43,10 @@ export function ChatInput(props: ChatInputProps) {
 
   const composeRow = (
     <>
-      <ChatComposeModeIcon
-        message={controller.messageValue}
-        className="ll:ml-1 ll:size-3.5"
+      <ChatComposeModeMenu
+        controller={controller}
+        side="top"
+        iconClassName="ll:size-3.5"
       />
       <ChatComposeField
         controller={controller}

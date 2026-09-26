@@ -7,6 +7,8 @@ export type ChecklistMenuItem<Value extends string> = {
   value: Value;
   label: string;
   leading?: ReactNode;
+  /** Shown before the check mark, e.g. the shortcut that does the same. */
+  trailing?: ReactNode;
 };
 
 type ChecklistMenuOnlyAction<Value extends string> = {
@@ -106,7 +108,17 @@ export const ChecklistMenu = <Value extends string>({
                 {item.leading}
                 <span className="ll:truncate">{item.label}</span>
               </span>
-              {isSelected ? (
+              {item.trailing ? (
+                <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1.5">
+                  {item.trailing}
+                  {/* Keeps the trailing content in place as the check moves. */}
+                  <Check
+                    size={ICON_SIZE}
+                    aria-hidden="true"
+                    className={cn("ll:shrink-0", !isSelected && "ll:invisible")}
+                  />
+                </span>
+              ) : isSelected ? (
                 <Check
                   size={ICON_SIZE}
                   aria-hidden="true"
