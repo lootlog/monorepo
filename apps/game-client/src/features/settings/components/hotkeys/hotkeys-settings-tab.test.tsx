@@ -1,8 +1,16 @@
 import i18n from "@/i18n/config";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
+import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useHotkeysStore } from "@/store/hotkeys.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { HotkeysSettingsTab } from "./hotkeys-settings-tab";
 
 const keyCaps = (row: ReturnType<typeof chatRow>) =>
@@ -27,6 +35,27 @@ describe("HotkeysSettingsTab", () => {
   beforeEach(() => {
     setTestRuntimeGame({ interface: "si" });
     useHotkeysStore.getState().resetAll();
+  });
+
+  it("records an already assigned shortcut as a conflict instead of running it", async () => {
+    const user = userEvent.setup();
+    useWindowsStore.setState(useWindowsStore.getInitialState(), true);
+    renderHook(() => useHotkeys());
+    render(<HotkeysSettingsTab />);
+
+    await user.click(
+      chatRow().getByRole("button", { name: "Zmień skrót: Czat" }),
+    );
+    fireEvent.keyDown(window, { key: "S", shiftKey: true });
+
+    expect(
+      chatRow().getByText(i18n.t("settings.hotkeys.conflict")),
+    ).toBeInTheDocument();
+    expect(useWindowsStore.getState().command.open).toBe(false);
+    expect(useHotkeysStore.getState().bindings["toggle-chat"]).toMatchObject({
+      key: "C",
+      shift: true,
+    });
   });
 
   it("hides the map ping hotkey on the old interface", () => {

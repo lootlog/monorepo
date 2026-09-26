@@ -193,7 +193,14 @@ export const useHotkeys = ({
       event.stopImmediatePropagation();
     };
 
+    // The settings recorder listens later in the same capture phase; while it
+    // records, the key is the new binding, not a hotkey.
+    const isRecordingBinding = () =>
+      useHotkeysStore.getState().recordingAction !== null;
+
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isRecordingBinding()) return;
+
       if (event.key === "Escape" && cancelActiveMapPing()) {
         consumeKey(event);
 
@@ -227,6 +234,8 @@ export const useHotkeys = ({
     };
 
     const handleMouseDown = (event: MouseEvent) => {
+      if (isRecordingBinding()) return;
+
       const matchingAction = Object.entries(bindings).find(
         ([action, binding]) =>
           binding.type === "mouse" &&

@@ -293,6 +293,13 @@ interface HotkeysState {
   resetAll: () => void;
   /** Replaces bindings from the settings documents without writing back. */
   applyBindings: (bindings: Record<HotkeyAction, HotkeyBinding>) => void;
+  /**
+   * The action whose new binding the settings are recording. While set, the
+   * next key or button belongs to the recorder, so hotkeys do not run.
+   * Never persisted.
+   */
+  recordingAction: HotkeyAction | null;
+  setRecordingAction: (action: HotkeyAction | null) => void;
 }
 
 const syncBindings = (bindings: Record<HotkeyAction, HotkeyBinding>) =>
@@ -342,6 +349,8 @@ export const useHotkeysStore = create<HotkeysState>()(
 
         set({ bindings });
       },
+      recordingAction: null,
+      setRecordingAction: (action) => set({ recordingAction: action }),
     }),
     {
       name: STORAGE_KEY,
