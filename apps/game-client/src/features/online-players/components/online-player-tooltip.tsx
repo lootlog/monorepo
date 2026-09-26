@@ -47,7 +47,7 @@ export const OnlinePlayerTooltip: FC<OnlinePlayerTooltipProps> = ({
       </span>
     ),
     relation === "party" && (
-      <span key="party" className="ll:text-sky-300">
+      <span key="party" className="ll:text-purple-300">
         {t("tooltip.status.party")}
       </span>
     ),

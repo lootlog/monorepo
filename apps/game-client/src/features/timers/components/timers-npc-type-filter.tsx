@@ -1,9 +1,9 @@
-import { Check, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "cn";
 import { NpcType } from "@/api/npcs.api";
-import { Button } from "@/components/ui/button";
+import { ChecklistMenu } from "@/components/checklist-menu";
 import {
   Popover,
   PopoverContent,
@@ -22,8 +22,6 @@ type TimersNpcTypeFilterProps = {
   selectedNpcTypes: NpcType[];
   onChange: (selectedNpcTypes: NpcType[]) => void;
 };
-
-const ICON_SIZE = 12;
 
 /**
  * One strip cell that opens the monster type checklist, so the filter row
@@ -45,8 +43,6 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
         : [...selectedNpcTypes, type],
     );
   };
-
-  const selectOnly = (type: NpcType) => onChange([type]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,49 +68,20 @@ export const TimersNpcTypeFilter: FC<TimersNpcTypeFilterProps> = ({
         align="end"
         className="ll-action-menu ll:w-44 ll:overflow-hidden ll:p-0"
       >
-        <div
-          role="group"
+        <ChecklistMenu
           aria-label={t("filters.npcTypesLabel")}
-          className="ll:flex ll:flex-col"
-        >
-          {NPC_TYPE_FILTER_OPTIONS.map((type) => {
-            const isSelected = selected.has(type);
-            const name = t(`common:npcTypes.${type.toLowerCase()}`);
-
-            return (
-              <div key={type} className="ll:flex ll:items-stretch">
-                <Button
-                  size="xs"
-                  variant="menu"
-                  aria-pressed={isSelected}
-                  className={cn(
-                    "ll:min-w-0 ll:flex-1 ll:justify-between ll:capitalize",
-                    !isSelected && "ll:text-muted-foreground",
-                  )}
-                  onClick={() => toggle(type)}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    selectOnly(type);
-                  }}
-                >
-                  <span>{name}</span>
-                  {isSelected ? (
-                    <Check size={ICON_SIZE} aria-hidden="true" />
-                  ) : null}
-                </Button>
-                <Button
-                  size="xs"
-                  variant="menu"
-                  aria-label={t("filters.npcTypesOnlyLabel", { type: name })}
-                  className="ll:shrink-0 ll:px-2 ll:text-[11px] ll:font-medium ll:text-muted-foreground ll:hover:text-foreground"
-                  onClick={() => selectOnly(type)}
-                >
-                  {t("filters.npcTypesOnly")}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+          items={NPC_TYPE_FILTER_OPTIONS.map((type) => ({
+            value: type,
+            label: t(`common:npcTypes.${type.toLowerCase()}`),
+          }))}
+          selected={selected}
+          onToggle={toggle}
+          only={{
+            text: t("filters.npcTypesOnly"),
+            getLabel: (type) => t("filters.npcTypesOnlyLabel", { type }),
+            onSelect: (type) => onChange([type]),
+          }}
+        />
       </PopoverContent>
     </Popover>
   );

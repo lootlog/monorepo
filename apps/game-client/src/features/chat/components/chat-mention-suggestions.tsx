@@ -26,6 +26,8 @@ type ChatMentionSuggestionsProps = {
   selectedIndex: number;
   onSelect: (suggestion: ChatInputSuggestion) => void;
   isLoading?: boolean;
+  /** `below` opens the list under a composer at the top of the screen. */
+  placement?: "above" | "below";
 };
 
 export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
@@ -36,6 +38,7 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
   selectedIndex,
   onSelect,
   isLoading = false,
+  placement = "above",
 }) => {
   const { t } = useTranslation("chat");
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -67,7 +70,14 @@ export const ChatMentionSuggestions: FC<ChatMentionSuggestionsProps> = ({
   );
 
   return (
-    <div className="ll:absolute ll:bottom-full ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/40 ll:bg-[#171719]">
+    <div
+      className={cn(
+        "ll:absolute ll:inset-x-0 ll:z-50 ll:w-full ll:overflow-hidden ll:border-x-0 ll:border-gray-400/40 ll:bg-[#171719]",
+        placement === "above"
+          ? "ll:bottom-full ll:border-t ll:border-b-0"
+          : "ll:top-full ll:border-t-0 ll:border-b",
+      )}
+    >
       <div className="ll:flex ll:items-center ll:justify-between ll:border-x-0 ll:border-t-0 ll:border-b ll:border-gray-400/20 ll:px-2 ll:py-1 ll:text-[10px] ll:text-neutral-400">
         <span>{title}</span>
         <span>{suggestions.length}</span>

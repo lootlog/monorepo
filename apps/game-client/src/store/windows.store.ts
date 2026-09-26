@@ -977,7 +977,9 @@ export const useWindowsStore = create<WindowsState>()(
           ...persisted
         } = state;
 
-        return persisted;
+        // The console is summoned for one line; a reload must not reopen it
+        // and pull focus away from the game.
+        return { ...persisted, command: { ...persisted.command, open: false } };
       },
       storage: createJSONStorage(() =>
         createDeduplicatingStateStorage(localStorage),

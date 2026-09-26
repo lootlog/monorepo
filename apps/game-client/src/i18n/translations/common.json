@@ -110,5 +110,9 @@
   "filters": {
     "minLevel": "Poziom od",
     "maxLevel": "Poziom do"
+  },
+  "guildTargets": {
+    "label": "Wyślij do",
+    "triggerLabel": "Wyślij do: {{names}}"
   }
 }
