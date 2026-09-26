@@ -102,8 +102,8 @@ const mergeOperations = (
 const sameQueryKey = (left: QueryKey, right: QueryKey) => isEqual(left, right);
 
 /**
- * One request batch cannot hold two different ids for the same scope type,
- * so pending operations are grouped by their non-user scope ids.
+ * The API accepts one operation per document and one id per scope type.
+ * Preserve reset boundaries in separate, ordered requests.
  */
 const groupIntoBatches = (patches: QueuedSettingsPatch[]) => {
   const { "": userOnly = [], ...batches } = groupBy(patches, ({ operation }) =>

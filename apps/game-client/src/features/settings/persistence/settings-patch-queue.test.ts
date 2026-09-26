@@ -55,6 +55,16 @@ const sentOperations = (
   send: ReturnType<typeof vi.fn<SettingsPatchQueueConfig["send"]>>,
 ) => send.mock.calls.map(([operations]) => operations);
 
+const applyOperations = (
+  currentOverrides: SettingsJsonRecord,
+  operations: SettingsOperation[],
+) =>
+  operations.reduce(
+    (overrides, patch) =>
+      applySettingsPatch({ ...patch, currentOverrides: overrides }),
+    currentOverrides,
+  );
+
 describe("settings patch queue", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -169,11 +179,7 @@ describe("settings patch queue", () => {
           operation({ domain: "appearance", ...edit }),
         );
 
-        const sequential = operations.reduce(
-          (currentOverrides, patch) =>
-            applySettingsPatch({ ...patch, currentOverrides }),
-          initial,
-        );
+        const sequential = applyOperations(initial, operations);
 
         let stored = structuredClone(initial);
 
@@ -188,9 +194,7 @@ describe("settings patch queue", () => {
             ).size,
           ).toBe(batch.length);
 
-          for (const patch of batch) {
-            stored = applySettingsPatch({ ...patch, currentOverrides: stored });
-          }
+          stored = applyOperations(stored, batch);
         });
 
         if (retry) send.mockRejectedValueOnce(new Error("offline"));
@@ -242,9 +246,7 @@ describe("settings patch queue", () => {
           await secondResponse.promise;
         }
 
-        for (const patch of batch) {
-          stored = applySettingsPatch({ ...patch, currentOverrides: stored });
-        }
+        stored = applyOperations(stored, batch);
 
         return structuredClone(stored);
       },
@@ -257,7 +259,7 @@ describe("settings patch queue", () => {
 
     applyOptimistic.mockImplementation(
       ({ operation }: { operation: SettingsOperation }) => {
-        cached = applySettingsPatch({ ...operation, currentOverrides: cached });
+        cached = applyOperations(cached, [operation]);
       },
     );
     queue.enqueue({
@@ -290,6 +292,248 @@ describe("settings patch queue", () => {
     expect(queue.hasPending()).toBe(false);
     expect(stored).toEqual(expected);
     expect(cached).toEqual(expected);
+  });
+
+  it.each<{
+    name: string;
+    initial: SettingsJsonRecord;
+    edits: SettingsJsonRecord[];
+    expected: SettingsJsonRecord;
+  }>([
+    {
+      name: "resetting the last timer color after changing it",
+      initial: { timersColors: { Tanroth: "blue" } },
+      edits: [
+        { timersColors: { Tanroth: "red" } },
+        { timersColors: {} },
+        { hiddenDefaultColors: ["green"] },
+      ],
+      expected: { timersColors: {}, hiddenDefaultColors: ["green"] },
+    },
+    {
+      name: "resetting a nested color override without clearing its siblings",
+      initial: {
+        overriddenDefaultColors: {
+          red: { borderColor: "#123456", backgroundColor: "#654321" },
+          blue: { borderColor: "#0000ff" },
+        },
+      },
+      edits: [
+        { overriddenDefaultColors: { red: { borderColor: "#abcdef" } } },
+        { overriddenDefaultColors: { red: {} } },
+      ],
+      expected: {
+        overriddenDefaultColors: {
+          red: {},
+          blue: { borderColor: "#0000ff" },
+        },
+      },
+    },
+    {
+      name: "assigning a new color after resetting persisted colors",
+      initial: { timersColors: { Tanroth: "blue" } },
+      edits: [{ timersColors: {} }, { timersColors: { Heros: "red" } }],
+      expected: { timersColors: { Heros: "red" } },
+    },
+    {
+      name: "changing, resetting and assigning colors in one debounce window",
+      initial: { timersColors: { Tanroth: "blue" } },
+      edits: [
+        { timersColors: { Heros: "green" } },
+        { timersColors: {} },
+        { timersColors: { Titan: "red" } },
+      ],
+      expected: { timersColors: { Titan: "red" } },
+    },
+  ])(
+    "matches sequential server settings when $name",
+    async ({ initial, edits, expected }) => {
+      const initialOverrides = {
+        timers: { defaultColorNames: { red: "Bosses" }, ...initial },
+      };
+
+      let persisted: SettingsJsonRecord = initialOverrides;
+
+      const { queue, send, statuses } = createHarness((operations) => {
+        persisted = applyOperations(persisted, operations);
+
+        return Promise.resolve({});
+      });
+
+      const patches = edits.map((timers) =>
+        operation({ domain: "appearance", set: { timers } }),
+      );
+
+      for (const patch of patches) {
+        queue.enqueue({ operation: patch, queryKeys: [] });
+      }
+
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(persisted).toEqual({
+        timers: { defaultColorNames: { red: "Bosses" }, ...expected },
+      });
+      expect(persisted).toEqual(applyOperations(initialOverrides, patches));
+
+      for (const batch of sentOperations(send)) {
+        expect(batch).toHaveLength(1);
+      }
+
+      expect(statuses.at(-1)).toBe("saved");
+    },
+  );
+
+  it("retries a failed reset before saving the color queued after it", async () => {
+    let persisted: SettingsJsonRecord = {
+      timers: { timersColors: { Tanroth: "blue" } },
+    };
+
+    let shouldFail = true;
+
+    const { queue, send, statuses } = createHarness((operations) => {
+      if (shouldFail) return Promise.reject(new Error("offline"));
+      persisted = applyOperations(persisted, operations);
+
+      return Promise.resolve({});
+    });
+
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: {} } },
+      }),
+      queryKeys: [],
+    });
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: { Heros: "red" } } },
+      }),
+      queryKeys: [],
+    });
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(statuses.at(-1)).toBe("error");
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(persisted).toEqual({
+      timers: { timersColors: { Tanroth: "blue" } },
+    });
+
+    shouldFail = false;
+    await queue.retry();
+
+    expect(persisted).toEqual({
+      timers: { timersColors: { Heros: "red" } },
+    });
+    expect(statuses.at(-1)).toBe("saved");
+    expect(queue.hasPending()).toBe(false);
+  });
+
+  it("keeps the new color visible while its preceding reset response is applied", async () => {
+    let persisted: SettingsJsonRecord = {
+      timers: { timersColors: { Tanroth: "blue" } },
+    };
+
+    let visible = persisted;
+    const responses: Array<() => void> = [];
+
+    const queue = createSettingsPatchQueue({
+      send: (operations) =>
+        new Promise<SettingsJsonRecord>((resolve) => {
+          responses.push(() => {
+            persisted = applyOperations(persisted, operations);
+            resolve(persisted);
+          });
+        }),
+      applyOptimistic: ({ operation }) => {
+        visible = applyOperations(visible, [operation]);
+      },
+      applyServerDocuments: (response) => {
+        visible = response;
+
+        return true;
+      },
+      reconcile: () => Promise.resolve(),
+      onStatus: () => {},
+    });
+
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: {} } },
+      }),
+      queryKeys: [],
+    });
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: { Heros: "red" } } },
+      }),
+      queryKeys: [],
+    });
+    const save = queue.flush();
+    responses.shift()?.();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(persisted).toEqual({ timers: { timersColors: {} } });
+    expect(visible).toEqual({ timers: { timersColors: { Heros: "red" } } });
+
+    responses.shift()?.();
+    await save;
+
+    expect(persisted).toEqual(visible);
+  });
+
+  it("retries a reset and new color queued while an older save failed", async () => {
+    let persisted: SettingsJsonRecord = {
+      timers: { timersColors: { Tanroth: "blue" } },
+    };
+
+    let failSave: (error: Error) => void = () => {};
+
+    const { queue, send } = createHarness((operations) => {
+      persisted = applyOperations(persisted, operations);
+
+      return Promise.resolve({});
+    });
+
+    send.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          failSave = reject;
+        }),
+    );
+
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: { Tanroth: "green" } } },
+      }),
+      queryKeys: [],
+    });
+    const saving = queue.flush();
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: {} } },
+      }),
+      queryKeys: [],
+    });
+    queue.enqueue({
+      operation: operation({
+        domain: "appearance",
+        set: { timers: { timersColors: { Heros: "red" } } },
+      }),
+      queryKeys: [],
+    });
+    failSave(new Error("offline"));
+    await saving;
+    await queue.retry();
+
+    expect(persisted).toEqual({
+      timers: { timersColors: { Heros: "red" } },
+    });
+    expect(queue.hasPending()).toBe(false);
   });
 
   it("uses the save response instead of refetching when it fits the cache", async () => {
