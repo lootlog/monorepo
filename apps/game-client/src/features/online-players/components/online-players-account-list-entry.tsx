@@ -17,9 +17,9 @@ import {
 import type { PlayerPresence } from "@/lib/online-players-presence";
 import { getPresenceCharacter } from "@/features/online-players/online-players-list.helpers";
 import { OnlinePlayerTooltip } from "@/features/online-players/components/online-player-tooltip";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { usePlayerRelations } from "@/hooks/use-player-relations";
 import {
+  PLAYER_AFK_FILL,
   PLAYER_RELATION_FILLS,
   type PlayerRelation,
 } from "@/lib/player-relation";
@@ -48,7 +48,7 @@ const getHighlightFill = (
 ) => {
   if (relation === "self") return PLAYER_RELATION_FILLS.self;
 
-  if (isAfk) return TIMERS_COLORS.orange.fill;
+  if (isAfk) return PLAYER_AFK_FILL;
 
   return relation ? PLAYER_RELATION_FILLS[relation] : undefined;
 };
