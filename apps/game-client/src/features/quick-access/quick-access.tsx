@@ -2,6 +2,8 @@ import { DraggableWindow } from "@/components/draggable-window/draggable-window"
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toolbarStripDividerClassName } from "@/components/ui/toolbar-strip";
 import { ConnectionStatus } from "@/features/quick-access/components/connection-status";
+import { QuickAccessCollapseButton } from "@/features/quick-access/components/quick-access-collapse-button";
+import { QuickAccessCollapsedBar } from "@/features/quick-access/components/quick-access-collapsed-bar";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
 import {
   QuickAccessWindowButton,
@@ -23,11 +25,17 @@ const ICON_CLASS_NAME = "ll:size-4";
 /**
  * Lootlog's "start bar": one tile per window, lit while that window is open.
  * Players tuck it under Margonem's top bar, so the default height stays at
- * one row of tiles and only the width grows with the tile count.
+ * one row of tiles and only the width grows with the tile count. Collapsed,
+ * only the connection state and the expand button remain.
  */
 export const QuickAccess = () => {
   const { t } = useTranslation("quickAccess");
   const open = useWindowsStore((state) => state["quick-access"].open);
+
+  const collapsed = useWindowsStore(
+    (state) => state["quick-access"].collapsed ?? false,
+  );
+
   const setOpen = useWindowsStore((state) => state.setOpen);
 
   const buttons: QuickAccessWindowButtonProps[] = [
@@ -69,6 +77,22 @@ export const QuickAccess = () => {
     },
   ];
 
+  if (collapsed) {
+    return (
+      <DraggableWindow
+        isOpen={open}
+        id="quick-access"
+        title={t("window.title")}
+        closable={false}
+        collapsed
+        disableTitle
+        draggableContent
+      >
+        <QuickAccessCollapsedBar />
+      </DraggableWindow>
+    );
+  }
+
   return (
     <DraggableWindow
       isOpen={open}
@@ -78,7 +102,10 @@ export const QuickAccess = () => {
       minWidth={250}
       onClose={() => setOpen("quick-access", false)}
       closable={false}
-      actions=<ConnectionStatus />
+      actions=<>
+        <ConnectionStatus />
+        <QuickAccessCollapseButton collapsed={false} />
+      </>
     >
       <ScrollArea
         className="ll:h-full ll:w-full"

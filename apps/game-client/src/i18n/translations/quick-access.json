@@ -20,5 +20,9 @@
     "heartbeatPing": "Opóźnienie połączenia: {{ping}} ms",
     "organizations": "Połączone Lootlogi",
     "reconnect": "Połącz ponownie"
+  },
+  "collapse": {
+    "collapse": "Zwiń pasek",
+    "expand": "Rozwiń pasek"
   }
 }
