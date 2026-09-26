@@ -23,7 +23,6 @@ describe("useHotkeys", () => {
       "quick-access": {
         ...state["quick-access"],
         open: true,
-        autofocus: undefined,
       },
       currentWindowFocus: undefined,
       windowFocusHistory: [],

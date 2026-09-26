@@ -62,7 +62,6 @@ export const CommandWindow = () => {
   const world = useGameStore((state) => state.game?.world ?? "unknown");
 
   const open = useWindowsStore((state) => state.command.open);
-  const autofocus = useWindowsStore((state) => state.command.autofocus);
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
   const { startNotificationMessage } = useNotificationChatOrchestration();
@@ -213,7 +212,7 @@ export const CommandWindow = () => {
                   }
                 }}
                 placeholder={t("input.placeholder")}
-                autoFocus={autofocus}
+                autoFocus
                 disabled={isSubmitting}
                 value={messageValue}
                 onChange={(e) => setValue("message", e.target.value)}
