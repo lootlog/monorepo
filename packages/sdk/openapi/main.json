@@ -22376,7 +22376,7 @@
             "properties": {
               "npcLayout": {
                 "type": "string",
-                "enum": ["tile", "inline"]
+                "enum": ["tile", "inline", "text"]
               },
               "fontScalePercent": {
                 "type": "number",
@@ -22546,7 +22546,7 @@
             "properties": {
               "npcLayout": {
                 "type": "string",
-                "enum": ["tile", "inline"]
+                "enum": ["tile", "inline", "text"]
               },
               "fontScalePercent": {
                 "type": "number"
