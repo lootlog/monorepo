@@ -1,9 +1,9 @@
 {
   "window": {
-    "title": "Gracze online"
+    "title": "Online"
   },
   "search": {
-    "placeholder": "Szukaj gracza…"
+    "placeholder": "Szukaj…"
   },
   "filters": {
     "professionLabel": "Profesja",
