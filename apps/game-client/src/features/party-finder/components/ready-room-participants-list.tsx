@@ -31,13 +31,9 @@ export function ReadyRoomParticipantsList({
 
   return (
     <ul className="ll:m-0 ll:list-none ll:p-0">
-      {waitingParticipants.map((participant, index) => (
+      {waitingParticipants.map((participant) => (
         <li key={participant.participantId}>
-          <ReadyRoomParticipantItem
-            room={room}
-            participant={participant}
-            isAlternateRow={index % 2 === 1}
-          />
+          <ReadyRoomParticipantItem room={room} participant={participant} />
         </li>
       ))}
     </ul>

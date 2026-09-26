@@ -33,7 +33,6 @@ type SingleTimerProps = {
   timer: TimerWithTimeLeft;
   settingsKey: string;
   isHidden?: boolean;
-  isAlternateRow?: boolean;
   showColorStripe?: boolean;
 };
 
@@ -44,7 +43,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   settingsKey,
   isHidden = false,
-  isAlternateRow = false,
   showColorStripe = true,
 }) => {
   const world = timer.world;
@@ -128,7 +126,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 displayMode={displayConfig.singleTimerDisplayMode}
                 fontSize={displayConfig.fontSize}
                 isPending={isPending}
-                isAlternateRow={isAlternateRow}
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
                 countdownMode={countdownMode}
                 timer={timer}
