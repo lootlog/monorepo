@@ -23,6 +23,7 @@ type ConfirmPopoverProps = {
   title: string;
   description?: string;
   confirmLabel: string;
+  confirmVariant?: ComponentProps<typeof Button>["variant"];
   /** The confirmed action is running; the confirm button shows a spinner. */
   pending?: boolean;
   onConfirm: () => void;
@@ -45,6 +46,7 @@ export const ConfirmPopover = ({
   title,
   description,
   confirmLabel,
+  confirmVariant = "destructive",
   pending = false,
   onConfirm,
 }: ConfirmPopoverProps) => {
@@ -104,7 +106,7 @@ export const ConfirmPopover = ({
             </Button>
             <Button
               size="xs"
-              variant="destructive"
+              variant={confirmVariant}
               type="button"
               loading={pending}
               onClick={onConfirm}

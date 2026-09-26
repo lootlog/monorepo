@@ -15,6 +15,8 @@ import {
 } from "../timer-fixtures";
 import { createTimerHttpFixture } from "../timer-http-fixtures";
 import { TimersGrid } from "./timers-grid";
+import { getTimerListRemovalTimers } from "../timer-list-projection";
+import type { Timer } from "@/api/timers.api";
 
 const NOW = Date.parse("2026-04-22T10:00:00.000Z");
 
@@ -153,3 +155,137 @@ it("updates twenty countdowns without adding permission observers or remounting 
   expect(query?.getObserversCount()).toBe(1);
   expect(fixture.requests).toHaveLength(0);
 });
+
+it("keeps grouped reset pending and retryable when a refreshed snapshot changes the representative and scope order", async () => {
+  const user = userEvent.setup();
+  const firstResponse = Promise.withResolvers<Response>();
+  const secondResponse = Promise.withResolvers<Response>();
+  let recovering = false;
+  const firstTimer = createTimer("Tanroth");
+
+  const secondTimer = {
+    ...createTimer("Tanroth", "guild-2"),
+    maxSpawnTime: new Date(NOW + 20_000).toISOString(),
+  };
+
+  const updatedFirst = {
+    ...firstTimer,
+    wasReset: true,
+    maxSpawnTime: new Date(NOW + 30_000).toISOString(),
+  };
+
+  const fixture = createTimerHttpFixture((request) => {
+    if (recovering) return Response.json({ ...secondTimer, wasReset: true });
+
+    return new URL(request.url).pathname.includes("/guild-1/")
+      ? firstResponse.promise
+      : secondResponse.promise;
+  });
+
+  useTimersStore.setState((state) => ({
+    generalConfig: { ...state.generalConfig, timersGrouping: true },
+  }));
+
+  for (const guildId of ["guild-1", "guild-2"])
+    fixture.queryClient.setQueryData(
+      getGuildsControllerGetGuildPermissionsQueryKey({ guildId }),
+      [Permission.LOOTLOG_TIMERS_RESET],
+    );
+
+  const content = (timers: Timer[]) => (
+    <QueryClientProvider client={fixture.queryClient}>
+      <TimersGrid
+        timers={getTimerListRemovalTimers(timers, true)}
+        settingsKey="global"
+        hiddenTimers={[]}
+        minColumnWidth={120}
+      />
+    </QueryClientProvider>
+  );
+
+  const view = render(content([secondTimer, firstTimer]));
+  onTestFinished(() => {
+    view.unmount();
+    fixture.cleanup();
+  });
+  await user.pointer({
+    keys: "[MouseRight]",
+    target: screen.getByText(/\[H\] Tanroth/),
+  });
+  await user.click(screen.getByRole("menuitem", { name: "Zresetuj timer" }));
+  await user.click(screen.getByRole("button", { name: "Zresetuj" }));
+  await waitFor(() => expect(fixture.requests).toHaveLength(2));
+  await act(async () => {
+    firstResponse.resolve(Response.json(updatedFirst));
+    await firstResponse.promise;
+  });
+  view.rerender(content([updatedFirst, secondTimer]));
+  expect(screen.getByRole("alertdialog")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Zresetuj" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "Zresetuj" }));
+  expect(fixture.requests).toHaveLength(2);
+  await act(async () => {
+    secondResponse.resolve(
+      Response.json({ message: "temporarily unavailable" }, { status: 503 }),
+    );
+    await secondResponse.promise;
+  });
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Zresetuj" })).toBeEnabled(),
+  );
+  recovering = true;
+  await user.click(screen.getByRole("button", { name: "Zresetuj" }));
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  expect(
+    fixture.requests.map((request) => new URL(request.url).pathname),
+  ).toEqual([
+    "/guilds/guild-2/timers/Tanroth/reset",
+    "/guilds/guild-1/timers/Tanroth/reset",
+    "/guilds/guild-2/timers/Tanroth/reset",
+  ]);
+});
+
+it.each([false, true])(
+  "clears an unconfirmed reset when the world changes with grouping=%s",
+  async (grouped) => {
+    const user = userEvent.setup();
+    const fixture = createTimerHttpFixture();
+    const timer = createTimer("Tanroth");
+    fixture.queryClient.setQueryData(
+      getGuildsControllerGetGuildPermissionsQueryKey({
+        guildId: timer.guildId,
+      }),
+      [Permission.LOOTLOG_TIMERS_RESET],
+    );
+    useTimersStore.setState((state) => ({
+      generalConfig: { ...state.generalConfig, timersGrouping: grouped },
+    }));
+
+    const content = (world: string) => (
+      <QueryClientProvider client={fixture.queryClient}>
+        <TimersGrid
+          timers={getTimerListRemovalTimers([{ ...timer, world }], grouped)}
+          settingsKey={grouped ? "global" : timer.guildId}
+          hiddenTimers={[]}
+          minColumnWidth={120}
+        />
+      </QueryClientProvider>
+    );
+
+    const view = render(content("luvia"));
+    onTestFinished(() => {
+      view.unmount();
+      fixture.cleanup();
+    });
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByText(/\[H\] Tanroth/),
+    });
+    await user.click(screen.getByRole("menuitem", { name: "Zresetuj timer" }));
+    expect(screen.getByRole("alertdialog")).toBeVisible();
+    view.rerender(content("zemyna"));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    await user.keyboard("{Enter}");
+    expect(fixture.requests).toHaveLength(0);
+  },
+);
