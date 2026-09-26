@@ -215,9 +215,8 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       <UnderBagTimers>
         {/* Mirrors the window title bar: actions lead, the title sits in the
             middle column, and the empty trailing column keeps it centered.
-            The bottom margin matches the panel's top padding, so the row
-            sits centered above the content. */}
-        <div className="ll:mb-1 ll:grid ll:h-7 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
+            Same height as the title bar, with no gap before the content. */}
+        <div className="ll:grid ll:h-6 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
           <div className="ll:flex ll:items-center ll:justify-self-start">
             <TimersActions
               timerFiltersEnabled={resolvedTimerFiltersEnabled}

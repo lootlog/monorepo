@@ -2,6 +2,7 @@ import { useLootlogGuilds } from "@/hooks/use-lootlog-guilds";
 import { cn } from "cn";
 import { useEffect, useState, type FC } from "react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   Popover,
   PopoverContent,
@@ -27,23 +28,22 @@ const STATUS_ICON = {
   { Icon: typeof Wifi; className: string }
 >;
 
-type ConnectionStatusProps = {
-  /** Shows the latency next to the icon; the collapsed bar keeps only the icon. */
-  showPing?: boolean;
-};
+/** Refresh rate of the latency while the player is looking at it. */
+const LATENCY_PROBE_INTERVAL_MS = 2_000;
 
 /**
- * Gateway connection state for the quick access title bar. The popover names
- * the state, lists the joined organizations and, while the connection is
- * down, lets the player retry now instead of waiting for the next backoff.
+ * Gateway connection state for the quick access title bar. The tooltip names
+ * the state and latency; the popover also lists the joined organizations and,
+ * while the connection is down, lets the player retry now instead of waiting
+ * for the next backoff.
  */
-export const ConnectionStatus: FC<ConnectionStatusProps> = ({
-  showPing = true,
-}) => {
+export const ConnectionStatus: FC = () => {
   const { t } = useTranslation("quickAccess");
   const { t: tCommon } = useTranslation("common");
   const { socket, joinedGuilds, status } = useSocket();
   const [open, setOpen] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const latencyVisible = open || tooltipOpen;
 
   const [heartbeatLatencyMs, setHeartbeatLatencyMs] = useState<number | null>(
     null,
@@ -53,6 +53,20 @@ export const ConnectionStatus: FC<ConnectionStatusProps> = ({
     () => socket?.subscribeHeartbeatLatency(setHeartbeatLatencyMs),
     [socket],
   );
+
+  // Heartbeats refresh the latency every 25 seconds; probe faster only while
+  // the tooltip or popover shows it.
+  useEffect(() => {
+    if (!socket || !latencyVisible) return;
+    socket.probeLatency();
+
+    const interval = setInterval(
+      () => socket.probeLatency(),
+      LATENCY_PROBE_INTERVAL_MS,
+    );
+
+    return () => clearInterval(interval);
+  }, [socket, latencyVisible]);
 
   const {
     guildsQuery: { data: guilds },
@@ -72,26 +86,22 @@ export const ConnectionStatus: FC<ConnectionStatusProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          data-ll-draggable="false"
-          aria-label={[statusLabel, pingLabel].filter(Boolean).join(" ")}
-          className={cn(
-            "ll-custom-cursor-pointer ll:inline-flex ll:h-5 ll:min-w-5 ll:gap-1 ll:shrink-0 ll:items-center ll:justify-center ll:rounded-sm ll:border-0 ll:bg-transparent ll:px-0.5 ll:transition-colors ll:motion-reduce:transition-none ll:hover:bg-white/10 ll:focus-visible:outline-2 ll:focus-visible:outline-ring",
-            open && "ll:bg-white/15",
-          )}
+        <IconButton
+          label={[statusLabel, pingLabel].filter(Boolean).join(" ")}
+          onTooltipOpenChange={setTooltipOpen}
+          tooltip={
+            <div className="ll:flex ll:flex-col">
+              <span>{statusLabel}</span>
+              {pingLabel ? (
+                <span className="ll:text-muted-foreground ll:tabular-nums">
+                  {pingLabel}
+                </span>
+              ) : null}
+            </div>
+          }
         >
-          <Icon
-            size={12}
-            aria-hidden="true"
-            className={cn("ll:shrink-0", iconClassName)}
-          />
-          {showPing && pingLabel ? (
-            <span className="ll:text-[10px] ll:tabular-nums" aria-hidden="true">
-              {t("connection.ping", { ping: heartbeatLatencyMs })}
-            </span>
-          ) : null}
-        </button>
+          <Icon aria-hidden="true" className={iconClassName} />
+        </IconButton>
       </PopoverTrigger>
       <PopoverContent
         className="ll:flex ll:w-56 ll:flex-col ll:gap-2 ll:text-xs"

@@ -82,6 +82,9 @@ export function createBackgroundConnection(
           case "disconnect":
             realtime.disconnect();
             break;
+          case "probe-latency":
+            realtime.probeLatency();
+            break;
           case "release":
             realtime.disconnect();
             send({ type: "closed" });
