@@ -218,7 +218,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
             The bottom margin matches the panel's top padding, so the row
             sits centered above the content. */}
         <div className="ll:mb-1 ll:grid ll:h-7 ll:shrink-0 ll:grid-cols-[1fr_auto_1fr] ll:items-center ll:gap-1 ll:px-0.5">
-          <div className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start">
+          <div className="ll:flex ll:items-center ll:justify-self-start">
             <TimersActions
               timerFiltersEnabled={resolvedTimerFiltersEnabled}
               toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
