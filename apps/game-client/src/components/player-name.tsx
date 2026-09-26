@@ -1,5 +1,5 @@
 import { cn } from "cn";
-import type { FC, ReactNode } from "react";
+import type { FC } from "react";
 
 type PlayerNameProps = {
   className?: string;
@@ -7,13 +7,12 @@ type PlayerNameProps = {
   level: number;
   name: string;
   profession: string;
-  /** Shown right after the level, before the clan, such as a badge. */
-  suffix?: ReactNode;
 };
 
 /**
- * A player's nick with level and profession, then the clan, dimmed. When the
- * row is too narrow the clan gives way first, so the nick stays readable.
+ * A player's nick with level and profession, then a faint dot and the clan,
+ * dimmed. When the row is too narrow the clan gives way first, so the nick
+ * stays readable.
  */
 export const PlayerName: FC<PlayerNameProps> = ({
   className,
@@ -21,7 +20,6 @@ export const PlayerName: FC<PlayerNameProps> = ({
   level,
   name,
   profession,
-  suffix,
 }) => (
   <span
     className={cn("ll:flex ll:min-w-0 ll:items-center ll:gap-1", className)}
@@ -30,11 +28,15 @@ export const PlayerName: FC<PlayerNameProps> = ({
       {name} ({level}
       {profession})
     </span>
-    {suffix}
     {clanName ? (
-      <span className="ll:min-w-0 ll:shrink-[9999] ll:truncate ll:font-normal ll:text-white/65">
-        {clanName}
-      </span>
+      <>
+        <span aria-hidden="true" className="ll:shrink-0 ll:text-white/35">
+          ·
+        </span>
+        <span className="ll:min-w-0 ll:shrink-[9999] ll:truncate ll:font-normal ll:text-white/65">
+          {clanName}
+        </span>
+      </>
     ) : null}
   </span>
 );

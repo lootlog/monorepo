@@ -137,14 +137,18 @@ describe("OnlinePlayersAccountListEntry", () => {
     expect(screen.getByText("Torneg")).toBeVisible();
   });
 
-  it("shows Margonem verification only for verified presence", () => {
-    const { rerender } = render(
+  it("shows Margonem verification in the row tooltip only for verified presence", async () => {
+    const user = userEvent.setup();
+
+    const { container, rerender } = render(
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(
-      screen.queryByLabelText("Zweryfikowane konto Margonem"),
-    ).not.toBeInTheDocument();
+    await user.hover(getAccountTile(container));
+
+    expect(await screen.findByRole("tooltip")).not.toHaveTextContent(
+      "Zweryfikowane konto Margonem",
+    );
 
     rerender(
       <OnlinePlayersAccountListEntry
@@ -152,7 +156,11 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Zweryfikowane konto Margonem")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole("tooltip")).toHaveTextContent(
+        "Zweryfikowane konto Margonem",
+      ),
+    );
   });
 
   it("shows the player details and relation in a tooltip", async () => {
@@ -211,22 +219,6 @@ describe("OnlinePlayersAccountListEntry", () => {
     const tooltip = await screen.findByRole("tooltip");
 
     expect(tooltip).toHaveTextContent("Hero (123w)");
-    expectTooltipAboveWindows(tooltip);
-  });
-
-  it("keeps the verified account tooltip above draggable windows", async () => {
-    const user = userEvent.setup();
-
-    render(
-      <OnlinePlayersAccountListEntry
-        presence={createPresence({ margonemAccountVerified: true })}
-      />,
-    );
-    await user.hover(screen.getByLabelText("Zweryfikowane konto Margonem"));
-
-    const tooltip = await screen.findByRole("tooltip");
-
-    expect(tooltip).toHaveTextContent("Zweryfikowane konto Margonem");
     expectTooltipAboveWindows(tooltip);
   });
 
