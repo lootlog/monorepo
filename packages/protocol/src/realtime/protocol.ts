@@ -7,6 +7,10 @@ import {
   AirTagUpdateEventSchema,
 } from "@lootlog/schema/air-tag";
 import {
+  BattlePingEventSchema,
+  BattlePingSendPayloadSchema,
+} from "@lootlog/schema/battle-ping";
+import {
   MapPingAckSchema,
   MapPingEventSchema,
   MapPingSendPayloadSchema,
@@ -221,6 +225,12 @@ export const MapPingCommand = command(
   MapPingSendPayloadSchema,
 );
 
+// Acknowledged with `MapPingAckSchema`: both pings share one reject vocabulary.
+export const BattlePingCommand = command(
+  "battle-ping.send",
+  BattlePingSendPayloadSchema,
+);
+
 export const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
@@ -280,6 +290,7 @@ export const ClientCommand = Schema.Union([
   SubscribeCommand,
   UnsubscribeCommand,
   MapPingCommand,
+  BattlePingCommand,
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
 ]);
@@ -376,6 +387,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("party-gathering.cancelled", OrganizationEvent),
   serverEvent("party-ready-room.updated", OrganizationEvent),
   serverEvent("map-ping.received", MapPingEventSchema),
+  serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),
