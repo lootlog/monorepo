@@ -1,6 +1,7 @@
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
+  type SettingsFieldDefinition,
 } from "@lootlog/domain/settings-documents";
 import type {
   SettingsDocumentLayer,
@@ -31,7 +32,9 @@ interface ApplySettingsPatchInput {
 }
 
 const getFieldDefinition = (domain: SettingsDomain, path: string) => {
-  const fields = SETTINGS_CATALOG[domain].fields;
+  const fields: Readonly<Record<string, SettingsFieldDefinition | undefined>> =
+    SETTINGS_CATALOG[domain].fields;
+
   const exactDefinition = fields[path];
 
   if (exactDefinition) {
@@ -46,8 +49,12 @@ const getFieldDefinition = (domain: SettingsDomain, path: string) => {
     return undefined;
   }
 
+  const definition = fields[ancestorPath];
+
+  if (!definition) return undefined;
+
   return {
-    definition: fields[ancestorPath],
+    definition,
     fieldPath: ancestorPath,
   };
 };
@@ -84,7 +91,10 @@ export const resolveSettingsDomain = (
 
       const candidateValue = getPath(layer.overrides, path);
 
-      if (!fieldDefinition.isValid(candidateValue)) {
+      if (
+        candidateValue === undefined ||
+        !fieldDefinition.isValid(candidateValue)
+      ) {
         continue;
       }
 

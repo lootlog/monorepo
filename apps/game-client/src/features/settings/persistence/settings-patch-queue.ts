@@ -1,4 +1,9 @@
-import { isSettingsRecord } from "@lootlog/domain/settings-paths";
+import {
+  collectLeafPaths,
+  isSettingsRecord,
+  pathsOverlap,
+  setPath,
+} from "@lootlog/domain/settings-paths";
 import { groupBy, isEqual } from "es-toolkit";
 import type { QueryKey } from "@tanstack/react-query";
 import type { SettingsOperation } from "./settings-documents";
@@ -47,15 +52,10 @@ const mergeSet = (
   current: SettingsOperation["set"],
   incoming: SettingsOperation["set"],
 ): SettingsOperation["set"] => {
-  const merged: SettingsOperation["set"] = { ...current };
+  const merged = structuredClone(current);
 
-  for (const [key, value] of Object.entries(incoming)) {
-    const existing = merged[key];
-
-    merged[key] =
-      isSettingsRecord(existing) && isSettingsRecord(value)
-        ? mergeSet(existing, value)
-        : value;
+  for (const { path, value } of collectLeafPaths(incoming)) {
+    setPath(merged, path, value);
   }
 
   return merged;
@@ -99,14 +99,32 @@ const mergeOperations = (
   return { domain: current.domain, scope: current.scope, set, unset };
 };
 
+const requiresSeparateOperation = (
+  current: SettingsOperation,
+  incoming: SettingsOperation,
+) => {
+  const incomingPaths = collectLeafPaths(incoming.set);
+
+  // An empty map clears persisted children. Merging a later child write into
+  // it would erase the reset, so these operations must reach the API in order.
+  return collectLeafPaths(current.set).some(
+    ({ path, value }) =>
+      isSettingsRecord(value) &&
+      (incomingPaths.some((incomingPath) =>
+        incomingPath.path.startsWith(`${path}.`),
+      ) ||
+        incoming.unset.some((unset) => pathsOverlap(path, unset))),
+  );
+};
+
 const sameQueryKey = (left: QueryKey, right: QueryKey) => isEqual(left, right);
 
 /**
- * One request batch cannot hold two different ids for the same scope type,
- * so pending operations are grouped by their non-user scope ids.
+ * The API accepts one operation per document and one id per scope type.
+ * Preserve reset boundaries in separate, ordered requests.
  */
-const groupIntoBatches = (operations: SettingsOperation[]) => {
-  const { "": userOnly = [], ...batches } = groupBy(operations, (operation) =>
+const groupIntoBatches = (patches: QueuedSettingsPatch[]) => {
+  const { "": userOnly = [], ...batches } = groupBy(patches, ({ operation }) =>
     operation.scope.type === "USER"
       ? ""
       : `${operation.scope.type}:${operation.scope.id}`,
@@ -114,26 +132,46 @@ const groupIntoBatches = (operations: SettingsOperation[]) => {
 
   const grouped = Object.values(batches);
 
-  if (userOnly.length === 0) return grouped;
+  if (userOnly.length > 0) {
+    if (grouped[0]) grouped[0].unshift(...userOnly);
+    else grouped.push(userOnly);
+  }
 
-  const [firstBatch, ...otherBatches] = grouped;
+  return grouped.flatMap((patches) => {
+    const batches: QueuedSettingsPatch[][] = [];
+    let batch: QueuedSettingsPatch[] = [];
+    const keys = new Set<string>();
 
-  if (!firstBatch) return [userOnly];
+    for (const patch of patches) {
+      const key = operationKey(patch.operation);
 
-  return [[...userOnly, ...firstBatch], ...otherBatches];
+      if (keys.has(key)) {
+        batches.push(batch);
+        batch = [];
+        keys.clear();
+      }
+
+      batch.push(patch);
+      keys.add(key);
+    }
+
+    if (batch.length > 0) batches.push(batch);
+
+    return batches;
+  });
 };
 
 export const createSettingsPatchQueue = <TResponse>(
   config: SettingsPatchQueueConfig<TResponse>,
 ): SettingsPatchQueue => {
   const debounceMs = config.debounceMs ?? 300;
-  const pending = new Map<string, QueuedSettingsPatch>();
-  let retained = new Map<string, QueuedSettingsPatch>();
+  const pending = new Map<string, QueuedSettingsPatch[]>();
+  let retained = new Map<string, QueuedSettingsPatch[]>();
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
 
   const takePending = () => {
-    const patches = [...pending.values()];
+    const patches = [...pending.values()].flat();
     pending.clear();
 
     return patches;
@@ -153,20 +191,34 @@ export const createSettingsPatchQueue = <TResponse>(
     return keys;
   };
 
-  const mergePatches = (
-    current: QueuedSettingsPatch | undefined,
-    incoming: QueuedSettingsPatch,
-  ): QueuedSettingsPatch => ({
-    operation: current
-      ? mergeOperations(current.operation, incoming.operation)
-      : incoming.operation,
-    queryKeys: collectQueryKeys(current ? [current, incoming] : [incoming]),
-    afterSave: incoming.afterSave ?? current?.afterSave,
-  });
+  const appendPatch = (
+    patches: QueuedSettingsPatch[],
+    patch: QueuedSettingsPatch,
+  ): QueuedSettingsPatch[] => {
+    const existing = patches.at(-1);
+
+    if (
+      !existing ||
+      requiresSeparateOperation(existing.operation, patch.operation)
+    ) {
+      return [...patches, patch];
+    }
+
+    return [
+      ...patches.slice(0, -1),
+      {
+        operation: mergeOperations(existing.operation, patch.operation),
+        queryKeys: collectQueryKeys([existing, patch]),
+        afterSave: patch.afterSave ?? existing.afterSave,
+      },
+    ];
+  };
 
   /** Re-lays the patches queued after `documents` were produced on top. */
   const reapplyPending = () => {
-    for (const patch of pending.values()) config.applyOptimistic(patch);
+    for (const patches of pending.values()) {
+      for (const patch of patches) config.applyOptimistic(patch);
+    }
   };
 
   /**
@@ -185,16 +237,21 @@ export const createSettingsPatchQueue = <TResponse>(
 
     try {
       let cacheMatchesServer = true;
+      const batches = groupIntoBatches(patches);
 
-      for (const batch of groupIntoBatches(
-        patches.map((patch) => patch.operation),
-      )) {
+      for (const [index, batch] of batches.entries()) {
         // Batches must reach the server in order: each one carries a merged
         // state for its scopes and later batches may depend on earlier ones.
-        // eslint-disable-next-line no-await-in-loop
-        const response = await config.send(batch);
+        const operations = batch.map((patch) => patch.operation);
 
-        if (config.applyServerDocuments?.(response, batch)) {
+        // eslint-disable-next-line no-await-in-loop
+        const response = await config.send(operations);
+
+        if (config.applyServerDocuments?.(response, operations)) {
+          for (const remainingBatch of batches.slice(index + 1)) {
+            for (const patch of remainingBatch) config.applyOptimistic(patch);
+          }
+
           reapplyPending();
         } else {
           cacheMatchesServer = false;
@@ -214,7 +271,7 @@ export const createSettingsPatchQueue = <TResponse>(
 
       for (const patch of failedPatches) {
         const key = operationKey(patch.operation);
-        retained.set(key, mergePatches(retained.get(key), patch));
+        retained.set(key, appendPatch(retained.get(key) ?? [], patch));
       }
 
       config.onError?.(error);
@@ -251,10 +308,10 @@ export const createSettingsPatchQueue = <TResponse>(
   return {
     enqueue: (patch) => {
       const key = operationKey(patch.operation);
-      const existing = pending.get(key) ?? retained.get(key);
+      const existing = pending.get(key) ?? retained.get(key) ?? [];
       retained.delete(key);
       config.applyOptimistic(patch);
-      pending.set(key, mergePatches(existing, patch));
+      pending.set(key, appendPatch(existing, patch));
       config.onStatus("saving");
       schedule();
     },
