@@ -199,7 +199,6 @@ export const OnlinePlayersAccountListEntry: FC<
                       name={player?.name || t("player.unknown")}
                       level={character.lvl}
                       profession={character.prof}
-                      clanName={player?.clan?.name}
                     />
                     <span className="ll:truncate ll:text-[10px] ll:font-normal ll:text-white/65">
                       {visibleLocationName}
