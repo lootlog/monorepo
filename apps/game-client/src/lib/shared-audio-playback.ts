@@ -7,8 +7,8 @@ const audioPlaybackPool = createAudioPlaybackPool();
 
 let audioPlaybackConsumers = 0;
 
-export const preloadSoundUrl = (url: string, channel?: string) => {
-  audioPlaybackPool.preload(url, channel);
+export const preloadSoundUrl = (url: string) => {
+  audioPlaybackPool.preload(url);
 };
 
 export const playSoundRequest = (request: AudioPlaybackRequest) => {
