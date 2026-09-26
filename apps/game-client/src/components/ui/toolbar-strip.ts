@@ -29,6 +29,10 @@ export const toolbarStripBleedClassName = "ll:-mx-1 ll:-mt-px ll:w-auto";
 export const toolbarStripLightClassName =
   "ll:border-b ll:border-x-0 ll:border-t-0 ll:border-gray-400/25";
 
+/** A wrapping row of toggles under a light strip's first row, e.g. filter chips. */
+export const toolbarStripLightSubRowClassName =
+  "ll:flex ll:flex-row ll:flex-wrap ll:border-t ll:border-x-0 ll:border-b-0 ll:border-gray-400/25 ll:p-0.5";
+
 /** Vertical rule between controls inside a light strip. */
 export const toolbarStripLightDividerClassName =
   "ll:border-0 ll:border-l ll:border-solid ll:border-gray-400/25";
