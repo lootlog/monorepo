@@ -1,18 +1,20 @@
 import { isString } from "es-toolkit";
 import {
+  hasRealtimeCapabilities,
   isMapPingAcknowledgement,
   isAirTagSubscriptionAcknowledgement,
   isAirTagObservationAcknowledgement,
   isPresenceFetchResult,
 } from "@lootlog/protocol/realtime/codec";
-import type {
-  AirTagSubscriptionCommand,
-  AirTagObservationCommand,
-  AirTagSubscriptionAck,
-  AirTagObservationAck,
-  BattlePingCommand,
-  MapPingCommand,
-  MapPingAckSchema,
+import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  type AirTagSubscriptionCommand,
+  type AirTagObservationCommand,
+  type AirTagSubscriptionAck,
+  type AirTagObservationAck,
+  type BattlePingCommand,
+  type MapPingCommand,
+  type MapPingAckSchema,
 } from "@lootlog/protocol/realtime";
 import type { PlayerPresenceAckPayload } from "@/lib/online-players-presence";
 import {
@@ -70,6 +72,7 @@ interface JoinResult {
   readonly connectionId: string;
   readonly organizationIds: string[];
   readonly accessPolicy?: AccessPolicySnapshot;
+  readonly capabilities?: readonly string[];
 }
 
 const isJoinResult = (value: unknown): value is JoinResult =>
@@ -186,6 +189,7 @@ export class AppSocket {
   private connectionStateValue: RealtimeConnectionState = "disconnected";
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
+  private battlePingsSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -205,7 +209,12 @@ export class AppSocket {
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
 
-      if (state === "disconnected") this.id = undefined;
+      if (state === "disconnected") {
+        this.id = undefined;
+        // The next connection may reach an older gateway.
+        this.battlePingsSupported = false;
+      }
+
       this.listeners.emit(
         connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
       );
@@ -237,6 +246,11 @@ export class AppSocket {
 
   probeLatency(): void {
     this.realtime.probeLatency();
+  }
+
+  /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
+  supportsBattlePings(): boolean {
+    return this.battlePingsSupported;
   }
 
   getAccessPolicy(): AccessPolicySnapshot | undefined {
@@ -314,6 +328,9 @@ export class AppSocket {
     if (!isJoinResult(response))
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
+    this.battlePingsSupported =
+      hasRealtimeCapabilities(response) &&
+      response.capabilities.includes(REALTIME_BATTLE_PING_CAPABILITY);
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);

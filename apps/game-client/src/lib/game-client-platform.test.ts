@@ -4,7 +4,10 @@ import {
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/client/realtime";
 
-import { REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -52,6 +55,7 @@ describe("game realtime handshake", () => {
                 ? REALTIME_JSON_SUBPROTOCOL
                 : REALTIME_SUBPROTOCOL,
               REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+              REALTIME_BATTLE_PING_CAPABILITY,
             ],
           },
         ]);

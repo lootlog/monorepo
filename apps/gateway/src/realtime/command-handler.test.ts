@@ -937,7 +937,7 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
-  test("advertises connection.ping on join and answers it for game and API key sockets", async () => {
+  test("advertises connection.ping and battle pings on join and answers pings for game and API key sockets", async () => {
     const { handler, hub, presence } = setup();
     const game = makeSocket().socket;
     const integration = makeSocket().socket;
@@ -959,7 +959,7 @@ describe("CommandHandler session lifecycle", () => {
       ),
     );
     expect(hub.responses[0]).toMatchObject({
-      data: { capabilities: ["connection.ping"] },
+      data: { capabilities: ["connection.ping", "lootlog.battle-ping.v1"] },
     });
 
     for (const [socket, requestId] of [

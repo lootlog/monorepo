@@ -2256,9 +2256,13 @@ describe("realtime Dragonfly integration", () => {
 
         if (!presence?.character)
           throw new Error("Missing battle ping presence");
-        target.socket.data.presence = {
-          ...presence,
-          character: { ...presence.character, characterId },
+        target.socket.data = {
+          ...target.socket.data,
+          supportsBattlePings: true,
+          presence: {
+            ...presence,
+            character: { ...presence.character, characterId },
+          },
         };
         secondHub.register(target.socket);
         secondHub.subscribe(target.socket, {

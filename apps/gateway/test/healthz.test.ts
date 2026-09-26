@@ -269,19 +269,25 @@ describe("gateway HTTP boundary", () => {
   });
 
   test.each([
-    [false, false],
-    [true, false],
-    [false, true],
-    [true, true],
+    [false, false, false],
+    [true, false, false],
+    [false, true, false],
+    [false, false, true],
+    [true, true, true],
   ])(
-    "negotiates feed (%s) and volunteer (%s) opt-in while echoing only the wire protocol",
-    async (supportsFeed, supportsNotificationVolunteer) => {
+    "negotiates feed (%s), volunteer (%s) and battle ping (%s) opt-in while echoing only the wire protocol",
+    async (
+      supportsFeed,
+      supportsNotificationVolunteer,
+      supportsBattlePings,
+    ) => {
       let upgradeOptions:
         | {
             readonly headers?: HeadersInit;
             readonly data: {
               readonly supportsFeed?: boolean;
               readonly supportsNotificationVolunteer?: boolean;
+              readonly supportsBattlePings?: boolean;
             };
           }
         | undefined;
@@ -297,7 +303,7 @@ describe("gateway HTTP boundary", () => {
           origin: "https://classic.margonem.pl",
           "x-auth-user-id": "user-1",
           "x-auth-discord-id": "discord-1",
-          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}`,
+          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}`,
         },
       });
 
@@ -317,6 +323,9 @@ describe("gateway HTTP boundary", () => {
       expect(upgradeOptions?.data.supportsFeed).toBe(supportsFeed);
       expect(upgradeOptions?.data.supportsNotificationVolunteer).toBe(
         supportsNotificationVolunteer,
+      );
+      expect(upgradeOptions?.data.supportsBattlePings).toBe(
+        supportsBattlePings,
       );
       expect(upgradeOptions?.headers).toEqual({
         "sec-websocket-protocol": "lootlog.realtime.v1",

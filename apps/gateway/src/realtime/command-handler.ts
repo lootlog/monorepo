@@ -7,6 +7,7 @@ import {
 import { decode } from "@msgpack/msgpack";
 import {
   decodeClientCommand,
+  REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   type ClientCommand,
   type Response,
@@ -762,7 +763,10 @@ export class CommandHandler {
           accessPolicy: sessionAccessPolicy(socket.data),
           organizationIds: organizationIds(socket.data),
           subscriptionScopes: scopes,
-          capabilities: [REALTIME_PING_CAPABILITY],
+          capabilities: [
+            REALTIME_PING_CAPABILITY,
+            REALTIME_BATTLE_PING_CAPABILITY,
+          ],
         },
       } satisfies Event;
 

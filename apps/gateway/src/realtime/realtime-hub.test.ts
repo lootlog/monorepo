@@ -307,8 +307,15 @@ describe("RealtimeHub federation", () => {
     } as const;
 
     const scenarios = [
-      { id: "listed", characterId: "100", delivered: true },
-      { id: "bystander", characterId: "200", delivered: false },
+      { id: "listed", characterId: "100", supported: true, delivered: true },
+      {
+        id: "bystander",
+        characterId: "200",
+        supported: true,
+        delivered: false,
+      },
+      // An older game client closes the socket on an unknown event type.
+      { id: "legacy", characterId: "100", supported: false, delivered: false },
     ];
 
     const targets = [local, remote].flatMap((hub, index) =>
@@ -318,6 +325,7 @@ describe("RealtimeHub federation", () => {
         const session: SessionData = {
           ...base,
           platform: "game",
+          supportsBattlePings: scenario.supported,
           presence: {
             userId: base.userId,
             sessionId: `presence-${base.connectionId}`,
