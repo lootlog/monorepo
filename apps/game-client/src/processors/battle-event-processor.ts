@@ -8,7 +8,10 @@ import {
   parseNumericHpValue,
 } from "@/hooks/game-events/helpers/battle.helpers";
 import { useGameStore } from "@/store/game.store";
-import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
+import type {
+  RuntimeGameSnapshot,
+  RuntimeIngressSnapshot,
+} from "@/lib/margonem-runtime/runtime.types";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import {
   useBattleStore,
@@ -43,10 +46,6 @@ type KillResolution = {
   intent: KillIntent | null;
   lastKillHash: string | undefined;
 };
-
-const isPromise = <Value>(
-  value: Value | Promise<Value>,
-): value is Promise<Value> => value instanceof Promise;
 
 const showBattleCreatedToast = (battleId: string) => {
   const t = getFixedT("timers");
@@ -148,7 +147,6 @@ export class BattleEventProcessor {
   private hasNpcWarrior = false;
   private hasWarnedCaptureOverflow = false;
   private battleGeneration = 0;
-  private finalizingGeneration: number | null = null;
 
   async handle(
     event: GameEvent,
@@ -173,11 +171,11 @@ export class BattleEventProcessor {
     const battleState = startsBattle ? "in-battle" : stateAtIngress.battleState;
     const endsBattle = event.f.endBattle === 1 && battleState === "in-battle";
 
-    if (endsBattle && this.finalizingGeneration === this.battleGeneration) {
-      return;
-    }
-
-    if (battlePanelStore.isBattleCollectionEnabled && !this.hasNpcWarrior) {
+    if (
+      battleState === "in-battle" &&
+      battlePanelStore.isBattleCollectionEnabled &&
+      !this.hasNpcWarrior
+    ) {
       battleStore.addEvent(event);
     }
 
@@ -191,59 +189,48 @@ export class BattleEventProcessor {
     }
 
     const endingGeneration = this.battleGeneration;
-    this.finalizingGeneration = endingGeneration;
 
     const capture = battlePanelStore.isBattleCollectionEnabled
       ? battleStore.getCaptureSnapshot()
       : null;
 
-    if (event.f.w) {
-      battleStore.applyBatch({ battleWarriors });
-    }
+    const game = ingress?.game ?? useGameStore.getState().game;
+    const hasMultipleTeams = this.hasMultipleTeams;
 
-    try {
-      const { deadNpcs, hasNpcInBattle, topNpc } =
-        getNpcBattleSummary(battleWarriors);
+    battleStore.clearEvents();
+    battleStore.applyBatch({ battleState: "idle", battleWarriors });
 
-      const pendingKillResult = this.resolveKillIntent({
+    const { deadNpcs, hasNpcInBattle, topNpc } =
+      getNpcBattleSummary(battleWarriors);
+
+    const [killResult, battleResult] = await Promise.all([
+      this.resolveKillIntent({
         deadNpcs,
         hasNpcInBattle,
-        ingress,
+        game,
         lastKillHash: stateAtIngress.lastKillHash,
         topNpc,
-      });
-
-      const killResult = isPromise(pendingKillResult)
-        ? await pendingKillResult
-        : pendingKillResult;
-
-      const battleResult = await this.resolveBattleIntent({
+      }),
+      this.resolveBattleIntent({
         capture,
         hasNpcInBattle,
-        ingress,
+        hasMultipleTeams,
+        game,
         lastBattleHash: stateAtIngress.lastBattleHash,
-      });
+      }),
+    ]);
 
-      if (endingGeneration !== this.battleGeneration) {
-        return;
-      }
-
-      const battleIntent = this.deduplicateBattleIntent(battleResult.intent);
-
-      battleStore.clearEvents();
+    if (endingGeneration === this.battleGeneration) {
       battleStore.applyBatch({
-        battleState: "idle",
-        battleWarriors,
         lastBattleHash: battleResult.lastBattleHash,
         lastKillHash: killResult.lastKillHash,
       });
-
-      this.submitIntents(killResult.intent, battleIntent);
-    } finally {
-      if (this.finalizingGeneration === endingGeneration) {
-        this.finalizingGeneration = null;
-      }
     }
+
+    this.submitIntents(
+      killResult.intent,
+      this.deduplicateBattleIntent(battleResult.intent),
+    );
   }
 
   private beginBattleIfNeeded(
@@ -312,7 +299,7 @@ export class BattleEventProcessor {
   private resolveKillIntent(params: {
     deadNpcs: DeadNpc[];
     hasNpcInBattle: boolean;
-    ingress?: RuntimeIngressSnapshot;
+    game: RuntimeGameSnapshot | null;
     lastKillHash: string | undefined;
     topNpc: DeadNpc | null;
   }): KillResolution | Promise<KillResolution> {
@@ -343,7 +330,7 @@ export class BattleEventProcessor {
     params: {
       deadNpcs: DeadNpc[];
       hasNpcInBattle: boolean;
-      ingress?: RuntimeIngressSnapshot;
+      game: RuntimeGameSnapshot | null;
       lastKillHash: string | undefined;
       topNpc: DeadNpc | null;
     },
@@ -353,7 +340,7 @@ export class BattleEventProcessor {
       return { intent: null, lastKillHash: params.lastKillHash };
     }
 
-    const game = params.ingress?.game ?? useGameStore.getState().game;
+    const game = params.game;
 
     if (!game) return { intent: null, lastKillHash: killHash };
 
@@ -377,7 +364,8 @@ export class BattleEventProcessor {
   private async resolveBattleIntent(params: {
     capture: BattleCapture | null;
     hasNpcInBattle: boolean;
-    ingress?: RuntimeIngressSnapshot;
+    hasMultipleTeams: boolean;
+    game: RuntimeGameSnapshot | null;
     lastBattleHash: string | undefined;
   }): Promise<{
     intent: BattleIntent | null;
@@ -395,11 +383,11 @@ export class BattleEventProcessor {
 
     // Only multi-team battles without NPCs are submitted; decide that before
     // hashing and mapping the capture.
-    if (params.hasNpcInBattle || !this.hasMultipleTeams) {
+    if (params.hasNpcInBattle || !params.hasMultipleTeams) {
       return { intent: null, lastBattleHash: params.lastBattleHash };
     }
 
-    const game = params.ingress?.game ?? useGameStore.getState().game;
+    const game = params.game;
 
     if (!game) return { intent: null, lastBattleHash: params.lastBattleHash };
 
