@@ -149,6 +149,8 @@ export const syncGuildTimerList = (
  * Writes one timer list, or removes it when `list` is undefined. Only that
  * list's paths are sent: the server merges per leaf path, so a device holding
  * a stale copy of another list cannot overwrite it or bring it back.
+ * Within one list the last write wins: `npcNames` is a single leaf because
+ * monster names can contain dots and cannot serve as path keys.
  */
 export const syncCustomList = (id: string, list: CustomTimerList | undefined) =>
   enqueueSettingsPatch(
