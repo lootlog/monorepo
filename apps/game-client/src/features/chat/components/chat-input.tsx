@@ -85,7 +85,11 @@ export function ChatInput(props: ChatInputProps) {
             disabled={isPending || !selectedGuildId}
             message={messageValue}
             mentionContext={mentionContext}
-            placeholder={t("input.placeholder")}
+            placeholder={
+              selectedGuildId
+                ? t("input.placeholder")
+                : t("input.selectGuildPlaceholder")
+            }
             onChange={(nextMessage, nextCaretIndex) => {
               setMessageValue(nextMessage);
               setCaretIndex(nextCaretIndex);
