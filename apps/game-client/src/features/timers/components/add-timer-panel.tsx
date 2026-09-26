@@ -10,6 +10,7 @@ import { AddTimerForm } from "./add-timer-form";
 
 type AddTimerPanelProps = {
   guildId?: string;
+  world: string;
   onClose: () => void;
   className?: string;
 };
@@ -22,6 +23,7 @@ type AddTimerPanelProps = {
  */
 export const AddTimerPanel: FC<AddTimerPanelProps> = ({
   guildId,
+  world,
   onClose,
   className,
 }) => {
@@ -65,7 +67,7 @@ export const AddTimerPanel: FC<AddTimerPanelProps> = ({
           ) : null}
         </span>
       </div>
-      <AddTimerForm guildId={guildId} onClose={onClose} />
+      <AddTimerForm guildId={guildId} world={world} onClose={onClose} />
     </div>
   );
 };

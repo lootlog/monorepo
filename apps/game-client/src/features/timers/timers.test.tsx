@@ -3,9 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, onTestFinished, vi } from "vitest";
 import { configureApiClients } from "@lootlog/client/transport";
+import { getGuildsControllerGetWorldsByGuildIdQueryKey } from "@lootlog/client/main";
 import { queryKeys } from "@/features/public-api/query-keys";
 import { useTimersStore, DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { createTimerFixture } from "./timer-fixtures";
 import { createTimerViewFixture } from "./timer-view-fixtures";
@@ -66,42 +68,71 @@ it("deduplicates timers and shows the same visible state in the regular and unde
   expect(screen.getAllByText(/\[H\] Tanroth/)).toHaveLength(1);
 });
 
-it("adds a manual timer from an overlay inside the timers window", async () => {
-  const user = userEvent.setup();
-  const fixture = mountTimers();
-  expect(
-    screen.queryByRole("dialog", { name: /Dodaj timer/ }),
-  ).not.toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
-  const panel = screen.getByRole("dialog", { name: /Dodaj timer/ });
-  expect(panel).toBeVisible();
-  expect(screen.getByRole("button", { name: "Dodaj timer" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await user.type(within(panel).getByLabelText("Nazwa"), "Tanroth");
-  await user.type(
-    within(panel).getByLabelText("Minimalny czas (maks. 300 h)"),
-    "1m",
-  );
-  await user.type(
-    within(panel).getByLabelText("Maksymalny czas (maks. 300 h)"),
-    "2m",
-  );
-  await user.click(within(panel).getByRole("button", { name: "Dodaj" }));
+it.each([
+  { underBag: false, selectWorld: false },
+  { underBag: false, selectWorld: true },
+  { underBag: true, selectWorld: false },
+  { underBag: true, selectWorld: true },
+])(
+  "adds a manual timer to the displayed world (underBag=$underBag, selectWorld=$selectWorld)",
+  async ({ underBag, selectWorld }) => {
+    const user = userEvent.setup();
 
-  const posts = () =>
-    fixture.requests.filter((request) => request.method === "POST");
+    const fixture = mountTimers((value) => {
+      setTestRuntimeGame({ hero: { characterId: "101" }, world: "luvia" });
+      useSettingsStore.setState({ allowWorldSelection: selectWorld });
 
-  await waitFor(() => expect(posts()).toHaveLength(1));
-  expect(posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
-  await waitFor(() =>
+      const worldsKey = getGuildsControllerGetWorldsByGuildIdQueryKey({
+        guildId: "guild-1",
+      });
+
+      value.queryClient.setQueryDefaults(worldsKey, { staleTime: Infinity });
+      value.queryClient.setQueryData(worldsKey, ["luvia", "gefion"]);
+      value.queryClient.setQueryData(queryKeys.timers("luvia"), []);
+      useTimersStore.setState((state) => ({
+        generalConfig: { ...state.generalConfig, timersUnderBag: underBag },
+      }));
+    });
+
     expect(
       screen.queryByRole("dialog", { name: /Dodaj timer/ }),
-    ).not.toBeInTheDocument(),
-  );
-  expect(useWindowsStore.getState()).not.toHaveProperty("add-timer");
-});
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Dodaj timer" }));
+    const panel = screen.getByRole("dialog", { name: /Dodaj timer/ });
+    expect(panel).toBeVisible();
+    expect(screen.getByRole("button", { name: "Dodaj timer" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await user.type(within(panel).getByLabelText("Nazwa"), "Tanroth");
+    await user.type(
+      within(panel).getByLabelText("Minimalny czas (maks. 300 h)"),
+      "1m",
+    );
+    await user.type(
+      within(panel).getByLabelText("Maksymalny czas (maks. 300 h)"),
+      "2m",
+    );
+    await user.click(within(panel).getByRole("button", { name: "Dodaj" }));
+
+    const posts = () =>
+      fixture.requests.filter((request) => request.method === "POST");
+
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0]?.url).toContain("/guilds/guild-1/timers/manual");
+    const payload = await posts()[0].json();
+    expect(payload.world).toBe(selectWorld ? "gefion" : "luvia");
+    expect(payload.actorCharacter?.characterId).toBe(
+      selectWorld ? undefined : "101",
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /Dodaj timer/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(useWindowsStore.getState()).not.toHaveProperty("add-timer");
+  },
+);
 
 it("closes the add timer overlay with Escape and keeps the window open", async () => {
   const user = userEvent.setup();

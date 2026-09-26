@@ -17,10 +17,10 @@ import { invalidateTimerHistory } from "../utils/invalidate-timer-history";
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
   settingsKey: string,
-  world: string | undefined,
   guildIds: string[],
   timersGrouping = false,
 ) => {
+  const world = timer.world;
   const t = getFixedT("timers");
   const queryClient = useQueryClient();
   const actionInFlight = useRef(false);
@@ -131,7 +131,9 @@ export const useTimerActions = (
   const { mutateAsync: restartTimer, isPending: isRestartingTimer } =
     useMutation({
       mutationFn: async (resetWorld: string) => {
-        const actorCharacter = buildCurrentTimerActorCharacterPayload();
+        const actorCharacter =
+          buildCurrentTimerActorCharacterPayload(resetWorld);
+
         const originalScopes = getTimerResetScopes(timer, timersGrouping);
 
         const scopeIdentities = originalScopes

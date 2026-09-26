@@ -25,13 +25,14 @@ const mountForm = (
   guildId: string | undefined = "guild-1",
   npcResults: SearchTimersNpcResponseDtoOutput[] = [],
   createStatus?: number,
+  world = "luvia",
 ) => {
   const fixture = createAddTimerFixture({ npcResults, createStatus });
   const onClose = vi.fn();
 
   const view = render(
     <QueryClientProvider client={fixture.queryClient}>
-      <AddTimerForm guildId={guildId} onClose={onClose} />
+      <AddTimerForm guildId={guildId} world={world} onClose={onClose} />
     </QueryClientProvider>,
   );
 
@@ -141,10 +142,18 @@ it("omits optional level, profession and NPC type when left empty", async () => 
   expect(payload).not.toHaveProperty("type");
 });
 
-it("selects an autocomplete NPC and submits custom spawn dates", async () => {
+it("searches the displayed world and creates its timer with custom spawn dates", async () => {
   const user = userEvent.setup();
-  const fixture = mountForm("guild-1", [npc]);
+  const fixture = mountForm("guild-1", [npc], undefined, "gefion");
   await selectNpc(user);
+
+  const searchRequest = fixture.requests.find(
+    (request) => request.method === "GET",
+  );
+
+  expect(
+    searchRequest && new URL(searchRequest.url).searchParams.get("world"),
+  ).toBe("gefion");
   expect(screen.getByLabelText("Minimalny czas (maks. 300 h)")).toHaveValue(
     "0h 1m 20s",
   );
@@ -164,6 +173,7 @@ it("selects an autocomplete NPC and submits custom spawn dates", async () => {
   });
   expect(await submit(user, fixture)).toMatchObject({
     name: "Tanroth",
+    world: "gefion",
     lvl: 120,
     prof: "W",
     type: "HERO",

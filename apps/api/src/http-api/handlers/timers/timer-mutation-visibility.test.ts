@@ -1,6 +1,6 @@
 import { expect, it } from "bun:test";
 import { Effect, Result } from "effect";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../../../test/database-fixtures.js";
@@ -12,6 +12,7 @@ import {
   guildTable,
   memberTable,
   memberToRoleTable,
+  playerSnapshotTable,
   roleTable,
   timerTable,
   timerHistoryEntryTable,
@@ -50,7 +51,7 @@ it.each([
   },
   { name: "administrator", read: Permission.ADMIN, max: 100, allowed: true },
 ])(
-  "preserves source visibility for timer mutations: $name",
+  "preserves source visibility and world isolation for timer mutations: $name",
   async ({ read, max, allowed, tierOnly }) => {
     const boundary = await createDatabaseBoundary();
 
@@ -59,8 +60,29 @@ it.each([
       const now = new Date();
       const guild = createGuildFixture();
       const member = createMemberFixture({ globalUserId: "user" });
+      const previousMember = createMemberFixture({ id: 2, userId: "previous" });
       await boundary.run(database.insert(guildTable).values(guild));
-      await boundary.run(database.insert(memberTable).values(member));
+      await boundary.run(
+        database.insert(memberTable).values([member, previousMember]),
+      );
+
+      const previousActor = {
+        id: 100,
+        world: "world",
+        accountId: 10,
+        characterId: 20,
+        snapshotHash: "previous-actor",
+        name: "Previous character",
+      };
+
+      await boundary.run(
+        database
+          .insert(playerSnapshotTable)
+          .values([
+            previousActor,
+            { ...previousActor, id: 101, world: "other-world" },
+          ]),
+      );
 
       const roles = await boundary.run(
         database
@@ -102,7 +124,9 @@ it.each([
           .insert(timerTable)
           .values({
             guildId: guild.id,
-            createdById: member.id,
+            createdById: previousMember.id,
+            actorCharacterSnapshotId: previousActor.id,
+            actorCharacterLvl: 300,
             npcId: 300,
             timerKey: "300:hero",
             world: "world",
@@ -116,6 +140,28 @@ it.each([
       );
 
       if (!timer) throw new Error("Timer fixture missing");
+
+      const otherWorldTimer = {
+        ...timer,
+        world: "other-world",
+        actorCharacterSnapshotId: 101,
+      };
+
+      await boundary.run(database.insert(timerTable).values(otherWorldTimer));
+
+      const timerCondition = and(
+        eq(timerTable.timerKey, timer.timerKey),
+        eq(timerTable.world, timer.world),
+      );
+
+      const readOtherWorldTimer = () =>
+        boundary.run(
+          database
+            .select()
+            .from(timerTable)
+            .where(eq(timerTable.world, otherWorldTimer.world)),
+        );
+
       const publications: string[] = [];
 
       const ports = {
@@ -159,27 +205,40 @@ it.each([
       const timerHistory = makeTimerHistory(database);
 
       const resetResult = await boundary.run(
-        reset(access, "300", { world: "world" }).pipe(Effect.result),
+        reset(access, timer.timerKey, { world: timer.world }).pipe(
+          Effect.result,
+        ),
       );
 
       expect(resetResult._tag).toBe(allowed ? "Success" : "Failure");
       const afterReset = await readTimers();
       expect(afterReset).toHaveLength(visibleCount);
+      afterReset.forEach((listedTimer) => {
+        expect(listedTimer.member?.id).toBe(member.id);
+        expect(listedTimer).not.toHaveProperty("actorCharacter");
+      });
+      expect(await readOtherWorldTimer()).toEqual([otherWorldTimer]);
 
       if (allowed) {
         const [persistedReset] = await boundary.run(
-          database.select().from(timerTable),
+          database.select().from(timerTable).where(timerCondition),
         );
 
-        expect(persistedReset?.wasReset).toBe(true);
+        expect(persistedReset).toMatchObject({
+          wasReset: true,
+          createdById: member.id,
+          actorCharacterSnapshotId: null,
+          actorCharacterLvl: null,
+        });
       }
 
       const deleteResult = await boundary.run(
-        remove(access, "300", "world").pipe(Effect.result),
+        remove(access, timer.timerKey, timer.world).pipe(Effect.result),
       );
 
       expect(deleteResult._tag).toBe(allowed ? "Success" : "Failure");
       expect(await readTimers()).toEqual([]);
+      expect(await readOtherWorldTimer()).toEqual([otherWorldTimer]);
 
       let history = await boundary.run(
         database.select().from(timerHistoryEntryTable),
@@ -189,14 +248,18 @@ it.each([
         expect(history).toHaveLength(0);
         expect(publications).toHaveLength(0);
         expect(
-          (await boundary.run(database.select().from(timerTable)))[0],
+          (
+            await boundary.run(
+              database.select().from(timerTable).where(timerCondition),
+            )
+          )[0],
         ).toEqual(timer);
         // A deleted source is still private when its history ID is known.
         await boundary.run(
           database
             .update(timerTable)
             .set({ deletedAt: now })
-            .where(eq(timerTable.timerKey, timer.timerKey)),
+            .where(timerCondition),
         );
         history = await boundary.run(
           database
@@ -241,7 +304,7 @@ it.each([
       expect(await readTimers()).toHaveLength(visibleCount);
 
       const [persisted] = await boundary.run(
-        database.select().from(timerTable),
+        database.select().from(timerTable).where(timerCondition),
       );
 
       expect(persisted?.deletedAt).toEqual(allowed ? null : now);
@@ -269,7 +332,7 @@ it.each([
                 deletedAt,
                 npc: { id: 300, name: "Hero", lvl: 999, type: "HERO" },
               })
-              .where(eq(timerTable.timerKey, timer.timerKey))
+              .where(timerCondition)
               .returning(),
           );
 
@@ -280,7 +343,11 @@ it.each([
           expect(Result.isFailure(denied)).toBe(true);
           expect(denied).toMatchObject({ failure: { kind: "not-found" } });
           expect(
-            (await boundary.run(database.select().from(timerTable)))[0],
+            (
+              await boundary.run(
+                database.select().from(timerTable).where(timerCondition),
+              )
+            )[0],
           ).toEqual(hiddenCurrent);
           expect(publications).toHaveLength(6);
           expect(
