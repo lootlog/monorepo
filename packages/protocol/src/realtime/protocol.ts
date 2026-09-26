@@ -36,6 +36,12 @@ export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 // unknown command, so clients send `connection.ping` only when it is listed.
 export const REALTIME_PING_CAPABILITY = "connection.ping";
 
+// Offered as a subprotocol by clients that decode `battle-ping.received`, and
+// listed in `session.joined` capabilities by gateways that accept
+// `battle-ping.send`. Older clients close the socket on an unknown event, and
+// older gateways close it on an unknown command.
+export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
+
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
 // Browser-permitted application codes; reasons are deliberately static and contain no identity.

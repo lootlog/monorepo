@@ -13,6 +13,7 @@ import { BunRedis } from "@effect/platform-bun";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
+  REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
@@ -404,6 +405,9 @@ export const createGatewayFetch =
             offeredProtocols.includes(
               REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
             ),
+          supportsBattlePings:
+            !identity.apiKeyAccess &&
+            offeredProtocols.includes(REALTIME_BATTLE_PING_CAPABILITY),
           platform: identity.apiKeyAccess
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),

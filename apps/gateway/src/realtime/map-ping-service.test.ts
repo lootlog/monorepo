@@ -85,4 +85,31 @@ describe("MapPingService legacy parity", () => {
     ).toEqual({ status: "rejected", code: "invalid-context" });
     expect(evaluations).toBe(0);
   });
+
+  test("carries a targeted NPC into the event and rejects an invalid NPC id", async () => {
+    const events: unknown[] = [];
+
+    const service = new MapPingService(
+      { command: { eval: async () => [1, 1234, 0] } },
+      {
+        publishToScopes: async (_scopes, event) => {
+          events.push(event.data);
+        },
+      },
+    );
+
+    const ping = { expectedMapId: 7, type: "enemy", x: 10, y: 11 } as const;
+
+    await service.send(makeSocket(), { ...ping, npcId: 42 });
+    await service.send(makeSocket(), ping);
+
+    expect(await service.send(makeSocket(), { ...ping, npcId: 0 })).toEqual({
+      status: "rejected",
+      code: "invalid-payload",
+    });
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({ npcId: 42 });
+    // Older clients strip the key, but an explicit undefined would fail encoding.
+    expect(events[1]).not.toHaveProperty("npcId");
+  });
 });

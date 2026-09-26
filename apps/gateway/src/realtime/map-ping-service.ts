@@ -1,9 +1,10 @@
 import {
-  isMapPingType,
+  MapPingSendPayloadSchema,
   type MapPingAck,
   type MapPingEvent,
   type MapPingSendPayload,
 } from "@lootlog/schema/map-ping";
+import { Schema } from "effect";
 import { Logger } from "#src/platform/logger";
 import {
   consumePingRateLimit,
@@ -17,6 +18,10 @@ import type { GatewaySocket } from "#src/realtime/session";
 const RATE_LIMIT = 5;
 
 const RATE_LIMIT_WINDOW_MS = 15_000;
+
+const MAX_COORDINATE = 65_535;
+
+const isMapPingSendPayload = Schema.is(MapPingSendPayloadSchema);
 
 export class MapPingService {
   private readonly logger = new Logger(MapPingService.name);
@@ -66,6 +71,7 @@ export class MapPingService {
       type: payload.type,
       x: payload.x,
       y: payload.y,
+      ...(payload.npcId !== undefined && { npcId: payload.npcId }),
       sender: { characterId: context.characterId, name: context.name },
       createdAt,
     };
@@ -92,13 +98,9 @@ export class MapPingService {
 
   private hasValidPayload(payload: MapPingSendPayload): boolean {
     return (
-      isMapPingType(payload.type) &&
-      [payload.x, payload.y].every(
-        (coordinate) =>
-          Number.isInteger(coordinate) &&
-          coordinate >= 0 &&
-          coordinate <= 65_535,
-      )
+      isMapPingSendPayload(payload) &&
+      payload.x <= MAX_COORDINATE &&
+      payload.y <= MAX_COORDINATE
     );
   }
 }
