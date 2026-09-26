@@ -83,7 +83,6 @@ export interface UpdateTimerSettingsPayload {
   displayConfig?: Partial<TimersDisplayConfig>;
   customColors?: Record<string, CustomTimerColor>;
   timersColors?: Record<string, string | undefined>;
-  customLists?: Record<string, CustomTimerList>;
   alwaysVisibleExpiredTimers?: Record<string, string[]>;
   defaultColorNames?: Record<string, string>;
   overriddenDefaultColors?: Record<
