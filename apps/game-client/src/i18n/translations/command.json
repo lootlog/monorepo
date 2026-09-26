@@ -5,10 +5,6 @@
   "target": {
     "label": "Lootlog, do którego wysyłasz"
   },
-  "modes": {
-    "notification": "Powiadomienie",
-    "party": "Zbiórka"
-  },
   "suggestions": {
     "partySearchLabel": "Utwórz zbiórkę",
     "partySearchDescription": "/grp [opis] – utwórz zbiórkę",

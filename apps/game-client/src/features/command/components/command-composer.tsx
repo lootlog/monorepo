@@ -5,7 +5,7 @@ import { GuildsLoadStatus } from "@/components/guilds-load-status";
 import { GuildSelect } from "@/components/guild-select";
 import { Kbd } from "@/components/ui/kbd";
 import { ChatComposeField } from "@/features/chat/components/chat-compose-field";
-import { ChatComposeModeIcon } from "@/features/chat/components/chat-compose-mode-icon";
+import { ChatComposeModeMenu } from "@/features/chat/components/chat-compose-mode-menu";
 import { ChatMentionSuggestions } from "@/features/chat/components/chat-mention-suggestions";
 import { useChatInputController } from "@/features/chat/components/use-chat-input-controller";
 import { useGuildTargets } from "@/hooks/use-guild-targets";
@@ -27,6 +27,7 @@ type CommandComposerProps = {
  */
 export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   const { t } = useTranslation("command");
+  const { t: tChat } = useTranslation("chat");
   const { t: tCommon } = useTranslation("common");
 
   const { commandGuildId, setCommandGuildId } = useChatStore(
@@ -104,7 +105,12 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
   return (
     <div className="ll:relative">
       <div className="ll:relative ll:flex ll:h-11 ll:items-center ll:gap-2 ll:px-3">
-        <ChatComposeModeIcon message={messageValue} className="ll:size-4" />
+        <ChatComposeModeMenu
+          controller={controller}
+          side="bottom"
+          iconClassName="ll:size-4"
+          className="ll:-ml-1"
+        />
         <ChatComposeField
           controller={controller}
           size="md"
@@ -135,7 +141,7 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
         <div className="ll:ml-auto ll:flex ll:shrink-0 ll:items-center ll:gap-0.5">
           <CommandModeToggle
             prefix="!"
-            label={t("modes.notification")}
+            label={tChat("input.modes.notification")}
             pressed={mode === "notification"}
             disabled={isPending || !hasTarget}
             onToggle={() =>
@@ -144,7 +150,7 @@ export const CommandComposer: FC<CommandComposerProps> = ({ onClose }) => {
           />
           <CommandModeToggle
             prefix="/grp"
-            label={t("modes.party")}
+            label={tChat("input.modes.party")}
             pressed={mode === "party"}
             disabled={isPending || !hasTarget}
             onToggle={() =>

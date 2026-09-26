@@ -116,6 +116,13 @@
     "commandHints": {
       "notification": "treść powiadomienia",
       "party": "opis zbiórki (opcjonalnie)"
+    },
+    "modes": {
+      "label": "Tryb wysyłania",
+      "trigger": "Tryb: {{mode}}",
+      "message": "Wiadomość",
+      "notification": "Powiadomienie",
+      "party": "Zbiórka"
     }
   },
   "actions": {
