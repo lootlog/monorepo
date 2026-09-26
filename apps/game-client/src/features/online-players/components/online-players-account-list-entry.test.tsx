@@ -17,7 +17,7 @@ import type {
   showCharacterEquipment,
   showCharacterProfile,
 } from "@/lib/margonem-runtime/adapters/character-action-runtime-adapter";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import { PLAYER_AFK_FILL, PLAYER_RELATION_FILLS } from "@/lib/player-relation";
 import { OnlinePlayersAccountListEntry } from "./online-players-account-list-entry";
 
 const getHighlightFill = (container: HTMLElement) =>
@@ -299,7 +299,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.purple.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.party);
     expect(
       screen.queryByRole("button", { name: "Zaproś do grupy" }),
     ).not.toBeInTheDocument();
@@ -355,7 +355,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.self);
     expect(
       screen.queryByRole("button", { name: "Zaproś do grupy" }),
     ).not.toBeInTheDocument();
@@ -388,7 +388,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       <OnlinePlayersAccountListEntry presence={createPresence()} />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.green.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.clan);
     expect(
       screen.getByRole("button", { name: "Zaproś do grupy" }),
     ).toBeVisible();
@@ -407,7 +407,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.orange.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_AFK_FILL);
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
@@ -422,7 +422,7 @@ describe("OnlinePlayersAccountListEntry", () => {
       />,
     );
 
-    expect(getHighlightFill(container)).toBe(TIMERS_COLORS.yellow.fill);
+    expect(getHighlightFill(container)).toBe(PLAYER_RELATION_FILLS.self);
     expect(container.querySelector(".lucide-triangle-alert")).not.toBeNull();
   });
 
