@@ -97,6 +97,7 @@
   "input": {
     "suggestionKeyboardHint": "↑ ↓ wybór · Enter zatwierdź · Esc zamknij",
     "placeholder": "Wiadomość…",
+    "selectGuildPlaceholder": "Wybierz Lootlog, aby pisać…",
     "pending": "Wysyłanie wiadomości",
     "clearChatConfirm": {
       "title": "Wyczyścić czat?",
@@ -145,7 +146,6 @@
   },
   "quickActions": {
     "menu": "Szybkie akcje",
-    "selectOrganization": "Wybierz Lootlog u góry czatu",
     "help": "Pomoc",
     "position": "Pozycja",
     "helpMessage": "Potrzebuję pomocy! {{map}} ({{x}}, {{y}}).",
