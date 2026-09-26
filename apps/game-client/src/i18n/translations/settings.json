@@ -94,11 +94,12 @@
     },
     "npcLayout": {
       "label": "Wiadomości NPC",
-      "description": "Wybierz osobny miękki kafelek albo oszczędny wpis w linii.",
+      "description": "Wybierz osobny miękki kafelek, oszczędny wpis w linii albo samą nazwę NPC w treści wiadomości.",
       "tile": "Kafelek",
       "inline": "W linii",
+      "text": "Tekst",
       "recommendation": "Kafelek jest czytelniejszy przy częstych komunikatach o NPC.",
-      "example": "Wariant w linii zajmuje mniej miejsca w gęstym czacie."
+      "example": "Wariant tekstowy pokazuje tylko nazwę NPC, a poziom, lokalizację i koordynaty po najechaniu kursorem."
     },
     "fontScale": {
       "label": "Skala tekstu",

@@ -6,6 +6,7 @@ import {
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
+  CHAT_NPC_LAYOUTS,
 } from "@lootlog/schema/chat-appearance";
 import {
   DEFAULT_NPC_TYPE_COLORS,
@@ -201,7 +202,7 @@ export const SETTINGS_CATALOG = {
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
         userScopes,
-        isOneOf(["tile", "inline"]),
+        isOneOf(CHAT_NPC_LAYOUTS),
       ),
       "chat.fontScalePercent": field(
         CHAT_APPEARANCE_READABLE_PRESET.fontScalePercent,

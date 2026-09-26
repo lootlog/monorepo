@@ -15856,6 +15856,7 @@ components:
               enum:
                 - tile
                 - inline
+                - text
             fontScalePercent:
               type: number
               minimum: 70
@@ -15998,6 +15999,7 @@ components:
               enum:
                 - tile
                 - inline
+                - text
             fontScalePercent:
               type: number
             messageGapPx:
