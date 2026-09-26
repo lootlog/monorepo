@@ -24,10 +24,9 @@ type TimersGridProps = {
 };
 
 /**
- * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap, so
- * row parity computed here matches the rows the browser lays out. `auto-fit`
- * collapses tracks no tile fills, so a short list lays out fewer columns
- * than fit the width.
+ * Mirrors `repeat(auto-fit, minmax(minColumnWidth, 1fr))` without a gap.
+ * `auto-fit` collapses tracks no tile fills, so a short list lays out fewer
+ * columns than fit the width.
  */
 const countGridColumns = (
   gridWidth: number,
@@ -40,7 +39,7 @@ const useGridWidth = () => {
   const [gridWidth, setGridWidth] = useState(0);
 
   // Measured before the first paint: until the observer reports, the grid
-  // would render as one column, without stripes and with the wrong row parity.
+  // would render as one column, without stripes.
   useLayoutEffect(() => {
     const grid = gridRef.current;
 
@@ -127,9 +126,8 @@ export const TimersGrid: FC<TimersGridProps> = ({
             gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
           }}
         >
-          {timers.map((timer, index) => {
+          {timers.map((timer) => {
             const isHidden = hiddenTimerNames.has(timer.npc.name);
-            const isAlternateRow = Math.floor(index / columnCount) % 2 === 1;
 
             return (
               <SingleTimer
@@ -144,7 +142,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
                 timer={timer}
                 settingsKey={settingsKey}
                 isHidden={isHidden}
-                isAlternateRow={!legacyAppearance && isAlternateRow}
                 showColorStripe={showColorStripe}
               />
             );
