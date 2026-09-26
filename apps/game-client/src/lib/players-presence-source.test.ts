@@ -199,6 +199,52 @@ describe("shared presence map projection", () => {
     rows.unmount();
   });
 
+  it.each(["disconnect", "location revocation", "organization removal"])(
+    "invalidates occupied maps during refresh after %s and ignores its delayed snapshot",
+    async (invalidation) => {
+      const harness = createOnlinePlayersTest();
+      getSocket().connect();
+      harness.open();
+      await harness.join(["guild-1"], policy());
+      const source = getPlayersPresenceSource(getSocket(), "guild-1", "alpha");
+      const release = source.retain();
+      await source.refresh();
+      const pending = Promise.withResolvers<PresenceSnapshotData>();
+      harness.fetchPresence.mockReturnValue(pending.promise);
+      const refresh = source.refresh();
+      expect(source.isMapOccupied("Karka-han")).toBe(true);
+
+      if (invalidation === "disconnect") {
+        harness.realtime.disconnect();
+      } else {
+        await harness.receive({
+          v: 1,
+          type: "permissions.updated",
+          data: {
+            organizationIds: ["guild-1"],
+            subscriptionScopes: [],
+            accessPolicy:
+              invalidation === "location revocation"
+                ? policy(false)
+                : createAccessPolicySnapshot([], "user"),
+          },
+        });
+      }
+
+      expect(source.isMapOccupied("Karka-han")).toBe(false);
+      pending.resolve(createPresenceSnapshot());
+      await refresh;
+      expect(source.isMapOccupied("Karka-han")).toBe(false);
+
+      if (invalidation !== "disconnect") {
+        await harness.receive(delta(createOnlinePresence()));
+      }
+
+      expect(source.isMapOccupied("Karka-han")).toBe(false);
+      release();
+    },
+  );
+
   it("never infers location access from legacy map fields and removes occupancy when access is revoked", async () => {
     const harness = createOnlinePlayersTest();
 
