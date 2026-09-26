@@ -22,9 +22,12 @@ type CommandOverlayProps = {
   onEscape: () => void;
 };
 
-/** Presses here must not dismiss the console: its own target list and the button that toggles it. */
+/**
+ * Presses here must not dismiss Quick chat: the popups it opens (portalled
+ * outside the overlay) and the button that toggles it.
+ */
 const KEEP_OPEN_SELECTOR =
-  '[data-slot="popover-content"], [data-ll-window-toggle="command"]';
+  '[data-slot="popover-content"], [data-slot="select-content"], [data-ll-window-toggle="command"]';
 
 /**
  * The console floats at the top center of the screen instead of living in a
