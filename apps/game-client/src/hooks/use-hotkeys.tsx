@@ -151,7 +151,7 @@ export const useHotkeys = ({
         const windowId = ACTION_TO_WINDOW.get(action);
 
         if (windowId) {
-          toggleOpen(windowId, true);
+          toggleOpen(windowId);
 
           return true;
         }
