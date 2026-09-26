@@ -58,7 +58,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       style={{ touchAction: "none" }}
     >
       <div
-        className="ll:flex ll:items-center ll:justify-self-start"
+        className="ll:flex ll:items-center ll:gap-0.5 ll:justify-self-start"
         data-ll-draggable="false"
       >
         {actions}
