@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
 import { Client } from "pg";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Effect, ManagedRuntime, Result, Schema } from "effect";
 import { createAccessPolicy } from "@lootlog/domain/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
@@ -13,6 +13,7 @@ import {
 } from "#src/database/drizzle/schema";
 import { makeDeleteTimer } from "#src/http-api/handlers/timers/timer-delete.data-layer";
 import { makeRestoreTimer } from "#src/http-api/handlers/timers/timer-restore.data-layer";
+import { makeResetTimer } from "#src/http-api/handlers/timers/timer-reset.data-layer";
 import { requireIsolatedTestDatabase } from "./isolated-test-database.js";
 import { createGuildFixture } from "./organization-fixtures.js";
 
@@ -21,6 +22,27 @@ const client = new Client({ connectionString: requireIsolatedTestDatabase() });
 const runtime = ManagedRuntime.make(ApiDatabaseLive);
 
 let database: typeof ApiDatabase.Service;
+
+const waitForTimerLocks = async (expected: number) => {
+  let blocked = 0;
+  const deadline = Date.now() + 5000;
+
+  while (blocked < expected && Date.now() < deadline) {
+    const result =
+      await client.query(`SELECT count(*)::int AS count FROM pg_stat_activity
+      WHERE datname = current_database() AND pid <> pg_backend_pid()
+        AND wait_event_type = 'Lock' AND query LIKE '%"Timer"%'`);
+
+    blocked =
+      Schema.decodeUnknownSync(
+        Schema.Array(Schema.Struct({ count: Schema.Number })),
+      )(result.rows)[0]?.count ?? 0;
+
+    if (blocked < expected) await Bun.sleep(10);
+  }
+
+  return blocked;
+};
 
 beforeAll(async () => {
   database = await runtime.runPromise(ApiDatabase);
@@ -140,21 +162,7 @@ it.each(["restore", "new spawn"] as const)(
     let blocked = 0;
 
     try {
-      const deadline = Date.now() + 5000;
-
-      while (blocked < restoreCount && Date.now() < deadline) {
-        const result =
-          await client.query(`SELECT count(*)::int AS count FROM pg_stat_activity
-          WHERE datname = current_database() AND pid <> pg_backend_pid()
-            AND wait_event_type = 'Lock' AND query LIKE '%"Timer"%'`);
-
-        blocked =
-          Schema.decodeUnknownSync(
-            Schema.Array(Schema.Struct({ count: Schema.Number })),
-          )(result.rows)[0]?.count ?? 0;
-
-        if (blocked < restoreCount) await Bun.sleep(10);
-      }
+      blocked = await waitForTimerLocks(restoreCount);
 
       if (competingWrite === "new spawn") {
         await runtime.runPromise(
@@ -203,6 +211,264 @@ it.each(["restore", "new spawn"] as const)(
 
     expect(restorationHistory).toHaveLength(successfulRestores);
     expect(publications).toHaveLength(successfulRestores * 2);
+  },
+  10_000,
+);
+
+it.each(["rollback", "new spawn", "identical reset", "delete"] as const)(
+  "serializes reset rollback against a concurrent %s",
+  async (competingWrite) => {
+    const now = new Date();
+    const guild = createGuildFixture({ id: crypto.randomUUID() });
+    await runtime.runPromise(database.insert(guildTable).values(guild));
+
+    const [member] = await runtime.runPromise(
+      database
+        .insert(memberTable)
+        .values({
+          guildId: guild.id,
+          userId: crypto.randomUUID(),
+          name: "Restorer",
+          updatedAt: now,
+        })
+        .returning(),
+    );
+
+    if (!member) throw new Error("Member fixture missing");
+
+    const original = {
+      guildId: guild.id,
+      world: "timer-reset-rollback-race",
+      timerKey: "300:hero",
+      npcId: 300,
+      npc: { id: 300, name: "Hero", lvl: 300, type: "HERO" },
+      createdById: member.id,
+      minSpawnTime: new Date(now.getTime() - 120_000),
+      maxSpawnTime: new Date(now.getTime() - 60_000),
+      latestRespBaseSeconds: 60,
+      latestRespawnRandomness: 10,
+      wasReset: false,
+      updatedAt: now,
+    };
+
+    const scope = and(
+      eq(timerTable.guildId, guild.id),
+      eq(timerTable.world, original.world),
+      eq(timerTable.timerKey, original.timerKey),
+    );
+
+    await runtime.runPromise(database.insert(timerTable).values(original));
+    await runtime.runPromise(
+      database.insert(timerHistoryEntryTable).values({
+        ...original,
+        action: "CREATE",
+        actorMemberId: member.id,
+        timerCreatedById: member.id,
+        createdAt: new Date(now.getTime() - 180_000),
+      }),
+    );
+
+    const access = {
+      guild,
+      userId: member.userId,
+      discordId: member.userId,
+      roles: [],
+      accessPolicy: createAccessPolicy({ capabilities: [Permission.ADMIN] }),
+    };
+
+    const publications: string[] = [];
+
+    const ports = {
+      invalidateList: () => Effect.void,
+      publish: (key: string) =>
+        Effect.sync(() => {
+          publications.push(key);
+        }),
+    };
+
+    const reset = makeResetTimer(database, {
+      ...ports,
+      withLock: (_key, operation) => operation,
+    });
+
+    await runtime.runPromise(
+      reset(access, original.timerKey, { world: original.world }),
+    );
+    publications.length = 0;
+
+    const [resetEntry] = await runtime.runPromise(
+      database
+        .select()
+        .from(timerHistoryEntryTable)
+        .where(eq(timerHistoryEntryTable.guildId, guild.id))
+        .orderBy(desc(timerHistoryEntryTable.id))
+        .limit(1),
+    );
+
+    if (!resetEntry) throw new Error("Reset history fixture missing");
+
+    const [resetTimer] = await runtime.runPromise(
+      database.select().from(timerTable).where(scope),
+    );
+
+    if (!resetTimer) throw new Error("Reset timer fixture missing");
+
+    const newSpawnWindow = {
+      minSpawnTime: new Date(now.getTime() + 300_000),
+      maxSpawnTime: new Date(now.getTime() + 360_000),
+      wasReset: false,
+    };
+
+    const release = Promise.withResolvers<void>();
+    const locked = Promise.withResolvers<void>();
+
+    const competing = runtime.runPromise(
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          yield* transaction
+            .select()
+            .from(timerTable)
+            .where(scope)
+            .for("update");
+
+          if (
+            competingWrite === "new spawn" ||
+            competingWrite === "identical reset"
+          ) {
+            const window =
+              competingWrite === "new spawn" ? newSpawnWindow : resetTimer;
+
+            yield* transaction
+              .update(timerTable)
+              .set({
+                minSpawnTime: window.minSpawnTime,
+                maxSpawnTime: window.maxSpawnTime,
+                wasReset: window.wasReset,
+              })
+              .where(scope);
+            const { id: _id, ...snapshot } = resetEntry;
+            yield* transaction.insert(timerHistoryEntryTable).values({
+              ...snapshot,
+              action: competingWrite === "new spawn" ? "CREATE" : "RESET",
+              createdAt: new Date(resetEntry.createdAt.getTime() - 60_000),
+              minSpawnTime: window.minSpawnTime,
+              maxSpawnTime: window.maxSpawnTime,
+              wasReset: window.wasReset,
+            });
+          }
+
+          locked.resolve();
+          yield* Effect.promise(() => release.promise);
+        }),
+      ),
+    );
+
+    await Promise.race([locked.promise, competing]);
+    const count = competingWrite === "rollback" ? 2 : 1;
+    const restore = makeRestoreTimer(database, ports);
+
+    const pending = Array.from({ length: count }, () =>
+      runtime.runPromise(restore(access, resetEntry.id).pipe(Effect.result)),
+    );
+
+    let blocked = 0;
+    let deletion: Promise<void> | undefined;
+
+    try {
+      blocked = await waitForTimerLocks(count);
+
+      if (competingWrite === "delete") {
+        deletion = runtime.runPromise(
+          makeDeleteTimer(database, ports)(
+            access,
+            original.timerKey,
+            original.world,
+          ),
+        );
+        expect(await waitForTimerLocks(2)).toBe(2);
+      }
+    } finally {
+      release.resolve();
+      await competing;
+    }
+
+    const results = await Promise.all(pending);
+    expect(blocked).toBe(count);
+
+    if (deletion) {
+      await deletion;
+      expect(results.filter(Result.isSuccess)).toHaveLength(1);
+
+      const [deleted] = await runtime.runPromise(
+        database
+          .select()
+          .from(timerHistoryEntryTable)
+          .where(
+            and(
+              eq(timerHistoryEntryTable.guildId, guild.id),
+              eq(timerHistoryEntryTable.action, "DELETE"),
+            ),
+          ),
+      );
+
+      expect(deleted).toMatchObject({
+        minSpawnTime: original.minSpawnTime,
+        maxSpawnTime: original.maxSpawnTime,
+        wasReset: false,
+      });
+
+      if (!deleted) throw new Error("Deletion history missing");
+      const recovered = await runtime.runPromise(restore(access, deleted.id));
+      expect(recovered).toMatchObject({
+        minSpawnTime: original.minSpawnTime,
+        maxSpawnTime: original.maxSpawnTime,
+        wasReset: false,
+        deletedAt: null,
+      });
+      expect(publications).toHaveLength(6);
+
+      return;
+    }
+
+    const successes = competingWrite === "rollback" ? 1 : 0;
+    expect(results.filter(Result.isSuccess)).toHaveLength(successes);
+    expect(results.filter(Result.isFailure)).toMatchObject([
+      { failure: { kind: "conflict" } },
+    ]);
+
+    const [persisted] = await runtime.runPromise(
+      database.select().from(timerTable).where(scope),
+    );
+
+    let expected = {
+      minSpawnTime: resetTimer.minSpawnTime,
+      maxSpawnTime: resetTimer.maxSpawnTime,
+      wasReset: resetTimer.wasReset,
+    };
+
+    if (competingWrite === "new spawn") expected = newSpawnWindow;
+
+    if (competingWrite === "rollback") expected = original;
+    expect(persisted).toMatchObject({
+      minSpawnTime: expected.minSpawnTime,
+      maxSpawnTime: expected.maxSpawnTime,
+      wasReset: expected.wasReset,
+    });
+
+    const history = await runtime.runPromise(
+      database
+        .select()
+        .from(timerHistoryEntryTable)
+        .where(
+          and(
+            eq(timerHistoryEntryTable.guildId, guild.id),
+            eq(timerHistoryEntryTable.action, "RESTORE"),
+          ),
+        ),
+    );
+
+    expect(history).toHaveLength(successes);
+    expect(publications).toHaveLength(successes * 2);
   },
   10_000,
 );

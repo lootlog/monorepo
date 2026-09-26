@@ -1572,6 +1572,7 @@ export interface TimerHistoryResponseDto {
      * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
      */
   maxSpawnTime: string | null;
+  /** Whether this entry can restore a deleted timer or undo the latest timer reset. */
   canRestore: boolean;
   /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
   createdAt: string;
@@ -13161,7 +13162,7 @@ export const getTimersControllerRestoreTimerFromHistoryUrl = ({ guildId, history
 }
 
 /**
- * Restore a deleted timer from a timer history entry
+ * Restore a deleted timer from a DELETE history entry, or undo the latest RESET using its previous saved state. Reset rollback rejects later timer changes. Timers owned by an active event cannot be restored.
  * @summary Restore timer from history
  */
 export const timersControllerRestoreTimerFromHistory = async ({ guildId, historyEntryId }: TimersControllerRestoreTimerFromHistoryPathParameters, options?: Parameters<typeof mainFetch>[1]): Promise<TimerResponseDto> => {

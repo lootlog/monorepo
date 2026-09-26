@@ -177,7 +177,7 @@ export class TimersGroup extends HttpApiGroup.make("timers").add(
     .annotate(OpenApi.Summary, "Restore timer from history")
     .annotate(
       OpenApi.Description,
-      "Restore a deleted timer from a timer history entry",
+      "Restore a deleted timer from a DELETE history entry, or undo the latest RESET using its previous saved state. Reset rollback rejects later timer changes. Timers owned by an active event cannot be restored.",
     ),
   HttpApiEndpoint.post(
     "TimersControllerCreateManualTimer",
