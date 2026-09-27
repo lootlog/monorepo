@@ -58,6 +58,24 @@ const getFieldDefinition = (domain: SettingsDomain, path: string) => {
   };
 };
 
+const requireFieldForScope = (
+  domain: SettingsDomain,
+  scope: SettingsScope,
+  path: string,
+) => {
+  const fieldMatch = getFieldDefinition(domain, path);
+
+  if (!fieldMatch) {
+    throw new Error(`Unknown setting path: ${path}`);
+  }
+
+  if (!fieldMatch.definition.scopes.includes(scope.type)) {
+    throw new Error(`Setting ${path} is not available for scope ${scope.type}`);
+  }
+
+  return fieldMatch;
+};
+
 export const resolveSettingsDomain = (
   domain: SettingsDomain,
   layers: SettingsDocumentLayer[],
@@ -140,17 +158,7 @@ export const applySettingsPatch = ({
   const nextOverrides = structuredClone(currentOverrides);
 
   for (const { path, value } of setEntries) {
-    const fieldMatch = getFieldDefinition(domain, path);
-
-    if (!fieldMatch) {
-      throw new Error(`Unknown setting path: ${path}`);
-    }
-
-    if (!fieldMatch.definition.scopes.includes(scope.type)) {
-      throw new Error(
-        `Setting ${path} is not available for scope ${scope.type}`,
-      );
-    }
+    const fieldMatch = requireFieldForScope(domain, scope, path);
 
     if (
       fieldMatch.fieldPath === path &&
@@ -163,17 +171,7 @@ export const applySettingsPatch = ({
   }
 
   for (const path of unset) {
-    const fieldMatch = getFieldDefinition(domain, path);
-
-    if (!fieldMatch) {
-      throw new Error(`Unknown setting path: ${path}`);
-    }
-
-    if (!fieldMatch.definition.scopes.includes(scope.type)) {
-      throw new Error(
-        `Setting ${path} is not available for scope ${scope.type}`,
-      );
-    }
+    requireFieldForScope(domain, scope, path);
 
     unsetPath(nextOverrides, path);
   }
