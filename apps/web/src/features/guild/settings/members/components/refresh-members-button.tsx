@@ -37,7 +37,7 @@ export const RefreshMembersButton = () => {
 
   const refreshAllMembersMutation = useMembersControllerRefreshAllMembers({
     mutation: {
-      onSuccess: (_data, variables) => {
+      onSuccess: (data, variables) => {
         const currentGuildId = variables?.pathParams.guildId;
 
         toast.success(t("settings.members.refreshStarted"));
@@ -46,18 +46,17 @@ export const RefreshMembersButton = () => {
           return;
         }
 
-        void Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: getMembersControllerGetGuildMembersQueryKey({
-              guildId: currentGuildId,
-            }),
+        queryClient.setQueryData(
+          getMembersControllerGetLatestRefreshJobQueryKey({
+            guildId: currentGuildId,
           }),
-          queryClient.invalidateQueries({
-            queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
-              guildId: currentGuildId,
-            }),
+          data,
+        );
+        void queryClient.invalidateQueries({
+          queryKey: getMembersControllerGetGuildMembersQueryKey({
+            guildId: currentGuildId,
           }),
-        ]);
+        });
       },
       onError: (error, variables) => {
         const message = getApiErrorMessage(error);
@@ -83,11 +82,8 @@ export const RefreshMembersButton = () => {
     },
   });
 
-  const latestJob = latestRefreshJobQuery.data;
+  const currentJob = latestRefreshJobQuery.data;
   const isPending = refreshAllMembersMutation.isPending;
-  const data = refreshAllMembersMutation.data;
-
-  const currentJob = data ?? latestJob;
   const nextAvailableAt = currentJob?.nextAvailableAt ?? null;
   const countdown = useCountdown(nextAvailableAt);
   const currentJobId = countdown.isExpired ? undefined : currentJob?.id;
