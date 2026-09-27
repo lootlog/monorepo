@@ -1,7 +1,7 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { Cause, Effect, Queue, Schedule, Schema } from "effect";
+import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
@@ -212,6 +212,13 @@ export class RedisGatewayStore {
 
         while (true) {
           const { message: raw } = yield* Queue.take(messages);
+
+          // A dropped subscriber leaves its backlog readable until it drains.
+          // Report the gap now; local sockets close, so the backlog has no audience.
+          if (!Predicate.isTagged(messages.state, "Open"))
+            return yield* new Redis.RedisError({
+              cause: "Redis federation subscriber disconnected",
+            });
 
           try {
             const message = decodeFederatedRealtimeMessage(raw);
