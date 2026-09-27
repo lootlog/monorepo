@@ -1,3 +1,4 @@
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
 import { and, eq, inArray } from "drizzle-orm";
@@ -121,17 +122,9 @@ export const makeCurrentUserGuilds = (
       .where(eq(userSettingsTable.userId, userId))
       .limit(1)
       .pipe(
-        Effect.map((rows) => {
-          const order = new Map(
-            (rows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
-          );
-
-          return [...summaries].sort(
-            (left, right) =>
-              (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-              (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
-          );
-        }),
+        Effect.map((rows) =>
+          sortGuildsByPreference(summaries, rows[0]?.guildsOrder ?? []),
+        ),
       );
 
   const operation = Effect.fn("getCurrentUserGuilds")(function* (

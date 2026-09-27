@@ -1,3 +1,4 @@
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { and, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { requestApiKeyAccess } from "#src/runtime/auth/forward-auth-identity";
@@ -164,14 +165,9 @@ export const makeUserGuildList = (
       .where(eq(userSettingsTable.userId, identity.userId))
       .limit(1);
 
-    const order = new Map(
-      (orderRows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
-    );
-
-    const result = [...guilds].sort(
-      (left, right) =>
-        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+    const result = sortGuildsByPreference(
+      guilds,
+      orderRows[0]?.guildsOrder ?? [],
     );
 
     yield* queueStale(identity, result);
