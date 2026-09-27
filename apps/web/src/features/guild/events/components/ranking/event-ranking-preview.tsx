@@ -1,3 +1,4 @@
+import { getRankingSelection } from "./event-ranking-selection";
 import { ChevronLink } from "@lootlog/ui/components/chevron-link";
 import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { useTranslation } from "react-i18next";
@@ -28,28 +29,11 @@ export const EventRankingPreview = ({
   const { t } = useTranslation();
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
 
-  const heroNamesWithRankings = new Set(
-    rankings.map((ranking) => ranking.heroNpcName),
+  const { effectiveSelectedHeroName, filteredRankings } = getRankingSelection(
+    heroNpcs,
+    rankings,
+    selectedHeroName,
   );
-
-  const firstHeroWithRankings = heroNpcs.find((hero) =>
-    heroNamesWithRankings.has(hero.npcName),
-  );
-
-  const defaultHeroName =
-    firstHeroWithRankings?.npcName ?? heroNpcs[0]?.npcName ?? null;
-
-  const effectiveSelectedHeroName =
-    selectedHeroName &&
-    heroNpcs.some((hero) => hero.npcName === selectedHeroName)
-      ? selectedHeroName
-      : defaultHeroName;
-
-  const filteredRankings = effectiveSelectedHeroName
-    ? rankings.filter(
-        (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
-      )
-    : rankings;
 
   const sortedRankings = [...filteredRankings]
     .sort(
