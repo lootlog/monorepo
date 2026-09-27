@@ -312,7 +312,13 @@ export const useBattlePings = () => {
     const senderName = context.game.hero.name;
     const previousTarget = battlePingStore.getSnapshot().target;
 
-    battlePingStore.apply({ forMe: false, senderName, type, warriorId });
+    const entryId = battlePingStore.apply({
+      forMe: false,
+      senderName,
+      type,
+      warriorId,
+    });
+
     playPingSound(type, false);
 
     const recipientCharacterIds = getBattleTeamCharacterIds(
@@ -344,12 +350,9 @@ export const useBattlePings = () => {
           return;
         }
 
-        // Undelivered: a shared target the team never saw must not stay up
-        // for the rest of the fight.
-        battlePingStore.retract(
-          { senderName, type, warriorId },
-          previousTarget,
-        );
+        // Undelivered: a ping the team never saw must not stay up or in the
+        // fight's history.
+        battlePingStore.retract(entryId, previousTarget);
 
         if (acknowledgement?.status === "rejected") {
           showHint(acknowledgement);
