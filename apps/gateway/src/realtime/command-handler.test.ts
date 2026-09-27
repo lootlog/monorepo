@@ -201,6 +201,8 @@ const setup = (
       updateSubscription,
       publishObservations: () =>
         Promise.reject(new Error("Unexpected air tag observation")),
+      fetchMapThreats: () =>
+        Promise.reject(new Error("Unexpected map threat fetch")),
     },
   );
 
@@ -773,6 +775,8 @@ describe("CommandHandler session lifecycle", () => {
             Promise.reject(new Error("Unexpected air tag subscription")),
           publishObservations: () =>
             Promise.reject(new Error("Unexpected air tag observation")),
+          fetchMapThreats: () =>
+            Promise.reject(new Error("Unexpected map threat fetch")),
         },
       );
 
@@ -959,7 +963,13 @@ describe("CommandHandler session lifecycle", () => {
       ),
     );
     expect(hub.responses[0]).toMatchObject({
-      data: { capabilities: ["connection.ping", "lootlog.battle-ping.v1"] },
+      data: {
+        capabilities: [
+          "connection.ping",
+          "lootlog.battle-ping.v1",
+          "lootlog.air-tag-map-threat.v1",
+        ],
+      },
     });
 
     for (const [socket, requestId] of [
@@ -1351,6 +1361,7 @@ describe("CommandHandler session lifecycle", () => {
       {
         updateSubscription: () => Promise.reject(new Error("unused")),
         publishObservations: () => Promise.reject(new Error("unused")),
+        fetchMapThreats: () => Promise.reject(new Error("unused")),
       },
     );
 

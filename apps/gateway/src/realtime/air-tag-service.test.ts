@@ -52,6 +52,12 @@ const makeSocket = (): GatewaySocket => ({
   } satisfies SessionData,
 });
 
+const unusedSetCommands = {
+  sadd: () => Promise.reject(new Error("Unexpected Redis write")),
+  smembers: () => Promise.reject(new Error("Unexpected Redis read")),
+  expire: () => Promise.reject(new Error("Unexpected Redis write")),
+};
+
 describe("AirTagService legacy parity", () => {
   test("returns snapshots on subscribe and exact counts/events for observations", async () => {
     const evaluations = [
@@ -59,8 +65,10 @@ describe("AirTagService legacy parity", () => {
         epochId: "epoch",
         epochStartedAt: 100,
         revision: 0,
+        serverTime: 150,
         targets: [],
       }),
+      [1, 0],
       [1, 0],
       JSON.stringify({
         epochId: "epoch",
@@ -102,6 +110,7 @@ describe("AirTagService legacy parity", () => {
     const service = new AirTagService(
       {
         command: {
+          ...unusedSetCommands,
           get: async () => null,
           eval: async () => {
             const reply = evaluations.shift();
@@ -134,6 +143,7 @@ describe("AirTagService legacy parity", () => {
           epochId: "epoch",
           epochStartedAt: 100,
           revision: 0,
+          serverTime: 150,
           targets: [],
         },
       ],
@@ -176,6 +186,7 @@ describe("AirTagService legacy parity", () => {
     const service = new AirTagService(
       {
         command: {
+          ...unusedSetCommands,
           eval: async () => {
             evaluations += 1;
 
