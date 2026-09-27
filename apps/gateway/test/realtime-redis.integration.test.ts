@@ -34,7 +34,7 @@ import type {
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
 import { BattlePingService } from "#src/realtime/battle-ping-service";
-import { RealtimeHub } from "#src/realtime/realtime-hub";
+import { FEDERATION_VERSION, RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
 import { getUserGuildsCacheKey } from "#src/guilds/cache-keys";
@@ -706,6 +706,21 @@ describe("realtime Dragonfly integration", () => {
         gameSessions: 0,
         uniquePlayers: 0,
       });
+      expect(secondHub.clusterFederationVersion).toBe(FEDERATION_VERSION);
+
+      // A replica that predates the field cannot decode newer frame types.
+      await store.command.eval(
+        `
+        local time = redis.call('TIME')
+        local at = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
+        redis.call('HSET', KEYS[1], 'older-replica', cjson.encode({at=at,connections=0,sessions=0,players={}}))
+        return 1
+      `,
+        1,
+        "realtime:metrics:instances:v2",
+      );
+      await Effect.runPromise(replicaB.sample());
+      expect(secondHub.clusterFederationVersion).toBe(1);
 
       const observed = Metric.gauge(
         "lootlog_gateway_cluster_observed_at_seconds",
@@ -3084,6 +3099,7 @@ describe("realtime Dragonfly integration", () => {
       ).toHaveLength(0);
 
       // A target leaves once no observer still sees it and one saw it leave the map.
+      firstHub.clusterFederationVersion = FEDERATION_VERSION;
       const scopeRecipient = makeSocket("scope-recipient");
       const firstObserver = makeSocket("first-observer");
       const secondObserver = makeSocket("second-observer");

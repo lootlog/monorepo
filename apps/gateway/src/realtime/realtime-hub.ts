@@ -57,6 +57,13 @@ const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
 
+/**
+ * Federated frame types this replica decodes. Bump it with a new federated
+ * event type and publish that type only once `clusterFederationVersion`
+ * reaches it: a replica drops a frame its schema does not know.
+ */
+export const FEDERATION_VERSION = 2;
+
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
 
@@ -134,6 +141,8 @@ export class RealtimeHub {
   private federated = false;
   private draining = false;
   readonly instanceId = crypto.randomUUID();
+  /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
+  clusterFederationVersion = 1;
 
   constructor(
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,

@@ -24,6 +24,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
+import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import {
@@ -47,6 +48,9 @@ const THREAT_REFRESH_MS = 4_000;
 const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
 const THREAT_PUBLISH_ATTEMPTS = 3;
+
+// The `FEDERATION_VERSION` that introduced `air-tag.scope-updated`.
+const SCOPE_UPDATE_FEDERATION_VERSION = 2;
 
 // One game tab sends at most four batches a second.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
@@ -429,7 +433,10 @@ export class AirTagService {
     private readonly redis: ScriptStore,
     private readonly hub: Pick<
       RealtimeHub,
-      "subscribe" | "unsubscribe" | "publishToScopes"
+      | "subscribe"
+      | "unsubscribe"
+      | "publishToScopes"
+      | "clusterFederationVersion"
     >,
   ) {}
 
@@ -616,8 +623,7 @@ export class AirTagService {
 
       if (result.targets.length === 0 && result.removed.length === 0) continue;
 
-      // One publication per batch; the hub splits it for older game clients.
-      const event: AirTagScopeUpdateEvent = {
+      await this.publishScopeUpdate(scope, socket.data.connectionId, {
         guildId: scope.guildId,
         world: scope.world,
         mapId: scope.mapId,
@@ -626,23 +632,7 @@ export class AirTagService {
         revision: result.revision,
         targets: result.targets,
         removedTargetIds: result.removed,
-      };
-
-      await this.hub.publishToScopes(
-        [scope.subscription],
-        {
-          v: 1,
-          type: "air-tag.scope-updated",
-          sequence: result.revision,
-          data: event,
-        },
-        {
-          excludeConnectionId: socket.data.connectionId,
-          recipientPlatform: "game",
-          recipientWorld: scope.world,
-          recipientMapId: scope.mapId,
-        },
-      );
+      });
     }
 
     return {
@@ -650,6 +640,56 @@ export class AirTagService {
       acceptedScopes: successes.length,
       acceptedTargets,
     };
+  }
+
+  /**
+   * One publication per batch; the hub splits it for older game clients.
+   * While an older replica is live it would drop the frame, so its targets go
+   * out as `air-tag.updated` and only removals, which it cannot deliver
+   * anyway, as a frame.
+   */
+  private async publishScopeUpdate(
+    scope: AirTagScope,
+    excludeConnectionId: string,
+    event: AirTagScopeUpdateEvent,
+  ): Promise<void> {
+    const options = {
+      excludeConnectionId,
+      recipientPlatform: "game",
+      recipientWorld: scope.world,
+      recipientMapId: scope.mapId,
+    } as const;
+
+    const frame = {
+      v: 1,
+      type: "air-tag.scope-updated",
+      sequence: event.revision,
+      data: event,
+    } as const;
+
+    if (this.hub.clusterFederationVersion >= SCOPE_UPDATE_FEDERATION_VERSION) {
+      await this.hub.publishToScopes([scope.subscription], frame, options);
+
+      return;
+    }
+
+    if (event.removedTargetIds.length > 0) {
+      // Removals precede the batch's target revisions.
+      const revision = event.revision - event.targets.length;
+
+      await this.hub.publishToScopes(
+        [scope.subscription],
+        {
+          ...frame,
+          sequence: revision,
+          data: { ...event, revision, targets: [] },
+        },
+        options,
+      );
+    }
+
+    for (const update of toLegacyAirTagUpdates(frame))
+      await this.hub.publishToScopes([scope.subscription], update, options);
   }
 
   /** Current map threats of one Organization and world, for a client that just connected. */
