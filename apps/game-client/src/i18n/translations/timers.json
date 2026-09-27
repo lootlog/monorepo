@@ -16,7 +16,8 @@
     "npcTypesOnly": "Tylko",
     "npcTypesOnlyLabel": "Pokaż tylko: {{type}}",
     "listsLabel": "Twoje listy timerów",
-    "listsHint": "Kliknij, aby filtrować po liście. Prawy przycisk myszy pokazuje tylko tę listę."
+    "listsHint": "Kliknij, aby filtrować po liście. Prawy przycisk myszy pokazuje tylko tę listę.",
+    "listsAll": "Wszystkie"
   },
   "toolbar": {
     "filters": "Filtry",
