@@ -2452,9 +2452,9 @@ describe("realtime Dragonfly integration", () => {
       await publishThreat(clanEnemy);
       // Unchanged and recently reported, so it stays quiet.
       await publishThreat({ ...clanEnemy, x: 9 });
-      // A change inside the throttle window waits for the next sighting.
+      // A change inside the throttle window goes out when the window ends, without another sighting.
       await publishThreat({ ...clanEnemy, stasis: false });
-      await Bun.sleep(1_100);
+      await waitFor(() => threatEvents().length === 2);
       // Older game clients omit level and stasis; the last values stay.
       const { lvl: _lvl, stasis: _stasis, ...legacySighting } = clanEnemy;
       await expect(

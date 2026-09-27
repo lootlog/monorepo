@@ -45,6 +45,8 @@ const THREAT_REFRESH_MS = 4_000;
 // Caps full-list fan-out per map; a change inside the window is sent with the next sighting.
 const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
+const THREAT_PUBLISH_ATTEMPTS = 3;
+
 // One game tab sends at most four batches a second.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
 
@@ -189,6 +191,7 @@ local stateRaw=redis.call("GET",KEYS[5])
 local state={broadcastAt=0,pending=false}
 if stateRaw ~= false then state=cjson.decode(stateRaw) end
 local threatResult=nil
+local threatPendingMs=nil
 if #sightings > 0 or state.pending == true then
   local records, threatCount = liveThreats(KEYS[4], now, threatTtl)
   local due=state.pending == true
@@ -220,13 +223,14 @@ if #sightings > 0 or state.pending == true then
       threatResult={revision=now,enemies=threatEnemies(records,now)}
     else
       state.pending=true
+      threatPendingMs=threatThrottle-(now-tonumber(state.broadcastAt))
     end
   end
   state.mapName=mapName
   redis.call("SET",KEYS[5],cjson.encode(state),"PX",threatTtl)
   if next(records) ~= nil then redis.call("PEXPIRE",KEYS[4],threatTtl) end
 end
-local encoded=cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,acceptedTargets=accepted,updates=updates,threat=threatResult})
+local encoded=cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,acceptedTargets=accepted,updates=updates,threat=threatResult,threatPendingMs=threatPendingMs})
 if #updates == 0 then encoded=string.gsub(encoded,'"updates":{}','"updates":[]',1) end
 return encoded
 `;
@@ -264,12 +268,38 @@ if next(records) == nil or state.mapName == nil then return "" end
 return cjson.encode({mapName=state.mapName,revision=now,enemies=threatEnemies(records,now)})
 `;
 
+// Sends a throttled or undelivered list without waiting for another sighting.
+const THREAT_FLUSH_SCRIPT = `${LUA_COMMON}
+local now=nowMs()
+local threatTtl=tonumber(ARGV[1])
+local stateRaw=redis.call("GET",KEYS[2])
+if stateRaw == false then return "" end
+local state=cjson.decode(stateRaw)
+if ARGV[3] ~= "1" and state.pending ~= true then return "" end
+local wait=tonumber(ARGV[2])-(now-tonumber(state.broadcastAt))
+if wait > 0 then return cjson.encode({retryInMs=wait}) end
+local records=liveThreats(KEYS[1], now, threatTtl)
+state.pending=false
+if next(records) == nil or state.mapName == nil then
+  redis.call("SET",KEYS[2],cjson.encode(state),"PX",threatTtl)
+  return ""
+end
+for id,record in pairs(records) do
+  record.reportedAt=record.observedAt
+  redis.call("HSET",KEYS[1],id,cjson.encode(record))
+end
+state.broadcastAt=now
+redis.call("SET",KEYS[2],cjson.encode(state),"PX",threatTtl)
+return cjson.encode({mapName=state.mapName,revision=now,enemies=threatEnemies(records,now)})
+`;
+
 interface MergeResult {
   epochId: string;
   epochStartedAt: number;
   acceptedTargets: number;
   updates: Array<{ revision: number; target: AirTagTarget }>;
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
+  threatPendingMs?: number;
 }
 
 interface ObservationBatch {
@@ -291,7 +321,19 @@ const MergeResultJson = Schema.fromJsonString(
         enemies: AirTagMapThreatEventSchema.fields.enemies,
       }),
     ),
+    threatPendingMs: Schema.optionalKey(Schema.Number),
   }),
+);
+
+const ThreatFlushJson = Schema.fromJsonString(
+  Schema.Union([
+    Schema.Struct({ retryInMs: Schema.Number }),
+    Schema.Struct({
+      mapName: Schema.String,
+      revision: Schema.Number,
+      enemies: AirTagMapThreatEventSchema.fields.enemies,
+    }),
+  ]),
 );
 
 const SnapshotResultJson = Schema.fromJsonString(
@@ -328,6 +370,10 @@ export class AirTagService {
   private readonly subscriptionOperations = new WeakMap<
     GatewaySocket,
     Promise<unknown>
+  >();
+  private readonly threatFlushes = new Map<
+    string,
+    ReturnType<typeof setTimeout>
   >();
 
   constructor(
@@ -506,6 +552,9 @@ export class AirTagService {
           enemies: result.threat.enemies,
         });
 
+      if (result.threatPendingMs !== undefined)
+        this.scheduleThreatFlush(scope, result.threatPendingMs);
+
       for (const update of result.updates) {
         const event: AirTagUpdateEvent = {
           guildId: scope.guildId,
@@ -669,7 +718,90 @@ export class AirTagService {
     );
   }
 
-  private async publishThreat(event: AirTagMapThreatEvent): Promise<void> {
+  /**
+   * Sends a list the throttle held back, or retries one that failed to go out,
+   * even when the observer sends nothing more. Lives on this instance; a list
+   * lost with it stays in Redis for `fetchMapThreats`.
+   */
+  private scheduleThreatFlush(
+    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
+    delayMs: number,
+    failedAttempts = 0,
+  ): void {
+    const hashTag = this.hashTag(scope);
+
+    if (this.threatFlushes.has(hashTag)) return;
+
+    this.threatFlushes.set(
+      hashTag,
+      setTimeout(
+        () => {
+          this.threatFlushes.delete(hashTag);
+          void this.flushThreat(scope, failedAttempts);
+        },
+        Math.max(0, delayMs),
+      ),
+    );
+  }
+
+  private async flushThreat(
+    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
+    failedAttempts: number,
+  ): Promise<void> {
+    const hashTag = this.hashTag(scope);
+
+    try {
+      const result = String(
+        await this.redis.command.eval(
+          THREAT_FLUSH_SCRIPT,
+          2,
+          `${hashTag}:threats`,
+          `${hashTag}:threat-state`,
+          AIR_TAG_MAP_THREAT_TTL_MS,
+          THREAT_BROADCAST_THROTTLE_MS,
+          failedAttempts > 0 ? "1" : "0",
+        ),
+      );
+
+      if (result === "") return;
+      const flush = Schema.decodeUnknownSync(ThreatFlushJson)(result);
+
+      if ("retryInMs" in flush) {
+        this.scheduleThreatFlush(scope, flush.retryInMs, failedAttempts);
+
+        return;
+      }
+
+      await this.publishThreat(
+        { ...scope, ...flush, enemies: [...flush.enemies] },
+        failedAttempts,
+      );
+    } catch (error) {
+      if (!this.retryThreat(scope, failedAttempts))
+        this.logger.warn("Gave up publishing map threat", error);
+    }
+  }
+
+  /** Returns false once the list has failed too often to try again. */
+  private retryThreat(
+    scope: Pick<AirTagScope, "guildId" | "world" | "mapId">,
+    failedAttempts: number,
+  ): boolean {
+    if (failedAttempts >= THREAT_PUBLISH_ATTEMPTS - 1) return false;
+
+    this.scheduleThreatFlush(
+      scope,
+      THREAT_BROADCAST_THROTTLE_MS * (failedAttempts + 1),
+      failedAttempts + 1,
+    );
+
+    return true;
+  }
+
+  private async publishThreat(
+    event: AirTagMapThreatEvent,
+    failedAttempts = 0,
+  ): Promise<void> {
     try {
       await this.redis.command.sadd(
         this.threatMapsKey(event.guildId, event.world),
@@ -691,8 +823,9 @@ export class AirTagService {
         },
       );
     } catch (error) {
-      // AirTag updates of the same batch must still go out.
-      this.logger.warn("Failed to publish map threat", error);
+      // AirTag updates of the same batch must still go out; the list goes out again later.
+      if (!this.retryThreat(event, failedAttempts))
+        this.logger.warn("Gave up publishing map threat", error);
     }
   }
 
