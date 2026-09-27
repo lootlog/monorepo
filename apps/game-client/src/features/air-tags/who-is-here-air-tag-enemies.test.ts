@@ -25,13 +25,11 @@ describe("selectUnseenAirTagEnemies", () => {
           clanEnemyObservedAt: 3_000,
         }),
         target({ targetId: "visible", relation: 6 }),
-        target({ targetId: "hero", relation: 6 }),
       ],
       {
         now: 5_000,
         ttlMs: 10_000,
-        heroId: "hero",
-        isVisible: (targetId) => targetId === "visible",
+        isShownByGame: (targetId) => targetId === "visible",
       },
     );
 

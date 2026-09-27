@@ -73,21 +73,20 @@ describe("AirTagService legacy parity", () => {
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
+        revision: 1,
         acceptedTargets: 1,
-        updates: [
+        targets: [
           {
-            revision: 1,
-            target: {
-              targetId: "target",
-              nickname: "Enemy",
-              relation: 3,
-              x: 1,
-              y: 2,
-              observedAt: 200,
-              enemyObservedAt: 200,
-            },
+            targetId: "target",
+            nickname: "Enemy",
+            relation: 3,
+            x: 1,
+            y: 2,
+            observedAt: 200,
+            enemyObservedAt: 200,
           },
         ],
+        removed: [],
       }),
     ];
 
@@ -172,9 +171,15 @@ describe("AirTagService legacy parity", () => {
         },
       ],
       {
-        type: "air-tag.updated",
+        type: "air-tag.scope-updated",
         sequence: 1,
-        data: { guildId: "organization-1", epochId: "epoch", revision: 1 },
+        data: {
+          guildId: "organization-1",
+          epochId: "epoch",
+          revision: 1,
+          targets: [{ targetId: "target" }],
+          removedTargetIds: [],
+        },
       },
       { excludeConnectionId: "connection-1" },
     ]);
@@ -229,8 +234,10 @@ describe("AirTagService map threats", () => {
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
+        revision: 0,
         acceptedTargets: 1,
-        updates: [],
+        targets: [],
+        removed: [],
         threat: threatEvent,
       }),
       JSON.stringify({ mapName: "Map", ...threatEvent, revision: 1_300 }),

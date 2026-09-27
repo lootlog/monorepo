@@ -37,9 +37,23 @@ export interface AirTagObservation {
   stasis?: boolean;
 }
 
+/**
+ * `left-map`: the observer is certain the target left the map (logout, teleport,
+ * gateway). `out-of-sight`: the target may still be on the map, beyond the
+ * observer's war shadow range.
+ */
+export type AirTagDepartureReason = "left-map" | "out-of-sight";
+
+export interface AirTagDeparture {
+  targetId: string;
+  reason: AirTagDepartureReason;
+}
+
 export interface AirTagObservationBatch {
   expectedMapId: number;
   observations: AirTagObservation[];
+  /** Sent only to gateways listing `lootlog.air-tag-scope-update.v1`. */
+  departures?: AirTagDeparture[];
 }
 
 export interface AirTagSubscriptionPayload {
@@ -74,6 +88,22 @@ export interface AirTagUpdateEvent {
   epochStartedAt: number;
   revision: number;
   target: AirTagTarget;
+}
+
+/**
+ * Every change of one scope from one merged batch. Removals precede updates:
+ * `targets[i]` carries revision `revision - (targets.length - 1 - i)`.
+ */
+export interface AirTagScopeUpdateEvent {
+  guildId: string;
+  world: string;
+  mapId: number;
+  epochId: string;
+  epochStartedAt: number;
+  revision: number;
+  targets: readonly AirTagTarget[];
+  /** Targets every observer lost sight of after one saw them leave the map. */
+  removedTargetIds: readonly string[];
 }
 
 export interface AirTagMapThreatEnemy {
@@ -162,9 +192,15 @@ export const AirTagObservationSchema = Schema.Struct({
   stasis: Schema.optionalKey(Schema.Boolean),
 });
 
+export const AirTagDepartureSchema = Schema.Struct({
+  targetId: ShortString,
+  reason: Schema.Literals(["left-map", "out-of-sight"]),
+});
+
 export const AirTagObservationBatchSchema = Schema.Struct({
   expectedMapId: Coordinate,
   observations: Schema.Array(AirTagObservationSchema),
+  departures: Schema.optionalKey(Schema.Array(AirTagDepartureSchema)),
 });
 
 export const AirTagTargetSchema = Schema.Struct({
@@ -201,6 +237,12 @@ export const AirTagUpdateEventSchema = Schema.Struct({
   target: AirTagTargetSchema,
 });
 
+export const AirTagScopeUpdateEventSchema = Schema.Struct({
+  ...AirTagScopeIdentityFields,
+  targets: Schema.Array(AirTagTargetSchema),
+  removedTargetIds: Schema.Array(ShortString),
+});
+
 export const AirTagMapThreatEventSchema = Schema.Struct({
   guildId: GuildId,
   world: ShortString,
@@ -228,3 +270,7 @@ export const isAirTagRelation = Schema.is(AirTagRelationSchema);
 export const isAirTagScopeSnapshot = Schema.is(AirTagScopeSnapshotSchema);
 
 export const isAirTagUpdateEvent = Schema.is(AirTagUpdateEventSchema);
+
+export const isAirTagScopeUpdateEvent = Schema.is(AirTagScopeUpdateEventSchema);
+
+export const isAirTagDeparture = Schema.is(AirTagDepartureSchema);
