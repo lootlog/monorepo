@@ -14,7 +14,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   if (!notification.npc) return null;
 
   return (
-    <div className="ll:flex ll:min-w-0 ll:flex-col">
+    <>
       <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-xs">
         <span className="ll:min-w-0 ll:truncate ll:font-semibold">
           {notification.npc.name}
@@ -24,11 +24,11 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           {notification.npc.prof})
         </span>
       </div>
-      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-400">
+      <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
         <span className="ll:min-w-0 ll:truncate">
           {notification.npc.location}
         </span>
-        <span className="ll:shrink-0">
+        <span className="ll:shrink-0 ll:tabular-nums">
           ({notification.npc.x}, {notification.npc.y})
         </span>
         {notification.isGatheringParty && (
@@ -37,6 +37,6 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           </span>
         )}
       </div>
-    </div>
+    </>
   );
 };

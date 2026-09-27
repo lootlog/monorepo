@@ -2,9 +2,9 @@ import { expect, test } from "bun:test";
 import { Effect, Metric } from "effect";
 import { encode } from "@msgpack/msgpack";
 import type { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { createGatewayWebSocket } from "#src/app";
+import { createGatewayWebSocket, drainGateway } from "#src/app";
 import { RealtimeHub } from "./realtime-hub.js";
-import { unusedFederationStore } from "../../test/realtime-fixtures.js";
+import { subscribedFederationStore } from "../../test/realtime-fixtures.js";
 import { CommandIngress } from "./command-ingress.js";
 import type { GatewaySocket } from "./session.js";
 
@@ -396,9 +396,11 @@ test("queued commands on closed sockets cannot consume reserved disconnect capac
 test("WebSocket close removes delivery targets immediately and rejects excess lifecycles before registration", async () => {
   const hub = new RealtimeHub(
     { maxBackpressureBytes: 1024 },
-    unusedFederationStore,
+    subscribedFederationStore,
     () => {},
   );
+
+  await Effect.runPromise(hub.start());
 
   const target = setup({
     active: 1,
@@ -437,4 +439,68 @@ test("WebSocket close removes delivery targets immediately and rejects excess li
   expect(target.ingress.getDiagnostics().rejectedConnections).toBe(1);
   transport.open(excess);
   expect(hub.getLocalSockets()).toEqual([excess]);
+});
+
+test("drain refuses new sessions, closes local sockets and waits for their disconnect cleanup", async () => {
+  const hub = new RealtimeHub(
+    { maxBackpressureBytes: 1024 },
+    subscribedFederationStore,
+    () => {},
+  );
+
+  await Effect.runPromise(hub.start());
+
+  const cleanedUp: string[] = [];
+
+  const ingress = new CommandIngress(
+    () => Effect.void,
+    () => {},
+    (connection) =>
+      Effect.sleep("20 millis").pipe(
+        Effect.andThen(
+          Effect.sync(() => cleanedUp.push(connection.data.connectionId)),
+        ),
+      ),
+    (_label, task) => {
+      Effect.runFork(task);
+    },
+  );
+
+  const transport = createGatewayWebSocket({ hub, ingress });
+  const closes: Array<{ readonly id: string; readonly code?: number }> = [];
+
+  const connect = (connectionId: string): GatewaySocket => {
+    const connection: GatewaySocket = {
+      ...socket(connectionId),
+      close: (code) => {
+        closes.push({ id: connectionId, code });
+        transport.close(connection, code);
+      },
+    };
+
+    transport.open(connection);
+
+    return connection;
+  };
+
+  const established = ["first", "second", "third"].map(connect);
+  expect(hub.getLocalSockets()).toEqual(established);
+
+  await Effect.runPromise(
+    drainGateway(
+      { hub, ingress },
+      { endpointRemoval: 0, closeSpread: "20 millis", cleanup: "1 second" },
+    ),
+  );
+
+  expect(hub.unavailableReason()).toBe("draining");
+  expect(closes).toEqual(
+    ["first", "second", "third"].map((id) => ({ id, code: 1012 })),
+  );
+  expect(cleanedUp.toSorted()).toEqual(["first", "second", "third"]);
+  expect(ingress.getDiagnostics().retainedConnections).toBe(0);
+
+  connect("late");
+  expect(closes.at(-1)).toEqual({ id: "late", code: 1013 });
+  expect(hub.getLocalSockets()).toEqual([]);
 });

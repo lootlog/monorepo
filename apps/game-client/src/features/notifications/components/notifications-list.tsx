@@ -27,7 +27,7 @@ import type { NotificationMutesPatch } from "@lootlog/schema/user-preferences";
 import type { NotificationsSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import { decodePartyReadyRoomProjection } from "@lootlog/schema/party-ready-room";
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import { getFixedT } from "@/i18n/get-fixed-t";
@@ -44,7 +44,9 @@ const EMPTY_NOTIFICATION_SETTINGS: Partial<NotificationsSettings> = {};
 
 const INITIAL_BULK_RENDER_COUNT = 2;
 
-const MANUAL_EXIT_ANIMATION_DURATION_MS = 150;
+const MANUAL_EXIT_ANIMATION_DURATION_MS = 180;
+
+const ROW_LAYOUT_ANIMATION_DURATION_MS = 220;
 
 export const NotificationsList: FC<NotificationsListProps> = ({
   notifications,
@@ -80,6 +82,8 @@ export const NotificationsList: FC<NotificationsListProps> = ({
 
   const setOpen = useWindowsStore((state) => state.setOpen);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+  const listContentRef = useRef<HTMLDivElement | null>(null);
+  const previousRowTopsRef = useRef(new Map<string, number>());
 
   const {
     clearNotifications,
@@ -113,6 +117,59 @@ export const NotificationsList: FC<NotificationsListProps> = ({
   const renderedNotifications = shouldStageBulkRender
     ? visibleNotifications.slice(0, INITIAL_BULK_RENDER_COUNT)
     : visibleNotifications;
+
+  const renderedListKeys = renderedNotifications
+    .map((notification) => notification.listKey)
+    .join("\n");
+
+  // Slides the rows that stay from where they were when a notification
+  // arrives or leaves. Only rows inside the scroll viewport animate, each with
+  // one transform-only Web Animation; positions are read once per change of
+  // the rendered rows, not on unrelated list renders.
+  useLayoutEffect(() => {
+    const listContent = listContentRef.current;
+    const viewport = scrollViewportRef.current;
+
+    if (!listContent || !viewport) return;
+
+    const previousRowTops = previousRowTopsRef.current;
+    const nextRowTops = new Map<string, number>();
+    const viewportTop = viewport.scrollTop;
+    const viewportBottom = viewportTop + viewport.clientHeight;
+
+    for (const row of listContent.children) {
+      if (!(row instanceof HTMLElement)) continue;
+      const listKey = row.dataset.lootlogNotificationListKey;
+
+      if (listKey === undefined) continue;
+      const top = row.offsetTop;
+      nextRowTops.set(listKey, top);
+      const previousTop = previousRowTops.get(listKey);
+
+      if (
+        !animationEffectsEnabled ||
+        previousTop === undefined ||
+        previousTop === top ||
+        top >= viewportBottom ||
+        top + row.offsetHeight <= viewportTop
+      ) {
+        continue;
+      }
+
+      row.animate(
+        [
+          { transform: `translateY(${previousTop - top}px)` },
+          { transform: "translateY(0)" },
+        ],
+        {
+          duration: ROW_LAYOUT_ANIMATION_DURATION_MS,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      );
+    }
+
+    previousRowTopsRef.current = nextRowTops;
+  }, [animationEffectsEnabled, renderedListKeys]);
 
   useEffect(() => {
     if (latestNotificationAnimationCycle === 0) return;
@@ -276,7 +333,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
       ref={scrollViewportRef}
       className="ll:h-full ll:max-h-[inherit] ll:w-full"
     >
-      <div className="ll:flex ll:w-full ll:flex-col ll:gap-1 ll:pt-1">
+      <div ref={listContentRef} className="ll:flex ll:w-full ll:flex-col">
         {renderedNotifications.map((notification) => {
           let animationClassName = "ll:w-full";
 
@@ -284,14 +341,15 @@ export const NotificationsList: FC<NotificationsListProps> = ({
             animationClassName = manuallyLeavingNotificationIds.has(
               notification.notificationId,
             )
-              ? "ll:pointer-events-none ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-2 ll:duration-150"
-              : "ll:w-full ll:animate-in ll:fade-in-0 ll:slide-in-from-top-2 ll:duration-150";
+              ? "ll:pointer-events-none ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-180 ll:ease-in"
+              : "ll-row-enter ll:w-full";
           }
 
           return (
             <div
               key={notification.listKey}
               data-lootlog-notification-id={notification.notificationId}
+              data-lootlog-notification-list-key={notification.listKey}
               className={animationClassName}
             >
               {getNotificationRow(notification)}

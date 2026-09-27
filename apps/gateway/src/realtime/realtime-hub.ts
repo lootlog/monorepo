@@ -131,6 +131,8 @@ export class RealtimeHub {
   private readonly permissionRebalanceListeners = new Set<
     (discordId: string, userId: string) => Effect.Effect<void, unknown>
   >();
+  private federated = false;
+  private draining = false;
   readonly instanceId = crypto.randomUUID();
 
   constructor(
@@ -142,9 +144,27 @@ export class RealtimeHub {
   start(): Effect.Effect<void, unknown> {
     return Effect.tryPromise({
       try: () =>
-        this.redis.subscribe((message) => this.receiveFederated(message)),
+        this.redis.subscribe(
+          (message) => this.receiveFederated(message),
+          (subscribed) =>
+            subscribed ? this.restoreFederation() : this.loseFederation(),
+        ),
       catch: (cause) => cause,
     });
+  }
+
+  /** Why this instance must not accept WebSocket sessions, if it must not. */
+  unavailableReason(): "draining" | "federation-unavailable" | undefined {
+    if (this.draining) return "draining";
+
+    if (!this.federated) return "federation-unavailable";
+
+    return undefined;
+  }
+
+  /** Stops admitting sessions; established sockets keep receiving events. */
+  startDraining(): void {
+    this.draining = true;
   }
 
   register(socket: GatewaySocket): void {
@@ -417,6 +437,32 @@ export class RealtimeHub {
       if (socket.data.discordId !== discordId) continue;
       this.detach(socket);
       socket.close(1013, "authorization temporarily unavailable");
+    }
+  }
+
+  private restoreFederation(): void {
+    if (this.federated) return;
+    this.federated = true;
+    this.logger.info("Realtime federation subscribed", {
+      instanceId: this.instanceId,
+    });
+  }
+
+  // Frames published during the gap are gone, including permission rebalances.
+  // Rejoining re-reads Organization access and lets clients refetch current state.
+  private loseFederation(): void {
+    if (!this.federated) return;
+    this.federated = false;
+    const sockets = this.getLocalSockets();
+
+    this.logger.error(
+      "Realtime federation subscription lost; closing local sockets",
+      { instanceId: this.instanceId, sockets: sockets.length },
+    );
+
+    for (const socket of sockets) {
+      this.detach(socket);
+      socket.close(1013, "realtime federation unavailable");
     }
   }
 
