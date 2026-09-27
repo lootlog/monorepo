@@ -43,6 +43,10 @@ import {
 
 type PinMutationContext = { previous?: ReservationSpotsResponseDto };
 
+type PinMutationOptions = NonNullable<
+  Parameters<typeof usePinReservationSpot<unknown, PinMutationContext>>[0]
+>["mutation"];
+
 export function Reservations() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -64,53 +68,34 @@ export function Reservations() {
 
   const spotsQueryKey = getListReservationSpotsQueryKey({ guildId });
 
-  const updatePinnedState = (spotId: string, isPinned: boolean) => {
-    queryClient.setQueryData<ReservationSpotsResponseDto>(
-      spotsQueryKey,
-      (current) => setReservationSpotPinned(current, spotId, isPinned),
-    );
-  };
+  const createPinMutationOptions = (isPinned: boolean): PinMutationOptions => ({
+    onMutate: async ({ pathParams }) => {
+      await queryClient.cancelQueries({ queryKey: spotsQueryKey });
+
+      const previous =
+        queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
+
+      queryClient.setQueryData<ReservationSpotsResponseDto>(
+        spotsQueryKey,
+        (current) =>
+          setReservationSpotPinned(current, pathParams.spotId, isPinned),
+      );
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      queryClient.setQueryData(spotsQueryKey, context?.previous);
+      toast.error(t("reservations.pin.error"));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: spotsQueryKey }),
+  });
 
   const pinMutation = usePinReservationSpot<unknown, PinMutationContext>({
-    mutation: {
-      onMutate: async ({ pathParams }) => {
-        await queryClient.cancelQueries({ queryKey: spotsQueryKey });
-
-        const previous =
-          queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
-
-        updatePinnedState(pathParams.spotId, true);
-
-        return { previous };
-      },
-      onError: (_error, _variables, context) => {
-        queryClient.setQueryData(spotsQueryKey, context?.previous);
-        toast.error(t("reservations.pin.error"));
-      },
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: spotsQueryKey }),
-    },
+    mutation: createPinMutationOptions(true),
   });
 
   const unpinMutation = useUnpinReservationSpot<unknown, PinMutationContext>({
-    mutation: {
-      onMutate: async ({ pathParams }) => {
-        await queryClient.cancelQueries({ queryKey: spotsQueryKey });
-
-        const previous =
-          queryClient.getQueryData<ReservationSpotsResponseDto>(spotsQueryKey);
-
-        updatePinnedState(pathParams.spotId, false);
-
-        return { previous };
-      },
-      onError: (_error, _variables, context) => {
-        queryClient.setQueryData(spotsQueryKey, context?.previous);
-        toast.error(t("reservations.pin.error"));
-      },
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: spotsQueryKey }),
-    },
+    mutation: createPinMutationOptions(false),
   });
 
   const normalizedSearch = searchValue.trim();
