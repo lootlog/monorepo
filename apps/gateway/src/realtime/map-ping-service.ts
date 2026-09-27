@@ -72,6 +72,7 @@ export class MapPingService {
       x: payload.x,
       y: payload.y,
       ...(payload.npcId !== undefined && { npcId: payload.npcId }),
+      ...(payload.playerId !== undefined && { playerId: payload.playerId }),
       sender: { characterId: context.characterId, name: context.name },
       createdAt,
     };
@@ -99,6 +100,8 @@ export class MapPingService {
   private hasValidPayload(payload: MapPingSendPayload): boolean {
     return (
       isMapPingSendPayload(payload) &&
+      // A ping targets one character at most.
+      (payload.npcId === undefined || payload.playerId === undefined) &&
       payload.x <= MAX_COORDINATE &&
       payload.y <= MAX_COORDINATE
     );

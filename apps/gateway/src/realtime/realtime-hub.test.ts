@@ -294,98 +294,107 @@ describe("RealtimeHub federation", () => {
     }
   });
 
-  test("delivers battle pings only to listed characters on the map on every instance", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+  test.each([
+    { type: "attack", team: false },
+    { type: "quick-fight", team: true },
+  ] as const)(
+    "delivers $type battle pings only to listed characters that decode them on every instance",
+    async ({ type, team }) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    const scope = {
-      topic: "map.pings",
-      organizationId: "organization-1",
-      world: "tempest",
-      mapId: 1,
-    } as const;
+      const scope = {
+        topic: "map.pings",
+        organizationId: "organization-1",
+        world: "tempest",
+        mapId: 1,
+      } as const;
 
-    const scenarios = [
-      { id: "listed", characterId: "100", supported: true, delivered: true },
-      {
-        id: "bystander",
-        characterId: "200",
-        supported: true,
-        delivered: false,
-      },
-      // An older game client closes the socket on an unknown event type.
-      { id: "legacy", characterId: "100", supported: false, delivered: false },
-    ];
+      const scenarios = [
+        { id: "listed", characterId: "100", battle: true, teamPings: true },
+        { id: "bystander", characterId: "200", battle: true, teamPings: true },
+        // An older game client closes the socket on an event it cannot decode.
+        { id: "legacy", characterId: "100", battle: false, teamPings: false },
+        { id: "no-team", characterId: "100", battle: true, teamPings: false },
+      ].map((scenario) => ({
+        ...scenario,
+        delivered:
+          scenario.characterId === "100" &&
+          scenario.battle &&
+          (!team || scenario.teamPings),
+      }));
 
-    const targets = [local, remote].flatMap((hub, index) =>
-      scenarios.map((scenario) => {
-        const base = makeSession(`battle-${index}-${scenario.id}`);
+      const targets = [local, remote].flatMap((hub, index) =>
+        scenarios.map((scenario) => {
+          const base = makeSession(`battle-${index}-${scenario.id}`);
 
-        const session: SessionData = {
-          ...base,
-          platform: "game",
-          supportsBattlePings: scenario.supported,
-          presence: {
-            userId: base.userId,
-            sessionId: `presence-${base.connectionId}`,
-            organizationIds: ["organization-1"],
+          const session: SessionData = {
+            ...base,
             platform: "game",
-            status: "online",
-            confidence: "verified",
-            isAfk: false,
-            lastSeen: 1,
-            character: {
-              world: scope.world,
-              name: `Hero-${scenario.characterId}`,
-              lvl: 100,
-              icon: "icon",
-              characterId: scenario.characterId,
-              accountId: `account-${scenario.characterId}`,
-              prof: "w",
+            supportsBattlePings: scenario.battle,
+            supportsTeamBattlePings: scenario.teamPings,
+            presence: {
+              userId: base.userId,
+              sessionId: `presence-${base.connectionId}`,
+              organizationIds: ["organization-1"],
+              platform: "game",
+              status: "online",
+              confidence: "verified",
+              isAfk: false,
+              lastSeen: 1,
+              character: {
+                world: scope.world,
+                name: `Hero-${scenario.characterId}`,
+                lvl: 100,
+                icon: "icon",
+                characterId: scenario.characterId,
+                accountId: `account-${scenario.characterId}`,
+                prof: "w",
+              },
+              location: { mapId: scope.mapId, map: "Map", x: 1, y: 1 },
             },
-            location: { mapId: scope.mapId, map: "Map", x: 1, y: 1 },
-          },
-        };
+          };
 
-        const target = makeSocket(session);
-        hub.register(target.socket);
-        hub.subscribe(target.socket, scope);
+          const target = makeSocket(session);
+          hub.register(target.socket);
+          hub.subscribe(target.socket, scope);
 
-        return { ...target, delivered: scenario.delivered };
-      }),
-    );
+          return { ...target, delivered: scenario.delivered };
+        }),
+      );
 
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
 
-    const ping = {
-      v: 1,
-      type: "battle-ping.received",
-      data: {
-        pingId: "ping",
-        world: scope.world,
-        mapId: scope.mapId,
-        type: "attack",
-        warriorId: -5,
-        sender: { characterId: "300", name: "Sender" },
-        createdAt: 1,
-      },
-    } as const;
+      const ping = {
+        v: 1,
+        type: "battle-ping.received",
+        data: {
+          pingId: "ping",
+          world: scope.world,
+          mapId: scope.mapId,
+          type,
+          warriorId: team ? 300 : -5,
+          sender: { characterId: "300", name: "Sender" },
+          createdAt: 1,
+        },
+      } as const;
 
-    await local.publishToScopes([scope], ping, {
-      recipientPlatform: "game",
-      recipientWorld: scope.world,
-      recipientMapId: scope.mapId,
-      recipientCharacterIds: ["100"],
-    });
+      await local.publishToScopes([scope], ping, {
+        recipientPlatform: "game",
+        recipientWorld: scope.world,
+        recipientMapId: scope.mapId,
+        recipientCharacterIds: ["100"],
+      });
 
-    for (const target of targets) {
-      // Without a routing scope a ping has no Organization to authorize it.
-      await local.publishToUser(target.socket.data.userId, ping);
-      expect(local.sendEvent(target.socket, ping)).toBe(false);
-      expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
-    }
-  });
+      for (const target of targets) {
+        // Without a routing scope a ping has no Organization to authorize it.
+        await local.publishToUser(target.socket.data.userId, ping);
+        expect(local.sendEvent(target.socket, ping)).toBe(false);
+        expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
+      }
+    },
+  );
 
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
     const bus = new FederationBus();

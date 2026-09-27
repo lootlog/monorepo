@@ -9,6 +9,7 @@ import {
   decodeClientCommand,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
   type Response,
   type ServerEvent,
@@ -766,6 +767,7 @@ export class CommandHandler {
           capabilities: [
             REALTIME_PING_CAPABILITY,
             REALTIME_BATTLE_PING_CAPABILITY,
+            REALTIME_TEAM_BATTLE_PING_CAPABILITY,
           ],
         },
       } satisfies Event;
