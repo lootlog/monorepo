@@ -462,8 +462,8 @@
         "description": "Dźwięk wykrywacza dla każdego typu. Puste pole gra dźwięk domyślny."
       },
       "pings": {
-        "label": "Pingi na mapie",
-        "description": "Dźwięk pingów, które grupa stawia na mapie."
+        "label": "Pingi",
+        "description": "Dźwięk pingów na mapie i w walce, także próśb skierowanych do Ciebie."
       }
     }
   },
