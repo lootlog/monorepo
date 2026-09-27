@@ -140,12 +140,14 @@ const clanEnemyFields = ({
   nickname,
   clan,
   lvl,
+  prof,
 }: {
   targetId: string;
   nickname: string;
   clan: { id: number; name: string };
   lvl: number;
-}) => ({ targetId, nickname, clan, lvl });
+  prof: string;
+}) => ({ targetId, nickname, clan, lvl, prof });
 
 const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
@@ -2988,6 +2990,7 @@ describe("realtime Dragonfly integration", () => {
         x: 3,
         y: 4,
         lvl: 250,
+        prof: "m",
         stasis: true,
       };
 
@@ -3008,8 +3011,15 @@ describe("realtime Dragonfly integration", () => {
       // A change inside the throttle window goes out when the window ends, without another sighting.
       await publishThreat({ ...clanEnemy, stasis: false });
       await waitFor(() => threatEvents().length === 2);
-      // Older game clients omit level and stasis; the last values stay.
-      const { lvl: _lvl, stasis: _stasis, ...legacySighting } = clanEnemy;
+
+      // Older game clients omit level, profession and stasis; the last values stay.
+      const {
+        lvl: _lvl,
+        prof: _prof,
+        stasis: _stasis,
+        ...legacySighting
+      } = clanEnemy;
+
       await expect(
         sourceAirTags.publishObservations(source.socket, {
           expectedMapId: 7,
@@ -3065,7 +3075,9 @@ describe("realtime Dragonfly integration", () => {
           {
             mapId: 7,
             mapName: "Ithan",
-            enemies: [{ targetId: "clan-enemy", lvl: 250, stasis: false }],
+            enemies: [
+              { targetId: "clan-enemy", lvl: 250, prof: "m", stasis: false },
+            ],
           },
         ],
       });

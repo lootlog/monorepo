@@ -13,13 +13,30 @@ import {
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
 import { createTimerFixture } from "../timer-fixtures";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
-import { TimerMapPresenceProvider } from "./timer-map-presence-provider";
+import {
+  TimerMapPresenceProvider,
+  useTimerMapPresence,
+  useTimerMapThreat,
+} from "./timer-map-presence-provider";
 import { TimerMapPresenceIndicator } from "./timer-map-presence-indicator";
 import { TimerMapThreatIndicator } from "./timer-map-threat-indicator";
 
-const occupiedLabel = () => i18n.t("timers:tooltip.mapOccupied");
+const occupiedLabel = (count = 1) =>
+  i18n.t("timers:tooltip.mapOccupied", { count });
 
-const afkLabel = () => i18n.t("timers:tooltip.mapAfk");
+const afkLabel = (count = 1) => i18n.t("timers:tooltip.mapAfk", { count });
+
+function Presence({ timer }: { timer: TimerWithTimeLeft }) {
+  const occupancy = useTimerMapPresence(timer);
+
+  return occupancy ? <TimerMapPresenceIndicator occupancy={occupancy} /> : null;
+}
+
+function Threat({ timer }: { timer: TimerWithTimeLeft }) {
+  const threat = useTimerMapThreat(timer);
+
+  return threat ? <TimerMapThreatIndicator threat={threat} /> : null;
+}
 
 const policy = (organizations: string[]) =>
   createAccessPolicySnapshot(
@@ -68,7 +85,7 @@ it("shares presence with online rows without committing the timer subtree for sa
         <Profiler id="timers" onRender={commits}>
           <div>
             {timers.map((entry, index) => (
-              <TimerMapPresenceIndicator key={index} timer={entry} />
+              <Presence key={index} timer={entry} />
             ))}
           </div>
         </Profiler>
@@ -178,7 +195,7 @@ it("includes own AFK presence, excludes heroes, and restricts grouped occupancy 
       <TimerMapPresenceProvider timers={entries}>
         {entries.map((entry, index) => (
           <section key={index} aria-label={`Timer ${index}`}>
-            <TimerMapPresenceIndicator timer={entry} />
+            <Presence timer={entry} />
           </section>
         ))}
       </TimerMapPresenceProvider>
@@ -226,7 +243,7 @@ it("counts an enemy seen through both organizations of a grouped timer once and 
   const view = render(
     <harness.wrapper>
       <TimerMapPresenceProvider timers={[grouped]}>
-        <TimerMapThreatIndicator timer={grouped} />
+        <Threat timer={grouped} />
       </TimerMapPresenceProvider>
     </harness.wrapper>,
   );

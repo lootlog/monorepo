@@ -1,4 +1,6 @@
 import type { Timer } from "@/api/timers.api";
+import type { MapThreat } from "@/lib/map-threat-source";
+import type { MapOccupancy } from "@/lib/presence-map-index";
 import { format } from "@/utils/local-date";
 import { ClockArrowDown, ClockArrowUp, RotateCcw } from "lucide-react";
 import type { FC } from "react";
@@ -8,27 +10,26 @@ import {
   getTimerMembers,
   getMembersWithGuilds,
 } from "../utils/timer-helpers";
-import {
-  useTimerMapPresence,
-  useTimerMapThreat,
-} from "./timer-map-presence-provider";
+import { TimerMapOccupancyList } from "./timer-map-occupancy-list";
 import { TimerMapThreatList } from "./timer-map-threat-list";
-import { TIMER_TOOLTIP_MAX_ROWS } from "../constants/timer-tooltip";
+import { TimerTooltipSection } from "./timer-tooltip-section";
 
 type TimerTooltipProps = {
   guildNamesById: Record<string, string>;
   timer: Timer;
+  occupancy?: MapOccupancy;
+  threat?: MapThreat;
 };
 
-const DATE_FORMAT = "dd.MM.yyyy - HH:mm:ss";
+const DATE_FORMAT = "dd.MM HH:mm:ss";
 
 export const TimerTooltip: FC<TimerTooltipProps> = ({
   guildNamesById,
   timer,
+  occupancy,
+  threat,
 }) => {
   const { t } = useTranslation("timers");
-  const occupancy = useTimerMapPresence(timer);
-  const threat = useTimerMapThreat(timer);
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
 
@@ -45,91 +46,87 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   const hiddenMembersCount = Math.max(membersWithGuilds.length - 1, 0);
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-2 ll:py-0.5">
-      <div className="ll:text-sm ll:font-semibold ll:leading-4">
-        {timer.npc.name} <span>{levelSuffix}</span>
+    <div className="ll:flex ll:flex-col ll:gap-1.5 ll:py-0.5">
+      <div className="ll:flex ll:flex-col ll:gap-0.5">
+        <div className="ll:text-sm ll:font-semibold ll:leading-4">
+          {timer.npc.name}
+          <span className="ll:font-normal ll:text-muted-foreground">
+            {levelSuffix}
+          </span>
+        </div>
+        {timer.wasReset && (
+          <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-orange-400">
+            <RotateCcw size={12} aria-hidden="true" />
+            {t("tooltip.reset")}
+          </div>
+        )}
       </div>
 
-      {firstMemberWithGuild && (
-        <div className="ll:flex ll:flex-col ll:gap-0.5">
-          <span className="ll:text-muted-foreground">
-            {t("tooltip.addedBy")}
+      <TimerTooltipSection>
+        <div className="ll:grid ll:grid-cols-[auto_auto_1fr] ll:items-center ll:gap-x-1.5 ll:gap-y-0.5">
+          <ClockArrowDown
+            size={12}
+            aria-hidden="true"
+            className="ll:text-green-400"
+          />
+          <span className="ll:text-muted-foreground">{t("tooltip.min")}</span>
+          <span className="ll:tabular-nums">
+            {format(new Date(timer.minSpawnTime), DATE_FORMAT)}
           </span>
-          <span className="ll:font-semibold ll:wrap-break-word">
-            {firstMemberWithGuild.memberLabel}
-            {hiddenMembersCount > 0 && (
-              <span className="ll:ml-1 ll:font-normal ll:text-muted-foreground">
-                +{hiddenMembersCount}
-              </span>
-            )}
+          <ClockArrowUp
+            size={12}
+            aria-hidden="true"
+            className="ll:text-red-400"
+          />
+          <span className="ll:text-muted-foreground">{t("tooltip.max")}</span>
+          <span className="ll:tabular-nums">
+            {format(new Date(timer.maxSpawnTime), DATE_FORMAT)}
           </span>
-          {firstMemberWithGuild.characterLabel && (
-            <span className="ll:wrap-break-word">
-              {firstMemberWithGuild.characterLabel}
-            </span>
-          )}
         </div>
-      )}
+      </TimerTooltipSection>
 
-      {timer.wasReset && (
-        <div className="ll:flex ll:items-center ll:gap-1 ll:font-semibold ll:text-orange-400">
-          <RotateCcw size={14} aria-hidden="true" />
-          {t("tooltip.reset")}
-        </div>
-      )}
-
-      {occupancy && (
-        <div className="ll:flex ll:flex-col ll:gap-0.5">
-          <span
-            className={
-              occupancy.allAfk ? "ll:text-orange-400" : "ll:text-emerald-400"
-            }
-          >
-            {t(occupancy.allAfk ? "tooltip.mapAfk" : "tooltip.mapOccupied")}
-          </span>
-          {occupancy.players.slice(0, TIMER_TOOLTIP_MAX_ROWS).map((player) => (
-            <span key={player.key} className="ll:wrap-break-word">
-              {player.name}
-              {player.isAfk && (
-                <span className="ll:ml-1 ll:text-orange-400">
-                  {t("tooltip.afk")}
-                </span>
-              )}
-            </span>
-          ))}
-          {occupancy.players.length > TIMER_TOOLTIP_MAX_ROWS && (
-            <span className="ll:text-muted-foreground">
-              {t("tooltip.more", {
-                count: occupancy.players.length - TIMER_TOOLTIP_MAX_ROWS,
-              })}
-            </span>
-          )}
-        </div>
-      )}
+      {occupancy && <TimerMapOccupancyList occupancy={occupancy} />}
 
       {threat && <TimerMapThreatList threat={threat} />}
 
-      {timer.updatedAt && (
-        <div className="ll:flex ll:flex-col ll:gap-0.5">
-          <span className="ll:text-muted-foreground">
-            {t("tooltip.addedAt")}
-          </span>
-          <span>{format(new Date(timer.updatedAt), DATE_FORMAT)}</span>
-        </div>
+      {(firstMemberWithGuild || timer.updatedAt) && (
+        <TimerTooltipSection>
+          <div className="ll:grid ll:grid-cols-[auto_minmax(0,1fr)] ll:gap-x-1.5 ll:gap-y-0.5">
+            {firstMemberWithGuild && (
+              <>
+                <span className="ll:text-muted-foreground">
+                  {t("tooltip.addedBy")}
+                </span>
+                <span className="ll:flex ll:flex-col ll:wrap-break-word">
+                  <span>
+                    {firstMemberWithGuild.memberLabel}
+                    {hiddenMembersCount > 0 && (
+                      <span className="ll:ml-1 ll:text-muted-foreground">
+                        +{hiddenMembersCount}
+                      </span>
+                    )}
+                  </span>
+                  {firstMemberWithGuild.characterLabel && (
+                    <span className="ll:text-muted-foreground">
+                      {firstMemberWithGuild.characterLabel}
+                    </span>
+                  )}
+                </span>
+              </>
+            )}
+            {timer.updatedAt && (
+              <>
+                <span className="ll:text-muted-foreground">
+                  {t("tooltip.addedAt")}
+                </span>
+                <span className="ll:tabular-nums">
+                  {format(new Date(timer.updatedAt), DATE_FORMAT)}
+                </span>
+              </>
+            )}
+          </div>
+        </TimerTooltipSection>
       )}
-
-      <div className="ll:grid ll:grid-cols-[auto_auto_1fr] ll:items-center ll:gap-x-2 ll:gap-y-1">
-        <ClockArrowDown size={14} className="ll:text-green-400" />
-        <span className="ll:text-muted-foreground">{t("tooltip.min")}</span>
-        <span className="ll:tabular-nums">
-          {format(new Date(timer.minSpawnTime), DATE_FORMAT)}
-        </span>
-        <ClockArrowUp size={14} className="ll:text-red-400" />
-        <span className="ll:text-muted-foreground">{t("tooltip.max")}</span>
-        <span className="ll:tabular-nums">
-          {format(new Date(timer.maxSpawnTime), DATE_FORMAT)}
-        </span>
-      </div>
     </div>
   );
 };
