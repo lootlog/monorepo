@@ -1,6 +1,9 @@
 import { createNotificationsResponse } from "@/test/game-account-preferences-fixtures";
 import { encodeRealtimeFrame } from "@lootlog/protocol/realtime/codec";
-import { REALTIME_BATTLE_PING_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 import {
   accountPreferenceValues,
   createSettingsDocuments,
@@ -50,6 +53,13 @@ const monster = {
   ry: 9,
 };
 
+// Players are keyed by their id as a string, like the game does.
+const player = {
+  collider: { box: [384, 240, 416, 320] as const },
+  d: { id: "5001", x: 12, y: 9 },
+  ry: 9,
+};
+
 const remotePing = () => ({
   v: 1 as const,
   type: "map-ping.received" as const,
@@ -71,6 +81,8 @@ const setup = async ({
   joined = true,
   oldInterface = false,
   npcUnderCursor = false,
+  playerUnderCursor = false,
+  teamBattlePings = true,
 } = {}) => {
   const test = createRealtimeTest();
 
@@ -108,6 +120,11 @@ const setup = async ({
       check: () => (npcUnderCursor ? { "91": monster } : {}),
       getById: (id: number) =>
         npcUnderCursor && id === 91 ? monster : undefined,
+    },
+    others: {
+      check: () => (playerUnderCursor ? { "5001": player } : {}),
+      getById: (id: number) =>
+        playerUnderCursor && id === 5001 ? player : undefined,
     },
   });
   const canvas = document.createElement("canvas");
@@ -147,7 +164,12 @@ const setup = async ({
           data: {
             connectionId: "test",
             organizationIds: ["guild-1"],
-            capabilities: [REALTIME_BATTLE_PING_CAPABILITY],
+            capabilities: [
+              REALTIME_BATTLE_PING_CAPABILITY,
+              ...(teamBattlePings
+                ? [REALTIME_TEAM_BATTLE_PING_CAPABILITY]
+                : []),
+            ],
           },
         });
       });
@@ -225,6 +247,7 @@ afterEach(() => {
   battlePingStore.clear();
   useBattleStore.setState({ battleState: "idle", battleWarriors: {} });
   document.querySelector(".battle-window")?.remove();
+  document.querySelector(".battle-controller")?.remove();
   disposeSoundPlayback();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -278,6 +301,17 @@ describe("usePings on the map", () => {
     expect(test.pingRequests()).toEqual([
       expect.objectContaining({
         data: { expectedMapId: 42, npcId: 91, type: "enemy", x: 12, y: 9 },
+      }),
+    ]);
+  });
+
+  it("marks the player under the cursor as an enemy and names them for other clients", async () => {
+    const test = await setup({ playerUnderCursor: true });
+
+    expect(test.tap()).toBe(true);
+    expect(test.pingRequests()).toEqual([
+      expect.objectContaining({
+        data: { expectedMapId: 42, playerId: 5001, type: "enemy", x: 12, y: 9 },
       }),
     ]);
   });
@@ -427,9 +461,24 @@ const startBattle = () => {
   };
 };
 
+const pressQuickFightButton = (test: Awaited<ReturnType<typeof setup>>) => {
+  const controller = document.createElement("div");
+  controller.className = "battle-controller";
+  controller.innerHTML = `<div class="buttons-wrapper"><div class="button auto-fight-btn"><span class="label"></span></div></div>`;
+  document.body.append(controller);
+
+  act(() => {
+    const press = new MouseEvent("mousedown", { button: 1 });
+
+    controller.querySelector(".label")?.dispatchEvent(press);
+    test.result.current.onPingStart(press);
+    test.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
+  });
+};
+
 const remoteBattlePing = (
   senderCharacterId: string,
-  type: "attack" | "taunt",
+  type: "attack" | "taunt" | "quick-fight",
   warriorId: number,
 ) => ({
   v: 1 as const,
@@ -497,6 +546,65 @@ describe("usePings in battle", () => {
     expect(target).toBeNull();
     expect(marks.get(1)).toMatchObject({ forMe: true, type: "taunt" });
     expect(test.play).toHaveBeenCalledOnce();
+    expect(test.play.mock.instances[0]).toMatchObject({ playbackRate: 1.5 });
+  });
+
+  it("calls every teammate to quick fight from the game's quick-fight button", async () => {
+    const test = await setup();
+    startBattle();
+    pressQuickFightButton(test);
+
+    expect(battlePingStore.getSnapshot().marks.get(1)).toMatchObject({
+      forMe: false,
+      type: "quick-fight",
+    });
+    expect(
+      test.wire.frames.filter(
+        (frame) => "type" in frame && frame.type === "battle-ping.send",
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        data: {
+          expectedMapId: 42,
+          recipientCharacterIds: ["2"],
+          type: "quick-fight",
+          warriorId: 1,
+        },
+      }),
+    ]);
+  });
+
+  it("keeps a quick-fight call local when the gateway cannot route team pings", async () => {
+    const test = await setup({ teamBattlePings: false });
+    startBattle();
+    pressQuickFightButton(test);
+
+    // A v1 gateway would close the socket on the unknown ping type.
+    expect(battlePingStore.getSnapshot().marks.get(1)?.type).toBe(
+      "quick-fight",
+    );
+    expect(
+      test.wire.frames.some(
+        (frame) => "type" in frame && frame.type === "battle-ping.send",
+      ),
+    ).toBe(false);
+  });
+
+  it("shows a teammate's quick-fight call to the hero and ignores one sent for someone else", async () => {
+    const test = await setup();
+    startBattle();
+
+    await test.receive(
+      remoteBattlePing("2", "quick-fight", 2),
+      // A call comes from the sender's own warrior.
+      remoteBattlePing("2", "quick-fight", 1),
+      // Only the hero's team may call it.
+      remoteBattlePing("7", "quick-fight", 7),
+    );
+
+    const { marks } = battlePingStore.getSnapshot();
+    expect([...marks.keys()]).toEqual([2]);
+    expect(marks.get(2)).toMatchObject({ forMe: true, type: "quick-fight" });
     expect(test.play.mock.instances[0]).toMatchObject({ playbackRate: 1.5 });
   });
 

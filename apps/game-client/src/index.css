@@ -365,6 +365,81 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   animation: ll-npc-list-enter 180ms ease-out both;
 }
 
+/* Battle pings: a chip drops onto the warrior, the stack bobs gently, the
+   ground ring pulses outwards and a request for the hero radiates gold. They
+   run in the game's battle window, outside #lootlog-root. */
+@keyframes ll-battle-ping-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.85);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ll-battle-ping-bob {
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes ll-battle-ping-ground-pulse {
+  from {
+    opacity: 0.9;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes ll-battle-ping-radiate {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+.ll-battle-ping-drop {
+  animation: ll-battle-ping-drop 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ll-battle-ping-bob {
+  animation: ll-battle-ping-bob 1.2s ease-in-out infinite alternate;
+}
+
+.ll-battle-ping-ground-pulse {
+  animation: ll-battle-ping-ground-pulse 1s ease-out infinite;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.ll-battle-ping-radiate {
+  animation: ll-battle-ping-radiate 1.1s ease-out infinite;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ll-battle-ping-drop,
+  .ll-battle-ping-bob,
+  .ll-battle-ping-ground-pulse,
+  .ll-battle-ping-radiate {
+    animation: none;
+  }
+}
+
 #lootlog-root .ll-npc-list-row {
   content-visibility: auto;
   contain-intrinsic-block-size: 48px;

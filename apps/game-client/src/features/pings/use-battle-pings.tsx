@@ -10,12 +10,14 @@ import { normalizeBattlePings } from "@lootlog/domain/account-preferences";
 import {
   isBattleEnemyPingType,
   isBattlePingType,
+  isBattleTeamPingType,
   type BattlePingEvent,
   type BattlePingType,
 } from "@lootlog/schema/battle-ping";
 import type { MapPingAck } from "@lootlog/schema/map-ping";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { isQuickFightButton } from "./battle-controls";
 import { battlePingStore } from "./battle-ping-store";
 import {
   getBattleTeamCharacterIds,
@@ -30,6 +32,7 @@ import type {
 } from "./ping-interaction-controller";
 import {
   BATTLE_ENEMY_RING_TYPES,
+  BATTLE_QUICK_FIGHT_TYPE,
   BATTLE_SELF_RING_TYPES,
   PING_REQUEST_FOR_ME_PLAYBACK_RATE,
   getBattleProfessionRequests,
@@ -38,6 +41,14 @@ import {
 import { useRejectedPingHint, type PingPointer } from "./use-map-pings";
 
 const ACK_TIMEOUT_MS = 1_500;
+
+/** A tap calls the team to quick fight; the centre of the wheel cancels. */
+const QUICK_FIGHT_MENU: PingMenu = {
+  centre: null,
+  quick: BATTLE_QUICK_FIGHT_TYPE,
+  ring: [BATTLE_QUICK_FIGHT_TYPE],
+  title: null,
+};
 
 const areBattlePingsEnabled = () =>
   Boolean(useGameStore.getState().game?.hero.accountId) &&
@@ -59,9 +70,10 @@ type BattleContext = NonNullable<ReturnType<typeof readBattleContext>>;
 
 /**
  * Whether a ping of this type may mark this warrior, from the sender's side:
- * enemy pings on living enemies, a request for healing on the sender's own
- * warrior, and profession requests on living allies of that profession. The
- * gateway cannot check battle roles, so both ends apply this.
+ * enemy pings on living enemies, a request for healing or a call to the whole
+ * team on the sender's own living warrior, and profession requests on living
+ * allies of that profession. The gateway cannot check battle roles, so both
+ * ends apply this.
  */
 const canPingWarrior = (
   context: BattleContext,
@@ -74,6 +86,10 @@ const canPingWarrior = (
 
   if (!warrior || !hero || isWarriorDead(warrior)) {
     return false;
+  }
+
+  if (isBattleTeamPingType(type)) {
+    return String(warriorId) === senderCharacterId;
   }
 
   if (isBattleEnemyPingType(type)) {
@@ -173,9 +189,11 @@ export const useBattlePings = () => {
         return;
       }
 
+      // A team call addresses every recipient.
       const forMe =
-        String(event.warriorId) === context.heroId &&
-        !isBattleEnemyPingType(event.type);
+        isBattleTeamPingType(event.type) ||
+        (String(event.warriorId) === context.heroId &&
+          !isBattleEnemyPingType(event.type));
 
       battlePingStore.apply({
         forMe,
@@ -252,6 +270,18 @@ export const useBattlePings = () => {
       return null;
     }
 
+    if (isQuickFightButton(pointer.target)) {
+      const heroId = readBattleContext()?.heroId;
+
+      return heroId === undefined
+        ? null
+        : {
+            menu: QUICK_FIGHT_MENU,
+            origin: { x: pointer.x, y: pointer.y },
+            target: { kind: "battle", warriorId: Number(heroId) },
+          };
+    }
+
     const element = resolveBattleWarriorElement(pointer.target);
     const warriorId = element ? getBattleWarriorId(element) : null;
     const menu = warriorId === null ? null : getMenu(warriorId);
@@ -290,10 +320,14 @@ export const useBattlePings = () => {
       context.heroId,
     );
 
+    const routed = isBattleTeamPingType(type)
+      ? socket.supportsTeamBattlePings()
+      : socket.supportsBattlePings();
+
     // A solo fight has nobody to tell, and a gateway that does not route
-    // battle pings would close the socket on the command; the local mark is
+    // this ping would close the socket on the command; the local mark is
     // then the whole effect.
-    if (recipientCharacterIds.length === 0 || !socket.supportsBattlePings()) {
+    if (recipientCharacterIds.length === 0 || !routed) {
       return;
     }
 
