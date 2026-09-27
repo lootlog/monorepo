@@ -12,6 +12,7 @@ import { NpcsDeleteProcessor } from "@/processors/npcs-delete-processor";
 import { MapChangeProcessor } from "@/processors/map-change-processor";
 import { AfkProcessor } from "@/processors/afk-processor";
 import { OtherEventProcessor } from "@/processors/other-event-processor";
+import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
 import { parseRuntimeFacts } from "@/lib/margonem-runtime/runtime-event-parser";
 import type {
   RuntimeEventEnvelope,
@@ -70,6 +71,10 @@ export class EventDispatcher {
     ingress?: RuntimeEventEnvelope["ingress"],
   ): void {
     const event = fact.event;
+
+    if (fact.kind === "reload") {
+      runSafe("reload", () => airTagObservationController.forgetTargets());
+    }
 
     if (fact.kind === "chat") {
       runSafe("chat", () => this.chat.handle(event));

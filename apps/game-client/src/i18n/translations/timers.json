@@ -35,7 +35,12 @@
     "min": "Min:",
     "max": "Max:",
     "reset": "Timer został zresetowany",
-    "mapOccupied": "Ktoś z Lootloga jest na tej mapie"
+    "mapOccupied": "Ktoś z Lootloga jest na tej mapie",
+    "mapAfk": "Wszyscy z Lootloga na tej mapie są AFK",
+    "afk": "AFK",
+    "mapThreat": "Wrogowie na mapie: {{count}}",
+    "mapThreatStale": "Wrogowie widziani niedawno na mapie: {{count}}",
+    "more": "i {{count}} więcej"
   },
   "emptyState": {
     "filteredTitle": "Żaden timer nie pasuje do filtrów",

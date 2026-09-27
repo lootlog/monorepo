@@ -22,6 +22,18 @@ const getScopeKey = ({
 }: Pick<AirTagScopeSnapshot, "guildId" | "world" | "mapId">) =>
   `${guildId}:${world}:${mapId}`;
 
+/** Moves gateway (Redis) timestamps onto the local clock, so a skewed clock cannot hide or keep markers. */
+const toLocalTarget = (target: AirTagTarget, offset: number): AirTagTarget => ({
+  ...target,
+  observedAt: target.observedAt + offset,
+  ...(target.enemyObservedAt !== undefined && {
+    enemyObservedAt: target.enemyObservedAt + offset,
+  }),
+  ...(target.clanEnemyObservedAt !== undefined && {
+    clanEnemyObservedAt: target.clanEnemyObservedAt + offset,
+  }),
+});
+
 const compareEpoch = (
   first: Pick<AirTagScopeSnapshot, "epochId" | "epochStartedAt">,
   second: Pick<AirTagScopeSnapshot, "epochId" | "epochStartedAt">,
@@ -41,6 +53,8 @@ export class AirTagReceiveController {
   private currentWorld: string | null = null;
   private currentMapId: number | null = null;
   private allowedOrganizations: ReadonlySet<string> | undefined;
+
+  constructor(private readonly now: () => number = () => Date.now()) {}
 
   beginSubscription(
     requestId: string,
@@ -87,9 +101,17 @@ export class AirTagReceiveController {
     for (const snapshot of acknowledgement.scopes) {
       if (!this.isCurrentSnapshot(snapshot)) continue;
 
+      // Older gateways send no server time; their timestamps stay as sent.
+      const offset =
+        snapshot.serverTime === undefined
+          ? 0
+          : this.now() - snapshot.serverTime;
+
       this.scopes.set(getScopeKey(snapshot), {
         ...snapshot,
-        targets: this.createTargetMap(snapshot.targets),
+        targets: this.createTargetMap(
+          snapshot.targets.map((target) => toLocalTarget(target, offset)),
+        ),
       });
     }
 
@@ -106,17 +128,23 @@ export class AirTagReceiveController {
   handleUpdate(value: unknown): void {
     if (!isAirTagUpdateEvent(value) || !this.isCurrentMap(value)) return;
 
+    // The gateway sends an update as it observes the target.
+    const update = {
+      ...value,
+      target: toLocalTarget(value.target, this.now() - value.target.observedAt),
+    };
+
     if (this.currentRequestId) {
       if (this.queuedUpdates.length >= MAX_QUEUED_UPDATES) {
         this.queuedUpdates.shift();
       }
 
-      this.queuedUpdates.push(value);
+      this.queuedUpdates.push(update);
 
       return;
     }
 
-    if (this.applyUpdate(value)) {
+    if (this.applyUpdate(update)) {
       this.notifyChange();
     }
   }

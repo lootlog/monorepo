@@ -135,6 +135,18 @@ const setSocketPresence = (
   socket.data.presence = presence;
 };
 
+const clanEnemyFields = ({
+  targetId,
+  nickname,
+  clan,
+  lvl,
+}: {
+  targetId: string;
+  nickname: string;
+  clan: { id: number; name: string };
+  lvl: number;
+}) => ({ targetId, nickname, clan, lvl });
+
 const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
 
@@ -2804,6 +2816,140 @@ describe("realtime Dragonfly integration", () => {
         status: "accepted",
         scopes: [{ targets: [] }],
       });
+
+      const threatWatcher = makeSocket("threat-watcher");
+      const locationBlind = makeSocket("location-blind");
+      const legacyClient = makeSocket("legacy-client");
+
+      for (const target of [threatWatcher, locationBlind, legacyClient]) {
+        Object.assign(target.socket.data, {
+          supportsAirTagMapThreats: target !== legacyClient,
+          presence: {
+            ...target.socket.data.presence,
+            location: { mapId: 8, map: "Karka-han" },
+          },
+        });
+
+        if (target !== locationBlind)
+          target.socket.data.guilds = guilds.map((entry) => ({
+            ...entry,
+            roles: entry.roles.map((role) => ({
+              ...role,
+              permissions: [
+                ...role.permissions,
+                Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+              ],
+            })),
+          }));
+        secondHub.register(target.socket);
+        secondHub.subscribe(target.socket, {
+          topic: "organization.presence",
+          organizationId: "organization-1",
+        });
+      }
+
+      const clanEnemy = {
+        targetId: "clan-enemy",
+        nickname: "Rival",
+        clan: { id: 5, name: "Rivals" },
+        relation: 6 as const,
+        x: 3,
+        y: 4,
+        lvl: 250,
+        stasis: true,
+      };
+
+      const publishThreat = async (sighting: typeof clanEnemy) =>
+        expect(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [sighting, observation],
+          }),
+        ).resolves.toMatchObject({ status: "accepted" });
+
+      const threatEvents = () =>
+        eventsOfType(threatWatcher.frames, "air-tag.map-threat-updated");
+
+      await publishThreat(clanEnemy);
+      // Unchanged and recently reported, so it stays quiet.
+      await publishThreat({ ...clanEnemy, x: 9 });
+      // A change inside the throttle window goes out when the window ends, without another sighting.
+      await publishThreat({ ...clanEnemy, stasis: false });
+      await waitFor(() => threatEvents().length === 2);
+      // Older game clients omit level and stasis; the last values stay.
+      const { lvl: _lvl, stasis: _stasis, ...legacySighting } = clanEnemy;
+      await expect(
+        sourceAirTags.publishObservations(source.socket, {
+          expectedMapId: 7,
+          observations: [legacySighting],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      await waitFor(() => threatEvents().length === 2);
+      await Bun.sleep(100);
+      expect(threatEvents()).toMatchObject([
+        {
+          data: {
+            guildId: "organization-1",
+            world: "classic",
+            mapId: 7,
+            mapName: "Ithan",
+            revision: expect.any(Number),
+            enemies: [
+              {
+                ...clanEnemyFields(clanEnemy),
+                stasis: true,
+                ageMs: expect.any(Number),
+              },
+            ],
+          },
+        },
+        {
+          data: {
+            enemies: [{ ...clanEnemyFields(clanEnemy), stasis: false }],
+          },
+        },
+      ]);
+
+      // Unverified characters and clanless clan enemies never feed the timers.
+      source.socket.data.confidence = "reported";
+      await publishThreat({ ...clanEnemy, targetId: "unverified" });
+      source.socket.data.confidence = "verified";
+      const { clan: _clan, ...clanless } = clanEnemy;
+      await expect(
+        sourceAirTags.publishObservations(source.socket, {
+          expectedMapId: 7,
+          observations: [{ ...clanless, targetId: "clanless" }],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+
+      await expect(
+        recipientAirTags.fetchMapThreats(
+          threatWatcher.socket,
+          "organization-1",
+          "classic",
+        ),
+      ).resolves.toMatchObject({
+        threats: [
+          {
+            mapId: 7,
+            mapName: "Ithan",
+            enemies: [{ targetId: "clan-enemy", lvl: 250, stasis: false }],
+          },
+        ],
+      });
+      await expect(
+        recipientAirTags.fetchMapThreats(
+          locationBlind.socket,
+          "organization-1",
+          "classic",
+        ),
+      ).resolves.toBeNull();
+      expect(
+        eventsOfType(locationBlind.frames, "air-tag.map-threat-updated"),
+      ).toHaveLength(0);
+      expect(
+        eventsOfType(legacyClient.frames, "air-tag.map-threat-updated"),
+      ).toHaveLength(0);
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
     }

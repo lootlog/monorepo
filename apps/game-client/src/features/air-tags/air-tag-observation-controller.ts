@@ -3,20 +3,33 @@ import { runtimeOtherHandles } from "@/lib/margonem-runtime/runtime-other-handle
 import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
+  isAirTagRelation,
   type AirTagObservation,
   type AirTagObservationBatch,
 } from "@lootlog/schema/air-tag";
-import type { Other, OtherCreate } from "@lootlog/margonem/game-events";
+import type {
+  Other,
+  OtherCreate,
+  OtherUpdate,
+} from "@lootlog/margonem/game-events";
 
 export const AIR_TAG_BATCH_INTERVAL_MS = 250;
 
 export const AIR_TAG_HEARTBEAT_INTERVAL_MS = 5_000;
 
-export const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 5_000;
+// Keeps a still target's sightings under 6.25 s apart, inside the 10 s AirTag and map-threat freshness windows.
+export const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 1_000;
+
+const AIR_TAG_HEARTBEAT_ALIGNMENT_MS = 2_000;
 
 export const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 3;
 
 const MAX_LOCAL_TARGETS_PER_SCOPE = 100;
+
+const isSameClan = (
+  first: AirTagObservation["clan"],
+  second: AirTagObservation["clan"],
+) => first?.id === second?.id && first?.name === second?.name;
 
 type ObservationPublisher = (batch: AirTagObservationBatch) => void;
 
@@ -110,17 +123,10 @@ export class AirTagObservationController {
 
       if ("action" in entry && entry.action === "CREATE") {
         this.handleCreate(targetId, entry);
-      } else if ("del" in entry && typeof entry.del === "number") {
-        this.handleDelete(targetId);
-      } else if (
-        "x" in entry &&
-        "y" in entry &&
-        "dir" in entry &&
-        Number.isInteger(entry.x) &&
-        Number.isInteger(entry.y) &&
-        Number.isInteger(entry.dir)
-      ) {
-        this.handleMovement(targetId, entry.x, entry.y, entry.dir);
+      } else if ("del" in entry) {
+        if (typeof entry.del === "number") this.handleDelete(targetId);
+      } else {
+        this.handleUpdate(targetId, entry);
       }
     }
   }
@@ -128,6 +134,11 @@ export class AirTagObservationController {
   resetForMap(mapId: number): void {
     this.clearState();
     this.mapId = mapId;
+  }
+
+  /** A reload rebuilds the map's players from fresh CREATE entries. */
+  forgetTargets(): void {
+    this.clearState();
   }
 
   clear(): void {
@@ -178,19 +189,13 @@ export class AirTagObservationController {
     this.startHeartbeatTimer();
   }
 
-  private handleMovement(
-    targetId: string,
-    x: number,
-    y: number,
-    dir: number,
-  ): void {
+  /** Margonem sends only changed fields: movement, stasis, a relation or clan change, a level-up. */
+  private handleUpdate(targetId: string, update: OtherUpdate): void {
     const target = this.targets.get(targetId);
 
     if (!target) return;
-
-    target.x = x;
-    target.y = y;
-    target.dir = dir;
+    const moved = this.applyMovement(target, update);
+    const changed = this.applyAttributes(target, update, moved);
 
     const movedFarEnough =
       Math.max(
@@ -199,11 +204,72 @@ export class AirTagObservationController {
       ) >= AIR_TAG_MOVEMENT_THRESHOLD_TILES;
 
     const heartbeatDue =
+      moved &&
       this.now() - target.lastPublishedAt >= AIR_TAG_HEARTBEAT_INTERVAL_MS;
 
-    if (movedFarEnough || heartbeatDue) {
+    if (changed || movedFarEnough || heartbeatDue) {
       this.queue(target, this.now());
     }
+  }
+
+  private applyMovement(
+    target: LocalAirTagTarget,
+    { x, y, dir }: OtherUpdate,
+  ): boolean {
+    if (dir !== undefined && Number.isInteger(dir)) target.dir = dir;
+
+    if (
+      x === undefined ||
+      y === undefined ||
+      !Number.isInteger(x) ||
+      !Number.isInteger(y)
+    )
+      return false;
+    target.x = x;
+    target.y = y;
+
+    return true;
+  }
+
+  /** Returns whether an attribute other members see has changed. */
+  private applyAttributes(
+    target: LocalAirTagTarget,
+    update: OtherUpdate,
+    moved: boolean,
+  ): boolean {
+    // Margonem ends stasis on movement without sending `stasis`.
+    const stasis =
+      update.stasis === undefined
+        ? target.stasis && !moved
+        : update.stasis === 1;
+
+    let changed = stasis !== target.stasis;
+    target.stasis = stasis;
+
+    if (
+      isAirTagRelation(update.relation) &&
+      update.relation !== target.relation
+    ) {
+      target.relation = update.relation;
+      changed = true;
+    }
+
+    if ("clan" in update && !isSameClan(update.clan, target.clan)) {
+      if (update.clan) target.clan = update.clan;
+      else delete target.clan;
+      changed = true;
+    }
+
+    if (
+      update.lvl !== undefined &&
+      Number.isInteger(update.lvl) &&
+      update.lvl !== target.lvl
+    ) {
+      target.lvl = update.lvl;
+      changed = true;
+    }
+
+    return changed;
   }
 
   private handleDelete(targetId: string): void {
@@ -225,9 +291,13 @@ export class AirTagObservationController {
       relation: create.relation,
       x: create.x,
       y: create.y,
+      stasis: create.stasis === 1,
     };
 
     if (create.clan) Object.assign(observation, { clan: create.clan });
+
+    if (create.lvl !== undefined)
+      Object.assign(observation, { lvl: create.lvl });
 
     return isAirTagObservation(observation) ? observation : null;
   }
@@ -243,20 +313,43 @@ export class AirTagObservationController {
       relation: target.relation,
       x: target.x,
       y: target.y,
+      stasis: target.stasis,
     };
 
     if (target.clan) observation.clan = target.clan;
+
+    if (target.lvl !== undefined) observation.lvl = target.lvl;
+
+    // One malformed partial update must not get the whole batch rejected.
+    if (!isAirTagObservation(observation)) return;
     this.pending.set(target.targetId, observation);
     this.scheduleBatch();
   }
 
-  private scheduleBatch(): void {
+  /** Sends a rate-limited batch again, unless a newer observation of a target is already queued. */
+  retry(batch: AirTagObservationBatch, delayMs: number): void {
+    if (!this.isActive() || batch.expectedMapId !== this.mapId) return;
+
+    for (const observation of batch.observations) {
+      if (
+        this.targets.has(observation.targetId) &&
+        !this.pending.has(observation.targetId)
+      )
+        this.pending.set(observation.targetId, observation);
+    }
+
+    if (this.batchTimer !== null) this.cancelTimeout(this.batchTimer);
+    this.batchTimer = null;
+    this.scheduleBatch(Math.max(delayMs, AIR_TAG_BATCH_INTERVAL_MS));
+  }
+
+  private scheduleBatch(delayMs = AIR_TAG_BATCH_INTERVAL_MS): void {
     if (this.batchTimer !== null) return;
 
     this.batchTimer = this.scheduleTimeout(() => {
       this.batchTimer = null;
       this.flushBatch();
-    }, AIR_TAG_BATCH_INTERVAL_MS);
+    }, delayMs);
   }
 
   private flushBatch(): void {
@@ -291,9 +384,22 @@ export class AirTagObservationController {
       if (!this.isActive()) return;
 
       const now = this.now();
+      const targets = [...this.targets.values()];
 
-      for (const target of this.targets.values()) {
-        if (now - target.lastPublishedAt >= AIR_TAG_HEARTBEAT_INTERVAL_MS) {
+      if (
+        !targets.some(
+          (target) =>
+            now - target.lastPublishedAt >= AIR_TAG_HEARTBEAT_INTERVAL_MS,
+        )
+      )
+        return;
+
+      // Targets due soon ride along, so heartbeats settle into one batch per interval.
+      for (const target of targets) {
+        if (
+          now - target.lastPublishedAt >=
+          AIR_TAG_HEARTBEAT_INTERVAL_MS - AIR_TAG_HEARTBEAT_ALIGNMENT_MS
+        ) {
           this.queue(target, now);
         }
       }

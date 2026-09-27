@@ -1,17 +1,19 @@
 import { User } from "lucide-react";
+import { cn } from "cn";
+import { useTranslation } from "react-i18next";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { useTimerMapPresence } from "./timer-map-presence-provider";
 
 export function TimerMapPresenceIndicator({
   timer,
-  label,
 }: {
   timer: TimerWithTimeLeft;
-  label: string;
 }) {
-  const occupied = useTimerMapPresence(timer);
+  const { t } = useTranslation("timers");
+  const occupancy = useTimerMapPresence(timer);
 
-  if (!occupied) return null;
+  if (!occupancy) return null;
+  const label = t(occupancy.allAfk ? "tooltip.mapAfk" : "tooltip.mapOccupied");
 
   // Sized in `em` to follow the timer font size; the negative block margin
   // keeps it out of the line height so tiles do not grow when it appears.
@@ -19,8 +21,10 @@ export function TimerMapPresenceIndicator({
     <span
       role="img"
       aria-label={label}
-      title={label}
-      className="ll:relative ll:-top-px ll:-my-[0.25em] ll:mr-[3px] ll:inline-block ll:size-[1em] ll:align-middle ll:text-green-400 ll:drop-shadow-[0_1px_1px_rgb(0_0_0/0.8)]"
+      className={cn(
+        "ll:relative ll:-top-px ll:-my-[0.25em] ll:mr-[3px] ll:inline-block ll:size-[1em] ll:align-middle ll:drop-shadow-[0_1px_1px_rgb(0_0_0/0.8)]",
+        occupancy.allAfk ? "ll:text-orange-400" : "ll:text-green-400",
+      )}
     >
       <User aria-hidden strokeWidth={3} className="ll:block ll:size-full" />
     </span>

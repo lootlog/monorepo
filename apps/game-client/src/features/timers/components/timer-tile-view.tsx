@@ -103,7 +103,7 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
       <span
         id={id}
         className={cn(
-          "ll-custom-cursor-pointer ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-1 ll:py-0.5 ll:transition-colors ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
+          "ll-custom-cursor-pointer ll:@container/timer-tile ll:flex ll:h-full ll:w-full ll:min-w-0 ll:items-center ll:rounded-[2px] ll:border ll:border-solid ll:border-[var(--ll-timer-accent)] ll:bg-[var(--ll-timer-fill)] ll:px-1 ll:py-0.5 ll:transition-colors ll:hover:bg-[var(--ll-timer-hover-fill)] ll:motion-reduce:transition-none",
           textColorClassName,
           {
             "ll:flex-col ll:items-center ll:px-0 ll:leading-[1.05]":
@@ -132,14 +132,19 @@ export const TimerTileView: FC<TimerTileViewProps> = ({
     <ListRow
       id={id}
       fill={isExpired ? veilColor(paint.fill, EXPIRED_VEIL) : paint.fill}
-      className={cn("ll:h-full ll:py-[4px]", textColorClassName, TEXT_OUTLINE, {
-        "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
-          showColorStripe,
-        "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
-          displayMode === "column",
-        "ll:justify-between": displayMode === "row",
-        "ll:opacity-60 ll:blur-[0.5px]": isPending,
-      })}
+      className={cn(
+        "ll:@container/timer-tile ll:h-full ll:py-[4px]",
+        textColorClassName,
+        TEXT_OUTLINE,
+        {
+          "ll:border-0 ll:border-l-[3px] ll:border-solid ll:border-l-[var(--ll-timer-accent)] ll:px-[5px]":
+            showColorStripe,
+          "ll:flex-col ll:items-stretch ll:gap-0 ll:leading-[1.15]":
+            displayMode === "column",
+          "ll:justify-between": displayMode === "row",
+          "ll:opacity-60 ll:blur-[0.5px]": isPending,
+        },
+      )}
       // SAFETY: CSSProperties has no index signature for custom properties;
       // "--ll-timer-accent" is consumed by the stripe class.
       style={

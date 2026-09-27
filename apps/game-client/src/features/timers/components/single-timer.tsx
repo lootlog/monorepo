@@ -23,8 +23,8 @@ import { TimerLiveTile } from "./timer-live-tile";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 import { useShallow } from "zustand/react/shallow";
-import { useTranslation } from "react-i18next";
 import { TimerMapPresenceIndicator } from "./timer-map-presence-indicator";
+import { TimerMapThreatIndicator } from "./timer-map-threat-indicator";
 
 type SingleTimerProps = {
   guildIds: string[];
@@ -45,8 +45,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   isHidden = false,
   showColorStripe = true,
 }) => {
-  const { t } = useTranslation("timers");
-
   const {
     customColors,
     defaultColorNames,
@@ -128,10 +126,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 label={`${resetIndicator}${shortname} ${timer.npc.name} ${npcDetails}`}
                 countdownMode={countdownMode}
                 timer={timer}
-                timeAdornment=<TimerMapPresenceIndicator
-                  timer={timer}
-                  label={t("tooltip.mapOccupied")}
-                />
+                timeAdornment={
+                  <>
+                    <TimerMapPresenceIndicator timer={timer} />
+                    <TimerMapThreatIndicator timer={timer} />
+                  </>
+                }
               />
             </div>
           </ContextMenuTrigger>
