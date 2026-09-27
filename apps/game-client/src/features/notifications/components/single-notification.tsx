@@ -8,6 +8,7 @@ import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { useGameStore } from "@/store/game.store";
 import {
   isMentionNotification,
+  type NotificationAutoHideCountdown,
   type NotificationAutoHideState,
   type PartyGatheringNotification,
   type NotificationWithServers,
@@ -60,7 +61,10 @@ type SingleNotificationProps = {
   isMutePending: boolean;
   mutes: NotificationMutes;
   onJoinReadyRoom: (notification: StoredNotification) => void;
-  onPauseAutoHide: (listKey: string) => void;
+  onPauseAutoHide: (
+    listKey: string,
+    derivedCountdown?: NotificationAutoHideCountdown,
+  ) => void;
   onRemoveNotification: (notificationId: string) => void;
   onResumeAutoHide: (listKey: string) => void;
   onUpdateMutes: (mutes: NotificationMutesPatch) => void;
@@ -346,7 +350,12 @@ export const SingleNotification = memo(function SingleNotification({
     if (wasHeld === holds.size > 0) return;
 
     if (holds.size > 0) {
-      onPauseAutoHide(notification.listKey);
+      onPauseAutoHide(
+        notification.listKey,
+        autoHideDeadlineMs === null
+          ? undefined
+          : { deadlineMs: autoHideDeadlineMs, durationMs: autoHideDurationMs },
+      );
 
       return;
     }
