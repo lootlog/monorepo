@@ -112,6 +112,90 @@ from its Redis registry atomically with the cardinality check. Heartbeats and
 publications restore both indexes atomically, including after partial eviction;
 pruning does not remove the pending offline queue or shorten its ten-second grace.
 
+## Ping routing and presence expiry
+
+Gateway indexes each connected socket by platform, character world and current
+map. A map-filtered publication, such as a map or battle ping, intersects that
+index with its subscription audiences before checking individual recipients.
+Wildcard Organization subscriptions retain their existing meaning.
+Authorization, API-key restrictions, sender exclusion, the battle-team character
+filter, ping capability negotiation and delivery deduplication still run for
+each candidate, locally and after federation. `RealtimeHub.setPresence` owns presence assignment and index
+maintenance; callers must use it when publishing, clearing or reconciling presence.
+The index is local to a replica and rebuilds as connections register.
+
+Presence refreshes atomically maintain the existing payload, durable metadata,
+Organization indexes and the additive `presence:expiry:due` sorted set. A member
+is the JSON pair `[organizationId, sessionId]`, scored at `lastSeen + 60 seconds`.
+Idle expiry sweeps inspect scores instead of fetching every active payload.
+Due entries are read in batches of at most 100. A drain yields between batches
+and stops starting more batches after one second. An individual batch can take
+longer when Redis or publication is slow; the bound limits batch size, not request
+latency.
+
+A 30-second token lease coordinates upgraded replicas. Due Organizations also
+use the existing `presence:sweep-lock:<organizationId>` locks to coordinate with
+older sweepers. Removal checks ownership and the captured payload and metadata
+atomically. It schedules the durable departure in the same operation, so a stale
+worker cannot recreate an offline event already handled by its successor. A
+concurrent heartbeat defeats removal. The ten-second offline grace period and
+publication retry queue remain unchanged.
+
+### Expiry rollout and recovery
+
+No client, WebSocket, federation or database migration is required. Deploy Gateway
+normally without clearing Redis. New refreshes write both old and new indexes;
+older replicas continue using the original records and Organization indexes.
+Existing records and legacy-only writes are backfilled by a shared cursor scan,
+at most one Organization page of 100 session candidates per five-second sweep.
+Scan overflow is retained across replicas and restarts. Healthy indexed sessions
+need no payload read during this reconciliation.
+
+Heartbeats repair independently evicted indexes. If the due index is lost, the
+bounded legacy scan rebuilds it even for sessions that no longer heartbeat;
+recovery can therefore take multiple sweep intervals for a large backlog.
+If only the Organization registry is lost, existing due entries can still expire.
+Durable metadata retains identity and the final observed expiry time after the
+payload TTL elapses. Fresh payloads from older writers correct stale due scores.
+
+Rollback needs no data rewrite. Older Gateway versions continue reading the
+retained records and indexes. They ignore the additive expiry keys, which the
+new version reconciles when it returns. Old workers retain their existing
+concurrency behavior until replaced; the stronger captured-value removal guard
+applies to upgraded workers.
+
+### Performance verification
+
+Run `bun run perf:routing` and `bun run perf:presence` in `apps/gateway`.
+The presence benchmark starts an isolated Dragonfly container and requires
+Docker. These are local synthetic measurements, not production latency claims.
+
+On Bun 1.4.2, the routing fixture uses 5,000 sockets, 20,000 publications and
+1,000,000 deliveries. With identical candidate-count instrumentation before and
+after the change, wildcard routing went from 5,000 to 50 candidates per
+publication, 1,114 to 225–230 ms wall time and 1,146 to 264–276 ms CPU time.
+Exact-map routing already had 50 candidates; its wall time changed from 226 to
+232–245 ms due to the additional intersection. Delivery assertions passed in
+both cases.
+
+The expiry baseline was revision `ef1e509fe4`. All sessions were active, with no
+expired entries. The same Dragonfly 1.34.1 fixture measured:
+
+| Organizations | Sessions per Organization | Replicas | Gateway Redis calls, before / after | Server commands, before / after | Active payload entries read, before / after | JSON reply bytes, before / after | Sweep ms, before / after |
+| ------------- | ------------------------- | -------- | ----------------------------------- | ------------------------------- | ------------------------------------------- | -------------------------------- | ------------------------ |
+| 1             | 100                       | 1        | 4 / 6                               | 4 / 134                         | 100 / 0                                     | 24,273 / 48                      | 3.96 / 4.07              |
+| 10            | 100                       | 1        | 31 / 5                              | 31 / 138                        | 1,000 / 0                                   | 242,721 / 48                     | 14.87 / 5.24             |
+| 100           | 10                        | 2        | 402 / 7                             | 402 / 144                       | 1,000 / 0                                   | 246,782 / 53                     | 33.92 / 2.21             |
+| 100           | 50                        | 4        | 604 / 9                             | 604 / 186                       | 5,000 / 0                                   | 1,242,564 / 61                   | 40.47 / 3.74             |
+
+Gateway call counts treat one script evaluation as one call. Server commands use
+Dragonfly's command counter and include Lua operations and script loading; they
+exclude the measurement's own INFO command. Reconciliation adds score checks,
+so small installations can execute more server commands even while transferring
+less data. Reply bytes are JSON-encoded command results, not Redis wire bytes.
+Small wall-time differences are noisy; the stable result is bounded idle work
+with zero active-payload reads as session and Organization counts grow.
+
 ## Realtime access policy updates
 
 Each connection can retain at most 4,096 distinct subscriptions, including its
