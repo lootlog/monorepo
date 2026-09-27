@@ -10,6 +10,14 @@ export const AIR_TAG_MAX_BATCH_SIZE = 50;
 
 const AIR_TAG_MAX_COORDINATE = 65_535;
 
+export const AIR_TAG_MAX_MAP_NAME_LENGTH = 128;
+
+/** A map threat is current this long after its last clan-enemy sighting. */
+export const AIR_TAG_MAP_THREAT_FRESH_MS = 10_000;
+
+/** After this long without a sighting, a map threat is dropped. */
+export const AIR_TAG_MAP_THREAT_TTL_MS = 30_000;
+
 export type AirTagRelation = (typeof AIR_TAG_RELATIONS)[number];
 
 interface AirTagClan {
@@ -24,6 +32,9 @@ export interface AirTagObservation {
   relation: AirTagRelation;
   x: number;
   y: number;
+  lvl?: number;
+  /** Margonem stasis: the player is away from the keyboard. */
+  stasis?: boolean;
 }
 
 export interface AirTagObservationBatch {
@@ -51,6 +62,8 @@ export interface AirTagScopeSnapshot {
   epochStartedAt: number;
   revision: number;
   targets: AirTagTarget[];
+  /** Redis time of the snapshot; relates `observedAt` values to the local clock. */
+  serverTime?: number;
 }
 
 export interface AirTagUpdateEvent {
@@ -61,6 +74,27 @@ export interface AirTagUpdateEvent {
   epochStartedAt: number;
   revision: number;
   target: AirTagTarget;
+}
+
+export interface AirTagMapThreatEnemy {
+  targetId: string;
+  nickname: string;
+  clan?: AirTagClan;
+  lvl?: number;
+  stasis?: boolean;
+  /** Time since the last clan-enemy sighting when the gateway sent the event; immune to client clock skew. */
+  ageMs: number;
+}
+
+/** Every clan enemy an Organization member saw on one map within `AIR_TAG_MAP_THREAT_TTL_MS`. */
+export interface AirTagMapThreatEvent {
+  guildId: string;
+  world: string;
+  mapId: number;
+  mapName: string;
+  /** Redis time of the aggregation; a later list of the same map replaces an earlier one. */
+  revision: number;
+  enemies: readonly AirTagMapThreatEnemy[];
 }
 
 export type AirTagRejectCode =
@@ -106,6 +140,10 @@ const Coordinate = Schema.Int.check(
   Schema.isBetween({ minimum: 0, maximum: AIR_TAG_MAX_COORDINATE }),
 );
 
+const Level = Schema.Int.check(
+  Schema.isBetween({ minimum: 0, maximum: 10_000 }),
+);
+
 const AirTagRelationSchema = Schema.Literals(AIR_TAG_RELATIONS);
 
 const AirTagClanSchema = Schema.Struct({
@@ -120,6 +158,8 @@ export const AirTagObservationSchema = Schema.Struct({
   relation: AirTagRelationSchema,
   x: Coordinate,
   y: Coordinate,
+  lvl: Schema.optionalKey(Level),
+  stasis: Schema.optionalKey(Schema.Boolean),
 });
 
 export const AirTagObservationBatchSchema = Schema.Struct({
@@ -134,6 +174,8 @@ export const AirTagTargetSchema = Schema.Struct({
   relation: AirTagRelationSchema,
   x: Coordinate,
   y: Coordinate,
+  lvl: Schema.optionalKey(Level),
+  stasis: Schema.optionalKey(Schema.Boolean),
   observedAt: SafeNatural,
   enemyObservedAt: Schema.optionalKey(SafeNatural),
   clanEnemyObservedAt: Schema.optionalKey(SafeNatural),
@@ -151,6 +193,7 @@ const AirTagScopeIdentityFields = {
 export const AirTagScopeSnapshotSchema = Schema.Struct({
   ...AirTagScopeIdentityFields,
   targets: Schema.Array(AirTagTargetSchema),
+  serverTime: Schema.optionalKey(SafeNatural),
 });
 
 export const AirTagUpdateEventSchema = Schema.Struct({
@@ -158,7 +201,29 @@ export const AirTagUpdateEventSchema = Schema.Struct({
   target: AirTagTargetSchema,
 });
 
+export const AirTagMapThreatEventSchema = Schema.Struct({
+  guildId: GuildId,
+  world: ShortString,
+  mapId: Coordinate,
+  mapName: Schema.NonEmptyString.check(
+    Schema.isMaxLength(AIR_TAG_MAX_MAP_NAME_LENGTH),
+  ),
+  revision: SafeNatural,
+  enemies: Schema.Array(
+    Schema.Struct({
+      targetId: ShortString,
+      nickname: ShortString,
+      clan: Schema.optionalKey(AirTagClanSchema),
+      lvl: Schema.optionalKey(Level),
+      stasis: Schema.optionalKey(Schema.Boolean),
+      ageMs: SafeNatural,
+    }),
+  ),
+});
+
 export const isAirTagObservation = Schema.is(AirTagObservationSchema);
+
+export const isAirTagRelation = Schema.is(AirTagRelationSchema);
 
 export const isAirTagScopeSnapshot = Schema.is(AirTagScopeSnapshotSchema);
 

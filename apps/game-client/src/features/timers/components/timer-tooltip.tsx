@@ -8,7 +8,12 @@ import {
   getTimerMembers,
   getMembersWithGuilds,
 } from "../utils/timer-helpers";
-import { useTimerMapPresence } from "./timer-map-presence-provider";
+import {
+  useTimerMapPresence,
+  useTimerMapThreat,
+} from "./timer-map-presence-provider";
+import { TimerMapThreatList } from "./timer-map-threat-list";
+import { TIMER_TOOLTIP_MAX_ROWS } from "../constants/timer-tooltip";
 
 type TimerTooltipProps = {
   guildNamesById: Record<string, string>;
@@ -22,7 +27,8 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
   timer,
 }) => {
   const { t } = useTranslation("timers");
-  const mapOccupied = useTimerMapPresence(timer);
+  const occupancy = useTimerMapPresence(timer);
+  const threat = useTimerMapThreat(timer);
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
 
@@ -72,9 +78,36 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({
         </div>
       )}
 
-      {mapOccupied && (
-        <div className="ll:text-emerald-400">{t("tooltip.mapOccupied")}</div>
+      {occupancy && (
+        <div className="ll:flex ll:flex-col ll:gap-0.5">
+          <span
+            className={
+              occupancy.allAfk ? "ll:text-orange-400" : "ll:text-emerald-400"
+            }
+          >
+            {t(occupancy.allAfk ? "tooltip.mapAfk" : "tooltip.mapOccupied")}
+          </span>
+          {occupancy.players.slice(0, TIMER_TOOLTIP_MAX_ROWS).map((player) => (
+            <span key={player.key} className="ll:wrap-break-word">
+              {player.name}
+              {player.isAfk && (
+                <span className="ll:ml-1 ll:text-orange-400">
+                  {t("tooltip.afk")}
+                </span>
+              )}
+            </span>
+          ))}
+          {occupancy.players.length > TIMER_TOOLTIP_MAX_ROWS && (
+            <span className="ll:text-muted-foreground">
+              {t("tooltip.more", {
+                count: occupancy.players.length - TIMER_TOOLTIP_MAX_ROWS,
+              })}
+            </span>
+          )}
+        </div>
       )}
+
+      {threat && <TimerMapThreatList threat={threat} />}
 
       {timer.updatedAt && (
         <div className="ll:flex ll:flex-col ll:gap-0.5">

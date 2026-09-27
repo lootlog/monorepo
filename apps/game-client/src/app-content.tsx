@@ -21,6 +21,7 @@ import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
 import { usePings } from "@/features/pings/use-pings";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
+import { WhoIsHereAirTags } from "@/features/air-tags/who-is-here-air-tags";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
@@ -75,6 +76,7 @@ export const AppContent = () => {
           <CreatePartyGathering />
           <PingWheel />
           <BattlePingMarkers />
+          <WhoIsHereAirTags />
         </>
       ) : null}
     </>

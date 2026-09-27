@@ -175,7 +175,7 @@
     "sectionTitle": "Funkcje eksperymentalne",
     "newInterfaceOnly": "Funkcje eksperymentalne są dostępne tylko w nowym interfejsie gry.",
     "airTagsLabel": "AirTagi – współdzielona widoczność",
-    "airTagsDescription": "Udostępniaj Lootlogowi pozycje widocznych graczy i pokazuj świeże obserwacje z bieżącej mapy."
+    "airTagsDescription": "Udostępniaj Lootlogowi pozycje widocznych graczy i pokazuj świeże obserwacje z bieżącej mapy. Gracze z wrogich klanów, których zobaczysz, pojawią się też na timerach Twojego Lootloga."
   },
   "information": {
     "title": "Informacje o kliencie",
@@ -191,7 +191,9 @@
     "copyFailed": "Nie udało się skopiować"
   },
   "airTags": {
-    "seenSeconds": "widziany {{seconds}} s temu"
+    "seenSeconds": "widziany {{seconds}} s temu",
+    "whoIsHereTitle": "Widziani przez Lootloga",
+    "afk": "AFK"
   },
   "battlePanel": {
     "dataCollectionTitle": "Zbieranie danych",
