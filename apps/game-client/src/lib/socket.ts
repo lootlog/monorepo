@@ -8,6 +8,7 @@ import {
 } from "@lootlog/protocol/realtime/codec";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type AirTagSubscriptionCommand,
   type AirTagObservationCommand,
   type AirTagSubscriptionAck,
@@ -190,6 +191,7 @@ export class AppSocket {
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
   private battlePingsSupported = false;
+  private teamBattlePingsSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -213,6 +215,7 @@ export class AppSocket {
         this.id = undefined;
         // The next connection may reach an older gateway.
         this.battlePingsSupported = false;
+        this.teamBattlePingsSupported = false;
       }
 
       this.listeners.emit(
@@ -251,6 +254,11 @@ export class AppSocket {
   /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
   supportsBattlePings(): boolean {
     return this.battlePingsSupported;
+  }
+
+  /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
+  supportsTeamBattlePings(): boolean {
+    return this.teamBattlePingsSupported;
   }
 
   getAccessPolicy(): AccessPolicySnapshot | undefined {
@@ -328,9 +336,17 @@ export class AppSocket {
     if (!isJoinResult(response))
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
-    this.battlePingsSupported =
-      hasRealtimeCapabilities(response) &&
-      response.capabilities.includes(REALTIME_BATTLE_PING_CAPABILITY);
+
+    const capabilities = hasRealtimeCapabilities(response)
+      ? response.capabilities
+      : [];
+
+    this.battlePingsSupported = capabilities.includes(
+      REALTIME_BATTLE_PING_CAPABILITY,
+    );
+    this.teamBattlePingsSupported = capabilities.includes(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+    );
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);

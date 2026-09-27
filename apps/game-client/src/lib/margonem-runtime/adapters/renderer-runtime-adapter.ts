@@ -18,17 +18,19 @@ export type RuntimeHandheldMiniMap = {
   normalSize?: number;
 };
 
-/** An NPC's hit box in map pixels, as the game uses it for mouse input. */
-export type RuntimeNpcBounds = {
+/** A character's hit box in map pixels, as the game uses it for mouse input. */
+export type RuntimeCharacterBounds = {
   bottom: number;
   left: number;
   right: number;
   top: number;
 };
 
-export type RuntimeNpcHit = {
-  bounds: RuntimeNpcBounds;
-  id: number;
+/** A monster a player can attack, or another player. */
+export type RuntimeCharacterRef = { kind: "npc" | "player"; id: number };
+
+export type RuntimeCharacterHit = RuntimeCharacterRef & {
+  bounds: RuntimeCharacterBounds;
   tile: { x: number; y: number };
 };
 
@@ -37,17 +39,28 @@ export interface RendererRuntimeAdapter {
   getHighestOrder(): number;
   getMapGeometry(): RuntimeMapGeometry | null;
   getHandheldMiniMap(): RuntimeHandheldMiniMap | null;
-  /** The topmost attackable NPC whose hit box contains a map-pixel point. */
-  findAttackableNpcAt(x: number, y: number): RuntimeNpcHit | null;
-  getNpcBounds(id: number): RuntimeNpcBounds | null;
+  /**
+   * The topmost attackable NPC or other player whose hit box contains a
+   * map-pixel point.
+   */
+  findPingableCharacterAt(x: number, y: number): RuntimeCharacterHit | null;
+  getCharacterBounds(
+    character: RuntimeCharacterRef,
+  ): RuntimeCharacterBounds | null;
   isAvailable(): boolean;
   subscribeDraw(callback: () => void): (() => void) | null;
 }
 
-type RuntimeNpcHandle = {
+type RuntimeCharacterHandle = {
   collider?: { box?: readonly [number, number, number, number] } | null;
-  d?: { id?: number; type?: number; x?: number; y?: number };
+  // Players are keyed by their id as a string; NPCs carry a number.
+  d?: { id?: number | string; type?: number; x?: number; y?: number };
   ry?: number;
+};
+
+type RuntimeCharacterCollection = {
+  check?: () => Record<string, RuntimeCharacterHandle>;
+  getById?: (id: number) => RuntimeCharacterHandle | undefined;
 };
 
 type RendererRuntimeWindow = Window & {
@@ -58,10 +71,8 @@ type RendererRuntimeWindow = Window & {
   CFG?: { tileSize?: number };
   Engine?: {
     apiData?: { CALL_DRAW_ADD_TO_RENDERER?: string };
-    npcs?: {
-      check?: () => Record<string, RuntimeNpcHandle>;
-      getById?: (id: number) => RuntimeNpcHandle | undefined;
-    };
+    npcs?: RuntimeCharacterCollection;
+    others?: RuntimeCharacterCollection;
     map?: {
       d?: { id?: number };
       offset?: [number, number];
@@ -91,7 +102,9 @@ const DEFAULT_TILE_SIZE = 32;
 // are dialogue characters, objects and decorations.
 const ATTACKABLE_NPC_TYPES = new Set([2, 3]);
 
-const toBounds = (handle: RuntimeNpcHandle): RuntimeNpcBounds | null => {
+const toBounds = (
+  handle: RuntimeCharacterHandle,
+): RuntimeCharacterBounds | null => {
   const box = handle.collider?.box;
 
   if (!box) return null;
@@ -101,25 +114,29 @@ const toBounds = (handle: RuntimeNpcHandle): RuntimeNpcBounds | null => {
 };
 
 // Strict comparisons, like the game's own hit test.
-const containsPoint = (bounds: RuntimeNpcBounds, x: number, y: number) =>
+const containsPoint = (bounds: RuntimeCharacterBounds, x: number, y: number) =>
   x > bounds.left && x < bounds.right && y > bounds.top && y < bounds.bottom;
 
-const toAttackableHit = (handle: RuntimeNpcHandle) => {
-  const { id, type, x, y } = handle.d ?? {};
+const toPingableHit = (
+  kind: RuntimeCharacterRef["kind"],
+  handle: RuntimeCharacterHandle,
+) => {
+  const { type, x, y } = handle.d ?? {};
+  const id = Number(handle.d?.id);
   const bounds = toBounds(handle);
 
   if (
     !bounds ||
-    id === undefined ||
+    !Number.isSafeInteger(id) ||
+    id <= 0 ||
     x === undefined ||
     y === undefined ||
-    type === undefined ||
-    !ATTACKABLE_NPC_TYPES.has(type)
+    (kind === "npc" && (type === undefined || !ATTACKABLE_NPC_TYPES.has(type)))
   ) {
     return null;
   }
 
-  return { bounds, id, order: handle.ry ?? y, tile: { x, y } };
+  return { bounds, id, kind, order: handle.ry ?? y, tile: { x, y } };
 };
 
 class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
@@ -164,31 +181,42 @@ class MargonemRendererRuntimeAdapter implements RendererRuntimeAdapter {
     };
   }
 
-  findAttackableNpcAt(x: number, y: number): RuntimeNpcHit | null {
-    const npcs = this.runtimeWindow.Engine?.npcs?.check?.();
+  findPingableCharacterAt(x: number, y: number): RuntimeCharacterHit | null {
+    const engine = this.runtimeWindow.Engine;
+    let hit: ReturnType<typeof toPingableHit> = null;
 
-    if (!npcs) return null;
+    const collections = [
+      ["npc", engine?.npcs?.check?.()],
+      ["player", engine?.others?.check?.()],
+    ] as const;
 
-    let hit: (RuntimeNpcHit & { order: number }) | null = null;
+    // The game gives the character drawn in front (lower on screen) priority.
+    for (const [kind, handles] of collections) {
+      for (const handle of Object.values(handles ?? {})) {
+        const candidate = toPingableHit(kind, handle);
 
-    // The game gives the NPC drawn in front (lower on screen) priority.
-    for (const handle of Object.values(npcs)) {
-      const candidate = toAttackableHit(handle);
-
-      if (
-        candidate &&
-        containsPoint(candidate.bounds, x, y) &&
-        (!hit || candidate.order > hit.order)
-      ) {
-        hit = candidate;
+        if (
+          candidate &&
+          containsPoint(candidate.bounds, x, y) &&
+          (!hit || candidate.order > hit.order)
+        ) {
+          hit = candidate;
+        }
       }
     }
 
-    return hit ? { bounds: hit.bounds, id: hit.id, tile: hit.tile } : null;
+    return hit
+      ? { bounds: hit.bounds, id: hit.id, kind: hit.kind, tile: hit.tile }
+      : null;
   }
 
-  getNpcBounds(id: number): RuntimeNpcBounds | null {
-    const handle = this.runtimeWindow.Engine?.npcs?.getById?.(id);
+  getCharacterBounds({
+    id,
+    kind,
+  }: RuntimeCharacterRef): RuntimeCharacterBounds | null {
+    const engine = this.runtimeWindow.Engine;
+    const collection = kind === "npc" ? engine?.npcs : engine?.others;
+    const handle = collection?.getById?.(id);
 
     return handle ? toBounds(handle) : null;
   }

@@ -1,3 +1,4 @@
+import type { RuntimeCharacterRef } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import type { MapTile } from "./map-ping-controller";
 import type { PingType } from "./ping-presentation";
 
@@ -31,7 +32,13 @@ export type PingPressIdentity =
   | { kind: "mouse"; button: number };
 
 export type PingTarget =
-  | { kind: "map"; mapId: number; npcId?: number; tile: MapTile }
+  | {
+      kind: "map";
+      mapId: number;
+      /** The monster or player under the press, if any. */
+      character?: RuntimeCharacterRef;
+      tile: MapTile;
+    }
   | { kind: "battle"; warriorId: number };
 
 export type PingMenu = {

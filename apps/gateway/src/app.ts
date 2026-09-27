@@ -14,6 +14,7 @@ import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
@@ -296,6 +297,27 @@ interface UpgradeServer {
   ) => boolean;
 }
 
+/** Capabilities a client opts into by offering them as subprotocols. */
+const negotiateCapabilities = (
+  offeredProtocols: readonly string[],
+  apiKeyAccess: boolean,
+) => {
+  // API key integrations never receive game-client events.
+  const offersGameCapability = (capability: string) =>
+    !apiKeyAccess && offeredProtocols.includes(capability);
+
+  return {
+    supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+    supportsNotificationVolunteer: offersGameCapability(
+      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+    ),
+    supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
+    supportsTeamBattlePings: offersGameCapability(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+    ),
+  };
+};
+
 const websocketResponseHeaders = (
   request: Request,
   frameEncoding: SessionData["frameEncoding"],
@@ -399,15 +421,10 @@ export const createGatewayFetch =
         data: {
           ...identity,
           connectionId,
-          supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-          supportsNotificationVolunteer:
-            !identity.apiKeyAccess &&
-            offeredProtocols.includes(
-              REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-            ),
-          supportsBattlePings:
-            !identity.apiKeyAccess &&
-            offeredProtocols.includes(REALTIME_BATTLE_PING_CAPABILITY),
+          ...negotiateCapabilities(
+            offeredProtocols,
+            Boolean(identity.apiKeyAccess),
+          ),
           platform: identity.apiKeyAccess
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),
