@@ -1,7 +1,7 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { Effect, Queue, Schedule, Schema } from "effect";
+import { Cause, Effect, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
@@ -176,8 +176,13 @@ export class RedisGatewayStore {
     }
   }
 
+  /**
+   * Pub/Sub has no replay: `onSubscriptionChange(false)` reports that frames
+   * published until the next `onSubscriptionChange(true)` may have been lost.
+   */
   async subscribe(
     listener: (message: FederatedRealtimeMessage) => void,
+    onSubscriptionChange: (subscribed: boolean) => void = () => undefined,
   ): Promise<void> {
     let markReady: () => void = () => undefined;
 
@@ -198,7 +203,10 @@ export class RedisGatewayStore {
             subscriptionQueues.delete(messages);
           }),
         );
-        yield* Effect.sync(markReady);
+        yield* Effect.sync(() => {
+          onSubscriptionChange(true);
+          markReady();
+        });
         let batchStarted = performance.now();
         let batchSize = 0;
 
@@ -230,6 +238,12 @@ export class RedisGatewayStore {
         }
       }),
     ).pipe(
+      Effect.catchDefect((defect) => Effect.fail(defect)),
+      Effect.tapCause((cause) =>
+        Cause.hasInterruptsOnly(cause)
+          ? Effect.void
+          : Effect.sync(() => onSubscriptionChange(false)),
+      ),
       Effect.retry(
         Schedule.min([
           Schedule.exponential("100 millis").pipe(Schedule.jittered),

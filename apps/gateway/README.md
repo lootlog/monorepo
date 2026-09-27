@@ -302,3 +302,38 @@ expires. Confirmed publication acknowledges the captured outbox value and renews
 the lease. Lease loss stops the current drain, while a failed publication leaves
 the durable outbox record for retry. Malformed stored departure records are
 removed without terminating the sweep or discarding valid records in the batch.
+
+## Replicas, probes and draining
+
+Replicas share Dragonfly under the `${SERVICE_NAME}:${ENV}` key prefix, consume
+the same durable RabbitMQ queues, and federate delivery through one Redis
+Pub/Sub channel. An established WebSocket stays on its pod, and a reconnecting
+client may land on any ready replica, so sticky sessions stay disabled.
+
+`GET /healthz` is liveness: it reports only that the process serves HTTP.
+Dependency failures never fail it, so a Dragonfly outage cannot restart every
+replica. `GET /readyz` returns `503` with `reason: "federation-unavailable"`
+until the replica is subscribed to the federation channel, and with
+`reason: "draining"` after shutdown starts. WebSocket upgrades receive the same
+`503` while the replica is unavailable. `lootlog_gateway_available` samples the
+same state as `1` or `0`.
+
+Redis Pub/Sub has no replay. When a replica's federation subscriber disconnects,
+it withdraws readiness and immediately closes every local socket with `1013`,
+because frames published during the gap may include events or
+`permissions.rebalance` controls. No session survives the gap: clients reconnect
+with jitter, and each rejoin re-reads Organization access, restores
+subscriptions, and refetches feature snapshots. The replica admits new sessions
+again after it has resubscribed.
+
+On `SIGTERM` the replica stops admitting sessions and waits 5 seconds for
+Traefik to drop the terminating endpoint. It then closes local sockets with
+`1012` over 10 seconds, so the remaining replicas absorb rejoins gradually. It
+waits up to 10 more seconds for disconnect cleanup (presence removal and
+`DISCONNECT_EVENT` activity) before stopping the server. The deployment's
+`terminationGracePeriodSeconds` must exceed these 25 seconds plus consumer and
+Redis shutdown. Local development skips the endpoint and spread delays.
+
+Deploy this image before switching the readiness probe to `/readyz`. Older
+images return `404` there. Two gateway replicas do not provide host or ingress
+high availability while the cluster has one server and one Traefik replica.

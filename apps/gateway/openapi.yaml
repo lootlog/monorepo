@@ -17,7 +17,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GatewayHealth"
-      summary: Health check
+      description: Reports that the process serves HTTP. Dependency failures never fail liveness.
+      summary: Liveness check
+  /readyz:
+    get:
+      tags:
+        - health
+      operationId: health.GatewayReadiness
+      parameters: []
+      responses:
+        "200":
+          description: GatewayReady
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayReady"
+        "503":
+          description: GatewayUnavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayUnavailable"
+      description: "Reports whether this instance accepts new WebSocket sessions: it is subscribed to realtime federation and not draining."
+      summary: Readiness check
 components:
   schemas:
     GatewayHealth:
@@ -29,4 +51,28 @@ components:
             - ok
       required:
         - status
+    GatewayReady:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+      required:
+        - status
+    GatewayUnavailable:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - unavailable
+        reason:
+          type: string
+          enum:
+            - draining
+            - federation-unavailable
+      required:
+        - status
+        - reason
 tags: []

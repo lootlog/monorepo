@@ -56,6 +56,10 @@ const uniquePlayers = Metric.gauge("lootlog_gateway_cluster_unique_players", {
 });
 
 const runtimeGauges = {
+  available: Metric.gauge("lootlog_gateway_available", {
+    description:
+      "1 while subscribed to realtime federation and not draining; readiness follows it",
+  }),
   federationQueued: Metric.gauge("lootlog_gateway_federation_queued"),
   pendingCommands: Metric.gauge("lootlog_gateway_redis_pending"),
   pendingPublications: Metric.gauge("lootlog_gateway_publications_pending"),
@@ -79,7 +83,10 @@ const runtimeGauges = {
 export class GatewayRuntimeMetrics {
   constructor(
     private readonly redis: Pick<RedisGatewayStore, "getDiagnostics">,
-    private readonly hub: Pick<RealtimeHub, "getLocalSockets">,
+    private readonly hub: Pick<
+      RealtimeHub,
+      "getLocalSockets" | "unavailableReason"
+    >,
     private readonly ingress: Pick<CommandIngress, "getDiagnostics">,
   ) {}
 
@@ -94,6 +101,7 @@ export class GatewayRuntimeMetrics {
     }
 
     const values = {
+      available: this.hub.unavailableReason() === undefined ? 1 : 0,
       ...this.redis.getDiagnostics(),
       ...this.ingress.getDiagnostics(),
       bufferedBytes,
