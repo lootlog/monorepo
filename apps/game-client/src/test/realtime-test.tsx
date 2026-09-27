@@ -140,6 +140,7 @@ export const createRealtimeTest = () => {
   const join = async (
     organizationIds = ["guild-1"],
     accessPolicy?: AccessPolicySnapshot,
+    capabilities?: string[],
   ) => {
     await act(async () => {
       const joined = getSocket().join({
@@ -162,7 +163,12 @@ export const createRealtimeTest = () => {
         v: 1,
         requestId: request.requestId,
         status: "success",
-        data: { connectionId: "test", organizationIds, accessPolicy },
+        data: {
+          connectionId: "test",
+          organizationIds,
+          accessPolicy,
+          capabilities,
+        },
       });
       await joined;
     });

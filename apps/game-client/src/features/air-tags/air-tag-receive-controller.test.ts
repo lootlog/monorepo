@@ -72,7 +72,7 @@ describe("AirTagReceiveController", () => {
   });
 
   it("applies queued deltas newer than the subscription snapshot", () => {
-    const controller = new AirTagReceiveController();
+    const controller = new AirTagReceiveController(() => 2_000);
     controller.beginSubscription("request-1", "aether", 42);
     controller.handleUpdate(createUpdate());
     controller.applySubscriptionAck({
@@ -83,6 +83,33 @@ describe("AirTagReceiveController", () => {
 
     expect(controller.getRenderableTargets(2_100, 10_000)).toEqual([
       expect.objectContaining({ x: 14, observedAt: 2_000 }),
+    ]);
+  });
+
+  it("measures marker age on the local clock when it runs a minute ahead of the gateway", () => {
+    let now = 61_000;
+    const controller = new AirTagReceiveController(() => now);
+    controller.beginSubscription("request-1", "aether", 42);
+    controller.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request-1",
+      scopes: [
+        createSnapshot({
+          serverTime: 1_500,
+          targets: [createTarget({ observedAt: 1_000 })],
+        }),
+      ],
+    });
+    expect(controller.getRenderableTargets(now, 10_000)).toEqual([
+      expect.objectContaining({ observedAt: 60_500 }),
+    ]);
+
+    now = 62_000;
+    controller.handleUpdate(
+      createUpdate({ target: createTarget({ x: 14, observedAt: 3_000 }) }),
+    );
+    expect(controller.getRenderableTargets(now + 9_000, 10_000)).toEqual([
+      expect.objectContaining({ x: 14, observedAt: 62_000 }),
     ]);
   });
 
