@@ -1,3 +1,4 @@
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -79,11 +80,9 @@ const HeroTimerDisplayContent = ({
   useEffect(() => {
     const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
 
-    const interval = setInterval(() => {
+    return subscribeToSecondClock(() => {
       setTimeLeft(maxSpawnTime - Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
+    });
   }, [timer.maxSpawnTime]);
 
   const isOverdue = timeLeft <= 0;
