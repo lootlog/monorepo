@@ -1,3 +1,4 @@
+import { queryEventHero } from "#src/events/event-scope-query";
 import { eventReadCacheScope } from "#src/events/catalog/event-read-cache.service";
 import type { CanonicalRabbitEvent } from "@lootlog/protocol/rabbit/events";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
@@ -157,18 +158,7 @@ export const makeEventRespawnCommands = (
       Effect.gen(function* () {
         const heroRows = yield* query(
           "events.respawn.open.hero",
-          database
-            .select({ hero: eventHeroNpcTable, event: eventTable })
-            .from(eventHeroNpcTable)
-            .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-            .where(
-              and(
-                eq(eventHeroNpcTable.id, heroId),
-                eq(eventTable.id, eventId),
-                eq(eventTable.guildId, guild.id),
-              ),
-            )
-            .limit(1),
+          queryEventHero(database, guild.id, eventId, heroId),
         );
 
         const row = heroRows[0];
@@ -313,18 +303,7 @@ export const makeEventRespawnCommands = (
       Effect.gen(function* () {
         const heroRows = yield* query(
           "events.respawn.close.hero",
-          database
-            .select({ hero: eventHeroNpcTable, event: eventTable })
-            .from(eventHeroNpcTable)
-            .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-            .where(
-              and(
-                eq(eventHeroNpcTable.id, heroId),
-                eq(eventTable.id, eventId),
-                eq(eventTable.guildId, guild.id),
-              ),
-            )
-            .limit(1),
+          queryEventHero(database, guild.id, eventId, heroId),
         );
 
         const row = heroRows[0];
