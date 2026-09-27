@@ -726,6 +726,7 @@ export const EventsHandlers = HttpApiBuilder.group(
               ),
             ),
         ),
+      // TODO(kill-history-legacy): Remove these three list handlers with their deprecated routes.
       EventsRankingControllerGetEventKillHistory: ({ params, query }) =>
         event(
           "EventsRankingControllerGetEventKillHistory",

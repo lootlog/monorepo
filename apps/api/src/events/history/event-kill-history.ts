@@ -242,6 +242,8 @@ export const makeEventKillHistory = ({
     );
   });
 
+  // TODO(kill-history-legacy): Remove legacyPage, prepareLegacy, legacyEvent and legacyMember
+  // after client retirement; see README.md. Keep list, detail, timeline and their shared authorization.
   const legacyPage = Effect.fnUntraced(function* (
     authorized: Effect.Success<ReturnType<typeof authorize>>,
     limit: number,

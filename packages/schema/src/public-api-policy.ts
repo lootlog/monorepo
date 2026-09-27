@@ -1268,6 +1268,7 @@ export const PUBLIC_API_OPERATIONS = [
     access: "read",
     data: "organization",
   },
+  // TODO(kill-history-legacy): Remove the next three deprecated list operations with their API routes.
   {
     service: "main",
     method: "GET",

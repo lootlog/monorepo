@@ -247,6 +247,8 @@ export const makeEventKillHistoryProjection = (
     };
   });
 
+  // TODO(kill-history-legacy): Remove this list-only map hydration and its private types/helper.
+  // See README.md; detail map data and getEffectiveWindowStartByKillId remain required.
   function buildKillPointMapDataByKillMember(
     kills: Array<{
       id: string;

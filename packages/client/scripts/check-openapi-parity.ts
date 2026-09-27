@@ -30,6 +30,8 @@ const GUILD_METADATA_ERROR_OPERATIONS = new Set([
   "GET /guilds/{guildId}/permissions",
 ]);
 
+// TODO(kill-history-legacy): Replace these status/deprecation allowances with verified removal expectations.
+// Do not relax parity for unrelated endpoints; see apps/api/src/events/history/README.md.
 const LEGACY_KILL_HISTORY_OPERATIONS = [
   "GET /guilds/{guildId}/events/{eventId}/kills",
   "GET /guilds/{guildId}/events/{eventId}/members/{memberId}/kills",

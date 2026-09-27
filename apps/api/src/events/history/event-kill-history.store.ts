@@ -128,6 +128,7 @@ export const makeEventKillHistoryStore = (
       .orderBy(desc(eventHeroKillTable.killedAt), desc(eventHeroKillTable.id))
       .limit(query.limit + 1);
 
+  // TODO(kill-history-legacy): Remove this full-row page adapter; orderedKills still serves findLeanPage.
   const findPage = (query: HistoryPageQuery) =>
     orderedKills(query).pipe(
       Effect.map((kills) => ({
@@ -208,6 +209,7 @@ export const makeEventKillHistoryStore = (
       .pipe(Effect.map((rows) => ({ kind: "member" as const, rows })));
   };
 
+  // TODO(kill-history-legacy): Remove UUID anchor lookup when the three old lists are retired.
   const findAnchor = (id: string, memberId?: number) =>
     database
       .select({
@@ -265,6 +267,7 @@ export const makeEventKillHistoryStore = (
       );
   };
 
+  // TODO(kill-history-legacy): Remove this legacy page hydration query; retain scopedHeroes.
   const findHeroes = () =>
     database
       .select()
