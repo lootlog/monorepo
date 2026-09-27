@@ -10,6 +10,7 @@ import {
 import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import {
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type AirTagSubscriptionCommand,
@@ -137,6 +138,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "map-ping.received": GatewayEvent.MAP_PING_RECEIVE,
   "battle-ping.received": GatewayEvent.BATTLE_PING_RECEIVE,
   "air-tag.updated": GatewayEvent.AIR_TAG_UPDATE,
+  "air-tag.scope-updated": GatewayEvent.AIR_TAG_SCOPE_UPDATE,
   "air-tag.map-threat-updated": GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
@@ -197,6 +199,7 @@ export class AppSocket {
   private battlePingsSupported = false;
   private teamBattlePingsSupported = false;
   private airTagMapThreatsSupported = false;
+  private airTagDeparturesSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -222,6 +225,7 @@ export class AppSocket {
         this.battlePingsSupported = false;
         this.teamBattlePingsSupported = false;
         this.airTagMapThreatsSupported = false;
+        this.airTagDeparturesSupported = false;
       }
 
       this.listeners.emit(
@@ -265,6 +269,11 @@ export class AppSocket {
   /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
   supportsTeamBattlePings(): boolean {
     return this.teamBattlePingsSupported;
+  }
+
+  /** Whether the joined gateway accepts AirTag departures; older gateways reject a batch without observations. */
+  supportsAirTagDepartures(): boolean {
+    return this.airTagDeparturesSupported;
   }
 
   /** Current map threats, or null when the joined gateway predates `air-tag.map-threats.fetch`. */
@@ -373,6 +382,9 @@ export class AppSocket {
     );
     this.airTagMapThreatsSupported = capabilities.includes(
       REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+    );
+    this.airTagDeparturesSupported = capabilities.includes(
+      REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
     );
     this.joinedOrganizationIds = [...response.organizationIds];
 

@@ -42,6 +42,7 @@ import {
 } from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 import { isReadyRoomRemoval } from "#src/realtime/npc-event-visibility";
+import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 
 type Scope = typeof SubscriptionScope.Type;
 
@@ -520,6 +521,11 @@ export class RealtimeHub {
     let binaryFrame = local?.bytes;
     const chatFrames = new Map<string, string | Uint8Array>();
 
+    const legacyAirTagFrames = new Map<
+      string,
+      ReadonlyArray<string | Uint8Array>
+    >();
+
     const canReadSource = prepareSourceEventVisibility(
       frame,
       message.sourceNpcs,
@@ -555,6 +561,21 @@ export class RealtimeHub {
             frame,
             chatFrames,
             chatPermissions(socket.data, guild),
+          ),
+        );
+        continue;
+      }
+
+      if (
+        frame.type === "air-tag.scope-updated" &&
+        !socket.data.supportsAirTagScopeUpdates
+      ) {
+        this.sendEach(
+          socket,
+          this.encodeLegacyAirTagUpdates(
+            socket.data,
+            frame,
+            legacyAirTagFrames,
           ),
         );
         continue;
@@ -652,6 +673,35 @@ export class RealtimeHub {
     }
 
     return encoded;
+  }
+
+  private encodeLegacyAirTagUpdates(
+    session: SessionData,
+    event: Extract<Event, { type: "air-tag.scope-updated" }>,
+    frames: Map<string, ReadonlyArray<string | Uint8Array>>,
+  ): ReadonlyArray<string | Uint8Array> {
+    const key = session.frameEncoding ?? "messagepack";
+    let encoded = frames.get(key);
+
+    if (encoded === undefined) {
+      encoded = toLegacyAirTagUpdates(event).map((legacy) =>
+        session.frameEncoding === "json"
+          ? JSON.stringify(legacy)
+          : encodeRealtimeFrame(legacy),
+      );
+      frames.set(key, encoded);
+    }
+
+    return encoded;
+  }
+
+  private sendEach(
+    socket: GatewaySocket,
+    frames: ReadonlyArray<string | Uint8Array>,
+  ): void {
+    for (const frame of frames) {
+      if (!this.send(socket, frame)) return;
+    }
   }
 
   private audienceKeys(session: SessionData): string[] {

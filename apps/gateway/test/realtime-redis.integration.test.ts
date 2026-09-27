@@ -2950,8 +2950,151 @@ describe("realtime Dragonfly integration", () => {
       expect(
         eventsOfType(legacyClient.frames, "air-tag.map-threat-updated"),
       ).toHaveLength(0);
+
+      // A target leaves once no observer still sees it and one saw it leave the map.
+      const scopeRecipient = makeSocket("scope-recipient");
+      const firstObserver = makeSocket("first-observer");
+      const secondObserver = makeSocket("second-observer");
+      const bystander = makeSocket("bystander");
+      const observers = [firstObserver, secondObserver, bystander];
+
+      const moveToNithal = (target: ReturnType<typeof makeSocket>) => {
+        const presence = target.socket.data.presence;
+
+        if (!presence) throw new Error("Missing departure presence");
+        setSocketPresence(target.socket, {
+          ...presence,
+          location: { mapId: 9, map: "Nithal" },
+        });
+      };
+
+      [...observers, scopeRecipient].forEach(moveToNithal);
+      observers.forEach((target) => firstHub.register(target.socket));
+      Object.assign(scopeRecipient.socket.data, {
+        supportsAirTagScopeUpdates: true,
+      });
+      secondHub.register(scopeRecipient.socket);
+      await Promise.all(
+        observers.map((target) =>
+          sourceAirTags.updateSubscription(target.socket, {
+            requestId: `${target.socket.data.connectionId}-subscription`,
+            enabled: true,
+            expectedMapId: 9,
+          }),
+        ),
+      );
+      await recipientAirTags.updateSubscription(scopeRecipient.socket, {
+        requestId: "scope-recipient-subscription",
+        enabled: true,
+        expectedMapId: 9,
+      });
+
+      const scopeUpdates = () =>
+        scopeRecipient.frames.flatMap((frame) => {
+          const decoded = decodeRealtimeFrame(frame);
+
+          return "type" in decoded && decoded.type === "air-tag.scope-updated"
+            ? [decoded.data]
+            : [];
+        });
+
+      const mapThreats = () =>
+        threatEvents().flatMap((event) =>
+          "type" in event &&
+          event.type === "air-tag.map-threat-updated" &&
+          event.data.mapId === 9
+            ? [event.data.enemies.map(({ targetId }) => targetId)]
+            : [],
+        );
+
+      const wanderer = { ...clanEnemy, targetId: "wanderer" };
+      const lurker = { ...observation, targetId: "lurker" };
+
+      const report = (
+        target: ReturnType<typeof makeSocket>,
+        batch: Omit<
+          Parameters<AirTagService["publishObservations"]>[1],
+          "expectedMapId"
+        >,
+      ) =>
+        expect(
+          sourceAirTags.publishObservations(target.socket, {
+            expectedMapId: 9,
+            ...batch,
+          }),
+        ).resolves.toMatchObject({ status: "accepted" });
+
+      await report(firstObserver, { observations: [wanderer, lurker] });
+      await report(secondObserver, { observations: [wanderer, lurker] });
+      await waitFor(() => scopeUpdates().length === 1);
+      await waitFor(() => mapThreats().length === 1);
+      // One frame per batch; the second observer's identical sighting stays quiet.
+      expect(scopeUpdates()).toMatchObject([
+        {
+          mapId: 9,
+          targets: [{ targetId: "wanderer" }, { targetId: "lurker" }],
+          removedTargetIds: [],
+        },
+      ]);
+      expect(
+        eventsOfType(scopeRecipient.frames, "air-tag.updated"),
+      ).toHaveLength(0);
+
+      // The second observer still sees both.
+      await report(firstObserver, {
+        observations: [],
+        departures: [
+          { targetId: "wanderer", reason: "left-map" },
+          { targetId: "lurker", reason: "out-of-sight" },
+        ],
+      });
+      await report(secondObserver, {
+        observations: [],
+        departures: [
+          { targetId: "wanderer", reason: "out-of-sight" },
+          { targetId: "lurker", reason: "out-of-sight" },
+        ],
+      });
+      // Nobody sees the lurker, but nobody saw it leave, and a connection that
+      // never reported it cannot remove it.
+      await report(bystander, {
+        observations: [],
+        departures: [{ targetId: "lurker", reason: "left-map" }],
+      });
+      await waitFor(() => scopeUpdates().length === 2);
+      await waitFor(() => mapThreats().length === 2);
+      await Bun.sleep(100);
+      expect(scopeUpdates()[1]).toMatchObject({
+        targets: [],
+        removedTargetIds: ["wanderer"],
+      });
+
+      // Recipients drop a frame that is not newer than the last one.
+      const [sighted, departed] = scopeUpdates().map(
+        ({ revision }) => revision,
+      );
+
+      expect(departed).toBeGreaterThan(sighted ?? Number.POSITIVE_INFINITY);
+      // The last clan enemy left: an empty list clears the timers at once.
+      expect(mapThreats()).toEqual([["wanderer"], []]);
+
+      const afterDeparture = makeSocket("after-departure");
+      setSocketPresence(
+        afterDeparture.socket,
+        scopeRecipient.socket.data.presence,
+      );
+      await expect(
+        recipientAirTags.updateSubscription(afterDeparture.socket, {
+          requestId: "after-departure-subscription",
+          enabled: true,
+          expectedMapId: 9,
+        }),
+      ).resolves.toMatchObject({
+        status: "accepted",
+        scopes: [{ targets: [{ targetId: "lurker" }] }],
+      });
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
     }
-  }, 20_000);
+  }, 30_000);
 });

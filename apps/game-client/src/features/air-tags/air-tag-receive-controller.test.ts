@@ -1,5 +1,6 @@
 import type {
   AirTagScopeSnapshot,
+  AirTagScopeUpdateEvent,
   AirTagTarget,
   AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
@@ -41,7 +42,81 @@ const createUpdate = (
   ...overrides,
 });
 
+const createScopeUpdate = (
+  overrides: Partial<AirTagScopeUpdateEvent> = {},
+): AirTagScopeUpdateEvent => ({
+  guildId: "guild-1",
+  world: "aether",
+  mapId: 42,
+  epochId: "epoch-a",
+  epochStartedAt: 100,
+  revision: 4,
+  targets: [],
+  removedTargetIds: [],
+  ...overrides,
+});
+
 describe("AirTagReceiveController", () => {
+  it("removes a departed target and keeps a late frame of another gateway from restoring it", () => {
+    const controller = new AirTagReceiveController(() => 2_000);
+    controller.beginSubscription("request-1", "aether", 42);
+    controller.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request-1",
+      scopes: [
+        createSnapshot({
+          targets: [createTarget(), createTarget({ targetId: "target-2" })],
+        }),
+      ],
+    });
+
+    controller.handleScopeUpdate(
+      createScopeUpdate({
+        revision: 6,
+        targets: [
+          createTarget({ targetId: "target-2", x: 30, observedAt: 2_000 }),
+        ],
+        removedTargetIds: ["target-1"],
+      }),
+    );
+    // Merged earlier, delivered later by another gateway instance.
+    controller.handleScopeUpdate(
+      createScopeUpdate({
+        revision: 5,
+        targets: [
+          createTarget({ x: 12, observedAt: 1_900 }),
+          createTarget({ targetId: "target-2", x: 20, observedAt: 1_900 }),
+          createTarget({ targetId: "target-3", observedAt: 1_900 }),
+        ],
+      }),
+    );
+
+    expect(controller.getRenderableTargets(2_100, 10_000)).toEqual([
+      expect.objectContaining({ targetId: "target-2", x: 30 }),
+      expect.objectContaining({ targetId: "target-3" }),
+    ]);
+  });
+
+  it("hides a player the hero saw leave, but only until the gateway could have removed them", () => {
+    let now = 2_000;
+    const controller = new AirTagReceiveController(() => now);
+    controller.beginSubscription("request-1", "aether", 42);
+    controller.applySubscriptionAck({
+      status: "accepted",
+      requestId: "request-1",
+      scopes: [createSnapshot()],
+    });
+
+    controller.hideDeparted("target-1");
+    expect(controller.getRenderableTargets(now, 10_000)).toEqual([]);
+
+    // Another member still reports the player: the hero's guess was wrong.
+    now = 5_000;
+    expect(controller.getRenderableTargets(now, 10_000)).toEqual([
+      expect.objectContaining({ targetId: "target-1" }),
+    ]);
+  });
+
   it("retains at most the 100 freshest targets in each scope", () => {
     const controller = new AirTagReceiveController();
     controller.beginSubscription("request-1", "aether", 42);
