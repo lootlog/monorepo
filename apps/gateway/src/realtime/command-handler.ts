@@ -10,6 +10,7 @@ import {
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type ClientCommand,
   type Response,
   type ServerEvent,
@@ -784,6 +785,7 @@ export class CommandHandler {
           capabilities: [
             REALTIME_PING_CAPABILITY,
             REALTIME_BATTLE_PING_CAPABILITY,
+            REALTIME_TEAM_BATTLE_PING_CAPABILITY,
             REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
           ],
         },

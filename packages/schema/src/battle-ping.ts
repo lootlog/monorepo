@@ -21,14 +21,23 @@ const BATTLE_REQUEST_PING_TYPES = [
   "taunt",
 ] as const;
 
+/**
+ * Calls to the whole battle team, sent from the sender's own warrior. Only
+ * sockets that negotiated `lootlog.battle-ping.team.v1` send or receive them.
+ */
+const BATTLE_TEAM_PING_TYPES = ["quick-fight"] as const;
+
 const BATTLE_PING_TYPES = [
   ...BATTLE_ENEMY_PING_TYPES,
   ...BATTLE_REQUEST_PING_TYPES,
+  ...BATTLE_TEAM_PING_TYPES,
 ] as const;
 
 export type BattleEnemyPingType = (typeof BATTLE_ENEMY_PING_TYPES)[number];
 
 export type BattleRequestPingType = (typeof BATTLE_REQUEST_PING_TYPES)[number];
+
+export type BattleTeamPingType = (typeof BATTLE_TEAM_PING_TYPES)[number];
 
 export type BattlePingType = (typeof BATTLE_PING_TYPES)[number];
 
@@ -56,6 +65,10 @@ export const isBattlePingType = Schema.is(BattlePingTypeSchema);
 
 export const isBattleEnemyPingType = Schema.is(
   Schema.Literals(BATTLE_ENEMY_PING_TYPES),
+);
+
+export const isBattleTeamPingType = Schema.is(
+  Schema.Literals(BATTLE_TEAM_PING_TYPES),
 );
 
 export interface BattlePingSendPayload {

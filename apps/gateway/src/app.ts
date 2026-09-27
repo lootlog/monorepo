@@ -14,6 +14,7 @@ import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
@@ -297,11 +298,12 @@ interface UpgradeServer {
   ) => boolean;
 }
 
-// Older clients close the socket on events they cannot decode, so each capability gates its events.
-const offeredCapabilities = (
+/** Capabilities a client opts into by offering them as subprotocols. */
+const negotiateCapabilities = (
   offeredProtocols: readonly string[],
   apiKeyAccess: boolean,
 ) => {
+  // API key integrations never receive game-client events.
   const offersGameCapability = (capability: string) =>
     !apiKeyAccess && offeredProtocols.includes(capability);
 
@@ -313,6 +315,9 @@ const offeredCapabilities = (
     supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
     supportsAirTagMapThreats: offersGameCapability(
       REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+    ),
+    supportsTeamBattlePings: offersGameCapability(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
     ),
   };
 };
@@ -420,9 +425,9 @@ export const createGatewayFetch =
         data: {
           ...identity,
           connectionId,
-          ...offeredCapabilities(
+          ...negotiateCapabilities(
             offeredProtocols,
-            identity.apiKeyAccess !== undefined,
+            Boolean(identity.apiKeyAccess),
           ),
           platform: identity.apiKeyAccess
             ? "web-app"
