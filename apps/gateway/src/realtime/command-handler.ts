@@ -8,6 +8,7 @@ import { decode } from "@msgpack/msgpack";
 import {
   decodeClientCommand,
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+  REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
@@ -788,6 +789,7 @@ export class CommandHandler {
             REALTIME_BATTLE_PING_CAPABILITY,
             REALTIME_TEAM_BATTLE_PING_CAPABILITY,
             REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+            REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY,
           ],
         },
       } satisfies Event;

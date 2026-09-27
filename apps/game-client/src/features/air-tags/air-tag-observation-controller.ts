@@ -4,6 +4,8 @@ import {
   AIR_TAG_MAX_BATCH_SIZE,
   isAirTagObservation,
   isAirTagRelation,
+  type AirTagDeparture,
+  type AirTagDepartureReason,
   type AirTagObservation,
   type AirTagObservationBatch,
 } from "@lootlog/schema/air-tag";
@@ -22,7 +24,10 @@ export const AIR_TAG_HEARTBEAT_SCAN_INTERVAL_MS = 1_000;
 
 const AIR_TAG_HEARTBEAT_ALIGNMENT_MS = 2_000;
 
-export const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 3;
+export const AIR_TAG_MOVEMENT_THRESHOLD_TILES = 2;
+
+// How far a walking player and the hero may both have moved since the game's last position update.
+const AIR_TAG_SIGHT_MARGIN_TILES = 3;
 
 const MAX_LOCAL_TARGETS_PER_SCOPE = 100;
 
@@ -38,6 +43,8 @@ type LocalAirTagTarget = AirTagObservation & {
   lastPublishedAt: number;
   lastPublishedX: number;
   lastPublishedY: number;
+  /** The gateway counts this character among the target's observers. */
+  sent: boolean;
 };
 
 type RuntimeOtherData = Partial<Omit<OtherCreate, "action">> & {
@@ -55,6 +62,7 @@ interface AirTagObservationControllerOptions {
 export class AirTagObservationController {
   private readonly targets = new Map<string, LocalAirTagTarget>();
   private readonly pending = new Map<string, AirTagObservation>();
+  private readonly departures = new Map<string, AirTagDeparture>();
   private readonly now: () => number;
   private readonly scheduleTimeout: typeof window.setTimeout;
   private readonly cancelTimeout: typeof window.clearTimeout;
@@ -66,6 +74,7 @@ export class AirTagObservationController {
   private canPublish = false;
   private mapId: number | null = null;
   private publisher: ObservationPublisher | null = null;
+  private onLeftMap: ((targetId: string) => void) | null = null;
 
   constructor(options: AirTagObservationControllerOptions = {}) {
     this.now = options.now ?? (() => Date.now());
@@ -83,11 +92,14 @@ export class AirTagObservationController {
     canPublish,
     mapId,
     publisher,
+    onLeftMap,
   }: {
     enabled: boolean;
     canPublish: boolean;
     mapId: number | null;
     publisher: ObservationPublisher;
+    /** A player the hero saw leave the map. */
+    onLeftMap?: (targetId: string) => void;
   }): void {
     const shouldDetectCurrentOthers =
       enabled &&
@@ -103,6 +115,7 @@ export class AirTagObservationController {
     this.enabled = enabled;
     this.canPublish = canPublish;
     this.publisher = publisher;
+    this.onLeftMap = onLeftMap ?? null;
 
     if (shouldClear) {
       this.clearState();
@@ -181,6 +194,10 @@ export class AirTagObservationController {
       lastPublishedAt: 0,
       lastPublishedX: observation.x,
       lastPublishedY: observation.y,
+      // The gateway still counts this character when its departure never went out.
+      sent:
+        this.targets.get(targetId)?.sent === true ||
+        this.departures.delete(targetId),
     };
 
     this.retainTargetCapacity(targetId);
@@ -273,12 +290,41 @@ export class AirTagObservationController {
   }
 
   private handleDelete(targetId: string): void {
+    const target = this.targets.get(targetId);
     this.targets.delete(targetId);
     this.pending.delete(targetId);
 
     if (this.targets.size === 0) {
       this.stopHeartbeatTimer();
     }
+
+    if (!target) return;
+    const reason = this.getDepartureReason(target);
+
+    if (reason === "left-map") this.onLeftMap?.(targetId);
+
+    if (!target.sent) return;
+    this.departures.set(targetId, { targetId, reason });
+    this.scheduleBatch();
+  }
+
+  /**
+   * Margonem sends `del` both when a player leaves the map and when they
+   * leave the hero's war shadow range. Only a player well inside that range,
+   * or any player on a map without war shadow, has certainly left the map.
+   */
+  private getDepartureReason(target: LocalAirTagTarget): AirTagDepartureReason {
+    const game = useGameStore.getState().game;
+
+    if (!game || game.map.id !== this.mapId) return "out-of-sight";
+    const range = game.map.visibility;
+
+    if (range <= 0) return "left-map";
+
+    return Math.hypot(target.x - game.hero.x, target.y - game.hero.y) <=
+      range - AIR_TAG_SIGHT_MARGIN_TILES
+      ? "left-map"
+      : "out-of-sight";
   }
 
   private toObservation(
@@ -338,6 +384,14 @@ export class AirTagObservationController {
         this.pending.set(observation.targetId, observation);
     }
 
+    for (const departure of batch.departures ?? []) {
+      if (
+        !this.targets.has(departure.targetId) &&
+        !this.departures.has(departure.targetId)
+      )
+        this.departures.set(departure.targetId, departure);
+    }
+
     if (this.batchTimer !== null) this.cancelTimeout(this.batchTimer);
     this.batchTimer = null;
     this.scheduleBatch(Math.max(delayMs, AIR_TAG_BATCH_INTERVAL_MS));
@@ -355,6 +409,7 @@ export class AirTagObservationController {
   private flushBatch(): void {
     if (!this.isActive() || this.mapId === null || !this.publisher) {
       this.pending.clear();
+      this.departures.clear();
 
       return;
     }
@@ -364,15 +419,31 @@ export class AirTagObservationController {
       AIR_TAG_MAX_BATCH_SIZE,
     );
 
+    const departures = [...this.departures.values()].slice(
+      0,
+      AIR_TAG_MAX_BATCH_SIZE,
+    );
+
     for (const observation of observations) {
       this.pending.delete(observation.targetId);
+      const target = this.targets.get(observation.targetId);
+
+      if (target) target.sent = true;
     }
 
-    if (observations.length > 0) {
-      this.publisher({ expectedMapId: this.mapId, observations });
+    for (const departure of departures) {
+      this.departures.delete(departure.targetId);
     }
 
-    if (this.pending.size > 0) {
+    if (observations.length > 0 || departures.length > 0) {
+      this.publisher({
+        expectedMapId: this.mapId,
+        observations,
+        ...(departures.length > 0 && { departures }),
+      });
+    }
+
+    if (this.pending.size > 0 || this.departures.size > 0) {
       this.scheduleBatch();
     }
   }
@@ -416,6 +487,7 @@ export class AirTagObservationController {
   private clearState(): void {
     this.targets.clear();
     this.pending.clear();
+    this.departures.clear();
 
     if (this.batchTimer !== null) {
       this.cancelTimeout(this.batchTimer);

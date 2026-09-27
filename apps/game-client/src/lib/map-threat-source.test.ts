@@ -168,6 +168,12 @@ describe("map threat source", () => {
       threat([{ targetId: "2", ageMs: 0 }], { mapId: 8, revision: 5 }),
     );
     expect(source.getMapThreat("Karka-han")?.freshCount).toBe(2);
+
+    // The last enemy left map 7: its fresh sighting goes at once.
+    await harness.receive(threat([], { revision: 30 }));
+    expect(source.getMapThreat("Karka-han")?.enemies).toEqual([
+      expect.objectContaining({ targetId: "2" }),
+    ]);
     release();
   });
 

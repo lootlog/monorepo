@@ -69,16 +69,73 @@ describe("AirTagObservationController", () => {
       ],
     });
 
-    controller.handle({ "123": { x: 12, y: 10, dir: 1 } });
+    controller.handle({ "123": { x: 11, y: 10, dir: 1 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenCalledTimes(1);
 
-    controller.handle({ "123": { x: 13, y: 10, dir: 1 } });
+    controller.handle({ "123": { x: 12, y: 10, dir: 1 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenCalledTimes(2);
     expect(publisher).toHaveBeenLastCalledWith({
       expectedMapId: 42,
-      observations: [expect.objectContaining({ x: 13, y: 10 })],
+      observations: [expect.objectContaining({ x: 12, y: 10 })],
+    });
+  });
+
+  it("tells a player who left the map from one who left the hero's sight, reporting only players the gateway knew", () => {
+    setTestRuntimeGame({
+      hero: { x: 10, y: 10 },
+      map: { id: 42, name: "Ithan", visibility: 12 },
+    });
+    const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
+    const onLeftMap = vi.fn<(targetId: string) => void>();
+    const controller = new AirTagObservationController();
+    controller.configure({
+      enabled: true,
+      canPublish: true,
+      mapId: 42,
+      publisher,
+      onLeftMap,
+    });
+
+    controller.handle({
+      near: createOther({ x: 14, y: 13 }),
+      edge: createOther({ x: 20, y: 16 }),
+    });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    // Leaves before its first batch went out.
+    controller.handle({ unsent: createOther({ x: 11, y: 10 }) });
+    controller.handle({
+      near: { del: 1 },
+      edge: { del: 1 },
+      unsent: { del: 1 },
+    });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+
+    expect(publisher).toHaveBeenLastCalledWith({
+      expectedMapId: 42,
+      observations: [],
+      departures: [
+        { targetId: "near", reason: "left-map" },
+        { targetId: "edge", reason: "out-of-sight" },
+      ],
+    });
+    expect(onLeftMap.mock.calls).toEqual([["near"], ["unsent"]]);
+
+    // Without war shadow the game knows every player on the map.
+    setTestRuntimeGame({
+      hero: { x: 10, y: 10 },
+      map: { id: 42, name: "Ithan", visibility: 0 },
+    });
+    controller.handle({ far: createOther({ x: 90, y: 90 }) });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+    controller.handle({ far: { del: 1 } });
+    vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
+
+    expect(publisher).toHaveBeenLastCalledWith({
+      expectedMapId: 42,
+      observations: [],
+      departures: [{ targetId: "far", reason: "left-map" }],
     });
   });
 

@@ -5,6 +5,7 @@ import {
   AirTagMapThreatEventSchema,
   AirTagObservationBatchSchema,
   AirTagScopeSnapshotSchema,
+  AirTagScopeUpdateEventSchema,
   AirTagUpdateEventSchema,
 } from "@lootlog/schema/air-tag";
 import {
@@ -55,6 +56,13 @@ export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
 // event, and older gateways close it on an unknown command.
 export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
   "lootlog.air-tag-map-threat.v1";
+
+// Offered as a subprotocol by clients that decode `air-tag.scope-updated`, and
+// listed in `session.joined` capabilities by gateways that accept `departures`
+// in `air-tag.observation`. Clients without it receive one `air-tag.updated`
+// per target and no removals.
+export const REALTIME_AIR_TAG_SCOPE_UPDATE_CAPABILITY =
+  "lootlog.air-tag-scope-update.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
@@ -422,6 +430,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("map-ping.received", MapPingEventSchema),
   serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
+  serverEvent("air-tag.scope-updated", AirTagScopeUpdateEventSchema),
   serverEvent("air-tag.map-threat-updated", AirTagMapThreatEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),

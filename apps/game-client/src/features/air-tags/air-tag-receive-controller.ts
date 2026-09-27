@@ -1,18 +1,30 @@
 import type { AirTagSubscriptionAck } from "@lootlog/protocol/realtime";
 import {
   isAirTagScopeSnapshot,
+  isAirTagScopeUpdateEvent,
   isAirTagUpdateEvent,
   type AirTagScopeSnapshot,
+  type AirTagScopeUpdateEvent,
   type AirTagTarget,
-  type AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
 
 const MAX_QUEUED_UPDATES = 1_000;
 
 const MAX_TARGETS_PER_SCOPE = 100;
 
+// Longer than the gateway takes to remove a player every observer saw leave.
+const DEPARTED_HIDE_MS = 3_000;
+
 type AirTagScopeState = Omit<AirTagScopeSnapshot, "targets"> & {
   targets: Map<string, AirTagTarget>;
+  /**
+   * Revision of each target's last update or removal. Frames of two gateway
+   * instances may arrive out of order; a late one must not restore a removed
+   * target or an older position.
+   */
+  revisions: Map<string, number>;
+  /** Revision every target not listed in `revisions` is known at. */
+  baseRevision: number;
 };
 
 const getScopeKey = ({
@@ -48,7 +60,8 @@ const compareEpoch = (
 export class AirTagReceiveController {
   private readonly scopes = new Map<string, AirTagScopeState>();
   private readonly changeListeners = new Set<() => void>();
-  private queuedUpdates: AirTagUpdateEvent[] = [];
+  private readonly departedUntil = new Map<string, number>();
+  private queuedUpdates: AirTagScopeUpdateEvent[] = [];
   private currentRequestId: string | null = null;
   private currentWorld: string | null = null;
   private currentMapId: number | null = null;
@@ -107,12 +120,11 @@ export class AirTagReceiveController {
           ? 0
           : this.now() - snapshot.serverTime;
 
-      this.scopes.set(getScopeKey(snapshot), {
-        ...snapshot,
-        targets: this.createTargetMap(
-          snapshot.targets.map((target) => toLocalTarget(target, offset)),
-        ),
-      });
+      const scope = this.createScope(snapshot, snapshot.revision);
+
+      for (const target of snapshot.targets)
+        this.setTarget(scope, toLocalTarget(target, offset), snapshot.revision);
+      this.scopes.set(getScopeKey(snapshot), scope);
     }
 
     [...queuedUpdates]
@@ -125,13 +137,38 @@ export class AirTagReceiveController {
     this.notifyChange();
   }
 
+  /** One target from a gateway that predates `air-tag.scope-updated`. */
   handleUpdate(value: unknown): void {
-    if (!isAirTagUpdateEvent(value) || !this.isCurrentMap(value)) return;
+    if (!isAirTagUpdateEvent(value)) return;
+    const { target, ...scope } = value;
 
-    // The gateway sends an update as it observes the target.
+    this.receive({ ...scope, targets: [target], removedTargetIds: [] });
+  }
+
+  handleScopeUpdate(value: unknown): void {
+    if (!isAirTagScopeUpdateEvent(value)) return;
+
+    this.receive(value);
+  }
+
+  /** Hides a player the hero saw leave until the gateway removes them. */
+  hideDeparted(targetId: string): void {
+    this.departedUntil.set(targetId, this.now() + DEPARTED_HIDE_MS);
+    this.notifyChange();
+    // Shows the player again when another member still reports them.
+    setTimeout(() => this.notifyChange(), DEPARTED_HIDE_MS);
+  }
+
+  private receive(value: AirTagScopeUpdateEvent): void {
+    if (!this.isCurrentMap(value)) return;
+    const now = this.now();
+
+    // The gateway sends an update as it observes the targets.
     const update = {
       ...value,
-      target: toLocalTarget(value.target, this.now() - value.target.observedAt),
+      targets: value.targets.map((target) =>
+        toLocalTarget(target, now - target.observedAt),
+      ),
     };
 
     if (this.currentRequestId) {
@@ -152,12 +189,18 @@ export class AirTagReceiveController {
   getRenderableTargets(now: number, ttlMs: number): AirTagTarget[] {
     const targets = new Map<string, AirTagTarget>();
 
+    for (const [targetId, hiddenUntil] of this.departedUntil) {
+      if (hiddenUntil <= now) this.departedUntil.delete(targetId);
+    }
+
     for (const scope of this.scopes.values()) {
       for (const [targetId, target] of scope.targets) {
         if (now - target.observedAt >= ttlMs) {
           scope.targets.delete(targetId);
           continue;
         }
+
+        if (this.departedUntil.has(targetId)) continue;
 
         const existing = targets.get(targetId);
 
@@ -207,6 +250,7 @@ export class AirTagReceiveController {
 
   clear(): void {
     this.scopes.clear();
+    this.departedUntil.clear();
     this.queuedUpdates = [];
     this.currentRequestId = null;
     this.currentWorld = null;
@@ -214,8 +258,9 @@ export class AirTagReceiveController {
     this.notifyChange();
   }
 
-  private applyUpdate(update: AirTagUpdateEvent): boolean {
-    const scope = this.scopes.get(getScopeKey(update));
+  private applyUpdate(update: AirTagScopeUpdateEvent): boolean {
+    const key = getScopeKey(update);
+    let scope = this.scopes.get(key);
 
     if (!scope) return false;
 
@@ -224,42 +269,69 @@ export class AirTagReceiveController {
     if (epochOrder < 0) return false;
 
     if (epochOrder > 0) {
-      this.scopes.set(getScopeKey(update), {
-        guildId: update.guildId,
-        world: update.world,
-        mapId: update.mapId,
-        epochId: update.epochId,
-        epochStartedAt: update.epochStartedAt,
-        revision: update.revision,
-        targets: this.createTargetMap([update.target]),
-      });
-
-      return true;
+      scope = this.createScope(update, 0);
+      this.scopes.set(key, scope);
     }
 
-    if (update.revision <= scope.revision) return false;
+    let changed = epochOrder > 0;
 
-    scope.revision = update.revision;
-    this.setTarget(scope.targets, update.target);
+    for (const targetId of update.removedTargetIds) {
+      if (!this.isNewer(scope, targetId, update.revision)) continue;
+      scope.revisions.set(targetId, update.revision);
+      changed = scope.targets.delete(targetId) || changed;
+    }
 
-    return true;
+    for (const target of update.targets) {
+      if (!this.isNewer(scope, target.targetId, update.revision)) continue;
+      this.setTarget(scope, target, update.revision);
+      changed = true;
+    }
+
+    scope.revision = Math.max(scope.revision, update.revision);
+
+    return changed;
   }
 
-  private createTargetMap(targets: AirTagTarget[]): Map<string, AirTagTarget> {
-    const targetMap = new Map<string, AirTagTarget>();
+  private isNewer(
+    scope: AirTagScopeState,
+    targetId: string,
+    revision: number,
+  ): boolean {
+    return revision > (scope.revisions.get(targetId) ?? scope.baseRevision);
+  }
 
-    for (const target of targets) {
-      this.setTarget(targetMap, target);
-    }
-
-    return targetMap;
+  private createScope(
+    identity: Omit<AirTagScopeSnapshot, "targets" | "serverTime">,
+    baseRevision: number,
+  ): AirTagScopeState {
+    return {
+      guildId: identity.guildId,
+      world: identity.world,
+      mapId: identity.mapId,
+      epochId: identity.epochId,
+      epochStartedAt: identity.epochStartedAt,
+      revision: identity.revision,
+      targets: new Map(),
+      revisions: new Map(),
+      baseRevision,
+    };
   }
 
   private setTarget(
-    targets: Map<string, AirTagTarget>,
+    scope: AirTagScopeState,
     target: AirTagTarget,
+    revision: number,
   ): void {
+    const { targets, revisions } = scope;
     targets.set(target.targetId, target);
+    revisions.set(target.targetId, revision);
+
+    // Removed targets leave revisions behind; keep only those of current targets.
+    if (revisions.size > MAX_TARGETS_PER_SCOPE * 4) {
+      for (const targetId of revisions.keys()) {
+        if (!targets.has(targetId)) revisions.delete(targetId);
+      }
+    }
 
     if (targets.size <= MAX_TARGETS_PER_SCOPE) return;
 
