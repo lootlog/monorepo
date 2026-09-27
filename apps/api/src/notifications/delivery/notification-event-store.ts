@@ -1,57 +1,14 @@
+import { readNotificationRuleTargets } from "#src/notifications/targets/notification-target-store";
 import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationRuleTable,
-  notificationRuleTargetTable,
-  notificationTargetTable,
   timerTable,
   watchedItemTable,
 } from "#src/database/drizzle/schema";
-import type { JsonValue } from "#src/database/json";
 
 export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
-  const targetsByRuleIds = (ruleIds: number[]) =>
-    Effect.gen(function* () {
-      const result = new Map<
-        number,
-        Array<{
-          ruleId: number;
-          targetId: number;
-          createdAt: Date;
-          target: Omit<
-            typeof notificationTargetTable.$inferSelect,
-            "metadata"
-          > & { metadata: JsonValue | null };
-        }>
-      >();
-
-      if (ruleIds.length === 0) return result;
-
-      const rows = yield* database
-        .select({
-          link: notificationRuleTargetTable,
-          target: notificationTargetTable,
-        })
-        .from(notificationRuleTargetTable)
-        .innerJoin(
-          notificationTargetTable,
-          eq(notificationRuleTargetTable.targetId, notificationTargetTable.id),
-        )
-        .where(inArray(notificationRuleTargetTable.ruleId, ruleIds));
-
-      for (const { link, target } of rows) {
-        const entries = result.get(link.ruleId) ?? [];
-        entries.push({
-          ...link,
-          target: { ...target, metadata: target.metadata },
-        });
-        result.set(link.ruleId, entries);
-      }
-
-      return result;
-    });
-
   const timerRules = (guildId: string, world: string) =>
     database
       .select()
@@ -92,7 +49,10 @@ export const makeNotificationEventStore = (database: ApiDatabaseValue) => {
           ),
         );
 
-      const targets = yield* targetsByRuleIds(rows.map(({ rule }) => rule.id));
+      const targets = yield* readNotificationRuleTargets(
+        database,
+        rows.map(({ rule }) => rule.id),
+      );
 
       return rows
         .filter(({ rule }) => (targets.get(rule.id)?.length ?? 0) > 0)
