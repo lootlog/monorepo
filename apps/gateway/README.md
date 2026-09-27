@@ -112,14 +112,15 @@ from its Redis registry atomically with the cardinality check. Heartbeats and
 publications restore both indexes atomically, including after partial eviction;
 pruning does not remove the pending offline queue or shorten its ten-second grace.
 
-## Map-ping routing and presence expiry
+## Ping routing and presence expiry
 
 Gateway indexes each connected socket by platform, character world and current
-map. A map-filtered publication intersects that index with its subscription
-audiences before checking individual recipients. Wildcard Organization
-subscriptions retain their existing meaning. Authorization, API-key restrictions,
-sender exclusion and delivery deduplication still run for each candidate, locally
-and after federation. `RealtimeHub.setPresence` owns presence assignment and index
+map. A map-filtered publication, such as a map or battle ping, intersects that
+index with its subscription audiences before checking individual recipients.
+Wildcard Organization subscriptions retain their existing meaning.
+Authorization, API-key restrictions, sender exclusion, the battle-team character
+filter, ping capability negotiation and delivery deduplication still run for
+each candidate, locally and after federation. `RealtimeHub.setPresence` owns presence assignment and index
 maintenance; callers must use it when publishing, clearing or reconciling presence.
 The index is local to a replica and rebuilds as connections register.
 
