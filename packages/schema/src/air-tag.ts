@@ -33,6 +33,8 @@ export interface AirTagObservation {
   x: number;
   y: number;
   lvl?: number;
+  /** Margonem profession letter, such as `w` or `m`. */
+  prof?: string;
   /** Margonem stasis: the player is away from the keyboard. */
   stasis?: boolean;
 }
@@ -111,6 +113,7 @@ export interface AirTagMapThreatEnemy {
   nickname: string;
   clan?: AirTagClan;
   lvl?: number;
+  prof?: string;
   stasis?: boolean;
   /** Time since the last clan-enemy sighting when the gateway sent the event; immune to client clock skew. */
   ageMs: number;
@@ -174,6 +177,8 @@ const Level = Schema.Int.check(
   Schema.isBetween({ minimum: 0, maximum: 10_000 }),
 );
 
+const Profession = Schema.NonEmptyString.check(Schema.isMaxLength(1));
+
 const AirTagRelationSchema = Schema.Literals(AIR_TAG_RELATIONS);
 
 const AirTagClanSchema = Schema.Struct({
@@ -189,6 +194,7 @@ export const AirTagObservationSchema = Schema.Struct({
   x: Coordinate,
   y: Coordinate,
   lvl: Schema.optionalKey(Level),
+  prof: Schema.optionalKey(Profession),
   stasis: Schema.optionalKey(Schema.Boolean),
 });
 
@@ -211,6 +217,7 @@ export const AirTagTargetSchema = Schema.Struct({
   x: Coordinate,
   y: Coordinate,
   lvl: Schema.optionalKey(Level),
+  prof: Schema.optionalKey(Profession),
   stasis: Schema.optionalKey(Schema.Boolean),
   observedAt: SafeNatural,
   enemyObservedAt: Schema.optionalKey(SafeNatural),
@@ -257,6 +264,7 @@ export const AirTagMapThreatEventSchema = Schema.Struct({
       nickname: ShortString,
       clan: Schema.optionalKey(AirTagClanSchema),
       lvl: Schema.optionalKey(Level),
+      prof: Schema.optionalKey(Profession),
       stasis: Schema.optionalKey(Schema.Boolean),
       ageMs: SafeNatural,
     }),

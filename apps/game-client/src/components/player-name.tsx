@@ -4,9 +4,10 @@ import type { FC } from "react";
 type PlayerNameProps = {
   className?: string;
   clanName?: string;
-  level: number;
+  /** Unknown for players seen only through older clients. */
+  level?: number;
   name: string;
-  profession: string;
+  profession?: string;
 };
 
 /**
@@ -25,8 +26,8 @@ export const PlayerName: FC<PlayerNameProps> = ({
     className={cn("ll:flex ll:min-w-0 ll:items-center ll:gap-1", className)}
   >
     <span className="ll:truncate">
-      {name} ({level}
-      {profession})
+      {name}
+      {level !== undefined && ` (${level}${profession ?? ""})`}
     </span>
     {clanName ? (
       <>

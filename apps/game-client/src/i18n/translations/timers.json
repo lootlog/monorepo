@@ -35,11 +35,15 @@
     "min": "Min:",
     "max": "Max:",
     "reset": "Timer został zresetowany",
-    "mapOccupied": "Ktoś z Lootloga jest na tej mapie",
-    "mapAfk": "Wszyscy z Lootloga na tej mapie są AFK",
+    "mapOccupied": "Gracze Lootloga na mapie: {{count}}",
+    "mapAfk": "Gracze Lootloga na mapie: {{count}}, wszyscy AFK",
+    "alliesHeading": "Gracze Lootloga na mapie",
     "afk": "AFK",
     "mapThreat": "Wrogowie na mapie: {{count}}",
     "mapThreatStale": "Wrogowie widziani niedawno na mapie: {{count}}",
+    "enemiesHeading": "Wrogowie na mapie",
+    "enemiesStaleHeading": "Wrogowie widziani niedawno",
+    "seenAgo": "{{seconds}} s temu",
     "more": "i {{count}} więcej"
   },
   "emptyState": {
