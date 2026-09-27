@@ -47,6 +47,8 @@ type ActiveMapPing = {
   mapId: number;
   /** Set when the ping marks a monster or a player rather than a tile. */
   character?: RuntimeCharacterRef;
+  /** The marked character was on this map; once it is gone, so is the ping. */
+  characterSeen?: boolean;
   x: number;
   y: number;
   senderName: string;
@@ -381,6 +383,7 @@ export class MapPingController {
 
   private readonly handleDrawFrame = () => {
     this.pruneExpired();
+    this.pruneDepartedCharacters();
 
     if (this.activePings.size === 0) {
       this.cancelExpiry();
@@ -394,6 +397,25 @@ export class MapPingController {
     this.addCharacterGlows();
     this.drawHandheldMiniMap();
   };
+
+  /**
+   * Ends a character ping once its monster died or its player left the map,
+   * instead of letting the marker jump back to the tile it was pinged on. A
+   * character this client never saw keeps the tile marker.
+   */
+  private pruneDepartedCharacters() {
+    const currentMapId = this.renderer.getMapGeometry()?.id;
+
+    for (const [id, ping] of this.activePings) {
+      if (!ping.character || ping.mapId !== currentMapId) continue;
+
+      if (this.renderer.getCharacterBounds(ping.character)) {
+        ping.characterSeen = true;
+      } else if (ping.characterSeen) {
+        this.activePings.delete(id);
+      }
+    }
+  }
 
   /** Lights up each pinged character's sprite, drawn just behind it. */
   private addCharacterGlows() {
