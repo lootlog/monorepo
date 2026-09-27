@@ -2,8 +2,8 @@ import type { CustomTimerList } from "@lootlog/schema/timer-settings";
 import { cn } from "cn";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { toolbarStripLightSubRowClassName } from "@/components/ui/toolbar-strip";
+import { TimersListChip } from "./timers-list-chip";
 
 type TimersListFilterProps = {
   lists: CustomTimerList[];
@@ -14,7 +14,8 @@ type TimersListFilterProps = {
 /**
  * A row of the player's lists under the filter strip. A click toggles a list
  * and a right-click keeps only that one, so switching views takes one click;
- * with nothing selected no list filters the timers.
+ * "all" clears the selection, and with nothing selected no list filters the
+ * timers.
  */
 export const TimersListFilter: FC<TimersListFilterProps> = ({
   lists,
@@ -41,23 +42,24 @@ export const TimersListFilter: FC<TimersListFilterProps> = ({
       role="group"
       aria-label={t("filters.listsLabel")}
       title={t("filters.listsHint")}
-      className={cn(toolbarStripLightSubRowClassName, "ll:gap-0.5")}
+      className={cn(toolbarStripLightSubRowClassName, "ll:gap-1 ll:p-1")}
     >
+      <TimersListChip
+        pressed={selected.length === 0}
+        onPressedChange={() => onChange([])}
+      >
+        {t("filters.listsAll")}
+      </TimersListChip>
       {lists.map((list) => (
-        <Button
+        <TimersListChip
           key={list.id}
-          size="xs"
-          variant="taskbar"
-          aria-pressed={selected.includes(list.id)}
-          className="ll:min-w-0 ll:max-w-full"
-          onClick={() => toggle(list.id)}
-          onContextMenu={(event) => {
-            event.preventDefault();
-            onChange([list.id]);
-          }}
+          pressed={selected.includes(list.id)}
+          title={list.name}
+          onPressedChange={() => toggle(list.id)}
+          onContextMenu={() => onChange([list.id])}
         >
           <span className="ll:truncate">{list.name}</span>
-        </Button>
+        </TimersListChip>
       ))}
     </div>
   );
