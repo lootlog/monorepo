@@ -55,20 +55,42 @@ const threat = (...args: Parameters<typeof threatData>): ServerEvent => ({
 async function setup({
   members = new Set<string>(),
   capabilities,
-}: { members?: Set<string>; capabilities?: string[] } = {}) {
+  location = true,
+}: {
+  members?: Set<string>;
+  capabilities?: string[];
+  location?: boolean;
+} = {}) {
   const harness = createOnlinePlayersTest();
   getSocket().connect();
   harness.open();
-  await harness.join(["guild-1"], policy(), capabilities);
+  await harness.join(["guild-1"], policy(location), capabilities);
   let now = 1_000_000;
+  const memberListeners = new Set<() => void>();
 
   const source = new MapThreatSource(
     getSocket(),
     "guild-1",
     "alpha",
-    { isOnlineMember: (characterId) => members.has(characterId) },
+    {
+      isOnlineMember: (characterId) => members.has(characterId),
+      subscribeChanges: (listener) => {
+        memberListeners.add(listener);
+
+        return () => memberListeners.delete(listener);
+      },
+    },
     () => now,
   );
+
+  const changeMembers = async (next: Iterable<string>) => {
+    members.clear();
+
+    for (const characterId of next) members.add(characterId);
+
+    for (const listener of memberListeners) listener();
+    await Promise.resolve();
+  };
 
   const release = source.retain();
   const changed = vi.fn();
@@ -80,7 +102,7 @@ async function setup({
     vi.advanceTimersByTime(ms);
   };
 
-  return { harness, source, release, changed, advance };
+  return { harness, source, release, changed, advance, changeMembers };
 }
 
 describe("map threat source", () => {
@@ -146,6 +168,43 @@ describe("map threat source", () => {
       threat([{ targetId: "2", ageMs: 0 }], { mapId: 8, revision: 5 }),
     );
     expect(source.getMapThreat("Karka-han")?.freshCount).toBe(2);
+    release();
+  });
+
+  it("drops a target once presence identifies it as an online member", async () => {
+    const { harness, source, release, changeMembers } = await setup();
+
+    await harness.receive(threat([{ targetId: "3", ageMs: 0 }]));
+    expect(source.getMapThreat("Karka-han")).toBeDefined();
+
+    await changeMembers(["3"]);
+    expect(source.getMapThreat("Karka-han")).toBeUndefined();
+    release();
+  });
+
+  it("fetches stored sightings once precise-location access is granted", async () => {
+    const { harness, release } = await setup({
+      location: false,
+      capabilities: [REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY],
+    });
+
+    const fetches = () =>
+      harness.wire.frames.filter(
+        (frame) =>
+          "type" in frame && frame.type === "air-tag.map-threats.fetch",
+      ).length;
+
+    expect(fetches()).toBe(0);
+    await harness.receive({
+      v: 1,
+      type: "permissions.updated",
+      data: {
+        organizationIds: ["guild-1"],
+        subscriptionScopes: [],
+        accessPolicy: policy(true),
+      },
+    });
+    expect(fetches()).toBe(1);
     release();
   });
 
