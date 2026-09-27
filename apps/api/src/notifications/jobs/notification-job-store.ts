@@ -1,5 +1,8 @@
 import { selectNotificationJobsWithRelations } from "./notification-job-query.js";
-import { mapNotificationTarget } from "#src/notifications/targets/notification-target-store";
+import {
+  mapNotificationTarget,
+  readNotificationRuleTargets,
+} from "#src/notifications/targets/notification-target-store";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -7,7 +10,6 @@ import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
   notificationJobTable,
   notificationRuleTable,
-  notificationRuleTargetTable,
   notificationTargetTable,
   timerTable,
 } from "#src/database/drizzle/schema";
@@ -204,26 +206,10 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       );
 
   const targetsForRule = (ruleId: number) =>
-    database
-      .select({
-        link: notificationRuleTargetTable,
-        target: notificationTargetTable,
-      })
-      .from(notificationRuleTargetTable)
-      .innerJoin(
-        notificationTargetTable,
-        eq(notificationRuleTargetTable.targetId, notificationTargetTable.id),
-      )
-      .where(eq(notificationRuleTargetTable.ruleId, ruleId))
-      .pipe(
-        Effect.mapError(failure("notifications.jobStore.ruleTargets")),
-        Effect.map((rows) =>
-          rows.map(({ link, target }) => ({
-            ...link,
-            target: mapNotificationTarget(target),
-          })),
-        ),
-      );
+    readNotificationRuleTargets(database, [ruleId]).pipe(
+      Effect.mapError(failure("notifications.jobStore.ruleTargets")),
+      Effect.map((targets) => targets.get(ruleId) ?? []),
+    );
 
   const findRule = (ruleId: number) =>
     Effect.gen(function* () {
