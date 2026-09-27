@@ -3,6 +3,39 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Event kill history
+
+`GET /guilds/{guildId}/events/{eventId}/kill-history` adds a paginated summary
+of kills visible to the caller. It requires `LOOTLOG_EVENTS_READ` and supports
+read-only API keys within their Organization scope. Optional query parameters
+are `heroId`, `memberId`, `cursor` and `limit`. The limit is an integer from 1
+to 100 and defaults to 20.
+
+The response contains `kind`, `data` and `nextCursor`. `kind` is `event` unless
+`memberId` is supplied, when it is `member`. Summaries include hero identity,
+timestamps, manual closure status and `participantCount`. This count includes
+all saved participant point records, including participants with
+`wasPresent: false`. Member summaries also include the selected member and
+their scoring and tracking data. Lists omit map presence, roles and other
+participants' full records. Existing detail and timeline endpoints remain
+available.
+
+Treat the new cursor as opaque and pass it unchanged with the same Organization,
+event and filters. Results use `killedAt DESC, id DESC`; the cursor remains usable
+if its boundary kill is deleted. Invalid cursors, mismatched filters and invalid
+limits return `400`. Each request applies current access rules. Pagination does
+not freeze a snapshot of the history.
+
+The existing event, hero and member kill-list endpoints are deprecated. Their
+response shapes and UUID cursors remain supported with corrected chronological
+pagination. A missing, hidden or out-of-scope UUID cursor returns the same
+`400 Invalid cursor` response. Inaccessible resources return `404`.
+
+Apply the database index migration and deploy the API before migrating clients
+to the new endpoint. The migration changes indexes only. Generated clients
+include the endpoint for the next SDK release; SDK publication remains a
+separate release step.
+
 ## Unreleased — Realtime latency probe
 
 The realtime v1 `session.joined` event and `session.join` response add an

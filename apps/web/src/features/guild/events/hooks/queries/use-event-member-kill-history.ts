@@ -1,30 +1,8 @@
 import {
-  eventsRankingControllerGetMemberKillHistory,
-  getEventsRankingControllerGetMemberKillHistoryQueryKey,
+  listEventKillHistory,
+  getListEventKillHistoryQueryKey,
 } from "@lootlog/client/main";
-import type {
-  HeroKillHeroNpc,
-  KillParticipant,
-  KillParticipantMember,
-} from "./use-hero-kill-history";
 import { useCursorInfiniteQuery } from "./use-cursor-infinite-query";
-
-export interface EventMemberKill {
-  id: string;
-  heroNpcId: string;
-  killedAt: string;
-  minSpawnTimeAtKill: string;
-  maxSpawnTimeAtKill: string;
-  isManualClose: boolean;
-  heroNpc: HeroKillHeroNpc;
-  memberPoint: KillParticipant | null;
-}
-
-export interface EventMemberKillHistoryResponse {
-  member: KillParticipantMember;
-  data: EventMemberKill[];
-  nextCursor: string | null;
-}
 
 interface UseEventMemberKillHistoryOptions {
   guildId: string;
@@ -41,28 +19,31 @@ export const useEventMemberKillHistory = ({
   heroId,
   limit = 20,
 }: UseEventMemberKillHistoryOptions) => {
-  const baseParams: NonNullable<
-    Parameters<typeof eventsRankingControllerGetMemberKillHistory>[1]
-  > = {
+  const baseParams: NonNullable<Parameters<typeof listEventKillHistory>[1]> = {
     limit: String(limit),
+    memberId,
   };
 
   if (heroId) baseParams.heroId = heroId;
 
   return useCursorInfiniteQuery({
-    queryKey: getEventsRankingControllerGetMemberKillHistoryQueryKey(
-      { guildId, eventId, memberId },
-      baseParams,
-    ),
-    fetchPage: (cursor, signal) =>
-      eventsRankingControllerGetMemberKillHistory(
-        { guildId, eventId, memberId },
+    queryKey: getListEventKillHistoryQueryKey({ guildId, eventId }, baseParams),
+    fetchPage: async (cursor, signal) => {
+      const response = await listEventKillHistory(
+        { guildId, eventId },
         {
           ...baseParams,
           cursor,
         },
         { signal },
-      ),
+      );
+
+      if (response.kind !== "member") {
+        throw new Error("Unexpected kill history response");
+      }
+
+      return response;
+    },
     enabled: !!guildId && !!eventId && !!memberId,
   });
 };
