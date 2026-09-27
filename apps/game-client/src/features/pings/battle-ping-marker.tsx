@@ -45,7 +45,10 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
 
   return (
     // `display: contents` keeps the warrior element as the positioning box.
-    <div className={`${getLootlogHostPortalThemeClassName()} ll:contents`}>
+    // The marker lives outside #lootlog-root, so it stills its own animations.
+    <div
+      className={`${getLootlogHostPortalThemeClassName()} ll:contents${pulse ? "" : " ll-battle-ping-still"}`}
+    >
       {color ? <BattlePingGround color={color} /> : null}
       <div
         className="ll:pointer-events-none ll:absolute ll:left-1/2"

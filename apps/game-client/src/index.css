@@ -431,6 +431,15 @@ body.si .ll-theme-boundary .ll-custom-cursor-pointer * {
   opacity: 0;
 }
 
+/* Stilled when Lootlog animations are off; the marker is rendered outside
+   #lootlog-root, where the ll-reduced-motion class does not reach. */
+.ll-battle-ping-still .ll-battle-ping-drop,
+.ll-battle-ping-still .ll-battle-ping-bob,
+.ll-battle-ping-still .ll-battle-ping-ground-pulse,
+.ll-battle-ping-still .ll-battle-ping-radiate {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ll-battle-ping-drop,
   .ll-battle-ping-bob,
