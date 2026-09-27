@@ -112,4 +112,27 @@ describe("MapPingService legacy parity", () => {
     // Older clients strip the key, but an explicit undefined would fail encoding.
     expect(events[1]).not.toHaveProperty("npcId");
   });
+
+  test("carries a targeted player and rejects a ping naming two targets", async () => {
+    const events: unknown[] = [];
+
+    const service = new MapPingService(
+      { command: { eval: async () => [1, 1234, 0] } },
+      {
+        publishToScopes: async (_scopes, event) => {
+          events.push(event.data);
+        },
+      },
+    );
+
+    const ping = { expectedMapId: 7, type: "enemy", x: 10, y: 11 } as const;
+
+    await service.send(makeSocket(), { ...ping, playerId: 5_001 });
+
+    expect(
+      await service.send(makeSocket(), { ...ping, npcId: 42, playerId: 5_001 }),
+    ).toEqual({ status: "rejected", code: "invalid-payload" });
+    expect(events).toEqual([expect.objectContaining({ playerId: 5_001 })]);
+    expect(events[0]).not.toHaveProperty("npcId");
+  });
 });
