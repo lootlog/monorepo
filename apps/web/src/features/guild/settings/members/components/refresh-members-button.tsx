@@ -1,5 +1,4 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useRefreshStatus } from "@/features/guild/settings/members/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
 import { useTranslation } from "react-i18next";
@@ -9,6 +8,7 @@ import {
   getMembersControllerGetGuildMembersQueryKey,
   getMembersControllerGetLatestRefreshJobQueryKey,
   useMembersControllerGetLatestRefreshJob,
+  type MembersControllerGetLatestRefreshJobQueryResult,
   useMembersControllerRefreshAllMembers,
 } from "@lootlog/client/main";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,7 +21,6 @@ export const RefreshMembersButton = () => {
   const guildId = useGuildId();
   const resolvedGuildId = getResolvedGuildId(guildId);
   const queryClient = useQueryClient();
-  const { markAsRefreshed, markAsFailed } = useRefreshStatus();
 
   const latestRefreshJobQuery = useMembersControllerGetLatestRefreshJob(
     { guildId: resolvedGuildId },
@@ -37,7 +36,7 @@ export const RefreshMembersButton = () => {
 
   const refreshAllMembersMutation = useMembersControllerRefreshAllMembers({
     mutation: {
-      onSuccess: (_data, variables) => {
+      onSuccess: (data, variables) => {
         const currentGuildId = variables?.pathParams.guildId;
 
         toast.success(t("settings.members.refreshStarted"));
@@ -46,18 +45,18 @@ export const RefreshMembersButton = () => {
           return;
         }
 
-        void Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: getMembersControllerGetGuildMembersQueryKey({
-              guildId: currentGuildId,
-            }),
+        // Realtime progress can reach the cache before this response.
+        queryClient.setQueryData<MembersControllerGetLatestRefreshJobQueryResult>(
+          getMembersControllerGetLatestRefreshJobQueryKey({
+            guildId: currentGuildId,
           }),
-          queryClient.invalidateQueries({
-            queryKey: getMembersControllerGetLatestRefreshJobQueryKey({
-              guildId: currentGuildId,
-            }),
+          (cached) => (cached?.id === data.id ? cached : { ...data }),
+        );
+        void queryClient.invalidateQueries({
+          queryKey: getMembersControllerGetGuildMembersQueryKey({
+            guildId: currentGuildId,
           }),
-        ]);
+        });
       },
       onError: (error, variables) => {
         const message = getApiErrorMessage(error);
@@ -83,23 +82,10 @@ export const RefreshMembersButton = () => {
     },
   });
 
-  const latestJob = latestRefreshJobQuery.data;
+  useRefreshJob();
+  const currentJob = latestRefreshJobQuery.data;
   const isPending = refreshAllMembersMutation.isPending;
-  const data = refreshAllMembersMutation.data;
-
-  const currentJob = data ?? latestJob;
-  const nextAvailableAt = currentJob?.nextAvailableAt ?? null;
-  const countdown = useCountdown(nextAvailableAt);
-  const currentJobId = countdown.isExpired ? undefined : currentJob?.id;
-
-  const { jobStatus } = useRefreshJob(
-    guildId,
-    currentJobId,
-    markAsRefreshed,
-    markAsFailed,
-  );
-
-  const displayJob = jobStatus ?? currentJob;
+  const countdown = useCountdown(currentJob?.nextAvailableAt ?? null);
 
   const handleRefresh = () => {
     if (!guildId) {
@@ -114,7 +100,7 @@ export const RefreshMembersButton = () => {
   return (
     <RefreshMembersStatus
       countdown={countdown}
-      displayJob={displayJob}
+      displayJob={currentJob}
       isPending={isPending}
       onRefresh={handleRefresh}
     />

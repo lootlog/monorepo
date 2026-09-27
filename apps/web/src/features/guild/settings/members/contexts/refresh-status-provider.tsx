@@ -69,24 +69,31 @@ export const RefreshStatusProvider = ({
     setFailedIds(new Set());
   };
 
-  useRefreshJobUpdates(guild?.id, (data) => {
-    if (
-      data.refreshedIds?.length ||
-      data.skippedIds?.length ||
-      data.failedIds?.length
-    ) {
-      // Skipped and failed attempts can update Discord sync diagnostics.
-      void queryClient.invalidateQueries({
-        queryKey: getMembersControllerGetGuildMembersQueryKey({
-          guildId: routeGuildId ?? data.guildId,
-        }),
-      });
-    }
+  const invalidateMembers = (guildId: string) =>
+    void queryClient.invalidateQueries({
+      queryKey: getMembersControllerGetGuildMembersQueryKey({ guildId }),
+    });
 
-    if (data.refreshedIds?.length) markAsRefreshed(data.refreshedIds);
+  useRefreshJobUpdates(
+    guild?.id,
+    (data) => {
+      if (
+        data.refreshedIds?.length ||
+        data.skippedIds?.length ||
+        data.failedIds?.length
+      ) {
+        // Skipped and failed attempts can update Discord sync diagnostics.
+        invalidateMembers(routeGuildId ?? data.guildId);
+      }
 
-    if (data.failedIds?.length) markAsFailed(data.failedIds);
-  });
+      if (data.refreshedIds?.length) markAsRefreshed(data.refreshedIds);
+
+      if (data.failedIds?.length) markAsFailed(data.failedIds);
+    },
+    () => {
+      if (guild) invalidateMembers(routeGuildId ?? guild.id);
+    },
+  );
 
   return (
     <RefreshStatusContext.Provider
