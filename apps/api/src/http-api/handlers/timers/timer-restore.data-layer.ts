@@ -7,7 +7,6 @@ import {
 } from "./timer-restore-snapshot.js";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
@@ -31,21 +30,9 @@ import {
   toTimersDataFailure,
 } from "./timer-errors.js";
 import {
-  mapTimerResponse,
-  type TimerPublishedEvent,
-} from "#src/timers/timer-projection";
-
-export interface RestoreTimerPorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
-}
+  publishTimerUpdate,
+  type TimerUpdatePorts,
+} from "./timer-update-publication.js";
 
 const resolveResetRollbackSnapshot = Effect.fnUntraced(function* (
   database: Pick<typeof ApiDatabase.Service, "select">,
@@ -85,7 +72,7 @@ const resolveResetRollbackSnapshot = Effect.fnUntraced(function* (
 
 export const makeRestoreTimer = (
   database: typeof ApiDatabase.Service,
-  ports: RestoreTimerPorts,
+  ports: TimerUpdatePorts,
 ) => {
   const operation = Effect.fn("restoreTimerData")(function* (
     access: TimersGuildAccess,
@@ -309,15 +296,7 @@ export const makeRestoreTimer = (
       }),
     );
 
-    const response = mapTimerResponse(projection);
-    yield* ports.invalidateList(access.guild.id);
-    yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-    yield* ports.publish(
-      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-      response,
-    );
-
-    return response;
+    return yield* publishTimerUpdate(ports, access.guild.id, projection);
   });
 
   return (access: TimersGuildAccess, historyEntryId: number) =>

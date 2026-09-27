@@ -2,7 +2,6 @@ import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 
 import { and, eq } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { memberTable, timerTable } from "#src/database/drizzle/schema";
 
@@ -18,21 +17,9 @@ import {
   toTimersDataFailure,
 } from "./timer-errors.js";
 import {
-  mapTimerResponse,
-  type TimerPublishedEvent,
-} from "#src/timers/timer-projection";
-
-export interface ManualTimerPorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
-}
+  publishTimerUpdate,
+  type TimerUpdatePorts,
+} from "./timer-update-publication.js";
 
 const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
   if (payload.customMinSpawnTime && payload.customMaxSpawnTime) {
@@ -77,7 +64,7 @@ const spawnWindow = (payload: CreateManualTimerRequest, now: Date) => {
 
 export const makeManualTimer = (
   database: typeof ApiDatabase.Service,
-  ports: ManualTimerPorts,
+  ports: TimerUpdatePorts,
 ) => {
   const operation = Effect.fn("createManualTimerData")(function* (
     access: TimersGuildAccess,
@@ -165,15 +152,7 @@ export const makeManualTimer = (
       }),
     );
 
-    const response = mapTimerResponse(projection);
-    yield* ports.invalidateList(access.guild.id);
-    yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-    yield* ports.publish(
-      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-      response,
-    );
-
-    return response;
+    return yield* publishTimerUpdate(ports, access.guild.id, projection);
   });
 
   return (access: TimersGuildAccess, payload: CreateManualTimerRequest) =>

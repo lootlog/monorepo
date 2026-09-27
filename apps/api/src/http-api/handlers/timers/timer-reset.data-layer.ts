@@ -7,7 +7,6 @@ import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
-import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
   memberTable,
@@ -27,21 +26,12 @@ import type { ResetTimerRequest } from "#src/contracts/timers/schemas";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import { TimersMemberNotFound, toTimersDataFailure } from "./timer-errors.js";
 import {
-  mapTimerResponse,
-  timerNpcField,
-  type TimerPublishedEvent,
-} from "#src/timers/timer-projection";
+  publishTimerUpdate,
+  type TimerUpdatePorts,
+} from "./timer-update-publication.js";
+import { timerNpcField } from "#src/timers/timer-projection";
 
-export interface ResetTimerPorts {
-  readonly invalidateList: (guildId: string) => Effect.Effect<unknown, unknown>;
-  readonly publish: <
-    Key extends
-      | typeof RabbitRoutingKey.GUILDS_TIMERS_UPDATE
-      | typeof RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-  >(
-    routingKey: Key,
-    payload: TimerPublishedEvent<Key>,
-  ) => Effect.Effect<unknown, unknown>;
+export interface ResetTimerPorts extends TimerUpdatePorts {
   readonly withLock: <A, E>(
     key: string,
     effect: Effect.Effect<A, E>,
@@ -258,15 +248,7 @@ export const makeResetTimer = (
       ),
     );
 
-    const response = mapTimerResponse(projection);
-    yield* ports.invalidateList(access.guild.id);
-    yield* ports.publish(RabbitRoutingKey.GUILDS_TIMERS_UPDATE, response);
-    yield* ports.publish(
-      RabbitRoutingKey.NOTIFICATIONS_TIMER_UPDATED,
-      response,
-    );
-
-    return response;
+    return yield* publishTimerUpdate(ports, access.guild.id, projection);
   });
 
   return (
