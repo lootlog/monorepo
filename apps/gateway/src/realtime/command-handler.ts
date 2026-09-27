@@ -145,6 +145,7 @@ export class CommandHandler {
       | "sendResponse"
       | "sendEvent"
       | "replaceSubscriptions"
+      | "setPresence"
       | "getLocalSocketsForUser"
       | "publishPermissionRebalance"
       | "reconnectUser"
@@ -755,7 +756,7 @@ export class CommandHandler {
               ),
             ),
           );
-        socket.data.presence = undefined;
+        hub.setPresence(socket, undefined);
 
         return yield* Effect.fail(new NoAuthorizedOrganizations());
       }

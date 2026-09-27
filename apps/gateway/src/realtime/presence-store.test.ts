@@ -12,6 +12,7 @@ class MemoryRedis {
   readonly values = new Map<string, string>();
   readonly sets = new Map<string, Set<string>>();
   readonly sortedSets = new Map<string, Map<string, number>>();
+  readonly lists = new Map<string, string[]>();
 
   async set(
     key: string,
@@ -44,6 +45,24 @@ class MemoryRedis {
     const args = parameters.map(String);
 
     if (_script.includes("-- presence:refresh")) return this.refresh(args);
+
+    if (_script.includes("-- presence:expiry-organization"))
+      return this.expiryOrganization(args);
+
+    if (_script.includes("-- presence:expiry-legacy-batch"))
+      return this.expiryLegacyBatch(args);
+
+    if (_script.includes("-- presence:expiry-index"))
+      return this.indexExpiry(args, _numberOfKeys);
+
+    if (_script.includes("-- presence:expiry-ready"))
+      return this.expiryReady(args);
+
+    if (_script.includes("-- presence:expiry-remove"))
+      return this.removeExpired(args, _numberOfKeys);
+
+    if (_script.includes("-- presence:remove"))
+      return this.removePresence(args);
 
     if (_script.includes("-- presence:prune-organization")) {
       if (this.sets.get(args[0]!)?.size) return 0;
@@ -81,17 +100,182 @@ class MemoryRedis {
     return this.claimOffline(args, _numberOfKeys);
   }
 
+  private expiryOrganization(args: string[]): string {
+    if (this.values.get(args[0]!) !== args[5]) return "";
+    const current = this.values.get(args[4]!);
+
+    if (current) return current;
+    let pending = this.lists.get(args[3]!) ?? [];
+
+    if (pending.length === 0) {
+      const organizations = [...(this.sets.get(args[1]!) ?? [])];
+      const cursor = Number(this.values.get(args[2]!) ?? 0);
+      const size = Number(args[6]);
+      pending = organizations.slice(cursor, cursor + size);
+      this.values.set(
+        args[2]!,
+        String(cursor + size >= organizations.length ? 0 : cursor + size),
+      );
+    }
+
+    const organization = pending.shift() ?? "";
+    this.lists.set(args[3]!, pending);
+
+    if (organization) this.values.set(args[4]!, organization);
+
+    return organization;
+  }
+
+  private expiryLegacyBatch(args: string[]): string {
+    if (this.values.get(args[0]!) !== args[6])
+      return JSON.stringify({ keys: [], complete: false });
+    const members = [...(this.sets.get(args[1]!) ?? [])];
+    const cursor = Number(this.values.get(args[2]!) ?? 0);
+    const size = Number(args[7]);
+    const complete = cursor + size >= members.length;
+    this.values.set(args[2]!, String(complete ? 0 : cursor + size));
+    const due = this.sortedSets.get(args[4]!);
+
+    const keys = members
+      .slice(cursor, cursor + size)
+      .filter(
+        (key) =>
+          !due?.has(
+            JSON.stringify([args[8], key.slice(key.lastIndexOf(":") + 1)]),
+          ),
+      );
+
+    if (complete) this.values.delete(args[5]!);
+
+    return JSON.stringify({ keys, complete });
+  }
+
+  private indexExpiry(args: string[], numberOfKeys: number): number {
+    const values = args.slice(numberOfKeys);
+
+    if (this.values.get(args[0]!) !== values[0]) return 0;
+    const due = this.sortedSets.get(args[1]!) ?? new Map<string, number>();
+
+    for (let index = 2; index < numberOfKeys; index += 2) {
+      const offset = 1 + ((index - 2) / 2) * 4;
+
+      if (
+        (this.values.get(args[index]!) ?? "") !== values[offset] ||
+        (this.values.get(args[index + 1]!) ?? "") !== values[offset + 1]
+      )
+        continue;
+      due.set(values[offset + 2]!, Number(values[offset + 3]));
+    }
+
+    this.sortedSets.set(args[1]!, due);
+
+    return 1;
+  }
+
+  private expiryReady(args: string[]): string {
+    if (this.values.get(args[0]!) !== args[2]) return "[]";
+
+    return JSON.stringify(
+      [...(this.sortedSets.get(args[1]!) ?? [])]
+        .filter(([, score]) => score <= Number(args[4]))
+        .sort((a, b) => a[1] - b[1])
+        .slice(0, Number(args[5]))
+        .map(([member]) => member),
+    );
+  }
+
+  private removeExpired(args: string[], numberOfKeys: number): number {
+    const values = args.slice(numberOfKeys);
+
+    if (
+      this.values.get(args[0]!) !== values[0] ||
+      this.values.get(args[5]!) !== values[0]
+    )
+      return 0;
+    const score = this.sortedSets.get(args[4]!)?.get(values[3]!);
+
+    if (score === undefined || score > Number(values[4])) return 0;
+
+    if (
+      (this.values.get(args[1]!) ?? "") !== values[1] ||
+      (this.values.get(args[2]!) ?? "") !== values[2]
+    )
+      return 0;
+
+    if (
+      numberOfKeys > 6 &&
+      !this.replaceExpiredDeparture(args, values, numberOfKeys)
+    )
+      return 0;
+
+    this.values.delete(args[1]!);
+    this.values.delete(args[2]!);
+    this.sets.get(args[3]!)?.delete(values[5]!);
+    this.sortedSets.get(args[4]!)?.delete(values[3]!);
+
+    return 1;
+  }
+
+  private replaceExpiredDeparture(
+    args: string[],
+    values: string[],
+    numberOfKeys: number,
+  ): number {
+    const count = numberOfKeys - 10;
+
+    if ((this.sets.get(args[8]!)?.size ?? 0) !== count) return 0;
+
+    for (let index = 10; index < numberOfKeys; index++) {
+      if (
+        (this.values.get(args[index]!) ?? "") !== values[index] ||
+        !this.sets.get(args[8]!)?.has(values[index + count]!)
+      )
+        return 0;
+    }
+
+    for (let index = 10; index < numberOfKeys; index++) {
+      this.values.delete(args[index]!);
+      this.sets.get(args[7]!)?.delete(values[index + count]!);
+      this.sets.get(args[8]!)?.delete(values[index + count]!);
+      this.sortedSets.get(args[9]!)?.delete(values[index + count]!);
+    }
+
+    this.values.set(args[6]!, values[7]!);
+
+    for (const key of [args[7]!, args[8]!]) {
+      const set = this.sets.get(key) ?? new Set<string>();
+      set.add(values[8]!);
+      this.sets.set(key, set);
+    }
+
+    const due = this.sortedSets.get(args[9]!) ?? new Map<string, number>();
+    due.set(values[8]!, Number(values[9]));
+    this.sortedSets.set(args[9]!, due);
+
+    return 1;
+  }
+
+  private async removePresence(args: string[]): Promise<number> {
+    await this.del(args[0]!, args[1]!);
+    await this.srem(args[2]!, args[4]!);
+    this.sortedSets.get(args[3]!)?.delete(args[5]!);
+
+    return 1;
+  }
+
   private async refresh(args: string[]): Promise<string | number> {
     const key = args[0]!;
+    await this.set(key, args[5]!);
+    await this.set(args[1]!, args[7]!);
 
-    await this.set(key, args[4]!);
-    await this.set(args[1]!, args[6]!);
+    if (!this.sets.get(args[2]!)?.has(args[8]!))
+      await this.sadd(args[2]!, args[8]!);
 
-    if (!this.sets.get(args[2]!)?.has(args[7]!))
-      await this.sadd(args[2]!, args[7]!);
-
-    if (!this.sets.get(args[3]!)?.has(args[8]!))
-      await this.sadd(args[3]!, args[8]!);
+    if (!this.sets.get(args[3]!)?.has(args[9]!))
+      await this.sadd(args[3]!, args[9]!);
+    const due = this.sortedSets.get(args[4]!) ?? new Map<string, number>();
+    due.set(args[10]!, Number(args[11]));
+    this.sortedSets.set(args[4]!, due);
 
     return 1;
   }
@@ -300,6 +484,10 @@ class RecordingHub {
   readonly instanceId = "00000000-0000-4000-8000-000000000001";
   readonly presenceEvents: unknown[] = [];
   readonly events: unknown[] = [];
+
+  setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
+    socket.data.presence = presence;
+  }
 
   async publishPresence(
     _scope: Parameters<RealtimeHub["publishPresence"]>[0],
@@ -1092,6 +1280,99 @@ describe("PresenceStore", () => {
     });
   });
 
+  test("does not fetch active payloads while draining a burst in bounded candidate batches", async () => {
+    let now = 1_000;
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const store = new PresenceStore({ command: redis }, hub, () => now);
+    const viewer = session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]);
+
+    for (let index = 0; index < 205; index++) {
+      await Effect.runPromise(
+        store.publish(
+          socket({
+            ...viewer,
+            connectionId: `burst-${index}`,
+            userId: `user-${index}`,
+          }),
+          { organizationIds: [] },
+        ),
+      );
+    }
+
+    const mget = spyOn(redis, "mget");
+    await Effect.runPromise(store.sweepExpired());
+    expect(mget).not.toHaveBeenCalled();
+    expect(hub.events).toEqual([]);
+
+    now += PRESENCE_EXPIRY_MS;
+    await Effect.runPromise(store.sweepExpired());
+    expect(mget.mock.calls.every(([keys]) => keys.length <= 200)).toBe(true);
+    expect(hub.events).toHaveLength(205);
+    expect(
+      (await Effect.runPromise(store.snapshot(viewer, "organization-1")))
+        .presences,
+    ).toEqual([]);
+    await Effect.runPromise(store.sweepExpired());
+    expect(hub.events).toHaveLength(205);
+  });
+
+  test("a heartbeat after expiry capture keeps the session and suppresses a remove delta", async () => {
+    let now = 1_000;
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const store = new PresenceStore({ command: redis }, hub, () => now);
+    const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    now += PRESENCE_EXPIRY_MS;
+    const evaluate = redis.eval.bind(redis);
+    let refreshed = false;
+    spyOn(redis, "eval").mockImplementation(
+      async (script, numberOfKeys, ...parameters) => {
+        if (!refreshed && script.includes("-- presence:expiry-remove")) {
+          refreshed = true;
+          await Effect.runPromise(
+            store.heartbeat(game, game.data.connectionId),
+          );
+        }
+
+        return evaluate(script, numberOfKeys, ...parameters);
+      },
+    );
+    await Effect.runPromise(store.sweepExpired());
+    expect(hub.events).toEqual([]);
+    expect(
+      (await Effect.runPromise(store.snapshot(game.data, "organization-1")))
+        .presences,
+    ).toMatchObject([{ lastSeen: now }]);
+  });
+
+  test("an older writer's fresh metadata repairs an early deadline after payload eviction", async () => {
+    let now = 1_000;
+    const redis = new MemoryRedis();
+    const hub = new RecordingHub();
+    const store = new PresenceStore({ command: redis }, hub, () => now);
+    const game = socket(session([Permission.LOOTLOG_ONLINE_PLAYERS_READ]));
+    await Effect.runPromise(store.publish(game, { organizationIds: [] }));
+    const oldDue = new Map(redis.sortedSets.get("presence:expiry:due"));
+    now += PRESENCE_EXPIRY_MS - 1_000;
+    await Effect.runPromise(store.heartbeat(game, game.data.connectionId));
+    redis.sortedSets.set("presence:expiry:due", oldDue);
+    redis.values.delete("presence:organization-1:session-1");
+    now += 1_000;
+    await Effect.runPromise(store.sweepExpired());
+    expect(hub.events).toEqual([]);
+    expect(
+      await redis.get("presence:metadata:organization-1:session-1"),
+    ).not.toBeNull();
+    now += PRESENCE_EXPIRY_MS;
+    await Effect.runPromise(store.sweepExpired());
+    expect(hub.events).toHaveLength(1);
+    expect(
+      await redis.get("presence:metadata:organization-1:session-1"),
+    ).toBeNull();
+  });
+
   test("clears published presence and coverage when all organization access is revoked", async () => {
     const redis = new MemoryRedis();
     const hub = new RecordingHub();
@@ -1389,12 +1670,18 @@ test("expiry cleanup resumes after a transient Redis failure", async () => {
   let attempts = 0;
 
   class RecoveringRedis extends MemoryRedis {
-    override async smembers(key: string) {
-      attempts++;
+    override async set(
+      key: string,
+      value: string,
+      ...options: Array<string | number>
+    ) {
+      if (key === "presence:expiry:sweep-lock") {
+        attempts++;
 
-      if (attempts === 1) throw new Error("Redis temporarily unavailable");
+        if (attempts === 1) throw new Error("Redis temporarily unavailable");
+      }
 
-      return super.smembers(key);
+      return super.set(key, value, ...options);
     }
   }
 

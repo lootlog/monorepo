@@ -79,6 +79,12 @@ const getScopeAudienceKey = (scope: Scope): string =>
     scope.mapId,
   ]);
 
+const getLocationAudienceKey = (
+  platform: SessionData["platform"],
+  world: string,
+  mapId: number,
+): string => JSON.stringify(["recipient-location", platform, world, mapId]);
+
 // Four optional fields produce at most 16 exact/wildcard subscription keys.
 const matchingScopeAudienceKeys = (scope: Scope): string[] => {
   let keys: Array<Array<string | number | undefined>> = [[scope.topic]];
@@ -117,6 +123,7 @@ export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
+  private readonly locationKeys = new WeakMap<GatewaySocket, string>();
   private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
@@ -145,12 +152,14 @@ export class RealtimeHub {
     if (previous) {
       for (const key of this.audienceKeys(previous.data))
         this.removeAudience(key, previous);
+      this.removeLocationAudience(previous);
     }
 
     this.sockets.set(socket.data.connectionId, socket);
 
     for (const key of this.audienceKeys(socket.data))
       this.addAudience(key, socket);
+    this.setPresence(socket, socket.data.presence);
   }
 
   detach(socket: GatewaySocket): void {
@@ -159,6 +168,28 @@ export class RealtimeHub {
 
     for (const key of this.audienceKeys(socket.data))
       this.removeAudience(key, socket);
+    this.removeLocationAudience(socket);
+  }
+
+  setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
+    socket.data.presence = presence;
+    const world = presence?.character?.world;
+    const mapId = presence?.location?.mapId;
+
+    const nextKey =
+      this.sockets.get(socket.data.connectionId) === socket &&
+      world !== undefined &&
+      mapId !== undefined
+        ? getLocationAudienceKey(socket.data.platform, world, mapId)
+        : undefined;
+
+    if (this.locationKeys.get(socket) === nextKey) return;
+    this.removeLocationAudience(socket);
+
+    if (nextKey !== undefined) {
+      this.addAudience(nextKey, socket);
+      this.locationKeys.set(socket, nextKey);
+    }
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -651,6 +682,14 @@ export class RealtimeHub {
     if (audience.size === 0) this.audiences.delete(key);
   }
 
+  private removeLocationAudience(socket: GatewaySocket): void {
+    const key = this.locationKeys.get(socket);
+
+    if (key === undefined) return;
+    this.removeAudience(key, socket);
+    this.locationKeys.delete(socket);
+  }
+
   private candidates(
     message: FederatedRealtimeMessage,
   ): ReadonlySet<GatewaySocket> {
@@ -669,11 +708,51 @@ export class RealtimeHub {
       keys.push(...matchingScopeAudienceKeys(scope));
     }
 
-    const [first, ...others] = keys.flatMap((key) => {
+    const audiences = keys.flatMap((key) => {
       const audience = this.audiences.get(key);
 
       return audience ? [audience] : [];
     });
+
+    if (
+      message.recipientPlatform !== undefined &&
+      message.recipientWorld !== undefined &&
+      message.recipientMapId !== undefined
+    ) {
+      const location = this.audiences.get(
+        getLocationAudienceKey(
+          message.recipientPlatform,
+          message.recipientWorld,
+          message.recipientMapId,
+        ),
+      );
+
+      const candidates = new Set<GatewaySocket>();
+
+      if (!location) return candidates;
+
+      const audienceSize = audiences.reduce(
+        (size, audience) => size + audience.size,
+        0,
+      );
+
+      if (location.size < audienceSize) {
+        for (const socket of location) {
+          if (audiences.some((audience) => audience.has(socket)))
+            candidates.add(socket);
+        }
+      } else {
+        for (const audience of audiences) {
+          for (const socket of audience) {
+            if (location.has(socket)) candidates.add(socket);
+          }
+        }
+      }
+
+      return candidates;
+    }
+
+    const [first, ...others] = audiences;
 
     if (!first) return new Set();
 
