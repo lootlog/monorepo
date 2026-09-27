@@ -12,7 +12,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
+import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { MemberKillsList } from "./member-kills-list";
 
 await initializeTestTranslations();
@@ -32,6 +32,7 @@ describe("MemberKillsList", () => {
       allKills: [],
       eventId: "event-1",
       fetchNextPage: vi.fn(),
+      onRetry: vi.fn(),
       guildId: "guild-1",
       hasNextPage: false,
       isFetchingNextPage: false,
@@ -58,6 +59,7 @@ describe("MemberKillsList", () => {
     const commonProps = {
       eventId: "event-1",
       fetchNextPage: vi.fn(),
+      onRetry: vi.fn(),
       guildId: "guild-1",
       hasError: false,
       hasNextPage: false,
@@ -100,25 +102,15 @@ describe("MemberKillsList", () => {
           createKill({
             basePoints: 1,
             bonusBreakdown: null,
-            afkPercentage: 0,
-            id: "point-1",
             manualAdjustmentPoints: 0.25,
-            member: {
-              avatar: null,
-              id: 8112,
-              name: "Wild",
-              userId: "user-1",
-            },
-            memberId: 8112,
             points: 1.5,
-            timeOnMapSeconds: 10_320,
             trackingDurationPercentage: 70,
             trackingDurationSeconds: 10_320,
-            wasPresent: true,
           }),
         ]}
         eventId="event-1"
         fetchNextPage={vi.fn()}
+        onRetry={vi.fn()}
         guildId="guild-1"
         hasError={false}
         hasNextPage={false}
@@ -189,6 +181,7 @@ describe("MemberKillsList", () => {
         allKills={[createKill()]}
         eventId="event-1"
         fetchNextPage={fetchNextPage}
+        onRetry={vi.fn()}
         guildId="guild-1"
         hasError={false}
         hasNextPage
@@ -201,11 +194,49 @@ describe("MemberKillsList", () => {
 
     await waitFor(() => expect(fetchNextPage).toHaveBeenCalledTimes(1));
   });
+
+  it("preserves loaded member history after a failed page and retries on request", () => {
+    const fetchNextPage = vi.fn();
+    const retry = vi.fn();
+    vi.stubGlobal("IntersectionObserver", ImmediateIntersectionObserver);
+
+    renderList(
+      <MemberKillsList
+        allKills={[createKill()]}
+        eventId="event-1"
+        guildId="guild-1"
+        scrollElement={document.createElement("div")}
+        resetKey="all"
+        isLoading={false}
+        hasError
+        hasNextPage
+        isFetchingNextPage={false}
+        fetchNextPage={fetchNextPage}
+        onRetry={retry}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "events.kills.openKillDetails" }),
+    ).toBeTruthy();
+    expect(fetchNextPage).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+    expect(retry).toHaveBeenCalledOnce();
+  });
 });
 
 function createKill(
-  memberPoint: EventMemberKill["memberPoint"] = null,
-): EventMemberKill {
+  memberPoint: KillHistoryMemberEntry["memberPoint"] = {
+    points: 1,
+    basePoints: 1,
+    manualAdjustmentPoints: 0,
+    bonusBreakdown: null,
+    trackingDurationSeconds: 60,
+    trackingDurationPercentage: 100,
+  },
+): KillHistoryMemberEntry {
   return {
     heroNpc: {
       id: "hero-1",
@@ -220,6 +251,7 @@ function createKill(
     killedAt: "2026-07-31T01:27:00.000Z",
     maxSpawnTimeAtKill: "2026-07-31T01:27:00.000Z",
     memberPoint,
+    participantCount: 1,
     minSpawnTimeAtKill: "2026-07-31T01:27:00.000Z",
   };
 }

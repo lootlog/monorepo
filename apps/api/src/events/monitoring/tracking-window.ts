@@ -114,3 +114,12 @@ export function getTrackingWindowDurationSeconds(params: {
     ),
   );
 }
+
+export function getEffectiveWindowEndAt(
+  killedAt: Date,
+  maxSpawnTimeAtKill: Date,
+) {
+  return killedAt.getTime() <= maxSpawnTimeAtKill.getTime()
+    ? killedAt
+    : maxSpawnTimeAtKill;
+}
