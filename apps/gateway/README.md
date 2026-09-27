@@ -318,6 +318,15 @@ until the replica is subscribed to the federation channel, and with
 `503` while the replica is unavailable. `lootlog_gateway_available` samples the
 same state as `1` or `0`.
 
+A replica drops a federated frame whose type its schema does not know, and a
+rolling upgrade runs old and new replicas side by side. Each replica therefore
+reports `FEDERATION_VERSION` in its metrics snapshot (older images report
+none, read as `1`), and `clusterFederationVersion` holds the lowest version
+among live replicas. A new federated event type bumps the version and is
+published only once every live replica reports it; until then AirTags federate
+one `air-tag.updated` per target instead of `air-tag.scope-updated`. A replica
+that rejoins after a rollback is noticed within one 10-second sample.
+
 Redis Pub/Sub has no replay. When a replica's federation subscriber disconnects,
 it withdraws readiness and immediately closes every local socket with `1013`,
 because frames published during the gap may include events or
