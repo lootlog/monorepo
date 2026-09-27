@@ -6,9 +6,9 @@ type BattlePingGroundProps = {
 };
 
 /**
- * A pool of light under the warrior's feet with a ring that pulses outwards,
- * like the map marker's ground ellipse. It sits where the game draws its own
- * `.selector` and stays behind the sprite.
+ * A pool of light under the warrior's feet with a ring, like the map marker's
+ * ground ellipse. It sits where the game draws its own `.selector` and stays
+ * behind the sprite.
  */
 export const BattlePingGround: FC<BattlePingGroundProps> = ({ color }) => (
   <div
@@ -37,17 +37,6 @@ export const BattlePingGround: FC<BattlePingGroundProps> = ({ color }) => (
         stroke={color}
         strokeWidth={2}
         style={{ filter: `drop-shadow(0 0 3px ${color})` }}
-        vectorEffect="non-scaling-stroke"
-      />
-      <ellipse
-        className="ll-battle-ping-ground-pulse"
-        cx={50}
-        cy={13}
-        fill="none"
-        rx={46}
-        ry={10}
-        stroke={color}
-        strokeWidth={2}
         vectorEffect="non-scaling-stroke"
       />
     </svg>

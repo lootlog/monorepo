@@ -78,9 +78,9 @@ const presentation = (
   translationKey: `types.${type}`,
 });
 
-const BATTLE_MARK_MS = 5_000;
+const BATTLE_MARK_MS = 3_000;
 
-const BATTLE_REQUEST_MS = 6_000;
+const BATTLE_REQUEST_MS = 4_000;
 
 export const PING_PRESENTATION = {
   attention: presentation("attention", "alert", "gold", 2_500, 1),

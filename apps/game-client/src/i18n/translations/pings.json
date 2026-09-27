@@ -30,8 +30,16 @@
     "warriorTitle": "{{name}} · {{profession}}"
   },
   "battle": {
-    "requestFor": "{{sender}} prosi Cię: {{request}}",
-    "markedBy": "od {{sender}}"
+    "windowTitle": "Pingi w walce",
+    "target": "Cel drużyny",
+    "recent": "Ostatnie",
+    "markedBy": "od {{sender}}",
+    "markedByYou": "od Ciebie",
+    "you": "Ty",
+    "dead": "nie żyje",
+    "unknownWarrior": "Nieznany wojownik",
+    "justNow": "teraz",
+    "secondsAgo": "{{seconds}} s temu"
   },
   "settings": {
     "sectionTitle": "Pingi",
