@@ -1,5 +1,9 @@
 import type { MapPingEvent, MapPingType } from "@lootlog/schema/map-ping";
 import {
+  createNpcGlow,
+  type NpcGlow,
+} from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
+import {
   rendererRuntimeAdapter,
   getMapCanvasCoordinate,
   getMiniMapCanvasCoordinate,
@@ -171,10 +175,12 @@ export class MapPingController {
   private expiryTimeoutId: number | null = null;
   private enabled = false;
   private readonly drawable: RuntimeDrawable;
+  private readonly npcGlows = new Map<string, NpcGlow>();
 
   constructor(
     private readonly now: () => number = () => performance.now(),
     private readonly renderer: RendererRuntimeAdapter = rendererRuntimeAdapter,
+    private readonly createGlow: typeof createNpcGlow = createNpcGlow,
   ) {
     this.drawable = {
       draw: (context) => this.drawMainMap(context),
@@ -200,6 +206,7 @@ export class MapPingController {
     this.cancelExpiry();
     this.detachDrawRegistration();
     this.activePings.clear();
+    this.npcGlows.clear();
   }
 
   addOptimistic(
@@ -267,6 +274,7 @@ export class MapPingController {
 
   clear() {
     this.activePings.clear();
+    this.npcGlows.clear();
     this.cancelExpiry();
     this.detachDrawRegistration();
   }
@@ -345,8 +353,51 @@ export class MapPingController {
 
     this.scheduleExpiry();
     this.renderer.addDrawable(this.drawable);
+    this.addNpcGlows();
     this.drawHandheldMiniMap();
   };
+
+  /** Lights up each pinged monster's sprite, drawn just behind it. */
+  private addNpcGlows() {
+    const currentMapId = this.renderer.getMapGeometry()?.id;
+
+    for (const id of this.npcGlows.keys()) {
+      if (!this.activePings.has(id)) this.npcGlows.delete(id);
+    }
+
+    for (const ping of this.activePings.values()) {
+      if (ping.npcId === undefined || ping.mapId !== currentMapId) {
+        continue;
+      }
+
+      let glow = this.npcGlows.get(ping.id);
+
+      if (!glow) {
+        const tone = PING_TONES[getPingStyle(ping).presentation.tone];
+
+        glow = this.createGlow(ping.npcId, tone.glow);
+        this.npcGlows.set(ping.id, glow);
+      }
+
+      if (!glow.isPresent()) {
+        continue;
+      }
+
+      const pulse = 0.75 + Math.sin((this.now() - ping.startedAt) / 180) * 0.25;
+      glow.setAlpha(this.getFade(ping) * pulse);
+      this.renderer.addDrawable(glow);
+    }
+  }
+
+  /** Full strength for most of a ping's life, then a fade out. */
+  private getFade(ping: ActiveMapPing) {
+    const progress = Math.min(
+      1,
+      (this.now() - ping.startedAt) / getPingStyle(ping).durationMs,
+    );
+
+    return Math.min(1, (1 - progress) / 0.3);
+  }
 
   private drawMainMap(context: CanvasRenderingContext2D) {
     const geometry = this.renderer.getMapGeometry();
@@ -370,16 +421,14 @@ export class MapPingController {
           : this.renderer.getNpcBounds(ping.npcId);
 
       if (npc) {
-        // Ring the monster's feet and float the badge above its name label.
-        const x = (npc.left + npc.right) / 2 - offset[0];
-        const radius = Math.min(24, (npc.right - npc.left) / 2) / 1.3;
-
+        // The sprite itself glows; float the badge above its name label.
         this.drawMarker(context, ping, {
           badgeAnchorY: npc.top - offset[1] - 14,
-          baseRadius: radius,
-          groundY: npc.bottom - offset[1] - radius * 0.6,
+          baseRadius: 13,
+          ground: false,
+          groundY: npc.bottom - offset[1],
           showSender: true,
-          x,
+          x: (npc.left + npc.right) / 2 - offset[0],
         });
         continue;
       }
@@ -390,6 +439,7 @@ export class MapPingController {
       this.drawMarker(context, ping, {
         badgeAnchorY: y,
         baseRadius: 13,
+        ground: true,
         groundY: y,
         showSender: true,
         x,
@@ -426,6 +476,7 @@ export class MapPingController {
       this.drawMarker(context, ping, {
         badgeAnchorY: y,
         baseRadius: radius,
+        ground: true,
         groundY: y,
         showSender: false,
         x,
@@ -440,46 +491,31 @@ export class MapPingController {
       /** The badge floats above this point. */
       badgeAnchorY: number;
       baseRadius: number;
+      /** Draw the pulsing ellipse on the ground. */
+      ground: boolean;
       /** Centre of the ground ellipse. */
       groundY: number;
       showSender: boolean;
       x: number;
     },
   ) {
-    const { badgeAnchorY, baseRadius, groundY: y, showSender, x } = placement;
-    const elapsed = this.now() - ping.startedAt;
-    const { durationMs, presentation } = getPingStyle(ping);
-    const tone = PING_TONES[presentation.tone];
-    const progress = Math.min(1, elapsed / durationMs);
-
-    context.save();
-    // Hold full strength for most of the lifetime, then fade out.
-    context.globalAlpha = Math.min(1, (1 - progress) / 0.3);
-    context.lineWidth = 2;
-    context.strokeStyle = tone.glow;
-    context.shadowColor = tone.glow;
-    context.shadowBlur = 8;
-
-    const radiusX = baseRadius * 1.3;
-    const radiusY = baseRadius * 0.6;
-    context.beginPath();
-    context.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
-    context.stroke();
-
-    const pulse = (elapsed % 1_000) / 1_000;
-    context.globalAlpha *= 1 - pulse;
-    context.beginPath();
-    context.ellipse(
+    const {
+      badgeAnchorY,
+      baseRadius,
+      ground,
+      groundY: y,
+      showSender,
       x,
-      y,
-      radiusX * (0.6 + pulse * 0.9),
-      radiusY * (0.6 + pulse * 0.9),
-      0,
-      0,
-      Math.PI * 2,
-    );
-    context.stroke();
-    context.restore();
+    } = placement;
+
+    const elapsed = this.now() - ping.startedAt;
+    const { presentation } = getPingStyle(ping);
+    const tone = PING_TONES[presentation.tone];
+    const fade = this.getFade(ping);
+
+    if (ground) {
+      this.drawGround(context, tone.glow, x, y, baseRadius, elapsed, fade);
+    }
 
     if (!showSender) {
       this.drawIcon(context, presentation.icon, x, y, baseRadius * 1.1);
@@ -488,7 +524,7 @@ export class MapPingController {
     }
 
     context.save();
-    context.globalAlpha = Math.min(1, (1 - progress) / 0.3);
+    context.globalAlpha = fade;
 
     // The badge drops onto the tile, then bobs gently.
     const drop = Math.max(0, 1 - elapsed / 260);
@@ -515,6 +551,44 @@ export class MapPingController {
     this.drawIcon(context, presentation.icon, x, badgeY, 15);
 
     this.drawPlate(context, ping, tone.glow, x, badgeY - badgeRadius - 6);
+    context.restore();
+  }
+
+  private drawGround(
+    context: CanvasRenderingContext2D,
+    color: string,
+    x: number,
+    y: number,
+    baseRadius: number,
+    elapsed: number,
+    fade: number,
+  ) {
+    context.save();
+    context.globalAlpha = fade;
+    context.lineWidth = 2;
+    context.strokeStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 8;
+
+    const radiusX = baseRadius * 1.3;
+    const radiusY = baseRadius * 0.6;
+    context.beginPath();
+    context.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    context.stroke();
+
+    const pulse = (elapsed % 1_000) / 1_000;
+    context.globalAlpha *= 1 - pulse;
+    context.beginPath();
+    context.ellipse(
+      x,
+      y,
+      radiusX * (0.6 + pulse * 0.9),
+      radiusY * (0.6 + pulse * 0.9),
+      0,
+      0,
+      Math.PI * 2,
+    );
+    context.stroke();
     context.restore();
   }
 
