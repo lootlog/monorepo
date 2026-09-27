@@ -104,6 +104,15 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
 
 type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
 
+// Pings carry no Organization, so they reach sockets only through authorized routing scopes.
+const isPingEvent = (
+  event: Event,
+): event is Extract<
+  Event,
+  { type: "map-ping.received" | "battle-ping.received" }
+> =>
+  event.type === "map-ping.received" || event.type === "battle-ping.received";
+
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
@@ -220,7 +229,7 @@ export class RealtimeHub {
   sendEvent(socket: GatewaySocket, event: Event): boolean {
     if (!canReadApiKeyEvent(socket.data, event)) return false;
 
-    if (event.type === "map-ping.received") return false;
+    if (isPingEvent(event)) return false;
 
     if (!this.canReadOrganization(socket.data, event)) return false;
 
@@ -259,6 +268,7 @@ export class RealtimeHub {
       readonly recipientPlatform?: "game" | "web-app";
       readonly recipientWorld?: string;
       readonly recipientMapId?: number;
+      readonly recipientCharacterIds?: readonly string[];
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;
@@ -387,6 +397,7 @@ export class RealtimeHub {
     readonly recipientPlatform?: "game" | "web-app";
     readonly recipientWorld?: string;
     readonly recipientMapId?: number;
+    readonly recipientCharacterIds?: readonly string[];
     readonly organizationId?: string;
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
@@ -408,6 +419,7 @@ export class RealtimeHub {
         recipientPlatform: options.recipientPlatform,
         recipientWorld: options.recipientWorld,
         recipientMapId: options.recipientMapId,
+        recipientCharacterIds: options.recipientCharacterIds,
         organizationId: options.organizationId,
         presenceAudience: options.presenceAudience,
         frame: toBase64(prepared.bytes),
@@ -545,8 +557,7 @@ export class RealtimeHub {
     const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
 
     // A ping carries no Organization in its payload, so only routing scopes can authorize it.
-    if (frame.type === "map-ping.received" && scopes.length === 0)
-      return () => false;
+    if (isPingEvent(frame) && scopes.length === 0) return () => false;
     const organizationId = eventOrganizationId(frame);
 
     const scopeAudiences = scopes.map((scope) => ({
@@ -572,7 +583,7 @@ export class RealtimeHub {
       )
         return false;
 
-      if (socket.data.apiKeyAccess && frame.type === "map-ping.received")
+      if (socket.data.apiKeyAccess && isPingEvent(frame))
         return scopes.every(
           (scope) =>
             scope.organizationId !== undefined &&
@@ -696,6 +707,13 @@ export class RealtimeHub {
       socket.data.presence?.location?.mapId !== message.recipientMapId
     )
       return false;
+
+    if (message.recipientCharacterIds !== undefined) {
+      const characterId = socket.data.presence?.character?.characterId;
+
+      if (!characterId || !message.recipientCharacterIds.includes(characterId))
+        return false;
+    }
 
     return true;
   }

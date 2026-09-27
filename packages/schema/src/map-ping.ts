@@ -7,6 +7,11 @@ export type MapPingType = (typeof MAP_PING_TYPES)[number];
 
 const MapPingTypeSchema = Schema.Literals(MAP_PING_TYPES);
 
+/** Margonem NPC ids are positive 32-bit integers. */
+const MapPingNpcIdSchema = Schema.Int.check(
+  Schema.isBetween({ minimum: 1, maximum: 2_147_483_647 }),
+);
+
 const MapPingRejectCodeSchema = Schema.Literals([
   "forbidden",
   "invalid-context",
@@ -22,6 +27,8 @@ export interface MapPingSendPayload {
   type: MapPingType;
   x: number;
   y: number;
+  /** The NPC the ping targets. Older gateways and clients ignore it. */
+  npcId?: number;
 }
 
 type MapPingRejectCode =
@@ -49,6 +56,7 @@ export interface MapPingEvent {
   type: MapPingType;
   x: number;
   y: number;
+  npcId?: number;
   sender: {
     characterId: string;
     name: string;
@@ -61,6 +69,7 @@ export const MapPingSendPayloadSchema = Schema.Struct({
   type: MapPingTypeSchema,
   x: NonNegativeInt,
   y: NonNegativeInt,
+  npcId: Schema.optionalKey(MapPingNpcIdSchema),
 });
 
 export const MapPingAckSchema = Schema.Union([
@@ -82,6 +91,7 @@ export const MapPingEventSchema = Schema.Struct({
   type: MapPingTypeSchema,
   x: NonNegativeInt,
   y: NonNegativeInt,
+  npcId: Schema.optionalKey(MapPingNpcIdSchema),
   sender: Schema.Struct({
     characterId: Schema.NonEmptyString,
     name: Schema.NonEmptyString,

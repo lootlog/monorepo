@@ -2,8 +2,8 @@ import { getSocket } from "@/lib/socket";
 import { useGlobalStore } from "@/store/global.store";
 import { GatewayEvent } from "@/config/gateway";
 import type { GameEvent } from "@lootlog/margonem/game-events";
-import { mapPingController } from "@/features/map-pings/map-ping-controller";
-import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { mapPingController } from "@/features/pings/map-ping-controller";
+import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useGameStore } from "@/store/game.store";
@@ -36,7 +36,7 @@ export class MapChangeProcessor {
     }
 
     useDialogStore.getState().clearNpcContext();
-    mapPingInteractionController.cancel();
+    pingInteractionController.cancel();
     mapPingController.clear();
 
     const { connected, joinedGuilds } = useGlobalStore.getState().socketState;

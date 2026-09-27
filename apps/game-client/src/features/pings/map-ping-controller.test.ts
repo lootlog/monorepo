@@ -255,6 +255,74 @@ describe("map ping coordinates", () => {
     testRuntimeWindow.Engine = originalEngine;
     testRuntimeWindow.API = originalApi;
   });
+
+  it("lights a pinged monster behind its sprite until the ping expires or it leaves", () => {
+    let now = 0;
+    const frame = new Map<"draw", () => void>();
+    let npcPresent = true;
+    const added: RuntimeDrawable[] = [];
+
+    const glow = {
+      draw: vi.fn<(context: CanvasRenderingContext2D) => void>(),
+      getAlwaysDraw: () => true,
+      getOrder: () => 9.1,
+      isPresent: () => npcPresent,
+      setAlpha: vi.fn<(alpha: number) => void>(),
+    };
+
+    const createGlow = vi.fn<(npcId: number, color: string) => typeof glow>(
+      () => glow,
+    );
+
+    const controller = new MapPingController(
+      () => now,
+      {
+        addDrawable: (drawable) => added.push(drawable),
+        findAttackableNpcAt: () => null,
+        getHandheldMiniMap: () => null,
+        getHighestOrder: () => 20_007,
+        getMapGeometry: () => ({
+          id: 42,
+          offset: [0, 0],
+          size: { x: 100, y: 100 },
+          tileSize: 32,
+        }),
+        getNpcBounds: () => ({ bottom: 320, left: 384, right: 416, top: 240 }),
+        isAvailable: () => true,
+        subscribeDraw: (callback) => {
+          frame.set("draw", callback);
+
+          return () => undefined;
+        },
+      },
+      createGlow,
+    );
+
+    controller.register();
+    controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "attention", "Uwaga");
+    controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "enemy", "Bij", 91);
+
+    const drawFrame = frame.get("draw");
+
+    if (!drawFrame) throw new Error("Expected draw callback");
+    drawFrame();
+    expect(createGlow).toHaveBeenCalledOnce();
+    expect(createGlow.mock.calls[0]?.[0]).toBe(91);
+    expect(added).toContain(glow);
+
+    added.length = 0;
+    npcPresent = false;
+    drawFrame();
+    expect(added).not.toContain(glow);
+
+    added.length = 0;
+    npcPresent = true;
+    now += 8_000;
+    drawFrame();
+    expect(added).not.toContain(glow);
+
+    controller.unregister();
+  });
 });
 
 import { testRuntimeWindow } from "@/test/test-runtime-window";

@@ -7,6 +7,10 @@ import {
   AirTagUpdateEventSchema,
 } from "@lootlog/schema/air-tag";
 import {
+  BattlePingEventSchema,
+  BattlePingSendPayloadSchema,
+} from "@lootlog/schema/battle-ping";
+import {
   MapPingAckSchema,
   MapPingEventSchema,
   MapPingSendPayloadSchema,
@@ -31,6 +35,12 @@ export const REALTIME_SUBPROTOCOL = "lootlog.realtime.v1";
 // Listed in `session.joined` capabilities. Older gateways close the socket on an
 // unknown command, so clients send `connection.ping` only when it is listed.
 export const REALTIME_PING_CAPABILITY = "connection.ping";
+
+// Offered as a subprotocol by clients that decode `battle-ping.received`, and
+// listed in `session.joined` capabilities by gateways that accept
+// `battle-ping.send`. Older clients close the socket on an unknown event, and
+// older gateways close it on an unknown command.
+export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
@@ -221,6 +231,12 @@ export const MapPingCommand = command(
   MapPingSendPayloadSchema,
 );
 
+// Acknowledged with `MapPingAckSchema`: both pings share one reject vocabulary.
+export const BattlePingCommand = command(
+  "battle-ping.send",
+  BattlePingSendPayloadSchema,
+);
+
 export const AirTagSubscriptionCommand = command(
   "air-tag.subscription",
   Schema.Struct({
@@ -280,6 +296,7 @@ export const ClientCommand = Schema.Union([
   SubscribeCommand,
   UnsubscribeCommand,
   MapPingCommand,
+  BattlePingCommand,
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
 ]);
@@ -376,6 +393,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("party-gathering.cancelled", OrganizationEvent),
   serverEvent("party-ready-room.updated", OrganizationEvent),
   serverEvent("map-ping.received", MapPingEventSchema),
+  serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),

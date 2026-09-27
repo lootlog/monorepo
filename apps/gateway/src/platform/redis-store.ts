@@ -26,6 +26,7 @@ export interface FederatedRealtimeMessage {
   readonly recipientPlatform?: "game" | "web-app";
   readonly recipientWorld?: string;
   readonly recipientMapId?: number;
+  readonly recipientCharacterIds?: ReadonlyArray<string>;
   readonly presenceAudience?: "basic" | "precise";
   readonly organizationId?: string;
   readonly frame?: string;
@@ -57,6 +58,7 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
     recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
     recipientWorld: Schema.optional(Schema.String),
     recipientMapId: Schema.optional(Schema.Number),
+    recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
     presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
     organizationId: Schema.optional(Schema.String),
     frame: Schema.optional(Schema.String),

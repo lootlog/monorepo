@@ -42,6 +42,8 @@ export enum GatewayEvent {
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
   MAP_PING_SEND = "map-ping:send",
   MAP_PING_RECEIVE = "map-ping:receive",
+  BATTLE_PING_SEND = "battle-ping:send",
+  BATTLE_PING_RECEIVE = "battle-ping:receive",
   AIR_TAG_SUBSCRIPTION = "air-tag:subscription",
   AIR_TAG_OBSERVATION = "air-tag:observation",
   AIR_TAG_UPDATE = "air-tag:update",
