@@ -37,6 +37,7 @@ const trackedNpc = (id = 500) => ({
 const notification = (id = 500): StoredNotification => ({
   notificationId: `notification-${id}`,
   listKey: `notification-${id}`,
+  reportIds: [`notification-${id}`],
   receivedAtMs: Date.now(),
   servers: ["guild-1"],
   world: "luvia",

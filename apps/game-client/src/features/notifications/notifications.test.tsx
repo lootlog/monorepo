@@ -17,6 +17,7 @@ const createMention = (id: string, message: string): StoredNotification => ({
   discordId: "discord-1",
   guildId: "guild-1",
   listKey: id,
+  reportIds: [id],
   message,
   notificationId: id,
   receivedAtMs: Date.now(),

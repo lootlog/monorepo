@@ -36,6 +36,7 @@ const notification: StoredNotification = {
   discordId: "discord-1",
   guildId: "guild-1",
   listKey: "notification-1",
+  reportIds: ["notification-1"],
   message: "hello",
   notificationId: "notification-1",
   receivedAtMs: 1,
@@ -48,6 +49,7 @@ const createNotifications = (count: number) =>
   Array.from({ length: count }, (_, index) => ({
     ...notification,
     listKey: `notification-${index}`,
+    reportIds: [`notification-${index}`],
     notificationId: `notification-${index}`,
   }));
 
@@ -226,6 +228,7 @@ describe("NotificationsList", () => {
       ...notification,
       notificationId: "second",
       listKey: "second",
+      reportIds: ["second"],
       message: "Second",
     };
 

@@ -20,7 +20,7 @@ import {
   getChatNpcTextColor,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
-import { ChatNpcCountBadge } from "./chat-npc-count-badge";
+import { CountBadge } from "@/components/count-badge";
 
 type ChatNpcMessageViewProps = {
   all: boolean;
@@ -148,7 +148,7 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
                 </span>
               ) : null}
             </div>
-            <ChatNpcCountBadge count={count} />
+            <CountBadge count={count} />
           </div>
 
           {appearance.showNpcLocationAndCoordinates &&

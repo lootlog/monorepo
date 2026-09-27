@@ -85,6 +85,7 @@ describe("resetTransientRuntimeState", () => {
           message: "Hello",
           servers: ["guild"],
           listKey: "notification",
+          reportIds: ["notification"],
           receivedAtMs: Date.now(),
         },
       ],

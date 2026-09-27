@@ -22,6 +22,7 @@ const createNotification = (
   message: "Hej",
   servers: [guildId],
   listKey: notificationId,
+  reportIds: [notificationId],
   receivedAtMs: 1,
 });
 

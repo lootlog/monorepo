@@ -20,6 +20,7 @@ const createStoredNotification = (
   message: "Hej",
   servers: ["guild-1"],
   listKey: "notification-1",
+  reportIds: ["notification-1"],
   receivedAtMs: Date.now(),
   ...overrides,
 });
@@ -48,11 +49,13 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: Date.now(),
         }),
         createStoredNotification({
           notificationId: "notification-2",
           listKey: "notification-2",
+          reportIds: ["notification-2"],
           receivedAtMs: Date.now(),
         }),
       ],
@@ -109,6 +112,7 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: Date.now(),
         }),
       ],
@@ -151,6 +155,7 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: Date.now(),
         }),
       ],
@@ -184,6 +189,7 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: Date.now(),
         }),
       ],
@@ -219,6 +225,7 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "mention-1",
           listKey: "mention-1",
+          reportIds: ["mention-1"],
           type: "chat-mention",
         }),
       ],

@@ -39,6 +39,8 @@ export type StoredNotification = (
 ) & {
   listKey: string;
   receivedAtMs: number;
+  /** Distinct notification ids grouped into this row, first report first. */
+  reportIds: string[];
 };
 
 export type NotificationAutoHideState = {
@@ -64,9 +66,10 @@ interface NotificationsState {
   notificationAutoHideByListKey: Record<string, NotificationAutoHideState>;
   latestNotificationAnimationCycle: number;
   latestPresentationStartedEmpty: boolean;
+  /** Returns the presentations that opened a new row rather than joining one. */
   presentNotifications: (
     presentations: readonly NotificationPresentation[],
-  ) => void;
+  ) => ReadonlySet<NotificationPresentation>;
   clearNotifications: () => void;
   removeNotifications: (ids: readonly string[]) => void;
   removeNotification: (id: string) => void;
@@ -92,85 +95,25 @@ const getMergedServers = (
   ...new Set([...currentNotification.servers, ...nextNotification.servers]),
 ];
 
-type RecencyIndexNode = {
-  key: string;
-  newerItemId?: number;
-  olderItemId?: number;
-};
-
-const createRecencyIndex = () => {
-  const newestItemIdByKey = new Map<string, number>();
-  const nodeByItemId = new Map<number, RecencyIndexNode>();
-
-  const remove = (itemId: number) => {
-    const node = nodeByItemId.get(itemId);
-
-    if (!node) {
-      return;
-    }
-
-    if (node.olderItemId !== undefined) {
-      const olderNode = nodeByItemId.get(node.olderItemId);
-
-      if (olderNode) {
-        olderNode.newerItemId = node.newerItemId;
-      }
-    }
-
-    if (node.newerItemId !== undefined) {
-      const newerNode = nodeByItemId.get(node.newerItemId);
-
-      if (newerNode) {
-        newerNode.olderItemId = node.olderItemId;
-      }
-    } else if (node.olderItemId === undefined) {
-      newestItemIdByKey.delete(node.key);
-    } else {
-      newestItemIdByKey.set(node.key, node.olderItemId);
-    }
-
-    nodeByItemId.delete(itemId);
-  };
-
-  return {
-    getNewestItemId: (key: string) => newestItemIdByKey.get(key),
-    set: (itemId: number, key?: string) => {
-      remove(itemId);
-
-      if (key === undefined) {
-        return;
-      }
-
-      const olderItemId = newestItemIdByKey.get(key);
-      const node: RecencyIndexNode = { key, olderItemId };
-      nodeByItemId.set(itemId, node);
-
-      if (olderItemId !== undefined) {
-        const olderNode = nodeByItemId.get(olderItemId);
-
-        if (olderNode) {
-          olderNode.newerItemId = itemId;
-        }
-      }
-
-      newestItemIdByKey.set(key, itemId);
-    },
-  };
-};
-
 /**
- * Runs once per stored notification on every presentation, so it must stay
- * allocation-light. The discriminator and numeric id come first and the world
- * last, so the key stays unambiguous whatever characters the world contains.
+ * Players with automatic sending report the same NPC every few seconds, so
+ * reports of one NPC on one world share a row while it is listed: the first
+ * report keeps its sender and data, later ones only raise the count. Party
+ * gathering reports keep their own row because joining targets their id.
  */
-const getNpcWorldLookupKey = (
+const getNpcGroupKey = (
   notification: PresentableNotification | StoredNotification,
 ) => {
-  const npcId = "npc" in notification ? notification.npc?.id : undefined;
+  if (
+    !("npc" in notification) ||
+    !notification.npc ||
+    notification.message ||
+    notification.isGatheringParty
+  ) {
+    return undefined;
+  }
 
-  return npcId === undefined
-    ? `u::${notification.world}`
-    : `n:${npcId}:${notification.world}`;
+  return `${notification.npc.id}:${notification.world}`;
 };
 
 const upsertNotificationBatch = (
@@ -182,84 +125,80 @@ const upsertNotificationBatch = (
     receivedAtMs: number,
   ) => void,
 ) => {
-  const notificationsByItemId = new Map<number, StoredNotification>();
-  const notificationIdIndex = createRecencyIndex();
-  const npcWorldIndex = createRecencyIndex();
-  let nextItemId = 0;
+  // Oldest first, so a later index always wins for a shared lookup key.
+  const rows = [...currentNotifications].reverse();
+  const rowIndexByReportId = new Map<string, number>();
+  const rowIndexByNpcGroupKey = new Map<string, number>();
+  const addedPresentations = new Set<NotificationPresentation>();
 
-  for (let index = currentNotifications.length - 1; index >= 0; index -= 1) {
-    const notification = currentNotifications[index];
-
-    if (!notification) {
-      continue;
+  const indexRow = (row: StoredNotification, rowIndex: number) => {
+    for (const reportId of row.reportIds) {
+      rowIndexByReportId.set(reportId, rowIndex);
     }
 
-    const itemId = nextItemId;
-    nextItemId += 1;
-    notificationsByItemId.set(itemId, notification);
-    notificationIdIndex.set(itemId, notification.notificationId);
-    npcWorldIndex.set(
-      itemId,
-      isPartyGatheringNotification(notification)
-        ? undefined
-        : getNpcWorldLookupKey(notification),
-    );
-  }
+    const npcGroupKey = getNpcGroupKey(row);
+
+    if (npcGroupKey !== undefined) {
+      rowIndexByNpcGroupKey.set(npcGroupKey, rowIndex);
+    }
+  };
+
+  rows.forEach(indexRow);
 
   for (const presentation of presentations) {
     const { notification } = presentation;
     const receivedAtMs = Date.now();
+    const reportRowIndex = rowIndexByReportId.get(notification.notificationId);
+    const npcGroupKey = getNpcGroupKey(notification);
 
-    let itemId = notificationIdIndex.getNewestItemId(
-      notification.notificationId,
-    );
-
-    if (
-      itemId === undefined &&
-      !isPartyGatheringNotification(notification) &&
-      !("message" in notification && notification.message)
-    ) {
-      itemId = npcWorldIndex.getNewestItemId(
-        getNpcWorldLookupKey(notification),
-      );
-    }
+    const rowIndex =
+      reportRowIndex ??
+      (npcGroupKey === undefined
+        ? undefined
+        : rowIndexByNpcGroupKey.get(npcGroupKey));
 
     const existingNotification =
-      itemId === undefined ? undefined : notificationsByItemId.get(itemId);
+      rowIndex === undefined ? undefined : rows[rowIndex];
 
-    let storedNotification: StoredNotification;
-
-    if (existingNotification && itemId !== undefined) {
-      storedNotification = {
-        ...existingNotification,
-        ...notification,
-        listKey: existingNotification.listKey,
-        receivedAtMs,
-        servers: getMergedServers(existingNotification, notification),
-      };
-      notificationsByItemId.delete(itemId);
-    } else {
-      itemId = nextItemId;
-      nextItemId += 1;
-      storedNotification = {
+    if (rowIndex === undefined || !existingNotification) {
+      const storedNotification: StoredNotification = {
         ...notification,
         listKey: notification.notificationId,
         receivedAtMs,
+        reportIds: [notification.notificationId],
       };
+
+      rows.push(storedNotification);
+      indexRow(storedNotification, rows.length - 1);
+      addedPresentations.add(presentation);
+      onStoredNotification(presentation, storedNotification, receivedAtMs);
+      continue;
     }
 
-    notificationsByItemId.set(itemId, storedNotification);
-    notificationIdIndex.set(itemId, storedNotification.notificationId);
-    npcWorldIndex.set(
-      itemId,
-      isPartyGatheringNotification(storedNotification)
-        ? undefined
-        : getNpcWorldLookupKey(storedNotification),
-    );
+    // A redelivered first report may carry updated content; any other match
+    // is a later report of a grouped NPC, which must not replace the sender.
+    const storedNotification: StoredNotification = {
+      ...(existingNotification.notificationId === notification.notificationId
+        ? { ...existingNotification, ...notification }
+        : existingNotification),
+      listKey: existingNotification.listKey,
+      receivedAtMs,
+      reportIds:
+        reportRowIndex === undefined
+          ? [...existingNotification.reportIds, notification.notificationId]
+          : existingNotification.reportIds,
+      servers: getMergedServers(existingNotification, notification),
+    };
+
+    rows[rowIndex] = storedNotification;
+    indexRow(storedNotification, rowIndex);
     onStoredNotification(presentation, storedNotification, receivedAtMs);
   }
 
-  return Array.from(notificationsByItemId.values()).reverse();
+  return {
+    addedPresentations,
+    notifications: rows.reverse(),
+  };
 };
 
 export const useNotificationsStore = create<NotificationsState>()(
@@ -268,7 +207,9 @@ export const useNotificationsStore = create<NotificationsState>()(
     notificationAutoHideByListKey: {},
     latestNotificationAnimationCycle: 0,
     latestPresentationStartedEmpty: false,
-    presentNotifications: (presentations) =>
+    presentNotifications: (presentations) => {
+      let addedPresentations: ReadonlySet<NotificationPresentation> = new Set();
+
       set((state) => {
         if (presentations.length === 0) {
           return state;
@@ -288,7 +229,7 @@ export const useNotificationsStore = create<NotificationsState>()(
           return notificationAutoHideByListKey;
         };
 
-        let notifications = upsertNotificationBatch(
+        const batch = upsertNotificationBatch(
           state.notifications,
           presentations,
           ({ autoHideDurationMs }, storedNotification, receivedAtMs) => {
@@ -297,20 +238,36 @@ export const useNotificationsStore = create<NotificationsState>()(
             }
 
             const writableAutoHideState = getWritableAutoHideState();
+            const { listKey } = storedNotification;
 
             if (autoHideDurationMs <= 0) {
-              delete writableAutoHideState[storedNotification.listKey];
+              delete writableAutoHideState[listKey];
 
               return;
             }
 
-            writableAutoHideState[storedNotification.listKey] = {
-              deadlineMs: receivedAtMs + autoHideDurationMs,
-              pausedRemainingMs: null,
-              durationMs: autoHideDurationMs,
-            };
+            const isPaused =
+              (writableAutoHideState[listKey]?.pausedRemainingMs ?? null) !==
+              null;
+
+            // A report joining a row whose countdown the player paused (an
+            // open mute menu) refills it without resuming it.
+            writableAutoHideState[listKey] = isPaused
+              ? {
+                  deadlineMs: null,
+                  pausedRemainingMs: autoHideDurationMs,
+                  durationMs: autoHideDurationMs,
+                }
+              : {
+                  deadlineMs: receivedAtMs + autoHideDurationMs,
+                  pausedRemainingMs: null,
+                  durationMs: autoHideDurationMs,
+                };
           },
         );
+
+        addedPresentations = batch.addedPresentations;
+        let { notifications } = batch;
 
         const evictedNotifications = notifications.slice(MAX_NOTIFICATIONS);
         notifications = notifications.slice(0, MAX_NOTIFICATIONS);
@@ -322,6 +279,12 @@ export const useNotificationsStore = create<NotificationsState>()(
           });
         }
 
+        // Only a new row replays the entry animation and scrolls to the top; a
+        // report joining a listed row updates it in place.
+        if (addedPresentations.size === 0) {
+          return { notifications, notificationAutoHideByListKey };
+        }
+
         return {
           notifications,
           notificationAutoHideByListKey,
@@ -329,7 +292,10 @@ export const useNotificationsStore = create<NotificationsState>()(
             state.latestNotificationAnimationCycle + 1,
           latestPresentationStartedEmpty: state.notifications.length === 0,
         };
-      }),
+      });
+
+      return addedPresentations;
+    },
     clearNotifications: () =>
       set((state) => {
         if (
