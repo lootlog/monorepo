@@ -19,10 +19,13 @@ const auth = makeGatewayAuth({
   allowedExtensionOrigins: new Set(),
 });
 
+const hub = { unavailableReason: () => undefined };
+
 const application = {
   config: { websocketPath: "/ws", environment: "test" },
   runPromise: Effect.runPromise,
   auth,
+  hub,
 };
 
 const server = { upgrade: () => false };
@@ -238,6 +241,59 @@ describe("gateway HTTP boundary", () => {
     expect(await response?.json()).toEqual({ status: "ok" });
   });
 
+  test("withdraws readiness and refuses upgrades while liveness stays up", async () => {
+    let reason: "draining" | "federation-unavailable" | undefined =
+      "federation-unavailable";
+
+    let upgraded = false;
+
+    const fetch = createGatewayFetch({
+      ...application,
+      hub: { unavailableReason: () => reason },
+    });
+
+    const request = (path: string) =>
+      fetch(
+        new Request(`https://gateway.example${path}`, {
+          headers: {
+            origin: "https://classic.margonem.pl",
+            "x-auth-user-id": "user-1",
+            "x-auth-discord-id": "discord-1",
+          },
+        }),
+        {
+          upgrade: () => {
+            upgraded = true;
+
+            return true;
+          },
+        },
+      );
+
+    expect((await request("/healthz"))?.status).toBe(200);
+    const unready = await request("/readyz");
+    expect(unready?.status).toBe(503);
+    expect(await unready?.json()).toEqual({
+      status: "unavailable",
+      reason: "federation-unavailable",
+    });
+    expect((await request("/ws"))?.status).toBe(503);
+    expect(upgraded).toBe(false);
+
+    reason = "draining";
+    expect(await (await request("/readyz"))?.json()).toEqual({
+      status: "unavailable",
+      reason: "draining",
+    });
+
+    reason = undefined;
+    const ready = await request("/readyz");
+    expect(ready?.status).toBe(200);
+    expect(await ready?.json()).toEqual({ status: "ready" });
+    expect(await request("/ws")).toBeUndefined();
+    expect(upgraded).toBe(true);
+  });
+
   test("rejects credentials in websocket URLs before upgrade", async () => {
     const response = await createGatewayFetch(application)(
       new Request("https://gateway.example/ws?ticket=secret"),
@@ -299,6 +355,7 @@ describe("gateway HTTP boundary", () => {
         config: { websocketPath: "/ws", environment: "test" },
         runPromise: Effect.runPromise,
         auth,
+        hub,
       };
 
       const request = new Request("https://gateway.example/ws", {
@@ -351,6 +408,7 @@ describe("gateway HTTP boundary", () => {
       config: { websocketPath: "/ws", environment: "local" },
       runPromise: Effect.runPromise,
       auth,
+      hub,
     };
 
     const request = new Request("https://gateway.example/ws", {

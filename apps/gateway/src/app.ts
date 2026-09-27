@@ -21,7 +21,15 @@ import {
   REALTIME_JSON_SUBPROTOCOL,
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/protocol/realtime";
-import { Context, Effect, FiberSet, Layer, Option, Redacted } from "effect";
+import {
+  Context,
+  Duration,
+  Effect,
+  FiberSet,
+  Layer,
+  Option,
+  Redacted,
+} from "effect";
 import { Headers, HttpClient, HttpTraceContext } from "effect/unstable/http";
 import { Redis } from "effect/unstable/persistence";
 import { makeGatewayAuth, type GatewayAuth } from "#src/auth/auth-service";
@@ -339,24 +347,26 @@ const websocketResponseHeaders = (
     : undefined;
 };
 
-let defaultGatewayHttpBoundary:
-  | ReturnType<typeof makeGatewayHttpBoundary>
-  | undefined;
+const probePaths = new Set(["/healthz", "/readyz"]);
 
-const handleGatewayHttpRequest = (request: Request): Promise<Response> => {
-  defaultGatewayHttpBoundary ??= makeGatewayHttpBoundary();
+export const createGatewayFetch = (
+  application: Pick<GatewayApplicationService, "auth" | "runPromise"> & {
+    config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
+    hub: Pick<RealtimeHub, "unavailableReason">;
+  },
+  httpHandler?: (request: Request) => Promise<Response>,
+) => {
+  let defaultBoundary: ReturnType<typeof makeGatewayHttpBoundary> | undefined;
 
-  return defaultGatewayHttpBoundary.handler(request);
-};
+  const handleHttp =
+    httpHandler ??
+    ((request: Request) => {
+      defaultBoundary ??= makeGatewayHttpBoundary(application.hub);
 
-export const createGatewayFetch =
-  (
-    application: Pick<GatewayApplicationService, "auth" | "runPromise"> & {
-      config: Pick<GatewayConfiguration, "websocketPath" | "environment">;
-    },
-    httpHandler = handleGatewayHttpRequest,
-  ) =>
-  async (
+      return defaultBoundary.handler(request);
+    });
+
+  return async (
     request: Request,
     activeServer: UpgradeServer,
   ): Promise<Response | undefined> => {
@@ -364,11 +374,11 @@ export const createGatewayFetch =
     const startedAt = performance.now();
     let status = 500;
 
-    const route = ["/healthz", application.config.websocketPath].includes(
-      url.pathname,
-    )
-      ? url.pathname
-      : undefined;
+    const route =
+      probePaths.has(url.pathname) ||
+      url.pathname === application.config.websocketPath
+        ? url.pathname
+        : undefined;
 
     const complete = (response: Response | undefined) => {
       status = response?.status ?? 101;
@@ -377,12 +387,22 @@ export const createGatewayFetch =
     };
 
     const handle = async () => {
-      if (url.pathname === "/healthz") {
-        return complete(await httpHandler(request));
+      if (probePaths.has(url.pathname)) {
+        return complete(await handleHttp(request));
       }
 
       if (url.pathname !== application.config.websocketPath) {
         return complete(new Response("Not found", { status: 404 }));
+      }
+
+      // Refuse before auth work so the client retries against a ready replica.
+      if (application.hub.unavailableReason() !== undefined) {
+        return complete(
+          new Response("Gateway unavailable", {
+            status: 503,
+            headers: { "retry-after": "1" },
+          }),
+        );
       }
 
       if (hasCredentialQuery(url)) {
@@ -451,7 +471,7 @@ export const createGatewayFetch =
     };
 
     try {
-      if (url.pathname === "/healthz") return await handle();
+      if (probePaths.has(url.pathname)) return await handle();
       const baseRequestAttributes = { "http.request.method": request.method };
 
       const requestAttributes =
@@ -492,6 +512,7 @@ export const createGatewayFetch =
       );
     }
   };
+};
 
 export const createGatewayWebSocket = (
   application: Pick<GatewayApplicationService, "hub" | "ingress">,
@@ -502,6 +523,13 @@ export const createGatewayWebSocket = (
     maxPayloadLength: 256 * 1_024,
     idleTimeout: 70,
     open(socket: GatewaySocket) {
+      // Federation can drop between the upgrade check and this callback.
+      if (application.hub.unavailableReason() !== undefined) {
+        socket.close(1013, "gateway unavailable");
+
+        return;
+      }
+
       if (!application.ingress.open(socket)) {
         socket.close(1013, "connection capacity exceeded");
 
@@ -521,12 +549,85 @@ export const createGatewayWebSocket = (
     },
   }) satisfies Bun.WebSocketHandler<SessionData>;
 
+interface DrainTiming {
+  /** Lets Traefik drop the terminating endpoint before sockets move. */
+  readonly endpointRemoval: Duration.Input;
+  /** Spreads reconnects so the remaining replicas absorb joins gradually. */
+  readonly closeSpread: Duration.Input;
+  /** Bounds disconnect cleanup: presence removal and DISCONNECT activity. */
+  readonly cleanup: Duration.Input;
+}
+
+// Keep the sum below terminationGracePeriodSeconds in the infra repository.
+const deployedDrainTiming: DrainTiming = {
+  endpointRemoval: "5 seconds",
+  closeSpread: "10 seconds",
+  cleanup: "10 seconds",
+};
+
+const localDrainTiming: DrainTiming = {
+  endpointRemoval: 0,
+  closeSpread: 0,
+  cleanup: "2 seconds",
+};
+
+const DRAIN_BATCH_INTERVAL = Duration.millis(100);
+
+/** Moves every local session to another replica before the server stops. */
+export const drainGateway = (
+  application: Pick<GatewayApplicationService, "hub" | "ingress">,
+  timing: DrainTiming,
+) =>
+  Effect.gen(function* () {
+    application.hub.startDraining();
+    yield* Effect.logInfo("Gateway draining").pipe(
+      Effect.annotateLogs({
+        sockets: application.hub.getLocalSockets().length,
+      }),
+    );
+    yield* Effect.sleep(timing.endpointRemoval);
+
+    const sockets = application.hub.getLocalSockets();
+
+    const batchSize = Math.max(
+      1,
+      Math.ceil(
+        sockets.length /
+          Math.max(
+            1,
+            Duration.toMillis(timing.closeSpread) /
+              Duration.toMillis(DRAIN_BATCH_INTERVAL),
+          ),
+      ),
+    );
+
+    for (let index = 0; index < sockets.length; index += batchSize) {
+      if (index > 0) yield* Effect.sleep(DRAIN_BATCH_INTERVAL);
+
+      for (const socket of sockets.slice(index, index + batchSize))
+        socket.close(1012, "gateway restarting");
+    }
+
+    const cleaned = yield* Effect.sleep("50 millis").pipe(
+      Effect.repeat({
+        until: () =>
+          application.ingress.getDiagnostics().retainedConnections === 0,
+      }),
+      Effect.timeoutOption(timing.cleanup),
+    );
+
+    if (Option.isNone(cleaned))
+      yield* Effect.logWarning("Gateway drain cleanup timed out").pipe(
+        Effect.annotateLogs(application.ingress.getDiagnostics()),
+      );
+  });
+
 export const GatewayServer = Layer.effectDiscard(
   Effect.gen(function* () {
     const application = yield* GatewayApplication;
 
     const httpBoundary = yield* Effect.acquireRelease(
-      Effect.sync(makeGatewayHttpBoundary),
+      Effect.sync(() => makeGatewayHttpBoundary(application.hub)),
       (boundary) => Effect.tryPromise(boundary.dispose).pipe(Effect.orDie),
     );
 
@@ -542,7 +643,15 @@ export const GatewayServer = Layer.effectDiscard(
         }),
       ),
       (activeServer) =>
-        Effect.tryPromise(() => activeServer.stop(true)).pipe(Effect.orDie),
+        drainGateway(
+          application,
+          application.config.environment === "local"
+            ? localDrainTiming
+            : deployedDrainTiming,
+        ).pipe(
+          Effect.andThen(Effect.tryPromise(() => activeServer.stop(true))),
+          Effect.orDie,
+        ),
     );
 
     yield* Effect.logInfo("Gateway WebSocket server listening").pipe(
