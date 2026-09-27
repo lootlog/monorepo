@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { MessageType } from "@/api/chat.api";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
@@ -66,5 +67,30 @@ describe("ChatNpcMessageView", () => {
     expect(screen.queryByText("Old Ruins")).not.toBeInTheDocument();
     expect(screen.queryByText(/\[\d{2}:\d{2}\]/)).not.toBeInTheDocument();
     expect(screen.getByText("Dark Hunter")).toBeInTheDocument();
+  });
+
+  it("reveals the level and location of a text NPC only on hover", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ChatNpcMessageView
+        all={false}
+        appearance={{
+          ...CHAT_APPEARANCE_READABLE_PRESET,
+          npcLayout: "text",
+          showNpcAvatar: false,
+        }}
+        guildName="Northern Guard"
+        memberColor="abcdef"
+        message={message}
+        senderName="Arianna"
+      />,
+    );
+
+    expect(screen.queryByText(/Old Ruins/)).not.toBeInTheDocument();
+
+    await user.hover(screen.getByText("Dark Hunter"));
+
+    expect(await screen.findByText("(120m) Old Ruins (42, 18)")).toBeVisible();
   });
 });

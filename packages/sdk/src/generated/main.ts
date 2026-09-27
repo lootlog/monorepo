@@ -169,6 +169,7 @@ export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof Use
 export const UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = {
   tile: 'tile',
   inline: 'inline',
+  text: 'text',
 } as const;
 
 export type UserPreferencesResponseDtoOutputChatAppearance = {
@@ -274,6 +275,7 @@ export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserP
 export const UpdateUserPreferencesDtoChatAppearanceNpcLayout = {
   tile: 'tile',
   inline: 'inline',
+  text: 'text',
 } as const;
 
 export type UpdateUserPreferencesDtoChatAppearance = {

@@ -117,7 +117,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(eq(notificationJobTable.id, jobId))
       .pipe(Effect.mapError(failure("notifications.jobStore.update")));
 
-  const claimJob = (jobId: string) =>
+  const claimJob = (jobId: string, retrying = false) =>
     database
       .update(notificationJobTable)
       .set({
@@ -129,12 +129,41 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
       .where(
         and(
           eq(notificationJobTable.id, jobId),
-          inArray(notificationJobTable.status, ["PENDING", "BLOCKED"]),
+          inArray(
+            notificationJobTable.status,
+            retrying
+              ? ["PENDING", "BLOCKED", "PROCESSING"]
+              : ["PENDING", "BLOCKED"],
+          ),
         ),
       )
       .returning({ id: notificationJobTable.id })
       .pipe(
         Effect.mapError(failure("notifications.jobStore.claim")),
+        Effect.map((rows) => rows.length > 0),
+      );
+
+  const failClaim = (
+    jobId: string,
+    attemptCount: number,
+    values: Pick<
+      typeof notificationJobTable.$inferInsert,
+      "status" | "lastError" | "processedAt"
+    >,
+  ) =>
+    database
+      .update(notificationJobTable)
+      .set({ ...values, updatedAt: new Date() })
+      .where(
+        and(
+          eq(notificationJobTable.id, jobId),
+          inArray(notificationJobTable.status, ["PROCESSING", "PENDING"]),
+          eq(notificationJobTable.attemptCount, attemptCount),
+        ),
+      )
+      .returning({ id: notificationJobTable.id })
+      .pipe(
+        Effect.mapError(failure("notifications.jobStore.failClaim")),
         Effect.map((rows) => rows.length > 0),
       );
 
@@ -298,6 +327,7 @@ export const makeNotificationJobStore = (database: ApiDatabaseValue) => {
     advanceRule,
     claimJob,
     cycleStatuses,
+    failClaim,
     findJob,
     findJobWithRelations,
     findRule,

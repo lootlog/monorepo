@@ -14,7 +14,9 @@
     "npcTypesLabel": "Typy potworów",
     "npcTypes": "Typy",
     "npcTypesOnly": "Tylko",
-    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}"
+    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}",
+    "listsLabel": "Twoje listy timerów",
+    "listsHint": "Kliknij, aby filtrować po liście. Prawy przycisk myszy pokazuje tylko tę listę."
   },
   "toolbar": {
     "filters": "Filtry",
@@ -48,6 +50,7 @@
   },
   "contextMenu": {
     "color": "Kolor",
+    "lists": "Listy",
     "creating": "Tworzenie timera…",
     "unpin": "Odepnij",
     "pin": "Przypnij",
@@ -74,6 +77,13 @@
     },
     "loadingPermissions": "Sprawdzanie uprawnień…",
     "deleteChooseGuild": "Wybierz Lootlog, z którego usunąć timer:"
+  },
+  "lists": {
+    "membershipLabel": "Listy z timerem {{name}}",
+    "empty": "Nie masz jeszcze list. Utwórz pierwszą, a ten timer od razu na nią trafi.",
+    "nameLabel": "Nazwa listy",
+    "namePlaceholder": "Nowa lista",
+    "create": "Utwórz"
   },
   "history": {
     "title": "Historia timera",

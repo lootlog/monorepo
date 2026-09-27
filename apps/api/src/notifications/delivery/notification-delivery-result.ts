@@ -5,18 +5,10 @@ import type {
   NotificationStoredJob,
 } from "#src/notifications/jobs/notification-job-store";
 import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
-import {
-  NotificationJobStatus,
-  type NotificationOwnerType,
-} from "#src/notifications/notification-enums";
+import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
+import { NotificationJobStatus } from "#src/notifications/notification-enums";
 
 export type NotificationDeliveryJob = NotificationStoredJob;
-
-const finalStatuses: readonly NotificationJobStatus[] = [
-  NotificationJobStatus.SENT,
-  NotificationJobStatus.FAILED,
-  NotificationJobStatus.CANCELED,
-];
 
 export interface NotificationDeliveryStore {
   readonly find: (
@@ -25,23 +17,27 @@ export interface NotificationDeliveryStore {
   readonly record: (
     options: NotificationDeliveryUpdate,
   ) => Effect.Effect<unknown, unknown, never>;
-  readonly prune: (owner: {
-    readonly ownerType: NotificationOwnerType;
-    readonly ownerId: string;
-  }) => Effect.Effect<unknown, unknown, never>;
 }
 
 export const makeNotificationDeliveryResult = (
   store: NotificationDeliveryStore,
   scheduler: Pick<NotificationJobScheduler, "enqueue">,
-  scheduleNext: (ruleId: number) => Effect.Effect<unknown, unknown, never>,
+  finalize: NotificationJobFinalization,
 ) =>
   Effect.fn("notifications.deliveryResult")(function* (
     event: DiscordNotificationDeliveryResultEvent,
   ) {
     const job = yield* store.find(event.notificationJobId);
 
-    if (!job || finalStatuses.includes(job.status)) return;
+    if (
+      !job ||
+      job.status === NotificationJobStatus.SENT ||
+      job.status === NotificationJobStatus.CANCELED ||
+      (job.status === NotificationJobStatus.FAILED && !event.success)
+    ) {
+      return;
+    }
+
     const deliveredAt = new Date(event.deliveredAt);
 
     if (event.success) {
@@ -57,11 +53,7 @@ export const makeNotificationDeliveryResult = (
         target: { lastDeliveryAt: deliveredAt, lastDeliveryError: null },
         targetFirst: false,
       });
-      yield* store.prune({ ownerType: job.ownerType, ownerId: job.ownerId });
-
-      if (job.sourceEntityType === "scheduled-message") {
-        yield* scheduleNext(job.ruleId);
-      }
+      yield* finalize(job);
 
       return;
     }
@@ -92,9 +84,5 @@ export const makeNotificationDeliveryResult = (
       return;
     }
 
-    yield* store.prune({ ownerType: job.ownerType, ownerId: job.ownerId });
-
-    if (job.sourceEntityType === "scheduled-message") {
-      yield* scheduleNext(job.ruleId);
-    }
+    yield* finalize(job);
   });

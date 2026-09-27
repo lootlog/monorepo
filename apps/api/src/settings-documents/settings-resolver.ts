@@ -1,6 +1,7 @@
 import {
   migrateSettingsDocument,
   SETTINGS_CATALOG,
+  type SettingsFieldDefinition,
 } from "@lootlog/domain/settings-documents";
 import type {
   SettingsDocumentLayer,
@@ -13,7 +14,6 @@ import {
   collectLeafPaths,
   decodeSettingsRecord,
   getPath,
-  hasPath,
   pathsOverlap,
   setPath,
   unsetPath,
@@ -31,7 +31,9 @@ interface ApplySettingsPatchInput {
 }
 
 const getFieldDefinition = (domain: SettingsDomain, path: string) => {
-  const fields = SETTINGS_CATALOG[domain].fields;
+  const fields: Readonly<Record<string, SettingsFieldDefinition | undefined>> =
+    SETTINGS_CATALOG[domain].fields;
+
   const exactDefinition = fields[path];
 
   if (exactDefinition) {
@@ -46,8 +48,12 @@ const getFieldDefinition = (domain: SettingsDomain, path: string) => {
     return undefined;
   }
 
+  const definition = fields[ancestorPath];
+
+  if (!definition) return undefined;
+
   return {
-    definition: fields[ancestorPath],
+    definition,
     fieldPath: ancestorPath,
   };
 };
@@ -75,16 +81,16 @@ export const resolveSettingsDomain = (
     sources[path] = "DEFAULT";
 
     for (const layer of migratedLayers) {
-      if (
-        !fieldDefinition.scopes.includes(layer.scope.type) ||
-        !hasPath(layer.overrides, path)
-      ) {
+      if (!fieldDefinition.scopes.includes(layer.scope.type)) {
         continue;
       }
 
       const candidateValue = getPath(layer.overrides, path);
 
-      if (!fieldDefinition.isValid(candidateValue)) {
+      if (
+        candidateValue === undefined ||
+        !fieldDefinition.isValid(candidateValue)
+      ) {
         continue;
       }
 

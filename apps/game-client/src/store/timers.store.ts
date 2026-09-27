@@ -5,6 +5,7 @@ import type {
   TimersDisplayConfig,
   TimersGeneralConfig as SharedTimersGeneralConfig,
   CustomTimerColor,
+  CustomTimerList,
 } from "@lootlog/schema/timer-settings";
 import { NpcType } from "@/api/npcs.api";
 import { create } from "zustand";
@@ -16,7 +17,11 @@ import {
 } from "zustand/middleware";
 import { shallow } from "zustand/vanilla/shallow";
 import { storageKey } from "@/lib/storage-key";
-import { syncGuildTimerList, syncTimerSettings } from "./timer-settings-sync";
+import {
+  syncCustomList,
+  syncGuildTimerList,
+  syncTimerSettings,
+} from "./timer-settings-sync";
 
 export const TIMERS_STORAGE_KEY = storageKey("ll-timers-state");
 
@@ -49,6 +54,7 @@ interface TimersState {
     { borderColor: string; backgroundColor: string }
   >;
   hiddenDefaultColors: string[];
+  customLists: Record<string, CustomTimerList>;
   timersFilters: Record<string, TimersFilters>;
   timerFiltersEnabled?: boolean;
   colorFiltersEnabled?: boolean;
@@ -83,6 +89,15 @@ interface TimersState {
   resetAllDefaultColors: () => void;
   deleteDefaultColor: (colorId: string) => void;
   restoreDefaultColor: (colorId: string) => void;
+  /** Creates a list and returns its id. */
+  addCustomList: (name: string, npcNames?: string[]) => string;
+  renameCustomList: (id: string, name: string) => void;
+  deleteCustomList: (id: string) => void;
+  setTimerListMembership: (
+    listId: string,
+    npcName: string,
+    member: boolean,
+  ) => void;
 }
 
 const DEFAULT_SELECTED_NPC_TYPES = [
@@ -97,6 +112,7 @@ export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   maxLvl: 300,
   selectedNpcTypes: DEFAULT_SELECTED_NPC_TYPES,
   selectedColors: [],
+  selectedLists: [],
 };
 
 // persist rewrites storage after every set, even when only transient state
@@ -171,6 +187,16 @@ export const useTimersStore = create<TimersState>()(
         syncGuildTimerList(guildId, field, next);
       };
 
+      const setCustomList = (id: string, list: CustomTimerList | undefined) => {
+        const customLists = { ...get().customLists };
+
+        if (list) customLists[id] = list;
+        else delete customLists[id];
+
+        setWithTimestamp(() => ({ customLists }));
+        syncCustomList(id, list);
+      };
+
       return {
         hiddenTimers: {},
         pinnedTimers: {},
@@ -180,6 +206,7 @@ export const useTimersStore = create<TimersState>()(
         defaultColorNames: {},
         overriddenDefaultColors: {},
         hiddenDefaultColors: [],
+        customLists: {},
         generalConfig: DEFAULT_GENERAL_CONFIG,
         setGeneralConfig: (config: TimersGeneralConfig) => {
           setGlobalSettings({ generalConfig: config });
@@ -390,6 +417,34 @@ export const useTimersStore = create<TimersState>()(
             defaultColorNames: newDefaultColorNames,
           });
         },
+        addCustomList: (name: string, npcNames: string[] = []) => {
+          const id = crypto.randomUUID();
+          setCustomList(id, { id, name, npcNames });
+
+          return id;
+        },
+        renameCustomList: (id: string, name: string) => {
+          const list = get().customLists[id];
+
+          if (list) setCustomList(id, { ...list, name });
+        },
+        deleteCustomList: (id: string) => setCustomList(id, undefined),
+        setTimerListMembership: (
+          listId: string,
+          npcName: string,
+          member: boolean,
+        ) => {
+          const list = get().customLists[listId];
+
+          if (!list || list.npcNames.includes(npcName) === member) return;
+
+          setCustomList(listId, {
+            ...list,
+            npcNames: member
+              ? [...list.npcNames, npcName]
+              : list.npcNames.filter((name) => name !== npcName),
+          });
+        },
       };
     },
     {
@@ -404,6 +459,7 @@ export const useTimersStore = create<TimersState>()(
         defaultColorNames: state.defaultColorNames,
         overriddenDefaultColors: state.overriddenDefaultColors,
         hiddenDefaultColors: state.hiddenDefaultColors,
+        customLists: state.customLists,
         timerFiltersEnabled: state.timerFiltersEnabled,
         colorFiltersEnabled: state.colorFiltersEnabled,
         timersSortOrder: state.timersSortOrder,
@@ -441,6 +497,7 @@ export const useTimersStore = create<TimersState>()(
             currentState.overriddenDefaultColors,
           hiddenDefaultColors:
             persisted.hiddenDefaultColors ?? currentState.hiddenDefaultColors,
+          customLists: persisted.customLists ?? currentState.customLists,
           timersFilters: persisted.timersFilters ?? currentState.timersFilters,
           timerFiltersEnabled:
             persisted.timerFiltersEnabled ?? currentState.timerFiltersEnabled,

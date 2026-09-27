@@ -15,6 +15,7 @@ type TimerListFilters = {
   minLvl: number;
   searchText: string;
   selectedColors: string[];
+  selectedLists: string[];
   selectedNpcTypes: NpcType[];
   showHiddenTimers: boolean;
 };
@@ -22,6 +23,7 @@ type TimerListFilters = {
 type TimerListPreferences = {
   alwaysVisibleExpiredTimers: Record<string, string[]>;
   colorFiltersEnabled: boolean;
+  customLists: UserTimerSettings["customLists"];
   hiddenTimers: string[];
   pinnedTimers: string[];
   removeTimerAfterMs: number;
@@ -160,11 +162,28 @@ const filterExpiredTimers = (
   });
 };
 
+/**
+ * Monster names of the selected lists, or `null` when no list filters the
+ * view. A selected list deleted meanwhile (here or on another device) no
+ * longer filters, so a stale selection cannot hide every timer.
+ */
+const getSelectedListNpcNames = (
+  selectedLists: string[],
+  customLists: TimerListPreferences["customLists"],
+): Set<string> | null => {
+  const lists = selectedLists.flatMap((id) => customLists[id] ?? []);
+
+  if (lists.length === 0) return null;
+
+  return new Set(lists.flatMap((list) => list.npcNames));
+};
+
 const filterTimers = (
   timers: TimerWithTimeLeft[],
   context: ProjectTimerListInput["context"],
   filters: TimerListFilters,
   preferences: TimerListPreferences,
+  listNpcNames: Set<string> | null,
 ): TimerWithTimeLeft[] => {
   const hiddenTimerNames = new Set(preferences.hiddenTimers);
   const selectedNpcTypes = new Set<string>(filters.selectedNpcTypes);
@@ -199,6 +218,8 @@ const filterTimers = (
     ) {
       return false;
     }
+
+    if (listNpcNames && !listNpcNames.has(timer.npc.name)) return false;
 
     if (!preferences.colorFiltersEnabled || selectedColors.size === 0) {
       return true;
@@ -276,8 +297,11 @@ const hasCustomNpcTypes = (selectedNpcTypes: NpcType[]): boolean => {
 const areTimerFiltersActive = (
   filters: TimerListFilters,
   hiddenTimersCount: number,
+  isListFilterActive: boolean,
 ): boolean => {
-  if (filters.searchText || hiddenTimersCount > 0) return true;
+  if (filters.searchText || hiddenTimersCount > 0 || isListFilterActive) {
+    return true;
+  }
 
   if (
     filters.minLvl !== DEFAULT_TIMERS_FILTERS.minLvl ||
@@ -347,8 +371,13 @@ export const projectTimerList = ({
     preferences.alwaysVisibleExpiredTimers,
   );
 
+  const listNpcNames = getSelectedListNpcNames(
+    filters.selectedLists,
+    preferences.customLists,
+  );
+
   const sortedTimers = sortTimers(
-    filterTimers(activeTimers, context, filters, preferences),
+    filterTimers(activeTimers, context, filters, preferences, listNpcNames),
     preferences,
   );
 
@@ -356,6 +385,7 @@ export const projectTimerList = ({
     areFiltersActive: areTimerFiltersActive(
       filters,
       filters.showHiddenTimers ? 0 : preferences.hiddenTimers.length,
+      listNpcNames !== null,
     ),
     timers: sortedTimers,
   };
