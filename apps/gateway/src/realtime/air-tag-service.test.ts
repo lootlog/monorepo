@@ -215,3 +215,98 @@ describe("AirTagService legacy parity", () => {
     expect(evaluations).toBe(0);
   });
 });
+
+describe("AirTagService map threats", () => {
+  test("publishes a map threat again when the first publication fails", async () => {
+    const threatEvent = {
+      revision: 300,
+      enemies: [{ targetId: "enemy", nickname: "Rival", ageMs: 0 }],
+    };
+
+    const evaluations: Array<string | number[]> = [
+      [1, 0],
+      [1, 0],
+      JSON.stringify({
+        epochId: "epoch",
+        epochStartedAt: 100,
+        acceptedTargets: 1,
+        updates: [],
+        threat: threatEvent,
+      }),
+      JSON.stringify({ mapName: "Map", ...threatEvent, revision: 1_300 }),
+    ];
+
+    const threatPublications: unknown[] = [];
+    let failures = 1;
+
+    const service = new AirTagService(
+      {
+        command: {
+          get: async () => null,
+          sadd: async () => 1,
+          expire: async () => 1,
+          smembers: async () => [],
+          eval: async () => {
+            const reply = evaluations.shift();
+
+            if (reply === undefined) throw new Error("Unexpected Redis script");
+
+            return reply;
+          },
+        },
+      },
+      {
+        subscribe: () => {},
+        unsubscribe: () => {},
+        publishToScopes: async (_scopes, event) => {
+          if (event.type !== "air-tag.map-threat-updated") return;
+
+          if (failures > 0) {
+            failures -= 1;
+            throw new Error("Federation unavailable");
+          }
+
+          threatPublications.push(event.data);
+        },
+      },
+    );
+
+    const socket = makeSocket();
+    socket.data.airTagScopes = [
+      {
+        guildId: "organization-1",
+        world: "classic",
+        mapId: 7,
+        subscription: {
+          topic: "map.air-tags",
+          organizationId: "organization-1",
+          world: "classic",
+          mapId: 7,
+        },
+      },
+    ];
+
+    await expect(
+      service.publishObservations(socket, {
+        expectedMapId: 7,
+        observations: [
+          {
+            targetId: "enemy",
+            nickname: "Rival",
+            clan: { id: 5, name: "Rivals" },
+            relation: 6,
+            x: 1,
+            y: 2,
+          },
+        ],
+      }),
+    ).resolves.toMatchObject({ status: "accepted" });
+    expect(threatPublications).toHaveLength(0);
+
+    await Bun.sleep(1_100);
+
+    expect(threatPublications).toEqual([
+      expect.objectContaining({ mapId: 7, mapName: "Map", revision: 1_300 }),
+    ]);
+  });
+});
