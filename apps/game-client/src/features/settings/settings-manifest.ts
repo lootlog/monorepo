@@ -15,6 +15,7 @@ export type SettingsIconName =
   | "radar"
   | "bellOff"
   | "swords"
+  | "mapPin"
   | "volume2"
   | "keyboard"
   | "flaskConical"
@@ -334,6 +335,18 @@ const MANIFEST = [
         ],
       },
       {
+        id: "timer-lists",
+        labelKey: "settings.subsections.timerLists",
+        controls: [
+          {
+            id: "timer-lists",
+            labelKey: "settings.timers.lists.title",
+            aliases: ["grupy", "zestawy", "filtr", "własne listy"],
+            settingKeys: ["timers.customLists"],
+          },
+        ],
+      },
+      {
         id: "hidden-timers",
         labelKey: "settings.subsections.hiddenTimers",
         controls: [
@@ -450,6 +463,33 @@ const MANIFEST = [
     ],
   },
   {
+    id: "pings",
+    labelKey: "settings.domains.pings",
+    icon: "mapPin",
+    subsections: [
+      {
+        id: "pings",
+        labelKey: "settings.subsections.pings",
+        controls: [
+          {
+            id: "map-pings",
+            labelKey: "pings.settings.mapLabel",
+            descriptionKey: "pings.settings.mapDescription",
+            aliases: ["pingi", "mapa", "koło"],
+            settingKeys: ["gameData.pings"],
+          },
+          {
+            id: "battle-pings",
+            labelKey: "pings.settings.battleLabel",
+            descriptionKey: "pings.settings.battleDescription",
+            aliases: ["pingi", "walka", "cel", "prośba", "leczenie", "aura"],
+            settingKeys: ["gameData.battlePings"],
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "sounds",
     labelKey: "settings.domains.sounds",
     icon: "volume2",
@@ -487,7 +527,7 @@ const MANIFEST = [
             id: "sound-pings",
             labelKey: "settings.sounds.categories.pings.label",
             descriptionKey: "settings.sounds.categories.pings.description",
-            aliases: ["głośność", "pingi", "mapa"],
+            aliases: ["głośność", "pingi", "mapa", "walka", "prośba"],
             settingKeys: ["sounds.pingsVolume"],
           },
         ],
@@ -521,13 +561,6 @@ const MANIFEST = [
         id: "experimental",
         labelKey: "settings.subsections.experimentalFeatures",
         controls: [
-          {
-            id: "map-pings",
-            labelKey: "settings.experimental.mapPingsLabel",
-            descriptionKey: "settings.experimental.mapPingsDescription",
-            aliases: ["pingi", "mapa"],
-            settingKeys: ["gameData.pings"],
-          },
           {
             id: "air-tags",
             labelKey: "settings.experimental.airTagsLabel",

@@ -59,7 +59,8 @@ export type WindowId =
   | "catching-whitelist-warning"
   | "backend-preferences-warning"
   | "party-finder"
-  | "create-party-gathering";
+  | "create-party-gathering"
+  | "battle-pings";
 
 interface WindowPositionState {
   x: number;
@@ -118,6 +119,7 @@ interface WindowsState {
   "backend-preferences-warning": WindowData;
   "party-finder": WindowData;
   "create-party-gathering": WindowData;
+  "battle-pings": WindowData;
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
   /**
@@ -234,6 +236,7 @@ const WINDOW_IDS: WindowId[] = [
   "backend-preferences-warning",
   "party-finder",
   "create-party-gathering",
+  "battle-pings",
 ];
 
 const migrateLegacyCommand = (state: RawPersistedWindows): void => {
@@ -653,6 +656,14 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
+      "battle-pings": {
+        open: false,
+        position: DEFAULT_POSITION,
+        hasDefinedPosition: false,
+        size: { width: 242, height: 240 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       currentWindowFocus: undefined,
       windowFocusHistory: [],
       focusRequest: undefined,
@@ -904,6 +915,10 @@ export const useWindowsStore = create<WindowsState>()(
             "create-party-gathering": resetWindow(
               state["create-party-gathering"],
               defaults["create-party-gathering"],
+            ),
+            "battle-pings": resetWindow(
+              state["battle-pings"],
+              defaults["battle-pings"],
             ),
           };
         }),

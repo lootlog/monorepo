@@ -2,8 +2,6 @@ import { getSubtleBackgroundColor } from "@/utils/notifications-and-detector/bac
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import { Message } from "@/components/ui/message";
-import { Bubble } from "@/components/ui/bubble";
-import { NpcTile } from "@/components/npc-tile";
 import { cn } from "cn";
 import { format } from "@/utils/local-date";
 import type { ChatMessageResponseDtoOutput as ChatMessageType } from "@lootlog/client/main";
@@ -14,13 +12,11 @@ import {
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 import type { FC, ReactElement, ReactNode } from "react";
 import {
-  toChatGameNpc,
-  getChatNpcCoordinatesLabel,
-  getChatNpcLocationName,
   getChatNpcTextColor,
   isChatMessageYesterdayOrOlder,
 } from "./chat-message.helpers";
-import { CountBadge } from "@/components/count-badge";
+import { ChatNpcBubble } from "./chat-npc-bubble";
+import { ChatNpcTextName } from "./chat-npc-text-name";
 
 type ChatNpcMessageViewProps = {
   all: boolean;
@@ -52,10 +48,12 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
   if (!npc) return null;
 
   const isMsgYesterday = isChatMessageYesterdayOrOlder(message.timestamp);
-  const npcLocationName = getChatNpcLocationName(npc);
-  const npcCoordinatesLabel = getChatNpcCoordinatesLabel(npc);
   const npcTextColor = getChatNpcTextColor(npc, npcTypeColors);
-  const tileNpc = toChatGameNpc(npc);
+
+  const npcBackgroundColor = getSubtleBackgroundColor(
+    getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
+    npcTypeColors,
+  );
 
   const sender = (
     <span
@@ -97,82 +95,27 @@ export const ChatNpcMessageView: FC<ChatNpcMessageViewProps> = (props) => {
           </span>
         ) : null}
         {wrapSender ? wrapSender(sender) : sender}{" "}
-      </div>
-      <Bubble
-        className={cn(
-          "ll:flex ll:-ml-1.5 ll:-mr-0.5 ll:w-[calc(100%+8px)] ll:min-w-0 ll:max-w-none ll:items-center ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden ll:rounded-none ll:pl-1.5 ll:pr-0.5 ll:py-[var(--ll-chat-space-sm)]",
-          appearance.npcLayout === "inline" && "ll:py-0",
-        )}
-        style={{
-          backgroundColor: getSubtleBackgroundColor(
-            getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
-            npcTypeColors,
-          ),
-        }}
-      >
-        {appearance.showNpcAvatar ? (
-          <NpcTile
-            className="ll:h-auto ll:max-h-[var(--ll-chat-avatar-height)] ll:w-auto ll:max-w-[var(--ll-chat-avatar-width)] ll:rounded ll:object-contain"
-            containerClassName="ll:h-[var(--ll-chat-avatar-height)] ll:w-[var(--ll-chat-avatar-width)] ll:shrink-0 ll:items-center"
-            npc={tileNpc}
+        {appearance.npcLayout === "text" ? (
+          <ChatNpcTextName
+            appearance={appearance}
+            backgroundColor={npcBackgroundColor}
+            count={count}
+            isMsgYesterday={isMsgYesterday}
+            npc={npc}
+            textColor={npcTextColor}
           />
         ) : null}
-
-        <div
-          className={cn(
-            "ll:flex ll:min-w-0 ll:max-w-full ll:flex-1 ll:flex-col ll:leading-tight",
-            appearance.npcLayout === "inline" &&
-              "ll:flex-row ll:flex-wrap ll:items-baseline ll:gap-x-[var(--ll-chat-space-sm)]",
-          )}
-        >
-          <div className="ll:flex ll:w-full ll:min-w-0 ll:max-w-full ll:items-baseline ll:gap-[var(--ll-chat-space-sm)]">
-            <div className="ll:flex ll:min-w-0 ll:flex-1 ll:items-baseline ll:gap-[var(--ll-chat-space-sm)] ll:overflow-hidden">
-              <span
-                className={cn(
-                  "ll:min-w-0 ll:max-w-full ll:truncate ll:text-[length:var(--ll-chat-meta-font-size)] ll:leading-[var(--ll-chat-meta-line-height)] ll:font-semibold",
-                  { "ll:text-gray-100": isMsgYesterday },
-                )}
-                style={{ color: npcTextColor }}
-              >
-                {npc.name}
-              </span>
-              {appearance.showNpcLevel ? (
-                <span
-                  className={cn(
-                    "ll:shrink-0 ll:select-text ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-300",
-                    { "ll:text-gray-300": isMsgYesterday },
-                  )}
-                >
-                  ({npc.lvl}
-                  {npc.prof})
-                </span>
-              ) : null}
-            </div>
-            <CountBadge count={count} />
-          </div>
-
-          {appearance.showNpcLocationAndCoordinates &&
-          (npcLocationName || npcCoordinatesLabel) ? (
-            <div
-              className={cn(
-                "ll:w-full ll:min-w-0 ll:max-w-full ll:select-text ll:whitespace-normal ll:break-words ll:text-[length:var(--ll-chat-detail-font-size)] ll:leading-[var(--ll-chat-detail-line-height)] ll:text-gray-400",
-                appearance.npcLayout === "inline" && "ll:w-auto ll:flex-none",
-                { "ll:text-gray-400": isMsgYesterday },
-              )}
-            >
-              {npcLocationName ? <span>{npcLocationName}</span> : null}
-              {npcCoordinatesLabel ? (
-                <>
-                  {npcLocationName ? " " : null}
-                  <span className="ll:whitespace-nowrap">
-                    {npcCoordinatesLabel}
-                  </span>
-                </>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </Bubble>
+      </div>
+      {appearance.npcLayout === "text" ? null : (
+        <ChatNpcBubble
+          appearance={appearance}
+          backgroundColor={npcBackgroundColor}
+          count={count}
+          isMsgYesterday={isMsgYesterday}
+          npc={npc}
+          textColor={npcTextColor}
+        />
+      )}
     </Message>
   );
 };

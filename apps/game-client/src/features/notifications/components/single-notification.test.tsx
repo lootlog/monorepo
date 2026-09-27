@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import type { NotificationMutes } from "@lootlog/schema/user-preferences";
 import type { NotificationSettings } from "@lootlog/schema/account-preferences";
@@ -47,7 +47,7 @@ const renderNotification = (
   props?: Partial<
     Pick<
       ComponentProps<typeof SingleNotification>,
-      "autoHideState" | "notification"
+      "autoHideState" | "notification" | "onPauseAutoHide" | "onResumeAutoHide"
     >
   >,
 ) =>
@@ -75,7 +75,7 @@ const renderNotification = (
     />,
   );
 
-describe("SingleNotification auto-hide perimeter", () => {
+describe("SingleNotification auto-hide countdown", () => {
   let originalAnimate: PropertyDescriptor | undefined;
 
   beforeEach(() => {
@@ -84,17 +84,13 @@ describe("SingleNotification auto-hide perimeter", () => {
     animate.mockClear();
     animationCancel.mockClear();
     originalAnimate = Object.getOwnPropertyDescriptor(
-      SVGElement.prototype,
+      HTMLElement.prototype,
       "animate",
     );
-    Object.defineProperty(SVGElement.prototype, "animate", {
+    Object.defineProperty(HTMLElement.prototype, "animate", {
       configurable: true,
       value: animate,
     });
-    // The ring measures the row's layout box, which the window's entry
-    // animation must not scale down.
-    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(242);
-    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(64);
   });
 
   afterEach(() => {
@@ -102,23 +98,17 @@ describe("SingleNotification auto-hide perimeter", () => {
     vi.useRealTimers();
 
     if (originalAnimate) {
-      Object.defineProperty(SVGElement.prototype, "animate", originalAnimate);
+      Object.defineProperty(HTMLElement.prototype, "animate", originalAnimate);
     } else {
-      Reflect.deleteProperty(SVGElement.prototype, "animate");
+      Reflect.deleteProperty(HTMLElement.prototype, "animate");
     }
   });
 
-  it("drains the visible border monotonically around the rendered perimeter", () => {
-    const { container } = renderNotification();
-    const progressPath = container.querySelectorAll("path")[1];
+  it("drains the bar from what is left of the countdown", () => {
+    renderNotification();
 
-    expect(progressPath).not.toHaveAttribute("pathLength");
-    expect(progressPath).toHaveStyle({
-      strokeDasharray: "612 1224",
-      strokeDashoffset: "306",
-    });
     expect(animate).toHaveBeenCalledWith(
-      [{ strokeDashoffset: "306" }, { strokeDashoffset: "612" }],
+      [{ transform: "scaleX(0.5)" }, { transform: "scaleX(0)" }],
       {
         duration: 15_000,
         easing: "linear",
@@ -133,16 +123,58 @@ describe("SingleNotification auto-hide perimeter", () => {
       notification: { ...notification, receivedAtMs: Date.now() - 10_000 },
     });
 
-    // The cleanup sweep removes this row 20s from now, so the ring must run
+    // The cleanup sweep removes this row 20s from now, so the bar must run
     // for what is left instead of restarting a full 30s countdown it would
     // never finish.
     expect(animate).toHaveBeenCalledWith(
-      [{ strokeDashoffset: "204" }, { strokeDashoffset: "612" }],
-      {
-        duration: 20_000,
-        easing: "linear",
-        fill: "forwards",
+      [{ transform: `scaleX(${20_000 / 30_000})` }, { transform: "scaleX(0)" }],
+      expect.objectContaining({ duration: 20_000 }),
+    );
+  });
+
+  it("runs the countdown to the stored deadline after the category duration was shortened", () => {
+    renderNotification({
+      autoHideState: {
+        deadlineMs: Date.now() + 40_000,
+        durationMs: 60_000,
+        pausedRemainingMs: null,
       },
+    });
+
+    // The sweep removes this row 40s from now; a countdown cut to the new 30s
+    // duration would hide the row 10s early while it still takes clicks.
+    expect(animate).toHaveBeenCalledWith(
+      [{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }],
+      expect.objectContaining({ duration: 40_000 }),
+    );
+  });
+
+  it("holds the countdown while the player points at the row or focuses inside it", () => {
+    const onPauseAutoHide = vi.fn<(listKey: string) => void>();
+    const onResumeAutoHide = vi.fn<(listKey: string) => void>();
+
+    const { container } = renderNotification({
+      onPauseAutoHide,
+      onResumeAutoHide,
+    });
+
+    const row = container.firstElementChild;
+
+    if (!(row instanceof HTMLElement)) throw new Error("Expected a row");
+    const muteButton = screen.getAllByRole("button")[0];
+
+    fireEvent.pointerEnter(row);
+    fireEvent.focus(muteButton);
+    fireEvent.pointerLeave(row);
+
+    // Keyboard focus still sits in the row, so the countdown stays paused.
+    expect(onPauseAutoHide).toHaveBeenCalledOnce();
+    expect(onResumeAutoHide).not.toHaveBeenCalled();
+
+    fireEvent.blur(muteButton, { relatedTarget: document.body });
+
+    expect(onResumeAutoHide).toHaveBeenCalledExactlyOnceWith(
+      notification.listKey,
     );
   });
 });

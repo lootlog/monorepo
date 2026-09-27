@@ -14,6 +14,7 @@ export interface TimersFilters {
   maxLvl: number;
   selectedNpcTypes: NpcType[];
   selectedColors: string[];
+  selectedLists: string[];
 }
 
 export interface TimersGeneralConfig {
@@ -39,12 +40,20 @@ export type CustomTimerColor = {
   backgroundColor: string;
 };
 
+/** A player-defined list of timers, matched by monster name. */
+export type CustomTimerList = {
+  id: string;
+  name: string;
+  npcNames: string[];
+};
+
 export interface UserTimerSettings {
   userId: string;
   generalConfig: TimersGeneralConfig;
   displayConfig: TimersDisplayConfig;
   customColors: Record<string, CustomTimerColor>;
   timersColors: Record<string, string | undefined>;
+  customLists: Record<string, CustomTimerList>;
   alwaysVisibleExpiredTimers: Record<string, string[]>;
   defaultColorNames: Record<string, string>;
   overriddenDefaultColors: Record<

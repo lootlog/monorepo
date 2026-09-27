@@ -29,7 +29,10 @@ import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import { unusedFederationStore } from "../../test/realtime-fixtures.js";
+import {
+  subscribedFederationStore,
+  unusedFederationStore,
+} from "../../test/realtime-fixtures.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { UserGuildData } from "#src/guilds/guild";
@@ -62,6 +65,9 @@ class FakeHub {
   }
   unsubscribe(): void {
     throw new Error("Unexpected unsubscribe");
+  }
+  setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
+    socket.data.presence = presence;
   }
   publishPermissionRebalance(): Effect.Effect<void, unknown> {
     return Effect.void;
@@ -196,10 +202,13 @@ const setup = (
     realtimeHub ?? hub,
     activity,
     { send: () => Promise.reject(new Error("Unexpected map ping")) },
+    { send: () => Promise.reject(new Error("Unexpected battle ping")) },
     {
       updateSubscription,
       publishObservations: () =>
         Promise.reject(new Error("Unexpected air tag observation")),
+      fetchMapThreats: () =>
+        Promise.reject(new Error("Unexpected map threat fetch")),
     },
   );
 
@@ -342,7 +351,7 @@ test.each([
       Promise.reject(new Error("Unexpected registry command"));
 
     const federationStore = {
-      ...unusedFederationStore,
+      ...subscribedFederationStore,
       command: {
         set: async () => "OK",
         del: unexpectedRegistryCommand,
@@ -359,6 +368,8 @@ test.each([
       federationStore,
       () => {},
     );
+
+    await Effect.runPromise(hub.start());
 
     const count = () => {
       const metric = Effect.runSync(Metric.snapshot).find(
@@ -766,11 +777,14 @@ describe("CommandHandler session lifecycle", () => {
         hub,
         activity,
         { send: () => Promise.reject(new Error("Unexpected map ping")) },
+        { send: () => Promise.reject(new Error("Unexpected battle ping")) },
         {
           updateSubscription: () =>
             Promise.reject(new Error("Unexpected air tag subscription")),
           publishObservations: () =>
             Promise.reject(new Error("Unexpected air tag observation")),
+          fetchMapThreats: () =>
+            Promise.reject(new Error("Unexpected map threat fetch")),
         },
       );
 
@@ -935,7 +949,7 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
-  test("advertises connection.ping on join and answers it for game and API key sockets", async () => {
+  test("advertises connection.ping and battle pings on join and answers pings for game and API key sockets", async () => {
     const { handler, hub, presence } = setup();
     const game = makeSocket().socket;
     const integration = makeSocket().socket;
@@ -957,7 +971,15 @@ describe("CommandHandler session lifecycle", () => {
       ),
     );
     expect(hub.responses[0]).toMatchObject({
-      data: { capabilities: ["connection.ping"] },
+      data: {
+        capabilities: [
+          "connection.ping",
+          "lootlog.battle-ping.v1",
+          "lootlog.battle-ping.team.v1",
+          "lootlog.air-tag-map-threat.v1",
+          "lootlog.air-tag-scope-update.v1",
+        ],
+      },
     });
 
     for (const [socket, requestId] of [
@@ -1345,9 +1367,11 @@ describe("CommandHandler session lifecycle", () => {
           }).pipe(Effect.andThen(Effect.die("Rabbit unavailable"))),
       },
       { send: () => Promise.reject(new Error("unused")) },
+      { send: () => Promise.reject(new Error("unused")) },
       {
         updateSubscription: () => Promise.reject(new Error("unused")),
         publishObservations: () => Promise.reject(new Error("unused")),
+        fetchMapThreats: () => Promise.reject(new Error("unused")),
       },
     );
 

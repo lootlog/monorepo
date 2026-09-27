@@ -12,6 +12,8 @@ import {
   type AirTagTarget,
 } from "@lootlog/schema/air-tag";
 import { getAirTagEffectiveRelation } from "@lootlog/domain/air-tag";
+import { isShownByGame } from "./air-tag-game-visibility";
+import { AirTagMotion } from "./air-tag-motion";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 
 export const AIR_TAG_TARGET_TTL_MS = 10_000;
@@ -25,6 +27,8 @@ const NEUTRAL_COLOR = "#38bdf8";
 const translateSettings = getFixedT("settings");
 
 type MapSize = { x: number; y: number };
+
+type TilePosition = { readonly x: number; readonly y: number };
 
 export const getAirTagMarkerAlpha = (ageMs: number): number => {
   if (ageMs <= AIR_TAG_FADE_START_MS) return 1;
@@ -45,7 +49,10 @@ export class AirTagRenderer {
   private expiryTimeoutId: number | null = null;
   private enabled = false;
   private unsubscribeTargets: (() => void) | null = null;
+  private readonly motion = new AirTagMotion();
+  /** Targets the game does not draw, with their positions this frame. */
   private frameTargets: AirTagTarget[] = [];
+  private framePositions: TilePosition[] = [];
   private frameTime = 0;
 
   constructor(
@@ -79,21 +86,40 @@ export class AirTagRenderer {
     this.cancelExpiry();
     this.detachDrawRegistration();
     this.frameTargets = [];
+    this.framePositions = [];
+    this.motion.clear();
   }
 
   private readonly handleDrawFrame = () => {
     this.frameTime = this.now();
-    this.frameTargets = airTagReceiveController.getRenderableTargets(
+
+    const targets = airTagReceiveController.getRenderableTargets(
       this.frameTime,
       AIR_TAG_TARGET_TTL_MS,
     );
 
-    if (this.frameTargets.length === 0) {
+    if (targets.length === 0) {
       this.cancelExpiry();
       this.detachDrawRegistration();
+      this.frameTargets = [];
+      this.framePositions = [];
+      this.motion.clear();
 
       return;
     }
+
+    // Keeps drawing while every target is in sight: one may leave it without an AirTag update.
+    this.frameTargets = [];
+    this.framePositions = [];
+    this.motion.beginFrame();
+
+    for (const target of targets) {
+      if (isShownByGame(target.targetId)) continue;
+      this.frameTargets.push(target);
+      this.framePositions.push(this.motion.position(target, this.frameTime));
+    }
+
+    this.motion.endFrame();
 
     const hasClanEnemy = this.frameTargets.some(
       (target) =>
@@ -120,20 +146,23 @@ export class AirTagRenderer {
 
     const tileSize = geometry.tileSize;
 
-    for (const target of this.frameTargets) {
+    for (const [index, target] of this.frameTargets.entries()) {
+      const position = this.framePositions[index];
+
       if (
+        !position ||
         getAirTagEffectiveRelation(
           target,
           this.frameTime,
           AIR_TAG_TARGET_TTL_MS,
         ) !== AIR_TAG_CLAN_ENEMY_RELATION ||
-        !this.isWithinMap(target, size)
+        !this.isWithinMap(position, size)
       ) {
         continue;
       }
 
-      const x = getMapCanvasCoordinate(target.x, tileSize, offset[0]);
-      const y = getMapCanvasCoordinate(target.y, tileSize, offset[1]);
+      const x = getMapCanvasCoordinate(position.x, tileSize, offset[0]);
+      const y = getMapCanvasCoordinate(position.y, tileSize, offset[1]);
       this.drawMainMarker(context, target, x, y);
     }
   }
@@ -151,8 +180,10 @@ export class AirTagRenderer {
 
     const radius = Math.min(5, Math.max(2.5, normalSize * 0.9));
 
-    for (const target of this.frameTargets) {
-      if (!this.isWithinMap(target, size)) continue;
+    for (const [index, target] of this.frameTargets.entries()) {
+      const position = this.framePositions[index];
+
+      if (!position || !this.isWithinMap(position, size)) continue;
 
       const relation = getAirTagEffectiveRelation(
         target,
@@ -166,8 +197,8 @@ export class AirTagRenderer {
           ? THREAT_COLOR
           : NEUTRAL_COLOR;
 
-      const x = getMiniMapCanvasCoordinate(target.x, normalSize, margin.left);
-      const y = getMiniMapCanvasCoordinate(target.y, normalSize, margin.top);
+      const x = getMiniMapCanvasCoordinate(position.x, normalSize, margin.left);
+      const y = getMiniMapCanvasCoordinate(position.y, normalSize, margin.top);
       const alpha = getAirTagMarkerAlpha(this.frameTime - target.observedAt);
 
       context.save();
@@ -226,9 +257,12 @@ export class AirTagRenderer {
     context.restore();
   }
 
-  private isWithinMap(target: AirTagTarget, size: MapSize): boolean {
+  private isWithinMap(position: TilePosition, size: MapSize): boolean {
     return (
-      target.x >= 0 && target.y >= 0 && target.x < size.x && target.y < size.y
+      position.x >= 0 &&
+      position.y >= 0 &&
+      position.x < size.x &&
+      position.y < size.y
     );
   }
 

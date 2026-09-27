@@ -6,6 +6,7 @@ import {
 } from "@lootlog/database/redis-cache-fill";
 import { type Cause, Effect, Exit, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
+import { chunk } from "es-toolkit";
 
 export interface JsonCodec<T> {
   stringify: (value: unknown) => string;
@@ -301,14 +302,10 @@ export class RedisService {
 
       cursor = nextCursor;
 
-      for (let index = 0; index < matchedKeys.length; index += batchSize) {
-        const batch = matchedKeys.slice(index, index + batchSize);
-
-        if (batch.length > 0) {
-          deletedCount += await this.run(
-            this.redis.send<number>("DEL", ...batch),
-          );
-        }
+      for (const batch of chunk(matchedKeys, batchSize)) {
+        deletedCount += await this.run(
+          this.redis.send<number>("DEL", ...batch),
+        );
       }
     } while (cursor !== "0");
 

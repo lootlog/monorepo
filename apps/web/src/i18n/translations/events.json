@@ -418,7 +418,6 @@
     "trackingCoverage": "Czas obstawiania respawnu: {{percentage}}",
     "trackingDurationTime": "Czas obstawiania",
     "manualAdjustment": "Korekta ręczna: {{uncapped}} -> {{total}} pkt",
-    "pointBreakdownUnavailable": "Brak danych o naliczeniu punktów",
     "timeOnMap": "Czas na mapie",
     "afkTime": "AFK",
     "expandParticipant": "Rozwiń szczegóły uczestnika: {{memberName}}",
@@ -467,6 +466,9 @@
   "killDetail": {
     "title": "Szczegóły bicia",
     "notFound": "Nie znaleziono bicia",
+    "accessDenied": "Nie masz dostępu do tego bicia",
+    "error": "Nie udało się pobrać szczegółów bicia",
+    "lootsError": "Nie udało się pobrać dopasowanych łupów",
     "participantCount": "Uczestników",
     "lootCount": "Dopasowanych łupów",
     "participants": "Uczestnicy",
@@ -508,6 +510,7 @@
     },
     "mapCoverage": {
       "title": "Pokrycie map",
+      "error": "Nie udało się pobrać historii pokrycia map",
       "covered": "Pokryte",
       "uncovered": "Nieobstawione",
       "unassigned": "Nieprzypisane",

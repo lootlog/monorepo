@@ -5,10 +5,14 @@ import { canReadPresence } from "@/lib/online-players-presence";
 import { getSocket, type PermissionsUpdatedPayload } from "@/lib/socket";
 import type {
   AirTagObservationBatch,
+  AirTagScopeUpdateEvent,
   AirTagSubscriptionPayload,
   AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
-import { airTagObservationController } from "./air-tag-observation-controller";
+import {
+  AIR_TAG_BATCH_INTERVAL_MS,
+  airTagObservationController,
+} from "./air-tag-observation-controller";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { airTagRenderer } from "./air-tag-renderer";
 
@@ -55,6 +59,7 @@ export class AirTagRuntime {
       canPublish: isPublishing,
       mapId: this.currentMapId,
       publisher: this.publishObservations,
+      onLeftMap: (targetId) => airTagReceiveController.hideDeparted(targetId),
     });
 
     if (!nextEnabled) {
@@ -163,6 +168,10 @@ export class AirTagRuntime {
     airTagReceiveController.handleUpdate(event);
   }
 
+  handleScopeUpdate(event: AirTagScopeUpdateEvent): void {
+    airTagReceiveController.handleScopeUpdate(event);
+  }
+
   shutdown(): void {
     if (this.policyRefreshTimer !== null) clearTimeout(this.policyRefreshTimer);
     this.policyRefreshTimer = null;
@@ -250,11 +259,32 @@ export class AirTagRuntime {
   }
 
   private readonly publishObservations = (
-    batch: AirTagObservationBatch,
+    observed: AirTagObservationBatch,
   ): void => {
     if (!this.isPublishing(this.state)) return;
+    const socket = getSocket();
 
-    getSocket().emit(GatewayEvent.AIR_TAG_OBSERVATION, batch, () => {});
+    // Older gateways reject a batch without observations; their targets expire instead.
+    const batch: AirTagObservationBatch =
+      socket.supportsAirTagDepartures?.() === true
+        ? observed
+        : {
+            expectedMapId: observed.expectedMapId,
+            observations: observed.observations,
+          };
+
+    if (batch.observations.length === 0 && !batch.departures?.length) return;
+
+    socket.emit(GatewayEvent.AIR_TAG_OBSERVATION, batch, (acknowledgement) => {
+      if (
+        acknowledgement.status === "rejected" &&
+        acknowledgement.code === "rate-limited"
+      )
+        airTagObservationController.retry(
+          batch,
+          acknowledgement.retryAfterMs ?? AIR_TAG_BATCH_INTERVAL_MS,
+        );
+    });
   };
 
   private getCurrentMap(): { id: number; name: string } | null {

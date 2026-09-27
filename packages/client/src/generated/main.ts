@@ -207,6 +207,7 @@ export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof Use
 export const UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = {
   tile: 'tile',
   inline: 'inline',
+  text: 'text',
 } as const;
 
 export type UserPreferencesResponseDtoOutputChatAppearance = {
@@ -312,6 +313,7 @@ export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserP
 export const UpdateUserPreferencesDtoChatAppearanceNpcLayout = {
   tile: 'tile',
   inline: 'inline',
+  text: 'text',
 } as const;
 
 export type UpdateUserPreferencesDtoChatAppearance = {
@@ -7901,6 +7903,124 @@ export interface EventHeroStatsResponseDto {
   killCount: number;
 }
 
+export type KillHistoryEntryHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface KillHistoryEntry {
+  id: string;
+  heroNpcId: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  killedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  minSpawnTimeAtKill: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: KillHistoryEntryHeroNpc;
+  /**
+     * Number of recorded participants with a point record, including participants marked absent.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participantCount: number;
+}
+
+export type KillHistoryEventResponseKind = typeof KillHistoryEventResponseKind[keyof typeof KillHistoryEventResponseKind];
+
+
+export const KillHistoryEventResponseKind = {
+  event: 'event',
+} as const;
+
+export interface KillHistoryEventResponse {
+  kind: KillHistoryEventResponseKind;
+  data: KillHistoryEntry[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryBonusBreakdown = string | number | boolean | (KillHistoryBonusBreakdown | null)[] | {[key: string]: KillHistoryBonusBreakdown | null} | null;
+
+export interface KillHistoryMemberPoint {
+  points: number;
+  basePoints: number;
+  /** @nullable */
+  manualAdjustmentPoints: number | null;
+  bonusBreakdown: KillHistoryBonusBreakdown | null;
+  /** @nullable */
+  trackingDurationSeconds: number | null;
+  /** @nullable */
+  trackingDurationPercentage: number | null;
+}
+
+export type KillHistoryMemberEntryHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface KillHistoryMemberEntry {
+  id: string;
+  heroNpcId: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  killedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  minSpawnTimeAtKill: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: KillHistoryMemberEntryHeroNpc;
+  /**
+     * Number of recorded participants with a point record, including participants marked absent.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participantCount: number;
+  memberPoint: KillHistoryMemberPoint;
+}
+
+export type KillHistoryMemberResponseKind = typeof KillHistoryMemberResponseKind[keyof typeof KillHistoryMemberResponseKind];
+
+
+export const KillHistoryMemberResponseKind = {
+  member: 'member',
+} as const;
+
+export type KillHistoryMemberResponseMember = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+};
+
+export interface KillHistoryMemberResponse {
+  kind: KillHistoryMemberResponseKind;
+  member: KillHistoryMemberResponseMember;
+  data: KillHistoryMemberEntry[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryResponse = KillHistoryEventResponse | KillHistoryMemberResponse;
+
 export type EventKillHistoryResponseDtoSchema0 = string | number | boolean | (EventKillHistoryResponseDtoSchema0 | null)[] | {[key: string]: EventKillHistoryResponseDtoSchema0 | null} | null;
 
 export type EventKillHistoryResponseDtoDataItemHeroNpc = {
@@ -12305,6 +12425,44 @@ export type EventsRankingControllerGetEventHeroStats403 = {
 };
 
 export type EventsRankingControllerGetEventHeroStats429 = {
+  message: string;
+};
+
+export type ListEventKillHistoryPathParameters = {
+ guildId: string,
+    eventId: string,
+ }
+export type ListEventKillHistoryParams = {
+/**
+ * Page size from 1 to 100. Defaults to 20.
+ * @pattern ^(?:[1-9]\d?|100)$
+ */
+limit?: string;
+/**
+ * Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged.
+ * @minLength 1
+ * @maxLength 4096
+ */
+cursor?: string;
+/**
+ * @minLength 1
+ */
+heroId?: string;
+/**
+ * @pattern ^[1-9]\d*$
+ */
+memberId?: string;
+};
+
+export type ListEventKillHistory401 = {
+  message: string;
+};
+
+export type ListEventKillHistory403 = {
+  message: string;
+};
+
+export type ListEventKillHistory429 = {
   message: string;
 };
 
@@ -30825,6 +30983,169 @@ export const useGetEventsRankingControllerGetEventHeroStatsQueryData = () => {
 
 
 
+export const getListEventKillHistoryUrl = ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/events/${eventId}/kill-history?${stringifiedParams}` : `/guilds/${guildId}/events/${eventId}/kill-history`
+}
+
+/**
+ * Read visible kills in descending (killedAt, id) order. Filter by hero or member. Cursors are opaque and scoped to the Organization, event and filters. Continuation reads current data, not a frozen snapshot. Full participants and map data are available from kill detail and timeline endpoints.
+ * @summary List event kill history summaries
+ */
+export const listEventKillHistory = async ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: Parameters<typeof mainFetch>[1]): Promise<KillHistoryResponse> => {
+
+  return mainFetch<KillHistoryResponse>(getListEventKillHistoryUrl({ guildId, eventId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListEventKillHistoryQueryKey = ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams,) => {
+    return [
+    `/guilds/${guildId}/events/${eventId}/kill-history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListEventKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>>({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListEventKillHistoryQueryKey({ guildId, eventId },params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEventKillHistory>>> = ({ signal }) => listEventKillHistory({ guildId, eventId },params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: guildId !== null && guildId !== undefined && eventId !== null && eventId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListEventKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof listEventKillHistory>>>
+export type ListEventKillHistoryQueryError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>
+
+
+export function useListEventKillHistory<TData = Awaited<ReturnType<typeof listEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>>(
+ pathParams: ListEventKillHistoryPathParameters,
+    params: undefined |  ListEventKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEventKillHistory>>,
+          TError,
+          Awaited<ReturnType<typeof listEventKillHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListEventKillHistory<TData = Awaited<ReturnType<typeof listEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>>(
+ pathParams: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEventKillHistory>>,
+          TError,
+          Awaited<ReturnType<typeof listEventKillHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListEventKillHistory<TData = Awaited<ReturnType<typeof listEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>>(
+ pathParams: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List event kill history summaries
+ */
+
+export function useListEventKillHistory<TData = Awaited<ReturnType<typeof listEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>>(
+ { guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListEventKillHistoryQueryOptions({ guildId, eventId },params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List event kill history summaries
+ */
+export const prefetchListEventKillHistoryQuery = async <TData = Awaited<ReturnType<typeof listEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | ListEventKillHistory401 | ListEventKillHistory403 | ListEventKillHistory429>>(
+ queryClient: QueryClient, { guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getListEventKillHistoryQueryOptions({ guildId, eventId },params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+/**
+ * @summary Invalidates the {@link useListEventKillHistory} query
+ */
+export const invalidateListEventKillHistory = async (
+ queryClient: QueryClient, { guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: getListEventKillHistoryQueryKey({ guildId, eventId },params) }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary List event kill history summaries
+ */
+export const useSetListEventKillHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params: ListEventKillHistoryParams | undefined,updater: Awaited<ReturnType<typeof listEventKillHistory>> | undefined | ((old: Awaited<ReturnType<typeof listEventKillHistory>> | undefined) => Awaited<ReturnType<typeof listEventKillHistory>> | undefined), $exactMatch: boolean = true) => {
+    queryClient.setQueriesData<Awaited<ReturnType<typeof listEventKillHistory>>>({ exact: $exactMatch, queryKey: getListEventKillHistoryQueryKey({ guildId, eventId },params) }, updater);
+  };
+}
+
+/**
+ * @summary List event kill history summaries
+ */
+export const useGetListEventKillHistoryQueryData = () => {
+  const queryClient = useQueryClient();
+  return ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof listEventKillHistory>>>(getListEventKillHistoryQueryKey({ guildId, eventId },params));
+}
+
+
+
 export const getEventsRankingControllerGetEventKillHistoryUrl = ({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -30842,7 +31163,8 @@ export const getEventsRankingControllerGetEventKillHistoryUrl = ({ guildId, even
 }
 
 /**
- * Get paginated kill history for all heroes in an event, with participant point details
+ * Deprecated: use listEventKillHistory for lightweight summaries. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.
+ * @deprecated
  * @summary Get event kill history
  */
 export const eventsRankingControllerGetEventKillHistory = async ({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
@@ -30869,7 +31191,7 @@ export const getEventsRankingControllerGetEventKillHistoryQueryKey = ({ guildId,
     }
 
 
-export const getEventsRankingControllerGetEventKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>>({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
+export const getEventsRankingControllerGetEventKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>>({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -30889,10 +31211,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetEventKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>>
-export type EventsRankingControllerGetEventKillHistoryQueryError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>
+export type EventsRankingControllerGetEventKillHistoryQueryError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>
 
 
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>>(
  pathParams: EventsRankingControllerGetEventKillHistoryPathParameters,
     params: undefined |  EventsRankingControllerGetEventKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -30903,7 +31225,7 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>>(
  pathParams: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -30914,16 +31236,17 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>>(
  pathParams: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Get event kill history
  */
 
-export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>>(
+export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>>(
  { guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -30937,9 +31260,10 @@ export function useEventsRankingControllerGetEventKillHistory<TData = Awaited<Re
 }
 
 /**
+ * @deprecated
  * @summary Get event kill history
  */
-export const prefetchEventsRankingControllerGetEventKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | HttpErrorResponse | EventsRankingControllerGetEventKillHistory429>>(
+export const prefetchEventsRankingControllerGetEventKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetEventKillHistory401 | EventsRankingControllerGetEventKillHistory403 | EventsRankingControllerGetEventKillHistory429>>(
  queryClient: QueryClient, { guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetEventKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -30953,6 +31277,7 @@ export const prefetchEventsRankingControllerGetEventKillHistoryQuery = async <TD
 }
 
 /**
+ * @deprecated
  * @summary Invalidates the {@link useEventsRankingControllerGetEventKillHistory} query
  */
 export const invalidateEventsRankingControllerGetEventKillHistory = async (
@@ -30966,6 +31291,7 @@ export const invalidateEventsRankingControllerGetEventKillHistory = async (
 }
 
 /**
+ * @deprecated
  * @summary Get event kill history
  */
 export const useSetEventsRankingControllerGetEventKillHistoryQueryData = () => {
@@ -30977,6 +31303,7 @@ export const useSetEventsRankingControllerGetEventKillHistoryQueryData = () => {
 }
 
 /**
+ * @deprecated
  * @summary Get event kill history
  */
 export const useGetEventsRankingControllerGetEventKillHistoryQueryData = () => {
@@ -31005,7 +31332,8 @@ export const getEventsRankingControllerGetMemberKillHistoryUrl = ({ guildId, eve
 }
 
 /**
- * Get paginated kill history for a specific member in an event, with detailed point breakdown per kill
+ * Deprecated: use listEventKillHistory with memberId. This endpoint retains its full response and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.
+ * @deprecated
  * @summary Get member kill history
  */
 export const eventsRankingControllerGetMemberKillHistory = async ({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
@@ -31032,7 +31360,7 @@ export const getEventsRankingControllerGetMemberKillHistoryQueryKey = ({ guildId
     }
 
 
-export const getEventsRankingControllerGetMemberKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>>({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
+export const getEventsRankingControllerGetMemberKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>>({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -31052,10 +31380,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetMemberKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>>
-export type EventsRankingControllerGetMemberKillHistoryQueryError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>
+export type EventsRankingControllerGetMemberKillHistoryQueryError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>
 
 
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>>(
  pathParams: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params: undefined |  EventsRankingControllerGetMemberKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -31066,7 +31394,7 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>>(
  pathParams: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -31077,16 +31405,17 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>>(
  pathParams: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Get member kill history
  */
 
-export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>>(
+export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>>(
  { guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -31100,9 +31429,10 @@ export function useEventsRankingControllerGetMemberKillHistory<TData = Awaited<R
 }
 
 /**
+ * @deprecated
  * @summary Get member kill history
  */
-export const prefetchEventsRankingControllerGetMemberKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | HttpErrorResponse | EventsRankingControllerGetMemberKillHistory429>>(
+export const prefetchEventsRankingControllerGetMemberKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetMemberKillHistory401 | EventsRankingControllerGetMemberKillHistory403 | EventsRankingControllerGetMemberKillHistory429>>(
  queryClient: QueryClient, { guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
     params?: EventsRankingControllerGetMemberKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetMemberKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -31116,6 +31446,7 @@ export const prefetchEventsRankingControllerGetMemberKillHistoryQuery = async <T
 }
 
 /**
+ * @deprecated
  * @summary Invalidates the {@link useEventsRankingControllerGetMemberKillHistory} query
  */
 export const invalidateEventsRankingControllerGetMemberKillHistory = async (
@@ -31129,6 +31460,7 @@ export const invalidateEventsRankingControllerGetMemberKillHistory = async (
 }
 
 /**
+ * @deprecated
  * @summary Get member kill history
  */
 export const useSetEventsRankingControllerGetMemberKillHistoryQueryData = () => {
@@ -31140,6 +31472,7 @@ export const useSetEventsRankingControllerGetMemberKillHistoryQueryData = () => 
 }
 
 /**
+ * @deprecated
  * @summary Get member kill history
  */
 export const useGetEventsRankingControllerGetMemberKillHistoryQueryData = () => {
@@ -31168,7 +31501,8 @@ export const getEventsRankingControllerGetHeroKillHistoryUrl = ({ guildId, event
 }
 
 /**
- * Get paginated kill history for a specific hero, with participant point details
+ * Deprecated: use listEventKillHistory with heroId. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.
+ * @deprecated
  * @summary Get hero kill history
  */
 export const eventsRankingControllerGetHeroKillHistory = async ({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
@@ -31195,7 +31529,7 @@ export const getEventsRankingControllerGetHeroKillHistoryQueryKey = ({ guildId, 
     }
 
 
-export const getEventsRankingControllerGetHeroKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>>({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
+export const getEventsRankingControllerGetHeroKillHistoryQueryOptions = <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>>({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 ) => {
 
@@ -31215,10 +31549,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type EventsRankingControllerGetHeroKillHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>>
-export type EventsRankingControllerGetHeroKillHistoryQueryError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>
+export type EventsRankingControllerGetHeroKillHistoryQueryError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>
 
 
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>>(
  pathParams: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params: undefined |  EventsRankingControllerGetHeroKillHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -31229,7 +31563,7 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>>(
  pathParams: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -31240,16 +31574,17 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
       >, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>>(
  pathParams: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Get hero kill history
  */
 
-export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>>(
+export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>>(
  { guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
  , queryClient?: QueryClient
@@ -31263,9 +31598,10 @@ export function useEventsRankingControllerGetHeroKillHistory<TData = Awaited<Ret
 }
 
 /**
+ * @deprecated
  * @summary Get hero kill history
  */
-export const prefetchEventsRankingControllerGetHeroKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | HttpErrorResponse | EventsRankingControllerGetHeroKillHistory429>>(
+export const prefetchEventsRankingControllerGetHeroKillHistoryQuery = async <TData = Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError = ErrorType<HttpErrorResponse | RequestValidationError | EventsRankingControllerGetHeroKillHistory401 | EventsRankingControllerGetHeroKillHistory403 | EventsRankingControllerGetHeroKillHistory429>>(
  queryClient: QueryClient, { guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,
     params?: EventsRankingControllerGetHeroKillHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRankingControllerGetHeroKillHistory>>, TError, TData>>, request?: SecondParameter<typeof mainFetch>}
 
@@ -31279,6 +31615,7 @@ export const prefetchEventsRankingControllerGetHeroKillHistoryQuery = async <TDa
 }
 
 /**
+ * @deprecated
  * @summary Invalidates the {@link useEventsRankingControllerGetHeroKillHistory} query
  */
 export const invalidateEventsRankingControllerGetHeroKillHistory = async (
@@ -31292,6 +31629,7 @@ export const invalidateEventsRankingControllerGetHeroKillHistory = async (
 }
 
 /**
+ * @deprecated
  * @summary Get hero kill history
  */
 export const useSetEventsRankingControllerGetHeroKillHistoryQueryData = () => {
@@ -31303,6 +31641,7 @@ export const useSetEventsRankingControllerGetHeroKillHistoryQueryData = () => {
 }
 
 /**
+ * @deprecated
  * @summary Get hero kill history
  */
 export const useGetEventsRankingControllerGetHeroKillHistoryQueryData = () => {

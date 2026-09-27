@@ -1,8 +1,7 @@
 import {
-  eventsRankingControllerGetEventKillHistory,
-  getEventsRankingControllerGetEventKillHistoryQueryKey,
+  listEventKillHistory,
+  getListEventKillHistoryQueryKey,
 } from "@lootlog/client/main";
-import type { HeroKill } from "./use-hero-kill-history";
 import { useCursorInfiniteQuery } from "./use-cursor-infinite-query";
 
 interface UseEventKillHistoryOptions {
@@ -18,30 +17,30 @@ export const useEventKillHistory = ({
   heroId,
   limit = 20,
 }: UseEventKillHistoryOptions) => {
-  const baseParams: NonNullable<
-    Parameters<typeof eventsRankingControllerGetEventKillHistory>[1]
-  > = {
+  const baseParams: NonNullable<Parameters<typeof listEventKillHistory>[1]> = {
     limit: String(limit),
   };
 
   if (heroId) baseParams.heroId = heroId;
 
   return useCursorInfiniteQuery({
-    queryKey: getEventsRankingControllerGetEventKillHistoryQueryKey(
-      { guildId, eventId },
-      baseParams,
-    ),
-    fetchPage: (cursor, signal) =>
-      eventsRankingControllerGetEventKillHistory(
+    queryKey: getListEventKillHistoryQueryKey({ guildId, eventId }, baseParams),
+    fetchPage: async (cursor, signal) => {
+      const response = await listEventKillHistory(
         { guildId, eventId },
         {
           ...baseParams,
           cursor,
         },
         { signal },
-      ),
+      );
+
+      if (response.kind !== "event") {
+        throw new Error("Unexpected kill history response");
+      }
+
+      return response;
+    },
     enabled: !!guildId && !!eventId,
   });
 };
-
-export type { HeroKill };

@@ -1,7 +1,7 @@
 import { RedisScriptCache } from "@lootlog/database/redis-script";
 import type { LootVisibilityNpc } from "@lootlog/domain/loot-visibility";
 import { SubscriptionScope } from "@lootlog/protocol/realtime";
-import { Effect, Queue, Schedule, Schema } from "effect";
+import { Cause, Effect, Predicate, Queue, Schedule, Schema } from "effect";
 import * as Redis from "effect/unstable/persistence/Redis";
 import type { GatewayConfiguration } from "#src/config/gateway-config";
 import {
@@ -26,6 +26,7 @@ export interface FederatedRealtimeMessage {
   readonly recipientPlatform?: "game" | "web-app";
   readonly recipientWorld?: string;
   readonly recipientMapId?: number;
+  readonly recipientCharacterIds?: ReadonlyArray<string>;
   readonly presenceAudience?: "basic" | "precise";
   readonly organizationId?: string;
   readonly frame?: string;
@@ -57,6 +58,7 @@ const FederatedRealtimeMessageJson = Schema.fromJsonString(
     recipientPlatform: Schema.optional(Schema.Literals(["game", "web-app"])),
     recipientWorld: Schema.optional(Schema.String),
     recipientMapId: Schema.optional(Schema.Number),
+    recipientCharacterIds: Schema.optional(Schema.Array(Schema.String)),
     presenceAudience: Schema.optional(Schema.Literals(["basic", "precise"])),
     organizationId: Schema.optional(Schema.String),
     frame: Schema.optional(Schema.String),
@@ -174,8 +176,13 @@ export class RedisGatewayStore {
     }
   }
 
+  /**
+   * Pub/Sub has no replay: `onSubscriptionChange(false)` reports that frames
+   * published until the next `onSubscriptionChange(true)` may have been lost.
+   */
   async subscribe(
     listener: (message: FederatedRealtimeMessage) => void,
+    onSubscriptionChange: (subscribed: boolean) => void = () => undefined,
   ): Promise<void> {
     let markReady: () => void = () => undefined;
 
@@ -196,12 +203,22 @@ export class RedisGatewayStore {
             subscriptionQueues.delete(messages);
           }),
         );
-        yield* Effect.sync(markReady);
+        yield* Effect.sync(() => {
+          onSubscriptionChange(true);
+          markReady();
+        });
         let batchStarted = performance.now();
         let batchSize = 0;
 
         while (true) {
           const { message: raw } = yield* Queue.take(messages);
+
+          // A dropped subscriber leaves its backlog readable until it drains.
+          // Report the gap now; local sockets close, so the backlog has no audience.
+          if (!Predicate.isTagged(messages.state, "Open"))
+            return yield* new Redis.RedisError({
+              cause: "Redis federation subscriber disconnected",
+            });
 
           try {
             const message = decodeFederatedRealtimeMessage(raw);
@@ -228,6 +245,12 @@ export class RedisGatewayStore {
         }
       }),
     ).pipe(
+      Effect.catchDefect((defect) => Effect.fail(defect)),
+      Effect.tapCause((cause) =>
+        Cause.hasInterruptsOnly(cause)
+          ? Effect.void
+          : Effect.sync(() => onSubscriptionChange(false)),
+      ),
       Effect.retry(
         Schedule.min([
           Schedule.exponential("100 millis").pipe(Schedule.jittered),

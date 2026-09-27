@@ -1,5 +1,4 @@
 import type { AccessPolicy } from "@lootlog/domain/access-policy";
-import { InvalidRequestError } from "#src/shared/http/http-errors";
 
 import { Permission } from "@lootlog/schema/permissions";
 import type { roleTable } from "#src/database/drizzle/schema";
@@ -11,7 +10,6 @@ import {
   UpdateKillPointRequest,
   UpdateRankingPointsRequest,
 } from "#src/contracts/events/schemas";
-import type { EventKills } from "#src/events/kills/event-kill.service";
 import type { EventRankingRead } from "#src/events/ranking/event-ranking-read";
 import { Effect } from "effect";
 import type { EventsCatalogRead } from "#src/events/catalog/events-catalog-read";
@@ -22,13 +20,6 @@ import type { EventHeroSummary } from "#src/events/kills/event-hero-summary";
 
 export const makeEventsRanking = (
   rankingRead: Pick<EventRankingRead, "getEditHistories" | "getRanking">,
-  kills: Pick<
-    EventKills,
-    | "getEventKillHistory"
-    | "getHeroKillHistory"
-    | "getKillDetail"
-    | "getMemberKillHistory"
-  >,
   catalogRead: Pick<EventsCatalogRead, "getEventOverview">,
   eventAccess: EventAccess,
   participation: Pick<
@@ -175,145 +166,6 @@ export const makeEventsRanking = (
           ),
         ),
       );
-  },
-
-  getEventKillHistory(
-    guildData: { id: string },
-    eventId: string,
-    accessPolicy: AccessPolicy,
-    limit?: string,
-    cursor?: string,
-    heroId?: string,
-    roles: Role[] = [],
-  ) {
-    return Effect.gen(function* () {
-      if (heroId) {
-        yield* eventAccess.getHero(
-          guildData.id,
-          eventId,
-          heroId,
-          roles,
-          accessPolicy,
-        );
-      }
-
-      const result = yield* kills.getEventKillHistory(
-        guildData.id,
-        eventId,
-        limit ? Number.parseInt(limit, 10) : 20,
-        cursor,
-        heroId,
-      );
-
-      return {
-        ...result,
-        data: result.data.filter((kill) =>
-          eventAccess.isHeroVisible(
-            { npcLvl: kill.heroNpc.npcLvl },
-            roles,
-            accessPolicy,
-          ),
-        ),
-      };
-    }).pipe(Effect.withSpan("EventsRanking.getEventKillHistory"));
-  },
-
-  getMemberKillHistory(
-    guildData: { id: string },
-    eventId: string,
-    memberId: string,
-    accessPolicy: AccessPolicy,
-    limit?: string,
-    cursor?: string,
-    heroId?: string,
-    roles: Role[] = [],
-  ) {
-    return Effect.gen(function* () {
-      const parsedMemberId = Number.parseInt(memberId, 10);
-
-      if (Number.isNaN(parsedMemberId)) {
-        return yield* Effect.fail(new InvalidRequestError("Invalid member ID"));
-      }
-
-      if (heroId) {
-        yield* eventAccess.getHero(
-          guildData.id,
-          eventId,
-          heroId,
-          roles,
-          accessPolicy,
-        );
-      }
-
-      const result = yield* kills.getMemberKillHistory(
-        guildData.id,
-        eventId,
-        parsedMemberId,
-        limit ? Number.parseInt(limit, 10) : 20,
-        cursor,
-        heroId,
-      );
-
-      return {
-        ...result,
-        data: result.data.filter((kill) =>
-          eventAccess.isHeroVisible(
-            { npcLvl: kill.heroNpc.npcLvl },
-            roles,
-            accessPolicy,
-          ),
-        ),
-      };
-    }).pipe(Effect.withSpan("EventsRanking.getMemberKillHistory"));
-  },
-
-  getHeroKillHistory(
-    guildData: { id: string },
-    eventId: string,
-    heroId: string,
-    accessPolicy: AccessPolicy,
-    limit?: string,
-    cursor?: string,
-    roles: Role[] = [],
-  ) {
-    return Effect.gen(function* () {
-      yield* eventAccess.getHero(
-        guildData.id,
-        eventId,
-        heroId,
-        roles,
-        accessPolicy,
-      );
-
-      return yield* kills.getHeroKillHistory(
-        guildData.id,
-        eventId,
-        heroId,
-        limit ? Number.parseInt(limit, 10) : 20,
-        cursor,
-      );
-    }).pipe(Effect.withSpan("EventsRanking.getHeroKillHistory"));
-  },
-
-  getKillDetail(
-    guildData: { id: string },
-    eventId: string,
-    heroId: string,
-    killId: string,
-    roles: Role[] = [],
-    accessPolicy: AccessPolicy,
-  ) {
-    return Effect.gen(function* () {
-      yield* eventAccess.getHero(
-        guildData.id,
-        eventId,
-        heroId,
-        roles,
-        accessPolicy,
-      );
-
-      return yield* kills.getKillDetail(guildData.id, eventId, heroId, killId);
-    }).pipe(Effect.withSpan("EventsRanking.getKillDetail"));
   },
 
   updateKillPoint(

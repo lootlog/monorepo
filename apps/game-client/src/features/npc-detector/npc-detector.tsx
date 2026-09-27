@@ -61,6 +61,7 @@ export const NpcDetector = () => {
       onMaxContentHeightChange={(nextMaxContentHeight) =>
         setMaxContentHeight("npc-detector", nextMaxContentHeight)
       }
+      contentClassName="ll:-mx-1 ll:-mb-1"
       resizable
       minHeight={82}
       maxHeight={600}

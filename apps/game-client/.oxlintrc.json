@@ -519,7 +519,7 @@
         "anti-slop/no-unknown-parameters": [
           "error",
           {
-            "boundaryFunctions": ["handleUpdate"]
+            "boundaryFunctions": ["handleUpdate", "handleScopeUpdate"]
           }
         ]
       }

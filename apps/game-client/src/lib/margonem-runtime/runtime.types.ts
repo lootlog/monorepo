@@ -96,7 +96,8 @@ export type RuntimeFact = Readonly<{
     | "npc-delete"
     | "npc-upsert"
     | "other"
-    | "party";
+    | "party"
+    | "reload";
   event: GameEvent;
 }>;
 

@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "cn";
-import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
+import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { formatDateTime } from "../../utils/format-date";
 import { formatPoints } from "../../utils/format-points";
 import { KillMonsterCell } from "../kills/kill-monster-cell";
@@ -31,7 +31,7 @@ export const createMemberKillsTableColumns = ({
   t,
 }: CreateMemberKillsTableColumnsOptions): ColumnDef<
   typeof coreTableFeatures,
-  EventMemberKill
+  KillHistoryMemberEntry
 >[] => [
   {
     id: "monster",
@@ -98,7 +98,7 @@ export const createMemberKillsTableColumns = ({
             </Tooltip>
           )}
           <span className="font-bold text-primary tabular-nums">
-            {formatPoints(point?.points ?? 0)}
+            {formatPoints(point.points)}
             <span className="ml-1 hidden text-xs font-medium text-primary/75 sm:inline">
               {t("events.common.pointsShort", "pkt")}
             </span>

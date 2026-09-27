@@ -112,7 +112,18 @@ describe("AirTagRenderer", () => {
     expect(removalCountBeforeCleanup).toBe(1);
   });
 
-  it("draws every target on the minimap and only CLAN_ENEMY on main canvas", () => {
+  it("draws every target the game does not show on the minimap and only CLAN_ENEMY on main canvas", () => {
+    setTestRuntimeGame({ hero: { characterId: "hero" } });
+    useOthersStore.getState().replaceOthers({
+      "in-sight": Object.freeze({
+        accountId: "account",
+        characterId: "in-sight",
+        icon: "warrior.gif",
+        level: 300,
+        name: "In sight",
+        profession: "w",
+      }),
+    });
     const canvas = installTestCanvas();
     const miniMapContext = canvas.create().context;
     const mainMapContext = canvas.create().context;
@@ -177,6 +188,13 @@ describe("AirTagRenderer", () => {
               x: 8,
               y: 9,
             }),
+            // Margonem draws these itself.
+            createTarget({
+              targetId: "in-sight",
+              relation: 6,
+              clanEnemyObservedAt: 1_000,
+            }),
+            createTarget({ targetId: "hero" }),
           ],
         },
       ],
@@ -202,7 +220,12 @@ describe("AirTagRenderer", () => {
 
     renderer.unregister();
     expect(removeCallbackFromEvent).toHaveBeenCalledOnce();
+    useOthersStore.getState().clearOthers();
   });
 });
 
-import { testRuntimeWindow } from "@/test/test-runtime-window";
+import { useOthersStore } from "@/store/others.store";
+import {
+  setTestRuntimeGame,
+  testRuntimeWindow,
+} from "@/test/test-runtime-window";

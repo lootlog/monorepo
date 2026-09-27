@@ -5,6 +5,7 @@ import type { SandboxController } from "./mount-sandbox-panel";
 import { RawEventForm } from "./raw-event-form";
 import { SandboxLogList } from "./sandbox-log-list";
 import { SessionStatus } from "./session-status";
+import { TimerStatesPreview } from "./timer-states-preview";
 
 const WINDOW_SHORTCUTS: readonly WindowId[] = [
   "settings",
@@ -42,6 +43,10 @@ export function SandboxPanel({
   controller: SandboxController;
 }) {
   const [open, setOpen] = useState(true);
+
+  const [timerStatesOpen, setTimerStatesOpen] = useState(() =>
+    new URLSearchParams(window.location.search).has("timer-states"),
+  );
 
   if (!open) {
     return (
@@ -97,6 +102,22 @@ export function SandboxPanel({
           ))}
         </div>
       </section>
+
+      <section className="sbx-section">
+        <h2>Previews</h2>
+        <div className="sbx-buttons">
+          <button
+            type="button"
+            onClick={() => setTimerStatesOpen((current) => !current)}
+          >
+            Timer map states
+          </button>
+        </div>
+      </section>
+
+      {timerStatesOpen && (
+        <TimerStatesPreview onClose={() => setTimerStatesOpen(false)} />
+      )}
 
       {SCENARIO_GROUPS.map((group) => (
         <section key={group} className="sbx-section">

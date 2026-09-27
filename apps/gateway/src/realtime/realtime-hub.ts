@@ -42,6 +42,7 @@ import {
 } from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 import { isReadyRoomRemoval } from "#src/realtime/npc-event-visibility";
+import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 
 type Scope = typeof SubscriptionScope.Type;
 
@@ -55,6 +56,13 @@ const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
+
+/**
+ * Federated frame types this replica decodes. Bump it with a new federated
+ * event type and publish that type only once `clusterFederationVersion`
+ * reaches it: a replica drops a frame its schema does not know.
+ */
+export const FEDERATION_VERSION = 2;
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -78,6 +86,12 @@ const getScopeAudienceKey = (scope: Scope): string =>
     scope.world,
     scope.mapId,
   ]);
+
+const getLocationAudienceKey = (
+  platform: SessionData["platform"],
+  world: string,
+  mapId: number,
+): string => JSON.stringify(["recipient-location", platform, world, mapId]);
 
 // Four optional fields produce at most 16 exact/wildcard subscription keys.
 const matchingScopeAudienceKeys = (scope: Scope): string[] => {
@@ -104,17 +118,31 @@ const matchingScopeAudienceKeys = (scope: Scope): string[] => {
 
 type RealtimeFederationStore = Pick<RedisGatewayStore, "publish" | "subscribe">;
 
+// Pings carry no Organization, so they reach sockets only through authorized routing scopes.
+const isPingEvent = (
+  event: Event,
+): event is Extract<
+  Event,
+  { type: "map-ping.received" | "battle-ping.received" }
+> =>
+  event.type === "map-ping.received" || event.type === "battle-ping.received";
+
 export class RealtimeHub {
   private readonly logger = new Logger(RealtimeHub.name);
   private readonly sockets = new Map<string, GatewaySocket>();
   private readonly audiences = new Map<string, Set<GatewaySocket>>();
+  private readonly locationKeys = new WeakMap<GatewaySocket, string>();
   private readonly backpressuredSockets = new WeakSet<GatewaySocket>();
   private readonly seenEventIds = new Set<string>();
   private readonly seenEventOrder: string[] = [];
   private readonly permissionRebalanceListeners = new Set<
     (discordId: string, userId: string) => Effect.Effect<void, unknown>
   >();
+  private federated = false;
+  private draining = false;
   readonly instanceId = crypto.randomUUID();
+  /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
+  clusterFederationVersion = 1;
 
   constructor(
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
@@ -125,9 +153,27 @@ export class RealtimeHub {
   start(): Effect.Effect<void, unknown> {
     return Effect.tryPromise({
       try: () =>
-        this.redis.subscribe((message) => this.receiveFederated(message)),
+        this.redis.subscribe(
+          (message) => this.receiveFederated(message),
+          (subscribed) =>
+            subscribed ? this.restoreFederation() : this.loseFederation(),
+        ),
       catch: (cause) => cause,
     });
+  }
+
+  /** Why this instance must not accept WebSocket sessions, if it must not. */
+  unavailableReason(): "draining" | "federation-unavailable" | undefined {
+    if (this.draining) return "draining";
+
+    if (!this.federated) return "federation-unavailable";
+
+    return undefined;
+  }
+
+  /** Stops admitting sessions; established sockets keep receiving events. */
+  startDraining(): void {
+    this.draining = true;
   }
 
   register(socket: GatewaySocket): void {
@@ -136,12 +182,14 @@ export class RealtimeHub {
     if (previous) {
       for (const key of this.audienceKeys(previous.data))
         this.removeAudience(key, previous);
+      this.removeLocationAudience(previous);
     }
 
     this.sockets.set(socket.data.connectionId, socket);
 
     for (const key of this.audienceKeys(socket.data))
       this.addAudience(key, socket);
+    this.setPresence(socket, socket.data.presence);
   }
 
   detach(socket: GatewaySocket): void {
@@ -150,6 +198,28 @@ export class RealtimeHub {
 
     for (const key of this.audienceKeys(socket.data))
       this.removeAudience(key, socket);
+    this.removeLocationAudience(socket);
+  }
+
+  setPresence(socket: GatewaySocket, presence: SessionData["presence"]): void {
+    socket.data.presence = presence;
+    const world = presence?.character?.world;
+    const mapId = presence?.location?.mapId;
+
+    const nextKey =
+      this.sockets.get(socket.data.connectionId) === socket &&
+      world !== undefined &&
+      mapId !== undefined
+        ? getLocationAudienceKey(socket.data.platform, world, mapId)
+        : undefined;
+
+    if (this.locationKeys.get(socket) === nextKey) return;
+    this.removeLocationAudience(socket);
+
+    if (nextKey !== undefined) {
+      this.addAudience(nextKey, socket);
+      this.locationKeys.set(socket, nextKey);
+    }
   }
 
   subscribe(socket: GatewaySocket, scope: Scope): void {
@@ -220,7 +290,7 @@ export class RealtimeHub {
   sendEvent(socket: GatewaySocket, event: Event): boolean {
     if (!canReadApiKeyEvent(socket.data, event)) return false;
 
-    if (event.type === "map-ping.received") return false;
+    if (isPingEvent(event)) return false;
 
     if (!this.canReadOrganization(socket.data, event)) return false;
 
@@ -259,6 +329,10 @@ export class RealtimeHub {
       readonly recipientPlatform?: "game" | "web-app";
       readonly recipientWorld?: string;
       readonly recipientMapId?: number;
+      readonly recipientCharacterIds?: readonly string[];
+      /** Limits delivery to readers of this Organization's precise presence location. */
+      readonly organizationId?: string;
+      readonly presenceAudience?: "precise";
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;
@@ -375,6 +449,32 @@ export class RealtimeHub {
     }
   }
 
+  private restoreFederation(): void {
+    if (this.federated) return;
+    this.federated = true;
+    this.logger.info("Realtime federation subscribed", {
+      instanceId: this.instanceId,
+    });
+  }
+
+  // Frames published during the gap are gone, including permission rebalances.
+  // Rejoining re-reads Organization access and lets clients refetch current state.
+  private loseFederation(): void {
+    if (!this.federated) return;
+    this.federated = false;
+    const sockets = this.getLocalSockets();
+
+    this.logger.error(
+      "Realtime federation subscription lost; closing local sockets",
+      { instanceId: this.instanceId, sockets: sockets.length },
+    );
+
+    for (const socket of sockets) {
+      this.detach(socket);
+      socket.close(1013, "realtime federation unavailable");
+    }
+  }
+
   private createFederatedMessage(options: {
     readonly sourceNpcs?: ReadonlyArray<LootVisibilityNpc>;
     readonly id?: string;
@@ -387,6 +487,7 @@ export class RealtimeHub {
     readonly recipientPlatform?: "game" | "web-app";
     readonly recipientWorld?: string;
     readonly recipientMapId?: number;
+    readonly recipientCharacterIds?: readonly string[];
     readonly organizationId?: string;
     readonly presenceAudience?: "basic" | "precise";
     readonly frame: Event;
@@ -408,6 +509,7 @@ export class RealtimeHub {
         recipientPlatform: options.recipientPlatform,
         recipientWorld: options.recipientWorld,
         recipientMapId: options.recipientMapId,
+        recipientCharacterIds: options.recipientCharacterIds,
         organizationId: options.organizationId,
         presenceAudience: options.presenceAudience,
         frame: toBase64(prepared.bytes),
@@ -474,6 +576,11 @@ export class RealtimeHub {
     let binaryFrame = local?.bytes;
     const chatFrames = new Map<string, string | Uint8Array>();
 
+    const legacyAirTagFrames = new Map<
+      string,
+      ReadonlyArray<string | Uint8Array>
+    >();
+
     const canReadSource = prepareSourceEventVisibility(
       frame,
       message.sourceNpcs,
@@ -514,6 +621,21 @@ export class RealtimeHub {
         continue;
       }
 
+      if (
+        frame.type === "air-tag.scope-updated" &&
+        !socket.data.supportsAirTagScopeUpdates
+      ) {
+        this.sendEach(
+          socket,
+          this.encodeLegacyAirTagUpdates(
+            socket.data,
+            frame,
+            legacyAirTagFrames,
+          ),
+        );
+        continue;
+      }
+
       const encoded =
         socket.data.frameEncoding === "json"
           ? (jsonFrame ??= JSON.stringify(frame))
@@ -545,8 +667,7 @@ export class RealtimeHub {
     const scopes = message.scopes ?? (message.scope ? [message.scope] : []);
 
     // A ping carries no Organization in its payload, so only routing scopes can authorize it.
-    if (frame.type === "map-ping.received" && scopes.length === 0)
-      return () => false;
+    if (isPingEvent(frame) && scopes.length === 0) return () => false;
     const organizationId = eventOrganizationId(frame);
 
     const scopeAudiences = scopes.map((scope) => ({
@@ -572,7 +693,7 @@ export class RealtimeHub {
       )
         return false;
 
-      if (socket.data.apiKeyAccess && frame.type === "map-ping.received")
+      if (socket.data.apiKeyAccess && isPingEvent(frame))
         return scopes.every(
           (scope) =>
             scope.organizationId !== undefined &&
@@ -609,6 +730,35 @@ export class RealtimeHub {
     return encoded;
   }
 
+  private encodeLegacyAirTagUpdates(
+    session: SessionData,
+    event: Extract<Event, { type: "air-tag.scope-updated" }>,
+    frames: Map<string, ReadonlyArray<string | Uint8Array>>,
+  ): ReadonlyArray<string | Uint8Array> {
+    const key = session.frameEncoding ?? "messagepack";
+    let encoded = frames.get(key);
+
+    if (encoded === undefined) {
+      encoded = toLegacyAirTagUpdates(event).map((legacy) =>
+        session.frameEncoding === "json"
+          ? JSON.stringify(legacy)
+          : encodeRealtimeFrame(legacy),
+      );
+      frames.set(key, encoded);
+    }
+
+    return encoded;
+  }
+
+  private sendEach(
+    socket: GatewaySocket,
+    frames: ReadonlyArray<string | Uint8Array>,
+  ): void {
+    for (const frame of frames) {
+      if (!this.send(socket, frame)) return;
+    }
+  }
+
   private audienceKeys(session: SessionData): string[] {
     return [
       JSON.stringify(["user", session.userId]),
@@ -637,6 +787,14 @@ export class RealtimeHub {
     if (audience.size === 0) this.audiences.delete(key);
   }
 
+  private removeLocationAudience(socket: GatewaySocket): void {
+    const key = this.locationKeys.get(socket);
+
+    if (key === undefined) return;
+    this.removeAudience(key, socket);
+    this.locationKeys.delete(socket);
+  }
+
   private candidates(
     message: FederatedRealtimeMessage,
   ): ReadonlySet<GatewaySocket> {
@@ -655,11 +813,51 @@ export class RealtimeHub {
       keys.push(...matchingScopeAudienceKeys(scope));
     }
 
-    const [first, ...others] = keys.flatMap((key) => {
+    const audiences = keys.flatMap((key) => {
       const audience = this.audiences.get(key);
 
       return audience ? [audience] : [];
     });
+
+    if (
+      message.recipientPlatform !== undefined &&
+      message.recipientWorld !== undefined &&
+      message.recipientMapId !== undefined
+    ) {
+      const location = this.audiences.get(
+        getLocationAudienceKey(
+          message.recipientPlatform,
+          message.recipientWorld,
+          message.recipientMapId,
+        ),
+      );
+
+      const candidates = new Set<GatewaySocket>();
+
+      if (!location) return candidates;
+
+      const audienceSize = audiences.reduce(
+        (size, audience) => size + audience.size,
+        0,
+      );
+
+      if (location.size < audienceSize) {
+        for (const socket of location) {
+          if (audiences.some((audience) => audience.has(socket)))
+            candidates.add(socket);
+        }
+      } else {
+        for (const audience of audiences) {
+          for (const socket of audience) {
+            if (location.has(socket)) candidates.add(socket);
+          }
+        }
+      }
+
+      return candidates;
+    }
+
+    const [first, ...others] = audiences;
 
     if (!first) return new Set();
 
@@ -696,6 +894,13 @@ export class RealtimeHub {
       socket.data.presence?.location?.mapId !== message.recipientMapId
     )
       return false;
+
+    if (message.recipientCharacterIds !== undefined) {
+      const characterId = socket.data.presence?.character?.characterId;
+
+      if (!characterId || !message.recipientCharacterIds.includes(characterId))
+        return false;
+    }
 
     return true;
   }

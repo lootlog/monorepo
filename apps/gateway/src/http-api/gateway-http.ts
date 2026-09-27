@@ -1,20 +1,29 @@
 import { Effect, Layer } from "effect";
 import { HttpRouter, HttpServer } from "effect/unstable/http";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
+import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import { GatewayApi } from "./gateway-api.js";
 
-const GatewayHandlers = HttpApiBuilder.group(GatewayApi, "health", (handlers) =>
-  handlers.handle("GatewayHealth", () =>
-    Effect.succeed({ status: "ok" as const }),
-  ),
-);
+type Availability = Pick<RealtimeHub, "unavailableReason">;
 
-const GatewayRoutes = HttpApiBuilder.layer(GatewayApi).pipe(
-  Layer.provide(GatewayHandlers),
-);
+const makeGatewayHandlers = (availability: Availability) =>
+  HttpApiBuilder.group(GatewayApi, "health", (handlers) =>
+    handlers
+      .handle("GatewayHealth", () => Effect.succeed({ status: "ok" as const }))
+      .handle("GatewayReadiness", () => {
+        const reason = availability.unavailableReason();
 
-export const makeGatewayHttpBoundary = () =>
+        return reason === undefined
+          ? Effect.succeed({ status: "ready" as const })
+          : Effect.fail({ status: "unavailable" as const, reason });
+      }),
+  );
+
+export const makeGatewayHttpBoundary = (availability: Availability) =>
   HttpRouter.toWebHandler(
-    GatewayRoutes.pipe(Layer.provide(HttpServer.layerServices)),
+    HttpApiBuilder.layer(GatewayApi).pipe(
+      Layer.provide(makeGatewayHandlers(availability)),
+      Layer.provide(HttpServer.layerServices),
+    ),
     { disableLogger: true },
   );

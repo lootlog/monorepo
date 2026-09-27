@@ -4,7 +4,13 @@ import { ImmediateIntersectionObserver } from "@/lib/testing/intersection-observ
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
 import type { ReactNode } from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHeroKill as createKill } from "@/lib/testing/event-kill";
 import { EventKillsTable } from "./event-kills-table";
@@ -24,6 +30,7 @@ describe("EventKillsTable", () => {
   const defaultProps = {
     eventId: "event-1",
     fetchNextPage: vi.fn(),
+    onRetry: vi.fn(),
     guildId: "guild-1",
     hasError: false,
     hasNextPage: false,
@@ -176,6 +183,7 @@ describe("EventKillsTable", () => {
     renderTable(
       <EventKillsTable
         variant="preview"
+        onRetry={vi.fn()}
         eventId="event-1"
         guildId="guild-1"
         hasError={false}
@@ -192,6 +200,7 @@ describe("EventKillsTable", () => {
 
   it("preserves rows and disables observation after a pagination error", () => {
     const observer = vi.fn();
+    const retry = vi.fn();
     vi.stubGlobal("IntersectionObserver", observer);
 
     renderTable(
@@ -200,12 +209,17 @@ describe("EventKillsTable", () => {
         kills={[createKill()]}
         hasError
         hasNextPage
+        onRetry={retry}
       />,
     );
 
     expect(screen.getAllByText("Zorin").length).toBeGreaterThan(0);
     expect(screen.getByText("events.error")).toBeTruthy();
     expect(observer).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it("resets the scroll position after the hero filter changes", () => {

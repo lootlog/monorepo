@@ -64,6 +64,31 @@ const makeSession = (connectionId: string): SessionData => ({
   confidence: "reported",
 });
 
+const makeGamePresence = (
+  session: SessionData,
+  world = "tempest",
+  mapId = 1,
+): NonNullable<SessionData["presence"]> => ({
+  userId: session.userId,
+  sessionId: session.connectionId,
+  organizationIds: session.guilds.map(({ guild }) => guild.id),
+  platform: "game",
+  status: "online",
+  confidence: "reported",
+  isAfk: false,
+  lastSeen: 1,
+  character: {
+    world,
+    name: "Player",
+    lvl: 200,
+    characterId: "123",
+    accountId: "456",
+    prof: "w",
+    icon: "icon",
+  },
+  location: { mapId, map: `Map ${mapId}` },
+});
+
 const makeSocket = (data: SessionData, bufferedAmount = 0) => {
   const sent: Uint8Array[] = [];
   const closes: number[] = [];
@@ -204,95 +229,446 @@ describe("RealtimeHub federation", () => {
     }
   });
 
-  test("delivers shared map pings only through an authorized matching Organization", async () => {
-    const bus = new FederationBus();
-    const local = new RealtimeHub(config, new FakeRedisStore(bus));
-    const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+  test.each([false, true])(
+    "delivers shared map pings only through an authorized matching Organization with location filtering: %s",
+    async (filterLocation) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
 
-    const scopes = ["organization-1", "organization-2"].map(
-      (organizationId) => ({ topic: "map.pings", organizationId }) as const,
-    );
+      const scopes = ["organization-1", "organization-2"].map(
+        (organizationId) => ({ topic: "map.pings", organizationId }) as const,
+      );
 
-    const scenarios = [
-      { id: "first", subscribed: [0], allowed: [0], delivered: true },
-      { id: "second", subscribed: [1], allowed: [1], delivered: true },
-      { id: "both", subscribed: [0, 1], allowed: [0, 1], delivered: true },
-      { id: "revoked", subscribed: [0, 1], allowed: [], delivered: false },
-      { id: "wrong-scope", subscribed: [0], allowed: [1], delivered: false },
-      {
-        id: "limited-key",
-        subscribed: [0, 1],
-        allowed: [0, 1],
-        keyScope: [0],
-        delivered: false,
-      },
-      {
-        id: "shared-key",
-        subscribed: [0, 1],
-        allowed: [0, 1],
-        keyScope: [0, 1],
-        delivered: true,
-      },
-    ];
+      const scenarios = [
+        { id: "first", subscribed: [0], allowed: [0], delivered: true },
+        { id: "second", subscribed: [1], allowed: [1], delivered: true },
+        { id: "both", subscribed: [0, 1], allowed: [0, 1], delivered: true },
+        { id: "revoked", subscribed: [0, 1], allowed: [], delivered: false },
+        { id: "wrong-scope", subscribed: [0], allowed: [1], delivered: false },
+        {
+          id: "unsubscribed",
+          subscribed: [],
+          allowed: [0, 1],
+          delivered: false,
+        },
+        {
+          id: "web",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          delivered: !filterLocation,
+        },
+        {
+          id: "other-world",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          delivered: !filterLocation,
+        },
+        {
+          id: "other-map",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          delivered: !filterLocation,
+        },
+        {
+          id: "limited-key",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          keyScope: [0],
+          delivered: false,
+        },
+        {
+          id: "shared-key",
+          subscribed: [0, 1],
+          allowed: [0, 1],
+          keyScope: [0, 1],
+          delivered: true,
+        },
+      ];
 
-    const targets = [local, remote].flatMap((hub, index) =>
-      scenarios.map((scenario) => {
-        const target = makeSocket(makeSession(`ping-${index}-${scenario.id}`));
-        target.socket.data.guilds = target.socket.data.guilds.filter(
-          (_, guildIndex) => scenario.allowed.includes(guildIndex),
-        );
-
-        if (scenario.keyScope) {
-          target.socket.data.apiKeyAccess = {
-            keyId: scenario.id,
-            organizationIds: scenario.keyScope.map(
-              (guildIndex) => `organization-${guildIndex + 1}`,
-            ),
-            mode: "read",
-            personalData: false,
-            expiresAt: null,
+      const targets = [local, remote].flatMap((hub, index) =>
+        scenarios.map((scenario) => {
+          const session: SessionData = {
+            ...makeSession(`ping-${index}-${scenario.id}`),
+            platform: scenario.id === "web" ? "web-app" : "game",
           };
-          target.socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
-        }
 
+          session.presence = makeGamePresence(
+            session,
+            scenario.id === "other-world" ? "other-world" : "tempest",
+            scenario.id === "other-map" ? 2 : 1,
+          );
+          const target = makeSocket(session);
+          target.socket.data.guilds = target.socket.data.guilds.filter(
+            (_, guildIndex) => scenario.allowed.includes(guildIndex),
+          );
+
+          if (scenario.keyScope) {
+            target.socket.data.apiKeyAccess = {
+              keyId: scenario.id,
+              organizationIds: scenario.keyScope.map(
+                (guildIndex) => `organization-${guildIndex + 1}`,
+              ),
+              mode: "read",
+              personalData: false,
+              expiresAt: null,
+            };
+            target.socket.data.apiKeyLeaseExpiresAt = Date.now() + 60_000;
+          }
+
+          hub.register(target.socket);
+
+          for (const scopeIndex of scenario.subscribed) {
+            const scope = scopes[scopeIndex];
+
+            if (!scope) throw new Error("Missing ping scope");
+            hub.subscribe(target.socket, scope);
+          }
+
+          return { ...target, delivered: scenario.delivered };
+        }),
+      );
+
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const ping = {
+        v: 1,
+        type: "map-ping.received",
+        data: {
+          pingId: "ping",
+          world: "tempest",
+          mapId: 1,
+          type: "attention",
+          x: 10,
+          y: 20,
+          sender: { characterId: "character", name: "Player" },
+          createdAt: 1,
+        },
+      } as const;
+
+      await local.publishToScopes(
+        scopes,
+        ping,
+        filterLocation
+          ? {
+              recipientPlatform: "game",
+              recipientWorld: "tempest",
+              recipientMapId: 1,
+            }
+          : {},
+      );
+
+      for (const target of targets) {
+        await local.publishToUser(target.socket.data.userId, ping);
+        expect(local.sendEvent(target.socket, ping)).toBe(false);
+        expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
+      }
+    },
+  );
+
+  test.each(["wildcard", "exact"] as const)(
+    "keeps %s map-ping recipients current through presence, access and connection changes on both gateways",
+    async (subscription) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+      const organizationIds = ["organization-1", "organization-2"];
+
+      const targets = [local, remote].map((hub, index) => {
+        const session: SessionData = {
+          ...makeSession(`ping-lifecycle-${index}`),
+          platform: "game",
+        };
+
+        const target = makeSocket(session);
+        hub.setPresence(target.socket, makeGamePresence(session));
         hub.register(target.socket);
 
-        for (const scopeIndex of scenario.subscribed) {
-          const scope = scopes[scopeIndex];
+        return { hub, target };
+      });
 
-          if (!scope) throw new Error("Missing ping scope");
-          hub.subscribe(target.socket, scope);
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const subscribeAt = (world: string, mapId: number) => {
+        for (const { hub, target } of targets) {
+          hub.replaceSubscriptions(
+            target.socket,
+            organizationIds.map((organizationId) => {
+              const scope = { topic: "map.pings", organizationId } as const;
+
+              return subscription === "exact"
+                ? { ...scope, world, mapId }
+                : scope;
+            }),
+          );
+        }
+      };
+
+      const publish = async (
+        world: string,
+        mapId: number,
+        expected: boolean,
+        excludeConnectionId?: string,
+      ) => {
+        const before = targets.map(({ target }) => target.sent.length);
+        await local.publishToScopes(
+          organizationIds.map((organizationId) => ({
+            topic: "map.pings",
+            organizationId,
+            world,
+            mapId,
+          })),
+          {
+            v: 1,
+            type: "map-ping.received",
+            data: {
+              pingId: crypto.randomUUID(),
+              world,
+              mapId,
+              type: "attention",
+              x: 10,
+              y: 20,
+              sender: { characterId: "123", name: "Player" },
+              createdAt: 1,
+            },
+          },
+          {
+            recipientPlatform: "game",
+            recipientWorld: world,
+            recipientMapId: mapId,
+            excludeConnectionId,
+          },
+        );
+
+        for (const [index, { target }] of targets.entries()) {
+          const delivered =
+            expected && target.socket.data.connectionId !== excludeConnectionId;
+
+          expect(target.sent.length - (before[index] ?? 0)).toBe(
+            delivered ? 1 : 0,
+          );
+        }
+      };
+
+      subscribeAt("tempest", 1);
+      await publish("tempest", 1, true);
+      await publish(
+        "tempest",
+        1,
+        true,
+        targets[0]?.target.socket.data.connectionId,
+      );
+
+      for (const { hub, target } of targets)
+        hub.setPresence(
+          target.socket,
+          makeGamePresence(target.socket.data, "tempest", 2),
+        );
+      await publish("tempest", 1, false);
+      await publish("tempest", 2, subscription === "wildcard");
+      subscribeAt("tempest", 2);
+      await publish("tempest", 2, true);
+
+      for (const { hub, target } of targets)
+        hub.setPresence(
+          target.socket,
+          makeGamePresence(target.socket.data, "other-world", 2),
+        );
+      await publish("tempest", 2, false);
+      subscribeAt("other-world", 2);
+      await publish("other-world", 2, true);
+
+      for (const missing of ["location", "character", "presence"] as const) {
+        for (const { hub, target } of targets) {
+          const presence = makeGamePresence(
+            target.socket.data,
+            "other-world",
+            2,
+          );
+
+          hub.setPresence(
+            target.socket,
+            missing === "presence"
+              ? undefined
+              : { ...presence, [missing]: undefined },
+          );
         }
 
-        return { ...target, delivered: scenario.delivered };
-      }),
-    );
+        await publish("other-world", 2, false);
 
-    for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+        for (const { hub, target } of targets)
+          hub.setPresence(
+            target.socket,
+            makeGamePresence(target.socket.data, "other-world", 2),
+          );
+        await publish("other-world", 2, true);
+      }
 
-    const ping = {
-      v: 1,
-      type: "map-ping.received",
-      data: {
-        pingId: "ping",
+      for (const { target } of targets) target.socket.data.guilds = [];
+      await publish("other-world", 2, false);
+
+      for (const { hub, target } of targets) {
+        target.socket.data.guilds = makeSession(
+          target.socket.data.connectionId,
+        ).guilds;
+        hub.replaceSubscriptions(target.socket, []);
+      }
+
+      await publish("other-world", 2, false);
+      subscribeAt("other-world", 2);
+      await publish("other-world", 2, true);
+
+      const replaced = targets.map(({ target }) => target);
+      const replacedCounts = replaced.map((target) => target.sent.length);
+
+      for (const entry of targets) {
+        const previous = entry.target.socket;
+        entry.target = makeSocket({
+          ...previous.data,
+          subscriptions: new Map(previous.data.subscriptions),
+          presence: makeGamePresence(previous.data, "other-world", 3),
+        });
+        entry.hub.register(entry.target.socket);
+        entry.hub.detach(previous);
+        entry.hub.setPresence(
+          previous,
+          makeGamePresence(previous.data, "other-world", 2),
+        );
+      }
+
+      await publish("other-world", 2, false);
+      subscribeAt("other-world", 3);
+      await publish("other-world", 3, true);
+      expect(replaced.map((target) => target.sent.length)).toEqual(
+        replacedCounts,
+      );
+
+      for (const { hub, target } of targets) {
+        hub.reconnectUser(
+          target.socket.data.discordId,
+          target.socket.data.userId,
+        );
+        hub.setPresence(
+          target.socket,
+          makeGamePresence(target.socket.data, "other-world", 3),
+        );
+      }
+
+      await publish("other-world", 3, false);
+
+      for (const entry of targets) {
+        entry.target = makeSocket({
+          ...entry.target.socket.data,
+          connectionId: `${entry.target.socket.data.connectionId}-reconnected`,
+        });
+        entry.hub.register(entry.target.socket);
+      }
+
+      await publish("other-world", 3, true);
+    },
+  );
+
+  test.each([
+    { type: "attack", team: false },
+    { type: "quick-fight", team: true },
+  ] as const)(
+    "delivers $type battle pings only to listed characters that decode them on every instance",
+    async ({ type, team }) => {
+      const bus = new FederationBus();
+      const local = new RealtimeHub(config, new FakeRedisStore(bus));
+      const remote = new RealtimeHub(config, new FakeRedisStore(bus));
+
+      const scope = {
+        topic: "map.pings",
+        organizationId: "organization-1",
         world: "tempest",
         mapId: 1,
-        type: "attention",
-        x: 10,
-        y: 20,
-        sender: { characterId: "character", name: "Player" },
-        createdAt: 1,
-      },
-    } as const;
+      } as const;
 
-    await local.publishToScopes(scopes, ping);
+      const scenarios = [
+        { id: "listed", characterId: "100", battle: true, teamPings: true },
+        { id: "bystander", characterId: "200", battle: true, teamPings: true },
+        // An older game client closes the socket on an event it cannot decode.
+        { id: "legacy", characterId: "100", battle: false, teamPings: false },
+        { id: "no-team", characterId: "100", battle: true, teamPings: false },
+      ].map((scenario) => ({
+        ...scenario,
+        delivered:
+          scenario.characterId === "100" &&
+          scenario.battle &&
+          (!team || scenario.teamPings),
+      }));
 
-    for (const target of targets) {
-      await local.publishToUser(target.socket.data.userId, ping);
-      expect(local.sendEvent(target.socket, ping)).toBe(false);
-      expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
-    }
-  });
+      const targets = [local, remote].flatMap((hub, index) =>
+        scenarios.map((scenario) => {
+          const base = makeSession(`battle-${index}-${scenario.id}`);
+
+          const session: SessionData = {
+            ...base,
+            platform: "game",
+            supportsBattlePings: scenario.battle,
+            supportsTeamBattlePings: scenario.teamPings,
+            presence: {
+              userId: base.userId,
+              sessionId: `presence-${base.connectionId}`,
+              organizationIds: ["organization-1"],
+              platform: "game",
+              status: "online",
+              confidence: "verified",
+              isAfk: false,
+              lastSeen: 1,
+              character: {
+                world: scope.world,
+                name: `Hero-${scenario.characterId}`,
+                lvl: 100,
+                icon: "icon",
+                characterId: scenario.characterId,
+                accountId: `account-${scenario.characterId}`,
+                prof: "w",
+              },
+              location: { mapId: scope.mapId, map: "Map", x: 1, y: 1 },
+            },
+          };
+
+          const target = makeSocket(session);
+          hub.register(target.socket);
+          hub.subscribe(target.socket, scope);
+
+          return { ...target, delivered: scenario.delivered };
+        }),
+      );
+
+      for (const hub of [local, remote]) await Effect.runPromise(hub.start());
+
+      const ping = {
+        v: 1,
+        type: "battle-ping.received",
+        data: {
+          pingId: "ping",
+          world: scope.world,
+          mapId: scope.mapId,
+          type,
+          warriorId: team ? 300 : -5,
+          sender: { characterId: "300", name: "Sender" },
+          createdAt: 1,
+        },
+      } as const;
+
+      await local.publishToScopes([scope], ping, {
+        recipientPlatform: "game",
+        recipientWorld: scope.world,
+        recipientMapId: scope.mapId,
+        recipientCharacterIds: ["100"],
+      });
+
+      for (const target of targets) {
+        // Without a routing scope a ping has no Organization to authorize it.
+        await local.publishToUser(target.socket.data.userId, ping);
+        expect(local.sendEvent(target.socket, ping)).toBe(false);
+        expect(target.sent).toHaveLength(target.delivered ? 1 : 0);
+      }
+    },
+  );
 
   test("filters hero events from RabbitMQ on local and federated connections after role changes", async () => {
     const bus = new FederationBus();

@@ -69,6 +69,7 @@ export const Notifications = () => {
       onMaxContentHeightChange={(nextMaxContentHeight) =>
         setMaxContentHeight("notifications", nextMaxContentHeight)
       }
+      contentClassName="ll:-mx-1 ll:-mb-1"
       resizable
       minHeight={64}
       maxHeight={600}

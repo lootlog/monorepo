@@ -14,7 +14,10 @@
     "npcTypesLabel": "Typy potworów",
     "npcTypes": "Typy",
     "npcTypesOnly": "Tylko",
-    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}"
+    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}",
+    "listsLabel": "Twoje listy timerów",
+    "listsHint": "Kliknij, aby filtrować po liście. Prawy przycisk myszy pokazuje tylko tę listę.",
+    "listsAll": "Wszystkie"
   },
   "toolbar": {
     "filters": "Filtry",
@@ -32,7 +35,16 @@
     "min": "Min:",
     "max": "Max:",
     "reset": "Timer został zresetowany",
-    "mapOccupied": "Ktoś z Lootloga jest na tej mapie"
+    "mapOccupied": "Gracze Lootloga na mapie: {{count}}",
+    "mapAfk": "Gracze Lootloga na mapie: {{count}}, wszyscy AFK",
+    "alliesHeading": "Gracze Lootloga na mapie",
+    "afk": "AFK",
+    "mapThreat": "Wrogowie na mapie: {{count}}",
+    "mapThreatStale": "Wrogowie widziani niedawno na mapie: {{count}}",
+    "enemiesHeading": "Wrogowie na mapie",
+    "enemiesStaleHeading": "Wrogowie widziani niedawno",
+    "seenAgo": "{{seconds}} s temu",
+    "more": "i {{count}} więcej"
   },
   "emptyState": {
     "filteredTitle": "Żaden timer nie pasuje do filtrów",
@@ -48,6 +60,7 @@
   },
   "contextMenu": {
     "color": "Kolor",
+    "lists": "Listy",
     "creating": "Tworzenie timera…",
     "unpin": "Odepnij",
     "pin": "Przypnij",
@@ -74,6 +87,13 @@
     },
     "loadingPermissions": "Sprawdzanie uprawnień…",
     "deleteChooseGuild": "Wybierz Lootlog, z którego usunąć timer:"
+  },
+  "lists": {
+    "membershipLabel": "Listy z timerem {{name}}",
+    "empty": "Nie masz jeszcze list. Utwórz pierwszą, a ten timer od razu na nią trafi.",
+    "nameLabel": "Nazwa listy",
+    "namePlaceholder": "Nowa lista",
+    "create": "Utwórz"
   },
   "history": {
     "title": "Historia timera",

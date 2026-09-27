@@ -22,11 +22,11 @@ type NpcsListProps = {
   npcTypeColors?: NpcTypeColors;
 };
 
-const NPC_ROW_HEIGHT_PX = 50;
+const NPC_ROW_HEIGHT_PX = 40;
 
-const NPC_ROW_GAP_PX = 4;
+const NPC_ROW_GAP_PX = 0;
 
-const NPC_LIST_PADDING_TOP_PX = 4;
+const NPC_LIST_PADDING_TOP_PX = 0;
 
 const NPC_ROW_STRIDE_PX = NPC_ROW_HEIGHT_PX + NPC_ROW_GAP_PX;
 
@@ -245,7 +245,7 @@ export const NpcsList: FC<NpcsListProps> = ({
           <li
             key={`exiting-${npc.id}-${startedAt}`}
             aria-hidden="true"
-            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-top-3 ll:zoom-out-95 ll:duration-200 ll:transition-none"
+            className="ll:pointer-events-none ll:absolute ll:left-0 ll:w-full ll:animate-out ll:fade-out-0 ll:slide-out-to-right-3 ll:duration-200 ll:ease-in ll:transition-none"
             style={{
               height: NPC_ROW_HEIGHT_PX,
               top: NPC_LIST_PADDING_TOP_PX + index * NPC_ROW_STRIDE_PX,
