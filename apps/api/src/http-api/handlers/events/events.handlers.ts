@@ -1,3 +1,4 @@
+import { KillHistoryResponse } from "#src/events/history/event-kill-history.schema";
 import { operationIdentifiers } from "../../operation-identifiers.js";
 import {
   optionalPathString,
@@ -229,6 +230,16 @@ export const EventsHandlers = HttpApiBuilder.group(
           run(caller, eventId),
         ),
       );
+
+    const historyContext = (
+      caller: AuthorizedEventCaller,
+      eventId: string,
+    ) => ({
+      guildId: caller.guild.id,
+      eventId,
+      roles: [...caller.roles],
+      accessPolicy: caller.accessPolicy,
+    });
 
     return handlers.handleAll({
       listEvents: ({ params, query }) =>
@@ -705,22 +716,25 @@ export const EventsHandlers = HttpApiBuilder.group(
                 ),
               ),
         ),
+      listEventKillHistory: ({ params, query }) =>
+        event("listEventKillHistory", read, params, (caller, eventId) =>
+          operations.history
+            .list(historyContext(caller, eventId), query)
+            .pipe(
+              Effect.map((value) =>
+                encodeUnknownResponse(KillHistoryResponse, value),
+              ),
+            ),
+        ),
+      // TODO(kill-history-legacy): Remove these three list handlers with their deprecated routes.
       EventsRankingControllerGetEventKillHistory: ({ params, query }) =>
         event(
           "EventsRankingControllerGetEventKillHistory",
           read,
           params,
           (caller, eventId) =>
-            operations.ranking
-              .getEventKillHistory(
-                caller.guild,
-                eventId,
-                caller.accessPolicy,
-                optionalPathString(query.limit),
-                optionalPathString(query.cursor),
-                optionalPathString(query.heroId),
-                [...caller.roles],
-              )
+            operations.history
+              .legacyEvent(historyContext(caller, eventId), query)
               .pipe(
                 Effect.map((value) =>
                   encodeUnknownResponse(EventKillHistoryResponse, value),
@@ -736,17 +750,11 @@ export const EventsHandlers = HttpApiBuilder.group(
             Effect.flatMap(
               stringParameter(params.memberId, "memberId"),
               (memberId) =>
-                operations.ranking
-                  .getMemberKillHistory(
-                    caller.guild,
-                    eventId,
+                operations.history
+                  .legacyMember(historyContext(caller, eventId), {
+                    ...query,
                     memberId,
-                    caller.accessPolicy,
-                    optionalPathString(query.limit),
-                    optionalPathString(query.cursor),
-                    optionalPathString(query.heroId),
-                    [...caller.roles],
-                  )
+                  })
                   .pipe(
                     Effect.map((value) =>
                       encodeUnknownResponse(
@@ -764,16 +772,11 @@ export const EventsHandlers = HttpApiBuilder.group(
           params,
           (caller, eventId) =>
             Effect.flatMap(stringParameter(params.heroId, "heroId"), (heroId) =>
-              operations.ranking
-                .getHeroKillHistory(
-                  caller.guild,
-                  eventId,
+              operations.history
+                .legacyEvent(historyContext(caller, eventId), {
+                  ...query,
                   heroId,
-                  caller.accessPolicy,
-                  optionalPathString(query.limit),
-                  optionalPathString(query.cursor),
-                  [...caller.roles],
-                )
+                })
                 .pipe(
                   Effect.map((value) =>
                     encodeUnknownResponse(EventKillHistoryResponse, value),
@@ -791,15 +794,8 @@ export const EventsHandlers = HttpApiBuilder.group(
               Effect.flatMap(
                 stringParameter(params.killId, "killId"),
                 (killId) =>
-                  operations.ranking
-                    .getKillDetail(
-                      caller.guild,
-                      eventId,
-                      heroId,
-                      killId,
-                      [...caller.roles],
-                      caller.accessPolicy,
-                    )
+                  operations.history
+                    .detail(historyContext(caller, eventId), { heroId, killId })
                     .pipe(
                       Effect.map((value) =>
                         encodeUnknownResponse(KillDetailResponse, value),
@@ -858,15 +854,11 @@ export const EventsHandlers = HttpApiBuilder.group(
               Effect.flatMap(
                 stringParameter(params.killId, "killId"),
                 (killId) =>
-                  operations.monitoring
-                    .getKillTimelineData(
-                      caller.guild,
-                      eventId,
+                  operations.history
+                    .timeline(historyContext(caller, eventId), {
                       heroId,
                       killId,
-                      [...caller.roles],
-                      caller.accessPolicy,
-                    )
+                    })
                     .pipe(
                       Effect.map((values) =>
                         values.map((value) =>

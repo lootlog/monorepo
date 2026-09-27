@@ -8,7 +8,10 @@ import { GlobalTimerHistoryPopover } from "./global-timer-history-popover";
 import { SocketProvider } from "@/contexts/socket-context";
 import { useTimersSocket } from "../hooks/use-timers-socket";
 import { createTimerRealtimeFixture } from "../timer-realtime-fixtures";
-import { createTimerHistoryFixture } from "../timer-fixtures";
+import {
+  createTimerFixture,
+  createTimerHistoryFixture,
+} from "../timer-fixtures";
 
 function HistoryWithRealtime() {
   useTimersSocket();
@@ -150,6 +153,121 @@ it("reloads a recently closed history after a deletion and stops offering restor
   } finally {
     view.unmount();
     gateway.cleanup();
+    fixture.cleanup();
+  }
+});
+
+it("retries failed history loading and reset rollback without losing the active timer, then refreshes history", async () => {
+  const user = userEvent.setup();
+  let history = createTimerHistoryFixture({ id: 44, action: "RESET" });
+
+  const previousTimer = createTimerFixture({
+    timerKey: history.timerKey,
+    npcId: history.npcId,
+    minSpawnTime: "2026-05-03T09:00:00.000Z",
+    maxSpawnTime: "2026-05-03T09:05:00.000Z",
+    wasReset: false,
+  });
+
+  const activeTimer = {
+    ...previousTimer,
+    minSpawnTime: history.minSpawnTime,
+    maxSpawnTime: history.maxSpawnTime,
+    wasReset: true,
+  };
+
+  let historyRequests = 0;
+  let restoreRequests = 0;
+
+  const fixture = createTimerHttpFixture((request) => {
+    if (request.method === "POST") {
+      restoreRequests += 1;
+
+      if (restoreRequests === 1)
+        return Response.json({ message: "Unavailable" }, { status: 503 });
+      history = createTimerHistoryFixture({
+        ...history,
+        id: 45,
+        action: "RESTORE",
+        canRestore: false,
+        minSpawnTime: previousTimer.minSpawnTime,
+        maxSpawnTime: previousTimer.maxSpawnTime,
+      });
+
+      return Response.json(previousTimer);
+    }
+
+    historyRequests += 1;
+
+    if (historyRequests === 1)
+      return Response.json({ message: "Failed" }, { status: 500 });
+
+    return Response.json([history]);
+  });
+
+  fixture.queryClient.setQueryDefaults(["/timers/history"], {
+    staleTime: 30_000,
+  });
+  fixture.queryClient.setQueryData(queryKeys.timers("luvia"), [activeTimer]);
+
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <GlobalTimerHistoryPopover guildId="guild-1" world="luvia" />
+    </QueryClientProvider>,
+  );
+
+  try {
+    await user.click(screen.getByRole("button", { name: "Historia timerów" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Spróbuj ponownie" }),
+    );
+
+    const rollback = await screen.findByRole("button", {
+      name: "Cofnij odświeżenie",
+    });
+
+    await user.click(rollback);
+    await waitFor(() => expect(restoreRequests).toBe(1));
+    await waitFor(() => expect(rollback).toBeEnabled());
+    expect(fixture.queryClient.getQueryData(queryKeys.timers("luvia"))).toEqual(
+      [activeTimer],
+    );
+    await user.click(rollback);
+    await waitFor(() =>
+      expect(
+        fixture.queryClient.getQueryData(queryKeys.timers("luvia")),
+      ).toMatchObject([
+        {
+          timerKey: previousTimer.timerKey,
+          guildId: previousTimer.guildId,
+          minSpawnTime: previousTimer.minSpawnTime,
+          maxSpawnTime: previousTimer.maxSpawnTime,
+          wasReset: false,
+          isPending: false,
+        },
+      ]),
+    );
+    expect(
+      fixture.requests
+        .filter((request) => request.method === "POST")
+        .map((request) => new URL(request.url).pathname),
+    ).toEqual([
+      "/guilds/guild-1/timers/history/44/restore",
+      "/guilds/guild-1/timers/history/44/restore",
+    ]);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Cofnij odświeżenie" }),
+      ).toBeNull(),
+    );
+    await user.click(screen.getByRole("button", { name: "Historia timerów" }));
+    expect(await screen.findByText("Salvatore (Lootlog)")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Cofnij odświeżenie" }),
+    ).toBeNull();
+    expect(historyRequests).toBeGreaterThanOrEqual(3);
+  } finally {
+    view.unmount();
     fixture.cleanup();
   }
 });

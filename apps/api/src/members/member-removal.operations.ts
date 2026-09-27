@@ -1,6 +1,7 @@
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
+import { chunk } from "es-toolkit";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { memberTable, memberToRoleTable } from "#src/database/drizzle/schema";
 import type {
@@ -58,10 +59,7 @@ export const makeMemberRemoval = (
     batchSize = 25,
   ) =>
     Effect.forEach(
-      Array.from(
-        { length: Math.ceil(members.length / batchSize) },
-        (_, index) => members.slice(index * batchSize, (index + 1) * batchSize),
-      ),
+      chunk(members, batchSize),
       (batch) =>
         Effect.forEach(batch, notifyMemberRemoved, {
           concurrency: "unbounded",

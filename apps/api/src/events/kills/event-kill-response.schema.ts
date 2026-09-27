@@ -55,6 +55,8 @@ const EventKillParticipantResponse = Schema.Struct({
   ),
 });
 
+// TODO(kill-history-legacy): Remove the four list entry/response schemas below after retirement.
+// Keep the participant schemas above: KillDetailResponse also uses them.
 const EventKillHistoryEntryResponse = Schema.Struct({
   id: Schema.String,
   heroNpcId: Schema.String,

@@ -68,15 +68,35 @@ z tego Lootloga, także Twoja postać lub osoba AFK. Ikona wymaga uprawnień do
 odczytu obecności i lokalizacji. Nie pojawia się przy herosach ani timerach bez
 mapy. Po utracie połączenia znika do czasu pobrania aktualnych danych.
 
+Timery możesz układać we własne listy, na przykład „E2 na event” albo
+„Herosi 100+”. Kliknij timer prawym przyciskiem myszy, wybierz **Listy** i
+zaznacz listę albo od razu utwórz nową. Jeden potwór może być na kilku
+listach. Gdy masz co najmniej jedną listę, pod filtrami okna timerów pojawia
+się rząd przycisków z nazwami list. Kliknięcie włącza lub wyłącza listę, a
+zaznaczone listy pokazują tylko swoje timery. Kliknięcie prawym przyciskiem
+myszy pokazuje tylko tę jedną listę. Nazwy list zmienisz, a listy i
+przypisane do nich timery usuniesz w **Ustawienia → Timery → Listy**. Listy
+są zapisywane na Twoim koncie i działają na każdym urządzeniu, na którym
+jesteś zalogowany.
+
 Skasowany timer potwora możesz odzyskać przez **Historię timerów** na pasku okna.
 Przy wpisie usunięcia wybierz **Przywróć timer**. Potrzebujesz uprawnienia do
 dodawania timerów i dostępu do danego potwora. Przywrócenie zachowuje zapisany
 czas odrodzenia, nie rozpoczyna odliczania od nowa i nie zastępuje aktywnego
 timera. Wygasły timer podlega zwykłym ustawieniom widoczności.
 
+Ostatnie odświeżenie timera potwora możesz cofnąć w historii akcją
+**Cofnij odświeżenie**. Przycisk pojawia się, gdy historia zawiera poprzedni
+stan timera i masz do niego dostęp oraz uprawnienie do dodawania timerów.
+Cofnięcie przywraca zapisany stan sprzed odświeżenia, w tym czas odrodzenia.
+Jeśli ktoś w międzyczasie zmienił timer, cofnięcie zostanie odrzucone.
+Timerów należących do aktywnego eventu nie można przywracać ani cofać ich
+odświeżenia.
+
 Historia pokazuje ostatnie 10 zdarzeń Lootloga; dla pojedynczego timera
-przechowuje 5 ostatnich wpisów. Jest niedostępna przy grupowaniu. Timery ręczne
-nie mają historii i nie można ich odzyskać po usunięciu.
+wyświetla 5 ostatnich wpisów. Aby z niej skorzystać, wyłącz grupowanie i
+wybierz Lootlog. Timery ręczne nie mają historii i nie można ich odzyskać po
+usunięciu. Jeśli pobranie historii się nie powiedzie, wybierz **Spróbuj ponownie**.
 
 | Działanie           | Wymagane uprawnienie    |
 | ------------------- | ----------------------- |
@@ -98,6 +118,74 @@ wyczyszczenia (zobacz [Okna Lootlog w grze](/docs/settings#okna-lootlog-w-grze))
 
 Jeżeli widok jest zbyt obciążający podczas gry, wyłącz niepotrzebne filtry lub
 sam moduł i sprawdź, czy wydajność się poprawiła.
+
+## Pingi
+
+Pingi działają w nowym interfejsie gry i są domyślnie włączone. Wyłączysz je
+w **Ustawienia → Pingi**, osobno na mapie i w walce. Domyślny skrót to
+środkowy przycisk myszy; zmienisz go w **Sterowanie → Skróty klawiszowe**
+(akcja „Ping”).
+
+Przytrzymaj skrót nad mapą albo wojownikiem. Wokół kursora pojawi się koło
+z opcjami. Pchnij mysz w stronę opcji i puść przycisk; nie musisz czekać, aż
+koło się otworzy. Liczy się tylko kierunek, więc kursor może wyjechać poza
+koło. `Escape` anuluje ping.
+
+### Na mapie
+
+Krótkie kliknięcie albo puszczenie przycisku na środku koła wysyła **Uwaga**.
+Na obwodzie koła są **Wróg** (u góry), **Idę** i **Grupa**. Ping widzą
+członkowie Twojej organizacji na tej samej mapie, także na Podręcznej mapie.
+
+Nad potworem środek koła i krótkie kliknięcie wysyłają **Bij ten cel**. Potwór
+zaczyna świecić na czerwono, a nad jego nazwą pojawia się znacznik z imieniem
+wskazującego; po kilku sekundach znika. Znika też od razu, gdy potwór
+zginie. Gdy dodatek nie zna tego potwora, znacznik stoi na jego kafelku.
+
+Nad innym graczem środek koła i krótkie kliknięcie wysyłają **Wróg**. Gracz
+zaczyna świecić na czerwono, a znacznik z imieniem wskazującego idzie za nim
+przez kilka sekund, także na Podręcznej mapie. Gdy gracz opuści mapę,
+znacznik znika. Na obwodzie koła są wtedy **Uwaga**, **Idę** i **Grupa**;
+te pingi zaznaczają kafelek, nie gracza.
+
+### W walce
+
+Pingi w walce działają w walce turowej. Walka automatyczna nie pokazuje
+wojowników, więc nie da się ich wtedy pingować. Środek koła w walce jest pusty:
+puszczenie na nim przycisku anuluje ping.
+
+- **Wróg:** krótkie kliknięcie wskazuje go drużynie jako cel do bicia.
+  Wspólny cel świeci na czerwono, stoi w czerwonym pierścieniu, a nad nim wisi
+  znacznik z imieniem wskazującego. Zostaje, dopóki ktoś nie wskaże innego
+  celu, cel nie zginie albo walka się nie skończy. Po przytrzymaniu wybierzesz
+  też **Uwaga** albo **Nie bij**.
+- **Sojusznik:** przytrzymaj skrót i wybierz prośbę. Opcje zależą od profesji
+  sojusznika.
+- **Twoja postać:** przytrzymaj skrót i wybierz **Potrzebuję leczenia**.
+
+| Profesja       | Prośby                               |
+| -------------- | ------------------------------------ |
+| Mag            | Atmo, Szadź, Leczenie                |
+| Tropiciel      | Aura SA, Leczenie, Emanująca strzała |
+| Paladyn        | Aura ochrony, Fala leczenia, Wyzyw   |
+| Wojownik       | Wyzyw                                |
+| Łowca          | Piętno, Oczyszczenie                 |
+| Tancerz ostrzy | Furia, Jad                           |
+
+Prośba wyświetla się nad sojusznikiem przez kilka sekund, a postać świeci
+w kolorze prośby. Pierścień wokół ikony prośby pokazuje, ile czasu jej zostało.
+Prośbę skierowaną do Ciebie wyróżnia złota ramka i wyższy dźwięk.
+
+Ping na przycisk **Szybka walka** prosi o szybką walkę wszystkich graczy
+z Twojej drużyny w tej walce. U każdego z nich przycisk zaczyna świecić na
+złoto, a nad Twoją postacią pojawia się znacznik **Szybka walka** z Twoim
+imieniem; po kilku sekundach znika.
+
+Pingi w walce widzą tylko gracze z Twojej drużyny w tej walce, którzy należą
+do Twojej organizacji.
+
+Zbyt częste pingi są chwilowo blokowane; dodatek pokaże wtedy, ile sekund
+poczekać.
 
 ## Sprawdź rezultat
 

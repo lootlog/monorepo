@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import type { ColumnDef } from "@tanstack/react-table";
 import { differenceInSeconds } from "date-fns";
-import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
+import type { KillHistoryEntry } from "@lootlog/client/main";
 import { formatDateTime } from "../../utils/format-date";
 import { KillMonsterCell } from "./kill-monster-cell";
 import { formatDurationHuman } from "../../utils/format-duration";
@@ -21,7 +21,7 @@ export const createEventKillsTableColumns = ({
   t,
 }: CreateEventKillsTableColumnsOptions): ColumnDef<
   typeof coreTableFeatures,
-  HeroKill
+  KillHistoryEntry
 >[] => [
   {
     id: "monster",
@@ -83,7 +83,7 @@ export const createEventKillsTableColumns = ({
     ),
     cell: ({ row }) => (
       <span className="block text-right font-medium tabular-nums">
-        {row.original.points?.length ?? 0}
+        {row.original.participantCount}
       </span>
     ),
     enableSorting: false,

@@ -74,6 +74,10 @@ export type AirTagPreferences = {
   enabled: boolean;
 };
 
+export type BattlePingPreferences = {
+  enabled: boolean;
+};
+
 export type DetectorTypeSettingsPatch = Partial<DetectorTypeSettings>;
 
 type DetectorSettingsPatch = {
@@ -111,7 +115,11 @@ export interface UpdateUserGameAccountPreferencesPayload {
 }
 
 export const defaultMapPingPreferences: MapPingPreferences = {
-  enabled: false,
+  enabled: true,
+};
+
+export const defaultBattlePingPreferences: BattlePingPreferences = {
+  enabled: true,
 };
 
 export const defaultAirTagPreferences: AirTagPreferences = {

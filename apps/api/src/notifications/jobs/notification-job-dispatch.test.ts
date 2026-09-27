@@ -15,6 +15,7 @@ import { NotificationJobStatus } from "#src/notifications/notification-enums";
 const job = (active: boolean): NotificationDispatchJob => ({
   ...createNotificationJobFixture({
     attemptCount: 2,
+    status: "PENDING",
     payloadSnapshot: { title: "title", message: "message" },
     targetId: 4,
   }),
@@ -43,6 +44,7 @@ describe("notification job dispatch", () => {
 
             return true;
           }),
+        failClaim: () => Effect.die("blocked jobs cannot fail a claim"),
       },
       { hasRequiredGuildPermissions: () => Effect.succeed(true) },
       {
@@ -51,11 +53,13 @@ describe("notification job dispatch", () => {
             published = true;
           }),
       },
-      { enqueue: () => Effect.void },
+      () => Effect.void,
       () => undefined,
     );
 
-    await Effect.runPromise(dispatch("job-1"));
+    await Effect.runPromise(
+      dispatch("job-1", { retrying: false, finalAttempt: false }),
+    );
 
     expect(updates).toEqual([
       {
@@ -68,40 +72,24 @@ describe("notification job dispatch", () => {
     expect(published).toBeFalse();
   });
 
-  it("returns a claimed job to pending and enqueues the established retry", async () => {
-    const updates: Array<Parameters<NotificationDispatchStore["update"]>[1]> =
-      [];
-
-    const enqueued: Array<[string, number]> = [];
-
+  it("keeps a delivered job final when a queued retry finds its target disabled", async () => {
     const dispatch = makeNotificationJobDispatch(
       {
-        find: () => Effect.succeed(job(true)),
-        update: (_jobId, values) =>
-          Effect.sync(() => {
-            updates.push(values);
-          }),
-        claim: () => Effect.succeed(true),
+        find: () => Effect.succeed({ ...job(false), status: "SENT" }),
+        update: () => Effect.die("delivery must remain final"),
+        claim: () => Effect.die("delivered jobs cannot be claimed again"),
+        failClaim: () => Effect.die("delivered jobs cannot fail"),
       },
       { hasRequiredGuildPermissions: () => Effect.succeed(true) },
-      { publish: () => Effect.fail(new Error("broker unavailable")) },
       {
-        enqueue: (jobId, delay) =>
-          Effect.sync(() => {
-            enqueued.push([jobId, delay]);
-          }),
+        publish: () => Effect.die("delivered jobs must not be published again"),
       },
+      () => Effect.void,
       () => undefined,
     );
 
-    await Effect.runPromise(dispatch("job-1"));
-
-    expect(updates).toEqual([
-      {
-        status: NotificationJobStatus.PENDING,
-        lastError: "AMQP publish failed: broker unavailable",
-      },
-    ]);
-    expect(enqueued).toEqual([["job-1", 30_000]]);
+    await Effect.runPromise(
+      dispatch("job-1", { retrying: true, finalAttempt: false }),
+    );
   });
 });

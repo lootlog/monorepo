@@ -14,7 +14,10 @@
     "npcTypesLabel": "Typy potworów",
     "npcTypes": "Typy",
     "npcTypesOnly": "Tylko",
-    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}"
+    "npcTypesOnlyLabel": "Pokaż tylko: {{type}}",
+    "listsLabel": "Twoje listy timerów",
+    "listsHint": "Kliknij, aby filtrować po liście. Prawy przycisk myszy pokazuje tylko tę listę.",
+    "listsAll": "Wszystkie"
   },
   "toolbar": {
     "filters": "Filtry",
@@ -48,6 +51,7 @@
   },
   "contextMenu": {
     "color": "Kolor",
+    "lists": "Listy",
     "creating": "Tworzenie timera…",
     "unpin": "Odepnij",
     "pin": "Przypnij",
@@ -75,14 +79,25 @@
     "loadingPermissions": "Sprawdzanie uprawnień…",
     "deleteChooseGuild": "Wybierz Lootlog, z którego usunąć timer:"
   },
+  "lists": {
+    "membershipLabel": "Listy z timerem {{name}}",
+    "empty": "Nie masz jeszcze list. Utwórz pierwszą, a ten timer od razu na nią trafi.",
+    "nameLabel": "Nazwa listy",
+    "namePlaceholder": "Nowa lista",
+    "create": "Utwórz"
+  },
   "history": {
     "title": "Historia timera",
     "globalTitle": "Historia timerów",
     "loading": "Ładowanie historii…",
+    "loadFailed": "Nie udało się pobrać historii timerów.",
     "empty": "Ten timer nie ma jeszcze historii.",
     "restore": "Przywróć timer",
     "restoreSuccess": "Przywrócono timer.",
     "restoreFailed": "Nie udało się przywrócić timera.",
+    "undoReset": "Cofnij odświeżenie",
+    "undoResetSuccess": "Przywrócono stan timera sprzed odświeżenia.",
+    "undoResetFailed": "Nie udało się cofnąć odświeżenia timera.",
     "details": {
       "action": "Akcja",
       "npc": "Potwór",

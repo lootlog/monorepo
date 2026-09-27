@@ -78,13 +78,17 @@ export function useCharacterTooltipCatchingGuilds(): void {
       updateShiftPressed(false);
     };
 
+    // Focused Lootlog editors stop key events from bubbling, so Shift pressed
+    // while typing stays out of Shift mode. The release must still end Shift
+    // mode: Shift+S opens the command console and focuses its editor while
+    // Shift is held, so the release is observed in the capture phase.
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("keyup", handleKeyUp, true);
     window.addEventListener("blur", handleWindowBlur);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keyup", handleKeyUp, true);
       window.removeEventListener("blur", handleWindowBlur);
     };
   }, []);

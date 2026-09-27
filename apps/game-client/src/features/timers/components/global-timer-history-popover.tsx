@@ -34,24 +34,29 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
   const { restoreTimer: handleRestore, isPending: restorePending } =
     useRestoreTimer(() => setOpen(false));
 
-  const { data: history = [], isLoading } =
-    useTimersControllerGetRecentTimerHistory(
-      {
-        guildId,
-        world,
-        limit: GLOBAL_TIMER_HISTORY_LIMIT,
+  const {
+    data: history = [],
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useTimersControllerGetRecentTimerHistory(
+    {
+      guildId,
+      world,
+      limit: GLOBAL_TIMER_HISTORY_LIMIT,
+    },
+    {
+      query: {
+        queryKey: getTimersControllerGetRecentTimerHistoryQueryKey({
+          guildId,
+          world,
+          limit: GLOBAL_TIMER_HISTORY_LIMIT,
+        }),
+        enabled: open && !!guildId && !!world,
       },
-      {
-        query: {
-          queryKey: getTimersControllerGetRecentTimerHistoryQueryKey({
-            guildId,
-            world,
-            limit: GLOBAL_TIMER_HISTORY_LIMIT,
-          }),
-          enabled: open && !!guildId && !!world,
-        },
-      },
-    );
+    },
+  );
 
   const historyLabel = t("toolbar.history");
 
@@ -66,6 +71,9 @@ export const GlobalTimerHistoryPopover: FC<GlobalTimerHistoryPopoverProps> = ({
         <TimerHistoryList
           history={history}
           isLoading={isLoading}
+          isError={isError}
+          isFetching={isFetching}
+          onRetry={() => void refetch()}
           onRestore={handleRestore}
           restorePending={restorePending}
           rowLayout="npcWithMember"

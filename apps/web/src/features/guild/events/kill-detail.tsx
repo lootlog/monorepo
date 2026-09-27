@@ -1,9 +1,7 @@
 import { differenceInSeconds } from "date-fns";
-import { Link, useParams } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
+import { useParams } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Permission } from "@lootlog/schema/permissions";
-import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
@@ -19,6 +17,9 @@ import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
 import { formatDurationHuman } from "./utils/format-duration";
 import { normalizeBonusBreakdown } from "./utils/normalize-bonus-breakdown";
+import { EventReadError } from "./components/shared/event-read-error";
+import { KillDetailLoadError } from "./components/kills/kill-detail-load-error";
+import { getKillDetailErrorKind } from "./utils/kill-detail-error";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
@@ -44,14 +45,20 @@ export const KillDetail = () => {
   const queryHeroId = heroId ?? "";
   const queryKillId = killId ?? "";
 
-  const { data, isLoading, error } = useKillDetail({
+  const { data, isLoading, error, isFetching, refetch } = useKillDetail({
     guildId: queryGuildId,
     eventId: queryEventId,
     heroId: queryHeroId,
     killId: queryKillId,
   });
 
-  const { data: matchingLoots, isLoading: isLootsLoading } = useMatchingLoots({
+  const {
+    data: matchingLoots,
+    isLoading: isLootsLoading,
+    isError: lootsHasError,
+    isFetching: isFetchingLoots,
+    refetch: refetchLoots,
+  } = useMatchingLoots({
     guildId: queryGuildId,
     world: data?.kill.heroNpc.event.world ?? "",
     killedAt: data?.kill.killedAt ?? "",
@@ -95,30 +102,18 @@ export const KillDetail = () => {
     );
   }
 
-  if (error || !data) {
+  const isUnavailable = getKillDetailErrorKind(error) !== "failure";
+
+  if (!data || isUnavailable) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
-        <AlertCircle className="size-10 text-destructive" />
-        <p className="text-sm text-muted-foreground">
-          {t("events.killDetail.notFound")}
-        </p>
-        <Button
-          variant="outline"
-          render={
-            <Link
-              to="/$guildId/events/$eventId/heroes/$heroId"
-              params={{
-                guildId: queryGuildId,
-                eventId: queryEventId,
-                heroId: queryHeroId,
-              }}
-            >
-              {t("events.common.backToHero")}
-            </Link>
-          }
-          nativeButton={false}
-        />
-      </div>
+      <KillDetailLoadError
+        error={error}
+        guildId={queryGuildId}
+        eventId={queryEventId}
+        heroId={queryHeroId}
+        onRetry={() => void refetch()}
+        isRetrying={isFetching}
+      />
     );
   }
 
@@ -230,6 +225,13 @@ export const KillDetail = () => {
 
       <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1">
         <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-x-hidden px-3 py-3">
+          {error && (
+            <EventReadError
+              message={t("events.killDetail.error")}
+              onRetry={() => void refetch()}
+              isRetrying={isFetching}
+            />
+          )}
           <KillDetailSummary
             kill={kill}
             eventConfig={eventConfig}
@@ -275,6 +277,9 @@ export const KillDetail = () => {
               <MatchingLootsSection
                 loots={loots}
                 isLoading={isLootsLoading}
+                hasError={lootsHasError}
+                onRetry={() => void refetchLoots()}
+                isRetrying={isFetchingLoots}
                 guildId={queryGuildId}
                 npcName={kill.heroNpc.npcName}
               />

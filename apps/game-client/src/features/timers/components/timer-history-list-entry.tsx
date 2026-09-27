@@ -119,7 +119,11 @@ export const TimerHistoryListEntry: FC<TimerHistoryListEntryProps> = ({
             </span>
             {entry.canRestore && (
               <IconButton
-                label={t("history.restore")}
+                label={t(
+                  entry.action === "RESET"
+                    ? "history.undoReset"
+                    : "history.restore",
+                )}
                 className="ll:shrink-0"
                 disabled={restorePending}
                 onClick={(event) => {

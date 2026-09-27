@@ -5,13 +5,28 @@ import {
   getUsersControllerGetUserPreferencesQueryKey,
   type UserCurrentGuildResponseDtoOutput,
 } from "@lootlog/client/main";
-import type { RealtimeWebSocket, ServerEvent } from "@lootlog/client/realtime";
+import type { RealtimeWebSocket } from "@lootlog/client/realtime";
 import { configureApiClients } from "@lootlog/client/transport";
+import {
+  REALTIME_JSON_SUBPROTOCOL,
+  decodeRealtimeFrame as parseRealtimeFrame,
+  type RealtimeFrame,
+} from "@lootlog/protocol/realtime";
 import {
   decodeRealtimeFrame,
   encodeRealtimeFrame,
 } from "@lootlog/protocol/realtime/codec";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  createAccessPolicySnapshot,
+  type AccessPolicySnapshot,
+} from "@lootlog/protocol/realtime/access-policy";
+import { Permission } from "@lootlog/schema/permissions";
+import {
+  InfiniteQueryObserver,
+  type InfiniteData,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -31,9 +46,12 @@ class Wire implements RealtimeWebSocket {
   binaryType: BinaryType = "arraybuffer";
   readyState = 0;
   static instances: Wire[] = [];
+  static accessPolicy: AccessPolicySnapshot | undefined;
   readonly frames: ReturnType<typeof decodeRealtimeFrame>[] = [];
   private readonly listeners = new Map<string, Listener>();
-  constructor() {
+  private readonly readable: boolean;
+  constructor(_url: string, protocols: string[]) {
+    this.readable = protocols.includes(REALTIME_JSON_SUBPROTOCOL);
     Wire.instances.push(this);
   }
   addEventListener(type: string, listener: Listener) {
@@ -47,38 +65,40 @@ class Wire implements RealtimeWebSocket {
     this.readyState = 3;
     this.listeners.get("close")?.({});
   }
-  deliver(event: ServerEvent) {
-    this.listeners.get("message")?.({ data: encodeRealtimeFrame(event) });
+  deliver(frame: RealtimeFrame) {
+    this.listeners.get("message")?.({
+      data: this.readable ? JSON.stringify(frame) : encodeRealtimeFrame(frame),
+    });
   }
   send(bytes: string | Uint8Array) {
-    if (!(bytes instanceof Uint8Array)) throw new Error("Expected MessagePack");
-    const command = decodeRealtimeFrame(bytes);
+    const command =
+      bytes instanceof Uint8Array
+        ? decodeRealtimeFrame(bytes)
+        : parseRealtimeFrame(JSON.parse(bytes));
+
     this.frames.push(command);
 
     if (!("requestId" in command) || !command.requestId)
       throw new Error("Expected request");
     const requestId = command.requestId;
     queueMicrotask(() => {
-      this.listeners.get("message")?.({
-        data: encodeRealtimeFrame({
-          v: 1,
-          requestId,
-          status: "success",
-          data: { sessionId: "presence-1" },
-        }),
+      this.deliver({
+        v: 1,
+        requestId,
+        status: "success",
+        data: { sessionId: "presence-1" },
       });
 
       if ("type" in command && command.type === "session.join")
-        this.listeners.get("message")?.({
-          data: encodeRealtimeFrame({
-            v: 1,
-            type: "session.joined",
-            data: {
-              connectionId: "connection-1",
-              organizationIds: ["guild-1"],
-              subscriptionScopes: [],
-            },
-          }),
+        this.deliver({
+          v: 1,
+          type: "session.joined",
+          data: {
+            connectionId: "connection-1",
+            organizationIds: ["guild-1"],
+            subscriptionScopes: [],
+            accessPolicy: Wire.accessPolicy,
+          },
         });
     });
   }
@@ -168,6 +188,7 @@ afterEach(() => {
   socket.disconnect();
   vi.unstubAllGlobals();
   Wire.instances = [];
+  Wire.accessPolicy = undefined;
 });
 
 it("restores the real provider session and presence exactly once after reconnect", async () => {
@@ -332,3 +353,204 @@ it("refreshes full Organization DTOs after permissions change while keeping an a
   expect(socket.connected).toBe(true);
   expect(Wire.instances).toHaveLength(1);
 });
+
+const eventPolicy = (permissions: Permission[]) =>
+  createAccessPolicySnapshot(
+    [
+      {
+        guild: { id: "guild-1", ownerId: "owner-1" },
+        roles: [{ permissions, lvlRangeFrom: 0, lvlRangeTo: 500 }],
+      },
+    ],
+    "discord-1",
+  );
+
+it.each(["permissions", "unknown reconnect", "restricted reconnect"] as const)(
+  "clears protected event caches outside event routes after %s and rejects late responses",
+  async (change) => {
+    onTestFinished(
+      configureApiClients({
+        main: {
+          baseUrl: "https://api.test",
+          fetch: async () =>
+            Response.json([{ id: "guild-1", vanityUrl: "guild-alias" }]),
+        },
+      }),
+    );
+    Wire.accessPolicy = eventPolicy([Permission.LOOTLOG_EVENTS_READ]);
+
+    const client = await setup();
+    act(() => wireAt(0).open());
+    await waitFor(() =>
+      expect(
+        wireAt(0).frames.some(
+          (frame) => "type" in frame && frame.type === "presence.publish",
+        ),
+      ).toBe(true),
+    );
+
+    const historyKey = [
+      "/guilds/guild-alias/events/event-1/kill-history",
+      { limit: "20" },
+    ];
+
+    const protectedKeys = [
+      "/guilds/guild-alias/events/event-1/maps",
+      "/guilds/guild-alias/events/event-1/heroes/hero-1/kills/kill-1",
+      "/guilds/guild-alias/events/event-1/heroes/hero-1/kills/kill-1/timeline",
+      "/guilds/guild-alias/events/event-2/kill-history",
+      "/guilds/guild-1/permissions",
+      "/guilds/guild-alias/loots",
+    ].map((path) => [path]);
+
+    const unrelatedKey = ["/users/@me/unrelated"];
+
+    type Page = { data: string[]; nextCursor: string | null };
+
+    const requests: Array<{ cursor: string | undefined; signal: AbortSignal }> =
+      [];
+
+    const resolveStale = vi.fn<(value: Page) => void>();
+
+    client.setQueryData(historyKey, {
+      pages: [
+        { data: ["restricted"], nextCursor: "older-page" },
+        { data: ["older restricted"], nextCursor: null },
+      ],
+      pageParams: [undefined, "older-page"],
+    });
+
+    for (const key of [...protectedKeys, unrelatedKey])
+      client.setQueryData(key, { private: true });
+
+    const observer = new InfiniteQueryObserver<
+      Page,
+      Error,
+      InfiniteData<Page>,
+      typeof historyKey,
+      string | undefined
+    >(client, {
+      queryKey: historyKey,
+      initialPageParam: undefined,
+      getNextPageParam: (page) => page.nextCursor ?? undefined,
+      queryFn: ({ pageParam, signal }) => {
+        requests.push({ cursor: pageParam, signal });
+
+        if (requests.length === 1)
+          return new Promise<Page>((resolve) => {
+            resolveStale.mockImplementation(resolve);
+          });
+
+        if (requests.length === 2)
+          return Promise.reject(new Error("Forbidden"));
+
+        return Promise.resolve({ data: ["visible"], nextCursor: null });
+      },
+    });
+
+    onTestFinished(observer.subscribe(() => {}));
+    void client.invalidateQueries({ queryKey: historyKey });
+    await waitFor(() => expect(requests).toHaveLength(1));
+
+    Wire.accessPolicy =
+      change === "unknown reconnect" ? undefined : eventPolicy([]);
+
+    act(() => {
+      if (change === "permissions") {
+        wireAt(0).deliver({
+          v: 1,
+          type: "permissions.updated",
+          data: {
+            organizationIds: ["guild-1"],
+            subscriptionScopes: [],
+            accessPolicy: Wire.accessPolicy,
+          },
+        });
+      } else {
+        wireAt(0).close();
+        socket.connect();
+        wireAt(1).open();
+      }
+    });
+
+    await waitFor(() =>
+      expect(client.getQueryState(historyKey)?.status).toBe("error"),
+    );
+    expect(requests).toHaveLength(2);
+    expect(requests[0]?.signal.aborted).toBe(true);
+    expect(requests[1]?.cursor).toBeUndefined();
+    expect(client.getQueryData(historyKey)).toBeUndefined();
+
+    for (const key of protectedKeys)
+      expect(client.getQueryData(key)).toBeUndefined();
+
+    expect(client.getQueryData(unrelatedKey)).toEqual({ private: true });
+    await act(async () =>
+      resolveStale({ data: ["restricted"], nextCursor: "older-page" }),
+    );
+    expect(client.getQueryData(historyKey)).toBeUndefined();
+
+    await act(() => observer.refetch());
+    expect(requests[2]?.cursor).toBeUndefined();
+    expect(client.getQueryData(historyKey)).toEqual({
+      pages: [{ data: ["visible"], nextCursor: null }],
+      pageParams: [undefined],
+    });
+  },
+);
+
+it.each(["unchanged", "expanded"] as const)(
+  "preserves loaded event pages when reconnect confirms %s access and refresh fails",
+  async (change) => {
+    Wire.accessPolicy = eventPolicy([Permission.LOOTLOG_EVENTS_READ]);
+
+    const client = await setup();
+    act(() => wireAt(0).open());
+    await waitFor(() =>
+      expect(
+        wireAt(0).frames.some(
+          (frame) => "type" in frame && frame.type === "presence.publish",
+        ),
+      ).toBe(true),
+    );
+
+    const historyKey = ["/guilds/guild-alias/events/event-1/kill-history"];
+
+    const history = {
+      pages: [
+        { data: ["visible"], nextCursor: "older-page" },
+        { data: ["older visible"], nextCursor: null },
+      ],
+      pageParams: [undefined, "older-page"],
+    };
+
+    client.setQueryData(historyKey, history);
+
+    const observer = new InfiniteQueryObserver(client, {
+      queryKey: historyKey,
+      initialPageParam: undefined,
+      getNextPageParam: () => undefined,
+      queryFn: async () => {
+        throw new Error("Unavailable");
+      },
+    });
+
+    onTestFinished(observer.subscribe(() => {}));
+
+    if (change === "expanded")
+      Wire.accessPolicy = eventPolicy([
+        Permission.LOOTLOG_EVENTS_READ,
+        Permission.LOOTLOG_EVENTS_WRITE,
+      ]);
+
+    act(() => {
+      wireAt(0).close();
+      socket.connect();
+      wireAt(1).open();
+    });
+    await waitFor(() =>
+      expect(client.getQueryState(historyKey)?.status).toBe("error"),
+    );
+    expect(client.getQueryData(historyKey)).toEqual(history);
+  },
+);

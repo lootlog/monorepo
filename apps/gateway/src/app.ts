@@ -13,6 +13,8 @@ import { BunRedis } from "@effect/platform-bun";
 import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
@@ -45,6 +47,7 @@ import { CommandHandler } from "#src/realtime/command-handler";
 import { CommandIngress } from "#src/realtime/command-ingress";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
+import { BattlePingService } from "#src/realtime/battle-ping-service";
 import { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
@@ -149,6 +152,7 @@ class GatewayApplication extends Context.Service<
       yield* presence.runOfflineSweep().pipe(Effect.forkScoped);
       const activity = new ActivityPublisher(messaging, config);
       const mapPings = new MapPingService(redis, hub);
+      const battlePings = new BattlePingService(redis, hub);
       const airTags = new AirTagService(redis, hub);
       const guilds = makeGuildStore(config, redis, httpClient);
 
@@ -159,6 +163,7 @@ class GatewayApplication extends Context.Service<
         hub,
         activity,
         mapPings,
+        battlePings,
         airTags,
       );
 
@@ -292,6 +297,27 @@ interface UpgradeServer {
   ) => boolean;
 }
 
+/** Capabilities a client opts into by offering them as subprotocols. */
+const negotiateCapabilities = (
+  offeredProtocols: readonly string[],
+  apiKeyAccess: boolean,
+) => {
+  // API key integrations never receive game-client events.
+  const offersGameCapability = (capability: string) =>
+    !apiKeyAccess && offeredProtocols.includes(capability);
+
+  return {
+    supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+    supportsNotificationVolunteer: offersGameCapability(
+      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+    ),
+    supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
+    supportsTeamBattlePings: offersGameCapability(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+    ),
+  };
+};
+
 const websocketResponseHeaders = (
   request: Request,
   frameEncoding: SessionData["frameEncoding"],
@@ -395,12 +421,10 @@ export const createGatewayFetch =
         data: {
           ...identity,
           connectionId,
-          supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-          supportsNotificationVolunteer:
-            !identity.apiKeyAccess &&
-            offeredProtocols.includes(
-              REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-            ),
+          ...negotiateCapabilities(
+            offeredProtocols,
+            Boolean(identity.apiKeyAccess),
+          ),
           platform: identity.apiKeyAccess
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),

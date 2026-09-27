@@ -67,7 +67,7 @@ export const makeDeleteTimer = (
           access.guild.id,
           world,
           timerIdentifier,
-        );
+        ).for("update");
 
         if (timers.some((timer) => !canViewTimer(access, timer))) {
           return yield* Effect.fail(
@@ -99,7 +99,7 @@ export const makeDeleteTimer = (
           transaction,
           access.guild.id,
           world,
-          timer,
+          [timer],
           now,
         );
 
@@ -164,10 +164,7 @@ export const makeDeleteTimer = (
                 eq(timerHistoryEntryTable.timerKey, timer.timerKey),
               ),
             )
-            .orderBy(
-              desc(timerHistoryEntryTable.createdAt),
-              desc(timerHistoryEntryTable.id),
-            )
+            .orderBy(desc(timerHistoryEntryTable.id))
             .offset(5);
 
           if (staleHistory.length > 0) {

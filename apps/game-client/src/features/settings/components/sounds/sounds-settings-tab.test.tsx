@@ -71,21 +71,19 @@ describe("SoundsSettingsTab", () => {
     expect(screen.getAllByRole("textbox", { name: "Heros" })).toHaveLength(2);
   });
 
-  it("hides map ping sound settings on the old interface", () => {
+  it("hides ping sound settings on the old interface", () => {
     setTestRuntimeGame({ interface: "si" });
     render();
 
     expect(
-      screen.queryByRole("slider", { name: "Pingi na mapie" }),
+      screen.queryByRole("slider", { name: "Pingi" }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows map ping sound settings on the new interface", () => {
+  it("shows ping sound settings on the new interface", () => {
     render();
 
-    expect(
-      screen.getByRole("slider", { name: "Pingi na mapie" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: "Pingi" })).toBeInTheDocument();
   });
 
   it("mutes every add-on sound from the master volume row", async () => {

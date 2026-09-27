@@ -1,11 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  eventsRankingControllerGetEventKillHistory,
-  eventsRankingControllerGetHeroKillHistory,
-  getEventsRankingControllerGetEventKillHistoryQueryKey,
-  getEventsRankingControllerGetHeroKillHistoryQueryKey,
+  listEventKillHistory,
+  getListEventKillHistoryQueryKey,
 } from "@lootlog/client/main";
-import type { HeroKill } from "./use-hero-kill-history";
 
 interface UseRecentHeroKillsOptions {
   guildId: string;
@@ -22,40 +19,29 @@ export const useRecentHeroKills = ({
   heroId,
   limit = 5,
 }: UseRecentHeroKillsOptions) => {
-  const baseParams = { limit: String(limit) };
+  const baseParams = { limit: String(limit), heroId };
 
-  return useQuery<HeroKill[]>({
-    queryKey: heroId
-      ? getEventsRankingControllerGetHeroKillHistoryQueryKey(
-          { guildId, eventId, heroId },
-          baseParams,
-        )
-      : getEventsRankingControllerGetEventKillHistoryQueryKey(
-          { guildId, eventId },
-          baseParams,
-        ),
+  return useQuery({
+    queryKey: [
+      ...getListEventKillHistoryQueryKey({ guildId, eventId }, baseParams),
+      "preview",
+    ],
     queryFn: async ({ signal }) => {
-      if (heroId) {
-        const response = await eventsRankingControllerGetHeroKillHistory(
-          { guildId, eventId, heroId },
-          baseParams,
-          { signal },
-        );
-
-        return response.data;
-      }
-
-      const response = await eventsRankingControllerGetEventKillHistory(
+      const response = await listEventKillHistory(
         { guildId, eventId },
         baseParams,
         { signal },
       );
 
-      return response.data;
+      if (response.kind !== "event") {
+        throw new Error("Unexpected kill history response");
+      }
+
+      return response;
     },
+    select: (response) => response.data,
     enabled: !!guildId && !!eventId,
+    placeholderData: undefined,
     staleTime: EVENT_LIVE_QUERY_STALE_TIME_MS,
   });
 };
-
-export type { HeroKill };
