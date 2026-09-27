@@ -55,6 +55,42 @@ const readBattleContext = () => {
   return { game, heroId: game.hero.characterId, warriors: battleWarriors };
 };
 
+type BattleContext = NonNullable<ReturnType<typeof readBattleContext>>;
+
+/**
+ * Whether a ping of this type may mark this warrior, from the sender's side:
+ * enemy pings on living enemies, a request for healing on the sender's own
+ * warrior, and profession requests on living allies of that profession. The
+ * gateway cannot check battle roles, so both ends apply this.
+ */
+const canPingWarrior = (
+  context: BattleContext,
+  senderCharacterId: string,
+  warriorId: number,
+  type: BattlePingType,
+) => {
+  const warrior = getBattleWarrior(context.warriors, warriorId);
+  const hero = getBattleWarrior(context.warriors, Number(context.heroId));
+
+  if (!warrior || !hero || isWarriorDead(warrior)) {
+    return false;
+  }
+
+  if (isBattleEnemyPingType(type)) {
+    return warrior.team !== hero.team;
+  }
+
+  if (warrior.team !== hero.team) {
+    return false;
+  }
+
+  if (String(warriorId) === senderCharacterId) {
+    return BATTLE_SELF_RING_TYPES.some((selfType) => selfType === type);
+  }
+
+  return getBattleProfessionRequests(warrior.prof).includes(type);
+};
+
 const playPingSound = (type: BattlePingType, forMe: boolean) => {
   playSound("pings", "mapPing", {
     playbackRate: forMe
@@ -123,10 +159,15 @@ export const useBattlePings = () => {
         !isBattlePingType(event.type) ||
         event.world !== context.game.world ||
         event.mapId !== context.game.map.id ||
-        !getBattleWarrior(context.warriors, event.warriorId) ||
         // Only a character fighting on the hero's team may mark this fight.
         !getBattleTeamCharacterIds(context.warriors, context.heroId).includes(
           event.sender.characterId,
+        ) ||
+        !canPingWarrior(
+          context,
+          event.sender.characterId,
+          event.warriorId,
+          event.type,
         )
       ) {
         return;
@@ -229,7 +270,12 @@ export const useBattlePings = () => {
   const send = (warriorId: number, type: BattlePingType) => {
     const context = readBattleContext();
 
-    if (!context || !socket || !getBattleWarrior(context.warriors, warriorId)) {
+    // The target may have died while the wheel was open.
+    if (
+      !context ||
+      !socket ||
+      !canPingWarrior(context, context.heroId, warriorId, type)
+    ) {
       return;
     }
 
@@ -260,15 +306,20 @@ export const useBattlePings = () => {
         warriorId,
       },
       (error: Error | null, acknowledgement?: MapPingAck) => {
-        if (error || acknowledgement?.status !== "rejected") {
+        if (!error && acknowledgement?.status === "accepted") {
           return;
         }
 
+        // Undelivered: a shared target the team never saw must not stay up
+        // for the rest of the fight.
         battlePingStore.retract(
           { senderName, type, warriorId },
           previousTarget,
         );
-        showHint(acknowledgement);
+
+        if (acknowledgement?.status === "rejected") {
+          showHint(acknowledgement);
+        }
       },
     );
   };

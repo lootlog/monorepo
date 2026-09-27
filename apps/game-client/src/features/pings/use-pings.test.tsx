@@ -429,7 +429,7 @@ const startBattle = () => {
 
 const remoteBattlePing = (
   senderCharacterId: string,
-  type: "attack" | "heal",
+  type: "attack" | "taunt",
   warriorId: number,
 ) => ({
   v: 1 as const,
@@ -482,20 +482,45 @@ describe("usePings in battle", () => {
     ]);
   });
 
-  it("shows a teammate's request for the hero and ignores pings from the other team", async () => {
+  it("shows a teammate's request for the hero and ignores pings from the other team or on the wrong side", async () => {
     const test = await setup();
     startBattle();
 
     await test.receive(
       remoteBattlePing("7", "attack", 2),
-      remoteBattlePing("2", "heal", 1),
+      // A teammate cannot mark an ally as the attack target.
+      remoteBattlePing("2", "attack", 1),
+      remoteBattlePing("2", "taunt", 1),
     );
 
     const { marks, target } = battlePingStore.getSnapshot();
     expect(target).toBeNull();
-    expect(marks.get(1)).toMatchObject({ forMe: true, type: "heal" });
+    expect(marks.get(1)).toMatchObject({ forMe: true, type: "taunt" });
     expect(test.play).toHaveBeenCalledOnce();
     expect(test.play.mock.instances[0]).toMatchObject({ playbackRate: 1.5 });
+  });
+
+  it("sends nothing when the target dies while the wheel is held", async () => {
+    const test = await setup();
+    const warriorElement = startBattle();
+
+    act(() => {
+      const press = new MouseEvent("mousedown", { button: 1 });
+
+      warriorElement(-5).dispatchEvent(press);
+      test.result.current.onPingStart(press);
+      useBattleStore.getState().updateBattleWarriors({
+        "-5": warrior(-5, 2, "", 0),
+      });
+      test.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
+    });
+
+    expect(battlePingStore.getSnapshot().target).toBeNull();
+    expect(
+      test.wire.frames.some(
+        (frame) => "type" in frame && frame.type === "battle-ping.send",
+      ),
+    ).toBe(false);
   });
 
   it("drops the target once it dies and every ping when the battle ends", async () => {
@@ -504,7 +529,7 @@ describe("usePings in battle", () => {
 
     await test.receive(
       remoteBattlePing("2", "attack", -5),
-      remoteBattlePing("2", "heal", 1),
+      remoteBattlePing("2", "taunt", 1),
     );
     expect(battlePingStore.getSnapshot().target?.warriorId).toBe(-5);
 

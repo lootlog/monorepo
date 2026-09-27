@@ -527,7 +527,7 @@ const MANIFEST = [
             id: "sound-pings",
             labelKey: "settings.sounds.categories.pings.label",
             descriptionKey: "settings.sounds.categories.pings.description",
-            aliases: ["głośność", "pingi", "mapa"],
+            aliases: ["głośność", "pingi", "mapa", "walka", "prośba"],
             settingKeys: ["sounds.pingsVolume"],
           },
         ],
