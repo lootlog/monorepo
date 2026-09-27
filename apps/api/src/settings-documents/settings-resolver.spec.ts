@@ -355,6 +355,22 @@ describe("settings resolver", () => {
       }),
     ).toThrow(/scope/i);
 
+    for (const type of ["GUILD", "GAME_ACCOUNT"] as const) {
+      const currentOverrides = { chat: { fontScalePercent: 120 } };
+
+      expect(() =>
+        applySettingsPatch({
+          domain: "appearance",
+          scope: { type, id: "scope-1" },
+          currentOverrides,
+          set: {},
+          unset: ["chat.fontScalePercent"],
+        }),
+      ).toThrow(/scope/i);
+
+      expect(currentOverrides).toEqual({ chat: { fontScalePercent: 120 } });
+    }
+
     expect(() =>
       applySettingsPatch({
         domain: "appearance",
