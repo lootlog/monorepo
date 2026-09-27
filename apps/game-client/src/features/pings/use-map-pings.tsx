@@ -7,6 +7,7 @@ import { playSound } from "@/lib/sound-playback";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useNpcsStore } from "@/store/npcs.store";
+import { useOthersStore } from "@/store/others.store";
 import { normalizePings } from "@lootlog/domain/account-preferences";
 import {
   isMapPingType,
@@ -17,7 +18,13 @@ import {
 } from "@lootlog/schema/map-ping";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { isMapPingSurface, mapPingController } from "./map-ping-controller";
+import type { RuntimeCharacterRef } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
+import {
+  getMapPingCharacter,
+  getMapPingPresentation,
+  isMapPingSurface,
+  mapPingController,
+} from "./map-ping-controller";
 import type {
   ClientPoint,
   PingInteractionStart,
@@ -25,8 +32,8 @@ import type {
 } from "./ping-interaction-controller";
 import {
   MAP_PING_CENTRE_TYPE,
+  MAP_PING_PLAYER_RING_TYPES,
   MAP_PING_RING_TYPES,
-  getPingPresentation,
 } from "./ping-presentation";
 
 const ACK_TIMEOUT_MS = 1_500;
@@ -43,6 +50,32 @@ const MAP_PING_MENU: PingMenu = {
 };
 
 export type PingPointer = ClientPoint & { target: EventTarget | null };
+
+/** "Name (70w)", the way the game labels a character. */
+const getCharacterTitle = ({ id, kind }: RuntimeCharacterRef) => {
+  const details =
+    kind === "npc"
+      ? useNpcsStore.getState().getNpc(id)
+      : useOthersStore.getState().getOther(String(id));
+
+  return details
+    ? `${details.name} (${details.level}${details.profession})`
+    : null;
+};
+
+/** A monster is attacked; another player is marked as an enemy. */
+const getCharacterMenu = (character: RuntimeCharacterRef): PingMenu => {
+  const title = getCharacterTitle(character);
+
+  return character.kind === "npc"
+    ? { ...MAP_PING_MENU, centre: "attack", quick: "attack", title }
+    : {
+        centre: "enemy",
+        quick: "enemy",
+        ring: MAP_PING_PLAYER_RING_TYPES,
+        title,
+      };
+};
 
 export const areMapPingsEnabled = () =>
   Boolean(useGameStore.getState().game?.hero.accountId) &&
@@ -148,8 +181,9 @@ export const useMapPings = () => {
         return;
       }
 
-      const presentation = getPingPresentation(
-        event.npcId === undefined ? event.type : "attack",
+      const presentation = getMapPingPresentation(
+        event.type,
+        getMapPingCharacter(event),
       );
 
       if (mapPingController.addRemote(event, t(presentation.translationKey))) {
@@ -188,26 +222,22 @@ export const useMapPings = () => {
 
     const origin = { x: pointer.x, y: pointer.y };
 
-    const npc = mapPingController.resolveNpc(
+    const character = mapPingController.resolveCharacter(
       pointer.target,
       pointer.x,
       pointer.y,
     );
 
-    if (npc && mapPingController.isTileValid(npc.tile)) {
-      const details = useNpcsStore.getState().getNpc(npc.id);
-
+    if (character && mapPingController.isTileValid(character.tile)) {
       return {
-        menu: {
-          ...MAP_PING_MENU,
-          centre: "attack",
-          quick: "attack",
-          title: details
-            ? `${details.name} (${details.level}${details.profession})`
-            : null,
-        },
+        menu: getCharacterMenu(character),
         origin,
-        target: { kind: "map", mapId, npcId: npc.id, tile: npc.tile },
+        target: {
+          kind: "map",
+          mapId,
+          character: { id: character.id, kind: character.kind },
+          tile: character.tile,
+        },
       };
     }
 
@@ -222,12 +252,12 @@ export const useMapPings = () => {
       : null;
   };
 
-  /** `npcId` marks that monster; old clients still see a tile ping. */
+  /** A character ping names it; old clients still see a tile ping. */
   const send = (
     mapId: number,
     tile: { x: number; y: number },
     type: MapPingType,
-    npcId?: number,
+    character?: RuntimeCharacterRef,
   ) => {
     const game = useGameStore.getState().game;
 
@@ -242,9 +272,7 @@ export const useMapPings = () => {
       return;
     }
 
-    const presentation = getPingPresentation(
-      npcId === undefined ? type : "attack",
-    );
+    const presentation = getMapPingPresentation(type, character);
 
     const localPingId = mapPingController.addOptimistic(
       tile,
@@ -252,7 +280,7 @@ export const useMapPings = () => {
       game.hero.name,
       type,
       t(presentation.translationKey),
-      npcId,
+      character,
     );
 
     playSound("pings", "mapPing", {
@@ -268,7 +296,9 @@ export const useMapPings = () => {
     };
 
     // The wire schema rejects an explicit `undefined`.
-    if (npcId !== undefined) payload.npcId = npcId;
+    if (character?.kind === "npc") payload.npcId = character.id;
+
+    if (character?.kind === "player") payload.playerId = character.id;
 
     socket
       .timeout(ACK_TIMEOUT_MS)

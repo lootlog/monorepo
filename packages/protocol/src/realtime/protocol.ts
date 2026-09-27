@@ -43,6 +43,12 @@ export const REALTIME_PING_CAPABILITY = "connection.ping";
 // older gateways close it on an unknown command.
 export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
 
+// Negotiated like `lootlog.battle-ping.v1`, for the battle ping types that
+// address the whole team (`quick-fight`), which v1 clients and gateways cannot
+// decode.
+export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
+  "lootlog.battle-ping.team.v1";
+
 // Offered as a subprotocol by clients that decode `air-tag.map-threat-updated`,
 // and listed in `session.joined` capabilities by gateways that accept
 // `air-tag.map-threats.fetch`. Older clients close the socket on an unknown

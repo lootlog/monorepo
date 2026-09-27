@@ -11,6 +11,7 @@ import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import {
   REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
   type AirTagSubscriptionCommand,
   type AirTagObservationCommand,
   type AirTagSubscriptionAck,
@@ -194,6 +195,7 @@ export class AppSocket {
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
   private battlePingsSupported = false;
+  private teamBattlePingsSupported = false;
   private airTagMapThreatsSupported = false;
   id: string | undefined;
 
@@ -218,6 +220,7 @@ export class AppSocket {
         this.id = undefined;
         // The next connection may reach an older gateway.
         this.battlePingsSupported = false;
+        this.teamBattlePingsSupported = false;
         this.airTagMapThreatsSupported = false;
       }
 
@@ -257,6 +260,11 @@ export class AppSocket {
   /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
   supportsBattlePings(): boolean {
     return this.battlePingsSupported;
+  }
+
+  /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
+  supportsTeamBattlePings(): boolean {
+    return this.teamBattlePingsSupported;
   }
 
   /** Current map threats, or null when the joined gateway predates `air-tag.map-threats.fetch`. */
@@ -352,12 +360,20 @@ export class AppSocket {
     if (!isJoinResult(response))
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
-    this.battlePingsSupported =
-      hasRealtimeCapabilities(response) &&
-      response.capabilities.includes(REALTIME_BATTLE_PING_CAPABILITY);
-    this.airTagMapThreatsSupported =
-      hasRealtimeCapabilities(response) &&
-      response.capabilities.includes(REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY);
+
+    const capabilities = hasRealtimeCapabilities(response)
+      ? response.capabilities
+      : [];
+
+    this.battlePingsSupported = capabilities.includes(
+      REALTIME_BATTLE_PING_CAPABILITY,
+    );
+    this.teamBattlePingsSupported = capabilities.includes(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+    );
+    this.airTagMapThreatsSupported = capabilities.includes(
+      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+    );
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);

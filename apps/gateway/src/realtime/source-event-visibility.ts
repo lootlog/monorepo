@@ -6,6 +6,7 @@ import {
   type LootVisibilityNpc,
 } from "@lootlog/domain/loot-visibility";
 import { Permission } from "@lootlog/schema/permissions";
+import { isBattleTeamPingType } from "@lootlog/schema/battle-ping";
 import type { ServerEvent } from "@lootlog/protocol/realtime";
 import { prepareNpcSourceEvent } from "#src/realtime/npc-event-visibility";
 import type { UserGuildData } from "#src/guilds/guild";
@@ -79,6 +80,11 @@ export const prepareSourceEventVisibility = (
   sourceNpcs: readonly LootVisibilityNpc[] = [],
 ) => {
   const canReadApiKey = prepareApiKeyEventVisibility(event);
+
+  const isTeamBattlePing =
+    event.type === "battle-ping.received" &&
+    isBattleTeamPingType(event.data.type);
+
   const canReadNpc = prepareNpcSourceEvent(event);
 
   const npcs =
@@ -94,7 +100,9 @@ export const prepareSourceEventVisibility = (
 
     // Older game clients close the socket on an event type they cannot decode.
     if (event.type === "battle-ping.received")
-      return session.supportsBattlePings === true;
+      return isTeamBattlePing
+        ? session.supportsTeamBattlePings === true
+        : session.supportsBattlePings === true;
 
     if (event.type === "air-tag.map-threat-updated")
       return session.supportsAirTagMapThreats === true;

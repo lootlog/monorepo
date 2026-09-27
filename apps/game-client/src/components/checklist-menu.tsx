@@ -20,6 +20,8 @@ type ChecklistMenuOnlyAction<Value extends string> = {
 type ChecklistMenuProps<Value extends string> = {
   "aria-label": string;
   className?: string;
+  /** Mutes rows that are off; disable it where an off row is an entry to add. */
+  dimUnselected?: boolean;
   items: readonly ChecklistMenuItem<Value>[];
   onToggle: (value: Value) => void;
   /** Adds an "only" button to each row (and on right-click) that keeps just that entry. */
@@ -39,6 +41,7 @@ const ICON_SIZE = 12;
 export const ChecklistMenu = <Value extends string>({
   "aria-label": ariaLabel,
   className,
+  dimUnselected = true,
   items,
   only,
   onToggle,
@@ -92,7 +95,7 @@ export const ChecklistMenu = <Value extends string>({
               aria-pressed={isSelected}
               className={cn(
                 "ll:min-w-0 ll:flex-1 ll:justify-between ll:gap-2",
-                !isSelected && "ll:text-muted-foreground",
+                dimUnselected && !isSelected && "ll:text-muted-foreground",
               )}
               onClick={() => onToggle(item.value)}
               onContextMenu={

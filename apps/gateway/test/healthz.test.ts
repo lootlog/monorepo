@@ -269,17 +269,19 @@ describe("gateway HTTP boundary", () => {
   });
 
   test.each([
-    [false, false, false],
-    [true, false, false],
-    [false, true, false],
-    [false, false, true],
-    [true, true, true],
+    [false, false, false, false],
+    [true, false, false, false],
+    [false, true, false, false],
+    [false, false, true, false],
+    [false, false, false, true],
+    [true, true, true, true],
   ])(
-    "negotiates feed (%s), volunteer (%s) and battle ping (%s) opt-in while echoing only the wire protocol",
+    "negotiates feed (%s), volunteer (%s), battle ping (%s) and team battle ping (%s) opt-in while echoing only the wire protocol",
     async (
       supportsFeed,
       supportsNotificationVolunteer,
       supportsBattlePings,
+      supportsTeamBattlePings,
     ) => {
       let upgradeOptions:
         | {
@@ -288,6 +290,7 @@ describe("gateway HTTP boundary", () => {
               readonly supportsFeed?: boolean;
               readonly supportsNotificationVolunteer?: boolean;
               readonly supportsBattlePings?: boolean;
+              readonly supportsTeamBattlePings?: boolean;
             };
           }
         | undefined;
@@ -303,7 +306,7 @@ describe("gateway HTTP boundary", () => {
           origin: "https://classic.margonem.pl",
           "x-auth-user-id": "user-1",
           "x-auth-discord-id": "discord-1",
-          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}`,
+          "sec-websocket-protocol": `lootlog.realtime.v1${supportsFeed ? ", lootlog.feed.v1" : ""}${supportsNotificationVolunteer ? ", lootlog.notification-volunteer.v1" : ""}${supportsBattlePings ? ", lootlog.battle-ping.v1" : ""}${supportsTeamBattlePings ? ", lootlog.battle-ping.team.v1" : ""}`,
         },
       });
 
@@ -326,6 +329,9 @@ describe("gateway HTTP boundary", () => {
       );
       expect(upgradeOptions?.data.supportsBattlePings).toBe(
         supportsBattlePings,
+      );
+      expect(upgradeOptions?.data.supportsTeamBattlePings).toBe(
+        supportsTeamBattlePings,
       );
       expect(upgradeOptions?.headers).toEqual({
         "sec-websocket-protocol": "lootlog.realtime.v1",
