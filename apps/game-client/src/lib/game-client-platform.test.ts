@@ -5,6 +5,7 @@ import {
 } from "@lootlog/client/realtime";
 
 import {
+  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
 } from "@lootlog/protocol/realtime";
@@ -56,6 +57,7 @@ describe("game realtime handshake", () => {
                 : REALTIME_SUBPROTOCOL,
               REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
               REALTIME_BATTLE_PING_CAPABILITY,
+              REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
             ],
           },
         ]);

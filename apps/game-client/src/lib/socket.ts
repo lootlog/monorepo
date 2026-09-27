@@ -4,9 +4,12 @@ import {
   isMapPingAcknowledgement,
   isAirTagSubscriptionAcknowledgement,
   isAirTagObservationAcknowledgement,
+  isAirTagMapThreatsFetchResponse,
   isPresenceFetchResult,
 } from "@lootlog/protocol/realtime/codec";
+import type { AirTagMapThreatEvent } from "@lootlog/schema/air-tag";
 import {
+  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   type AirTagSubscriptionCommand,
   type AirTagObservationCommand,
@@ -133,6 +136,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "map-ping.received": GatewayEvent.MAP_PING_RECEIVE,
   "battle-ping.received": GatewayEvent.BATTLE_PING_RECEIVE,
   "air-tag.updated": GatewayEvent.AIR_TAG_UPDATE,
+  "air-tag.map-threat-updated": GatewayEvent.AIR_TAG_MAP_THREAT_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
   "event.ranking-updated": GatewayEvent.EVENT_RANKING_UPDATE,
@@ -190,6 +194,7 @@ export class AppSocket {
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
   private battlePingsSupported = false;
+  private airTagMapThreatsSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -213,6 +218,7 @@ export class AppSocket {
         this.id = undefined;
         // The next connection may reach an older gateway.
         this.battlePingsSupported = false;
+        this.airTagMapThreatsSupported = false;
       }
 
       this.listeners.emit(
@@ -251,6 +257,24 @@ export class AppSocket {
   /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
   supportsBattlePings(): boolean {
     return this.battlePingsSupported;
+  }
+
+  /** Current map threats, or null when the joined gateway predates `air-tag.map-threats.fetch`. */
+  async fetchAirTagMapThreats(
+    organizationId: string,
+    world: string,
+  ): Promise<readonly AirTagMapThreatEvent[] | null> {
+    if (!this.airTagMapThreatsSupported) return null;
+
+    const response = await this.realtime.request("air-tag.map-threats.fetch", {
+      organizationId,
+      world,
+    });
+
+    if (!isAirTagMapThreatsFetchResponse(response))
+      throw new Error("Invalid air-tag.map-threats.fetch response");
+
+    return response.threats;
   }
 
   getAccessPolicy(): AccessPolicySnapshot | undefined {
@@ -331,6 +355,9 @@ export class AppSocket {
     this.battlePingsSupported =
       hasRealtimeCapabilities(response) &&
       response.capabilities.includes(REALTIME_BATTLE_PING_CAPABILITY);
+    this.airTagMapThreatsSupported =
+      hasRealtimeCapabilities(response) &&
+      response.capabilities.includes(REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY);
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
@@ -627,7 +654,8 @@ export class AppSocket {
       const payload =
         event.type === "map-ping.received" ||
         event.type === "battle-ping.received" ||
-        event.type === "air-tag.updated"
+        event.type === "air-tag.updated" ||
+        event.type === "air-tag.map-threat-updated"
           ? event.data
           : unwrapOrganizationEvent(event);
 
