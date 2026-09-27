@@ -48,6 +48,7 @@ export function prepareApiKeyEventVisibility(event: ServerEvent) {
       case "feed.entry":
         return allowed(event.data.guild.id);
       case "map-ping.received":
+      case "battle-ping.received":
         // Its payload has no Organization: the hub checks the authoritative routing scope.
         return true;
       default:

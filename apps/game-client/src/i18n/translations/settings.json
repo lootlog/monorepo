@@ -13,6 +13,7 @@
     "detector": "Wykrywacz",
     "mutes": "Wyciszenia",
     "battlePanel": "Panel walk",
+    "pings": "Pingi",
     "sounds": "Dźwięki",
     "controls": "Sterowanie",
     "experimental": "Eksperymentalne",
@@ -33,6 +34,7 @@
     "notificationRules": "Reguły",
     "experimentalFeatures": "Funkcje",
     "battleDataCollection": "Zbieranie danych",
+    "pings": "Pingi",
     "hiddenTimers": "Ukryte timery",
     "detector": "Wykrywacz",
     "mutedPlayers": "Gracze",
@@ -172,8 +174,6 @@
   "experimental": {
     "sectionTitle": "Funkcje eksperymentalne",
     "newInterfaceOnly": "Funkcje eksperymentalne są dostępne tylko w nowym interfejsie gry.",
-    "mapPingsLabel": "Pingi na mapie",
-    "mapPingsDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie.",
     "airTagsLabel": "AirTagi – współdzielona widoczność",
     "airTagsDescription": "Udostępniaj Lootlogowi pozycje widocznych graczy i pokazuj świeże obserwacje z bieżącej mapy."
   },
@@ -192,20 +192,6 @@
   },
   "airTags": {
     "seenSeconds": "widziany {{seconds}} s temu"
-  },
-  "mapPings": {
-    "rateLimited": "Poczekaj {{seconds}} s przed kolejnym pingiem.",
-    "temporarilyUnavailable": "Pingi są chwilowo niedostępne.",
-    "types": {
-      "attention": "Uwaga",
-      "enemy": "Wróg",
-      "regroup": "Zbiórka",
-      "avoid": "Unikaj"
-    },
-    "wheel": {
-      "cancelHint": "Anuluj",
-      "ariaLabel": "Koło pingów. Wybrano: {{selection}}"
-    }
   },
   "battlePanel": {
     "dataCollectionTitle": "Zbieranie danych",
@@ -258,8 +244,8 @@
         "description": "Zaprasza do grupy wszystkich zgłoszonych do Twojej zbiórki."
       },
       "map-ping": {
-        "label": "Ping na mapie",
-        "description": "Oznacza miejsce pod kursorem na mapie."
+        "label": "Ping",
+        "description": "Oznacza miejsce na mapie albo wojownika w walce. Przytrzymaj, żeby wybrać rodzaj pingu."
       }
     },
     "restoreDefaultsTitle": "Domyślne skróty",
@@ -476,8 +462,8 @@
         "description": "Dźwięk wykrywacza dla każdego typu. Puste pole gra dźwięk domyślny."
       },
       "pings": {
-        "label": "Pingi na mapie",
-        "description": "Dźwięk pingów, które grupa stawia na mapie."
+        "label": "Pingi",
+        "description": "Dźwięk pingów na mapie i w walce, także próśb skierowanych do Ciebie."
       }
     }
   },

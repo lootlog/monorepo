@@ -144,6 +144,7 @@ function executeGameCommand(realtime: RealtimeClient, command: unknown) {
     case "presence.publish":
     case "presence.fetch":
     case "map-ping.send":
+    case "battle-ping.send":
     case "air-tag.subscription":
     case "air-tag.observation":
       return realtime.request(frame.type, frame.data);

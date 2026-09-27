@@ -33,6 +33,7 @@ import type {
 } from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
+import { BattlePingService } from "#src/realtime/battle-ping-service";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
@@ -2243,6 +2244,55 @@ describe("realtime Dragonfly integration", () => {
       expect(eventsOfType(recipient.frames, "map-ping.received")).toHaveLength(
         5,
       );
+
+      const battleRecipient = makeSocket("battle-recipient");
+      const battleBystander = makeSocket("battle-bystander");
+
+      for (const [target, characterId] of [
+        [battleRecipient, "100"],
+        [battleBystander, "200"],
+      ] as const) {
+        const presence = target.socket.data.presence;
+
+        if (!presence?.character)
+          throw new Error("Missing battle ping presence");
+        target.socket.data = {
+          ...target.socket.data,
+          supportsBattlePings: true,
+          presence: {
+            ...presence,
+            character: { ...presence.character, characterId },
+          },
+        };
+        secondHub.register(target.socket);
+        secondHub.subscribe(target.socket, {
+          topic: "map.pings",
+          organizationId: "organization-1",
+          world: "classic",
+          mapId: 7,
+        });
+      }
+
+      // The exhausted map ping budget must not block battle pings.
+      await expect(
+        new BattlePingService(firstStore, firstHub).send(source.socket, {
+          expectedMapId: 7,
+          type: "attack",
+          warriorId: -1,
+          recipientCharacterIds: ["100"],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      await waitFor(
+        () =>
+          eventsOfType(battleRecipient.frames, "battle-ping.received")
+            .length === 1,
+      );
+      expect(
+        eventsOfType(battleBystander.frames, "battle-ping.received"),
+      ).toHaveLength(0);
+      expect(
+        eventsOfType(recipient.frames, "battle-ping.received"),
+      ).toHaveLength(0);
 
       await firstStore.command.set(
         "air-tag:disabled:organization-2:classic",

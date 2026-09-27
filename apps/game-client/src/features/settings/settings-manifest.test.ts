@@ -36,6 +36,7 @@ describe("settings manifest persistence references", () => {
       "detector",
       "mutes",
       "battle-panel",
+      "pings",
       "sounds",
       "controls",
       "experimental",

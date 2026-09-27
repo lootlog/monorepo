@@ -4,8 +4,8 @@ import { LOOTLOG_APP_URL } from "@/config/app";
 import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
 import { NpcType } from "@/api/npcs.api";
 import {
+  isWarriorDead,
   mergeBattleWarriorPatches,
-  parseNumericHpValue,
 } from "@/hooks/game-events/helpers/battle.helpers";
 import { useGameStore } from "@/store/game.store";
 import type {
@@ -61,23 +61,6 @@ const showBattleCreatedToast = (battleId: string) => {
       },
     },
   });
-};
-
-const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
-  const legacyHpp = parseNumericHpValue(warrior.hpp);
-
-  if (legacyHpp !== null) return legacyHpp <= 0;
-
-  const hpData = warrior.hp;
-  const nestedHpp = parseNumericHpValue(hpData?.hpp);
-
-  if (nestedHpp !== null) return nestedHpp <= 0;
-
-  const currentHp = parseNumericHpValue(hpData?.cur);
-
-  if (currentHp !== null) return currentHp <= 0;
-
-  return false;
 };
 
 type DeadNpc = {

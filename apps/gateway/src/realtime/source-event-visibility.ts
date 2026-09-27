@@ -92,6 +92,10 @@ export const prepareSourceEventVisibility = (
     if (event.type === "notification.volunteer")
       return session.supportsNotificationVolunteer === true;
 
+    // Older game clients close the socket on an event type they cannot decode.
+    if (event.type === "battle-ping.received")
+      return session.supportsBattlePings === true;
+
     if (!canReadNpc(session, guild)) return false;
 
     switch (event.type) {
