@@ -1,3 +1,4 @@
+import { notificationChannelMetadata } from "#src/notifications/targets/notification-channel-metadata";
 import {
   mapNotificationTarget,
   updateNotificationTarget,
@@ -59,23 +60,6 @@ export class NotificationGuildTargetFailure extends TaggedErrorClass<Notificatio
   "NotificationGuildTargetFailure",
   { operation: Schema.String, cause: Schema.Defect() },
 ) {}
-
-const targetMetadata = (
-  channel: Pick<
-    NotificationGuildChannel,
-    | "channelType"
-    | "requiredPermissions"
-    | "grantedPermissions"
-    | "missingPermissions"
-    | "hasRequiredPermissions"
-  >,
-) => ({
-  channelType: channel.channelType,
-  requiredPermissions: channel.requiredPermissions,
-  grantedPermissions: channel.grantedPermissions,
-  missingPermissions: channel.missingPermissions,
-  hasRequiredPermissions: channel.hasRequiredPermissions,
-});
 
 export const makeNotificationGuildTargets = (
   database: ApiDatabaseValue,
@@ -177,7 +161,7 @@ export const makeNotificationGuildTargets = (
         externalId: data.externalId,
         displayName: data.displayName ?? selected.name,
         guildName: null,
-        metadata: targetMetadata(selected),
+        metadata: notificationChannelMetadata(selected),
         active: true,
         canSend: selected.hasRequiredPermissions,
         lastSyncedAt: new Date(selected.lastSyncedAt),
@@ -194,7 +178,7 @@ export const makeNotificationGuildTargets = (
         ],
         set: {
           displayName: data.displayName ?? selected.name,
-          metadata: targetMetadata(selected),
+          metadata: notificationChannelMetadata(selected),
           active: true,
           canSend: selected.hasRequiredPermissions,
           lastSyncedAt: new Date(selected.lastSyncedAt),
