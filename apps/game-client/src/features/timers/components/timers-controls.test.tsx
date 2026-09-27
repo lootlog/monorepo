@@ -120,7 +120,7 @@ describe("timers controls", () => {
     ).toEqual([NpcType.TITAN]);
   });
 
-  it("switches to one player list and back to several without touching the other filters", async () => {
+  it("switches to one player list, back to several and to all without touching the other filters", async () => {
     const user = userEvent.setup();
     useTimersStore.setState({
       customLists: {
@@ -145,6 +145,10 @@ describe("timers controls", () => {
     expect(
       useTimersStore.getState().timersFilters["guild-1"].selectedLists,
     ).toEqual(["heroes", "e2"]);
+    await user.click(screen.getByRole("button", { name: "Wszystkie" }));
+    expect(
+      useTimersStore.getState().timersFilters["guild-1"].selectedLists,
+    ).toEqual([]);
   });
 
   it("dispatches toolbar actions in regular and under-bag layouts using real controls", async () => {
