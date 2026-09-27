@@ -93,7 +93,7 @@ it("bounds mounted rows for five hundred NPCs and mounts rows reached by scrolli
   expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(20);
   expect(screen.getByText("NPC 0")).toBeVisible();
   expect(screen.queryByText("NPC 100")).not.toBeInTheDocument();
-  viewport.scrollTop = 100 * 54;
+  viewport.scrollTop = 100 * 40;
   fireEvent.scroll(viewport);
   expect(screen.getByText("NPC 100")).toBeVisible();
   expect(screen.queryByText("NPC 0")).not.toBeInTheDocument();
@@ -132,11 +132,14 @@ it("does not replay entry animation when virtualization remounts an existing row
     true,
   );
 
-  viewport.scrollTop = 100 * 54;
+  viewport.scrollTop = 100 * 40;
   fireEvent.scroll(viewport);
-  expect(screen.getByText("NPC 100").closest("li")).not.toHaveClass(
-    "ll-npc-list-enter",
-  );
+  expect(
+    screen
+      .getByText("NPC 100")
+      .closest("li")
+      ?.querySelector("[data-ll-row-arrival]"),
+  ).toBeNull();
 });
 
 it("animates retained rows from their previous positions after detections reorder the list", () => {
@@ -202,7 +205,7 @@ it("animates retained rows from their previous positions after detections reorde
   );
   expect(animate).toHaveBeenCalledTimes(2);
   expect(animate).toHaveBeenCalledWith(
-    [{ transform: "translateY(-54px)" }, { transform: "translateY(0)" }],
+    [{ transform: "translateY(-40px)" }, { transform: "translateY(0)" }],
     expect.objectContaining({ duration: 180 }),
   );
 });
@@ -231,7 +234,7 @@ it("expires cooldowns and detection animations while their row is offscreen", ()
     })),
   );
 
-  viewport.scrollTop = 100 * 54;
+  viewport.scrollTop = 100 * 40;
   fireEvent.scroll(viewport);
   expect(screen.queryByText("NPC 0")).not.toBeInTheDocument();
   act(() => vi.advanceTimersByTime(5500));
