@@ -22,6 +22,8 @@ const createNotification = (
   message: "Hej",
   servers: [guildId],
   listKey: notificationId,
+  recentReportIds: [notificationId],
+  reportCountByGuildId: {},
   receivedAtMs: 1,
 });
 

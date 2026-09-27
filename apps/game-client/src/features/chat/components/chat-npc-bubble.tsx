@@ -9,7 +9,7 @@ import {
   getChatNpcLocationName,
   toChatGameNpc,
 } from "./chat-message.helpers";
-import { ChatNpcCountBadge } from "./chat-npc-count-badge";
+import { CountBadge } from "@/components/count-badge";
 
 type ChatNpcBubbleProps = {
   appearance: ChatAppearanceSettings;
@@ -77,7 +77,7 @@ export const ChatNpcBubble: FC<ChatNpcBubbleProps> = ({
               </span>
             ) : null}
           </div>
-          <ChatNpcCountBadge count={count} />
+          <CountBadge count={count} />
         </div>
 
         {appearance.showNpcLocationAndCoordinates &&

@@ -20,6 +20,8 @@ const createStoredNotification = (
   message: "Hej",
   servers: ["guild-1"],
   listKey: "notification-1",
+  recentReportIds: ["notification-1"],
+  reportCountByGuildId: {},
   receivedAtMs: Date.now(),
   ...overrides,
 });
@@ -48,11 +50,15 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: Date.now(),
         }),
         createStoredNotification({
           notificationId: "notification-2",
           listKey: "notification-2",
+          recentReportIds: ["notification-2"],
+          reportCountByGuildId: {},
           receivedAtMs: Date.now(),
         }),
       ],
@@ -109,6 +115,8 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: Date.now(),
         }),
       ],
@@ -151,6 +159,8 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: Date.now(),
         }),
       ],
@@ -184,6 +194,8 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "notification-1",
           listKey: "notification-1",
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: Date.now(),
         }),
       ],
@@ -219,6 +231,8 @@ describe("useVisibleNotifications", () => {
         createStoredNotification({
           notificationId: "mention-1",
           listKey: "mention-1",
+          recentReportIds: ["mention-1"],
+          reportCountByGuildId: {},
           type: "chat-mention",
         }),
       ],

@@ -2,7 +2,7 @@ import { cn } from "cn";
 import type { ChatMessageResponseDtoOutputNpc as ChatNpc } from "@lootlog/client/main";
 import type { ChatAppearanceSettings } from "@lootlog/schema/chat-appearance";
 import type { FC } from "react";
-import { ChatNpcCountBadge } from "./chat-npc-count-badge";
+import { CountBadge } from "@/components/count-badge";
 import { ChatNpcTooltip } from "./chat-npc-tooltip";
 
 type ChatNpcTextNameProps = {
@@ -34,6 +34,6 @@ export const ChatNpcTextName: FC<ChatNpcTextNameProps> = ({
         {npc.name}
       </span>
     </ChatNpcTooltip>{" "}
-    <ChatNpcCountBadge count={count} />
+    <CountBadge count={count} />
   </>
 );
