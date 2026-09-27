@@ -11,6 +11,7 @@ const notification: StoredNotification = {
   discordId: "discord-1",
   guildId: "guild-1",
   listKey: "notification-1",
+  reportIds: ["notification-1"],
   message: "hello",
   notificationId: "notification-1",
   receivedAtMs: 1,

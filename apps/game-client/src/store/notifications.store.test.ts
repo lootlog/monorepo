@@ -175,6 +175,7 @@ describe("notifications.store", () => {
             npc: createNpc(500),
           }),
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: 1,
         },
         {
@@ -183,6 +184,7 @@ describe("notifications.store", () => {
             message: "Hej",
           }),
           listKey: "notification-2",
+          reportIds: ["notification-2"],
           receivedAtMs: 2,
         },
       ],
@@ -235,12 +237,14 @@ describe("notifications.store", () => {
         world,
       }),
       listKey: notificationId,
+      reportIds: [notificationId],
       receivedAtMs: 1,
     });
 
     const keptMessage = {
       ...createNotification({ notificationId: "message-1" }),
       listKey: "message-1",
+      reportIds: ["message-1"],
       receivedAtMs: 1,
     };
 
@@ -325,35 +329,133 @@ describe("notifications.store", () => {
     ]);
   });
 
-  it("merges npc notifications by npc id and world", () => {
-    presentNotification(
-      createNotification({
-        notificationId: "notification-1",
-        message: undefined,
-        servers: ["guild-1"],
-        npc: createNpc(500),
-      }),
-    );
+  it("groups repeated npc reports under the first sender without moving the row", () => {
+    const presentNpcReport = (
+      notificationId: string,
+      overrides?: Partial<NotificationWithServers>,
+    ) =>
+      useNotificationsStore.getState().presentNotifications([
+        {
+          notification: createNotification({
+            notificationId,
+            discordId: `discord-${notificationId}`,
+            message: undefined,
+            npc: createNpc(500),
+            ...overrides,
+          }),
+        },
+      ]);
 
-    const initialListKey =
-      useNotificationsStore.getState().notifications[0]?.listKey;
+    presentNpcReport("report-1", { servers: ["guild-1"] });
+    presentNotification(createNotification({ notificationId: "message-1" }));
 
-    presentNotification(
-      createNotification({
-        notificationId: "notification-2",
-        message: undefined,
-        servers: ["guild-2"],
-        npc: createNpc(500),
-      }),
-    );
+    const cycleBeforeRepeats =
+      useNotificationsStore.getState().latestNotificationAnimationCycle;
 
-    expect(useNotificationsStore.getState().notifications).toEqual([
+    const repeatedReports = [
+      presentNpcReport("report-2", { servers: ["guild-2"] }),
+      // The same report delivered through another guild is not a new report.
+      presentNpcReport("report-2", { servers: ["guild-3"] }),
+      presentNpcReport("report-3"),
+    ];
+
+    const { notifications, latestNotificationAnimationCycle } =
+      useNotificationsStore.getState();
+
+    expect(repeatedReports.map((added) => added.size)).toEqual([0, 0, 0]);
+    expect(latestNotificationAnimationCycle).toBe(cycleBeforeRepeats);
+    expect(notifications).toEqual([
+      expect.objectContaining({ notificationId: "message-1" }),
       expect.objectContaining({
-        notificationId: "notification-2",
-        listKey: initialListKey,
-        servers: ["guild-1", "guild-2"],
+        listKey: "report-1",
+        notificationId: "report-1",
+        discordId: "discord-report-1",
+        reportIds: ["report-1", "report-2", "report-3"],
+        servers: ["guild-1", "guild-2", "guild-3"],
       }),
     ]);
+  });
+
+  it("keeps npc reports apart across worlds and from party gathering reports", () => {
+    presentNotification(
+      createNotification({
+        notificationId: "report-1",
+        message: undefined,
+        npc: createNpc(500),
+      }),
+    );
+    presentNotification(
+      createNotification({
+        notificationId: "report-other-world",
+        message: undefined,
+        npc: createNpc(500),
+        world: "gefion",
+      }),
+    );
+    presentNotification(
+      createNotification({
+        notificationId: "gathering-1",
+        message: undefined,
+        npc: createNpc(500),
+        isGatheringParty: true,
+      }),
+    );
+
+    expect(
+      useNotificationsStore
+        .getState()
+        .notifications.map(({ notificationId, reportIds }) => ({
+          notificationId,
+          reportIds,
+        })),
+    ).toEqual([
+      { notificationId: "gathering-1", reportIds: ["gathering-1"] },
+      {
+        notificationId: "report-other-world",
+        reportIds: ["report-other-world"],
+      },
+      { notificationId: "report-1", reportIds: ["report-1"] },
+    ]);
+  });
+
+  it("refills the countdown of a grouped row and keeps a paused one paused", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
+
+    const presentNpcReport = (notificationId: string, npcId: number) =>
+      useNotificationsStore.getState().presentNotifications([
+        {
+          notification: createNotification({
+            notificationId,
+            message: undefined,
+            npc: createNpc(npcId),
+          }),
+          autoHideDurationMs: 10_000,
+        },
+      ]);
+
+    presentNpcReport("running-1", 500);
+    presentNpcReport("paused-1", 600);
+    useNotificationsStore.getState().pauseNotificationAutoHide("paused-1");
+
+    vi.setSystemTime(new Date("2026-04-17T10:00:08.000Z"));
+    presentNpcReport("running-2", 500);
+    presentNpcReport("paused-2", 600);
+
+    expect(
+      useNotificationsStore.getState().notificationAutoHideByListKey,
+    ).toEqual({
+      "running-1": {
+        deadlineMs: Date.now() + 10_000,
+        pausedRemainingMs: null,
+        durationMs: 10_000,
+      },
+      "paused-1": {
+        deadlineMs: null,
+        pausedRemainingMs: 10_000,
+        durationMs: 10_000,
+      },
+    });
   });
 
   it("does not merge party gathering notifications by world or guild", () => {
@@ -467,9 +569,9 @@ describe("notifications.store", () => {
         listKey: "npc-other-world",
         notificationId: "npc-other-world",
       },
-      { listKey: "npc-1", notificationId: "npc-2" },
-      { listKey: "message-1", notificationId: "message-1" },
+      { listKey: "npc-1", notificationId: "npc-1" },
       { listKey: "message-2", notificationId: "message-2" },
+      { listKey: "message-1", notificationId: "message-1" },
     ]);
     expect(
       notifications.find(({ listKey }) => listKey === "message-1"),
@@ -481,6 +583,7 @@ describe("notifications.store", () => {
     );
     expect(notifications.find(({ listKey }) => listKey === "npc-1")).toEqual(
       expect.objectContaining({
+        reportIds: ["npc-1", "npc-2"],
         servers: ["guild-1", "guild-2", "guild-3"],
       }),
     );
@@ -503,6 +606,7 @@ describe("notifications.store", () => {
             notificationId: "notification-1",
           }),
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: 1,
         },
       ],
@@ -529,11 +633,13 @@ describe("notifications.store", () => {
         {
           ...createNotification({ notificationId: "notification-1" }),
           listKey: "notification-1",
+          reportIds: ["notification-1"],
           receivedAtMs: 1,
         },
         {
           ...createNotification({ notificationId: "notification-2" }),
           listKey: "notification-2",
+          reportIds: ["notification-2"],
           receivedAtMs: 2,
         },
       ],

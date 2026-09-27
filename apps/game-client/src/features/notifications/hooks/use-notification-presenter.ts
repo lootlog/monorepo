@@ -33,7 +33,7 @@ export const useNotificationPresenter = () => {
       return;
     }
 
-    const soundKeys = new Set<string>();
+    const audibleSettingsKeys = new Map<NotificationPresentation, string>();
 
     const presentations = requests.map(
       ({ notification, playSound: audible }) => {
@@ -45,21 +45,35 @@ export const useNotificationPresenter = () => {
 
         const autoHideTimeout = categorySettings?.autoHideTimeout ?? 0;
 
-        if (audible !== false && categorySettings?.sound) {
-          soundKeys.add(settingsKey);
-        }
-
-        return {
+        const presentation = {
           notification,
           autoHideDurationMs: Math.max(0, autoHideTimeout * 1_000),
         } satisfies NotificationPresentation;
+
+        if (audible !== false && categorySettings?.sound) {
+          audibleSettingsKeys.set(presentation, settingsKey);
+        }
+
+        return presentation;
       },
     );
 
+    let addedPresentations: ReadonlySet<NotificationPresentation> = new Set();
+
     unstable_batchedUpdates(() => {
-      presentInStore(presentations);
+      addedPresentations = presentInStore(presentations);
       setOpen("notifications", true);
     });
+
+    // A report joining a listed row stays silent: automatic sending would
+    // otherwise replay the sound every few seconds.
+    const soundKeys = new Set<string>();
+
+    for (const presentation of addedPresentations) {
+      const settingsKey = audibleSettingsKeys.get(presentation);
+
+      if (settingsKey !== undefined) soundKeys.add(settingsKey);
+    }
 
     if (soundKeys.size > 0) {
       playSounds("notifications", soundKeys);
