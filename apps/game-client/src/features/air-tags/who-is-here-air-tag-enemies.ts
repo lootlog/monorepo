@@ -22,23 +22,16 @@ export function selectUnseenAirTagEnemies(
     ttlMs,
     heroId,
     isVisible,
-    isMember,
   }: {
     now: number;
     ttlMs: number;
     heroId: string | undefined;
     isVisible: (targetId: string) => boolean;
-    isMember: (targetId: string) => boolean;
   },
 ): WhoIsHereAirTagEnemy[] {
   return targets
     .flatMap((target) => {
-      if (
-        target.targetId === heroId ||
-        isVisible(target.targetId) ||
-        isMember(target.targetId)
-      )
-        return [];
+      if (target.targetId === heroId || isVisible(target.targetId)) return [];
       const effectiveRelation = getAirTagEffectiveRelation(target, now, ttlMs);
 
       return effectiveRelation === AIR_TAG_CLAN_ENEMY_RELATION ||

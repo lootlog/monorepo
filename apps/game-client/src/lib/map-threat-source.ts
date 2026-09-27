@@ -78,13 +78,19 @@ export class MapThreatSource {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private references = 0;
   private fetchId = 0;
+  private readable = false;
+  private releaseMembers: (() => void) | null = null;
+  private membersChanged = false;
 
   constructor(
     private readonly socket: AppSocket,
     readonly guildId: string,
     readonly world: string,
     // Members of different Margonem clans can be each other's clan enemies.
-    private readonly members: Pick<PlayersPresenceSource, "isOnlineMember">,
+    private readonly members: Pick<
+      PlayersPresenceSource,
+      "isOnlineMember" | "subscribeChanges"
+    >,
     private readonly now: () => number = () => Date.now(),
   ) {}
 
@@ -143,6 +149,11 @@ export class MapThreatSource {
     this.socket.on(GatewayEvent.PERMISSIONS_UPDATED, this.handleAccessChange);
     this.socket.on(GatewayEvent.JOIN, this.handleJoin);
     this.socket.on(GatewayEvent.DISCONNECT, this.clear);
+    this.releaseMembers = this.members.subscribeChanges(
+      this.handleMembersChange,
+      false,
+    );
+    this.readable = this.canRead();
     void this.hydrate();
   }
 
@@ -151,6 +162,8 @@ export class MapThreatSource {
     this.socket.off(GatewayEvent.PERMISSIONS_UPDATED, this.handleAccessChange);
     this.socket.off(GatewayEvent.JOIN, this.handleJoin);
     this.socket.off(GatewayEvent.DISCONNECT, this.clear);
+    this.releaseMembers?.();
+    this.releaseMembers = null;
     this.fetchId += 1;
     this.clear();
   }
@@ -202,12 +215,37 @@ export class MapThreatSource {
   };
 
   private readonly handleJoin = (payload: { status: string }): void => {
-    if (payload.status === "success") void this.hydrate();
+    if (payload.status !== "success") return;
+    this.readable = this.canRead();
+    void this.hydrate();
   };
 
   private readonly handleAccessChange = (): void => {
-    if (!this.canRead()) this.clear();
+    const readable = this.canRead();
+
+    if (!readable) this.clear();
+    // Sightings stored before access was granted are not sent again.
+    else if (!this.readable) void this.hydrate();
+
+    this.readable = readable;
   };
+
+  /** A target becomes a known member once presence loads; re-project once per burst. */
+  private readonly handleMembersChange = (): void => {
+    if (this.membersChanged || this.sightings.size === 0) return;
+    this.membersChanged = true;
+    queueMicrotask(() => {
+      this.membersChanged = false;
+      this.update(this.projectedMapNames());
+    });
+  };
+
+  private projectedMapNames(): string[] {
+    return [
+      ...this.threats.keys(),
+      ...[...this.sightings.values()].map(({ mapName }) => mapName),
+    ];
+  }
 
   private readonly clear = (): void => {
     const mapNames = [...this.threats.keys()];
@@ -301,10 +339,7 @@ export class MapThreatSource {
     this.timer = setTimeout(
       () => {
         this.timer = null;
-        this.update([
-          ...this.threats.keys(),
-          ...[...this.sightings.values()].map(({ mapName }) => mapName),
-        ]);
+        this.update(this.projectedMapNames());
       },
       Math.max(0, next - now),
     );
