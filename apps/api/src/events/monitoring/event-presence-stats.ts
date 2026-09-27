@@ -1,12 +1,11 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { queryEventHero } from "#src/events/event-scope-query";
+import { asc, eq, inArray } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
-  eventHeroNpcTable,
   eventMapTable,
   eventMapToMemberTable,
   eventPresenceLogTable,
-  eventTable,
   memberTable,
 } from "#src/database/drizzle/schema";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
@@ -19,18 +18,12 @@ export const makeEventPresenceStats = (
 ) => {
   const load = (guildId: string, eventId: string, heroNpcId: string) =>
     Effect.gen(function* () {
-      const heroRows = yield* database
-        .select({ hero: eventHeroNpcTable, event: eventTable })
-        .from(eventHeroNpcTable)
-        .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
-        .where(
-          and(
-            eq(eventHeroNpcTable.id, heroNpcId),
-            eq(eventTable.id, eventId),
-            eq(eventTable.guildId, guildId),
-          ),
-        )
-        .limit(1);
+      const heroRows = yield* queryEventHero(
+        database,
+        guildId,
+        eventId,
+        heroNpcId,
+      );
 
       const hero = heroRows[0];
 
