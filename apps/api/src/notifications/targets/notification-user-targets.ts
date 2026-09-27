@@ -6,7 +6,10 @@ import {
   mapNotificationTarget,
   updateNotificationTarget,
 } from "#src/notifications/targets/notification-target-store";
-import { readNotificationTestUsage } from "../jobs/notification-test-usage.js";
+import {
+  getNotificationTestUsageResponse,
+  readNotificationTestUsage,
+} from "../jobs/notification-test-usage.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { and, count, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
@@ -41,8 +44,6 @@ import {
 } from "#src/notifications/notification-enums";
 
 const TEST_LIMIT = 5;
-
-const TEST_WINDOW_MS = 15 * 60_000;
 
 type Rule = typeof notificationRuleTable.$inferSelect;
 
@@ -141,20 +142,9 @@ export const makeNotificationUserTargets = (
     });
 
   const recentUsage = (targetIds: number[]) =>
-    readNotificationTestUsage(database, targetIds, TEST_WINDOW_MS).pipe(
+    readNotificationTestUsage(database, targetIds).pipe(
       Effect.mapError(databaseFailure("notifications.userTargets.testUsage")),
     );
-
-  const usageResponse = (usage: readonly Date[]) => ({
-    limit: TEST_LIMIT,
-    used: usage.length,
-    remaining: Math.max(0, TEST_LIMIT - usage.length),
-    windowSeconds: Math.floor(TEST_WINDOW_MS / 1000),
-    nextAvailableAt:
-      usage.length >= TEST_LIMIT && usage[0]
-        ? new Date(usage[0].getTime() + TEST_WINDOW_MS).toISOString()
-        : null,
-  });
 
   const list = Effect.fn("notifications.userTargets.list")(function* (
     discordId: string,
@@ -178,7 +168,10 @@ export const makeNotificationUserTargets = (
 
     return targets.map((target) => ({
       ...mapNotificationTarget(target),
-      testTrigger: usageResponse(usage.get(target.id) ?? []),
+      testTrigger: getNotificationTestUsageResponse(
+        usage.get(target.id) ?? [],
+        TEST_LIMIT,
+      ),
     }));
   });
 
@@ -467,8 +460,9 @@ export const makeNotificationUserTargets = (
         );
       }
 
-      const usage = usageResponse(
+      const usage = getNotificationTestUsageResponse(
         (yield* recentUsage([targetId])).get(targetId) ?? [],
+        TEST_LIMIT,
       );
 
       if (usage.remaining <= 0) {
