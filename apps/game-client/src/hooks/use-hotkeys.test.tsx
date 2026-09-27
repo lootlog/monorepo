@@ -244,9 +244,9 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onMapPingStart = vi.fn<() => boolean>(() => true);
-    const onMapPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
-    renderHook(() => useHotkeys({ onMapPingStart, onMapPingEnd }));
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
     const editor = document.createElement("div");
     editor.addEventListener("keyup", (event) => event.stopPropagation());
     document.body.append(editor);
@@ -260,7 +260,7 @@ describe("useHotkeys", () => {
       );
     });
 
-    expect(onMapPingEnd).toHaveBeenCalledOnce();
+    expect(onPingEnd).toHaveBeenCalledOnce();
     editor.remove();
   });
 
