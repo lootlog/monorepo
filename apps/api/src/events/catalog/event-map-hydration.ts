@@ -1,13 +1,14 @@
-import { topMemberDisplayRoles } from "#src/members/member-display-role";
-import { desc, eq, inArray } from "drizzle-orm";
+import {
+  memberDisplayRolesQuery,
+  topMemberDisplayRoles,
+} from "#src/members/member-display-role";
+import { eq, inArray } from "drizzle-orm";
 import { Effect } from "effect";
 import type { ApiDatabase } from "#src/database/drizzle/database";
 import {
   eventMapTable,
   eventMapToMemberTable,
   memberTable,
-  memberToRoleTable,
-  roleTable,
 } from "#src/database/drizzle/schema";
 
 export const makeEventMapHydration = <Failure>(
@@ -43,16 +44,7 @@ export const makeEventMapHydration = <Failure>(
         ? []
         : yield* query(
             "events.catalog.memberRoles",
-            database
-              .select({
-                memberId: memberToRoleTable.A,
-                position: roleTable.position,
-                color: roleTable.color,
-              })
-              .from(memberToRoleTable)
-              .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
-              .where(inArray(memberToRoleTable.A, memberIds))
-              .orderBy(desc(roleTable.position)),
+            memberDisplayRolesQuery(database, memberIds),
           );
 
     return maps.map((map) => ({
