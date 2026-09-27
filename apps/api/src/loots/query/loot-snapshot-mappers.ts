@@ -1,7 +1,6 @@
-import { ProfessionEnum as Profession } from "@lootlog/schema/loot";
 import type { LootItemDto } from "#src/loots/query/loot-item";
 import type { LootNpcDto } from "#src/loots/query/loot-npc";
-import { getProfByShortname } from "@lootlog/domain/profession";
+import { parseRequiredProfessions } from "#src/loots/required-professions";
 import type {
   itemSnapshotTable,
   playerSnapshotTable,
@@ -39,14 +38,6 @@ const parseStatValue = (statRaw: string, key: string): string | null => {
   return segment?.slice(prefix.length) ?? null;
 };
 
-const parseRequiredProf = (required?: string | null): Profession[] =>
-  required
-    ? required
-        .split("")
-        .map((short) => getProfByShortname(short))
-        .filter((prof) => prof !== undefined)
-    : Object.values(Profession);
-
 export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
   const statRaw = lootItem.itemSnapshot.statRaw;
 
@@ -64,7 +55,7 @@ export const mapItem = (lootItem: LootItemWithSnapshot): LootItemDto => {
     type: lootItem.itemSnapshot.itemType,
     rarity: lootItem.itemSnapshot.rarity,
     lvl,
-    prof: parseRequiredProf(parseStatValue(statRaw, "reqp")),
+    prof: parseRequiredProfessions(parseStatValue(statRaw, "reqp")),
   };
 };
 
