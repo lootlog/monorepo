@@ -7,6 +7,7 @@ import {
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
 } from "@lootlog/protocol/realtime";
 
 afterEach(() => {
@@ -56,6 +57,7 @@ describe("game realtime handshake", () => {
                 : REALTIME_SUBPROTOCOL,
               REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
               REALTIME_BATTLE_PING_CAPABILITY,
+              REALTIME_TEAM_BATTLE_PING_CAPABILITY,
             ],
           },
         ]);
