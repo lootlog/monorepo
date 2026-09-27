@@ -58,6 +58,19 @@ describe("resolveDefaultWindowPosition", () => {
   );
 
   it.each([
+    { width: 1024, height: 600 },
+    { width: 1366, height: 768 },
+    { width: 1920, height: 1080 },
+  ])(
+    "opens the battle ping window clear of the windows open from the start at $width x $height",
+    (viewport) => {
+      expect(
+        findLayoutProblems([...DEFAULT_OPEN_WINDOWS, "battle-pings"], viewport),
+      ).toEqual([]);
+    },
+  );
+
+  it.each([
     { width: 1024, height: 768 },
     { width: 1280, height: 800 },
     { width: 1366, height: 768 },

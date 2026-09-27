@@ -6,6 +6,7 @@ import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
+import { BattlePingWindow } from "@/features/pings/battle-ping-window";
 import { PingWheel } from "@/features/pings/ping-wheel";
 import { Notifications } from "@/features/notifications/notifications";
 import { NpcDetector } from "@/features/npc-detector/npc-detector";
@@ -76,6 +77,7 @@ export const AppContent = () => {
           <CreatePartyGathering />
           <PingWheel />
           <BattlePingMarkers />
+          <BattlePingWindow />
           <WhoIsHereAirTags />
         </>
       ) : null}

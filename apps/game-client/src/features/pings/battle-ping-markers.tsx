@@ -13,7 +13,7 @@ import { usePingPulse } from "./use-ping-pulse";
 
 /** Portals each warrior's battle pings into that warrior's game element. */
 export const BattlePingMarkers = () => {
-  const { marks, target } = useSyncExternalStore(
+  const { highlightedWarriorId, marks, target } = useSyncExternalStore(
     battlePingStore.subscribe,
     battlePingStore.getSnapshot,
   );
@@ -39,6 +39,10 @@ export const BattlePingMarkers = () => {
     warriorIds.add(target.warriorId);
   }
 
+  if (highlightedWarriorId !== null) {
+    warriorIds.add(highlightedWarriorId);
+  }
+
   return [...warriorIds].map((warriorId) => {
     const element = getBattleWarriorElement(warriorId);
 
@@ -49,6 +53,7 @@ export const BattlePingMarkers = () => {
     return createPortal(
       <BattlePingMarker
         element={element}
+        highlighted={highlightedWarriorId === warriorId}
         mark={marks.get(warriorId)}
         target={target?.warriorId === warriorId ? target : undefined}
       />,

@@ -1,17 +1,21 @@
 import { getLootlogHostPortalThemeClassName } from "@/components/ui/theme-boundary";
 import { useSettingsStore } from "@/store/settings.store";
 import { useEffect, type FC } from "react";
-import { useTranslation } from "react-i18next";
-import { BattlePingChip } from "./battle-ping-chip";
 import { BattlePingGround } from "./battle-ping-ground";
+import { BattlePingIcon } from "./battle-ping-icon";
 import type { BattlePingMark, BattlePingTarget } from "./battle-ping-store";
 import { glowBattleWarrior } from "./battle-warriors";
 import { PING_TONES, getPingPresentation } from "./ping-presentation";
 import { usePingPulse } from "./use-ping-pulse";
 
+/** Picks out the warrior of the history entry under the pointer. */
+const HIGHLIGHT_GLOW = "#ffffff";
+
 type BattlePingMarkerProps = {
   /** The game's warrior element this marker is portalled into. */
   element: HTMLElement;
+  /** A history entry about this warrior is under the pointer. */
+  highlighted: boolean;
   mark: BattlePingMark | undefined;
   target: BattlePingTarget | undefined;
 };
@@ -19,11 +23,10 @@ type BattlePingMarkerProps = {
 /** Rendered inside the warrior element, so it follows the battle scaling. */
 export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
   element,
+  highlighted,
   mark,
   target,
 }) => {
-  const { t } = useTranslation("pings");
-
   const animationEffectsEnabled = useSettingsStore(
     (state) => state.animationEffectsEnabled,
   );
@@ -32,16 +35,16 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
 
   const attack = getPingPresentation("attack");
   const markPresentation = mark ? getPingPresentation(mark.type) : null;
+  const targetColor = target ? PING_TONES[attack.tone].glow : null;
 
-  // The shared target outranks a mark in the warrior's glow and ground ring.
-  const tone = target ? attack.tone : markPresentation?.tone;
-  const color = tone ? PING_TONES[tone].glow : null;
+  // Only the shared target lights the warrior up; marks stay icons.
+  const glow = highlighted ? HIGHLIGHT_GLOW : targetColor;
 
   useEffect(() => {
-    if (!color) return;
+    if (!glow) return;
 
-    return glowBattleWarrior(element, color, pulse);
-  }, [color, element, pulse]);
+    return glowBattleWarrior(element, glow);
+  }, [element, glow]);
 
   return (
     // `display: contents` keeps the warrior element as the positioning box.
@@ -49,40 +52,36 @@ export const BattlePingMarker: FC<BattlePingMarkerProps> = ({
     <div
       className={`${getLootlogHostPortalThemeClassName()} ll:contents${pulse ? "" : " ll-battle-ping-still"}`}
     >
-      {color ? <BattlePingGround color={color} /> : null}
+      {targetColor ? <BattlePingGround color={targetColor} /> : null}
+      {/* Docked on the sprite's top-right corner, below the warrior's name,
+          so the rows behind stay visible. */}
       <div
-        className="ll:pointer-events-none ll:absolute ll:left-1/2"
-        style={{ top: -24, transform: "translate(-50%, -100%)", zIndex: 10 }}
+        className="ll:pointer-events-none ll:absolute ll:right-0 ll:top-0.5 ll:flex ll:flex-col ll:gap-[3px]"
+        style={{ transform: "translateX(50%)", zIndex: 10 }}
       >
-        <div className="ll-battle-ping-bob ll:flex ll:flex-col ll:items-center ll:gap-1">
-          {mark && markPresentation ? (
-            <BattlePingChip
-              countdown={
-                animationEffectsEnabled
-                  ? {
-                      durationMs: markPresentation.durationMs,
-                      expiresAt: mark.expiresAt,
-                    }
-                  : undefined
-              }
-              highlighted={mark.forMe}
-              icon={markPresentation.icon}
-              key={`${mark.type}-${mark.expiresAt}`}
-              label={t(markPresentation.translationKey)}
-              senderName={mark.senderName}
-              tone={markPresentation.tone}
-            />
-          ) : null}
-          {target ? (
-            <BattlePingChip
-              icon={attack.icon}
-              key={`target-${target.senderName}`}
-              label={t(attack.translationKey)}
-              senderName={target.senderName}
-              tone={attack.tone}
-            />
-          ) : null}
-        </div>
+        {target ? (
+          <BattlePingIcon
+            icon={attack.icon}
+            key={`target-${target.entryId}`}
+            tone={attack.tone}
+          />
+        ) : null}
+        {mark && markPresentation ? (
+          <BattlePingIcon
+            countdown={
+              animationEffectsEnabled
+                ? {
+                    durationMs: markPresentation.durationMs,
+                    expiresAt: mark.expiresAt,
+                  }
+                : undefined
+            }
+            highlighted={mark.forMe}
+            icon={markPresentation.icon}
+            key={mark.entryId}
+            tone={markPresentation.tone}
+          />
+        ) : null}
       </div>
     </div>
   );
