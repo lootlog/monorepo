@@ -1,4 +1,5 @@
 import { resolveNpcType } from "@lootlog/domain/npc-routing";
+import { pick } from "es-toolkit";
 import {
   canReadPolicyNpc,
   type AccessPolicySnapshot,
@@ -52,7 +53,8 @@ export const reconcileNotificationAccess = (policy: AccessPolicySnapshot) => {
 
       if (servers.length === notification.servers.length) return [notification];
 
-      // A grouped entry must no longer retain the removed organization as its source.
+      // A grouped entry must no longer retain the removed organization as its
+      // source, nor count the reports that arrived through it.
       return [
         {
           ...notification,
@@ -60,6 +62,10 @@ export const reconcileNotificationAccess = (policy: AccessPolicySnapshot) => {
           guildId: servers.includes(notification.guildId)
             ? notification.guildId
             : servers[0],
+          reportCountByGuildId: pick(
+            notification.reportCountByGuildId,
+            servers,
+          ),
         },
       ];
     });

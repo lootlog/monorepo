@@ -1,5 +1,6 @@
 import { createNotificationTest } from "../notification-test";
 import {
+  getNotificationReportCount,
   useNotificationsStore,
   type NotificationWithServers,
 } from "@/store/notifications.store";
@@ -64,5 +65,53 @@ describe("useNotificationPresenter", () => {
     );
 
     expect(test.play).toHaveBeenCalledOnce();
+  });
+
+  it("stays silent when a repeated npc report joins a listed notification", () => {
+    test.preferences.notifications.message.sound = true;
+    test.setPreferences();
+
+    const { result } = renderHook(() => useNotificationPresenter(), {
+      wrapper: test.wrapper,
+    });
+
+    const presentNpcReport = (notificationId: string) =>
+      act(() =>
+        result.current.presentNotifications([
+          {
+            notification: {
+              ...createNotification(notificationId),
+              message: undefined,
+              npc: {
+                id: 500,
+                nick: "Hydra",
+                name: "Hydra",
+                icon: "npc.gif",
+                lvl: 200,
+                prof: "w",
+                wt: 0,
+                type: 2,
+                tpl: 1,
+                x: 1,
+                y: 2,
+                location: "Swamp",
+              },
+            },
+          },
+        ]),
+      );
+
+    presentNpcReport("report-1");
+    presentNpcReport("report-2");
+    presentNpcReport("report-3");
+
+    expect(test.play).toHaveBeenCalledOnce();
+    expect(
+      useNotificationsStore
+        .getState()
+        .notifications.map((notification) =>
+          getNotificationReportCount(notification),
+        ),
+    ).toEqual([3]);
   });
 });
