@@ -1,10 +1,11 @@
 import { CharacterTile } from "@/components/character-tile";
+import { ListRow } from "@/components/list-row";
+import { ListRowArrival } from "@/components/list-row-arrival";
 import { NpcTile } from "@/components/npc-tile";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotificationMuteMenu } from "@/features/notifications/components/notification-mute-menu";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { useGameStore } from "@/store/game.store";
-import { cn } from "cn";
 import {
   isMentionNotification,
   type NotificationAutoHideState,
@@ -14,12 +15,19 @@ import {
 } from "@/store/notifications.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import {
+  getArrivalStrength,
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
 import { format } from "@/utils/local-date";
 import { Swords, XIcon } from "lucide-react";
-import { memo, type ReactNode, useEffect, useRef } from "react";
+import {
+  type FocusEvent,
+  memo,
+  type ReactNode,
+  useEffect,
+  useRef,
+} from "react";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
@@ -35,18 +43,10 @@ import type {
 import type { NotificationSettings } from "@lootlog/schema/account-preferences";
 import type { NpcTypeColors } from "@lootlog/schema/npc-appearance";
 
-const AUTO_HIDE_RING_PATH =
-  "M 50 0 H 2 A 2 2 0 0 0 0 2 V 38 A 2 2 0 0 0 2 40 H 98 A 2 2 0 0 0 100 38 V 2 A 2 2 0 0 0 98 0 H 50";
+/** The row fades out this long before the cleanup sweep removes it. */
+const AUTO_HIDE_EXIT_DURATION_MS = 200;
 
-const AUTO_HIDE_BASE_STROKE_WIDTH = 1.5;
-
-const AUTO_HIDE_PROGRESS_STROKE_WIDTH = 3;
-
-const DEFAULT_BORDER_STROKE_WIDTH = 2;
-
-const AUTO_HIDE_BASE_STROKE_OPACITY = 0.45;
-
-const AUTO_HIDE_PROGRESS_STROKE_OPACITY = 0.95;
+type AutoHideHoldSource = "focus" | "menu" | "pointer";
 
 type SingleNotificationProps = {
   guildNamesById: Record<string, string>;
@@ -89,12 +89,12 @@ const renderLeadingVisual = (
 ) => {
   if (isPartyGatheringNotification(notification)) {
     return (
-      <div className="ll:flex ll:h-10 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center ll:overflow-hidden">
+      <span className="ll:flex ll:h-10 ll:w-7 ll:shrink-0 ll:items-center ll:justify-center">
         <CharacterTile
           character={notification.character}
-          className="ll:scale-75 ll:origin-center"
+          className="ll:shrink-0 ll:scale-75"
         />
-      </div>
+      </span>
     );
   }
 
@@ -103,13 +103,13 @@ const renderLeadingVisual = (
   }
 
   return (
-    <div className="ll:flex ll:h-8 ll:w-8 ll:shrink-0 ll:items-center ll:justify-center">
+    <span className="ll:flex ll:h-10 ll:w-7 ll:shrink-0 ll:items-center ll:justify-center">
       <img
         src={avatarUrl}
         alt=""
-        className="ll:h-8 ll:w-8 ll:rounded-full ll:object-cover"
+        className="ll:size-6 ll:rounded-full ll:object-cover"
       />
-    </div>
+    </span>
   );
 };
 
@@ -159,6 +159,7 @@ const resolveNotificationAppearance = ({
   const highlight = categorySettings?.highlight;
 
   return {
+    arrivalStrength: getArrivalStrength(key),
     autoHideDurationMs,
     background: getBackgroundColor(key, highlight, npcTypeColors),
     borderColor: getBorderColor(key, highlight, npcTypeColors),
@@ -217,7 +218,9 @@ export const SingleNotification = memo(function SingleNotification({
   npcTypeColors,
 }: SingleNotificationProps) {
   const { t } = useTranslation("notifications");
-  const autoHidePathRef = useRef<SVGPathElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const autoHideBarRef = useRef<HTMLSpanElement>(null);
+  const autoHideHoldsRef = useRef(new Set<AutoHideHoldSource>());
 
   const avatarUrl = getDiscordAvatarUrl(
     guildMember?.userId,
@@ -226,16 +229,20 @@ export const SingleNotification = memo(function SingleNotification({
 
   const memberColor = useMemberColor(guildMember);
 
-  const { autoHideDurationMs, background, borderColor, metaText } =
-    resolveNotificationAppearance({
-      categorySettings,
-      guildNamesById,
-      notification,
-      npcTypeColors,
-    });
+  const {
+    arrivalStrength,
+    autoHideDurationMs,
+    background,
+    borderColor,
+    metaText,
+  } = resolveNotificationAppearance({
+    categorySettings,
+    guildNamesById,
+    notification,
+    npcTypeColors,
+  });
 
-  const hasAutoHideRing = autoHideDurationMs > 0;
-  const showAutoHideRing = hasAutoHideRing && animationEffectsEnabled;
+  const showAutoHideBar = autoHideDurationMs > 0 && animationEffectsEnabled;
   const senderName = guildMember?.name ?? t("states.unknownSender");
 
   const heroLvl = useGameStore((state) => state.game?.hero.level ?? 0);
@@ -258,22 +265,15 @@ export const SingleNotification = memo(function SingleNotification({
     receivedAtMs: notification.receivedAtMs,
   });
 
+  // Drains the bar from what is left of the countdown and fades the row out
+  // just before the cleanup sweep removes it, so an expiring notification
+  // leaves instead of vanishing. Both are single Web Animations of transform
+  // and opacity; a paused countdown holds the bar still and keeps the row.
   useEffect(() => {
-    const path = autoHidePathRef.current;
-    const host = path?.ownerSVGElement?.parentElement;
+    const bar = autoHideBarRef.current;
+    const row = rowRef.current;
 
-    if (!animationEffectsEnabled || !path || !host || autoHideDurationMs <= 0) {
-      return;
-    }
-
-    // The window plays its entry animation with `scale(0.94)`, and a client
-    // rect reports that painted box: the dash length has to come from the
-    // untransformed layout box or the ring closes before the countdown ends.
-    // A row that is not laid out yet measures zero, and a zero dash array
-    // paints a solid ring that never moves, so leave the plain border instead.
-    const totalLength = 2 * (host.offsetWidth + host.offsetHeight);
-
-    if (totalLength <= 0) {
+    if (!animationEffectsEnabled || !bar || !row || autoHideDurationMs <= 0) {
       return;
     }
 
@@ -281,40 +281,23 @@ export const SingleNotification = memo(function SingleNotification({
       autoHidePausedRemainingMs ??
       (autoHideDeadlineMs === null ? 0 : autoHideDeadlineMs - Date.now());
 
-    const clampedRemainingMs = Math.min(
-      autoHideDurationMs,
-      Math.max(0, remainingMs),
-    );
+    // The sweep removes the row at the stored deadline, which can lie further
+    // out than the category's current duration after the setting was
+    // shortened; the bar then starts full, and both animations still end
+    // exactly when the row leaves.
+    const clampedRemainingMs = Math.max(0, remainingMs);
 
-    const elapsedMs = Math.max(0, autoHideDurationMs - clampedRemainingMs);
-    const initialOffset = (elapsedMs / autoHideDurationMs) * totalLength;
-    const dashGapLength = totalLength * 2;
+    const startScale = `scaleX(${Math.min(1, clampedRemainingMs / autoHideDurationMs)})`;
+    bar.style.transform = startScale;
 
-    path.style.strokeDasharray = `${totalLength} ${dashGapLength}`;
-    path.style.strokeDashoffset = String(initialOffset);
-
-    if (clampedRemainingMs <= 0) {
-      path.style.strokeDasharray = `0 ${dashGapLength}`;
-      path.style.strokeDashoffset = String(totalLength);
-
+    if (clampedRemainingMs <= 0 || autoHidePausedRemainingMs !== null) {
       return () => {
-        path.style.strokeDasharray = "";
-        path.style.strokeDashoffset = "";
+        bar.style.transform = "";
       };
     }
 
-    if (autoHidePausedRemainingMs !== null) {
-      return () => {
-        path.style.strokeDasharray = "";
-        path.style.strokeDashoffset = "";
-      };
-    }
-
-    const animation = path.animate(
-      [
-        { strokeDashoffset: String(initialOffset) },
-        { strokeDashoffset: String(totalLength) },
-      ],
+    const drain = bar.animate(
+      [{ transform: startScale }, { transform: "scaleX(0)" }],
       {
         duration: clampedRemainingMs,
         easing: getCountdownRingEasing(clampedRemainingMs),
@@ -322,16 +305,23 @@ export const SingleNotification = memo(function SingleNotification({
       },
     );
 
-    animation.onfinish = () => {
-      path.style.strokeDasharray = `0 ${dashGapLength}`;
-      path.style.strokeDashoffset = String(totalLength);
-    };
+    const exit = row.animate(
+      [
+        { opacity: 1, transform: "translateX(0)" },
+        { opacity: 0, transform: "translateX(12px)" },
+      ],
+      {
+        delay: Math.max(0, clampedRemainingMs - AUTO_HIDE_EXIT_DURATION_MS),
+        duration: Math.min(AUTO_HIDE_EXIT_DURATION_MS, clampedRemainingMs),
+        easing: "ease-in",
+        fill: "forwards",
+      },
+    );
 
     return () => {
-      animation.onfinish = null;
-      animation.cancel();
-      path.style.strokeDasharray = "";
-      path.style.strokeDashoffset = "";
+      drain.cancel();
+      exit.cancel();
+      bar.style.transform = "";
     };
   }, [
     animationEffectsEnabled,
@@ -340,8 +330,22 @@ export const SingleNotification = memo(function SingleNotification({
     autoHidePausedRemainingMs,
   ]);
 
-  const handleMuteMenuOpenChange = (open: boolean) => {
-    if (open) {
+  // The countdown holds while the player points at the row, has keyboard
+  // focus inside it or has its mute menu open, and runs on once all of them
+  // let go.
+  const setAutoHideHold = (source: AutoHideHoldSource, held: boolean) => {
+    const holds = autoHideHoldsRef.current;
+    const wasHeld = holds.size > 0;
+
+    if (held) {
+      holds.add(source);
+    } else {
+      holds.delete(source);
+    }
+
+    if (wasHeld === holds.size > 0) return;
+
+    if (holds.size > 0) {
       onPauseAutoHide(notification.listKey);
 
       return;
@@ -350,71 +354,53 @@ export const SingleNotification = memo(function SingleNotification({
     onResumeAutoHide(notification.listKey);
   };
 
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (
+      event.relatedTarget instanceof Node &&
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+
+    setAutoHideHold("focus", false);
+  };
+
   return (
-    <div className="ll:w-full">
-      <div
-        className={cn(
-          "ll:relative ll:flex ll:items-center ll:gap-2 ll:overflow-hidden ll:px-2 ll:py-2",
-          "ll:rounded-sm",
-          "ll:transition-[background-color,border-color] ll:duration-300",
-        )}
-        style={{ background }}
+    <div
+      ref={rowRef}
+      className="ll:w-full"
+      onPointerEnter={() => setAutoHideHold("pointer", true)}
+      onPointerLeave={() => setAutoHideHold("pointer", false)}
+      onFocus={() => setAutoHideHold("focus", true)}
+      onBlur={handleBlur}
+    >
+      <ListRow
+        fill={background}
+        className="ll:relative ll:min-h-10 ll:gap-1.5 ll:overflow-hidden ll:py-1.5 ll:font-normal"
       >
-        <svg
-          className="ll:pointer-events-none ll:absolute ll:inset-0 ll:h-full ll:w-full"
-          viewBox="0 0 100 40"
-          preserveAspectRatio="none"
-        >
-          <path
-            d={AUTO_HIDE_RING_PATH}
-            fill="none"
-            stroke={borderColor}
-            strokeWidth={
-              showAutoHideRing
-                ? AUTO_HIDE_BASE_STROKE_WIDTH
-                : DEFAULT_BORDER_STROKE_WIDTH
-            }
-            strokeLinecap="butt"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            opacity={
-              showAutoHideRing
-                ? AUTO_HIDE_BASE_STROKE_OPACITY
-                : AUTO_HIDE_PROGRESS_STROKE_OPACITY
-            }
+        {animationEffectsEnabled ? (
+          <ListRowArrival
+            key={notification.receivedAtMs}
+            accent={borderColor}
+            strength={arrivalStrength}
           />
-          {showAutoHideRing ? (
-            <path
-              ref={autoHidePathRef}
-              d={AUTO_HIDE_RING_PATH}
-              fill="none"
-              stroke={borderColor}
-              strokeWidth={AUTO_HIDE_PROGRESS_STROKE_WIDTH}
-              strokeLinecap="butt"
-              strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke"
-              opacity={AUTO_HIDE_PROGRESS_STROKE_OPACITY}
-            />
-          ) : null}
-        </svg>
+        ) : null}
         {renderLeadingVisual(notification, avatarUrl)}
-        <div className="ll:relative ll:flex ll:min-w-0 ll:flex-1 ll:flex-col">
-          <div className="ll:flex ll:items-center ll:gap-1 ll:overflow-hidden ll:leading-none ll:pb-1">
+        <div className="ll:relative ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:leading-tight">
+          <div className="ll:flex ll:items-baseline ll:gap-1 ll:overflow-hidden">
             <span
               className="ll:shrink-0 ll:text-[11px] ll:font-semibold"
               style={{ color: `#${memberColor}` }}
             >
               {senderName}
             </span>
-            <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-gray-400">
+            <span className="ll:min-w-0 ll:truncate ll:text-[10px] ll:text-gray-300">
               {metaText}
             </span>
           </div>
-          <div className="ll:mt-px">
-            {renderNotificationContent({ notification, meetsLevelReq })}
-          </div>
+          {renderNotificationContent({ notification, meetsLevelReq })}
         </div>
-        <div className="ll:flex ll:shrink-0 ll:items-center ll:gap-1">
+        <div className="ll:relative ll:flex ll:shrink-0 ll:items-center">
           {showJoinAction ? (
             <IconButton
               label={t("actions.joinAria")}
@@ -432,7 +418,7 @@ export const SingleNotification = memo(function SingleNotification({
             isPending={isMutePending}
             mutes={mutes}
             onUpdateMutes={onUpdateMutes}
-            onOpenChange={handleMuteMenuOpenChange}
+            onOpenChange={(open) => setAutoHideHold("menu", open)}
             onMuted={handleRemoveNotification}
           />
           {showCloseButton ? (
@@ -445,7 +431,19 @@ export const SingleNotification = memo(function SingleNotification({
             </IconButton>
           ) : null}
         </div>
-      </div>
+        {showAutoHideBar ? (
+          <span
+            aria-hidden="true"
+            className="ll:pointer-events-none ll:absolute ll:inset-x-0 ll:bottom-0 ll:h-0.5 ll:bg-white/10"
+          >
+            <span
+              ref={autoHideBarRef}
+              className="ll:block ll:h-full ll:origin-left"
+              style={{ background: borderColor }}
+            />
+          </span>
+        ) : null}
+      </ListRow>
     </div>
   );
 });
