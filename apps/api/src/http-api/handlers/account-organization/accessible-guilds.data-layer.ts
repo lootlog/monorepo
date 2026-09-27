@@ -1,3 +1,4 @@
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
 import { apiKeyCacheSuffix } from "#src/runtime/auth/organization-scope";
@@ -183,14 +184,9 @@ export const makeAccessibleGuilds = (
       .where(eq(userSettingsTable.userId, identity.userId))
       .limit(1);
 
-    const order = new Map(
-      (orderRows[0]?.guildsOrder ?? []).map((id, index) => [id, index]),
-    );
-
-    const result = [...summaries].sort(
-      (left, right) =>
-        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
-        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+    const result = sortGuildsByPreference(
+      summaries,
+      orderRows[0]?.guildsOrder ?? [],
     );
 
     yield* ports.setCached(cacheKey, result, CACHE_TTL_SECONDS);
