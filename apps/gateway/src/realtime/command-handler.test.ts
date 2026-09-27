@@ -29,7 +29,10 @@ import type { ActivityPublisher } from "#src/rabbit/activity-publisher";
 import type { AirTagService } from "#src/realtime/air-tag-service";
 import type { PresenceStore } from "#src/realtime/presence-store";
 import { RealtimeHub } from "#src/realtime/realtime-hub";
-import { unusedFederationStore } from "../../test/realtime-fixtures.js";
+import {
+  subscribedFederationStore,
+  unusedFederationStore,
+} from "../../test/realtime-fixtures.js";
 import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import type { FederatedRealtimeMessage } from "#src/platform/redis-store";
 import type { UserGuildData } from "#src/guilds/guild";
@@ -348,7 +351,7 @@ test.each([
       Promise.reject(new Error("Unexpected registry command"));
 
     const federationStore = {
-      ...unusedFederationStore,
+      ...subscribedFederationStore,
       command: {
         set: async () => "OK",
         del: unexpectedRegistryCommand,
@@ -365,6 +368,8 @@ test.each([
       federationStore,
       () => {},
     );
+
+    await Effect.runPromise(hub.start());
 
     const count = () => {
       const metric = Effect.runSync(Metric.snapshot).find(
