@@ -1,4 +1,21 @@
-import type { roleTable } from "#src/database/drizzle/schema";
+import { desc, eq, inArray } from "drizzle-orm";
+import type { ApiDatabaseValue } from "#src/database/drizzle/database";
+import { memberToRoleTable, roleTable } from "#src/database/drizzle/schema";
+
+export const memberDisplayRolesQuery = (
+  database: ApiDatabaseValue,
+  memberIds: number[],
+) =>
+  database
+    .select({
+      memberId: memberToRoleTable.A,
+      position: roleTable.position,
+      color: roleTable.color,
+    })
+    .from(memberToRoleTable)
+    .innerJoin(roleTable, eq(roleTable.id, memberToRoleTable.B))
+    .where(inArray(memberToRoleTable.A, memberIds))
+    .orderBy(desc(roleTable.position));
 
 type MemberDisplayRole = Pick<
   typeof roleTable.$inferSelect,
