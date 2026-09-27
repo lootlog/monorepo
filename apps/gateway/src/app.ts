@@ -14,6 +14,7 @@ import { recordHttpServerMetrics } from "@lootlog/instrumentation";
 import { RabbitMessaging } from "@lootlog/messaging";
 import {
   REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_FEED_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_JSON_SUBPROTOCOL,
@@ -296,6 +297,26 @@ interface UpgradeServer {
   ) => boolean;
 }
 
+// Older clients close the socket on events they cannot decode, so each capability gates its events.
+const offeredCapabilities = (
+  offeredProtocols: readonly string[],
+  apiKeyAccess: boolean,
+) => {
+  const offersGameCapability = (capability: string) =>
+    !apiKeyAccess && offeredProtocols.includes(capability);
+
+  return {
+    supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
+    supportsNotificationVolunteer: offersGameCapability(
+      REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+    ),
+    supportsBattlePings: offersGameCapability(REALTIME_BATTLE_PING_CAPABILITY),
+    supportsAirTagMapThreats: offersGameCapability(
+      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
+    ),
+  };
+};
+
 const websocketResponseHeaders = (
   request: Request,
   frameEncoding: SessionData["frameEncoding"],
@@ -399,15 +420,10 @@ export const createGatewayFetch =
         data: {
           ...identity,
           connectionId,
-          supportsFeed: offeredProtocols.includes(REALTIME_FEED_CAPABILITY),
-          supportsNotificationVolunteer:
-            !identity.apiKeyAccess &&
-            offeredProtocols.includes(
-              REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
-            ),
-          supportsBattlePings:
-            !identity.apiKeyAccess &&
-            offeredProtocols.includes(REALTIME_BATTLE_PING_CAPABILITY),
+          ...offeredCapabilities(
+            offeredProtocols,
+            identity.apiKeyAccess !== undefined,
+          ),
           platform: identity.apiKeyAccess
             ? "web-app"
             : application.auth.getPlatform(origin ?? ""),

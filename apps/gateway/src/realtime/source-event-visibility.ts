@@ -96,6 +96,9 @@ export const prepareSourceEventVisibility = (
     if (event.type === "battle-ping.received")
       return session.supportsBattlePings === true;
 
+    if (event.type === "air-tag.map-threat-updated")
+      return session.supportsAirTagMapThreats === true;
+
     if (!canReadNpc(session, guild)) return false;
 
     switch (event.type) {

@@ -7,6 +7,7 @@ import {
 import { decode } from "@msgpack/msgpack";
 import {
   decodeClientCommand,
+  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_PING_CAPABILITY,
   type ClientCommand,
@@ -154,7 +155,7 @@ export class CommandHandler {
     private readonly battlePings: Pick<BattlePingService, "send">,
     private readonly airTags: Pick<
       AirTagService,
-      "updateSubscription" | "publishObservations"
+      "updateSubscription" | "publishObservations" | "fetchMapThreats"
     >,
   ) {
     this.hub.onPermissionRebalance((discordId, userId) =>
@@ -660,6 +661,23 @@ export class CommandHandler {
             ),
           ),
         );
+      case "air-tag.map-threats.fetch":
+        return requireJoined.pipe(
+          Effect.andThen(
+            fromPromise(() =>
+              this.airTags.fetchMapThreats(
+                socket,
+                command.data.organizationId,
+                command.data.world,
+              ),
+            ),
+          ),
+          Effect.flatMap((result) =>
+            result
+              ? Effect.succeed(result)
+              : Effect.fail(new OrganizationAccessDenied()),
+          ),
+        );
     }
   }
 
@@ -766,6 +784,7 @@ export class CommandHandler {
           capabilities: [
             REALTIME_PING_CAPABILITY,
             REALTIME_BATTLE_PING_CAPABILITY,
+            REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
           ],
         },
       } satisfies Event;
