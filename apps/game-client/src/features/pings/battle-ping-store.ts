@@ -2,6 +2,8 @@ import type { BattlePingType } from "@lootlog/schema/battle-ping";
 import { getPingPresentation } from "./ping-presentation";
 
 export type BattlePingMark = {
+  /** The history entry this mark shows. */
+  entryId: number;
   /** True when an ally asked the local hero for this. */
   forMe: boolean;
   senderName: string;
@@ -10,7 +12,22 @@ export type BattlePingMark = {
 };
 
 export type BattlePingTarget = {
+  /** The history entry this target shows. */
+  entryId: number;
+  /** `performance.now()` time the target was picked. */
+  receivedAt: number;
   senderName: string;
+  warriorId: number;
+};
+
+/** One ping of the current fight, kept after its mark leaves the warrior. */
+export type BattlePingEntry = {
+  id: number;
+  forMe: boolean;
+  /** `performance.now()` time the ping arrived or was sent. */
+  receivedAt: number;
+  senderName: string;
+  type: BattlePingType;
   warriorId: number;
 };
 
@@ -18,6 +35,10 @@ export type BattlePingSnapshot = {
   marks: ReadonlyMap<number, BattlePingMark>;
   /** The team's shared attack target; the latest `attack` ping wins. */
   target: BattlePingTarget | null;
+  /** The fight's pings, newest first. */
+  history: readonly BattlePingEntry[];
+  /** The warrior a history entry under the pointer refers to. */
+  highlightedWarriorId: number | null;
 };
 
 type TimerHandle = ReturnType<typeof globalThis.setTimeout>;
@@ -28,7 +49,15 @@ type StoreDependencies = {
   setTimer: (callback: () => void, delayMs: number) => TimerHandle;
 };
 
-const EMPTY_SNAPSHOT: BattlePingSnapshot = { marks: new Map(), target: null };
+const EMPTY_SNAPSHOT: BattlePingSnapshot = {
+  marks: new Map(),
+  target: null,
+  history: [],
+  highlightedWarriorId: null,
+};
+
+/** A long fight keeps its recent pings; older ones no longer matter. */
+const HISTORY_LIMIT = 20;
 
 const defaultDependencies: StoreDependencies = {
   clearTimer: (timer) => globalThis.clearTimeout(timer),
@@ -39,78 +68,103 @@ const defaultDependencies: StoreDependencies = {
 /**
  * Battle pings for the current fight. Marks expire on their own; the shared
  * target stays until it is replaced, its warrior dies, or the battle ends.
+ * The history keeps the fight's latest pings until the battle ends.
  */
 export class BattlePingStore {
   private readonly dependencies: StoreDependencies;
   private readonly listeners = new Set<() => void>();
   private snapshot = EMPTY_SNAPSHOT;
   private expiryTimer: TimerHandle | null = null;
+  private nextEntryId = 1;
 
   constructor(dependencies: Partial<StoreDependencies> = {}) {
     this.dependencies = { ...defaultDependencies, ...dependencies };
   }
 
+  /** Shows a ping and returns its history entry id. */
   apply(input: {
     forMe: boolean;
     senderName: string;
     type: BattlePingType;
     warriorId: number;
-  }): void {
-    if (input.type === "attack") {
-      const marks = new Map(this.snapshot.marks);
-      marks.delete(input.warriorId);
-      this.setSnapshot({
-        marks,
-        target: { senderName: input.senderName, warriorId: input.warriorId },
-      });
+  }): number {
+    const now = this.dependencies.now();
+    const entryId = this.nextEntryId++;
 
-      return;
-    }
+    const history = [
+      { ...input, id: entryId, receivedAt: now },
+      ...this.snapshot.history,
+    ].slice(0, HISTORY_LIMIT);
 
     const marks = new Map(this.snapshot.marks);
+
+    if (input.type === "attack") {
+      marks.delete(input.warriorId);
+      this.setSnapshot({
+        ...this.snapshot,
+        history,
+        marks,
+        target: {
+          entryId,
+          receivedAt: now,
+          senderName: input.senderName,
+          warriorId: input.warriorId,
+        },
+      });
+
+      return entryId;
+    }
+
     marks.set(input.warriorId, {
-      expiresAt:
-        this.dependencies.now() + getPingPresentation(input.type).durationMs,
+      entryId,
+      expiresAt: now + getPingPresentation(input.type).durationMs,
       forMe: input.forMe,
       senderName: input.senderName,
       type: input.type,
     });
-    this.setSnapshot({ ...this.snapshot, marks });
+    this.setSnapshot({ ...this.snapshot, history, marks });
+
+    return entryId;
   }
 
   /**
-   * Undoes a local ping the gateway rejected, unless another ping already
+   * Undoes a local ping the gateway rejected: the team never saw it, so it
+   * leaves the history, and its mark or target unless another ping already
    * replaced it.
    */
-  retract(
-    input: { senderName: string; type: BattlePingType; warriorId: number },
-    previousTarget: BattlePingTarget | null,
-  ): void {
-    const { marks, target } = this.snapshot;
-
-    if (input.type === "attack") {
-      if (
-        target?.warriorId === input.warriorId &&
-        target.senderName === input.senderName
-      ) {
-        this.setSnapshot({ marks, target: previousTarget });
-      }
-
-      return;
-    }
-
-    const mark = marks.get(input.warriorId);
-
-    if (mark?.type !== input.type || mark.senderName !== input.senderName) {
-      return;
-    }
-
+  retract(entryId: number, previousTarget: BattlePingTarget | null): void {
+    const { history, marks, target } = this.snapshot;
+    const nextHistory = history.filter(({ id }) => id !== entryId);
     const nextMarks = new Map(marks);
-    nextMarks.delete(input.warriorId);
-    this.setSnapshot({ marks: nextMarks, target });
+
+    for (const [warriorId, mark] of marks) {
+      if (mark.entryId === entryId) {
+        nextMarks.delete(warriorId);
+      }
+    }
+
+    const nextTarget = target?.entryId === entryId ? previousTarget : target;
+
+    if (
+      nextHistory.length === history.length &&
+      nextMarks.size === marks.size &&
+      nextTarget === target
+    ) {
+      return;
+    }
+
+    this.setSnapshot({
+      ...this.snapshot,
+      history: nextHistory,
+      marks: nextMarks,
+      target: nextTarget,
+    });
   }
 
-  /** Drops everything shown on a warrior, e.g. once it died. */
+  /**
+   * Drops the mark and target shown on a warrior, e.g. once it died. Its
+   * history entries stay.
+   */
   removeWarrior(warriorId: number): void {
     const { marks, target } = this.snapshot;
 
@@ -121,9 +175,19 @@ export class BattlePingStore {
     const nextMarks = new Map(marks);
     nextMarks.delete(warriorId);
     this.setSnapshot({
+      ...this.snapshot,
       marks: nextMarks,
       target: target?.warriorId === warriorId ? null : target,
     });
+  }
+
+  /** Points at the warrior of the history entry under the pointer. */
+  highlightWarrior(warriorId: number | null): void {
+    if (this.snapshot.highlightedWarriorId === warriorId) {
+      return;
+    }
+
+    this.setSnapshot({ ...this.snapshot, highlightedWarriorId: warriorId });
   }
 
   clear(): void {

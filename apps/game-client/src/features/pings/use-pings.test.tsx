@@ -511,7 +511,7 @@ describe("usePings in battle", () => {
       test.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
     });
 
-    expect(battlePingStore.getSnapshot().target).toEqual({
+    expect(battlePingStore.getSnapshot().target).toMatchObject({
       senderName: "Current Hero",
       warriorId: -5,
     });
@@ -528,6 +528,44 @@ describe("usePings in battle", () => {
           warriorId: -5,
         },
       }),
+    ]);
+  });
+
+  it("takes a rejected target back to the previous one and out of the fight's history", async () => {
+    const test = await setup();
+    const warriorElement = startBattle();
+    await test.receive(remoteBattlePing("2", "attack", 7));
+
+    act(() => {
+      const press = new MouseEvent("mousedown", { button: 1 });
+
+      warriorElement(-5).dispatchEvent(press);
+      test.result.current.onPingStart(press);
+      test.result.current.onPingEnd(new MouseEvent("mouseup", { button: 1 }));
+    });
+
+    const request = test.wire.frames.find(
+      (frame) => "type" in frame && frame.type === "battle-ping.send",
+    );
+
+    if (!request || !("requestId" in request) || !request.requestId)
+      throw new Error("Missing battle ping request");
+    const requestId = request.requestId;
+
+    act(() =>
+      test.wire.receive({
+        v: 1,
+        requestId,
+        status: "success",
+        data: { status: "rejected", code: "invalid-context" },
+      }),
+    );
+
+    await waitFor(() =>
+      expect(battlePingStore.getSnapshot().target?.warriorId).toBe(7),
+    );
+    expect(battlePingStore.getSnapshot().history).toEqual([
+      expect.objectContaining({ senderName: "Leczek", warriorId: 7 }),
     ]);
   });
 
@@ -648,10 +686,15 @@ describe("usePings in battle", () => {
     });
     expect(battlePingStore.getSnapshot().target).toBeNull();
     expect(battlePingStore.getSnapshot().marks.size).toBe(1);
+    // The fight's history still says who was pinged.
+    expect(
+      battlePingStore.getSnapshot().history.map(({ type }) => type),
+    ).toEqual(["taunt", "attack"]);
 
     act(() => {
       useBattleStore.getState().endBattle();
     });
     expect(battlePingStore.getSnapshot().marks.size).toBe(0);
+    expect(battlePingStore.getSnapshot().history).toHaveLength(0);
   });
 });
