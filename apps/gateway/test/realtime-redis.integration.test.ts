@@ -2395,6 +2395,138 @@ describe("realtime Dragonfly integration", () => {
     );
   });
 
+  test("a lost federation subscription closes local sockets until the instance resubscribes", async () => {
+    const configuration = makeConfiguration();
+    const url = `redis://127.0.0.1:${redisPort}`;
+    const control = ManagedRuntime.make(BunRedis.layer({ url }));
+    const controlRedis = await control.runPromise(Redis.Redis);
+
+    const subscriberAddresses = async () =>
+      new Set(
+        (await control.runPromise(controlRedis.send<string>("CLIENT", "LIST")))
+          .split("\n")
+          .filter((client) => /\bflags=P\b/.test(client))
+          .flatMap((client) => client.match(/\baddr=(\S+)/)?.[1] ?? []),
+      );
+
+    const instances: Array<{
+      readonly runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
+      readonly fibers: Array<Fiber.Fiber<void, unknown>>;
+    }> = [];
+
+    const startInstance = async () => {
+      const runtime = ManagedRuntime.make(BunRedis.layer({ url }));
+      const fibers: Array<Fiber.Fiber<void, unknown>> = [];
+      instances.push({ runtime, fibers });
+
+      const store = new RedisGatewayStore(
+        await runtime.runPromise(Redis.Redis),
+        {
+          ...configuration.redis,
+          password: Redacted.value(configuration.redis.password),
+        },
+        (effect) => runtime.runPromise(effect),
+        (_label, effect) => {
+          fibers.push(runtime.runFork(effect));
+        },
+      );
+
+      const hub = new RealtimeHub(configuration, store);
+      await runtime.runPromise(hub.start());
+
+      return hub;
+    };
+
+    const scope = {
+      topic: "organization.loots",
+      organizationId: "organization-1",
+    } as const;
+
+    const connect = (hub: RealtimeHub, connectionId: string) => {
+      const target = makeSocket(connectionId);
+      const closes: Array<{ code?: number; reason?: string }> = [];
+      Object.assign(target.socket.data, {
+        platform: "web-app",
+        supportsFeed: true,
+      });
+      target.socket.data.guilds = [
+        {
+          guild: { id: "organization-1", ownerId: "other-owner" },
+          roles: [
+            {
+              id: "feed-role",
+              lvlRangeFrom: 0,
+              lvlRangeTo: 500,
+              permissions: [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+            },
+          ],
+        },
+      ];
+      target.socket.close = (code?: number) => {
+        closes.push({ code, reason: hub.unavailableReason() });
+      };
+
+      hub.register(target.socket);
+      hub.subscribe(target.socket, scope);
+
+      return { ...target, closes };
+    };
+
+    const publishKill = (hub: RealtimeHub) =>
+      hub.publishToScope(
+        scope,
+        { v: 1, type: "kills.changed", data: { guildId: "organization-1" } },
+        crypto.randomUUID(),
+        {
+          recipientPlatform: "web-app",
+          sourceNpcs: [{ level: 100, type: "HERO" }],
+        },
+      );
+
+    try {
+      const before = await subscriberAddresses();
+      const affected = await startInstance();
+
+      const [affectedSubscriber] = [...(await subscriberAddresses())].filter(
+        (address) => !before.has(address),
+      );
+
+      if (!affectedSubscriber)
+        throw new Error("Affected subscriber connection not found");
+      const healthy = await startInstance();
+      const stale = connect(affected, "stale");
+      await publishKill(healthy);
+      await waitFor(() => stale.frames.length === 1);
+
+      await control.runPromise(
+        controlRedis.send("CLIENT", "KILL", affectedSubscriber),
+      );
+      await waitFor(() => stale.closes.length === 1);
+      // Readiness was withdrawn before the socket closed, so no session was admitted into the gap.
+      expect(stale.closes).toEqual([
+        { code: 1013, reason: "federation-unavailable" },
+      ]);
+      expect(affected.getLocalSockets()).toEqual([]);
+
+      await waitFor(() => affected.unavailableReason() === undefined);
+      const current = connect(affected, "current");
+      await publishKill(healthy);
+      await waitFor(() => current.frames.length === 1);
+      expect(stale.frames).toHaveLength(1);
+      expect(stale.closes).toHaveLength(1);
+    } finally {
+      for (const { runtime, fibers } of instances) {
+        await Effect.runPromise(Fiber.interruptAll(fibers));
+        await runtime.dispose();
+      }
+
+      await control.dispose();
+    }
+  });
+
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
     const configuration = makeConfiguration();
 
