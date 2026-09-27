@@ -1,3 +1,4 @@
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
   canViewTimer,
   findTimerMatches,
@@ -5,7 +6,7 @@ import {
 } from "./timer-selection.js";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -220,27 +221,12 @@ export const makeResetTimer = (
               timerActorCharacterLvl: updated.actorCharacterLvl,
             });
 
-            const stale = yield* transaction
-              .select({ id: timerHistoryEntryTable.id })
-              .from(timerHistoryEntryTable)
-              .where(
-                and(
-                  eq(timerHistoryEntryTable.guildId, access.guild.id),
-                  eq(timerHistoryEntryTable.world, payload.world),
-                  eq(timerHistoryEntryTable.timerKey, updated.timerKey),
-                ),
-              )
-              .orderBy(desc(timerHistoryEntryTable.id))
-              .offset(5);
-
-            if (stale.length > 0) {
-              yield* transaction.delete(timerHistoryEntryTable).where(
-                inArray(
-                  timerHistoryEntryTable.id,
-                  stale.map(({ id }) => id),
-                ),
-              );
-            }
+            yield* pruneTimerHistory(
+              transaction,
+              access.guild.id,
+              payload.world,
+              updated.timerKey,
+            );
           }
 
           return { ...updated, member, actorCharacter };

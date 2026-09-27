@@ -1,3 +1,4 @@
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import {
   timerNpcField,
   type TimerPublishedEvent,
@@ -8,7 +9,7 @@ import {
   findActiveTimerEventHeroes,
   timerIdentifierCondition,
 } from "./timer-selection.js";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Clock, Effect, Schema } from "effect";
 import { getNpcRoutingTier } from "@lootlog/domain/npc-routing";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -154,27 +155,12 @@ export const makeDeleteTimer = (
             timerActorCharacterLvl: timer.actorCharacterLvl,
           });
 
-          const staleHistory = yield* transaction
-            .select({ id: timerHistoryEntryTable.id })
-            .from(timerHistoryEntryTable)
-            .where(
-              and(
-                eq(timerHistoryEntryTable.guildId, access.guild.id),
-                eq(timerHistoryEntryTable.world, world),
-                eq(timerHistoryEntryTable.timerKey, timer.timerKey),
-              ),
-            )
-            .orderBy(desc(timerHistoryEntryTable.id))
-            .offset(5);
-
-          if (staleHistory.length > 0) {
-            yield* transaction.delete(timerHistoryEntryTable).where(
-              inArray(
-                timerHistoryEntryTable.id,
-                staleHistory.map(({ id }) => id),
-              ),
-            );
-          }
+          yield* pruneTimerHistory(
+            transaction,
+            access.guild.id,
+            world,
+            timer.timerKey,
+          );
 
           const updated = yield* transaction
             .update(timerTable)

@@ -1,3 +1,4 @@
+import { pruneTimerHistory } from "./timer-history-retention.js";
 import { canViewTimer, findActiveTimerEventHeroes } from "./timer-selection.js";
 import {
   getTimerRestoreSnapshot,
@@ -5,7 +6,7 @@ import {
   getTimerHistorySnapshot,
   isCurrentTimerReset,
 } from "./timer-restore-snapshot.js";
-import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
@@ -250,27 +251,12 @@ export const makeRestoreTimer = (
           timerActorCharacterLvl: restored.actorCharacterLvl,
         });
 
-        const staleHistory = yield* transaction
-          .select({ id: timerHistoryEntryTable.id })
-          .from(timerHistoryEntryTable)
-          .where(
-            and(
-              eq(timerHistoryEntryTable.guildId, access.guild.id),
-              eq(timerHistoryEntryTable.world, entry.world),
-              eq(timerHistoryEntryTable.timerKey, entry.timerKey),
-            ),
-          )
-          .orderBy(desc(timerHistoryEntryTable.id))
-          .offset(5);
-
-        if (staleHistory.length > 0) {
-          yield* transaction.delete(timerHistoryEntryTable).where(
-            inArray(
-              timerHistoryEntryTable.id,
-              staleHistory.map(({ id }) => id),
-            ),
-          );
-        }
+        yield* pruneTimerHistory(
+          transaction,
+          access.guild.id,
+          entry.world,
+          entry.timerKey,
+        );
 
         const creators = yield* transaction
           .select()
