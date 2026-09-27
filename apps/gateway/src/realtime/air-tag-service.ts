@@ -75,7 +75,7 @@ end
 local function threatEnemies(records, now)
   local enemies={}
   for _,record in pairs(records) do
-    table.insert(enemies,{targetId=record.targetId,nickname=record.nickname,clan=record.clan,lvl=record.lvl,stasis=record.stasis,ageMs=now-tonumber(record.observedAt)})
+    table.insert(enemies,{targetId=record.targetId,nickname=record.nickname,clan=record.clan,lvl=record.lvl,prof=record.prof,stasis=record.stasis,ageMs=now-tonumber(record.observedAt)})
   end
   return enemies
 end
@@ -99,13 +99,13 @@ local function effective(target, now, ttl, enemy, clanEnemy)
 end
 local function isThreat(relation, enemy, clanEnemy) return relation == enemy or relation == clanEnemy end
 local function public(target)
-  local result = { targetId=target.targetId, nickname=target.nickname, relation=target.relation, x=target.x, y=target.y, lvl=target.lvl, stasis=target.stasis, observedAt=target.observedAt }
+  local result = { targetId=target.targetId, nickname=target.nickname, relation=target.relation, x=target.x, y=target.y, lvl=target.lvl, prof=target.prof, stasis=target.stasis, observedAt=target.observedAt }
   if target.clan ~= nil then result.clan=target.clan end
   if target.enemyObservedAt ~= nil then result.enemyObservedAt=target.enemyObservedAt end
   if target.clanEnemyObservedAt ~= nil then result.clanEnemyObservedAt=target.clanEnemyObservedAt end
   return result
 end
--- Older game clients omit level and stasis; keep the last reported value instead of erasing it.
+-- Older game clients omit level, profession and stasis; keep the last reported value instead of erasing it.
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
 end
@@ -158,6 +158,7 @@ for _,observation in ipairs(observations) do
     local target={targetId=observation.targetId,nickname=observation.nickname,relation=observation.relation,x=observation.x,y=observation.y,observedAt=now,lastBroadcastAt=0}
     if observation.clan ~= nil then target.clan=observation.clan end
     carry(target,observation,existing,"lvl")
+    carry(target,observation,existing,"prof")
     carry(target,observation,existing,"stasis")
     if existing ~= nil then
       target.enemyObservedAt=existing.enemyObservedAt; target.clanEnemyObservedAt=existing.clanEnemyObservedAt; target.lastBroadcastAt=tonumber(existing.lastBroadcastAt) or 0
@@ -200,6 +201,7 @@ if #sightings > 0 or state.pending == true then
     if previous ~= nil or threatCount < maxTargets then
       local record={targetId=observation.targetId,nickname=observation.nickname,clan=observation.clan,observedAt=now}
       carry(record,observation,previous,"lvl")
+      carry(record,observation,previous,"prof")
       carry(record,observation,previous,"stasis")
       if previous == nil then
         threatCount=threatCount+1; due=true
@@ -238,7 +240,7 @@ return encoded
 const SNAPSHOT_SCRIPT = `
 local function nowMs() local time=redis.call("TIME"); return (tonumber(time[1])*1000)+math.floor(tonumber(time[2])/1000) end
 local function public(target)
-  local result={targetId=target.targetId,nickname=target.nickname,relation=target.relation,x=target.x,y=target.y,lvl=target.lvl,stasis=target.stasis,observedAt=target.observedAt}
+  local result={targetId=target.targetId,nickname=target.nickname,relation=target.relation,x=target.x,y=target.y,lvl=target.lvl,prof=target.prof,stasis=target.stasis,observedAt=target.observedAt}
   if target.clan ~= nil then result.clan=target.clan end
   if target.enemyObservedAt ~= nil then result.enemyObservedAt=target.enemyObservedAt end
   if target.clanEnemyObservedAt ~= nil then result.clanEnemyObservedAt=target.clanEnemyObservedAt end

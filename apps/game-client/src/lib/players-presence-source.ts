@@ -196,7 +196,7 @@ export class PlayersPresenceSource {
       this.mapListeners.set(mapName, listeners);
     }
 
-    // Who is on the map and their AFK state only; position deltas must never wake a timer tile.
+    // Only what a timer shows about the map; position deltas must never wake a timer tile.
     let previous = this.getMapOccupancy(mapName);
 
     const onChange = () => {

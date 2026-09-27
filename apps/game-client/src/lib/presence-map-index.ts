@@ -4,9 +4,16 @@ import {
   type PlayerPresenceResponse,
 } from "./online-players-presence";
 
-export type MapOccupant = { key: string; name: string; isAfk: boolean };
+export type MapOccupant = {
+  key: string;
+  name: string;
+  isAfk: boolean;
+  lvl?: number;
+  prof?: string;
+  clanName?: string;
+};
 
-/** Who is on one map; the reference changes only when a name or AFK state does. */
+/** Who is on one map; the reference changes only when what the tooltip shows does. */
 export type MapOccupancy = {
   players: readonly MapOccupant[];
   allAfk: boolean;
@@ -20,9 +27,20 @@ const sameOccupancy = (first: MapOccupancy, second: MapOccupancy) =>
     return (
       other?.key === player.key &&
       other.name === player.name &&
-      other.isAfk === player.isAfk
+      other.isAfk === player.isAfk &&
+      other.lvl === player.lvl &&
+      other.prof === player.prof &&
+      other.clanName === player.clanName
     );
   });
+
+/** Whether a presence update leaves everything a map occupant shows unchanged. */
+const sameOccupant = (previous: PlayerPresence, next: PlayerPresence) =>
+  previous.isAfk === next.isAfk &&
+  previous.player?.name === next.player?.name &&
+  previous.player?.lvl === next.player?.lvl &&
+  previous.player?.prof === next.player?.prof &&
+  previous.player?.clan?.name === next.player?.clan?.name;
 
 /** Character identity survives reconnects; session identity makes late removals safe. */
 export class PresenceMapIndex {
@@ -44,6 +62,9 @@ export class PresenceMapIndex {
         key,
         name: presence.player?.name ?? "",
         isAfk: presence.isAfk,
+        lvl: presence.player?.lvl,
+        prof: presence.player?.prof,
+        clanName: presence.player?.clan?.name,
       }))
       .sort(
         (first, second) =>
@@ -141,11 +162,7 @@ export class PresenceMapIndex {
       if (!presence.mapName) return [];
       this.maps.get(presence.mapName)?.set(identity, presence);
 
-      if (
-        previous.isAfk === presence.isAfk &&
-        previous.player?.name === presence.player.name
-      )
-        return [];
+      if (sameOccupant(previous, presence)) return [];
       this.occupancy.delete(presence.mapName);
 
       return [presence.mapName];

@@ -299,6 +299,8 @@ export class AirTagObservationController {
     if (create.lvl !== undefined)
       Object.assign(observation, { lvl: create.lvl });
 
+    if (create.prof) Object.assign(observation, { prof: create.prof });
+
     return isAirTagObservation(observation) ? observation : null;
   }
 
@@ -319,6 +321,8 @@ export class AirTagObservationController {
     if (target.clan) observation.clan = target.clan;
 
     if (target.lvl !== undefined) observation.lvl = target.lvl;
+
+    if (target.prof) observation.prof = target.prof;
 
     // One malformed partial update must not get the whole batch rejected.
     if (!isAirTagObservation(observation)) return;
