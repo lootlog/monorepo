@@ -1,8 +1,9 @@
 import type { FC } from "react";
 import { CountBadge } from "@/components/count-badge";
-import type {
-  NotificationWithServers,
-  StoredNotification,
+import {
+  getNotificationReportCount,
+  type NotificationWithServers,
+  type StoredNotification,
 } from "@/store/notifications.store";
 import { useTranslation } from "react-i18next";
 
@@ -27,7 +28,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
           ({notification.npc.lvl}
           {notification.npc.prof})
         </span>
-        <CountBadge count={notification.reportIds.length} />
+        <CountBadge count={getNotificationReportCount(notification)} />
       </div>
       <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
         <span className="ll:min-w-0 ll:truncate">

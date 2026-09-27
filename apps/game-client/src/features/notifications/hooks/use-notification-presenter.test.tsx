@@ -1,5 +1,6 @@
 import { createNotificationTest } from "../notification-test";
 import {
+  getNotificationReportCount,
   useNotificationsStore,
   type NotificationWithServers,
 } from "@/store/notifications.store";
@@ -105,10 +106,12 @@ describe("useNotificationPresenter", () => {
     presentNpcReport("report-3");
 
     expect(test.play).toHaveBeenCalledOnce();
-    expect(useNotificationsStore.getState().notifications).toEqual([
-      expect.objectContaining({
-        reportIds: ["report-1", "report-2", "report-3"],
-      }),
-    ]);
+    expect(
+      useNotificationsStore
+        .getState()
+        .notifications.map((notification) =>
+          getNotificationReportCount(notification),
+        ),
+    ).toEqual([3]);
   });
 });

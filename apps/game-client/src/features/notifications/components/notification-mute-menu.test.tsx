@@ -16,7 +16,8 @@ const notification: StoredNotification = {
   message: "Hej",
   servers: ["guild-1"],
   listKey: "notif-1",
-  reportIds: ["notif-1"],
+  recentReportIds: ["notif-1"],
+  reportCountByGuildId: {},
   receivedAtMs: Date.now(),
 };
 

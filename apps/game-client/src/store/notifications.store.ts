@@ -1,5 +1,6 @@
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
+import { sum } from "es-toolkit";
 import { create } from "zustand";
 
 export type NotificationWithServers = Notification & {
@@ -39,8 +40,16 @@ export type StoredNotification = (
 ) & {
   listKey: string;
   receivedAtMs: number;
-  /** Distinct notification ids grouped into this row, first report first. */
-  reportIds: string[];
+  /**
+   * The latest report ids, oldest first, so a report delivered through
+   * several Organizations joins its row once.
+   */
+  recentReportIds: string[];
+  /**
+   * Distinct reports grouped into this row, keyed by the Organization each
+   * first arrived through, so revoking an Organization drops its reports.
+   */
+  reportCountByGuildId: Record<string, number>;
 };
 
 export type NotificationAutoHideState = {
@@ -70,6 +79,13 @@ export type NotificationPresentation = {
 };
 
 const MAX_NOTIFICATIONS = 50;
+
+/**
+ * One report reaches every Organization in the same burst, so a short window
+ * recognises it; automatic sending can keep a row alive for hours, and keeping
+ * every id would grow without bound.
+ */
+const MAX_RECENT_REPORT_IDS = 32;
 
 interface NotificationsState {
   notifications: StoredNotification[];
@@ -145,7 +161,7 @@ const upsertNotificationBatch = (
   const addedPresentations = new Set<NotificationPresentation>();
 
   const indexRow = (row: StoredNotification, rowIndex: number) => {
-    for (const reportId of row.reportIds) {
+    for (const reportId of row.recentReportIds) {
       rowIndexByReportId.set(reportId, rowIndex);
     }
 
@@ -178,7 +194,8 @@ const upsertNotificationBatch = (
         ...notification,
         listKey: notification.notificationId,
         receivedAtMs,
-        reportIds: [notification.notificationId],
+        recentReportIds: [notification.notificationId],
+        reportCountByGuildId: { [notification.guildId]: 1 },
       };
 
       rows.push(storedNotification);
@@ -188,6 +205,8 @@ const upsertNotificationBatch = (
       continue;
     }
 
+    const isNewReport = reportRowIndex === undefined;
+
     // A redelivered first report may carry updated content; any other match
     // is a later report of a grouped NPC, which must not replace the sender.
     const storedNotification: StoredNotification = {
@@ -196,10 +215,21 @@ const upsertNotificationBatch = (
         : existingNotification),
       listKey: existingNotification.listKey,
       receivedAtMs,
-      reportIds:
-        reportRowIndex === undefined
-          ? [...existingNotification.reportIds, notification.notificationId]
-          : existingNotification.reportIds,
+      recentReportIds: isNewReport
+        ? [
+            ...existingNotification.recentReportIds,
+            notification.notificationId,
+          ].slice(-MAX_RECENT_REPORT_IDS)
+        : existingNotification.recentReportIds,
+      reportCountByGuildId: isNewReport
+        ? {
+            ...existingNotification.reportCountByGuildId,
+            [notification.guildId]:
+              (existingNotification.reportCountByGuildId[
+                notification.guildId
+              ] ?? 0) + 1,
+          }
+        : existingNotification.reportCountByGuildId,
       servers: getMergedServers(existingNotification, notification),
     };
 
@@ -498,3 +528,10 @@ export const isMentionNotification = (
   notification: StoredNotification,
 ): notification is StoredNotification & MentionNotification =>
   "type" in notification && notification.type === "chat-mention";
+
+/**
+ * A listed row always stands for at least one readable report: a report
+ * counted under a revoked Organization may still have reached a kept one.
+ */
+export const getNotificationReportCount = (notification: StoredNotification) =>
+  Math.max(1, sum(Object.values(notification.reportCountByGuildId)));
