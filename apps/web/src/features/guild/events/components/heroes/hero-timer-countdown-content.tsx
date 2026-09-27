@@ -1,3 +1,4 @@
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
@@ -21,16 +22,16 @@ export const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
   );
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const unsubscribe = subscribeToSecondClock(() => {
       const nextCountdownState = getHeroTimerCountdownState(timer, Date.now());
       setCountdownState(nextCountdownState);
 
       if (nextCountdownState.phase === "expired") {
-        clearInterval(interval);
+        unsubscribe();
       }
-    }, 1000);
+    });
 
-    return () => clearInterval(interval);
+    return unsubscribe;
   }, [timer]);
 
   if (countdownState.phase === "expired") {
