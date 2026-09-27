@@ -7,15 +7,20 @@ import { BattlePingWindow } from "./battle-ping-window";
 
 const TITLE = "Pingi w walce";
 
-const ping = (senderName: string) =>
+const ping = (senderName: string) => {
+  let entryId = 0;
+
   act(() => {
-    battlePingStore.apply({
+    entryId = battlePingStore.apply({
       forMe: false,
       senderName,
       type: "caution",
       warriorId: -5,
     });
   });
+
+  return entryId;
+};
 
 let test: ReturnType<typeof createRealtimeTest>;
 
@@ -34,10 +39,12 @@ it("opens with a fight's first ping, stays closed once closed, and opens again i
   render(<BattlePingWindow />, { wrapper: test.wrapper });
   expect(screen.queryByText(TITLE)).not.toBeInTheDocument();
 
-  ping("Borsuk");
+  const rejected = ping("Borsuk");
   expect(screen.getByText(TITLE)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Zamknij okno" }));
+  // The gateway rejects the only ping, which empties the history.
+  act(() => battlePingStore.retract(rejected, null));
   ping("Iskra");
   expect(useWindowsStore.getState()["battle-pings"].open).toBe(false);
 

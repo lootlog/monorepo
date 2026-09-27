@@ -37,6 +37,11 @@ export type BattlePingSnapshot = {
   target: BattlePingTarget | null;
   /** The fight's pings, newest first. */
   history: readonly BattlePingEntry[];
+  /**
+   * The fight has had a ping, even one retracted since; only the battle's end
+   * resets it.
+   */
+  fightPinged: boolean;
   /** The warrior a history entry under the pointer refers to. */
   highlightedWarriorId: number | null;
 };
@@ -53,6 +58,7 @@ const EMPTY_SNAPSHOT: BattlePingSnapshot = {
   marks: new Map(),
   target: null,
   history: [],
+  fightPinged: false,
   highlightedWarriorId: null,
 };
 
@@ -102,6 +108,7 @@ export class BattlePingStore {
       marks.delete(input.warriorId);
       this.setSnapshot({
         ...this.snapshot,
+        fightPinged: true,
         history,
         marks,
         target: {
@@ -122,7 +129,7 @@ export class BattlePingStore {
       senderName: input.senderName,
       type: input.type,
     });
-    this.setSnapshot({ ...this.snapshot, history, marks });
+    this.setSnapshot({ ...this.snapshot, fightPinged: true, history, marks });
 
     return entryId;
   }

@@ -21,7 +21,7 @@ import { getPingPresentation } from "./ping-presentation";
 export const BattlePingWindow = () => {
   const { t } = useTranslation("pings");
 
-  const { history, marks, target } = useSyncExternalStore(
+  const { fightPinged, history, marks, target } = useSyncExternalStore(
     battlePingStore.subscribe,
     battlePingStore.getSnapshot,
   );
@@ -51,9 +51,11 @@ export const BattlePingWindow = () => {
   const hasHistory = history.length > 0;
   const visible = open && hasHistory;
 
+  // Opens once per fight: a rejected ping emptying the history must not
+  // reopen a window the player closed.
   useEffect(() => {
-    if (hasHistory) setOpen("battle-pings", true);
-  }, [hasHistory, setOpen]);
+    if (fightPinged) setOpen("battle-pings", true);
+  }, [fightPinged, setOpen]);
 
   // Ticks the "seconds ago" labels only while the window is shown, and lets
   // go of a highlighted warrior when the window goes away under the pointer.
