@@ -1,3 +1,4 @@
+import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import { and, eq } from "drizzle-orm";
 import {
   eventHeroNpcTable,
@@ -26,3 +27,22 @@ export const eventMapScope = (
     eq(eventTable.id, eventId),
     eq(eventTable.guildId, guildId),
   );
+
+export const queryEventHero = (
+  database: ApiDatabaseValue,
+  guildId: string,
+  eventId: string,
+  heroId: string,
+) =>
+  database
+    .select({ hero: eventHeroNpcTable, event: eventTable })
+    .from(eventHeroNpcTable)
+    .innerJoin(eventTable, eq(eventTable.id, eventHeroNpcTable.eventId))
+    .where(
+      and(
+        eq(eventHeroNpcTable.id, heroId),
+        eq(eventTable.id, eventId),
+        eq(eventTable.guildId, guildId),
+      ),
+    )
+    .limit(1);
