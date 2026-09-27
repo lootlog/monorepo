@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getNotificationReportCount,
   type NotificationPresentation,
   type NotificationWithServers,
   useNotificationsStore,
@@ -175,7 +176,8 @@ describe("notifications.store", () => {
             npc: createNpc(500),
           }),
           listKey: "notification-1",
-          reportIds: ["notification-1"],
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: 1,
         },
         {
@@ -184,7 +186,8 @@ describe("notifications.store", () => {
             message: "Hej",
           }),
           listKey: "notification-2",
-          reportIds: ["notification-2"],
+          recentReportIds: ["notification-2"],
+          reportCountByGuildId: {},
           receivedAtMs: 2,
         },
       ],
@@ -237,14 +240,16 @@ describe("notifications.store", () => {
         world,
       }),
       listKey: notificationId,
-      reportIds: [notificationId],
+      recentReportIds: [notificationId],
+      reportCountByGuildId: {},
       receivedAtMs: 1,
     });
 
     const keptMessage = {
       ...createNotification({ notificationId: "message-1" }),
       listKey: "message-1",
-      reportIds: ["message-1"],
+      recentReportIds: ["message-1"],
+      reportCountByGuildId: {},
       receivedAtMs: 1,
     };
 
@@ -346,17 +351,26 @@ describe("notifications.store", () => {
         },
       ]);
 
-    presentNpcReport("report-1", { servers: ["guild-1"] });
+    presentNpcReport("report-1", { guildId: "guild-1", servers: ["guild-1"] });
     presentNotification(createNotification({ notificationId: "message-1" }));
 
     const cycleBeforeRepeats =
       useNotificationsStore.getState().latestNotificationAnimationCycle;
 
     const repeatedReports = [
-      presentNpcReport("report-2", { servers: ["guild-2"] }),
+      presentNpcReport("report-2", {
+        guildId: "guild-2",
+        servers: ["guild-2"],
+      }),
       // The same report delivered through another guild is not a new report.
-      presentNpcReport("report-2", { servers: ["guild-3"] }),
-      presentNpcReport("report-3"),
+      presentNpcReport("report-2", {
+        guildId: "guild-3",
+        servers: ["guild-3"],
+      }),
+      presentNpcReport("report-3", {
+        guildId: "guild-1",
+        servers: ["guild-1"],
+      }),
     ];
 
     const { notifications, latestNotificationAnimationCycle } =
@@ -370,10 +384,37 @@ describe("notifications.store", () => {
         listKey: "report-1",
         notificationId: "report-1",
         discordId: "discord-report-1",
-        reportIds: ["report-1", "report-2", "report-3"],
+        reportCountByGuildId: { "guild-1": 2, "guild-2": 1 },
         servers: ["guild-1", "guild-2", "guild-3"],
       }),
     ]);
+    expect(getNotificationReportCount(notifications[1]!)).toBe(3);
+  });
+
+  it("counts every report of a long-lived row while remembering only recent ids", () => {
+    const presentNpcReport = (notificationId: string) =>
+      useNotificationsStore.getState().presentNotifications([
+        {
+          notification: createNotification({
+            notificationId,
+            message: undefined,
+            npc: createNpc(500),
+          }),
+        },
+      ]);
+
+    for (let index = 1; index <= 500; index += 1) {
+      presentNpcReport(`report-${index}`);
+    }
+
+    // The latest report delivered again through another Organization.
+    presentNpcReport("report-500");
+
+    const [row] = useNotificationsStore.getState().notifications;
+
+    expect(getNotificationReportCount(row!)).toBe(500);
+    expect(row?.recentReportIds.length).toBeLessThan(50);
+    expect(row?.recentReportIds.at(-1)).toBe("report-500");
   });
 
   it("keeps npc reports apart across worlds and from party gathering reports", () => {
@@ -402,19 +443,14 @@ describe("notifications.store", () => {
     );
 
     expect(
-      useNotificationsStore
-        .getState()
-        .notifications.map(({ notificationId, reportIds }) => ({
-          notificationId,
-          reportIds,
-        })),
+      useNotificationsStore.getState().notifications.map((notification) => ({
+        notificationId: notification.notificationId,
+        count: getNotificationReportCount(notification),
+      })),
     ).toEqual([
-      { notificationId: "gathering-1", reportIds: ["gathering-1"] },
-      {
-        notificationId: "report-other-world",
-        reportIds: ["report-other-world"],
-      },
-      { notificationId: "report-1", reportIds: ["report-1"] },
+      { notificationId: "gathering-1", count: 1 },
+      { notificationId: "report-other-world", count: 1 },
+      { notificationId: "report-1", count: 1 },
     ]);
   });
 
@@ -583,7 +619,7 @@ describe("notifications.store", () => {
     );
     expect(notifications.find(({ listKey }) => listKey === "npc-1")).toEqual(
       expect.objectContaining({
-        reportIds: ["npc-1", "npc-2"],
+        recentReportIds: ["npc-1", "npc-2"],
         servers: ["guild-1", "guild-2", "guild-3"],
       }),
     );
@@ -606,7 +642,8 @@ describe("notifications.store", () => {
             notificationId: "notification-1",
           }),
           listKey: "notification-1",
-          reportIds: ["notification-1"],
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: 1,
         },
       ],
@@ -633,13 +670,15 @@ describe("notifications.store", () => {
         {
           ...createNotification({ notificationId: "notification-1" }),
           listKey: "notification-1",
-          reportIds: ["notification-1"],
+          recentReportIds: ["notification-1"],
+          reportCountByGuildId: {},
           receivedAtMs: 1,
         },
         {
           ...createNotification({ notificationId: "notification-2" }),
           listKey: "notification-2",
-          reportIds: ["notification-2"],
+          recentReportIds: ["notification-2"],
+          reportCountByGuildId: {},
           receivedAtMs: 2,
         },
       ],

@@ -1,6 +1,9 @@
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { useNotificationsStore } from "@/store/notifications.store";
+import {
+  getNotificationReportCount,
+  useNotificationsStore,
+} from "@/store/notifications.store";
 import {
   canReadNotification,
   reconcileNotificationAccess,
@@ -74,6 +77,49 @@ it("removes only revoked sources of grouped notifications without replaying thei
   expect(useNotificationsStore.getState().notifications).toBe(
     state.notifications,
   );
+});
+
+it("stops counting grouped npc reports that arrived through a revoked organization", () => {
+  const report = (notificationId: string, guildId: string) => ({
+    notification: {
+      notificationId,
+      guildId,
+      servers: [guildId],
+      discordId: `sender-${notificationId}`,
+      world: "alpha",
+      createdAt: "2026-09-07T00:00:00Z",
+      npc: {
+        id: 500,
+        nick: "Hydra",
+        name: "Hydra",
+        icon: "npc.gif",
+        lvl: 80,
+        prof: "w",
+        wt: 20,
+        type: 2,
+        tpl: 1,
+        x: 1,
+        y: 2,
+        location: "Swamp",
+      },
+    },
+  });
+
+  useNotificationsStore
+    .getState()
+    .presentNotifications([
+      report("a-1", "a"),
+      report("b-1", "b"),
+      report("a-2", "a"),
+      report("a-3", "a"),
+    ]);
+
+  reconcileNotificationAccess(snapshot());
+
+  const [row] = useNotificationsStore.getState().notifications;
+
+  expect(row).toMatchObject({ guildId: "b", servers: ["b"] });
+  expect(getNotificationReportCount(row!)).toBe(1);
 });
 
 it("applies the server's NPC tier and level rules to numeric game NPC types", () => {
