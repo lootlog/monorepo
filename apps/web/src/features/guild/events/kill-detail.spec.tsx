@@ -15,7 +15,7 @@ import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
 // @vitest-environment happy-dom
 
 import { initializeTestTranslations } from "@/lib/testing/i18n";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
   afterEach,
   beforeEach,
@@ -28,7 +28,11 @@ import { KillDetail } from "./kill-detail";
 
 let detail: KillDetailResponseDto;
 
-let state: "success" | "loading" | "error";
+let state: "success" | "loading" | "error" | "not-found";
+
+let timelineFails: boolean;
+
+let lootsFail: boolean;
 
 async function renderDetail() {
   const client = new QueryClient({
@@ -58,6 +62,9 @@ async function renderDetail() {
               Response.json({ items: [], expiredItems: [] }),
             );
 
+          if (path.endsWith("/timeline") && timelineFails)
+            return Promise.resolve(Response.json({}, { status: 503 }));
+
           if (path.endsWith("/timeline"))
             return Promise.resolve(
               Response.json([
@@ -72,10 +79,17 @@ async function renderDetail() {
             );
 
           if (path.endsWith("/loots"))
-            return Promise.resolve(Response.json([]));
+            return Promise.resolve(
+              lootsFail
+                ? Response.json({}, { status: 503 })
+                : Response.json([]),
+            );
 
           if (path.endsWith("/kills/kill-1")) {
             if (state === "loading") return new Promise<Response>(() => {});
+
+            if (state === "not-found")
+              return Promise.resolve(Response.json({}, { status: 404 }));
 
             return Promise.resolve(
               state === "error"
@@ -123,6 +137,8 @@ await initializeTestTranslations();
 beforeEach(() => {
   detail = createDetailData();
   state = "success";
+  timelineFails = false;
+  lootsFail = false;
 });
 
 afterEach(cleanup);
@@ -154,17 +170,70 @@ describe("KillDetail states", () => {
     expect(main?.className).not.toContain("lg:py-4");
   });
 
-  it("renders the data error state with a route back to the hero", async () => {
+  it("allows a failed detail request to recover without reporting the kill as missing", async () => {
     state = "error";
 
     await renderDetail();
 
-    expect(await screen.findByText("events.killDetail.notFound")).toBeTruthy();
+    expect(await screen.findByText("events.killDetail.error")).toBeTruthy();
+    expect(screen.queryByText("events.killDetail.notFound")).toBeNull();
     expect(
       screen
         .getByRole("button", { name: "events.common.backToHero" })
         .getAttribute("href"),
     ).toBe("/guild-1/events/event-1/heroes/hero-1");
+
+    state = "success";
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: detail.kill.heroNpc.npcName }),
+    ).toBeTruthy();
+  });
+
+  it("reports an unavailable kill separately from a failed request", async () => {
+    state = "not-found";
+    await renderDetail();
+    expect(await screen.findByText("events.killDetail.notFound")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "common.actions.retry" }),
+    ).toBeNull();
+  });
+
+  it("keeps kill details visible when timeline loading fails and retries that section", async () => {
+    timelineFails = true;
+    await renderDetail();
+    expect(
+      await screen.findByText("events.killDetail.mapCoverage.error"),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: detail.kill.heroNpc.npcName }),
+    ).toBeTruthy();
+
+    timelineFails = false;
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+    expect(await screen.findByText("Pradawne Wzgórze")).toBeTruthy();
+    expect(
+      screen.queryByText("events.killDetail.mapCoverage.error"),
+    ).toBeNull();
+  });
+
+  it("does not turn a failed loot lookup into an empty result and allows recovery", async () => {
+    lootsFail = true;
+    await renderDetail();
+    expect(
+      await screen.findByText("events.killDetail.lootsError"),
+    ).toBeTruthy();
+    expect(screen.queryByText("events.killDetail.noLoots")).toBeNull();
+
+    lootsFail = false;
+    fireEvent.click(
+      screen.getByRole("button", { name: "common.actions.retry" }),
+    );
+    expect(await screen.findByText("events.killDetail.noLoots")).toBeTruthy();
   });
 
   it("renders empty participants and loot states", async () => {

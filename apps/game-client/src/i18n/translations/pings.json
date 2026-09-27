@@ -1,0 +1,44 @@
+{
+  "rateLimited": "Poczekaj {{seconds}} s przed kolejnym pingiem.",
+  "temporarilyUnavailable": "Pingi są chwilowo niedostępne.",
+  "types": {
+    "attention": "Uwaga",
+    "enemy": "Wróg",
+    "regroup": "Grupa",
+    "avoid": "Idę",
+    "attack": "Bij ten cel",
+    "caution": "Uwaga",
+    "spare": "Nie bij",
+    "attack-speed-aura": "Aura SA",
+    "atmo": "Atmo",
+    "cleanse": "Oczyszczenie",
+    "emanating-arrow": "Emanująca strzała",
+    "fury": "Furia",
+    "heal": "Leczenie",
+    "healing-wave": "Fala leczenia",
+    "need-heal": "Potrzebuję leczenia",
+    "poison": "Jad",
+    "protection-aura": "Aura ochrony",
+    "rime": "Szadź",
+    "stigma": "Piętno",
+    "taunt": "Wyzyw",
+    "quick-fight": "Szybka walka"
+  },
+  "wheel": {
+    "cancelHint": "Anuluj",
+    "ariaLabel": "Koło pingów. Wybrano: {{selection}}",
+    "warriorTitle": "{{name}} · {{profession}}"
+  },
+  "battle": {
+    "requestFor": "{{sender}} prosi Cię: {{request}}",
+    "markedBy": "od {{sender}}"
+  },
+  "settings": {
+    "sectionTitle": "Pingi",
+    "newInterfaceOnly": "Pingi są dostępne tylko w nowym interfejsie gry.",
+    "mapLabel": "Pingi na mapie",
+    "mapDescription": "Pokazuj i wysyłaj pingi na mapie oraz Podręcznej mapie.",
+    "battleLabel": "Pingi w walce",
+    "battleDescription": "Wskazuj drużynie cel do bicia i proś sojuszników o umiejętności, np. leczenie albo aurę."
+  }
+}

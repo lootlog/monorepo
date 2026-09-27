@@ -33,6 +33,7 @@ export function useCursorInfiniteQuery<TPage extends CursorPage>({
     queryFn: ({ pageParam, signal }) => fetchPage(pageParam, signal),
     enabled,
     initialPageParam: undefined,
+    placeholderData: undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
 }

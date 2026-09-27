@@ -472,10 +472,7 @@ export const makeAutoTimer = (
                 eq(timerHistoryEntryTable.timerKey, timerKey),
               ),
             )
-            .orderBy(
-              desc(timerHistoryEntryTable.createdAt),
-              desc(timerHistoryEntryTable.id),
-            )
+            .orderBy(desc(timerHistoryEntryTable.id))
             .offset(5);
 
           if (stale.length > 0) {

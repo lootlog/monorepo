@@ -8,7 +8,10 @@ import { makeReservationReadDataLayer } from "#src/http-api/handlers/organizatio
 import { makeReservationSharingDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-sharing.data-layer";
 import { ApiRedis, redisUrl } from "#src/runtime/infrastructure/api-redis";
 import { ApiRuntimeConfig } from "#src/runtime/infrastructure/api-runtime-config";
-import { NOTIFICATIONS_DISPATCH_QUEUE } from "#src/notifications/jobs/dispatch-queue";
+import {
+  NOTIFICATIONS_DISPATCH_QUEUE,
+  NOTIFICATION_DISPATCH_JOB_OPTIONS,
+} from "#src/notifications/jobs/dispatch-queue";
 import { Queue } from "bullmq";
 import { makeReservationMutationsDataLayer } from "#src/http-api/handlers/organization-workspace/reservation-mutations.data-layer";
 
@@ -98,10 +101,9 @@ export const reservationMutationsData = Layer.unwrap(
             notificationJobId,
             { notificationJobId },
             {
+              ...NOTIFICATION_DISPATCH_JOB_OPTIONS,
               jobId: notificationJobId,
               delay,
-              removeOnComplete: true,
-              removeOnFail: true,
             },
           ),
         ),

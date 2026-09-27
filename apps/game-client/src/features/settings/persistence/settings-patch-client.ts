@@ -1,4 +1,4 @@
-import { isSettingsRecord } from "@lootlog/domain/settings-paths";
+import { collectLeafPaths } from "@lootlog/domain/settings-paths";
 import { queryClient } from "@/lib/query-client";
 import { getFixedT } from "@/i18n/get-fixed-t";
 import { useGameStore } from "@/store/game.store";
@@ -216,19 +216,6 @@ export const settingsPatchQueue = createSettingsPatchQueue({
   },
 });
 
-/** Dotted leaf paths of a patch `set`, e.g. `{ a: { b: 1 } }` -> `["a.b"]`. */
-const collectLeafPaths = (
-  value: SettingsOperation["set"],
-  prefix = "",
-): string[] =>
-  Object.entries(value).flatMap(([key, nested]) => {
-    const path = prefix ? `${prefix}.${key}` : key;
-
-    return isSettingsRecord(nested) && Object.keys(nested).length > 0
-      ? collectLeafPaths(nested, path)
-      : [path];
-  });
-
 export type EnqueueSettingsPatchInput = {
   domain: SettingsDomain;
   set?: SettingsOperation["set"];
@@ -262,9 +249,10 @@ export const enqueueSettingsPatch = ({
       ? [GUILD_TIMERS_DOCUMENTS_QUERY_KEY_PREFIX]
       : [getCurrentSettingsDocumentsQueryKey()];
 
-  const settingKeys = [...collectLeafPaths(set), ...unset].map(
-    (path) => `${domain}.${path}`,
-  );
+  const settingKeys = [
+    ...collectLeafPaths(set).map(({ path }) => path),
+    ...unset,
+  ].map((path) => `${domain}.${path}`);
 
   const saveStatusStore = useSettingsSaveStatusStore.getState();
   saveStatusStore.markKeys(settingKeys, "saving");

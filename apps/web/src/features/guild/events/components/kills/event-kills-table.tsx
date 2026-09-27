@@ -2,9 +2,8 @@ import { SectionCardHeader } from "@lootlog/ui/components/section-card-header";
 import { SectionCard } from "@/components/common/section-card/section-card";
 import { useTranslation } from "react-i18next";
 import { useTable } from "@tanstack/react-table";
-import { AlertCircle, Skull } from "lucide-react";
+import { Skull } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Spinner } from "@lootlog/ui/components/spinner";
 import {
   Table,
   TableBody,
@@ -14,18 +13,22 @@ import {
 import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
-import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
+import type { KillHistoryEntry } from "@lootlog/client/main";
 import { createEventKillsTableColumns } from "./event-kills-table-columns";
 import { coreTableFeatures } from "@/lib/tanstack-table-features";
 import { useInfiniteScrollSentinel } from "@/hooks/utils/use-infinite-scroll-sentinel";
 import { useResetScrollTop } from "@/hooks/utils/use-virtual-infinite-scroll";
+import { EventReadError } from "../shared/event-read-error";
+import { EventHistoryPaginationStatus } from "../shared/event-history-pagination-status";
 
 type EventKillsTableBaseProps = {
   eventId: string;
   guildId: string;
   hasError: boolean;
   isLoading: boolean;
-  kills: HeroKill[];
+  onRetry: () => void;
+  isRetrying?: boolean;
+  kills: KillHistoryEntry[];
 };
 
 type EventKillsTableHistoryProps = EventKillsTableBaseProps & {
@@ -78,7 +81,10 @@ const getColumnClassName = (columnId: string, isPreview: boolean) => {
 
 export const EventKillsTable = (props: EventKillsTableProps) => {
   const { t } = useTranslation();
-  const { eventId, guildId, hasError, isLoading, kills } = props;
+
+  const { eventId, guildId, hasError, isLoading, kills, onRetry, isRetrying } =
+    props;
+
   const variant = getEventKillsTableVariant(props);
   const isPreview = variant === "preview";
   const historyProps = props.variant === "preview" ? undefined : props;
@@ -137,14 +143,13 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
 
   if (hasError && kills.length === 0) {
     return (
-      <div className="flex min-h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
-        <AlertCircle className="size-6 text-destructive" />
-        <p className="text-sm">{t("events.error")}</p>
+      <div className="flex min-h-48 items-center justify-center">
+        <EventReadError onRetry={onRetry} isRetrying={isRetrying} />
       </div>
     );
   }
 
-  if (kills.length === 0) {
+  if (kills.length === 0 && !hasNextPage) {
     return (
       <div className="flex min-h-48 flex-col items-center justify-center text-muted-foreground">
         <Skull className="mb-2 size-6 opacity-50" />
@@ -184,28 +189,19 @@ export const EventKillsTable = (props: EventKillsTableProps) => {
             )
           }
         />
-        {!isPreview && (
+        {(!isPreview || hasError) && (
           <TableBody>
             <TableRow ref={loaderRowRef} className="hover:bg-transparent">
               <TableCell
                 colSpan={columns.length}
                 className="h-11 text-center text-xs text-muted-foreground"
               >
-                {hasError ? (
-                  <span className="inline-flex items-center gap-2 text-destructive">
-                    <AlertCircle className="size-4" />
-                    {t("events.error")}
-                  </span>
-                ) : hasNextPage ? (
-                  <span className="inline-flex items-center gap-2">
-                    {isFetchingNextPage && (
-                      <Spinner className="size-4 text-primary" />
-                    )}
-                    {t("events.kills.loading")}
-                  </span>
-                ) : (
-                  t("events.kills.endOfList")
-                )}
+                <EventHistoryPaginationStatus
+                  hasError={hasError}
+                  hasNextPage={hasNextPage}
+                  isFetching={isRetrying ?? isFetchingNextPage}
+                  onRetry={onRetry}
+                />
               </TableCell>
             </TableRow>
           </TableBody>

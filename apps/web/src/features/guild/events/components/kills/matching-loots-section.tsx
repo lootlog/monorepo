@@ -7,10 +7,14 @@ import { Frown, Package } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import type { Loot } from "@/lib/loots/loot-types";
 import { LootsListItem } from "@/features/guild/loots-list/components/loots-list/loots-list-item";
+import { EventReadError } from "../shared/event-read-error";
 
 interface MatchingLootsSectionProps {
   loots: Loot[];
   isLoading: boolean;
+  hasError: boolean;
+  onRetry: () => void;
+  isRetrying?: boolean;
   guildId: string;
   npcName: string;
 }
@@ -18,6 +22,9 @@ interface MatchingLootsSectionProps {
 export const MatchingLootsSection = ({
   loots,
   isLoading,
+  hasError,
+  onRetry,
+  isRetrying,
   guildId,
   npcName,
 }: MatchingLootsSectionProps) => {
@@ -47,6 +54,13 @@ export const MatchingLootsSection = ({
         }
       />
 
+      {hasError && (
+        <EventReadError
+          message={t("events.killDetail.lootsError")}
+          onRetry={onRetry}
+          isRetrying={isRetrying}
+        />
+      )}
       {isLoading ? (
         <div className="divide-y divide-border/70">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -55,7 +69,7 @@ export const MatchingLootsSection = ({
             </div>
           ))}
         </div>
-      ) : loots.length === 0 ? (
+      ) : loots.length === 0 && !hasError ? (
         <div className="flex min-h-28 flex-col items-center justify-center px-4 py-6 text-center text-muted-foreground">
           <Frown className="mb-2 size-6 opacity-50" />
           <p className="text-sm">{t("events.killDetail.noLoots")}</p>

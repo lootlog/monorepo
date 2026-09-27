@@ -21,6 +21,7 @@ beforeEach(() => {
         maxLvl: 200,
         selectedNpcTypes: [NpcType.HERO],
         selectedColors: ["red"],
+        selectedLists: [],
       },
     },
     customColors: {
@@ -109,6 +110,7 @@ describe("timers controls", () => {
       maxLvl: 200,
       selectedNpcTypes: [NpcType.ELITE2],
       selectedColors: ["red"],
+      selectedLists: [],
     });
     await user.click(
       screen.getByRole("button", { name: "Pokaż tylko: Tytan" }),
@@ -116,6 +118,37 @@ describe("timers controls", () => {
     expect(
       useTimersStore.getState().timersFilters["guild-1"].selectedNpcTypes,
     ).toEqual([NpcType.TITAN]);
+  });
+
+  it("switches to one player list, back to several and to all without touching the other filters", async () => {
+    const user = userEvent.setup();
+    useTimersStore.setState({
+      customLists: {
+        e2: { id: "e2", name: "E2", npcNames: ["Kic"] },
+        heroes: { id: "heroes", name: "Herosi", npcNames: ["Tanroth"] },
+      },
+    });
+    render(<TimersFilters filtersKey="guild-1" />);
+    await user.click(screen.getByRole("button", { name: "E2" }));
+    const heroes = screen.getByRole("button", { name: "Herosi" });
+    const event = createEvent.contextMenu(heroes);
+    fireEvent(heroes, event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(useTimersStore.getState().timersFilters["guild-1"]).toEqual({
+      minLvl: 10,
+      maxLvl: 200,
+      selectedNpcTypes: [NpcType.HERO],
+      selectedColors: ["red"],
+      selectedLists: ["heroes"],
+    });
+    await user.click(screen.getByRole("button", { name: "E2" }));
+    expect(
+      useTimersStore.getState().timersFilters["guild-1"].selectedLists,
+    ).toEqual(["heroes", "e2"]);
+    await user.click(screen.getByRole("button", { name: "Wszystkie" }));
+    expect(
+      useTimersStore.getState().timersFilters["guild-1"].selectedLists,
+    ).toEqual([]);
   });
 
   it("dispatches toolbar actions in regular and under-bag layouts using real controls", async () => {

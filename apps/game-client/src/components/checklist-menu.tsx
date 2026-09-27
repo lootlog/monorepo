@@ -7,6 +7,8 @@ export type ChecklistMenuItem<Value extends string> = {
   value: Value;
   label: string;
   leading?: ReactNode;
+  /** Shown before the check mark, e.g. the shortcut that does the same. */
+  trailing?: ReactNode;
 };
 
 type ChecklistMenuOnlyAction<Value extends string> = {
@@ -18,6 +20,8 @@ type ChecklistMenuOnlyAction<Value extends string> = {
 type ChecklistMenuProps<Value extends string> = {
   "aria-label": string;
   className?: string;
+  /** Mutes rows that are off; disable it where an off row is an entry to add. */
+  dimUnselected?: boolean;
   items: readonly ChecklistMenuItem<Value>[];
   onToggle: (value: Value) => void;
   /** Adds an "only" button to each row (and on right-click) that keeps just that entry. */
@@ -37,6 +41,7 @@ const ICON_SIZE = 12;
 export const ChecklistMenu = <Value extends string>({
   "aria-label": ariaLabel,
   className,
+  dimUnselected = true,
   items,
   only,
   onToggle,
@@ -90,7 +95,7 @@ export const ChecklistMenu = <Value extends string>({
               aria-pressed={isSelected}
               className={cn(
                 "ll:min-w-0 ll:flex-1 ll:justify-between ll:gap-2",
-                !isSelected && "ll:text-muted-foreground",
+                dimUnselected && !isSelected && "ll:text-muted-foreground",
               )}
               onClick={() => onToggle(item.value)}
               onContextMenu={
@@ -106,7 +111,17 @@ export const ChecklistMenu = <Value extends string>({
                 {item.leading}
                 <span className="ll:truncate">{item.label}</span>
               </span>
-              {isSelected ? (
+              {item.trailing ? (
+                <span className="ll:flex ll:shrink-0 ll:items-center ll:gap-1.5">
+                  {item.trailing}
+                  {/* Keeps the trailing content in place as the check moves. */}
+                  <Check
+                    size={ICON_SIZE}
+                    aria-hidden="true"
+                    className={cn("ll:shrink-0", !isSelected && "ll:invisible")}
+                  />
+                </span>
+              ) : isSelected ? (
                 <Check
                   size={ICON_SIZE}
                   aria-hidden="true"

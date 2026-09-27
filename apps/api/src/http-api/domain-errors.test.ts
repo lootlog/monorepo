@@ -50,6 +50,13 @@ const bearer = Layer.succeed(
 const unexpected = () => Effect.die("Unexpected operation");
 
 const unusedEvents = {
+  history: {
+    list: unexpected,
+    legacyEvent: unexpected,
+    legacyMember: unexpected,
+    detail: unexpected,
+    timeline: unexpected,
+  },
   assignment: {
     assignMember: unexpected,
     selfAssignMember: unexpected,
@@ -81,7 +88,6 @@ const unusedEvents = {
   },
   monitoring: {
     getCoordination: unexpected,
-    getKillTimelineData: unexpected,
     getHeroCoverageGaps: unexpected,
     getMapCoverageGaps: unexpected,
     getActiveGapForMap: unexpected,
@@ -104,10 +110,6 @@ const unusedEvents = {
     updateRankingPoints: unexpected,
     getEventHeroTimers: unexpected,
     getEventHeroStats: unexpected,
-    getEventKillHistory: unexpected,
-    getMemberKillHistory: unexpected,
-    getHeroKillHistory: unexpected,
-    getKillDetail: unexpected,
     updateKillPoint: unexpected,
   },
 } satisfies EventOperations["Service"];

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 export type PermissionCategory = {
+  groupKey: string;
   name: string;
   icon: LucideIcon;
   color: string;
@@ -23,6 +24,7 @@ export type PermissionCategory = {
 
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
+    groupKey: "access",
     name: "Dostęp",
     icon: KeyRound,
     color: "text-emerald-500",
@@ -30,6 +32,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     permissions: [Permission.LOOTLOG_ACCESS],
   },
   {
+    groupKey: "admin",
     name: "Administracja",
     icon: Shield,
     color: "text-red-500",
@@ -37,6 +40,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     permissions: [Permission.ADMIN, Permission.LOOTLOG_MANAGE],
   },
   {
+    groupKey: "loots",
     name: "Łupy",
     icon: Package,
     color: "text-amber-500",
@@ -50,6 +54,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    groupKey: "timers",
     name: "Timery",
     icon: Clock,
     color: "text-blue-500",
@@ -64,6 +69,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    groupKey: "reservations",
     name: "Rezerwacje",
     icon: CalendarCheck,
     color: "text-purple-500",
@@ -74,6 +80,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    groupKey: "docs",
     name: "Dokumenty",
     icon: FileText,
     color: "text-indigo-500",
@@ -81,6 +88,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     permissions: [Permission.LOOTLOG_DOCS_READ, Permission.LOOTLOG_DOCS_WRITE],
   },
   {
+    groupKey: "members",
     name: "Członkowie",
     icon: Users,
     color: "text-cyan-500",
@@ -91,6 +99,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    groupKey: "chat",
     name: "Czat",
     icon: MessageCircle,
     color: "text-green-500",
@@ -103,6 +112,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    groupKey: "notifications",
     name: "Powiadomienia",
     icon: Bell,
     color: "text-orange-500",
@@ -115,6 +125,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    groupKey: "events",
     name: "Eventy",
     icon: Trophy,
     color: "text-fuchsia-500",

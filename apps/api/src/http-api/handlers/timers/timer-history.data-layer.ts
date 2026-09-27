@@ -1,10 +1,29 @@
-import { and, desc, eq } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  inArray,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import { Capability } from "@lootlog/domain/access-policy";
-import { Effect } from "effect";
-import { canViewTimer } from "./timer-selection.js";
-import { getTimerRestoreSnapshot } from "./timer-restore-snapshot.js";
+import { Clock, Effect } from "effect";
+import { uniqBy } from "es-toolkit";
+import { activeTimerEventCondition, canViewTimer } from "./timer-selection.js";
+import {
+  getTimerRestoreSnapshot,
+  getTimerResetRollbackSnapshot,
+} from "./timer-restore-snapshot.js";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import {
+  TimerHistoryAction,
+  type TimerHistoryEntry,
+} from "#src/timers/timers.types";
+import {
+  eventHeroNpcTable,
+  eventTable,
   guildTable,
   memberTable,
   playerSnapshotTable,
@@ -20,7 +39,12 @@ import {
   mapTimerCharacter,
   mapTimerMember,
   mapTimerNpc,
+  timerNpcField,
 } from "#src/timers/timer-projection";
+
+type TimerHistoryAssociations = {
+  actorCharacter?: NonNullable<ReturnType<typeof mapTimerCharacter>>;
+};
 
 export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
   const read = (
@@ -69,6 +93,14 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             eq(timerHistoryEntryTable.world, world),
           );
 
+      const recentEntryIds = database
+        .select({ id: timerHistoryEntryTable.id })
+        .from(timerHistoryEntryTable)
+        .where(condition)
+        // Preserve insertion order without scanning unrelated Organizations through the primary key.
+        .orderBy(desc(sql`${timerHistoryEntryTable.id}::bigint`))
+        .limit(limit);
+
       const rows = yield* database
         .select({
           entry: timerHistoryEntryTable,
@@ -101,9 +133,137 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             eq(timerTable.timerKey, timerHistoryEntryTable.timerKey),
           ),
         )
-        .where(condition)
-        .orderBy(desc(timerHistoryEntryTable.createdAt))
+        .where(
+          timerKey
+            ? condition
+            : inArray(timerHistoryEntryTable.id, recentEntryIds),
+        )
+        .orderBy(desc(timerHistoryEntryTable.id))
         .limit(limit);
+
+      const canWrite = access.accessPolicy.allows(
+        Capability.LOOTLOG_TIMERS_WRITE,
+      );
+
+      const rollbackTimerKeys = canWrite
+        ? [
+            ...new Set(
+              rows
+                .filter(
+                  ({ entry }) =>
+                    entry.action === TimerHistoryAction.RESET &&
+                    canViewTimer(access, entry),
+                )
+                .map(({ entry }) => entry.timerKey),
+            ),
+          ]
+        : [];
+
+      const rollbackHistory = new Map<
+        string,
+        {
+          latest?: TimerHistoryEntry;
+          previous?: TimerHistoryEntry;
+        }
+      >();
+
+      if (rollbackTimerKeys.length > 0) {
+        const rankedHistory = database.$with("timer_rollback_history").as(
+          database
+            .select({
+              ...getTableColumns(timerHistoryEntryTable),
+              position: sql<number>`row_number() over (
+              partition by ${timerHistoryEntryTable.timerKey}
+              order by ${timerHistoryEntryTable.id} desc
+            )`
+                .mapWith(Number)
+                .as("position"),
+            })
+            .from(timerHistoryEntryTable)
+            .where(
+              and(
+                eq(timerHistoryEntryTable.guildId, access.guild.id),
+                eq(timerHistoryEntryTable.world, world),
+                inArray(timerHistoryEntryTable.timerKey, rollbackTimerKeys),
+              ),
+            ),
+        );
+
+        const snapshots = yield* database
+          .with(rankedHistory)
+          .select()
+          .from(rankedHistory)
+          .where(lte(rankedHistory.position, 2));
+
+        for (const snapshot of snapshots) {
+          const history = rollbackHistory.get(snapshot.timerKey) ?? {};
+
+          if (snapshot.position === 1) history.latest = snapshot;
+          else history.previous = snapshot;
+          rollbackHistory.set(snapshot.timerKey, history);
+        }
+      }
+
+      const eventTargets = canWrite
+        ? uniqBy(
+            rows.flatMap(({ entry, currentTimer }) => {
+              if (
+                !canViewTimer(access, entry) ||
+                (entry.action !== TimerHistoryAction.DELETE &&
+                  entry.action !== TimerHistoryAction.RESET)
+              )
+                return [];
+
+              const previous = rollbackHistory.get(entry.timerKey)?.previous;
+
+              return [
+                entry,
+                ...(currentTimer ? [currentTimer] : []),
+                ...(previous ? [previous] : []),
+              ];
+            }),
+            (target) =>
+              `${target.npcId}:${String(timerNpcField(target.npc, "name") ?? "")}`,
+          )
+        : [];
+
+      const now = new Date(yield* Clock.currentTimeMillis);
+
+      const eventHeroes =
+        eventTargets.length > 0
+          ? yield* database
+              .select({
+                npcId: eventHeroNpcTable.npcId,
+                npcName: eventHeroNpcTable.npcName,
+              })
+              .from(eventHeroNpcTable)
+              .innerJoin(
+                eventTable,
+                eq(eventTable.id, eventHeroNpcTable.eventId),
+              )
+              .where(
+                or(
+                  ...eventTargets.map((target) =>
+                    activeTimerEventCondition(
+                      access.guild.id,
+                      world,
+                      target.npcId,
+                      String(timerNpcField(target.npc, "name") ?? ""),
+                      now,
+                    ),
+                  ),
+                ),
+              )
+          : [];
+
+      const eventNpcIds = new Set(eventHeroes.map((hero) => hero.npcId));
+      const eventNpcNames = new Set(eventHeroes.map((hero) => hero.npcName));
+
+      const isEventTimer = (
+        timer: Pick<typeof timerTable.$inferSelect, "npcId" | "npc">,
+      ) =>
+        eventNpcIds.has(timer.npcId) ||
+        eventNpcNames.has(String(timerNpcField(timer.npc, "name") ?? ""));
 
       return rows.flatMap(
         ({ entry, guildName, actorMember, actorCharacter, currentTimer }) => {
@@ -111,8 +271,42 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
             return [];
           }
 
+          const character = mapTimerCharacter(
+            actorCharacter,
+            entry.actorCharacterLvl,
+          );
+
+          const associations: TimerHistoryAssociations = {};
+
+          if (character !== undefined) associations.actorCharacter = character;
+
+          const rollback = rollbackHistory.get(entry.timerKey);
+
+          const canUndoReset =
+            currentTimer !== null &&
+            canViewTimer(access, currentTimer) &&
+            !isEventTimer(currentTimer) &&
+            rollback?.previous !== undefined &&
+            canViewTimer(access, rollback.previous) &&
+            !isEventTimer(rollback.previous) &&
+            getTimerResetRollbackSnapshot(
+              entry,
+              currentTimer,
+              rollback.latest,
+              rollback.previous,
+            ) !== undefined;
+
+          const canRestoreDeleted =
+            getTimerRestoreSnapshot(entry) !== undefined &&
+            !isEventTimer(entry) &&
+            (currentTimer === null ||
+              (currentTimer.deletedAt !== null &&
+                canViewTimer(access, currentTimer) &&
+                !isEventTimer(currentTimer)));
+
           return [
             {
+              ...associations,
               id: entry.id,
               guildId: entry.guildId,
               guildName,
@@ -122,18 +316,9 @@ export const makeTimerHistory = (database: typeof ApiDatabase.Service) => {
               npc: mapTimerNpc(entry.npc),
               action: entry.action,
               member: mapTimerMember(actorMember),
-              actorCharacter: mapTimerCharacter(
-                actorCharacter,
-                entry.actorCharacterLvl,
-              ),
               minSpawnTime: entry.minSpawnTime,
               maxSpawnTime: entry.maxSpawnTime,
-              canRestore:
-                access.accessPolicy.allows(Capability.LOOTLOG_TIMERS_WRITE) &&
-                getTimerRestoreSnapshot(entry) !== undefined &&
-                (currentTimer === null ||
-                  (currentTimer.deletedAt !== null &&
-                    canViewTimer(access, currentTimer))),
+              canRestore: canWrite && (canRestoreDeleted || canUndoReset),
               createdAt: entry.createdAt,
             },
           ];

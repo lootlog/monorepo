@@ -120,6 +120,9 @@ export const EventMemberKillsPageContent = ({
     isFetchingNextPage,
     isLoading: killsLoading,
     error: killsError,
+    isFetchNextPageError,
+    isFetching,
+    refetch,
   } = useEventMemberKillHistory({
     guildId: queryGuildId,
     eventId: queryEventId,
@@ -204,6 +207,10 @@ export const EventMemberKillsPageContent = ({
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               fetchNextPage={fetchNextPage}
+              onRetry={() =>
+                void (isFetchNextPageError ? fetchNextPage() : refetch())
+              }
+              isRetrying={isFetching}
             />
           )}
         </div>

@@ -1,5 +1,10 @@
-import { canViewTimer } from "./timer-selection.js";
-import { getTimerRestoreSnapshot } from "./timer-restore-snapshot.js";
+import { canViewTimer, findActiveTimerEventHeroes } from "./timer-selection.js";
+import {
+  getTimerRestoreSnapshot,
+  getTimerResetRollbackSnapshot,
+  getTimerHistorySnapshot,
+  isCurrentTimerReset,
+} from "./timer-restore-snapshot.js";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
@@ -16,7 +21,10 @@ import {
   ResourceNotFoundError,
 } from "#src/shared/http/http-errors";
 import { ErrorKey } from "#src/timers/error-key";
-import { TimerHistoryAction } from "#src/timers/timers.types";
+import {
+  TimerHistoryAction,
+  type TimerHistoryEntry,
+} from "#src/timers/timers.types";
 import type { TimersGuildAccess } from "./timers.handlers.js";
 import {
   TimersInvariantViolation,
@@ -38,6 +46,42 @@ export interface RestoreTimerPorts {
     payload: TimerPublishedEvent<Key>,
   ) => Effect.Effect<unknown, unknown>;
 }
+
+const resolveResetRollbackSnapshot = Effect.fnUntraced(function* (
+  database: Pick<typeof ApiDatabase.Service, "select">,
+  access: TimersGuildAccess,
+  entry: TimerHistoryEntry,
+  current: typeof timerTable.$inferSelect | undefined,
+) {
+  const [latest, previous] = yield* database
+    .select()
+    .from(timerHistoryEntryTable)
+    .where(
+      and(
+        eq(timerHistoryEntryTable.guildId, access.guild.id),
+        eq(timerHistoryEntryTable.world, entry.world),
+        eq(timerHistoryEntryTable.timerKey, entry.timerKey),
+      ),
+    )
+    .orderBy(desc(timerHistoryEntryTable.id))
+    .limit(2);
+
+  if (!isCurrentTimerReset(entry, current, latest)) {
+    return yield* Effect.fail(
+      new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),
+    );
+  }
+
+  if (previous && !canViewTimer(access, previous)) {
+    return yield* Effect.fail(
+      new ResourceNotFoundError({
+        message: ErrorKey.TIMER_HISTORY_ENTRY_NOT_FOUND,
+      }),
+    );
+  }
+
+  return getTimerResetRollbackSnapshot(entry, current, latest, previous);
+});
 
 export const makeRestoreTimer = (
   database: typeof ApiDatabase.Service,
@@ -70,9 +114,10 @@ export const makeRestoreTimer = (
           );
         }
 
-        const snapshot = getTimerRestoreSnapshot(entry);
+        const rollbackReset = entry.action === TimerHistoryAction.RESET;
+        let snapshot = getTimerRestoreSnapshot(entry);
 
-        if (!snapshot) {
+        if (rollbackReset ? !getTimerHistorySnapshot(entry) : !snapshot) {
           return yield* Effect.fail(
             new InvalidRequestError({
               message: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
@@ -80,17 +125,21 @@ export const makeRestoreTimer = (
           );
         }
 
-        const existingRows = yield* transaction
+        const timerScope = and(
+          eq(timerTable.guildId, access.guild.id),
+          eq(timerTable.world, entry.world),
+          eq(timerTable.timerKey, entry.timerKey),
+        );
+
+        const currentQuery = transaction
           .select()
           .from(timerTable)
-          .where(
-            and(
-              eq(timerTable.guildId, access.guild.id),
-              eq(timerTable.world, entry.world),
-              eq(timerTable.timerKey, entry.timerKey),
-            ),
-          )
+          .where(timerScope)
           .limit(1);
+
+        const existingRows = yield* rollbackReset
+          ? currentQuery.for("update")
+          : currentQuery;
 
         if (existingRows.some((timer) => !canViewTimer(access, timer))) {
           return yield* Effect.fail(
@@ -100,35 +149,76 @@ export const makeRestoreTimer = (
           );
         }
 
-        if (existingRows[0]?.deletedAt === null) {
+        if (rollbackReset) {
+          snapshot = yield* resolveResetRollbackSnapshot(
+            transaction,
+            access,
+            entry,
+            existingRows[0],
+          );
+        } else if (existingRows[0]?.deletedAt === null) {
           return yield* Effect.fail(
             new ResourceConflictError({ message: ErrorKey.EXISTING_TIMER }),
           );
         }
 
+        if (!snapshot) {
+          return yield* Effect.fail(
+            new InvalidRequestError({
+              message: ErrorKey.TIMER_HISTORY_ENTRY_CANNOT_BE_RESTORED,
+            }),
+          );
+        }
+
         const now = new Date(yield* Clock.currentTimeMillis);
 
-        const restoredRows = yield* transaction
-          .insert(timerTable)
-          .values({
-            ...snapshot,
-            guildId: access.guild.id,
-            timerKey: entry.timerKey,
-            world: entry.world,
-            deletedAt: null,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [timerTable.guildId, timerTable.world, timerTable.timerKey],
-            set: {
-              ...snapshot,
-              deletedAt: null,
-              updatedAt: now,
-            },
-            setWhere: isNotNull(timerTable.deletedAt),
-          })
-          .returning();
+        const activeEventHeroes = yield* findActiveTimerEventHeroes(
+          transaction,
+          access.guild.id,
+          entry.world,
+          [snapshot, ...existingRows],
+          now,
+        );
+
+        if (activeEventHeroes.length > 0) {
+          return yield* Effect.fail(
+            new InvalidRequestError({
+              message: ErrorKey.EVENT_TIMER_CANNOT_BE_RESET,
+            }),
+          );
+        }
+
+        const restoredRows = yield* rollbackReset
+          ? transaction
+              .update(timerTable)
+              .set({ ...snapshot, updatedAt: now })
+              .where(timerScope)
+              .returning()
+          : transaction
+              .insert(timerTable)
+              .values({
+                ...snapshot,
+                guildId: access.guild.id,
+                timerKey: entry.timerKey,
+                world: entry.world,
+                deletedAt: null,
+                createdAt: now,
+                updatedAt: now,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  timerTable.guildId,
+                  timerTable.world,
+                  timerTable.timerKey,
+                ],
+                set: {
+                  ...snapshot,
+                  deletedAt: null,
+                  updatedAt: now,
+                },
+                setWhere: isNotNull(timerTable.deletedAt),
+              })
+              .returning();
 
         const restored = restoredRows[0];
 
@@ -158,8 +248,8 @@ export const makeRestoreTimer = (
           guildId: access.guild.id,
           world: entry.world,
           timerKey: entry.timerKey,
-          npcId: entry.npcId,
-          npc: entry.npc,
+          npcId: restored.npcId,
+          npc: restored.npc,
           action: TimerHistoryAction.RESTORE,
           actorMemberId: actor.id,
           minSpawnTime: restored.minSpawnTime,
@@ -183,10 +273,7 @@ export const makeRestoreTimer = (
               eq(timerHistoryEntryTable.timerKey, entry.timerKey),
             ),
           )
-          .orderBy(
-            desc(timerHistoryEntryTable.createdAt),
-            desc(timerHistoryEntryTable.id),
-          )
+          .orderBy(desc(timerHistoryEntryTable.id))
           .offset(5);
 
         if (staleHistory.length > 0) {

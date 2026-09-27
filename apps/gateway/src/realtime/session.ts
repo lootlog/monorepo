@@ -28,6 +28,8 @@ export interface SessionData extends AuthenticatedIdentity {
   readonly userAgent?: string;
   readonly supportsFeed?: boolean;
   readonly supportsNotificationVolunteer?: boolean;
+  readonly supportsBattlePings?: boolean;
+  readonly supportsTeamBattlePings?: boolean;
   readonly frameEncoding?: "json";
   joined: boolean;
   guilds: UserGuildData[];

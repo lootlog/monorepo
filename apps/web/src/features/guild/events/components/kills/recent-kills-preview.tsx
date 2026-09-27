@@ -42,6 +42,8 @@ export const RecentKillsPreview = ({
     data: kills,
     isError,
     isLoading,
+    isFetching,
+    refetch,
   } = useRecentHeroKills({
     guildId,
     eventId,
@@ -106,6 +108,8 @@ export const RecentKillsPreview = ({
         hasError={isError}
         isLoading={isLoading}
         kills={kills ?? []}
+        onRetry={() => void refetch()}
+        isRetrying={isFetching}
       />
     </SectionCard>
   );

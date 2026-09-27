@@ -2,6 +2,8 @@ import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import type { Job } from "bullmq";
 import { Effect, Schema } from "effect";
 import type { ApplicationLogger as Logger } from "#src/shared/application-logger";
+import type { NotificationDispatchAttempt } from "#src/notifications/jobs/notification-job-dispatch";
+import { NOTIFICATION_DISPATCH_JOB_OPTIONS } from "#src/notifications/jobs/dispatch-queue";
 
 export interface NotificationDispatchJobData {
   notificationJobId: string;
@@ -10,6 +12,7 @@ export interface NotificationDispatchJobData {
 export interface NotificationDispatch {
   readonly dispatch: (
     notificationJobId: string,
+    attempt: NotificationDispatchAttempt,
   ) => Effect.Effect<void, unknown, never>;
 }
 
@@ -25,15 +28,25 @@ export const makeNotificationDispatchProcessor = (
   Effect.fn("notifications.worker.dispatch")(function* (
     job: Job<NotificationDispatchJobData>,
   ) {
-    yield* notifications.dispatch(job.data.notificationJobId).pipe(
-      Effect.mapError(
-        (cause) =>
-          new NotificationDispatchFailure({
-            jobId: job.data.notificationJobId,
-            cause,
-          }),
-      ),
-    );
+    if (!job.opts.attempts) {
+      job.opts.attempts = NOTIFICATION_DISPATCH_JOB_OPTIONS.attempts;
+      job.opts.backoff ??= NOTIFICATION_DISPATCH_JOB_OPTIONS.backoff;
+    }
+
+    yield* notifications
+      .dispatch(job.data.notificationJobId, {
+        retrying: job.attemptsMade > 0,
+        finalAttempt: job.attemptsMade + 1 >= (job.opts.attempts ?? 1),
+      })
+      .pipe(
+        Effect.mapError(
+          (cause) =>
+            new NotificationDispatchFailure({
+              jobId: job.data.notificationJobId,
+              cause,
+            }),
+        ),
+      );
     logger.log({
       level: "info",
       message: "Notification dispatch job processed",

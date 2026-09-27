@@ -4,7 +4,11 @@ import {
   REALTIME_SUBPROTOCOL,
 } from "@lootlog/client/realtime";
 import { GATEWAY_URL, GATEWAY_SOCKET_PATH } from "@/config/gateway";
-import { REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 
 export type GameRealtimeClient = Pick<
   RealtimeClient,
@@ -33,6 +37,8 @@ export function createGameRealtimeClient(): RealtimeClient {
     protocols: [
       readable ? REALTIME_JSON_SUBPROTOCOL : REALTIME_SUBPROTOCOL,
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
+      REALTIME_BATTLE_PING_CAPABILITY,
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
     ],
     frameEncoding: readable ? "json" : "messagepack",
   });

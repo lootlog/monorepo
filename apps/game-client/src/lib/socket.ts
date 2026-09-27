@@ -1,17 +1,21 @@
 import { isString } from "es-toolkit";
 import {
+  hasRealtimeCapabilities,
   isMapPingAcknowledgement,
   isAirTagSubscriptionAcknowledgement,
   isAirTagObservationAcknowledgement,
   isPresenceFetchResult,
 } from "@lootlog/protocol/realtime/codec";
-import type {
-  AirTagSubscriptionCommand,
-  AirTagObservationCommand,
-  AirTagSubscriptionAck,
-  AirTagObservationAck,
-  MapPingCommand,
-  MapPingAckSchema,
+import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+  type AirTagSubscriptionCommand,
+  type AirTagObservationCommand,
+  type AirTagSubscriptionAck,
+  type AirTagObservationAck,
+  type BattlePingCommand,
+  type MapPingCommand,
+  type MapPingAckSchema,
 } from "@lootlog/protocol/realtime";
 import type { PlayerPresenceAckPayload } from "@/lib/online-players-presence";
 import {
@@ -69,6 +73,7 @@ interface JoinResult {
   readonly connectionId: string;
   readonly organizationIds: string[];
   readonly accessPolicy?: AccessPolicySnapshot;
+  readonly capabilities?: readonly string[];
 }
 
 const isJoinResult = (value: unknown): value is JoinResult =>
@@ -127,6 +132,7 @@ const legacyEventNames: Partial<Record<ServerEvent["type"], GatewayEvent>> = {
   "party-gathering.cancelled": GatewayEvent.PARTY_GATHERING_CANCEL,
   "party-ready-room.updated": GatewayEvent.PARTY_READY_ROOM_UPDATE,
   "map-ping.received": GatewayEvent.MAP_PING_RECEIVE,
+  "battle-ping.received": GatewayEvent.BATTLE_PING_RECEIVE,
   "air-tag.updated": GatewayEvent.AIR_TAG_UPDATE,
   "event.map-status-updated": GatewayEvent.EVENT_MAP_STATUS_UPDATE,
   "event.hero-killed": GatewayEvent.EVENT_HERO_KILLED,
@@ -144,6 +150,7 @@ type SocketCommandPayloads = {
     readonly world?: string;
   };
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingCommand.fields.data.Type;
+  [GatewayEvent.BATTLE_PING_SEND]: typeof BattlePingCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionCommand.fields.data.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationCommand.fields.data.Type;
 };
@@ -151,6 +158,7 @@ type SocketCommandPayloads = {
 type SocketCommandResponses = {
   [GatewayEvent.ONLINE_PLAYERS_PRESENCE_FETCH]: PlayerPresenceAckPayload;
   [GatewayEvent.MAP_PING_SEND]: typeof MapPingAckSchema.Type;
+  [GatewayEvent.BATTLE_PING_SEND]: typeof MapPingAckSchema.Type;
   [GatewayEvent.AIR_TAG_SUBSCRIPTION]: typeof AirTagSubscriptionAck.Type;
   [GatewayEvent.AIR_TAG_OBSERVATION]: typeof AirTagObservationAck.Type;
 };
@@ -182,6 +190,8 @@ export class AppSocket {
   private connectionStateValue: RealtimeConnectionState = "disconnected";
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
+  private battlePingsSupported = false;
+  private teamBattlePingsSupported = false;
   id: string | undefined;
 
   constructor() {
@@ -201,7 +211,13 @@ export class AppSocket {
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
 
-      if (state === "disconnected") this.id = undefined;
+      if (state === "disconnected") {
+        this.id = undefined;
+        // The next connection may reach an older gateway.
+        this.battlePingsSupported = false;
+        this.teamBattlePingsSupported = false;
+      }
+
       this.listeners.emit(
         connected ? GatewayEvent.CONNECT : GatewayEvent.DISCONNECT,
       );
@@ -233,6 +249,16 @@ export class AppSocket {
 
   probeLatency(): void {
     this.realtime.probeLatency();
+  }
+
+  /** Whether the joined gateway accepts `battle-ping.send`; older gateways close the socket on it. */
+  supportsBattlePings(): boolean {
+    return this.battlePingsSupported;
+  }
+
+  /** Whether the joined gateway accepts team battle pings such as `quick-fight`. */
+  supportsTeamBattlePings(): boolean {
+    return this.teamBattlePingsSupported;
   }
 
   getAccessPolicy(): AccessPolicySnapshot | undefined {
@@ -310,6 +336,17 @@ export class AppSocket {
     if (!isJoinResult(response))
       throw new Error("Invalid session.join response");
     this.id = response.connectionId;
+
+    const capabilities = hasRealtimeCapabilities(response)
+      ? response.capabilities
+      : [];
+
+    this.battlePingsSupported = capabilities.includes(
+      REALTIME_BATTLE_PING_CAPABILITY,
+    );
+    this.teamBattlePingsSupported = capabilities.includes(
+      REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+    );
     this.joinedOrganizationIds = [...response.organizationIds];
 
     if (response.accessPolicy) this.applyAccessPolicy(response.accessPolicy);
@@ -492,6 +529,17 @@ export class AppSocket {
       return response;
     }
 
+    if (event === GatewayEvent.BATTLE_PING_SEND) {
+      if (!payload) throw new Error("Missing battle-ping.send payload");
+      const response = await this.realtime.request("battle-ping.send", payload);
+
+      // Battle pings share the map ping acknowledgement contract.
+      if (!isMapPingAcknowledgement(response))
+        throw new Error("Invalid battle-ping.send response");
+
+      return response;
+    }
+
     if (event === GatewayEvent.AIR_TAG_SUBSCRIPTION) {
       if (!payload) throw new Error("Missing air-tag.subscription payload");
       const data = payload;
@@ -593,7 +641,9 @@ export class AppSocket {
 
     if (legacyEvent) {
       const payload =
-        event.type === "map-ping.received" || event.type === "air-tag.updated"
+        event.type === "map-ping.received" ||
+        event.type === "battle-ping.received" ||
+        event.type === "air-tag.updated"
           ? event.data
           : unwrapOrganizationEvent(event);
 

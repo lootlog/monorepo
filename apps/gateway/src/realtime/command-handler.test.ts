@@ -199,6 +199,7 @@ const setup = (
     realtimeHub ?? hub,
     activity,
     { send: () => Promise.reject(new Error("Unexpected map ping")) },
+    { send: () => Promise.reject(new Error("Unexpected battle ping")) },
     {
       updateSubscription,
       publishObservations: () =>
@@ -769,6 +770,7 @@ describe("CommandHandler session lifecycle", () => {
         hub,
         activity,
         { send: () => Promise.reject(new Error("Unexpected map ping")) },
+        { send: () => Promise.reject(new Error("Unexpected battle ping")) },
         {
           updateSubscription: () =>
             Promise.reject(new Error("Unexpected air tag subscription")),
@@ -938,7 +940,7 @@ describe("CommandHandler session lifecycle", () => {
     expect(activity.calls.map(({ type }) => type)).toEqual(["CONNECT_EVENT"]);
   });
 
-  test("advertises connection.ping on join and answers it for game and API key sockets", async () => {
+  test("advertises connection.ping and battle pings on join and answers pings for game and API key sockets", async () => {
     const { handler, hub, presence } = setup();
     const game = makeSocket().socket;
     const integration = makeSocket().socket;
@@ -960,7 +962,13 @@ describe("CommandHandler session lifecycle", () => {
       ),
     );
     expect(hub.responses[0]).toMatchObject({
-      data: { capabilities: ["connection.ping"] },
+      data: {
+        capabilities: [
+          "connection.ping",
+          "lootlog.battle-ping.v1",
+          "lootlog.battle-ping.team.v1",
+        ],
+      },
     });
 
     for (const [socket, requestId] of [
@@ -1347,6 +1355,7 @@ describe("CommandHandler session lifecycle", () => {
             await gate.promise;
           }).pipe(Effect.andThen(Effect.die("Rabbit unavailable"))),
       },
+      { send: () => Promise.reject(new Error("unused")) },
       { send: () => Promise.reject(new Error("unused")) },
       {
         updateSubscription: () => Promise.reject(new Error("unused")),

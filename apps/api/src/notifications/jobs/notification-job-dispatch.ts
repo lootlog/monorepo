@@ -2,12 +2,12 @@ import { isObjectRecord } from "@lootlog/schema/records";
 import type { DiscordNotificationSendCommand } from "@lootlog/schema/notifications";
 import type { NotificationContentModule } from "#src/notifications/content/notification-content.service";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
-import { Effect, Result, Schema } from "effect";
+import { Clock, Effect, Result, Schema } from "effect";
 import type {
   NotificationJobStore,
   NotificationJobWithRelations,
 } from "#src/notifications/jobs/notification-job-store";
-import type { NotificationJobScheduler } from "#src/notifications/jobs/notification-job-scheduler";
+import type { NotificationJobFinalization } from "#src/notifications/jobs/notification-job-finalization";
 import {
   NotificationJobStatus,
   NotificationOwnerType,
@@ -25,7 +25,17 @@ export interface NotificationDispatchStore {
     jobId: string,
     values: Parameters<NotificationJobStore["updateJob"]>[1],
   ) => Effect.Effect<unknown, unknown, never>;
-  readonly claim: (jobId: string) => Effect.Effect<boolean, unknown, never>;
+  readonly claim: (
+    ...args: Parameters<NotificationJobStore["claimJob"]>
+  ) => Effect.Effect<boolean, unknown, never>;
+  readonly failClaim: (
+    ...args: Parameters<NotificationJobStore["failClaim"]>
+  ) => Effect.Effect<boolean, unknown, never>;
+}
+
+export interface NotificationDispatchAttempt {
+  readonly retrying: boolean;
+  readonly finalAttempt: boolean;
 }
 
 export interface NotificationDispatchPermissions {
@@ -88,13 +98,24 @@ export const makeNotificationJobDispatch = (
   store: NotificationDispatchStore,
   permissions: NotificationDispatchPermissions,
   publisher: NotificationDispatchPublisher,
-  scheduler: Pick<NotificationJobScheduler, "enqueue">,
+  finalize: NotificationJobFinalization,
   parseAllowedMentions: NotificationContentModule["parseAllowedMentions"],
 ) =>
-  Effect.fn("notifications.jobs.dispatch")(function* (jobId: string) {
+  Effect.fn("notifications.jobs.dispatch")(function* (
+    jobId: string,
+    attempt: NotificationDispatchAttempt,
+  ) {
     const job = yield* store.find(jobId);
 
-    if (!job) return;
+    if (
+      !job ||
+      job.status === NotificationJobStatus.SENT ||
+      job.status === NotificationJobStatus.FAILED ||
+      job.status === NotificationJobStatus.CANCELED
+    ) {
+      return;
+    }
+
     const blockedReason = targetBlockedReason(job.target);
 
     if (blockedReason) {
@@ -124,7 +145,7 @@ export const makeNotificationJobDispatch = (
       }
     }
 
-    if (!(yield* store.claim(job.id))) return;
+    if (!(yield* store.claim(job.id, attempt.retrying))) return;
     const payload = parseDispatchPayload(job.payloadSnapshot);
 
     const published = yield* publisher
@@ -148,12 +169,24 @@ export const makeNotificationJobDispatch = (
 
     if (Result.isSuccess(published)) return;
     const message = errorMessage(published.failure);
-    yield* store.update(job.id, {
-      status: NotificationJobStatus.PENDING,
+
+    const failed = yield* store.failClaim(job.id, job.attemptCount + 1, {
+      status: attempt.finalAttempt
+        ? NotificationJobStatus.FAILED
+        : NotificationJobStatus.PENDING,
       lastError: `AMQP publish failed: ${message}`,
+      processedAt: attempt.finalAttempt
+        ? new Date(yield* Clock.currentTimeMillis)
+        : null,
     });
-    yield* scheduler.enqueue(
-      job.id,
-      Math.min(60_000, job.attemptCount * 15_000),
-    );
+
+    if (!failed) return;
+
+    if (attempt.finalAttempt) yield* finalize(job);
+
+    return yield* new NotificationJobDispatchFailure({
+      operation: "publish",
+      jobId: job.id,
+      cause: published.failure,
+    });
   });

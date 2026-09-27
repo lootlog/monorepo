@@ -277,6 +277,7 @@ test.each([
   ["api", "/users/@me/stats/kills/analytics"],
   ["api", "/users/@me/stats/kills/activity"],
   ["api", "/users/@me/feed"],
+  ["api", "/guilds/{guildId}/events/{eventId}/kill-history"],
 ] as const)(
   "verified private addition %s %s pins authentication, filters and response",
   (service, path) => {
@@ -329,6 +330,38 @@ test.each([
     expect(() =>
       assertVerifiedPersonalAddition(service, `${key}/unreviewed`, operation),
     ).toThrow("Unverified");
+  },
+);
+
+test.each([
+  "/guilds/{guildId}/events/{eventId}/kills",
+  "/guilds/{guildId}/events/{eventId}/members/{memberId}/kills",
+  "/guilds/{guildId}/events/{eventId}/heroes/{heroId}/kills",
+])(
+  "legacy history migration %s requires deprecation and cursor errors",
+  (path) => {
+    const document = parse(
+      readFileSync(
+        new URL("../../../apps/api/openapi.yaml", import.meta.url),
+        "utf8",
+      ),
+    );
+
+    const operation = document.paths[path].get;
+    const key = `GET ${path}`;
+
+    expect(() =>
+      normalizeAllowedChanges("api", key, normalizeValidationErrors(operation)),
+    ).not.toThrow();
+    expect(() =>
+      normalizeAllowedChanges("api", key, { ...operation, deprecated: false }),
+    ).toThrow("must remain deprecated");
+    expect(() =>
+      normalizeAllowedChanges("api", key, {
+        ...operation,
+        responses: { ...operation.responses, "400": {} },
+      }),
+    ).toThrow();
   },
 );
 

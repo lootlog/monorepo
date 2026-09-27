@@ -31,6 +31,12 @@ const stringList = Schema.mutable(Schema.Array(Schema.String));
 
 const stringLists = Schema.Record(Schema.String, stringList);
 
+// Filters stored before lists existed have no list selection.
+const selectedLists = stringList.pipe(
+  withFallback([]),
+  Schema.withDecodingDefaultType(Effect.succeed([])),
+);
+
 const colorFields = {
   borderColor: Schema.String,
   backgroundColor: Schema.String,
@@ -59,6 +65,16 @@ const persistedTimerSettings = Schema.Struct({
     Schema.Record(Schema.String, Schema.Struct(colorFields)),
   ),
   hiddenDefaultColors: optionalOrUndefined(stringList),
+  customLists: optionalOrUndefined(
+    Schema.Record(
+      Schema.String,
+      Schema.Struct({
+        id: Schema.String,
+        name: Schema.String,
+        npcNames: stringList,
+      }),
+    ),
+  ),
   timersFilters: optionalOrUndefined(
     Schema.Record(
       Schema.String,
@@ -67,6 +83,7 @@ const persistedTimerSettings = Schema.Struct({
         maxLvl: Schema.Finite,
         selectedNpcTypes: Schema.mutable(Schema.Array(NpcTypeSchema)),
         selectedColors: stringList,
+        selectedLists,
       }),
     ),
   ),

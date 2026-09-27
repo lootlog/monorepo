@@ -151,8 +151,8 @@ describe("useHotkeys", () => {
     canvas.id = "GAME_CANVAS";
     document.body.append(input, canvas);
     input.focus();
-    const onMapPingStart = vi.fn<() => boolean>(() => true);
-    renderHook(() => useHotkeys({ onMapPingStart }));
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    renderHook(() => useHotkeys({ onPingStart }));
 
     const event = new MouseEvent("mousedown", {
       bubbles: true,
@@ -167,7 +167,7 @@ describe("useHotkeys", () => {
     input.remove();
     canvas.remove();
 
-    expect(onMapPingStart).toHaveBeenCalledOnce();
+    expect(onPingStart).toHaveBeenCalledOnce();
     expect(event.defaultPrevented).toBe(true);
   });
 
@@ -175,9 +175,9 @@ describe("useHotkeys", () => {
     const canvas = document.createElement("canvas");
     canvas.id = "GAME_CANVAS";
     document.body.append(canvas);
-    const onMapPingStart = vi.fn<() => boolean>(() => true);
-    const onMapPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
-    renderHook(() => useHotkeys({ onMapPingStart, onMapPingEnd }));
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
 
     act(() => {
       canvas.dispatchEvent(
@@ -197,8 +197,8 @@ describe("useHotkeys", () => {
     });
 
     canvas.remove();
-    expect(onMapPingStart).toHaveBeenCalledOnce();
-    expect(onMapPingEnd).toHaveBeenCalledOnce();
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(onPingEnd).toHaveBeenCalledOnce();
   });
 
   it("matches keyboard release by code after a modifier is released", () => {
@@ -209,9 +209,9 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onMapPingStart = vi.fn<() => boolean>(() => true);
-    const onMapPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
-    renderHook(() => useHotkeys({ onMapPingStart, onMapPingEnd }));
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
 
     act(() => {
       window.dispatchEvent(
@@ -232,8 +232,36 @@ describe("useHotkeys", () => {
       );
     });
 
-    expect(onMapPingStart).toHaveBeenCalledOnce();
-    expect(onMapPingEnd).toHaveBeenCalledOnce();
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(onPingEnd).toHaveBeenCalledOnce();
+  });
+
+  it("finishes a keyboard map ping when a focused editor stops the release", () => {
+    useHotkeysStore.getState().setBinding("map-ping", {
+      type: "keyboard",
+      key: "X",
+      shift: false,
+      ctrl: false,
+      alt: false,
+    });
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    renderHook(() => useHotkeys({ onPingStart, onPingEnd }));
+    const editor = document.createElement("div");
+    editor.addEventListener("keyup", (event) => event.stopPropagation());
+    document.body.append(editor);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyX", key: "x" }),
+      );
+      editor.dispatchEvent(
+        new KeyboardEvent("keyup", { code: "KeyX", key: "x", bubbles: true }),
+      );
+    });
+
+    expect(onPingEnd).toHaveBeenCalledOnce();
+    editor.remove();
   });
 
   it("ignores key repeat and cancels an active ping with Escape", () => {
@@ -244,9 +272,9 @@ describe("useHotkeys", () => {
       ctrl: false,
       alt: false,
     });
-    const onMapPingStart = vi.fn<() => boolean>(() => true);
-    const onMapPingCancel = vi.fn<() => void>();
-    renderHook(() => useHotkeys({ onMapPingStart, onMapPingCancel }));
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingCancel = vi.fn<() => void>();
+    renderHook(() => useHotkeys({ onPingStart, onPingCancel }));
 
     act(() => {
       window.dispatchEvent(
@@ -266,8 +294,32 @@ describe("useHotkeys", () => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
 
-    expect(onMapPingStart).toHaveBeenCalledOnce();
-    expect(onMapPingCancel).toHaveBeenCalledOnce();
+    expect(onPingStart).toHaveBeenCalledOnce();
+    expect(onPingCancel).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a held ping open when the caller re-renders with new callbacks", () => {
+    const onPingStart = vi.fn<() => boolean>(() => true);
+    const onPingCancel = vi.fn<() => void>();
+    const firstEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+    const latestEnd = vi.fn<(event: KeyboardEvent | MouseEvent) => void>();
+
+    const view = renderHook(
+      ({ onPingEnd }) => useHotkeys({ onPingStart, onPingCancel, onPingEnd }),
+      { initialProps: { onPingEnd: firstEnd } },
+    );
+
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mousedown", { button: 1 }));
+    });
+    view.rerender({ onPingEnd: latestEnd });
+    act(() => {
+      window.dispatchEvent(new MouseEvent("mouseup", { button: 1 }));
+    });
+
+    expect(onPingCancel).not.toHaveBeenCalled();
+    expect(firstEnd).not.toHaveBeenCalled();
+    expect(latestEnd).toHaveBeenCalledOnce();
   });
 
   it("enqueues every explicit rapid invite-all hotkey activation", async () => {
