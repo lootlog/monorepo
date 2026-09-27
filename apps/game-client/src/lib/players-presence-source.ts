@@ -13,7 +13,7 @@ import {
   type PlayerPresenceResponse,
   type PlayerPresenceUpdatePayload,
 } from "./online-players-presence";
-import { PresenceMapIndex } from "./presence-map-index";
+import { PresenceMapIndex, type MapOccupancy } from "./presence-map-index";
 import type { AppSocket, PermissionsUpdatedPayload } from "./socket";
 
 type Listener = () => void;
@@ -132,12 +132,20 @@ export class PlayersPresenceSource {
     onlinePlayers: this.index.toPlayers(),
   });
 
-  isMapOccupied = (mapName: string): boolean =>
+  getMapOccupancy = (mapName: string): MapOccupancy | undefined =>
     this.snapshot.isCurrent &&
     this.ready() &&
     this.snapshotConnectionId === this.socket.id &&
-    canReadPresenceLocation(this.organization()) &&
-    this.index.has(mapName);
+    canReadPresenceLocation(this.organization())
+      ? this.index.getOccupancy(mapName)
+      : undefined;
+
+  /** Whether a character is an online member; unknown until the snapshot is current. */
+  isOnlineMember = (characterId: string): boolean =>
+    this.snapshot.isCurrent && this.index.hasCharacter(characterId);
+
+  isMapOccupied = (mapName: string): boolean =>
+    this.getMapOccupancy(mapName) !== undefined;
 
   retain = (hydrate = true): (() => void) => {
     this.references += 1;
@@ -188,11 +196,11 @@ export class PlayersPresenceSource {
       this.mapListeners.set(mapName, listeners);
     }
 
-    // Occupancy changes only; metadata deltas must never wake a timer tile.
-    let previous = this.isMapOccupied(mapName);
+    // Who is on the map and their AFK state only; position deltas must never wake a timer tile.
+    let previous = this.getMapOccupancy(mapName);
 
     const onChange = () => {
-      const next = this.isMapOccupied(mapName);
+      const next = this.getMapOccupancy(mapName);
 
       if (next === previous) return;
       previous = next;

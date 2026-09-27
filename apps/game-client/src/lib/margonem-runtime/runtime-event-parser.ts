@@ -12,6 +12,8 @@ export function parseRuntimeFacts(event: GameEvent): readonly RuntimeFact[] {
     if (present) facts.push(Object.freeze({ event, kind }));
   };
 
+  // Margonem clears its map state, players included, without sending `del`.
+  add("reload", event.t === "reload");
   add("chat", event.chat !== undefined);
   add("dialog", event.d !== undefined);
   add("battle", event.f !== undefined);

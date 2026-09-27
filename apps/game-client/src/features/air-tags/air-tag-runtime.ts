@@ -8,7 +8,10 @@ import type {
   AirTagSubscriptionPayload,
   AirTagUpdateEvent,
 } from "@lootlog/schema/air-tag";
-import { airTagObservationController } from "./air-tag-observation-controller";
+import {
+  AIR_TAG_BATCH_INTERVAL_MS,
+  airTagObservationController,
+} from "./air-tag-observation-controller";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { airTagRenderer } from "./air-tag-renderer";
 
@@ -254,7 +257,20 @@ export class AirTagRuntime {
   ): void => {
     if (!this.isPublishing(this.state)) return;
 
-    getSocket().emit(GatewayEvent.AIR_TAG_OBSERVATION, batch, () => {});
+    getSocket().emit(
+      GatewayEvent.AIR_TAG_OBSERVATION,
+      batch,
+      (acknowledgement) => {
+        if (
+          acknowledgement.status === "rejected" &&
+          acknowledgement.code === "rate-limited"
+        )
+          airTagObservationController.retry(
+            batch,
+            acknowledgement.retryAfterMs ?? AIR_TAG_BATCH_INTERVAL_MS,
+          );
+      },
+    );
   };
 
   private getCurrentMap(): { id: number; name: string } | null {
