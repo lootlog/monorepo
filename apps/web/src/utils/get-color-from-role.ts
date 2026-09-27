@@ -1,7 +1,10 @@
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
+
 const DEFAULT_ROLE_COLOR_HEX = "FFF";
 
 type RoleColorSource = {
   color?: number | null;
+  position?: number | null;
 };
 
 const hasCustomRoleColor = (
@@ -29,5 +32,5 @@ export const getCustomRoleCssColor = (
 export const getColorFromRole = (
   roles: readonly RoleColorSource[] | null | undefined,
 ) => {
-  return getColorFromRoleColor(roles?.[0]?.color);
+  return getColorFromRoleColor(getMemberDisplayRole(roles)?.color);
 };
