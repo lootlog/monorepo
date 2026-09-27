@@ -14,10 +14,7 @@ import {
 import { createHash } from "node:crypto";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 import { ItemRaritySchema } from "@lootlog/schema/item-rarity";
-import {
-  LootShareSourceEnum as LootShareSource,
-  ProfessionEnum as Profession,
-} from "@lootlog/schema/loot";
+import { LootShareSourceEnum as LootShareSource } from "@lootlog/schema/loot";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import { Permission } from "@lootlog/schema/permissions";
 import type {
@@ -31,6 +28,7 @@ import type {
 import { ErrorKey } from "#src/loots/error-key";
 import { getItemTypeByCl } from "#src/shared/margonem/item-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
+import { parseRequiredProfessions } from "#src/loots/required-professions";
 import {
   LootPublicationPayload,
   type LootPublication,
@@ -649,14 +647,7 @@ class LootSubmissionAcceptanceImplementation implements LootSubmissionAcceptance
         ? undefined
         : Schema.decodeUnknownSync(ItemRaritySchema)(rawRarity);
 
-    const requiredProf = parsedStats["reqp"];
-
-    const prof = requiredProf
-      ? requiredProf
-          .split("")
-          .map((id) => getProfByShortname(id))
-          .filter((prof) => prof !== undefined)
-      : Object.values(Profession);
+    const prof = parseRequiredProfessions(parsedStats["reqp"]);
 
     return { lvl, rarity, prof, type: getItemTypeByCl(item.cl) };
   }
