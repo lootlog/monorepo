@@ -1,3 +1,4 @@
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import type { roleTable } from "#src/database/drizzle/schema";
 
 type MemberDisplayRole = Pick<
@@ -5,12 +6,16 @@ type MemberDisplayRole = Pick<
   "position" | "color"
 > & { memberId: number };
 
-/** Input is ordered by descending role position by the persistence query. */
+/** Returns the member's Discord display role as a zero- or one-item list. */
 export const topMemberDisplayRoles = (
   roles: MemberDisplayRole[],
   memberId: number,
-) =>
-  roles
-    .filter((role) => role.memberId === memberId)
-    .slice(0, 1)
-    .map(({ position, color }) => ({ position, color }));
+) => {
+  const displayRole = getMemberDisplayRole(
+    roles.filter((role) => role.memberId === memberId),
+  );
+
+  return displayRole
+    ? [{ position: displayRole.position, color: displayRole.color }]
+    : [];
+};

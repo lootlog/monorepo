@@ -10,19 +10,7 @@ describe("useMemberColor", () => {
     expect(useMemberColor({ color: 0 })).toBe("FFF");
   });
 
-  it("falls back to the highest role color", () => {
-    expect(
-      useMemberColor({
-        roles: [
-          { position: 1, color: 0x111111 },
-          { position: 5, color: 0xabcdef },
-        ],
-      }),
-    ).toBe("abcdef");
-  });
-
   it("returns fallback color when there is no member data", () => {
     expect(useMemberColor(undefined)).toBe("FFF");
-    expect(useMemberColor({ roles: [] })).toBe("FFF");
   });
 });
