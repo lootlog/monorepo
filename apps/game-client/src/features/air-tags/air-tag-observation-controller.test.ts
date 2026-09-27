@@ -164,7 +164,7 @@ describe("AirTagObservationController", () => {
     });
   });
 
-  it("reports stasis from a partial update at once and its end on the next small step", () => {
+  it("reports stasis from a partial update at once, keeps the profession, and ends stasis on the next small step", () => {
     const publisher = vi.fn<(batch: AirTagObservationBatch) => void>();
     const controller = new AirTagObservationController();
     controller.configure({
@@ -177,15 +177,18 @@ describe("AirTagObservationController", () => {
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenLastCalledWith({
       expectedMapId: 42,
-      observations: [expect.objectContaining({ lvl: 250, stasis: false })],
+      observations: [
+        expect.objectContaining({ lvl: 250, prof: "w", stasis: false }),
+      ],
     });
 
+    // A partial update omits the profession; the observation keeps it.
     controller.handle({ "123": { stasis: 1 } });
     vi.advanceTimersByTime(AIR_TAG_BATCH_INTERVAL_MS);
     expect(publisher).toHaveBeenCalledTimes(2);
     expect(publisher).toHaveBeenLastCalledWith({
       expectedMapId: 42,
-      observations: [expect.objectContaining({ stasis: true })],
+      observations: [expect.objectContaining({ prof: "w", stasis: true })],
     });
 
     // Margonem sends no `stasis: 0` when a player in stasis moves.

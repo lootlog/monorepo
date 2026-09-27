@@ -128,3 +128,60 @@ body:has(.sbx-panel) .sandbox-game {
     monospace;
   overflow-wrap: anywhere;
 }
+
+/* Timer states preview: a stand-in for the Timery window surface. */
+.sbx-preview {
+  position: absolute;
+  bottom: 16px;
+  left: 280px;
+  pointer-events: auto;
+  color: #fff;
+  font-family: Arimo, sans-serif;
+  background: rgb(0 0 0 / 0.75);
+  border: 1px solid rgb(255 255 255 / 0.5);
+  border-radius: 8px;
+  padding: 8px 10px 12px;
+  box-shadow: 2px 2px 3px 3px rgb(12 13 13 / 0.4);
+}
+
+.sbx-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.sbx-preview-header button {
+  font: inherit;
+  color: #e6e6e6;
+  background: #2a2d35;
+  border: 1px solid #454a55;
+  border-radius: 6px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.sbx-preview-columns {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.sbx-preview-columns > section > h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #a1a1aa;
+}
+
+.sbx-preview-grid {
+  display: grid;
+}
+
+.sbx-preview-tile {
+  display: block;
+  min-width: 0;
+  outline: none;
+}
