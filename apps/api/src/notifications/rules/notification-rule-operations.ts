@@ -4,7 +4,11 @@ import {
   requireNotificationRuleApiKeyScope,
 } from "../notification-api-key-scope.js";
 import { parseNotificationFilters } from "./notification-matching.service.js";
-import { readNotificationTestUsage } from "../jobs/notification-test-usage.js";
+import {
+  getNotificationTestUsageResponse,
+  NOTIFICATION_TEST_WINDOW_MS,
+  readNotificationTestUsage,
+} from "../jobs/notification-test-usage.js";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
@@ -40,8 +44,6 @@ import {
 } from "#src/shared/http/http-errors";
 
 const TEST_LIMIT = 10;
-
-const TEST_WINDOW_MS = 15 * 60_000;
 
 const MAX_NPCS_PER_RULE = 5;
 
@@ -167,7 +169,7 @@ export const makeNotificationRuleOperations = (
     );
 
   const testUsage = (targetIds: number[]) =>
-    readNotificationTestUsage(database, targetIds, TEST_WINDOW_MS).pipe(
+    readNotificationTestUsage(database, targetIds).pipe(
       Effect.mapError(
         (cause) =>
           new NotificationRuleOperationFailure({
@@ -184,19 +186,7 @@ export const makeNotificationRuleOperations = (
       return candidate.length > current.length ? candidate : current;
     }, []);
 
-    const used = worst.length;
-    const oldest = worst[0];
-
-    return {
-      limit: TEST_LIMIT,
-      used,
-      remaining: Math.max(0, TEST_LIMIT - used),
-      windowSeconds: Math.floor(TEST_WINDOW_MS / 1000),
-      nextAvailableAt:
-        used >= TEST_LIMIT && oldest
-          ? new Date(oldest.getTime() + TEST_WINDOW_MS).toISOString()
-          : null,
-    };
+    return getNotificationTestUsageResponse(worst, TEST_LIMIT);
   };
 
   const listGuild = Effect.fn("notifications.rules.listGuild")(function* (
@@ -246,7 +236,9 @@ export const makeNotificationRuleOperations = (
         ruleCount: counts[0]?.value ?? loadedRules.length,
         maxNpcsPerRule: MAX_NPCS_PER_RULE,
         testTriggerLimit: TEST_LIMIT,
-        testTriggerWindowSeconds: Math.floor(TEST_WINDOW_MS / 1000),
+        testTriggerWindowSeconds: Math.floor(
+          NOTIFICATION_TEST_WINDOW_MS / 1000,
+        ),
       },
     };
   });

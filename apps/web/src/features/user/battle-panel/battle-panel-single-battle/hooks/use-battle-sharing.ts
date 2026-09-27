@@ -1,11 +1,5 @@
-import {
-  invalidateBattlesControllerGetBattle,
-  invalidateBattlesControllerGetDashboardBattles,
-  useBattlesControllerUpdateBattle,
-  invalidatePublicBattlesControllerGetPublicBattle,
-  invalidatePublicBattlesControllerGetPublicBattleRaw,
-  invalidatePublicBattlesControllerGetPublicBattleTimeline,
-} from "@lootlog/client/battlelog";
+import { createBattleVisibilityInvalidations } from "../../battle-visibility-queries";
+import { useBattlesControllerUpdateBattle } from "@lootlog/client/battlelog";
 
 import { BATTLELOG_PUBLIC_URL } from "@/config/addon";
 import { useRef, useState } from "react";
@@ -68,22 +62,9 @@ export const useBattleSharing = () => {
           pathParams: { battleId },
           data: { public: action === "share" },
         });
-        await Promise.all([
-          invalidateBattlesControllerGetBattle(queryClient, { battleId }),
-          invalidateBattlesControllerGetDashboardBattles(queryClient),
-          invalidatePublicBattlesControllerGetPublicBattle(queryClient, {
-            battleId,
-          }),
-          invalidatePublicBattlesControllerGetPublicBattleRaw(queryClient, {
-            battleId,
-          }),
-          invalidatePublicBattlesControllerGetPublicBattleTimeline(
-            queryClient,
-            {
-              battleId,
-            },
-          ),
-        ]);
+        await Promise.all(
+          createBattleVisibilityInvalidations(queryClient, [battleId]),
+        );
         toast.success(
           t(
             action === "share"

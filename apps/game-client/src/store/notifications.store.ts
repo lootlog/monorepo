@@ -49,6 +49,16 @@ export type NotificationAutoHideState = {
   durationMs: number;
 };
 
+/**
+ * A countdown the row derived itself: a notification presented before its
+ * category settings loaded has no stored auto-hide state, yet the cleanup
+ * sweep still expires it from its arrival time.
+ */
+export type NotificationAutoHideCountdown = {
+  deadlineMs: number;
+  durationMs: number;
+};
+
 type PresentableNotification =
   | NotificationWithServers
   | MentionNotification
@@ -79,7 +89,10 @@ interface NotificationsState {
     world?: string,
   ) => void;
   setNotificationAutoHide: (listKey: string, durationMs: number) => void;
-  pauseNotificationAutoHide: (listKey: string) => void;
+  pauseNotificationAutoHide: (
+    listKey: string,
+    derivedCountdown?: NotificationAutoHideCountdown,
+  ) => void;
   resumeNotificationAutoHide: (listKey: string) => void;
   clearNotificationAutoHide: (listKey: string) => void;
 }
@@ -418,9 +431,14 @@ export const useNotificationsStore = create<NotificationsState>()(
           },
         };
       }),
-    pauseNotificationAutoHide: (listKey) =>
+    pauseNotificationAutoHide: (listKey, derivedCountdown) =>
       set((state) => {
-        const currentState = state.notificationAutoHideByListKey[listKey];
+        const currentState =
+          state.notificationAutoHideByListKey[listKey] ??
+          (derivedCountdown && {
+            ...derivedCountdown,
+            pausedRemainingMs: null,
+          });
 
         if (!currentState || currentState.deadlineMs === null) {
           return state;

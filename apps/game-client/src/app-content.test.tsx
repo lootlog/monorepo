@@ -19,7 +19,7 @@ import { createRealtimeTest } from "@/test/realtime-test";
 import { createDetectorSettings } from "@/lib/game-account-preferences";
 import { useWindowsStore } from "@/store/windows.store";
 import { useGlobalStore } from "@/store/global.store";
-import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
 
 vi.stubGlobal("Engine", createNativeRuntime());
 
@@ -96,11 +96,11 @@ it("opens the map ping wheel from the configured hotkey and cancels it on Escape
   );
   fireEvent.mouseDown(canvas, { button: 1, clientX: 400, clientY: 272 });
   await waitFor(() =>
-    expect(mapPingInteractionController.getSnapshot()).not.toBeNull(),
+    expect(pingInteractionController.getSnapshot()).not.toBeNull(),
   );
   expect(screen.getByRole("status", { name: /ping/i })).toBeInTheDocument();
   fireEvent.keyDown(window, { key: "Escape" });
-  expect(mapPingInteractionController.getSnapshot()).toBeNull();
+  expect(pingInteractionController.getSnapshot()).toBeNull();
   expect(screen.queryByRole("status", { name: /ping/i })).toBeNull();
   act(() => view.unmount());
   canvas.remove();

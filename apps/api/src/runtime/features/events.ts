@@ -1,3 +1,4 @@
+import { makeEventKillHistory } from "#src/events/history/event-kill-history";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { makeEventTimerStore } from "#src/events/respawn/event-timer.store";
 import {
@@ -142,7 +143,6 @@ export const eventsServicesLive = Layer.effect(
       points,
       tracking,
       summary,
-      timers,
       queues.respawn,
     );
 
@@ -175,6 +175,12 @@ export const eventsServicesLive = Layer.effect(
     const eventAccess = makeEventAccess(database);
 
     const layer = eventDataLayer({
+      history: makeEventKillHistory({
+        database,
+        eventAccess,
+        readCache,
+        points,
+      }),
       assignment: makeEventsAssignment(
         eventAccess,
         makeEventCatalogMutations(database, redis, applicationLogger),
@@ -238,7 +244,6 @@ export const eventsServicesLive = Layer.effect(
       },
       monitoring: makeEventsMonitoring(
         coordination,
-        kill,
         presenceStats,
         respawn,
         eventAccess,
@@ -299,7 +304,6 @@ export const eventsServicesLive = Layer.effect(
       pins: makeEventsPins(makePinnedEventsPersistence(database)),
       ranking: makeEventsRanking(
         rankingRead,
-        kill,
         catalogRead,
         eventAccess,
         makeEventParticipation(

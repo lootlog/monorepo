@@ -36,6 +36,7 @@ describe("settings manifest persistence references", () => {
       "detector",
       "mutes",
       "battle-panel",
+      "pings",
       "sounds",
       "controls",
       "experimental",
@@ -58,6 +59,7 @@ describe("settings manifest persistence references", () => {
       "timer-behavior",
       "timer-appearance",
       "timer-colors",
+      "timer-lists",
       "hidden-timers",
     ]);
     expect(subsectionsOf("notifications")).toEqual(["notification-rules"]);

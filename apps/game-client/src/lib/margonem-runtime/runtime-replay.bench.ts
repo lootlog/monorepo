@@ -390,9 +390,9 @@ function createFullReplayHarness(
         continue;
       }
 
-      if ("x" in entry) rawOthers[id].x = entry.x;
+      if (entry.x !== undefined) rawOthers[id].x = entry.x;
 
-      if ("y" in entry) rawOthers[id].y = entry.y;
+      if (entry.y !== undefined) rawOthers[id].y = entry.y;
     }
 
     for (const deletion of event.npcs_del ?? []) {

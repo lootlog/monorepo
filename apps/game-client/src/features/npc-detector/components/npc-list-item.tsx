@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { ListRow } from "@/components/list-row";
+import { ListRowArrival } from "@/components/list-row-arrival";
 import { NpcTile } from "@/components/npc-tile";
 import { IconButton } from "@/components/ui/icon-button";
 import { NpcType } from "@/api/npcs.api";
@@ -15,6 +17,7 @@ import type {
 } from "@/store/npc-detector.store";
 import { AlertTriangle, Megaphone, Users, XIcon } from "lucide-react";
 import {
+  getArrivalStrength,
   getBackgroundColor,
   getBorderColor,
 } from "@/utils/notifications-and-detector/background";
@@ -48,51 +51,6 @@ type NpcListItemProps = {
   npcTypeColors?: NpcTypeColors;
 };
 
-const getRepeatDetectionFlashFrames = (npcType: string) => {
-  if (npcType === NpcType.TITAN) {
-    return {
-      overlayBackground:
-        "radial-gradient(circle at center, rgba(255,255,255,0.82) 0%, rgba(219,234,254,0.7) 20%, rgba(125,211,252,0.42) 40%, rgba(34,211,238,0.16) 60%, rgba(34,211,238,0) 80%)",
-      glowShadow:
-        "inset 0 0 0 1px rgba(219,234,254,0.82), inset 0 0 34px rgba(125,211,252,0.4), inset 0 0 60px rgba(34,211,238,0.16)",
-    };
-  }
-
-  if (npcType === NpcType.COLOSSUS) {
-    return {
-      overlayBackground:
-        "radial-gradient(circle at center, rgba(236,253,245,0.82) 0%, rgba(167,243,208,0.66) 20%, rgba(45,212,191,0.42) 40%, rgba(20,184,166,0.16) 60%, rgba(20,184,166,0) 80%)",
-      glowShadow:
-        "inset 0 0 0 1px rgba(167,243,208,0.8), inset 0 0 30px rgba(45,212,191,0.34), inset 0 0 54px rgba(20,184,166,0.14)",
-    };
-  }
-
-  if (npcType === NpcType.ELITE2) {
-    return {
-      overlayBackground:
-        "radial-gradient(circle at center, rgba(250,245,255,0.82) 0%, rgba(233,213,255,0.68) 20%, rgba(217,70,239,0.42) 40%, rgba(192,38,211,0.16) 60%, rgba(192,38,211,0) 80%)",
-      glowShadow:
-        "inset 0 0 0 1px rgba(233,213,255,0.82), inset 0 0 30px rgba(217,70,239,0.34), inset 0 0 54px rgba(192,38,211,0.14)",
-    };
-  }
-
-  if (npcType === NpcType.HERO) {
-    return {
-      overlayBackground:
-        "radial-gradient(circle at center, rgba(255,247,237,0.82) 0%, rgba(254,215,170,0.68) 20%, rgba(251,146,60,0.42) 40%, rgba(249,115,22,0.16) 60%, rgba(249,115,22,0) 80%)",
-      glowShadow:
-        "inset 0 0 0 1px rgba(254,215,170,0.82), inset 0 0 30px rgba(251,146,60,0.34), inset 0 0 54px rgba(249,115,22,0.14)",
-    };
-  }
-
-  return {
-    overlayBackground:
-      "radial-gradient(circle at center, rgba(243,244,246,0.82) 0%, rgba(209,213,219,0.62) 20%, rgba(156,163,175,0.36) 40%, rgba(107,114,128,0.14) 60%, rgba(107,114,128,0) 80%)",
-    glowShadow:
-      "inset 0 0 0 1px rgba(209,213,219,0.8), inset 0 0 28px rgba(156,163,175,0.28), inset 0 0 48px rgba(107,114,128,0.12)",
-  };
-};
-
 export const NpcListItem = ({
   animationEffectsEnabled,
   npc,
@@ -124,7 +82,6 @@ export const NpcListItem = ({
   });
 
   const key = npcType;
-  const repeatDetectionFlashFrames = getRepeatDetectionFlashFrames(key);
 
   const handleRemoveNpc = (npcId: number) => {
     removeNpc(npcId);
@@ -206,24 +163,25 @@ export const NpcListItem = ({
   const shouldPlayDetectionAnimation =
     animationEffectsEnabled && detectionAnimationCycle !== null;
 
-  const content = (
-    <>
-      {animationEffectsEnabled ? (
-        shouldPlayDetectionAnimation ? (
-          <div
-            key={detectionAnimationCycle}
-            className="ll-npc-detection-flash ll:pointer-events-none ll:absolute ll:inset-0 ll:rounded-[inherit]"
-            style={{
-              background: repeatDetectionFlashFrames.overlayBackground,
-              boxShadow: repeatDetectionFlashFrames.glowShadow,
-            }}
-          />
-        ) : null
+  return (
+    <ListRow
+      fill={background}
+      className={cn(
+        "ll:relative ll:h-full ll:gap-1.5 ll:overflow-hidden ll:font-normal",
+        shouldPlayDetectionAnimation && "ll-row-settle",
+      )}
+    >
+      {shouldPlayDetectionAnimation ? (
+        <ListRowArrival
+          key={detectionAnimationCycle}
+          accent={borderColor}
+          strength={getArrivalStrength(key)}
+        />
       ) : null}
       <NpcTile npc={npc} />
-      <div className="ll:relative ll:flex ll:flex-col ll:flex-1 ll:min-w-0">
-        <div className="ll:flex ll:text-xs ll:gap-1 ll:overflow-hidden">
-          <span className="ll:font-semibold ll:truncate ll:min-w-0">
+      <div className="ll:relative ll:flex ll:min-w-0 ll:flex-1 ll:flex-col ll:leading-tight">
+        <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-xs">
+          <span className="ll:min-w-0 ll:truncate ll:font-semibold">
             {npc.nick}
           </span>
           <span className="ll:shrink-0">
@@ -231,14 +189,14 @@ export const NpcListItem = ({
             {npc.prof})
           </span>
         </div>
-        <div className="ll:flex ll:text-[11px] ll:text-gray-400 ll:gap-1 ll:overflow-hidden">
-          <span className="ll:truncate ll:min-w-0">{npc.location}</span>
-          <span className="ll:shrink-0">
+        <div className="ll:flex ll:gap-1 ll:overflow-hidden ll:text-[11px] ll:text-gray-300">
+          <span className="ll:min-w-0 ll:truncate">{npc.location}</span>
+          <span className="ll:shrink-0 ll:tabular-nums">
             ({npc.x}, {npc.y})
           </span>
         </div>
       </div>
-      <div className="ll:relative ll:flex ll:items-center ll:gap-1 ll:shrink-0">
+      <div className="ll:relative ll:flex ll:shrink-0 ll:items-center">
         {resolvedGuildIds.length === 0 && (
           <IconButton
             label={t("actions.openSettingsAria")}
@@ -298,26 +256,6 @@ export const NpcListItem = ({
           </IconButton>
         )}
       </div>
-    </>
-  );
-
-  const className = cn(
-    "ll:relative ll:overflow-hidden ll:flex ll:items-center ll:py-1 ll:gap-2 ll:px-2",
-    "ll:border ll:rounded-sm",
-    "ll:transition-[background-color] ll:duration-300",
-  );
-
-  const style = { background, borderColor };
-
-  return (
-    <div
-      className={cn(
-        className,
-        shouldPlayDetectionAnimation && "ll-npc-detection-settle",
-      )}
-      style={style}
-    >
-      {content}
-    </div>
+    </ListRow>
   );
 };

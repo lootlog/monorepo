@@ -106,12 +106,6 @@ it("filters hero timers by NPC level before exposing their public projection", a
 
     const ranking = makeEventsRanking(
       { getRanking: unexpected, getEditHistories: unexpected },
-      {
-        getEventKillHistory: unexpected,
-        getMemberKillHistory: unexpected,
-        getHeroKillHistory: unexpected,
-        getKillDetail: unexpected,
-      },
       { getEventOverview: unexpected },
       makeEventAccess(database),
       {

@@ -16,28 +16,26 @@ export type MemberIdentity = {
 export const formatPercentage = (value: number) => `${formatPoints(value)}%`;
 
 export const getMemberKillScoringViewModel = (
-  kill: EventMemberKill,
+  kill: KillHistoryMemberEntry,
   t: TFunction,
 ) => {
   const point = kill.memberPoint;
 
   const scoring = getScoringBreakdown({
-    points: point?.points ?? 0,
-    basePoints: point?.basePoints ?? 0,
-    manualAdjustmentPoints: point?.manualAdjustmentPoints ?? 0,
-    bonusBreakdown: point?.bonusBreakdown,
+    points: point.points,
+    basePoints: point.basePoints,
+    manualAdjustmentPoints: point.manualAdjustmentPoints ?? 0,
+    bonusBreakdown: point.bonusBreakdown,
   });
 
   return {
     point,
     hasManualPointsAdjustment: scoring.manualAdjustmentPoints !== 0,
     trackingPercentage:
-      point?.trackingDurationPercentage !== undefined &&
       point.trackingDurationPercentage !== null
         ? `${Math.round(point.trackingDurationPercentage)}%`
         : "-",
     trackingTime:
-      point?.trackingDurationSeconds !== undefined &&
       point.trackingDurationSeconds !== null &&
       point.trackingDurationSeconds >= 0
         ? formatDurationHuman(point.trackingDurationSeconds)
@@ -47,7 +45,7 @@ export const getMemberKillScoringViewModel = (
 };
 
 import type { TFunction } from "i18next";
-import type { EventMemberKill } from "../../hooks/queries/use-event-member-kill-history";
+import type { KillHistoryMemberEntry } from "@lootlog/client/main";
 import { formatPoints } from "../../utils/format-points";
 import { formatDurationHuman } from "../../utils/format-duration";
 import {

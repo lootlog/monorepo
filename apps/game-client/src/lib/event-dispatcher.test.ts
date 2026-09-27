@@ -23,6 +23,7 @@ import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { normalizeNpc } from "@/lib/margonem-runtime/runtime-adapter";
 import { createDetectorSettings } from "./game-account-preferences";
 import { queryClient } from "./query-client";
+import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
 import { EventDispatcher } from "./event-dispatcher";
 
 const town = (id: number): NonNullable<GameEvent["town"]> => ({
@@ -232,4 +233,12 @@ it("sends loot distribution updates over HTTP and clears the pending loot only a
     msg: "Podział łupów: Tanroth",
   });
   await waitFor(() => expect(useLootStore.getState().lastLootId).toBeNull());
+});
+
+it("forgets AirTag targets when Margonem reloads the map without deleting its players", () => {
+  const forgetTargets = vi.spyOn(airTagObservationController, "forgetTargets");
+
+  new EventDispatcher().handleEvent({ t: "reload" });
+
+  expect(forgetTargets).toHaveBeenCalledOnce();
 });

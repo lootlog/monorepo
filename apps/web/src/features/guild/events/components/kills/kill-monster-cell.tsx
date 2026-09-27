@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NpcTile } from "@/components/tiles";
-import type { HeroKillHeroNpc } from "../../hooks/queries/use-hero-kill-history";
+import type { KillHistoryEntryHeroNpc } from "@lootlog/client/main";
 import { formatDateTime } from "../../utils/format-date";
 
 type KillMonsterCellProps = {
@@ -13,7 +13,7 @@ type KillMonsterCellProps = {
   /** Keeps the kill date under the name when the table has no date column. */
   isDateAlwaysVisible?: boolean;
   kill: {
-    heroNpc: Pick<HeroKillHeroNpc, "npcIcon" | "npcId" | "npcName">;
+    heroNpc: Pick<KillHistoryEntryHeroNpc, "npcIcon" | "npcId" | "npcName">;
     heroNpcId: string;
     id: string;
     killedAt: string;

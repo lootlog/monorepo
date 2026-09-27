@@ -169,6 +169,7 @@ export type UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = typeof Use
 export const UserPreferencesResponseDtoOutputChatAppearanceNpcLayout = {
   tile: 'tile',
   inline: 'inline',
+  text: 'text',
 } as const;
 
 export type UserPreferencesResponseDtoOutputChatAppearance = {
@@ -274,6 +275,7 @@ export type UpdateUserPreferencesDtoChatAppearanceNpcLayout = typeof UpdateUserP
 export const UpdateUserPreferencesDtoChatAppearanceNpcLayout = {
   tile: 'tile',
   inline: 'inline',
+  text: 'text',
 } as const;
 
 export type UpdateUserPreferencesDtoChatAppearance = {
@@ -7463,6 +7465,124 @@ export interface EventHeroStatsResponseDto {
   killCount: number;
 }
 
+export type KillHistoryEventResponseKind = typeof KillHistoryEventResponseKind[keyof typeof KillHistoryEventResponseKind];
+
+
+export const KillHistoryEventResponseKind = {
+  event: 'event',
+} as const;
+
+export type KillHistoryEntryHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface KillHistoryEntry {
+  id: string;
+  heroNpcId: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  killedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  minSpawnTimeAtKill: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: KillHistoryEntryHeroNpc;
+  /**
+     * Number of recorded participants with a point record, including participants marked absent.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participantCount: number;
+}
+
+export interface KillHistoryEventResponse {
+  kind: KillHistoryEventResponseKind;
+  data: KillHistoryEntry[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryMemberResponseKind = typeof KillHistoryMemberResponseKind[keyof typeof KillHistoryMemberResponseKind];
+
+
+export const KillHistoryMemberResponseKind = {
+  member: 'member',
+} as const;
+
+export type KillHistoryBonusBreakdown = string | number | boolean | (KillHistoryBonusBreakdown | null)[] | {[key: string]: KillHistoryBonusBreakdown | null} | null;
+
+export interface KillHistoryMemberPoint {
+  points: number;
+  basePoints: number;
+  /** @nullable */
+  manualAdjustmentPoints: number | null;
+  bonusBreakdown: KillHistoryBonusBreakdown | null;
+  /** @nullable */
+  trackingDurationSeconds: number | null;
+  /** @nullable */
+  trackingDurationPercentage: number | null;
+}
+
+export type KillHistoryMemberEntryHeroNpc = {
+  id: string;
+  /** @nullable */
+  npcId: number | null;
+  npcName: string;
+  /** @nullable */
+  npcIcon: string | null;
+  /** @nullable */
+  npcLvl: number | null;
+};
+
+export interface KillHistoryMemberEntry {
+  id: string;
+  heroNpcId: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  killedAt: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  minSpawnTimeAtKill: string;
+  /** @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$ */
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: KillHistoryMemberEntryHeroNpc;
+  /**
+     * Number of recorded participants with a point record, including participants marked absent.
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  participantCount: number;
+  memberPoint: KillHistoryMemberPoint;
+}
+
+export type KillHistoryMemberResponseMember = {
+  /**
+     * @minimum 1
+     * @maximum 9007199254740991
+     */
+  id: number;
+  name: string;
+  /** @nullable */
+  avatar: string | null;
+  userId: string;
+};
+
+export interface KillHistoryMemberResponse {
+  kind: KillHistoryMemberResponseKind;
+  member: KillHistoryMemberResponseMember;
+  data: KillHistoryMemberEntry[];
+  /** @nullable */
+  nextCursor: string | null;
+}
+
+export type KillHistoryResponse = KillHistoryEventResponse | KillHistoryMemberResponse;
+
 export type EventKillHistoryResponseDtoDataItemHeroNpc = {
   id: string;
   /** @nullable */
@@ -11203,6 +11323,44 @@ export type EventsRankingControllerGetEventHeroStats403 = {
 };
 
 export type EventsRankingControllerGetEventHeroStats429 = {
+  message: string;
+};
+
+export type ListEventKillHistoryPathParameters = {
+ guildId: string,
+    eventId: string,
+ }
+export type ListEventKillHistoryParams = {
+/**
+ * Page size from 1 to 100. Defaults to 20.
+ * @pattern ^(?:[1-9]\d?|100)$
+ */
+limit?: string;
+/**
+ * Opaque continuation token returned by this endpoint. Keep the Organization, event and filters unchanged.
+ * @minLength 1
+ * @maxLength 4096
+ */
+cursor?: string;
+/**
+ * @minLength 1
+ */
+heroId?: string;
+/**
+ * @pattern ^[1-9]\d*$
+ */
+memberId?: string;
+};
+
+export type ListEventKillHistory401 = {
+  message: string;
+};
+
+export type ListEventKillHistory403 = {
+  message: string;
+};
+
+export type ListEventKillHistory429 = {
   message: string;
 };
 
@@ -16468,6 +16626,40 @@ export const eventsRankingControllerGetEventHeroStats = async ({ guildId, eventI
 
 
 
+export const getListEventKillHistoryUrl = ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/guilds/${guildId}/events/${eventId}/kill-history?${stringifiedParams}` : `/guilds/${guildId}/events/${eventId}/kill-history`
+}
+
+/**
+ * Read visible kills in descending (killedAt, id) order. Filter by hero or member. Cursors are opaque and scoped to the Organization, event and filters. Continuation reads current data, not a frozen snapshot. Full participants and map data are available from kill detail and timeline endpoints.
+ * @summary List event kill history summaries
+ */
+export const listEventKillHistory = async ({ guildId, eventId }: ListEventKillHistoryPathParameters,
+    params?: ListEventKillHistoryParams, options?: Parameters<typeof mainFetch>[1]): Promise<KillHistoryResponse> => {
+
+  return mainFetch<KillHistoryResponse>(getListEventKillHistoryUrl({ guildId, eventId },params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
 export const getEventsRankingControllerGetEventKillHistoryUrl = ({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
     params?: EventsRankingControllerGetEventKillHistoryParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -16485,7 +16677,8 @@ export const getEventsRankingControllerGetEventKillHistoryUrl = ({ guildId, even
 }
 
 /**
- * Get paginated kill history for all heroes in an event, with participant point details
+ * Deprecated: use listEventKillHistory for lightweight summaries. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.
+ * @deprecated
  * @summary Get event kill history
  */
 export const eventsRankingControllerGetEventKillHistory = async ({ guildId, eventId }: EventsRankingControllerGetEventKillHistoryPathParameters,
@@ -16519,7 +16712,8 @@ export const getEventsRankingControllerGetMemberKillHistoryUrl = ({ guildId, eve
 }
 
 /**
- * Get paginated kill history for a specific member in an event, with detailed point breakdown per kill
+ * Deprecated: use listEventKillHistory with memberId. This endpoint retains its full response and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.
+ * @deprecated
  * @summary Get member kill history
  */
 export const eventsRankingControllerGetMemberKillHistory = async ({ guildId, eventId, memberId }: EventsRankingControllerGetMemberKillHistoryPathParameters,
@@ -16553,7 +16747,8 @@ export const getEventsRankingControllerGetHeroKillHistoryUrl = ({ guildId, event
 }
 
 /**
- * Get paginated kill history for a specific hero, with participant point details
+ * Deprecated: use listEventKillHistory with heroId. This endpoint retains full participant details and UUID cursors. Invalid, missing or inaccessible cursor anchors return 400. Limit must be an integer from 1 to 100.
+ * @deprecated
  * @summary Get hero kill history
  */
 export const eventsRankingControllerGetHeroKillHistory = async ({ guildId, eventId, heroId }: EventsRankingControllerGetHeroKillHistoryPathParameters,

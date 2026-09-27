@@ -2,8 +2,8 @@ import { Schema } from "effect";
 import { configureApiClients } from "@lootlog/client/transport";
 import { airTagObservationController } from "@/features/air-tags/air-tag-observation-controller";
 import { airTagRuntime } from "@/features/air-tags/air-tag-runtime";
-import { mapPingController } from "@/features/map-pings/map-ping-controller";
-import { mapPingInteractionController } from "@/features/map-pings/map-ping-interaction-controller";
+import { mapPingController } from "@/features/pings/map-ping-controller";
+import { pingInteractionController } from "@/features/pings/ping-interaction-controller";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
 import { useBattleStore } from "@/store/game-store/battle.store";
@@ -23,7 +23,7 @@ import { useNpcsStore } from "@/store/npcs.store";
 import { useOthersStore } from "@/store/others.store";
 
 const effects = {
-  cancelMapPingInteraction: vi.spyOn(mapPingInteractionController, "cancel"),
+  cancelMapPingInteraction: vi.spyOn(pingInteractionController, "cancel"),
   clearMapPings: vi.spyOn(mapPingController, "clear"),
   handleAirTagMapChange: vi.spyOn(airTagRuntime, "handleMapChange"),
   observeOtherPlayers: vi.spyOn(airTagObservationController, "handle"),

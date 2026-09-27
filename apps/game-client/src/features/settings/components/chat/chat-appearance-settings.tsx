@@ -15,6 +15,7 @@ import {
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
+  type ChatNpcLayout,
 } from "@lootlog/schema/chat-appearance";
 import { getChatAppearancePreset } from "@lootlog/domain/chat-appearance";
 import { useTranslation } from "react-i18next";
@@ -97,7 +98,7 @@ export const ChatAppearanceSettingsForm = () => {
             size="sm"
             spacing={0}
             value={[draft.npcLayout]}
-            onValueChange={([npcLayout]: ("tile" | "inline")[]) => {
+            onValueChange={([npcLayout]: ChatNpcLayout[]) => {
               if (!npcLayout) return;
               updateAndCommit({ npcLayout });
             }}
@@ -107,6 +108,9 @@ export const ChatAppearanceSettingsForm = () => {
             </ToggleGroupItem>
             <ToggleGroupItem value="inline">
               {t("settings.chat.npcLayout.inline")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="text">
+              {t("settings.chat.npcLayout.text")}
             </ToggleGroupItem>
           </ToggleGroup>
         </SettingsRow>

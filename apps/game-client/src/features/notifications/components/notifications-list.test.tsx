@@ -164,21 +164,59 @@ describe("NotificationsList", () => {
     expect(useNotificationsStore.getState().notifications).toEqual([gathering]);
   });
 
-  it("uses a CSS-only entry animation without whole-list layout animation", () => {
+  it("slides the rows in view down from where they were when a notification arrives", () => {
     useSettingsStore.setState({ animationEffectsEnabled: true });
+    const rowHeight = 44;
 
-    render(<NotificationsList notifications={[notification]} />, {
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(
+      rowHeight * 2,
+    );
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(
+      rowHeight,
+    );
+    vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockImplementation(
+      function (this: HTMLElement) {
+        const siblings = this.parentElement?.children;
+
+        return siblings ? [...siblings].indexOf(this) * rowHeight : 0;
+      },
+    );
+
+    const animate = vi.fn<HTMLElement["animate"]>();
+
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "animate",
+    );
+
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: animate,
+    });
+    onTestFinished(() => {
+      if (original)
+        Object.defineProperty(HTMLElement.prototype, "animate", original);
+      else Reflect.deleteProperty(HTMLElement.prototype, "animate");
+    });
+
+    const [first, second, third] = createNotifications(3);
+
+    const view = render(<NotificationsList notifications={[first, second]} />, {
       wrapper: test.wrapper,
     });
 
-    expect(
-      screen.getByText("hello").closest("[data-lootlog-notification-id]"),
-    ).toHaveClass("ll:animate-in", "ll:fade-in-0", "ll:slide-in-from-top-2");
-    expect(
-      screen.getByText("hello").closest("[data-lootlog-notification-id]"),
-    ).toHaveAttribute(
-      "data-lootlog-notification-id",
-      notification.notificationId,
+    animate.mockClear();
+    view.rerender(<NotificationsList notifications={[third, first, second]} />);
+
+    // The first row moved into the second slot and slides down into it; the
+    // second row left the viewport, so it moves without an animation.
+    expect(animate).toHaveBeenCalledTimes(1);
+    expect(animate).toHaveBeenCalledWith(
+      [
+        { transform: `translateY(${-rowHeight}px)` },
+        { transform: "translateY(0)" },
+      ],
+      expect.objectContaining({ duration: 220 }),
     );
   });
 
@@ -247,7 +285,7 @@ describe("NotificationsList", () => {
     expect(useNotificationsStore.getState().notifications).toHaveLength(2);
 
     act(() => {
-      vi.advanceTimersByTime(150);
+      vi.advanceTimersByTime(180);
     });
 
     expect(useNotificationsStore.getState().notifications).toEqual([second]);

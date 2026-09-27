@@ -5,7 +5,9 @@ import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/
 import { Chat } from "@/features/chat/chat";
 import { CommandWindow } from "@/features/command/command";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
-import { MapPingWheel } from "@/features/map-pings/map-ping-wheel";
+import { BattlePingMarkers } from "@/features/pings/battle-ping-markers";
+import { BattlePingWindow } from "@/features/pings/battle-ping-window";
+import { PingWheel } from "@/features/pings/ping-wheel";
 import { Notifications } from "@/features/notifications/notifications";
 import { NpcDetector } from "@/features/npc-detector/npc-detector";
 import { OnlinePlayers } from "@/features/online-players/online-players";
@@ -18,8 +20,9 @@ import { useGameEventHandlers } from "@/hooks/game-events/use-game-event-handler
 import { useGlobalStore } from "@/store/global.store";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { useInit } from "@/hooks/use-init";
-import { useMapPings } from "@/features/map-pings/use-map-pings";
+import { usePings } from "@/features/pings/use-pings";
 import { useAirTags } from "@/features/air-tags/use-air-tags";
+import { WhoIsHereAirTags } from "@/features/air-tags/who-is-here-air-tags";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
 import { usePartyReadyRoomExpiry } from "@/features/party-finder/hooks/use-party-ready-room-expiry";
 import { usePartyReadyRoomObserver } from "@/features/party-finder/hooks/use-party-ready-room-observer";
@@ -33,11 +36,11 @@ export const AppContent = () => {
   useInit();
   useSelectedLootlogGuildInitialization();
   useSettingsHydration();
-  const mapPingHotkeyHandlers = useMapPings();
+  const pingHotkeyHandlers = usePings();
   useAirTags();
   const { sendHelp, sendPosition } = useChatQuickActions();
   useHotkeys({
-    ...mapPingHotkeyHandlers,
+    ...pingHotkeyHandlers,
     onChatHelp: () => void sendHelp(),
     onChatPosition: () => void sendPosition(),
   });
@@ -72,7 +75,10 @@ export const AppContent = () => {
           <BackendPreferencesWarning />
           <PartyFinder />
           <CreatePartyGathering />
-          <MapPingWheel />
+          <PingWheel />
+          <BattlePingMarkers />
+          <BattlePingWindow />
+          <WhoIsHereAirTags />
         </>
       ) : null}
     </>

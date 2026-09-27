@@ -152,6 +152,28 @@ const resolveLeftColumnPosition = (
 };
 
 /**
+ * The battle ping window opens with a fight, so it sits in the map's
+ * bottom-left corner, clear of the corner stacks at the top where the fight's
+ * enemies stand.
+ */
+const resolveBattlePingsPosition = (
+  sizeOf: SizeOf,
+  viewport: WindowSize,
+): WindowPosition => {
+  const size = sizeOf("battle-pings");
+
+  return clearOfRightColumn(
+    {
+      x: GAME_LEFT_COLUMN_WIDTH + WINDOW_GAP,
+      y: viewport.height - GAME_BOTTOM_BAR_HEIGHT - WINDOW_GAP - size.height,
+    },
+    size,
+    sizeOf,
+    viewport,
+  );
+};
+
+/**
  * Where a window sits until the player moves it, recomputed from the current
  * viewport so edge-anchored windows follow browser resizes. Windows the player
  * opens on demand (settings, command palette, prompts) start centered.
@@ -169,6 +191,8 @@ export const resolveDefaultWindowPosition = (
     case "npc-detector":
     case "notifications":
       return resolveLeftColumnPosition(id, sizeOf, viewport);
+    case "battle-pings":
+      return resolveBattlePingsPosition(sizeOf, viewport);
     default: {
       const size = sizeOf(id);
 

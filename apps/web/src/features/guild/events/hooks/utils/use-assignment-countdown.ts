@@ -1,3 +1,4 @@
+import { subscribeToSecondClock } from "@/hooks/utils/second-clock";
 import { useState, useEffect } from "react";
 import { formatDurationCompact } from "../../utils/format-duration";
 
@@ -57,11 +58,7 @@ export const useAssignmentCountdown = (
 
     updateCountdown();
 
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    return subscribeToSecondClock(updateCountdown);
   }, [assignmentDisabled, assignmentEnabledAt]);
 
   return {

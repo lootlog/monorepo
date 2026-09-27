@@ -6,6 +6,7 @@ import {
   CHAT_FONT_SCALE_MIN_PERCENT,
   CHAT_MESSAGE_GAP_MAX_PX,
   CHAT_MESSAGE_GAP_MIN_PX,
+  CHAT_NPC_LAYOUTS,
 } from "@lootlog/schema/chat-appearance";
 import {
   DEFAULT_NPC_TYPE_COLORS,
@@ -14,6 +15,7 @@ import {
 import { NpcTypeSchema, type NpcTypeEnum } from "@lootlog/schema/npc-type";
 import type {
   AirTagPreferences,
+  BattlePingPreferences,
   DetectorSettings,
   MapPingPreferences,
   NotificationsSettings,
@@ -201,7 +203,7 @@ export const SETTINGS_CATALOG = {
       "chat.npcLayout": field(
         CHAT_APPEARANCE_READABLE_PRESET.npcLayout,
         userScopes,
-        isOneOf(["tile", "inline"]),
+        isOneOf(CHAT_NPC_LAYOUTS),
       ),
       "chat.fontScalePercent": field(
         CHAT_APPEARANCE_READABLE_PRESET.fontScalePercent,
@@ -327,6 +329,7 @@ export const SETTINGS_CATALOG = {
       alwaysVisibleExpiredTimers: field({}, guildScopes, Predicate.isObject),
       timerFiltersEnabled: field(true, guildScopes, isBoolean),
       colorFiltersEnabled: field(false, guildScopes, isBoolean),
+      customLists: field({}, guildScopes, Predicate.isObject),
       timersSortOrder: field("asc", guildScopes, isOneOf(["asc", "desc"])),
       syncEnabled: field(true, guildScopes, isBoolean),
       hiddenTimers: field<string[]>([], guildScopes, isStringArray),
@@ -338,6 +341,11 @@ export const SETTINGS_CATALOG = {
     migrations: [],
     fields: {
       pings: field<Partial<MapPingPreferences>>(
+        {},
+        accountScopes,
+        isEnabledFlagRecord,
+      ),
+      battlePings: field<Partial<BattlePingPreferences>>(
         {},
         accountScopes,
         isEnabledFlagRecord,

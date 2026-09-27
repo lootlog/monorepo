@@ -85,3 +85,18 @@ export const getSubtleBackgroundColor = (
   npcTypeColors?: NpcTypeColors,
 ) =>
   `color-mix(in srgb, ${getBackgroundColor(key, true, npcTypeColors)} 37.5%, transparent)`;
+
+/** How brightly a row plays its arrival: rarer NPCs flash harder. */
+export const getArrivalStrength = (key?: string) => {
+  switch (key) {
+    case NpcType.TITAN:
+    case NpcType.COLOSSUS:
+      return 1;
+    case NpcType.HERO:
+      return 0.85;
+    case NpcType.ELITE2:
+      return 0.65;
+    default:
+      return 0.8;
+  }
+};

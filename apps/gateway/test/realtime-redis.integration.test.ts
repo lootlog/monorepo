@@ -33,8 +33,9 @@ import type {
 } from "@lootlog/protocol/rabbit/events";
 import { AirTagService } from "#src/realtime/air-tag-service";
 import { MapPingService } from "#src/realtime/map-ping-service";
-import { RealtimeHub } from "#src/realtime/realtime-hub";
-import type { SessionData } from "#src/realtime/session";
+import { BattlePingService } from "#src/realtime/battle-ping-service";
+import { FEDERATION_VERSION, RealtimeHub } from "#src/realtime/realtime-hub";
+import type { GatewaySocket, SessionData } from "#src/realtime/session";
 import { makeGuildStore } from "#src/guilds/guild-store";
 import { getUserGuildsCacheKey } from "#src/guilds/cache-keys";
 import { httpClientFromResponses } from "./http-fixtures.js";
@@ -126,6 +127,27 @@ const makeSocket = (connectionId: string) => {
 
   return { socket, frames };
 };
+
+const setSocketPresence = (
+  socket: GatewaySocket,
+  presence: SessionData["presence"],
+) => {
+  socket.data.presence = presence;
+};
+
+const clanEnemyFields = ({
+  targetId,
+  nickname,
+  clan,
+  lvl,
+  prof,
+}: {
+  targetId: string;
+  nickname: string;
+  clan: { id: number; name: string };
+  lvl: number;
+  prof: string;
+}) => ({ targetId, nickname, clan, lvl, prof });
 
 const eventsOfType = (frames: ReadonlyArray<Uint8Array>, type: string) => {
   const events: ReturnType<typeof decodeRealtimeFrame>[] = [];
@@ -686,6 +708,21 @@ describe("realtime Dragonfly integration", () => {
         gameSessions: 0,
         uniquePlayers: 0,
       });
+      expect(secondHub.clusterFederationVersion).toBe(FEDERATION_VERSION);
+
+      // A replica that predates the field cannot decode newer frame types.
+      await store.command.eval(
+        `
+        local time = redis.call('TIME')
+        local at = tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000)
+        redis.call('HSET', KEYS[1], 'older-replica', cjson.encode({at=at,connections=0,sessions=0,players={}}))
+        return 1
+      `,
+        1,
+        "realtime:metrics:instances:v2",
+      );
+      await Effect.runPromise(replicaB.sample());
+      expect(secondHub.clusterFederationVersion).toBe(1);
 
       const observed = Metric.gauge(
         "lootlog_gateway_cluster_observed_at_seconds",
@@ -741,6 +778,7 @@ describe("realtime Dragonfly integration", () => {
 
       const hub = {
         instanceId: crypto.randomUUID(),
+        setPresence: setSocketPresence,
         publishPresence: async () => {},
         publishToScope: async () => {},
       };
@@ -878,6 +916,7 @@ describe("realtime Dragonfly integration", () => {
         { command },
         {
           instanceId: crypto.randomUUID(),
+          setPresence: setSocketPresence,
           publishPresence: async () => {
             if (!pausePublication) return;
             reconnectPublished.resolve();
@@ -1011,6 +1050,7 @@ describe("realtime Dragonfly integration", () => {
         { command },
         {
           instanceId: crypto.randomUUID(),
+          setPresence: setSocketPresence,
           publishPresence: async () => {},
           publishToScope: async () => {},
         },
@@ -1124,6 +1164,7 @@ describe("realtime Dragonfly integration", () => {
 
       const hub = {
         instanceId: crypto.randomUUID(),
+        setPresence: setSocketPresence,
         publishPresence: async () => {},
         publishToScope: async () => {},
       };
@@ -1227,6 +1268,7 @@ describe("realtime Dragonfly integration", () => {
 
         const hub = {
           instanceId: crypto.randomUUID(),
+          setPresence: setSocketPresence,
           publishPresence: async () => {},
           publishToScope: async () => {},
         };
@@ -1294,7 +1336,9 @@ describe("realtime Dragonfly integration", () => {
         );
 
         await store.command.sadd("presence:organizations", "empty");
-        await Effect.runPromise(sweepingStore.sweepExpired());
+
+        for (let attempt = 0; attempt < 6; attempt++)
+          await Effect.runPromise(sweepingStore.sweepExpired());
         expect(published).toBe(true);
         expect(
           (await store.command.smembers("presence:organizations")).sort(),
@@ -1317,10 +1361,9 @@ describe("realtime Dragonfly integration", () => {
         await Effect.runPromise(publisher.sweepOffline());
         expect(events).toEqual([]);
         await Effect.runPromise(publisher.disconnect(returning.data));
-        await store.command.del(
-          ...guilds.map(({ guild }) => `presence:sweep-lock:${guild.id}`),
-        );
-        await Effect.runPromise(sweepingStore.sweepExpired());
+
+        for (let attempt = 0; attempt < 6; attempt++)
+          await Effect.runPromise(sweepingStore.sweepExpired());
         expect(await store.command.smembers("presence:organizations")).toEqual(
           [],
         );
@@ -1335,6 +1378,378 @@ describe("realtime Dragonfly integration", () => {
       }
     },
   );
+
+  test.each(["current", "legacy"] as const)(
+    "two expiry replicas retain a session refreshed by a %s writer after candidate capture",
+    async (writer) => {
+      const url = `redis://${dragonfly.getHost()}:${redisPort}`;
+
+      const runtimes = [
+        ManagedRuntime.make(BunRedis.layer({ url })),
+        ManagedRuntime.make(BunRedis.layer({ url })),
+      ];
+
+      const keyPrefix = `expiry-race:${crypto.randomUUID()}`;
+
+      try {
+        const stores = await Promise.all(
+          runtimes.map(
+            async (runtime) =>
+              new RedisGatewayStore(
+                await runtime.runPromise(Redis.Redis),
+                {
+                  ...makeConfiguration().redis,
+                  password: "",
+                  keyPrefix,
+                },
+                (effect) => runtime.runPromise(effect),
+                () => {},
+              ),
+          ),
+        );
+
+        const [firstStore, secondStore] = stores;
+
+        if (!firstStore || !secondStore) throw new Error("Missing replica");
+
+        let now = Date.now();
+        const events: GameCharacterOffline[] = [];
+        const removed: string[] = [];
+        const game = makeSocket("expiry-race").socket;
+        game.data.guilds = guilds.slice(0, 1);
+        game.data.character = game.data.presence?.character;
+        setSocketPresence(game, undefined);
+        const organizationId = "organization-1";
+        const key = `presence:${organizationId}:${game.data.connectionId}`;
+        const metadataKey = `presence:metadata:${organizationId}:${game.data.connectionId}`;
+
+        const dueMember = JSON.stringify([
+          organizationId,
+          game.data.connectionId,
+        ]);
+
+        let refreshBeforeRemoval: (() => Promise<void>) | undefined;
+
+        const makeHub = () => ({
+          instanceId: crypto.randomUUID(),
+          setPresence: setSocketPresence,
+          publishPresence: async () => {},
+          publishToScope: async () => {
+            removed.push(game.data.connectionId);
+          },
+        });
+
+        const publishOffline = (event: GameCharacterOffline) =>
+          Effect.sync(() => void events.push(event));
+
+        const first = new PresenceStore(
+          {
+            command: {
+              ...firstStore.command,
+              eval: async <A>(
+                script: string,
+                keyCount: number,
+                ...parameters: ReadonlyArray<string | number>
+              ): Promise<A> => {
+                if (script.includes("-- presence:expiry-remove")) {
+                  const refresh = refreshBeforeRemoval;
+                  refreshBeforeRemoval = undefined;
+                  await refresh?.();
+                }
+
+                return firstStore.command.eval<A>(
+                  script,
+                  keyCount,
+                  ...parameters,
+                );
+              },
+            },
+          },
+          makeHub(),
+          () => now,
+          undefined,
+          undefined,
+          publishOffline,
+        );
+
+        const second = new PresenceStore(
+          secondStore,
+          makeHub(),
+          () => now,
+          undefined,
+          undefined,
+          publishOffline,
+        );
+
+        await Effect.runPromise(first.publish(game, { organizationIds: [] }));
+        now += PRESENCE_EXPIRY_MS;
+        let refreshed = false;
+        refreshBeforeRemoval = async () => {
+          refreshed = true;
+
+          // Another replica cannot claim the batch while the first holds its lease.
+          await Effect.runPromise(second.sweepExpired());
+
+          if (writer === "current") {
+            await Effect.runPromise(
+              second.heartbeat(game, game.data.connectionId),
+            );
+          } else {
+            const presence = game.data.presence;
+
+            if (!presence) throw new Error("Missing published presence");
+            const refreshedPresence = { ...presence, lastSeen: now };
+            setSocketPresence(game, refreshedPresence);
+            // Older replicas refresh existing records without the additive due index.
+            await secondStore.command.set(
+              key,
+              JSON.stringify(refreshedPresence),
+              "EX",
+              PRESENCE_EXPIRY_MS / 1_000,
+            );
+            await secondStore.command.set(
+              metadataKey,
+              JSON.stringify({
+                userId: game.data.userId,
+                discordId: game.data.discordId,
+                presence: refreshedPresence,
+              }),
+            );
+          }
+        };
+
+        await Effect.runPromise(first.sweepExpired());
+        await Effect.runPromise(second.sweepExpired());
+        now += 10_000;
+        await Effect.runPromise(second.sweepOffline());
+        expect(refreshed).toBe(true);
+        expect(removed).toEqual([]);
+        expect(events).toEqual([]);
+        expect(
+          (await Effect.runPromise(second.snapshot(game.data, organizationId)))
+            .presences,
+        ).toEqual([expect.objectContaining({ sessionId: "expiry-race" })]);
+        expect(
+          Number(
+            await secondStore.command.eval(
+              "return redis.call('ZSCORE', KEYS[1], ARGV[1])",
+              1,
+              "presence:expiry:due",
+              dueMember,
+            ),
+          ),
+        ).toBe(now - 10_000 + PRESENCE_EXPIRY_MS);
+
+        now += PRESENCE_EXPIRY_MS;
+        await Effect.runPromise(second.sweepExpired());
+        await Effect.runPromise(first.sweepExpired());
+        await Effect.runPromise(first.sweepOffline());
+        expect(await firstStore.command.get(key)).toBeNull();
+        expect(await firstStore.command.get(metadataKey)).toBeNull();
+        expect(removed).toHaveLength(1);
+        expect(events).toHaveLength(1);
+        expect(events[0]?.disconnectedAt).toBe(now - 10_000);
+      } finally {
+        await Promise.all(runtimes.map((runtime) => runtime.dispose()));
+      }
+    },
+  );
+
+  test("an expired sweeper lease cannot recreate a departure already delivered by its successor", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const store = new RedisGatewayStore(
+        await runtime.runPromise(Redis.Redis),
+        {
+          ...makeConfiguration().redis,
+          password: "",
+          keyPrefix: `expiry-lease:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      let now = Date.now();
+      const events: GameCharacterOffline[] = [];
+
+      const hub = () => ({
+        instanceId: crypto.randomUUID(),
+        setPresence: setSocketPresence,
+        publishPresence: async () => {},
+        publishToScope: async () => {},
+      });
+
+      const publishOffline = (event: GameCharacterOffline) =>
+        Effect.sync(() => void events.push(event));
+
+      const successor = new PresenceStore(
+        store,
+        hub(),
+        () => now,
+        undefined,
+        undefined,
+        publishOffline,
+      );
+
+      const game = makeSocket("lost-expiry-lease").socket;
+      game.data.guilds = guilds.slice(0, 1);
+      game.data.character = game.data.presence?.character;
+      setSocketPresence(game, undefined);
+      await Effect.runPromise(successor.publish(game, { organizationIds: [] }));
+      now += PRESENCE_EXPIRY_MS + 10_000;
+      let transferred = false;
+
+      const predecessor = new PresenceStore(
+        {
+          command: {
+            ...store.command,
+            mget: async (keys) => {
+              const values = await store.command.mget(keys);
+
+              if (
+                !transferred &&
+                keys.includes("presence:organization-1:lost-expiry-lease")
+              ) {
+                transferred = true;
+                await store.command.del(
+                  "presence:expiry:sweep-lock",
+                  "presence:sweep-lock:organization-1",
+                );
+                await Effect.runPromise(successor.sweepExpired());
+                await Effect.runPromise(successor.sweepOffline());
+                expect(events).toHaveLength(1);
+              }
+
+              return values;
+            },
+          },
+        },
+        hub(),
+        () => now,
+        undefined,
+        undefined,
+        publishOffline,
+      );
+
+      await Effect.runPromise(predecessor.sweepExpired());
+      await Effect.runPromise(successor.sweepOffline());
+      expect(transferred).toBe(true);
+      expect(events).toHaveLength(1);
+      expect(await store.command.smembers("presence:offline:pending")).toEqual(
+        [],
+      );
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("expiry rebuilds an evicted due index and drains legacy sessions after Organization registry loss", async () => {
+    const runtime = ManagedRuntime.make(
+      BunRedis.layer({ url: `redis://${dragonfly.getHost()}:${redisPort}` }),
+    );
+
+    try {
+      const store = new RedisGatewayStore(
+        await runtime.runPromise(Redis.Redis),
+        {
+          ...makeConfiguration().redis,
+          password: "",
+          keyPrefix: `expiry-recovery:${crypto.randomUUID()}`,
+        },
+        (effect) => runtime.runPromise(effect),
+        () => {},
+      );
+
+      let now = Date.now();
+      const events: GameCharacterOffline[] = [];
+
+      const makePresence = () =>
+        new PresenceStore(
+          store,
+          {
+            instanceId: crypto.randomUUID(),
+            setPresence: setSocketPresence,
+            publishPresence: async () => {},
+            publishToScope: async () => {},
+          },
+          () => now,
+          undefined,
+          undefined,
+          (event) => Effect.sync(() => void events.push(event)),
+        );
+
+      const publisher = makePresence();
+      const sessionCount = 205;
+      const keys: string[] = [];
+
+      for (let index = 0; index < sessionCount; index++) {
+        const game = makeSocket(`legacy-${index}`).socket;
+        game.data.guilds = guilds.slice(0, 1);
+        game.data.character = game.data.presence?.character;
+        await Effect.runPromise(
+          publisher.publish(game, { organizationIds: [] }),
+        );
+        keys.push(`presence:organization-1:${game.data.connectionId}`);
+      }
+
+      await store.command.del("presence:expiry:due");
+
+      const countDue = () =>
+        store.command.eval<number>(
+          "return redis.call('ZCARD', KEYS[1])",
+          1,
+          "presence:expiry:due",
+        );
+
+      // Recreated sweepers must resume shared scan cursors, including overflow.
+      for (let attempts = 0; attempts < 20; attempts++) {
+        await Effect.runPromise(makePresence().sweepExpired());
+
+        if ((await countDue()) === sessionCount) break;
+      }
+
+      expect(await countDue()).toBe(sessionCount);
+      expect((await store.command.mget(keys)).every(Boolean)).toBe(true);
+      const disconnectedAt = now + PRESENCE_EXPIRY_MS;
+      now = disconnectedAt + 10_000;
+      await store.command.del("presence:organizations", ...keys);
+      await store.command.set(
+        "presence:sweep-lock:organization-1",
+        "legacy-replica",
+        "EX",
+        10,
+      );
+      await Effect.runPromise(makePresence().sweepExpired());
+      await Effect.runPromise(makePresence().sweepOffline());
+      expect(await countDue()).toBe(sessionCount);
+      expect(events).toEqual([]);
+      await store.command.del("presence:sweep-lock:organization-1");
+
+      for (let attempts = 0; attempts < 20; attempts++) {
+        await Effect.runPromise(makePresence().sweepExpired());
+        await Effect.runPromise(makePresence().sweepOffline());
+
+        if (events.length === sessionCount) break;
+      }
+
+      expect(await countDue()).toBe(0);
+      expect(
+        await store.command.smembers("presence:index:organization-1"),
+      ).toEqual([]);
+      expect(events).toHaveLength(sessionCount);
+      expect(new Set(events.map(({ characterId }) => characterId)).size).toBe(
+        sessionCount,
+      );
+      expect(
+        events.every((event) => event.disconnectedAt === disconnectedAt),
+      ).toBe(true);
+    } finally {
+      await runtime.dispose();
+    }
+  }, 15_000);
 
   test("offline sweeps share bounded Organization work, drain scan overflow, and reject a lease lost during a read", async () => {
     const runtime = ManagedRuntime.make(
@@ -1388,6 +1803,7 @@ describe("realtime Dragonfly integration", () => {
 
       const hub = {
         instanceId: crypto.randomUUID(),
+        setPresence: setSocketPresence,
         publishPresence: async () => {},
         publishToScope: async () => {},
       };
@@ -1996,6 +2412,138 @@ describe("realtime Dragonfly integration", () => {
     );
   });
 
+  test("a lost federation subscription closes local sockets until the instance resubscribes", async () => {
+    const configuration = makeConfiguration();
+    const url = `redis://127.0.0.1:${redisPort}`;
+    const control = ManagedRuntime.make(BunRedis.layer({ url }));
+    const controlRedis = await control.runPromise(Redis.Redis);
+
+    const subscriberAddresses = async () =>
+      new Set(
+        (await control.runPromise(controlRedis.send<string>("CLIENT", "LIST")))
+          .split("\n")
+          .filter((client) => /\bflags=P\b/.test(client))
+          .flatMap((client) => client.match(/\baddr=(\S+)/)?.[1] ?? []),
+      );
+
+    const instances: Array<{
+      readonly runtime: ManagedRuntime.ManagedRuntime<Redis.Redis, never>;
+      readonly fibers: Array<Fiber.Fiber<void, unknown>>;
+    }> = [];
+
+    const startInstance = async () => {
+      const runtime = ManagedRuntime.make(BunRedis.layer({ url }));
+      const fibers: Array<Fiber.Fiber<void, unknown>> = [];
+      instances.push({ runtime, fibers });
+
+      const store = new RedisGatewayStore(
+        await runtime.runPromise(Redis.Redis),
+        {
+          ...configuration.redis,
+          password: Redacted.value(configuration.redis.password),
+        },
+        (effect) => runtime.runPromise(effect),
+        (_label, effect) => {
+          fibers.push(runtime.runFork(effect));
+        },
+      );
+
+      const hub = new RealtimeHub(configuration, store);
+      await runtime.runPromise(hub.start());
+
+      return hub;
+    };
+
+    const scope = {
+      topic: "organization.loots",
+      organizationId: "organization-1",
+    } as const;
+
+    const connect = (hub: RealtimeHub, connectionId: string) => {
+      const target = makeSocket(connectionId);
+      const closes: Array<{ code?: number; reason?: string }> = [];
+      Object.assign(target.socket.data, {
+        platform: "web-app",
+        supportsFeed: true,
+      });
+      target.socket.data.guilds = [
+        {
+          guild: { id: "organization-1", ownerId: "other-owner" },
+          roles: [
+            {
+              id: "feed-role",
+              lvlRangeFrom: 0,
+              lvlRangeTo: 500,
+              permissions: [
+                Permission.LOOTLOG_LOOTS_READ,
+                Permission.LOOTLOG_LOOTS_HEROES_READ,
+              ],
+            },
+          ],
+        },
+      ];
+      target.socket.close = (code?: number) => {
+        closes.push({ code, reason: hub.unavailableReason() });
+      };
+
+      hub.register(target.socket);
+      hub.subscribe(target.socket, scope);
+
+      return { ...target, closes };
+    };
+
+    const publishKill = (hub: RealtimeHub) =>
+      hub.publishToScope(
+        scope,
+        { v: 1, type: "kills.changed", data: { guildId: "organization-1" } },
+        crypto.randomUUID(),
+        {
+          recipientPlatform: "web-app",
+          sourceNpcs: [{ level: 100, type: "HERO" }],
+        },
+      );
+
+    try {
+      const before = await subscriberAddresses();
+      const affected = await startInstance();
+
+      const [affectedSubscriber] = [...(await subscriberAddresses())].filter(
+        (address) => !before.has(address),
+      );
+
+      if (!affectedSubscriber)
+        throw new Error("Affected subscriber connection not found");
+      const healthy = await startInstance();
+      const stale = connect(affected, "stale");
+      await publishKill(healthy);
+      await waitFor(() => stale.frames.length === 1);
+
+      await control.runPromise(
+        controlRedis.send("CLIENT", "KILL", affectedSubscriber),
+      );
+      await waitFor(() => stale.closes.length === 1);
+      // Readiness was withdrawn before the socket closed, so no session was admitted into the gap.
+      expect(stale.closes).toEqual([
+        { code: 1013, reason: "federation-unavailable" },
+      ]);
+      expect(affected.getLocalSockets()).toEqual([]);
+
+      await waitFor(() => affected.unavailableReason() === undefined);
+      const current = connect(affected, "current");
+      await publishKill(healthy);
+      await waitFor(() => current.frames.length === 1);
+      expect(stale.frames).toHaveLength(1);
+      expect(stale.closes).toHaveLength(1);
+    } finally {
+      for (const { runtime, fibers } of instances) {
+        await Effect.runPromise(Fiber.interruptAll(fibers));
+        await runtime.dispose();
+      }
+
+      await control.dispose();
+    }
+  });
+
   test("Dragonfly federates two Gateway instances and preserves map/air contracts", async () => {
     const configuration = makeConfiguration();
 
@@ -2215,6 +2763,20 @@ describe("realtime Dragonfly integration", () => {
         });
       }
 
+      const localWildcard = makeSocket("local-wildcard");
+      const remoteWildcard = makeSocket("remote-wildcard");
+      firstHub.register(localWildcard.socket);
+      secondHub.register(remoteWildcard.socket);
+
+      for (const { hub, target } of [
+        { hub: firstHub, target: source },
+        { hub: firstHub, target: localWildcard },
+        { hub: secondHub, target: remoteWildcard },
+      ]) {
+        for (const organizationId of ["organization-1", "organization-2"])
+          hub.subscribe(target.socket, { topic: "map.pings", organizationId });
+      }
+
       const mapPings = new MapPingService(firstStore, firstHub);
 
       for (let index = 0; index < 5; index += 1) {
@@ -2226,6 +2788,21 @@ describe("realtime Dragonfly integration", () => {
             y: index,
           }),
         ).resolves.toMatchObject({ status: "accepted" });
+
+        if (index === 2) {
+          await waitFor(
+            () =>
+              eventsOfType(remoteWildcard.frames, "map-ping.received")
+                .length === 3,
+          );
+          const presence = remoteWildcard.socket.data.presence;
+
+          if (!presence) throw new Error("Missing remote presence");
+          secondHub.setPresence(remoteWildcard.socket, {
+            ...presence,
+            location: { mapId: 8, map: "Another map" },
+          });
+        }
       }
 
       await expect(
@@ -2243,6 +2820,61 @@ describe("realtime Dragonfly integration", () => {
       expect(eventsOfType(recipient.frames, "map-ping.received")).toHaveLength(
         5,
       );
+      expect(
+        eventsOfType(localWildcard.frames, "map-ping.received"),
+      ).toHaveLength(5);
+      expect(
+        eventsOfType(remoteWildcard.frames, "map-ping.received"),
+      ).toHaveLength(3);
+
+      const battleRecipient = makeSocket("battle-recipient");
+      const battleBystander = makeSocket("battle-bystander");
+
+      for (const [target, characterId] of [
+        [battleRecipient, "100"],
+        [battleBystander, "200"],
+      ] as const) {
+        const presence = target.socket.data.presence;
+
+        if (!presence?.character)
+          throw new Error("Missing battle ping presence");
+        target.socket.data = {
+          ...target.socket.data,
+          supportsBattlePings: true,
+          presence: {
+            ...presence,
+            character: { ...presence.character, characterId },
+          },
+        };
+        secondHub.register(target.socket);
+        secondHub.subscribe(target.socket, {
+          topic: "map.pings",
+          organizationId: "organization-1",
+          world: "classic",
+          mapId: 7,
+        });
+      }
+
+      // The exhausted map ping budget must not block battle pings.
+      await expect(
+        new BattlePingService(firstStore, firstHub).send(source.socket, {
+          expectedMapId: 7,
+          type: "attack",
+          warriorId: -1,
+          recipientCharacterIds: ["100"],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      await waitFor(
+        () =>
+          eventsOfType(battleRecipient.frames, "battle-ping.received")
+            .length === 1,
+      );
+      expect(
+        eventsOfType(battleBystander.frames, "battle-ping.received"),
+      ).toHaveLength(0);
+      expect(
+        eventsOfType(recipient.frames, "battle-ping.received"),
+      ).toHaveLength(0);
 
       await firstStore.command.set(
         "air-tag:disabled:organization-2:classic",
@@ -2333,8 +2965,296 @@ describe("realtime Dragonfly integration", () => {
         status: "accepted",
         scopes: [{ targets: [] }],
       });
+
+      const threatWatcher = makeSocket("threat-watcher");
+      const locationBlind = makeSocket("location-blind");
+      const legacyClient = makeSocket("legacy-client");
+
+      for (const target of [threatWatcher, locationBlind, legacyClient]) {
+        Object.assign(target.socket.data, {
+          supportsAirTagMapThreats: target !== legacyClient,
+          presence: {
+            ...target.socket.data.presence,
+            location: { mapId: 8, map: "Karka-han" },
+          },
+        });
+
+        if (target !== locationBlind)
+          target.socket.data.guilds = guilds.map((entry) => ({
+            ...entry,
+            roles: entry.roles.map((role) => ({
+              ...role,
+              permissions: [
+                ...role.permissions,
+                Permission.LOOTLOG_PRESENCE_LOCATION_READ,
+              ],
+            })),
+          }));
+        secondHub.register(target.socket);
+        secondHub.subscribe(target.socket, {
+          topic: "organization.presence",
+          organizationId: "organization-1",
+        });
+      }
+
+      const clanEnemy = {
+        targetId: "clan-enemy",
+        nickname: "Rival",
+        clan: { id: 5, name: "Rivals" },
+        relation: 6 as const,
+        x: 3,
+        y: 4,
+        lvl: 250,
+        prof: "m",
+        stasis: true,
+      };
+
+      const publishThreat = async (sighting: typeof clanEnemy) =>
+        expect(
+          sourceAirTags.publishObservations(source.socket, {
+            expectedMapId: 7,
+            observations: [sighting, observation],
+          }),
+        ).resolves.toMatchObject({ status: "accepted" });
+
+      const threatEvents = () =>
+        eventsOfType(threatWatcher.frames, "air-tag.map-threat-updated");
+
+      await publishThreat(clanEnemy);
+      // Unchanged and recently reported, so it stays quiet.
+      await publishThreat({ ...clanEnemy, x: 9 });
+      // A change inside the throttle window goes out when the window ends, without another sighting.
+      await publishThreat({ ...clanEnemy, stasis: false });
+      await waitFor(() => threatEvents().length === 2);
+
+      // Older game clients omit level, profession and stasis; the last values stay.
+      const {
+        lvl: _lvl,
+        prof: _prof,
+        stasis: _stasis,
+        ...legacySighting
+      } = clanEnemy;
+
+      await expect(
+        sourceAirTags.publishObservations(source.socket, {
+          expectedMapId: 7,
+          observations: [legacySighting],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      await waitFor(() => threatEvents().length === 2);
+      await Bun.sleep(100);
+      expect(threatEvents()).toMatchObject([
+        {
+          data: {
+            guildId: "organization-1",
+            world: "classic",
+            mapId: 7,
+            mapName: "Ithan",
+            revision: expect.any(Number),
+            enemies: [
+              {
+                ...clanEnemyFields(clanEnemy),
+                stasis: true,
+                ageMs: expect.any(Number),
+              },
+            ],
+          },
+        },
+        {
+          data: {
+            enemies: [{ ...clanEnemyFields(clanEnemy), stasis: false }],
+          },
+        },
+      ]);
+
+      // Unverified characters and clanless clan enemies never feed the timers.
+      source.socket.data.confidence = "reported";
+      await publishThreat({ ...clanEnemy, targetId: "unverified" });
+      source.socket.data.confidence = "verified";
+      const { clan: _clan, ...clanless } = clanEnemy;
+      await expect(
+        sourceAirTags.publishObservations(source.socket, {
+          expectedMapId: 7,
+          observations: [{ ...clanless, targetId: "clanless" }],
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+
+      await expect(
+        recipientAirTags.fetchMapThreats(
+          threatWatcher.socket,
+          "organization-1",
+          "classic",
+        ),
+      ).resolves.toMatchObject({
+        threats: [
+          {
+            mapId: 7,
+            mapName: "Ithan",
+            enemies: [
+              { targetId: "clan-enemy", lvl: 250, prof: "m", stasis: false },
+            ],
+          },
+        ],
+      });
+      await expect(
+        recipientAirTags.fetchMapThreats(
+          locationBlind.socket,
+          "organization-1",
+          "classic",
+        ),
+      ).resolves.toBeNull();
+      expect(
+        eventsOfType(locationBlind.frames, "air-tag.map-threat-updated"),
+      ).toHaveLength(0);
+      expect(
+        eventsOfType(legacyClient.frames, "air-tag.map-threat-updated"),
+      ).toHaveLength(0);
+
+      // A target leaves once no observer still sees it and one saw it leave the map.
+      firstHub.clusterFederationVersion = FEDERATION_VERSION;
+      const scopeRecipient = makeSocket("scope-recipient");
+      const firstObserver = makeSocket("first-observer");
+      const secondObserver = makeSocket("second-observer");
+      const bystander = makeSocket("bystander");
+      const observers = [firstObserver, secondObserver, bystander];
+
+      const moveToNithal = (target: ReturnType<typeof makeSocket>) => {
+        const presence = target.socket.data.presence;
+
+        if (!presence) throw new Error("Missing departure presence");
+        setSocketPresence(target.socket, {
+          ...presence,
+          location: { mapId: 9, map: "Nithal" },
+        });
+      };
+
+      [...observers, scopeRecipient].forEach(moveToNithal);
+      observers.forEach((target) => firstHub.register(target.socket));
+      Object.assign(scopeRecipient.socket.data, {
+        supportsAirTagScopeUpdates: true,
+      });
+      secondHub.register(scopeRecipient.socket);
+      await Promise.all(
+        observers.map((target) =>
+          sourceAirTags.updateSubscription(target.socket, {
+            requestId: `${target.socket.data.connectionId}-subscription`,
+            enabled: true,
+            expectedMapId: 9,
+          }),
+        ),
+      );
+      await recipientAirTags.updateSubscription(scopeRecipient.socket, {
+        requestId: "scope-recipient-subscription",
+        enabled: true,
+        expectedMapId: 9,
+      });
+
+      const scopeUpdates = () =>
+        scopeRecipient.frames.flatMap((frame) => {
+          const decoded = decodeRealtimeFrame(frame);
+
+          return "type" in decoded && decoded.type === "air-tag.scope-updated"
+            ? [decoded.data]
+            : [];
+        });
+
+      const mapThreats = () =>
+        threatEvents().flatMap((event) =>
+          "type" in event &&
+          event.type === "air-tag.map-threat-updated" &&
+          event.data.mapId === 9
+            ? [event.data.enemies.map(({ targetId }) => targetId)]
+            : [],
+        );
+
+      const wanderer = { ...clanEnemy, targetId: "wanderer" };
+      const lurker = { ...observation, targetId: "lurker" };
+
+      const report = (
+        target: ReturnType<typeof makeSocket>,
+        batch: Omit<
+          Parameters<AirTagService["publishObservations"]>[1],
+          "expectedMapId"
+        >,
+      ) =>
+        expect(
+          sourceAirTags.publishObservations(target.socket, {
+            expectedMapId: 9,
+            ...batch,
+          }),
+        ).resolves.toMatchObject({ status: "accepted" });
+
+      await report(firstObserver, { observations: [wanderer, lurker] });
+      await report(secondObserver, { observations: [wanderer, lurker] });
+      await waitFor(() => scopeUpdates().length === 1);
+      await waitFor(() => mapThreats().length === 1);
+      // One frame per batch; the second observer's identical sighting stays quiet.
+      expect(scopeUpdates()).toMatchObject([
+        {
+          mapId: 9,
+          targets: [{ targetId: "wanderer" }, { targetId: "lurker" }],
+          removedTargetIds: [],
+        },
+      ]);
+      expect(
+        eventsOfType(scopeRecipient.frames, "air-tag.updated"),
+      ).toHaveLength(0);
+
+      // The second observer still sees both.
+      await report(firstObserver, {
+        observations: [],
+        departures: [
+          { targetId: "wanderer", reason: "left-map" },
+          { targetId: "lurker", reason: "out-of-sight" },
+        ],
+      });
+      await report(secondObserver, {
+        observations: [],
+        departures: [
+          { targetId: "wanderer", reason: "out-of-sight" },
+          { targetId: "lurker", reason: "out-of-sight" },
+        ],
+      });
+      // Nobody sees the lurker, but nobody saw it leave, and a connection that
+      // never reported it cannot remove it.
+      await report(bystander, {
+        observations: [],
+        departures: [{ targetId: "lurker", reason: "left-map" }],
+      });
+      await waitFor(() => scopeUpdates().length === 2);
+      await waitFor(() => mapThreats().length === 2);
+      await Bun.sleep(100);
+      expect(scopeUpdates()[1]).toMatchObject({
+        targets: [],
+        removedTargetIds: ["wanderer"],
+      });
+
+      // Recipients drop a frame that is not newer than the last one.
+      const [sighted, departed] = scopeUpdates().map(
+        ({ revision }) => revision,
+      );
+
+      expect(departed).toBeGreaterThan(sighted ?? Number.POSITIVE_INFINITY);
+      // The last clan enemy left: an empty list clears the timers at once.
+      expect(mapThreats()).toEqual([["wanderer"], []]);
+
+      const afterDeparture = makeSocket("after-departure");
+      setSocketPresence(
+        afterDeparture.socket,
+        scopeRecipient.socket.data.presence,
+      );
+      await expect(
+        recipientAirTags.updateSubscription(afterDeparture.socket, {
+          requestId: "after-departure-subscription",
+          enabled: true,
+          expectedMapId: 9,
+        }),
+      ).resolves.toMatchObject({
+        status: "accepted",
+        scopes: [{ targets: [{ targetId: "lurker" }] }],
+      });
     } finally {
       await Promise.all([firstStore.close(), secondStore.close()]);
     }
-  }, 20_000);
+  }, 30_000);
 });

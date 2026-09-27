@@ -1,4 +1,7 @@
-import type { RuntimeDrawable } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
+import type {
+  RuntimeCharacterRef,
+  RuntimeDrawable,
+} from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import {
   MapPingController,
   resolveHandheldMiniMapTile,
@@ -254,6 +257,150 @@ describe("map ping coordinates", () => {
     controller.unregister();
     testRuntimeWindow.Engine = originalEngine;
     testRuntimeWindow.API = originalApi;
+  });
+
+  it("lights a pinged monster behind its sprite until the ping expires or it leaves", () => {
+    let now = 0;
+    const frame = new Map<"draw", () => void>();
+    let npcPresent = true;
+    const added: RuntimeDrawable[] = [];
+
+    const glow = {
+      draw: vi.fn<(context: CanvasRenderingContext2D) => void>(),
+      getAlwaysDraw: () => true,
+      getOrder: () => 9.1,
+      isPresent: () => npcPresent,
+      setAlpha: vi.fn<(alpha: number) => void>(),
+    };
+
+    const createGlow = vi.fn<
+      (character: RuntimeCharacterRef, color: string) => typeof glow
+    >(() => glow);
+
+    const controller = new MapPingController(
+      () => now,
+      {
+        addDrawable: (drawable) => added.push(drawable),
+        findPingableCharacterAt: () => null,
+        getHandheldMiniMap: () => null,
+        getHighestOrder: () => 20_007,
+        getMapGeometry: () => ({
+          id: 42,
+          offset: [0, 0],
+          size: { x: 100, y: 100 },
+          tileSize: 32,
+        }),
+        getCharacterBounds: () => ({
+          bottom: 320,
+          left: 384,
+          right: 416,
+          top: 240,
+        }),
+        isAvailable: () => true,
+        subscribeDraw: (callback) => {
+          frame.set("draw", callback);
+
+          return () => undefined;
+        },
+      },
+      createGlow,
+    );
+
+    controller.register();
+    controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "attention", "Uwaga");
+    controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "enemy", "Bij", {
+      kind: "npc",
+      id: 91,
+    });
+
+    const drawFrame = frame.get("draw");
+
+    if (!drawFrame) throw new Error("Expected draw callback");
+    drawFrame();
+    expect(createGlow).toHaveBeenCalledOnce();
+    expect(createGlow.mock.calls[0]?.[0]).toEqual({ kind: "npc", id: 91 });
+    expect(added).toContain(glow);
+
+    added.length = 0;
+    npcPresent = false;
+    drawFrame();
+    expect(added).not.toContain(glow);
+
+    added.length = 0;
+    npcPresent = true;
+    now += 8_000;
+    drawFrame();
+    expect(added).not.toContain(glow);
+
+    controller.unregister();
+  });
+
+  it("ends a character ping once the character leaves instead of returning to its tile", () => {
+    const frame = new Map<"draw", () => void>();
+    const present = new Set([91]);
+    const added: RuntimeDrawable[] = [];
+    const unsubscribe = vi.fn<() => void>();
+
+    const controller = new MapPingController(
+      () => 0,
+      {
+        addDrawable: (drawable) => added.push(drawable),
+        findPingableCharacterAt: () => null,
+        getHandheldMiniMap: () => null,
+        getHighestOrder: () => 20_007,
+        getMapGeometry: () => ({
+          id: 42,
+          offset: [0, 0],
+          size: { x: 100, y: 100 },
+          tileSize: 32,
+        }),
+        getCharacterBounds: ({ id }) =>
+          present.has(id)
+            ? { bottom: 320, left: 384, right: 416, top: 240 }
+            : null,
+        isAvailable: () => true,
+        subscribeDraw: (callback) => {
+          frame.set("draw", callback);
+
+          return unsubscribe;
+        },
+      },
+      () => ({
+        draw: () => undefined,
+        getAlwaysDraw: () => true,
+        getOrder: () => 9.1,
+        isPresent: () => true,
+        setAlpha: () => undefined,
+      }),
+    );
+
+    controller.register();
+    controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "enemy", "Wróg", {
+      kind: "player",
+      id: 91,
+    });
+
+    const drawFrame = frame.get("draw");
+
+    if (!drawFrame) throw new Error("Expected draw callback");
+    drawFrame();
+    expect(added.length).toBeGreaterThan(0);
+
+    added.length = 0;
+    present.delete(91);
+    drawFrame();
+    expect(added).toEqual([]);
+    expect(unsubscribe).toHaveBeenCalledOnce();
+
+    // A character this client never saw still shows the tile marker.
+    controller.addOptimistic({ x: 12, y: 9 }, 42, "Me", "enemy", "Wróg", {
+      kind: "player",
+      id: 77,
+    });
+    frame.get("draw")?.();
+    expect(added.length).toBeGreaterThan(0);
+
+    controller.unregister();
   });
 });
 

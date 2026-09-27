@@ -6,6 +6,7 @@ import { Map } from "lucide-react";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useEventsMonitoringControllerGetKillTimelineData } from "@lootlog/client/main";
 import { KillMapsTimelineTable } from "./kill-maps-timeline-table";
+import { EventReadError } from "../shared/event-read-error";
 
 interface KillMapsTimelineSectionProps {
   eventId: string;
@@ -28,13 +29,16 @@ export const KillMapsTimelineSection = ({
 }: KillMapsTimelineSectionProps) => {
   const { guildId } = useParams({ strict: false });
 
-  const { data: mapsTimeline, isLoading } =
-    useEventsMonitoringControllerGetKillTimelineData({
-      guildId: guildId ?? "",
-      eventId,
-      heroId,
-      killId,
-    });
+  const {
+    data: mapsTimeline,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useEventsMonitoringControllerGetKillTimelineData(
+    { guildId: guildId ?? "", eventId, heroId, killId },
+    { query: { enabled: Boolean(guildId), placeholderData: undefined } },
+  );
 
   if (isLoading) {
     return (
@@ -48,12 +52,12 @@ export const KillMapsTimelineSection = ({
     );
   }
 
-  if (!mapsTimeline || mapsTimeline.length === 0) return null;
+  if (!mapsTimeline?.length && !isError) return null;
 
   const startTime = new Date(minSpawnTimeAtKill);
   const endTime = new Date(killedAt);
 
-  const sortedMaps = [...mapsTimeline].sort((leftMap, rightMap) => {
+  const sortedMaps = [...(mapsTimeline ?? [])].sort((leftMap, rightMap) => {
     const gapCountDifference = rightMap.gaps.length - leftMap.gaps.length;
 
     if (gapCountDifference !== 0) return gapCountDifference;
@@ -92,6 +96,13 @@ export const KillMapsTimelineSection = ({
       />
 
       <div className="border-t border-border/70">
+        {isError && (
+          <EventReadError
+            message={t("events.killDetail.mapCoverage.error")}
+            onRetry={() => void refetch()}
+            isRetrying={isFetching}
+          />
+        )}
         <KillMapsTimelineTable
           maps={sortedMaps}
           startTime={startTime}

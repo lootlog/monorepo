@@ -52,6 +52,7 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
       "timers.colorFiltersEnabled",
     ),
     timersSortOrder: selectSettingsValue(documents, "timers.timersSortOrder"),
+    customLists: selectSettingsValue(documents, "timers.customLists"),
     displayConfig: selectSettingsValue(
       documents,
       "appearance.timers.displayConfig",
@@ -95,6 +96,7 @@ export const applyTimerDocuments = (documents: SettingsDocuments) => {
     colorFiltersEnabled:
       decoded.colorFiltersEnabled ?? store.colorFiltersEnabled,
     timersSortOrder: decoded.timersSortOrder ?? store.timersSortOrder,
+    customLists: decoded.customLists ?? store.customLists,
     customColors: decoded.customColors ?? store.customColors,
     timersColors: decoded.timersColors ?? store.timersColors,
     defaultColorNames: decoded.defaultColorNames ?? store.defaultColorNames,
@@ -125,6 +127,7 @@ type TimersProjection = Pick<
   | "timerFiltersEnabled"
   | "colorFiltersEnabled"
   | "timersSortOrder"
+  | "customLists"
   | "customColors"
   | "timersColors"
   | "defaultColorNames"
