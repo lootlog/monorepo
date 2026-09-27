@@ -4,8 +4,8 @@
   "types": {
     "attention": "Uwaga",
     "enemy": "Wróg",
-    "regroup": "Zbiórka",
-    "avoid": "Unikaj",
+    "regroup": "Grupa",
+    "avoid": "Idę",
     "attack": "Bij ten cel",
     "caution": "Uwaga",
     "spare": "Nie bij",
@@ -21,7 +21,8 @@
     "protection-aura": "Aura ochrony",
     "rime": "Szadź",
     "stigma": "Piętno",
-    "taunt": "Wyzyw"
+    "taunt": "Wyzyw",
+    "quick-fight": "Szybka walka"
   },
   "wheel": {
     "cancelHint": "Anuluj",

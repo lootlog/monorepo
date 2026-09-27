@@ -1,6 +1,7 @@
 import { isObjectRecord as isObject } from "@lootlog/schema/records";
 import type { Other, OtherHandle } from "@lootlog/margonem/others";
 import type { CharacterTooltipCatchingGuildsEntry } from "@/store/character-tooltip-catching-guilds.store";
+import type { RuntimeCharacterRef } from "./renderer-runtime-adapter";
 
 export const LOOTLOG_OTHER_GLOW_BLUE = "#3ed1de";
 
@@ -76,6 +77,7 @@ type RuntimeWindow = Window &
         getById?: (id: number) => GlowMaster | undefined;
       };
       others?: {
+        getById?: (id: number) => GlowMaster | undefined;
         getDrawableList?: () => unknown[];
       };
     };
@@ -321,33 +323,41 @@ class TintedGlowMasks {
 
 const tintedGlowMasks = new TintedGlowMasks();
 
-export type NpcGlow = {
+export type TrackedCharacterGlow = {
   draw: (context: CanvasRenderingContext2D) => void;
   getAlwaysDraw: () => boolean;
   getOrder: () => number;
-  /** False once the NPC left the map; the glow then draws nothing. */
+  /** False once the character left the map; the glow then draws nothing. */
   isPresent: () => boolean;
   setAlpha: (alpha: number) => void;
 };
 
 /**
- * A glow behind an NPC's sprite, like the game's own group glow. It looks the
- * NPC up on every frame, so a respawned or moved NPC keeps its glow; add it to
- * the renderer each frame it should show.
+ * A glow behind a monster's or player's sprite, like the game's own group
+ * glow. It looks the character up on every frame, so a respawned or moved
+ * character keeps its glow; add it to the renderer each frame it should show.
  */
-export const createNpcGlow = (npcId: number, color: string): NpcGlow => {
-  const findNpc = () => getRuntimeWindow().Engine?.npcs?.getById?.(npcId);
+export const createCharacterGlow = (
+  { id, kind }: RuntimeCharacterRef,
+  color: string,
+): TrackedCharacterGlow => {
+  const findCharacter = () => {
+    const engine = getRuntimeWindow().Engine;
+
+    return (kind === "npc" ? engine?.npcs : engine?.others)?.getById?.(id);
+  };
+
   let glow: CharacterGlow<GlowMaster> | null = null;
 
   tintedGlowMasks.request();
 
   const resolve = () => {
-    const npc = findNpc();
+    const character = findCharacter();
 
-    if (!npc) return null;
+    if (!character) return null;
 
-    glow ??= new CharacterGlow(npc, color, tintedGlowMasks.get);
-    glow.master = npc;
+    glow ??= new CharacterGlow(character, color, tintedGlowMasks.get);
+    glow.master = character;
 
     return glow;
   };
@@ -364,7 +374,7 @@ export const createNpcGlow = (npcId: number, color: string): NpcGlow => {
     },
     getAlwaysDraw: () => true,
     getOrder: () => resolve()?.getOrder() ?? 0,
-    isPresent: () => findNpc() !== undefined,
+    isPresent: () => findCharacter() !== undefined,
     setAlpha: (next) => {
       alpha = next;
     },

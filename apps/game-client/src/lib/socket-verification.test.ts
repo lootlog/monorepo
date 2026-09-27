@@ -2,7 +2,10 @@ import type { PlayerPresenceUpdatePayload } from "@/lib/online-players-presence"
 import { useGameStore } from "@/store/game.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { GatewayEvent } from "@/config/gateway";
-import { REALTIME_BATTLE_PING_CAPABILITY } from "@lootlog/protocol/realtime";
+import {
+  REALTIME_BATTLE_PING_CAPABILITY,
+  REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+} from "@lootlog/protocol/realtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -250,10 +253,25 @@ describe("game realtime verification and presence selection", () => {
     });
     await socket.join(joinData);
     expect(socket.supportsBattlePings()).toBe(true);
+    // A v1 gateway cannot decode team pings such as `quick-fight`.
+    expect(socket.supportsTeamBattlePings()).toBe(false);
+
+    mocks.join.mockResolvedValue({
+      connectionId: "connection-1",
+      organizationIds: ["organization-1"],
+      capabilities: [
+        "connection.ping",
+        REALTIME_BATTLE_PING_CAPABILITY,
+        REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+      ],
+    });
+    await socket.join(joinData);
+    expect(socket.supportsTeamBattlePings()).toBe(true);
 
     // The next connection may reach an older gateway before it rejoins.
     wire.close();
     expect(socket.supportsBattlePings()).toBe(false);
+    expect(socket.supportsTeamBattlePings()).toBe(false);
   });
 
   it("keeps the reported session when an account proof is unavailable", async () => {

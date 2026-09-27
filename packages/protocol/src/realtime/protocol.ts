@@ -42,6 +42,12 @@ export const REALTIME_PING_CAPABILITY = "connection.ping";
 // older gateways close it on an unknown command.
 export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
 
+// Negotiated like `lootlog.battle-ping.v1`, for the battle ping types that
+// address the whole team (`quick-fight`), which v1 clients and gateways cannot
+// decode.
+export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
+  "lootlog.battle-ping.team.v1";
+
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
 // Browser-permitted application codes; reasons are deliberately static and contain no identity.

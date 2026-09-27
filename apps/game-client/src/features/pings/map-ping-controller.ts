@@ -1,13 +1,15 @@
 import type { MapPingEvent, MapPingType } from "@lootlog/schema/map-ping";
 import {
-  createNpcGlow,
-  type NpcGlow,
+  createCharacterGlow,
+  type TrackedCharacterGlow,
 } from "@/lib/margonem-runtime/adapters/glow-runtime-adapter";
 import {
   rendererRuntimeAdapter,
   getMapCanvasCoordinate,
   getMiniMapCanvasCoordinate,
   type RendererRuntimeAdapter,
+  type RuntimeCharacterBounds,
+  type RuntimeCharacterRef,
   type RuntimeDrawable,
 } from "@/lib/margonem-runtime/adapters/renderer-runtime-adapter";
 import {
@@ -43,8 +45,10 @@ const getIconPath = (icon: PingIconName) => {
 type ActiveMapPing = {
   id: string;
   mapId: number;
-  /** Set when the ping marks a monster rather than a tile. */
-  npcId?: number;
+  /** Set when the ping marks a monster or a player rather than a tile. */
+  character?: RuntimeCharacterRef;
+  /** The marked character was on this map; once it is gone, so is the ping. */
+  characterSeen?: boolean;
   x: number;
   y: number;
   senderName: string;
@@ -53,19 +57,48 @@ type ActiveMapPing = {
   typeLabel: string;
 };
 
-/** An attack ping on an NPC stays up longer: the team needs time to reach it. */
-const NPC_PING_DURATION_MS = 8_000;
+/**
+ * A ping on a monster or a player stays up longer: the team needs time to
+ * reach it.
+ */
+const CHARACTER_PING_DURATION_MS = 8_000;
 
-const getPingStyle = (ping: ActiveMapPing) =>
-  ping.npcId === undefined
-    ? {
-        durationMs: getPingPresentation(ping.type).durationMs,
-        presentation: getPingPresentation(ping.type),
-      }
-    : {
-        durationMs: NPC_PING_DURATION_MS,
-        presentation: getPingPresentation("attack"),
-      };
+/** The monster or player a received ping marks, if any. */
+export const getMapPingCharacter = (
+  event: Pick<MapPingEvent, "npcId" | "playerId">,
+): RuntimeCharacterRef | undefined => {
+  if (event.npcId !== undefined) return { kind: "npc", id: event.npcId };
+
+  return event.playerId === undefined
+    ? undefined
+    : { kind: "player", id: event.playerId };
+};
+
+/** A ping on a monster asks the team to attack it. */
+export const getMapPingPresentation = (
+  type: MapPingType,
+  character: RuntimeCharacterRef | undefined,
+) => getPingPresentation(character?.kind === "npc" ? "attack" : type);
+
+const getPingStyle = (ping: ActiveMapPing) => {
+  const presentation = getMapPingPresentation(ping.type, ping.character);
+
+  return {
+    durationMs: ping.character
+      ? CHARACTER_PING_DURATION_MS
+      : presentation.durationMs,
+    presentation,
+  };
+};
+
+/** The tile a character stands on, fractional while it walks. */
+const getCharacterTile = (
+  bounds: RuntimeCharacterBounds,
+  tileSize: number,
+) => ({
+  x: (bounds.left + bounds.right) / 2 / tileSize - 0.5,
+  y: bounds.bottom / tileSize - 1,
+});
 
 type MainMapGeometry = {
   offset: readonly [number, number];
@@ -175,12 +208,12 @@ export class MapPingController {
   private expiryTimeoutId: number | null = null;
   private enabled = false;
   private readonly drawable: RuntimeDrawable;
-  private readonly npcGlows = new Map<string, NpcGlow>();
+  private readonly characterGlows = new Map<string, TrackedCharacterGlow>();
 
   constructor(
     private readonly now: () => number = () => performance.now(),
     private readonly renderer: RendererRuntimeAdapter = rendererRuntimeAdapter,
-    private readonly createGlow: typeof createNpcGlow = createNpcGlow,
+    private readonly createGlow: typeof createCharacterGlow = createCharacterGlow,
   ) {
     this.drawable = {
       draw: (context) => this.drawMainMap(context),
@@ -206,7 +239,7 @@ export class MapPingController {
     this.cancelExpiry();
     this.detachDrawRegistration();
     this.activePings.clear();
-    this.npcGlows.clear();
+    this.characterGlows.clear();
   }
 
   addOptimistic(
@@ -215,14 +248,14 @@ export class MapPingController {
     senderName: string,
     type: MapPingType,
     typeLabel: string,
-    npcId?: number,
+    character?: RuntimeCharacterRef,
   ) {
     const id = `local-${crypto.randomUUID()}`;
     this.retainCapacityFor(id);
     this.activePings.set(id, {
       id,
       mapId,
-      npcId,
+      character,
       x: tile.x,
       y: tile.y,
       senderName,
@@ -245,7 +278,7 @@ export class MapPingController {
     this.activePings.set(event.pingId, {
       id: event.pingId,
       mapId: event.mapId,
-      npcId: event.npcId,
+      character: getMapPingCharacter(event),
       x: event.x,
       y: event.y,
       senderName: event.sender.name,
@@ -274,7 +307,7 @@ export class MapPingController {
 
   clear() {
     this.activePings.clear();
-    this.npcGlows.clear();
+    this.characterGlows.clear();
     this.cancelExpiry();
     this.detachDrawRegistration();
   }
@@ -320,8 +353,15 @@ export class MapPingController {
     });
   }
 
-  /** The attackable NPC drawn under a point on the main map, if any. */
-  resolveNpc(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
+  /**
+   * The attackable monster or other player drawn under a point on the main
+   * map, if any.
+   */
+  resolveCharacter(
+    canvas: HTMLCanvasElement,
+    clientX: number,
+    clientY: number,
+  ) {
     const offset = this.renderer.getMapGeometry()?.offset;
     const point = getCanvasPoint(canvas, clientX, clientY);
 
@@ -329,7 +369,7 @@ export class MapPingController {
       return null;
     }
 
-    return this.renderer.findAttackableNpcAt(
+    return this.renderer.findPingableCharacterAt(
       point.x + offset[0],
       point.y + offset[1],
     );
@@ -343,6 +383,7 @@ export class MapPingController {
 
   private readonly handleDrawFrame = () => {
     this.pruneExpired();
+    this.pruneDepartedCharacters();
 
     if (this.activePings.size === 0) {
       this.cancelExpiry();
@@ -353,30 +394,49 @@ export class MapPingController {
 
     this.scheduleExpiry();
     this.renderer.addDrawable(this.drawable);
-    this.addNpcGlows();
+    this.addCharacterGlows();
     this.drawHandheldMiniMap();
   };
 
-  /** Lights up each pinged monster's sprite, drawn just behind it. */
-  private addNpcGlows() {
+  /**
+   * Ends a character ping once its monster died or its player left the map,
+   * instead of letting the marker jump back to the tile it was pinged on. A
+   * character this client never saw keeps the tile marker.
+   */
+  private pruneDepartedCharacters() {
     const currentMapId = this.renderer.getMapGeometry()?.id;
 
-    for (const id of this.npcGlows.keys()) {
-      if (!this.activePings.has(id)) this.npcGlows.delete(id);
+    for (const [id, ping] of this.activePings) {
+      if (!ping.character || ping.mapId !== currentMapId) continue;
+
+      if (this.renderer.getCharacterBounds(ping.character)) {
+        ping.characterSeen = true;
+      } else if (ping.characterSeen) {
+        this.activePings.delete(id);
+      }
+    }
+  }
+
+  /** Lights up each pinged character's sprite, drawn just behind it. */
+  private addCharacterGlows() {
+    const currentMapId = this.renderer.getMapGeometry()?.id;
+
+    for (const id of this.characterGlows.keys()) {
+      if (!this.activePings.has(id)) this.characterGlows.delete(id);
     }
 
     for (const ping of this.activePings.values()) {
-      if (ping.npcId === undefined || ping.mapId !== currentMapId) {
+      if (!ping.character || ping.mapId !== currentMapId) {
         continue;
       }
 
-      let glow = this.npcGlows.get(ping.id);
+      let glow = this.characterGlows.get(ping.id);
 
       if (!glow) {
         const tone = PING_TONES[getPingStyle(ping).presentation.tone];
 
-        glow = this.createGlow(ping.npcId, tone.glow);
-        this.npcGlows.set(ping.id, glow);
+        glow = this.createGlow(ping.character, tone.glow);
+        this.characterGlows.set(ping.id, glow);
       }
 
       if (!glow.isPresent()) {
@@ -415,25 +475,24 @@ export class MapPingController {
         continue;
       }
 
-      const npc =
-        ping.npcId === undefined
-          ? null
-          : this.renderer.getNpcBounds(ping.npcId);
+      const character = ping.character
+        ? this.renderer.getCharacterBounds(ping.character)
+        : null;
 
-      if (npc) {
+      if (character) {
         // The sprite itself glows; float the badge above its name label.
         this.drawMarker(context, ping, {
-          badgeAnchorY: npc.top - offset[1] - 14,
+          badgeAnchorY: character.top - offset[1] - 14,
           baseRadius: 13,
           ground: false,
-          groundY: npc.bottom - offset[1],
+          groundY: character.bottom - offset[1],
           showSender: true,
-          x: (npc.left + npc.right) / 2 - offset[0],
+          x: (character.left + character.right) / 2 - offset[0],
         });
         continue;
       }
 
-      // An NPC out of view falls back to its tile.
+      // A character out of view falls back to the tile it was pinged on.
       const x = getMapCanvasCoordinate(ping.x, tileSize, offset[0]);
       const y = getMapCanvasCoordinate(ping.y, tileSize, offset[1]);
       this.drawMarker(context, ping, {
@@ -448,13 +507,15 @@ export class MapPingController {
   }
 
   private drawHandheldMiniMap() {
-    const currentMapId = this.renderer.getMapGeometry()?.id;
+    const geometry = this.renderer.getMapGeometry();
+    const currentMapId = geometry?.id;
     const miniMap = this.renderer.getHandheldMiniMap();
 
     if (!miniMap) return;
     const { context, margin, normalSize } = miniMap;
 
     if (
+      !geometry ||
       currentMapId === undefined ||
       !context ||
       !margin ||
@@ -471,8 +532,14 @@ export class MapPingController {
         continue;
       }
 
-      const x = getMiniMapCanvasCoordinate(ping.x, normalSize, margin.left);
-      const y = getMiniMapCanvasCoordinate(ping.y, normalSize, margin.top);
+      // A marked player walks away from the tile; follow them while in range.
+      const bounds = ping.character
+        ? this.renderer.getCharacterBounds(ping.character)
+        : null;
+
+      const tile = bounds ? getCharacterTile(bounds, geometry.tileSize) : ping;
+      const x = getMiniMapCanvasCoordinate(tile.x, normalSize, margin.left);
+      const y = getMiniMapCanvasCoordinate(tile.y, normalSize, margin.top);
       this.drawMarker(context, ping, {
         badgeAnchorY: y,
         baseRadius: radius,

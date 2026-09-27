@@ -959,7 +959,13 @@ describe("CommandHandler session lifecycle", () => {
       ),
     );
     expect(hub.responses[0]).toMatchObject({
-      data: { capabilities: ["connection.ping", "lootlog.battle-ping.v1"] },
+      data: {
+        capabilities: [
+          "connection.ping",
+          "lootlog.battle-ping.v1",
+          "lootlog.battle-ping.team.v1",
+        ],
+      },
     });
 
     for (const [socket, requestId] of [
