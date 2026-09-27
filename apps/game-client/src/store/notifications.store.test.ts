@@ -617,6 +617,28 @@ describe("notifications.store", () => {
     unsubscribe();
   });
 
+  it("pauses a countdown that started before its category settings loaded", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
+
+    const listKey = "notification-1";
+
+    // No stored state: the sweep expires this row from its arrival time, so
+    // a hover or an open mute menu must still hold it on screen.
+    useNotificationsStore.getState().pauseNotificationAutoHide(listKey, {
+      deadlineMs: Date.now() + 4000,
+      durationMs: 5000,
+    });
+
+    expect(
+      useNotificationsStore.getState().notificationAutoHideByListKey[listKey],
+    ).toEqual({
+      deadlineMs: null,
+      pausedRemainingMs: 4000,
+      durationMs: 5000,
+    });
+  });
+
   it("manages notification auto-hide lifecycle", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-17T10:00:00.000Z"));
