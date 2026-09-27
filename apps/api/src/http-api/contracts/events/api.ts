@@ -545,6 +545,8 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
       OpenApi.Description,
       "Read visible kills in descending (killedAt, id) order. Filter by hero or member. Cursors are opaque and scoped to the Organization, event and filters. Continuation reads current data, not a frozen snapshot. Full participants and map data are available from kill detail and timeline endpoints.",
     ),
+  // TODO(kill-history-legacy): Remove the next three list endpoints after client retirement.
+  // Keep the detail and timeline endpoints below; see events/history/README.md.
   HttpApiEndpoint.get(
     "EventsRankingControllerGetEventKillHistory",
     "/guilds/:guildId/events/:eventId/kills",
