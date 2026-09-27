@@ -1,3 +1,4 @@
+import { useMemberActivity } from "@/features/guild/settings/members/use-member-activity";
 import { EmptyState } from "@/components/common/empty-state";
 import { RefreshMembersButton } from "./components/refresh-members-button";
 import { TableFilterToolbar } from "@/components/ui/table-filter-toolbar";
@@ -10,16 +11,12 @@ import {
   defaultStatusFilter,
   statusFilters,
 } from "@/features/guild/settings/members/members.constants";
-import { memberActivityStatsQueryOptions } from "@/features/guild/settings/members/member-activity-stats-api";
-import { mapMemberActivityStatsByDiscordIdAndSource } from "@/features/guild/settings/members/member-activity-stats.utils";
 import {
   buildGuildRolePositionById,
   computeMembersStats,
   getFilteredSortedMembers,
   type MemberStatusFilter,
 } from "@/features/guild/settings/members/member-list-item.utils";
-import { useMemberGamePresence } from "@/features/guild/settings/members/use-member-game-presence";
-import { useMemberWebPresence } from "@/features/guild/settings/members/use-member-web-presence";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
@@ -38,7 +35,6 @@ import { Permission } from "@lootlog/schema/permissions";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { useQuery } from "@tanstack/react-query";
 import { FilterX, Users } from "lucide-react";
 import { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -75,15 +71,11 @@ export const MembersSettingsContent = () => {
   const { data: accessPolicy } = useGuildPermissions();
   const resolvedGuildId = guild?.id ?? undefined;
 
-  const { data: memberActivityStats } = useQuery(
-    memberActivityStatsQueryOptions(resolvedGuildId),
-  );
-
-  const memberGamePresenceByDiscordId = useMemberGamePresence(resolvedGuildId);
-  const memberWebPresenceByDiscordId = useMemberWebPresence(resolvedGuildId);
-
-  const memberActivityStatsByDiscordIdAndSource =
-    mapMemberActivityStatsByDiscordIdAndSource(memberActivityStats);
+  const {
+    memberGamePresenceByDiscordId,
+    memberWebPresenceByDiscordId,
+    memberActivityStatsByDiscordIdAndSource,
+  } = useMemberActivity(resolvedGuildId);
 
   const guildRolePositionById = buildGuildRolePositionById(guildRoles);
 
