@@ -5,6 +5,7 @@ import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/game.store";
 import { useGlobalStore } from "@/store/global.store";
 import { useOthersStore } from "@/store/others.store";
+import { isShownByGame } from "./air-tag-game-visibility";
 import { airTagReceiveController } from "./air-tag-receive-controller";
 import { AIR_TAG_TARGET_TTL_MS } from "./air-tag-renderer";
 import {
@@ -28,17 +29,11 @@ function getMemberSources() {
 }
 
 function readUnseenEnemies(now: number) {
-  const { othersById } = useOthersStore.getState();
   const members = getMemberSources();
 
   const candidates = selectUnseenAirTagEnemies(
     airTagReceiveController.getRenderableTargets(now, AIR_TAG_TARGET_TTL_MS),
-    {
-      now,
-      ttlMs: AIR_TAG_TARGET_TTL_MS,
-      heroId: useGameStore.getState().game?.hero.characterId,
-      isVisible: (targetId) => othersById[targetId] !== undefined,
-    },
+    { now, ttlMs: AIR_TAG_TARGET_TTL_MS, isShownByGame },
   );
 
   return {

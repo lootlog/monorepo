@@ -5,7 +5,10 @@ import type {
   RedisGatewayStore,
 } from "#src/platform/redis-store";
 import type { CommandIngress } from "#src/realtime/command-ingress";
-import type { RealtimeHub } from "#src/realtime/realtime-hub";
+import {
+  FEDERATION_VERSION,
+  type RealtimeHub,
+} from "#src/realtime/realtime-hub";
 
 const SNAPSHOTS = "realtime:metrics:instances:v2";
 
@@ -18,6 +21,7 @@ redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(snapshot))
 redis.call('EXPIRE', KEYS[1], 60)
 local snapshots = redis.call('HGETALL', KEYS[1])
 local connections, sessions, count = 0, 0, 0
+local federationVersion = math.huge
 local players = {}
 for i = 1, #snapshots, 2 do
   local value = cjson.decode(snapshots[i + 1])
@@ -26,16 +30,18 @@ for i = 1, #snapshots, 2 do
   else
     connections = connections + value.connections
     sessions = sessions + value.sessions
+    -- Replicas that predate the field decode version 1 frames only.
+    federationVersion = math.min(federationVersion, tonumber(value.federationVersion) or 1)
     for _, player in ipairs(value.players) do
       if not players[player] then players[player] = true; count = count + 1 end
     end
   end
 end
-return {connections, sessions, count}
+return {connections, sessions, count, federationVersion}
 `;
 
 const decodeCounts = Schema.decodeUnknownSync(
-  Schema.Tuple([Schema.Number, Schema.Number, Schema.Number]),
+  Schema.Tuple([Schema.Number, Schema.Number, Schema.Number, Schema.Number]),
 );
 
 const observedAt = Metric.gauge("lootlog_gateway_cluster_observed_at_seconds", {
@@ -126,7 +132,10 @@ export class GatewayRuntimeMetrics {
 export class GatewayMetrics {
   constructor(
     private readonly redis: Pick<RedisGatewayCommands, "eval">,
-    private readonly hub: Pick<RealtimeHub, "instanceId" | "getLocalSockets">,
+    private readonly hub: Pick<
+      RealtimeHub,
+      "instanceId" | "getLocalSockets" | "clusterFederationVersion"
+    >,
     private readonly now: () => number = Date.now,
   ) {}
 
@@ -160,11 +169,16 @@ export class GatewayMetrics {
           connections: sockets.length,
           sessions,
           players: [...players],
+          federationVersion: FEDERATION_VERSION,
         }),
       ),
     );
 
-    const [connectionCount, sessionCount, playerCount] = decodeCounts(counts);
+    const [connectionCount, sessionCount, playerCount, federationVersion] =
+      decodeCounts(counts);
+
+    // Each replica samples every 10 s, so a starting older replica is seen within that.
+    this.hub.clusterFederationVersion = federationVersion;
     yield* Metric.update(connections, connectionCount);
     yield* Metric.update(gameSessions, sessionCount);
     yield* Metric.update(uniquePlayers, playerCount);

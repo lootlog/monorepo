@@ -73,27 +73,44 @@ describe("AirTagService legacy parity", () => {
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
+        revision: 1,
         acceptedTargets: 1,
-        updates: [
+        targets: [
           {
-            revision: 1,
-            target: {
-              targetId: "target",
-              nickname: "Enemy",
-              relation: 3,
-              x: 1,
-              y: 2,
-              observedAt: 200,
-              enemyObservedAt: 200,
-            },
+            targetId: "target",
+            nickname: "Enemy",
+            relation: 3,
+            x: 1,
+            y: 2,
+            observedAt: 200,
+            enemyObservedAt: 200,
           },
         ],
+        removed: [],
+      }),
+      [1, 0],
+      [1, 0],
+      JSON.stringify({
+        epochId: "epoch",
+        epochStartedAt: 100,
+        revision: 5,
+        acceptedTargets: 2,
+        targets: ["second", "third"].map((targetId) => ({
+          targetId,
+          nickname: "Neutral",
+          relation: 1,
+          x: 1,
+          y: 2,
+          observedAt: 300,
+        })),
+        removed: ["target"],
       }),
     ];
 
-    const publications: unknown[] = [];
+    const publications: unknown[][] = [];
 
     const hub = {
+      clusterFederationVersion: 2,
       subscribe: (
         socket: GatewaySocket,
         scope: SessionData["subscriptions"] extends Map<string, infer T>
@@ -172,11 +189,43 @@ describe("AirTagService legacy parity", () => {
         },
       ],
       {
-        type: "air-tag.updated",
+        type: "air-tag.scope-updated",
         sequence: 1,
-        data: { guildId: "organization-1", epochId: "epoch", revision: 1 },
+        data: {
+          guildId: "organization-1",
+          epochId: "epoch",
+          revision: 1,
+          targets: [{ targetId: "target" }],
+          removedTargetIds: [],
+        },
       },
       { excludeConnectionId: "connection-1" },
+    ]);
+
+    // An older replica drops a frame type it does not know: its clients still get the targets.
+    hub.clusterFederationVersion = 1;
+    publications.length = 0;
+    await service.publishObservations(socket, {
+      expectedMapId: 7,
+      observations: [
+        { targetId: "second", nickname: "Neutral", relation: 1, x: 1, y: 2 },
+        { targetId: "third", nickname: "Neutral", relation: 1, x: 1, y: 2 },
+      ],
+      departures: [{ targetId: "target", reason: "left-map" }],
+    });
+    expect(publications.map((publication) => publication[1])).toMatchObject([
+      {
+        type: "air-tag.scope-updated",
+        data: { revision: 3, targets: [], removedTargetIds: ["target"] },
+      },
+      {
+        type: "air-tag.updated",
+        data: { revision: 4, target: { targetId: "second" } },
+      },
+      {
+        type: "air-tag.updated",
+        data: { revision: 5, target: { targetId: "third" } },
+      },
     ]);
   });
 
@@ -196,6 +245,7 @@ describe("AirTagService legacy parity", () => {
         },
       },
       {
+        clusterFederationVersion: 2,
         subscribe: () => {
           throw new Error("Unexpected subscribe");
         },
@@ -229,8 +279,10 @@ describe("AirTagService map threats", () => {
       JSON.stringify({
         epochId: "epoch",
         epochStartedAt: 100,
+        revision: 0,
         acceptedTargets: 1,
-        updates: [],
+        targets: [],
+        removed: [],
         threat: threatEvent,
       }),
       JSON.stringify({ mapName: "Map", ...threatEvent, revision: 1_300 }),
@@ -256,6 +308,7 @@ describe("AirTagService map threats", () => {
         },
       },
       {
+        clusterFederationVersion: 2,
         subscribe: () => {},
         unsubscribe: () => {},
         publishToScopes: async (_scopes, event) => {

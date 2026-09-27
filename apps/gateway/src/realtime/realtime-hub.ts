@@ -42,6 +42,7 @@ import {
 } from "#src/realtime/subscription-policy";
 import { SubscriptionLimitExceeded } from "#src/realtime/realtime-errors";
 import { isReadyRoomRemoval } from "#src/realtime/npc-event-visibility";
+import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 
 type Scope = typeof SubscriptionScope.Type;
 
@@ -55,6 +56,13 @@ const MAX_DEDUPLICATION_ENTRIES = 10_000;
 const MAX_SUBSCRIPTIONS = 4_096;
 
 const MAX_SCOPE_BYTES = 1_024;
+
+/**
+ * Federated frame types this replica decodes. Bump it with a new federated
+ * event type and publish that type only once `clusterFederationVersion`
+ * reaches it: a replica drops a frame its schema does not know.
+ */
+export const FEDERATION_VERSION = 2;
 
 const toBase64 = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("base64");
@@ -133,6 +141,8 @@ export class RealtimeHub {
   private federated = false;
   private draining = false;
   readonly instanceId = crypto.randomUUID();
+  /** Lowest `FEDERATION_VERSION` among live replicas, kept by `GatewayMetrics`; 1 until known. */
+  clusterFederationVersion = 1;
 
   constructor(
     private readonly config: Pick<GatewayConfiguration, "maxBackpressureBytes">,
@@ -566,6 +576,11 @@ export class RealtimeHub {
     let binaryFrame = local?.bytes;
     const chatFrames = new Map<string, string | Uint8Array>();
 
+    const legacyAirTagFrames = new Map<
+      string,
+      ReadonlyArray<string | Uint8Array>
+    >();
+
     const canReadSource = prepareSourceEventVisibility(
       frame,
       message.sourceNpcs,
@@ -601,6 +616,21 @@ export class RealtimeHub {
             frame,
             chatFrames,
             chatPermissions(socket.data, guild),
+          ),
+        );
+        continue;
+      }
+
+      if (
+        frame.type === "air-tag.scope-updated" &&
+        !socket.data.supportsAirTagScopeUpdates
+      ) {
+        this.sendEach(
+          socket,
+          this.encodeLegacyAirTagUpdates(
+            socket.data,
+            frame,
+            legacyAirTagFrames,
           ),
         );
         continue;
@@ -698,6 +728,35 @@ export class RealtimeHub {
     }
 
     return encoded;
+  }
+
+  private encodeLegacyAirTagUpdates(
+    session: SessionData,
+    event: Extract<Event, { type: "air-tag.scope-updated" }>,
+    frames: Map<string, ReadonlyArray<string | Uint8Array>>,
+  ): ReadonlyArray<string | Uint8Array> {
+    const key = session.frameEncoding ?? "messagepack";
+    let encoded = frames.get(key);
+
+    if (encoded === undefined) {
+      encoded = toLegacyAirTagUpdates(event).map((legacy) =>
+        session.frameEncoding === "json"
+          ? JSON.stringify(legacy)
+          : encodeRealtimeFrame(legacy),
+      );
+      frames.set(key, encoded);
+    }
+
+    return encoded;
+  }
+
+  private sendEach(
+    socket: GatewaySocket,
+    frames: ReadonlyArray<string | Uint8Array>,
+  ): void {
+    for (const frame of frames) {
+      if (!this.send(socket, frame)) return;
+    }
   }
 
   private audienceKeys(session: SessionData): string[] {

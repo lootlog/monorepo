@@ -7,15 +7,16 @@ import {
   AIR_TAG_MAX_MAP_NAME_LENGTH,
   AirTagMapThreatEventSchema,
   AirTagTargetSchema,
+  isAirTagDeparture,
   isAirTagObservation,
+  type AirTagDeparture,
   type AirTagObservationAck,
   type AirTagMapThreatEnemy,
   type AirTagMapThreatEvent,
   type AirTagObservation,
   type AirTagScopeSnapshot,
   type AirTagSubscriptionAck,
-  type AirTagTarget,
-  type AirTagUpdateEvent,
+  type AirTagScopeUpdateEvent,
 } from "@lootlog/schema/air-tag";
 import { Schema } from "effect";
 import { Logger } from "#src/platform/logger";
@@ -23,6 +24,7 @@ import type {
   RedisGatewayStore,
   RedisScriptReply,
 } from "#src/platform/redis-store";
+import { toLegacyAirTagUpdates } from "#src/realtime/air-tag-legacy-updates";
 import type { RealtimeHub } from "#src/realtime/realtime-hub";
 import type { AirTagScope, GatewaySocket } from "#src/realtime/session";
 import {
@@ -46,6 +48,9 @@ const THREAT_REFRESH_MS = 4_000;
 const THREAT_BROADCAST_THROTTLE_MS = 1_000;
 
 const THREAT_PUBLISH_ATTEMPTS = 3;
+
+// The `FEDERATION_VERSION` that introduced `air-tag.scope-updated`.
+const SCOPE_UPDATE_FEDERATION_VERSION = 2;
 
 // One game tab sends at most four batches a second.
 const CONNECTION_BATCH_RATE_LIMIT = 15;
@@ -79,6 +84,11 @@ local function threatEnemies(records, now)
   end
   return enemies
 end
+-- cjson encodes an empty table as an object.
+local function withArrays(encoded, keys)
+  for _,key in ipairs(keys) do encoded=string.gsub(encoded,'"'..key..'":{}','"'..key..'":[]') end
+  return encoded
+end
 local function liveThreats(key, now, threatTtl)
   local records={}
   local count=0
@@ -109,6 +119,16 @@ end
 local function carry(target, observation, existing, field)
   if observation[field] ~= nil then target[field]=observation[field] elseif existing ~= nil then target[field]=existing[field] end
 end
+-- Connections that reported the target within the TTL; a live observer reports it at least every 6.25 s.
+local function liveObservers(target, now, ttl)
+  local observers={}
+  if target.seenBy ~= nil then
+    for id,seenAt in pairs(target.seenBy) do
+      if now-tonumber(seenAt) < ttl then observers[id]=seenAt end
+    end
+  end
+  return observers
+end
 local now=nowMs()
 local observations=cjson.decode(ARGV[2])
 local ttl=tonumber(ARGV[3])
@@ -122,6 +142,8 @@ local threatRefresh=tonumber(ARGV[10])
 local threatThrottle=tonumber(ARGV[11])
 local threatsAllowed=ARGV[12] == "1"
 local mapName=ARGV[13]
+local observer=ARGV[14]
+local departures=cjson.decode(ARGV[15])
 local raw=redis.call("GET",KEYS[3])
 local metadata
 if raw == false then
@@ -133,6 +155,31 @@ if #expired > 0 then redis.call("HDEL",KEYS[1],unpack(expired)); redis.call("ZRE
 local count=redis.call("HLEN",KEYS[1])
 local accepted=0
 local updates={}
+local removed={}
+local threatRemoved=false
+-- A target leaves once no observer still sees it and one of them saw it leave the map;
+-- a target only out of sight stays until its TTL.
+for _,departure in ipairs(departures) do
+  local existingRaw=redis.call("HGET",KEYS[1],departure.targetId)
+  if existingRaw ~= false then
+    local target=cjson.decode(existingRaw)
+    local observers=liveObservers(target,now,ttl)
+    if observers[observer] ~= nil then
+      observers[observer]=nil
+      if departure.reason == "left-map" then target.departed=true end
+      if target.departed == true and next(observers) == nil then
+        redis.call("HDEL",KEYS[1],departure.targetId); redis.call("ZREM",KEYS[2],departure.targetId)
+        count=count-1
+        metadata.revision=tonumber(metadata.revision)+1
+        table.insert(removed,departure.targetId)
+        if threatsAllowed and redis.call("HDEL",KEYS[4],departure.targetId) == 1 then threatRemoved=true end
+      else
+        target.seenBy=observers
+        redis.call("HSET",KEYS[1],departure.targetId,cjson.encode(target))
+      end
+    end
+  end
+end
 for _,observation in ipairs(observations) do
   local existingRaw=redis.call("HGET",KEYS[1],observation.targetId)
   local existing=nil
@@ -159,9 +206,12 @@ for _,observation in ipairs(observations) do
     if observation.clan ~= nil then target.clan=observation.clan end
     carry(target,observation,existing,"lvl")
     carry(target,observation,existing,"stasis")
+    target.seenBy={}
     if existing ~= nil then
       target.enemyObservedAt=existing.enemyObservedAt; target.clanEnemyObservedAt=existing.clanEnemyObservedAt; target.lastBroadcastAt=tonumber(existing.lastBroadcastAt) or 0
+      target.seenBy=liveObservers(existing,now,ttl)
     end
+    target.seenBy[observer]=now
     if tonumber(observation.relation) == enemy then target.enemyObservedAt=now end
     if tonumber(observation.relation) == clanEnemy then target.clanEnemyObservedAt=now end
     local broadcast=existing == nil
@@ -170,7 +220,7 @@ for _,observation in ipairs(observations) do
     end
     if broadcast then
       metadata.revision=tonumber(metadata.revision)+1; target.lastBroadcastAt=now
-      table.insert(updates,{revision=metadata.revision,target=public(target)})
+      table.insert(updates,public(target))
     end
     redis.call("HSET",KEYS[1],target.targetId,cjson.encode(target)); redis.call("ZADD",KEYS[2],now+ttl,target.targetId)
     if existing == nil then count=count+1 end
@@ -192,9 +242,9 @@ local state={broadcastAt=0,pending=false}
 if stateRaw ~= false then state=cjson.decode(stateRaw) end
 local threatResult=nil
 local threatPendingMs=nil
-if #sightings > 0 or state.pending == true then
+if #sightings > 0 or state.pending == true or threatRemoved then
   local records, threatCount = liveThreats(KEYS[4], now, threatTtl)
-  local due=state.pending == true
+  local due=state.pending == true or threatRemoved
   for _,observation in ipairs(sightings) do
     local previous=records[observation.targetId]
     if previous ~= nil or threatCount < maxTargets then
@@ -213,7 +263,8 @@ if #sightings > 0 or state.pending == true then
     end
   end
   state.pending=false
-  if due and next(records) ~= nil then
+  -- An empty list tells recipients the last enemy left.
+  if due then
     if now-tonumber(state.broadcastAt) >= threatThrottle then
       for id,record in pairs(records) do
         record.reportedAt=record.observedAt
@@ -230,9 +281,7 @@ if #sightings > 0 or state.pending == true then
   redis.call("SET",KEYS[5],cjson.encode(state),"PX",threatTtl)
   if next(records) ~= nil then redis.call("PEXPIRE",KEYS[4],threatTtl) end
 end
-local encoded=cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,acceptedTargets=accepted,updates=updates,threat=threatResult,threatPendingMs=threatPendingMs})
-if #updates == 0 then encoded=string.gsub(encoded,'"updates":{}','"updates":[]',1) end
-return encoded
+return withArrays(cjson.encode({epochId=metadata.epochId,epochStartedAt=metadata.epochStartedAt,revision=metadata.revision,acceptedTargets=accepted,targets=updates,removed=removed,threat=threatResult,threatPendingMs=threatPendingMs}),{"targets","removed","enemies"})
 `;
 
 const SNAPSHOT_SCRIPT = `
@@ -280,7 +329,7 @@ local wait=tonumber(ARGV[2])-(now-tonumber(state.broadcastAt))
 if wait > 0 then return cjson.encode({retryInMs=wait}) end
 local records=liveThreats(KEYS[1], now, threatTtl)
 state.pending=false
-if next(records) == nil or state.mapName == nil then
+if state.mapName == nil then
   redis.call("SET",KEYS[2],cjson.encode(state),"PX",threatTtl)
   return ""
 end
@@ -290,14 +339,17 @@ for id,record in pairs(records) do
 end
 state.broadcastAt=now
 redis.call("SET",KEYS[2],cjson.encode(state),"PX",threatTtl)
-return cjson.encode({mapName=state.mapName,revision=now,enemies=threatEnemies(records,now)})
+-- Empty once the last enemy left while the list was held back.
+return withArrays(cjson.encode({mapName=state.mapName,revision=now,enemies=threatEnemies(records,now)}),{"enemies"})
 `;
 
 interface MergeResult {
   epochId: string;
   epochStartedAt: number;
+  revision: number;
   acceptedTargets: number;
-  updates: Array<{ revision: number; target: AirTagTarget }>;
+  targets: AirTagScopeUpdateEvent["targets"];
+  removed: string[];
   threat?: { revision: number; enemies: AirTagMapThreatEnemy[] };
   threatPendingMs?: number;
 }
@@ -305,16 +357,17 @@ interface MergeResult {
 interface ObservationBatch {
   readonly expectedMapId: number;
   readonly observations: ReadonlyArray<AirTagObservation>;
+  readonly departures?: ReadonlyArray<AirTagDeparture>;
 }
 
 const MergeResultJson = Schema.fromJsonString(
   Schema.Struct({
     epochId: Schema.String,
     epochStartedAt: Schema.Number,
+    revision: Schema.Number,
     acceptedTargets: Schema.Number,
-    updates: Schema.Array(
-      Schema.Struct({ revision: Schema.Number, target: AirTagTargetSchema }),
-    ),
+    targets: Schema.Array(AirTagTargetSchema),
+    removed: Schema.Array(Schema.String),
     threat: Schema.optionalKey(
       Schema.Struct({
         revision: Schema.Number,
@@ -380,7 +433,10 @@ export class AirTagService {
     private readonly redis: ScriptStore,
     private readonly hub: Pick<
       RealtimeHub,
-      "subscribe" | "unsubscribe" | "publishToScopes"
+      | "subscribe"
+      | "unsubscribe"
+      | "publishToScopes"
+      | "clusterFederationVersion"
     >,
   ) {}
 
@@ -506,6 +562,15 @@ export class AirTagService {
       ).values(),
     ];
 
+    const observedIds = new Set(observations.map((item) => item.targetId));
+
+    // A sighting in the same batch supersedes a departure.
+    const departures = [
+      ...new Map(
+        (payload.departures ?? []).map((item) => [item.targetId, item]),
+      ).values(),
+    ].filter((item) => !observedIds.has(item.targetId));
+
     // Proof-checked characters only: a threat reaches the whole Organization's timers.
     const threatsAllowed =
       socket.data.confidence === "verified" &&
@@ -517,12 +582,13 @@ export class AirTagService {
 
         return {
           scope,
-          result: await this.merge(
-            scope,
+          result: await this.merge(scope, {
+            observer: socket.data.connectionId,
             observations,
+            departures,
             threatsAllowed,
-            context.mapName,
-          ),
+            mapName: context.mapName,
+          }),
         };
       }),
     );
@@ -555,33 +621,18 @@ export class AirTagService {
       if (result.threatPendingMs !== undefined)
         this.scheduleThreatFlush(scope, result.threatPendingMs);
 
-      for (const update of result.updates) {
-        const event: AirTagUpdateEvent = {
-          guildId: scope.guildId,
-          world: scope.world,
-          mapId: scope.mapId,
-          epochId: result.epochId,
-          epochStartedAt: result.epochStartedAt,
-          revision: update.revision,
-          target: update.target,
-        };
+      if (result.targets.length === 0 && result.removed.length === 0) continue;
 
-        await this.hub.publishToScopes(
-          [scope.subscription],
-          {
-            v: 1,
-            type: "air-tag.updated",
-            sequence: update.revision,
-            data: event,
-          },
-          {
-            excludeConnectionId: socket.data.connectionId,
-            recipientPlatform: "game",
-            recipientWorld: scope.world,
-            recipientMapId: scope.mapId,
-          },
-        );
-      }
+      await this.publishScopeUpdate(scope, socket.data.connectionId, {
+        guildId: scope.guildId,
+        world: scope.world,
+        mapId: scope.mapId,
+        epochId: result.epochId,
+        epochStartedAt: result.epochStartedAt,
+        revision: result.revision,
+        targets: result.targets,
+        removedTargetIds: result.removed,
+      });
     }
 
     return {
@@ -589,6 +640,56 @@ export class AirTagService {
       acceptedScopes: successes.length,
       acceptedTargets,
     };
+  }
+
+  /**
+   * One publication per batch; the hub splits it for older game clients.
+   * While an older replica is live it would drop the frame, so its targets go
+   * out as `air-tag.updated` and only removals, which it cannot deliver
+   * anyway, as a frame.
+   */
+  private async publishScopeUpdate(
+    scope: AirTagScope,
+    excludeConnectionId: string,
+    event: AirTagScopeUpdateEvent,
+  ): Promise<void> {
+    const options = {
+      excludeConnectionId,
+      recipientPlatform: "game",
+      recipientWorld: scope.world,
+      recipientMapId: scope.mapId,
+    } as const;
+
+    const frame = {
+      v: 1,
+      type: "air-tag.scope-updated",
+      sequence: event.revision,
+      data: event,
+    } as const;
+
+    if (this.hub.clusterFederationVersion >= SCOPE_UPDATE_FEDERATION_VERSION) {
+      await this.hub.publishToScopes([scope.subscription], frame, options);
+
+      return;
+    }
+
+    if (event.removedTargetIds.length > 0) {
+      // Removals precede the batch's target revisions.
+      const revision = event.revision - event.targets.length;
+
+      await this.hub.publishToScopes(
+        [scope.subscription],
+        {
+          ...frame,
+          sequence: revision,
+          data: { ...event, revision, targets: [] },
+        },
+        options,
+      );
+    }
+
+    for (const update of toLegacyAirTagUpdates(frame))
+      await this.hub.publishToScopes([scope.subscription], update, options);
   }
 
   /** Current map threats of one Organization and world, for a client that just connected. */
@@ -708,13 +809,17 @@ export class AirTagService {
   }
 
   private hasValidBatch(payload: ObservationBatch): boolean {
+    const departures = payload.departures ?? [];
+
     return (
       Number.isInteger(payload.expectedMapId) &&
       payload.expectedMapId >= 0 &&
       payload.expectedMapId <= 65_535 &&
-      payload.observations.length > 0 &&
+      payload.observations.length + departures.length > 0 &&
       payload.observations.length <= AIR_TAG_MAX_BATCH_SIZE &&
-      payload.observations.every(isAirTagObservation)
+      departures.length <= AIR_TAG_MAX_BATCH_SIZE &&
+      payload.observations.every(isAirTagObservation) &&
+      departures.every(isAirTagDeparture)
     );
   }
 
@@ -882,9 +987,19 @@ export class AirTagService {
 
   private async merge(
     scope: AirTagScope,
-    observations: ReadonlyArray<AirTagObservation>,
-    threatsAllowed: boolean,
-    mapName: string,
+    {
+      observer,
+      observations,
+      departures,
+      threatsAllowed,
+      mapName,
+    }: {
+      observer: string;
+      observations: ReadonlyArray<AirTagObservation>;
+      departures: ReadonlyArray<AirTagDeparture>;
+      threatsAllowed: boolean;
+      mapName: string;
+    },
   ): Promise<MergeResult> {
     const hashTag = this.hashTag(scope);
 
@@ -907,6 +1022,8 @@ export class AirTagService {
       THREAT_BROADCAST_THROTTLE_MS,
       threatsAllowed ? "1" : "0",
       mapName,
+      observer,
+      JSON.stringify(departures),
     );
 
     const { threat, ...parsed } = Schema.decodeUnknownSync(MergeResultJson)(
@@ -915,7 +1032,8 @@ export class AirTagService {
 
     return {
       ...parsed,
-      updates: [...parsed.updates],
+      targets: [...parsed.targets],
+      removed: [...parsed.removed],
       ...(threat && {
         threat: { revision: threat.revision, enemies: [...threat.enemies] },
       }),
