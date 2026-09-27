@@ -140,8 +140,12 @@ export const usePageVirtualizer = <TItemElement extends Element>({
       }
 
       if (!viewport) return;
+
+      // The viewport's own list starts at zero even after scroll restoration.
       setScrollMargin(
-        listTop - viewport.getBoundingClientRect().top + viewport.scrollTop,
+        list === viewport
+          ? 0
+          : listTop - viewport.getBoundingClientRect().top + viewport.scrollTop,
       );
     };
 

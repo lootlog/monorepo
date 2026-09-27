@@ -290,7 +290,9 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
-    window.addEventListener("keyup", handleKeyUp);
+    // Focused editors stop key events from bubbling; a held ping must still
+    // end on its release.
+    window.addEventListener("keyup", handleKeyUp, true);
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("auxclick", suppressHandledMouseEvent);
@@ -299,7 +301,7 @@ export const useHotkeys = (handlers: UseHotkeysOptions = {}) => {
     return () => {
       cancelActivePing();
       window.removeEventListener("keydown", handleKeyDown, true);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keyup", handleKeyUp, true);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("auxclick", suppressHandledMouseEvent);

@@ -51,6 +51,7 @@ export const SETTINGS_SUBSECTION_DOMAINS = {
   "timer-behavior": "timers",
   "timer-appearance": "timers",
   "timer-colors": "timers",
+  "timer-lists": "timers",
   "hidden-timers": "timers",
   "notification-rules": "notifications",
   detector: "detector",

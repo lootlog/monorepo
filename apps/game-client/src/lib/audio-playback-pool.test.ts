@@ -3,17 +3,34 @@ import { createAudioPlaybackPool } from "./audio-playback-pool";
 
 const audioInstances: AudioMock[] = [];
 
+const unavailableUrls = new Set<string>();
+
+const playedUrls: string[] = [];
+
 class AudioMock {
   currentTime = 8;
+  error: Pick<MediaError, "code"> | null = null;
   onended: (() => void) | null = null;
   playbackRate = 1;
   preservesPitch = true;
   preload = "";
   src: string;
   volume = 1;
-  readonly load = vi.fn<() => void>();
+  readonly load = vi.fn<() => void>(() => {
+    this.error = unavailableUrls.has(this.src) ? { code: 4 } : null;
+  });
   readonly pause = vi.fn<() => void>();
-  readonly play = vi.fn<() => Promise<void>>().mockResolvedValue();
+  readonly play = vi.fn<() => Promise<void>>(() => {
+    if (this.error) {
+      return Promise.reject(
+        new DOMException("Unavailable media", "NotSupportedError"),
+      );
+    }
+
+    playedUrls.push(this.src);
+
+    return Promise.resolve();
+  });
   readonly removeAttribute = vi.fn<(attribute: string) => void>(
     (attribute: string) => {
       if (attribute === "src") this.src = "";
@@ -29,6 +46,8 @@ class AudioMock {
 describe("createAudioPlaybackPool", () => {
   beforeEach(() => {
     audioInstances.length = 0;
+    unavailableUrls.clear();
+    playedUrls.length = 0;
     vi.stubGlobal("Audio", AudioMock);
   });
 
@@ -53,22 +72,28 @@ describe("createAudioPlaybackPool", () => {
     expect(audioInstances[0]?.volume).toBe(0.6);
   });
 
-  it("keeps preview playback isolated from regular playback", () => {
+  it("plays a custom sound after its earlier preload failed and the host recovered", async () => {
     const pool = createAudioPlaybackPool();
+    const url = "https://audio.test/custom-elite.mp3";
+    unavailableUrls.add(url);
+    pool.preload(url);
 
-    pool.play({ channel: "regular", url: "sound.mp3", volume: 0.4 });
-    pool.play({ channel: "preview", url: "sound.mp3", volume: 0.8 });
+    unavailableUrls.delete(url);
+    const freshPreview = new AudioMock(url);
+    freshPreview.load();
+    await freshPreview.play();
 
-    expect(audioInstances).toHaveLength(2);
-    expect(audioInstances[0]?.pause).not.toHaveBeenCalled();
-    expect(audioInstances[1]?.volume).toBe(0.8);
+    pool.play({ url, volume: 0.6 });
+    await Promise.resolve();
+
+    expect(playedUrls).toEqual([url, url]);
   });
 
-  it("does not interrupt a different URL playing on the same channel", () => {
+  it("does not interrupt a different URL playing at the same time", () => {
     const pool = createAudioPlaybackPool();
 
-    pool.play({ channel: "regular", url: "notification.mp3", volume: 0.4 });
-    pool.play({ channel: "regular", url: "detector.mp3", volume: 0.8 });
+    pool.play({ url: "notification.mp3", volume: 0.4 });
+    pool.play({ url: "detector.mp3", volume: 0.8 });
 
     expect(audioInstances).toHaveLength(2);
     expect(audioInstances[0]?.pause).not.toHaveBeenCalled();

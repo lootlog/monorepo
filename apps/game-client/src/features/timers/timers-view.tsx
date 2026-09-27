@@ -100,6 +100,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setTimersFilters,
     displayConfig,
     timersColors,
+    customLists,
     alwaysVisibleExpiredTimers,
   } = useTimersStore(
     useShallow((state) => ({
@@ -118,6 +119,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       setTimersFilters: state.setTimersFilters,
       displayConfig: state.displayConfig,
       timersColors: state.timersColors,
+      customLists: state.customLists,
       alwaysVisibleExpiredTimers: state.alwaysVisibleExpiredTimers,
     })),
   );
@@ -171,12 +173,14 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
       minLvl: filters.minLvl,
       searchText,
       selectedColors: filters.selectedColors,
+      selectedLists: filters.selectedLists,
       selectedNpcTypes: filters.selectedNpcTypes,
       showHiddenTimers,
     },
     preferences: {
       alwaysVisibleExpiredTimers,
       colorFiltersEnabled: resolvedColorFiltersEnabled,
+      customLists,
       hiddenTimers: hiddenTimersForSettings,
       pinnedTimers: pinnedTimersForSettings,
       removeTimerAfterMs: generalConfig.removeTimerAfterMs,
@@ -206,6 +210,7 @@ export const TimersView = ({ isOpen, isUnderBag }: TimersViewProps) => {
     setTimersFilters(settingsKey, {
       ...DEFAULT_TIMERS_FILTERS,
       selectedColors: [...DEFAULT_TIMERS_FILTERS.selectedColors],
+      selectedLists: [...DEFAULT_TIMERS_FILTERS.selectedLists],
       selectedNpcTypes: [...DEFAULT_TIMERS_FILTERS.selectedNpcTypes],
     });
     setShowHiddenTimers(true);

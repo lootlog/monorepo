@@ -335,6 +335,18 @@ const MANIFEST = [
         ],
       },
       {
+        id: "timer-lists",
+        labelKey: "settings.subsections.timerLists",
+        controls: [
+          {
+            id: "timer-lists",
+            labelKey: "settings.timers.lists.title",
+            aliases: ["grupy", "zestawy", "filtr", "własne listy"],
+            settingKeys: ["timers.customLists"],
+          },
+        ],
+      },
+      {
         id: "hidden-timers",
         labelKey: "settings.subsections.hiddenTimers",
         controls: [

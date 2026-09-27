@@ -19,6 +19,7 @@ import { ServerVisibilitySettingsTab } from "@/features/settings/components/serv
 import { NpcColorsSettings } from "@/features/settings/components/npc-colors/npc-colors-settings";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";
+import { TimersSettingsLists } from "@/features/settings/components/timers/timers-settings-lists";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
 import type { SettingsSubsectionValue } from "@/features/settings/constants/settings-tabs";
 import type { SettingsIconName } from "@/features/settings/settings-manifest";
@@ -77,6 +78,7 @@ export const SETTINGS_SUBSECTION_CONTENT = {
   "timer-behavior": TimersSettingsGeneral,
   "timer-appearance": TimersSettingsAppearance,
   "timer-colors": TimersSettingsColors,
+  "timer-lists": TimersSettingsLists,
   "hidden-timers": HiddenTimersTab,
   "notification-rules": NotificationsSettingsTab,
   detector: DetectorSettingsTab,
