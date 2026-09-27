@@ -269,6 +269,9 @@ export class RealtimeHub {
       readonly recipientWorld?: string;
       readonly recipientMapId?: number;
       readonly recipientCharacterIds?: readonly string[];
+      /** Limits delivery to readers of this Organization's precise presence location. */
+      readonly organizationId?: string;
+      readonly presenceAudience?: "precise";
     } = {},
   ): Promise<void> {
     if (scopes.length === 0) return;

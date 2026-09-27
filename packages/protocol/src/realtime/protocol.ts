@@ -2,6 +2,7 @@ import { AccessPolicySnapshot, AccessPolicyChange } from "./access-policy.js";
 import { UserFeedItem } from "../feed.js";
 import { NonNegativeInt } from "@lootlog/schema/primitives";
 import {
+  AirTagMapThreatEventSchema,
   AirTagObservationBatchSchema,
   AirTagScopeSnapshotSchema,
   AirTagUpdateEventSchema,
@@ -47,6 +48,13 @@ export const REALTIME_BATTLE_PING_CAPABILITY = "lootlog.battle-ping.v1";
 // decode.
 export const REALTIME_TEAM_BATTLE_PING_CAPABILITY =
   "lootlog.battle-ping.team.v1";
+
+// Offered as a subprotocol by clients that decode `air-tag.map-threat-updated`,
+// and listed in `session.joined` capabilities by gateways that accept
+// `air-tag.map-threats.fetch`. Older clients close the socket on an unknown
+// event, and older gateways close it on an unknown command.
+export const REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY =
+  "lootlog.air-tag-map-threat.v1";
 
 export const REALTIME_JSON_SUBPROTOCOL = "lootlog.realtime.json.v1";
 
@@ -257,6 +265,18 @@ export const AirTagObservationCommand = command(
   AirTagObservationBatchSchema,
 );
 
+export const AirTagMapThreatsFetchCommand = command(
+  "air-tag.map-threats.fetch",
+  Schema.Struct({
+    organizationId: Schema.NonEmptyString,
+    world: Schema.NonEmptyString,
+  }),
+);
+
+export const AirTagMapThreatsFetchResponse = Schema.Struct({
+  threats: Schema.Array(AirTagMapThreatEventSchema),
+});
+
 export const AirTagRejectCode = Schema.Literals([
   "forbidden",
   "invalid-context",
@@ -305,6 +325,7 @@ export const ClientCommand = Schema.Union([
   BattlePingCommand,
   AirTagSubscriptionCommand,
   AirTagObservationCommand,
+  AirTagMapThreatsFetchCommand,
 ]);
 
 export type ClientCommand = typeof ClientCommand.Type;
@@ -401,6 +422,7 @@ export const ServerEvent = Schema.Union([
   serverEvent("map-ping.received", MapPingEventSchema),
   serverEvent("battle-ping.received", BattlePingEventSchema),
   serverEvent("air-tag.updated", AirTagUpdateEventSchema),
+  serverEvent("air-tag.map-threat-updated", AirTagMapThreatEventSchema),
   serverEvent("event.map-status-updated", OrganizationEvent),
   serverEvent("event.hero-killed", OrganizationEvent),
   serverEvent("event.ranking-updated", OrganizationEvent),

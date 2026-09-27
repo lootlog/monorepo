@@ -49,7 +49,7 @@ const delta = (...presences: PresenceWithLocation[]): ServerEvent => ({
 describe("shared presence map projection", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("shares one snapshot with rows and does no map notifications or animation work for a thousand same-map updates", async () => {
+  it("shares one snapshot with rows and does no map notifications or animation work for a thousand same-map position updates", async () => {
     const harness = createOnlinePlayersTest();
     getSocket().connect();
     harness.open();
@@ -70,7 +70,6 @@ describe("shared presence map projection", () => {
         ...Array.from({ length: 1000 }, (_, index) =>
           createOnlinePresence({
             lastSeen: index,
-            isAfk: index % 2 === 0,
             location: { map: "Karka-han", x: index % 32, y: index % 24 },
           }),
         ),
@@ -88,7 +87,7 @@ describe("shared presence map projection", () => {
     release();
   });
 
-  it("keeps a map occupied until the last character leaves and ignores a replaced session's removal", async () => {
+  it("keeps a map occupied until the last character leaves, lists who remains, and ignores a replaced session's removal", async () => {
     const harness = createOnlinePlayersTest();
     const first = createOnlinePresence();
 
@@ -132,15 +131,16 @@ describe("shared presence map projection", () => {
         ],
       },
     });
-    await harness.receive(delta({ ...second, status: "offline" }));
     expect(changed).not.toHaveBeenCalled();
-    expect(source.isMapOccupied("Karka-han")).toBe(true);
+    await harness.receive(delta({ ...second, status: "offline" }));
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(source.getMapOccupancy("Karka-han")?.players).toHaveLength(1);
     await harness.receive(
       delta(
         createOnlinePresence({ sessionId: "replacement", status: "offline" }),
       ),
     );
-    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    await waitFor(() => expect(changed).toHaveBeenCalledTimes(2));
     expect(source.isMapOccupied("Karka-han")).toBe(false);
     unsubscribe();
     rows.unmount();

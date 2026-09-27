@@ -5,6 +5,7 @@ import {
 } from "@lootlog/client/realtime";
 import { GATEWAY_URL, GATEWAY_SOCKET_PATH } from "@/config/gateway";
 import {
+  REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
   REALTIME_BATTLE_PING_CAPABILITY,
   REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
   REALTIME_TEAM_BATTLE_PING_CAPABILITY,
@@ -39,6 +40,7 @@ export function createGameRealtimeClient(): RealtimeClient {
       REALTIME_NOTIFICATION_VOLUNTEER_CAPABILITY,
       REALTIME_BATTLE_PING_CAPABILITY,
       REALTIME_TEAM_BATTLE_PING_CAPABILITY,
+      REALTIME_AIR_TAG_MAP_THREAT_CAPABILITY,
     ],
     frameEncoding: readable ? "json" : "messagepack",
   });

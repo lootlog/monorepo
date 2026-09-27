@@ -84,7 +84,7 @@ function applyOthers(
         x: entry.x,
         y: entry.y,
       };
-    } else if (world.others[id]) {
+    } else if ("x" in entry && world.others[id]) {
       Object.assign(world.others[id], { x: entry.x, y: entry.y });
     }
   }
