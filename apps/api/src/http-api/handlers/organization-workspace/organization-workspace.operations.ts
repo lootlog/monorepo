@@ -1,3 +1,4 @@
+import { sortGuildsByPreference } from "#src/guilds/guild-order";
 import {
   AcceptedReservationShareBoundary,
   CreatedReservationShareInvitationBoundary,
@@ -161,20 +162,10 @@ export class MyReservationsData extends Context.Service<
 
             if (guildRows.length === 0) return { items: [] };
 
-            const guildOrder = new Map(
-              (preferenceRows[0]?.guildsOrder ?? []).map((id, index) => [
-                id,
-                index,
-              ]),
-            );
-
-            const guildIds = guildRows
-              .map(({ id }) => id)
-              .sort(
-                (left, right) =>
-                  (guildOrder.get(left) ?? Number.MAX_SAFE_INTEGER) -
-                  (guildOrder.get(right) ?? Number.MAX_SAFE_INTEGER),
-              );
+            const guildIds = sortGuildsByPreference(
+              guildRows,
+              preferenceRows[0]?.guildsOrder ?? [],
+            ).map(({ id }) => id);
 
             const now = new Date(yield* Clock.currentTimeMillis);
 
