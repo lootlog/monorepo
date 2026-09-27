@@ -167,7 +167,7 @@ for _,observation in ipairs(observations) do
     if tonumber(observation.relation) == clanEnemy then target.clanEnemyObservedAt=now end
     local broadcast=existing == nil
     if existing ~= nil then
-      broadcast=tonumber(existing.x) ~= tonumber(target.x) or tonumber(existing.y) ~= tonumber(target.y) or existing.nickname ~= target.nickname or clanId(existing) ~= clanId(target) or existing.lvl ~= target.lvl or existing.stasis ~= target.stasis or effective(existing,now,ttl,enemy,clanEnemy) ~= effective(target,now,ttl,enemy,clanEnemy) or now-target.lastBroadcastAt >= interval
+      broadcast=tonumber(existing.x) ~= tonumber(target.x) or tonumber(existing.y) ~= tonumber(target.y) or existing.nickname ~= target.nickname or clanId(existing) ~= clanId(target) or existing.lvl ~= target.lvl or existing.prof ~= target.prof or existing.stasis ~= target.stasis or effective(existing,now,ttl,enemy,clanEnemy) ~= effective(target,now,ttl,enemy,clanEnemy) or now-target.lastBroadcastAt >= interval
     end
     if broadcast then
       metadata.revision=tonumber(metadata.revision)+1; target.lastBroadcastAt=now
@@ -208,7 +208,7 @@ if #sightings > 0 or state.pending == true then
       else
         record.reportedAt=previous.reportedAt
         -- A sighting last reported long ago must reach recipients before it turns stale for them.
-        if previous.nickname ~= record.nickname or clanId(previous) ~= clanId(record) or previous.lvl ~= record.lvl or previous.stasis ~= record.stasis or now-tonumber(previous.reportedAt or 0) >= threatRefresh then due=true end
+        if previous.nickname ~= record.nickname or clanId(previous) ~= clanId(record) or previous.lvl ~= record.lvl or previous.prof ~= record.prof or previous.stasis ~= record.stasis or now-tonumber(previous.reportedAt or 0) >= threatRefresh then due=true end
       end
       records[observation.targetId]=record
       redis.call("HSET",KEYS[4],observation.targetId,cjson.encode(record))

@@ -62,8 +62,9 @@ export class PresenceMapIndex {
         key,
         name: presence.player?.name ?? "",
         isAfk: presence.isAfk,
-        lvl: presence.player?.lvl,
-        prof: presence.player?.prof,
+        // Presence normalises a missing level to 0 and a missing profession to "".
+        lvl: presence.player?.lvl || undefined,
+        prof: presence.player?.prof || undefined,
         clanName: presence.player?.clan?.name,
       }))
       .sort(
