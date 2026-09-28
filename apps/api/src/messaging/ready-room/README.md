@@ -98,7 +98,7 @@ sequence above.
 
 Generic gathering creation publishes `guilds.party-gathering` for each authorized Organization after persistence, in addition to the private organizer update. This lets viewers refresh discovery without a chat message or a page reload.
 
-Cancellation publishes `guilds.party-gathering.cancel` to every source Organization after successful termination, independently of chat messages and participant-only updates. Discovery viewers can therefore remove the gathering without reloading.
+Cancellation publishes `guilds.party-gathering.cancel` to every source Organization after successful termination, independently of chat messages and participant-only updates. Discovery viewers can therefore remove the gathering without reloading. Participant updates are published before the chat messages are ended; a chat cleanup failure is logged and does not fail the committed cancellation, because a retry cannot cancel the room again.
 
 Game-client disconnection uses a gateway-owned 10-second reconnect grace period.
 The gateway persists pending deadlines, cancels them on renewed character presence,

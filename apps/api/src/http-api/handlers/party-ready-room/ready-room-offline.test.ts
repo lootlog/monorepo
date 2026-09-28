@@ -15,7 +15,7 @@ import { ReadyRoomData } from "./party-ready-room.handlers.js";
 import { makeReadyRoomDataLayer } from "./ready-room.data-layer.js";
 import type { ReadyRoomRedis } from "./ready-room.repository.js";
 
-it("expires only the disconnected character's existing gathering or application and tolerates repeated offline delivery", async () => {
+it("expires only the disconnected character's existing gathering or application, publishes despite chat cleanup failure and tolerates repeated offline delivery", async () => {
   const boundary = await createDatabaseBoundary();
   const disconnectedAt = Date.parse("2026-09-10T10:00:00Z");
   const createdAt = new Date(disconnectedAt - 60_000).toISOString();
@@ -162,7 +162,8 @@ it("expires only the disconnected character's existing gathering or application 
           cancellations.push(event);
         }),
       publishGathering: () => Effect.void,
-      endPartyGatheringMessages: () => Effect.void,
+      endPartyGatheringMessages: () =>
+        Effect.fail(new Error("Chat storage unavailable")),
     },
     () => disconnectedAt + 10_000,
   ).pipe(Layer.provide(Layer.succeed(ApiDatabase, boundary.database)));
@@ -189,6 +190,15 @@ it("expires only the disconnected character's existing gathering or application 
     expect(cancellations).toEqual([
       { notificationId: "owned", guildId: "organization" },
     ]);
+    expect(updates).toContainEqual(
+      expect.objectContaining({
+        recipientDiscordId: "owner",
+        update: expect.objectContaining({
+          type: "REMOVE",
+          notificationId: "owned",
+        }),
+      }),
+    );
     expect(rooms.slice(1, -2)).toEqual(untouched);
     expect(rooms.at(-2)).toMatchObject({ status: "ACTIVE", revision: 2 });
     expect(Object.keys(rooms.at(-2)?.participants ?? {})).toEqual([
