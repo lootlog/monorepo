@@ -10,7 +10,8 @@ import {
 import { TimersListFilter } from "./timers-list-filter";
 import { TimersNpcTypeFilter } from "./timers-npc-type-filter";
 import { cn } from "cn";
-import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
+import { useTimerFilters } from "@/features/timers/hooks/use-timer-filters";
+import { useTimersStore } from "@/store/timers.store";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { getTimerColorOptions } from "@/features/timers/utils/get-timer-color-options";
@@ -21,17 +22,19 @@ const MIN_LVL = 0;
 
 type TimersFiltersProps = {
   filtersKey: string;
+  world: string;
 };
 
-export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
+export const TimersFilters: FC<TimersFiltersProps> = ({
+  filtersKey,
+  world,
+}) => {
   const { t } = useTranslation("timers");
   const { t: tCommon } = useTranslation("common");
 
   const {
     timerFiltersSearchText,
     setTimerFiltersSearchText,
-    timersFilters,
-    setTimersFilters,
     customColors,
     defaultColorNames,
     overriddenDefaultColors,
@@ -41,7 +44,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     displayConfig: { legacyAppearance },
   } = useTimersStore();
 
-  const filters = timersFilters[filtersKey] ?? DEFAULT_TIMERS_FILTERS;
+  const { filters, setFilters } = useTimerFilters(filtersKey, world);
   const selectedColors = new Set(filters.selectedColors);
 
   const colors = getTimerColorOptions({
@@ -55,7 +58,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   const lists = Object.values(customLists);
 
   const handleToggleColor = (colorId: string) => {
-    setTimersFilters(filtersKey, {
+    setFilters({
       ...filters,
       selectedColors: selectedColors.has(colorId)
         ? filters.selectedColors.filter((id) => id !== colorId)
@@ -86,14 +89,12 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           value={filters}
           min={MIN_LVL}
           max={MAX_LVL}
-          onChange={(range) =>
-            setTimersFilters(filtersKey, { ...filters, ...range })
-          }
+          onChange={(range) => setFilters({ ...filters, ...range })}
         />
         <TimersNpcTypeFilter
           selectedNpcTypes={filters.selectedNpcTypes}
           onChange={(selectedNpcTypes) =>
-            setTimersFilters(filtersKey, { ...filters, selectedNpcTypes })
+            setFilters({ ...filters, selectedNpcTypes })
           }
         />
       </div>
@@ -102,7 +103,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           lists={lists}
           selectedLists={filters.selectedLists}
           onChange={(selectedLists) =>
-            setTimersFilters(filtersKey, { ...filters, selectedLists })
+            setFilters({ ...filters, selectedLists })
           }
         />
       )}
