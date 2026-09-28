@@ -1,3 +1,4 @@
+import { getTimerHistoryValues } from "./timer-restore-snapshot.js";
 import { pruneTimerHistory } from "./timer-history-retention.js";
 import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { upsertActorCharacter } from "./timer-actor-snapshot.js";
@@ -443,6 +444,7 @@ export const makeAutoTimer = (
               new TimersInvariantViolation({ code: "AUTO_UPSERT_NO_ROW" }),
             );
           yield* transaction.insert(timerHistoryEntryTable).values({
+            ...getTimerHistoryValues(timer),
             guildId,
             world: payload.world,
             timerKey,
@@ -454,13 +456,6 @@ export const makeAutoTimer = (
             actorCharacterLvl: payload.actorCharacter?.lvl,
             minSpawnTime: window.minSpawnTime,
             maxSpawnTime: window.maxSpawnTime,
-            latestRespBaseSeconds: timer.latestRespBaseSeconds,
-            latestRespawnRandomness: timer.latestRespawnRandomness,
-            wasReset: timer.wasReset,
-            windowOpenedAt: timer.windowOpenedAt,
-            timerCreatedById: timer.createdById,
-            timerActorCharacterSnapshotId: timer.actorCharacterSnapshotId,
-            timerActorCharacterLvl: timer.actorCharacterLvl,
           });
 
           yield* pruneTimerHistory(
