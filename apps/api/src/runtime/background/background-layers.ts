@@ -1,6 +1,6 @@
 import { ReadyRoomData } from "#src/http-api/handlers/party-ready-room/party-ready-room.handlers";
 import { makeGuildKillActivityCleanup } from "#src/kills/guild-kill-activity";
-import { Effect, FiberSet, Layer } from "effect";
+import { Effect, FiberSet, Layer, Schedule } from "effect";
 import { RabbitMessaging } from "@lootlog/messaging";
 import { RabbitRoutingKey } from "@lootlog/protocol/rabbit/topology";
 
@@ -46,7 +46,7 @@ export const RabbitConsumers = Layer.effectDiscard(
     yield* runLootPublications.pipe(Effect.forkScoped);
     const readyRooms = yield* ReadyRoomData;
     const guildSync = yield* GuildDiscordSync;
-    const { removal } = yield* MemberServices;
+    const { memberDelivery } = yield* MemberServices;
     const { tracking } = yield* EventsServices;
 
     const { scheduler, matching, store, targets, delivery, rebuild } =
@@ -59,7 +59,7 @@ export const RabbitConsumers = Layer.effectDiscard(
       clearCachePattern: (pattern) =>
         adapter(() => redis.deleteByPattern(pattern)),
       clearCacheKey: (key) => adapter(() => redis.del(key)),
-      notifyMembersRemoved: (members) => removal.notifyMembersRemoved(members),
+      deliverMemberChanges: memberDelivery.deliverAll,
     });
 
     const notificationEvents = makeNotificationsEvents({
@@ -195,8 +195,16 @@ export const BullWorkers = Layer.effectDiscard(
     const config = yield* ApiRuntimeConfig;
     const rabbit = yield* RabbitMessaging;
 
-    const { refreshMember, scheduler, diagnostics, sync } =
+    const { refreshMember, scheduler, diagnostics, sync, memberDelivery } =
       yield* MemberServices;
+
+    yield* memberDelivery.dispatchPending().pipe(
+      Effect.catch((error) =>
+        Effect.logError("Member sync dispatch failed", error),
+      ),
+      Effect.repeat(Schedule.spaced("5 seconds")),
+      Effect.forkScoped,
+    );
 
     const { kills } = yield* EventsServices;
     const { dispatch } = yield* NotificationsServices;

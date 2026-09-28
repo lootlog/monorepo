@@ -16,6 +16,7 @@ import {
 } from "#src/members/member-cache";
 import { MEMBER_LAST_DISCORD_STATUS } from "#src/members/member-discord-status";
 import { MEMBER_REFRESH_PRIORITY } from "#src/members/member-refresh-queue";
+import { queueMemberDeliveries } from "#src/members/member.store";
 import { ErrorKey } from "#src/members/error-key";
 import { isTransientMemberSyncStatus } from "#src/members/member-discord-sync-status";
 import type {
@@ -51,16 +52,10 @@ export interface MemberCommandsPorts {
   readonly recordStaleUse: (
     reason: MemberRefreshAttempt["status"],
   ) => Effect.Effect<unknown, unknown>;
-  readonly clearMemberCaches: (options: {
-    readonly discordId: string;
-    readonly guildId: string;
-    readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
-  readonly publishMemberRemoved: (options: {
-    readonly discordId: string;
-    readonly guildId: string;
-    readonly userId: string;
-  }) => Effect.Effect<unknown, unknown>;
+  /** Delivers member changes queued in the `MemberSyncDelivery` outbox. */
+  readonly deliverMemberChanges: (
+    memberIds: ReadonlyArray<number>,
+  ) => Effect.Effect<unknown, unknown>;
   readonly enqueueBulkRefresh: (
     data: MemberBulkRefreshJobData,
   ) => Effect.Effect<unknown, unknown>;
@@ -288,30 +283,15 @@ export const makeMembersDataLayer = (
               yield* transaction
                 .delete(memberToRoleTable)
                 .where(eq(memberToRoleTable.A, stored.id));
+              // A retry sees the member as deactivated, so the committed
+              // outbox row is what keeps its removal retryable.
+              yield* queueMemberDeliveries(transaction, [stored.id], true);
 
               return { ...updated, roles: [] };
             }),
           )
           .pipe(
-            Effect.tap((member) =>
-              member.globalUserId
-                ? Effect.all(
-                    [
-                      ports.clearMemberCaches({
-                        discordId,
-                        guildId,
-                        userId: member.globalUserId,
-                      }),
-                      ports.publishMemberRemoved({
-                        discordId,
-                        guildId,
-                        userId: member.globalUserId,
-                      }),
-                    ],
-                    { concurrency: "unbounded" },
-                  )
-                : Effect.void,
-            ),
+            Effect.tap((member) => ports.deliverMemberChanges([member.id])),
           );
 
       const createBulkRefresh = (guildId: string, requestedBy: string) =>
