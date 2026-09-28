@@ -79,6 +79,7 @@ export const Timers = () => {
 
   const {
     data: timers,
+    dataUpdatedAt,
     isPending,
     isError,
     isFetching,
@@ -99,7 +100,7 @@ export const Timers = () => {
     },
   );
 
-  useTimerExpiry(timers, guildId, world);
+  useTimerExpiry(timers, guildId, world, dataUpdatedAt);
   const [search, setSearch] = useState("");
   const { viewMode, setViewMode } = useViewMode("timers-view-mode", "list");
   const { t } = useTranslation();
