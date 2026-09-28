@@ -1,7 +1,5 @@
-import {
-  discordPermissionFields,
-  DiscordGuildSyncStatus,
-} from "@lootlog/schema/discord";
+import { discordPermissionFields } from "@lootlog/schema/discord";
+import { DiscordGuildSyncStateResponse } from "#src/contracts/guilds/schemas";
 /** Shared input and output schemas for the notifications feature. */
 import * as Schema from "effect/Schema";
 import {
@@ -111,21 +109,9 @@ export const AvailableOrganizationNotificationTargetsResponse = Schema.Struct({
     }),
   ),
   syncState: Schema.Union([
-    Schema.StructWithRest(
-      Schema.Struct({
-        guildId: Schema.String,
-        status: DiscordGuildSyncStatus,
-        ...discordPermissionFields,
-        channelCount: SafeInteger,
-        selectableChannelCount: SafeInteger,
-        lastAttemptAt: Schema.Union([DateTimeString, Schema.Null]),
-        lastSuccessAt: Schema.Union([DateTimeString, Schema.Null]),
-        lastError: Schema.Union([Schema.String, Schema.Null]),
-        createdAt: DateTimeString,
-        updatedAt: DateTimeString,
-      }),
-      [Schema.Record(Schema.String, JsonValue)],
-    ),
+    Schema.StructWithRest(Schema.Struct(DiscordGuildSyncStateResponse.fields), [
+      Schema.Record(Schema.String, JsonValue),
+    ]),
     Schema.Null,
   ]),
 }).annotate({ identifier: "GuildAvailableNotificationTargetsResponseDto" });
