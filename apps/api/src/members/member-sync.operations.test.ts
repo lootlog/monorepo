@@ -1,12 +1,20 @@
 import { expect, test } from "bun:test";
 import { GuildMemberFlags, type APIGuildMember } from "discord-api-types/v10";
 import { Effect } from "effect";
+import { sql } from "drizzle-orm";
 import { Permission } from "@lootlog/schema/permissions";
 import { createDatabaseBoundary } from "../../test/database-fixtures.js";
 import { createGuildFixture } from "../../test/organization-fixtures.js";
-import { guildTable, roleTable } from "#src/database/drizzle/schema";
+import {
+  guildTable,
+  roleTable,
+  memberSyncDeliveryTable,
+  memberToRoleTable,
+} from "#src/database/drizzle/schema";
 import { applicationLogger } from "#src/shared/application-logger";
 import { ResourceNotFoundError } from "#src/shared/http/http-errors";
+import { MEMBER_LAST_DISCORD_STATUS } from "./member-discord-status.js";
+import { makeMemberDelivery } from "./member-delivery.operations.js";
 import { makeMemberRemoval } from "./member-removal.operations.js";
 import { makeMemberStore } from "./member.store.js";
 import { makeMemberSync } from "./member-sync.operations.js";
@@ -46,11 +54,10 @@ test("member sync retries invalidation after a committed role change and clears 
     let notFound = false;
     let failInvalidation = false;
     const invalidated: string[] = [];
-    const readProjectionChanges: boolean[] = [];
     const removed: string[] = [];
     const store = makeMemberStore(boundary.database);
 
-    const removal = makeMemberRemoval(boundary.database, {
+    const delivery = makeMemberDelivery(store, {
       clearMemberCaches: ({ guildId, discordId }) =>
         Effect.sync(() => {
           invalidated.push(`${guildId}:${discordId}`);
@@ -59,21 +66,22 @@ test("member sync retries invalidation after a committed role change and clears 
         Effect.sync(() => {
           removed.push(globalUserId);
         }),
+      publishMemberUpdated: () => Effect.void,
+      invalidateMember: ({ guildId, discordId }) =>
+        failInvalidation
+          ? Effect.fail(new Error("cache unavailable"))
+          : Effect.sync(() => {
+              invalidated.push(`${guildId}:${discordId}`);
+            }),
     });
 
-    const sync = makeMemberSync(applicationLogger, store, removal, {
+    const sync = makeMemberSync(applicationLogger, store, delivery, {
       getGuildMember: () =>
         notFound
           ? Effect.fail(new ResourceNotFoundError("Member not found"))
           : Effect.succeed(discordMember),
       nextRefreshAt: () => Effect.succeed(null),
-      invalidateMember: ({ guildId, discordId, readProjectionChanged }) =>
-        failInvalidation
-          ? Effect.fail(new Error("cache unavailable"))
-          : Effect.sync(() => {
-              invalidated.push(`${guildId}:${discordId}`);
-              readProjectionChanges.push(readProjectionChanged);
-            }),
+      refreshPermissionCache: () => Effect.void,
     });
 
     const refresh = () =>
@@ -91,7 +99,7 @@ test("member sync retries invalidation after a committed role change and clears 
 
     discordMember = { ...discordMember, roles: [] };
     failInvalidation = true;
-    await expect(refresh()).rejects.toThrow("cache unavailable");
+    await expect(refresh()).rejects.toThrow();
 
     const persisted = await boundary.run(
       store.findMemberWithRoles("discord-1", "guild-1"),
@@ -109,18 +117,13 @@ test("member sync retries invalidation after a committed role change and clears 
 
     discordMember = { ...discordMember, roles: ["role-1"] };
     await refresh();
-    await refresh();
-    discordMember = { ...discordMember, nick: "Renamed" };
-    await refresh();
-    // Guild member lists are evicted only for syncs that change what they show.
-    expect(readProjectionChanges).toEqual([true, false, true, false, true]);
     notFound = true;
     const deactivated = await refresh();
     expect(deactivated.status).toBe("NOT_FOUND");
     expect(deactivated.member?.active).toBe(false);
     expect(deactivated.member?.roles).toEqual([]);
     expect(removed).toEqual(["user-1"]);
-    expect(invalidated).toHaveLength(6);
+    expect(invalidated).toHaveLength(4);
 
     const storedRemoval = await boundary.run(
       store.findMemberWithRoles("discord-1", "guild-1"),
@@ -128,6 +131,472 @@ test("member sync retries invalidation after a committed role change and clears 
 
     expect(storedRemoval?.active).toBe(false);
     expect(storedRemoval?.roles).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+type DiscordBoundaryState = {
+  member: APIGuildMember;
+  error: Error | undefined;
+  failDelivery: boolean;
+  failCache: boolean;
+  duringPublish: Effect.Effect<unknown, unknown> | undefined;
+};
+
+const createSyncBoundary = async () => {
+  const boundary = await createDatabaseBoundary();
+  await boundary.run(
+    boundary.database
+      .insert(guildTable)
+      .values([
+        createGuildFixture(),
+        createGuildFixture({ id: "other-guild" }),
+      ]),
+  );
+  await boundary.run(
+    boundary.database.insert(roleTable).values([
+      {
+        id: "role-1",
+        guildId: "guild-1",
+        name: "Reader",
+        updatedAt: new Date(0),
+      },
+      {
+        id: "role-2",
+        guildId: "guild-1",
+        name: "Writer",
+        updatedAt: new Date(0),
+      },
+      { id: "role-3", guildId: "guild-1", name: "New", updatedAt: new Date(0) },
+      {
+        id: "foreign-role",
+        guildId: "other-guild",
+        name: "Foreign",
+        updatedAt: new Date(0),
+      },
+    ]),
+  );
+
+  const state: DiscordBoundaryState = {
+    member: {
+      user: {
+        id: "discord-1",
+        username: "Member",
+        discriminator: "0",
+        avatar: null,
+        global_name: null,
+      },
+      roles: ["role-1", "role-2"],
+      joined_at: "2026-01-01T00:00:00.000Z",
+      deaf: false,
+      mute: false,
+      flags: GuildMemberFlags.CompletedOnboarding,
+    },
+    error: undefined,
+    failDelivery: false,
+    failCache: false,
+    duringPublish: undefined,
+  };
+
+  const events: string[] = [];
+  const store = makeMemberStore(boundary.database);
+
+  const clearCaches = () =>
+    Effect.try(() => {
+      if (state.failCache) throw new Error("cache unavailable");
+      events.push("cache");
+    });
+
+  const publish = (event: string) =>
+    Effect.suspend(() => {
+      const concurrentWork = state.duringPublish ?? Effect.void;
+      state.duringPublish = undefined;
+
+      return concurrentWork;
+    }).pipe(
+      Effect.andThen(() =>
+        Effect.try(() => {
+          if (state.failDelivery) throw new Error("broker unavailable");
+          events.push(event);
+        }),
+      ),
+    );
+
+  // A fresh delivery models a restarted process with a new dispatcher cursor.
+  const makeDelivery = () =>
+    makeMemberDelivery(makeMemberStore(boundary.database), {
+      clearMemberCaches: clearCaches,
+      publishMemberRemoved: () => publish("removed"),
+      invalidateMember: clearCaches,
+      publishMemberUpdated: () => publish("updated"),
+    });
+
+  const delivery = makeDelivery();
+
+  const sync = makeMemberSync(applicationLogger, store, delivery, {
+    getGuildMember: () =>
+      state.error ? Effect.fail(state.error) : Effect.succeed(state.member),
+    nextRefreshAt: () => Effect.succeed(null),
+    refreshPermissionCache: () =>
+      Effect.sync(() => {
+        events.push("freshness");
+      }),
+  });
+
+  const syncMember = sync.syncMemberFromDiscord({
+    discordId: "discord-1",
+    guildId: "guild-1",
+    userId: "user-1",
+  });
+
+  return {
+    ...boundary,
+    state,
+    events,
+    store,
+    makeDelivery,
+    removal: makeMemberRemoval(boundary.database, delivery),
+    syncMember,
+    refresh: () => boundary.run(syncMember),
+    roleRows: () =>
+      boundary.run(
+        boundary.database
+          .select({ id: memberToRoleTable.B, tuple: sql<string>`ctid::text` })
+          .from(memberToRoleTable)
+          .orderBy(memberToRoleTable.B),
+      ),
+    pending: () =>
+      boundary.run(boundary.database.select().from(memberSyncDeliveryTable)),
+  };
+};
+
+test("unchanged Discord membership refreshes freshness without rewriting roles or invalidating member views", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    const initial = await boundary.refresh();
+    const roles = await boundary.roleRows();
+    boundary.events.length = 0;
+    boundary.state.member.roles = [
+      "role-2",
+      "role-1",
+      "role-2",
+      "foreign-role",
+      "unknown-role",
+    ];
+
+    const refreshed = await boundary.refresh();
+
+    expect(refreshed.member?.updatedAt).toEqual(initial.member?.updatedAt);
+    expect(
+      refreshed.member?.lastDiscordSyncAt?.getTime(),
+    ).toBeGreaterThanOrEqual(initial.member?.lastDiscordSyncAt?.getTime() ?? 0);
+    expect(await boundary.roleRows()).toEqual(roles);
+    expect(boundary.events).toEqual(["freshness"]);
+    expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("role deltas retain common rows and only visible profile changes invalidate views", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+
+    const retained = (await boundary.roleRows()).find(
+      ({ id }) => id === "role-2",
+    );
+
+    boundary.events.length = 0;
+    boundary.state.member.roles = ["role-2", "role-3"];
+    const changed = await boundary.refresh();
+
+    expect(changed.member?.roles.map(({ id }) => id).sort()).toEqual([
+      "role-2",
+      "role-3",
+    ]);
+    expect(
+      (await boundary.roleRows()).find(({ id }) => id === "role-2"),
+    ).toEqual(retained);
+    expect(boundary.events).toEqual(["cache", "updated", "freshness"]);
+
+    boundary.events.length = 0;
+    boundary.state.member = {
+      ...boundary.state.member,
+      nick: "New name",
+      avatar: "new-avatar",
+      banner: "new-banner",
+    };
+    const renamed = await boundary.refresh();
+    expect(renamed.member).toMatchObject({
+      name: "New name",
+      avatar: "new-avatar",
+      banner: "new-banner",
+    });
+    expect(boundary.events).toEqual(["cache", "freshness"]);
+
+    boundary.events.length = 0;
+    boundary.state.member.banner = "changed-banner";
+    const bannerChanged = await boundary.refresh();
+
+    expect(bannerChanged.member?.banner).toBe("changed-banner");
+    expect(boundary.events).toEqual(["freshness"]);
+    expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("failed permission publication survives later profile changes and a restarted dispatcher", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.member.roles = [];
+    boundary.state.failDelivery = true;
+    await expect(boundary.refresh()).rejects.toThrow();
+    boundary.state.member.nick = "Renamed while pending";
+    await expect(boundary.refresh()).rejects.toThrow();
+    expect(await boundary.pending()).toMatchObject([
+      { permissionsChanged: true },
+    ]);
+    expect(
+      (
+        await boundary.run(
+          boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+        )
+      )?.roles,
+    ).toEqual([]);
+
+    boundary.events.length = 0;
+    boundary.state.failDelivery = false;
+    await boundary.run(boundary.makeDelivery().dispatchPending());
+    expect(boundary.events).toEqual(["cache", "updated"]);
+    expect(await boundary.pending()).toEqual([]);
+    boundary.events.length = 0;
+    await boundary.refresh();
+    expect(boundary.events).toEqual(["freshness"]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("removal retries without another Discord request and reactivation publishes a real change", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.error = new ResourceNotFoundError("Member not found");
+    boundary.state.failDelivery = true;
+    await expect(boundary.refresh()).rejects.toThrow();
+
+    const removed = await boundary.run(
+      boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+    );
+
+    expect(removed).toMatchObject({ active: false, roles: [] });
+    expect(await boundary.pending()).toMatchObject([
+      { permissionsChanged: true },
+    ]);
+
+    boundary.events.length = 0;
+    boundary.state.failDelivery = false;
+    await boundary.run(boundary.makeDelivery().dispatchPending());
+    expect(boundary.events).toEqual(["cache", "removed"]);
+    boundary.events.length = 0;
+    await boundary.refresh();
+    expect(boundary.events).toEqual([]);
+
+    boundary.state.error = undefined;
+    const reactivated = await boundary.refresh();
+    expect(reactivated.member?.active).toBe(true);
+    expect(reactivated.member?.roles.map(({ id }) => id).sort()).toEqual([
+      "role-1",
+      "role-2",
+    ]);
+    expect(boundary.events).toEqual(["cache", "updated", "freshness"]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a transient Discord failure retains permissions and successful recovery remains a no-op", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    const initial = await boundary.refresh();
+    const roles = await boundary.roleRows();
+    boundary.events.length = 0;
+    boundary.state.error = new Error("Discord unavailable");
+    await boundary.refresh();
+
+    const failed = await boundary.run(
+      boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+    );
+
+    expect(failed?.active).toBe(true);
+    expect(failed?.lastDiscordSyncAt).toEqual(
+      initial.member?.lastDiscordSyncAt,
+    );
+    expect(await boundary.roleRows()).toEqual(roles);
+    expect(boundary.events).toEqual([]);
+
+    boundary.state.error = undefined;
+    await boundary.refresh();
+    expect(boundary.events).toEqual(["freshness"]);
+    expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("cache failures delay permission publication until invalidation recovers", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.member.roles = [];
+    boundary.state.failCache = true;
+    await expect(boundary.refresh()).rejects.toThrow();
+    expect(boundary.events).toEqual([]);
+    expect(await boundary.pending()).toMatchObject([
+      { permissionsChanged: true },
+    ]);
+
+    boundary.state.failCache = false;
+    await boundary.run(boundary.makeDelivery().dispatchPending());
+    expect(boundary.events).toEqual(["cache", "updated"]);
+    expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a rejected role write rolls back profile and role changes before any publication", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    const initial = await boundary.refresh();
+    const roleRows = await boundary.roleRows();
+    boundary.events.length = 0;
+    // Drizzle's query builder has no ALTER TABLE API. Reject one external write
+    // to exercise rollback through the real transaction and database boundary.
+    await boundary.run(
+      boundary.database.execute(sql`
+      ALTER TABLE ${memberToRoleTable} ADD CONSTRAINT test_reject_role
+      CHECK (${memberToRoleTable.B} <> 'role-3')
+    `),
+    );
+    boundary.state.member.roles = ["role-2", "role-3"];
+    boundary.state.member.nick = "New name";
+    await expect(boundary.refresh()).rejects.toThrow();
+
+    const persisted = await boundary.run(
+      boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+    );
+
+    expect(persisted).toEqual(initial.member);
+    expect(await boundary.roleRows()).toEqual(roleRows);
+    expect(await boundary.pending()).toEqual([]);
+    expect(boundary.events).toEqual([]);
+
+    await boundary.run(
+      boundary.database.execute(sql`
+      ALTER TABLE ${memberToRoleTable} DROP CONSTRAINT test_reject_role
+    `),
+    );
+    const retried = await boundary.refresh();
+    expect(retried.member?.name).toBe("New name");
+    expect(retried.member?.roles.map(({ id }) => id).sort()).toEqual([
+      "role-2",
+      "role-3",
+    ]);
+    expect(boundary.events).toEqual(["cache", "updated", "freshness"]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a guild missing from Discord still publishes removal after a cache failure without replaying it", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.failCache = true;
+
+    const deactivateMissing = () =>
+      boundary.run(
+        boundary.removal.deactivateMembersMissingFromDiscordGuilds({
+          discordId: "discord-1",
+          userId: "user-1",
+          activeDiscordGuildIds: ["other-guild"],
+          status: MEMBER_LAST_DISCORD_STATUS.GUILD_NOT_IN_DISCORD_LIST,
+        }),
+      );
+
+    await expect(deactivateMissing()).rejects.toThrow();
+    expect(
+      await boundary.run(
+        boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+      ),
+    ).toMatchObject({ active: false, roles: [] });
+    expect(await boundary.pending()).toMatchObject([
+      { permissionsChanged: true },
+    ]);
+
+    // The retry no longer sees an active member; only the outbox remembers.
+    expect(await deactivateMissing()).toBe(0);
+    expect(boundary.events).toEqual([]);
+
+    boundary.state.failCache = false;
+    await boundary.run(boundary.makeDelivery().dispatchPending());
+    expect(boundary.events).toEqual(["cache", "removed"]);
+    expect(await boundary.pending()).toEqual([]);
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("a change queued while an earlier change is being published is delivered after it", async () => {
+  const boundary = await createSyncBoundary();
+
+  try {
+    await boundary.refresh();
+    boundary.events.length = 0;
+    boundary.state.member.roles = ["role-2"];
+    boundary.state.duringPublish = Effect.suspend(() => {
+      boundary.state.member.roles = ["role-3"];
+
+      return boundary.syncMember;
+    });
+
+    await boundary.refresh();
+
+    // The nested sync commits role-3 while role-2 is being published; its own
+    // delivery attempt finds the row claimed and leaves it to the first one.
+    expect(boundary.events).toEqual([
+      "cache",
+      "freshness",
+      "updated",
+      "cache",
+      "updated",
+      "freshness",
+    ]);
+    expect(await boundary.pending()).toEqual([]);
+    expect(
+      (
+        await boundary.run(
+          boundary.store.findMemberWithRoles("discord-1", "guild-1"),
+        )
+      )?.roles.map(({ id }) => id),
+    ).toEqual(["role-3"]);
   } finally {
     await boundary.dispose();
   }
