@@ -114,10 +114,14 @@ export const makeGuildStore = (
 ): GuildStore => {
   const fetchGuilds = Effect.fn("GuildStore_fetchUserGuilds")(function* (
     options: GetUserGuildsOptions,
+    readOptions?: { readonly freshness: "required" },
   ) {
     const url = new URL(`${config.apiUrl}/internal/guilds/user-permissions`);
     url.searchParams.set("discordId", options.discordId);
     url.searchParams.set("userId", options.userId);
+
+    if (readOptions?.freshness === "required")
+      url.searchParams.set("freshness", "required");
 
     return yield* boundedHttpGet({
       client: httpClient,
@@ -165,7 +169,7 @@ export const makeGuildStore = (
       return [...cached.guilds];
     }
 
-    const result = yield* fetchGuilds(options).pipe(Effect.result);
+    const result = yield* fetchGuilds(options, readOptions).pipe(Effect.result);
 
     if (Result.isFailure(result)) {
       if (readOptions?.freshness === "required")
