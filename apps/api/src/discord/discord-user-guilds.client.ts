@@ -52,6 +52,11 @@ export interface CompleteUserGuildsResult {
    * the long-lived cache may miss a server the user has joined since.
    */
   fresh: boolean;
+  /**
+   * The list is older than the 15-minute max age and is being replaced in the
+   * background, so it must be presented as stale.
+   */
+  stale: boolean;
 }
 
 interface CompleteUserGuildsEntry {
@@ -251,9 +256,12 @@ export class DiscordUserGuildsClient {
   private toCompleteUserGuildsResult(
     entry: CompleteUserGuildsEntry,
   ): CompleteUserGuildsResult {
+    const age = Date.now() - entry.fetchedAt;
+
     return {
       guilds: entry.guilds,
-      fresh: Date.now() - entry.fetchedAt <= this.completeGuildsFreshMaxAgeMs,
+      fresh: age <= this.completeGuildsFreshMaxAgeMs,
+      stale: age > this.completeGuildsMaxAgeMs,
     };
   }
 

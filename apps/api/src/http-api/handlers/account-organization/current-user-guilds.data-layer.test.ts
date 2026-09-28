@@ -62,6 +62,7 @@ test("guild list waits on Discord only for missing access and at most twice", as
         discordGuilds: () =>
           Effect.succeed({
             fresh: false,
+            stale: false,
             guilds: guildIds.map((id) => ({
               id,
               name: id,
@@ -97,6 +98,79 @@ test("guild list waits on Discord only for missing access and at most twice", as
       hasLootlogAccess: true,
       isAccessDataStale: true,
     });
+  } finally {
+    await boundary.dispose();
+  }
+});
+
+test("guild list past its max age reports every Organization as stale", async () => {
+  const boundary = await createDatabaseBoundary();
+
+  try {
+    await boundary.run(
+      boundary.database
+        .insert(guildTable)
+        .values(createGuildFixture({ id: "guild-a" })),
+    );
+    await boundary.run(
+      boundary.database.insert(roleTable).values({
+        id: "role-a",
+        guildId: "guild-a",
+        name: "Member",
+        permissions: [Permission.LOOTLOG_ACCESS],
+        updatedAt: new Date(0),
+      }),
+    );
+    // Member access synced just now, so only the list can be stale.
+    await boundary.run(
+      boundary.database.insert(memberTable).values(
+        createMemberFixture({
+          id: 1,
+          userId: "discord-1",
+          guildId: "guild-a",
+          globalUserId: "user-1",
+          lastDiscordSyncAt: new Date(),
+        }),
+      ),
+    );
+    await boundary.run(
+      boundary.database.insert(memberToRoleTable).values({ A: 1, B: "role-a" }),
+    );
+
+    const currentUserGuilds = makeCurrentUserGuilds(
+      boundary.database,
+      {
+        accessibleFallback: () => Effect.succeed([]),
+        deactivateMissing: () => Effect.void,
+        discordGuilds: () =>
+          Effect.succeed({
+            fresh: false,
+            stale: true,
+            guilds: [
+              {
+                id: "guild-a",
+                name: "guild-a",
+                icon: null,
+                banner: null,
+                owner: false,
+                permissions: "0",
+                features: [],
+              },
+            ],
+          }),
+        refreshMember: () => Effect.succeed({ refreshQueued: false }),
+        queueMember: () => Effect.void,
+      },
+      RuntimeEnvironment.PROD,
+    );
+
+    const guilds = await boundary.run(
+      currentUserGuilds({ userId: "user-1", discordId: "discord-1" }),
+    );
+
+    expect(guilds).toMatchObject([
+      { id: "guild-a", hasLootlogAccess: true, isAccessDataStale: true },
+    ]);
   } finally {
     await boundary.dispose();
   }
