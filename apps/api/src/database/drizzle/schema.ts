@@ -283,6 +283,7 @@ export const guildTable = pgTable(
     ),
     uniqueIndex("Guild_vanityUrl_key").on(table["vanityUrl"]),
     index("Guild_vanityUrl_idx").on(table["vanityUrl"]),
+    index("Guild_ownerId_idx").on(table["ownerId"]),
   ],
 );
 

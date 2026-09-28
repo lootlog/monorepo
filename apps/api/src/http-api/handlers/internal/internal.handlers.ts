@@ -3,20 +3,19 @@ import {
   writeGuildConfigurationCache,
 } from "#src/guilds/guild-configuration-cache";
 import { hydrateMemberRoles } from "#src/members/member-role-hydration";
-import { activeGuildMemberJoin } from "#src/members/member-access-query";
+import { selectAccessibleGuilds } from "#src/members/member-access-query";
 import { TaggedError as TaggedErrorClass } from "effect/Schema";
 import { Context, Effect, Layer, Schema } from "effect";
 
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { resolveReservationSettings } from "@lootlog/domain/reservations";
 import { Permission } from "@lootlog/schema/permissions";
-import { and, arrayOverlaps, eq, inArray, or } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { ApiDatabase } from "#src/database/drizzle/database";
 import { findActiveGuild } from "#src/guilds/active-guild-lookup";
 import {
   guildTable,
   memberTable,
-  memberToRoleTable,
   roleTable,
 } from "#src/database/drizzle/schema";
 
@@ -195,27 +194,9 @@ export class InternalGuildsData extends Context.Service<
           findActiveGuild: (idOrVanityUrl) =>
             findActiveGuild(database, idOrVanityUrl),
           findGuildsForPermissions: (discordId) =>
-            database
-              .selectDistinct({ guild: guildTable })
-              .from(guildTable)
-              .leftJoin(memberTable, activeGuildMemberJoin(discordId))
-              .leftJoin(
-                memberToRoleTable,
-                eq(memberToRoleTable.A, memberTable.id),
-              )
-              .leftJoin(roleTable, eq(memberToRoleTable.B, roleTable.id))
-              .where(
-                and(
-                  eq(guildTable.active, true),
-                  or(
-                    eq(guildTable.ownerId, discordId),
-                    arrayOverlaps(roleTable.permissions, [
-                      Permission.LOOTLOG_ACCESS,
-                    ]),
-                  ),
-                ),
-              )
-              .pipe(Effect.map((rows) => rows.map(({ guild }) => guild))),
+            selectAccessibleGuilds(database, discordId).pipe(
+              Effect.map((rows) => rows.map(({ guild }) => guild)),
+            ),
           findMembersWithRoles: (discordId, guildIds) =>
             Effect.gen(function* () {
               const members = yield* database
