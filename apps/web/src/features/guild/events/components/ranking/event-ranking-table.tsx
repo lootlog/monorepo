@@ -14,6 +14,7 @@ import { cn } from "cn";
 import { TanStackTableBody } from "@/components/ui/tanstack-table-body";
 import { TanStackTableHeader } from "@/components/ui/tanstack-table-header";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import type { EventRanking } from "../../types/api";
 import { invalidateRankingQueries } from "../../hooks/mutations/invalidate-ranking-queries";
 import { formatDurationHuman } from "../../utils/format-duration";
@@ -172,7 +173,7 @@ export const EventRankingTable = ({
         const memberLabel = getRankingMemberName(ranking, t);
 
         const roleCssColor = getCustomRoleCssColor(
-          ranking.member?.roles[0]?.color,
+          getMemberDisplayRole(ranking.member?.roles)?.color,
         );
 
         return (

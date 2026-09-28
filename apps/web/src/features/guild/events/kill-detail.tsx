@@ -7,6 +7,7 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { useSession } from "@/hooks/auth/use-session";
 import { getCustomRoleCssColor } from "@/utils/get-color-from-role";
+import { getMemberDisplayRole } from "@lootlog/domain/member-display-role";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { KillDetailSummary } from "./components/kills/kill-detail-summary";
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
@@ -125,7 +126,7 @@ export const KillDetail = () => {
 
     for (const participant of participants) {
       const roleColor = getCustomRoleCssColor(
-        participant.member.roles?.[0]?.color,
+        getMemberDisplayRole(participant.member.roles)?.color,
       );
 
       if (roleColor) colors.set(participant.member.id, roleColor);
