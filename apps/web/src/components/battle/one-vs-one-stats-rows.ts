@@ -1,3 +1,4 @@
+import { normalizeBattleSearchText } from "./utils/normalize-battle-search-text";
 import { isNotNil } from "es-toolkit";
 import type { Battle } from "@/lib/api/battlelog-types";
 import type {
@@ -27,25 +28,18 @@ export type OneVsOneStatsRow =
       stat: VisibleStatDefinition;
     };
 
-const normalizeStatSearchText = (value: string) =>
-  value
-    .trim()
-    .toLocaleLowerCase("pl-PL")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-
 export const getMatchingStatSearchKey = (
   query: string,
   categories: VisibleStatCategory[],
 ) => {
-  const normalizedQuery = normalizeStatSearchText(query);
+  const normalizedQuery = normalizeBattleSearchText(query);
 
   if (!normalizedQuery) {
     return null;
   }
 
   for (const category of categories) {
-    const categoryIndex = normalizeStatSearchText(
+    const categoryIndex = normalizeBattleSearchText(
       `${category.label} ${category.id}`,
     );
 
@@ -54,7 +48,7 @@ export const getMatchingStatSearchKey = (
     }
 
     for (const stat of category.stats) {
-      const statIndex = normalizeStatSearchText(
+      const statIndex = normalizeBattleSearchText(
         `${stat.label} ${String(stat.key)}`,
       );
 
