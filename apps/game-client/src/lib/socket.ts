@@ -375,6 +375,10 @@ export class AppSocket {
     data: GameSessionJoinData,
     margonemAccountProof?: MargonemAccountProof,
   ): Promise<JoinResult> {
+    // Until this join is dispatched, neither timer events nor session waiters
+    // may treat the previous session as current.
+    this.joinedSession = false;
+
     if (this.lastJoinData && this.lastJoinData.accountId !== data.accountId) {
       this.currentAccessPolicy = undefined;
     }

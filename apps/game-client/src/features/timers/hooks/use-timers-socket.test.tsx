@@ -1,9 +1,9 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { QueryClientProvider, QueryObserver } from "@tanstack/react-query";
-import { expect, it } from "vitest";
+import { expect, it, onTestFinished, vi } from "vitest";
 import { createAccessPolicySnapshot } from "@lootlog/protocol/realtime/access-policy";
 import { Permission } from "@lootlog/schema/permissions";
-import { getSocket } from "@/lib/socket";
+import { AppSocket, getSocket } from "@/lib/socket";
 import { SocketProvider } from "@/contexts/socket-context";
 import { queryKeys } from "@/features/public-api/query-keys";
 import {
@@ -134,6 +134,56 @@ it("fetches the timer list once per page load, only after the session joins", as
     // The initial policy and the join each restart the load, but only the
     // fetch that began inside the joined session reaches the API.
     expect(fixture.requests).toHaveLength(1);
+  } finally {
+    view.unmount();
+    gateway.cleanup();
+    fixture.cleanup();
+    useGlobalStore.setState({ gameState: { gameInitialized: false } });
+  }
+});
+
+it("replaces a timer list requested before the join with one requested after it", async () => {
+  setTestRuntimeGame();
+  useGlobalStore.setState({ gameState: { gameInitialized: true } });
+  const early = createTimerFixture();
+  const current = createTimerFixture({ ...early, wasReset: true });
+  const earlyResponse = Promise.withResolvers<Response>();
+
+  const fixture = createTimerHttpFixture(() =>
+    fixture.requests.length === 1
+      ? earlyResponse.promise
+      : Response.json([current]),
+  );
+
+  fixture.queryClient.removeQueries({ queryKey: queryKeys.allTimers() });
+  // The session wait expired, so the first request leaves before the join.
+  vi.spyOn(AppSocket.prototype, "waitForSession").mockResolvedValueOnce();
+  onTestFinished(() => {
+    vi.restoreAllMocks();
+  });
+  const gateway = createTimerRealtimeFixture();
+  const key = queryKeys.timers("luvia");
+
+  const view = render(
+    <QueryClientProvider client={fixture.queryClient}>
+      <SocketProvider>
+        <TimerListener readSnapshot />
+      </SocketProvider>
+    </QueryClientProvider>,
+  );
+
+  try {
+    await waitFor(() => expect(fixture.requests).toHaveLength(1));
+    act(() => gateway.wire.open());
+    await gateway.acknowledgeJoin(["guild-1"]);
+    // Its snapshot may predate the subscription, so the join asks again.
+    await waitFor(() => expect(fixture.requests).toHaveLength(2));
+    earlyResponse.resolve(Response.json([early]));
+    await waitFor(() =>
+      expect(fixture.queryClient.getQueryData(key)).toEqual([
+        expect.objectContaining({ wasReset: true }),
+      ]),
+    );
   } finally {
     view.unmount();
     gateway.cleanup();
