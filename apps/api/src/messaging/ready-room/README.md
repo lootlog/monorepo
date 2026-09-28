@@ -129,11 +129,12 @@ display an unnamed character. Room keys and schema version remain v3 and old
 aggregates decode with unknown party state. Do not infer their composition from a
 legacy count. Observed data becomes visibly stale after two minutes; clients use
 a local deadline without polling. The organizer's client re-reports an unchanged
-party every minute while its room is live. The API commits an unchanged
-observation only when the stored one is at least 45 seconds old, so each
-heartbeat publishes a renewed `observedAt` while reconnects and remounts within
-that window do not create revisions. The three durations live together in
-`@lootlog/schema/party-ready-room`.
+party one minute after its last report while its room is live. For requests
+without `expectedRevision`, the API commits an unchanged observation only when
+the stored one is at least 45 seconds old, so repeated legacy reports within
+that window do not create revisions. Versioned reports always commit (see
+below); each heartbeat publishes a renewed `observedAt` either way. The three
+durations live together in `@lootlog/schema/party-ready-room`.
 
 Every committed creation, application, departure, removal, observation, or
 cancellation publishes `guilds.party-gathering.updated` for each source
@@ -170,3 +171,34 @@ using the legacy counters and personal updates and do not receive the new event.
 Client parsers accept absent additive fields from old servers and show unknown
 roster/party state. During rollback, follow the drain and 30-minute lifetime
 procedure above: an old writer can discard observed party metadata.
+
+## Bounded party observation recovery
+
+`POST /messaging/party-gathering/{notificationId}/party-observation` accepts an
+optional `expectedRevision`. When supplied, the API commits only against that
+exact room revision. A mismatched revision or a lost compare-and-set returns
+`409 REVISION_CONFLICT` without replaying the roster against newer state.
+A successful versioned observation advances the revision even when the roster
+is unchanged and was observed less than 45 seconds ago. After a client timeout,
+the retry may carry the same revision as a request still in flight; skipping the
+commit would leave that revision open for the older roster. Requests without the
+field retain the existing server-side conflict retries and the unchanged-report
+short-circuit.
+
+The game client bounds each observation and recovery read to five seconds. It
+retries transient failures, including revision conflicts, at most twice after
+one and two seconds. Each retry first reads the current room revision and then
+reports the latest local roster, provided the room, Organizations, character,
+and connection context still match. A timed-out request may continue on the
+server; revision checks prevent it from overwriting a later accepted report.
+The one-minute heartbeat uses the same reporter, so it is bounded, latest-only,
+and retried the same way, and it also restarts reporting after a cycle that
+exhausted its retries. The client takes `expectedRevision` from the shared room
+cache, which every observation, recovery read, realtime update, and organizer
+mutation response refreshes.
+
+Deploy this API change to every writer before deploying the updated game client.
+Older API instances ignore the new field and cannot protect overlapping requests
+after a client timeout. No persisted aggregate or Redis migration is needed.
+For rollback, restore the previous client before removing API revision checks;
+keep those checks until updated clients and their outstanding requests are gone.
