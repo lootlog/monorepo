@@ -21,21 +21,44 @@ export const useTimersSocket = () => {
   });
 
   useEffect(() => {
-    if (!connected || !joined || !socket) {
+    if (!socket) {
       return;
     }
 
+    const refreshTimers = () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() });
+    };
+
+    // Listeners stay attached from mount so none of a session's events can
+    // arrive before them; events outside a joined session are ignored.
     const onTimerCreate = (data: Timer) => {
-      handleTimerCreate(data);
+      if (socket.sessionJoined) handleTimerCreate(data);
     };
 
     const onTimerDelete = (data: Timer) => {
-      handleTimerDelete(data);
+      if (socket.sessionJoined) handleTimerDelete(data);
     };
 
     socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
     socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);
-    void queryClient.invalidateQueries({ queryKey: queryKeys.allTimers() });
+    // Refetching inside the join event cancels a snapshot fetch that still
+    // waits for the session, before it sends any request.
+    socket.on(GatewayEvent.JOIN, refreshTimers);
+
+    // Events were not applied while unmounted.
+    if (socket.sessionJoined) refreshTimers();
+
+    return () => {
+      socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
+      socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
+      socket.off(GatewayEvent.JOIN, refreshTimers);
+    };
+  }, [socket, queryClient]);
+
+  useEffect(() => {
+    if (!connected || !joined || !socket) {
+      return;
+    }
 
     const histories = {
       predicate: (query: Query) => {
@@ -51,10 +74,5 @@ export const useTimersSocket = () => {
 
     void queryClient.cancelQueries(histories);
     void queryClient.invalidateQueries({ ...histories, refetchType: "active" });
-
-    return () => {
-      socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
-      socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
-    };
   }, [connected, joined, joinedGuilds, socket, queryClient]);
 };

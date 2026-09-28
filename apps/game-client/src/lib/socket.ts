@@ -193,6 +193,7 @@ export class AppSocket {
   private lastIsAfk = false;
   private currentAccessPolicy: AccessPolicySnapshot | undefined;
   private wasConnected = false;
+  private joinedSession = false;
   private connectionStateValue: RealtimeConnectionState = "disconnected";
   private readonly connectionStateListeners = new Set<() => void>();
   private lastJoinData: GameSessionJoinData | null = null;
@@ -219,6 +220,8 @@ export class AppSocket {
       if (connected === this.wasConnected) return;
       this.wasConnected = connected;
 
+      if (!connected) this.joinedSession = false;
+
       if (state === "disconnected") {
         this.id = undefined;
         // The next connection may reach an older gateway.
@@ -236,6 +239,33 @@ export class AppSocket {
 
   get connected(): boolean {
     return this.wasConnected;
+  }
+
+  /** Set before `JOIN` is emitted, so its listeners already see the session. */
+  get sessionJoined(): boolean {
+    return this.joinedSession;
+  }
+
+  /**
+   * Resolves once the session has joined, or after `timeoutMs` so a caller
+   * can degrade when realtime is unavailable, or when `signal` aborts.
+   */
+  waitForSession(timeoutMs: number, signal?: AbortSignal): Promise<void> {
+    if (this.joinedSession || signal?.aborted) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(timeout);
+        this.off(GatewayEvent.JOIN, done);
+        signal?.removeEventListener("abort", done);
+        resolve();
+      };
+
+      const timeout = setTimeout(done, timeoutMs);
+
+      this.on(GatewayEvent.JOIN, done);
+      signal?.addEventListener("abort", done);
+    });
   }
 
   /** The transport's own reading, which tells a first connect from a retry. */
@@ -719,6 +749,7 @@ export class AppSocket {
       } satisfies PermissionsUpdatedPayload);
     }
 
+    this.joinedSession = true;
     this.listeners.emit(GatewayEvent.JOIN, {
       status: "success",
       guildsCount: result.organizationIds.length,
