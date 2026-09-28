@@ -1,4 +1,4 @@
-import { getNpcTypeByWt } from "@lootlog/domain/npc-type";
+import { getNpcTypeByWt, MIN_LOOT_NPC_WT } from "@lootlog/domain/npc-type";
 import { getProfByShortname } from "@lootlog/domain/profession";
 import { NpcTypeEnum as NpcType } from "@lootlog/schema/npc-type";
 import {
@@ -13,6 +13,7 @@ import {
   type LootCreateDebugContext,
 } from "@/lib/loot-create-debug";
 import { getLoot } from "@/utils/game/get-loots";
+import { getLoadedCatchingGuildIds } from "@/lib/catching-guild-ids";
 import {
   getBattleParticipants,
   type Npc,
@@ -182,6 +183,8 @@ export class LootEventProcessor {
       game,
     );
 
+    if (this.isRejectedByEveryOrganization(npcs, game, debugContext)) return;
+
     const { hero, map } = game;
 
     const payload = {
@@ -217,6 +220,39 @@ export class LootEventProcessor {
         });
         console.warn("[LootEventProcessor] Failed to create loot:", error);
       });
+  }
+
+  // The API rejects these loots for every Organization, so submitting them
+  // only produces a 400 response.
+  private isRejectedByEveryOrganization(
+    npcs: ReadonlyArray<Pick<Npc, "wt">>,
+    game: RuntimeGameSnapshot,
+    debugContext: LootCreateDebugContext,
+  ): boolean {
+    if (!npcs.some((npc) => npc.wt >= MIN_LOOT_NPC_WT)) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "npc-wt-too-low",
+      });
+
+      return true;
+    }
+
+    const catchingGuildIds = getLoadedCatchingGuildIds(
+      game.hero.accountId,
+      game.hero.characterId,
+    );
+
+    if (catchingGuildIds?.length === 0) {
+      logLootCreateDebug("skipped", {
+        ...debugContext,
+        reason: "empty-catching-whitelist",
+      });
+
+      return true;
+    }
+
+    return false;
   }
 
   private captureMapPlayers(
@@ -324,6 +360,12 @@ export class LootEventProcessor {
         location: mapName,
       },
     ];
+
+    if (this.isRejectedByEveryOrganization(npcs, game, debugContext)) {
+      useDialogStore.getState().clearNpcContext();
+
+      return;
+    }
 
     const { hero } = game;
 

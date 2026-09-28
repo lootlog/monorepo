@@ -6,13 +6,9 @@ import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@lootlog/margonem/game-events";
 import type { RuntimeIngressSnapshot } from "@/lib/margonem-runtime/runtime.types";
-import { queryClient } from "@/lib/query-client";
 import { isSignedOut } from "@/lib/auth-client";
+import { getLoadedCatchingGuildIds } from "@/lib/catching-guild-ids";
 import { createAutoTimer } from "@/api";
-import {
-  getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey,
-  type UserLootlogConfigAccountResponseDtoOutput,
-} from "@lootlog/client/main";
 
 export class NpcsDeleteProcessor {
   handle(event: GameEvent, ingress?: RuntimeIngressSnapshot): void {
@@ -49,27 +45,10 @@ export class NpcsDeleteProcessor {
       const characterId = game.hero.characterId;
       const map = game.map;
 
-      const lootlogCharacterConfigQueryKey =
-        getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
-          accountId,
-        });
-
-      const configQuery =
-        queryClient.getQueryState<UserLootlogConfigAccountResponseDtoOutput>(
-          lootlogCharacterConfigQueryKey,
-        );
-
-      // A loaded configuration without this character matches the server's
-      // empty whitelist. A pending or failed load leaves the check to the server.
-      const catchingGuildIds =
-        configQuery?.status === "success"
-          ? (configQuery.data?.[characterId]?.catchingGuildIds ?? [])
-          : undefined;
-
       timerContext = {
         accountId,
         characterId,
-        catchingGuildIds,
+        catchingGuildIds: getLoadedCatchingGuildIds(accountId, characterId),
         mapId: map.id,
         mapName: map.name,
       };

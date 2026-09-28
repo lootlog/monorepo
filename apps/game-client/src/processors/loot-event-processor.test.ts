@@ -10,6 +10,8 @@ import { useGameStore } from "@/store/game.store";
 import { useOthersStore } from "@/store/others.store";
 import { useNpcsStore } from "@/store/npcs.store";
 import { useSettingsStore } from "@/store/settings.store";
+import { queryClient } from "@/lib/query-client";
+import { getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey } from "@lootlog/client/main";
 import { setTestRuntimeGame } from "@/test/test-runtime-window";
 import { LOOT_CREATE_DEBUG_PREFIX } from "@/lib/loot-create-debug";
 import { LootEventProcessor } from "./loot-event-processor";
@@ -141,7 +143,10 @@ beforeEach(() => {
   useSettingsStore.getState().setLootDebugLoggingEnabled(false);
 });
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  queryClient.clear();
+});
 
 it("captures map characters and the hero once for a legendary elite II loot", async () => {
   const fixture = createFixture();
@@ -241,6 +246,8 @@ it.each([
   "missing-battle-warriors",
   "missing-fight-data",
   "empty-parsed-loots",
+  "npc-wt-too-low",
+  "empty-catching-whitelist",
 ])("reports why battle loot was skipped: %s", (reason) => {
   const fixture = createFixture();
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -253,6 +260,22 @@ it.each([
   if (reason === "missing-fight-data") delete event.f;
 
   if (reason === "empty-parsed-loots") event.item = {};
+
+  if (reason === "npc-wt-too-low")
+    useBattleStore.setState({
+      battleWarriors: {
+        ...useBattleStore.getState().battleWarriors,
+        "-501": createBattleWarrior(-501, { originalId: 501, wt: 9 }),
+      },
+    });
+
+  if (reason === "empty-catching-whitelist")
+    queryClient.setQueryData(
+      getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+        accountId: "202",
+      }),
+      { "999": { catchingGuildIds: ["guild-1"] } },
+    );
   fixture.processor.handleLootFromBattle(event);
   expect(fixture.requests).toHaveLength(0);
   expect(log).toHaveBeenCalledWith(
@@ -378,6 +401,32 @@ it("reports missing dialog snapshot with the event's deleted NPC ids", () => {
       resolutionSource: "fallback-lookup",
     }),
   );
+});
+
+it("consumes dialog context without submitting loot from an NPC every Organization rejects", async () => {
+  const fixture = createFixture();
+  setDialogNpcContext(501, { ...createRuntimeNpc(), weight: 9 });
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  expect(useDialogStore.getState().npcContext).toBeNull();
+  setDialogNpcContext(502, createRuntimeNpc(502));
+  fixture.processor.handleDialogLoot(createLootEvent("dialog"));
+  expect(await fixture.payload()).toMatchObject({ npcs: [{ id: 502 }] });
+  expect(fixture.requests).toHaveLength(1);
+});
+
+it("submits battle loot while the catching whitelist is not loaded or lists the character", async () => {
+  const fixture = createFixture();
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  await fixture.payload(0);
+  queryClient.setQueryData(
+    getUserLootlogConfigControllerGetUserLootlogConfigByAccountIdQueryKey({
+      accountId: "202",
+    }),
+    { "101": { catchingGuildIds: ["guild-1"] } },
+  );
+  fixture.processor.handleLootFromBattle(createBattleLootEvent());
+  await fixture.payload(1);
+  expect(fixture.requests).toHaveLength(2);
 });
 
 it("retains dialog context through empty loot and consumes it after one valid loot", async () => {
