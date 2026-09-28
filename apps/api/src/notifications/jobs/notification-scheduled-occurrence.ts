@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 import type { NotificationRuleWithTargets } from "./notification-job-store.js";
-import type { NotificationJobScheduler } from "./notification-job-scheduler.js";
-import type { NotificationRecurrenceContent } from "./notification-job-recurrence.js";
 import {
-  NotificationJobKind,
-  NotificationJobStatus,
-} from "#src/notifications/notification-enums";
+  enqueuePendingNotificationJob,
+  type NotificationJobScheduler,
+} from "./notification-job-scheduler.js";
+import type { NotificationRecurrenceContent } from "./notification-job-recurrence.js";
+import { NotificationJobKind } from "#src/notifications/notification-enums";
 
 export const scheduleNotificationOccurrence = (
   rule: NotificationRuleWithTargets,
@@ -36,12 +36,7 @@ export const scheduleNotificationOccurrence = (
         })
         .pipe(
           Effect.flatMap((job) =>
-            job?.status === NotificationJobStatus.PENDING
-              ? scheduler.enqueue(
-                  job.id,
-                  Math.max(0, scheduledAt.getTime() - Date.now()),
-                )
-              : Effect.void,
+            enqueuePendingNotificationJob(scheduler, job, scheduledAt),
           ),
         );
     },
