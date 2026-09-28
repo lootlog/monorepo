@@ -5,6 +5,7 @@ import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { Clock, Effect } from "effect";
 import type { ApiDatabaseValue } from "#src/database/drizzle/database";
 import {
+  eventHeroKillTable,
   eventHeroNpcTable,
   eventKillPointTable,
   eventMapAssignmentHistoryTable,
@@ -54,54 +55,94 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
     );
   }
 
-  function findRankingByKey(
+  /**
+   * Adds one kill's points to the name-keyed rankings. The kill row is locked
+   * for the transaction, so a concurrent hero deletion either waits for these
+   * writes and then removes them, or has already removed the kill and no
+   * ranking is written.
+   */
+  function addKillToRankings(
     eventId: string,
-    memberId: number,
     heroNpcName: string,
+    killId: string,
+    entries: ReadonlyArray<{
+      memberId: number;
+      points: number;
+      trackingSeconds: number;
+      afkPercentage: number;
+      pointsModified: boolean;
+    }>,
   ) {
     return run((database) =>
-      database
-        .select()
-        .from(eventRankingTable)
-        .where(
-          and(
-            eq(eventRankingTable.eventId, eventId),
-            eq(eventRankingTable.memberId, memberId),
-            eq(eventRankingTable.heroNpcName, heroNpcName),
-          ),
-        )
-        .limit(1),
-    ).pipe(Effect.map((rows) => rows[0] ?? null));
-  }
+      database.transaction((transaction) =>
+        Effect.gen(function* () {
+          const kills = yield* transaction
+            .select({ id: eventHeroKillTable.id })
+            .from(eventHeroKillTable)
+            .where(eq(eventHeroKillTable.id, killId))
+            .for("share");
 
-  function createRanking(data: Omit<RankingInsert, "id" | "updatedAt">) {
-    return run((database) =>
-      database
-        .insert(eventRankingTable)
-        .values({ ...data, id: randomUUID(), updatedAt: new Date() })
-        .returning(),
-    ).pipe(Effect.map((rows) => rows[0]));
-  }
+          if (kills.length === 0) return false;
 
-  function incrementRanking(
-    id: string,
-    points: number,
-    time: number,
-    afk: number,
-    pointsModified: boolean,
-  ) {
-    return run((database) =>
-      database
-        .update(eventRankingTable)
-        .set({
-          totalPoints: sql`${eventRankingTable.totalPoints} + ${points}`,
-          totalKills: sql`${eventRankingTable.totalKills} + 1`,
-          totalTimeSeconds: sql`${eventRankingTable.totalTimeSeconds} + ${time}`,
-          avgAfkPercentage: afk,
-          pointsModified,
-          updatedAt: new Date(),
-        })
-        .where(eq(eventRankingTable.id, id)),
+          const now = new Date(yield* Clock.currentTimeMillis);
+
+          for (const entry of entries) {
+            const existing = yield* transaction
+              .select()
+              .from(eventRankingTable)
+              .where(
+                and(
+                  eq(eventRankingTable.eventId, eventId),
+                  eq(eventRankingTable.memberId, entry.memberId),
+                  eq(eventRankingTable.heroNpcName, heroNpcName),
+                ),
+              )
+              .limit(1);
+
+            const ranking = existing[0];
+
+            if (ranking) {
+              const totalKills = ranking.totalKills + 1;
+
+              yield* transaction
+                .update(eventRankingTable)
+                .set({
+                  totalPoints: sql`${eventRankingTable.totalPoints} + ${entry.points}`,
+                  totalKills: sql`${eventRankingTable.totalKills} + 1`,
+                  totalTimeSeconds: sql`${eventRankingTable.totalTimeSeconds} + ${entry.trackingSeconds}`,
+                  avgAfkPercentage:
+                    Math.round(
+                      ((ranking.avgAfkPercentage * ranking.totalKills +
+                        entry.afkPercentage) /
+                        totalKills) *
+                        100,
+                    ) / 100,
+                  pointsModified:
+                    ranking.pointsModified || entry.pointsModified,
+                  updatedAt: now,
+                })
+                .where(eq(eventRankingTable.id, ranking.id));
+
+              continue;
+            }
+
+            yield* transaction.insert(eventRankingTable).values({
+              id: randomUUID(),
+              eventId,
+              memberId: entry.memberId,
+              heroNpcName,
+              totalPoints: entry.points,
+              totalKills: 1,
+              totalTimeSeconds: entry.trackingSeconds,
+              avgAfkPercentage: entry.afkPercentage,
+              pointsModified: entry.pointsModified,
+              updatedAt: now,
+            });
+          }
+
+          return true;
+        }),
+      ),
     );
   }
 
@@ -275,17 +316,15 @@ export const makeEventPointsStore = (database: ApiDatabaseValue) => {
   }
 
   return {
+    addKillToRankings,
     applyRecalculation,
-    createRanking,
     findAssignments,
     findEvent,
     findKillPointsForEvent,
     findMaps,
     findPresenceLogs,
-    findRankingByKey,
     findRankings,
     findWindowSummaries,
-    incrementRanking,
   };
 };
 

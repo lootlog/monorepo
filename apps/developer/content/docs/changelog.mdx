@@ -3,6 +3,28 @@ title: Contract changelog
 description: A reference for HTTP, realtime, and game client integrations.
 ---
 
+## Unreleased: Event hero lists keep history
+
+`PATCH /guilds/{guildId}/events/{eventId}` no longer rebuilds the event's heroes
+and maps when the request includes `heroNpcs`. Heroes are matched by `npcName`
+and maps by `mapId`, so retained heroes and maps keep their IDs, kills, kill
+points, tracking history and ranking entries. The list can add heroes, add
+maps, rename maps and set a hero's `npcId`; omitting `npcId` keeps the stored
+value.
+As with the map create operation, a map added to an existing hero starts with
+an open unassigned coverage gap.
+
+A `heroNpcs` list that omits an existing hero or map now returns `400` and
+changes nothing. Previously the omitted records were deleted with their history.
+Repeated hero names, or a repeated `mapId` within one hero, also return `400`.
+Remove a hero with `DELETE /guilds/{guildId}/events/{eventId}/heroes/{heroId}`
+and a map with
+`DELETE /guilds/{guildId}/events/{eventId}/heroes/{heroId}/maps/{mapId}`.
+
+Deleting a hero removes its maps, kills, kill points and tracking history, and
+now also its ranking entries, so event ranking totals match the remaining kill
+points. No migration is required.
+
 ## Unreleased: Event kill history
 
 `GET /guilds/{guildId}/events/{eventId}/kill-history` adds a paginated summary
