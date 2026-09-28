@@ -9801,7 +9801,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Update an existing event
+      description: "Update an existing event. heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations."
       summary: Update event
       requestBody:
         content:
@@ -10561,7 +10561,7 @@ paths:
                 required:
                   - message
                 additionalProperties: false
-      description: Remove a hero from the event
+      description: Remove a hero from the event together with its maps, kills, kill points, tracking history and ranking entries
       summary: Delete hero
     patch:
       tags:

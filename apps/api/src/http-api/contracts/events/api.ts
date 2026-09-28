@@ -129,7 +129,10 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "updateEvent")
     .annotate(OpenApi.Summary, "Update event")
-    .annotate(OpenApi.Description, "Update an existing event"),
+    .annotate(
+      OpenApi.Description,
+      "Update an existing event. heroNpcs lists every hero and map the event should have: heroes are matched by npcName and maps by mapId, so retained ones keep their kills and tracking history. It can add heroes and maps and rename maps; a list that omits an existing hero or map is rejected. Remove them with the hero and map delete operations.",
+    ),
   HttpApiEndpoint.get(
     "showEventOverview",
     "/guilds/:guildId/events/:eventId/overview",
@@ -281,7 +284,10 @@ export class EventsGroup extends HttpApiGroup.make("events").add(
     .middleware(BearerSecurityMiddleware)
     .annotate(OpenApi.Identifier, "EventsAssignmentController_deleteHero")
     .annotate(OpenApi.Summary, "Delete hero")
-    .annotate(OpenApi.Description, "Remove a hero from the event"),
+    .annotate(
+      OpenApi.Description,
+      "Remove a hero from the event together with its maps, kills, kill points, tracking history and ranking entries",
+    ),
   HttpApiEndpoint.patch(
     "EventsAssignmentControllerUpdateHero",
     "/guilds/:guildId/events/:eventId/heroes/:heroId",
