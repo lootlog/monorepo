@@ -465,6 +465,7 @@ it.each(["OUTSIDE", "IN_PARTY"] as const)(
 it("keeps the hovered signup target and prioritizes an owned room", async () => {
   const room = createGathering({
     notificationId: "original-room",
+    createdAt: "2026-09-28T10:00:00.000Z",
   });
 
   const harness = await setup([room]);
@@ -475,7 +476,14 @@ it("keeps the hovered signup target and prioritizes an owned room", async () => 
     throw new Error("Expected gathering panel");
   fireEvent.mouseEnter(panel);
   harness.discovery.mockImplementation(async () =>
-    Response.json([{ ...room, notificationId: "newer-room" }, room]),
+    Response.json([
+      {
+        ...room,
+        notificationId: "newer-room",
+        createdAt: "2026-09-28T10:00:01.000Z",
+      },
+      room,
+    ]),
   );
   await harness.refresh();
   harness.mutation.mockResolvedValue(
@@ -507,11 +515,13 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
     const first = createGathering({
       notificationId: "first-room",
       description: "First gathering",
+      createdAt: "2026-09-28T10:00:01.000Z",
     });
 
     const second = createGathering({
       notificationId: "second-room",
       description: "Second gathering",
+      createdAt: "2026-09-28T10:00:00.000Z",
     });
 
     const harness = await setup([first, second]);
@@ -554,6 +564,7 @@ it.each(["ORGANIZER", "PARTICIPANT"] as const)(
         createGathering({
           notificationId: "new-room",
           description: "New gathering",
+          createdAt: "2026-09-28T10:00:02.000Z",
         }),
         first,
         second,
@@ -763,8 +774,15 @@ it("restores hidden gatherings through their floating menu and keeps new IDs and
 it("keeps keyboard focus on the hidden gatherings menu after hiding a secondary or last gathering", async () => {
   const user = userEvent.setup();
   await setup([
-    createGathering({ description: "First" }),
-    createGathering({ notificationId: "second-room", description: "Second" }),
+    createGathering({
+      description: "First",
+      createdAt: "2026-09-28T10:00:01.000Z",
+    }),
+    createGathering({
+      notificationId: "second-room",
+      description: "Second",
+      createdAt: "2026-09-28T10:00:00.000Z",
+    }),
   ]);
   expandGatherings();
   await openGatheringMenu(1);
