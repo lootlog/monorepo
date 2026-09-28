@@ -2,6 +2,18 @@
 
 The service owns Organization activity logs and private confirmed game online history. The histories have separate persistence and retention policies. Neither the Organization log permissions nor member removal grant access to, or delete, private account-wide history.
 
+## Health probes
+
+`GET /healthz` is process liveness. A 200 response means the HTTP event loop can answer a request. It performs no SQL, outbound HTTP, filesystem or memory-threshold checks. It keeps the existing `status`, `info`, `error` and `details` response envelope, with only `process: { status: "up" }` in `info` and `details`. Dependency failures no longer produce 503 here.
+
+`GET /readyz` checks the direct PostgreSQL connection used by Activity with `SELECT 1`. It returns 200 with `database: { status: "up" }`, or 503 with `database: { status: "down" }` after a connection/query failure or a three-second timeout. The timeout covers waiting for a pooled connection as well as executing the query. Only one database probe may run at a time, including cancellation cleanup. A probe arriving while another check or its cleanup is in progress returns 503 without acquiring another connection. The HTTP deadline does not wait for the driver to finish cancelling SQL; Activity retains the query in its service scope until cleanup completes. The next successful probe restores readiness. Neither endpoint calls the API or another service's health endpoint. Readiness covers database access, not end-to-end event delivery; queue depth, consumer errors and collector freshness remain separate operational signals.
+
+Kubernetes startup and liveness probes use `/healthz`; readiness uses `/readyz` with a five-second probe timeout, longer than the application's database-check budget. Failed readiness removes the pod from Service endpoints. It does not restart Activity or interrupt its durable consumers. Existing startup acquisition of database and broker connections is unchanged; these HTTP probes apply once initialization starts the HTTP server. Both probe paths are excluded from request telemetry through the shared instrumentation policy.
+
+Roll out the application image with both endpoints first, while keeping existing probe paths. After every Activity pod runs that image, update readiness to `/readyz` in the infrastructure repository. Before rolling the application back to an image without `/readyz`, restore the old readiness path and confirm that configuration has rolled out. Old images still couple `/healthz` to dependencies, so such a rollback restores the previous restart risk. No database migration or secret change is required. The companion infrastructure change documents the RabbitMQ, PgBouncer and Meilisearch probe review and its separate rollout checks. Do not expose new public ingress routes for the probes.
+
+`bun run --cwd apps/activity test:e2e` exercises the real HTTP handlers and readiness service with failed and stalled database transport. It checks concurrent liveness, a bounded readiness failure, cancellation of the pending probe and recovery without restarting the handler.
+
 ## Activity event recovery
 
 Gateway and Activity must use the same `ACTIVITY_EVENT_SIGNATURE_SECRET`, including locally. A mismatch rejects every signed activity event before persistence. Restart both processes after changing their environment files.

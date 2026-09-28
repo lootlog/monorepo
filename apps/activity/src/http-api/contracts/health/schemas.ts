@@ -10,51 +10,44 @@ export const HealthzControllerCheck200 = Schema.Struct({
     Schema.Union([
       Schema.Record(Schema.String, Schema.Struct({ status: Schema.String })),
       Schema.Null,
-    ]).annotate({ examples: [{ database: { status: "up" } }] }),
+    ]).annotate({ examples: [{ process: { status: "up" } }] }),
   ),
   error: Schema.optionalKey(
     Schema.Union([
       Schema.Record(Schema.String, Schema.Struct({ status: Schema.String })),
       Schema.Null,
-    ]).annotate({ examples: [{}] }),
+    ]).annotate({ examples: [null] }),
   ),
   details: Schema.optionalKey(
     Schema.Record(
       Schema.String,
       Schema.Struct({ status: Schema.String }),
-    ).annotate({ examples: [{ database: { status: "up" } }] }),
+    ).annotate({ examples: [{ process: { status: "up" } }] }),
   ),
 });
 
-export type HealthzControllerCheck503 = typeof HealthzControllerCheck503.Type;
+const DatabaseUp = Schema.Struct({
+  database: Schema.Struct({ status: Schema.Literal("up") }),
+});
 
-export const HealthzControllerCheck503 = Schema.Struct({
-  status: Schema.optionalKey(Schema.String.annotate({ examples: ["error"] })),
-  info: Schema.optionalKey(
-    Schema.Union([
-      Schema.Record(Schema.String, Schema.Struct({ status: Schema.String })),
-      Schema.Null,
-    ]).annotate({ examples: [{ database: { status: "up" } }] }),
-  ),
-  error: Schema.optionalKey(
-    Schema.Union([
-      Schema.Record(Schema.String, Schema.Struct({ status: Schema.String })),
-      Schema.Null,
-    ]).annotate({
-      examples: [{ redis: { status: "down" } }],
-    }),
-  ),
-  details: Schema.optionalKey(
-    Schema.Record(
-      Schema.String,
-      Schema.Struct({ status: Schema.String }),
-    ).annotate({
-      examples: [
-        {
-          database: { status: "up" },
-          redis: { status: "down" },
-        },
-      ],
-    }),
-  ),
+const DatabaseDown = Schema.Struct({
+  database: Schema.Struct({ status: Schema.Literal("down") }),
+});
+
+export type ReadyzControllerCheck200 = typeof ReadyzControllerCheck200.Type;
+
+export const ReadyzControllerCheck200 = Schema.Struct({
+  status: Schema.Literal("ok"),
+  info: DatabaseUp,
+  error: Schema.Null,
+  details: DatabaseUp,
+});
+
+export type ReadyzControllerCheck503 = typeof ReadyzControllerCheck503.Type;
+
+export const ReadyzControllerCheck503 = Schema.Struct({
+  status: Schema.Literal("error"),
+  info: Schema.Null,
+  error: DatabaseDown,
+  details: DatabaseDown,
 });
