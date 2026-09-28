@@ -30,6 +30,7 @@ const game = Object.freeze({
     maxHp: 100,
     name: "Hero",
     profession: "w",
+    stasis: false,
     x: 1,
     y: 2,
   }),
@@ -524,7 +525,8 @@ describe("RuntimeStateProjection", () => {
     const captured = projection.captureIngress(envelope);
     projection.apply(captured);
 
-    expect(captured.ingress.game).toBe(useGameStore.getState().game);
+    expect(captured.ingress.game?.hero.stasis).toBe(false);
+    expect(useGameStore.getState().game?.hero.stasis).toBe(true);
     expect(captured.ingress.npcsById[501]).toEqual(npc);
     expect(useNpcsStore.getState().getNpc(501)).toBeUndefined();
     expect(adapter.getGameSnapshot).not.toHaveBeenCalled();

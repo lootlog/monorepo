@@ -137,6 +137,7 @@ describe("NI runtime adapter", () => {
         maxHp: 50,
         name: "Hero",
         profession: "w",
+        stasis: false,
         x: 12,
         y: 8,
       },

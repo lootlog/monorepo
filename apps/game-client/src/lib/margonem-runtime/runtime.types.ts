@@ -40,6 +40,7 @@ export type RuntimeHero = Readonly<{
   maxHp: number;
   name: string;
   profession: string;
+  stasis: boolean;
   x: number;
   y: number;
 }>;
