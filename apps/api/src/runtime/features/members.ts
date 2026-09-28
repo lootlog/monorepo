@@ -27,6 +27,10 @@ import {
   type MemberRefresh,
 } from "#src/members/member-refresh.operations";
 import {
+  makeMemberDelivery,
+  type MemberDelivery,
+} from "#src/members/member-delivery.operations";
+import {
   makeMemberRemoval,
   type MemberRemoval,
 } from "#src/members/member-removal.operations";
@@ -63,6 +67,7 @@ interface MemberServicesValue {
     readonly skipTtlCheck?: boolean;
   }) => Effect.Effect<{ readonly refreshQueued: boolean } | null, unknown>;
   readonly removal: MemberRemoval;
+  readonly memberDelivery: MemberDelivery;
   readonly bulkRefreshQueue: Queue<MemberBulkRefreshJobData>;
   readonly refresh: MemberRefresh;
   readonly discord: DiscordOperations;
@@ -156,7 +161,7 @@ export const memberServicesLive = Layer.effect(
           guildMemberClient,
         );
 
-        const removal = makeMemberRemoval(database, {
+        const delivery = makeMemberDelivery(memberStore, {
           clearMemberCaches: (member) =>
             Effect.all(
               [
@@ -206,7 +211,34 @@ export const memberServicesLive = Layer.effect(
                 }),
               ),
             }),
+          invalidateMember: ({ discordId, guildId, userId }) =>
+            Effect.all(
+              [
+                adapter(() =>
+                  redis.del(getPermissionsCacheKey(userId, guildId)),
+                ),
+                adapter(() =>
+                  redis.invalidateScopes(
+                    getUserLootlogConfigCacheScope(discordId),
+                  ),
+                ),
+                adapter(() =>
+                  redis.invalidateScopes(getMemberReadCacheScope(guildId)),
+                ),
+              ],
+              { concurrency: "unbounded", discard: true },
+            ),
+          publishMemberUpdated: ({ discordId, guildId, userId }) =>
+            rabbit.publish({
+              exchange: "default",
+              routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
+              content: new TextEncoder().encode(
+                JSON.stringify({ id: discordId, discordId, userId, guildId }),
+              ),
+            }),
         });
+
+        const removal = makeMemberRemoval(database, delivery);
 
         const nextRefreshAt = (userId: string) =>
           adapter(() =>
@@ -235,52 +267,12 @@ export const memberServicesLive = Layer.effect(
         const memberDiscordSync = makeMemberSync(
           applicationLogger,
           memberStore,
-          removal,
+          delivery,
           {
             getGuildMember: discord.getGuildMember,
             nextRefreshAt,
-            invalidateMember: ({
-              discordId,
-              guildId,
-              userId,
-              readProjectionChanged,
-            }) =>
-              Effect.all(
-                [
-                  rabbit.publish({
-                    exchange: "default",
-                    routingKey: RabbitRoutingKey.GUILDS_MEMBERS_UPDATE,
-                    content: new TextEncoder().encode(
-                      JSON.stringify({
-                        id: discordId,
-                        discordId,
-                        userId,
-                        guildId,
-                      }),
-                    ),
-                  }),
-                  adapter(() =>
-                    redis.del(getPermissionsCacheKey(userId, guildId)),
-                  ),
-                  adapter(() =>
-                    redis.invalidateScopes(
-                      getUserLootlogConfigCacheScope(discordId),
-                    ),
-                  ),
-                  // Member-read caches expire within a minute, so a sync that
-                  // changes nothing they show skips the guild-wide eviction.
-                  ...(readProjectionChanged
-                    ? [
-                        adapter(() =>
-                          redis.invalidateScopes(
-                            getMemberReadCacheScope(guildId),
-                          ),
-                        ),
-                      ]
-                    : []),
-                ],
-                { concurrency: "unbounded", discard: true },
-              ),
+            refreshPermissionCache: ({ userId, guildId }) =>
+              adapter(() => redis.del(getPermissionsCacheKey(userId, guildId))),
           },
         );
 
@@ -322,6 +314,7 @@ export const memberServicesLive = Layer.effect(
           bulkRefreshQueue: memberBulkRefreshQueue,
           refreshMember,
           removal,
+          memberDelivery: delivery,
           refresh: memberDiscordRefresh,
           discord,
           scheduler,
@@ -342,9 +335,6 @@ export const memberServicesLive = Layer.effect(
 );
 
 type MemberPublishedEvents = {
-  [RabbitRoutingKey.GUILDS_MEMBERS_REMOVE]: Parameters<
-    MemberCommandsPorts["publishMemberRemoved"]
-  >[0] & { readonly id: string };
   [RabbitRoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE]: Parameters<
     MemberCommandsPorts["publishRefreshJobUpdate"]
   >[0];
@@ -353,10 +343,9 @@ type MemberPublishedEvents = {
 export const membersData = Layer.unwrap(
   Effect.gen(function* () {
     const config = yield* ApiRuntimeConfig;
-    const redis = yield* ApiRedis;
     const rabbit = yield* RabbitMessaging;
 
-    const { refresh, diagnostics, discord, bulkRefreshQueue } =
+    const { refresh, diagnostics, memberDelivery, bulkRefreshQueue } =
       yield* MemberServices;
 
     const promise = <A>(operation: () => PromiseLike<A>) =>
@@ -382,29 +371,7 @@ export const membersData = Layer.unwrap(
               reason,
             }),
           ),
-        clearMemberCaches: ({ discordId, guildId, userId }) =>
-          Effect.all(
-            [
-              promise(() =>
-                redis.invalidateScopes(
-                  getUserLootlogConfigCacheScope(discordId),
-                ),
-              ),
-              promise(() =>
-                redis.invalidateScopes(getMemberReadCacheScope(guildId)),
-              ),
-              discord.clearGuildMemberDataCache({ discordId, guildId, userId }),
-              promise(() => redis.del(getPermissionsCacheKey(userId, guildId))),
-            ],
-            { concurrency: "unbounded", discard: true },
-          ),
-        publishMemberRemoved: ({ discordId, guildId, userId }) =>
-          publish(RabbitRoutingKey.GUILDS_MEMBERS_REMOVE, {
-            id: discordId,
-            discordId,
-            userId,
-            guildId,
-          }),
+        deliverMemberChanges: memberDelivery.deliverAll,
         enqueueBulkRefresh: (data) =>
           promise(() =>
             bulkRefreshQueue.add("bulk-refresh", data, {
